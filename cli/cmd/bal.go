@@ -34,6 +34,7 @@ func main() {
 	rootCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(packCmd)
+	rootCmd.AddCommand(pushCmd)
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
