@@ -30,21 +30,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// pushError returns an error formatted with the push-specific USAGE block.
+// Cobra prefixes it with "ballerina:" and writes to stderr when RunE returns.
+func pushError(format string, args ...any) error {
+	return usageError("push [<bala-path>]", format, args...)
+}
+
 // localRepoBalaSubpath is the subpath under <BAL_ENV> that holds bala archives
-// for the local repository. The destination of a `bal push` lands at
-// <BAL_ENV>/<localRepoBalaSubpath>/<org>/<name>/<version>/<platform>/.
-//
-// Only the local repository is supported today. Central and custom-repo paths
-// would land alongside this constant when added; introducing a
-// `--repository=local` flag at that point is not a breaking change for
-// existing callers.
+// for the local repository. The destination of a `bal push --repository=local`
+// lands at <BAL_ENV>/<localRepoBalaSubpath>/<org>/<name>/<version>/<platform>/.
 const localRepoBalaSubpath = "repositories/local/bala"
 
-// pushOptions holds CLI flag values for `bal push`. The command takes no
-// flags today; the struct is retained so the createPushCmd factory shape
-// matches createPackCmd (tests allocate one per invocation to stay
-// parallel-safe).
-type pushOptions struct{}
+// localRepositoryName is the only --repository value accepted in this release.
+// Central (the implicit default) and custom remote repos are not yet
+// implemented, so the flag is required and constrained to this value.
+const localRepositoryName = "local"
+
+// pushOptions holds CLI flag values for `bal push`.
+type pushOptions struct {
+	repository string
+}
 
 var pushCmd = createPushCmd()
 
@@ -53,51 +58,50 @@ var pushCmd = createPushCmd()
 func createPushCmd() *cobra.Command {
 	opts := &pushOptions{}
 	cmd := &cobra.Command{
-		Use:   "push [<bala-path>]",
-		Short: "Push a Ballerina Archive (BALA) to a package repository",
+		Use:   "push [<bala-path>] --repository=local",
+		Short: "Push a Ballerina Archive (BALA) of the current package to the local repository",
 		Long: `	Push a Ballerina archive (.bala) of the current package or a provided
-	BALA file to Ballerina Central, local or a custom remote repository.
-	Once the package is pushed to Ballerina Central, it becomes public and
-	sharable and will be permanent.
+	BALA file to the local repository so it can be consumed by other
+	packages on the same machine via 'repository = "local"' in their
+	Ballerina.toml.
 
-	To be able to publish a package to Ballerina Central, you should sign
-	in to Ballerina Central and obtain an access token.
+	If <bala-path> is omitted, the command picks up the .bala file
+	under '<project>/target/bala/', which is the output of 'bal pack'.
 
-	To be able to publish a package to a custom remote repository, it must
-	be defined in the <USER_HOME>/.ballerina/Settings.toml file.
-
-	Note: Only the local repository is supported in this release; Ballerina
-	Central and custom-repository targets are not yet implemented.
+	Only 'local' is supported in this release. Ballerina Central and 
+	other custom repositories will be added in a future release.
 
 EXAMPLES
-	Push a BALA of the current package. The 'bal pack' command should be
-	run before executing this.
-	    $ bal push
+	Push the BALA of the current package to the local repository.
+	The 'bal pack' command should be run before executing this.
+	    $ bal push --repository=local
 
-	Push a provided BALA file. The file path can be relative or absolute.
-	    $ bal push <bala-path>`,
+	Push a provided BALA file to the local repository.
+	    $ bal push <bala-path> --repository=local`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPush(cmd, args, opts)
 		},
 	}
+	cmd.Flags().StringVar(&opts.repository, "repository", "",
+		"Target repository name. Required; only 'local' is supported in this release.")
+	// cobra's MarkFlagRequired routes the missing-flag check through the
+	// FlagErrorFunc, so the user sees the same "ballerina: ..." prefix
+	// applied to all other flag errors.
+	_ = cmd.MarkFlagRequired("repository")
 	return cmd
 }
 
-// pushError reports a push-specific failure to stderr (writer w) and
-// returns the same error so cobra exits non-zero. Mirrors packError.
-func pushError(w io.Writer, format string, args ...any) error {
-	err := fmt.Errorf(format, args...)
-	printErrorTo(w, err, "push [<bala-path>]", false)
-	return err
-}
-
-func runPush(cmd *cobra.Command, args []string, _ *pushOptions) error {
-	stderr := cmd.ErrOrStderr()
+func runPush(cmd *cobra.Command, args []string, opts *pushOptions) error {
+	if opts.repository != localRepositoryName {
+		return pushError(
+			"unsupported --repository value %q; only %q is supported in this release",
+			opts.repository, localRepositoryName)
+	}
 
 	balaPath, err := resolveBalaSource(args)
 	if err != nil {
-		return pushError(stderr, "%w", err)
+		return pushError("%w", err)
 	}
 
 	// Identity is sourced from the archive's manifests — the filename is
@@ -105,12 +109,12 @@ func runPush(cmd *cobra.Command, args []string, _ *pushOptions) error {
 	// malformed bala never touches the local repository.
 	org, name, version, platform, err := readBalaIdentity(balaPath)
 	if err != nil {
-		return pushError(stderr, "%w", err)
+		return pushError("%w", err)
 	}
 
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
-		return pushError(stderr, "resolve ballerina env path: %w", err)
+		return pushError("resolve ballerina env path: %w", err)
 	}
 
 	destDir := filepath.Join(
@@ -121,14 +125,14 @@ func runPush(cmd *cobra.Command, args []string, _ *pushOptions) error {
 	// Wipe destination so a re-push is deterministic — no stale files left
 	// from a previous version's layout. Mirrors Java toolchain behaviour.
 	if err := os.RemoveAll(destDir); err != nil {
-		return pushError(stderr, "remove existing destination %q: %w", destDir, err)
+		return pushError("remove existing destination %q: %w", destDir, err)
 	}
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
-		return pushError(stderr, "create destination %q: %w", destDir, err)
+		return pushError("create destination %q: %w", destDir, err)
 	}
 
 	if err := unzipBala(balaPath, destDir); err != nil {
-		return pushError(stderr, "%w", err)
+		return pushError("%w", err)
 	}
 
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Pushed %s to %s\n", balaPath, destDir)

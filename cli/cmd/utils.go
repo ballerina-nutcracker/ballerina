@@ -30,27 +30,24 @@ import (
 	"golang.org/x/term"
 )
 
-// printError prints an error message in the standard Ballerina CLI format to stderr.
-func printError(err error, usage string, showHelp bool) {
-	printErrorTo(os.Stderr, err, usage, showHelp)
-}
-
-func printRuntimeError(err error) {
-	_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-}
-
-// printErrorTo prints an error message in the standard Ballerina CLI format to the given writer.
-func printErrorTo(w io.Writer, err error, usage string, showHelp bool) {
-	_, _ = fmt.Fprintf(w, "ballerina: %s\n", err.Error())
-	if usage != "" {
-		_, _ = fmt.Fprintln(w)
-		_, _ = fmt.Fprintln(w, "USAGE:")
-		_, _ = fmt.Fprintf(w, "    %s\n", usage)
+// usageError builds an error suitable for returning from RunE. The error
+// message contains the inner failure followed by an optional USAGE block.
+// Cobra prefixes the result with the root command's ErrPrefix ("ballerina:")
+// when it prints to stderr, so the on-screen output is:
+//
+//	ballerina: <inner error>
+//
+//	USAGE:
+//	    <usage>
+//
+// Pass usage="" to omit the USAGE block. The inner error is wrapped via %w so
+// errors.Is / errors.As traverse it normally.
+func usageError(usage, format string, args ...any) error {
+	inner := fmt.Errorf(format, args...)
+	if usage == "" {
+		return inner
 	}
-	if showHelp {
-		_, _ = fmt.Fprintln(w)
-		_, _ = fmt.Fprintln(w, "For more information try --help")
-	}
+	return fmt.Errorf("%w\n\nUSAGE:\n    %s", inner, usage)
 }
 
 // validateSourceFile validates the source file argument for the 'run' command.

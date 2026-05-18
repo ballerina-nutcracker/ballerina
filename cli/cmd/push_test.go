@@ -620,7 +620,7 @@ func TestPushCommand_Help(t *testing.T) {
 	if !strings.Contains(stdout, "Push a Ballerina archive") {
 		t.Errorf("expected push help text, got: %s", stdout)
 	}
-	if !strings.Contains(stdout, "Only '--repository=local' is supported") {
+	if !strings.Contains(stdout, "only 'local' is supported in this") {
 		t.Errorf("expected current-scope note in help, got: %s", stdout)
 	}
 }

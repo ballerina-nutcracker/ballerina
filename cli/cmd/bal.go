@@ -22,15 +22,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// rootCmd is the root of the bal CLI. SetErrPrefix gives every error printed
+// by cobra (both flag-parse errors and errors returned from RunE) the
+// "ballerina:" prefix expected by users. SilenceUsage stays true because
+// subcommands embed their own concise USAGE block in the error (see
+// usageError); cobra's verbose UsageString would otherwise duplicate that.
 var rootCmd = &cobra.Command{
-	Use:           "bal",
-	Short:         "The build system and package manager of Ballerina",
-	Long:          `The build system and package manager of Ballerina`,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Use:          "bal",
+	Short:        "The build system and package manager of Ballerina",
+	Long:         `The build system and package manager of Ballerina`,
+	SilenceUsage: true,
 }
 
 func main() {
+	rootCmd.SetErrPrefix("ballerina:")
+
 	rootCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(packCmd)
