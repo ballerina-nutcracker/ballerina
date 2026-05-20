@@ -1,0 +1,7 @@
+[ballerina]
+dependencies-toml-version = "2"
+
+[[package]]
+org     = "ballerina"
+name    = "dummypkg"
+version = "0.1.0"
