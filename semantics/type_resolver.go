@@ -6299,7 +6299,13 @@ func argArray(t typeResolver, sym model.FunctionSymbol, paramTypes []semtypes.Se
 				}
 				ctx := t.typeContext()
 				T := semtypes.TypedescConstraint(ctx, paramTypes[i])
-				S := semtypes.Intersect(T, callExpectedType)
+				S := semtypes.Diff(callExpectedType, semtypes.ERROR)
+				if semtypes.IsEmpty(ctx, S) {
+					S = callExpectedType
+				}
+				if !semtypes.IsSubtype(ctx, S, T) {
+					S = semtypes.Intersect(T, S)
+				}
 				if semtypes.IsEmpty(ctx, S) {
 					t.semanticError(fmt.Sprintf("cannot infer maximal type such that it is a subtype of both %s and %s", semtypes.ToString(ctx, T), semtypes.ToString(ctx, callExpectedType)), loc)
 					return nil, chain, false
