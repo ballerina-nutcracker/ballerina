@@ -18,7 +18,6 @@ package convert
 
 import (
 	"math"
-	"strconv"
 
 	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
@@ -38,7 +37,7 @@ func isLikeType(tc semtypes.Context, value values.BalValue, target semtypes.SemT
 
 func isNumericConvertible(tc semtypes.Context, value values.BalValue, target semtypes.SemType) bool {
 	switch value.(type) {
-	case int64, float64, *decimal.Decimal, string, bool:
+	case int64, float64, *decimal.Decimal:
 	default:
 		return false
 	}
@@ -46,7 +45,6 @@ func isNumericConvertible(tc semtypes.Context, value values.BalValue, target sem
 	case semtypes.IsSubtypeSimple(target, semtypes.INT),
 		semtypes.IsSubtypeSimple(target, semtypes.FLOAT),
 		semtypes.IsSubtypeSimple(target, semtypes.DECIMAL),
-		semtypes.IsSubtypeSimple(target, semtypes.BOOLEAN),
 		semtypes.IsSubtype(tc, target, semtypes.BYTE):
 		converted, err := convertNumeric(tc, value, target)
 		return err == nil && semtypes.IsSubtype(tc, values.SemTypeForValue(converted), target)
@@ -63,10 +61,6 @@ func convertNumeric(tc semtypes.Context, value values.BalValue, target semtypes.
 		return toFloat(value)
 	case semtypes.IsSubtypeSimple(target, semtypes.DECIMAL):
 		return toDecimal(value)
-	case semtypes.IsSubtypeSimple(target, semtypes.STRING):
-		return toStringValue(value)
-	case semtypes.IsSubtypeSimple(target, semtypes.BOOLEAN):
-		return toBoolean(value)
 	case semtypes.IsSubtype(tc, target, semtypes.BYTE):
 		v, err := toInt(value)
 		if err != nil {
@@ -106,22 +100,6 @@ func toInt(value values.BalValue) (values.BalValue, error) {
 			return nil, newConversionFailure("cannot convert decimal to int64: value out of range")
 		}
 		return n, nil
-	case string:
-		if v == "NaN" || v == "Infinity" || v == "-Infinity" {
-			return nil, newConversionFailure("cannot convert string to int")
-		}
-		if i, err := strconv.ParseInt(v, 10, 64); err == nil {
-			return i, nil
-		}
-		if f, err := strconv.ParseFloat(v, 64); err == nil {
-			return toInt(f)
-		}
-		return nil, newConversionFailure("cannot convert string to int")
-	case bool:
-		if v {
-			return int64(1), nil
-		}
-		return int64(0), nil
 	default:
 		return nil, newConversionFailure("cannot convert value to int")
 	}
@@ -135,16 +113,6 @@ func toFloat(value values.BalValue) (values.BalValue, error) {
 		return v, nil
 	case *decimal.Decimal:
 		return v.Float64(), nil
-	case string:
-		if f, err := strconv.ParseFloat(v, 64); err == nil {
-			return f, nil
-		}
-		return nil, newConversionFailure("cannot convert string to float")
-	case bool:
-		if v {
-			return float64(1), nil
-		}
-		return float64(0), nil
 	default:
 		return nil, newConversionFailure("cannot convert value to float")
 	}
@@ -162,58 +130,7 @@ func toDecimal(value values.BalValue) (values.BalValue, error) {
 		return d, nil
 	case *decimal.Decimal:
 		return v, nil
-	case string:
-		d, decErr := decimal.FromString(v)
-		if decErr != nil {
-			return nil, newConversionFailure(decErr.Error())
-		}
-		return d, nil
-	case bool:
-		if v {
-			return decimal.FromInt64(1), nil
-		}
-		return decimal.FromInt64(0), nil
 	default:
 		return nil, newConversionFailure("cannot convert value to decimal")
-	}
-}
-
-func toStringValue(value values.BalValue) (values.BalValue, error) {
-	switch v := value.(type) {
-	case string:
-		return v, nil
-	case int64:
-		return strconv.FormatInt(v, 10), nil
-	case float64:
-		return values.FormatFloat(v), nil
-	case *decimal.Decimal:
-		return v.FormatBallerina(), nil
-	case bool:
-		return strconv.FormatBool(v), nil
-	default:
-		return nil, newConversionFailure("cannot convert value to string")
-	}
-}
-
-func toBoolean(value values.BalValue) (values.BalValue, error) {
-	switch v := value.(type) {
-	case bool:
-		return v, nil
-	case int64:
-		return v != 0, nil
-	case float64:
-		return v != 0 && !math.IsNaN(v), nil
-	case *decimal.Decimal:
-		return v.Cmp(decimal.FromInt64(0)) != 0, nil
-	case string:
-		switch v {
-		case "true":
-			return true, nil
-		case "false":
-			return false, nil
-		}
-		return nil, newConversionFailure("cannot convert string to boolean")
-	default:
-		return nil, newConversionFailure("cannot convert value to boolean")
 	}
 }

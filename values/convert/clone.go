@@ -21,35 +21,46 @@ import (
 	"ballerina-lang-go/values"
 )
 
-func cloneValue(tc semtypes.Context, value values.BalValue) values.BalValue {
+func cloneValue(tc semtypes.Context, value values.BalValue, targetType semtypes.SemType) values.BalValue {
 	if value == nil {
 		return nil
 	}
 	switch v := value.(type) {
 	case *values.List:
-		lat := semtypes.ToListAtomicType(tc, v.Type)
+		effectiveTarget := effectiveTargetType(tc, targetType)
+		lat := semtypes.ToListAtomicType(tc, effectiveTarget)
 		if lat == nil {
-			return value
+			lat = semtypes.ToListAtomicType(tc, v.Type)
+			if lat == nil {
+				return value
+			}
 		}
 		items := make([]values.BalValue, v.Len())
 		for i := 0; i < v.Len(); i++ {
-			items[i] = cloneValue(tc, v.Get(i))
+			items[i] = cloneValue(tc, v.Get(i), lat.MemberAtInnerVal(i))
 		}
 		restFiller, _ := values.FillerFactoryFor(tc, lat.Rest())
-		readonly := semtypes.IsSubtype(tc, v.Type, semtypes.VAL_READONLY)
-		return values.NewList(v.Type, lat, readonly, restFiller, v.Len(), items)
+		readonly := semtypes.IsSubtype(tc, targetType, semtypes.VAL_READONLY)
+		return values.NewList(targetType, lat, readonly, restFiller, v.Len(), items)
 	case *values.Map:
-		atomic := semtypes.ToMappingAtomicType(tc, v.Type)
+		effectiveTarget := effectiveTargetType(tc, targetType)
+		atomic := semtypes.ToMappingAtomicType(tc, effectiveTarget)
+		mappingTarget := effectiveTarget
 		if atomic == nil {
-			return value
+			atomic = semtypes.ToMappingAtomicType(tc, v.Type)
+			mappingTarget = v.Type
+			if atomic == nil {
+				return value
+			}
 		}
 		entries := make([]values.MapEntry, 0, v.Len())
 		for _, key := range v.Keys() {
 			val, _ := v.Get(key)
-			entries = append(entries, values.MapEntry{Key: key, Value: cloneValue(tc, val)})
+			fieldType := mappingFieldType(tc, mappingTarget, atomic, key)
+			entries = append(entries, values.MapEntry{Key: key, Value: cloneValue(tc, val, fieldType)})
 		}
-		readonly := semtypes.IsSubtype(tc, v.Type, semtypes.VAL_READONLY)
-		return values.NewMap(v.Type, atomic, readonly, entries)
+		readonly := semtypes.IsSubtype(tc, targetType, semtypes.VAL_READONLY)
+		return values.NewMap(targetType, atomic, readonly, entries)
 	default:
 		return value
 	}

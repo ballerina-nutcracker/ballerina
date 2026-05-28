@@ -1,0 +1,124 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition IntArray
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+  (type-definition StringArray
+    (array-type
+      (value-type string) dimensions: 1 ([])))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (type-definition Closed
+    (record-type
+      (field x
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (check-panicked-expr
+          (invocation run ())))))
+  (function run () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable badBool (type
+          (builtin-ref-type json)) (expr
+          (literal 2022))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref badBool) (
+              (typedesc-expr
+                (value-type boolean))))
+            (error-type)))))
+      (var-def
+        (variable badArr (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal a)
+            (literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref badArr) (
+              (simple-var-ref IntArray)))
+            (error-type)))))
+      (var-def
+        (variable badNumArr (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref badNumArr) (
+              (simple-var-ref StringArray)))
+            (error-type)))))
+      (var-def
+        (variable badString (type
+          (builtin-ref-type json)) (expr
+          (literal foobar))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref badString) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable missingField (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref missingField) (
+              (simple-var-ref Person)))
+            (error-type)))))
+      (var-def
+        (variable extraField (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal a))
+            (key-value
+              (literal y)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref extraField) (
+              (simple-var-ref Closed)))
+            (error-type)))))
+      (var-def
+        (variable nilVal (type
+          (builtin-ref-type json)) (expr
+          (literal <nil>))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nilVal) (
+              (simple-var-ref Person)))
+            (error-type)))))
+      (return
+        (literal <nil>)))))

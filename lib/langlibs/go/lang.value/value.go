@@ -22,7 +22,6 @@ import (
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/values"
-	"ballerina-lang-go/values/convert"
 )
 
 const (
@@ -30,25 +29,25 @@ const (
 	moduleName = "lang.value"
 )
 
-func fromJsonWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	if len(args) < 2 {
-		return nil, fmt.Errorf("fromJsonWithType expects 2 arguments, got %d", len(args))
-	}
-	td, ok := args[1].(*values.TypeDesc)
-	if !ok {
-		return nil, fmt.Errorf("second argument must be a typedesc, got %T", args[1])
-	}
-	result, convErr := convert.Convert(ctx.TypeCtx, args[0], td.Type)
-	if convErr != nil {
-		return convErr, nil
-	}
-	return result, nil
+func init() {
+	runtime.RegisterModuleInitializer(initValueModule)
 }
 
 func initValueModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromJsonWithType", fromJsonWithType)
 }
 
-func init() {
-	runtime.RegisterModuleInitializer(initValueModule)
+func fromJsonWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("fromJsonWithType expects 2 arguments, got %d", len(args))
+	}
+	td, ok := args[1].(*values.TypeDesc)
+	if !ok {
+		return nil, fmt.Errorf("second argument must be a typedesc, got %T", args[1])
+	}
+	result, convErr := runtime.FromJsonWithType(ctx.TypeCtx, args[0], td.Type)
+	if convErr != nil {
+		return convErr, nil
+	}
+	return result, nil
 }

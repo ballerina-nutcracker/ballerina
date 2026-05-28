@@ -77,16 +77,16 @@ func getConvertibleType(tc semtypes.Context, value values.BalValue, target semty
 	state.unresolved[pair] = struct{}{}
 	defer delete(state.unresolved, pair)
 
-	switch value.(type) {
+	switch value := value.(type) {
 	case *values.Map:
 		if semtypes.IsSubtypeSimple(target, semtypes.MAPPING) {
-			if isConvertibleMapping(tc, value.(*values.Map), target, state, allowNumeric) {
+			if isConvertibleMapping(tc, value, target, state, allowNumeric) {
 				return target, nil
 			}
 		}
 	case *values.List:
 		if semtypes.IsSubtypeSimple(target, semtypes.LIST) {
-			if isConvertibleList(tc, value.(*values.List), target, state, allowNumeric) {
+			if isConvertibleList(tc, value, target, state, allowNumeric) {
 				return target, nil
 			}
 		}

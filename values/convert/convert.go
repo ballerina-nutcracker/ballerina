@@ -39,14 +39,15 @@ func Convert(tc semtypes.Context, value values.BalValue, targetType semtypes.Sem
 func convert(tc semtypes.Context, value values.BalValue, convertibleType, targetType semtypes.SemType,
 	state *convertState,
 ) (values.BalValue, error) {
-	targetType = effectiveTargetType(tc, targetType)
-	convertibleType = effectiveTargetType(tc, convertibleType)
+	originalTargetType := targetType
+	effectiveTarget := effectiveTargetType(tc, targetType)
+	effectiveConvertibleType := effectiveTargetType(tc, convertibleType)
 
 	if value == nil {
 		return nil, nil
 	}
 
-	pair := state.pair(value, convertibleType, tc)
+	pair := state.pair(value, effectiveConvertibleType, tc)
 	if _, ok := state.unresolved[pair]; ok {
 		sourceTy := values.SemTypeForValue(value)
 		return nil, cyclicValueReference(tc, sourceTy)
@@ -54,59 +55,39 @@ func convert(tc semtypes.Context, value values.BalValue, convertibleType, target
 	state.unresolved[pair] = struct{}{}
 	defer delete(state.unresolved, pair)
 
-	if isLikeType(tc, value, convertibleType, false) {
-		return cloneValue(tc, value), nil
+	if isLikeType(tc, value, effectiveConvertibleType, false) {
+		return cloneValue(tc, value, originalTargetType), nil
 	}
 
-	switch value.(type) {
+	switch value := value.(type) {
 	case *values.Map:
-		if semtypes.IsSubtypeSimple(convertibleType, semtypes.MAPPING) {
-			return convertMapping(tc, value.(*values.Map), convertibleType, state)
+		if semtypes.IsSubtypeSimple(effectiveConvertibleType, semtypes.MAPPING) {
+			return convertMapping(tc, value, originalTargetType, effectiveTarget, state)
 		}
 	case *values.List:
-		if semtypes.IsSubtypeSimple(convertibleType, semtypes.LIST) {
-			return convertList(tc, value.(*values.List), convertibleType, state)
+		if semtypes.IsSubtypeSimple(effectiveConvertibleType, semtypes.LIST) {
+			return convertList(tc, value, originalTargetType, effectiveTarget, state)
 		}
 	}
 
-	if isNumericConvertible(tc, value, convertibleType) {
-		converted, err := convertNumeric(tc, value, convertibleType)
+	if isNumericConvertible(tc, value, effectiveConvertibleType) {
+		converted, err := convertNumeric(tc, value, effectiveConvertibleType)
 		if err != nil {
 			return nil, err
 		}
-		if !semtypes.IsSubtype(tc, values.SemTypeForValue(converted), convertibleType) {
-			return nil, incompatibleConversion(tc, value, targetType)
+		if !semtypes.IsSubtype(tc, values.SemTypeForValue(converted), effectiveConvertibleType) {
+			return nil, incompatibleConversion(tc, value, originalTargetType)
 		}
 		return converted, nil
 	}
 
-	return nil, incompatibleConversion(tc, value, targetType)
+	return nil, incompatibleConversion(tc, value, originalTargetType)
 }
 
-func convertList(tc semtypes.Context, source *values.List, target semtypes.SemType, state *convertState) (values.BalValue, error) {
-	atomic := semtypes.ToListAtomicType(tc, target)
-	if atomic == nil {
-		return nil, incompatibleConversion(tc, source, target)
-	}
-	items := make([]values.BalValue, source.Len())
-	for i := 0; i < source.Len(); i++ {
-		memberTy := atomic.MemberAtInnerVal(i)
-		if _, err := getConvertibleType(tc, source.Get(i), memberTy, state, true); err != nil {
-			return nil, err
-		}
-		converted, err := convert(tc, source.Get(i), memberTy, memberTy, state)
-		if err != nil {
-			return nil, err
-		}
-		items[i] = converted
-	}
-	restFiller, _ := values.FillerFactoryFor(tc, atomic.Rest())
-	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
-	return values.NewList(target, atomic, readonly, restFiller, len(items), items), nil
-}
-
-func convertMapping(tc semtypes.Context, source *values.Map, target semtypes.SemType, state *convertState) (values.BalValue, error) {
-	atomic := semtypes.ToMappingAtomicType(tc, target)
+func convertMapping(tc semtypes.Context, source *values.Map, target, effectiveTarget semtypes.SemType,
+	state *convertState,
+) (values.BalValue, error) {
+	atomic := semtypes.ToMappingAtomicType(tc, effectiveTarget)
 	if atomic == nil {
 		return nil, incompatibleConversion(tc, source, target)
 	}
@@ -114,7 +95,7 @@ func convertMapping(tc semtypes.Context, source *values.Map, target semtypes.Sem
 	seen := make(map[string]struct{}, source.Len())
 	for _, key := range source.Keys() {
 		seen[key] = struct{}{}
-		fieldTy := mappingFieldType(tc, target, atomic, key)
+		fieldTy := mappingFieldType(tc, effectiveTarget, atomic, key)
 		val, _ := source.Get(key)
 		convertibleFieldTy, err := getConvertibleType(tc, val, fieldTy, state, true)
 		if err != nil {
@@ -130,11 +111,36 @@ func convertMapping(tc semtypes.Context, source *values.Map, target semtypes.Sem
 		if _, ok := seen[name]; ok {
 			continue
 		}
-		if !fieldNeedsNilWhenMissing(tc, target, name, atomic) {
+		if !fieldNeedsNilWhenMissing(tc, effectiveTarget, name, atomic) {
 			continue
 		}
 		entries = append(entries, values.MapEntry{Key: name, Value: nil})
 	}
 	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
 	return values.NewMap(target, atomic, readonly, entries), nil
+}
+
+func convertList(tc semtypes.Context, source *values.List, target, effectiveTarget semtypes.SemType,
+	state *convertState,
+) (values.BalValue, error) {
+	atomic := semtypes.ToListAtomicType(tc, effectiveTarget)
+	if atomic == nil {
+		return nil, incompatibleConversion(tc, source, target)
+	}
+	items := make([]values.BalValue, source.Len())
+	for i := 0; i < source.Len(); i++ {
+		memberTy := atomic.MemberAtInnerVal(i)
+		narrowedMemberTy, err := getConvertibleType(tc, source.Get(i), memberTy, state, true)
+		if err != nil {
+			return nil, err
+		}
+		converted, err := convert(tc, source.Get(i), narrowedMemberTy, memberTy, state)
+		if err != nil {
+			return nil, err
+		}
+		items[i] = converted
+	}
+	restFiller, _ := values.FillerFactoryFor(tc, atomic.Rest())
+	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
+	return values.NewList(target, atomic, readonly, restFiller, len(items), items), nil
 }

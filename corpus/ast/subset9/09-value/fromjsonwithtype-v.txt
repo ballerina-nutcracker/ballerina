@@ -1,0 +1,139 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition IntArray
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+  (type-definition StringArray
+    (array-type
+      (value-type string) dimensions: 1 ([])))
+  (type-definition IntMap
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int)))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (check-panicked-expr
+          (invocation run ())))))
+  (function run () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable num (type
+          (builtin-ref-type json)) (expr
+          (literal 2022))))
+      (var-def
+        (variable n (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation fromJsonWithType expr:
+            (simple-var-ref num) (
+            (typedesc-expr
+              (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))
+      (var-def
+        (variable arr (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)))))
+      (var-def
+        (variable intArray (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref arr) (
+              (simple-var-ref IntArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref intArray))))
+      (var-def
+        (variable inferred (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref arr) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inferred))))
+      (var-def
+        (variable vowels (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal a)
+            (literal e)
+            (literal i)
+            (literal o)
+            (literal u)))))
+      (var-def
+        (variable chars (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref vowels) (
+              (simple-var-ref StringArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref chars))))
+      (var-def
+        (variable m (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2))))))
+      (var-def
+        (variable mi (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref m) (
+              (simple-var-ref IntMap)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mi))))
+      (var-def
+        (variable p (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))
+            (key-value
+              (literal age)
+              (literal 30))))))
+      (var-def
+        (variable person (type
+          (user-defined-type Person)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref p) (
+              (simple-var-ref Person)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref person))))
+      (return
+        (literal <nil>)))))

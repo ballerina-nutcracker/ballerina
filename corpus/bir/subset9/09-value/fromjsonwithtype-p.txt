@@ -1,0 +1,24 @@
+module $anon.. v 0.0.0;
+import ballerina.io v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad Alice
+    %3 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%1=%2}
+    missing = %3;
+    %5 = ConstantLoad typedesc
+    %6 = fromJsonWithType(missing,%5) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    %8 = $desugar$0 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    panic $desugar$0;
+  }
+  bb3 {
+    p = $desugar$0;
+    return;
+  }
+}
