@@ -1,0 +1,44 @@
+import ballerina/io;
+
+type IntArray int[];
+type StringArray string[];
+type IntMap map<int>;
+
+type Person record {|
+    string name;
+    int age;
+|};
+
+public function main() {
+    checkpanic run();
+}
+
+function run() returns error? {
+    // primitives
+    json num = 2022;
+    int|error n = num.fromJsonWithType(int);
+    io:println(n); // @output 2022
+
+    // arrays
+    json arr = [1, 2, 3, 4];
+    int[] intArray = check arr.fromJsonWithType(IntArray);
+    io:println(intArray); // @output [1,2,3,4]
+
+    int[] inferred = check arr.fromJsonWithType();
+    io:println(inferred); // @output [1,2,3,4]
+
+    json vowels = ["a", "e", "i", "o", "u"];
+    string[] chars = check vowels.fromJsonWithType(StringArray);
+    io:println(chars); // @output ["a","e","i","o","u"]
+
+    // maps
+    json m = {"a": 1, "b": 2};
+    map<int> mi = check m.fromJsonWithType(IntMap);
+    io:println(mi); // @output {"a":1,"b":2}
+
+    // records
+    json p = {"name": "Alice", "age": 30};
+    Person person = check p.fromJsonWithType(Person);
+    io:println(person); // @output {"name":"Alice","age":30}
+    return;
+}

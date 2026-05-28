@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: {ballerina/lang.value}ConversionError
+        at main(fromjsonwithtype-p.bal:8)
