@@ -1,7 +1,9 @@
 -- stdout --
 -- stderr --
 ballerina: no package found at path
-notamember within workspace
+notamember
+within workspace
+run-workspace-corpus
 
 USAGE:
     run [<source-file.bal> | <package-dir> | .]

@@ -27,12 +27,11 @@ func cloneValue(tc semtypes.Context, value values.BalValue, targetType semtypes.
 	}
 	switch v := value.(type) {
 	case *values.List:
-		effectiveTarget := effectiveTargetType(tc, targetType)
-		lat := semtypes.ToListAtomicType(tc, effectiveTarget)
+		lat := semtypes.ToListAtomicType(tc, targetType)
 		if lat == nil {
 			lat = semtypes.ToListAtomicType(tc, v.Type)
 			if lat == nil {
-				return value
+				panic("cloneValue: list has no atomic representation")
 			}
 		}
 		items := make([]values.BalValue, v.Len())
@@ -43,14 +42,13 @@ func cloneValue(tc semtypes.Context, value values.BalValue, targetType semtypes.
 		readonly := semtypes.IsSubtype(tc, targetType, semtypes.VAL_READONLY)
 		return values.NewList(targetType, lat, readonly, restFiller, v.Len(), items)
 	case *values.Map:
-		effectiveTarget := effectiveTargetType(tc, targetType)
-		atomic := semtypes.ToMappingAtomicType(tc, effectiveTarget)
-		mappingTarget := effectiveTarget
+		atomic := semtypes.ToMappingAtomicType(tc, targetType)
+		mappingTarget := targetType
 		if atomic == nil {
 			atomic = semtypes.ToMappingAtomicType(tc, v.Type)
 			mappingTarget = v.Type
 			if atomic == nil {
-				return value
+				panic("cloneValue: mapping has no atomic representation")
 			}
 		}
 		entries := make([]values.MapEntry, 0, v.Len())

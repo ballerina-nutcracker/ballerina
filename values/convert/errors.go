@@ -26,22 +26,12 @@ import (
 
 const conversionErrorMessage = "{ballerina/lang.value}ConversionError"
 
-const maxConversionErrors = 20
-
 type conversionFailure struct {
 	detailMessage string
 }
 
-func wrapConversionError(tc semtypes.Context, value values.BalValue, targetType semtypes.SemType, err error) *values.Error {
-	var detail string
-	switch e := err.(type) {
-	case *conversionFailure:
-		detail = e.detailMessage
-	default:
-		sourceTy := values.SemTypeForValue(value)
-		detail = fmt.Sprintf("'%s' value cannot be converted to '%s'",
-			semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType))
-	}
+func wrapConversionError(_ semtypes.Context, _ values.BalValue, _ semtypes.SemType, err error) *values.Error {
+	detail := err.(*conversionFailure).detailMessage
 	detailMap := values.NewMap(semtypes.MAPPING, &semtypes.MAPPING_ATOMIC_INNER, true, []values.MapEntry{
 		{Key: "message", Value: detail},
 	})
@@ -52,10 +42,6 @@ func incompatibleConversion(tc semtypes.Context, value values.BalValue, targetTy
 	sourceTy := values.SemTypeForValue(value)
 	return newConversionFailure(fmt.Sprintf("'%s' value cannot be converted to '%s'",
 		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType)))
-}
-
-func cyclicValueReference(tc semtypes.Context, sourceType semtypes.SemType) *conversionFailure {
-	return newConversionFailure(fmt.Sprintf("cyclic value reference in '%s'", semtypes.ToString(tc, sourceType)))
 }
 
 func cannotConvertNil(tc semtypes.Context, targetType semtypes.SemType) *conversionFailure {
@@ -71,15 +57,9 @@ func newConversionFailure(message string) *conversionFailure {
 }
 
 func unionErrorMessage(errors []string) string {
-	if len(errors) == 0 {
-		return ""
-	}
 	var b strings.Builder
 	tabs := 0
-	for i, err := range errors {
-		if i >= maxConversionErrors {
-			break
-		}
+	for _, err := range errors {
 		switch err {
 		case "{":
 			b.WriteString("\n\t\t")

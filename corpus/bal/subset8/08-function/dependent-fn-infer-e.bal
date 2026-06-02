@@ -15,8 +15,7 @@
 // under the License.
 
 public function main() {
-    json arr = [1, 2];
-    arr.fromJsonWithType(); // @error
-    int x = 1;
-    x.fromJsonWithType(int); // @error
+    error e = inferredPartially(0); // @error
 }
+
+function inferredPartially(int val, typedesc<anydata> retTy = <>) returns retTy|error = external;

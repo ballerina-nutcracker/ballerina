@@ -73,6 +73,21 @@
         (invocation io println (
           (simple-var-ref b))))
       (var-def
+        (variable floatByte (type
+          (builtin-ref-type json)) (expr
+          (literal 200.0))))
+      (var-def
+        (variable fromFloat (type
+          (value-type byte)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref floatByte) (
+              (typedesc-expr
+                (value-type byte))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromFloat))))
+      (var-def
         (variable outOfRange (type
           (builtin-ref-type json)) (expr
           (literal 256))))
@@ -96,5 +111,151 @@
               (typedesc-expr
                 (value-type byte))))
             (error-type)))))
+      (var-def
+        (variable negByte (type
+          (builtin-ref-type json)) (expr
+          (unary-expr -
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref negByte) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (var-def
+        (variable nan (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0)))))
+      (var-def
+        (variable nanJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref nan))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nanJson) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable inf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1.0)
+            (literal 0.0)))))
+      (var-def
+        (variable infJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref inf))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref infJson) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable hugeFloat (type
+          (builtin-ref-type json)) (expr
+          (literal 1e100))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref hugeFloat) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable decVal (type
+          (value-type decimal)) (expr
+          (literal 42))))
+      (var-def
+        (variable decJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref decVal))))
+      (var-def
+        (variable fromDec (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref decJson) (
+              (typedesc-expr
+                (value-type int))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromDec))))
+      (var-def
+        (variable tooBig (type
+          (value-type decimal)) (expr
+          (literal 9.223372036854776e+18))))
+      (var-def
+        (variable tooBigJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref tooBig))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref tooBigJson) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable floatToDec (type
+          (builtin-ref-type json)) (expr
+          (literal 1.5))))
+      (var-def
+        (variable decFromFloat (type
+          (value-type decimal)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref floatToDec) (
+              (typedesc-expr
+                (value-type decimal))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref decFromFloat))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nanJson) (
+              (typedesc-expr
+                (value-type decimal))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref infJson) (
+              (typedesc-expr
+                (value-type decimal))))
+            (error-type)))))
+      (var-def
+        (variable decForFloat (type
+          (value-type decimal)) (expr
+          (literal 3.5))))
+      (var-def
+        (variable decForFloatJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref decForFloat))))
+      (var-def
+        (variable floatFromDec (type
+          (value-type float)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref decForFloatJson) (
+              (typedesc-expr
+                (value-type float))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref floatFromDec))))
       (return
         (literal <nil>)))))

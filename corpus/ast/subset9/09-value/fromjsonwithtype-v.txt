@@ -29,6 +29,23 @@
       (value-type null)))
     (block-function-body
       (var-def
+        (variable arrForAny (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable ad (type
+          (value-type anydata)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref arrForAny) (
+              (typedesc-expr
+                (value-type anydata))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ad))))
+      (var-def
         (variable num (type
           (builtin-ref-type json)) (expr
           (literal 2022))))
@@ -44,6 +61,28 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref n))))
+      (var-def
+        (variable b (type
+          (value-type boolean)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (literal true) (
+              (typedesc-expr
+                (value-type boolean))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable f (type
+          (value-type boolean)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (literal false) (
+              (typedesc-expr
+                (value-type boolean))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f))))
       (var-def
         (variable arr (type
           (builtin-ref-type json)) (expr

@@ -30,10 +30,19 @@ public function main() {
 }
 
 function run() returns error? {
+    json arrForAny = [1, 2];
+    anydata ad = check arrForAny.fromJsonWithType(anydata);
+    io:println(ad); // @output [1,2]
+
     // primitives
     json num = 2022;
     int|error n = num.fromJsonWithType(int);
     io:println(n); // @output 2022
+
+    boolean b = check true.fromJsonWithType(boolean);
+    io:println(b); // @output true
+    boolean f = check false.fromJsonWithType(boolean);
+    io:println(f); // @output false
 
     // arrays
     json arr = [1, 2, 3, 4];

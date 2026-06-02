@@ -15,7 +15,10 @@ main() -> nil{
     %8 ? bb2 : bb3;
   }
   bb2 {
-    panic $desugar$0;
+    PushScopeFrame 0
+    (1, %9) = (1, $desugar$0);
+    PopScopeFrame
+    panic %9;
   }
   bb3 {
     p = $desugar$0;

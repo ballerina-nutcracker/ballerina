@@ -9,6 +9,9 @@
         (simple-var-ref B)
         (literal 1))
       (assignment
+        (simple-var-ref K)
+        (literal 10))
+      (assignment
         (simple-var-ref A)
         (binary-expr +
           (numeric-literal 10)

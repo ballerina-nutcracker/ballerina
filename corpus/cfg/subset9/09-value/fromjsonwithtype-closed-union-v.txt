@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable petJson (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal nickname)
+            (literal Fido))
+          (key-value
+            (literal pet_type)
+            (literal Dog))
+          (key-value
+            (literal age)
+            (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref petJson)
+            (simple-var-ref Pet)))
+          (error-type)))))
+  )
+)

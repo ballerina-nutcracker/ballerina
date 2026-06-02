@@ -24,123 +24,99 @@ import (
 // Convert converts a value to the given target type.
 // On failure it returns a lang.value ConversionError as *values.Error.
 func Convert(tc semtypes.Context, value values.BalValue, targetType semtypes.SemType) (values.BalValue, *values.Error) {
-	state := newConvertState()
-	convertibleType, err := getConvertibleType(tc, value, targetType, state, true)
+	var unionErrors []string
+	convertibleType, err := getConvertibleType(tc, value, targetType, &unionErrors, true)
 	if err != nil {
 		return nil, wrapConversionError(tc, value, targetType, err)
 	}
-	converted, err := convert(tc, value, convertibleType, targetType, state)
-	if err != nil {
-		return nil, wrapConversionError(tc, value, targetType, err)
-	}
-	return converted, nil
+	return convert(tc, value, convertibleType, targetType, &unionErrors), nil
 }
 
 func convert(tc semtypes.Context, value values.BalValue, convertibleType, targetType semtypes.SemType,
-	state *convertState,
-) (values.BalValue, error) {
-	originalTargetType := targetType
-	effectiveTarget := effectiveTargetType(tc, targetType)
-	effectiveConvertibleType := effectiveTargetType(tc, convertibleType)
+	unionErrors *[]string,
+) values.BalValue {
+	inherentType := convertibleType
 
 	if value == nil {
-		return nil, nil
+		return nil
 	}
 
-	pair := state.pair(value, effectiveConvertibleType, tc)
-	if _, ok := state.unresolved[pair]; ok {
-		sourceTy := values.SemTypeForValue(value)
-		return nil, cyclicValueReference(tc, sourceTy)
-	}
-	state.unresolved[pair] = struct{}{}
-	defer delete(state.unresolved, pair)
-
-	if isLikeType(tc, value, effectiveConvertibleType, false) {
-		return cloneValue(tc, value, originalTargetType), nil
+	if isLikeType(tc, value, convertibleType, false) {
+		return cloneValue(tc, value, inherentType)
 	}
 
 	switch value := value.(type) {
 	case *values.Map:
-		if semtypes.IsSubtypeSimple(effectiveConvertibleType, semtypes.MAPPING) {
-			return convertMapping(tc, value, originalTargetType, effectiveTarget, state)
+		if semtypes.IsSubtypeSimple(convertibleType, semtypes.MAPPING) {
+			return convertMapping(tc, value, inherentType, targetType, unionErrors)
 		}
 	case *values.List:
-		if semtypes.IsSubtypeSimple(effectiveConvertibleType, semtypes.LIST) {
-			return convertList(tc, value, originalTargetType, effectiveTarget, state)
+		if semtypes.IsSubtypeSimple(convertibleType, semtypes.LIST) {
+			return convertList(tc, value, inherentType, targetType, unionErrors)
 		}
 	}
 
-	if isNumericConvertible(tc, value, effectiveConvertibleType) {
-		converted, err := convertNumeric(tc, value, effectiveConvertibleType)
+	if isNumericConvertible(tc, value, convertibleType) {
+		converted, err := convertNumeric(tc, value, convertibleType)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
-		if !semtypes.IsSubtype(tc, values.SemTypeForValue(converted), effectiveConvertibleType) {
-			return nil, incompatibleConversion(tc, value, originalTargetType)
-		}
-		return converted, nil
+		return converted
 	}
 
-	return nil, incompatibleConversion(tc, value, originalTargetType)
+	panic("convert: value is not convertible after getConvertibleType")
 }
 
-func convertMapping(tc semtypes.Context, source *values.Map, target, effectiveTarget semtypes.SemType,
-	state *convertState,
-) (values.BalValue, error) {
-	atomic := semtypes.ToMappingAtomicType(tc, effectiveTarget)
+func convertMapping(tc semtypes.Context, source *values.Map, inherentType, requestedTarget semtypes.SemType,
+	unionErrors *[]string,
+) values.BalValue {
+	atomic := semtypes.ToMappingAtomicType(tc, inherentType)
 	if atomic == nil {
-		return nil, incompatibleConversion(tc, source, target)
+		panic("convert: mapping target has no atomic representation")
 	}
 	entries := make([]values.MapEntry, 0, source.Len()+len(atomic.Names))
 	seen := make(map[string]struct{}, source.Len())
 	for _, key := range source.Keys() {
 		seen[key] = struct{}{}
-		fieldTy := mappingFieldType(tc, effectiveTarget, atomic, key)
+		fieldTy := mappingFieldType(tc, inherentType, atomic, key)
 		val, _ := source.Get(key)
-		convertibleFieldTy, err := getConvertibleType(tc, val, fieldTy, state, true)
+		convertibleFieldTy, err := getConvertibleType(tc, val, fieldTy, unionErrors, true)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
-		converted, err := convert(tc, val, convertibleFieldTy, convertibleFieldTy, state)
-		if err != nil {
-			return nil, err
-		}
+		converted := convert(tc, val, convertibleFieldTy, convertibleFieldTy, unionErrors)
 		entries = append(entries, values.MapEntry{Key: key, Value: converted})
 	}
 	for _, name := range atomic.Names {
 		if _, ok := seen[name]; ok {
 			continue
 		}
-		if !fieldNeedsNilWhenMissing(tc, effectiveTarget, name, atomic) {
+		if !fieldNeedsNilWhenMissing(tc, inherentType, name, atomic) {
 			continue
 		}
 		entries = append(entries, values.MapEntry{Key: name, Value: nil})
 	}
-	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
-	return values.NewMap(target, atomic, readonly, entries), nil
+	readonly := semtypes.IsSubtype(tc, requestedTarget, semtypes.VAL_READONLY)
+	return values.NewMap(inherentType, atomic, readonly, entries)
 }
 
-func convertList(tc semtypes.Context, source *values.List, target, effectiveTarget semtypes.SemType,
-	state *convertState,
-) (values.BalValue, error) {
-	atomic := semtypes.ToListAtomicType(tc, effectiveTarget)
+func convertList(tc semtypes.Context, source *values.List, inherentType, requestedTarget semtypes.SemType,
+	unionErrors *[]string,
+) values.BalValue {
+	atomic := semtypes.ToListAtomicType(tc, inherentType)
 	if atomic == nil {
-		return nil, incompatibleConversion(tc, source, target)
+		panic("convert: list target has no atomic representation")
 	}
 	items := make([]values.BalValue, source.Len())
 	for i := 0; i < source.Len(); i++ {
 		memberTy := atomic.MemberAtInnerVal(i)
-		narrowedMemberTy, err := getConvertibleType(tc, source.Get(i), memberTy, state, true)
+		narrowedMemberTy, err := getConvertibleType(tc, source.Get(i), memberTy, unionErrors, true)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
-		converted, err := convert(tc, source.Get(i), narrowedMemberTy, memberTy, state)
-		if err != nil {
-			return nil, err
-		}
-		items[i] = converted
+		items[i] = convert(tc, source.Get(i), narrowedMemberTy, memberTy, unionErrors)
 	}
 	restFiller, _ := values.FillerFactoryFor(tc, atomic.Rest())
-	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
-	return values.NewList(target, atomic, readonly, restFiller, len(items), items), nil
+	readonly := semtypes.IsSubtype(tc, requestedTarget, semtypes.VAL_READONLY)
+	return values.NewList(inherentType, atomic, readonly, restFiller, len(items), items)
 }

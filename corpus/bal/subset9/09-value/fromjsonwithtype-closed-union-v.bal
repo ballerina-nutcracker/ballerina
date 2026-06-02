@@ -14,9 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/io;
+
+type PetByAge record {|
+    int age;
+    string nickname?;
+|};
+
+type PetByType record {|
+    "Cat"|"Dog" pet_type;
+    boolean hunts?;
+|};
+
+type Pet PetByAge|PetByType;
+
 public function main() {
-    json arr = [1, 2];
-    arr.fromJsonWithType(); // @error
-    int x = 1;
-    x.fromJsonWithType(int); // @error
+    json petJson = {"nickname": "Fido", "pet_type": "Dog", "age": 4};
+    io:println(petJson.fromJsonWithType(Pet) is error); // @output true
 }

@@ -17,6 +17,10 @@
     (record-type
       (field x
         (value-type string))))
+  (type-definition PersonOrClosed
+    (union-type
+      (user-defined-type Person)
+      (user-defined-type Closed)))
   (function main () (
     (value-type null))
     (block-function-body
@@ -101,6 +105,23 @@
               (simple-var-ref Person)))
             (error-type)))))
       (var-def
+        (variable badAge (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))
+            (key-value
+              (literal age)
+              (literal old))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref badAge)
+              (simple-var-ref Person)))
+            (error-type)))))
+      (var-def
         (variable extraField (type
           (builtin-ref-type json)) (expr
           (mapping-constructor-expr
@@ -127,6 +148,20 @@
             (invocation lang.value fromJsonWithType (
               (simple-var-ref nilVal)
               (simple-var-ref Person)))
+            (error-type)))))
+      (var-def
+        (variable notPerson (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref notPerson)
+              (simple-var-ref PersonOrClosed)))
             (error-type)))))
       (return
         (literal <nil>)))))

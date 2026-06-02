@@ -37,10 +37,49 @@ function run() returns error? {
     byte b = check maxByte.fromJsonWithType(byte);
     io:println(b); // @output 255
 
+    json floatByte = 200.0;
+    byte fromFloat = check floatByte.fromJsonWithType(byte);
+    io:println(fromFloat); // @output 200
+
     json outOfRange = 256;
     io:println(outOfRange.fromJsonWithType(byte) is error); // @output true
 
     json roundedOutOfRange = 255.6;
     io:println(roundedOutOfRange.fromJsonWithType(byte) is error); // @output true
+
+    json negByte = -1;
+    io:println(negByte.fromJsonWithType(byte) is error); // @output true
+
+    float nan = 0.0/0.0;
+    json nanJson = nan;
+    io:println(nanJson.fromJsonWithType(int) is error); // @output true
+
+    float inf = 1.0/0.0;
+    json infJson = inf;
+    io:println(infJson.fromJsonWithType(int) is error); // @output true
+
+    json hugeFloat = 1e100;
+    io:println(hugeFloat.fromJsonWithType(int) is error); // @output true
+
+    decimal decVal = 42;
+    json decJson = decVal;
+    int fromDec = check decJson.fromJsonWithType(int);
+    io:println(fromDec); // @output 42
+
+    decimal tooBig = 9223372036854775808;
+    json tooBigJson = tooBig;
+    io:println(tooBigJson.fromJsonWithType(int) is error); // @output true
+
+    json floatToDec = 1.5;
+    decimal decFromFloat = check floatToDec.fromJsonWithType(decimal);
+    io:println(decFromFloat); // @output 1.5
+
+    io:println(nanJson.fromJsonWithType(decimal) is error); // @output true
+    io:println(infJson.fromJsonWithType(decimal) is error); // @output true
+
+    decimal decForFloat = 3.5;
+    json decForFloatJson = decForFloat;
+    float floatFromDec = check decForFloatJson.fromJsonWithType(float);
+    io:println(floatFromDec); // @output 3.5
     return;
 }

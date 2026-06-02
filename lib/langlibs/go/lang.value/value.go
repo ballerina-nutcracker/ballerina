@@ -17,8 +17,6 @@
 package value
 
 import (
-	"fmt"
-
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/values"
@@ -38,13 +36,7 @@ func initValueModule(rt *runtime.Runtime) {
 }
 
 func fromJsonWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	if len(args) != 2 {
-		return nil, fmt.Errorf("fromJsonWithType expects 2 arguments, got %d", len(args))
-	}
-	td, ok := args[1].(*values.TypeDesc)
-	if !ok {
-		return nil, fmt.Errorf("second argument must be a typedesc, got %T", args[1])
-	}
+	td := args[1].(*values.TypeDesc)
 	result, convErr := runtime.FromJsonWithType(ctx.TypeCtx, args[0], td.Type)
 	if convErr != nil {
 		return convErr, nil

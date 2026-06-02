@@ -1,0 +1,177 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition IntOrString
+    (union-type
+      (value-type int)
+      (value-type string)))
+  (type-definition JsonOrInt
+    (union-type
+      (builtin-ref-type json)
+      (value-type int)))
+  (type-definition IntNilable
+    (union-type
+      (value-type int)
+      (value-type null)))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (type-definition PersonOpt
+    (record-type
+      (field name
+        (value-type string))
+      (field age optional
+        (value-type int))))
+  (type-definition WithNilable
+    (record-type
+      (field name
+        (value-type string))
+      (field score
+        (union-type
+          (value-type int)
+          (value-type null)))))
+  (type-definition PersonNilAge
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (union-type
+          (value-type int)
+          (value-type null)))))
+  (type-definition AnyMap
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type any)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (check-panicked-expr
+          (invocation run ())))))
+  (function run () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable num (type
+          (builtin-ref-type json)) (expr
+          (literal 42))))
+      (var-def
+        (variable asUnion (type
+          (user-defined-type IntOrString)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref num) (
+              (simple-var-ref IntOrString)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref asUnion))))
+      (var-def
+        (variable arr (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable asJson (type
+          (user-defined-type JsonOrInt)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref arr) (
+              (simple-var-ref JsonOrInt)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref asJson))))
+      (var-def
+        (variable nilVal (type
+          (builtin-ref-type json)) (expr
+          (literal <nil>))))
+      (var-def
+        (variable asNilable (type
+          (user-defined-type IntNilable)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nilVal) (
+              (simple-var-ref IntNilable)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref asNilable)
+            (user-defined-type IntNilable)))))
+      (var-def
+        (variable partial (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Bob))))))
+      (var-def
+        (variable withOptional (type
+          (user-defined-type PersonOpt)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref partial) (
+              (simple-var-ref PersonOpt)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withOptional))))
+      (var-def
+        (variable missingNilable (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Carol))))))
+      (var-def
+        (variable withScore (type
+          (user-defined-type WithNilable)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref missingNilable) (
+              (simple-var-ref WithNilable)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withScore))))
+      (var-def
+        (variable withNullAge (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Ann))
+            (key-value
+              (literal age)
+              (literal <nil>))))))
+      (var-def
+        (variable withAge (type
+          (user-defined-type PersonNilAge)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref withNullAge) (
+              (simple-var-ref PersonNilAge)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withAge))))
+      (var-def
+        (variable openMap (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))))))
+      (var-def
+        (variable anyMap (type
+          (user-defined-type AnyMap)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref openMap) (
+              (simple-var-ref AnyMap)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref anyMap))))
+      (return
+        (literal <nil>)))))
