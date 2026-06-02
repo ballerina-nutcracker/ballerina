@@ -1,0 +1,140 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation run ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$0))))
+  (function run () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable floatNum (type
+          (builtin-ref-type json)) (expr
+          (literal 2.5))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref floatNum)
+            (typedesc-expr
+              (value-type int)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable rounded (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rounded))))
+      (var-def
+        (variable intNum (type
+          (builtin-ref-type json)) (expr
+          (literal 42))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref intNum)
+            (typedesc-expr
+              (value-type float)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable asFloat (type
+          (value-type float)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref asFloat))))
+      (var-def
+        (variable decNum (type
+          (builtin-ref-type json)) (expr
+          (literal 7))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref decNum)
+            (typedesc-expr
+              (value-type decimal)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable asDecimal (type
+          (value-type decimal)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref asDecimal))))
+      (var-def
+        (variable maxByte (type
+          (builtin-ref-type json)) (expr
+          (literal 255))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref maxByte)
+            (typedesc-expr
+              (value-type byte)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable b (type
+          (value-type byte)) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable outOfRange (type
+          (builtin-ref-type json)) (expr
+          (literal 256))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref outOfRange)
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (var-def
+        (variable roundedOutOfRange (type
+          (builtin-ref-type json)) (expr
+          (literal 255.6))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref roundedOutOfRange)
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (return
+        (literal <nil>)))))

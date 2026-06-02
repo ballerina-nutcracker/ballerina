@@ -1,0 +1,97 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (check-panicked-expr
+        (invocation run ())))
+  )
+)
+(run
+  (bb0 () ()
+    (var-def
+      (variable floatNum (type
+        (builtin-ref-type json)) (expr
+        (literal 2.5))))
+    (var-def
+      (variable rounded (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref floatNum)
+            (typedesc-expr
+              (value-type int))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref rounded))))
+    (var-def
+      (variable intNum (type
+        (builtin-ref-type json)) (expr
+        (literal 42))))
+    (var-def
+      (variable asFloat (type
+        (value-type float)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref intNum)
+            (typedesc-expr
+              (value-type float))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asFloat))))
+    (var-def
+      (variable decNum (type
+        (builtin-ref-type json)) (expr
+        (literal 7))))
+    (var-def
+      (variable asDecimal (type
+        (value-type decimal)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref decNum)
+            (typedesc-expr
+              (value-type decimal))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asDecimal))))
+    (var-def
+      (variable maxByte (type
+        (builtin-ref-type json)) (expr
+        (literal 255))))
+    (var-def
+      (variable b (type
+        (value-type byte)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref maxByte)
+            (typedesc-expr
+              (value-type byte))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable outOfRange (type
+        (builtin-ref-type json)) (expr
+        (literal 256))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref outOfRange)
+            (typedesc-expr
+              (value-type byte))))
+          (error-type)))))
+    (var-def
+      (variable roundedOutOfRange (type
+        (builtin-ref-type json)) (expr
+        (literal 255.6))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref roundedOutOfRange)
+            (typedesc-expr
+              (value-type byte))))
+          (error-type)))))
+    (return
+      (literal <nil>))
+  )
+)
