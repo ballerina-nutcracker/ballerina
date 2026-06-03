@@ -712,19 +712,7 @@ func (bw *birWriter) writeType(buf *bytes.Buffer, ty semtypes.SemType) {
 		write(buf, int32(-1))
 		return
 	}
-	tyCtx := semtypes.TypeCheckContext(bw.env)
-	serializedType := ty
-	if semtypes.IsSubtypeSimple(serializedType, semtypes.TYPEDESC) {
-		if constraint := semtypes.TypedescConstraint(tyCtx, serializedType); !semtypes.IsZero(constraint) {
-			serializedType = constraint
-		}
-	} else if semtypes.ContainsBasicType(serializedType, semtypes.TYPEDESC) {
-		withoutTypedesc := semtypes.Diff(serializedType, semtypes.TYPEDESC)
-		if !semtypes.IsEmpty(tyCtx, withoutTypedesc) {
-			serializedType = withoutTypedesc
-		}
-	}
-	write(buf, int32(bw.tp.Put(serializedType)))
+	write(buf, int32(bw.tp.Put(ty)))
 }
 
 func (bw *birWriter) writePosition(buf *bytes.Buffer, pos bir.Location) {
