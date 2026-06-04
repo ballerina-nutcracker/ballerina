@@ -4,6 +4,7 @@
 true
 {"name":"Bob"}
 {"name":"Carol","score":null}
+{"name":"Eve","active":null}
 {"name":"Ann","age":null}
 {"a":1}
 -- stderr --

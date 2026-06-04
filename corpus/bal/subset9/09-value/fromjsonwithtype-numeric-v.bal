@@ -61,6 +61,10 @@ function run() returns error? {
     json hugeFloat = 1e100;
     io:println(hugeFloat.fromJsonWithType(int) is error); // @output true
 
+    float maxIntOverflow = 9223372036854775808.0;
+    json maxIntOverflowJson = maxIntOverflow;
+    io:println(maxIntOverflowJson.fromJsonWithType(int) is error); // @output true
+
     decimal decVal = 42;
     json decJson = decVal;
     int fromDec = check decJson.fromJsonWithType(int);

@@ -33,6 +33,14 @@
         (union-type
           (value-type int)
           (value-type null)))))
+  (type-definition WithNilableFlag
+    (record-type
+      (field name
+        (value-type string))
+      (field active
+        (union-type
+          (value-type boolean)
+          (value-type null)))))
   (type-definition PersonNilAge
     (record-type
       (field name
@@ -136,6 +144,23 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref withScore))))
+      (var-def
+        (variable missingFlag (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Eve))))))
+      (var-def
+        (variable withActive (type
+          (user-defined-type WithNilableFlag)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref missingFlag) (
+              (simple-var-ref WithNilableFlag)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withActive))))
       (var-def
         (variable withNullAge (type
           (builtin-ref-type json)) (expr

@@ -139,8 +139,49 @@ run() -> nil|error{
     %81 = println(%80) -> bb18;
   }
   bb18 {
-    %82 = ConstantLoad <nil>
-    %0 = %82;
+    %82 = ConstantLoad 1
+    %83 = ConstantLoad 1
+    %84 = newArray [nil|boolean|int|float|decimal|string|...|......][%83]{%82}
+    shortTuple = %84;
+    %86 = ConstantLoad typedesc
+    %87 = fromJsonWithType(shortTuple,%86) -> bb19;
+  }
+  bb19 {
+    %88 = %87 is error
+    %89 = %88;
+    %90 = println(%89) -> bb20;
+  }
+  bb20 {
+    %91 = ConstantLoad 1
+    %92 = ConstantLoad a
+    %93 = ConstantLoad 2
+    %94 = ConstantLoad 3
+    %95 = newArray [nil|boolean|int|float|decimal|string|...|......][%94]{%91, %92, %93}
+    longTuple = %95;
+    %97 = ConstantLoad typedesc
+    %98 = fromJsonWithType(longTuple,%97) -> bb21;
+  }
+  bb21 {
+    %99 = %98 is error
+    %100 = %99;
+    %101 = println(%100) -> bb22;
+  }
+  bb22 {
+    %102 = ConstantLoad name
+    %103 = ConstantLoad Dave
+    %104 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%102=%103}
+    missingScore = %104;
+    %106 = ConstantLoad typedesc
+    %107 = fromJsonWithType(missingScore,%106) -> bb23;
+  }
+  bb23 {
+    %108 = %107 is error
+    %109 = %108;
+    %110 = println(%109) -> bb24;
+  }
+  bb24 {
+    %111 = ConstantLoad <nil>
+    %0 = %111;
     return;
   }
 }

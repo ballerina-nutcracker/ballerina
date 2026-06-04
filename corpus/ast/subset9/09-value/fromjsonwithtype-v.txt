@@ -11,6 +11,10 @@
     (constrained-type
       (builtin-ref-type map)
       (value-type int)))
+  (type-definition IntStringTuple
+    (tuple-type
+      (value-type int)
+      (value-type string)))
   (type-definition Person
     (record-type
       (field name
@@ -174,5 +178,21 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref person))))
+      (var-def
+        (variable tuple (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal x)))))
+      (var-def
+        (variable tupleVal (type
+          (user-defined-type IntStringTuple)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref tuple) (
+              (simple-var-ref IntStringTuple)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref tupleVal))))
       (return
         (literal <nil>)))))

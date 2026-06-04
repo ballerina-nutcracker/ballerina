@@ -7,6 +7,10 @@
   (type-definition StringArray
     (array-type
       (value-type string) dimensions: 1 ([])))
+  (type-definition IntStringTuple
+    (tuple-type
+      (value-type int)
+      (value-type string)))
   (type-definition Person
     (record-type
       (field name
@@ -21,6 +25,12 @@
     (union-type
       (user-defined-type Person)
       (user-defined-type Closed)))
+  (type-definition WithRequiredScore
+    (record-type
+      (field name
+        (value-type string))
+      (field score
+        (value-type int))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -154,6 +164,46 @@
             (invocation fromJsonWithType expr:
               (simple-var-ref notPerson) (
               (simple-var-ref PersonOrClosed)))
+            (error-type)))))
+      (var-def
+        (variable shortTuple (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref shortTuple) (
+              (simple-var-ref IntStringTuple)))
+            (error-type)))))
+      (var-def
+        (variable longTuple (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal a)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref longTuple) (
+              (simple-var-ref IntStringTuple)))
+            (error-type)))))
+      (var-def
+        (variable missingScore (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Dave))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref missingScore) (
+              (simple-var-ref WithRequiredScore)))
             (error-type)))))
       (return
         (literal <nil>)))))

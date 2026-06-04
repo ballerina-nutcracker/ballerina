@@ -18,6 +18,7 @@ import ballerina/io;
 
 type IntArray int[];
 type StringArray string[];
+type IntStringTuple [int, string];
 
 type Person record {|
     string name;
@@ -29,6 +30,11 @@ type Closed record {|
 |};
 
 type PersonOrClosed Person|Closed;
+
+type WithRequiredScore record {|
+    string name;
+    int score;
+|};
 
 public function main() {
     checkpanic run();
@@ -61,5 +67,14 @@ function run() returns error? {
 
     json notPerson = {"a": 1};
     io:println(notPerson.fromJsonWithType(PersonOrClosed) is error); // @output true
+
+    json shortTuple = [1];
+    io:println(shortTuple.fromJsonWithType(IntStringTuple) is error); // @output true
+
+    json longTuple = [1, "a", 2];
+    io:println(longTuple.fromJsonWithType(IntStringTuple) is error); // @output true
+
+    json missingScore = {"name": "Dave"};
+    io:println(missingScore.fromJsonWithType(WithRequiredScore) is error); // @output true
     return;
 }

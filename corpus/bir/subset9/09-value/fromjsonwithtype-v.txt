@@ -222,8 +222,32 @@ run() -> nil|error{
     %92 = println(person) -> bb34;
   }
   bb34 {
-    %93 = ConstantLoad <nil>
-    %0 = %93;
+    %93 = ConstantLoad 1
+    %94 = ConstantLoad x
+    %95 = ConstantLoad 2
+    %96 = newArray [nil|boolean|int|float|decimal|string|...|......][%95]{%93, %94}
+    tuple = %96;
+    %98 = ConstantLoad typedesc
+    %99 = fromJsonWithType(tuple,%98) -> bb35;
+  }
+  bb35 {
+    $desugar$8 = %99;
+    %101 = $desugar$8 is error
+    %101 ? bb36 : bb37;
+  }
+  bb36 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb37 {
+    tupleVal = $desugar$8;
+    %103 = println(tupleVal) -> bb38;
+  }
+  bb38 {
+    %104 = ConstantLoad <nil>
+    %0 = %104;
     return;
   }
 }

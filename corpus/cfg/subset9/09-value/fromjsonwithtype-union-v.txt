@@ -88,6 +88,23 @@
       (invocation io println (
         (simple-var-ref withScore))))
     (var-def
+      (variable missingFlag (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Eve))))))
+    (var-def
+      (variable withActive (type
+        (user-defined-type WithNilableFlag)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref missingFlag)
+            (simple-var-ref WithNilableFlag)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref withActive))))
+    (var-def
       (variable withNullAge (type
         (builtin-ref-type json)) (expr
         (mapping-constructor-expr

@@ -209,106 +209,118 @@ run() -> nil|error{
     %98 = println(%97) -> bb32;
   }
   bb32 {
-    %99 = ConstantLoad 42
-    decVal = %99;
-    decJson = decVal;
+    %99 = ConstantLoad 9.223372036854776e+18
+    maxIntOverflow = %99;
+    maxIntOverflowJson = maxIntOverflow;
     %102 = ConstantLoad typedesc
-    %103 = fromJsonWithType(decJson,%102) -> bb33;
+    %103 = fromJsonWithType(maxIntOverflowJson,%102) -> bb33;
   }
   bb33 {
-    $desugar$5 = %103;
-    %105 = $desugar$5 is error
-    %105 ? bb34 : bb35;
+    %104 = %103 is error
+    %105 = %104;
+    %106 = println(%105) -> bb34;
   }
   bb34 {
+    %107 = ConstantLoad 42
+    decVal = %107;
+    decJson = decVal;
+    %110 = ConstantLoad typedesc
+    %111 = fromJsonWithType(decJson,%110) -> bb35;
+  }
+  bb35 {
+    $desugar$5 = %111;
+    %113 = $desugar$5 is error
+    %113 ? bb36 : bb37;
+  }
+  bb36 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$5);
     PopScopeFrame
     return;
   }
-  bb35 {
-    fromDec = $desugar$5;
-    %107 = fromDec;
-    %108 = println(%107) -> bb36;
-  }
-  bb36 {
-    %109 = ConstantLoad 9.223372036854776E+18
-    tooBig = %109;
-    tooBigJson = tooBig;
-    %112 = ConstantLoad typedesc
-    %113 = fromJsonWithType(tooBigJson,%112) -> bb37;
-  }
   bb37 {
-    %114 = %113 is error
-    %115 = %114;
+    fromDec = $desugar$5;
+    %115 = fromDec;
     %116 = println(%115) -> bb38;
   }
   bb38 {
-    %117 = ConstantLoad 1.5
-    floatToDec = %117;
-    %119 = ConstantLoad typedesc
-    %120 = fromJsonWithType(floatToDec,%119) -> bb39;
+    %117 = ConstantLoad 9.223372036854776E+18
+    tooBig = %117;
+    tooBigJson = tooBig;
+    %120 = ConstantLoad typedesc
+    %121 = fromJsonWithType(tooBigJson,%120) -> bb39;
   }
   bb39 {
-    $desugar$6 = %120;
-    %122 = $desugar$6 is error
-    %122 ? bb40 : bb41;
+    %122 = %121 is error
+    %123 = %122;
+    %124 = println(%123) -> bb40;
   }
   bb40 {
+    %125 = ConstantLoad 1.5
+    floatToDec = %125;
+    %127 = ConstantLoad typedesc
+    %128 = fromJsonWithType(floatToDec,%127) -> bb41;
+  }
+  bb41 {
+    $desugar$6 = %128;
+    %130 = $desugar$6 is error
+    %130 ? bb42 : bb43;
+  }
+  bb42 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$6);
     PopScopeFrame
     return;
   }
-  bb41 {
-    decFromFloat = $desugar$6;
-    %124 = decFromFloat;
-    %125 = println(%124) -> bb42;
-  }
-  bb42 {
-    %126 = ConstantLoad typedesc
-    %127 = fromJsonWithType(nanJson,%126) -> bb43;
-  }
   bb43 {
-    %128 = %127 is error
-    %129 = %128;
-    %130 = println(%129) -> bb44;
+    decFromFloat = $desugar$6;
+    %132 = decFromFloat;
+    %133 = println(%132) -> bb44;
   }
   bb44 {
-    %131 = ConstantLoad typedesc
-    %132 = fromJsonWithType(infJson,%131) -> bb45;
+    %134 = ConstantLoad typedesc
+    %135 = fromJsonWithType(nanJson,%134) -> bb45;
   }
   bb45 {
-    %133 = %132 is error
-    %134 = %133;
-    %135 = println(%134) -> bb46;
+    %136 = %135 is error
+    %137 = %136;
+    %138 = println(%137) -> bb46;
   }
   bb46 {
-    %136 = ConstantLoad 3.5
-    decForFloat = %136;
-    decForFloatJson = decForFloat;
     %139 = ConstantLoad typedesc
-    %140 = fromJsonWithType(decForFloatJson,%139) -> bb47;
+    %140 = fromJsonWithType(infJson,%139) -> bb47;
   }
   bb47 {
-    $desugar$7 = %140;
-    %142 = $desugar$7 is error
-    %142 ? bb48 : bb49;
+    %141 = %140 is error
+    %142 = %141;
+    %143 = println(%142) -> bb48;
   }
   bb48 {
+    %144 = ConstantLoad 3.5
+    decForFloat = %144;
+    decForFloatJson = decForFloat;
+    %147 = ConstantLoad typedesc
+    %148 = fromJsonWithType(decForFloatJson,%147) -> bb49;
+  }
+  bb49 {
+    $desugar$7 = %148;
+    %150 = $desugar$7 is error
+    %150 ? bb50 : bb51;
+  }
+  bb50 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$7);
     PopScopeFrame
     return;
   }
-  bb49 {
+  bb51 {
     floatFromDec = $desugar$7;
-    %144 = floatFromDec;
-    %145 = println(%144) -> bb50;
+    %152 = floatFromDec;
+    %153 = println(%152) -> bb52;
   }
-  bb50 {
-    %146 = ConstantLoad <nil>
-    %0 = %146;
+  bb52 {
+    %154 = ConstantLoad <nil>
+    %0 = %154;
     return;
   }
 }

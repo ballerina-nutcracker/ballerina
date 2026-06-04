@@ -19,6 +19,7 @@ import ballerina/io;
 type IntArray int[];
 type StringArray string[];
 type IntMap map<int>;
+type IntStringTuple [int, string];
 
 type Person record {|
     string name;
@@ -65,5 +66,10 @@ function run() returns error? {
     json p = {"name": "Alice", "age": 30};
     Person person = check p.fromJsonWithType(Person);
     io:println(person); // @output {"name":"Alice","age":30}
+
+    // tuples
+    json tuple = [1, "x"];
+    IntStringTuple tupleVal = check tuple.fromJsonWithType(IntStringTuple);
+    io:println(tupleVal); // @output [1,"x"]
     return;
 }

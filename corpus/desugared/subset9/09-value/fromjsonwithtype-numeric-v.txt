@@ -221,6 +221,22 @@
                 (value-type int))))
             (error-type)))))
       (var-def
+        (variable maxIntOverflow (type
+          (value-type float)) (expr
+          (literal 9.223372036854776e+18))))
+      (var-def
+        (variable maxIntOverflowJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref maxIntOverflow))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref maxIntOverflowJson)
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
         (variable decVal (type
           (value-type decimal)) (expr
           (literal 42))))

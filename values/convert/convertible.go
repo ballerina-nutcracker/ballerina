@@ -127,6 +127,17 @@ func isConvertibleList(tc semtypes.Context, source *values.List, target semtypes
 	unionErrors *[]string, allowNumeric bool,
 ) bool {
 	atomic := semtypes.ToListAtomicType(tc, target)
+	if atomic == nil {
+		return false
+	}
+	fixedLen := atomic.Members.FixedLength
+	if semtypes.IsNever(atomic.Rest()) {
+		if source.Len() != fixedLen {
+			return false
+		}
+	} else if source.Len() < fixedLen {
+		return false
+	}
 	for i := 0; i < source.Len(); i++ {
 		memberTy := atomic.MemberAtInnerVal(i)
 		if _, err := getConvertibleType(tc, source.Get(i), memberTy, unionErrors, allowNumeric); err != nil {
@@ -145,7 +156,14 @@ func isConvertibleMapping(tc semtypes.Context, source *values.Map, target semtyp
 		if _, ok := source.Get(name); ok {
 			continue
 		}
-		if !fieldMayOmitKey(tc, target, name, atomic) {
+		if fieldMayOmitKey(tc, target, name) {
+			continue
+		}
+		if !fieldNeedsNilWhenMissing(tc, target, name, atomic) {
+			return false
+		}
+		fieldTy := atomic.FieldInnerVal(name)
+		if _, err := getConvertibleType(tc, nil, fieldTy, unionErrors, allowNumeric); err != nil {
 			return false
 		}
 	}
@@ -187,11 +205,8 @@ func isClosedRecord(atomic *semtypes.MappingAtomicType) bool {
 	return semtypes.IsNever(restTy)
 }
 
-func fieldMayOmitKey(tc semtypes.Context, target semtypes.SemType, name string, atomic *semtypes.MappingAtomicType) bool {
-	if semtypes.AllMappingAtomsHaveOptionalFieldByName(tc, target, name) {
-		return true
-	}
-	return isNilable(atomic.FieldInnerVal(name))
+func fieldMayOmitKey(tc semtypes.Context, target semtypes.SemType, name string) bool {
+	return semtypes.AllMappingAtomsHaveOptionalFieldByName(tc, target, name)
 }
 
 func fieldNeedsNilWhenMissing(tc semtypes.Context, target semtypes.SemType, name string, atomic *semtypes.MappingAtomicType) bool {
