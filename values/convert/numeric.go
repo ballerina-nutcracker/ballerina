@@ -72,7 +72,7 @@ func toInt(value values.BalValue) (values.BalValue, error) {
 		if math.IsNaN(v) || math.IsInf(v, 0) {
 			return nil, newConversionFailure("cannot convert non-finite float to int")
 		}
-		if v < float64(math.MinInt64) || v > float64(math.MaxInt64) {
+		if v < float64(math.MinInt64) || v >= float64(math.MaxInt64) {
 			return nil, newConversionFailure("cannot convert out-of-range float to int")
 		}
 		return int64(math.RoundToEven(v)), nil

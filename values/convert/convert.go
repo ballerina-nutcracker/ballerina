@@ -84,7 +84,7 @@ func convertMapping(tc semtypes.Context, source *values.Map, inherentType, reque
 		if err != nil {
 			panic(err)
 		}
-		converted := convert(tc, val, convertibleFieldTy, convertibleFieldTy, unionErrors)
+		converted := convert(tc, val, convertibleFieldTy, fieldTy, unionErrors)
 		entries = append(entries, values.MapEntry{Key: key, Value: converted})
 	}
 	for _, name := range atomic.Names {
