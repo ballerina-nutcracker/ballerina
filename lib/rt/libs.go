@@ -29,8 +29,8 @@ import (
 	_ "ballerina-lang-go/lib/langlibs/go/lang.xml"
 
 	// standard libraries
-	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.2/native"
-	_ "ballerina-lang-go/lib/stdlibs/ballerina/io/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.26/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/io/0.0.1/go1.26/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/time/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/url/0.0.1/go1.2/native"
 )

@@ -71,18 +71,19 @@ type PipelineResult struct {
 
 // stdlibEntry describes one embedded standard-library package to pre-compile.
 type stdlibEntry struct {
-	org     string
-	name    string
-	version string
+	org      string
+	name     string
+	version  string
+	platform string
 }
 
 // builtinStdlibs is the ordered list of standard-library packages baked into the
 // binary that are still seeded manually for hand-rolled compile drivers.
 var builtinStdlibs = []stdlibEntry{
-	{"ballerina", "http", "0.0.1"},
-	{"ballerina", "math.vector", "0.0.1"},
-	{"ballerina", "time", "0.0.1"},
-	{"ballerina", "url", "0.0.1"},
+	{"ballerina", "http", "0.0.1", "go1.26"},
+	{"ballerina", "math.vector", "0.0.1", "go1.2"},
+	{"ballerina", "time", "0.0.1", "go1.2"},
+	{"ballerina", "url", "0.0.1", "go1.2"},
 }
 
 // loadBuiltinPublicSymbols compiles the embedded standard-library packages into
@@ -93,7 +94,7 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 
 	for _, entry := range builtinStdlibs {
-		balPath := fmt.Sprintf("ballerina/%s/%s/go1.2/%s.bal", entry.name, entry.version, entry.name)
+		balPath := fmt.Sprintf("ballerina/%s/%s/%s/%s.bal", entry.name, entry.version, entry.platform, entry.name)
 		contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
 		if err != nil {
 			continue

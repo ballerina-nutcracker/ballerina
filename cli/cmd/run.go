@@ -17,14 +17,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	interpsrc "ballerina-lang-go"
 	"ballerina-lang-go/bir"
+	"ballerina-lang-go/cli/internal/nativeexec"
+	"ballerina-lang-go/cli/internal/nativerunner"
 	debugcommon "ballerina-lang-go/common"
 	_ "ballerina-lang-go/lib/rt"
+	"ballerina-lang-go/lib/stdlibs"
 	"ballerina-lang-go/platform/palnative"
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/runtime"
@@ -152,6 +157,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		printRunError(err)
+		return err
 	}
 
 	baseDir := path
@@ -231,6 +237,14 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	}
 
 	pkg := project.CurrentPackage()
+
+	// Detect native Go packages and re-execute via a custom interpreter if needed.
+	// Skipped when already running as a native interpreter (BAL_NATIVE=1).
+	if !nativeexec.InNativeMode() {
+		if err := execWithNativeRunner(pkg, project, absBaseDir); err != nil {
+			return err
+		}
+	}
 
 	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG analysis)
 	compilation := pkg.Compilation()
@@ -352,4 +366,133 @@ func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRo
 		}
 	}
 	return nil
+}
+
+// reexecWithNativeRunner checks whether any resolved dependency has Go-native
+// sources. If so, it builds a custom interpreter that embeds those sources and
+// re-executes the current command via that binary. On success this function never
+// returns — it calls os.Exit after the child process finishes.
+func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBaseDir string) error {
+	resolution := pkg.Resolution()
+	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
+	if len(nativeBalaProjects) == 0 {
+		return nil
+	}
+
+	outBin := filepath.Join(absBaseDir, "target", "bin", "bal")
+	executor, err := chooseNativeExecutor(outBin)
+	if err != nil {
+		return err
+	}
+
+	payloads := make([]nativeexec.NativePayload, 0, len(nativeBalaProjects))
+	for _, bp := range nativeBalaProjects {
+		goFS, err := bp.NativeGoSourceFS()
+		if err != nil {
+			return fmt.Errorf("reading native Go sources for %s: %w", bp.CurrentPackage().Descriptor().Name().Value(), err)
+		}
+		desc := bp.CurrentPackage().Descriptor()
+		moduleName := desc.Org().Value() + "/" + desc.Name().Value() + "-native"
+		payloads = append(payloads, &nativeexec.GoSourcePayload{GoFiles: goFS, Module: moduleName})
+	}
+
+	req := nativeexec.NativeRunnerRequest{
+		Payloads: payloads,
+		Stdout:   os.Stdout,
+		Stderr:   os.Stderr,
+		Args:     os.Args[1:],
+		Env:      os.Environ(),
+	}
+
+	runner, err := executor.Prepare(context.Background(), req)
+	if err != nil {
+		return fmt.Errorf("building native interpreter: %w", err)
+	}
+	defer func() { _ = runner.Close() }()
+
+	code, err := runner.Run(context.Background())
+	if err != nil {
+		return fmt.Errorf("running native interpreter: %w", err)
+	}
+	os.Exit(int(code))
+	return nil // unreachable
+}
+
+// findNativeGoBalaProjects returns all resolved bala packages in resolution that
+// contain Go-native function implementations under platform/go/.
+func findNativeGoBalaProjects(resolution *projects.PackageResolution, env *projects.Environment) []*projects.BalaProject {
+	var result []*projects.BalaProject
+	cache := env.PackageCache()
+	for _, pkgDesc := range resolution.DependencyGraph().ToTopologicallySortedList() {
+		dep := cache.Get(pkgDesc.Org().Value(), pkgDesc.Name().Value(), pkgDesc.Version().String())
+		if dep == nil {
+			continue
+		}
+		bp, ok := dep.Project().(*projects.BalaProject)
+		if ok && strings.HasPrefix(bp.Platform(), "go") && !isEmbeddedPackage(bp) {
+			result = append(result, bp)
+		}
+	}
+	return result
+}
+
+// isEmbeddedPackage reports whether the bala project is present in the
+// interpreter's bundled stdlib FS. Embedded packages have their Go native
+// code already compiled into the binary via lib/rt and do not require a
+// native interpreter rebuild.
+func isEmbeddedPackage(bp *projects.BalaProject) bool {
+	desc := bp.CurrentPackage().Descriptor()
+	return stdlibs.Contains(desc.Org().Value(), desc.Name().Value(), desc.Version().String())
+}
+
+// chooseNativeExecutor returns a LocalExecutor when the Go toolchain and
+// interpreter source are available. Returns an error if Go is not installed or
+// the interpreter source cannot be located — native packages are not supported
+// without a local Go toolchain. Remote build support is reserved for WASM.
+func chooseNativeExecutor(outBin string) (nativeexec.NativeExecutor, error) {
+	root, err := findInterpreterRoot()
+	if err != nil {
+		return nil, fmt.Errorf("native Go packages require the interpreter source: %w", err)
+	}
+	local := nativerunner.New(root, outBin)
+	if !local.Available() {
+		return nil, fmt.Errorf("native Go packages require Go %s or later to be installed", nativerunner.MinGoVersion)
+	}
+	return local, nil
+}
+
+// findInterpreterRoot returns the absolute path to the ballerina-lang-go source tree.
+// It checks BALLERINA_SRC first, then walks up from os.Executable().
+func findInterpreterRoot() (string, error) {
+	if src := os.Getenv("BALLERINA_SRC"); src != "" {
+		return filepath.Abs(src)
+	}
+
+	exe, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("cannot determine executable path: %w", err)
+	}
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve executable symlink: %w", err)
+	}
+	current := filepath.Dir(exe)
+	for {
+		gomod := filepath.Join(current, "go.mod")
+		data, err := os.ReadFile(gomod)
+		if err == nil && strings.Contains(string(data), "module ballerina-lang-go") {
+			return current, nil
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+		current = parent
+	}
+	// Fall back to the source tree embedded in the release binary.
+	cacheRoot, err := getBallerinaEnvPath()
+	if err != nil {
+		return "", fmt.Errorf("interpreter source not found; set BALLERINA_SRC to the ballerina-lang-go directory")
+	}
+	return interpsrc.ExtractTo(cacheRoot, Version)
 }

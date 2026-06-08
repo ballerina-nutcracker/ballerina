@@ -17,6 +17,7 @@
 package projects_test
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -203,4 +204,56 @@ func TestBalaProject_TargetDir(t *testing.T) {
 
 	// Bala projects have no target directory
 	assert.True(result.Project().TargetDir() == "")
+}
+
+func TestBalaProject_Platform_GoNative(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	repo := newTestRepository("testdata/repo/bala")
+	ctx := context.Background()
+	opts := projects.ResolutionOptions{}
+
+	t.Run("go-platform package has go* platform", func(t *testing.T) {
+		pkg, err := repo.GetPackage(ctx, "mockorg", "nativepkg", "1.0.0", opts)
+		require.NoError(err)
+		require.NotNil(pkg)
+
+		bp, ok := pkg.Project().(*projects.BalaProject)
+		assert.True(ok)
+		assert.True(strings.HasPrefix(bp.Platform(), "go"))
+	})
+
+	t.Run("any-platform package does not have go* platform", func(t *testing.T) {
+		pkg, err := repo.GetPackage(ctx, "mockorg", "mockpkg", "1.0.0", opts)
+		require.NoError(err)
+		require.NotNil(pkg)
+
+		bp, ok := pkg.Project().(*projects.BalaProject)
+		assert.True(ok)
+		assert.False(strings.HasPrefix(bp.Platform(), "go"))
+	})
+}
+
+func TestBalaProject_NativeGoSourceFS(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	repo := newTestRepository("testdata/repo/bala")
+	ctx := context.Background()
+
+	pkg, err := repo.GetPackage(ctx, "mockorg", "nativepkg", "1.0.0", projects.ResolutionOptions{})
+	require.NoError(err)
+	require.NotNil(pkg)
+
+	bp, ok := pkg.Project().(*projects.BalaProject)
+	assert.True(ok)
+
+	goFS, err := bp.NativeGoSourceFS()
+	require.NoError(err)
+	require.NotNil(goFS)
+
+	// Verify the native Go source file is accessible via the returned FS.
+	_, err = goFS.Open("nativepkg.go")
+	require.NoError(err)
 }

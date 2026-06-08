@@ -322,6 +322,17 @@ func substituteScenarioPlaceholders(t *testing.T, args []string) []string {
 	return out
 }
 
+// normalizePaths replaces the absolute repo root in CLI output with the
+// portable placeholder <ROOT> so txtar fixtures are machine-independent.
+// It is applied to both the --update write path and the comparison path so
+// the txtar content and the actual output are compared on equal footing.
+func normalizePaths(s, repoRoot string) string {
+	if repoRoot == "" {
+		return s
+	}
+	return strings.ReplaceAll(s, repoRoot, "<ROOT>")
+}
+
 // assertBalCommandMatchesTxtarFragmentsLoose is like assertBalCommandMatchesTxtarFragmentsForBinary
 // but uses fragment (substring) matching for both stdout and stderr. This is needed when stderr
 // contains machine-specific absolute paths that cannot be captured exactly in a txtar fixture.
@@ -332,8 +343,8 @@ func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, 
 	}
 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
-	stdout = test_util.NormalizeNewlines(stdout)
-	stderr = test_util.NormalizeNewlines(stderr)
+	stdout = normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	stderr = normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
 
 	expectedStdoutFragments, expectedStderrFragments, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(txtarPath)
 	if err != nil {
@@ -469,8 +480,8 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
 
-	stdout = test_util.NormalizeNewlines(stdout)
-	stderr = test_util.NormalizeNewlines(stderr)
+	stdout = normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	stderr = normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
 	expectedPath := filepath.Join(append([]string{repoRoot, "corpus", "cli", "output"}, txtarPathParts...)...)
 
 	expectedStdoutFragments, expectedStderr, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
@@ -555,8 +566,8 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 		t.Parallel()
 		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", runPath)
 		expectedPath := filepath.Join(outputsRoot, outputKey+".txtar")
-		actualOutput := test_util.NormalizeNewlines(stdout)
-		actualError := test_util.NormalizeNewlines(stderr)
+		actualOutput := normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+		actualError := normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
 		actualExitCode := strconv.Itoa(exitCode)
 
 		expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)

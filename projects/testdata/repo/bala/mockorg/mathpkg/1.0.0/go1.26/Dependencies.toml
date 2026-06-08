@@ -1,0 +1,7 @@
+[ballerina]
+dependencies-toml-version = "2"
+
+[[package]]
+org     = "mockorg"
+name    = "mathpkg"
+version = "1.0.0"
