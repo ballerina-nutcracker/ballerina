@@ -34,7 +34,9 @@ func FingerprintPayloads(payloads []NativePayload, seeds ...[]byte) (string, err
 
 	for _, seed := range seeds {
 		sum := sha256.Sum256(seed)
-		fmt.Fprintf(h, "seed:%x\n", sum)
+		if _, err := fmt.Fprintf(h, "seed:%x\n", sum); err != nil {
+			return "", fmt.Errorf("hashing seed: %w", err)
+		}
 	}
 
 	sorted := slices.Clone(payloads)
@@ -43,7 +45,9 @@ func FingerprintPayloads(payloads []NativePayload, seeds ...[]byte) (string, err
 	})
 
 	for _, payload := range sorted {
-		fmt.Fprintf(h, "module:%s\n", payload.GoModuleName())
+		if _, err := fmt.Fprintf(h, "module:%s\n", payload.GoModuleName()); err != nil {
+			return "", fmt.Errorf("hashing module marker for %s: %w", payload.GoModuleName(), err)
+		}
 		err := fs.WalkDir(payload.FS(), ".", func(p string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !strings.HasSuffix(p, ".go") {
 				return err
@@ -53,7 +57,9 @@ func FingerprintPayloads(payloads []NativePayload, seeds ...[]byte) (string, err
 				return err
 			}
 			sum := sha256.Sum256(data)
-			fmt.Fprintf(h, "%s:%x\n", p, sum)
+			if _, err := fmt.Fprintf(h, "%s:%x\n", p, sum); err != nil {
+				return fmt.Errorf("hashing file entry %s: %w", p, err)
+			}
 			return nil
 		})
 		if err != nil {

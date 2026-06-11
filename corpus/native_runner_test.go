@@ -85,8 +85,8 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 	backend := projects.NewBallerinaBackend(compilation)
 	birPkgs := backend.BIRPackages()
 
-	var stdout bytes.Buffer
-	rt := runtime.NewRuntime(test_util.TestPal(&stdout, os.Stderr), result.Project().Environment().TypeEnv())
+	var stdout, stderr bytes.Buffer
+	rt := runtime.NewRuntime(test_util.TestPal(&stdout, &stderr), result.Project().Environment().TypeEnv())
 
 	for _, birPkg := range birPkgs {
 		if err := rt.Interpret(*birPkg); err != nil {
@@ -94,8 +94,28 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 		}
 	}
 
-	const expected = "hello from native Go\n42\n42\nHello, Ballerina!\n84\n168\n"
-	if stdout.String() != expected {
-		t.Errorf("expected %q\ngot      %q", expected, stdout.String())
+	const txtarPath = "extern/output/native-multi-org-v.txtar"
+	actualStdout := test_util.NormalizeNewlines(stdout.String())
+	actualStderr := test_util.NormalizeNewlines(stderr.String())
+
+	if *update {
+		if test_util.UpdateTxtarArchiveIfNeeded(t, txtarPath, test_util.TxtarFilesStdoutStderr(actualStdout, actualStderr)) {
+			t.Fatalf("Updated expected file: %s", txtarPath)
+		}
+		return
+	}
+
+	expectedStdout, expectedStderr, err := test_util.LoadTxtarStdoutStderr(txtarPath)
+	if err != nil {
+		t.Fatalf("failed to load golden file %s: %v", txtarPath, err)
+	}
+	expectedStdout = test_util.NormalizeNewlines(expectedStdout)
+	expectedStderr = test_util.NormalizeNewlines(expectedStderr)
+
+	if actualStdout != expectedStdout {
+		t.Errorf("stdout mismatch\n%s", test_util.FormatExpectedGot(expectedStdout, actualStdout))
+	}
+	if actualStderr != expectedStderr {
+		t.Errorf("stderr mismatch\n%s", test_util.FormatExpectedGot(expectedStderr, actualStderr))
 	}
 }

@@ -254,6 +254,7 @@ func TestBalaProject_NativeGoSourceFS(t *testing.T) {
 	require.NotNil(goFS)
 
 	// Verify the native Go source file is accessible via the returned FS.
-	_, err = goFS.Open("nativepkg.go")
+	f, err := goFS.Open("nativepkg.go")
 	require.NoError(err)
+	require.NoError(f.Close())
 }

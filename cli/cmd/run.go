@@ -401,7 +401,7 @@ func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBa
 		Stdout:   os.Stdout,
 		Stderr:   os.Stderr,
 		Args:     os.Args[1:],
-		Env:      os.Environ(),
+		Env:      nativeexec.AppendNativeMode(os.Environ()),
 	}
 
 	runner, err := executor.Prepare(context.Background(), req)
@@ -419,7 +419,7 @@ func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBa
 }
 
 // findNativeGoBalaProjects returns all resolved bala packages in resolution that
-// contain Go-native function implementations under platform/go/.
+// have a go-prefixed platform (e.g. go1.26) and are not bundled in the embedded stdlib.
 func findNativeGoBalaProjects(resolution *projects.PackageResolution, env *projects.Environment) []*projects.BalaProject {
 	var result []*projects.BalaProject
 	cache := env.PackageCache()

@@ -94,6 +94,7 @@ func goVersionAtLeast(goExe, minVersion string) bool {
 
 // versionAtLeast reports whether dot-separated version a is >= b.
 // Missing trailing components are treated as zero: "1.26" == "1.26.0".
+// Non-numeric components (e.g. "rc1", "beta2") are treated as incompatible.
 func versionAtLeast(a, b string) bool {
 	aParts := strings.Split(a, ".")
 	bParts := strings.Split(b, ".")
@@ -101,10 +102,18 @@ func versionAtLeast(a, b string) bool {
 	for i := range n {
 		av, bv := 0, 0
 		if i < len(aParts) {
-			av, _ = strconv.Atoi(aParts[i])
+			var err error
+			av, err = strconv.Atoi(aParts[i])
+			if err != nil {
+				return false
+			}
 		}
 		if i < len(bParts) {
-			bv, _ = strconv.Atoi(bParts[i])
+			var err error
+			bv, err = strconv.Atoi(bParts[i])
+			if err != nil {
+				return false
+			}
 		}
 		if av != bv {
 			return av > bv
@@ -115,8 +124,8 @@ func versionAtLeast(a, b string) bool {
 
 // Prepare builds a custom interpreter that embeds all req.Payloads' native Go
 // sources and returns a Runner that re-executes the program via that binary.
-// If a previously built binary with a matching fingerprint already exists in
-// target/bin/, it is reused without rebuilding.
+// If a previously built binary with a matching fingerprint already exists at
+// outputBinary, it is reused without rebuilding.
 func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunnerRequest) (nativeexec.Runner, error) {
 	// Fast path: reuse cached binary when native imports haven't changed.
 	fingerprint, fpErr := localFingerprint(e.interpreterRoot, req.Payloads)
@@ -184,8 +193,12 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 		return nil, err
 	}
 
-	// Ensure output directory exists.
+	// Ensure output directory exists. Resolve relative paths against interpreterRoot
+	// so that build, fingerprint, and run all reference the same absolute path.
 	outBin := e.outputBinary
+	if !filepath.IsAbs(outBin) {
+		outBin = filepath.Join(e.interpreterRoot, outBin)
+	}
 	if err := os.MkdirAll(filepath.Dir(outBin), 0o755); err != nil {
 		return nil, fmt.Errorf("creating output directory: %w", err)
 	}
@@ -194,7 +207,9 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 	if stderr == nil {
 		stderr = os.Stderr
 	}
-	fmt.Fprintln(stderr, "info: building native interpreter using local Go toolchain")
+	if _, err := fmt.Fprintln(stderr, "info: building native interpreter using local Go toolchain"); err != nil {
+		return nil, fmt.Errorf("writing build status: %w", err)
+	}
 	buildCmd := exec.CommandContext(ctx, "go", "build",
 		"-C", e.interpreterRoot,
 		"-modfile", patchedModFile,
@@ -211,7 +226,7 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 
 	// Persist fingerprint so the next invocation can skip the build.
 	if fpErr == nil {
-		_ = nativeexec.WriteFingerprint(e.outputBinary, fingerprint)
+		_ = nativeexec.WriteFingerprint(outBin, fingerprint)
 	}
 
 	ok = true
@@ -228,16 +243,20 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 // loadCachedRunner returns a runner backed by the already-compiled binary when
 // the stored fingerprint matches the current one. Returns false if a rebuild is needed.
 func (e *LocalExecutor) loadCachedRunner(fingerprint string, req nativeexec.NativeRunnerRequest) (*localRunner, bool) {
-	fpFile := nativeexec.FingerprintPath(e.outputBinary)
+	outBin := e.outputBinary
+	if !filepath.IsAbs(outBin) {
+		outBin = filepath.Join(e.interpreterRoot, outBin)
+	}
+	fpFile := nativeexec.FingerprintPath(outBin)
 	existing, err := os.ReadFile(fpFile)
 	if err != nil || strings.TrimSpace(string(existing)) != fingerprint {
 		return nil, false
 	}
-	if _, err := os.Stat(e.outputBinary); err != nil {
+	if _, err := os.Stat(outBin); err != nil {
 		return nil, false
 	}
 	return &localRunner{
-		binaryPath: e.outputBinary,
+		binaryPath: outBin,
 		args:       req.Args,
 		env:        nativeexec.AppendNativeMode(req.Env),
 		stdout:     req.Stdout,

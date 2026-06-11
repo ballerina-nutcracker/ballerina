@@ -17,6 +17,7 @@
 package projects
 
 import (
+	"fmt"
 	"io/fs"
 	"path"
 	"path/filepath"
@@ -143,5 +144,8 @@ func (b *BalaProject) Environment() *Environment {
 // NativeGoSourceFS returns an fs.FS rooted at the native/ directory of this
 // bala, containing the Go source files that implement native functions.
 func (b *BalaProject) NativeGoSourceFS() (fs.FS, error) {
+	if b.fsys == nil {
+		return nil, fmt.Errorf("native source filesystem not initialized")
+	}
 	return fs.Sub(b.fsys, path.Join(b.sourceRoot, balaGoNativeDir))
 }
