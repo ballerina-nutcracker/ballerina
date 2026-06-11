@@ -19,6 +19,7 @@ import ballerina/io;
 type IntArray int[];
 type StringArray string[];
 type IntStringTuple [int, string];
+type OpenIntStringTuple [int, string, int...];
 
 type Person record {|
     string name;
@@ -68,6 +69,10 @@ function run() returns error? {
 
     json longTuple = [1, "a", 2];
     io:println(longTuple.fromJsonWithType(IntStringTuple) is error); // @output true
+
+    // open tuple: source shorter than fixed members
+    json shortOpenTuple = [1];
+    io:println(shortOpenTuple.fromJsonWithType(OpenIntStringTuple) is error); // @output true
 
     return;
 }

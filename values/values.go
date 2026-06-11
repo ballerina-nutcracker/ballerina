@@ -143,14 +143,6 @@ func FillerFactoryFor(cx semtypes.Context, t semtypes.SemType) (FillerFactory, b
 
 // Float utilities
 
-func FormatFloat(f float64) string {
-	return core.FormatFloat(f)
-}
-
-func FloatDeepEqual(a, b float64) bool {
-	return core.FloatDeepEqual(a, b)
-}
-
 func FloatExactEqual(a, b float64) bool {
 	return core.FloatExactEqual(a, b)
 }
@@ -164,14 +156,6 @@ func DeepEquals(v1, v2 BalValue) bool {
 
 func Compare(x, y BalValue) CompareResult {
 	return cmp.Compare(x, y)
-}
-
-func CompareA(x, y BalValue) CompareResult {
-	return cmp.CompareA(x, y)
-}
-
-func CompareD(x, y BalValue) CompareResult {
-	return cmp.CompareD(x, y)
 }
 
 func CompareK(x, y BalValue, ascending bool) CompareResult {

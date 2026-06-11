@@ -156,6 +156,18 @@
             (simple-var-ref longTuple)
             (simple-var-ref IntStringTuple)))
           (error-type)))))
+    (var-def
+      (variable shortOpenTuple (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref shortOpenTuple)
+            (simple-var-ref OpenIntStringTuple)))
+          (error-type)))))
     (return
       (literal <nil>))
   )

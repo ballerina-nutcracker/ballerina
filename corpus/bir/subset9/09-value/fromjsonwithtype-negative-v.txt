@@ -167,8 +167,21 @@ run() -> nil|error{
     %101 = println(%100) -> bb22;
   }
   bb22 {
-    %102 = ConstantLoad <nil>
-    %0 = %102;
+    %102 = ConstantLoad 1
+    %103 = ConstantLoad 1
+    %104 = newArray [nil|boolean|int|float|decimal|string|...|......][%103]{%102}
+    shortOpenTuple = %104;
+    %106 = ConstantLoad typedesc
+    %107 = fromJsonWithType(shortOpenTuple,%106) -> bb23;
+  }
+  bb23 {
+    %108 = %107 is error
+    %109 = %108;
+    %110 = println(%109) -> bb24;
+  }
+  bb24 {
+    %111 = ConstantLoad <nil>
+    %0 = %111;
     return;
   }
 }
