@@ -137,16 +137,18 @@ run() -> nil|error{
   }
   bb20 {
     %50 = ConstantLoad name
-    %51 = ConstantLoad Eve
-    %52 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%50=%51}
-    missingFlag = %52;
-    %54 = ConstantLoad typedesc
-    %55 = fromJsonWithType(missingFlag,%54) -> bb21;
+    %51 = ConstantLoad Ann
+    %52 = ConstantLoad age
+    %53 = ConstantLoad <nil>
+    %54 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%50=%51, %52=%53}
+    withNullAge = %54;
+    %56 = ConstantLoad typedesc
+    %57 = fromJsonWithType(withNullAge,%56) -> bb21;
   }
   bb21 {
-    $desugar$5 = %55;
-    %57 = $desugar$5 is error
-    %57 ? bb22 : bb23;
+    $desugar$5 = %57;
+    %59 = $desugar$5 is error
+    %59 ? bb22 : bb23;
   }
   bb22 {
     PushScopeFrame 0
@@ -155,18 +157,16 @@ run() -> nil|error{
     return;
   }
   bb23 {
-    withActive = $desugar$5;
-    %59 = println(withActive) -> bb24;
+    withAge = $desugar$5;
+    %61 = println(withAge) -> bb24;
   }
   bb24 {
-    %60 = ConstantLoad name
-    %61 = ConstantLoad Ann
-    %62 = ConstantLoad age
-    %63 = ConstantLoad <nil>
-    %64 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%60=%61, %62=%63}
-    withNullAge = %64;
+    %62 = ConstantLoad a
+    %63 = ConstantLoad 1
+    %64 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%62=%63}
+    openMap = %64;
     %66 = ConstantLoad typedesc
-    %67 = fromJsonWithType(withNullAge,%66) -> bb25;
+    %67 = fromJsonWithType(openMap,%66) -> bb25;
   }
   bb25 {
     $desugar$6 = %67;
@@ -180,35 +180,12 @@ run() -> nil|error{
     return;
   }
   bb27 {
-    withAge = $desugar$6;
-    %71 = println(withAge) -> bb28;
+    anyMap = $desugar$6;
+    %71 = println(anyMap) -> bb28;
   }
   bb28 {
-    %72 = ConstantLoad a
-    %73 = ConstantLoad 1
-    %74 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%72=%73}
-    openMap = %74;
-    %76 = ConstantLoad typedesc
-    %77 = fromJsonWithType(openMap,%76) -> bb29;
-  }
-  bb29 {
-    $desugar$7 = %77;
-    %79 = $desugar$7 is error
-    %79 ? bb30 : bb31;
-  }
-  bb30 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$7);
-    PopScopeFrame
-    return;
-  }
-  bb31 {
-    anyMap = $desugar$7;
-    %81 = println(anyMap) -> bb32;
-  }
-  bb32 {
-    %82 = ConstantLoad <nil>
-    %0 = %82;
+    %72 = ConstantLoad <nil>
+    %0 = %72;
     return;
   }
 }

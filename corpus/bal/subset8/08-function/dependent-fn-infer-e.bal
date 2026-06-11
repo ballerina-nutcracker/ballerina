@@ -16,6 +16,7 @@
 
 public function main() {
     error e = inferredPartially(0); // @error
+    _ = e;
 }
 
 function inferredPartially(int val, typedesc<anydata> retTy = <>) returns retTy|error = external;

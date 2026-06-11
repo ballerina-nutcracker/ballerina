@@ -18,11 +18,11 @@ package convert
 
 import (
 	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina-lang-go/values/core"
 )
 
-func isLikeType(tc semtypes.Context, value values.BalValue, target semtypes.SemType, allowNumeric bool) bool {
-	valueTy := values.SemTypeForValue(value)
+func isLikeType(tc semtypes.Context, value core.BalValue, target semtypes.SemType, allowNumeric bool) bool {
+	valueTy := core.SemTypeForValue(value)
 	if semtypes.IsSubtype(tc, valueTy, target) {
 		return true
 	}
@@ -36,7 +36,7 @@ func isNilable(target semtypes.SemType) bool {
 	return semtypes.ContainsBasicType(target, semtypes.NIL)
 }
 
-func getConvertibleType(tc semtypes.Context, value values.BalValue, target semtypes.SemType,
+func getConvertibleType(tc semtypes.Context, value core.BalValue, target semtypes.SemType,
 	unionErrors *[]string, allowNumeric bool,
 ) (semtypes.SemType, error) {
 	if value == nil {
@@ -53,24 +53,24 @@ func getConvertibleType(tc semtypes.Context, value values.BalValue, target semty
 	}
 
 	if semtypes.IsSameType(tc, target, semtypes.CreateAnydata(tc)) {
-		valueTy := values.SemTypeForValue(value)
+		valueTy := core.SemTypeForValue(value)
 		if semtypes.IsSubtype(tc, valueTy, target) {
 			return target, nil
 		}
 	}
 
-	if isUnionType(tc, target) {
-		return getConvertibleUnionMember(tc, value, target, unionErrors, allowNumeric)
+	if members := unionMemberTypes(tc, target); len(members) > 1 {
+		return getConvertibleUnionMember(tc, value, target, members, unionErrors, allowNumeric)
 	}
 
 	switch value := value.(type) {
-	case *values.Map:
+	case *core.Map:
 		if semtypes.IsSubtypeSimple(target, semtypes.MAPPING) {
 			if isConvertibleMapping(tc, value, target, unionErrors, allowNumeric) {
 				return target, nil
 			}
 		}
-	case *values.List:
+	case *core.List:
 		if semtypes.IsSubtypeSimple(target, semtypes.LIST) {
 			if isConvertibleList(tc, value, target, unionErrors, allowNumeric) {
 				return target, nil
@@ -85,10 +85,9 @@ func getConvertibleType(tc semtypes.Context, value values.BalValue, target semty
 	return semtypes.SemType{}, incompatibleConversion(tc, value, target)
 }
 
-func getConvertibleUnionMember(tc semtypes.Context, value values.BalValue, target semtypes.SemType,
-	unionErrors *[]string, allowNumeric bool,
+func getConvertibleUnionMember(tc semtypes.Context, value core.BalValue, target semtypes.SemType,
+	members []semtypes.SemType, unionErrors *[]string, allowNumeric bool,
 ) (semtypes.SemType, error) {
-	members := unionMemberTypes(tc, target)
 	if isStructuredValue(value) {
 		initial := len(*unionErrors)
 		*unionErrors = append(*unionErrors, "{")
@@ -123,7 +122,7 @@ func getConvertibleUnionMember(tc semtypes.Context, value values.BalValue, targe
 	return semtypes.SemType{}, incompatibleConversion(tc, value, target)
 }
 
-func isConvertibleList(tc semtypes.Context, source *values.List, target semtypes.SemType,
+func isConvertibleList(tc semtypes.Context, source *core.List, target semtypes.SemType,
 	unionErrors *[]string, allowNumeric bool,
 ) bool {
 	atomic := semtypes.ToListAtomicType(tc, target)
@@ -147,12 +146,17 @@ func isConvertibleList(tc semtypes.Context, source *values.List, target semtypes
 	return true
 }
 
-func isConvertibleMapping(tc semtypes.Context, source *values.Map, target semtypes.SemType,
+func isConvertibleMapping(tc semtypes.Context, source *core.Map, target semtypes.SemType,
 	unionErrors *[]string, allowNumeric bool,
 ) bool {
 	atomic := semtypes.ToMappingAtomicType(tc, target)
+	if atomic == nil {
+		return false
+	}
 
+	declared := make(map[string]struct{}, len(atomic.Names))
 	for _, name := range atomic.Names {
+		declared[name] = struct{}{}
 		if _, ok := source.Get(name); ok {
 			continue
 		}
@@ -169,11 +173,6 @@ func isConvertibleMapping(tc semtypes.Context, source *values.Map, target semtyp
 	}
 
 	closed := isClosedRecord(atomic)
-	declared := make(map[string]struct{}, len(atomic.Names))
-	for _, name := range atomic.Names {
-		declared[name] = struct{}{}
-	}
-
 	for _, key := range source.Keys() {
 		if closed {
 			if _, ok := declared[key]; !ok {
@@ -216,9 +215,9 @@ func fieldNeedsNilWhenMissing(tc semtypes.Context, target semtypes.SemType, name
 	return isNilable(atomic.FieldInnerVal(name))
 }
 
-func isStructuredValue(value values.BalValue) bool {
+func isStructuredValue(value core.BalValue) bool {
 	switch value.(type) {
-	case *values.List, *values.Map:
+	case *core.List, *core.Map:
 		return true
 	default:
 		return false

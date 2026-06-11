@@ -17,24 +17,25 @@
 package convert
 
 import (
+	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina-lang-go/values/core"
 )
 
 // Convert converts a value to the given target type.
-// On failure it returns a lang.value ConversionError as *values.Error.
-func Convert(tc semtypes.Context, value values.BalValue, targetType semtypes.SemType) (values.BalValue, *values.Error) {
+// On failure it returns a lang.value ConversionError as *core.Error.
+func Convert(tc semtypes.Context, value core.BalValue, targetType semtypes.SemType) (core.BalValue, *core.Error) {
 	var unionErrors []string
 	convertibleType, err := getConvertibleType(tc, value, targetType, &unionErrors, true)
 	if err != nil {
-		return nil, wrapConversionError(tc, value, targetType, err)
+		return nil, wrapConversionError(err)
 	}
 	return convert(tc, value, convertibleType, targetType, &unionErrors), nil
 }
 
-func convert(tc semtypes.Context, value values.BalValue, convertibleType, targetType semtypes.SemType,
+func convert(tc semtypes.Context, value core.BalValue, convertibleType, targetType semtypes.SemType,
 	unionErrors *[]string,
-) values.BalValue {
+) core.BalValue {
 	inherentType := convertibleType
 
 	if value == nil {
@@ -46,17 +47,18 @@ func convert(tc semtypes.Context, value values.BalValue, convertibleType, target
 	}
 
 	switch value := value.(type) {
-	case *values.Map:
+	case *core.Map:
 		if semtypes.IsSubtypeSimple(convertibleType, semtypes.MAPPING) {
 			return convertMapping(tc, value, inherentType, targetType, unionErrors)
 		}
-	case *values.List:
+	case *core.List:
 		if semtypes.IsSubtypeSimple(convertibleType, semtypes.LIST) {
 			return convertList(tc, value, inherentType, targetType, unionErrors)
 		}
 	}
 
-	if isNumericConvertible(tc, value, convertibleType) {
+	switch value.(type) {
+	case int64, float64, *decimal.Decimal:
 		converted, err := convertNumeric(tc, value, convertibleType)
 		if err != nil {
 			panic(err)
@@ -67,14 +69,14 @@ func convert(tc semtypes.Context, value values.BalValue, convertibleType, target
 	panic("convert: value is not convertible after getConvertibleType")
 }
 
-func convertMapping(tc semtypes.Context, source *values.Map, inherentType, requestedTarget semtypes.SemType,
+func convertMapping(tc semtypes.Context, source *core.Map, inherentType, requestedTarget semtypes.SemType,
 	unionErrors *[]string,
-) values.BalValue {
+) core.BalValue {
 	atomic := semtypes.ToMappingAtomicType(tc, inherentType)
 	if atomic == nil {
 		panic("convert: mapping target has no atomic representation")
 	}
-	entries := make([]values.MapEntry, 0, source.Len()+len(atomic.Names))
+	entries := make([]core.MapEntry, 0, source.Len()+len(atomic.Names))
 	seen := make(map[string]struct{}, source.Len())
 	for _, key := range source.Keys() {
 		seen[key] = struct{}{}
@@ -85,7 +87,7 @@ func convertMapping(tc semtypes.Context, source *values.Map, inherentType, reque
 			panic(err)
 		}
 		converted := convert(tc, val, convertibleFieldTy, fieldTy, unionErrors)
-		entries = append(entries, values.MapEntry{Key: key, Value: converted})
+		entries = append(entries, core.MapEntry{Key: key, Value: converted})
 	}
 	for _, name := range atomic.Names {
 		if _, ok := seen[name]; ok {
@@ -94,20 +96,20 @@ func convertMapping(tc semtypes.Context, source *values.Map, inherentType, reque
 		if !fieldNeedsNilWhenMissing(tc, inherentType, name, atomic) {
 			continue
 		}
-		entries = append(entries, values.MapEntry{Key: name, Value: nil})
+		entries = append(entries, core.MapEntry{Key: name, Value: nil})
 	}
 	readonly := semtypes.IsSubtype(tc, requestedTarget, semtypes.VAL_READONLY)
-	return values.NewMap(inherentType, atomic, readonly, entries)
+	return core.NewMap(inherentType, atomic, readonly, entries)
 }
 
-func convertList(tc semtypes.Context, source *values.List, inherentType, requestedTarget semtypes.SemType,
+func convertList(tc semtypes.Context, source *core.List, inherentType, requestedTarget semtypes.SemType,
 	unionErrors *[]string,
-) values.BalValue {
+) core.BalValue {
 	atomic := semtypes.ToListAtomicType(tc, inherentType)
 	if atomic == nil {
 		panic("convert: list target has no atomic representation")
 	}
-	items := make([]values.BalValue, source.Len())
+	items := make([]core.BalValue, source.Len())
 	for i := 0; i < source.Len(); i++ {
 		memberTy := atomic.MemberAtInnerVal(i)
 		narrowedMemberTy, err := getConvertibleType(tc, source.Get(i), memberTy, unionErrors, true)
@@ -116,7 +118,7 @@ func convertList(tc semtypes.Context, source *values.List, inherentType, request
 		}
 		items[i] = convert(tc, source.Get(i), narrowedMemberTy, memberTy, unionErrors)
 	}
-	restFiller, _ := values.FillerFactoryFor(tc, atomic.Rest())
+	restFiller, _ := core.FillerFactoryFor(tc, atomic.Rest())
 	readonly := semtypes.IsSubtype(tc, requestedTarget, semtypes.VAL_READONLY)
-	return values.NewList(inherentType, atomic, readonly, restFiller, len(items), items)
+	return core.NewList(inherentType, atomic, readonly, restFiller, len(items), items)
 }

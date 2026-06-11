@@ -14,16 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package runtime
+// Package core contains the core value types used in the Ballerina runtime.
+package core
 
-import (
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
-	"ballerina-lang-go/values/convert"
-)
+// Given we use nil for ballerina nil we'll have an explicit never value. If tried to use as operand in any operation
+// this should panic.
+type never struct{}
 
-// FromJsonWithType converts a json value to the given target type.
-// It matches lang.value:fromJsonWithType.
-func FromJsonWithType(tc semtypes.Context, value values.BalValue, targetType semtypes.SemType) (values.BalValue, *values.Error) {
-	return convert.Convert(tc, value, targetType)
-}
+var NeverValue = &never{}

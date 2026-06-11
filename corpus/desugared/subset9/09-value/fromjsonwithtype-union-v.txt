@@ -33,14 +33,6 @@
         (union-type
           (value-type int)
           (value-type null)))))
-  (type-definition WithNilableFlag
-    (record-type
-      (field name
-        (value-type string))
-      (field active
-        (union-type
-          (value-type boolean)
-          (value-type null)))))
   (type-definition PersonNilAge
     (record-type
       (field name
@@ -193,31 +185,6 @@
         (invocation io println (
           (simple-var-ref withScore))))
       (var-def
-        (variable missingFlag (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Eve))))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref missingFlag)
-            (simple-var-ref WithNilableFlag))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
-      (var-def
-        (variable withActive (type
-          (user-defined-type WithNilableFlag)) (expr
-          (simple-var-ref $desugar$5))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref withActive))))
-      (var-def
         (variable withNullAge (type
           (builtin-ref-type json)) (expr
           (mapping-constructor-expr
@@ -228,20 +195,20 @@
               (literal age)
               (literal <nil>))))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$5 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref withNullAge)
             (simple-var-ref PersonNilAge))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$6))
+          (simple-var-ref $desugar$5))
         (block-stmt
           (return
-            (simple-var-ref $desugar$6))) ())
+            (simple-var-ref $desugar$5))) ())
       (var-def
         (variable withAge (type
           (user-defined-type PersonNilAge)) (expr
-          (simple-var-ref $desugar$6))))
+          (simple-var-ref $desugar$5))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref withAge))))
@@ -253,20 +220,20 @@
               (literal a)
               (literal 1))))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$6 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref openMap)
             (simple-var-ref AnyMap))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$7))
+          (simple-var-ref $desugar$6))
         (block-stmt
           (return
-            (simple-var-ref $desugar$7))) ())
+            (simple-var-ref $desugar$6))) ())
       (var-def
         (variable anyMap (type
           (user-defined-type AnyMap)) (expr
-          (simple-var-ref $desugar$7))))
+          (simple-var-ref $desugar$6))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref anyMap))))

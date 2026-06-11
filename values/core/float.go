@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package values
+package core
 
 import (
 	"math"

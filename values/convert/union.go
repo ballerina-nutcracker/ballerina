@@ -69,8 +69,3 @@ func listUnionMembers(tc semtypes.Context, listTy semtypes.SemType) []semtypes.S
 	}
 	return members
 }
-
-func isUnionType(tc semtypes.Context, ty semtypes.SemType) bool {
-	members := unionMemberTypes(tc, ty)
-	return len(members) > 1
-}

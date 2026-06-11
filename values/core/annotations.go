@@ -14,18 +14,28 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package values
+package core
 
-import "ballerina-lang-go/values/core"
+// AnnotationValue is the evaluated Ballerina value stored for an annotation.
+type AnnotationValue = BalValue
 
-// Type aliases — preserves the existing API surface for all callers.
-type (
-	AnnotationValue           = core.AnnotationValue
-	AnnotationValues          = core.AnnotationValues
-	RuntimeAnnotationValueRef = core.RuntimeAnnotationValueRef
-)
+// AnnotationValues maps fully-qualified annotation keys to evaluated values.
+type AnnotationValues map[string]AnnotationValue
+
+// RuntimeAnnotationValueRef identifies an annotation value initialized in a
+// module global.
+type RuntimeAnnotationValueRef struct {
+	Organization string
+	Module       string
+	GlobalName   string
+}
+
+// GlobalLookupKey returns the runtime global key for the annotation value.
+func (r *RuntimeAnnotationValueRef) GlobalLookupKey() string {
+	return r.Organization + "/" + r.Module + ":" + r.GlobalName
+}
 
 // NewAnnotationValues returns an initialized annotation value map.
 func NewAnnotationValues() AnnotationValues {
-	return core.NewAnnotationValues()
+	return make(AnnotationValues)
 }

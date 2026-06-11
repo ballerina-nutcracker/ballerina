@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package values
+package core
 
 import (
 	"ballerina-lang-go/semtypes"
@@ -33,8 +33,8 @@ type List struct {
 
 // NewList constructs a fully initialized list without applying any inherent
 // type or readonly checks. The resulting length is max(size, len(initial));
-// initial values occupy the low indices and any remaining slots are populated
-// by the filler factory.
+// initial values occupy the low indices and remaining slots are populated by
+// invoking filler (which must not be nil when size > len(initial)).
 func NewList(ty semtypes.SemType, atomic *semtypes.ListAtomicType, isReadonly bool,
 	filler FillerFactory, size int, initial []BalValue,
 ) *List {
@@ -44,8 +44,11 @@ func NewList(ty semtypes.SemType, atomic *semtypes.ListAtomicType, isReadonly bo
 	length := max(len(initial), size)
 	elems := make([]BalValue, length)
 	copy(elems, initial)
-	if len(initial) < length {
-		panic("values.NewList: missing values")
+	for i := len(initial); i < length; i++ {
+		if filler == nil {
+			panic("values.NewList: filler required for slots beyond initial values")
+		}
+		elems[i] = filler()
 	}
 	return &List{
 		Type:       ty,

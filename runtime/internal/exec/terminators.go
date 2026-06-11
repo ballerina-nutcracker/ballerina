@@ -183,7 +183,7 @@ func buildResourceCallArgs(ctx *extern.Context, receiver *values.Object, match *
 	result := make([]values.BalValue, 0, 1+len(pathVals)+len(argVals))
 	result = append(result, receiver)
 	for i := range k {
-		if _, isLiteral := values.LiteralPathSegment(match.PathSegments[i]); !isLiteral {
+		if _, isLiteral := literalPathSegment(match.PathSegments[i]); !isLiteral {
 			result = append(result, pathVals[i])
 		}
 	}
@@ -203,6 +203,17 @@ func buildResourceCallArgs(ctx *extern.Context, receiver *values.Object, match *
 	}
 	result = append(result, argVals...)
 	return result
+}
+
+// LiteralPathSegment returns the literal string of seg and true if seg is a
+// literal path segment, otherwise it returns false.
+func literalPathSegment(seg values.ResourcePathSegmentDef) (string, bool) {
+	shape := semtypes.SingleShape(seg.Ty)
+	if !shape.IsPresent() {
+		return "", false
+	}
+	s, ok := shape.Get().Value.(string)
+	return s, ok
 }
 
 func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRBasicBlock {

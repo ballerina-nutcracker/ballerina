@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina-lang-go/values/core"
 )
 
 const conversionErrorMessage = "{ballerina/lang.value}ConversionError"
@@ -30,16 +30,16 @@ type conversionFailure struct {
 	detailMessage string
 }
 
-func wrapConversionError(_ semtypes.Context, _ values.BalValue, _ semtypes.SemType, err error) *values.Error {
+func wrapConversionError(err error) *core.Error {
 	detail := err.(*conversionFailure).detailMessage
-	detailMap := values.NewMap(semtypes.MAPPING, &semtypes.MAPPING_ATOMIC_INNER, true, []values.MapEntry{
+	detailMap := core.NewMap(semtypes.MAPPING, &semtypes.MAPPING_ATOMIC_INNER, true, []core.MapEntry{
 		{Key: "message", Value: detail},
 	})
-	return values.NewError(semtypes.ERROR, conversionErrorMessage, nil, "", detailMap)
+	return core.NewError(semtypes.ERROR, conversionErrorMessage, nil, "", detailMap)
 }
 
-func incompatibleConversion(tc semtypes.Context, value values.BalValue, targetType semtypes.SemType) *conversionFailure {
-	sourceTy := values.SemTypeForValue(value)
+func incompatibleConversion(tc semtypes.Context, value core.BalValue, targetType semtypes.SemType) *conversionFailure {
+	sourceTy := core.SemTypeForValue(value)
 	return newConversionFailure(fmt.Sprintf("'%s' value cannot be converted to '%s'",
 		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType)))
 }

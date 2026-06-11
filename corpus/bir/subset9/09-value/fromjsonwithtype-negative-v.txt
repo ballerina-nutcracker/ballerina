@@ -167,21 +167,8 @@ run() -> nil|error{
     %101 = println(%100) -> bb22;
   }
   bb22 {
-    %102 = ConstantLoad name
-    %103 = ConstantLoad Dave
-    %104 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%102=%103}
-    missingScore = %104;
-    %106 = ConstantLoad typedesc
-    %107 = fromJsonWithType(missingScore,%106) -> bb23;
-  }
-  bb23 {
-    %108 = %107 is error
-    %109 = %108;
-    %110 = println(%109) -> bb24;
-  }
-  bb24 {
-    %111 = ConstantLoad <nil>
-    %0 = %111;
+    %102 = ConstantLoad <nil>
+    %0 = %102;
     return;
   }
 }

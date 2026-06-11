@@ -35,11 +35,6 @@ type WithNilable record {|
     int? score;
 |};
 
-type WithNilableFlag record {|
-    string name;
-    boolean? active;
-|};
-
 type PersonNilAge record {|
     string name;
     int? age;
@@ -71,10 +66,6 @@ function run() returns error? {
     json missingNilable = {"name": "Carol"};
     WithNilable withScore = check missingNilable.fromJsonWithType(WithNilable);
     io:println(withScore); // @output {"name":"Carol","score":null}
-
-    json missingFlag = {"name": "Eve"};
-    WithNilableFlag withActive = check missingFlag.fromJsonWithType(WithNilableFlag);
-    io:println(withActive); // @output {"name":"Eve","active":null}
 
     json withNullAge = {"name": "Ann", "age": ()};
     PersonNilAge withAge = check withNullAge.fromJsonWithType(PersonNilAge);

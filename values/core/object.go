@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package values
+package core
 
 import (
 	"strings"
@@ -39,17 +39,6 @@ type ResourcePathSegmentDef struct {
 	// Ty is a singleton string type for literal path segments
 	// and the parameter type for path-parameter segments.
 	Ty semtypes.SemType
-}
-
-// LiteralPathSegment returns the literal string of seg and true if seg is a
-// literal path segment, otherwise it returns false.
-func LiteralPathSegment(seg ResourcePathSegmentDef) (string, bool) {
-	shape := semtypes.SingleShape(seg.Ty)
-	if !shape.IsPresent() {
-		return "", false
-	}
-	s, ok := shape.Get().Value.(string)
-	return s, ok
 }
 
 func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, rtable map[string][]ResourceEntry) *Object {

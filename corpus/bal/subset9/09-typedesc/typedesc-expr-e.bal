@@ -16,4 +16,5 @@
 
 public function main() {
     int td = int; // @error
+    _ = td;
 }

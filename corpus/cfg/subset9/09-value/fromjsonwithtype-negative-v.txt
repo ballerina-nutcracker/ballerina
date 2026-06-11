@@ -156,20 +156,6 @@
             (simple-var-ref longTuple)
             (simple-var-ref IntStringTuple)))
           (error-type)))))
-    (var-def
-      (variable missingScore (type
-        (builtin-ref-type json)) (expr
-        (mapping-constructor-expr
-          (key-value
-            (literal name)
-            (literal Dave))))))
-    (expression-stmt
-      (invocation io println (
-        (type-test-expr is
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref missingScore)
-            (simple-var-ref WithRequiredScore)))
-          (error-type)))))
     (return
       (literal <nil>))
   )

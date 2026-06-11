@@ -1,0 +1,7 @@
+-- stdout --
+{"name":"Whiskers","lives":9}
+{"name":"Rex","breed":"Labrador"}
+{"a":"hello","b":"world"}
+{"x":1,"y":2}
+true
+-- stderr --

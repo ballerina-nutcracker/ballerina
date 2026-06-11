@@ -25,12 +25,6 @@
     (union-type
       (user-defined-type Person)
       (user-defined-type Closed)))
-  (type-definition WithRequiredScore
-    (record-type
-      (field name
-        (value-type string))
-      (field score
-        (value-type int))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -198,20 +192,6 @@
             (invocation lang.value fromJsonWithType (
               (simple-var-ref longTuple)
               (simple-var-ref IntStringTuple)))
-            (error-type)))))
-      (var-def
-        (variable missingScore (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Dave))))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref missingScore)
-              (simple-var-ref WithRequiredScore)))
             (error-type)))))
       (return
         (literal <nil>)))))

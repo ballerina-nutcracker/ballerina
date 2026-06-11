@@ -8,7 +8,7 @@
             (literal name)
             (literal Alice))))))
     (var-def
-      (variable p (type
+      (variable _ (type
         (user-defined-type Person)) (expr
         (check-panicked-expr
           (invocation lang.value fromJsonWithType (

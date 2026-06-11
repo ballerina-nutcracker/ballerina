@@ -28,6 +28,6 @@
           (panic
             (simple-var-ref $desugar$0))) ())
       (var-def
-        (variable p (type
+        (variable _ (type
           (user-defined-type Person)) (expr
           (simple-var-ref $desugar$0)))))))

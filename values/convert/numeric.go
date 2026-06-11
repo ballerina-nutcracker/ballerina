@@ -21,10 +21,10 @@ import (
 
 	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina-lang-go/values/core"
 )
 
-func isNumericConvertible(tc semtypes.Context, value values.BalValue, target semtypes.SemType) bool {
+func isNumericConvertible(tc semtypes.Context, value core.BalValue, target semtypes.SemType) bool {
 	switch value.(type) {
 	case int64, float64, *decimal.Decimal:
 	default:
@@ -36,13 +36,13 @@ func isNumericConvertible(tc semtypes.Context, value values.BalValue, target sem
 		semtypes.IsSubtypeSimple(target, semtypes.DECIMAL),
 		semtypes.IsSubtype(tc, target, semtypes.BYTE):
 		converted, err := convertNumeric(tc, value, target)
-		return err == nil && semtypes.IsSubtype(tc, values.SemTypeForValue(converted), target)
+		return err == nil && semtypes.IsSubtype(tc, core.SemTypeForValue(converted), target)
 	default:
 		return false
 	}
 }
 
-func convertNumeric(tc semtypes.Context, value values.BalValue, target semtypes.SemType) (values.BalValue, error) {
+func convertNumeric(tc semtypes.Context, value core.BalValue, target semtypes.SemType) (core.BalValue, error) {
 	switch {
 	case semtypes.IsSubtype(tc, target, semtypes.BYTE):
 		v, err := toInt(value)
@@ -64,7 +64,7 @@ func convertNumeric(tc semtypes.Context, value values.BalValue, target semtypes.
 	panic("convertNumeric: unreachable target type")
 }
 
-func toInt(value values.BalValue) (values.BalValue, error) {
+func toInt(value core.BalValue) (core.BalValue, error) {
 	switch v := value.(type) {
 	case int64:
 		return v, nil
@@ -86,7 +86,7 @@ func toInt(value values.BalValue) (values.BalValue, error) {
 	panic("toInt: unreachable value type")
 }
 
-func toFloat(value values.BalValue) (values.BalValue, error) {
+func toFloat(value core.BalValue) (core.BalValue, error) {
 	switch v := value.(type) {
 	case int64:
 		return float64(v), nil
@@ -96,7 +96,7 @@ func toFloat(value values.BalValue) (values.BalValue, error) {
 	panic("toFloat: unreachable value type")
 }
 
-func toDecimal(value values.BalValue) (values.BalValue, error) {
+func toDecimal(value core.BalValue) (core.BalValue, error) {
 	switch v := value.(type) {
 	case int64:
 		return decimal.FromInt64(v), nil

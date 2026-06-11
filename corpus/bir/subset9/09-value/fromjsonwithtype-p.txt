@@ -21,7 +21,7 @@ main() -> nil{
     panic %9;
   }
   bb3 {
-    p = $desugar$0;
+    _ = $desugar$0;
     return;
   }
 }

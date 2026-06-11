@@ -21,5 +21,5 @@ type Person record {|
 
 public function main() {
     json missing = {"name": "Alice"};
-    Person p = checkpanic missing.fromJsonWithType(Person); // @panic
+    Person _ = checkpanic missing.fromJsonWithType(Person); // @panic
 }
