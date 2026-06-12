@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 
 	interpsrc "ballerina-lang-go"
@@ -380,6 +381,9 @@ func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBa
 	}
 
 	outBin := filepath.Join(absBaseDir, "target", "bin", "bal")
+	if goruntime.GOOS == "windows" {
+		outBin += ".exe"
+	}
 	executor, err := chooseNativeExecutor(outBin)
 	if err != nil {
 		return err

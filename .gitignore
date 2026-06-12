@@ -31,6 +31,9 @@ go.work.sum
 /bal
 /bal-debug
 
+# Build outputs written by `bal run`/`bal pack` (mirrors Ballerina's target/ convention)
+**/target/
+
 # Generated test data files (run ./init.sh to regenerate).
 # package.json and dependency-graph.json are bala-format metadata fixtures
 # that must be tracked even though the broader corpus/**/*.json rule ignores
