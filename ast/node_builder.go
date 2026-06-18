@@ -1631,8 +1631,8 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 	typeDescriptorNode := typeDefinitionNode.TypeDescriptor()
 	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*tree.DistinctTypeDescriptorNode); ok {
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
-		if innerTypeDescriptorNode == nil || innerTypeDescriptorNode.Kind() != common.OBJECT_TYPE_DESC {
-			n.cx.Unimplemented("distinct types are only supported for object types", getPosition(n.de(), distinctTypeDescriptorNode))
+		if innerTypeDescriptorNode == nil || (innerTypeDescriptorNode.Kind() != common.OBJECT_TYPE_DESC && innerTypeDescriptorNode.Kind() != common.ERROR_TYPE_DESC) {
+			n.cx.SyntaxError("only object and error types can be distinct", getPosition(n.de(), distinctTypeDescriptorNode))
 			neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
 			neverType.pos = getPosition(n.de(), distinctTypeDescriptorNode)
 			typeDef.SetTypeData(TypeData{TypeDescriptor: neverType})

@@ -173,6 +173,8 @@ func (sr *symbolReader) readSymbol(space *model.SymbolSpace, opaque []model.Symb
 		sr.readRecordSymbol(space)
 	case symTagObjectType:
 		sr.readObjectTypeSymbol(space)
+	case symTagErrorType:
+		sr.readErrorTypeSymbol(space)
 	case symTagValue:
 		sr.readValueSymbol(space)
 	case symTagConstantValue:
@@ -235,6 +237,19 @@ func (sr *symbolReader) readObjectTypeSymbol(space *model.SymbolSpace) {
 	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
 }
 
+func (sr *symbolReader) readErrorTypeSymbol(space *model.SymbolSpace) {
+	name, isPublic, ty := sr.readSymbolBase()
+	sym := model.NewErrorTypeSymbol(name, isPublic)
+	sym.SetType(ty)
+	annotations := sr.readAnnotationValues()
+	ids := sr.readDistinctTypes(space)
+	sym.SetDistinctTypeIDs(ids)
+	sym.SetType(addErrorDistinctAtoms(ty, ids))
+	ref := addDeserializedSymbol(space, name, &sym)
+	sr.storeAnnotations(ref, annotations)
+	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
+}
+
 func (sr *symbolReader) readDistinctTypes(space *model.SymbolSpace) []int {
 	var count int64
 	read(sr.r, &count)
@@ -252,6 +267,16 @@ func addObjectDistinctAtoms(ty semtypes.SemType, ids []int) semtypes.SemType {
 	}
 	for _, id := range ids {
 		ty = semtypes.Intersect(ty, semtypes.ObjectDefinitionDistinct(id))
+	}
+	return ty
+}
+
+func addErrorDistinctAtoms(ty semtypes.SemType, ids []int) semtypes.SemType {
+	if semtypes.IsZero(ty) {
+		return ty
+	}
+	for _, id := range ids {
+		ty = semtypes.Intersect(ty, semtypes.ErrorDistinct(id))
 	}
 	return ty
 }

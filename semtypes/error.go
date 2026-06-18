@@ -27,7 +27,7 @@ func ErrorDetailAtomicType(ctx Context, errorType SemType) (MappingAtomicType, b
 	if IsSameType(ctx, errorType, ERROR) {
 		return mappingAtomicTypeFrom(nil, nil, cellContaining(ctx.Env(), CreateCloneable(ctx))), true
 	}
-	mappingSd := subtypeData(errorType, BTError)
+	mappingSd := errorDetailBddWithoutDistinctAtoms(subtypeData(errorType, BTError).(Bdd))
 	if bn, ok := mappingSd.(bddNode); ok {
 		if bn.atom().index() != 0 {
 			// Not readonly. Not sure if this can happen (due to ErroWithDetail) but just in case
@@ -87,7 +87,7 @@ func ErrorWithDetail(detail SemType) SemType {
 	return getBasicSubtype(BTError, sd.(ProperSubtypeData))
 }
 
-func errorDistinct(distinctId int) SemType {
+func ErrorDistinct(distinctId int) SemType {
 	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(((-distinctId) - 1))))
 	return getBasicSubtype(BTError, bdd)

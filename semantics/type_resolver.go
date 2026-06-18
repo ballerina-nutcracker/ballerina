@@ -2043,18 +2043,17 @@ func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefiniti
 }
 
 func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinition, semType semtypes.SemType) (semtypes.SemType, bool) {
-	objectType, ok := typeDef.GetTypeData().TypeDescriptor.(*ast.BLangObjectType)
-	if !ok {
-		if typeDef.IsDistinct() {
-			t.unimplemented("distinct types are only supported for object types", typeDef.GetPosition())
-			return semtypes.SemType{}, false
-		}
+	switch typeDesc := typeDef.GetTypeData().TypeDescriptor.(type) {
+	case *ast.BLangObjectType:
+		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions), true
+	case *ast.BLangErrorTypeNode:
+		return appendDistinctErrorAtoms(t, semType, typeDef)
+	default:
 		return semType, true
 	}
-	return appendDistinctAtoms(t, semType, typeDef.Symbol(), objectType.Inclusions), true
 }
 
-func appendDistinctAtoms(t typeResolver, semType semtypes.SemType, symbol model.SymbolRef, inclusions []model.SymbolRef) semtypes.SemType {
+func appendDistinctObjectAtoms(t typeResolver, semType semtypes.SemType, symbol model.SymbolRef, inclusions []model.SymbolRef) semtypes.SemType {
 	carrier, ok := t.getSymbol(symbol).(model.ObjectType)
 	if !ok {
 		return semType
@@ -2086,6 +2085,22 @@ func appendDistinctAtoms(t typeResolver, semType semtypes.SemType, symbol model.
 		current = semtypes.Intersect(current, semtypes.ObjectDefinitionDistinct(distinctTypeID))
 	}
 	return current
+}
+
+func appendDistinctErrorAtoms(t typeResolver, semType semtypes.SemType, typeDef *ast.BLangTypeDefinition) (semtypes.SemType, bool) {
+	if !typeDef.IsDistinct() {
+		return semType, true
+	}
+	carrier, ok := t.getSymbol(typeDef.Symbol()).(*model.ErrorTypeSymbol)
+	if !ok {
+		t.internalError("distinct error type symbol is not an ErrorTypeSymbol", typeDef.GetPosition())
+		return semtypes.SemType{}, false
+	}
+	current := semType
+	for _, distinctTypeID := range carrier.DistinctTypeIDs() {
+		current = semtypes.Intersect(current, semtypes.ErrorDistinct(distinctTypeID))
+	}
+	return current, true
 }
 
 // addInclusionsToTypeSymbol addes all the inclusions (both transitive and direct) to the type symbol
@@ -2314,7 +2329,7 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 		// Recursive self-reference while the surrounding class is still being
 		// resolved. Return the partial type so callers can refer to it.
 		recTy := classDef.Definition.GetSemType(t.typeEnv())
-		semType := appendDistinctAtoms(t, recTy, classDef.Symbol(), classDef.Inclusions)
+		semType := appendDistinctObjectAtoms(t, recTy, classDef.Symbol(), classDef.Inclusions)
 		t.setSymbolType(classDef.Symbol(), semType)
 		return semType, true
 	}
@@ -2562,7 +2577,7 @@ func defineObjectSemType(t typeResolver, od *semtypes.ObjectDefinition, isolated
 	if distinctSymbol.IsEmpty() {
 		return semType
 	}
-	return appendDistinctAtoms(t, semType, distinctSymbol, inclusions)
+	return appendDistinctObjectAtoms(t, semType, distinctSymbol, inclusions)
 }
 
 func resolveLiteral(t typeResolver, n *ast.BLangLiteral, expectedType semtypes.SemType) bool {
@@ -6611,9 +6626,6 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		}
 		return result, true
 	case *ast.BLangErrorTypeNode:
-		if ty.IsDistinct() {
-			panic("distinct error types not supported")
-		}
 		if ty.IsTop() {
 			return semtypes.ERROR, true
 		} else {
