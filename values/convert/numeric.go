@@ -58,16 +58,13 @@ func convertNumeric(tc semtypes.Context, value core.BalValue, target semtypes.Se
 		return toInt(value)
 	case semtypes.IsSubtypeSimple(target, semtypes.FLOAT):
 		return toFloat(value)
-	case semtypes.IsSubtypeSimple(target, semtypes.DECIMAL):
+	default: // DECIMAL
 		return toDecimal(value)
 	}
-	panic("convertNumeric: unreachable target type")
 }
 
 func toInt(value core.BalValue) (core.BalValue, error) {
 	switch v := value.(type) {
-	case int64:
-		return v, nil
 	case float64:
 		if math.IsNaN(v) || math.IsInf(v, 0) {
 			return nil, newConversionFailure("cannot convert non-finite float to int")
@@ -82,30 +79,29 @@ func toInt(value core.BalValue) (core.BalValue, error) {
 			return nil, newConversionFailure("cannot convert decimal to int64: value out of range")
 		}
 		return n, nil
+	default: // int64
+		return value.(int64), nil
 	}
-	panic("toInt: unreachable value type")
 }
 
 func toFloat(value core.BalValue) (core.BalValue, error) {
 	switch v := value.(type) {
-	case int64:
-		return float64(v), nil
 	case *decimal.Decimal:
 		return v.Float64(), nil
+	default: // int64
+		return float64(value.(int64)), nil
 	}
-	panic("toFloat: unreachable value type")
 }
 
 func toDecimal(value core.BalValue) (core.BalValue, error) {
 	switch v := value.(type) {
-	case int64:
-		return decimal.FromInt64(v), nil
 	case float64:
 		d, err := decimal.FromFloat64(v)
 		if err != nil {
 			return nil, newConversionFailure(err.Error())
 		}
 		return d, nil
+	default: // int64
+		return decimal.FromInt64(value.(int64)), nil
 	}
-	panic("toDecimal: unreachable value type")
 }

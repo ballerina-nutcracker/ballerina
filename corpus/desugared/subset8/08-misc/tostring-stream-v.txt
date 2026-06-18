@@ -1,0 +1,63 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 0))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (union-type
+          (error-type)
+          (value-type null))))
+      (block-function-body
+        (var-def
+          (variable current (type
+            (value-type int)) (expr
+            (index-based-access
+              (simple-var-ref self)
+              (literal n)))))
+        (if
+          (binary-expr >=
+            (simple-var-ref current)
+            (literal 3))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref self)
+              (literal n))
+            (binary-expr +
+              (simple-var-ref current)
+              (literal 1)))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (simple-var-ref current))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (expr
+          (new
+            (stream-type
+              (value-type int)
+              (union-type
+                (error-type)
+                (value-type null))) (
+            (new
+              (user-defined-type Counter) ()))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s)))))))

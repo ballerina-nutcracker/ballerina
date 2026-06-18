@@ -222,18 +222,17 @@ run() -> nil|error{
     %92 = println(person) -> bb34;
   }
   bb34 {
-    %93 = ConstantLoad 1
-    %94 = ConstantLoad x
-    %95 = ConstantLoad 2
-    %96 = newArray [nil|boolean|int|float|decimal|string|...|......][%95]{%93, %94}
-    tuple = %96;
-    %98 = ConstantLoad typedesc
-    %99 = fromJsonWithType(tuple,%98) -> bb35;
+    %93 = ConstantLoad name
+    %94 = ConstantLoad Alice
+    %95 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%93=%94}
+    noAge = %95;
+    %97 = ConstantLoad typedesc
+    %98 = fromJsonWithType(noAge,%97) -> bb35;
   }
   bb35 {
-    $desugar$8 = %99;
-    %101 = $desugar$8 is error
-    %101 ? bb36 : bb37;
+    $desugar$8 = %98;
+    %100 = $desugar$8 is error
+    %100 ? bb36 : bb37;
   }
   bb36 {
     PushScopeFrame 0
@@ -242,12 +241,36 @@ run() -> nil|error{
     return;
   }
   bb37 {
-    tupleVal = $desugar$8;
-    %103 = println(tupleVal) -> bb38;
+    nilAgePerson = $desugar$8;
+    %102 = println(nilAgePerson) -> bb38;
   }
   bb38 {
-    %104 = ConstantLoad <nil>
-    %0 = %104;
+    %103 = ConstantLoad 1
+    %104 = ConstantLoad x
+    %105 = ConstantLoad 2
+    %106 = newArray [nil|boolean|int|float|decimal|string|...|......][%105]{%103, %104}
+    tuple = %106;
+    %108 = ConstantLoad typedesc
+    %109 = fromJsonWithType(tuple,%108) -> bb39;
+  }
+  bb39 {
+    $desugar$9 = %109;
+    %111 = $desugar$9 is error
+    %111 ? bb40 : bb41;
+  }
+  bb40 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb41 {
+    tupleVal = $desugar$9;
+    %113 = println(tupleVal) -> bb42;
+  }
+  bb42 {
+    %114 = ConstantLoad <nil>
+    %0 = %114;
     return;
   }
 }

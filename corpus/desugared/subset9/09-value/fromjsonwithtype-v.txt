@@ -21,6 +21,14 @@
         (value-type string))
       (field age
         (value-type int))))
+  (type-definition PersonNilAge
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (union-type
+          (value-type int)
+          (value-type null)))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -252,16 +260,17 @@
         (invocation io println (
           (simple-var-ref person))))
       (var-def
-        (variable tuple (type
+        (variable noAge (type
           (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal x)))))
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))))))
       (var-def
         (variable $desugar$8 (expr
           (invocation lang.value fromJsonWithType (
-            (simple-var-ref tuple)
-            (simple-var-ref IntStringTuple))))))
+            (simple-var-ref noAge)
+            (simple-var-ref PersonNilAge))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$8))
@@ -269,9 +278,33 @@
           (return
             (simple-var-ref $desugar$8))) ())
       (var-def
+        (variable nilAgePerson (type
+          (user-defined-type PersonNilAge)) (expr
+          (simple-var-ref $desugar$8))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nilAgePerson))))
+      (var-def
+        (variable tuple (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal x)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref tuple)
+            (simple-var-ref IntStringTuple))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (var-def
         (variable tupleVal (type
           (user-defined-type IntStringTuple)) (expr
-          (simple-var-ref $desugar$8))))
+          (simple-var-ref $desugar$9))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref tupleVal))))

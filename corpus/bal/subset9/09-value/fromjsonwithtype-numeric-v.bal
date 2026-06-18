@@ -81,6 +81,9 @@ function run() returns error? {
     io:println(nanJson.fromJsonWithType(decimal) is error); // @output true
     io:println(infJson.fromJsonWithType(decimal) is error); // @output true
 
+    io:println(nanJson.fromJsonWithType(byte) is error); // @output true
+    io:println(infJson.fromJsonWithType(byte) is error); // @output true
+
     decimal decForFloat = 3.5;
     json decForFloatJson = decForFloat;
     float floatFromDec = check decForFloatJson.fromJsonWithType(float);

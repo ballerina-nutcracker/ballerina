@@ -1,0 +1,55 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (check-panicked-expr
+        (invocation run ())))
+  )
+)
+(run
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (builtin-ref-type json)) (expr
+        (literal 2))))
+    (var-def
+      (variable n (type
+        (user-defined-type IntOrString)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref f)
+            (simple-var-ref IntOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+    (var-def
+      (variable i (type
+        (builtin-ref-type json)) (expr
+        (literal 3))))
+    (var-def
+      (variable optFloat (type
+        (user-defined-type OptFloat)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref i)
+            (simple-var-ref OptFloat)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref optFloat))))
+    (var-def
+      (variable j (type
+        (builtin-ref-type json)) (expr
+        (literal 10))))
+    (var-def
+      (variable ds (type
+        (user-defined-type DecimalOrString)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref j)
+            (simple-var-ref DecimalOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ds))))
+    (return
+      (literal <nil>))
+  )
+)

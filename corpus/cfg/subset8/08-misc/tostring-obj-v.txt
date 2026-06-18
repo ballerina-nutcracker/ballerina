@@ -1,0 +1,22 @@
+(Box
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access val
+          (simple-var-ref self))
+        (simple-var-ref v))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (user-defined-type Box)) (expr
+        (new (
+          (literal 42))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+  )
+)

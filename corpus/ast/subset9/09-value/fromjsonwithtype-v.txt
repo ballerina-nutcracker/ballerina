@@ -21,6 +21,14 @@
         (value-type string))
       (field age
         (value-type int))))
+  (type-definition PersonNilAge
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (union-type
+          (value-type int)
+          (value-type null)))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -178,6 +186,23 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref person))))
+      (var-def
+        (variable noAge (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))))))
+      (var-def
+        (variable nilAgePerson (type
+          (user-defined-type PersonNilAge)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref noAge) (
+              (simple-var-ref PersonNilAge)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nilAgePerson))))
       (var-def
         (variable tuple (type
           (builtin-ref-type json)) (expr

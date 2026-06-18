@@ -1,0 +1,39 @@
+module $anon.. v 0.0.0;
+import ballerina.io v 0.0.0;
+class Box {
+  val int
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad val
+      self[%3] = v;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Box
+    %2 = ConstantLoad 42
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    b = %4;
+    %7 = println(b) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

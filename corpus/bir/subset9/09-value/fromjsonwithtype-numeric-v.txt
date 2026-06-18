@@ -296,31 +296,49 @@ run() -> nil|error{
     %143 = println(%142) -> bb48;
   }
   bb48 {
-    %144 = ConstantLoad 3.5
-    decForFloat = %144;
-    decForFloatJson = decForFloat;
-    %147 = ConstantLoad typedesc
-    %148 = fromJsonWithType(decForFloatJson,%147) -> bb49;
+    %144 = ConstantLoad typedesc
+    %145 = fromJsonWithType(nanJson,%144) -> bb49;
   }
   bb49 {
-    $desugar$7 = %148;
-    %150 = $desugar$7 is error
-    %150 ? bb50 : bb51;
+    %146 = %145 is error
+    %147 = %146;
+    %148 = println(%147) -> bb50;
   }
   bb50 {
+    %149 = ConstantLoad typedesc
+    %150 = fromJsonWithType(infJson,%149) -> bb51;
+  }
+  bb51 {
+    %151 = %150 is error
+    %152 = %151;
+    %153 = println(%152) -> bb52;
+  }
+  bb52 {
+    %154 = ConstantLoad 3.5
+    decForFloat = %154;
+    decForFloatJson = decForFloat;
+    %157 = ConstantLoad typedesc
+    %158 = fromJsonWithType(decForFloatJson,%157) -> bb53;
+  }
+  bb53 {
+    $desugar$7 = %158;
+    %160 = $desugar$7 is error
+    %160 ? bb54 : bb55;
+  }
+  bb54 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$7);
     PopScopeFrame
     return;
   }
-  bb51 {
+  bb55 {
     floatFromDec = $desugar$7;
-    %152 = floatFromDec;
-    %153 = println(%152) -> bb52;
+    %162 = floatFromDec;
+    %163 = println(%162) -> bb56;
   }
-  bb52 {
-    %154 = ConstantLoad <nil>
-    %0 = %154;
+  bb56 {
+    %164 = ConstantLoad <nil>
+    %0 = %164;
     return;
   }
 }

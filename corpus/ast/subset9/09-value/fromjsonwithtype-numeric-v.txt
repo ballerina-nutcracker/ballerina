@@ -254,6 +254,22 @@
               (typedesc-expr
                 (value-type decimal))))
             (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nanJson) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref infJson) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
       (var-def
         (variable decForFloat (type
           (value-type decimal)) (expr

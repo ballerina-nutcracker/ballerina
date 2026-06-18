@@ -27,29 +27,25 @@ func cloneValue(tc semtypes.Context, value core.BalValue, targetType semtypes.Se
 	}
 	switch v := value.(type) {
 	case *core.List:
+		listType := targetType
 		lat := semtypes.ToListAtomicType(tc, targetType)
 		if lat == nil {
 			lat = semtypes.ToListAtomicType(tc, v.Type)
-			if lat == nil {
-				panic("cloneValue: list has no atomic representation")
-			}
+			listType = v.Type
 		}
 		items := make([]core.BalValue, v.Len())
 		for i := 0; i < v.Len(); i++ {
 			items[i] = cloneValue(tc, v.Get(i), lat.MemberAtInnerVal(i))
 		}
 		restFiller, _ := core.FillerFactoryFor(tc, lat.Rest())
-		readonly := semtypes.IsSubtype(tc, targetType, semtypes.VAL_READONLY)
-		return core.NewList(targetType, lat, readonly, restFiller, v.Len(), items)
+		readonly := semtypes.IsSubtype(tc, listType, semtypes.VAL_READONLY)
+		return core.NewList(listType, lat, readonly, restFiller, v.Len(), items)
 	case *core.Map:
 		atomic := semtypes.ToMappingAtomicType(tc, targetType)
 		mappingTarget := targetType
 		if atomic == nil {
 			atomic = semtypes.ToMappingAtomicType(tc, v.Type)
 			mappingTarget = v.Type
-			if atomic == nil {
-				panic("cloneValue: mapping has no atomic representation")
-			}
 		}
 		entries := make([]core.MapEntry, 0, v.Len())
 		for _, key := range v.Keys() {
@@ -57,8 +53,8 @@ func cloneValue(tc semtypes.Context, value core.BalValue, targetType semtypes.Se
 			fieldType := mappingFieldType(tc, mappingTarget, atomic, key)
 			entries = append(entries, core.MapEntry{Key: key, Value: cloneValue(tc, val, fieldType)})
 		}
-		readonly := semtypes.IsSubtype(tc, targetType, semtypes.VAL_READONLY)
-		return core.NewMap(targetType, atomic, readonly, entries)
+		readonly := semtypes.IsSubtype(tc, mappingTarget, semtypes.VAL_READONLY)
+		return core.NewMap(mappingTarget, atomic, readonly, entries)
 	default:
 		return value
 	}

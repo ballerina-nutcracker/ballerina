@@ -26,6 +26,11 @@ type Person record {|
     int age;
 |};
 
+type PersonNilAge record {|
+    string name;
+    int? age;
+|};
+
 public function main() {
     checkpanic run();
 }
@@ -66,6 +71,11 @@ function run() returns error? {
     json p = {"name": "Alice", "age": 30};
     Person person = check p.fromJsonWithType(Person);
     io:println(person); // @output {"name":"Alice","age":30}
+
+    // required nilable field absent in source → nil injected
+    json noAge = {"name": "Alice"};
+    PersonNilAge nilAgePerson = check noAge.fromJsonWithType(PersonNilAge);
+    io:println(nilAgePerson); // @output {"name":"Alice","age":null}
 
     // tuples
     json tuple = [1, "x"];

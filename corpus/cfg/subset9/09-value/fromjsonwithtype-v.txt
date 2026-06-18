@@ -154,6 +154,23 @@
       (invocation io println (
         (simple-var-ref person))))
     (var-def
+      (variable noAge (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))))))
+    (var-def
+      (variable nilAgePerson (type
+        (user-defined-type PersonNilAge)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref noAge)
+            (simple-var-ref PersonNilAge)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilAgePerson))))
+    (var-def
       (variable tuple (type
         (builtin-ref-type json)) (expr
         (list-constructor-expr
