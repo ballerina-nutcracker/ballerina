@@ -38,4 +38,4 @@
 # + v - json value
 # + t - type to convert to
 # + return - value belonging to type parameter `t` or error if this cannot be done
-public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) = external;
+public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) returns t|error  = external;
