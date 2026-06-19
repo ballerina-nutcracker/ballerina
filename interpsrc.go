@@ -35,10 +35,10 @@ import (
 
 // The embed includes all Go source packages needed to build the interpreter,
 // plus go.mod and go.sum. parser/testdata (270 MB of test fixtures),
-// corpus/, and samples/ are intentionally excluded to keep binary size small.
+// corpus/, samples/, and compiler-tools/ are intentionally excluded to keep binary size small.
 
 //go:embed go.mod go.sum interpsrc_stub.go
-//go:embed ast bir cli common compiler-tools context decimal desugar lib model platform projects runtime semantics semtypes tools values
+//go:embed ast bir cli common context decimal desugar lib model platform projects runtime semantics semtypes tools values
 //go:embed parser/*.go parser/nodes.json parser/common parser/tree
 var src embed.FS
 
