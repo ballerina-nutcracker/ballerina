@@ -247,6 +247,14 @@ func (c *CompilerEnvironment) SymbolType(symbol model.SymbolRef) semtypes.SemTyp
 	return c.GetSymbol(symbol).Type()
 }
 
+func (c *CompilerEnvironment) SymbolLocation(symbol model.SymbolRef) diagnostics.Location {
+	return c.GetSymbol(symbol).Location()
+}
+
+func (c *CompilerEnvironment) SetSymbolLocation(symbol model.SymbolRef, location diagnostics.Location) {
+	c.GetSymbol(symbol).SetLocation(location)
+}
+
 func (c *CompilerEnvironment) SymbolKind(symbol model.SymbolRef) model.SymbolKind {
 	return c.GetSymbol(symbol).Kind()
 }

@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"ballerina-lang-go/semtypes"
+	"ballerina-lang-go/tools/diagnostics"
 	"ballerina-lang-go/values"
 )
 
@@ -59,6 +60,8 @@ type Symbol interface {
 	Type() semtypes.SemType
 	Kind() SymbolKind
 	SetType(semtypes.SemType)
+	Location() diagnostics.Location
+	SetLocation(diagnostics.Location)
 	IsPublic() bool
 	Copy() Symbol
 }
@@ -276,6 +279,7 @@ type (
 	symbolBase struct {
 		name     string
 		ty       semtypes.SemType
+		location diagnostics.Location
 		isPublic bool
 	}
 
@@ -805,6 +809,14 @@ func (ba *symbolBase) SetType(ty semtypes.SemType) {
 	ba.ty = ty
 }
 
+func (ba *symbolBase) Location() diagnostics.Location {
+	return ba.location
+}
+
+func (ba *symbolBase) SetLocation(location diagnostics.Location) {
+	ba.location = location
+}
+
 func (ba *symbolBase) IsPublic() bool {
 	return ba.isPublic
 }
@@ -822,6 +834,14 @@ func (ref *SymbolRef) SetType(ty semtypes.SemType) {
 }
 
 func (ref *SymbolRef) Kind() SymbolKind {
+	panic("unexpected")
+}
+
+func (ref *SymbolRef) Location() diagnostics.Location {
+	panic("unexpected")
+}
+
+func (ref *SymbolRef) SetLocation(diagnostics.Location) {
 	panic("unexpected")
 }
 
@@ -1416,6 +1436,14 @@ func (s *dependentlyTypedFunctionSymbol) Type() semtypes.SemType {
 
 func (s *dependentlyTypedFunctionSymbol) SetType(_ semtypes.SemType) {
 	panic("DependentlyTypedFunctionSymbol must be Monomorphized")
+}
+
+func (s *dependentlyTypedFunctionSymbol) Location() diagnostics.Location {
+	return s.symbolBase.Location()
+}
+
+func (s *dependentlyTypedFunctionSymbol) SetLocation(location diagnostics.Location) {
+	s.symbolBase.SetLocation(location)
 }
 
 func (s *dependentlyTypedFunctionSymbol) Signature() FunctionSignature {

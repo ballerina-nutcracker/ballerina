@@ -249,6 +249,7 @@ type desugaredSymbol struct {
 	name     string
 	ty       semtypes.SemType
 	kind     model.SymbolKind
+	location diagnostics.Location
 	isPublic bool
 }
 
@@ -268,6 +269,14 @@ func (s *desugaredSymbol) Kind() model.SymbolKind {
 
 func (s *desugaredSymbol) SetType(_ semtypes.SemType) {
 	panic("SetType is not supported for desugared symbols")
+}
+
+func (s *desugaredSymbol) Location() diagnostics.Location {
+	return s.location
+}
+
+func (s *desugaredSymbol) SetLocation(location diagnostics.Location) {
+	s.location = location
 }
 
 func (s *desugaredSymbol) IsPublic() bool {
