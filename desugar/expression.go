@@ -431,7 +431,7 @@ func walkFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAccess) de
 		return walkOptionalFieldBaseAccess(cx, expr, initStmts)
 	}
 
-	indexAccess := createFieldIndexAccess(expr.Expr, expr.Field.Value, expr.GetDeterminedType(), expr.GetPosition())
+	indexAccess := createFieldIndexAccess(expr.Expr, expr.Field.GetValue(), expr.GetDeterminedType(), expr.GetPosition())
 
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
@@ -455,7 +455,8 @@ func walkOptionalFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAc
 	baseTy := expr.Expr.GetDeterminedType()
 	VForIndex := createVarRef(VName, VSymbol, semtypes.Diff(baseTy, semtypes.ERROR))
 	setPositionIfMissing(VForIndex, basePos)
-	indexAccess := createFieldIndexAccess(VForIndex, expr.Field.Value, optionalFieldIndexResultType(cx, baseTy, expr.Field.Value), basePos)
+	fieldName := expr.Field.GetValue()
+	indexAccess := createFieldIndexAccess(VForIndex, fieldName, optionalFieldIndexResultType(cx, baseTy, fieldName), basePos)
 	indexAssign := createResultAssignment(resultName, resultSymbol, resultTy, indexAccess, basePos)
 	elseBody := &ast.BLangBlockStmt{Stmts: []ast.StatementNode{indexAssign}}
 	elseBody.SetDeterminedType(semtypes.NEVER)
@@ -747,7 +748,7 @@ func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.Functio
 		switch arg := arg.(type) {
 		case *ast.BLangNamedArgsExpression:
 			for j, name := range sig.ParamNames {
-				if name == arg.Name.Value {
+				if name == arg.Name.GetValue() {
 					reordered[j] = arg.Expr
 					break
 				}
@@ -1222,7 +1223,7 @@ func walkMappingConstructorExpr(cx *functionContext, expr *ast.BLangMappingConst
 
 		if kv.Key.Kind != ast.MappingKeyComputed {
 			if varRef, ok := kv.Key.Expr.(*ast.BLangSimpleVarRef); ok {
-				name := varRef.VariableName.Value
+				name := varRef.VariableName.GetValue()
 				lit := &ast.BLangLiteral{
 					Value:         name,
 					OriginalValue: name,
@@ -1307,14 +1308,14 @@ func createNilTypeTest(varName *ast.BLangIdentifier, symbol model.SymbolRef, ty 
 	return typeTest
 }
 
-func createVarRef(varName *ast.BLangIdentifier, symbol model.SymbolRef, ty semtypes.SemType) *ast.BLangSimpleVarRef {
+func createVarRef(varName ast.IdentifierNode, symbol model.SymbolRef, ty semtypes.SemType) *ast.BLangSimpleVarRef {
 	ref := &ast.BLangSimpleVarRef{VariableName: varName}
 	ref.SetSymbol(symbol)
 	ref.SetDeterminedType(ty)
 	return ref
 }
 
-func createResultAssignment(resultVarName *ast.BLangIdentifier, resultSymbol model.SymbolRef, resultTy semtypes.SemType, valueExpr ast.BLangExpression, pos diagnostics.Location) *ast.BLangAssignment {
+func createResultAssignment(resultVarName ast.IdentifierNode, resultSymbol model.SymbolRef, resultTy semtypes.SemType, valueExpr ast.BLangExpression, pos diagnostics.Location) *ast.BLangAssignment {
 	varRef := createVarRef(resultVarName, resultSymbol, resultTy)
 	assign := &ast.BLangAssignment{
 		VarRef: varRef,

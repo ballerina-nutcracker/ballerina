@@ -70,7 +70,7 @@ type (
 
 	BLangAnnotation struct {
 		bLangNodeBase
-		Name                            *BLangIdentifier
+		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		AnnAttachments                  []BLangAnnotationAttachment
 		MarkdownDocumentationAttachment *BLangMarkdownDocumentation
@@ -148,7 +148,7 @@ type (
 
 	BLangClassDefinition struct {
 		classDefnBase
-		Name   *BLangIdentifier
+		Name   IdentifierNode
 		symbol model.SymbolRef
 	}
 
@@ -230,12 +230,12 @@ type (
 
 	BLangConstant struct {
 		BLangVariableBase
-		Name *BLangIdentifier
+		Name IdentifierNode
 	}
 
 	BLangSimpleVariable struct {
 		BLangVariableBase
-		Name *BLangIdentifier
+		Name IdentifierNode
 	}
 
 	ClosureVarSymbol struct {
@@ -244,7 +244,7 @@ type (
 
 	bLangInvokableNodeBase struct {
 		bLangNodeBase
-		Name                            BLangIdentifier
+		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		AnnAttachments                  []BLangAnnotationAttachment
 		MarkdownDocumentationAttachment *BLangMarkdownDocumentation
@@ -274,7 +274,7 @@ type (
 
 	BLangTypeDefinition struct {
 		bLangNodeBase
-		Name                            *BLangIdentifier
+		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		typeData                        TypeData
 		annAttachments                  []BLangAnnotationAttachment
@@ -538,11 +538,11 @@ func (b *BLangAnnotationAttachment) SetExpressionNode(expr BLangExpression) {
 	b.Expr = expr
 }
 
-func (b *BLangAnnotation) GetName() *BLangIdentifier {
+func (b *BLangAnnotation) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangAnnotation) SetName(name *BLangIdentifier) {
+func (b *BLangAnnotation) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -695,11 +695,11 @@ func (b *classDefnBase) PopUnresolvedInclusions() []*BLangUserDefinedType {
 	return inclusions
 }
 
-func (b *BLangClassDefinition) GetName() *BLangIdentifier {
+func (b *BLangClassDefinition) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangClassDefinition) SetName(name *BLangIdentifier) {
+func (b *BLangClassDefinition) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -813,11 +813,11 @@ func (b *BLangCompilationUnit) SetPackageID(packageID *model.PackageID) {
 	b.packageID = packageID
 }
 
-func (b *BLangConstant) GetName() *BLangIdentifier {
+func (b *BLangConstant) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangConstant) SetName(name *BLangIdentifier) {
+func (b *BLangConstant) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -852,11 +852,11 @@ func (b *BLangConstant) GetAssociatedType() semtypes.SemType {
 	return semtypes.SemType{}
 }
 
-func (b *BLangSimpleVariable) GetName() *BLangIdentifier {
+func (b *BLangSimpleVariable) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangSimpleVariable) SetName(name *BLangIdentifier) {
+func (b *BLangSimpleVariable) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -1016,15 +1016,11 @@ const (
 )
 
 func (b *bLangInvokableNodeBase) GetName() IdentifierNode {
-	return &b.Name
+	return b.Name
 }
 
 func (b *bLangInvokableNodeBase) SetName(name IdentifierNode) {
-	if id, ok := name.(*BLangIdentifier); ok {
-		b.Name = *id
-	} else {
-		panic("name is not a BLangIdentifier")
-	}
+	b.Name = name
 }
 
 func (b *bLangInvokableNodeBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
@@ -1268,11 +1264,11 @@ func NewBLangTypeDefinition() *BLangTypeDefinition {
 	return b
 }
 
-func (b *BLangTypeDefinition) GetName() *BLangIdentifier {
+func (b *BLangTypeDefinition) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangTypeDefinition) SetName(name *BLangIdentifier) {
+func (b *BLangTypeDefinition) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -1574,7 +1570,7 @@ func addCompilationUnitNodesToPackage(p *BLangPackage, compilationUnit *BLangCom
 		case *BLangSimpleVariable:
 			p.GlobalVars = append(p.GlobalVars, *node)
 		case *BLangFunction:
-			if node.Name.Value == "init" {
+			if node.Name.GetValue() == "init" {
 				p.InitFunction = node
 			} else {
 				p.Functions = append(p.Functions, *node)

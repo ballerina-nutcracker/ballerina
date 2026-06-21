@@ -651,7 +651,7 @@ func (b *BLangFunctionTypeParam) GetName() *string {
 	if b.Name == nil {
 		return nil
 	}
-	name := b.Name.Value
+	name := b.Name.GetValue()
 	return &name
 }
 

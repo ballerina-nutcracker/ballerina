@@ -176,7 +176,7 @@ type queryLetStore struct {
 }
 
 type queryRowBinding struct {
-	varName         *ast.BLangIdentifier
+	varName         ast.IdentifierNode
 	symbol          model.SymbolRef
 	valueTy         semtypes.SemType
 	groupAggregated bool
@@ -741,7 +741,7 @@ func queryVarDefHasBindableSymbol(varDef *ast.BLangSimpleVariableDef) bool {
 	return varDef != nil &&
 		varDef.Var != nil &&
 		varDef.Var.Name != nil &&
-		varDef.Var.Name.Value != "_" &&
+		varDef.Var.Name.GetValue() != "_" &&
 		ast.SymbolIsSet(varDef.Var)
 }
 

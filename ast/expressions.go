@@ -193,7 +193,7 @@ type (
 
 	BLangFieldBaseAccess struct {
 		bLangAccessExpressionBase
-		Field BLangIdentifier
+		Field IdentifierNode
 		// I think this need a symbol to got to the field definition in type but Expr could be non atomic and
 		// this should still work
 	}
@@ -260,8 +260,8 @@ type (
 
 	BLangSimpleVarRef struct {
 		BLangVariableReferenceBase
-		PkgAlias     *BLangIdentifier
-		VariableName *BLangIdentifier
+		PkgAlias     IdentifierNode
+		VariableName IdentifierNode
 	}
 
 	BLangLocalVarRef struct {
@@ -314,7 +314,7 @@ type (
 	}
 
 	bLangInvocationBase struct {
-		Name *BLangIdentifier
+		Name IdentifierNode
 		// RawSymbol holds either a *model.SymbolRef (resolved) or a *deferredMethodSymbol (unresolved).
 		// Access via Symbol() after type resolution, or directly for deferred-symbol checks.
 		RawSymbol    model.Symbol
@@ -327,7 +327,7 @@ type (
 	BLangInvocation struct {
 		bLangExpressionBase
 		bLangInvocationBase
-		PkgAlias *BLangIdentifier
+		PkgAlias IdentifierNode
 		Async    bool
 	}
 
@@ -423,7 +423,7 @@ type (
 
 	BLangNamedArgsExpression struct {
 		bLangExpressionBase
-		Name BLangIdentifier
+		Name IdentifierNode
 		Expr BLangExpression
 		// JBallerina has symbols for these as well. Need to think if we need them as well (for go to definition)
 	}
@@ -734,11 +734,11 @@ func (b *BLangCheckPanickedExpr) GetOperatorKind() model.OperatorKind {
 	return model.OperatorKind_CHECK_PANIC
 }
 
-func (b *BLangSimpleVarRef) GetPackageAlias() *BLangIdentifier {
+func (b *BLangSimpleVarRef) GetPackageAlias() IdentifierNode {
 	return b.PkgAlias
 }
 
-func (b *BLangSimpleVarRef) GetVariableName() *BLangIdentifier {
+func (b *BLangSimpleVarRef) GetVariableName() IdentifierNode {
 	return b.VariableName
 }
 
@@ -984,8 +984,8 @@ func (b *BLangFieldBaseAccess) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangFieldBaseAccess) GetFieldName() *BLangIdentifier {
-	return &b.Field
+func (b *BLangFieldBaseAccess) GetFieldName() IdentifierNode {
+	return b.Field
 }
 
 func (b *BLangListConstructorExpr) GetExpressions() []BLangExpression {
@@ -1059,12 +1059,12 @@ func (b *BLangMappingConstructorExpr) GetFields() []MappingField {
 	return b.Fields
 }
 
-func (b *BLangNamedArgsExpression) SetName(name *BLangIdentifier) {
-	b.Name = *name
+func (b *BLangNamedArgsExpression) SetName(name IdentifierNode) {
+	b.Name = name
 }
 
-func (b *BLangNamedArgsExpression) GetName() *BLangIdentifier {
-	return &b.Name
+func (b *BLangNamedArgsExpression) GetName() IdentifierNode {
+	return b.Name
 }
 
 func (b *BLangNamedArgsExpression) GetExpression() BLangExpression {

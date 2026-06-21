@@ -1020,7 +1020,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	nextRefForValue.SetDeterminedType(semtypes.MAPPING)
 
 	valueAccess := &ast.BLangFieldBaseAccess{
-		Field: ast.BLangIdentifier{Value: "value"},
+		Field: &ast.BLangIdentifier{Value: "value"},
 	}
 	valueAccess.Expr = nextRefForValue
 	valueAccess.SetDeterminedType(loopVarDef.Var.GetDeterminedType())
