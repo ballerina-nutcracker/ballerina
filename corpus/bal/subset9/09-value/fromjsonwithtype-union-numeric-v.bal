@@ -23,11 +23,7 @@ type IntOrString int|string;
 type OptFloat float?;
 type DecimalOrString decimal|string;
 
-public function main() {
-    checkpanic run();
-}
-
-function run() returns error? {
+public function main() returns error? {
     // float64 → int|string: float doesn't match int or string exactly in first
     // loop, but numeric coercion float→int succeeds in the second loop.
     json f = 2.0;

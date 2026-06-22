@@ -34,11 +34,7 @@ type StrMap map<string>;
 type IntMap map<int>;
 type StrOrInt StrMap|IntMap;
 
-public function main() {
-    checkpanic run();
-}
-
-function run() returns error? {
+public function main() returns error? {
     json catJson = {"name": "Whiskers", "lives": 9};
     Animal cat = check catJson.fromJsonWithType(Animal);
     io:println(cat); // @output {"name":"Whiskers","lives":9}

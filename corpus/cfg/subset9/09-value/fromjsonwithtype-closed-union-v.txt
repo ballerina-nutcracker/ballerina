@@ -1,6 +1,40 @@
 (main
   (bb0 () ()
     (var-def
+      (variable ageOnly (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal age)
+            (literal 5))))))
+    (var-def
+      (variable ageOnlyPet (type
+        (user-defined-type Pet)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref ageOnly)
+            (simple-var-ref Pet)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ageOnlyPet))))
+    (var-def
+      (variable typeOnly (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal pet_type)
+            (literal Cat))))))
+    (var-def
+      (variable typeOnlyPet (type
+        (user-defined-type Pet)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref typeOnly)
+            (simple-var-ref Pet)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref typeOnlyPet))))
+    (var-def
       (variable petJson (type
         (builtin-ref-type json)) (expr
         (mapping-constructor-expr
@@ -20,5 +54,7 @@
             (simple-var-ref petJson)
             (simple-var-ref Pet)))
           (error-type)))))
+    (return
+      (literal <nil>))
   )
 )

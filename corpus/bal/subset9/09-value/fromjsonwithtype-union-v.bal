@@ -42,14 +42,15 @@ type PersonNilAge record {|
 
 type AnyMap map<any>;
 
-public function main() {
-    checkpanic run();
-}
-
-function run() returns error? {
+public function main() returns error? {
     json num = 42;
     IntOrString asUnion = check num.fromJsonWithType(IntOrString);
     io:println(asUnion); // @output 42
+
+    // string value directly matches string member of union.
+    json str = "hello";
+    IntOrString asStr = check str.fromJsonWithType(IntOrString);
+    io:println(asStr); // @output hello
 
     json arr = [1, 2];
     JsonOrInt asJson = check arr.fromJsonWithType(JsonOrInt);

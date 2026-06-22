@@ -1,26 +1,7 @@
 module $anon.. v 0.0.0;
 import ballerina.io v 0.0.0;
 import ballerina.io v 0.0.0;
-main() -> nil{
-  bb0 {
-    %1 = run() -> bb1;
-  }
-  bb1 {
-    $desugar$0 = %1;
-    %3 = $desugar$0 is error
-    %3 ? bb2 : bb3;
-  }
-  bb2 {
-    PushScopeFrame 0
-    (1, %4) = (1, $desugar$0);
-    PopScopeFrame
-    panic %4;
-  }
-  bb3 {
-    return;
-  }
-}
-run() -> nil|error{
+main() -> nil|error{
   bb0 {
     %1 = ConstantLoad 1
     %2 = ConstantLoad 2
@@ -100,20 +81,15 @@ run() -> nil|error{
     %35 = println(%34) -> bb14;
   }
   bb14 {
-    %36 = ConstantLoad 1
-    %37 = ConstantLoad 2
-    %38 = ConstantLoad 3
-    %39 = ConstantLoad 4
-    %40 = ConstantLoad 4
-    %41 = newArray [nil|boolean|int|float|decimal|string|...|......][%40]{%36, %37, %38, %39}
-    arr = %41;
-    %43 = ConstantLoad typedesc
-    %44 = fromJsonWithType(arr,%43) -> bb15;
+    %36 = ConstantLoad hello
+    strVal = %36;
+    %38 = ConstantLoad typedesc
+    %39 = fromJsonWithType(strVal,%38) -> bb15;
   }
   bb15 {
-    $desugar$3 = %44;
-    %46 = $desugar$3 is error
-    %46 ? bb16 : bb17;
+    $desugar$3 = %39;
+    %41 = $desugar$3 is error
+    %41 ? bb16 : bb17;
   }
   bb16 {
     PushScopeFrame 0
@@ -122,17 +98,24 @@ run() -> nil|error{
     return;
   }
   bb17 {
-    intArray = $desugar$3;
-    %48 = println(intArray) -> bb18;
+    s = $desugar$3;
+    %43 = println(s) -> bb18;
   }
   bb18 {
-    %49 = ConstantLoad typedesc
-    %50 = fromJsonWithType(arr,%49) -> bb19;
+    %44 = ConstantLoad 1
+    %45 = ConstantLoad 2
+    %46 = ConstantLoad 3
+    %47 = ConstantLoad 4
+    %48 = ConstantLoad 4
+    %49 = newArray [nil|boolean|int|float|decimal|string|...|......][%48]{%44, %45, %46, %47}
+    arr = %49;
+    %51 = ConstantLoad typedesc
+    %52 = fromJsonWithType(arr,%51) -> bb19;
   }
   bb19 {
-    $desugar$4 = %50;
-    %52 = $desugar$4 is error
-    %52 ? bb20 : bb21;
+    $desugar$4 = %52;
+    %54 = $desugar$4 is error
+    %54 ? bb20 : bb21;
   }
   bb20 {
     PushScopeFrame 0
@@ -141,25 +124,17 @@ run() -> nil|error{
     return;
   }
   bb21 {
-    inferred = $desugar$4;
-    %54 = println(inferred) -> bb22;
+    intArray = $desugar$4;
+    %56 = println(intArray) -> bb22;
   }
   bb22 {
-    %55 = ConstantLoad a
-    %56 = ConstantLoad e
-    %57 = ConstantLoad i
-    %58 = ConstantLoad o
-    %59 = ConstantLoad u
-    %60 = ConstantLoad 5
-    %61 = newArray [nil|boolean|int|float|decimal|string|...|......][%60]{%55, %56, %57, %58, %59}
-    vowels = %61;
-    %63 = ConstantLoad typedesc
-    %64 = fromJsonWithType(vowels,%63) -> bb23;
+    %57 = ConstantLoad typedesc
+    %58 = fromJsonWithType(arr,%57) -> bb23;
   }
   bb23 {
-    $desugar$5 = %64;
-    %66 = $desugar$5 is error
-    %66 ? bb24 : bb25;
+    $desugar$5 = %58;
+    %60 = $desugar$5 is error
+    %60 ? bb24 : bb25;
   }
   bb24 {
     PushScopeFrame 0
@@ -168,23 +143,25 @@ run() -> nil|error{
     return;
   }
   bb25 {
-    chars = $desugar$5;
-    %68 = println(chars) -> bb26;
+    inferred = $desugar$5;
+    %62 = println(inferred) -> bb26;
   }
   bb26 {
-    %69 = ConstantLoad a
-    %70 = ConstantLoad 1
-    %71 = ConstantLoad b
-    %72 = ConstantLoad 2
-    %73 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%69=%70, %71=%72}
-    m = %73;
-    %75 = ConstantLoad typedesc
-    %76 = fromJsonWithType(m,%75) -> bb27;
+    %63 = ConstantLoad a
+    %64 = ConstantLoad e
+    %65 = ConstantLoad i
+    %66 = ConstantLoad o
+    %67 = ConstantLoad u
+    %68 = ConstantLoad 5
+    %69 = newArray [nil|boolean|int|float|decimal|string|...|......][%68]{%63, %64, %65, %66, %67}
+    vowels = %69;
+    %71 = ConstantLoad typedesc
+    %72 = fromJsonWithType(vowels,%71) -> bb27;
   }
   bb27 {
-    $desugar$6 = %76;
-    %78 = $desugar$6 is error
-    %78 ? bb28 : bb29;
+    $desugar$6 = %72;
+    %74 = $desugar$6 is error
+    %74 ? bb28 : bb29;
   }
   bb28 {
     PushScopeFrame 0
@@ -193,23 +170,23 @@ run() -> nil|error{
     return;
   }
   bb29 {
-    mi = $desugar$6;
-    %80 = println(mi) -> bb30;
+    chars = $desugar$6;
+    %76 = println(chars) -> bb30;
   }
   bb30 {
-    %81 = ConstantLoad name
-    %82 = ConstantLoad Alice
-    %83 = ConstantLoad age
-    %84 = ConstantLoad 30
-    %85 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%81=%82, %83=%84}
-    p = %85;
-    %87 = ConstantLoad typedesc
-    %88 = fromJsonWithType(p,%87) -> bb31;
+    %77 = ConstantLoad a
+    %78 = ConstantLoad 1
+    %79 = ConstantLoad b
+    %80 = ConstantLoad 2
+    %81 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%77=%78, %79=%80}
+    m = %81;
+    %83 = ConstantLoad typedesc
+    %84 = fromJsonWithType(m,%83) -> bb31;
   }
   bb31 {
-    $desugar$7 = %88;
-    %90 = $desugar$7 is error
-    %90 ? bb32 : bb33;
+    $desugar$7 = %84;
+    %86 = $desugar$7 is error
+    %86 ? bb32 : bb33;
   }
   bb32 {
     PushScopeFrame 0
@@ -218,21 +195,23 @@ run() -> nil|error{
     return;
   }
   bb33 {
-    person = $desugar$7;
-    %92 = println(person) -> bb34;
+    mi = $desugar$7;
+    %88 = println(mi) -> bb34;
   }
   bb34 {
-    %93 = ConstantLoad name
-    %94 = ConstantLoad Alice
-    %95 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%93=%94}
-    noAge = %95;
-    %97 = ConstantLoad typedesc
-    %98 = fromJsonWithType(noAge,%97) -> bb35;
+    %89 = ConstantLoad name
+    %90 = ConstantLoad Alice
+    %91 = ConstantLoad age
+    %92 = ConstantLoad 30
+    %93 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%89=%90, %91=%92}
+    p = %93;
+    %95 = ConstantLoad typedesc
+    %96 = fromJsonWithType(p,%95) -> bb35;
   }
   bb35 {
-    $desugar$8 = %98;
-    %100 = $desugar$8 is error
-    %100 ? bb36 : bb37;
+    $desugar$8 = %96;
+    %98 = $desugar$8 is error
+    %98 ? bb36 : bb37;
   }
   bb36 {
     PushScopeFrame 0
@@ -241,22 +220,21 @@ run() -> nil|error{
     return;
   }
   bb37 {
-    nilAgePerson = $desugar$8;
-    %102 = println(nilAgePerson) -> bb38;
+    person = $desugar$8;
+    %100 = println(person) -> bb38;
   }
   bb38 {
-    %103 = ConstantLoad 1
-    %104 = ConstantLoad x
-    %105 = ConstantLoad 2
-    %106 = newArray [nil|boolean|int|float|decimal|string|...|......][%105]{%103, %104}
-    tuple = %106;
-    %108 = ConstantLoad typedesc
-    %109 = fromJsonWithType(tuple,%108) -> bb39;
+    %101 = ConstantLoad name
+    %102 = ConstantLoad Alice
+    %103 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%101=%102}
+    noAge = %103;
+    %105 = ConstantLoad typedesc
+    %106 = fromJsonWithType(noAge,%105) -> bb39;
   }
   bb39 {
-    $desugar$9 = %109;
-    %111 = $desugar$9 is error
-    %111 ? bb40 : bb41;
+    $desugar$9 = %106;
+    %108 = $desugar$9 is error
+    %108 ? bb40 : bb41;
   }
   bb40 {
     PushScopeFrame 0
@@ -265,12 +243,138 @@ run() -> nil|error{
     return;
   }
   bb41 {
-    tupleVal = $desugar$9;
-    %113 = println(tupleVal) -> bb42;
+    nilAgePerson = $desugar$9;
+    %110 = println(nilAgePerson) -> bb42;
   }
   bb42 {
-    %114 = ConstantLoad <nil>
-    %0 = %114;
+    %111 = ConstantLoad name
+    %112 = ConstantLoad Eve
+    %113 = ConstantLoad role
+    %114 = ConstantLoad admin
+    %115 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%111=%112, %113=%114}
+    extra = %115;
+    %117 = ConstantLoad typedesc
+    %118 = fromJsonWithType(extra,%117) -> bb43;
+  }
+  bb43 {
+    $desugar$10 = %118;
+    %120 = $desugar$10 is error
+    %120 ? bb44 : bb45;
+  }
+  bb44 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$10);
+    PopScopeFrame
+    return;
+  }
+  bb45 {
+    op = $desugar$10;
+    %122 = println(op) -> bb46;
+  }
+  bb46 {
+    %123 = ConstantLoad name
+    %124 = ConstantLoad Bob
+    %125 = ConstantLoad address
+    %126 = ConstantLoad city
+    %127 = ConstantLoad NYC
+    %128 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%126=%127}
+    %129 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%123=%124, %125=%128}
+    emp = %129;
+    %131 = ConstantLoad typedesc
+    %132 = fromJsonWithType(emp,%131) -> bb47;
+  }
+  bb47 {
+    $desugar$11 = %132;
+    %134 = $desugar$11 is error
+    %134 ? bb48 : bb49;
+  }
+  bb48 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$11);
+    PopScopeFrame
+    return;
+  }
+  bb49 {
+    empVal = $desugar$11;
+    %136 = println(empVal) -> bb50;
+  }
+  bb50 {
+    %137 = ConstantLoad 1
+    %138 = ConstantLoad x
+    %139 = ConstantLoad 2
+    %140 = newArray [nil|boolean|int|float|decimal|string|...|......][%139]{%137, %138}
+    tuple = %140;
+    %142 = ConstantLoad typedesc
+    %143 = fromJsonWithType(tuple,%142) -> bb51;
+  }
+  bb51 {
+    $desugar$12 = %143;
+    %145 = $desugar$12 is error
+    %145 ? bb52 : bb53;
+  }
+  bb52 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb53 {
+    tupleVal = $desugar$12;
+    %147 = println(tupleVal) -> bb54;
+  }
+  bb54 {
+    %148 = ConstantLoad 1
+    %149 = ConstantLoad x
+    %150 = ConstantLoad 2
+    %151 = ConstantLoad 3
+    %152 = ConstantLoad 4
+    %153 = newArray [nil|boolean|int|float|decimal|string|...|......][%152]{%148, %149, %150, %151}
+    restTuple = %153;
+    %155 = ConstantLoad typedesc
+    %156 = fromJsonWithType(restTuple,%155) -> bb55;
+  }
+  bb55 {
+    $desugar$13 = %156;
+    %158 = $desugar$13 is error
+    %158 ? bb56 : bb57;
+  }
+  bb56 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb57 {
+    openTupleVal = $desugar$13;
+    %160 = println(openTupleVal) -> bb58;
+  }
+  bb58 {
+    %161 = ConstantLoad 1
+    %162 = ConstantLoad y
+    %163 = ConstantLoad 2
+    %164 = newArray [nil|boolean|int|float|decimal|string|...|......][%163]{%161, %162}
+    fixedOnly = %164;
+    %166 = ConstantLoad typedesc
+    %167 = fromJsonWithType(fixedOnly,%166) -> bb59;
+  }
+  bb59 {
+    $desugar$14 = %167;
+    %169 = $desugar$14 is error
+    %169 ? bb60 : bb61;
+  }
+  bb60 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$14);
+    PopScopeFrame
+    return;
+  }
+  bb61 {
+    fixedOnlyVal = $desugar$14;
+    %171 = println(fixedOnlyVal) -> bb62;
+  }
+  bb62 {
+    %172 = ConstantLoad <nil>
+    %0 = %172;
     return;
   }
 }

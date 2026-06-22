@@ -1,4 +1,7 @@
 -- stdout --
+hello
+42
+true
 [1,null,3]
 {"a":1,"b":null}
 [[1,2],[3,4]]

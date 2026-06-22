@@ -1,12 +1,5 @@
 (main
   (bb0 () ()
-    (expression-stmt
-      (check-panicked-expr
-        (invocation run ())))
-  )
-)
-(run
-  (bb0 () ()
     (var-def
       (variable badBool (type
         (builtin-ref-type json)) (expr
@@ -167,6 +160,57 @@
           (invocation lang.value fromJsonWithType (
             (simple-var-ref shortOpenTuple)
             (simple-var-ref OpenIntStringTuple)))
+          (error-type)))))
+    (var-def
+      (variable nullVal (type
+        (builtin-ref-type json)) (expr
+        (literal <nil>))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref nullVal)
+            (typedesc-expr
+              (value-type int))))
+          (error-type)))))
+    (var-def
+      (variable numBool (type
+        (builtin-ref-type json)) (expr
+        (literal 42))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref numBool)
+            (typedesc-expr
+              (value-type boolean))))
+          (error-type)))))
+    (var-def
+      (variable arrForMap (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arrForMap)
+            (simple-var-ref IntMap)))
+          (error-type)))))
+    (var-def
+      (variable mapForArr (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref mapForArr)
+            (simple-var-ref IntArray)))
           (error-type)))))
     (return
       (literal <nil>))

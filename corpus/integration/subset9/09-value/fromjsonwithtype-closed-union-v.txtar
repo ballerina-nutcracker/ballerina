@@ -1,3 +1,5 @@
 -- stdout --
+{"age":5}
+{"pet_type":"Cat"}
 true
 -- stderr --

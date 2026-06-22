@@ -1,5 +1,6 @@
 -- stdout --
 42
+hello
 [1,2]
 true
 {"name":"Bob"}

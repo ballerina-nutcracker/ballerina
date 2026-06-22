@@ -16,11 +16,20 @@
 
 import ballerina/io;
 
-public function main() {
-    checkpanic run();
-}
+public function main() returns error? {
+    // scalar primitives to json.
+    json strJson = "hello";
+    json strOut = check strJson.fromJsonWithType(json);
+    io:println(strOut); // @output hello
 
-function run() returns error? {
+    json intJson = 42;
+    json intOut = check intJson.fromJsonWithType(json);
+    io:println(intOut); // @output 42
+
+    json boolJson = true;
+    json boolOut = check boolJson.fromJsonWithType(json);
+    io:println(boolOut); // @output true
+
     // json array to json (including null elements).
     json arr = [1, (), 3];
     json arrOut = check arr.fromJsonWithType(json);

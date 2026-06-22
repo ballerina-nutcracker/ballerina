@@ -2,35 +2,18 @@
   (import-package ballerina io (as io))
   (import-package ballerina lang value (as lang.value))
   (function main () (
-    (value-type null))
-    (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation run ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$0))))
-  (function run () (
     (union-type
       (error-type)
       (value-type null)))
     (block-function-body
       (var-def
-        (variable arr (type
+        (variable strJson (type
           (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal <nil>)
-            (literal 3)))))
+          (literal hello))))
       (var-def
         (variable $desugar$0 (expr
           (invocation lang.value fromJsonWithType (
-            (simple-var-ref arr)
+            (simple-var-ref strJson)
             (typedesc-expr
               (builtin-ref-type json)))))))
       (if
@@ -40,9 +23,81 @@
           (return
             (simple-var-ref $desugar$0))) ())
       (var-def
-        (variable arrOut (type
+        (variable strOut (type
           (builtin-ref-type json)) (expr
           (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref strOut))))
+      (var-def
+        (variable intJson (type
+          (builtin-ref-type json)) (expr
+          (literal 42))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref intJson)
+            (typedesc-expr
+              (builtin-ref-type json)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable intOut (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref intOut))))
+      (var-def
+        (variable boolJson (type
+          (builtin-ref-type json)) (expr
+          (literal true))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref boolJson)
+            (typedesc-expr
+              (builtin-ref-type json)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable boolOut (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref boolOut))))
+      (var-def
+        (variable arr (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal <nil>)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arr)
+            (typedesc-expr
+              (builtin-ref-type json)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable arrOut (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$3))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref arrOut))))
@@ -57,21 +112,21 @@
               (literal b)
               (literal <nil>))))))
       (var-def
-        (variable $desugar$1 (expr
+        (variable $desugar$4 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref m)
             (typedesc-expr
               (builtin-ref-type json)))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$1))
+          (simple-var-ref $desugar$4))
         (block-stmt
           (return
-            (simple-var-ref $desugar$1))) ())
+            (simple-var-ref $desugar$4))) ())
       (var-def
         (variable mapOut (type
           (builtin-ref-type json)) (expr
-          (simple-var-ref $desugar$1))))
+          (simple-var-ref $desugar$4))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref mapOut))))
@@ -86,21 +141,21 @@
               (literal 3)
               (literal 4))))))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$5 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref nested)
             (typedesc-expr
               (builtin-ref-type json)))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$2))
+          (simple-var-ref $desugar$5))
         (block-stmt
           (return
-            (simple-var-ref $desugar$2))) ())
+            (simple-var-ref $desugar$5))) ())
       (var-def
         (variable nestedOut (type
           (builtin-ref-type json)) (expr
-          (simple-var-ref $desugar$2))))
+          (simple-var-ref $desugar$5))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref nestedOut))))
@@ -120,21 +175,21 @@
                   (literal n)
                   (literal 2))))))))
       (var-def
-        (variable $desugar$3 (expr
+        (variable $desugar$6 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref rec)
             (typedesc-expr
               (builtin-ref-type json)))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$3))
+          (simple-var-ref $desugar$6))
         (block-stmt
           (return
-            (simple-var-ref $desugar$3))) ())
+            (simple-var-ref $desugar$6))) ())
       (var-def
         (variable recOut (type
           (builtin-ref-type json)) (expr
-          (simple-var-ref $desugar$3))))
+          (simple-var-ref $desugar$6))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref recOut))))

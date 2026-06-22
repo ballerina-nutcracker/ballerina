@@ -30,20 +30,6 @@
       (user-defined-type StrMap)
       (user-defined-type IntMap)))
   (function main () (
-    (value-type null))
-    (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation run ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$0))))
-  (function run () (
     (union-type
       (error-type)
       (value-type null)))

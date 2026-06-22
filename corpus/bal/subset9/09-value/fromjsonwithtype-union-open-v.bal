@@ -28,27 +28,24 @@ type PetByType record {
 
 type Pet PetByAge|PetByType;
 
-type MapUnion map<int>|map<string>;
 type IntStrArr int[]|string[];
 type IntFloat int|float;
 type ByteOrString byte|string;
 
-public function main() {
-    checkpanic run();
-}
-
-function run() returns error? {
+public function main() returns error? {
     json petJson = {"nickname": "Fido", "pet_type": "Dog", "age": 4};
     Pet pet = check petJson.fromJsonWithType(Pet);
     io:println(pet); // @output {"nickname":"Fido","pet_type":"Dog","age":4}
 
-    json mapJson = {"k": 2};
-    MapUnion mapVal = check mapJson.fromJsonWithType(MapUnion);
-    io:println(mapVal); // @output {"k":2}
-
+    // int array: first union member (int[]) selected.
     json arrJson = [1, 2];
     IntStrArr arrVal = check arrJson.fromJsonWithType(IntStrArr);
     io:println(arrVal); // @output [1,2]
+
+    // string array: second union member (string[]) selected.
+    json strArrJson = ["a", "b"];
+    IntStrArr strArrVal = check strArrJson.fromJsonWithType(IntStrArr);
+    io:println(strArrVal); // @output ["a","b"]
 
     json floatJson = 12.0;
     IntFloat numVal = check floatJson.fromJsonWithType(IntFloat);

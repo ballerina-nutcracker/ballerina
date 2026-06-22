@@ -22,8 +22,60 @@
       (user-defined-type PetByAge)
       (user-defined-type PetByType)))
   (function main () (
-    (value-type null))
+    (union-type
+      (error-type)
+      (value-type null)))
     (block-function-body
+      (var-def
+        (variable ageOnly (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal age)
+              (literal 5))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref ageOnly)
+            (simple-var-ref Pet))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable ageOnlyPet (type
+          (user-defined-type Pet)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ageOnlyPet))))
+      (var-def
+        (variable typeOnly (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal pet_type)
+              (literal Cat))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref typeOnly)
+            (simple-var-ref Pet))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable typeOnlyPet (type
+          (user-defined-type Pet)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref typeOnlyPet))))
       (var-def
         (variable petJson (type
           (builtin-ref-type json)) (expr
@@ -43,4 +95,6 @@
             (invocation lang.value fromJsonWithType (
               (simple-var-ref petJson)
               (simple-var-ref Pet)))
-            (error-type))))))))
+            (error-type)))))
+      (return
+        (literal <nil>)))))

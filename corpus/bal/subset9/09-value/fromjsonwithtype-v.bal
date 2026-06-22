@@ -20,6 +20,7 @@ type IntArray int[];
 type StringArray string[];
 type IntMap map<int>;
 type IntStringTuple [int, string];
+type OpenIntStringTuple [int, string, int...];
 
 type Person record {|
     string name;
@@ -31,11 +32,20 @@ type PersonNilAge record {|
     int? age;
 |};
 
-public function main() {
-    checkpanic run();
-}
+type OpenPerson record {
+    string name;
+};
 
-function run() returns error? {
+type Address record {|
+    string city;
+|};
+
+type Employee record {|
+    string name;
+    Address address;
+|};
+
+public function main() returns error? {
     json arrForAny = [1, 2];
     anydata ad = check arrForAny.fromJsonWithType(anydata);
     io:println(ad); // @output [1,2]
@@ -49,6 +59,10 @@ function run() returns error? {
     io:println(b); // @output true
     boolean f = check false.fromJsonWithType(boolean);
     io:println(f); // @output false
+
+    json strVal = "hello";
+    string s = check strVal.fromJsonWithType(string);
+    io:println(s); // @output hello
 
     // arrays
     json arr = [1, 2, 3, 4];
@@ -77,9 +91,29 @@ function run() returns error? {
     PersonNilAge nilAgePerson = check noAge.fromJsonWithType(PersonNilAge);
     io:println(nilAgePerson); // @output {"name":"Alice","age":null}
 
+    // open record — extra fields are preserved
+    json extra = {"name": "Eve", "role": "admin"};
+    OpenPerson op = check extra.fromJsonWithType(OpenPerson);
+    io:println(op); // @output {"name":"Eve","role":"admin"}
+
+    // nested record
+    json emp = {"name": "Bob", "address": {"city": "NYC"}};
+    Employee empVal = check emp.fromJsonWithType(Employee);
+    io:println(empVal); // @output {"name":"Bob","address":{"city":"NYC"}}
+
     // tuples
     json tuple = [1, "x"];
     IntStringTuple tupleVal = check tuple.fromJsonWithType(IntStringTuple);
     io:println(tupleVal); // @output [1,"x"]
+
+    // open tuple with rest elements
+    json restTuple = [1, "x", 2, 3];
+    OpenIntStringTuple openTupleVal = check restTuple.fromJsonWithType(OpenIntStringTuple);
+    io:println(openTupleVal); // @output [1,"x",2,3]
+
+    // open tuple with only fixed members (no rest elements)
+    json fixedOnly = [1, "y"];
+    OpenIntStringTuple fixedOnlyVal = check fixedOnly.fromJsonWithType(OpenIntStringTuple);
+    io:println(fixedOnlyVal); // @output [1,"y"]
     return;
 }

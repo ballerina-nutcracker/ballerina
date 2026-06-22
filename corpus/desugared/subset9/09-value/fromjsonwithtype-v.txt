@@ -15,6 +15,11 @@
     (tuple-type
       (value-type int)
       (value-type string)))
+  (type-definition OpenIntStringTuple
+    (tuple-type
+      (value-type int)
+      (value-type string) (rest
+        (value-type int))))
   (type-definition Person
     (record-type
       (field name
@@ -29,21 +34,21 @@
         (union-type
           (value-type int)
           (value-type null)))))
+  (type-definition OpenPerson
+    (record-type
+      (field name
+        (value-type string))))
+  (type-definition Address
+    (record-type
+      (field city
+        (value-type string))))
+  (type-definition Employee
+    (record-type
+      (field name
+        (value-type string))
+      (field address
+        (user-defined-type Address))))
   (function main () (
-    (value-type null))
-    (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation run ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$0))))
-  (function run () (
     (union-type
       (error-type)
       (value-type null)))
@@ -128,6 +133,29 @@
         (invocation io println (
           (simple-var-ref f))))
       (var-def
+        (variable strVal (type
+          (builtin-ref-type json)) (expr
+          (literal hello))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref strVal)
+            (typedesc-expr
+              (value-type string)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s))))
+      (var-def
         (variable arr (type
           (builtin-ref-type json)) (expr
           (list-constructor-expr
@@ -136,29 +164,10 @@
             (literal 3)
             (literal 4)))))
       (var-def
-        (variable $desugar$3 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref arr)
-            (simple-var-ref IntArray))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
-      (var-def
-        (variable intArray (type
-          (array-type
-            (value-type int) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$3))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref intArray))))
-      (var-def
         (variable $desugar$4 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref arr)
-            (typedesc-expr))))))
+            (simple-var-ref IntArray))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$4))
@@ -166,10 +175,29 @@
           (return
             (simple-var-ref $desugar$4))) ())
       (var-def
-        (variable inferred (type
+        (variable intArray (type
           (array-type
             (value-type int) dimensions: 1 ([]))) (expr
           (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref intArray))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arr)
+            (typedesc-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable inferred (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$5))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref inferred))))
@@ -183,21 +211,21 @@
             (literal o)
             (literal u)))))
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$6 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref vowels)
             (simple-var-ref StringArray))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$5))
+          (simple-var-ref $desugar$6))
         (block-stmt
           (return
-            (simple-var-ref $desugar$5))) ())
+            (simple-var-ref $desugar$6))) ())
       (var-def
         (variable chars (type
           (array-type
             (value-type string) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$5))))
+          (simple-var-ref $desugar$6))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref chars))))
@@ -212,22 +240,22 @@
               (literal b)
               (literal 2))))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$7 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref m)
             (simple-var-ref IntMap))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$6))
+          (simple-var-ref $desugar$7))
         (block-stmt
           (return
-            (simple-var-ref $desugar$6))) ())
+            (simple-var-ref $desugar$7))) ())
       (var-def
         (variable mi (type
           (constrained-type
             (builtin-ref-type map)
             (value-type int))) (expr
-          (simple-var-ref $desugar$6))))
+          (simple-var-ref $desugar$7))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref mi))))
@@ -242,20 +270,20 @@
               (literal age)
               (literal 30))))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$8 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref p)
             (simple-var-ref Person))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$7))
+          (simple-var-ref $desugar$8))
         (block-stmt
           (return
-            (simple-var-ref $desugar$7))) ())
+            (simple-var-ref $desugar$8))) ())
       (var-def
         (variable person (type
           (user-defined-type Person)) (expr
-          (simple-var-ref $desugar$7))))
+          (simple-var-ref $desugar$8))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref person))))
@@ -267,34 +295,10 @@
               (literal name)
               (literal Alice))))))
       (var-def
-        (variable $desugar$8 (expr
+        (variable $desugar$9 (expr
           (invocation lang.value fromJsonWithType (
             (simple-var-ref noAge)
             (simple-var-ref PersonNilAge))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$8))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$8))) ())
-      (var-def
-        (variable nilAgePerson (type
-          (user-defined-type PersonNilAge)) (expr
-          (simple-var-ref $desugar$8))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref nilAgePerson))))
-      (var-def
-        (variable tuple (type
-          (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal x)))))
-      (var-def
-        (variable $desugar$9 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref tuple)
-            (simple-var-ref IntStringTuple))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$9))
@@ -302,11 +306,144 @@
           (return
             (simple-var-ref $desugar$9))) ())
       (var-def
-        (variable tupleVal (type
-          (user-defined-type IntStringTuple)) (expr
+        (variable nilAgePerson (type
+          (user-defined-type PersonNilAge)) (expr
           (simple-var-ref $desugar$9))))
       (expression-stmt
         (invocation io println (
+          (simple-var-ref nilAgePerson))))
+      (var-def
+        (variable extra (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Eve))
+            (key-value
+              (literal role)
+              (literal admin))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref extra)
+            (simple-var-ref OpenPerson))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$10))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$10))) ())
+      (var-def
+        (variable op (type
+          (user-defined-type OpenPerson)) (expr
+          (simple-var-ref $desugar$10))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref op))))
+      (var-def
+        (variable emp (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Bob))
+            (key-value
+              (literal address)
+              (mapping-constructor-expr
+                (key-value
+                  (literal city)
+                  (literal NYC))))))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref emp)
+            (simple-var-ref Employee))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (var-def
+        (variable empVal (type
+          (user-defined-type Employee)) (expr
+          (simple-var-ref $desugar$11))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref empVal))))
+      (var-def
+        (variable tuple (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal x)))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref tuple)
+            (simple-var-ref IntStringTuple))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$12))) ())
+      (var-def
+        (variable tupleVal (type
+          (user-defined-type IntStringTuple)) (expr
+          (simple-var-ref $desugar$12))))
+      (expression-stmt
+        (invocation io println (
           (simple-var-ref tupleVal))))
+      (var-def
+        (variable restTuple (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal x)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref restTuple)
+            (simple-var-ref OpenIntStringTuple))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (var-def
+        (variable openTupleVal (type
+          (user-defined-type OpenIntStringTuple)) (expr
+          (simple-var-ref $desugar$13))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref openTupleVal))))
+      (var-def
+        (variable fixedOnly (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal y)))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref fixedOnly)
+            (simple-var-ref OpenIntStringTuple))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (var-def
+        (variable fixedOnlyVal (type
+          (user-defined-type OpenIntStringTuple)) (expr
+          (simple-var-ref $desugar$14))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fixedOnlyVal))))
       (return
         (literal <nil>)))))

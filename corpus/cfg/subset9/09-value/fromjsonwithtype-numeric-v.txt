@@ -1,12 +1,5 @@
 (main
   (bb0 () ()
-    (expression-stmt
-      (check-panicked-expr
-        (invocation run ())))
-  )
-)
-(run
-  (bb0 () ()
     (var-def
       (variable floatNum (type
         (builtin-ref-type json)) (expr

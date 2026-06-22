@@ -1,12 +1,50 @@
 (main
   (bb0 () ()
+    (var-def
+      (variable strJson (type
+        (builtin-ref-type json)) (expr
+        (literal hello))))
+    (var-def
+      (variable strOut (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref strJson)
+            (typedesc-expr
+              (builtin-ref-type json))))))))
     (expression-stmt
-      (check-panicked-expr
-        (invocation run ())))
-  )
-)
-(run
-  (bb0 () ()
+      (invocation io println (
+        (simple-var-ref strOut))))
+    (var-def
+      (variable intJson (type
+        (builtin-ref-type json)) (expr
+        (literal 42))))
+    (var-def
+      (variable intOut (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref intJson)
+            (typedesc-expr
+              (builtin-ref-type json))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref intOut))))
+    (var-def
+      (variable boolJson (type
+        (builtin-ref-type json)) (expr
+        (literal true))))
+    (var-def
+      (variable boolOut (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref boolJson)
+            (typedesc-expr
+              (builtin-ref-type json))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref boolOut))))
     (var-def
       (variable arr (type
         (builtin-ref-type json)) (expr

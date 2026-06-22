@@ -21,14 +21,6 @@
     (union-type
       (user-defined-type PetByAge)
       (user-defined-type PetByType)))
-  (type-definition MapUnion
-    (union-type
-      (constrained-type
-        (builtin-ref-type map)
-        (value-type int))
-      (constrained-type
-        (builtin-ref-type map)
-        (value-type string))))
   (type-definition IntStrArr
     (union-type
       (array-type
@@ -44,12 +36,6 @@
       (value-type byte)
       (value-type string)))
   (function main () (
-    (value-type null))
-    (block-function-body
-      (expression-stmt
-        (check-panicked-expr
-          (invocation run ())))))
-  (function run () (
     (union-type
       (error-type)
       (value-type null)))
@@ -78,23 +64,6 @@
         (invocation io println (
           (simple-var-ref pet))))
       (var-def
-        (variable mapJson (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal k)
-              (literal 2))))))
-      (var-def
-        (variable mapVal (type
-          (user-defined-type MapUnion)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref mapJson) (
-              (simple-var-ref MapUnion)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref mapVal))))
-      (var-def
         (variable arrJson (type
           (builtin-ref-type json)) (expr
           (list-constructor-expr
@@ -110,6 +79,22 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref arrVal))))
+      (var-def
+        (variable strArrJson (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal a)
+            (literal b)))))
+      (var-def
+        (variable strArrVal (type
+          (user-defined-type IntStrArr)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref strArrJson) (
+              (simple-var-ref IntStrArr)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref strArrVal))))
       (var-def
         (variable floatJson (type
           (builtin-ref-type json)) (expr

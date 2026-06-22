@@ -16,11 +16,7 @@
 
 import ballerina/io;
 
-public function main() {
-    checkpanic run();
-}
-
-function run() returns error? {
+public function main() returns error? {
     json floatNum = 2.5;
     int rounded = check floatNum.fromJsonWithType(int);
     io:println(rounded); // @output 2

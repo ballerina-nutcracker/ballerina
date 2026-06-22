@@ -1,12 +1,5 @@
 (main
   (bb0 () ()
-    (expression-stmt
-      (check-panicked-expr
-        (invocation run ())))
-  )
-)
-(run
-  (bb0 () ()
     (var-def
       (variable arrForAny (type
         (builtin-ref-type json)) (expr
@@ -62,6 +55,21 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref f))))
+    (var-def
+      (variable strVal (type
+        (builtin-ref-type json)) (expr
+        (literal hello))))
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref strVal)
+            (typedesc-expr
+              (value-type string))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
     (var-def
       (variable arr (type
         (builtin-ref-type json)) (expr
@@ -171,6 +179,49 @@
       (invocation io println (
         (simple-var-ref nilAgePerson))))
     (var-def
+      (variable extra (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Eve))
+          (key-value
+            (literal role)
+            (literal admin))))))
+    (var-def
+      (variable op (type
+        (user-defined-type OpenPerson)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref extra)
+            (simple-var-ref OpenPerson)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref op))))
+    (var-def
+      (variable emp (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Bob))
+          (key-value
+            (literal address)
+            (mapping-constructor-expr
+              (key-value
+                (literal city)
+                (literal NYC))))))))
+    (var-def
+      (variable empVal (type
+        (user-defined-type Employee)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref emp)
+            (simple-var-ref Employee)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref empVal))))
+    (var-def
       (variable tuple (type
         (builtin-ref-type json)) (expr
         (list-constructor-expr
@@ -186,6 +237,40 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref tupleVal))))
+    (var-def
+      (variable restTuple (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal x)
+          (literal 2)
+          (literal 3)))))
+    (var-def
+      (variable openTupleVal (type
+        (user-defined-type OpenIntStringTuple)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref restTuple)
+            (simple-var-ref OpenIntStringTuple)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref openTupleVal))))
+    (var-def
+      (variable fixedOnly (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal y)))))
+    (var-def
+      (variable fixedOnlyVal (type
+        (user-defined-type OpenIntStringTuple)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref fixedOnly)
+            (simple-var-ref OpenIntStringTuple)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fixedOnlyVal))))
     (return
       (literal <nil>))
   )

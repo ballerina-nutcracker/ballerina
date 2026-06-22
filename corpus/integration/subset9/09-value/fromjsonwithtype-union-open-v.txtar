@@ -1,7 +1,7 @@
 -- stdout --
 {"nickname":"Fido","pet_type":"Dog","age":4}
-{"k":2}
 [1,2]
+["a","b"]
 true
 200
 -- stderr --

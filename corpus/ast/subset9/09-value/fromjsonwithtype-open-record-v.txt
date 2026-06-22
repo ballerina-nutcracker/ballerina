@@ -30,12 +30,6 @@
       (user-defined-type StrMap)
       (user-defined-type IntMap)))
   (function main () (
-    (value-type null))
-    (block-function-body
-      (expression-stmt
-        (check-panicked-expr
-          (invocation run ())))))
-  (function run () (
     (union-type
       (error-type)
       (value-type null)))

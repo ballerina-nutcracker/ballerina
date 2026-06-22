@@ -1,12 +1,5 @@
 (main
   (bb0 () ()
-    (expression-stmt
-      (check-panicked-expr
-        (invocation run ())))
-  )
-)
-(run
-  (bb0 () ()
     (var-def
       (variable num (type
         (builtin-ref-type json)) (expr
@@ -21,6 +14,20 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref asUnion))))
+    (var-def
+      (variable str (type
+        (builtin-ref-type json)) (expr
+        (literal hello))))
+    (var-def
+      (variable asStr (type
+        (user-defined-type IntOrString)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref str)
+            (simple-var-ref IntOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asStr))))
     (var-def
       (variable arr (type
         (builtin-ref-type json)) (expr

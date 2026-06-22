@@ -46,12 +46,6 @@
       (builtin-ref-type map)
       (value-type any)))
   (function main () (
-    (value-type null))
-    (block-function-body
-      (expression-stmt
-        (check-panicked-expr
-          (invocation run ())))))
-  (function run () (
     (union-type
       (error-type)
       (value-type null)))
@@ -70,6 +64,20 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref asUnion))))
+      (var-def
+        (variable str (type
+          (builtin-ref-type json)) (expr
+          (literal hello))))
+      (var-def
+        (variable asStr (type
+          (user-defined-type IntOrString)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref str) (
+              (simple-var-ref IntOrString)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref asStr))))
       (var-def
         (variable arr (type
           (builtin-ref-type json)) (expr

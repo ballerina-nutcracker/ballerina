@@ -18,6 +18,7 @@ import ballerina/io;
 
 type IntArray int[];
 type StringArray string[];
+type IntMap map<int>;
 type IntStringTuple [int, string];
 type OpenIntStringTuple [int, string, int...];
 
@@ -32,11 +33,7 @@ type Closed record {|
 
 type PersonOrClosed Person|Closed;
 
-public function main() {
-    checkpanic run();
-}
-
-function run() returns error? {
+public function main() returns error? {
     json badBool = "2022";
     io:println(badBool.fromJsonWithType(boolean) is error); // @output true
 
@@ -73,6 +70,22 @@ function run() returns error? {
     // open tuple: source shorter than fixed members
     json shortOpenTuple = [1];
     io:println(shortOpenTuple.fromJsonWithType(OpenIntStringTuple) is error); // @output true
+
+    // null to non-nilable scalar
+    json nullVal = ();
+    io:println(nullVal.fromJsonWithType(int) is error); // @output true
+
+    // number to boolean
+    json numBool = 42;
+    io:println(numBool.fromJsonWithType(boolean) is error); // @output true
+
+    // array where map expected
+    json arrForMap = [1, 2];
+    io:println(arrForMap.fromJsonWithType(IntMap) is error); // @output true
+
+    // map where array expected
+    json mapForArr = {"a": 1};
+    io:println(mapForArr.fromJsonWithType(IntArray) is error); // @output true
 
     return;
 }

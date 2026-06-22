@@ -28,7 +28,19 @@ type PetByType record {|
 
 type Pet PetByAge|PetByType;
 
-public function main() {
+public function main() returns error? {
+    // Only PetByAge fields match — single member selected.
+    json ageOnly = {"age": 5};
+    Pet ageOnlyPet = check ageOnly.fromJsonWithType(Pet);
+    io:println(ageOnlyPet); // @output {"age":5}
+
+    // Only PetByType fields match — single member selected.
+    json typeOnly = {"pet_type": "Cat"};
+    Pet typeOnlyPet = check typeOnly.fromJsonWithType(Pet);
+    io:println(typeOnlyPet); // @output {"pet_type":"Cat"}
+
+    // Both PetByAge and PetByType required fields present — ambiguous closed union → error.
     json petJson = {"nickname": "Fido", "pet_type": "Dog", "age": 4};
     io:println(petJson.fromJsonWithType(Pet) is error); // @output true
+    return;
 }
