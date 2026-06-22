@@ -14,11 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package compare
+package values
 
 import (
 	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values/core"
 	"math"
 	"testing"
 )
@@ -72,8 +71,8 @@ func TestCompareK(t *testing.T) {
 	assertCompareResult(t, CompareK(nan, float64(2), false), CmpGT, "CompareK(NaN,2.0,descending)")
 }
 
-func newList(values ...core.BalValue) *core.List {
-	return core.NewList(semtypes.LIST, &semtypes.LIST_ATOMIC_INNER, false, nil, 0, values)
+func newList(values ...BalValue) *List {
+	return NewList(semtypes.LIST, &semtypes.LIST_ATOMIC_INNER, false, nil, 0, values)
 }
 
 func assertCompareResult(t *testing.T, got CompareResult, want CompareResult, label string) {

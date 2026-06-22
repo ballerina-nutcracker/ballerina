@@ -14,8 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package core contains the core value types used in the Ballerina runtime.
-package core
+package values
 
 // Given we use nil for ballerina nil we'll have an explicit never value. If tried to use as operand in any operation
 // this should panic.

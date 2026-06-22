@@ -14,15 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package convert
+package values
 
 import (
 	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values/core"
 )
 
-func isLikeType(tc semtypes.Context, value core.BalValue, target semtypes.SemType, allowNumeric bool) bool {
-	valueTy := core.SemTypeForValue(value)
+func isLikeType(tc semtypes.Context, value BalValue, target semtypes.SemType, allowNumeric bool) bool {
+	valueTy := SemTypeForValue(value)
 	if semtypes.IsSubtype(tc, valueTy, target) {
 		return true
 	}
@@ -36,7 +35,7 @@ func isNilable(target semtypes.SemType) bool {
 	return semtypes.ContainsBasicType(target, semtypes.NIL)
 }
 
-func getConvertibleType(tc semtypes.Context, value core.BalValue, target semtypes.SemType,
+func getConvertibleType(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	unionErrors *[]string, allowNumeric bool,
 ) (semtypes.SemType, error) {
 	if value == nil {
@@ -53,7 +52,7 @@ func getConvertibleType(tc semtypes.Context, value core.BalValue, target semtype
 	}
 
 	if semtypes.IsSameType(tc, target, semtypes.CreateAnydata(tc)) {
-		valueTy := core.SemTypeForValue(value)
+		valueTy := SemTypeForValue(value)
 		if semtypes.IsSubtype(tc, valueTy, target) {
 			return target, nil
 		}
@@ -64,13 +63,13 @@ func getConvertibleType(tc semtypes.Context, value core.BalValue, target semtype
 	}
 
 	switch value := value.(type) {
-	case *core.Map:
+	case *Map:
 		if semtypes.IsSubtypeSimple(target, semtypes.MAPPING) {
 			if isConvertibleMapping(tc, value, target, unionErrors, allowNumeric) {
 				return target, nil
 			}
 		}
-	case *core.List:
+	case *List:
 		if semtypes.IsSubtypeSimple(target, semtypes.LIST) {
 			if isConvertibleList(tc, value, target, unionErrors, allowNumeric) {
 				return target, nil
@@ -85,7 +84,7 @@ func getConvertibleType(tc semtypes.Context, value core.BalValue, target semtype
 	return semtypes.SemType{}, incompatibleConversion(tc, value, target)
 }
 
-func getConvertibleUnionMember(tc semtypes.Context, value core.BalValue, target semtypes.SemType,
+func getConvertibleUnionMember(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	members []semtypes.SemType, unionErrors *[]string, allowNumeric bool,
 ) (semtypes.SemType, error) {
 	if isStructuredValue(value) {
@@ -122,7 +121,7 @@ func getConvertibleUnionMember(tc semtypes.Context, value core.BalValue, target 
 	return semtypes.SemType{}, incompatibleConversion(tc, value, target)
 }
 
-func isConvertibleList(tc semtypes.Context, source *core.List, target semtypes.SemType,
+func isConvertibleList(tc semtypes.Context, source *List, target semtypes.SemType,
 	unionErrors *[]string, allowNumeric bool,
 ) bool {
 	atomic := semtypes.ToListAtomicType(tc, target)
@@ -146,7 +145,7 @@ func isConvertibleList(tc semtypes.Context, source *core.List, target semtypes.S
 	return true
 }
 
-func isConvertibleMapping(tc semtypes.Context, source *core.Map, target semtypes.SemType,
+func isConvertibleMapping(tc semtypes.Context, source *Map, target semtypes.SemType,
 	unionErrors *[]string, allowNumeric bool,
 ) bool {
 	atomic := semtypes.ToMappingAtomicType(tc, target)
@@ -215,11 +214,61 @@ func fieldNeedsNilWhenMissing(tc semtypes.Context, target semtypes.SemType, name
 	return isNilable(atomic.FieldInnerVal(name))
 }
 
-func isStructuredValue(value core.BalValue) bool {
+func isStructuredValue(value BalValue) bool {
 	switch value.(type) {
-	case *core.List, *core.Map:
+	case *List, *Map:
 		return true
 	default:
 		return false
 	}
+}
+
+func unionMemberTypes(tc semtypes.Context, ty semtypes.SemType) []semtypes.SemType {
+	var members []semtypes.SemType
+	basic := semtypes.WidenToBasicTypes(ty)
+
+	if semtypes.ContainsBasicType(basic, semtypes.MAPPING) {
+		mappingTy := semtypes.Intersect(ty, semtypes.MAPPING)
+		if !semtypes.IsEmpty(tc, mappingTy) {
+			members = append(members, mappingUnionMembers(tc, mappingTy)...)
+		}
+	}
+	if semtypes.ContainsBasicType(basic, semtypes.LIST) {
+		listTy := semtypes.Intersect(ty, semtypes.LIST)
+		if !semtypes.IsEmpty(tc, listTy) {
+			members = append(members, listUnionMembers(tc, listTy)...)
+		}
+	}
+
+	simpleBasics := []semtypes.SemType{
+		semtypes.NIL, semtypes.BOOLEAN, semtypes.INT, semtypes.FLOAT, semtypes.DECIMAL,
+		semtypes.STRING, semtypes.XML, semtypes.ERROR,
+	}
+	for _, bt := range simpleBasics {
+		if semtypes.ContainsBasicType(basic, bt) {
+			member := semtypes.Intersect(ty, bt)
+			if !semtypes.IsEmpty(tc, member) {
+				members = append(members, member)
+			}
+		}
+	}
+	return members
+}
+
+func mappingUnionMembers(tc semtypes.Context, mappingTy semtypes.SemType) []semtypes.SemType {
+	alts := semtypes.MappingAlternatives(tc, mappingTy)
+	members := make([]semtypes.SemType, 0, len(alts))
+	for _, alt := range alts {
+		members = append(members, alt.SemType)
+	}
+	return members
+}
+
+func listUnionMembers(tc semtypes.Context, listTy semtypes.SemType) []semtypes.SemType {
+	alts := semtypes.ListAlternatives(tc, listTy)
+	members := make([]semtypes.SemType, 0, len(alts))
+	for _, alt := range alts {
+		members = append(members, alt.SemType)
+	}
+	return members
 }

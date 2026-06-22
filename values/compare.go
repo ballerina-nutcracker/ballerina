@@ -14,14 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package compare
+package values
 
 import (
 	"fmt"
 	"math"
 
 	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/values/core"
 )
 
 type CompareResult int8
@@ -33,7 +32,7 @@ const (
 	CmpUN CompareResult = 2
 )
 
-func Compare(x, y core.BalValue) CompareResult {
+func Compare(x, y BalValue) CompareResult {
 	if x == nil && y == nil {
 		return CmpEQ
 	}
@@ -90,30 +89,30 @@ func Compare(x, y core.BalValue) CompareResult {
 		default:
 			return CmpGT
 		}
-	case *core.List:
-		v2 := y.(*core.List)
+	case *List:
+		v2 := y.(*List)
 		return compareList(v1, v2)
 	default:
-		panic(core.NewErrorWithMessage(fmt.Sprintf("unsupported type for comparison: %T", x)))
+		panic(NewErrorWithMessage(fmt.Sprintf("unsupported type for comparison: %T", x)))
 	}
 }
 
-func CompareA(x, y core.BalValue) CompareResult {
+func CompareA(x, y BalValue) CompareResult {
 	return compareForSort(x, y, true)
 }
 
-func CompareD(x, y core.BalValue) CompareResult {
+func CompareD(x, y BalValue) CompareResult {
 	return compareForSort(x, y, false)
 }
 
-func CompareK(x, y core.BalValue, ascending bool) CompareResult {
+func CompareK(x, y BalValue, ascending bool) CompareResult {
 	if ascending {
 		return CompareA(x, y)
 	}
 	return reverseCompareResult(CompareD(x, y))
 }
 
-func compareForSort(x, y core.BalValue, ascending bool) CompareResult {
+func compareForSort(x, y BalValue, ascending bool) CompareResult {
 	if x == nil {
 		if y == nil {
 			return CmpEQ
@@ -129,8 +128,8 @@ func compareForSort(x, y core.BalValue, ascending bool) CompareResult {
 		}
 		return CmpGT
 	}
-	if xList, ok := x.(*core.List); ok {
-		yList := y.(*core.List)
+	if xList, ok := x.(*List); ok {
+		yList := y.(*List)
 		return compareListForSort(xList, yList, ascending)
 	}
 	if xFloat, ok := x.(float64); ok {
@@ -155,12 +154,12 @@ func compareForSort(x, y core.BalValue, ascending bool) CompareResult {
 
 	r := Compare(x, y)
 	if r == CmpUN {
-		panic(core.NewErrorWithMessage(fmt.Sprintf("unsupported type for comparison: %T and %T", x, y)))
+		panic(NewErrorWithMessage(fmt.Sprintf("unsupported type for comparison: %T and %T", x, y)))
 	}
 	return r
 }
 
-func compareList(x, y *core.List) CompareResult {
+func compareList(x, y *List) CompareResult {
 	xLen := x.Len()
 	yLen := y.Len()
 	minLen := min(yLen, xLen)
@@ -179,7 +178,7 @@ func compareList(x, y *core.List) CompareResult {
 	return CmpEQ
 }
 
-func compareListForSort(x, y *core.List, ascending bool) CompareResult {
+func compareListForSort(x, y *List, ascending bool) CompareResult {
 	xLen := x.Len()
 	yLen := y.Len()
 	minLen := min(yLen, xLen)

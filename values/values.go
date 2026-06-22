@@ -14,164 +14,195 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package values provides the public API for Ballerina runtime values.
 package values
 
 import (
+	"strconv"
+	"sync"
+
+	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
-	cmp "ballerina-lang-go/values/compare"
-	"ballerina-lang-go/values/convert"
-	"ballerina-lang-go/values/core"
 )
 
-// Type aliases — preserves the existing API surface for all callers.
-type (
-	// Core value types
-	BalValue      = core.BalValue
-	Function      = core.Function
-	TypeDesc      = core.TypeDesc
-	FillerFactory = core.FillerFactory
+// Currently this is just an alias on any but I think we will need to add methods to this like type
+type BalValue any
 
-	// Structured value types
-	List                   = core.List
-	Map                    = core.Map
-	MapEntry               = core.MapEntry
-	Object                 = core.Object
-	ResourceEntry          = core.ResourceEntry
-	ResourcePathSegmentDef = core.ResourcePathSegmentDef
-	Stream                 = core.Stream
-	Error                  = core.Error
-
-	// XML value types
-	XMLValue                 = core.XMLValue
-	XMLElement               = core.XMLElement
-	XMLSequence              = core.XMLSequence
-	XMLProcessingInstruction = core.XMLProcessingInstruction
-	XMLText                  = core.XMLText
-	XMLComment               = core.XMLComment
-
-	// Comparison result
-	CompareResult = cmp.CompareResult
-)
-
-// Constants re-exported from compare.
-const (
-	CmpLT CompareResult = cmp.CmpLT
-	CmpEQ CompareResult = cmp.CmpEQ
-	CmpGT CompareResult = cmp.CmpGT
-	CmpUN CompareResult = cmp.CmpUN
-)
-
-// NeverValue is the sentinel for the Ballerina never type.
-var NeverValue = core.NeverValue
-
-// Constructors
-
-func NewList(ty semtypes.SemType, atomic *semtypes.ListAtomicType, isReadonly bool, filler FillerFactory, size int, initial []BalValue) *List {
-	return core.NewList(ty, atomic, isReadonly, filler, size, initial)
+type Function struct {
+	Type      semtypes.SemType
+	LookupKey string
+	// TODO: fix type here and remove unwanted casts
+	ParentFrame any // *exec.Frame at runtime, nil for non-closures
 }
 
-func NewMap(ty semtypes.SemType, atomic *semtypes.MappingAtomicType, isReadonly bool, entries []MapEntry) *Map {
-	return core.NewMap(ty, atomic, isReadonly, entries)
+// TypeDesc is the runtime representation of a typedesc value — a thin wrapper
+// around a semtype.
+type TypeDesc struct {
+	Type        semtypes.SemType
+	Annotations AnnotationValues
 }
 
 // NewTypeDesc returns a fully initialized TypeDesc.
 func NewTypeDesc(ty semtypes.SemType, annotations AnnotationValues) *TypeDesc {
-	return core.NewTypeDesc(ty, annotations)
+	if annotations == nil {
+		annotations = NewAnnotationValues()
+	}
+	return &TypeDesc{
+		Type:        ty,
+		Annotations: annotations,
+	}
 }
 
-func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, rtable map[string][]ResourceEntry) *Object {
-	return core.NewObject(typ, fieldValues, methodKeys, rtable)
+// FillerFactory produces a fresh filler value each time it is invoked.
+// Mutable filler values (lists, mappings) must be unique per slot, so they
+// cannot be cached as a single shared value.
+type FillerFactory func() BalValue
+
+// FillerValue returns the runtime value representation for filler value according to https://ballerina.io/spec/lang/master/#FillMember
+func FillerValue(cx semtypes.Context, t semtypes.SemType) (BalValue, bool) {
+	factory, ok := FillerFactoryFor(cx, t)
+	if !ok {
+		return nil, false
+	}
+	return factory(), true
 }
 
-func NewStream(typ semtypes.SemType, next, close func() BalValue) *Stream {
-	return core.NewStream(typ, next, close)
+// FillerFactoryFor returns a factory that produces a fresh filler value for
+// the given type on each invocation.
+func FillerFactoryFor(cx semtypes.Context, t semtypes.SemType) (FillerFactory, bool) {
+	filler, ok := semtypes.FillerValue(cx, t)
+	if !ok {
+		return nil, false
+	}
+	return fillerFactoryFromDesc(cx, filler)
 }
 
-func NewError(t semtypes.SemType, message string, cause BalValue, typeName string, detail *Map) *Error {
-	return core.NewError(t, message, cause, typeName, detail)
+func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) (FillerFactory, bool) {
+	switch f := f.(type) {
+	case semtypes.SingleValueFiller:
+		v := f.Value
+		return func() BalValue { return v }, true
+	case semtypes.MappingFiller:
+		ty := f.Type
+		atomic := f.Atomic
+		readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
+		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }, true
+	case semtypes.ListFiller:
+		return listFillerFactory(cx, f)
+	case semtypes.XMLFiller:
+		return func() BalValue { return &XMLText{} }, true
+	case semtypes.ObjectFiller, semtypes.StreamFiller, semtypes.TableFiller:
+		return nil, false
+	default:
+		panic("unknown filler kind")
+	}
 }
 
-func NewErrorWithMessage(message string) *Error {
-	return core.NewErrorWithMessage(message)
+func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactory, bool) {
+	memberFactories := make([]FillerFactory, len(f.Members))
+	for i, m := range f.Members {
+		var ok bool
+		memberFactories[i], ok = fillerFactoryFromDesc(cx, m)
+		if !ok {
+			return nil, false
+		}
+	}
+	ty := f.Type
+	atomic := f.Atomic
+	readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
+	restType := f.Atomic.Rest()
+	// Resolve the rest filler factory lazily so that recursive types (e.g.
+	// `type A A[]`) do not blow the stack while building the factory graph.
+	var once sync.Once
+	var restFactory FillerFactory
+	getRestFactory := func() FillerFactory {
+		once.Do(func() { restFactory, _ = FillerFactoryFor(cx, restType) })
+		return restFactory
+	}
+	return func() BalValue {
+		initial := make([]BalValue, len(memberFactories))
+		for i, mf := range memberFactories {
+			initial[i] = mf()
+		}
+		return NewList(ty, atomic, readonly, getRestFactory(), len(memberFactories), initial)
+	}, true
 }
-
-func NewXMLElement(name string, attrs, namespaces *Map, children XMLValue, isReadonly bool) *XMLElement {
-	return core.NewXMLElement(name, attrs, namespaces, children, isReadonly)
-}
-
-func NewXMLText(body string) *XMLText {
-	return core.NewXMLText(body)
-}
-
-func NewXMLComment(body string, isReadonly bool) *XMLComment {
-	return core.NewXMLComment(body, isReadonly)
-}
-
-func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
-	return core.NewXMLProcessingInstruction(target, data, isReadonly)
-}
-
-func NewNormalizedXMLSequence(items []XMLValue) *XMLSequence {
-	return core.NewNormalizedXMLSequence(items)
-}
-
-func NewXMLConcatSequence(items ...XMLValue) *XMLSequence {
-	return core.NewXMLConcatSequence(items...)
-}
-
-// Value utilities
 
 func SemTypeForValue(v BalValue) semtypes.SemType {
-	return core.SemTypeForValue(v)
+	switch v := v.(type) {
+	case nil:
+		return semtypes.NIL
+	case bool:
+		return semtypes.BooleanConst(v)
+	case int64:
+		return semtypes.IntConst(v)
+	case float64:
+		return semtypes.FloatConst(v)
+	case string:
+		return semtypes.StringConst(v)
+	case *decimal.Decimal:
+		return semtypes.DecimalConst(*v)
+	case *List:
+		return v.Type
+	case *Map:
+		return v.Type
+	case *Error:
+		return v.Type
+	case *Function:
+		return v.Type
+	case *Object:
+		return v.Type
+	case *Stream:
+		return v.Type
+	case XMLValue:
+		return v.Type()
+	case *TypeDesc:
+		return semtypes.TYPEDESC
+	default:
+		return semtypes.ANY
+	}
 }
 
 func String(v BalValue, visited map[uintptr]bool) string {
-	return core.String(v, visited)
+	if v == nil {
+		return ""
+	}
+	return toString(v, visited, true)
 }
 
-func FillerValue(cx semtypes.Context, t semtypes.SemType) (BalValue, bool) {
-	return core.FillerValue(cx, t)
-}
-
-func FillerFactoryFor(cx semtypes.Context, t semtypes.SemType) (FillerFactory, bool) {
-	return core.FillerFactoryFor(cx, t)
-}
-
-// XML utilities
-
-func EscapeXMLAttribute(s string) string {
-	return core.EscapeXMLAttribute(s)
-}
-
-func EscapeXMLContent(s string) string {
-	return core.EscapeXMLContent(s)
-}
-
-// Equality
-
-func DeepEquals(v1, v2 BalValue) bool {
-	return core.DeepEquals(v1, v2)
-}
-
-func FloatExactEqual(a, b float64) bool {
-	return core.FloatExactEqual(a, b)
-}
-
-// Comparison
-
-func Compare(x, y BalValue) CompareResult {
-	return cmp.Compare(x, y)
-}
-
-func CompareK(x, y BalValue, ascending bool) CompareResult {
-	return cmp.CompareK(x, y, ascending)
-}
-
-// Conversion
-
-// Convert converts a JSON value to the given target type.
-// On failure it returns a lang.value ConversionError as *Error.
-func Convert(tc semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, *Error) {
-	return convert.Convert(tc, value, targetType)
+func toString(v BalValue, visited map[uintptr]bool, isDirect bool) string {
+	switch t := v.(type) {
+	case nil:
+		return "null"
+	case string:
+		if isDirect {
+			return t
+		}
+		return strconv.Quote(t)
+	case int64:
+		return strconv.FormatInt(t, 10)
+	case float64:
+		return FormatFloat(t)
+	case bool:
+		return strconv.FormatBool(t)
+	case *decimal.Decimal:
+		return t.FormatBallerina()
+	case *List:
+		return t.String(visited)
+	case *Map:
+		return t.String(visited)
+	case *Error:
+		return t.String(visited)
+	case *Function:
+		return "function " + t.LookupKey
+	case *Object:
+		return "object"
+	case *Stream:
+		return "stream"
+	case *TypeDesc:
+		return "typedesc"
+	case XMLValue:
+		return t.XMLString()
+	default:
+		return "<unsupported>"
+	}
 }
