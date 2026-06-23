@@ -2067,7 +2067,7 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(tyCtx, recordPart, semtypes.StringConst("value"))
 		}
 		if !semtypes.IsSubtype(a.tyCtx(), expectedValueType, variableType) {
-			a.ctx().SemanticError("invalid type for variable", variable.GetPosition())
+			a.ctx().SemanticError(fmt.Sprintf("invalid variable type %s", semtypes.ToString(a.tyCtx(), variableType)), variable.GetPosition())
 			return false
 		}
 	}

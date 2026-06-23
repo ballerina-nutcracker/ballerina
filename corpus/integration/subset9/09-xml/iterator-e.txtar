@@ -18,20 +18,20 @@ error[SEMANTIC_ERROR]: incompatible type: expected nil|{| value: xml:Element, ne
 23 |     record {| xml:Element value; |}? _ = xml:iterator(text).next(); // @error iterator value type is xml:Text
    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: invalid type for variable
+error[SEMANTIC_ERROR]: invalid variable type int
+  --> iterator-e.bal:34:13
+   |
+34 |     foreach int item in text { // @error foreach item type is xml:Text
+   |             ^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid variable type xml:Comment
   --> iterator-e.bal:26:13
    |
 26 |     foreach xml:Comment item in element { // @error foreach item type is xml:Element
    |             ^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: invalid type for variable
+error[SEMANTIC_ERROR]: invalid variable type xml:Comment
   --> iterator-e.bal:30:13
    |
 30 |     foreach xml:Comment item in elementOrText { // @error foreach item type is xml:Element|xml:Text
    |             ^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: invalid type for variable
-  --> iterator-e.bal:34:13
-   |
-34 |     foreach int item in text { // @error foreach item type is xml:Text
-   |             ^^^^^^^^
