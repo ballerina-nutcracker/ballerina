@@ -28,6 +28,7 @@ type (
 		Type() semtypes.SemType
 		Readonly() bool
 		XMLString() string
+		IterItems() []XMLValue
 	}
 
 	XMLElement struct {
@@ -78,6 +79,8 @@ var (
 func (e *XMLElement) Type() semtypes.SemType { return e.semType }
 
 func (e *XMLElement) Readonly() bool { return e.isReadonly }
+
+func (e *XMLElement) IterItems() []XMLValue { return []XMLValue{e} }
 
 func (e *XMLElement) XMLString() string {
 	var b strings.Builder
@@ -145,6 +148,8 @@ func (s *XMLSequence) Type() semtypes.SemType { return s.semType }
 
 func (s *XMLSequence) Readonly() bool { return s.isReadonly }
 
+func (s *XMLSequence) IterItems() []XMLValue { return s.Children }
+
 func (s *XMLSequence) XMLString() string {
 	var b strings.Builder
 	for _, child := range s.Children {
@@ -157,6 +162,8 @@ func (p *XMLProcessingInstruction) Type() semtypes.SemType { return p.semType }
 
 func (p *XMLProcessingInstruction) Readonly() bool { return p.isReadonly }
 
+func (p *XMLProcessingInstruction) IterItems() []XMLValue { return []XMLValue{p} }
+
 func (p *XMLProcessingInstruction) XMLString() string {
 	if strings.Contains(p.Data, "?>") {
 		panic(NewErrorWithMessage(fmt.Sprintf("xml processing instruction %q data must not contain '?>'", p.Target)))
@@ -168,6 +175,8 @@ func (t *XMLText) Type() semtypes.SemType { return t.semType }
 
 func (t *XMLText) Readonly() bool { return true }
 
+func (t *XMLText) IterItems() []XMLValue { return []XMLValue{t} }
+
 func (t *XMLText) XMLString() string {
 	return EscapeXMLContent(t.Body)
 }
@@ -175,6 +184,8 @@ func (t *XMLText) XMLString() string {
 func (c *XMLComment) Type() semtypes.SemType { return c.semType }
 
 func (c *XMLComment) Readonly() bool { return c.isReadonly }
+
+func (c *XMLComment) IterItems() []XMLValue { return []XMLValue{c} }
 
 func (c *XMLComment) XMLString() string {
 	if strings.Contains(c.Body, "--") || strings.HasSuffix(c.Body, "-") {

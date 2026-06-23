@@ -47,6 +47,7 @@ type packageContext struct {
 	addedImplicitImports map[string]bool
 	desugarSymbolCounter int
 	typeContext          semtypes.Context
+	xmlIteratorTypes     *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -58,6 +59,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		importedSymbols:      importedSymbols,
 		addedImplicitImports: make(map[string]bool),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
+		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
 	}
 }
 

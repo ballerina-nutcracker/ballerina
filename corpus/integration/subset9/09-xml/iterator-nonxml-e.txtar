@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of xml
+  --> iterator-nonxml-e.bal:18:9
+   |
+18 |     _ = xml:iterator(1); // @error non-xml value is not valid for xml iterator
+   |         ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: method not found: iterator
+  --> iterator-nonxml-e.bal:19:9
+   |
+19 |     _ = 1.iterator(); // @error non-xml receiver has no iterator method
+   |         ^^^^^^^^^^^^

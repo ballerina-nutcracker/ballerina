@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil|{| value: xml:Comment, never... |}, got nil|{| value: xml:Element, never... |}
+  --> iterator-e.bal:22:42
+   |
+22 |     record {| xml:Comment value; |}? _ = element.iterator().next(); // @error iterator value type is xml:Element
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil|{| value: xml:Comment, never... |}, got nil|{| value: xml<xml:Text|xml:Element>, never... |}
+  --> iterator-e.bal:24:42
+   |
+24 |     record {| xml:Comment value; |}? _ = elementOrText.iterator().next(); // @error iterator value type is xml:Element|xml:Text
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil|{| value: xml:Element, never... |}, got nil|{| value: xml:Text, never... |}
+  --> iterator-e.bal:23:42
+   |
+23 |     record {| xml:Element value; |}? _ = xml:iterator(text).next(); // @error iterator value type is xml:Text
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid type for variable
+  --> iterator-e.bal:26:13
+   |
+26 |     foreach xml:Comment item in element { // @error foreach item type is xml:Element
+   |             ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid type for variable
+  --> iterator-e.bal:30:13
+   |
+30 |     foreach xml:Comment item in elementOrText { // @error foreach item type is xml:Element|xml:Text
+   |             ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid type for variable
+  --> iterator-e.bal:34:13
+   |
+34 |     foreach int item in text { // @error foreach item type is xml:Text
+   |             ^^^^^^^^
