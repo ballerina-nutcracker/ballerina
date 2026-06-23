@@ -2115,10 +2115,9 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 		}
 		if currentStatement.HasDiagnostics() {
 			n.syntaxError(currentStatement)
-			if n.recovering() {
-				*statements = append(*statements, n.badStmt(currentStatement))
+			if !n.recovering() {
+				continue
 			}
-			continue
 		}
 		if currentStatement.Kind() == common.FORK_STATEMENT {
 			forkStmt := currentStatement.(*tree.ForkStatementNode)
@@ -2194,9 +2193,6 @@ func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName tree.Node) BLangE
 func (n *NodeBuilder) createExpression(expressionNode tree.Node) BLangExpression {
 	if expressionNode != nil && expressionNode.HasDiagnostics() {
 		n.syntaxError(expressionNode)
-		if n.recovering() {
-			return n.badExprOrAction(expressionNode)
-		}
 	}
 	result, err := n.createExpressionInner(expressionNode)
 	if err == nil {
@@ -2224,9 +2220,6 @@ func (n *NodeBuilder) createExpressionInner(expressionNode tree.Node) (BLangExpr
 func (n *NodeBuilder) createActionOrExpression(actionOrExpression tree.Node) BLangActionOrExpression {
 	if actionOrExpression != nil && actionOrExpression.HasDiagnostics() {
 		n.syntaxError(actionOrExpression)
-		if n.recovering() {
-			return n.badExprOrAction(actionOrExpression)
-		}
 	}
 	result, err := n.createActionOrExpressionInner(actionOrExpression)
 	if err == nil {
@@ -3293,7 +3286,12 @@ func (n *NodeBuilder) TransformSimpleNameReference(simpleNameReferenceNode *tree
 }
 
 func (n *NodeBuilder) TransformQualifiedNameReference(qualifiedNameReferenceNode *tree.QualifiedNameReferenceNode) BLangNode {
-	panic("TransformQualifiedNameReference unimplemented")
+	nameReference := n.createBLangNameReference(qualifiedNameReferenceNode)
+	bLVarRef := &BLangSimpleVarRef{}
+	bLVarRef.pos = n.getPosition(qualifiedNameReferenceNode)
+	bLVarRef.PkgAlias = nameReference[0]
+	bLVarRef.VariableName = nameReference[1]
+	return bLVarRef
 }
 
 func (n *NodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameReferenceNode *tree.BuiltinSimpleNameReferenceNode) BLangNode {
