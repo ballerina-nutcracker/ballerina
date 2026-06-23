@@ -20,6 +20,8 @@ type preallocatedTypeVals struct {
 	none      basicCellTypeVals
 	limited   basicCellTypeVals
 	unlimited basicCellTypeVals
+	json      SemType
+	anydata   SemType
 }
 
 type basicCellTypeVals struct {
@@ -52,11 +54,35 @@ type basicCellTypeVals struct {
 }
 
 func newPreallocatedTypeVals(env Env) preallocatedTypeVals {
-	return preallocatedTypeVals{
+	p := preallocatedTypeVals{
 		none:      newBasicCellTypeVals(env, CellMutability_CELL_MUT_NONE),
 		limited:   newBasicCellTypeVals(env, CellMutability_CELL_MUT_LIMITED),
 		unlimited: newBasicCellTypeVals(env, CellMutability_CELL_MUT_UNLIMITED),
 	}
+	env.preallocatedTypeVals = p
+	p.json = buildJSON(env)
+	p.anydata = buildAnydata(env)
+	return p
+}
+
+func buildJSON(env Env) SemType {
+	listDef := &ListDefinition{}
+	mapDef := &MappingDefinition{}
+	j := Union(SIMPLE_OR_STRING, Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
+	listDef.DefineListTypeWrappedWithEnvSemType(env, j)
+	mapDef.DefineMappingTypeWrapped(env, nil, j)
+	return j
+}
+
+func buildAnydata(env Env) SemType {
+	listDef := &ListDefinition{}
+	mapDef := &MappingDefinition{}
+	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
+	ad := Union(Union(SIMPLE_OR_STRING, Union(XML, Union(REGEXP, tableTy))),
+		Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
+	listDef.DefineListTypeWrappedWithEnvSemType(env, ad)
+	mapDef.DefineMappingTypeWrapped(env, nil, ad)
+	return ad
 }
 
 func newBasicCellTypeVals(env Env, mut CellMutability) basicCellTypeVals {

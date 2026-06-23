@@ -151,7 +151,8 @@ func TestEnvInitRecAtoms(t *testing.T) {
 	recListAtoms := env.recListAtoms
 	env.recListAtomsMutex.Unlock()
 
-	assertEqual(t, len(recListAtoms), 2)
+	// 2 predefined + 2 preallocated (json, anydata)
+	assertEqual(t, len(recListAtoms), 4)
 	if recListAtoms[0] == nil {
 		t.Error("recListAtoms[0] should not be nil")
 	} else if recListAtoms[0] != LIST_ATOMIC_RO {
@@ -160,13 +161,20 @@ func TestEnvInitRecAtoms(t *testing.T) {
 	if recListAtoms[1] != nil {
 		t.Error("recListAtoms[1] should be nil")
 	}
+	if recListAtoms[2] == nil {
+		t.Error("recListAtoms[2] (json) should not be nil")
+	}
+	if recListAtoms[3] == nil {
+		t.Error("recListAtoms[3] (anydata) should not be nil")
+	}
 
 	// Test recMappingAtoms
 	env.recMappingAtomsMutex.Lock()
 	recMappingAtoms := env.recMappingAtoms
 	env.recMappingAtomsMutex.Unlock()
 
-	assertEqual(t, len(recMappingAtoms), 2)
+	// 2 predefined + 2 preallocated (json, anydata)
+	assertEqual(t, len(recMappingAtoms), 4)
 	if recMappingAtoms[0] == nil {
 		t.Error("recMappingAtoms[0] should not be nil")
 	} else if recMappingAtoms[0] != MAPPING_ATOMIC_RO {
@@ -176,6 +184,12 @@ func TestEnvInitRecAtoms(t *testing.T) {
 		t.Error("recMappingAtoms[1] should not be nil")
 	} else if recMappingAtoms[1] != MAPPING_ATOMIC_OBJECT_RO {
 		t.Errorf("recMappingAtoms[1] does not match MAPPING_ATOMIC_OBJECT_RO")
+	}
+	if recMappingAtoms[2] == nil {
+		t.Error("recMappingAtoms[2] (json) should not be nil")
+	}
+	if recMappingAtoms[3] == nil {
+		t.Error("recMappingAtoms[3] (anydata) should not be nil")
 	}
 
 	// Test recFunctionAtoms

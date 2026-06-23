@@ -45,19 +45,6 @@ func getConvertibleType(tc semtypes.Context, value BalValue, target semtypes.Sem
 		return semtypes.SemType{}, cannotConvertNil(tc, target)
 	}
 
-	if semtypes.IsSameType(tc, target, semtypes.CreateJSON(tc)) {
-		if isLikeType(tc, value, target, allowNumeric) {
-			return target, nil
-		}
-	}
-
-	if semtypes.IsSameType(tc, target, semtypes.CreateAnydata(tc)) {
-		valueTy := SemTypeForValue(value)
-		if semtypes.IsSubtype(tc, valueTy, target) {
-			return target, nil
-		}
-	}
-
 	if members := unionMemberTypes(tc, target); len(members) > 1 {
 		return getConvertibleUnionMember(tc, value, target, members, unionErrors, allowNumeric)
 	}
