@@ -59,7 +59,7 @@ func XMLSingleton(primitives int) SemType {
 }
 
 func XMLSequence(constituentType SemType) SemType {
-	common.Assert(IsSubtypeSimple(constituentType, XML))
+	common.Assert(func() bool { return IsSubtypeSimple(constituentType, XML) })
 	if IsNever(constituentType) {
 		return XMLSequence(XMLSingleton(XML_PRIMITIVE_NEVER))
 	}
