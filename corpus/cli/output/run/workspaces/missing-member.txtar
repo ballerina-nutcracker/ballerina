@@ -1,7 +1,6 @@
 -- stdout --
 -- stderr --
 ballerina: no package found at path
-notamember
 within workspace
 run-workspace-corpus
 
