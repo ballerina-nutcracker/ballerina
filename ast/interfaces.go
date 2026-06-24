@@ -167,6 +167,7 @@ type InvokableNode interface {
 	AddParameter(param SimpleVariableNode)
 	GetReturnTypeDescriptor() ReturnTypeDescriptor
 	SetReturnTypeDescriptor(typeDescriptor TypeDescriptor)
+	HasExplicitReturnTypeDescriptor() bool
 	GetBody() FunctionBodyNode
 	SetBody(body FunctionBodyNode)
 	HasBody() bool
