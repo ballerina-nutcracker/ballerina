@@ -221,6 +221,7 @@ type (
 		RequiredParams       []BLangFunctionTypeParam
 		RestParam            *BLangFunctionTypeParam
 		ReturnTypeDescriptor BType
+		ParamListPos         Location
 	}
 
 	BLangFunctionTypeParam struct {
@@ -555,6 +556,14 @@ func (b *BLangErrorTypeNode) SetDistinct() {
 
 func (b *BLangFunctionType) IsAnyFunction() bool {
 	return b.bTypeGetFlags().Has(model.FlagAnyFunction)
+}
+
+func (b *BLangFunctionType) HasExplicitReturnTypeDescriptor() bool {
+	return b.bTypeGetFlags().Has(model.FlagExplicitReturnTypeDescriptor)
+}
+
+func (b *BLangFunctionType) SetExplicitReturnTypeDescriptor() {
+	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagExplicitReturnTypeDescriptor)
 }
 func (b *BLangFunctionType) IsIsolated() bool { return b.bTypeGetFlags().Has(model.FlagIsolated) }
 func (b *BLangFunctionType) IsTransactional() bool {
