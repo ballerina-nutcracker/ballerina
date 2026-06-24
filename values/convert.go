@@ -23,9 +23,19 @@ import (
 	"ballerina-lang-go/semtypes"
 )
 
-// Convert converts a value to the given target type.
-// On failure it returns a lang.value ConversionError as *Error.
-func Convert(tc semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, *Error) {
+// CloneWithType implements the cloneWithType abstract operation defined in the Ballerina spec
+// (https://ballerina.io/spec/lang/master/#section_16.6).
+//
+// It constructs a value of targetType by deep-cloning value, applying the following conversions:
+//   - the inherent type of any structural value comes from targetType
+//   - numeric values may be converted between int, float, and decimal via NumericConvert
+//   - if targetType is a record with default values, missing fields are filled from those defaults
+//
+// Note: currently only covers the json subset required by fromJsonWithType; support for
+// the full anydata domain (xml, table, cycles) will be added as those types come into scope.
+//
+// On failure it returns a ConversionError wrapped as *Error.
+func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, *Error) {
 	var unionErrors []string
 	convertibleType, err := getConvertibleType(tc, value, targetType, &unionErrors, true)
 	if err != nil {
