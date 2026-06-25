@@ -465,8 +465,10 @@ func (f *FieldDescriptor) MemberType() semtypes.SemType      { return f.ty }
 func (f *FieldDescriptor) SetMemberType(ty semtypes.SemType) { f.ty = ty }
 func (f *FieldDescriptor) IsPublic() bool                    { return f.isPublic }
 func (f *FieldDescriptor) IsReadonly() bool                  { return f.flags&FieldDescriptorReadonly != 0 }
-func (f *FieldDescriptor) IsOptional() bool                  { return f.flags&FieldDescriptorOptional != 0 }
-func (f *FieldDescriptor) HasDefault() bool                  { return f.flags&FieldDescriptorHasDefault != 0 }
+
+func (f *FieldDescriptor) IsOptional() bool { return f.flags&FieldDescriptorOptional != 0 }
+
+func (f *FieldDescriptor) HasDefault() bool { return f.flags&FieldDescriptorHasDefault != 0 }
 
 type MethodDescriptor struct {
 	name      string
@@ -494,7 +496,8 @@ func NewRestTypeDescriptor() RestTypeDescriptor {
 	return RestTypeDescriptor{}
 }
 
-func (r *RestTypeDescriptor) MemberName() string                { panic("RestTypeDescriptor has no name") }
+func (r *RestTypeDescriptor) MemberName() string { panic("RestTypeDescriptor has no name") }
+
 func (r *RestTypeDescriptor) MemberKind() InclusionMemberKind   { return InclusionMemberKindRestType }
 func (r *RestTypeDescriptor) MemberType() semtypes.SemType      { return r.ty }
 func (r *RestTypeDescriptor) SetMemberType(ty semtypes.SemType) { r.ty = ty }
@@ -642,6 +645,8 @@ func mapToLangPrefixIfNeeded(prefix string) string {
 		return "lang.boolean"
 	case "decimal":
 		return "lang.decimal"
+	case "float":
+		return "lang.float"
 	case "array":
 		return "lang.array"
 	case "map":

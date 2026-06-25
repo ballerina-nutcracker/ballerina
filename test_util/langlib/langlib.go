@@ -74,6 +74,14 @@ var migratedLangLibs = []bundledLib{
 	},
 	{
 		org:        "ballerina",
+		nameComps:  []string{"lang", "float"},
+		implicitID: "lang.float",
+		srcFS:      langlibs.FS,
+		balPath:    "ballerina/lang.float/0.0.1/any/lang.float.bal",
+		version:    "0.0.1",
+	},
+	{
+		org:        "ballerina",
 		nameComps:  []string{"lang", "error"},
 		implicitID: "lang.error",
 		srcFS:      langlibs.FS,

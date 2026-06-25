@@ -1,0 +1,242 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang float (as floats))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation floats sum ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats sum (
+            (literal 1.5)
+            (literal 2.25)
+            (unary-expr -
+              (literal 0.75)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats max (
+            (literal 1.5)
+            (literal 2.25)
+            (unary-expr -
+              (literal 0.75)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats min (
+            (literal 1.5)
+            (literal 2.25)
+            (unary-expr -
+              (literal 0.75)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation abs expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.25))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 2.5)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 3.5)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 4.55555)) (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floor expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.2))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation ceiling expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.2))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sqrt expr:
+            (group-expr
+              (literal 4.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation cbrt expr:
+            (group-expr
+              (literal 0.125)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (literal 2.0)) (
+            (literal 3.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation log expr:
+            (group-expr
+              (literal 1.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation log10 expr:
+            (group-expr
+              (literal 10.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exp expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sin expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation cos expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation tan expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation acos expr:
+            (group-expr
+              (literal 1.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation atan expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation asin expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats atan2 (
+            (literal 0.0)
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sinh expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation cosh expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation tanh expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isFinite (
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isInfinite (
+            (simple-var-ref floats Infinity))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isNaN (
+            (simple-var-ref floats NaN))))))
+      (var-def
+        (variable parsed (type
+          (union-type
+            (value-type float)
+            (error-type))) (expr
+          (invocation floats fromString (
+            (literal +12.5))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref parsed)
+          (value-type float))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref parsed))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
+                (literal bad)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toHexString expr:
+              (group-expr
+                (unary-expr -
+                  (literal 10.2453))) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toHexString expr:
+              (simple-var-ref floats Infinity) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation floats fromHexString (
+              (literal 0x1.0a3d70a3d70a4p4))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromHexString (
+                (literal 0x1J)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toBitsInt expr:
+              (group-expr
+                (literal 4.16)) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation floats fromBitsInt (
+              (literal 4))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toFixedString expr:
+              (group-expr
+                (literal 12.456)) (
+              (literal 2))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toFixedString expr:
+              (group-expr
+                (literal 12.456)) (
+              (literal <nil>))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toExpString expr:
+              (group-expr
+                (literal 12.456)) (
+              (literal 2))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toExpString expr:
+              (group-expr
+                (literal 12.456)) (
+              (literal <nil>))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation floats avg (
+              (literal 2.0)
+              (literal 4.0))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation isNaN expr:
+              (invocation floats avg ()) ()))))))))

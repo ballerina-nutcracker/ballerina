@@ -76,17 +76,24 @@ main() -> nil{
   bb13 {
     %48 = ConstantLoad 5
     x = %48;
-    %51 = x;
-    %52 = round(%51) -> bb14;
+    $desugar$0 = x;
+    %51 = $desugar$0;
+    %52 = $default$0(%51) -> bb14;
   }
   bb14 {
-    %53 = %52;
-    %54 = x;
-    %50 = == %53 %54;
-    %55 = %50;
-    %56 = println(%55) -> bb15;
+    $desugar$1 = %52;
+    %55 = $desugar$0;
+    %56 = $desugar$1;
+    %57 = round(%55,%56) -> bb15;
   }
   bb15 {
+    %58 = %57;
+    %59 = x;
+    %54 = == %58 %59;
+    %60 = %54;
+    %61 = println(%60) -> bb16;
+  }
+  bb16 {
     return;
   }
 }
