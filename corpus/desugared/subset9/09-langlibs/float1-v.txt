@@ -7,6 +7,22 @@
     (block-function-body
       (expression-stmt
         (invocation io println (
+          (invocation floats isFinite (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation float isFinite (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isInfinite (
+            (simple-var-ref floats Infinity))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isNaN (
+            (simple-var-ref floats NaN))))))
+      (expression-stmt
+        (invocation io println (
           (invocation floats sum ()))))
       (expression-stmt
         (invocation io println (
@@ -17,11 +33,17 @@
               (literal 0.75)))))))
       (expression-stmt
         (invocation io println (
+          (invocation floats max ()))))
+      (expression-stmt
+        (invocation io println (
           (invocation floats max (
             (literal 1.5)
             (literal 2.25)
             (unary-expr -
               (literal 0.75)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats min ()))))
       (expression-stmt
         (invocation io println (
           (invocation floats min (
@@ -38,7 +60,7 @@
       (var-def
         (variable $desugar$0 (expr
           (group-expr
-            (literal 2.5)))))
+            (literal 0)))))
       (var-def
         (variable $desugar$1 (expr
           (invocation $default$0 (
@@ -50,17 +72,55 @@
             (simple-var-ref $desugar$1))))))
       (var-def
         (variable $desugar$2 (expr
-          (group-expr
-            (literal 3.5)))))
+          (simple-var-ref floats NaN))))
       (var-def
         (variable $desugar$3 (expr
           (invocation $default$0 (
             (simple-var-ref $desugar$2))))))
       (expression-stmt
         (invocation io println (
+          (invocation lang.float isNaN (
+            (invocation lang.float round (
+              (simple-var-ref $desugar$2)
+              (simple-var-ref $desugar$3))))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (simple-var-ref floats Infinity))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
           (invocation lang.float round (
-            (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3))))))
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (group-expr
+            (literal 2.5)))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (group-expr
+            (literal 3.5)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$8))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$8)
+            (simple-var-ref $desugar$9))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float round (
@@ -88,6 +148,19 @@
                 (literal 1.2345)))
             (unary-expr -
               (literal 309)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (group-expr
+              (literal 1.79e+308))
+            (unary-expr -
+              (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (group-expr
+              (literal 1.79e+308))
+            (literal 1))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float floor (
@@ -181,18 +254,6 @@
           (invocation lang.float tanh (
             (group-expr
               (literal 0)))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation floats isFinite (
-            (literal 1))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation floats isInfinite (
-            (simple-var-ref floats Infinity))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation floats isNaN (
-            (simple-var-ref floats NaN))))))
       (var-def
         (variable parsed (type
           (union-type
@@ -213,6 +274,12 @@
           (invocation io println (
             (type-test-expr is
               (invocation floats fromString (
+                (literal 0x1p0)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
                 (literal bad)))
               (error-type)))))
         (expression-stmt
@@ -227,8 +294,24 @@
               (simple-var-ref floats Infinity))))))
         (expression-stmt
           (invocation io println (
+            (invocation lang.float toHexString (
+              (group-expr
+                (literal 1)))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.float toHexString (
+              (group-expr
+                (literal 0.5)))))))
+        (expression-stmt
+          (invocation io println (
             (invocation floats fromHexString (
               (literal 0x1.0a3d70a3d70a4p4))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromHexString (
+                (literal 12.5)))
+              (error-type)))))
         (expression-stmt
           (invocation io println (
             (type-test-expr is
@@ -246,6 +329,11 @@
               (literal 4))))))
         (expression-stmt
           (invocation io println (
+            (invocation lang.float isNaN (
+              (invocation floats fromBitsInt (
+                (literal 9221120237041090561))))))))
+        (expression-stmt
+          (invocation io println (
             (invocation lang.float toFixedString (
               (group-expr
                 (literal 12.456))
@@ -258,6 +346,11 @@
               (literal <nil>))))))
         (expression-stmt
           (invocation io println (
+            (invocation lang.float toFixedString (
+              (simple-var-ref floats Infinity)
+              (literal 2))))))
+        (expression-stmt
+          (invocation io println (
             (invocation lang.float toExpString (
               (group-expr
                 (literal 12.456))
@@ -267,6 +360,23 @@
             (invocation lang.float toExpString (
               (group-expr
                 (literal 12.456))
+              (literal <nil>))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.float toExpString (
+              (simple-var-ref floats NaN)
+              (literal 2))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.float toExpString (
+              (group-expr
+                (literal 1))
+              (literal 0))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.float toExpString (
+              (group-expr
+                (literal 0.001))
               (literal <nil>))))))
         (expression-stmt
           (invocation io println (

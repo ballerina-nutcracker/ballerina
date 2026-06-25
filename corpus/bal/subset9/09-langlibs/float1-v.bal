@@ -18,17 +18,31 @@ import ballerina/io;
 import ballerina/lang.'float as floats;
 
 public function main() {
+    io:println(floats:isFinite(1.0)); // @output true
+    io:println('float:isFinite(1.0)); // @output true
+    io:println(floats:isInfinite(floats:Infinity)); // @output true
+    io:println(floats:isNaN(floats:NaN)); // @output true
+
     io:println(floats:sum()); // @output 0.0
     io:println(floats:sum(1.5, 2.25, -0.75)); // @output 3.0
+    io:println(floats:max()); // @output -Infinity
     io:println(floats:max(1.5, 2.25, -0.75)); // @output 2.25
+    io:println(floats:min()); // @output Infinity
     io:println(floats:min(1.5, 2.25, -0.75)); // @output -0.75
     io:println((-1.25).abs()); // @output 1.25
+
+    io:println((0.0).round()); // @output 0.0
+    io:println(floats:NaN.round().isNaN()); // @output true
+    io:println(floats:Infinity.round()); // @output Infinity
     io:println((2.5).round()); // @output 2.0
     io:println((3.5).round()); // @output 4.0
     io:println((4.55555).round(3)); // @output 4.556
     io:println((1.2345).round(400)); // @output 1.2345
     io:println((1.2345).round(-400)); // @output 0.0
     io:println((-1.2345).round(-309)); // @output 0.0
+    io:println((1.79e308).round(-1)); // @output 1.79e308
+    io:println((1.79e308).round(1)); // @output 1.79e308
+
     io:println((-1.2).floor()); // @output -2.0
     io:println((-1.2).ceiling()); // @output -1.0
     io:println((4.0).sqrt()); // @output 2.0
@@ -47,25 +61,37 @@ public function main() {
     io:println((0.0).sinh()); // @output 0.0
     io:println((0.0).cosh()); // @output 1.0
     io:println((0.0).tanh()); // @output 0.0
-    io:println(floats:isFinite(1.0)); // @output true
-    io:println(floats:isInfinite(floats:Infinity)); // @output true
-    io:println(floats:isNaN(floats:NaN)); // @output true
 
     float|error parsed = floats:fromString("+12.5");
     if parsed is float {
         io:println(parsed); // @output 12.5
     }
+    io:println(floats:fromString("0x1p0") is error); // @output true
     io:println(floats:fromString("bad") is error); // @output true
+
     io:println((-10.2453).toHexString()); // @output -0x1.47d97f62b6ae8p3
     io:println(floats:Infinity.toHexString()); // @output Infinity
+    io:println((1.0).toHexString()); // @output 0x1p0
+    io:println((0.5).toHexString()); // @output 0x1p-1
+
     io:println(floats:fromHexString("0x1.0a3d70a3d70a4p4")); // @output 16.64
+    io:println(floats:fromHexString("12.5") is error); // @output true
     io:println(floats:fromHexString("0x1J") is error); // @output true
+
     io:println((4.16).toBitsInt()); // @output 4616369762039853220
     io:println(floats:fromBitsInt(4)); // @output 2e-323
+    io:println(floats:fromBitsInt(9221120237041090561).isNaN()); // @output true
+
     io:println((12.456).toFixedString(2)); // @output 12.46
     io:println((12.456).toFixedString(())); // @output 12.456
+    io:println(floats:Infinity.toFixedString(2)); // @output Infinity
+
     io:println((12.456).toExpString(2)); // @output 1.25e+01
     io:println((12.456).toExpString(())); // @output 1.2456e+01
+    io:println(floats:NaN.toExpString(2)); // @output NaN
+    io:println((1.0).toExpString(0)); // @output 1e+00
+    io:println((0.001).toExpString(())); // @output 1e-03
+
     io:println(floats:avg(2.0, 4.0)); // @output 3.0
     io:println(floats:avg().isNaN()); // @output true
 }

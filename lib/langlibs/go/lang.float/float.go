@@ -180,9 +180,6 @@ func floatToHexString(_ *extern.Context, args []values.BalValue) (values.BalValu
 
 func normalizeHexFloat(s string) string {
 	idx := strings.LastIndexByte(s, 'p')
-	if idx < 0 || idx == len(s)-1 {
-		return s
-	}
 	exp := s[idx+1:]
 	if exp[0] == '+' {
 		exp = exp[1:]

@@ -7,6 +7,22 @@
     (block-function-body
       (expression-stmt
         (invocation io println (
+          (invocation floats isFinite (
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation float isFinite (
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isInfinite (
+            (simple-var-ref floats Infinity))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats isNaN (
+            (simple-var-ref floats NaN))))))
+      (expression-stmt
+        (invocation io println (
           (invocation floats sum ()))))
       (expression-stmt
         (invocation io println (
@@ -17,11 +33,17 @@
               (literal 0.75)))))))
       (expression-stmt
         (invocation io println (
+          (invocation floats max ()))))
+      (expression-stmt
+        (invocation io println (
           (invocation floats max (
             (literal 1.5)
             (literal 2.25)
             (unary-expr -
               (literal 0.75)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floats min ()))))
       (expression-stmt
         (invocation io println (
           (invocation floats min (
@@ -35,6 +57,20 @@
             (group-expr
               (unary-expr -
                 (literal 1.25))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 0.0)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isNaN expr:
+            (invocation round expr:
+              (simple-var-ref floats NaN) ()) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (simple-var-ref floats Infinity) ()))))
       (expression-stmt
         (invocation io println (
           (invocation round expr:
@@ -72,6 +108,19 @@
                 (literal 1.2345))) (
             (unary-expr -
               (literal 309)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 1.79e308)) (
+            (unary-expr -
+              (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 1.79e308)) (
+            (literal 1))))))
       (expression-stmt
         (invocation io println (
           (invocation floor expr:
@@ -165,18 +214,6 @@
           (invocation tanh expr:
             (group-expr
               (literal 0.0)) ()))))
-      (expression-stmt
-        (invocation io println (
-          (invocation floats isFinite (
-            (literal 1.0))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation floats isInfinite (
-            (simple-var-ref floats Infinity))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation floats isNaN (
-            (simple-var-ref floats NaN))))))
       (var-def
         (variable parsed (type
           (union-type
@@ -197,6 +234,12 @@
           (invocation io println (
             (type-test-expr is
               (invocation floats fromString (
+                (literal 0x1p0)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
                 (literal bad)))
               (error-type)))))
         (expression-stmt
@@ -211,8 +254,24 @@
               (simple-var-ref floats Infinity) ()))))
         (expression-stmt
           (invocation io println (
+            (invocation toHexString expr:
+              (group-expr
+                (literal 1.0)) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toHexString expr:
+              (group-expr
+                (literal 0.5)) ()))))
+        (expression-stmt
+          (invocation io println (
             (invocation floats fromHexString (
               (literal 0x1.0a3d70a3d70a4p4))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromHexString (
+                (literal 12.5)))
+              (error-type)))))
         (expression-stmt
           (invocation io println (
             (type-test-expr is
@@ -230,6 +289,11 @@
               (literal 4))))))
         (expression-stmt
           (invocation io println (
+            (invocation isNaN expr:
+              (invocation floats fromBitsInt (
+                (literal 9221120237041090561))) ()))))
+        (expression-stmt
+          (invocation io println (
             (invocation toFixedString expr:
               (group-expr
                 (literal 12.456)) (
@@ -242,6 +306,11 @@
               (literal <nil>))))))
         (expression-stmt
           (invocation io println (
+            (invocation toFixedString expr:
+              (simple-var-ref floats Infinity) (
+              (literal 2))))))
+        (expression-stmt
+          (invocation io println (
             (invocation toExpString expr:
               (group-expr
                 (literal 12.456)) (
@@ -251,6 +320,23 @@
             (invocation toExpString expr:
               (group-expr
                 (literal 12.456)) (
+              (literal <nil>))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toExpString expr:
+              (simple-var-ref floats NaN) (
+              (literal 2))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toExpString expr:
+              (group-expr
+                (literal 1.0)) (
+              (literal 0))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation toExpString expr:
+              (group-expr
+                (literal 0.001)) (
               (literal <nil>))))))
         (expression-stmt
           (invocation io println (
