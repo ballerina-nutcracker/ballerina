@@ -118,8 +118,22 @@ func floatRound(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 	if x == 0 || math.IsNaN(x) || math.IsInf(x, 0) {
 		return x, nil
 	}
+	if fractionDigits > 308 {
+		return x, nil
+	}
+	if fractionDigits < -323 {
+		return 0.0, nil
+	}
 	scale := math.Pow10(int(fractionDigits))
-	return math.RoundToEven(x*scale) / scale, nil
+	scaled := x * scale
+	if math.IsInf(scaled, 0) {
+		return x, nil
+	}
+	rounded := math.RoundToEven(scaled)
+	if rounded == 0 {
+		return 0.0, nil
+	}
+	return rounded / scale, nil
 }
 
 func floatPow(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {

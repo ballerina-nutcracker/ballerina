@@ -26,6 +26,9 @@ public function main() {
     io:println((2.5).round()); // @output 2.0
     io:println((3.5).round()); // @output 4.0
     io:println((4.55555).round(3)); // @output 4.556
+    io:println((1.2345).round(400)); // @output 1.2345
+    io:println((1.2345).round(-400)); // @output 0.0
+    io:println((-1.2345).round(-309)); // @output 0.0
     io:println((-1.2).floor()); // @output -2.0
     io:println((-1.2).ceiling()); // @output -1.0
     io:println((4.0).sqrt()); // @output 2.0

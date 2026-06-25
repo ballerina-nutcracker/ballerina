@@ -48,6 +48,27 @@
           (literal 3))))))
     (expression-stmt
       (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 1.2345))
+          (literal 400))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 1.2345))
+          (unary-expr -
+            (literal 400)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (unary-expr -
+              (literal 1.2345)))
+          (unary-expr -
+            (literal 309)))))))
+    (expression-stmt
+      (invocation io println (
         (invocation lang.float floor (
           (group-expr
             (unary-expr -
