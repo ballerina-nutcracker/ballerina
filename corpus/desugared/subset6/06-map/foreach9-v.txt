@@ -1,7 +1,7 @@
 (package
   (import-package ballerina io (as io))
-  (import-package ballerina lang map (as lang.map))
   (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang map (as lang.map))
   (type-definition OpenRecord
     (record-type
       (field name
