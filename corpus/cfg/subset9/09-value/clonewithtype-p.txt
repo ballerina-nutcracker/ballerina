@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable cyclic (type
+        (value-type anydata)) (expr
+        (simple-var-ref m))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal self))
+      (simple-var-ref cyclic))
+    (var-def
+      (variable _ (type
+        (value-type anydata)) (expr
+        (check-panicked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref cyclic)))))))
+  )
+)

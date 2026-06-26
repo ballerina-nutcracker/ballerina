@@ -212,6 +212,20 @@
             (simple-var-ref mapForArr)
             (simple-var-ref IntArray)))
           (error-type)))))
+    (var-def
+      (variable missingNilableReq (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Bob))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref missingNilableReq)
+            (simple-var-ref PersonNilRequired)))
+          (error-type)))))
     (return
       (literal <nil>))
   )

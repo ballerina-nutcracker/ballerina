@@ -121,71 +121,86 @@ main() -> nil|error{
     %53 = fromJsonWithType(missingNilable,%52) -> bb21;
   }
   bb21 {
-    $desugar$5 = %53;
-    %55 = $desugar$5 is error
-    %55 ? bb22 : bb23;
+    %54 = %53 is error
+    %55 = %54;
+    %56 = println(%55) -> bb22;
   }
   bb22 {
+    %57 = ConstantLoad name
+    %58 = ConstantLoad Carol
+    %59 = ConstantLoad score
+    %60 = ConstantLoad <nil>
+    %61 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%57=%58, %59=%60}
+    explicitNull = %61;
+    %63 = ConstantLoad typedesc
+    %64 = fromJsonWithType(explicitNull,%63) -> bb23;
+  }
+  bb23 {
+    $desugar$5 = %64;
+    %66 = $desugar$5 is error
+    %66 ? bb24 : bb25;
+  }
+  bb24 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$5);
     PopScopeFrame
     return;
   }
-  bb23 {
-    withScore = $desugar$5;
-    %57 = println(withScore) -> bb24;
-  }
-  bb24 {
-    %58 = ConstantLoad name
-    %59 = ConstantLoad Ann
-    %60 = ConstantLoad age
-    %61 = ConstantLoad <nil>
-    %62 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%58=%59, %60=%61}
-    withNullAge = %62;
-    %64 = ConstantLoad typedesc
-    %65 = fromJsonWithType(withNullAge,%64) -> bb25;
-  }
   bb25 {
-    $desugar$6 = %65;
-    %67 = $desugar$6 is error
-    %67 ? bb26 : bb27;
+    withScore = $desugar$5;
+    %68 = println(withScore) -> bb26;
   }
   bb26 {
+    %69 = ConstantLoad name
+    %70 = ConstantLoad Ann
+    %71 = ConstantLoad age
+    %72 = ConstantLoad <nil>
+    %73 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%69=%70, %71=%72}
+    withNullAge = %73;
+    %75 = ConstantLoad typedesc
+    %76 = fromJsonWithType(withNullAge,%75) -> bb27;
+  }
+  bb27 {
+    $desugar$6 = %76;
+    %78 = $desugar$6 is error
+    %78 ? bb28 : bb29;
+  }
+  bb28 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$6);
     PopScopeFrame
     return;
   }
-  bb27 {
-    withAge = $desugar$6;
-    %69 = println(withAge) -> bb28;
-  }
-  bb28 {
-    %70 = ConstantLoad a
-    %71 = ConstantLoad 1
-    %72 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%70=%71}
-    openMap = %72;
-    %74 = ConstantLoad typedesc
-    %75 = fromJsonWithType(openMap,%74) -> bb29;
-  }
   bb29 {
-    $desugar$7 = %75;
-    %77 = $desugar$7 is error
-    %77 ? bb30 : bb31;
+    withAge = $desugar$6;
+    %80 = println(withAge) -> bb30;
   }
   bb30 {
+    %81 = ConstantLoad a
+    %82 = ConstantLoad 1
+    %83 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%81=%82}
+    openMap = %83;
+    %85 = ConstantLoad typedesc
+    %86 = fromJsonWithType(openMap,%85) -> bb31;
+  }
+  bb31 {
+    $desugar$7 = %86;
+    %88 = $desugar$7 is error
+    %88 ? bb32 : bb33;
+  }
+  bb32 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$7);
     PopScopeFrame
     return;
   }
-  bb31 {
+  bb33 {
     anyMap = $desugar$7;
-    %79 = println(anyMap) -> bb32;
+    %90 = println(anyMap) -> bb34;
   }
-  bb32 {
-    %80 = ConstantLoad <nil>
-    %0 = %80;
+  bb34 {
+    %91 = ConstantLoad <nil>
+    %0 = %91;
     return;
   }
 }

@@ -29,10 +29,9 @@ type conversionFailure struct {
 	detailMessage string
 }
 
-func wrapConversionError(err error) *Error {
-	detail := err.(*conversionFailure).detailMessage
+func wrapConversionError(err *conversionFailure) *Error {
 	detailMap := NewMap(semtypes.MAPPING, &semtypes.MAPPING_ATOMIC_INNER, true, []MapEntry{
-		{Key: "message", Value: detail},
+		{Key: "message", Value: err.detailMessage},
 	})
 	return NewError(semtypes.ERROR, conversionErrorMessage, nil, "", detailMap)
 }

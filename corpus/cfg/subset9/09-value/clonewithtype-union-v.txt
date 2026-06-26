@@ -1,0 +1,186 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable nilVal (type
+        (value-type anydata)) (expr
+        (literal <nil>))))
+    (var-def
+      (variable n (type
+        (user-defined-type IntNilable)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref nilVal)
+            (simple-var-ref IntNilable)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref n)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref nilVal)
+            (simple-var-ref IntOrString)))
+          (error-type)))))
+    (var-def
+      (variable num (type
+        (value-type anydata)) (expr
+        (literal 42))))
+    (var-def
+      (variable asInt (type
+        (user-defined-type IntOrString)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref num)
+            (simple-var-ref IntOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asInt))))
+    (var-def
+      (variable str (type
+        (value-type anydata)) (expr
+        (literal hello))))
+    (var-def
+      (variable asStr (type
+        (user-defined-type IntOrString)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref str)
+            (simple-var-ref IntOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asStr))))
+    (var-def
+      (variable fv (type
+        (value-type anydata)) (expr
+        (literal 2))))
+    (var-def
+      (variable coerced (type
+        (user-defined-type IntOrString)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref fv)
+            (simple-var-ref IntOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref coerced))))
+    (var-def
+      (variable iv (type
+        (value-type anydata)) (expr
+        (literal 3))))
+    (var-def
+      (variable optF (type
+        (user-defined-type OptFloat)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref iv)
+            (simple-var-ref OptFloat)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref optF))))
+    (var-def
+      (variable dv (type
+        (value-type anydata)) (expr
+        (literal 10))))
+    (var-def
+      (variable ds (type
+        (user-defined-type DecimalOrString)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref dv)
+            (simple-var-ref DecimalOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ds))))
+    (var-def
+      (variable pMap (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal 30))))))
+    (var-def
+      (variable pu (type
+        (user-defined-type PersonUnion)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref pMap)
+            (simple-var-ref PersonUnion)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref pu))))
+    (var-def
+      (variable pMap2 (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Bob))
+          (key-value
+            (literal role)
+            (literal admin))))))
+    (var-def
+      (variable pu2 (type
+        (user-defined-type PersonUnion)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref pMap2)
+            (simple-var-ref PersonUnion)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref pu2))))
+    (var-def
+      (variable intArr (type
+        (value-type anydata)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (var-def
+      (variable arrVal (type
+        (user-defined-type IntStrArr)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref intArr)
+            (simple-var-ref IntStrArr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref arrVal))))
+    (var-def
+      (variable strArr (type
+        (value-type anydata)) (expr
+        (list-constructor-expr
+          (literal a)
+          (literal b)))))
+    (var-def
+      (variable strArrVal (type
+        (user-defined-type IntStrArr)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref strArr)
+            (simple-var-ref IntStrArr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref strArrVal))))
+    (var-def
+      (variable bv (type
+        (value-type anydata)) (expr
+        (literal 200))))
+    (var-def
+      (variable asByte (type
+        (user-defined-type ByteOrString)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref bv)
+            (simple-var-ref ByteOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asByte))))
+    (return
+      (literal <nil>))
+  )
+)

@@ -33,9 +33,19 @@ func init() {
 
 func initValueModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromJsonWithType", fromJsonWithType)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "cloneWithType", cloneWithType)
 }
 
 func fromJsonWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	td := args[1].(*values.TypeDesc)
+	result, convErr := values.CloneWithType(ctx.TypeCtx, args[0], td.Type)
+	if convErr != nil {
+		return convErr, nil
+	}
+	return result, nil
+}
+
+func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	td := args[1].(*values.TypeDesc)
 	result, convErr := values.CloneWithType(ctx.TypeCtx, args[0], td.Type)
 	if convErr != nil {

@@ -1,0 +1,275 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 42
+    n = %1;
+    %3 = ConstantLoad typedesc
+    %4 = cloneWithType(n,%3) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %4;
+    %6 = $desugar$0 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    i = $desugar$0;
+    %8 = i;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad hello
+    s = %10;
+    %12 = ConstantLoad typedesc
+    %13 = cloneWithType(s,%12) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %13;
+    %15 = $desugar$1 is error
+    %15 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    str = $desugar$1;
+    %17 = println(str) -> bb8;
+  }
+  bb8 {
+    %18 = ConstantLoad 7
+    intVal = %18;
+    %20 = ConstantLoad typedesc
+    %21 = cloneWithType(intVal,%20) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %21;
+    %23 = $desugar$2 is error
+    %23 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    f = $desugar$2;
+    %25 = f;
+    %26 = println(%25) -> bb12;
+  }
+  bb12 {
+    %27 = ConstantLoad name
+    %28 = ConstantLoad Alice
+    %29 = ConstantLoad age
+    %30 = ConstantLoad 30
+    %31 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%27=%28, %29=%30}
+    raw = %31;
+    %33 = ConstantLoad typedesc
+    %34 = cloneWithType(raw,%33) -> bb13;
+  }
+  bb13 {
+    $desugar$3 = %34;
+    %36 = $desugar$3 is error
+    %36 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    p = $desugar$3;
+    %38 = println(p) -> bb16;
+  }
+  bb16 {
+    %39 = ConstantLoad 1
+    %40 = ConstantLoad 2
+    %41 = ConstantLoad 3
+    %42 = ConstantLoad 3
+    %43 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%42]{%39, %40, %41}
+    nums = %43;
+    %45 = ConstantLoad typedesc
+    %46 = cloneWithType(nums,%45) -> bb17;
+  }
+  bb17 {
+    $desugar$4 = %46;
+    %48 = $desugar$4 is error
+    %48 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    ia = $desugar$4;
+    %50 = println(ia) -> bb20;
+  }
+  bb20 {
+    %51 = ConstantLoad 10
+    %52 = ConstantLoad 20
+    %53 = ConstantLoad 30
+    %54 = ConstantLoad 3
+    %55 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%54]{%51, %52, %53}
+    ints = %55;
+    %57 = ConstantLoad typedesc
+    %58 = cloneWithType(ints,%57) -> bb21;
+  }
+  bb21 {
+    $desugar$5 = %58;
+    %60 = $desugar$5 is error
+    %60 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    fa = $desugar$5;
+    %62 = println(fa) -> bb24;
+  }
+  bb24 {
+    %63 = ConstantLoad x
+    %64 = ConstantLoad 3
+    %65 = ConstantLoad y
+    %66 = ConstantLoad 4
+    %67 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%63=%64, %65=%66}
+    coords = %67;
+    %69 = ConstantLoad typedesc
+    %70 = cloneWithType(coords,%69) -> bb25;
+  }
+  bb25 {
+    $desugar$6 = %70;
+    %72 = $desugar$6 is error
+    %72 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    pt = $desugar$6;
+    %74 = println(pt) -> bb28;
+  }
+  bb28 {
+    %75 = ConstantLoad label
+    %76 = ConstantLoad origin
+    %77 = ConstantLoad origin
+    %78 = ConstantLoad x
+    %79 = ConstantLoad 0
+    %80 = ConstantLoad y
+    %81 = ConstantLoad 0
+    %82 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%78=%79, %80=%81}
+    %83 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%75=%76, %77=%82}
+    shapeRaw = %83;
+    %85 = ConstantLoad typedesc
+    %86 = cloneWithType(shapeRaw,%85) -> bb29;
+  }
+  bb29 {
+    $desugar$7 = %86;
+    %88 = $desugar$7 is error
+    %88 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb31 {
+    sh = $desugar$7;
+    %90 = println(sh) -> bb32;
+  }
+  bb32 {
+    %91 = ConstantLoad name
+    %92 = ConstantLoad Bob
+    %93 = ConstantLoad age
+    %94 = ConstantLoad 25
+    %95 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%91=%92, %93=%94}
+    personMap = %95;
+    %97 = ConstantLoad typedesc
+    %98 = cloneWithType(personMap,%97) -> bb33;
+  }
+  bb33 {
+    $desugar$8 = %98;
+    %100 = $desugar$8 is error
+    %100 ? bb34 : bb35;
+  }
+  bb34 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb35 {
+    poi = $desugar$8;
+    %102 = println(poi) -> bb36;
+  }
+  bb36 {
+    %103 = ConstantLoad name
+    %104 = ConstantLoad Carol
+    %105 = ConstantLoad age
+    %106 = ConstantLoad <nil>
+    %107 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%103=%104, %105=%106}
+    withNull = %107;
+    %109 = ConstantLoad typedesc
+    %110 = cloneWithType(withNull,%109) -> bb37;
+  }
+  bb37 {
+    $desugar$9 = %110;
+    %112 = $desugar$9 is error
+    %112 ? bb38 : bb39;
+  }
+  bb38 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb39 {
+    nilAge = $desugar$9;
+    %114 = println(nilAge) -> bb40;
+  }
+  bb40 {
+    %115 = ConstantLoad name
+    %116 = ConstantLoad Dave
+    %117 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%115=%116}
+    partial = %117;
+    %119 = ConstantLoad typedesc
+    %120 = cloneWithType(partial,%119) -> bb41;
+  }
+  bb41 {
+    $desugar$10 = %120;
+    %122 = $desugar$10 is error
+    %122 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$10);
+    PopScopeFrame
+    return;
+  }
+  bb43 {
+    optAge = $desugar$10;
+    %124 = println(optAge) -> bb44;
+  }
+  bb44 {
+    %125 = ConstantLoad <nil>
+    %0 = %125;
+    return;
+  }
+}

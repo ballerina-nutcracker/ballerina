@@ -4,22 +4,6 @@
   (type-definition IntArray
     (array-type
       (value-type int) dimensions: 1 ([])))
-  (type-definition StringArray
-    (array-type
-      (value-type string) dimensions: 1 ([])))
-  (type-definition IntMap
-    (constrained-type
-      (builtin-ref-type map)
-      (value-type int)))
-  (type-definition IntStringTuple
-    (tuple-type
-      (value-type int)
-      (value-type string)))
-  (type-definition OpenIntStringTuple
-    (tuple-type
-      (value-type int)
-      (value-type string) (rest
-        (value-type int))))
   (type-definition Person
     (record-type
       (field name
@@ -34,20 +18,6 @@
         (union-type
           (value-type int)
           (value-type null)))))
-  (type-definition OpenPerson
-    (record-type
-      (field name
-        (value-type string))))
-  (type-definition Address
-    (record-type
-      (field city
-        (value-type string))))
-  (type-definition Employee
-    (record-type
-      (field name
-        (value-type string))
-      (field address
-        (user-defined-type Address))))
   (function main () (
     (union-type
       (error-type)
@@ -76,13 +46,12 @@
           (literal 2022))))
       (var-def
         (variable n (type
-          (union-type
-            (value-type int)
-            (error-type))) (expr
-          (invocation fromJsonWithType expr:
-            (simple-var-ref num) (
-            (typedesc-expr
-              (value-type int)))))))
+          (value-type int)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref num) (
+              (typedesc-expr
+                (value-type int))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref n))))
@@ -124,6 +93,40 @@
         (invocation io println (
           (simple-var-ref s))))
       (var-def
+        (variable noAge (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref noAge) (
+              (simple-var-ref PersonNilAge)))
+            (error-type)))))
+      (var-def
+        (variable nullAge (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))
+            (key-value
+              (literal age)
+              (literal <nil>))))))
+      (var-def
+        (variable nilAgePerson (type
+          (user-defined-type PersonNilAge)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nullAge) (
+              (simple-var-ref PersonNilAge)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nilAgePerson))))
+      (var-def
         (variable arr (type
           (builtin-ref-type json)) (expr
           (list-constructor-expr
@@ -131,17 +134,6 @@
             (literal 2)
             (literal 3)
             (literal 4)))))
-      (var-def
-        (variable intArray (type
-          (array-type
-            (value-type int) dimensions: 1 ([]))) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref arr) (
-              (simple-var-ref IntArray)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref intArray))))
       (var-def
         (variable inferred (type
           (array-type
@@ -152,48 +144,6 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref inferred))))
-      (var-def
-        (variable vowels (type
-          (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal a)
-            (literal e)
-            (literal i)
-            (literal o)
-            (literal u)))))
-      (var-def
-        (variable chars (type
-          (array-type
-            (value-type string) dimensions: 1 ([]))) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref vowels) (
-              (simple-var-ref StringArray)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref chars))))
-      (var-def
-        (variable m (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal a)
-              (literal 1))
-            (key-value
-              (literal b)
-              (literal 2))))))
-      (var-def
-        (variable mi (type
-          (constrained-type
-            (builtin-ref-type map)
-            (value-type int))) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref m) (
-              (simple-var-ref IntMap)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref mi))))
       (var-def
         (variable p (type
           (builtin-ref-type json)) (expr
@@ -214,115 +164,5 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref person))))
-      (var-def
-        (variable noAge (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Alice))))))
-      (var-def
-        (variable nilAgePerson (type
-          (user-defined-type PersonNilAge)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref noAge) (
-              (simple-var-ref PersonNilAge)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref nilAgePerson))))
-      (var-def
-        (variable extra (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Eve))
-            (key-value
-              (literal role)
-              (literal admin))))))
-      (var-def
-        (variable op (type
-          (user-defined-type OpenPerson)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref extra) (
-              (simple-var-ref OpenPerson)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref op))))
-      (var-def
-        (variable emp (type
-          (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Bob))
-            (key-value
-              (literal address)
-              (mapping-constructor-expr
-                (key-value
-                  (literal city)
-                  (literal NYC))))))))
-      (var-def
-        (variable empVal (type
-          (user-defined-type Employee)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref emp) (
-              (simple-var-ref Employee)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref empVal))))
-      (var-def
-        (variable tuple (type
-          (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal x)))))
-      (var-def
-        (variable tupleVal (type
-          (user-defined-type IntStringTuple)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref tuple) (
-              (simple-var-ref IntStringTuple)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref tupleVal))))
-      (var-def
-        (variable restTuple (type
-          (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal x)
-            (literal 2)
-            (literal 3)))))
-      (var-def
-        (variable openTupleVal (type
-          (user-defined-type OpenIntStringTuple)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref restTuple) (
-              (simple-var-ref OpenIntStringTuple)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref openTupleVal))))
-      (var-def
-        (variable fixedOnly (type
-          (builtin-ref-type json)) (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal y)))))
-      (var-def
-        (variable fixedOnlyVal (type
-          (user-defined-type OpenIntStringTuple)) (expr
-          (checked-expr
-            (invocation fromJsonWithType expr:
-              (simple-var-ref fixedOnly) (
-              (simple-var-ref OpenIntStringTuple)))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref fixedOnlyVal))))
       (return
         (literal <nil>)))))

@@ -174,10 +174,27 @@
             (key-value
               (literal name)
               (literal Carol))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref missingNilable)
+              (simple-var-ref WithNilable)))
+            (error-type)))))
+      (var-def
+        (variable explicitNull (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Carol))
+            (key-value
+              (literal score)
+              (literal <nil>))))))
       (var-def
         (variable $desugar$5 (expr
           (invocation lang.value fromJsonWithType (
-            (simple-var-ref missingNilable)
+            (simple-var-ref explicitNull)
             (simple-var-ref WithNilable))))))
       (if
         (type-test-expr is

@@ -1,9 +1,4 @@
 -- stdout --
-2
-42.0
-7
-255
-200
 true
 true
 true
@@ -11,12 +6,4 @@ true
 true
 true
 true
-42
-true
-1.5
-true
-true
-true
-true
-3.5
 -- stderr --

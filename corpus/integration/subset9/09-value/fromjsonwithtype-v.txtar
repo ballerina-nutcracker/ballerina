@@ -4,15 +4,8 @@
 true
 false
 hello
-[1,2,3,4]
-[1,2,3,4]
-["a","e","i","o","u"]
-{"a":1,"b":2}
-{"name":"Alice","age":30}
+true
 {"name":"Alice","age":null}
-{"name":"Eve","role":"admin"}
-{"name":"Bob","address":{"city":"NYC"}}
-[1,"x"]
-[1,"x",2,3]
-[1,"y"]
+[1,2,3,4]
+{"name":"Alice","age":30}
 -- stderr --

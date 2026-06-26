@@ -33,6 +33,11 @@ type Closed record {|
 
 type PersonOrClosed Person|Closed;
 
+type PersonNilRequired record {|
+    string name;
+    int? age;
+|};
+
 public function main() returns error? {
     json badBool = "2022";
     io:println(badBool.fromJsonWithType(boolean) is error); // @output true
@@ -86,6 +91,10 @@ public function main() returns error? {
     // map where array expected
     json mapForArr = {"a": 1};
     io:println(mapForArr.fromJsonWithType(IntArray) is error); // @output true
+
+    // required nilable field absent is an error — the field must be present, even if null
+    json missingNilableReq = {"name": "Bob"};
+    io:println(missingNilableReq.fromJsonWithType(PersonNilRequired) is error); // @output true
 
     return;
 }

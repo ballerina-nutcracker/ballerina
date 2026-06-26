@@ -1,0 +1,27 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    m = %1;
+    cyclic = m;
+    %4 = ConstantLoad self
+    m[%4] = cyclic;
+    %5 = ConstantLoad typedesc
+    %6 = cloneWithType(cyclic,%5) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    %8 = $desugar$0 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %9) = (1, $desugar$0);
+    PopScopeFrame
+    panic %9;
+  }
+  bb3 {
+    _ = $desugar$0;
+    return;
+  }
+}

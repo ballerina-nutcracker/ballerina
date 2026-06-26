@@ -208,8 +208,21 @@ main() -> nil|error{
     %143 = println(%142) -> bb32;
   }
   bb32 {
-    %144 = ConstantLoad <nil>
-    %0 = %144;
+    %144 = ConstantLoad name
+    %145 = ConstantLoad Bob
+    %146 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%144=%145}
+    missingNilableReq = %146;
+    %148 = ConstantLoad typedesc
+    %149 = fromJsonWithType(missingNilableReq,%148) -> bb33;
+  }
+  bb33 {
+    %150 = %149 is error
+    %151 = %150;
+    %152 = println(%151) -> bb34;
+  }
+  bb34 {
+    %153 = ConstantLoad <nil>
+    %0 = %153;
     return;
   }
 }

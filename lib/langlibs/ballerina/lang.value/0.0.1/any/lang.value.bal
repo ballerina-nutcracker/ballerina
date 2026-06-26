@@ -39,3 +39,30 @@
 # + t - type to convert to
 # + return - value belonging to type parameter `t` or error if this cannot be done
 public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) returns t|error  = external;
+
+# Constructs a value with a specified type by cloning another value.
+#
+# When `v` is a structural value, the inherent type of the constructed value comes from `t`.
+# When `t` is a union with more than one structural type descriptor applicable to `v`'s basic type,
+# the leftmost matching type descriptor is used as the inherent type.
+# The operation is applied recursively to each member of `v` using the type required by the inherent type.
+#
+# Unlike `clone`:
+# - the inherent type of structural values comes from `t`, not `v`
+# - the read-only bit comes from `t`
+# - the graph structure is not preserved (result is always a tree); an error is returned if `v` has cycles
+# - immutable structural values are copied rather than returned as-is
+# - numeric values may be converted via NumericConvert
+# - missing record fields are filled from default values specified in `t`
+#
+# ```ballerina
+# anydata rec = {name: "Alice", age: 30};
+# type Person record {| string name; int age; |};
+# Person p = check rec.cloneWithType();
+# p ⇒ {name:"Alice",age:30}
+# ```
+#
+# + v - the value to clone
+# + t - the type for the clone to be constructed
+# + return - a new value of type `t`, or an error if this cannot be done
+public isolated function cloneWithType(anydata v, typedesc<anydata> t = <>) returns t|error = external;

@@ -1,0 +1,107 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable badBool (type
+        (value-type anydata)) (expr
+        (literal true))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref badBool)
+            (typedesc-expr
+              (value-type boolean))))
+          (error-type)))))
+    (var-def
+      (variable badArr (type
+        (value-type anydata)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref badArr)
+            (simple-var-ref StringArray)))
+          (error-type)))))
+    (var-def
+      (variable extra (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal 30))
+          (key-value
+            (literal extra)
+            (literal oops))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref extra)
+            (simple-var-ref Person)))
+          (error-type)))))
+    (var-def
+      (variable missing (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref missing)
+            (simple-var-ref Person)))
+          (error-type)))))
+    (var-def
+      (variable mapVal (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref mapVal)
+            (simple-var-ref IntArray)))
+          (error-type)))))
+    (var-def
+      (variable arrVal (type
+        (value-type anydata)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref arrVal)
+            (simple-var-ref Closed)))
+          (error-type)))))
+    (var-def
+      (variable missingNilable (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Bob))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value cloneWithType (
+            (simple-var-ref missingNilable)
+            (simple-var-ref PersonNilRequired)))
+          (error-type)))))
+    (return
+      (literal <nil>))
+  )
+)

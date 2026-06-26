@@ -64,8 +64,13 @@ public function main() returns error? {
     PersonOpt withOptional = check partial.fromJsonWithType(PersonOpt);
     io:println(withOptional); // @output {"name":"Bob"}
 
+    // required nilable field absent → error
     json missingNilable = {"name": "Carol"};
-    WithNilable withScore = check missingNilable.fromJsonWithType(WithNilable);
+    io:println(missingNilable.fromJsonWithType(WithNilable) is error); // @output true
+
+    // required nilable field present as null → nil assigned
+    json explicitNull = {"name": "Carol", "score": null};
+    WithNilable withScore = check explicitNull.fromJsonWithType(WithNilable);
     io:println(withScore); // @output {"name":"Carol","score":null}
 
     json withNullAge = {"name": "Ann", "age": ()};
