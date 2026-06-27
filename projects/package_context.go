@@ -210,6 +210,11 @@ func (p *packageContext) getPackageCompilation() *PackageCompilation {
 // Uses sync.Once for thread-safe lazy initialization.
 func (p *packageContext) getResolution() *PackageResolution {
 	p.resolutionOnce.Do(func() {
+		for _, modID := range p.moduleIDs {
+			if moduleCtx := p.moduleContextMap[modID]; moduleCtx != nil && moduleCtx.compilerCtx != nil {
+				moduleCtx.compilerCtx.InitModuleStats(moduleCtx.getModuleName().String())
+			}
+		}
 		env := p.project.Environment()
 		p.packageResolution = newPackageResolution(p, env)
 	})

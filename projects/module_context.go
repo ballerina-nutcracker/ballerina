@@ -233,14 +233,13 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	compilerCtx := moduleCtx.compilerCtx
 
 	// Parse all source and test documents in parallel.
-	compilerCtx.StartStage(context.StageParse)
 	syntaxTrees := parseDocumentsParallel(
+		compilerCtx,
 		moduleCtx.srcDocIDs,
 		moduleCtx.srcDocContextMap,
 		moduleCtx.testSrcDocIDs,
 		moduleCtx.testDocContextMap,
 	)
-	compilerCtx.EndStage()
 
 	if len(syntaxTrees) == 0 {
 		return
@@ -373,6 +372,7 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 // parseDocumentsParallel parses source and test documents in parallel.
 // Returns syntax trees from source documents only (test docs are parsed but not returned).
 func parseDocumentsParallel(
+	compilerCtx *context.CompilerContext,
 	srcDocIDs []DocumentID,
 	srcDocContextMap map[DocumentID]*documentContext,
 	testDocIDs []DocumentID,
@@ -394,7 +394,7 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			st := dc.parse()
+			st := dc.parseWithStats(compilerCtx)
 			if st != nil {
 				mu.Lock()
 				syntaxTrees = append(syntaxTrees, st)
@@ -413,7 +413,7 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			dc.parse()
+			dc.parseWithStats(compilerCtx)
 		}(docCtx)
 	}
 
@@ -567,7 +567,7 @@ func (m *moduleContext) populateModuleLoadRequests() []*moduleLoadRequest {
 	for _, docID := range m.srcDocIDs {
 		docCtx := m.srcDocContextMap[docID]
 		if docCtx != nil {
-			requests = append(requests, docCtx.moduleLoadRequests()...)
+			requests = append(requests, docCtx.moduleLoadRequests(m.compilerCtx)...)
 		}
 	}
 	return requests
@@ -578,7 +578,7 @@ func (m *moduleContext) populateTestModuleLoadRequests() []*moduleLoadRequest {
 	for _, docID := range m.testSrcDocIDs {
 		docCtx := m.testDocContextMap[docID]
 		if docCtx != nil {
-			requests = append(requests, docCtx.moduleLoadRequests()...)
+			requests = append(requests, docCtx.moduleLoadRequests(m.compilerCtx)...)
 		}
 	}
 	return requests
