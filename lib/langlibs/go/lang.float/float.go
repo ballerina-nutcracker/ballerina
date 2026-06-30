@@ -19,6 +19,7 @@ package floatruntime
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -30,6 +31,11 @@ import (
 const (
 	orgName    = "ballerina"
 	moduleName = "lang.float"
+)
+
+var (
+	decimalFloatingPointStringPattern     = regexp.MustCompile(`^(?:NaN|[+-]?(?:Infinity|(?:(?:0|[1-9][0-9]*)|(?:(?:0|[1-9][0-9]*)\.[0-9]+|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|(?:0|[1-9][0-9]*)[eE][+-]?[0-9]+)))$`)
+	hexadecimalFloatingPointStringPattern = regexp.MustCompile(`^(?:NaN|[+-]?(?:Infinity|0[xX](?:(?:[0-9A-Fa-f]+\.[0-9A-Fa-f]+|\.[0-9A-Fa-f]+)(?:[pP][+-]?[0-9]+)?|[0-9A-Fa-f]+[pP][+-]?[0-9]+)))$`)
 )
 
 func initFloatModule(rt *runtime.Runtime) {
@@ -146,8 +152,7 @@ func floatAtan2(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 
 func floatFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	s := args[0].(string)
-	unsigned := strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-")
-	if strings.HasPrefix(unsigned, "0x") || strings.HasPrefix(unsigned, "0X") {
+	if !decimalFloatingPointStringPattern.MatchString(s) {
 		return values.NewErrorWithMessage("invalid decimal floating point string: " + s), nil
 	}
 	return parseFloat(s)
@@ -155,11 +160,18 @@ func floatFromString(_ *extern.Context, args []values.BalValue) (values.BalValue
 
 func floatFromHexString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	s := args[0].(string)
-	unsigned := strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-")
-	if unsigned != "NaN" && unsigned != "Infinity" && !strings.HasPrefix(unsigned, "0x") && !strings.HasPrefix(unsigned, "0X") {
+	if !hexadecimalFloatingPointStringPattern.MatchString(s) {
 		return values.NewErrorWithMessage("invalid hexadecimal floating point string: " + s), nil
 	}
-	return parseFloat(s)
+	return parseFloat(normalizeHexFloatString(s))
+}
+
+func normalizeHexFloatString(s string) string {
+	unsigned := strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-")
+	if unsigned == "NaN" || unsigned == "Infinity" || strings.ContainsAny(unsigned, "pP") {
+		return s
+	}
+	return s + "p0"
 }
 
 func parseFloat(s string) (values.BalValue, error) {
@@ -214,7 +226,7 @@ func floatToFixedString(_ *extern.Context, args []values.BalValue) (values.BalVa
 		return values.FormatFloat(x), nil
 	}
 	if args[1] == nil {
-		return strconv.FormatFloat(x, 'f', -1, 64), nil
+		return ensureFraction(strconv.FormatFloat(x, 'f', -1, 64)), nil
 	}
 	digits := args[1].(int64)
 	if digits < 0 {
@@ -229,13 +241,28 @@ func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValu
 		return values.FormatFloat(x), nil
 	}
 	if args[1] == nil {
-		return normalizeExp(strconv.FormatFloat(x, 'e', -1, 64)), nil
+		return normalizeExp(ensureExpFraction(strconv.FormatFloat(x, 'e', -1, 64))), nil
 	}
 	digits := args[1].(int64)
 	if digits < 0 {
 		panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
 	}
 	return normalizeExp(strconv.FormatFloat(x, 'e', int(digits), 64)), nil
+}
+
+func ensureFraction(s string) string {
+	if strings.ContainsRune(s, '.') {
+		return s
+	}
+	return s + ".0"
+}
+
+func ensureExpFraction(s string) string {
+	idx := strings.LastIndexByte(s, 'e')
+	if idx < 0 || strings.ContainsRune(s[:idx], '.') {
+		return s
+	}
+	return s[:idx] + ".0" + s[idx:]
 }
 
 func normalizeExp(s string) string {

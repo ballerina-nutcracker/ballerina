@@ -280,6 +280,42 @@
           (invocation io println (
             (type-test-expr is
               (invocation floats fromString (
+                (literal 1_000.0)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
+                (literal Inf)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
+                (literal inf)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
+                (literal Infinity)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
+                (literal 1.)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
+                (literal 1f)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromString (
                 (literal bad)))
               (error-type)))))
         (expression-stmt
@@ -306,6 +342,22 @@
           (invocation io println (
             (invocation floats fromHexString (
               (literal 0x1.0a3d70a3d70a4p4))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation floats fromHexString (
+              (literal 0x1.0))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromHexString (
+                (literal 0x1.)))
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation floats fromHexString (
+                (literal 0x1)))
+              (error-type)))))
         (expression-stmt
           (invocation io println (
             (type-test-expr is
@@ -347,6 +399,12 @@
         (expression-stmt
           (invocation io println (
             (invocation lang.float toFixedString (
+              (group-expr
+                (literal 1))
+              (literal <nil>))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.float toFixedString (
               (simple-var-ref floats Infinity)
               (literal 2))))))
         (expression-stmt
@@ -360,6 +418,12 @@
             (invocation lang.float toExpString (
               (group-expr
                 (literal 12.456))
+              (literal <nil>))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.float toExpString (
+              (group-expr
+                (literal 1))
               (literal <nil>))))))
         (expression-stmt
           (invocation io println (

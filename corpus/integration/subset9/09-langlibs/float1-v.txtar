@@ -42,11 +42,20 @@ Infinity
 12.5
 true
 true
+true
+true
+false
+true
+true
+true
 -0x1.47d97f62b6ae8p3
 Infinity
 0x1p0
 0x1p-1
 16.64
+1.0
+true
+true
 true
 true
 4616369762039853220
@@ -54,12 +63,14 @@ true
 true
 12.46
 12.456
+1.0
 Infinity
 1.25e+01
 1.2456e+01
+1.0e+00
 NaN
 1e+00
-1e-03
+1.0e-03
 3.0
 true
 -- stderr --

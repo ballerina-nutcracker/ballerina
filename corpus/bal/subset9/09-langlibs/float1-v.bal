@@ -67,6 +67,12 @@ public function main() {
         io:println(parsed); // @output 12.5
     }
     io:println(floats:fromString("0x1p0") is error); // @output true
+    io:println(floats:fromString("1_000.0") is error); // @output true
+    io:println(floats:fromString("Inf") is error); // @output true
+    io:println(floats:fromString("inf") is error); // @output true
+    io:println(floats:fromString("Infinity") is error); // @output false
+    io:println(floats:fromString("1.") is error); // @output true
+    io:println(floats:fromString("1f") is error); // @output true
     io:println(floats:fromString("bad") is error); // @output true
 
     io:println((-10.2453).toHexString()); // @output -0x1.47d97f62b6ae8p3
@@ -75,6 +81,9 @@ public function main() {
     io:println((0.5).toHexString()); // @output 0x1p-1
 
     io:println(floats:fromHexString("0x1.0a3d70a3d70a4p4")); // @output 16.64
+    io:println(floats:fromHexString("0x1.0")); // @output 1.0
+    io:println(floats:fromHexString("0x1.") is error); // @output true
+    io:println(floats:fromHexString("0x1") is error); // @output true
     io:println(floats:fromHexString("12.5") is error); // @output true
     io:println(floats:fromHexString("0x1J") is error); // @output true
 
@@ -84,13 +93,15 @@ public function main() {
 
     io:println((12.456).toFixedString(2)); // @output 12.46
     io:println((12.456).toFixedString(())); // @output 12.456
+    io:println((1.0).toFixedString(())); // @output 1.0
     io:println(floats:Infinity.toFixedString(2)); // @output Infinity
 
     io:println((12.456).toExpString(2)); // @output 1.25e+01
     io:println((12.456).toExpString(())); // @output 1.2456e+01
+    io:println((1.0).toExpString(())); // @output 1.0e+00
     io:println(floats:NaN.toExpString(2)); // @output NaN
     io:println((1.0).toExpString(0)); // @output 1e+00
-    io:println((0.001).toExpString(())); // @output 1e-03
+    io:println((0.001).toExpString(())); // @output 1.0e-03
 
     io:println(floats:avg(2.0, 4.0)); // @output 3.0
     io:println(floats:avg().isNaN()); // @output true
