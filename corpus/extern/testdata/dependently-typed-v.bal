@@ -55,6 +55,13 @@ public function main() {
     io:println(defB); // @output 100
     string defC = inferredWithDefault(val = 7);
     io:println(defC); // @output 7
+
+    error|int withError = inferredMaybeError();
+    if withError is error {
+        io:println("error"); // @output error
+    } else {
+        io:println(withError);
+    }
 }
 
 function inferred(int val, typedesc retTy = <>) returns retTy = external;
@@ -66,3 +73,5 @@ function inferredPartially(int val, typedesc<anydata> retTy = <>) returns retTy|
 function shiftBy(Point p, int dx, int dy, typedesc retTy = <>) returns retTy = external;
 
 function inferredWithDefault(int val = 42, typedesc retTy = <>) returns retTy = external;
+
+function inferredMaybeError(typedesc<any|error> retTy = <>) returns retTy = external;

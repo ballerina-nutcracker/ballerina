@@ -6299,7 +6299,12 @@ func argArray(t typeResolver, sym model.FunctionSymbol, paramTypes []semtypes.Se
 				}
 				ctx := t.typeContext()
 				T := semtypes.TypedescConstraint(ctx, paramTypes[i])
-				S := semtypes.Diff(callExpectedType, semtypes.ERROR)
+				depSym, ok := sym.(model.DependentlyTypedFunctionSymbol)
+				if !ok {
+					t.internalError("inferred typedesc param on non-dependent function", loc)
+					return nil, chain, false
+				}
+				S := semtypes.Diff(callExpectedType, depSym.ReturnType().FixedPart())
 				if semtypes.IsEmpty(ctx, S) {
 					S = callExpectedType
 				}
