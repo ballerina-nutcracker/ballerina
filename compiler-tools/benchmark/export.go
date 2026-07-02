@@ -55,6 +55,7 @@ type (
 	report struct {
 		BaseRef   string
 		HeadRef   string
+		Mode      benchmarkMode
 		Generated time.Time
 		results   []runResult
 	}
@@ -87,12 +88,12 @@ func (r *report) export(outPath string) error {
 			Head:  head,
 		}
 		if base != nil {
-			tblRow.BaseMean = fmt.Sprintf("%.3f", base.Mean*1000.0)
-			tblRow.BaseStddev = fmt.Sprintf("%.3f", base.Stddev*1000.0)
+			tblRow.BaseMean = r.formatMetric(base.Mean)
+			tblRow.BaseStddev = r.formatMetric(base.Stddev)
 		}
 		if head != nil {
-			tblRow.HeadMean = fmt.Sprintf("%.3f", head.Mean*1000.0)
-			tblRow.HeadStddev = fmt.Sprintf("%.3f", head.Stddev*1000.0)
+			tblRow.HeadMean = r.formatMetric(head.Mean)
+			tblRow.HeadStddev = r.formatMetric(head.Stddev)
 		}
 		tblRow.DeltaAvailable, tblRow.DeltaRatio, tblRow.DeltaStddev, tblRow.DeltaWinnerRef = computeDelta(base, head, r.BaseRef, r.HeadRef)
 		rows = append(rows, tblRow)
@@ -106,17 +107,60 @@ func (r *report) export(outPath string) error {
 	defer func() { _ = f.Close() }()
 
 	data := struct {
-		Report report
-		Rows   []row
+		Report      report
+		Rows        []row
+		Title       string
+		MeanLabel   string
+		StddevLabel string
+		WinnerVerb  string
 	}{
-		Report: *r,
-		Rows:   rows,
+		Report:      *r,
+		Rows:        rows,
+		Title:       r.title(),
+		MeanLabel:   r.meanLabel(),
+		StddevLabel: r.stddevLabel(),
+		WinnerVerb:  r.winnerVerb(),
 	}
 
 	if err := tpl.Execute(f, data); err != nil {
 		return fmt.Errorf("failed to render html report %q: %w", outPath, err)
 	}
 	return nil
+}
+
+func (r *report) formatMetric(value float64) string {
+	if r.Mode == memoryMode {
+		return fmt.Sprintf("%.3f", value)
+	}
+	return fmt.Sprintf("%.3f", value*1000.0)
+}
+
+func (r *report) title() string {
+	if r.Mode == memoryMode {
+		return "Ballerina Memory Benchmark"
+	}
+	return "Ballerina Benchmark"
+}
+
+func (r *report) meanLabel() string {
+	if r.Mode == memoryMode {
+		return "PEAK RSS (MiB)"
+	}
+	return "MEAN (ms)"
+}
+
+func (r *report) stddevLabel() string {
+	if r.Mode == memoryMode {
+		return "STDDEV (MiB)"
+	}
+	return "STDDEV (ms)"
+}
+
+func (r *report) winnerVerb() string {
+	if r.Mode == memoryMode {
+		return "uses less memory"
+	}
+	return "is faster"
 }
 
 func computeDelta(base, head *benchResult, baseRef, headRef string) (bool, string, string, string) {
