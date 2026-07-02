@@ -883,11 +883,11 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	}
 
 	// Run compilation pipeline
-	implicitImports, err := langlib.ImplicitImports(cx)
+	langlibs, err := langlib.Build(cx, publicSymbols)
 	if err != nil {
 		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
 	}
-	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(cx, syntaxTrees, implicitImports, publicSymbols, defaultOrg)
+	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(cx, syntaxTrees, langlibs.ImplicitImports, langlibs.PublicSymbols, defaultOrg)
 	pkgScope, _ := semantics.ResolveSymbols(cx, *pkgID, importedSymbolsByCU)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")

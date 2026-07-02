@@ -14,55 +14,23 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
-class NumberIterator {
-    int[] items = [1, 2, 3];
+public class NumberIterator {
     int idx = 0;
 
     public function next() returns record {|int value;|}? {
         if self.idx >= 3 {
             return ();
         }
-        int val = self.items[self.idx];
+        int value = self.idx + 1;
         self.idx += 1;
-        return {value: val};
+        return {value: value};
     }
 }
 
-class NumberGenerator {
+public class NumberGenerator {
     *object:Iterable;
 
     public function iterator() returns NumberIterator {
         return new;
-    }
-}
-
-public function main() returns error? {
-    string[] names = ["John", "Jane", "Doe"];
-
-    foreach var name in names {
-        io:println("Hello, ", name); // @output Hello, John
-    }
-    // @output Hello, Jane
-    // @output Hello, Doe
-
-    map<int> scores = {alice: 10, bob: 20};
-    foreach var score in scores {
-        io:println(score); // @output 10
-                           // @output 20
-    }
-
-    NumberGenerator gen = new;
-    foreach var value in gen {
-        io:println(value); // @output 1
-                           // @output 2
-                           // @output 3
-    }
-
-    foreach var i in 0..<3 {
-        io:println(i); // @output 0
-                       // @output 1
-                       // @output 2
     }
 }
