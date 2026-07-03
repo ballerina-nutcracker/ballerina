@@ -43,6 +43,28 @@ type httpClient struct {
 	maxEntityBodySize int64 // -1 = no limit; 0 or positive = byte cap
 }
 
+// limitedReadCloser bounds reads to n bytes (like io.LimitReader) while still
+// forwarding Close to the underlying stream when it is an io.Closer. The bound
+// gives net/http's post-write drain read a clean EOF without touching the
+// underlying stream; forwarding Close ensures an owned stream is not leaked.
+type limitedReadCloser struct {
+	lr   *io.LimitedReader
+	body io.Reader
+}
+
+func newLimitedReadCloser(body io.Reader, n int64) *limitedReadCloser {
+	return &limitedReadCloser{lr: &io.LimitedReader{R: body, N: n}, body: body}
+}
+
+func (l *limitedReadCloser) Read(p []byte) (int, error) { return l.lr.Read(p) }
+
+func (l *limitedReadCloser) Close() error {
+	if c, ok := l.body.(io.Closer); ok {
+		return c.Close()
+	}
+	return nil
+}
+
 func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body io.Reader, contentLength int64, contentType string, reqHeaders map[string][]string) (int, map[string][]string, io.ReadCloser, error) {
 	// When a streamed body has a declared content length, bound it with
 	// io.LimitReader. After writing the declared bytes, net/http's
@@ -58,17 +80,18 @@ func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body
 	// they are not the affected case, and net/http recognises them to populate
 	// Request.GetBody so the request stays replayable on a stale pooled connection.
 	//
-	// Note: io.LimitReader is not an io.Closer, so the transport no longer Close()s
-	// the wrapped stream. That is fine for the only streamed caller (forward, the
-	// sole takeStream site), which forwards the server-owned inbound r.Body whose
-	// lifetime net/http manages. A future caller that passes an owned io.ReadCloser
-	// here (with contentLength >= 0) expecting the transport to close it would leak.
+	// The wrapper preserves the underlying stream's Close: net/http's transport
+	// closes the request body when it is an io.ReadCloser, so an owned stream is
+	// released rather than leaked. For the current streamed caller (forward,
+	// forwarding the server-owned inbound r.Body) this Close is redundant with
+	// the server's own — http request bodies tolerate a repeat Close — so it is
+	// safe either way.
 	if body != nil && contentLength >= 0 {
 		switch body.(type) {
 		case *bytes.Reader, *bytes.Buffer, *strings.Reader:
 			// replayable in-memory body — leave untouched
 		default:
-			body = io.LimitReader(body, contentLength)
+			body = newLimitedReadCloser(body, contentLength)
 		}
 	}
 	req, err := http.NewRequestWithContext(ctx, method, targetURL, body)
