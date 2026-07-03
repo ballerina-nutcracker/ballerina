@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+moduleLevelLambda  function() returns int;
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = ConstantLoad 50
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    lock-start "$anon/.:moduleLevelLambda" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 1
+    _ = moduleLevelLambda;
+    PopScopeFrame
+    lock-end "$anon/.:moduleLevelLambda" GOTO bb2;
+  }
+  bb2 {
+    return;
+  }
+}

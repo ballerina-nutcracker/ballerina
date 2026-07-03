@@ -516,7 +516,7 @@ func initializeInvokableAnalyzer(parent analyzer, function invokableSignatureNod
 // the function's parameters (and `self` for methods). Body-local variables
 // are added later as normal semantic analysis encounters their definitions.
 func buildFunctionLocals(parent analyzer, fn invokableSignatureNode) *localScope {
-	scope := newLocalScope(nil, true)
+	scope := newLocalScope(enclosingFunctionLocals(parent), true)
 	finishBuildFunctionLocals(parent, scope, fn.RequiredParameters(), fn.GetRestParam())
 	return scope
 }
@@ -1296,9 +1296,21 @@ func validateStreamCloseMethod[A analyzer](a A, impl ast.BLangExpression, comple
 	return true
 }
 
+func enclosingFunctionIsIsolated(a analyzer) bool {
+	fa := enclosingFunctionAnalyzer(a)
+	if fa == nil {
+		return false
+	}
+	fn, ok := fa.function.(invokableSignatureNode)
+	return ok && fn.IsIsolated()
+}
+
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
 	fa := initializeFunctionAnalyzer(a, expr.Function)
 	fn := expr.Function
+	if fn.IsIsolated() && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
+		validateIsolatedCapture(a, enclosingFunctionLocals(a), fn.Body.(ast.BLangNode))
+	}
 	// Walk params + body directly rather than the BLangFunction node
 	// itself; otherwise the walker's first visit on BLangFunction would
 	// re-enter visitInner's BLangFunction case and re-initialize the
