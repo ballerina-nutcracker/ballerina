@@ -1296,6 +1296,18 @@ func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	case *ast.BLangService:
 		resolveServiceDefinition(ms, n)
 		return nil
+	case *ast.BLangLambdaFunction:
+		fn := n.Function
+		name := fn.Name.Value
+		signature := model.FunctionSignature{}
+		symbol := model.NewFunctionSymbol(name, signature, false)
+		ms.AddSymbol(name, symbol)
+		symRef, _, _ := ms.GetSymbolFromCurrentScope(name)
+		fn.SetSymbol(symRef)
+		functionResolver := newFunctionResolver(ms, fn)
+		fn.SetScope(functionResolver.scope)
+		resolveLambdaFunction(functionResolver, functionResolver, fn)
+		return nil
 	default:
 		return visitInnerSymbolResolver(ms, n)
 	}

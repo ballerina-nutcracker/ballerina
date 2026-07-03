@@ -1,0 +1,24 @@
+(package
+  (variable moduleLevelLambda (type
+    (function-type () (
+      (value-type int)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref moduleLevelLambda)
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (literal 50))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (function-type () (
+                (value-type int)))) (expr
+              (simple-var-ref moduleLevelLambda)))))))))
