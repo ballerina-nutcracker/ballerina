@@ -29,7 +29,7 @@ routes requests to attached services by base path.
 | `secureSocket` (TLS) | `ListenerSecureSocket`: `key` (`CertKey` with `certFile`/`keyFile`), `cert`, `mutualSsl`, `protocol`, `ciphers`, `shareSession` |
 | `service /basePath on new http:Listener(port) { ... }` | Attach a service at a base path declaratively, or via `Listener.attach(svc, name?)` / `detach(svc)` |
 | Resource functions | `resource function get\|post\|... <path>(...)`; path segments may be typed params (`[int id]`, `[string s]`, `[boolean b]`, `[decimal d]`) coerced from the URL; an optional `http:Request` parameter receives the inbound request |
-| Resource return | `string`, `http:Response`, `error`, or unions thereof; non-matching path → 404, wrong method → 405 |
+| Resource return | `http:Response`, `error`, `()`, or unions thereof — `()` → 202, `error` → 500, `http:Response` is written as-is. Bare `string`/scalar/`anydata` returns are not supported in this cut (construct an `http:Response`). Non-matching path → 404, wrong method → 405 |
 | Listener lifecycle | `start` / `gracefulStop` / `immediateStop` are driven by the module lifecycle (`$start`/`$gracefulStop`/`$immediateStop`); the program stays alive while listening and winds down on a stop signal |
 
 ### Request / Response messages
