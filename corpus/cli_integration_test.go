@@ -278,6 +278,86 @@ func TestBalPackCorpus(t *testing.T) {
 	}
 }
 
+// TestBalBuildCorpus exercises `bal build` end-to-end: it runs `bal build` on
+// a fixture project, then executes the *produced binary* directly (not the
+// bal CLI) and checks its stdout/stderr/exitcode. This is the Phase 1
+// "end-to-end working sample" milestone from
+// migration-docs/specs/build-command-architecture.md — one fixture uses only
+// pure Ballerina, the other calls a native (lib/rt) stdlib function
+// (time:utcToString) to prove the embedded-binary output already dispatches
+// to native Go code with no extra wiring.
+func TestBalBuildCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
+
+	tests := []struct {
+		name       string
+		projectDir string // relative to repoRoot
+		pkgName    string
+		runTxtar   string // expected stdout/stderr/exitcode of the produced binary
+	}{
+		{
+			name:       "pure-ballerina",
+			projectDir: filepath.Join(testdataRoot, "pure-ballerina", "project"),
+			pkgName:    "build_pure_sample",
+			runTxtar:   "pure-ballerina.txtar",
+		},
+		{
+			name:       "native-stdlib",
+			projectDir: filepath.Join(testdataRoot, "native-stdlib", "project"),
+			pkgName:    "build_native_sample",
+			runTxtar:   "native-stdlib.txtar",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			absProjectDir := filepath.Join(repoRoot, tt.projectDir)
+			t.Cleanup(func() { _ = os.RemoveAll(filepath.Join(absProjectDir, "target")) })
+
+			stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "build", tt.projectDir)
+			if exitCode != 0 {
+				t.Fatalf("bal build failed for %s: exit=%d\nstdout:\n%s\nstderr:\n%s", tt.projectDir, exitCode, stdout, stderr)
+			}
+			if !strings.Contains(stdout, "Created ") {
+				t.Fatalf("expected bal build stdout to report the created binary, got:\n%s", stdout)
+			}
+
+			binName := tt.pkgName
+			if runtime.GOOS == "windows" {
+				binName += ".exe"
+			}
+			binPath := filepath.Join(absProjectDir, "target", "bin", binName)
+			if _, err := os.Stat(binPath); err != nil {
+				t.Fatalf("expected built binary at %s: %v", binPath, err)
+			}
+
+			runOut, runErr, runExit := runCLICommand(t, binPath, repoRoot, coverDir)
+			runOut = test_util.NormalizeNewlines(runOut)
+			runErr = test_util.NormalizeNewlines(runErr)
+
+			expectedOut, expectedErr, expectedExit, err := test_util.LoadTxtarStdoutStderrExitcode(filepath.Join(outputsRoot, tt.runTxtar))
+			if err != nil {
+				t.Fatalf("failed to parse txtar file for %s: %v", tt.name, err)
+			}
+			if runOut != expectedOut {
+				t.Fatalf("unexpected stdout from built binary %s\n%s", binPath, test_util.FormatExpectedGot(expectedOut, runOut))
+			}
+			if runErr != expectedErr {
+				t.Fatalf("unexpected stderr from built binary %s\n%s", binPath, test_util.FormatExpectedGot(expectedErr, runErr))
+			}
+			if strconv.Itoa(runExit) != expectedExit {
+				t.Fatalf("unexpected exit code from built binary %s\n%s", binPath, test_util.FormatExpectedGot(expectedExit, strconv.Itoa(runExit)))
+			}
+		})
+	}
+}
+
 // substituteScenarioPlaceholders replaces the token "{{TMPDIR}}" in each arg
 // with a fresh t.TempDir() (one TempDir per scenario, reused across args).
 // Any other "{{...}}" token is treated as an unknown placeholder and fails
