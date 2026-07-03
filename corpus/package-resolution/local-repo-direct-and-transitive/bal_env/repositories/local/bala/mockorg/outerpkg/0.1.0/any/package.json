@@ -1,8 +1,0 @@
-{
-  "organization": "mockorg",
-  "name": "outerpkg",
-  "version": "0.1.0",
-  "ballerina_version": "2201.10.0",
-  "platform": "any",
-  "export": ["outerpkg"]
-}

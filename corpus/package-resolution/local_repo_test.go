@@ -25,6 +25,7 @@ package packageresolution
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -34,6 +35,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"golang.org/x/tools/txtar"
 )
@@ -85,6 +87,7 @@ func TestPackageResolutionScenarios(t *testing.T) {
 		}
 
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			runScenario(t, scenarioDir, projectDir)
 		})
 	}
@@ -129,7 +132,17 @@ func runScenario(t *testing.T, scenarioDir, projectDir string) {
 func runBalRun(t *testing.T, projectDir, balEnvDir string) (stdout, stderr string) {
 	t.Helper()
 
-	cmd := exec.Command(pkgResBalBin, "run", projectDir)
+	deadline, ok := t.Deadline()
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if ok {
+		ctx, cancel = context.WithDeadline(context.Background(), deadline)
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+	}
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, pkgResBalBin, "run", projectDir)
 	cmd.Dir = pkgResRepoRoot
 
 	// Build subprocess environment: inherit current env, then override BAL_ENV.

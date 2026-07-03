@@ -158,12 +158,6 @@ func prependBundledRepositories(repos []Repository) []Repository {
 	return append(bundledRepositories(), repos...)
 }
 
-// getDefaultRepositories returns the default repositories based on config.
-func (l *ProjectLoader) getDefaultRepositories(cfg ProjectLoadConfig) []Repository {
-	if len(cfg.Repositories) > 0 {
-		return prependBundledRepositories(cfg.Repositories)
-	}
-
 // getDefaultRepositories returns the default repository chain (cfg.Repositories
 // when set, otherwise derived from homeFs) and the custom-repo registry
 // (always derived from homeFs).

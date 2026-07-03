@@ -244,12 +244,12 @@ var _ bindableRepository = (*FileSystemRepository)(nil)
 // The central repository is exposed as a RemoteRepository whose on-disk cache
 // is the central bala directory. The RemoteRepository currently has no remote
 // source wired in, so it behaves as a cache-only read until that arrives.
-func defaultRepositories(ballerinaEnvFs fs.FS) []Repository {
+func defaultRepositories(ballerinaEnvFs fs.FS) ([]Repository, map[string]Repository) {
 	centralCache := NewFileSystemRepository(ballerinaEnvFs, centralCacheSubpath)
 	localCache := NewFileSystemRepository(ballerinaEnvFs, localRepoCacheSubpath)
-    append(bundledRepositories(), NewRemoteRepository(centralCache))
-    custom := map[string]Repository{"local": localCache}
-    return chain, custom
+	chain := append(bundledRepositories(), NewRemoteRepository(centralCache))
+	custom := map[string]Repository{"local": localCache}
+	return chain, custom
 }
 
 // bundledRepositories returns the repositories baked into the binary: the lang

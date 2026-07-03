@@ -104,6 +104,7 @@ func buildBlendedManifest(b *blendedManifestBuilder) *blendedManifest {
 						dep.Org().Value(),
 						dep.Name().Value(),
 						dep.Version().String(),
+						dep.Repository(),
 					)
 				}
 				continue
@@ -121,16 +122,16 @@ func buildBlendedManifest(b *blendedManifestBuilder) *blendedManifest {
 	return bm
 }
 
-// emitLocalRepoMissWarning warns that a dep routed to the local repository is
+// emitLocalRepoMissWarning warns that a dep routed to a user-specified repository is
 // missing there; the caller then drops it so resolution falls back to the chain.
-func emitLocalRepoMissWarning(report func(diagnostics.Diagnostic), org, pkgName, version string) {
+func emitLocalRepoMissWarning(report func(diagnostics.Diagnostic), org, pkgName, version, repoName string) {
 	info := diagnostics.NewDiagnosticInfo(
 		nil,
-		"dependency %s/%s:%s cannot be found in the local repository. falling back to default repositories",
+		"dependency %s/%s:%s cannot be found in the '%s' repository. falling back to default repositories",
 		diagnostics.Warning,
 	)
 	loc := diagnostics.NewBallerinaTomlLocation(0, 0)
-	report(diagnostics.NewDefaultDiagnostic(info, loc, nil, org, pkgName, version))
+	report(diagnostics.NewDefaultDiagnostic(info, loc, nil, org, pkgName, version, repoName))
 }
 
 // dependency returns the blended-view entry for (org, name). A nil receiver

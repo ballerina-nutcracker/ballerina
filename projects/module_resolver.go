@@ -101,55 +101,32 @@ func (r *moduleResolver) resolveRequest(ctx context.Context, request *moduleLoad
 		org = request.orgName.Value()
 	}
 
-	// Extract package name from module name (e.g., "http.auth" -> "http")
-	pkgName := extractPackageName(request.moduleName)
-
-	// Route through the user-specified repository when the root manifest names
-	// one for this (org, name). Validation in blendedManifest guarantees the
-	// package exists in that registry; if it doesn't carry the requested module,
-	// fall through silently to the default chain.
-	if blended, ok := r.blendedManifest.dependency(org, pkgName); ok && blended.Repository() != "" {
-		desc := NewPackageDescriptor(blended.Org(), blended.Name(), blended.Version())
-		customReq := newResolutionRequestWithRepository(desc, blended.Repository())
-		responses := r.packageResolver.ResolvePackages(ctx, []ResolutionRequest{customReq}, r.resolutionOptions)
-		if len(responses) > 0 && responses[0].IsResolved() {
-			pkg := responses[0].Package()
-			if pkg != nil {
-				for _, mod := range pkg.Modules() {
-					if mod.ModuleName().String() == request.moduleName {
-						pkgDesc := pkg.Manifest().PackageDescriptor()
-						var pkgDescPtr *PackageDescriptor
-						if !pkgDesc.Equals(r.rootPkgDesc) {
-							pkgDescPtr = &pkgDesc
-						}
-						return &importModuleResponse{
-							packageDescriptor: pkgDescPtr,
-							moduleDesc:        mod.Descriptor(),
-							resolutionStatus:  resolutionStatusResolved,
-						}
-					}
-				}
-			}
+	// Try each package name candidate in order.
+	// The full module name is tried first (handles top-level packages like "math.vector"),
+	// then the prefix before the first dot (handles sub-modules like "http.auth" within "http").
+	for _, pkgName := range packageNameCandidates(request.moduleName) {
+		if resp := r.resolveFromUserSpecifiedRepo(ctx, org, pkgName, request.moduleName); resp != nil {
+			return resp
 		}
-	}
 
-	// Default chain: packages are returned oldest-first, so iterate in reverse.
-	packages := r.packageResolver.ResolveByName(ctx, org, pkgName, r.resolutionOptions)
-	for i := len(packages) - 1; i >= 0; i-- {
-		pkg := packages[i]
-		// Check if module exists in this package
-		for _, mod := range pkg.Modules() {
-			if mod.ModuleName().String() == request.moduleName {
-				pkgDesc := pkg.Manifest().PackageDescriptor()
-				// Only set packageDescriptor for external packages (nil for same-package)
-				var pkgDescPtr *PackageDescriptor
-				if !pkgDesc.Equals(r.rootPkgDesc) {
-					pkgDescPtr = &pkgDesc
-				}
-				return &importModuleResponse{
-					packageDescriptor: pkgDescPtr,
-					moduleDesc:        mod.Descriptor(),
-					resolutionStatus:  resolutionStatusResolved,
+		// Default chain: packages are returned oldest-first, so iterate in reverse to get the newest version.
+		packages := r.packageResolver.ResolveByName(ctx, org, pkgName, r.resolutionOptions)
+		for i := len(packages) - 1; i >= 0; i-- {
+			pkg := packages[i]
+			// Check if module exists in this package
+			for _, mod := range pkg.Modules() {
+				if mod.ModuleName().String() == request.moduleName {
+					pkgDesc := pkg.Manifest().PackageDescriptor()
+					// Only set packageDescriptor for external packages (nil for same-package)
+					var pkgDescPtr *PackageDescriptor
+					if !pkgDesc.Equals(r.rootPkgDesc) {
+						pkgDescPtr = &pkgDesc
+					}
+					return &importModuleResponse{
+						packageDescriptor: pkgDescPtr,
+						moduleDesc:        mod.Descriptor(),
+						resolutionStatus:  resolutionStatusResolved,
+					}
 				}
 			}
 		}
@@ -159,6 +136,42 @@ func (r *moduleResolver) resolveRequest(ctx context.Context, request *moduleLoad
 	return &importModuleResponse{
 		resolutionStatus: resolutionStatusUnresolved,
 	}
+}
+
+// resolveFromUserSpecifiedRepo routes a module lookup through the repository named in the
+// root manifest for (org, pkgName). Returns nil if no user-specified repository is
+// configured or if the package doesn't carry the requested module, so the caller falls
+// through to the default chain.
+func (r *moduleResolver) resolveFromUserSpecifiedRepo(ctx context.Context, org, pkgName, moduleName string) *importModuleResponse {
+	blended, ok := r.blendedManifest.dependency(org, pkgName)
+	if !ok || blended.Repository() == "" {
+		return nil
+	}
+	desc := NewPackageDescriptor(blended.Org(), blended.Name(), blended.Version())
+	customReq := newResolutionRequestWithRepository(desc, blended.Repository())
+	responses := r.packageResolver.ResolvePackages(ctx, []ResolutionRequest{customReq}, r.resolutionOptions)
+	if len(responses) == 0 || !responses[0].IsResolved() {
+		return nil
+	}
+	pkg := responses[0].Package()
+	if pkg == nil {
+		return nil
+	}
+	for _, mod := range pkg.Modules() {
+		if mod.ModuleName().String() == moduleName {
+			pkgDesc := pkg.Manifest().PackageDescriptor()
+			var pkgDescPtr *PackageDescriptor
+			if !pkgDesc.Equals(r.rootPkgDesc) {
+				pkgDescPtr = &pkgDesc
+			}
+			return &importModuleResponse{
+				packageDescriptor: pkgDescPtr,
+				moduleDesc:        mod.Descriptor(),
+				resolutionStatus:  resolutionStatusResolved,
+			}
+		}
+	}
+	return nil
 }
 
 // packageNameCandidates returns the package name(s) to try when resolving a module.

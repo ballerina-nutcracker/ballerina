@@ -107,13 +107,7 @@ func (e *Environment) addRepository(repo Repository) {
 // same CompilerEnvironment. Post-Build to avoid exporting builder surface for a
 // single internal caller.
 func (e *Environment) setCustomRepos(custom map[string]Repository) {
-	r, ok := e.packageResolver.(*defaultPackageResolver)
-	if !ok {
-		return
-	}
-	if custom == nil {
-		custom = map[string]Repository{}
-	}
+	r := e.packageResolver.(*defaultPackageResolver)
 	for _, repo := range custom {
 		if bindable, ok := repo.(bindableRepository); ok {
 			bindable.bind(e)
