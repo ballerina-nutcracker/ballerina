@@ -361,6 +361,18 @@
     (expression-stmt
       (invocation io println (
         (invocation lang.float toFixedString (
+          (group-expr
+            (literal 1e+07))
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float toFixedString (
+          (group-expr
+            (literal 1e+20))
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float toFixedString (
           (simple-var-ref floats Infinity)
           (literal 2))))))
     (expression-stmt
@@ -380,6 +392,30 @@
         (invocation lang.float toExpString (
           (group-expr
             (literal 1))
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float toExpString (
+          (group-expr
+            (literal 10))
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float toExpString (
+          (group-expr
+            (literal 100))
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float toExpString (
+          (group-expr
+            (literal 1e+06))
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float toExpString (
+          (group-expr
+            (literal 1e+07))
           (literal <nil>))))))
     (expression-stmt
       (invocation io println (

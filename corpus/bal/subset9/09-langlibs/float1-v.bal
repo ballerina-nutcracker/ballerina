@@ -94,14 +94,20 @@ public function main() {
     io:println((12.456).toFixedString(2)); // @output 12.46
     io:println((12.456).toFixedString(())); // @output 12.456
     io:println((1.0).toFixedString(())); // @output 1.0
+    io:println((1e7).toFixedString(())); // @output 10000000
+    io:println((1e20).toFixedString(())); // @output 100000000000000000000
     io:println(floats:Infinity.toFixedString(2)); // @output Infinity
 
     io:println((12.456).toExpString(2)); // @output 1.25e+01
     io:println((12.456).toExpString(())); // @output 1.2456e+01
     io:println((1.0).toExpString(())); // @output 1.0e+00
+    io:println((10.0).toExpString(())); // @output 1.0e+01
+    io:println((100.0).toExpString(())); // @output 1.00e+02
+    io:println((1000000.0).toExpString(())); // @output 1.000000e+06
+    io:println((1e7).toExpString(())); // @output 1e+07
     io:println(floats:NaN.toExpString(2)); // @output NaN
     io:println((1.0).toExpString(0)); // @output 1e+00
-    io:println((0.001).toExpString(())); // @output 1.0e-03
+    io:println((0.001).toExpString(())); // @output 1e-03
 
     io:println(floats:avg(2.0, 4.0)); // @output 3.0
     io:println(floats:avg().isNaN()); // @output true

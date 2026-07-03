@@ -226,7 +226,7 @@ func floatToFixedString(_ *extern.Context, args []values.BalValue) (values.BalVa
 		return values.FormatFloat(x), nil
 	}
 	if args[1] == nil {
-		return ensureFraction(strconv.FormatFloat(x, 'f', -1, 64)), nil
+		return formatMinimalFixed(x), nil
 	}
 	digits := args[1].(int64)
 	if digits < 0 {
@@ -241,7 +241,7 @@ func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValu
 		return values.FormatFloat(x), nil
 	}
 	if args[1] == nil {
-		return normalizeExp(ensureExpFraction(strconv.FormatFloat(x, 'e', -1, 64))), nil
+		return normalizeExp(formatMinimalExp(x)), nil
 	}
 	digits := args[1].(int64)
 	if digits < 0 {
@@ -250,19 +250,29 @@ func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValu
 	return normalizeExp(strconv.FormatFloat(x, 'e', int(digits), 64)), nil
 }
 
-func ensureFraction(s string) string {
-	if strings.ContainsRune(s, '.') {
-		return s
+func formatMinimalFixed(x float64) string {
+	out := strconv.FormatFloat(x, 'f', -1, 64)
+	if math.Abs(x) < 1e7 && math.Trunc(x) == x && !strings.ContainsRune(out, '.') {
+		return out + ".0"
 	}
-	return s + ".0"
+	return out
 }
 
-func ensureExpFraction(s string) string {
-	idx := strings.LastIndexByte(s, 'e')
-	if idx < 0 || strings.ContainsRune(s[:idx], '.') {
-		return s
+func formatMinimalExp(x float64) string {
+	out := strconv.FormatFloat(x, 'e', -1, 64)
+	idx := strings.LastIndexByte(out, 'e')
+	if idx < 0 || strings.ContainsRune(out[:idx], '.') {
+		return out
 	}
-	return s[:idx] + ".0" + s[idx:]
+	exp, err := strconv.Atoi(out[idx+1:])
+	if err != nil || math.Abs(x) >= 1e7 || math.Trunc(x) != x {
+		return out
+	}
+	zeros := exp
+	if zeros < 1 {
+		zeros = 1
+	}
+	return out[:idx] + "." + strings.Repeat("0", zeros) + out[idx:]
 }
 
 func normalizeExp(s string) string {
