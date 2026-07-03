@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-lambda-2-e.bal:30:16
+   |
+30 |         return arr.length(); // @error
+   |                ^^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-lambda-2-e.bal:38:16
+   |
+38 |         return x; // @error
+   |                ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-lambda-2-e.bal:44:16
+   |
+44 |         return xs[0]; // @error
+   |                ^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-lambda-2-e.bal:56:20
+   |
+56 |             return outerXs.length(); // @error
+   |                    ^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> isolated-lambda-2-e.bal:24:16
+   |
+24 |         return nonIsolated(); // @error
+   |                ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> isolated-lambda-2-e.bal:49:16
+   |
+49 |         return nonIsolated(); // @error
+   |                ^^^^^^^^^^^^^

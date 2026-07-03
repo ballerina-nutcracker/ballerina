@@ -76,6 +76,7 @@ func compileForSerializationBench(b *testing.B, tc test_util.TestCase) *serializ
 	birPkg := backend.BIR()
 	if birPkg == nil {
 		b.Fatalf("nil BIR for %s", tc.InputPath)
+		return nil
 	}
 
 	pkgIdent := semantics.PackageIdentifier{
