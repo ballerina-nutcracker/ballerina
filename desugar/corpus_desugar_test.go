@@ -116,9 +116,10 @@ func testDesugar(t *testing.T, testCase test_util.TestCase) {
 
 	// The synthetic init function emits assignments in a topo order whose
 	// peer-statement order depends on Go's map iteration; commuting statements
-	// that share no dependency edge produces an equivalent program. Compare
-	// init-function bodies as multisets of statements so the test is stable
-	// regardless of frontend dep-collection order.
+	// that share no dependency edge produces an equivalent program. Import
+	// declaration order can also vary. Compare these order-insensitive regions in
+	// canonical order so the test is stable regardless of frontend collection
+	// order.
 	if normalizeDesugaredAST(actualAST) != normalizeDesugaredAST(expectedAST) {
 		t.Errorf("Desugared AST mismatch for %s\nExpected file: %s\n%s",
 			testCase.InputPath, testCase.ExpectedPath, getDiff(expectedAST, actualAST))
@@ -210,6 +211,29 @@ func printSExp(e *sexp) string {
 	return "(" + strings.Join(parts, " ") + ")"
 }
 
+// canonicalisePackageImports sorts top-level import-package nodes by their
+// printed form while leaving every non-import package child in place.
+func canonicalisePackageImports(e *sexp) {
+	if e.isAtom || !isPackageSExp(e) {
+		return
+	}
+
+	imports := make([]*sexp, 0)
+	importSlots := make([]int, 0)
+	for i := 1; i < len(e.list); i++ {
+		if isImportPackageSExp(e.list[i]) {
+			imports = append(imports, e.list[i])
+			importSlots = append(importSlots, i)
+		}
+	}
+	sort.Slice(imports, func(i, j int) bool {
+		return printSExp(imports[i]) < printSExp(imports[j])
+	})
+	for i, slot := range importSlots {
+		e.list[slot] = imports[i]
+	}
+}
+
 // canonicaliseInitFnBodies finds every (function init () () (block-function-body ...))
 // node in the AST and sorts its block-function-body's child statements by
 // their printed form. The synthetic init function's assignments commute as
@@ -252,6 +276,14 @@ func isInitFnSExp(e *sexp) bool {
 	return true
 }
 
+func isPackageSExp(e *sexp) bool {
+	return !e.isAtom && len(e.list) > 0 && e.list[0].isAtom && e.list[0].atom == "package"
+}
+
+func isImportPackageSExp(e *sexp) bool {
+	return !e.isAtom && len(e.list) > 0 && e.list[0].isAtom && e.list[0].atom == "import-package"
+}
+
 func normalizeDesugaredAST(s string) string {
 	toks := tokenizeSExp(s)
 	if len(toks) == 0 {
@@ -261,6 +293,7 @@ func normalizeDesugaredAST(s string) string {
 	if !ok {
 		return s
 	}
+	canonicalisePackageImports(root)
 	canonicaliseInitFnBodies(root)
 	return printSExp(root)
 }
