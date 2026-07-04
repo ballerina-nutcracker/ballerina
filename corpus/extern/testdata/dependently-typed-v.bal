@@ -62,6 +62,10 @@ public function main() {
     } else {
         io:println(withError);
     }
+
+    Getter g = new;
+    string & readonly s = g->get();
+    io:println(s); // @output immutable
 }
 
 function inferred(int val, typedesc retTy = <>) returns retTy = external;
@@ -75,3 +79,7 @@ function shiftBy(Point p, int dx, int dy, typedesc retTy = <>) returns retTy = e
 function inferredWithDefault(int val = 42, typedesc retTy = <>) returns retTy = external;
 
 function inferredMaybeError(typedesc<any|error> retTy = <>) returns retTy = external;
+
+isolated client class Getter {
+    isolated remote function get(typedesc<anydata> targetType = <>) returns targetType & readonly = external;
+}
