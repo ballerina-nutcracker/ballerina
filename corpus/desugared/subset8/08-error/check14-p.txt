@@ -1,0 +1,31 @@
+(package
+  (variable moduleValue (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation mayFail ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (assignment
+        (simple-var-ref moduleValue)
+        (simple-var-ref $desugar$0))))
+  (function mayFail () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal module init failed))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref moduleValue)))))

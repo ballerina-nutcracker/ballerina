@@ -1,0 +1,20 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function mayFail () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal module init failed))))))
+  (variable moduleValue (type
+    (value-type int)) (expr
+    (checked-expr
+      (invocation mayFail ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref moduleValue)))))
