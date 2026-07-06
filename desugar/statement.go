@@ -1017,10 +1017,6 @@ func walkMatchStatement(cx *functionContext, stmt *ast.BLangMatchStatement) desu
 			if !ok {
 				continue
 			}
-			if constPattern.Expr == nil {
-				cx.pkgCtx.compilerCtx.InternalError("constant match pattern expression is nil", constPattern.GetPosition())
-				continue
-			}
 			patternResult := walkExpression(cx, constPattern.Expr)
 			initStmts = append(initStmts, patternResult.initStmts...)
 			constPattern.Expr = patternResult.replacementNode.(ast.BLangExpression)
