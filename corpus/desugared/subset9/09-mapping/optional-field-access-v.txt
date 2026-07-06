@@ -1,0 +1,643 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (type-definition RequiredX
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition OptionalX
+    (record-type
+      (field x optional
+        (value-type int))))
+  (type-definition RequiredY
+    (record-type
+      (field y
+        (value-type int))))
+  (type-definition OptionalX2
+    (record-type
+      (field x optional
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition RequiredX2
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition RequiredXAlso
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition ReadonlyRequiredX
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field x
+          (value-type int)))))
+  (type-definition IntersectX
+    (intersection-type
+      (user-defined-type RequiredX)
+      (user-defined-type RequiredXAlso)))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner))))
+  (type-definition ErrorField
+    (record-type
+      (field e optional
+        (error-type))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type RequiredX)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref r))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal <nil>))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$0))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$1)
+            (index-based-access
+              (simple-var-ref $desugar$0)
+              (literal x))))))
+      (var-def
+        (variable rX (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rX))))
+      (var-def
+        (variable $desugar$2 (expr
+          (simple-var-ref r))))
+      (var-def
+        (variable $desugar$3 (expr
+          (literal <nil>))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$2))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$3)
+            (index-based-access
+              (simple-var-ref $desugar$2)
+              (literal x))))))
+      (var-def
+        (variable bracedRX (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bracedRX))))
+      (var-def
+        (variable o (type
+          (user-defined-type OptionalX)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 11))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (simple-var-ref o))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal <nil>))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$4))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (index-based-access
+              (simple-var-ref $desugar$4)
+              (literal x))))))
+      (var-def
+        (variable oXWithValue (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref oXWithValue))))
+      (assignment
+        (index-based-access
+          (simple-var-ref o)
+          (literal x))
+        (literal <nil>))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref o))))
+      (var-def
+        (variable $desugar$7 (expr
+          (literal <nil>))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$7)
+            (simple-var-ref $desugar$6))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$7)
+            (index-based-access
+              (simple-var-ref $desugar$6)
+              (literal x))))))
+      (var-def
+        (variable oX (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (simple-var-ref $desugar$7))))
+      (if
+        (type-test-expr is
+          (simple-var-ref oX)
+          (value-type null))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal single optional nil))))) ())
+      (block-stmt
+        (var-def
+          (variable oneRequired (type
+            (union-type
+              (user-defined-type RequiredX)
+              (user-defined-type RequiredY))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal y)
+                (literal 2))))))
+        (var-def
+          (variable $desugar$8 (expr
+            (simple-var-ref oneRequired))))
+        (var-def
+          (variable $desugar$9 (expr
+            (literal <nil>))))
+        (if
+          (type-test-expr is
+            (simple-var-ref $desugar$8))
+          (block-stmt
+            (assignment
+              (simple-var-ref $desugar$9)
+              (simple-var-ref $desugar$8))) (
+          (block-stmt
+            (assignment
+              (simple-var-ref $desugar$9)
+              (index-based-access
+                (simple-var-ref $desugar$8)
+                (literal x))))))
+        (var-def
+          (variable oneRequiredX (type
+            (union-type
+              (value-type int)
+              (value-type null))) (expr
+            (simple-var-ref $desugar$9))))
+        (if
+          (type-test-expr is
+            (simple-var-ref oneRequiredX)
+            (value-type null))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal union one required nil))))) ())
+        (block-stmt
+          (var-def
+            (variable oneOptional (type
+              (union-type
+                (user-defined-type OptionalX)
+                (user-defined-type RequiredY))) (expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 3))))))
+          (var-def
+            (variable $desugar$10 (expr
+              (simple-var-ref oneOptional))))
+          (var-def
+            (variable $desugar$11 (expr
+              (literal <nil>))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$10))
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$11)
+                (simple-var-ref $desugar$10))) (
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$11)
+                (index-based-access
+                  (simple-var-ref $desugar$10)
+                  (literal x))))))
+          (var-def
+            (variable oneOptionalX (type
+              (union-type
+                (value-type int)
+                (value-type null))) (expr
+              (simple-var-ref $desugar$11))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref oneOptionalX))))
+          (var-def
+            (variable allRequiredValue (type
+              (user-defined-type RequiredX2)) (expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 4))
+                (key-value
+                  (literal y)
+                  (literal 5))))))
+          (var-def
+            (variable allRequired (type
+              (union-type
+                (user-defined-type RequiredX)
+                (user-defined-type RequiredX2))) (expr
+              (simple-var-ref allRequiredValue))))
+          (var-def
+            (variable $desugar$12 (expr
+              (simple-var-ref allRequired))))
+          (var-def
+            (variable $desugar$13 (expr
+              (literal <nil>))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$12))
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$13)
+                (simple-var-ref $desugar$12))) (
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$13)
+                (index-based-access
+                  (simple-var-ref $desugar$12)
+                  (literal x))))))
+          (var-def
+            (variable allRequiredX (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$13))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref allRequiredX))))
+          (var-def
+            (variable allOptional (type
+              (union-type
+                (user-defined-type RequiredX)
+                (user-defined-type OptionalX))) (expr
+              (mapping-constructor-expr))))
+          (var-def
+            (variable $desugar$14 (expr
+              (simple-var-ref allOptional))))
+          (var-def
+            (variable $desugar$15 (expr
+              (literal <nil>))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$14))
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$15)
+                (simple-var-ref $desugar$14))) (
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$15)
+                (index-based-access
+                  (simple-var-ref $desugar$14)
+                  (literal x))))))
+          (var-def
+            (variable allOptionalX (type
+              (union-type
+                (value-type int)
+                (value-type null))) (expr
+              (simple-var-ref $desugar$15))))
+          (if
+            (type-test-expr is
+              (simple-var-ref allOptionalX)
+              (value-type null))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal union required optional nil))))) ())
+          (block-stmt
+            (var-def
+              (variable allOptionalValue (type
+                (user-defined-type OptionalX2)) (expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal y)
+                    (literal 10))))))
+            (var-def
+              (variable allOptionalFields (type
+                (union-type
+                  (user-defined-type OptionalX)
+                  (user-defined-type OptionalX2))) (expr
+                (simple-var-ref allOptionalValue))))
+            (var-def
+              (variable $desugar$16 (expr
+                (simple-var-ref allOptionalFields))))
+            (var-def
+              (variable $desugar$17 (expr
+                (literal <nil>))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$16))
+              (block-stmt
+                (assignment
+                  (simple-var-ref $desugar$17)
+                  (simple-var-ref $desugar$16))) (
+              (block-stmt
+                (assignment
+                  (simple-var-ref $desugar$17)
+                  (index-based-access
+                    (simple-var-ref $desugar$16)
+                    (literal x))))))
+            (var-def
+              (variable allOptionalFieldsX (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (simple-var-ref $desugar$17))))
+            (if
+              (type-test-expr is
+                (simple-var-ref allOptionalFieldsX)
+                (value-type null))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal union all optional nil))))) ())
+            (block-stmt
+              (var-def
+                (variable ro (type
+                  (user-defined-type ReadonlyRequiredX)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal x)
+                      (literal 6))))))
+              (var-def
+                (variable $desugar$18 (expr
+                  (simple-var-ref ro))))
+              (var-def
+                (variable $desugar$19 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$18))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$19)
+                    (simple-var-ref $desugar$18))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$19)
+                    (index-based-access
+                      (simple-var-ref $desugar$18)
+                      (literal x))))))
+              (var-def
+                (variable roX (type
+                  (value-type int)) (expr
+                  (simple-var-ref $desugar$19))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref roX))))
+              (var-def
+                (variable ix (type
+                  (user-defined-type IntersectX)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal x)
+                      (literal 7))))))
+              (var-def
+                (variable $desugar$20 (expr
+                  (simple-var-ref ix))))
+              (var-def
+                (variable $desugar$21 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$20))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$21)
+                    (simple-var-ref $desugar$20))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$21)
+                    (index-based-access
+                      (simple-var-ref $desugar$20)
+                      (literal x))))))
+              (var-def
+                (variable ixX (type
+                  (value-type int)) (expr
+                  (simple-var-ref $desugar$21))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref ixX))))
+              (var-def
+                (variable nested (type
+                  (user-defined-type Outer)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal inner)
+                      (mapping-constructor-expr
+                        (key-value
+                          (literal x)
+                          (literal 9))))))))
+              (var-def
+                (variable $desugar$22 (expr
+                  (index-based-access
+                    (simple-var-ref nested)
+                    (literal inner)))))
+              (var-def
+                (variable $desugar$23 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$22))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$23)
+                    (simple-var-ref $desugar$22))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$23)
+                    (index-based-access
+                      (simple-var-ref $desugar$22)
+                      (literal x))))))
+              (var-def
+                (variable nestedX (type
+                  (value-type int)) (expr
+                  (simple-var-ref $desugar$23))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref nestedX))))
+              (var-def
+                (variable $desugar$24 (expr
+                  (simple-var-ref nested))))
+              (var-def
+                (variable $desugar$25 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$24))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$25)
+                    (simple-var-ref $desugar$24))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$25)
+                    (index-based-access
+                      (simple-var-ref $desugar$24)
+                      (literal inner))))))
+              (var-def
+                (variable $desugar$26 (expr
+                  (simple-var-ref $desugar$25))))
+              (var-def
+                (variable $desugar$27 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$26))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$27)
+                    (simple-var-ref $desugar$26))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$27)
+                    (index-based-access
+                      (simple-var-ref $desugar$26)
+                      (literal x))))))
+              (var-def
+                (variable nestedOptionalX (type
+                  (value-type int)) (expr
+                  (simple-var-ref $desugar$27))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref nestedOptionalX))))
+              (var-def
+                (variable maybeNested (type
+                  (union-type
+                    (user-defined-type Outer)
+                    (value-type null))) (expr
+                  (simple-var-ref nested))))
+              (var-def
+                (variable $desugar$28 (expr
+                  (simple-var-ref maybeNested))))
+              (var-def
+                (variable $desugar$29 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$28))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$29)
+                    (simple-var-ref $desugar$28))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$29)
+                    (index-based-access
+                      (simple-var-ref $desugar$28)
+                      (literal inner))))))
+              (var-def
+                (variable $desugar$30 (expr
+                  (simple-var-ref $desugar$29))))
+              (var-def
+                (variable $desugar$31 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$30))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$31)
+                    (simple-var-ref $desugar$30))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$31)
+                    (index-based-access
+                      (simple-var-ref $desugar$30)
+                      (literal x))))))
+              (var-def
+                (variable maybeNestedX (type
+                  (union-type
+                    (value-type int)
+                    (value-type null))) (expr
+                  (simple-var-ref $desugar$31))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref maybeNestedX))))
+              (var-def
+                (variable errorField (type
+                  (user-defined-type ErrorField)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal e)
+                      (error-constructor-expr (
+                        (literal boom))))))))
+              (var-def
+                (variable $desugar$32 (expr
+                  (simple-var-ref errorField))))
+              (var-def
+                (variable $desugar$33 (expr
+                  (literal <nil>))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$32))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$33)
+                    (simple-var-ref $desugar$32))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$33)
+                    (index-based-access
+                      (simple-var-ref $desugar$32)
+                      (literal e))))))
+              (var-def
+                (variable maybeError (type
+                  (union-type
+                    (error-type)
+                    (value-type null))) (expr
+                  (simple-var-ref $desugar$33))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref maybeError)
+                  (error-type))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (invocation lang.error message (
+                        (simple-var-ref maybeError))))))) ())
+              (block-stmt))))))))

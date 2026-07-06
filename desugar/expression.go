@@ -421,25 +421,95 @@ func walkFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAccess) de
 		expr.Expr = result.replacementNode.(ast.BLangExpression)
 	}
 
-	name := expr.Field.Value
-	lit := &ast.BLangLiteral{
-		Value:         name,
-		OriginalValue: name,
+	if expr.IsOptionalAccess() {
+		return walkOptionalFieldBaseAccess(cx, expr, initStmts)
 	}
-	lit.SetPosition(expr.GetPosition())
-	lit.SetDeterminedType(semtypes.STRING)
 
-	indexAccess := &ast.BLangIndexBasedAccess{
-		IndexExpr: lit,
-	}
-	indexAccess.SetPosition(expr.GetPosition())
-	indexAccess.Expr = expr.Expr
-	indexAccess.SetDeterminedType(expr.GetDeterminedType())
+	indexAccess := createFieldIndexAccess(expr.Expr, expr.Field.Value, expr.GetDeterminedType(), expr.GetPosition())
 
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: indexAccess,
 	}
+}
+
+func walkOptionalFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAccess, initStmts []ast.StatementNode) desugaredNode[ast.BLangActionOrExpression] {
+	basePos := expr.GetPosition()
+	VName, VSymbol, initStmts := createOperandTempVar(cx, expr.Expr.GetDeterminedType(), expr.Expr, basePos, initStmts)
+	resultTy := expr.GetDeterminedType()
+	resultName, resultSymbol, initStmts := createNilResultVar(cx, resultTy, basePos, initStmts)
+
+	VForError := createVarRef(VName, VSymbol, semtypes.ERROR)
+	setPositionIfMissing(VForError, basePos)
+	errorAssign := createResultAssignment(resultName, resultSymbol, resultTy, VForError, basePos)
+	errorBody := &ast.BLangBlockStmt{Stmts: []ast.StatementNode{errorAssign}}
+	errorBody.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(errorBody, basePos)
+
+	baseTy := expr.Expr.GetDeterminedType()
+	VForIndex := createVarRef(VName, VSymbol, semtypes.Diff(baseTy, semtypes.ERROR))
+	setPositionIfMissing(VForIndex, basePos)
+	indexAccess := createFieldIndexAccess(VForIndex, expr.Field.Value, optionalFieldIndexResultType(cx, baseTy, expr.Field.Value), basePos)
+	indexAssign := createResultAssignment(resultName, resultSymbol, resultTy, indexAccess, basePos)
+	elseBody := &ast.BLangBlockStmt{Stmts: []ast.StatementNode{indexAssign}}
+	elseBody.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(elseBody, basePos)
+
+	// TODO: update when handling lax case https://github.com/ballerina-platform/ballerina-lang-go/issues/558
+	ifStmt := &ast.BLangIf{
+		Expr:     createErrorTypeTest(VName, VSymbol, baseTy, basePos),
+		Body:     *errorBody,
+		ElseStmt: elseBody,
+	}
+	ifStmt.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(ifStmt, basePos)
+	initStmts = append(initStmts, ifStmt)
+
+	replacementRef := createVarRef(resultName, resultSymbol, resultTy)
+	setPositionIfMissing(replacementRef, basePos)
+	return desugaredNode[ast.BLangActionOrExpression]{
+		initStmts:       initStmts,
+		replacementNode: replacementRef,
+	}
+}
+
+func optionalFieldIndexResultType(cx *functionContext, baseTy semtypes.SemType, fieldName string) semtypes.SemType {
+	tyCtx := cx.typeCtx()
+	mappingTy := semtypes.Intersect(semtypes.Diff(semtypes.Diff(baseTy, semtypes.ERROR), semtypes.NIL), semtypes.MAPPING)
+	memberTy := semtypes.MappingMemberTypeInner(tyCtx, mappingTy, semtypes.StringConst(fieldName))
+	if semtypes.ContainsUndef(memberTy) || semtypes.IsSubtype(tyCtx, semtypes.NIL, baseTy) {
+		return semtypes.Union(semtypes.Diff(memberTy, semtypes.UNDEF), semtypes.NIL)
+	}
+	return memberTy
+}
+
+func createFieldIndexAccess(expr ast.BLangExpression, fieldName string, ty semtypes.SemType, pos diagnostics.Location) *ast.BLangIndexBasedAccess {
+	lit := &ast.BLangLiteral{
+		Value:         fieldName,
+		OriginalValue: fieldName,
+	}
+	lit.SetPosition(pos)
+	lit.SetDeterminedType(semtypes.STRING)
+
+	indexAccess := &ast.BLangIndexBasedAccess{
+		IndexExpr: lit,
+	}
+	indexAccess.Expr = expr
+	indexAccess.SetPosition(pos)
+	indexAccess.SetDeterminedType(ty)
+	return indexAccess
+}
+
+func createErrorTypeTest(varName *ast.BLangIdentifier, symbol model.SymbolRef, ty semtypes.SemType, pos diagnostics.Location) *ast.BLangTypeTestExpr {
+	ref := createVarRef(varName, symbol, ty)
+	setPositionIfMissing(ref, pos)
+	typeTest := &ast.BLangTypeTestExpr{
+		Expr: ref,
+		Type: ast.TypeData{Type: semtypes.ERROR},
+	}
+	typeTest.SetDeterminedType(semtypes.BOOLEAN)
+	setPositionIfMissing(typeTest, pos)
+	return typeTest
 }
 
 func walkTemplateExpr(cx *functionContext, expr *ast.BLangTemplateExpr) desugaredNode[ast.BLangActionOrExpression] {

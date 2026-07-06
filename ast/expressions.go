@@ -95,6 +95,34 @@ type AbstractExpression = bLangExpressionBase
 func (*bLangExpressionBase) actionOrExpression() {}
 func (*bLangExpressionBase) expressionNode()     {}
 
+func (b *BLangValueExpressionBase) IsCompoundAssignmentLValue() bool {
+	return b.flags.Has(valueExpressionFlagCompoundAssignmentLValue)
+}
+
+func (b *BLangValueExpressionBase) SetCompoundAssignmentLValue() {
+	b.flags |= valueExpressionFlagCompoundAssignmentLValue
+}
+
+func (b *BLangValueExpressionBase) IsLexpr() bool {
+	return b.flags.Has(valueExpressionFlagLexpr)
+}
+
+func (b *BLangValueExpressionBase) SetLexpr() {
+	b.flags |= valueExpressionFlagLexpr
+}
+
+func (b *BLangValueExpressionBase) IsOptionalAccess() bool {
+	return b.flags.Has(valueExpressionFlagOptionalAccess)
+}
+
+func (b *BLangValueExpressionBase) SetOptionalAccess() {
+	b.flags |= valueExpressionFlagOptionalAccess
+}
+
+func (f BLangValueExpressionFlags) Has(flag BLangValueExpressionFlags) bool {
+	return f&flag == flag
+}
+
 func (*BLangRemoteMethodCallAction) actionNode()         {}
 func (*BLangRemoteMethodCallAction) actionOrExpression() {}
 
@@ -114,6 +142,12 @@ const (
 	MappingKeyStringLiteral MappingKeyKind = iota
 	MappingKeyIdentifier
 	MappingKeyComputed
+)
+
+const (
+	valueExpressionFlagCompoundAssignmentLValue BLangValueExpressionFlags = 1 << iota
+	valueExpressionFlagLexpr
+	valueExpressionFlagOptionalAccess
 )
 
 type TemplateExprKind uint8
@@ -143,16 +177,17 @@ type (
 		TypeDescriptor BType
 	}
 
+	BLangValueExpressionFlags byte
+
 	BLangValueExpressionBase struct {
 		bLangExpressionBase
-		IsCompoundAssignmentLValue bool
+		flags BLangValueExpressionFlags
 	}
 
 	bLangAccessExpressionBase struct {
 		BLangValueExpressionBase
 		Expr         BLangExpression
 		OriginalType BType
-		IsLexpr      bool
 	}
 
 	BLangFieldBaseAccess struct {

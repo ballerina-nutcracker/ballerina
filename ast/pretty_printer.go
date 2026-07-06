@@ -1782,7 +1782,11 @@ func (p *PrettyPrinter) printMethodDecl(node *BMethodDecl) {
 // Field-based access expression printer
 func (p *PrettyPrinter) printFieldBaseAccess(node *BLangFieldBaseAccess) {
 	p.StartNode()
-	p.PrintString("field-based-access")
+	if node.IsOptionalAccess() {
+		p.PrintString("optional-field-based-access")
+	} else {
+		p.PrintString("field-based-access")
+	}
 	p.PrintString(node.Field.Value)
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))

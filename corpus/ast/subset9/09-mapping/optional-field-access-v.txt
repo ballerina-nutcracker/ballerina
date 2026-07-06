@@ -1,0 +1,335 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition RequiredX
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition OptionalX
+    (record-type
+      (field x optional
+        (value-type int))))
+  (type-definition RequiredY
+    (record-type
+      (field y
+        (value-type int))))
+  (type-definition OptionalX2
+    (record-type
+      (field x optional
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition RequiredX2
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition RequiredXAlso
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition ReadonlyRequiredX
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field x
+          (value-type int)))))
+  (type-definition IntersectX
+    (intersection-type
+      (user-defined-type RequiredX)
+      (user-defined-type RequiredXAlso)))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner))))
+  (type-definition ErrorField
+    (record-type
+      (field e optional
+        (error-type))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type RequiredX)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (var-def
+        (variable rX (type
+          (value-type int)) (expr
+          (optional-field-based-access x
+            (simple-var-ref r)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rX))))
+      (var-def
+        (variable bracedRX (type
+          (value-type int)) (expr
+          (optional-field-based-access x
+            (simple-var-ref r)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bracedRX))))
+      (var-def
+        (variable o (type
+          (user-defined-type OptionalX)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 11))))))
+      (var-def
+        (variable oXWithValue (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (optional-field-based-access x
+            (simple-var-ref o)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref oXWithValue))))
+      (assignment
+        (field-based-access x
+          (simple-var-ref o))
+        (literal <nil>))
+      (var-def
+        (variable oX (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (optional-field-based-access x
+            (simple-var-ref o)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref oX)
+          (value-type null))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal single optional nil))))) ())
+      (block-stmt
+        (var-def
+          (variable oneRequired (type
+            (union-type
+              (user-defined-type RequiredX)
+              (user-defined-type RequiredY))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal y)
+                (literal 2))))))
+        (var-def
+          (variable oneRequiredX (type
+            (union-type
+              (value-type int)
+              (value-type null))) (expr
+            (optional-field-based-access x
+              (simple-var-ref oneRequired)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref oneRequiredX)
+            (value-type null))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal union one required nil))))) ())
+        (block-stmt
+          (var-def
+            (variable oneOptional (type
+              (union-type
+                (user-defined-type OptionalX)
+                (user-defined-type RequiredY))) (expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 3))))))
+          (var-def
+            (variable oneOptionalX (type
+              (union-type
+                (value-type int)
+                (value-type null))) (expr
+              (optional-field-based-access x
+                (simple-var-ref oneOptional)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref oneOptionalX))))
+          (var-def
+            (variable allRequiredValue (type
+              (user-defined-type RequiredX2)) (expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 4))
+                (key-value
+                  (literal y)
+                  (literal 5))))))
+          (var-def
+            (variable allRequired (type
+              (union-type
+                (user-defined-type RequiredX)
+                (user-defined-type RequiredX2))) (expr
+              (simple-var-ref allRequiredValue))))
+          (var-def
+            (variable allRequiredX (type
+              (value-type int)) (expr
+              (optional-field-based-access x
+                (simple-var-ref allRequired)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref allRequiredX))))
+          (var-def
+            (variable allOptional (type
+              (union-type
+                (user-defined-type RequiredX)
+                (user-defined-type OptionalX))) (expr
+              (mapping-constructor-expr))))
+          (var-def
+            (variable allOptionalX (type
+              (union-type
+                (value-type int)
+                (value-type null))) (expr
+              (optional-field-based-access x
+                (simple-var-ref allOptional)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref allOptionalX)
+              (value-type null))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal union required optional nil))))) ())
+          (block-stmt
+            (var-def
+              (variable allOptionalValue (type
+                (user-defined-type OptionalX2)) (expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal y)
+                    (literal 10))))))
+            (var-def
+              (variable allOptionalFields (type
+                (union-type
+                  (user-defined-type OptionalX)
+                  (user-defined-type OptionalX2))) (expr
+                (simple-var-ref allOptionalValue))))
+            (var-def
+              (variable allOptionalFieldsX (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (optional-field-based-access x
+                  (simple-var-ref allOptionalFields)))))
+            (if
+              (type-test-expr is
+                (simple-var-ref allOptionalFieldsX)
+                (value-type null))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal union all optional nil))))) ())
+            (block-stmt
+              (var-def
+                (variable ro (type
+                  (user-defined-type ReadonlyRequiredX)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal x)
+                      (literal 6))))))
+              (var-def
+                (variable roX (type
+                  (value-type int)) (expr
+                  (optional-field-based-access x
+                    (simple-var-ref ro)))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref roX))))
+              (var-def
+                (variable ix (type
+                  (user-defined-type IntersectX)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal x)
+                      (literal 7))))))
+              (var-def
+                (variable ixX (type
+                  (value-type int)) (expr
+                  (optional-field-based-access x
+                    (simple-var-ref ix)))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref ixX))))
+              (var-def
+                (variable nested (type
+                  (user-defined-type Outer)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal inner)
+                      (mapping-constructor-expr
+                        (key-value
+                          (literal x)
+                          (literal 9))))))))
+              (var-def
+                (variable nestedX (type
+                  (value-type int)) (expr
+                  (optional-field-based-access x
+                    (field-based-access inner
+                      (simple-var-ref nested))))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref nestedX))))
+              (var-def
+                (variable nestedOptionalX (type
+                  (value-type int)) (expr
+                  (optional-field-based-access x
+                    (optional-field-based-access inner
+                      (simple-var-ref nested))))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref nestedOptionalX))))
+              (var-def
+                (variable maybeNested (type
+                  (union-type
+                    (user-defined-type Outer)
+                    (value-type null))) (expr
+                  (simple-var-ref nested))))
+              (var-def
+                (variable maybeNestedX (type
+                  (union-type
+                    (value-type int)
+                    (value-type null))) (expr
+                  (optional-field-based-access x
+                    (optional-field-based-access inner
+                      (simple-var-ref maybeNested))))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref maybeNestedX))))
+              (var-def
+                (variable errorField (type
+                  (user-defined-type ErrorField)) (expr
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal e)
+                      (error-constructor-expr (
+                        (literal boom))))))))
+              (var-def
+                (variable maybeError (type
+                  (union-type
+                    (error-type)
+                    (value-type null))) (expr
+                  (optional-field-based-access e
+                    (simple-var-ref errorField)))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref maybeError)
+                  (error-type))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (invocation message expr:
+                        (simple-var-ref maybeError) ()))))) ())
+              (block-stmt))))))))
