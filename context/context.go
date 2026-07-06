@@ -105,8 +105,20 @@ func (c *CompilerContext) CreateNarrowedSymbol(baseRef model.SymbolRef) model.Sy
 	return c.env.CreateNarrowedSymbol(baseRef)
 }
 
-func (c *CompilerContext) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.FunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
-	return c.env.CreateFunctionSymbol(space, name, signature, fnTy)
+func (c *CompilerContext) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.TypedFunctionSignature, untypedSignature model.UntypedFunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
+	return c.env.CreateFunctionSymbol(space, name, signature, untypedSignature, fnTy)
+}
+
+func (c *CompilerContext) SetFunctionSignature(fn model.SymbolRef, sig model.UntypedFunctionSignature) bool {
+	return c.env.SetFunctionSignature(fn, sig)
+}
+
+func (c *CompilerContext) UpdateFunctionSignatureIncludedRecords(fn model.SymbolRef, includedRecords []*model.IncludedRecordMetadata) bool {
+	return c.env.UpdateFunctionSignatureIncludedRecords(fn, includedRecords)
+}
+
+func (c *CompilerContext) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return c.env.GetFunctionSignature(fn)
 }
 
 func (c *CompilerContext) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {

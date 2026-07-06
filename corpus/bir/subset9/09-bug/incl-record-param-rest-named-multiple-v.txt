@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-foo({| string... |},{| city: never, name: never, int... |}) -> nil{
+foo({| count: never, string... |},{| city: never, name: never, int... |}) -> nil{
   bb0 {
     %4 = ConstantLoad name
     %3 = stringConfig[%4];
@@ -26,7 +26,7 @@ main() -> nil{
     %2 = ConstantLoad Alice
     %3 = ConstantLoad city
     %4 = ConstantLoad New York
-    %5 = newMap {| string... |}{%1=%2, %3=%4}
+    %5 = newMap {| count: never, string... |}{%1=%2, %3=%4}
     %6 = ConstantLoad count
     %7 = ConstantLoad 2
     %8 = newMap {| city: never, name: never, int... |}{%6=%7}

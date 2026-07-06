@@ -684,7 +684,7 @@ func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *
 		return nil
 	}
 	fnSymbol := cx.getSymbol(symbolRef).(model.FunctionSymbol)
-	returnType := fnSymbol.Signature().ReturnType
+	returnType := fnSymbol.TypedSignature().ReturnType
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
 		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
 		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "map"}},

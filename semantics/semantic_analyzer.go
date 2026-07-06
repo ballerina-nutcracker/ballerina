@@ -425,7 +425,7 @@ func validateInitFunction(a analyzer, function *ast.BLangFunction, fnSymbol mode
 		a.semanticErr("'init' function cannot be declared as public", pos)
 	}
 
-	actualReturnType := fnSymbol.Signature().ReturnType
+	actualReturnType := fnSymbol.TypedSignature().ReturnType
 	if !semtypes.IsZero(actualReturnType) {
 		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.NIL) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.NIL, semtypes.ERROR)) {
 			a.semanticErr("'init' function must have return type '()' or  'error?'", pos)
@@ -442,7 +442,7 @@ func validateMainFunction(a analyzer, fnSymbol model.FunctionSymbol, pos diagnos
 		a.semanticErr("'main' function must be public", pos)
 	}
 
-	actualReturnType := fnSymbol.Signature().ReturnType
+	actualReturnType := fnSymbol.TypedSignature().ReturnType
 
 	if !semtypes.IsZero(actualReturnType) {
 		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.NIL) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.NIL, semtypes.ERROR)) {
@@ -503,7 +503,7 @@ func initializeInvokableAnalyzer(parent analyzer, function invokableSignatureNod
 		return fa
 	}
 	rejectInferredTypedescOnNonDependent(parent, function)
-	fa.retTy = fnSymbol.Signature().ReturnType
+	fa.retTy = fnSymbol.TypedSignature().ReturnType
 	validateDefaultParamTypes(parent, function)
 	if function.IsIsolated() && !function.IsNative() {
 		validateIsolatedFunction(fa, function)
@@ -1737,18 +1737,19 @@ func analyzeStreamOperation[A analyzer](a A, invocation *ast.BLangInvocation, ex
 }
 
 func analyzeDirectInvocation[A analyzer](a A, inv invocable, fnSymbol model.FunctionSymbol, paramListTy, expectedType semtypes.SemType) bool {
-	signature := fnSymbol.Signature()
+	signature, ok := a.ctx().GetFunctionSignature(inv.ResolvedSymbol())
+	if !ok {
+		a.internalError("function signature not found", inv.GetPosition())
+		return false
+	}
 	tyCtx := a.tyCtx()
 	for i, arg := range inv.CallArgs() {
 		switch arg := arg.(type) {
 		case *ast.BLangNamedArgsExpression:
 			name := arg.Name.GetValue()
-			targetIndex := -1
-			for j, each := range signature.ParamNames {
-				if each == name {
-					targetIndex = j
-					break
-				}
+			targetIndex, result := signature.Index(name)
+			if result != model.ParamIndexFound {
+				targetIndex = -1
 			}
 			key := semtypes.IntConst(int64(targetIndex))
 			if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {

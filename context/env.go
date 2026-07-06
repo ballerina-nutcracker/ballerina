@@ -65,6 +65,11 @@ func (r *langLibDistinctTypeRegistry) lookup(packageName, typeName string) (mode
 	return ref, ok
 }
 
+type functionSignatureStore struct {
+	mu         sync.RWMutex
+	signatures map[model.SymbolRef]model.UntypedFunctionSignature
+}
+
 func newDistinctTypeTracker() distinctTypeTracker {
 	return distinctTypeTracker{
 		ids:  make(map[model.SymbolRef]int),
@@ -94,13 +99,14 @@ func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
 
 // CompilerEnvironment maintain the shared state of the frontend.
 type CompilerEnvironment struct {
-	anonTypeCount              map[*model.PackageID]int
-	anonFuncCount              map[*model.PackageID]int
-	packageInterner            *model.PackageIDInterner
-	symbolSpaces               []*model.SymbolSpace
-	symbolSpacesMu             sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
-	typeEnv                    semtypes.Env
-	underlyingSymbol           sync.Map
+	anonTypeCount    map[*model.PackageID]int
+	anonFuncCount    map[*model.PackageID]int
+	packageInterner  *model.PackageIDInterner
+	symbolSpaces     []*model.SymbolSpace
+	symbolSpacesMu   sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
+	typeEnv          semtypes.Env
+	underlyingSymbol sync.Map
+	functionSignatureStore
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
 	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
@@ -225,11 +231,47 @@ func (c *CompilerEnvironment) CreateNarrowedSymbol(baseRef model.SymbolRef) mode
 	return narrowedSymbol
 }
 
-func (c *CompilerEnvironment) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.FunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
+func (c *CompilerEnvironment) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.TypedFunctionSignature, untypedSignature model.UntypedFunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
 	sym := model.NewFunctionSymbol(name, signature, false, diagnostics.NewBuiltinLocation())
 	sym.SetType(fnTy)
 	symbolIndex := space.AppendSymbol(sym)
-	return space.RefAt(symbolIndex)
+	ref := space.RefAt(symbolIndex)
+	c.SetFunctionSignature(ref, untypedSignature)
+	return ref
+}
+
+func (s *functionSignatureStore) SetFunctionSignature(fn model.SymbolRef, sig model.UntypedFunctionSignature) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.signatures[fn]; ok {
+		return false
+	}
+	s.signatures[fn] = sig
+	return true
+}
+
+func (s *functionSignatureStore) UpdateFunctionSignatureIncludedRecords(fn model.SymbolRef, includedRecords []*model.IncludedRecordMetadata) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sig, ok := s.signatures[fn]
+	if !ok {
+		return false
+	}
+	for i, metadata := range includedRecords {
+		if metadata == nil {
+			continue
+		}
+		sig.SetIncludedRecordMetadata(i, *metadata)
+	}
+	s.signatures[fn] = sig
+	return true
+}
+
+func (s *functionSignatureStore) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	sig, ok := s.signatures[fn]
+	return sig, ok
 }
 
 func (c *CompilerEnvironment) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {
@@ -316,9 +358,12 @@ func (c *CompilerEnvironment) NewPackageID(orgName model.Name, nameComps []model
 
 func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEnvironment {
 	return &CompilerEnvironment{
-		anonTypeCount:              make(map[*model.PackageID]int),
-		anonFuncCount:              make(map[*model.PackageID]int),
-		packageInterner:            model.DefaultPackageIDInterner,
+		anonTypeCount:   make(map[*model.PackageID]int),
+		anonFuncCount:   make(map[*model.PackageID]int),
+		packageInterner: model.DefaultPackageIDInterner,
+		functionSignatureStore: functionSignatureStore{
+			signatures: make(map[model.SymbolRef]model.UntypedFunctionSignature),
+		},
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,

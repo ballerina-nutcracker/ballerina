@@ -105,13 +105,8 @@ const (
 
 type FunctionSymbol interface {
 	Symbol
-	Signature() FunctionSignature
-	SetSignature(FunctionSignature)
-	DefaultableParams() *DefaultableParamInfo
-	SetDefaultableParams(DefaultableParamInfo)
-	IncludedRecordParams() *IncludedRecordParamInfo
-	SetIncludedRecordParams(*IncludedRecordParamInfo)
-	ParamNames() []string
+	TypedSignature() TypedFunctionSignature
+	SetTypedSignature(TypedFunctionSignature)
 }
 
 // DependentlyTypedFunctionSymbol represents a [dependently typed function]. Actual function signature
@@ -122,7 +117,6 @@ type DependentlyTypedFunctionSymbol interface {
 	Monomorphize(ctx semtypes.Context, name string, polymorphicRef SymbolRef, argTys []semtypes.SemType) FunctionSymbol
 	ParamTypes() []semtypes.SemType
 	ReturnType() TypeOp
-	NRequiredArgs() int
 	FuncFlags() FuncSymbolFlags
 	SetParamTypes(types []semtypes.SemType)
 	SetReturnType(op TypeOp)
@@ -360,9 +354,7 @@ type (
 
 	functionSymbol struct {
 		symbolBase
-		signature            FunctionSignature
-		defaultableParams    DefaultableParamInfo
-		includedRecordParams *IncludedRecordParamInfo
+		typedSignature TypedFunctionSignature
 	}
 
 	monomorphicFunctionSymbol struct {
@@ -379,23 +371,39 @@ type (
 
 	dependentlyTypedFunctionSymbol struct {
 		symbolBase
-		paramNames           []string
-		nRequiredArgs        int
-		Flags                FuncSymbolFlags
-		defaultable          DefaultableParamInfo
-		includedRecordParams *IncludedRecordParamInfo
+		Flags FuncSymbolFlags
 
 		// Populated by type resolver at stage 4.
 		paramTypes []semtypes.SemType
 		retType    TypeOp
 	}
 
-	FunctionSignature struct {
+	ParamFlag uint8
+
+	ParamIndexResult uint8
+
+	TypedFunctionSignature struct {
 		ParamTypes    []semtypes.SemType
-		ParamNames    []string
 		ReturnType    semtypes.SemType
 		RestParamType semtypes.SemType
 		Flags         FuncSymbolFlags
+	}
+
+	UntypedFunctionSignature struct {
+		ParamNames []string
+		ParamFlags []ParamFlag
+		// We are keeping these as arrays to pointers instead of values under
+		// the assumption in most cases they will zero and zero value takes lot more memory
+		// but this will have negative effect on allocations (and GC)
+		Default                []*DefaultableParam
+		IncludedRecordMetadata []*IncludedRecordMetadata
+		HasRest                bool
+	}
+
+	IncludedRecordMetadata struct {
+		RequiredFields []string
+		NeverFields    []string
+		IsOpen         bool
 	}
 
 	DefaultableParamKind uint8
@@ -421,9 +429,106 @@ func (ref SymbolRef) IsEmpty() bool {
 }
 
 const (
+	ParamFlagDefaultable ParamFlag = 1 << iota
+	ParamFlagIncludedRecordParam
+	ParamFlagRestParam
+)
+
+const (
+	ParamIndexNotFound ParamIndexResult = iota
+	ParamIndexFound
+	ParamIndexAmbiguous
+)
+
+const (
 	DefaultableParamKindExpr DefaultableParamKind = iota
 	DefaultableParamKindInferredTypedesc
 )
+
+func NewUntypedFunctionSignature(paramNames []string, hasRest bool, flags []ParamFlag, defaults []*DefaultableParam, includedRecords []*IncludedRecordMetadata) UntypedFunctionSignature {
+	paramCount := len(paramNames)
+	if flags == nil {
+		flags = make([]ParamFlag, paramCount)
+	} else if len(flags) != paramCount {
+		panic("function signature flags length mismatch")
+	}
+	if defaults == nil {
+		defaults = make([]*DefaultableParam, paramCount)
+	} else if len(defaults) != paramCount {
+		panic("function signature defaults length mismatch")
+	}
+	if includedRecords == nil {
+		includedRecords = make([]*IncludedRecordMetadata, paramCount)
+	} else if len(includedRecords) != paramCount {
+		panic("function signature included records length mismatch")
+	}
+	return UntypedFunctionSignature{
+		HasRest:                hasRest,
+		ParamNames:             paramNames,
+		ParamFlags:             flags,
+		Default:                defaults,
+		IncludedRecordMetadata: includedRecords,
+	}
+}
+
+func (sig *UntypedFunctionSignature) SetIncludedRecordMetadata(index int, metadata IncludedRecordMetadata) {
+	if len(sig.IncludedRecordMetadata) != len(sig.ParamNames) {
+		panic("function signature included record metadata length mismatch")
+	}
+	sig.IncludedRecordMetadata[index] = &metadata
+}
+
+func (sig UntypedFunctionSignature) Index(name string) (int, ParamIndexResult) {
+	for i, paramName := range sig.ParamNames {
+		if paramName == name {
+			return i, ParamIndexFound
+		}
+	}
+	var candidates []int
+Outer:
+	for i, inclRecord := range sig.IncludedRecordMetadata {
+		if inclRecord == nil {
+			continue
+		}
+		for _, fieldName := range inclRecord.RequiredFields {
+			if fieldName == name {
+				candidates = append(candidates, i)
+				continue Outer
+			}
+		}
+		if !inclRecord.IsOpen {
+			continue
+		}
+		for _, fieldName := range inclRecord.NeverFields {
+			if fieldName == name {
+				continue Outer
+			}
+		}
+		candidates = append(candidates, i)
+	}
+	switch len(candidates) {
+	case 0:
+		return -1, ParamIndexNotFound
+	case 1:
+		return candidates[0], ParamIndexFound
+	default:
+		return -1, ParamIndexAmbiguous
+	}
+}
+
+func (sig UntypedFunctionSignature) FixedParamCount() int {
+	if sig.HasRest && len(sig.ParamNames) > 0 {
+		return len(sig.ParamNames) - 1
+	}
+	return len(sig.ParamNames)
+}
+
+func (sig UntypedFunctionSignature) DefaultableParam(index int) (*DefaultableParam, bool) {
+	if sig.Default[index] == nil {
+		return nil, false
+	}
+	return sig.Default[index], true
+}
 
 type InclusionMemberKind uint8
 
@@ -1146,38 +1251,18 @@ func (fs *functionSymbol) Copy() Symbol {
 	return &cp
 }
 
-func (fs *functionSymbol) Signature() FunctionSignature {
-	return fs.signature
+func (fs *functionSymbol) TypedSignature() TypedFunctionSignature {
+	return fs.typedSignature
 }
 
-func (fs *functionSymbol) SetSignature(sig FunctionSignature) {
-	fs.signature = sig
+func (fs *functionSymbol) SetTypedSignature(sig TypedFunctionSignature) {
+	fs.typedSignature = sig
 }
 
-func (fs *functionSymbol) DefaultableParams() *DefaultableParamInfo {
-	return &fs.defaultableParams
-}
-
-func (fs *functionSymbol) SetDefaultableParams(info DefaultableParamInfo) {
-	fs.defaultableParams = info
-}
-
-func (fs *functionSymbol) IncludedRecordParams() *IncludedRecordParamInfo {
-	return fs.includedRecordParams
-}
-
-func (fs *functionSymbol) SetIncludedRecordParams(info *IncludedRecordParamInfo) {
-	fs.includedRecordParams = info
-}
-
-func (fs *functionSymbol) ParamNames() []string {
-	return fs.Signature().ParamNames
-}
-
-func NewFunctionSymbol(name string, signature FunctionSignature, isPublic bool, location diagnostics.Location) FunctionSymbol {
+func NewFunctionSymbol(name string, signature TypedFunctionSignature, isPublic bool, location diagnostics.Location) FunctionSymbol {
 	return &functionSymbol{
-		symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
-		signature:  signature,
+		symbolBase:     symbolBase{name: name, isPublic: isPublic, location: location},
+		typedSignature: signature,
 	}
 }
 
@@ -1189,7 +1274,7 @@ func NewDefaultableParamInfo(paramCount int) DefaultableParamInfo {
 }
 
 func (d *DefaultableParamInfo) Get(index int) (DefaultableParam, bool) {
-	if index >= len(d.defaultable) || !d.defaultable[index] {
+	if !d.defaultable[index] {
 		return DefaultableParam{}, false
 	}
 	return d.params[index], true
@@ -1221,9 +1306,6 @@ func (i *IncludedRecordParamInfo) SetFields(index int, names []string) {
 }
 
 func (i *IncludedRecordParamInfo) Fields(index int) []string {
-	if index >= len(i.fieldNames) {
-		return nil
-	}
 	return i.fieldNames[index]
 }
 
@@ -1237,9 +1319,6 @@ func (i *IncludedRecordParamInfo) LookupField(name string) (int, bool) {
 }
 
 func (i *IncludedRecordParamInfo) IsIncluded(index int) bool {
-	if index >= len(i.params) {
-		return false
-	}
 	return i.params[index]
 }
 
@@ -1247,11 +1326,11 @@ func (i *IncludedRecordParamInfo) Len() int {
 	return len(i.params)
 }
 
-func (fs *FunctionSignature) IsIsolated() bool {
+func (fs *TypedFunctionSignature) IsIsolated() bool {
 	return fs.Flags&FuncSymbolFlagIsolated != 0
 }
 
-func (fs *FunctionSignature) IsTransactional() bool {
+func (fs *TypedFunctionSignature) IsTransactional() bool {
 	return fs.Flags&FuncSymbolFlagTransactional != 0
 }
 
@@ -1410,12 +1489,10 @@ func (c *classSymbolBase) MethodSymbol(name string) (SymbolRef, bool) {
 	return ref, ok
 }
 
-func NewDependentlyTypedFunctionSymbol(name string, paramNames []string, nRequiredArgs int, flags FuncSymbolFlags, isPublic bool, location diagnostics.Location) DependentlyTypedFunctionSymbol {
+func NewDependentlyTypedFunctionSymbol(name string, flags FuncSymbolFlags, isPublic bool, location diagnostics.Location) DependentlyTypedFunctionSymbol {
 	return &dependentlyTypedFunctionSymbol{
-		symbolBase:    symbolBase{name: name, isPublic: isPublic, location: location},
-		paramNames:    paramNames,
-		nRequiredArgs: nRequiredArgs,
-		Flags:         flags,
+		symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
+		Flags:      flags,
 	}
 }
 
@@ -1429,31 +1506,13 @@ func (s *dependentlyTypedFunctionSymbol) SetType(_ semtypes.SemType) {
 	panic("DependentlyTypedFunctionSymbol must be Monomorphized")
 }
 
-func (s *dependentlyTypedFunctionSymbol) Signature() FunctionSignature {
+func (s *dependentlyTypedFunctionSymbol) TypedSignature() TypedFunctionSignature {
 	panic("DependentlyTypedFunctionSymbol must be Monomorphized")
 }
 
-func (s *dependentlyTypedFunctionSymbol) SetSignature(_ FunctionSignature) {
+func (s *dependentlyTypedFunctionSymbol) SetTypedSignature(_ TypedFunctionSignature) {
 	panic("DependentlyTypedFunctionSymbol must be Monomorphized")
 }
-
-func (s *dependentlyTypedFunctionSymbol) DefaultableParams() *DefaultableParamInfo {
-	return &s.defaultable
-}
-
-func (s *dependentlyTypedFunctionSymbol) SetDefaultableParams(info DefaultableParamInfo) {
-	s.defaultable = info
-}
-
-func (s *dependentlyTypedFunctionSymbol) IncludedRecordParams() *IncludedRecordParamInfo {
-	return s.includedRecordParams
-}
-
-func (s *dependentlyTypedFunctionSymbol) SetIncludedRecordParams(info *IncludedRecordParamInfo) {
-	s.includedRecordParams = info
-}
-
-func (s *dependentlyTypedFunctionSymbol) ParamNames() []string { return s.paramNames }
 
 func (s *dependentlyTypedFunctionSymbol) Copy() Symbol {
 	cp := *s
@@ -1462,7 +1521,6 @@ func (s *dependentlyTypedFunctionSymbol) Copy() Symbol {
 
 func (s *dependentlyTypedFunctionSymbol) ParamTypes() []semtypes.SemType { return s.paramTypes }
 func (s *dependentlyTypedFunctionSymbol) ReturnType() TypeOp             { return s.retType }
-func (s *dependentlyTypedFunctionSymbol) NRequiredArgs() int             { return s.nRequiredArgs }
 func (s *dependentlyTypedFunctionSymbol) FuncFlags() FuncSymbolFlags     { return s.Flags }
 
 func (s *dependentlyTypedFunctionSymbol) SetParamTypes(types []semtypes.SemType) {
@@ -1476,26 +1534,23 @@ func (s *dependentlyTypedFunctionSymbol) SetReturnType(op TypeOp) {
 func (s *dependentlyTypedFunctionSymbol) Monomorphize(ctx semtypes.Context, name string, origRef SymbolRef, argTys []semtypes.SemType) FunctionSymbol {
 	fixed := argTys
 	rest := semtypes.NEVER
-	if len(argTys) > s.nRequiredArgs {
-		fixed = argTys[:s.nRequiredArgs]
-		for _, each := range argTys[s.nRequiredArgs:] {
+	if len(argTys) > len(s.paramTypes) {
+		fixed = argTys[:len(s.paramTypes)]
+		for _, each := range argTys[len(s.paramTypes):] {
 			rest = semtypes.Union(rest, each)
 		}
 	}
 	returnType := s.retType.Apply(ctx, argTys)
-	sig := FunctionSignature{
+	sig := TypedFunctionSignature{
 		ParamTypes:    fixed,
-		ParamNames:    s.paramNames,
 		RestParamType: rest,
 		ReturnType:    returnType,
 		Flags:         s.Flags,
 	}
 	return &monomorphicFunctionSymbol{
 		functionSymbol: functionSymbol{
-			symbolBase:           symbolBase{name: name, isPublic: s.isPublic},
-			signature:            sig,
-			defaultableParams:    s.defaultable,
-			includedRecordParams: s.includedRecordParams,
+			symbolBase:     symbolBase{name: name, isPublic: s.isPublic},
+			typedSignature: sig,
 		},
 		polymorhpicFn: origRef,
 	}
