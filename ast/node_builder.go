@@ -1823,9 +1823,9 @@ func (n *NodeBuilder) TransformAssignmentStatement(assignmentStatementNode *tree
 	lhsExpr := n.createExpression(assignmentStatementNode.VarRef())
 	switch lhsExpr := lhsExpr.(type) {
 	case *BLangFieldBaseAccess:
-		lhsExpr.IsLexpr = true
+		lhsExpr.SetLexpr()
 	case *BLangIndexBasedAccess:
-		lhsExpr.IsLexpr = true
+		lhsExpr.SetLexpr()
 	}
 	bLAssignment.SetActionOrExpression(n.createActionOrExpression(assignmentStatementNode.Expression()))
 	bLAssignment.pos = getPosition(n.de(), assignmentStatementNode)
@@ -1839,11 +1839,11 @@ func (n *NodeBuilder) TransformCompoundAssignmentStatement(compoundAssignmentStm
 	lhsExpr := n.createExpression(compoundAssignmentStmtNode.LhsExpression())
 	switch lhsExpr := lhsExpr.(type) {
 	case *BLangFieldBaseAccess:
-		lhsExpr.IsLexpr = true
-		lhsExpr.IsCompoundAssignmentLValue = true
+		lhsExpr.SetLexpr()
+		lhsExpr.SetCompoundAssignmentLValue()
 	case *BLangIndexBasedAccess:
-		lhsExpr.IsLexpr = true
-		lhsExpr.IsCompoundAssignmentLValue = true
+		lhsExpr.SetLexpr()
+		lhsExpr.SetCompoundAssignmentLValue()
 	}
 	bLCompAssignment.SetVariable(lhsExpr.(LExpr))
 	BLangNode(bLCompAssignment).SetPosition(getPosition(n.de(), compoundAssignmentStmtNode))
@@ -4432,7 +4432,28 @@ func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression 
 }
 
 func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *tree.OptionalFieldAccessExpressionNode) BLangNode {
-	panic("TransformOptionalFieldAccessExpression unimplemented")
+	fieldName := optionalFieldAccessBLangExpression.FieldName()
+	if fieldName.Kind() == common.QUALIFIED_NAME_REFERENCE {
+		// @cleanup we should replace all these panics with proper internal errors. Need to problem is with return value
+		// this should be detected by parser
+		panic("TransformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE expected")
+	}
+
+	bLFieldBasedAccess := &BLangFieldBaseAccess{}
+	bLFieldBasedAccess.SetOptionalAccess()
+	simpleNameRef := fieldName.(*tree.SimpleNameReferenceNode)
+	bLFieldBasedAccess.Field = createIdentifierFromToken(getPosition(n.de(), optionalFieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
+
+	containerExpr := optionalFieldAccessBLangExpression.Expression()
+	if containerExpr.Kind() == common.BRACED_EXPRESSION {
+		bracedExpr := containerExpr.(*tree.BracedExpressionNode)
+		bLFieldBasedAccess.Expr = n.createExpression(bracedExpr.Expression())
+	} else {
+		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
+	}
+
+	bLFieldBasedAccess.pos = getPosition(n.de(), optionalFieldAccessBLangExpression)
+	return bLFieldBasedAccess
 }
 
 func (n *NodeBuilder) TransformConditionalExpression(conditionalBLangExpression *tree.ConditionalExpressionNode) BLangNode {
