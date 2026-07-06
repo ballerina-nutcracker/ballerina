@@ -1013,15 +1013,13 @@ func analyzeCheckedExpr[A analyzer](a A, expr *ast.BLangCheckedExpr, expectedTyp
 		return false
 	}
 	retTy := expectedReturnType(a)
-	if semtypes.IsZero(retTy) {
-		a.ctx().SemanticError("check expression not allowed outside a function", expr.GetPosition())
-		return false
-	}
-	exprTy := expr.Expr.GetDeterminedType()
-	errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
-	if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
-		if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
-			a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
+	if !semtypes.IsZero(retTy) {
+		exprTy := expr.Expr.GetDeterminedType()
+		errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
+		if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
+			if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
+				a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
+			}
 		}
 	}
 	return validateResolvedType(a, expr, expectedType)

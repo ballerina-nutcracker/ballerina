@@ -517,9 +517,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	// service init or listener registration can actually fail.
 	hasListeners := len(pkg.Services) > 0 || hasModuleListenerVar(compilerCtx, nodes)
 
-	if hasListeners {
-		widenInitReturnTypeToErrorOptional(compilerCtx, pkg.InitFunction)
-	}
+	widenInitReturnTypeToErrorOptional(compilerCtx, pkg.InitFunction)
 
 	var initStmts []ast.StatementNode
 	var moduleListenersRef *ast.BLangSimpleVarRef
