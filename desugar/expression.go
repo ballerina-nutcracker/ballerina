@@ -730,8 +730,13 @@ func invocationSymbol(expr invocable) (model.SymbolRef, bool) {
 }
 
 func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.FunctionSymbol) []ast.StatementNode {
-	sig := fnSym.Signature()
-	totalParams := len(sig.ParamTypes)
+	typedSig := fnSym.TypedSignature()
+	untypedSig, ok := cx.pkgCtx.compilerCtx.GetFunctionSignature(expr.ResolvedSymbol())
+	if !ok {
+		cx.pkgCtx.compilerCtx.InternalError("function signature not found", expr.GetPosition())
+		return nil
+	}
+	totalParams := len(typedSig.ParamTypes)
 	if totalParams == 0 {
 		return nil
 	}
@@ -740,11 +745,8 @@ func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.Functio
 	for i, arg := range expr.CallArgs() {
 		switch arg := arg.(type) {
 		case *ast.BLangNamedArgsExpression:
-			for j, name := range sig.ParamNames {
-				if name == arg.Name.Value {
-					reordered[j] = arg.Expr
-					break
-				}
+			if j, result := untypedSig.Index(arg.Name.Value); result == model.ParamIndexFound && j < totalParams {
+				reordered[j] = arg.Expr
 			}
 		default:
 			if i < totalParams {
@@ -756,7 +758,6 @@ func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.Functio
 	}
 
 	pos := expr.GetPosition()
-	defaultableParams := fnSym.DefaultableParams()
 	var initStmts []ast.StatementNode
 
 	var transformed []ast.BLangExpression
@@ -764,9 +765,9 @@ func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.Functio
 		if reordered[i] != nil {
 			continue
 		}
-		dp, isDefaultable := defaultableParams.Get(i)
+		dp, isDefaultable := untypedSig.DefaultableParam(i)
 		if isDefaultable && dp.Kind == model.DefaultableParamKindInferredTypedesc {
-			reordered[i] = synthesizeInferredTypedescArg(cx, sig.ParamTypes[i], pos)
+			reordered[i] = synthesizeInferredTypedescArg(cx, typedSig.ParamTypes[i], pos)
 			continue
 		}
 		for j := len(transformed); j < i; j++ {
@@ -779,7 +780,7 @@ func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.Functio
 		defaultInv.Name = &ast.BLangIdentifier{Value: cx.pkgCtx.compilerCtx.GetSymbol(dp.Symbol).Name()}
 		defaultInv.ArgExprs = reordered[:i]
 		defaultInv.SetSymbol(dp.Symbol)
-		defaultInv.SetDeterminedType(sig.ParamTypes[i])
+		defaultInv.SetDeterminedType(typedSig.ParamTypes[i])
 		setPositionIfMissing(defaultInv, pos)
 
 		varDef, varRef := assignToLocal(cx, defaultInv, pos)
@@ -1157,12 +1158,13 @@ func fillNewExprInitDefaults(cx *functionContext, expr *ast.BLangNewExpression) 
 	if !ok {
 		return nil
 	}
-	sig := initFnSym.Signature()
-	defaultableParams := initFnSym.DefaultableParams()
-	if defaultableParams == nil {
+	typedSig := initFnSym.TypedSignature()
+	untypedSig, ok := cx.pkgCtx.compilerCtx.GetFunctionSignature(initRef)
+	if !ok {
+		cx.pkgCtx.compilerCtx.InternalError("function signature not found", expr.GetPosition())
 		return nil
 	}
-	totalParams := len(sig.ParamTypes)
+	totalParams := len(typedSig.ParamTypes)
 	if totalParams <= len(expr.ArgsExprs) {
 		return nil
 	}
@@ -1182,12 +1184,12 @@ func fillNewExprInitDefaults(cx *functionContext, expr *ast.BLangNewExpression) 
 	}
 
 	for i := originalLen; i < totalParams; i++ {
-		dp, ok := defaultableParams.Get(i)
+		dp, ok := untypedSig.DefaultableParam(i)
 		if !ok {
 			break
 		}
 		if dp.Kind == model.DefaultableParamKindInferredTypedesc {
-			tdExpr := synthesizeInferredTypedescArg(cx, sig.ParamTypes[i], pos)
+			tdExpr := synthesizeInferredTypedescArg(cx, typedSig.ParamTypes[i], pos)
 			setPositionIfMissing(tdExpr, pos)
 			varDef, varRef := assignToLocal(cx, tdExpr, pos)
 			initStmts = append(initStmts, varDef)
@@ -1198,7 +1200,7 @@ func fillNewExprInitDefaults(cx *functionContext, expr *ast.BLangNewExpression) 
 		defaultInv.Name = &ast.BLangIdentifier{Value: cx.getSymbol(dp.Symbol).Name()}
 		defaultInv.ArgExprs = append([]ast.BLangExpression(nil), expr.ArgsExprs[:i]...)
 		defaultInv.SetSymbol(dp.Symbol)
-		defaultInv.SetDeterminedType(sig.ParamTypes[i])
+		defaultInv.SetDeterminedType(typedSig.ParamTypes[i])
 		setPositionIfMissing(defaultInv, pos)
 
 		varDef, varRef := assignToLocal(cx, defaultInv, pos)

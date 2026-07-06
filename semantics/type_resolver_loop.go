@@ -95,8 +95,8 @@ func (l *loopTypeResolver) createNarrowedSymbol(ref model.SymbolRef) model.Symbo
 	return l.parentResolver.createNarrowedSymbol(ref)
 }
 
-func (l *loopTypeResolver) createFunctionSymbol(space *model.SymbolSpace, name string, sig model.FunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
-	return l.parentResolver.createFunctionSymbol(space, name, sig, fnTy)
+func (l *loopTypeResolver) createFunctionSymbol(space *model.SymbolSpace, name string, sig model.TypedFunctionSignature, untypedSig model.UntypedFunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
+	return l.parentResolver.createFunctionSymbol(space, name, sig, untypedSig, fnTy)
 }
 
 func (l *loopTypeResolver) compilerContext() *context.CompilerContext {

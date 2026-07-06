@@ -17,7 +17,6 @@
 import ballerina/io;
 
 type StringConfig record {|
-    never count?;
     string...;
 |};
 
@@ -28,11 +27,11 @@ type IntConfig record {|
 |};
 
 function foo(*StringConfig stringConfig, *IntConfig intConfig) {
-    io:println(stringConfig["name"]); // @output Alice
-    io:println(stringConfig["city"]); // @output New York
-    io:println(intConfig["count"]); // @output 2
+    io:println(stringConfig["name"]);
+    io:println(stringConfig["city"]);
+    io:println(intConfig["count"]);
 }
 
 public function main() {
-    foo(name = "Alice", city = "New York", count = 2);
+    foo(name = "Alice", city = "New York", count = 2); // @error
 }

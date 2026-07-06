@@ -433,17 +433,13 @@ func (ms *moduleSymbolResolver) isDescriptorTypedesc(desc any, visited map[model
 // DependentlyTypedFunctionSymbol; otherwise a plain FunctionSymbol. The returned symbol has
 // no type information yet — it is filled during type resolution.
 func (ms *moduleSymbolResolver) allocateFunctionSymbolInner(fn *ast.BLangFunction, name string, isPublic bool) model.Symbol {
-	paramNames := make([]string, len(fn.RequiredParams))
-	for i := range fn.RequiredParams {
-		paramNames[i] = fn.RequiredParams[i].GetName().GetValue()
-	}
 	if ms.isDependentlyTyped(fn) {
 		if fn.RestParam != nil {
 			ms.ctx.Unimplemented("rest parameters are not supported on dependently-typed functions", fn.GetPosition())
 		}
-		return model.NewDependentlyTypedFunctionSymbol(name, paramNames, len(fn.RequiredParams), fn.FuncSymbolFlags(), isPublic)
+		return model.NewDependentlyTypedFunctionSymbol(name, fn.FuncSymbolFlags(), isPublic)
 	}
-	return model.NewFunctionSymbol(name, model.FunctionSignature{}, isPublic)
+	return model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, isPublic)
 }
 
 // isDependentlyTyped reports whether a function's return type references one of its typedesc
@@ -587,7 +583,11 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 func (ms *moduleSymbolResolver) allocateFunctionSymbol(fn *ast.BLangFunction) {
 	name := fn.Name.Value
 	symbol := ms.allocateFunctionSymbolInner(fn, name, fn.IsPublic())
-	addTopLevelSymbol(ms, name, symbol, fn.Name.GetPosition())
+	if !addTopLevelSymbol(ms, name, symbol, fn.Name.GetPosition()) {
+		return
+	}
+	ref, _, _ := ms.GetSymbolFromCurrentScope(name)
+	fn.SetSymbol(ref)
 }
 
 func (ms *moduleSymbolResolver) allocateConstantSymbol(constDef *ast.BLangConstant) {
@@ -777,40 +777,66 @@ func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
 	return ok
 }
 
-func allocateDefaultParamSymbols(alloc defaultSymbolAllocator, targetScope model.Scope, function *ast.BLangFunction) {
-	if len(function.RequiredParams) == 0 {
-		return
+func setBasicFunctionSignature(ctx *context.CompilerContext, function *ast.BLangFunction) {
+	paramNames := make([]string, 0, len(function.RequiredParams)+1)
+	flags := make([]model.ParamFlag, 0, len(function.RequiredParams)+1)
+	for i := range function.RequiredParams {
+		paramNames = append(paramNames, function.RequiredParams[i].GetName().GetValue())
+		flags = append(flags, 0)
 	}
+	if function.RestParam != nil {
+		restParam := function.RestParam.(*ast.BLangSimpleVariable)
+		paramNames = append(paramNames, restParam.GetName().GetValue())
+		flags = append(flags, model.ParamFlagRestParam)
+	}
+	if !ctx.SetFunctionSignature(function.Symbol(), model.NewUntypedFunctionSignature(paramNames, function.RestParam != nil, flags, nil, nil)) {
+		ctx.InternalError("function signature already set", function.GetPosition())
+	}
+}
+
+func allocateDefaultParamSymbols(alloc defaultSymbolAllocator, targetScope model.Scope, function *ast.BLangFunction) {
 	cx := alloc.GetCtx()
-	fnSymRef := function.Symbol()
-	fnSym := cx.GetSymbol(fnSymRef).(model.FunctionSymbol)
-	info := model.NewDefaultableParamInfo(len(function.RequiredParams))
-	var inclInfo *model.IncludedRecordParamInfo
+	paramNames := make([]string, 0, len(function.RequiredParams)+1)
+	flags := make([]model.ParamFlag, 0, len(function.RequiredParams)+1)
+	defaults := make([]*model.DefaultableParam, 0, len(function.RequiredParams)+1)
+	includedRecords := make([]*model.IncludedRecordMetadata, 0, len(function.RequiredParams)+1)
 	for i := range function.RequiredParams {
 		param := &function.RequiredParams[i]
+		paramNames = append(paramNames, param.GetName().GetValue())
+		var flag model.ParamFlag
+		var defaultParam *model.DefaultableParam
 		if param.IsIncludedRecordParam() {
-			if inclInfo == nil {
-				inclInfo = model.NewIncludedRecordParamInfo(len(function.RequiredParams))
+			flag |= model.ParamFlagIncludedRecordParam
+			includedRecords = append(includedRecords, &model.IncludedRecordMetadata{})
+		} else {
+			includedRecords = append(includedRecords, nil)
+		}
+		if param.IsDefaultableParam() {
+			flag |= model.ParamFlagDefaultable
+			if _, ok := param.Expr.(*ast.BLangInferredTypedescDefault); ok {
+				defaultParam = &model.DefaultableParam{Kind: model.DefaultableParamKindInferredTypedesc}
+			} else {
+				name := alloc.nextDefaultSymbolName()
+				// Until type resolution we don't know the type of the parameters to create this function signature.
+				defaultFnSym := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false)
+				targetScope.AddSymbol(name, defaultFnSym)
+				symRef, _ := targetScope.GetSymbol(name)
+				defaultParam = &model.DefaultableParam{Symbol: symRef, Kind: model.DefaultableParamKindExpr}
 			}
-			inclInfo.Set(i)
-			continue
 		}
-		if !param.IsDefaultableParam() {
-			continue
-		}
-		if _, ok := param.Expr.(*ast.BLangInferredTypedescDefault); ok {
-			info.SetInferredTypedesc(i)
-			continue
-		}
-		name := alloc.nextDefaultSymbolName()
-		// Until type resolution we don't know the type of the parametes to create this function signature
-		defaultFnSym := model.NewFunctionSymbol(name, model.FunctionSignature{}, false)
-		targetScope.AddSymbol(name, defaultFnSym)
-		symRef, _ := targetScope.GetSymbol(name)
-		info.SetDefaultable(i, symRef)
+		flags = append(flags, flag)
+		defaults = append(defaults, defaultParam)
 	}
-	fnSym.SetDefaultableParams(info)
-	fnSym.SetIncludedRecordParams(inclInfo)
+	if function.RestParam != nil {
+		restParam := function.RestParam.(*ast.BLangSimpleVariable)
+		paramNames = append(paramNames, restParam.GetName().GetValue())
+		flags = append(flags, model.ParamFlagRestParam)
+		defaults = append(defaults, nil)
+		includedRecords = append(includedRecords, nil)
+	}
+	if !cx.SetFunctionSignature(function.Symbol(), model.NewUntypedFunctionSignature(paramNames, function.RestParam != nil, flags, defaults, includedRecords)) {
+		cx.InternalError("function signature already set", function.GetPosition())
+	}
 }
 
 func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockSymbolResolver, function *ast.BLangFunction) {
@@ -957,12 +983,13 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	case *ast.BLangLambdaFunction:
 		fn := n.Function
 		name := fn.Name.Value
-		signature := model.FunctionSignature{}
+		signature := model.TypedFunctionSignature{}
 		symbol := model.NewFunctionSymbol(name, signature, false)
 		addSymbolAndSetOnNode(bs, name, symbol, fn)
 		functionResolver := newFunctionResolver(bs, fn)
 		fn.SetScope(functionResolver.scope)
 		resolveLambdaFunction(functionResolver, bs, fn)
+		setBasicFunctionSignature(bs.GetCtx(), fn)
 		return nil
 	default:
 		return visitInnerSymbolResolver(bs, n)
@@ -1248,12 +1275,9 @@ func setTypeDescriptorSymbol[T symbolResolver](resolver T, td ast.TypeDescriptor
 func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.BLangFunction:
-		name := n.Name.Value
-		symRef, _, ok := ms.GetSymbol(name)
-		if !ok {
-			internalError(ms, "Module level function symbol not found: "+name, n.Name.GetPosition())
+		if n.Symbol().IsEmpty() {
+			return nil
 		}
-		n.SetSymbol(symRef)
 		functionResolver := newFunctionResolver(ms, n)
 		n.SetScope(functionResolver.scope)
 		resolveFunction(functionResolver, n)
@@ -1299,7 +1323,7 @@ func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	case *ast.BLangLambdaFunction:
 		fn := n.Function
 		name := fn.Name.Value
-		signature := model.FunctionSignature{}
+		signature := model.TypedFunctionSignature{}
 		symbol := model.NewFunctionSymbol(name, signature, false)
 		ms.AddSymbol(name, symbol)
 		symRef, _, _ := ms.GetSymbolFromCurrentScope(name)
@@ -1307,6 +1331,7 @@ func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		functionResolver := newFunctionResolver(ms, fn)
 		fn.SetScope(functionResolver.scope)
 		resolveLambdaFunction(functionResolver, functionResolver, fn)
+		allocateDefaultParamSymbols(ms, ms.scope, fn)
 		return nil
 	default:
 		return visitInnerSymbolResolver(ms, n)
@@ -1572,7 +1597,7 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 	}
 
 	if initFn != nil {
-		signature := model.FunctionSignature{}
+		signature := model.TypedFunctionSignature{}
 		symbol := model.NewFunctionSymbol("init", signature, false)
 		addSymbolAndSetOnNode(blockRes, "init", symbol, initFn)
 	}

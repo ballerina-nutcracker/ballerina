@@ -93,6 +93,10 @@ func (ctx *packageContext) getSymbol(ref model.SymbolRef) model.Symbol {
 	return ctx.compilerCtx.GetSymbol(ref)
 }
 
+func (ctx *packageContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return ctx.compilerCtx.GetFunctionSignature(ref)
+}
+
 func (ctx *packageContext) getSymbolType(ref model.SymbolRef) semtypes.SemType {
 	return ctx.compilerCtx.SymbolType(ref)
 }
@@ -157,6 +161,10 @@ func (ctx *functionContext) internalError(msg string) {
 
 func (ctx *functionContext) unimplemented(msg string) {
 	ctx.pkgCtx.unimplemented(msg)
+}
+
+func (ctx *functionContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return ctx.pkgCtx.functionSignature(ref)
 }
 
 func (ctx *functionContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
@@ -240,6 +248,7 @@ type desugarContext interface {
 	setSymbolType(ref model.SymbolRef, ty semtypes.SemType)
 	symbolType(ref model.SymbolRef) semtypes.SemType
 	getSymbol(ref model.SymbolRef) model.Symbol
+	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
 	typeEnv() semtypes.Env
 	internalError(msg string)
 }
@@ -482,7 +491,7 @@ func serviceInitResultType(pkgCtx *packageContext, svc *ast.BLangService, svcTy 
 		pkgCtx.internalError("failed to find init function symbol")
 		return semtypes.NEVER
 	}
-	retTy := fnSym.Signature().ReturnType
+	retTy := fnSym.TypedSignature().ReturnType
 	errComponent := semtypes.Diff(retTy, semtypes.NIL)
 	return semtypes.Union(errComponent, svcTy)
 }
@@ -644,7 +653,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		fn.SetDeterminedType(semtypes.NEVER)
 		fn.SetPosition(initPos)
 
-		signature := model.FunctionSignature{ReturnType: errorOrNil}
+		signature := model.TypedFunctionSignature{ReturnType: errorOrNil}
 		fnSymbol := model.NewFunctionSymbol(fnName, signature, false)
 		symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 		symbolSpace.AddSymbol(fnName, fnSymbol)
@@ -753,9 +762,9 @@ func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, in
 		compilerCtx.InternalError("module init function symbol is not a FunctionSymbol", initFn.GetPosition())
 		return
 	}
-	sig := fnSym.Signature()
+	sig := fnSym.TypedSignature()
 	sig.ReturnType = newRet
-	fnSym.SetSignature(sig)
+	fnSym.SetTypedSignature(sig)
 }
 
 func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, initPos diagnostics.Location) {
@@ -769,7 +778,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 	pkg.InitFunction.SetDeterminedType(semtypes.NEVER)
 	pkg.InitFunction.SetPosition(initPos)
 	pkgID := pkg.PackageID
-	signature := model.FunctionSignature{ReturnType: semtypes.NIL}
+	signature := model.TypedFunctionSignature{ReturnType: semtypes.NIL}
 	initSymbol := model.NewFunctionSymbol("init", signature, false)
 	symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 	symbolSpace.AddSymbol("init", initSymbol)
@@ -1120,12 +1129,15 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 }
 
 func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*ast.BLangFunction {
-	fnSym := ctx.getSymbol(fn.Symbol()).(model.FunctionSymbol)
-	defaultableParams := fnSym.DefaultableParams()
+	sig, ok := ctx.functionSignature(fn.Symbol())
+	if !ok {
+		ctx.internalError("function signature not found")
+		return nil
+	}
 	var results []*ast.BLangFunction
 	for j := range fn.RequiredParams {
 		param := &fn.RequiredParams[j]
-		dp, ok := defaultableParams.Get(j)
+		dp, ok := sig.DefaultableParam(j)
 		if !ok {
 			if param.IsDefaultableParam() {
 				ctx.internalError("defaultable param info missing for parameter marked as defaultable")
@@ -1333,7 +1345,7 @@ func synthesizeDefaultInitFunction(pkgCtx *packageContext, classScope model.Scop
 	fn.SetDeterminedType(semtypes.NEVER)
 	fn.SetScope(pkgCtx.newFunctionScope(classScope))
 	fn.SetPosition(pos)
-	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false)
+	initSymbol := model.NewFunctionSymbol("init", model.TypedFunctionSignature{ReturnType: semtypes.NIL}, false)
 	classScope.AddSymbol("init", initSymbol)
 	symRef, _ := classScope.GetSymbol("init")
 	fn.SetSymbol(symRef)

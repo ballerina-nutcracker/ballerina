@@ -19,6 +19,7 @@ package semantics
 import (
 	"fmt"
 
+	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
@@ -26,6 +27,7 @@ import (
 
 type symbolLookup interface {
 	getSymbol(ref model.SymbolRef) model.Symbol
+	compilerContext() *context.CompilerContext
 	internalError(message string, loc diagnostics.Location)
 	unimplemented(message string, loc diagnostics.Location)
 }
@@ -39,7 +41,11 @@ func padArgTypesForDefaults(lookup symbolLookup, symbolRef model.SymbolRef, argT
 	}
 	switch fnSym := sym.(type) {
 	case model.FunctionSymbol:
-		return padFunctionDefaults(fnSym, argTys)
+		sig, ok := lookup.compilerContext().GetFunctionSignature(symbolRef)
+		if !ok {
+			return argTys
+		}
+		return padFunctionDefaults(fnSym, sig, argTys)
 	case *model.ValueSymbol:
 		// When we support lambdas we need to have a way to get a function symbol from the declaration (this means it have to be atomic) and then use the
 		// same logic
@@ -50,20 +56,19 @@ func padArgTypesForDefaults(lookup symbolLookup, symbolRef model.SymbolRef, argT
 	}
 }
 
-func padFunctionDefaults(fnSym model.FunctionSymbol, argTys []semtypes.SemType) []semtypes.SemType {
-	defaultableParams := fnSym.DefaultableParams()
-	totalParams := len(fnSym.Signature().ParamTypes)
+func padFunctionDefaults(fnSym model.FunctionSymbol, sig model.UntypedFunctionSignature, argTys []semtypes.SemType) []semtypes.SemType {
+	totalParams := len(fnSym.TypedSignature().ParamTypes)
 	if len(argTys) >= totalParams {
 		return argTys
 	}
 	for i := len(argTys); i < totalParams; i++ {
-		if _, ok := defaultableParams.Get(i); !ok {
+		if _, ok := sig.DefaultableParam(i); !ok {
 			// When caller do function application with this they'll get an error and at that point they can decide
 			// how to handle the error
 			return argTys
 		}
 	}
-	paramTypes := fnSym.Signature().ParamTypes
+	paramTypes := fnSym.TypedSignature().ParamTypes
 	padded := make([]semtypes.SemType, totalParams)
 	copy(padded, argTys)
 	for i := len(argTys); i < totalParams; i++ {
