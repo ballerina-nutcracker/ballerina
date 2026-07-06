@@ -21,7 +21,7 @@ const htmlTemplate = `<!doctype html>
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Go Ballerina Benchmark</title>
+	<title>{{ .Title }}</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
@@ -163,7 +163,7 @@ const htmlTemplate = `<!doctype html>
 </head>
 <body>
 	<header>
-		<div class="header-eyebrow">Ballerina Benchmark</div>
+		<div class="header-eyebrow">{{ .Title }}</div>
 		<div class="header-refs">
 			<span>{{ .Report.BaseRef }}</span>
 			<span class="sep">vs</span>
@@ -184,10 +184,10 @@ const htmlTemplate = `<!doctype html>
 					<th class="col-sep align-right" rowspan="2">DELTA</th>
 				</tr>
 				<tr class="row-subs">
-					<th class="col-sep">MEAN (ms)</th>
-					<th class="col-sep">STDDEV (ms)</th>
-					<th class="col-sep">MEAN (ms)</th>
-					<th class="col-sep">STDDEV (ms)</th>
+					<th class="col-sep">{{ .MeanLabel }}</th>
+					<th class="col-sep">{{ .StddevLabel }}</th>
+					<th class="col-sep">{{ .MeanLabel }}</th>
+					<th class="col-sep">{{ .StddevLabel }}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -205,7 +205,7 @@ const htmlTemplate = `<!doctype html>
 						{{ if eq .DeltaWinnerRef "tie" }}
 						<span class="delta-winner">tie</span>
 						{{ else }}
-						<span class="delta-winner">{{ .DeltaWinnerRef }} is faster</span>
+						<span class="delta-winner">{{ .DeltaWinnerRef }} {{ $.WinnerVerb }}</span>
 						{{ end }}
 						{{ else }}
 						<span class="not-available">n/a</span>
