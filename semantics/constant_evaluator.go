@@ -488,64 +488,7 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 	if err != nil {
 		return nil, err
 	}
-	targetType := expr.TypeDescriptor.GetDeterminedType()
-	if semtypes.IsSubtype(e.resolver.typeContext(), values.SemTypeForValue(value), targetType) {
-		return value, nil
-	}
-
-	converted, err := constantCastValue(e.resolver.typeContext(), value, targetType)
-	if err != nil {
-		return nil, err
-	}
-	return converted, nil
-}
-
-func constantCastValue(typeCtx semtypes.Context, value values.BalValue, targetType semtypes.SemType) (values.BalValue, error) {
-	var converted values.BalValue
-	var err error
-	switch {
-	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
-		converted, err = values.ToInt(value)
-	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
-		converted, err = values.ToFloat(value)
-	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
-		converted, err = values.ToDecimal(value)
-	default:
-		return nil, fmt.Errorf("unsupported constant conversion from %T", value)
-	}
-	if err != nil {
-		var decimalErr *decimal.Error
-		if semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL) && errors.As(err, &decimalErr) {
-			return nil, decimalErr
-		}
-		return nil, constantConversionError(value, targetType)
-	}
-	if !semtypes.IsSubtype(typeCtx, values.SemTypeForValue(converted), targetType) {
-		return nil, fmt.Errorf("converted constant does not belong to target type")
-	}
-	return converted, nil
-}
-
-func constantConversionError(value values.BalValue, targetType semtypes.SemType) error {
-	target := "target type"
-	switch {
-	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
-		target = "int"
-	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
-		target = "float"
-	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
-		target = "decimal"
-	}
-	switch value.(type) {
-	case bool:
-		return fmt.Errorf("bool cannot be converted to %s", target)
-	case float64:
-		return fmt.Errorf("float value cannot be converted to %s", target)
-	case *decimal.Decimal:
-		return fmt.Errorf("decimal value cannot be converted to %s", target)
-	default:
-		return fmt.Errorf("%T cannot be converted to %s", value, target)
-	}
+	return values.CastValue(e.resolver.typeContext(), value, expr.TypeDescriptor.GetDeterminedType())
 }
 
 func (e *constantExpressionEvaluator) evaluateStringTemplate(expr *ast.BLangTemplateExpr) (values.BalValue, error) {
