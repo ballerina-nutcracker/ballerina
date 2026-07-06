@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"ballerina-lang-go/platform/pal"
+	"ballerina-lang-go/platform/palnative"
 )
 
 // TestKind represents the type of corpus test
@@ -347,6 +348,101 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 				}()
 				_, err = f.Write(data)
 				return err
+			},
+			Getwd: os.Getwd,
+			Mkdir: func(path string) error {
+				return os.Mkdir(normalizePath(path), 0o755)
+			},
+			MkdirAll: func(path string) error {
+				return os.MkdirAll(normalizePath(path), 0o755)
+			},
+			Remove: func(path string) error {
+				return os.Remove(normalizePath(path))
+			},
+			RemoveAll: func(path string) error {
+				return os.RemoveAll(normalizePath(path))
+			},
+			Rename: func(oldPath, newPath string) error {
+				return os.Rename(normalizePath(oldPath), normalizePath(newPath))
+			},
+			CreateFile: func(path string) error {
+				f, err := os.OpenFile(normalizePath(path), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+				if err != nil {
+					return err
+				}
+				return f.Close()
+			},
+			Stat: func(path string) (*pal.FileInfo, error) {
+				normalized := normalizePath(path)
+				fi, err := os.Stat(normalized)
+				if err != nil {
+					return nil, err
+				}
+				absPath, _ := filepath.Abs(normalized)
+				return &pal.FileInfo{
+					AbsPath:    absPath,
+					Size:       fi.Size(),
+					ModifiedAt: fi.ModTime(),
+					IsDir:      fi.IsDir(),
+					IsSymlink:  false,
+					IsReadable: palnative.IsReadable(normalized, fi),
+					IsWritable: palnative.IsWritable(normalized, fi),
+				}, nil
+			},
+			Lstat: func(path string) (*pal.FileInfo, error) {
+				normalized := normalizePath(path)
+				fi, err := os.Lstat(normalized)
+				if err != nil {
+					return nil, err
+				}
+				absPath, _ := filepath.Abs(normalized)
+				return &pal.FileInfo{
+					AbsPath:    absPath,
+					Size:       fi.Size(),
+					ModifiedAt: fi.ModTime(),
+					IsDir:      fi.IsDir(),
+					IsSymlink:  fi.Mode()&os.ModeSymlink != 0,
+					IsReadable: palnative.IsReadable(normalized, fi),
+					IsWritable: palnative.IsWritable(normalized, fi),
+				}, nil
+			},
+			ReadDir: func(path string) ([]pal.FileInfo, error) {
+				normalized := normalizePath(path)
+				entries, err := os.ReadDir(normalized)
+				if err != nil {
+					return nil, err
+				}
+				result := make([]pal.FileInfo, 0, len(entries))
+				for _, entry := range entries {
+					childPath := filepath.Join(normalized, entry.Name())
+					fi, err := entry.Info()
+					if err != nil {
+						continue
+					}
+					absPath, _ := filepath.Abs(childPath)
+					result = append(result, pal.FileInfo{
+						AbsPath:    absPath,
+						Size:       fi.Size(),
+						ModifiedAt: fi.ModTime(),
+						IsDir:      fi.IsDir(),
+						IsSymlink:  fi.Mode()&os.ModeSymlink != 0,
+						IsReadable: palnative.IsReadable(childPath, fi),
+						IsWritable: palnative.IsWritable(childPath, fi),
+					})
+				}
+				return result, nil
+			},
+			Copy: func(src, dst string, opts pal.CopyOptions) error {
+				return palnative.CopyFS(normalizePath(src), normalizePath(dst), opts)
+			},
+			CreateTemp: func(prefix, suffix, dir string) (string, error) {
+				return palnative.CreateTemp(prefix, suffix, normalizePath(dir))
+			},
+			CreateTempDir: func(prefix, suffix, dir string) (string, error) {
+				return palnative.CreateTempDir(prefix, suffix, normalizePath(dir))
+			},
+			Readlink: func(path string) (string, error) {
+				return os.Readlink(normalizePath(path))
 			},
 		},
 		OS: pal.OS{
