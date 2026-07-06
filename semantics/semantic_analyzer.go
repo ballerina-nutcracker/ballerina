@@ -1022,15 +1022,13 @@ func analyzeCheckedExpr[A analyzer](a A, expr *ast.BLangCheckedExpr, expectedTyp
 		return false
 	}
 	retTy := expectedReturnType(a)
-	if semtypes.IsZero(retTy) {
-		a.ctx().SemanticError("check expression not allowed outside a function", expr.GetPosition())
-		return false
-	}
-	exprTy := expr.Expr.GetDeterminedType()
-	errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
-	if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
-		if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
-			a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
+	if !semtypes.IsZero(retTy) {
+		exprTy := expr.Expr.GetDeterminedType()
+		errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
+		if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
+			if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
+				a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
+			}
 		}
 	}
 	return validateResolvedType(a, expr, expectedType)
@@ -2058,6 +2056,8 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = result
 		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.MAPPING):
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(a.tyCtx(), collectionType, semtypes.STRING)
+		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.XML):
+			expectedValueType = semtypes.XMLItemType(collectionType)
 		default:
 			tyCtx := a.tyCtx()
 			iterableTy := semtypes.CreateIterable(tyCtx)
@@ -2077,7 +2077,7 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(tyCtx, recordPart, semtypes.StringConst("value"))
 		}
 		if !semtypes.IsSubtype(a.tyCtx(), expectedValueType, variableType) {
-			a.ctx().SemanticError("invalid type for variable", variable.GetPosition())
+			a.ctx().SemanticError(fmt.Sprintf("invalid variable type %s", semtypes.ToString(a.tyCtx(), variableType)), variable.GetPosition())
 			return false
 		}
 	}

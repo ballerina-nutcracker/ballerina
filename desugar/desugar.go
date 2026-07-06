@@ -48,6 +48,7 @@ type packageContext struct {
 	addedImplicitImports map[string]bool
 	desugarSymbolCounter int
 	typeContext          semtypes.Context
+	xmlIteratorTypes     *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -59,6 +60,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		importedSymbols:      importedSymbols,
 		addedImplicitImports: make(map[string]bool),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
+		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
 	}
 }
 
@@ -533,9 +535,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	// service init or listener registration can actually fail.
 	hasListeners := len(pkg.Services) > 0 || hasModuleListenerVar(compilerCtx, nodes)
 
-	if hasListeners {
-		widenInitReturnTypeToErrorOptional(compilerCtx, pkg.InitFunction)
-	}
+	widenInitReturnTypeToErrorOptional(compilerCtx, pkg.InitFunction)
 
 	var initStmts []ast.StatementNode
 	var moduleListenersRef *ast.BLangSimpleVarRef

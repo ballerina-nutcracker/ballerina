@@ -210,7 +210,7 @@ func Intersect(t1, t2 SemType) SemType {
 func intersectMemberSemTypes(env Env, t1, t2 SemType) SemType {
 	c1 := getCellAtomicType(t1)
 	c2 := getCellAtomicType(t2)
-	common.Assert(c1 != nil && c2 != nil)
+	common.Assert(func() bool { return c1 != nil && c2 != nil })
 	atomicType := intersectCellAtomicType(c1, c2)
 	var mut CellMutability
 	if sameSemType(atomicType.Ty, UNDEF) {
@@ -576,13 +576,13 @@ func cellInnerVal(t SemType) SemType {
 
 func cellInner(t SemType) SemType {
 	cat := getCellAtomicType(t)
-	common.Assert(cat != nil)
+	common.Assert(func() bool { return cat != nil })
 	return cat.Ty
 }
 
 func cellContainingInnerVal(env Env, t SemType) SemType {
 	cat := getCellAtomicType(t)
-	common.Assert(cat != nil)
+	common.Assert(func() bool { return cat != nil })
 	return cellContainingWithEnvSemTypeCellMutability(env, Diff(cat.Ty, UNDEF), cat.Mut)
 }
 
