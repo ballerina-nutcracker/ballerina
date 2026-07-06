@@ -26,14 +26,18 @@ import (
 	_ "ballerina-lang-go/lib/langlibs/go/lang.int"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.map"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.string"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.value"
 
 	// standard libraries
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/crypto/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/file/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/io/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/log/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/mime/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/os/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/random/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/time/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/url/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/uuid/0.0.1/go1.2/native"
 )

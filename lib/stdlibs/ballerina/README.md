@@ -13,15 +13,18 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | Package | Supported | Partially Supported | Not Yet Supported | Support % |
 |---|---|---|---|---|
 | [crypto](crypto/0.0.1/go1.2/README.md) | 26 | 1 | 5 | 81% |
+| [file](file/0.0.1/go1.2/README.md) | 20 | 0 | 0 | 95% |
 | [http](http/0.0.1/go1.2/README.md) | 24 | 2 | 46 | 33% |
 | [io](io/0.0.1/go1.2/README.md) | 14 | 1 | 11 | 54% |
 | [log](log/0.0.1/go1.2/README.md) | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.2/README.md) | 5 | 0 | 0 | 100% |
+| [mime](mime/0.0.1/go1.2/README.md) | 13 | 1 | 2 | 81% |
 | [os](os/0.0.1/go1.2/README.md) | 11 | 1 | 0 | 92% |
 | [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
-| **Total** | **124** | **9** | **79** | **58%** |
+| [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
+| **Total** | **176** | **11** | **81** | **65%** |
 
 ## Notable Behavioural Changes
 
@@ -32,6 +35,11 @@ tables instead.
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### file
+
+- **`distinct` error types flattened.** jBallerina declares each error type (e.g. `FileNotFoundError`, `PermissionError`) as a `distinct` subtype of `file:Error`, allowing precise `is`-checks. The Go-native version declares them as plain type aliases of `Error` — they are structurally identical at runtime. Code that uses `error is file:FileNotFoundError` to distinguish error kinds will not work as expected.
+- **Path separator detection on Windows.** `isWindows` is determined at startup by checking whether the `OS` environment variable is set. On non-standard Windows environments where this variable is absent the path functions will behave as on POSIX.
 
 ### http
 
@@ -70,4 +78,8 @@ tables instead.
 - **Named IANA timezones in `civilToString`, `civilToEmailString`, and `TimeZone`.** When a `Civil` record carries a `timeAbbrev` containing an IANA zone name (e.g., `"Asia/Colombo"`), or when a `TimeZone` object is constructed from an IANA name, the Go-native version resolves the zone using the host operating system's timezone database via `time.LoadLocation`. If the host has an incomplete or missing IANA database, an error is returned. jBallerina ships its own bundled IANA data.
 - **DST disambiguation in `TimeZone.utcFromCivil`.** When a civil time falls in an ambiguous DST window (clocks are set back), Go's `time.Date` resolves to the first (standard-time) occurrence. jBallerina honours the `which` field in the `Civil` record to select the correct occurrence. The `which` field is silently ignored in the Go-native version.
 
-The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
+### uuid
+
+- **Type 1 UUID node identifier — random bytes instead of MAC address.** jBallerina uses the MAC address of the host machine as the node identifier in type 1 UUIDs; the Go-native version generates a random 6-byte node ID per RFC 4122 §4.5 for portability and privacy. The UUID is still valid and passes `validate()`.
+
+The remaining packages (`math.vector`, `mime`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
