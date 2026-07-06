@@ -29,24 +29,34 @@ const (
 	moduleName = "log"
 )
 
-// logLevelWeight maps level name → numeric weight for filtering.
-// Higher weight = higher severity (matches jBallerina's logLevelWeight map).
-var logLevelWeight = map[string]int{
-	"ERROR": 1000,
-	"WARN":  900,
-	"INFO":  800,
-	"DEBUG": 700,
+// logLevel orders severities from least to most severe so enablement is a
+// simple comparison; only the ordering matters, not the underlying values.
+type logLevel int
+
+const (
+	levelDebug logLevel = iota
+	levelInfo
+	levelWarn
+	levelError
+)
+
+// logLevels maps level name → logLevel for filtering.
+var logLevels = map[string]logLevel{
+	"DEBUG": levelDebug,
+	"INFO":  levelInfo,
+	"WARN":  levelWarn,
+	"ERROR": levelError,
 }
 
-// defaultLevelWeight corresponds to INFO — the jBallerina default.
-const defaultLevelWeight = 800
+// defaultLevel is the jBallerina default.
+const defaultLevel = levelInfo
 
 func isLevelEnabled(level string) bool {
-	w, ok := logLevelWeight[level]
+	l, ok := logLevels[level]
 	if !ok {
 		return true
 	}
-	return w >= defaultLevelWeight
+	return l >= defaultLevel
 }
 
 // logfmtEscaper replaces special characters for LOGFMT string values.

@@ -66,6 +66,11 @@ func rc2ExpandKey(key []byte, t1 int) [64]uint16 {
 	return k
 }
 
+// Encrypt is never invoked: rc2Cipher is only ever used to decrypt legacy
+// PKCS#12 blobs encrypted with pbeWithSHAAnd40BitRC2-CBC (see
+// cbcDecryptAndUnpad, which calls only Decrypt via cipher.NewCBCDecrypter).
+// It exists solely because rc2New returns a cipher.Block, which requires
+// both methods.
 func (c *rc2Cipher) Encrypt(dst, src []byte) {
 	r0 := binary.LittleEndian.Uint16(src[0:])
 	r1 := binary.LittleEndian.Uint16(src[2:])

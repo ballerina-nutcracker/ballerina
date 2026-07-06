@@ -40,4 +40,10 @@ public function main() returns error? {
     crypto:TrustStore missing = {path: "testdata/does-not-exist.p12", password: "secret"};
     crypto:PublicKey|crypto:Error missingErr = crypto:decodeRsaPublicKeyFromTrustStore(missing, "ballerina");
     io:println(missingErr is crypto:Error); // @output true
+
+    // An EC key recovered via the RSA decoder fails: the store decodes fine,
+    // but the recovered key is not RSA.
+    crypto:KeyStore ecKs = {path: "testdata/crypto-keystore-ec.p12", password: "secret"};
+    crypto:PrivateKey|crypto:Error notRsaKey = crypto:decodeRsaPrivateKeyFromKeyStore(ecKs, "ballerina-ec", "secret");
+    io:println(notRsaKey is crypto:Error); // @output true
 }
