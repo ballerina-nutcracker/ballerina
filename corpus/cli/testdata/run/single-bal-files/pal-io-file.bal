@@ -18,11 +18,27 @@
 // `bal` binary so WriteFile/AppendFile/ReadFile coverage flows into the
 // palnative profile. In-process corpus tests run under NewTestPal, which wires
 // os.ReadFile/WriteFile directly and never hits these closures.
+//
+// Unlike NewTestPal, the production PAL does not rewrite "/tmp" on Windows, so
+// the target path is derived from the environment using the same precedence as
+// Go's os.TempDir() (TMPDIR, then TMP/TEMP on Windows), falling back to /tmp.
 import ballerina/io;
+import ballerina/os;
 
 public function main() returns error? {
-    string path = "/tmp/bal_cli_pal_file.txt";
+    string dir = tempDir();
+    string path = dir + "/bal_cli_pal_file.txt";
     check io:fileWriteString(path, "First");             // WriteFile (OVERWRITE)
     check io:fileWriteString(path, "Second", io:APPEND); // AppendFile
     io:println(check io:fileReadString(path));           // @output FirstSecond
+}
+
+function tempDir() returns string {
+    foreach string name in ["TMPDIR", "TMP", "TEMP"] {
+        string val = os:getEnv(name);
+        if val != "" {
+            return val;
+        }
+    }
+    return "/tmp";
 }
