@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: Unreachable code
   --> method-unreachable-e.bal:23:9
    |
-23 |         int x = 2; // @error
+23 |         int _ = 2; // @error
    |         ^^^^^^^^^^

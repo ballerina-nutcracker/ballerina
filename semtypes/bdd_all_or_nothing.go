@@ -55,12 +55,11 @@ func (b *bddAllOrNothing) complement() *bddAllOrNothing {
 	return &all
 }
 
-func (b *bddAllOrNothing) canonicalKey() string {
+func (b *bddAllOrNothing) canonicalKey() bddKey {
 	if b.isAll {
-		return "true"
-	} else {
-		return "false"
+		return bddKeyAll
 	}
+	return bddKeyNothing
 }
 
 func (b *bddAllOrNothing) String() string {

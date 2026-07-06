@@ -1,0 +1,50 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)
+          (literal 4)
+          (literal 5)))))
+    (var-def
+      (variable nested (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (group-by-clause
+            (grouping-key
+              (var-def
+                (variable _ (expr
+                  (binary-expr ==
+                    (binary-expr %
+                      (simple-var-ref x)
+                      (literal 2))
+                    (literal 0)))))))
+          (select-clause
+            (query-expr
+              (from-clause
+                (var-def
+                  (variable y))
+                (simple-var-ref x))
+              (group-by-clause
+                (grouping-key
+                  (var-def
+                    (variable big (expr
+                      (binary-expr >
+                        (simple-var-ref y)
+                        (literal 2)))))))
+              (select-clause
+                (list-constructor-expr
+                  (simple-var-ref big)
+                  (simple-var-ref y)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nested))))
+  )
+)

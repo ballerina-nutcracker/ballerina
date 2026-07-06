@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid xml name
+  --> attrib-invalid-e.bal:18:37
+   |
+18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
+   |                                     ^
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> attrib-invalid-e.bal:18:37
+   |
+18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> attrib-invalid-e.bal:18:37
+   |
+18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> attrib-invalid-e.bal:18:38
+   |
+18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> attrib-invalid-e.bal:18:38
+   |
+18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> attrib-invalid-e.bal:18:38
+   |
+18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
+   |

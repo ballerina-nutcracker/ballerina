@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Color)) (expr
+        (literal red))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+)

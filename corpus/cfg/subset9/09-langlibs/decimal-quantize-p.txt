@@ -1,0 +1,10 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.decimal quantize (
+        (group-expr
+          (literal 9.999999999999999999999999999999999E+6144))
+        (literal 1E+6112))))
+  )
+)

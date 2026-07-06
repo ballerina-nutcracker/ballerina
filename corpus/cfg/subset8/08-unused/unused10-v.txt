@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 3))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+)

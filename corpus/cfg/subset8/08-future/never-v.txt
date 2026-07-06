@@ -1,0 +1,14 @@
+(foo
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal never returns))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal hello))))
+  )
+)

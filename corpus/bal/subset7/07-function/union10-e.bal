@@ -28,5 +28,6 @@ public function main() {
 
 
 function foo(any a) returns int {
+        any _ = a;
     return 1;
-}
+    }

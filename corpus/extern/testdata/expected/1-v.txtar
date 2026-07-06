@@ -1,0 +1,3 @@
+-- stdout --
+$foo, $foo
+-- stderr --

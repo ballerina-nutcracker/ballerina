@@ -2,7 +2,13 @@
   (bb0 () ())
 )
 (baz
-  (bb0 () ())
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (simple-var-ref i))))
+  )
 )
 (foo
   (bb0 () ()

@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable pairs (type
+          (array-type
+            (tuple-type
+              (value-type string)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal odd)
+              (literal 1))
+            (list-constructor-expr
+              (literal even)
+              (literal 2))
+            (list-constructor-expr
+              (literal odd)
+              (literal 3))
+            (list-constructor-expr
+              (literal even)
+              (literal 4))))))
+      (var-def
+        (variable grouped (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable p))
+              (simple-var-ref pairs))
+            (let-clause
+              (var-def
+                (variable key (type
+                  (value-type string)) (expr
+                  (index-based-access
+                    (simple-var-ref p)
+                    (literal 0))))))
+            (let-clause
+              (var-def
+                (variable n (type
+                  (value-type int)) (expr
+                  (index-based-access
+                    (simple-var-ref p)
+                    (literal 1))))))
+            (group-by-clause
+              (grouping-key
+                (simple-var-ref key)))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref key)
+                (list-constructor-expr
+                  (simple-var-ref n))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref grouped)))))))

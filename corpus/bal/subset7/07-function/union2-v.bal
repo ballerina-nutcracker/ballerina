@@ -32,5 +32,6 @@ function foo(int x) returns int {
 }
 
 function bar(int x) returns string {
+    int _ = x;
     return "hello";
 }

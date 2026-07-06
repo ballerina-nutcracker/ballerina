@@ -5,7 +5,7 @@ error[SEMANTIC_ERROR]: 'init' function cannot have parameters
    |
 21 | function init(string[] args) { // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-22 | 
-   | 
+22 |     string[] _ = args;
+   |     ^^^^^^^^^^^^^^^^^^
 23 | }
    | ^

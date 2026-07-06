@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
-  --> infiniteRecord4-e.bal:20:5
+  --> infiniteRecord4-e.bal:19:5
    |
-20 |     A & B x; // @error
+19 |     A & B x; // @error
    |     ^^^^^

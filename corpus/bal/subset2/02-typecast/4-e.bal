@@ -21,5 +21,6 @@ public function main() {
 }
 
 function ignore(int n) {
+        int _ = n;
     
-}
+    }

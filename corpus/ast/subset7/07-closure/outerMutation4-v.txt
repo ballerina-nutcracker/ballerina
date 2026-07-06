@@ -56,6 +56,10 @@
                     (value-type float)))) (
                   (value-type float))
                   (block-function-body
+                    (var-def
+                      (variable _ (type
+                        (value-type float)) (expr
+                        (simple-var-ref b))))
                     (compound-assignment +
                       (simple-var-ref v2)
                       (simple-var-ref v1))

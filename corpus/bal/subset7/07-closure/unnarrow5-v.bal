@@ -24,6 +24,7 @@ public function main() {
     int|boolean v1 = 10;
     if v1 is int {
         int res = v1 + runner(function(int a) returns int {
+                    int _ = a;
                     v1 = true;
                     return 5;
                   }, 2);

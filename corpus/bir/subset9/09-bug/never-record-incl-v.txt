@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+foo(string,{| age: string, city: string, country: string, name: never, never... |}) -> nil{
+  bb0 {
+    %3 = println(name) -> bb1;
+  }
+  bb1 {
+    %4 = println(config) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad Alice
+    %2 = ConstantLoad age
+    %3 = ConstantLoad 30
+    %4 = ConstantLoad city
+    %5 = ConstantLoad New York
+    %6 = ConstantLoad country
+    %7 = ConstantLoad USA
+    %8 = newMap {| age: string, city: string, country: string, name: never, never... |}{%2=%3, %4=%5, %6=%7}
+    %9 = foo(%1,%8) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

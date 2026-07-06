@@ -1,0 +1,27 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (literal 3))))
+      (var-def
+        (variable inner (type
+          (value-type xml)) (expr
+          (xml-element-literal i))))
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<root>n=")
+            (invocation lang.__internal escapeXMLContent (
+              (simple-var-ref n)))
+            (template-string ", inner=")
+            (simple-var-ref inner)
+            (template-string "</root>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

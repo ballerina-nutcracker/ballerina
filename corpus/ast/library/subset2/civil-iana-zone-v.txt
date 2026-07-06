@@ -1,0 +1,39 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type time Civil)) (expr
+          (checked-expr
+            (invocation time civilFromString (
+              (literal 2021-04-12T23:20:50.520+05:30[Asia/Colombo])))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access year
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access month
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access day
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access hour
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access minute
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access timeAbbrev
+            (simple-var-ref c))))))))

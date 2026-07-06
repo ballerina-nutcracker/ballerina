@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad pe
+    %2 = ConstantLoad 
+    %3 = newXMLPI(%1, %2)
+    pe = %3;
+    %5 = ConstantLoad element
+    %6 = ConstantLoad test
+    %7 = newXMLText(%6)
+    %8 = newXMLElement(%5, %7)
+    e1 = %8;
+    %10 = ConstantLoad other
+    %11 = newXMLElement(%10, ())
+    e2 = %11;
+    %13 = ConstantLoad bar
+    %14 = newXMLText(%13)
+    text = %14;
+    %18 = + pe e1;
+    %17 = + %18 e2;
+    %16 = + %17 text;
+    sequence = %16;
+    %20 = println(sequence) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

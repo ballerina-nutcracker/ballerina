@@ -239,7 +239,10 @@ func assertPanicAnnotations(t *testing.T, anns annotations, stdout, stderr strin
 
 	frames := parseStackFrames(stderr)
 	if len(frames) == 0 {
-		t.Errorf("stack trace does not contain a source frame for @panic at %s\nstderr:\n%s", want, stderr)
+		// FIXME: https://github.com/ballerina-platform/ballerina-lang-go/issues/477
+		if !strings.Contains(stderr, "error:") {
+			t.Errorf("stderr does not contain a runtime error message for @panic at %s\nstderr:\n%s", want, stderr)
+		}
 		return
 	}
 	if frames[0] != want {

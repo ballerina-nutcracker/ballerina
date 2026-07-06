@@ -5,7 +5,15 @@
     (variable s (type
       (value-type string)))) (
     (value-type null))
-    (block-function-body))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref i))))
+      (var-def
+        (variable _ (type
+          (value-type string)) (expr
+          (simple-var-ref s))))))
   (function bar (
     (variable i (type
       (value-type int)))) (

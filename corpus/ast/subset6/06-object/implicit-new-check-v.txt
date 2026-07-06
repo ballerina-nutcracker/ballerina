@@ -1,0 +1,50 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function init (
+      (variable v (type
+        (value-type int)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr <
+            (simple-var-ref v)
+            (literal 0))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal negative value))))) ())
+        (block-stmt
+          (assignment
+            (field-based-access count
+              (simple-var-ref self))
+            (simple-var-ref v)))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (field-based-access count
+            (simple-var-ref self))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (checked-expr
+            (new (
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref c) ()))))
+      (return
+        (literal <nil>)))))

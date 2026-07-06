@@ -1,0 +1,87 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal https://example.com))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$13 (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (new (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable $desugar$3 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal proxy)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal host)
+                    (literal proxy.example.com))
+                  (key-value
+                    (literal port)
+                    (literal 3128))))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$3))))
+      (var-def
+        (variable $desugar$4 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal proxy)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal host)
+                    (literal proxy.example.com))
+                  (key-value
+                    (literal port)
+                    (literal 3128))
+                  (key-value
+                    (literal userName)
+                    (literal user))
+                  (key-value
+                    (literal password)
+                    (literal secret))))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))

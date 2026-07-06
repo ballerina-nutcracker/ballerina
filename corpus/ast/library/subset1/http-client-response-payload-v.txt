@@ -1,0 +1,45 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)))))))
+      (var-def
+        (variable r (type
+          (user-defined-type http Response)) (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c) (
+              (literal /path)))))))
+      (var-def
+        (variable b (expr
+          (checked-expr
+            (invocation getBinaryPayload expr:
+              (simple-var-ref r) ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref b) ()))))
+      (var-def
+        (variable payload (type
+          (union-type
+            (builtin-ref-type json)
+            (error-type))) (expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref r) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref payload)
+            (error-type)))))
+      (return
+        (literal <nil>)))))

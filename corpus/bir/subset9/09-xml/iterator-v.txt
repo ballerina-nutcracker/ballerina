@@ -1,0 +1,362 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = newXMLElement(%1, ())
+    %3 = ConstantLoad hello
+    %4 = newXMLText(%3)
+    %5 = ConstantLoad c
+    %6 = newXMLComment(%5)
+    %7 = newXMLSequence{%2, %4, %6}
+    x = %7;
+    %9 = iterator(x) -> bb1;
+  }
+  bb1 {
+    %10 = next(%9) -> bb2;
+  }
+  bb2 {
+    methodNext = %10;
+    %13 = ConstantLoad <nil>
+    %14 = %13;
+    %12 = != methodNext %14;
+    %12 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, methodNext)[%1];
+    %2 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 6
+    %0 = iterator((1, x)) -> bb6;
+  }
+  bb6 {
+    %1 = next(%0) -> bb7;
+  }
+  bb7 {
+    functionNext = %1;
+    %4 = ConstantLoad <nil>
+    %5 = %4;
+    %3 = != functionNext %5;
+    %3 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, functionNext)[%1];
+    %2 = println(%0) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 13
+    $desugar$0 = (2, x);
+    %1 = iterator($desugar$0) -> bb11;
+  }
+  bb11 {
+    $desugar$1 = %1;
+    GOTO bb12;
+  }
+  bb12 {
+    %3 = ConstantLoad true
+    %3 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 7
+    %0 = next((1, $desugar$1)) -> bb15;
+  }
+  bb14 {
+    %4 = ConstantLoad e
+    %5 = newXMLElement(%4, ())
+    element = %5;
+    %7 = iterator(element) -> bb19;
+  }
+  bb15 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is nil
+    %2 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb17 {
+    %4 = ConstantLoad value
+    %3 = $desugar$3[%4];
+    item = %3;
+    %6 = println(item) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb19 {
+    %8 = next(%7) -> bb20;
+  }
+  bb20 {
+    elementNext = %8;
+    %11 = ConstantLoad <nil>
+    %12 = %11;
+    %10 = != elementNext %12;
+    %10 ? bb21 : bb23;
+  }
+  bb21 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, elementNext)[%1];
+    %2 = println(%0) -> bb22;
+  }
+  bb22 {
+    PopScopeFrame
+    GOTO bb23;
+  }
+  bb23 {
+    PushScopeFrame 13
+    $desugar$4 = (1, element);
+    %1 = iterator($desugar$4) -> bb24;
+  }
+  bb24 {
+    $desugar$5 = %1;
+    GOTO bb25;
+  }
+  bb25 {
+    %3 = ConstantLoad true
+    %3 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 7
+    %0 = next((1, $desugar$5)) -> bb28;
+  }
+  bb27 {
+    %4 = ConstantLoad comment
+    %5 = newXMLComment(%4)
+    comment = %5;
+    %7 = iterator(comment) -> bb32;
+  }
+  bb28 {
+    $desugar$7 = %0;
+    %2 = $desugar$7 is nil
+    %2 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb27;
+  }
+  bb30 {
+    %4 = ConstantLoad value
+    %3 = $desugar$7[%4];
+    item = %3;
+    %6 = println(item) -> bb31;
+  }
+  bb31 {
+    PopScopeFrame
+    GOTO bb25;
+  }
+  bb32 {
+    %8 = next(%7) -> bb33;
+  }
+  bb33 {
+    commentNext = %8;
+    %11 = ConstantLoad <nil>
+    %12 = %11;
+    %10 = != commentNext %12;
+    %10 ? bb34 : bb36;
+  }
+  bb34 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, commentNext)[%1];
+    %2 = println(%0) -> bb35;
+  }
+  bb35 {
+    PopScopeFrame
+    GOTO bb36;
+  }
+  bb36 {
+    PushScopeFrame 14
+    $desugar$8 = (1, comment);
+    %1 = iterator($desugar$8) -> bb37;
+  }
+  bb37 {
+    $desugar$9 = %1;
+    GOTO bb38;
+  }
+  bb38 {
+    %3 = ConstantLoad true
+    %3 ? bb39 : bb40;
+  }
+  bb39 {
+    PushScopeFrame 7
+    %0 = next((1, $desugar$9)) -> bb41;
+  }
+  bb40 {
+    %4 = ConstantLoad p
+    %5 = ConstantLoad data
+    %6 = newXMLPI(%4, %5)
+    pi = %6;
+    %8 = iterator(pi) -> bb45;
+  }
+  bb41 {
+    $desugar$11 = %0;
+    %2 = $desugar$11 is nil
+    %2 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb40;
+  }
+  bb43 {
+    %4 = ConstantLoad value
+    %3 = $desugar$11[%4];
+    item = %3;
+    %6 = println(item) -> bb44;
+  }
+  bb44 {
+    PopScopeFrame
+    GOTO bb38;
+  }
+  bb45 {
+    %9 = next(%8) -> bb46;
+  }
+  bb46 {
+    piNext = %9;
+    %12 = ConstantLoad <nil>
+    %13 = %12;
+    %11 = != piNext %13;
+    %11 ? bb47 : bb49;
+  }
+  bb47 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, piNext)[%1];
+    %2 = println(%0) -> bb48;
+  }
+  bb48 {
+    PopScopeFrame
+    GOTO bb49;
+  }
+  bb49 {
+    PushScopeFrame 13
+    $desugar$12 = (1, pi);
+    %1 = iterator($desugar$12) -> bb50;
+  }
+  bb50 {
+    $desugar$13 = %1;
+    GOTO bb51;
+  }
+  bb51 {
+    %3 = ConstantLoad true
+    %3 ? bb52 : bb53;
+  }
+  bb52 {
+    PushScopeFrame 7
+    %0 = next((1, $desugar$13)) -> bb54;
+  }
+  bb53 {
+    %4 = ConstantLoad text
+    %5 = newXMLText(%4)
+    text = %5;
+    %7 = iterator(text) -> bb58;
+  }
+  bb54 {
+    $desugar$15 = %0;
+    %2 = $desugar$15 is nil
+    %2 ? bb55 : bb56;
+  }
+  bb55 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb53;
+  }
+  bb56 {
+    %4 = ConstantLoad value
+    %3 = $desugar$15[%4];
+    item = %3;
+    %6 = println(item) -> bb57;
+  }
+  bb57 {
+    PopScopeFrame
+    GOTO bb51;
+  }
+  bb58 {
+    %8 = next(%7) -> bb59;
+  }
+  bb59 {
+    textNext = %8;
+    %11 = ConstantLoad <nil>
+    %12 = %11;
+    %10 = != textNext %12;
+    %10 ? bb60 : bb62;
+  }
+  bb60 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, textNext)[%1];
+    %2 = println(%0) -> bb61;
+  }
+  bb61 {
+    PopScopeFrame
+    GOTO bb62;
+  }
+  bb62 {
+    PushScopeFrame 4
+    $desugar$16 = (1, text);
+    %1 = iterator($desugar$16) -> bb63;
+  }
+  bb63 {
+    $desugar$17 = %1;
+    GOTO bb64;
+  }
+  bb64 {
+    %3 = ConstantLoad true
+    %3 ? bb65 : bb66;
+  }
+  bb65 {
+    PushScopeFrame 7
+    %0 = next((1, $desugar$17)) -> bb67;
+  }
+  bb66 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb67 {
+    $desugar$19 = %0;
+    %2 = $desugar$19 is nil
+    %2 ? bb68 : bb69;
+  }
+  bb68 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb66;
+  }
+  bb69 {
+    %4 = ConstantLoad value
+    %3 = $desugar$19[%4];
+    item = %3;
+    %6 = println(item) -> bb70;
+  }
+  bb70 {
+    PopScopeFrame
+    GOTO bb64;
+  }
+}

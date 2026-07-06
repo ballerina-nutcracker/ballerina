@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (xmlns
+    (literal https://example.com/u) as a)
+  (xmlns
+    (literal https://example.com/u) as b)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type string)) (expr
+          (literal x))))
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<a:tag>")
+            (xml-template-content-insertion
+              (simple-var-ref v))
+            (template-string "</a:tag>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

@@ -1,0 +1,38 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_lines2.txt))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteLines (
+          (simple-var-ref path)
+          (list-constructor-expr
+            (literal Line1)
+            (literal Line2))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteLines (
+          (simple-var-ref path)
+          (list-constructor-expr
+            (literal Line3))
+          (simple-var-ref io APPEND)))))
+    (var-def
+      (variable lines (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadLines (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref lines))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref lines)
+          (literal 2)))))
+  )
+)

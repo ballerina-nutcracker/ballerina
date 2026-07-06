@@ -1,0 +1,336 @@
+module $anon.. v 0.0.0;
+$moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
+l  object { public function attach(isolated service object { private function get() returns int; private function inc() returns nil }, nil) returns nil; public function detach(isolated service object { private function get() returns int; private function inc() returns nil }) returns nil|error; private function get() returns int; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; private function inc() returns nil; public function init() returns nil; private nil|isolated service object { private function get() returns int; private function inc() returns nil } s; public function start() returns nil|error };
+class SimpleListener {
+  s nil|isolated service object { private function get() returns int; private function inc() returns nil }
+
+  attach(isolated service object { private function get() returns int; private function inc() returns nil },nil) -> nil{
+    bb0 {
+      _ = svc;
+      _ = attachPoint;
+      %6 = ConstantLoad s
+      self[%6] = svc;
+      return;
+    }
+  }
+
+  detach(isolated service object { private function get() returns int; private function inc() returns nil }) -> nil|error{
+    bb0 {
+      _ = svc;
+      %4 = ConstantLoad <nil>
+      %5 = ConstantLoad s
+      self[%5] = %4;
+      return;
+    }
+  }
+
+  get() -> int{
+    bb0 {
+      %3 = ConstantLoad s
+      %2 = self[%3];
+      svc = %2;
+      %6 = ConstantLoad <nil>
+      %7 = %6;
+      %5 = == svc %7;
+      %5 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad no service
+      %1 = newError error(%0)
+      (1, %8) = %1;
+      PopScopeFrame
+      panic %8;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = get((1, svc)) -> bb3;
+    }
+    bb3 {
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+  }
+
+  gracefulStop() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+
+  immediateStop() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+
+  inc() -> nil{
+    bb0 {
+      %3 = ConstantLoad s
+      %2 = self[%3];
+      svc = %2;
+      %6 = ConstantLoad <nil>
+      %7 = %6;
+      %5 = == svc %7;
+      %5 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad no service
+      %1 = newError error(%0)
+      (1, %8) = %1;
+      PopScopeFrame
+      panic %8;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = inc((1, svc)) -> bb3;
+    }
+    bb3 {
+      PopScopeFrame
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad <nil>
+      %3 = ConstantLoad s
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  start() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+}
+class $service$0 {
+  count int
+
+  get() -> int{
+    bb0 {
+      lock-start "$anon/.:$service.284.0.count" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %1 = ConstantLoad count
+      %0 = (1, self)[%1];
+      (1, %0) = %0;
+      PopScopeFrame
+      lock-end "$anon/.:$service.284.0.count" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+
+  inc() -> nil{
+    bb0 {
+      lock-start "$anon/.:$service.284.0.count" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 7
+      %2 = ConstantLoad count
+      %1 = (1, self)[%2];
+      %3 = %1;
+      %4 = ConstantLoad 1
+      %5 = %4;
+      %0 = + %3 %5;
+      %6 = ConstantLoad count
+      (1, self)[%6] = %0;
+      PopScopeFrame
+      lock-end "$anon/.:$service.284.0.count" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad count
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = inc(l) -> bb1;
+  }
+  bb1 {
+    %2 = inc(l) -> bb2;
+  }
+  bb2 {
+    %3 = inc(l) -> bb3;
+  }
+  bb3 {
+    %4 = get(l) -> bb4;
+  }
+  bb4 {
+    %5 = %4;
+    %6 = println(%5) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0(isolated service object { private function get() returns int; private function inc() returns nil }) -> nil{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %0 = %2;
+    return;
+  }
+}
+$start() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %2 = start($listener) -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$gracefulStop() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %2 = gracefulStop($listener) -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$immediateStop() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %2 = immediateStop($listener) -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}

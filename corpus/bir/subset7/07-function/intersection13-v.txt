@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:foo
@@ -45,8 +44,9 @@ main() -> nil{
 }
 foo(1|2|3|4|5|6|7|8|9|function(1|2|3|4|8|9|...) returns 1|2|3|4|8|9|...|function(3|4|5|6|9|...|function(2|3|6|7|8|9|...|...) returns 2|3|6|7|8|9|...|...) returns 3|4|5|6|9|...|function(2|3|6|7|8|9|...|...) returns 2|3|6|7|8|9|...|...|function(2|3|6|7|8|9|function(3|4|5|6|9|...|...) returns 3|4|5|6|9|...|...|...) returns 2|3|6|7|8|9|function(3|4|5|6|9|...|...) returns 3|4|5|6|9|...|...|...) -> 3|9|function(1|2|3|4|8|9|...) returns 1|2|3|4|8|9|...&function(3|4|5|6|9|...|function(2|3|6|7|8|9|...|...) returns 2|3|6|7|8|9|...|...) returns 3|4|5|6|9|...|function(2|3|6|7|8|9|...|...) returns 2|3|6|7|8|9|...|...|function(1|2|3|4|8|9|...) returns 1|2|3|4|8|9|...&function(2|3|6|7|8|9|function(3|4|5|6|9|...|...) returns 3|4|5|6|9|...|...|...) returns 2|3|6|7|8|9|function(3|4|5|6|9|...|...) returns 3|4|5|6|9|...|...|...&¬function(3|4|5|6|9|...|function(2|3|6|7|8|9|...|...) returns 2|3|6|7|8|9|...|...) returns 3|4|5|6|9|...|function(2|3|6|7|8|9|...|...) returns 2|3|6|7|8|9|...|...{
   bb0 {
-    %2 = ConstantLoad 3
-    %0 = %2;
+    _ = s;
+    %3 = ConstantLoad 3
+    %0 = %3;
     return;
   }
 }

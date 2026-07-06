@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: can't fill values
+error: inherent type violation
         at main(fill3-p.bal:21)

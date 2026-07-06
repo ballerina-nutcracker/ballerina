@@ -1,0 +1,53 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)))))))
+    (var-def
+      (variable r (expr
+        (checked-expr
+          (remote-method-call post expr:
+            (simple-var-ref c) (
+            (literal /post)
+            (literal hello world)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r)))))
+    (var-def
+      (variable r2 (expr
+        (checked-expr
+          (remote-method-call post expr:
+            (simple-var-ref c) (
+            (literal /post)
+            (literal {"key":"value"})
+            (literal <nil>)
+            (literal application/json)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r2)))))
+    (var-def
+      (variable r3 (expr
+        (checked-expr
+          (remote-method-call post expr:
+            (simple-var-ref c) (
+            (literal /post)
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal test))
+              (key-value
+                (literal count)
+                (literal 1)))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r3)))))
+    (return
+      (literal <nil>))
+  )
+)

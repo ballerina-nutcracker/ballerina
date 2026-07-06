@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: fixed-length array size must be a singleton int
   --> fixedlength7-e.bal:20:9
    |
-20 |     int[x] v = [1, 2]; // @error
+20 |     int[x] _ = [1, 2]; // @error
    |         ^

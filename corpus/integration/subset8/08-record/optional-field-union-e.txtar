@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
-  --> optional-field-union-e.bal:31:15
+  --> optional-field-union-e.bal:30:13
    |
-31 |     int foo = r.foo; // @error
-   |               ^^^^^
+30 |     int _ = r.foo; // @error
+   |             ^^^^^

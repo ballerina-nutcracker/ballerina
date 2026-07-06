@@ -1,9 +1,8 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 A  -3;
-B  float;
+B  -2;
 C  float;
-D  float;
+D  3.7;
 main() -> nil{
   bb0 {
     %1 = println(A) -> bb1;

@@ -1,0 +1,19 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type int Signed8)) (expr
+          (type-conversion-expr
+            (invocation foo ())
+            (user-defined-type int Signed8)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))))
+  (function foo () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 300)))))

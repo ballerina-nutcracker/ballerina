@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-init-1-e.bal:18:16
+   |
+18 | public int b = a; // @error
+   |                ^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-init-1-e.bal:19:16
+   |
+19 | public int c = a + 1; // @error
+   |                ^

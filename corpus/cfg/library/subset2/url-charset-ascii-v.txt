@@ -1,0 +1,94 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal hello world)
+            (literal US-ASCII)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url decode (
+            (literal hello%20world)
+            (literal US-ASCII)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal a=b)
+            (literal ASCII)))))))
+    (var-def
+      (variable enc (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (invocation url encode (
+          (literal café)
+          (literal US-ASCII))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref enc)
+          (error-type)))))
+    (var-def
+      (variable dec (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (invocation url decode (
+          (literal %FF)
+          (literal US-ASCII))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref dec)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal a b)
+            (literal UTF8)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal café)
+            (literal LATIN-1)))))))
+    (var-def
+      (variable original (type
+        (value-type string)) (expr
+        (literal Hi))))
+    (var-def
+      (variable utf16 (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation url encode (
+            (simple-var-ref original)
+            (literal UTF-16)))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (checked-expr
+            (invocation url decode (
+              (simple-var-ref utf16)
+              (literal UTF-16))))
+          (simple-var-ref original)))))
+    (var-def
+      (variable utf16le (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation url encode (
+            (simple-var-ref original)
+            (literal UTF-16LE)))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (checked-expr
+            (invocation url decode (
+              (simple-var-ref utf16le)
+              (literal UTF-16LE))))
+          (simple-var-ref original)))))
+  )
+)

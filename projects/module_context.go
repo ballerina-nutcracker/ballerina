@@ -246,28 +246,38 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 		return
 	}
 
-	// Build BLangPackage from syntax trees.
+	// Build compilation units from syntax trees.
 	compilerCtx.StartStage(context.StageASTBuild)
 	compilationOptions := moduleCtx.project.BuildOptions().CompilationOptions()
-	pkgNode := buildBLangPackage(compilerCtx, syntaxTrees, compilationOptions)
-	moduleCtx.bLangPkg = pkgNode
+	compilationUnits := buildCompilationUnits(compilerCtx, syntaxTrees, compilationOptions)
 
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
 
-	pkgNode.PackageID = createModelPackageID(compilerCtx, moduleCtx.moduleDescriptor)
+	pkgID := createModelPackageID(compilerCtx, moduleCtx.moduleDescriptor)
+	for _, cu := range compilationUnits {
+		cu.SetPackageID(pkgID)
+	}
 	compilerCtx.EndStage()
 
 	// Resolve symbols (imports) before type resolution
 	compilerCtx.StartStage(context.StageImportResolution)
 	publicSymbols := moduleCtx.getProject().Environment().publicSymbols
-	importedSymbols := semantics.ResolveImports(compilerCtx, pkgNode, semantics.GetImplicitImports(compilerCtx), publicSymbols, moduleCtx.moduleDescriptor.Org().value)
-	moduleCtx.importedSymbols = importedSymbols
+	// PR-TODO: remove this after migration all lang libraries
+	implicitImports := semantics.GetImplicitImports(compilerCtx)
+	seedMigratedLangLibs(implicitImports, publicSymbols)
+	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(compilerCtx, compilationUnits, implicitImports, publicSymbols, moduleCtx.moduleDescriptor.Org().value)
+	moduleCtx.importedSymbols = mergeCompilationUnitImports(importedSymbolsByCU)
 	compilerCtx.EndStage()
 
 	compilerCtx.StartStage(context.StageSymbolResolution)
-	exported := semantics.ResolveSymbols(compilerCtx, pkgNode, importedSymbols)
+	pkgScope, exported := semantics.ResolveSymbols(compilerCtx, *pkgID, importedSymbolsByCU)
+	pkgNode := ast.ToPackageFromCompilationUnits(compilationUnits)
+	pkgNode.Imports = nil
+	pkgNode.PackageID = pkgID
+	pkgNode.Scope = pkgScope
+	moduleCtx.bLangPkg = pkgNode
 	compilerCtx.EndStage()
 
 	if compilerCtx.HasErrors() {
@@ -283,7 +293,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 
 	// Add type resolution step (this only resolve types of top level nodes)
 	compilerCtx.StartStage(context.StageTopLevelTypeResolution)
-	semantics.ResolveTopLevelNodes(compilerCtx, pkgNode, importedSymbols)
+	semantics.ResolveTopLevelNodes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 }
 
@@ -312,7 +322,7 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 
 	compilerCtx.StartStage(context.StageSemanticAnalysis)
 	semanticAnalyzer := semantics.NewSemanticAnalyzer(moduleCtx.compilerCtx)
-	semanticAnalyzer.Analyze(pkgNode)
+	semanticAnalyzer.Analyze(pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
@@ -411,68 +421,42 @@ func parseDocumentsParallel(
 	return syntaxTrees
 }
 
-// buildBLangPackage builds a BLangPackage from one or more syntax trees.
-// For a single file this is equivalent to ast.ToPackage(ast.GetCompilationUnit(cx, st)).
-// For multiple files it merges all compilation units into a single package.
-func buildBLangPackage(cx *context.CompilerContext, syntaxTrees []*tree.SyntaxTree, compilationOptions CompilationOptions) *ast.BLangPackage {
+func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*tree.SyntaxTree, compilationOptions CompilationOptions) []*ast.BLangCompilationUnit {
 	dumpAST := compilationOptions.DumpAST()
 	var prettyPrinter ast.PrettyPrinter
 	if dumpAST {
 		prettyPrinter = ast.PrettyPrinter{}
 	}
 
-	if len(syntaxTrees) == 1 {
-		cu := ast.GetCompilationUnit(cx, syntaxTrees[0])
-		if dumpAST {
-			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
-		}
-		return ast.ToPackage(cu)
-	}
-
-	pkg := &ast.BLangPackage{}
-	initDuplicated := false
+	compilationUnits := make([]*ast.BLangCompilationUnit, 0, len(syntaxTrees))
 	for _, st := range syntaxTrees {
 		cu := ast.GetCompilationUnit(cx, st)
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
 		}
-		if pkg.PackageID == nil {
-			pkg.PackageID = cu.GetPackageID()
-		}
-		for _, node := range cu.GetTopLevelNodes() {
-			switch n := node.(type) {
-			case *ast.BLangImportPackage:
-				pkg.Imports = append(pkg.Imports, *n)
-			case *ast.BLangConstant:
-				pkg.Constants = append(pkg.Constants, *n)
-			case *ast.BLangService:
-				pkg.Services = append(pkg.Services, *n)
-			case *ast.BLangSimpleVariable:
-				pkg.GlobalVars = append(pkg.GlobalVars, *n)
-			case *ast.BLangFunction:
-				if n.Name.Value == "init" {
-					if pkg.InitFunction != nil {
-						if !initDuplicated {
-							cx.SemanticError("redeclared symbol 'init'", pkg.InitFunction.Name.GetPosition())
-							initDuplicated = true
-						}
-						cx.SemanticError("redeclared symbol 'init'", n.Name.GetPosition())
-					} else {
-						pkg.InitFunction = n
-					}
-				} else {
-					pkg.Functions = append(pkg.Functions, *n)
-				}
-			case *ast.BLangTypeDefinition:
-				pkg.TypeDefinitions = append(pkg.TypeDefinitions, *n)
-			case *ast.BLangAnnotation:
-				pkg.Annotations = append(pkg.Annotations, *n)
-			default:
-				pkg.TopLevelNodes = append(pkg.TopLevelNodes, node)
-			}
+		compilationUnits = append(compilationUnits, cu)
+	}
+	return compilationUnits
+}
+
+func mergeCompilationUnitImports(imports []semantics.CompilationUnitImports) map[string]model.ExportedSymbolSpace {
+	result := make(map[string]model.ExportedSymbolSpace)
+	for _, cuImports := range imports {
+		maps.Copy(result, cuImports.Imports)
+	}
+	return result
+}
+
+// seedMigratedLangLibs adds the migrated lang libraries (compiled as real
+// packages and published to publicSymbols) to the implicit-imports map under
+// their langlib key, so they are usable without an import statement. No-op
+// until the lib has been compiled (e.g. while compiling the lib itself).
+func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) {
+	for _, name := range []string{"lang.int", "lang.boolean", "lang.decimal", "lang.error", "lang.string", "lang.value", "lang.xml", "lang.float", "lang.array", "lang.map"} {
+		if space, ok := publicSymbols[semantics.PackageIdentifier{OrgName: "ballerina", ModuleName: name}]; ok {
+			implicitImports[name] = space
 		}
 	}
-	return pkg
 }
 
 // createModelPackageID builds a model.PackageID from the module descriptor so BIR gen

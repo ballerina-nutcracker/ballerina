@@ -3,11 +3,11 @@
 error[SEMANTIC_ERROR]: expect boolean types for &&
   --> 27-e.bal:18:17
    |
-18 |     boolean b = a && true; // @error
+18 |     boolean _ = a && true; // @error
    |                 ^^^^^^^^^
 
 error[SEMANTIC_ERROR]: expect boolean types for ||
   --> 27-e.bal:19:17
    |
-19 |     boolean c = false || a; // @error
+19 |     boolean _ = false || a; // @error
    |                 ^^^^^^^^^^

@@ -1,0 +1,14 @@
+(foo
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (literal 21))))
+  )
+)

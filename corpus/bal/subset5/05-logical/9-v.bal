@@ -16,8 +16,8 @@
 public function main() {
     int|string|float x = 1;
     if x is string|int && x is string|float {
-        string unused1 = x;
+        string _ = x;
         return;
     }
-    int|float unused2 = x;
+    int|float _ = x;
 }

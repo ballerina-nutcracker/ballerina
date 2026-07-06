@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: invalid type for operand of +
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
   --> add1-e.bal:20:9
    |
 20 |     foo(1 + true); // @error

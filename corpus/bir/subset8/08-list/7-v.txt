@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 2
@@ -39,42 +38,54 @@ foo(any) -> nil{
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad unexpected
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %5 = a is [int, int, never...]
-    %5 ? bb4 : bb6;
+    PushScopeFrame 1
+    %0 = (1, a) is [int, int, never...]
+    %0 ? bb4 : bb6;
   }
   bb4 {
-    %6 = ConstantLoad unexpected
-    %7 = println(%6) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
-    %8 = a is [int...]
-    %8 ? bb7 : bb9;
+    PushScopeFrame 1
+    %0 = (2, a) is [int...]
+    %0 ? bb7 : bb9;
   }
   bb7 {
-    %9 = ConstantLoad unexpected
-    %10 = println(%9) -> bb8;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb8;
   }
   bb8 {
+    PopScopeFrame
     GOTO bb11;
   }
   bb9 {
-    %11 = ConstantLoad a is any
-    %12 = println(%11) -> bb10;
+    PushScopeFrame 2
+    %0 = ConstantLoad a is any
+    %1 = println(%0) -> bb10;
   }
   bb10 {
+    PopScopeFrame
     GOTO bb11;
   }
   bb11 {
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }
@@ -84,31 +95,39 @@ foo1([int...]) -> nil{
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad unexpected
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %5 = a is [int, int, never...]
-    %5 ? bb4 : bb6;
+    PushScopeFrame 1
+    %0 = (1, a) is [int, int, never...]
+    %0 ? bb4 : bb6;
   }
   bb4 {
-    %6 = ConstantLoad unexpected
-    %7 = println(%6) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb6 {
-    %8 = ConstantLoad a is int[]
-    %9 = println(%8) -> bb7;
+    PushScopeFrame 2
+    %0 = ConstantLoad a is int[]
+    %1 = println(%0) -> bb7;
   }
   bb7 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb8 {
+    PopScopeFrame
     return;
   }
 }
@@ -118,13 +137,17 @@ foo2([2, 3, never...]) -> nil{
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad a is [2,3]
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad a is [2,3]
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

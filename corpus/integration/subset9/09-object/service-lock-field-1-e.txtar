@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> service-lock-field-1-e.bal:47:22
+   |
+47 |         self.count = self.count + 1; // @error
+   |                      ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> service-lock-field-1-e.bal:47:9
+   |
+47 |         self.count = self.count + 1; // @error
+   |         ^^^^^^^^^^

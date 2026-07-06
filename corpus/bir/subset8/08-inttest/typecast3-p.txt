@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = foo() -> bb1;
+  }
+  bb1 {
+    %2 = <int:Signed8>(%1)
+    a = %2;
+    %4 = a;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+foo() -> int{
+  bb0 {
+    %1 = ConstantLoad 300
+    %0 = %1;
+    return;
+  }
+}

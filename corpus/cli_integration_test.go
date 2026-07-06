@@ -143,6 +143,185 @@ func TestBalRunWorkspaceCorpus(t *testing.T) {
 	})
 }
 
+// TestBalPackCorpus exercises `bal pack` end-to-end through the coverage-aware
+// CLI harness. Each subtest invokes the binary with the scenario's args and
+// substring-matches the captured stdout/stderr/exitcode against the txtar at
+// corpus/cli/output/pack/<scenario>.txtar. This is the corpus replacement for
+// the in-process cli/cmd/pack_test.go suite — running via the real binary
+// keeps subprocess coverage flowing into the cli/cmd profile.
+//
+// Java equivalent: N/A — pack is Go-only CLI integration coverage.
+func TestBalPackCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "pack")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "pack")
+
+	// Use a guaranteed-missing path under the testdata root for the
+	// nonexistent-path scenario. The directory's parent exists (testdata/pack)
+	// so the stat error is "no such file or directory" rather than something
+	// else like "permission denied".
+	missingPath := filepath.Join(testdataRoot, "this-path-does-not-exist")
+
+	basicProject := filepath.Join(testdataRoot, "basic", "project")
+	basicTargetDir := filepath.Join(repoRoot, testdataRoot, "basic", "project", "target")
+
+	// projectTargetDir, when non-empty, is the project's target/ directory to
+	// scrub on test cleanup so reruns start fresh and any bala-emission test
+	// stays deterministic.
+	//
+	// useDebugBinary, when true, dispatches through the debug-tagged bal binary
+	// instead of the release binary. Scenarios that exercise debug-only flags
+	// (e.g. --prof, which is registered by prof_debug.go) must set this. If the
+	// debug binary build failed (e.g. missing -tags debug support), the scenario
+	// is t.Skip()ed rather than failed.
+	tests := []struct {
+		name             string
+		args             []string
+		txtar            string
+		projectTargetDir string
+		useDebugBinary   bool
+	}{
+		{
+			name:             "basic",
+			args:             []string{"pack", basicProject},
+			txtar:            "basic.txtar",
+			projectTargetDir: basicTargetDir,
+		},
+		{
+			name:  "rejects-single-file",
+			args:  []string{"pack", filepath.Join(testdataRoot, "rejects-single-file", "main.bal")},
+			txtar: "rejects-single-file.txtar",
+		},
+		{
+			name:  "nonexistent-path",
+			args:  []string{"pack", missingPath},
+			txtar: "nonexistent-path.txtar",
+		},
+		{
+			name:  "not-ballerina-project",
+			args:  []string{"pack", filepath.Join(testdataRoot, "not-ballerina-project", "empty")},
+			txtar: "not-ballerina-project.txtar",
+		},
+		{
+			name:  "too-many-args",
+			args:  []string{"pack", "a", "b"},
+			txtar: "too-many-args.txtar",
+		},
+		{
+			name:             "compile-error",
+			args:             []string{"pack", filepath.Join(testdataRoot, "compile-error", "project")},
+			txtar:            "compile-error.txtar",
+			projectTargetDir: filepath.Join(repoRoot, testdataRoot, "compile-error", "project", "target"),
+		},
+		{
+			name:  "help",
+			args:  []string{"pack", "--help"},
+			txtar: "help.txtar",
+		},
+		{
+			name:             "pack-with-dump-tokens",
+			args:             []string{"pack", basicProject, "--dump-tokens"},
+			txtar:            "pack-with-dump-tokens.txtar",
+			projectTargetDir: basicTargetDir,
+		},
+		{
+			name:             "pack-with-dump-st",
+			args:             []string{"pack", basicProject, "--dump-st"},
+			txtar:            "pack-with-dump-st.txtar",
+			projectTargetDir: basicTargetDir,
+		},
+		{
+			name:             "pack-with-trace-recovery",
+			args:             []string{"pack", basicProject, "--trace-recovery"},
+			txtar:            "pack-with-trace-recovery.txtar",
+			projectTargetDir: basicTargetDir,
+		},
+		{
+			name:             "pack-with-log-file",
+			args:             []string{"pack", basicProject, "--dump-tokens", "--log-file={{TMPDIR}}/bal.log"},
+			txtar:            "pack-with-log-file.txtar",
+			projectTargetDir: basicTargetDir,
+		},
+		{
+			name:             "pack-with-prof",
+			args:             []string{"pack", basicProject, "--prof"},
+			txtar:            "pack-with-prof.txtar",
+			projectTargetDir: basicTargetDir,
+			useDebugBinary:   true,
+		},
+		{
+			name:  "pack-malformed-manifest",
+			args:  []string{"pack", filepath.Join(testdataRoot, "malformed-manifest", "project")},
+			txtar: "pack-malformed-manifest.txtar",
+		},
+		{
+			name:  "rejects-workspace",
+			args:  []string{"pack", filepath.Join(testdataRoot, "rejects-workspace", "project")},
+			txtar: "rejects-workspace.txtar",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.projectTargetDir != "" {
+				t.Cleanup(func() { _ = os.RemoveAll(tt.projectTargetDir) })
+			}
+
+			binToUse := balBin
+			if tt.useDebugBinary {
+				if cliIntegrationDebugBalBin == "" {
+					t.Skip("debug-tagged bal binary unavailable; skipping debug-only scenario")
+				}
+				binToUse = cliIntegrationDebugBalBin
+			}
+
+			// Substitute the per-scenario {{TMPDIR}} placeholder in each arg
+			// with t.TempDir(). The TempDir is created lazily on first use
+			// per subtest and cleaned up by the testing package. Only the
+			// literal token "{{TMPDIR}}" is recognised — any other "{{...}}"
+			// placeholder is rejected to prevent silent typos.
+			args := substituteScenarioPlaceholders(t, tt.args)
+
+			assertBalCommandMatchesTxtarFragmentsLoose(t, binToUse, repoRoot, coverDir,
+				args, filepath.Join(outputsRoot, tt.txtar))
+		})
+	}
+}
+
+// substituteScenarioPlaceholders replaces the token "{{TMPDIR}}" in each arg
+// with a fresh t.TempDir() (one TempDir per scenario, reused across args).
+// Any other "{{...}}" token is treated as an unknown placeholder and fails
+// the test — only TMPDIR is supported today.
+func substituteScenarioPlaceholders(t *testing.T, args []string) []string {
+	t.Helper()
+	const tmpdirToken = "{{TMPDIR}}"
+	var tmpDir string
+	out := make([]string, len(args))
+	for i, a := range args {
+		if strings.Contains(a, tmpdirToken) {
+			if tmpDir == "" {
+				tmpDir = t.TempDir()
+			}
+			a = strings.ReplaceAll(a, tmpdirToken, tmpDir)
+		}
+		// Detect any leftover placeholder of the form "{{NAME}}" — these are
+		// unsupported and must fail loudly rather than be passed verbatim.
+		if openIdx := strings.Index(a, "{{"); openIdx != -1 {
+			closeIdx := strings.Index(a[openIdx:], "}}")
+			if closeIdx != -1 {
+				t.Fatalf("unsupported scenario placeholder %q in arg %q (only {{TMPDIR}} is supported)",
+					a[openIdx:openIdx+closeIdx+2], a)
+			}
+		}
+		out[i] = a
+	}
+	return out
+}
+
 // assertBalCommandMatchesTxtarFragmentsLoose is like assertBalCommandMatchesTxtarFragmentsForBinary
 // but uses fragment (substring) matching for both stdout and stderr. This is needed when stderr
 // contains machine-specific absolute paths that cannot be captured exactly in a txtar fixture.
@@ -155,13 +334,6 @@ func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
 	stdout = test_util.NormalizeNewlines(stdout)
 	stderr = test_util.NormalizeNewlines(stderr)
-
-	if *update {
-		if test_util.UpdateTxtarArchiveIfNeeded(t, txtarPath, test_util.TxtarFilesStdoutStderrExitcode(stdout, stderr, strconv.Itoa(exitCode))) {
-			t.Fatalf("Updated expected file: %s", txtarPath)
-		}
-		return
-	}
 
 	expectedStdoutFragments, expectedStderrFragments, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(txtarPath)
 	if err != nil {
@@ -301,13 +473,6 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 	stderr = test_util.NormalizeNewlines(stderr)
 	expectedPath := filepath.Join(append([]string{repoRoot, "corpus", "cli", "output"}, txtarPathParts...)...)
 
-	if *update {
-		if test_util.UpdateTxtarArchiveIfNeeded(t, expectedPath, test_util.TxtarFilesStdoutStderrExitcode(stdout, stderr, strconv.Itoa(exitCode))) {
-			t.Fatalf("Updated expected file: %s", expectedPath)
-		}
-		return
-	}
-
 	expectedStdoutFragments, expectedStderr, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
 	if err != nil {
 		t.Fatalf("failed to parse txtar file %s: %v", expectedPath, err)
@@ -343,20 +508,22 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 	cmd.Stderr = &stderrBuf
 
 	err := cmd.Run()
+	stdoutStr := stdoutBuf.String()
+	stderrStr := stderrBuf.String()
 	if err == nil {
-		return stdoutBuf.String(), stderrBuf.String(), 0
+		return stdoutStr, stderrStr, 0
 	}
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) {
-		return stdoutBuf.String(), stderrBuf.String(), exitErr.ExitCode()
+		return stdoutStr, stderrStr, exitErr.ExitCode()
 	}
 	t.Fatalf(
 		"failed to execute command %q (repo: %s): %v\nstdout:\n%s\nstderr:\n%s",
 		strings.Join(args, " "),
 		repoRoot,
 		err,
-		stdoutBuf.String(),
-		stderrBuf.String(),
+		stdoutStr,
+		stderrStr,
 	)
 	return "", "", 0
 }
@@ -391,13 +558,6 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 		actualOutput := test_util.NormalizeNewlines(stdout)
 		actualError := test_util.NormalizeNewlines(stderr)
 		actualExitCode := strconv.Itoa(exitCode)
-
-		if *update {
-			if test_util.UpdateTxtarArchiveIfNeeded(t, expectedPath, test_util.TxtarFilesStdoutStderrExitcode(actualOutput, actualError, actualExitCode)) {
-				t.Fatalf("Updated expected file: %s", expectedPath)
-			}
-			return
-		}
 
 		expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
 		if err != nil {

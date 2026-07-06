@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -9,46 +8,62 @@ main() -> nil{
     %4 ? bb1 : bb3;
   }
   bb1 {
-    %5 = ConstantLoad any[]
-    %6 = println(%5) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad any[]
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %7 = iv is [string...]
-    %7 ? bb4 : bb6;
+    PushScopeFrame 1
+    %0 = (1, iv) is [string...]
+    %0 ? bb4 : bb6;
   }
   bb4 {
-    %8 = ConstantLoad string[]
-    %9 = println(%8) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad string[]
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
-    %10 = iv is [nil|int...]
-    %10 ? bb7 : bb9;
+    PushScopeFrame 1
+    %0 = (2, iv) is [nil|int...]
+    %0 ? bb7 : bb9;
   }
   bb7 {
-    %11 = ConstantLoad int?[]
-    %12 = println(%11) -> bb8;
+    PushScopeFrame 2
+    %0 = ConstantLoad int?[]
+    %1 = println(%0) -> bb8;
   }
   bb8 {
+    PopScopeFrame
     GOTO bb9;
   }
   bb9 {
-    %13 = iv is [int|string...]
-    %13 ? bb10 : bb12;
+    PushScopeFrame 1
+    %0 = (3, iv) is [int|string...]
+    %0 ? bb10 : bb12;
   }
   bb10 {
-    %14 = ConstantLoad ISA
-    %15 = println(%14) -> bb11;
+    PushScopeFrame 2
+    %0 = ConstantLoad ISA
+    %1 = println(%0) -> bb11;
   }
   bb11 {
+    PopScopeFrame
     GOTO bb12;
   }
   bb12 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

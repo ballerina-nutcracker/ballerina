@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable id (type
+        (value-type int)) (expr
+        (literal 7))))
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-template-literal
+          (template-string "<row id=\"")
+          (xml-template-attribute-insertion
+            (simple-var-ref id))
+          (template-string "\"/>")))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (var-def
+      (variable value (type
+        (value-type string)) (expr
+        (literal a&b"c<d))))
+    (var-def
+      (variable escaped (type
+        (value-type xml)) (expr
+        (xml-template-literal
+          (template-string "<root value=\"")
+          (xml-template-attribute-insertion
+            (simple-var-ref value))
+          (template-string "\"/>")))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref escaped))))
+  )
+)

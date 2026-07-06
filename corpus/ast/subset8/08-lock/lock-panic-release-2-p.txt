@@ -1,0 +1,30 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function bump () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (binary-expr /
+            (literal 1)
+            (simple-var-ref x)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (simple-var-ref counter)
+            (binary-expr +
+              (simple-var-ref counter)
+              (literal 1)))
+          (expression-stmt
+            (invocation bump ())))))))

@@ -240,7 +240,7 @@ func (p *packageContext) moduleDependencyGraph() *DependencyGraph[ModuleDescript
 
 // buildModuleDependencyGraph constructs a dependency graph for modules within this package.
 func (p *packageContext) buildModuleDependencyGraph() *DependencyGraph[ModuleDescriptor] {
-	builder := newDependencyGraphBuilder[ModuleDescriptor]()
+	builder := newDependencyGraphBuilder(moduleDescriptorCmp)
 
 	// Add all modules as nodes
 	for _, modID := range p.moduleIDs {

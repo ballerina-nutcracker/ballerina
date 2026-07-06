@@ -109,4 +109,9 @@
     (block-function-body))
   (function baz () (
     (value-type null))
-    (block-function-body)))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (simple-var-ref i)))))))

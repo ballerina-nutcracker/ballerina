@@ -19,7 +19,9 @@ type X record {|
 |};
 
 function foo(X x) {
-}
+        X _ = x;
+    
+    }
 
 public function main() {
 }

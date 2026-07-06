@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 runner(function(float) returns float,float) -> float{
   bb0 {
     %3 = val;
@@ -23,12 +22,13 @@ $anonFunc$_0(float) -> float{
 }
 $anonFunc$_1(float) -> float{
   bb0 {
-    %3 = (1, v2);
-    %4 = (1, v1);
-    %2 = + %3 %4;
-    (1, v2) = %2;
-    %5 = ConstantLoad 0
-    %0 = %5;
+    _ = b;
+    %4 = (1, v2);
+    %5 = (1, v1);
+    %3 = + %4 %5;
+    (1, v2) = %3;
+    %6 = ConstantLoad 0
+    %0 = %6;
     return;
   }
 }

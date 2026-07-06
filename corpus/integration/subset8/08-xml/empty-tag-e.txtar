@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing identifier
+  --> empty-tag-e.bal:18:27
+   |
+18 |     xml:Element e = xml `</>`; // @error
+   |

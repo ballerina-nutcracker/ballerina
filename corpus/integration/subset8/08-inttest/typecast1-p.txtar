@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: bad type cast
+        at main(typecast1-p.bal:22)

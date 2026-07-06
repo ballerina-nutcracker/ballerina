@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 class NumberIterator {
   items [int...]
   idx int
@@ -10,7 +9,7 @@ class NumberIterator {
       %3 = ConstantLoad 2
       %4 = ConstantLoad 3
       %5 = ConstantLoad 3
-      %6 = newArray [int, int, int, never...][%5]{%2, %3, %4}
+      %6 = newArray [int...][%5]{%2, %3, %4}
       %7 = ConstantLoad items
       self[%7] = %6;
       %8 = ConstantLoad 0
@@ -31,27 +30,31 @@ class NumberIterator {
       %2 ? bb1 : bb2;
     }
     bb1 {
-      %8 = ConstantLoad <nil>
-      %0 = %8;
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
       return;
     }
     bb2 {
-      %11 = ConstantLoad idx
-      %10 = self[%11];
-      %13 = ConstantLoad items
-      %12 = self[%13];
-      %9 = %12[%10];
-      val = %9;
-      %15 = ConstantLoad idx
-      %16 = self[%15];
-      %17 = %16;
-      %18 = ConstantLoad 1
-      %19 = %18;
-      %20 = + %17 %19;
-      self[%15] = %20;
-      %21 = ConstantLoad value
-      %22 = newMap {| value: int, never... |}{%21=val}
-      %0 = %22;
+      PushScopeFrame 14
+      %2 = ConstantLoad idx
+      %1 = (1, self)[%2];
+      %4 = ConstantLoad items
+      %3 = (1, self)[%4];
+      %0 = %3[%1];
+      val = %0;
+      %6 = ConstantLoad idx
+      %7 = (1, self)[%6];
+      %8 = %7;
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %11 = + %8 %10;
+      (1, self)[%6] = %11;
+      %12 = ConstantLoad value
+      %13 = newMap {| value: int, never... |}{%12=val}
+      (1, %0) = %13;
+      PopScopeFrame
       return;
     }
   }
@@ -64,7 +67,7 @@ class NumberGenerator {
     }
   }
 
-  iterator() -> object { int idx; function init() returns nil; [int...] items; function next() returns nil|{| value: int, never... |} }{
+  iterator() -> object { private int idx; public function init() returns nil; private [int...] items; public function next() returns nil|{| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:NumberIterator
       %3 = init(%2) -> bb1;
@@ -130,6 +133,8 @@ main() -> nil{
     %2 ? bb10 : bb11;
   }
   bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
     PopScopeFrame
     GOTO bb8;
   }

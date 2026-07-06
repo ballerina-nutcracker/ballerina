@@ -40,6 +40,8 @@ corpus/**/*.json
 !corpus/**/dependency-graph.json
 parser/testdata/**/*.json
 /corpus/parser/*
+# Hand-authored bala fixture data (not generated)
+!corpus/package-resolution/testdata/**/*.json
 
 # IDE specific files
 .idea/

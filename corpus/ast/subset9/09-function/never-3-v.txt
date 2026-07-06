@@ -1,0 +1,32 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function foo (
+    (variable a (type
+      (value-type int)))) (
+    (value-type never))
+    (block-function-body
+      (if
+        (binary-expr <
+          (simple-var-ref a)
+          (literal 5))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal less that five))))) (
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal greater than five)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (trap-expr
+            (invocation foo (
+              (literal 10)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e)))))))

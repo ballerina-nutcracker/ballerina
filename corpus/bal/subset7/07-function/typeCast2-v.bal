@@ -22,6 +22,7 @@ type F2 function(2|3) returns "b"|"c";
 type Fx F1&F2;
 
 function foo(1|2|3 a) returns "b" {
+    1|2|3 _ = a;
     return "b";
 }
 

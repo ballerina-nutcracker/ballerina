@@ -1,0 +1,50 @@
+(SimpleListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+($remote$greet
+  (bb0 () ()
+    (return
+      (field-based-access foo
+        (simple-var-ref self)))
+  )
+)
+($resource$get$0
+  (bb0 () ()
+    (var-def
+      (variable _ (expr
+        (simple-var-ref name))))
+    (return
+      (binary-expr +
+        (literal Hello, )
+        (field-based-access foo
+          (simple-var-ref self))))
+  )
+)
+(main
+  (bb0 () ())
+)

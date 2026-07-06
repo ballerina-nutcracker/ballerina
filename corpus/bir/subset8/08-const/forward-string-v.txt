@@ -1,7 +1,6 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 H  "hello";
-S  string;
+S  "hello, world!";
 T  "world";
 U  "world";
 main() -> nil{

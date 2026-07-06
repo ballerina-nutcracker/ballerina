@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible type: expected [[int, never...]|[string, never...], never...], got [[int|string, never...], never...]
   --> listassign2-e.bal:30:11
    |
-30 |     P p = q; // @error
+30 |     P _ = q; // @error
    |           ^

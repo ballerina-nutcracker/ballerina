@@ -63,18 +63,14 @@ func (p *PrettyPrinter) decreaseIndent() {
 	p.indentLevel--
 }
 
-func (p *PrettyPrinter) Print(node BIRPackage) string {
+func (p *PrettyPrinter) Print(tyCtx semtypes.Context, node BIRPackage) string {
 	// Reset the builder
 	p.sb.Reset()
-	p.cx = semtypes.TypeCheckContext(node.TypeEnv)
+	p.cx = tyCtx
 
 	p.write("module ")
 	p.write(p.PrintPackageID(node.PackageID))
 	p.write(";\n")
-	for _, importModule := range node.ImportModules {
-		p.write(p.PrintImportModule(importModule))
-		p.write(";\n")
-	}
 	sortedGlobalVars := make([]BIRGlobalVariableDcl, 0, len(node.GlobalVars))
 	for _, globalVar := range node.GlobalVars {
 		sortedGlobalVars = append(sortedGlobalVars, globalVar)
@@ -123,7 +119,7 @@ func (p *PrettyPrinter) PrintFunction(function BIRFunction) {
 		p.write("...")
 	}
 	p.write(")")
-	if function.ReturnVariable != nil && function.ReturnVariable.Type != nil {
+	if function.ReturnVariable != nil && !semtypes.IsZero(function.ReturnVariable.Type) {
 		p.write(" -> ")
 		p.write(p.PrintSemType(function.ReturnVariable.Type))
 	}
@@ -192,14 +188,38 @@ func (p *PrettyPrinter) PrintInstruction(instruction BIRInstruction) string {
 		return p.PrintTypeTest(instruction)
 	case *Panic:
 		return p.PrintPanic(instruction)
+	case *LockStart:
+		return p.PrintLockStart(instruction)
+	case *LockEnd:
+		return p.PrintLockEnd(instruction)
+	case *ResourceFunctionCall:
+		return p.PrintResourceFunctionCall(instruction)
 	case *NewObject:
 		return p.PrintNewObject(instruction)
+	case *NewStream:
+		return p.PrintNewStream(instruction)
+	case *StreamNext:
+		return p.PrintStreamNext(instruction)
+	case *StreamClose:
+		return p.PrintStreamClose(instruction)
 	case *FPLoad:
 		return p.PrintFPLoad(instruction)
 	case *PushScopeFrame:
 		return p.PrintPushScopeFrame(instruction)
 	case *PopScopeFrame:
 		return "PopScopeFrame"
+	case *NewXMLElement:
+		return p.PrintNewXMLElement(instruction)
+	case *NewXMLPI:
+		return p.PrintNewXMLPI(instruction)
+	case *NewXMLComment:
+		return p.PrintNewXMLComment(instruction)
+	case *NewXMLText:
+		return p.PrintNewXMLText(instruction)
+	case *NewXMLSequence:
+		return p.PrintNewXMLSequence(instruction)
+	case *EvalTemplateExpr:
+		return p.PrintEvalTemplateExpr(instruction)
 	default:
 		panic(fmt.Sprintf("unknown instruction type: %T", instruction))
 	}
@@ -298,6 +318,18 @@ func (p *PrettyPrinter) PrintNewObject(n *NewObject) string {
 	return fmt.Sprintf("%s = newObject %s", p.PrintOperand(*n.LhsOp), n.ClassDefRef)
 }
 
+func (p *PrettyPrinter) PrintNewStream(n *NewStream) string {
+	return fmt.Sprintf("%s = newStream %s %s", p.PrintOperand(*n.LhsOp), p.PrintSemType(n.StreamType), p.PrintOperand(*n.ImplOp))
+}
+
+func (p *PrettyPrinter) PrintStreamNext(n *StreamNext) string {
+	return fmt.Sprintf("%s = streamNext %s", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.StreamOp))
+}
+
+func (p *PrettyPrinter) PrintStreamClose(n *StreamClose) string {
+	return fmt.Sprintf("%s = streamClose %s", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.StreamOp))
+}
+
 func (p *PrettyPrinter) PrintClassDef(classDef BIRClassDef) {
 	p.write("class ")
 	p.write(classDef.Name.Value())
@@ -317,8 +349,50 @@ func (p *PrettyPrinter) PrintClassDef(classDef BIRClassDef) {
 		p.PrintFunction(*classDef.VTable[name])
 		p.write("\n")
 	}
+	var rmNames []string
+	for name := range classDef.RTable {
+		rmNames = append(rmNames, name)
+	}
+	sort.Strings(rmNames)
+	for _, name := range rmNames {
+		for _, entry := range classDef.RTable[name] {
+			p.write("\n")
+			p.writeIndent()
+			p.write("resource ")
+			p.write(name)
+			p.write(" ")
+			p.write(p.printResourcePath(entry))
+			p.write(" ")
+			p.PrintFunction(*entry.Fn)
+			p.write("\n")
+		}
+	}
 	p.decreaseIndent()
 	p.write("}")
+}
+
+func literalPathSegment(seg ResourcePathSegmentDef) (string, bool) {
+	shape := semtypes.SingleShape(seg.Ty)
+	if !shape.IsPresent() {
+		return "", false
+	}
+	s, ok := shape.Get().Value.(string)
+	return s, ok
+}
+
+func (p *PrettyPrinter) printResourcePath(entry BIRResourceMethod) string {
+	parts := []string{}
+	for _, seg := range entry.PathSegments {
+		if s, ok := literalPathSegment(seg); ok {
+			parts = append(parts, s)
+		} else {
+			parts = append(parts, "["+p.PrintSemType(seg.Ty)+"]")
+		}
+	}
+	if !semtypes.IsNever(entry.RestSegmentTy) {
+		parts = append(parts, "["+p.PrintSemType(entry.RestSegmentTy)+"...]")
+	}
+	return strings.Join(parts, "/")
 }
 
 func (p *PrettyPrinter) PrintReturn(r *Return) string {
@@ -329,12 +403,38 @@ func (p *PrettyPrinter) PrintPanic(pa *Panic) string {
 	return fmt.Sprintf("panic %s;", p.PrintOperand(*pa.ErrorOp))
 }
 
+func (p *PrettyPrinter) PrintLockStart(l *LockStart) string {
+	return fmt.Sprintf("lock-start %q GOTO %s;", l.LockKey, l.ThenBB.Id.Value())
+}
+
+func (p *PrettyPrinter) PrintLockEnd(l *LockEnd) string {
+	return fmt.Sprintf("lock-end %q GOTO %s;", l.LockKey, l.ThenBB.Id.Value())
+}
+
 func (p *PrettyPrinter) PrintBranch(b *Branch) string {
 	return fmt.Sprintf("%s ? %s : %s;", p.PrintOperand(*b.Op), b.TrueBB.Id.Value(), b.FalseBB.Id.Value())
 }
 
 func (p *PrettyPrinter) PrintGoto(g *Goto) string {
 	return fmt.Sprintf("GOTO %s;", g.ThenBB.Id.Value())
+}
+
+func (p *PrettyPrinter) PrintResourceFunctionCall(call *ResourceFunctionCall) string {
+	segs := strings.Builder{}
+	for i, seg := range call.PathSegments {
+		if i > 0 {
+			segs.WriteString(",")
+		}
+		segs.WriteString(p.PrintOperand(seg))
+	}
+	args := strings.Builder{}
+	for i, arg := range call.Args {
+		if i > 0 {
+			args.WriteString(",")
+		}
+		args.WriteString(p.PrintOperand(arg))
+	}
+	return fmt.Sprintf("%s = %s->[%s].%s(%s) -> %s;", p.PrintOperand(*call.LhsOp), p.PrintOperand(call.Receiver), segs.String(), call.MethodName, args.String(), call.ThenBB.Id.Value())
 }
 
 func (p *PrettyPrinter) PrintCall(call *Call) string {
@@ -430,17 +530,10 @@ func (p *PrettyPrinter) PrintGlobalVar(globalVar BIRGlobalVariableDcl) string {
 }
 
 func (p *PrettyPrinter) PrintSemType(typeNode semtypes.SemType) string {
-	if typeNode == nil {
+	if semtypes.IsZero(typeNode) {
 		return "<UNKNOWN>"
 	}
 	return semtypes.ToString(p.cx, typeNode)
-}
-
-func (p *PrettyPrinter) PrintImportModule(importModules BIRImportModule) string {
-	sb := strings.Builder{}
-	sb.WriteString("import ")
-	sb.WriteString(p.PrintPackageID(importModules.PackageID))
-	return sb.String()
 }
 
 func (p *PrettyPrinter) PrintPackageID(packageID *model.PackageID) string {
@@ -451,4 +544,64 @@ func (p *PrettyPrinter) PrintPackageID(packageID *model.PackageID) string {
 	pkgName := string(*packageID.PkgName)
 	version := string(*packageID.Version)
 	return fmt.Sprintf("%s.%s v %s", orgName, pkgName, version)
+}
+
+func (p *PrettyPrinter) PrintNewXMLElement(n *NewXMLElement) string {
+	children := "()"
+	if n.ChildrenOp != nil {
+		children = p.PrintOperand(*n.ChildrenOp)
+	}
+	attrs := "()"
+	if n.AttrsOp != nil {
+		attrs = p.PrintOperand(*n.AttrsOp)
+	}
+	if n.NamespacesOp != nil {
+		return fmt.Sprintf("%s = newXMLElement(%s, %s, %s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.NameOp), children, attrs, p.PrintOperand(*n.NamespacesOp))
+	}
+	if n.AttrsOp != nil {
+		return fmt.Sprintf("%s = newXMLElement(%s, %s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.NameOp), children, attrs)
+	}
+	return fmt.Sprintf("%s = newXMLElement(%s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.NameOp), children)
+}
+
+func (p *PrettyPrinter) PrintNewXMLPI(n *NewXMLPI) string {
+	return fmt.Sprintf("%s = newXMLPI(%s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.TargetOp), p.PrintOperand(*n.DataOp))
+}
+
+func (p *PrettyPrinter) PrintNewXMLComment(n *NewXMLComment) string {
+	return fmt.Sprintf("%s = newXMLComment(%s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.BodyOp))
+}
+
+func (p *PrettyPrinter) PrintNewXMLText(n *NewXMLText) string {
+	return fmt.Sprintf("%s = newXMLText(%s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.BodyOp))
+}
+
+func (p *PrettyPrinter) PrintEvalTemplateExpr(n *EvalTemplateExpr) string {
+	kindStr := "string"
+	if n.Kind == TemplateKindXML {
+		kindStr = "xml"
+	}
+	parts := strings.Builder{}
+	for i, s := range n.Strings {
+		if i > 0 {
+			parts.WriteString(", ")
+		}
+		fmt.Fprintf(&parts, "%q", s)
+		if i < len(n.Insertions) {
+			parts.WriteString(", ")
+			parts.WriteString(p.PrintOperand(*n.Insertions[i]))
+		}
+	}
+	return fmt.Sprintf("%s = evalTemplate[%s](%s)", p.PrintOperand(*n.LhsOp), kindStr, parts.String())
+}
+
+func (p *PrettyPrinter) PrintNewXMLSequence(n *NewXMLSequence) string {
+	parts := strings.Builder{}
+	for i, child := range n.Children {
+		if i > 0 {
+			parts.WriteString(", ")
+		}
+		parts.WriteString(p.PrintOperand(*child))
+	}
+	return fmt.Sprintf("%s = newXMLSequence{%s}", p.PrintOperand(*n.LhsOp), parts.String())
 }

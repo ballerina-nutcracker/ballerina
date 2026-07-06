@@ -1,0 +1,16 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hi
+    v = %1;
+    %3 = escapeXMLContent(v) -> bb1;
+  }
+  bb1 {
+    %4 = evalTemplate[xml]("<p:tag xmlns:p=\"https://example.com/a&amp;b&quot;c\">", %3, "</p:tag>")
+    x = %4;
+    %6 = println(x) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

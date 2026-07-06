@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 type Values record {
     int bar;
@@ -22,6 +21,8 @@ type Values record {
 
 class C {
     function foo(int bar, *Values values) returns int { // @error
+        int _ = bar;
+        Values _ = values;
         return 0;
     }
 }

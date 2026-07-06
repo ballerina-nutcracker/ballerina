@@ -70,9 +70,17 @@ func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) FillerFactory
 		return func() BalValue { return v }
 	case semtypes.MappingFiller:
 		ty := f.Type
-		return func() BalValue { return NewMap(ty) }
+		atomic := f.Atomic
+		readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
+		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }
 	case semtypes.ListFiller:
 		return listFillerFactory(cx, f)
+	case semtypes.XMLFiller:
+		return func() BalValue { return &XMLText{} }
+	case semtypes.ObjectFiller, semtypes.StreamFiller, semtypes.TableFiller:
+		return func() BalValue {
+			panic("internal error: filler factory not implemented for object/stream/table types")
+		}
 	default:
 		panic("unknown filler kind")
 	}
@@ -84,6 +92,8 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) FillerFactory
 		memberFactories[i] = fillerFactoryFromDesc(cx, m)
 	}
 	ty := f.Type
+	atomic := f.Atomic
+	readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
 	restType := f.Atomic.Rest()
 	// Resolve the rest filler factory lazily so that recursive types (e.g.
 	// `type A A[]`) do not blow the stack while building the factory graph.
@@ -97,11 +107,11 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) FillerFactory
 		return restFactory
 	}
 	return func() BalValue {
-		list := NewList(len(memberFactories), ty, getRestFactory())
+		initial := make([]BalValue, len(memberFactories))
 		for i, mf := range memberFactories {
-			list.elems[i] = mf()
+			initial[i] = mf()
 		}
-		return list
+		return NewList(ty, atomic, readonly, getRestFactory(), len(memberFactories), initial)
 	}
 }
 
@@ -129,6 +139,10 @@ func SemTypeForValue(v BalValue) semtypes.SemType {
 		return v.Type
 	case *Object:
 		return v.Type
+	case *Stream:
+		return v.Type
+	case XMLValue:
+		return v.Type()
 	case *TypeDesc:
 		return semtypes.TYPEDESC
 	default:
@@ -170,8 +184,12 @@ func toString(v BalValue, visited map[uintptr]bool, isDirect bool) string {
 		return "function " + t.LookupKey
 	case *Object:
 		return "object"
+	case *Stream:
+		return "stream"
 	case *TypeDesc:
 		return "typedesc"
+	case XMLValue:
+		return t.XMLString()
 	default:
 		return "<unsupported>"
 	}

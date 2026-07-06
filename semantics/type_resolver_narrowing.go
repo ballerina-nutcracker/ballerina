@@ -23,11 +23,19 @@ import (
 	"ballerina-lang-go/tools/diagnostics"
 )
 
+type bindingFlags uint8
+
+const (
+	bindingFlagFunctionBoundary bindingFlags = 1 << iota
+	bindingFlagQueryAggregated
+)
+
 type binding struct {
 	// ref is the underlying symbol we are narrowing. This is never a narrowed symbol
 	ref            model.SymbolRef
 	narrowedSymbol model.SymbolRef
 	prev           *binding
+	flags          bindingFlags
 	// assignmentPos is set on unnarrowing entries created by an assignment
 	// statement. The loop arms use it to report assignments to variables
 	// narrowed outside the loop whose effect reaches the loop top via the
@@ -36,10 +44,10 @@ type binding struct {
 	// defaultType is used for unreachable branches (e.g. false branch of constant true)
 	// see https://github.com/ballerina-platform/ballerina-spec/issues/1029
 	defaultType semtypes.SemType
-	// functionBoundary marks the entry point of a lambda/closure function scope.
-	// When lookupBinding crosses this marker and finds a narrowed binding beyond it,
-	// the variable is captured from the outer scope and should be treated as unnarrowed.
-	functionBoundary bool
+}
+
+func (b *binding) hasFlag(flag bindingFlags) bool {
+	return b.flags&flag != 0
 }
 
 func (b *binding) isUnnarrowing() bool {
@@ -71,11 +79,28 @@ func lookupBinding(chain *binding, ref model.SymbolRef) (model.SymbolRef, bool, 
 	return lookupBindingInner(chain, ref, false)
 }
 
+func lookupQueryAggregatedBinding(chain *binding, ref model.SymbolRef) bool {
+	return lookupQueryAggregatedBindingInner(chain, ref, false)
+}
+
+func lookupQueryAggregatedBindingInner(chain *binding, ref model.SymbolRef, crossedBoundary bool) bool {
+	if chain == nil {
+		return false
+	}
+	if chain.hasFlag(bindingFlagFunctionBoundary) {
+		return lookupQueryAggregatedBindingInner(chain.prev, ref, true)
+	}
+	if chain.ref == ref || chain.narrowedSymbol == ref {
+		return !crossedBoundary && !chain.isUnnarrowing() && chain.hasFlag(bindingFlagQueryAggregated)
+	}
+	return lookupQueryAggregatedBindingInner(chain.prev, ref, crossedBoundary)
+}
+
 func lookupBindingInner(chain *binding, ref model.SymbolRef, crossedBoundary bool) (model.SymbolRef, bool, bool) {
 	if chain == nil {
 		return ref, false, false
 	}
-	if chain.functionBoundary {
+	if chain.hasFlag(bindingFlagFunctionBoundary) {
 		return lookupBindingInner(chain.prev, ref, true)
 	}
 	if chain.ref == ref {
@@ -129,7 +154,7 @@ func reportOutsideLoopAssignments(t typeResolver, chains []*binding, loopEntry *
 	for _, chain := range chains {
 		seen := make(map[model.SymbolRef]bool)
 		for c := chain; c != nil && c != loopEntry; c = c.prev {
-			if c.functionBoundary {
+			if c.hasFlag(bindingFlagFunctionBoundary) {
 				continue
 			}
 			if seen[c.ref] {
@@ -150,17 +175,17 @@ func accumNarrowedTypes(t typeResolver, chain *binding, accum map[model.SymbolRe
 	if chain == nil {
 		return accumDefault
 	}
-	if chain.functionBoundary {
+	if chain.hasFlag(bindingFlagFunctionBoundary) {
 		// This is just a marker move to the next one
 		return accumNarrowedTypes(t, chain.prev, accum, accumDefault)
 	}
-	if chain.defaultType == nil {
+	if semtypes.IsZero(chain.defaultType) {
 		ref := chain.ref
 		_, hasTy := accum[ref]
 		if !hasTy {
 			accum[ref] = t.symbolType(chain.narrowedSymbol)
 		}
-	} else if accumDefault == nil {
+	} else if semtypes.IsZero(accumDefault) {
 		accumDefault = chain.defaultType
 	}
 	return accumNarrowedTypes(t, chain.prev, accum, accumDefault)
@@ -168,15 +193,15 @@ func accumNarrowedTypes(t typeResolver, chain *binding, accum map[model.SymbolRe
 
 func mergeChains(t typeResolver, c1 *binding, c2 *binding, mergeOp func(semtypes.SemType, semtypes.SemType) semtypes.SemType) *binding {
 	m1 := make(map[model.SymbolRef]semtypes.SemType)
-	d1 := accumNarrowedTypes(t, c1, m1, nil)
+	d1 := accumNarrowedTypes(t, c1, m1, semtypes.SemType{})
 	m2 := make(map[model.SymbolRef]semtypes.SemType)
-	d2 := accumNarrowedTypes(t, c2, m2, nil)
+	d2 := accumNarrowedTypes(t, c2, m2, semtypes.SemType{})
 	type typePair struct{ ty1, ty2 semtypes.SemType }
 	pairs := make(map[model.SymbolRef]typePair)
 	for s, ty1 := range m1 {
 		ty2, ok := m2[s]
 		if !ok {
-			if d2 != nil {
+			if !semtypes.IsZero(d2) {
 				ty2 = d2
 			} else {
 				ty2 = t.symbolType(s)
@@ -186,7 +211,7 @@ func mergeChains(t typeResolver, c1 *binding, c2 *binding, mergeOp func(semtypes
 	}
 	for s, ty2 := range m2 {
 		if _, ok := m1[s]; !ok {
-			if d1 != nil {
+			if !semtypes.IsZero(d1) {
 				pairs[s] = typePair{d1, ty2}
 			} else {
 				pairs[s] = typePair{t.symbolType(s), ty2}
@@ -221,11 +246,11 @@ func diff(c1, c2 *binding) *binding {
 	if c1 == c2 {
 		return nil
 	}
-	result := &binding{ref: c1.ref, narrowedSymbol: c1.narrowedSymbol, defaultType: c1.defaultType}
+	result := &binding{ref: c1.ref, narrowedSymbol: c1.narrowedSymbol, flags: c1.flags, defaultType: c1.defaultType}
 	cur := result
 	parent := c1.prev
 	for parent != nil && parent != c2 {
-		cur.prev = &binding{ref: parent.ref, narrowedSymbol: parent.narrowedSymbol, defaultType: parent.defaultType}
+		cur.prev = &binding{ref: parent.ref, narrowedSymbol: parent.narrowedSymbol, flags: parent.flags, defaultType: parent.defaultType}
 		cur = cur.prev
 		parent = parent.prev
 	}
@@ -237,7 +262,7 @@ func singletonExprEffect(chain *binding, expr ast.BLangActionOrExpression) (expr
 }
 
 func singletonResultEffect(chain *binding, ty semtypes.SemType) (expressionEffect, bool) {
-	if ty == nil {
+	if semtypes.IsZero(ty) {
 		return expressionEffect{}, false
 	}
 	if isSingletonBool(ty, true) {

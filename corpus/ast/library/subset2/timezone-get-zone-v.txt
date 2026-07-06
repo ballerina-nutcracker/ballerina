@@ -1,0 +1,43 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable zone (type
+          (union-type
+            (user-defined-type time Zone)
+            (value-type null))) (expr
+          (invocation time getZone (
+            (literal Asia/Colombo))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !=
+            (simple-var-ref zone)
+            (literal <nil>)))))
+      (var-def
+        (variable bad (type
+          (union-type
+            (user-defined-type time Zone)
+            (value-type null))) (expr
+          (invocation time getZone (
+            (literal Not/AZone))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref bad)
+            (literal <nil>)))))
+      (var-def
+        (variable fixedZone (type
+          (union-type
+            (user-defined-type time Zone)
+            (value-type null))) (expr
+          (invocation time getZone (
+            (literal +05:30))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !=
+            (simple-var-ref fixedZone)
+            (literal <nil>))))))))

@@ -23,11 +23,11 @@ import (
 
 type toStringState struct {
 	cx      Context
-	visited map[string]bool
+	visited map[atomKey]bool
 }
 
 func newToStringState(cx Context) *toStringState {
-	return &toStringState{cx: cx, visited: make(map[string]bool)}
+	return &toStringState{cx: cx, visited: make(map[atomKey]bool)}
 }
 
 func ToString(cx Context, ty SemType) string {
@@ -45,31 +45,47 @@ func builtinUnion(cx Context, ty SemType) (string, bool) {
 	if IsSameType(cx, ty, CreateAnydata(cx)) {
 		return "anydata", true
 	}
-	if IsSameType(cx, ty, createJson(cx)) {
+	if IsSameType(cx, ty, CreateJSON(cx)) {
 		return "json", true
 	}
 	return "", false
 }
 
 func (s *toStringState) semTypeToString(ty SemType) string {
-	switch ty := ty.(type) {
-	case BasicTypeBitSet:
-		return basicTypeToString(ty)
-	case *ComplexSemType:
-		return s.complexSemtypeToString(ty)
-	default:
-		panic("Unexpect semtype kind")
+	if ty.some() == 0 {
+		return basicTypeToString(ty.all())
 	}
+	if name, ok := xmlPredefinedName(s.cx, ty); ok {
+		return name
+	}
+	return s.complexSemtypeToString(ty)
 }
 
-func basicTypeToString(ty BasicTypeBitSet) string {
-	if ty.all() == 0 {
+func xmlPredefinedName(cx Context, ty SemType) (string, bool) {
+	if IsSameType(cx, ty, XML_ELEMENT) {
+		return "xml:Element", true
+	}
+	if IsSameType(cx, ty, XML_COMMENT) {
+		return "xml:Comment", true
+	}
+	if IsSameType(cx, ty, XML_TEXT) {
+		return "xml:Text", true
+	}
+	if IsSameType(cx, ty, XML_PI) {
+		return "xml:ProcessingInstruction", true
+	}
+	return "", false
+}
+
+func basicTypeToString(ty basicTypeBitSet) string {
+	bits := ty & basicTypeMask
+	if bits == 0 {
 		return "never"
 	}
-	return basicTypeBitSetToString(ty.all())
+	return basicTypeBitSetToString(bits)
 }
 
-func basicTypeBitSetToString(bits BasicTypeBitSet) string {
+func basicTypeBitSetToString(bits basicTypeBitSet) string {
 	var parts []string
 	for i := 0; i < int(ValueTypeCount); i++ {
 		if bits&(1<<i) != 0 {
@@ -81,7 +97,7 @@ func basicTypeBitSetToString(bits BasicTypeBitSet) string {
 	return strings.Join(parts, "|")
 }
 
-func (s *toStringState) complexSemtypeToString(ty *ComplexSemType) string {
+func (s *toStringState) complexSemtypeToString(ty SemType) string {
 	var parts []string
 	allStr := basicTypeBitSetToString(ty.all())
 	if allStr != "" {
@@ -123,9 +139,8 @@ func (s *toStringState) subtypeToString(sub basicSubtype) string {
 			name := strings.TrimPrefix(sub.BasicTypeCode.String(), "BT_")
 			return strings.ToLower(name)
 		}
-	case xmlSubtype:
-		name := strings.TrimPrefix(sub.BasicTypeCode.String(), "BT_")
-		return strings.ToLower(name)
+	case *xmlSubtype:
+		return s.xmlSubtypeToString(st)
 	default:
 		panic(fmt.Sprintf("unimplemented: ToString for %s", sub.BasicTypeCode.String()))
 	}
@@ -232,11 +247,10 @@ func (s *toStringState) functionAtomicTypeToString(atom atom) string {
 func (s *toStringState) functionParamsToString(paramType SemType) string {
 	// ParamType is a list SemType representing the parameter tuple.
 	// Try to extract individual parameter types from the list atom.
-	cst, ok := paramType.(*ComplexSemType)
-	if !ok {
+	if paramType.some() == 0 {
 		return s.semTypeToString(paramType)
 	}
-	for _, sub := range unpack(cst) {
+	for _, sub := range unpack(paramType) {
 		if sub.BasicTypeCode != BTList {
 			continue
 		}
@@ -313,7 +327,7 @@ func (s *toStringState) mappingAtomicTypeToString(atom atom) string {
 	atomic := s.cx.MappingAtomType(atom)
 	var parts []string
 	for i, name := range atomic.Names {
-		parts = append(parts, name+": "+s.semTypeToString(cellInnerVal(&atomic.Types[i])))
+		parts = append(parts, name+": "+s.semTypeToString(cellInnerVal(atomic.Types[i])))
 	}
 	restStr := s.semTypeToString(cellInnerVal(atomic.Rest))
 	parts = append(parts, restStr+"...")
@@ -345,8 +359,13 @@ func (s *toStringState) bddObjectToString(bdd Bdd) string {
 }
 
 func (s *toStringState) objectAtomToString(atom atom) string {
-	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() == BDD_REC_ATOM_OBJECT_READONLY {
-		return "readonly"
+	if recAtom, ok := atom.(*recAtom); ok {
+		if recAtom.index() < 0 {
+			return "object"
+		}
+		if recAtom.index() == BDD_REC_ATOM_OBJECT_READONLY {
+			return "readonly"
+		}
 	}
 	key := atom.canonicalKey()
 	if s.visited[key] {
@@ -363,7 +382,7 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 	var members []string
 	for i, name := range atomic.Names {
 		if name == "$qualifiers" {
-			qualTy := cellInnerVal(&atomic.Types[i])
+			qualTy := cellInnerVal(atomic.Types[i])
 			qualAtomic := ToMappingAtomicType(s.cx, qualTy)
 			if qualAtomic != nil {
 				isolatedTy := qualAtomic.FieldInnerVal("isolated")
@@ -379,7 +398,7 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 			}
 			continue
 		}
-		memberTy := cellInnerVal(&atomic.Types[i])
+		memberTy := cellInnerVal(atomic.Types[i])
 		memberAtomic := ToMappingAtomicType(s.cx, memberTy)
 		if memberAtomic == nil {
 			members = append(members, name+": "+s.semTypeToString(memberTy))
@@ -387,10 +406,12 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 		}
 		kindTy := memberAtomic.FieldInnerVal("kind")
 		valueTy := memberAtomic.FieldInnerVal("value")
+		visibilityTy := memberAtomic.FieldInnerVal("visibility")
+		visibilityPrefix := visibilityToString(s.cx, visibilityTy)
 		if IsSameType(s.cx, kindTy, StringConst("field")) {
-			members = append(members, s.semTypeToString(valueTy)+" "+name)
+			members = append(members, visibilityPrefix+s.semTypeToString(valueTy)+" "+name)
 		} else {
-			members = append(members, s.objectMethodToString(name, kindTy, valueTy))
+			members = append(members, visibilityPrefix+s.objectMethodToString(name, kindTy, valueTy))
 		}
 	}
 	prefix = append(prefix, "object")
@@ -399,6 +420,16 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 		result += " { " + strings.Join(members, "; ") + " }"
 	}
 	return result
+}
+
+func visibilityToString(cx Context, visibilityTy SemType) string {
+	if IsSameType(cx, visibilityTy, StringConst("public")) {
+		return "public "
+	}
+	if IsSameType(cx, visibilityTy, StringConst("private")) {
+		return "private "
+	}
+	return ""
 }
 
 func (s *toStringState) objectMethodToString(name string, kindTy SemType, fnTy SemType) string {
@@ -410,11 +441,10 @@ func (s *toStringState) objectMethodToString(name string, kindTy SemType, fnTy S
 	} else {
 		methodPrefix = "function "
 	}
-	cst, ok := fnTy.(*ComplexSemType)
-	if !ok {
+	if fnTy.some() == 0 {
 		return methodPrefix + name + "()"
 	}
-	for _, sub := range unpack(cst) {
+	for _, sub := range unpack(fnTy) {
 		if sub.BasicTypeCode == BTFunction {
 			bdd, ok := sub.SubtypeData.(Bdd)
 			if !ok {
@@ -484,6 +514,39 @@ func decimalSubtypeToString(st decimalSubtype) string {
 	var parts []string
 	for _, v := range st.values {
 		parts = append(parts, v.value.String())
+	}
+	return strings.Join(parts, "|")
+}
+
+func (s *toStringState) xmlSubtypeToString(st *xmlSubtype) string {
+	bits := st.Primitives & ^XML_PRIMITIVE_NEVER
+	bddEvery(s.cx, st.Sequence, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
+		for c := pos; c != conjunctionNil; c = cx.conjunctionNext(c) {
+			if rec, ok := cx.conjunctionAtom(c).(*recAtom); ok {
+				bits |= rec.index()
+			}
+		}
+		return true
+	})
+	return "xml<" + xmlConstituentName(bits) + ">"
+}
+
+func xmlConstituentName(bits int) string {
+	if bits == 0 {
+		return "never"
+	}
+	var parts []string
+	if bits&XML_PRIMITIVE_TEXT != 0 {
+		parts = append(parts, "xml:Text")
+	}
+	if bits&(XML_PRIMITIVE_ELEMENT_RO|XML_PRIMITIVE_ELEMENT_RW) != 0 {
+		parts = append(parts, "xml:Element")
+	}
+	if bits&(XML_PRIMITIVE_COMMENT_RO|XML_PRIMITIVE_COMMENT_RW) != 0 {
+		parts = append(parts, "xml:Comment")
+	}
+	if bits&(XML_PRIMITIVE_PI_RO|XML_PRIMITIVE_PI_RW) != 0 {
+		parts = append(parts, "xml:ProcessingInstruction")
 	}
 	return strings.Join(parts, "|")
 }

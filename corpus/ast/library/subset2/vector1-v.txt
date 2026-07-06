@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina math vector (as vector))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type float) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1.0)
+            (unary-expr -
+              (literal 2.5))
+            (literal 3.2)
+            (unary-expr -
+              (literal 6.8))
+            (literal 4.9)))))
+      (var-def
+        (variable v2 (type
+          (array-type
+            (value-type float) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 4.3)
+            (literal 0.8)
+            (unary-expr -
+              (literal 1.5))
+            (unary-expr -
+              (literal 9.6))
+            (literal 2.0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation vector vectorNorm (
+            (simple-var-ref v)
+            (simple-var-ref vector L1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation vector vectorNorm (
+            (simple-var-ref v)
+            (simple-var-ref vector L2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation vector dotProduct (
+            (simple-var-ref v)
+            (simple-var-ref v2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation vector cosineSimilarity (
+            (simple-var-ref v)
+            (simple-var-ref v2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation vector euclideanDistance (
+            (simple-var-ref v)
+            (simple-var-ref v2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation vector manhattanDistance (
+            (simple-var-ref v)
+            (simple-var-ref v2)))))))))

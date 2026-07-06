@@ -161,13 +161,15 @@ func (r *moduleResolver) resolveRequest(ctx context.Context, request *moduleLoad
 	}
 }
 
-// extractPackageName extracts the package name from a module name.
-// e.g., "http" -> "http", "http.auth" -> "http"
-func extractPackageName(moduleName string) string {
+// packageNameCandidates returns the package name(s) to try when resolving a module.
+// The full module name is the first candidate (handles packages whose name contains a dot,
+// e.g. "math.vector"). If the name contains a dot, the prefix before the first dot is also
+// appended as a fallback (handles sub-modules, e.g. "http.auth" lives in package "http").
+func packageNameCandidates(moduleName string) []string {
 	for i, c := range moduleName {
 		if c == '.' {
-			return moduleName[:i]
+			return []string{moduleName, moduleName[:i]}
 		}
 	}
-	return moduleName
+	return []string{moduleName}
 }

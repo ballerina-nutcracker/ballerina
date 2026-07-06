@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (xmlns
+      (literal https:foo/bar))
+    (var-def
+      (variable elem (type
+        (value-type xml)) (expr
+        (xml-element-literal f
+          (xml-element-literal x
+            (xml-attribute ff
+              (literal fff)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref elem))))
+  )
+)

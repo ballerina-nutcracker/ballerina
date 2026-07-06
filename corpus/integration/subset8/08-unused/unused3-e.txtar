@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> unused3-e.bal:23:13
+   |
+23 |             boolean b = true; // @error
+   |             ^^^^^^^^^^^^^^^^^

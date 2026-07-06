@@ -160,11 +160,11 @@ func validate(d *Decimal, cond apd.Condition) *Error {
 func arith(a, b *Decimal, op func(*apd.Decimal, *apd.Decimal, *apd.Decimal) (apd.Condition, error)) (*Decimal, *Error) {
 	out := &Decimal{}
 	cond, err := op(&out.v, &a.v, &b.v)
-	if err != nil {
-		return nil, &Error{Kind: ErrInvalid}
-	}
 	if e := validate(out, cond); e != nil {
 		return nil, e
+	}
+	if err != nil {
+		return nil, &Error{Kind: ErrInvalid}
 	}
 	normalizeUpperExponent(out)
 	return out, nil
@@ -226,6 +226,71 @@ func (a *Decimal) Neg() *Decimal {
 	out := &Decimal{}
 	out.v.Neg(&a.v)
 	return out
+}
+
+// Abs returns the absolute value of a.
+func (a *Decimal) Abs() *Decimal {
+	out := &Decimal{}
+	out.v.Abs(&a.v)
+	return out
+}
+
+// Round returns a rounded to fractionDigits digits after the decimal point,
+// using the decimal128 round-to-nearest-ties-to-even mode.
+func (a *Decimal) Round(fractionDigits int64) (*Decimal, *Error) {
+	const (
+		minFractionDigits = -2147483647
+		maxFractionDigits = 2147483648
+	)
+	if fractionDigits < minFractionDigits || fractionDigits > maxFractionDigits {
+		return nil, &Error{Kind: ErrInvalid}
+	}
+	return a.quantizeExp(int32(-fractionDigits), context.Rounding)
+}
+
+// Quantize returns a rounded to the exponent of b.
+func (a *Decimal) Quantize(b *Decimal) (*Decimal, *Error) {
+	return a.quantizeExp(b.v.Exponent, context.Rounding)
+}
+
+// Floor returns the largest integral decimal not greater than a.
+func (a *Decimal) Floor() (*Decimal, *Error) {
+	return a.roundToIntegral(apd.RoundFloor)
+}
+
+// Ceiling returns the smallest integral decimal not less than a.
+func (a *Decimal) Ceiling() (*Decimal, *Error) {
+	return a.roundToIntegral(apd.RoundCeiling)
+}
+
+func (a *Decimal) quantizeExp(exp int32, rounding apd.Rounder) (*Decimal, *Error) {
+	ctx := *context
+	ctx.Rounding = rounding
+	out := &Decimal{}
+	cond, err := ctx.Quantize(&out.v, &a.v, exp)
+	if e := validate(out, cond); e != nil {
+		return nil, e
+	}
+	if err != nil {
+		return nil, &Error{Kind: ErrInvalid}
+	}
+	normalizeUpperExponent(out)
+	return out, nil
+}
+
+func (a *Decimal) roundToIntegral(rounding apd.Rounder) (*Decimal, *Error) {
+	ctx := *context
+	ctx.Rounding = rounding
+	out := &Decimal{}
+	cond, err := ctx.RoundToIntegralValue(&out.v, &a.v)
+	if e := validate(out, cond); e != nil {
+		return nil, e
+	}
+	if err != nil {
+		return nil, &Error{Kind: ErrInvalid}
+	}
+	normalizeUpperExponent(out)
+	return out, nil
 }
 
 // Cmp returns -1, 0, or +1 for a<b, a==b, a>b.

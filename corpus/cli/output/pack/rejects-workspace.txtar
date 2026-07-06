@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+is a workspace; expected a package directory
+-- exitcode --
+1

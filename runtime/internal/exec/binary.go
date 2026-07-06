@@ -22,10 +22,11 @@ import (
 
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/decimal"
+	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/values"
 )
 
-func execBinaryOpAdd(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	switch v1 := op1.(type) {
 	case int64:
@@ -46,12 +47,15 @@ func execBinaryOpAdd(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	case *decimal.Decimal:
 		v2 := op2.(*decimal.Decimal)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Add, v2))
+	case values.XMLValue:
+		v2 := op2.(values.XMLValue)
+		setOperandValue(ctx, binaryOp.LhsOp, frame, values.NewXMLConcatSequence(v1, v2))
 	default:
 		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
 	}
 }
 
-func execBinaryOpSub(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpSub(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	switch v1 := op1.(type) {
 	case int64:
@@ -74,7 +78,7 @@ func execBinaryOpSub(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	}
 }
 
-func execBinaryOpMul(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpMul(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	op1, op2 = promoteMultiplicativeOperands(op1, op2, true)
 	switch v1 := op1.(type) {
@@ -96,7 +100,7 @@ func execBinaryOpMul(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	}
 }
 
-func execBinaryOpDiv(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpDiv(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	op1, op2 = promoteMultiplicativeOperands(op1, op2, false)
 	switch v1 := op1.(type) {
@@ -120,7 +124,7 @@ func execBinaryOpDiv(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	}
 }
 
-func execBinaryOpMod(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpMod(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	op1, op2 = promoteMultiplicativeOperands(op1, op2, false)
 	switch v1 := op1.(type) {
@@ -141,12 +145,12 @@ func execBinaryOpMod(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	}
 }
 
-func execBinaryOpEqual(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpEqual(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, values.DeepEquals(op1, op2))
 }
 
-func execBinaryOpNotEqual(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpNotEqual(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, !values.DeepEquals(op1, op2))
 }
@@ -196,46 +200,46 @@ func decimalArith(op func(*decimal.Decimal) (*decimal.Decimal, *decimal.Error), 
 	return out
 }
 
-func execBinaryOpGT(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpGT(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	r := values.Compare(op1, op2)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, r == values.CmpGT)
 }
 
-func execBinaryOpGTE(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpGTE(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	r := values.Compare(op1, op2)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, r == values.CmpGT || r == values.CmpEQ)
 }
 
-func execBinaryOpLT(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpLT(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	r := values.Compare(op1, op2)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, r == values.CmpLT)
 }
 
-func execBinaryOpLTE(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpLTE(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	r := values.Compare(op1, op2)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, r == values.CmpLT || r == values.CmpEQ)
 }
 
-func execBinaryOpAnd(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpAnd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, op1.(bool) && op2.(bool))
 }
 
-func execBinaryOpOr(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpOr(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, op1.(bool) || op2.(bool))
 }
 
-func execBinaryOpRefEqual(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpRefEqual(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, refEqual(op1, op2))
 }
 
-func execBinaryOpRefNotEqual(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpRefNotEqual(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, !refEqual(op1, op2))
 }
@@ -246,6 +250,10 @@ func refEqual(op1, op2 values.BalValue) bool {
 	}
 	if op1 == nil || op2 == nil {
 		return false
+	}
+	if xml1, ok := op1.(values.XMLValue); ok {
+		xml2, ok := op2.(values.XMLValue)
+		return ok && xmlRefEqual(xml1, xml2)
 	}
 	if f1, ok := op1.(*values.Function); ok {
 		if f2, ok := op2.(*values.Function); ok {
@@ -267,38 +275,75 @@ func refEqual(op1, op2 values.BalValue) bool {
 	return op1 == op2
 }
 
-func execBinaryOpBitwiseAnd(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func xmlRefEqual(op1, op2 values.XMLValue) bool {
+	switch v1 := op1.(type) {
+	case *values.XMLElement:
+		v2, ok := op2.(*values.XMLElement)
+		return ok && v1 == v2
+	case *values.XMLProcessingInstruction:
+		v2, ok := op2.(*values.XMLProcessingInstruction)
+		return ok && v1 == v2
+	case *values.XMLComment:
+		v2, ok := op2.(*values.XMLComment)
+		return ok && v1 == v2
+	case *values.XMLSequence:
+		v2, ok := op2.(*values.XMLSequence)
+		return ok && xmlSequenceRefEqual(v1, v2)
+	case *values.XMLText:
+		_, ok := op2.(*values.XMLText)
+		return ok && values.DeepEquals(op1, op2)
+	default:
+		panic(fmt.Sprintf("internal error: unsupported XML value type %T", op1))
+	}
+}
+
+func xmlSequenceRefEqual(op1, op2 *values.XMLSequence) bool {
+	if len(op1.Children) != len(op2.Children) {
+		return false
+	}
+	if len(op1.Children) == 1 {
+		return values.DeepEquals(op1.Children[0], op2.Children[0])
+	}
+	for i := range op1.Children {
+		if !refEqual(op1.Children[i], op2.Children[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func execBinaryOpBitwiseAnd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	execBinaryOpBitwise(ctx, binaryOp, frame, func(a, b int64) int64 { return a & b })
 }
 
-func execBinaryOpBitwiseOr(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpBitwiseOr(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	execBinaryOpBitwise(ctx, binaryOp, frame, func(a, b int64) int64 { return a | b })
 }
 
-func execBinaryOpBitwiseXor(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpBitwiseXor(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	execBinaryOpBitwise(ctx, binaryOp, frame, func(a, b int64) int64 { return a ^ b })
 }
 
-func execBinaryOpBitwiseLeftShift(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpBitwiseLeftShift(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	execBinaryOpBitwise(ctx, binaryOp, frame, func(a, b int64) int64 { return a << uint(b&shiftAmountMask) })
 }
 
-func execBinaryOpBitwiseRightShift(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpBitwiseRightShift(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	execBinaryOpBitwise(ctx, binaryOp, frame, func(a, b int64) int64 { return a >> uint(b&shiftAmountMask) })
 }
 
-func execBinaryOpBitwiseUnsignedRightShift(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) {
+func execBinaryOpBitwiseUnsignedRightShift(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	execBinaryOpBitwise(ctx, binaryOp, frame, func(a, b int64) int64 { return int64(uint64(a) >> uint(b&shiftAmountMask)) })
 }
 
 const shiftAmountMask = 0x3F
 
-func execUnaryOpNot(ctx *Context, unaryOp *bir.UnaryOp, frame *Frame) {
+func execUnaryOpNot(ctx *extern.Context, unaryOp *bir.UnaryOp, frame *Frame) {
 	op := getOperandValue(ctx, unaryOp.RhsOp, frame)
 	setOperandValue(ctx, unaryOp.LhsOp, frame, !op.(bool))
 }
 
-func execUnaryOpNegate(ctx *Context, unaryOp *bir.UnaryOp, frame *Frame) {
+func execUnaryOpNegate(ctx *extern.Context, unaryOp *bir.UnaryOp, frame *Frame) {
 	op := getOperandValue(ctx, unaryOp.RhsOp, frame)
 	switch v := op.(type) {
 	case int64:
@@ -315,19 +360,19 @@ func execUnaryOpNegate(ctx *Context, unaryOp *bir.UnaryOp, frame *Frame) {
 	}
 }
 
-func execUnaryOpBitwiseComplement(ctx *Context, unaryOp *bir.UnaryOp, frame *Frame) {
+func execUnaryOpBitwiseComplement(ctx *extern.Context, unaryOp *bir.UnaryOp, frame *Frame) {
 	op := getOperandValue(ctx, unaryOp.RhsOp, frame)
 	v := op.(int64)
 	setOperandValue(ctx, unaryOp.LhsOp, frame, ^v)
 }
 
-func execBinaryOpBitwise(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame, bitOp func(a, b int64) int64) {
+func execBinaryOpBitwise(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame, bitOp func(a, b int64) int64) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	v1 := op1.(int64)
 	v2 := op2.(int64)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, bitOp(v1, v2))
 }
 
-func getBinaryRhsValues(ctx *Context, binaryOp *bir.BinaryOp, frame *Frame) (op1, op2 values.BalValue) {
+func getBinaryRhsValues(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) (op1, op2 values.BalValue) {
 	return getOperandValue(ctx, &binaryOp.RhsOp1, frame), getOperandValue(ctx, &binaryOp.RhsOp2, frame)
 }

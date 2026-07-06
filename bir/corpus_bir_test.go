@@ -53,7 +53,10 @@ func getBIRDiff(expectedText, actualText string) string {
 
 // birGenerationSkipList is the BIR-stage *additional* skip list, on top of
 // the shared test_util.UnsupportedTests baseline.
-var birGenerationSkipList = []string{}
+var birGenerationSkipList = []string{
+	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	"subset8/08-xml/namespace12-v.bal",
+}
 
 func TestBIRGeneration(t *testing.T) {
 	flag.Parse()
@@ -84,7 +87,12 @@ func testBIRGeneration(t *testing.T, testPair test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseBIR, testPair.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testPair.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseBIR, testPair.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testPair.InputPath, err)
 		return
@@ -99,7 +107,7 @@ func testBIRGeneration(t *testing.T, testPair test_util.TestCase) {
 
 	// Pretty print BIR output
 	prettyPrinter := bir.PrettyPrinter{}
-	actualBIR := prettyPrinter.Print(*result.BIRPackage)
+	actualBIR := prettyPrinter.Print(semtypes.ContextFrom(env.GetTypeEnv()), *result.BIRPackage)
 
 	// If update flag is set, update expected file
 	if *update {

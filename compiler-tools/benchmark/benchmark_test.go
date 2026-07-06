@@ -107,6 +107,36 @@ func TestBenchmarkBinaryRunExportsHTMLForDirectoryTarget(t *testing.T) {
 	}
 }
 
+func TestResolveDirectoryTargetIncludesProjectRootWithoutProjectFiles(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	directFile := filepath.Join(root, "1-v.bal")
+	projectDir := filepath.Join(root, "project-v")
+	projectFile := filepath.Join(projectDir, "main.bal")
+	moduleFile := filepath.Join(projectDir, "modules", "mod", "mod.bal")
+	for _, path := range []string{directFile, projectFile, moduleFile} {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("public function main() {}"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "Ballerina.toml"), []byte("[package]\norg = \"benchorg\"\nname = \"project\"\nversion = \"0.1.0\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	target, err := resolveTarget(root)
+	if err != nil {
+		t.Fatalf("resolveTarget(%q): %v", root, err)
+	}
+	want := []string{directFile, projectDir}
+	if !slices.Equal(target.paths, want) {
+		t.Fatalf("target paths = %v, want %v", target.paths, want)
+	}
+}
+
 func TestBenchmarkBinaryRunExportsHTMLForPackageTarget(t *testing.T) {
 	skipUnlessBenchmarkIntegration(t)
 	t.Parallel()
@@ -175,6 +205,72 @@ func TestParseConfigDefaultsToEmptyExportPath(t *testing.T) {
 	}
 	if cfg.exportPath != "" {
 		t.Fatalf("expected exportPath to default to empty, got %q", cfg.exportPath)
+	}
+	if cfg.mode != timeMode {
+		t.Fatalf("expected mode to default to %q, got %q", timeMode, cfg.mode)
+	}
+}
+
+func TestBenchmarkBinaryFailsForInvalidMode(t *testing.T) {
+	t.Parallel()
+	bin := ensureBenchmarkBinary(t)
+	assertBenchmarkBinaryFailure(t, bin,
+		[]string{
+			"--mode", "unknown",
+			"--export-html", filepath.Join(t.TempDir(), "output.html"),
+			baseRef, headRef, integrationSinglePath,
+		},
+		"mode must be one of",
+	)
+}
+
+func TestBenchmarkBinaryFailsForInvalidRunsInMemoryMode(t *testing.T) {
+	t.Parallel()
+	bin := ensureBenchmarkBinary(t)
+	assertBenchmarkBinaryFailure(t, bin,
+		[]string{
+			"--mode", "memory",
+			"--runs", "0",
+			"--export-html", filepath.Join(t.TempDir(), "output.html"),
+			baseRef, headRef, integrationSinglePath,
+		},
+		"runs must be greater than zero",
+	)
+}
+
+func TestBenchmarkBinaryFailsForInvalidWarmupInMemoryMode(t *testing.T) {
+	t.Parallel()
+	bin := ensureBenchmarkBinary(t)
+	assertBenchmarkBinaryFailure(t, bin,
+		[]string{
+			"--mode", "memory",
+			"--warmup", "-1",
+			"--export-html", filepath.Join(t.TempDir(), "output.html"),
+			baseRef, headRef, integrationSinglePath,
+		},
+		"warmup must be non-negative",
+	)
+}
+
+func TestParseGNUMaxRSSMiB(t *testing.T) {
+	t.Parallel()
+	got, err := parseGNUMaxRSSMiB("Maximum resident set size (kbytes): 1536\n")
+	if err != nil {
+		t.Fatalf("parseGNUMaxRSSMiB() returned error: %v", err)
+	}
+	if got != 1.5 {
+		t.Fatalf("parseGNUMaxRSSMiB() = %v, want 1.5", got)
+	}
+}
+
+func TestParseMacOSMaxRSSMiB(t *testing.T) {
+	t.Parallel()
+	got, err := parseMacOSMaxRSSMiB("1572864  maximum resident set size\n")
+	if err != nil {
+		t.Fatalf("parseMacOSMaxRSSMiB() returned error: %v", err)
+	}
+	if got != 1.5 {
+		t.Fatalf("parseMacOSMaxRSSMiB() = %v, want 1.5", got)
 	}
 }
 

@@ -1,0 +1,36 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io fprint (
+          (simple-var-ref io stdout)
+          (literal hello))))
+      (expression-stmt
+        (invocation io fprint (
+          (simple-var-ref io stdout)
+          (literal  world))))
+      (expression-stmt
+        (invocation io fprintln (
+          (simple-var-ref io stdout))))
+      (expression-stmt
+        (invocation io fprint (
+          (simple-var-ref io stdout)
+          (literal a)
+          (literal b)
+          (literal c))))
+      (expression-stmt
+        (invocation io fprintln (
+          (simple-var-ref io stdout))))
+      (expression-stmt
+        (invocation io fprint (
+          (simple-var-ref io stdout)
+          (literal 1))))
+      (expression-stmt
+        (invocation io fprint (
+          (simple-var-ref io stdout)
+          (literal 2))))
+      (expression-stmt
+        (invocation io fprintln (
+          (simple-var-ref io stdout)))))))

@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 A  float;
 B  float;
 C  float;
@@ -9,7 +8,7 @@ F  0;
 G  float;
 H  boolean;
 I  boolean;
-J  float;
+J  0;
 main() -> nil{
   bb0 {
     %1 = eq(A,B) -> bb1;
@@ -73,12 +72,16 @@ eq(float,float) -> any{
     %11 ? bb1 : bb2;
   }
   bb1 {
-    %14 = ConstantLoad <nil>
-    %0 = %14;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
-    %0 = eq;
+    PushScopeFrame 0
+    (1, %0) = (1, eq);
+    PopScopeFrame
     return;
   }
 }

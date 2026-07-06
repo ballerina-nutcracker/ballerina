@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 foo([nil|int...]|[int...]) -> [nil|int...]{
   bb0 {
     %0 = v;

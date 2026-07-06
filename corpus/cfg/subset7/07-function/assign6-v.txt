@@ -1,5 +1,9 @@
 (foo
   (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref x))))
     (expression-stmt
       (invocation io println (
         (literal unexpected))))

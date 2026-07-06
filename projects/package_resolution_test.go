@@ -341,14 +341,21 @@ func TestPackageResolution_TransitiveDependency(t *testing.T) {
 		t.Logf("Diagnostic: %s", diag.Message())
 	}
 
-	// Step 5: Verify external packages were resolved and cached during compilation
-	assert.Equal(3, env.PackageCache().Size(), "expected 3 packages in cache after compilation")
+	// Step 5: Verify external packages were resolved and cached during compilation.
+	// middlepkg declares aaaleafpkg and leafpkg as direct deps; with the main
+	// project that's 4 packages, plus the always-compiled implicit lang libs
+	// (lang.int, lang.boolean, lang.decimal, lang.error, lang.string, lang.value,
+	// lang.xml, lang.float, lang.array, lang.map, lang.runtime), giving 15 packages total in the cache.
+	assert.Equal(15, env.PackageCache().Size(), "expected 15 packages in cache after compilation")
 
 	cachedMiddle := env.PackageCache().Get("mockorg", "middlepkg", "1.0.0")
 	require.NotNil(cachedMiddle, "middlepkg should be cached after compilation")
 
 	cachedLeaf := env.PackageCache().Get("mockorg", "leafpkg", "1.0.0")
 	require.NotNil(cachedLeaf, "leafpkg should be cached after compilation")
+
+	cachedAaaLeaf := env.PackageCache().Get("mockorg", "aaaleafpkg", "1.0.0")
+	require.NotNil(cachedAaaLeaf, "aaaleafpkg should be cached after compilation")
 
 	// Step 6: Verify dependency graph shows both direct and transitive dependencies
 	resolution := pkg.Resolution()
@@ -374,9 +381,85 @@ func TestPackageResolution_TransitiveDependency(t *testing.T) {
 	packageDependencyGraph := resolution.DependencyGraph()
 	require.NotNil(packageDependencyGraph)
 
-	// The graph should show: project -> middlepkg -> leafpkg
+	// The graph should show: project -> middlepkg -> {aaaleafpkg, leafpkg}
 	nodes := packageDependencyGraph.ToTopologicallySortedList()
-	assert.Len(nodes, 3, "expected 3 nodes in package dependency graph (project, middlepkg, leafpkg)")
+	assert.Len(nodes, 4, "expected 4 nodes in package dependency graph (project, middlepkg, aaaleafpkg, leafpkg)")
+}
+
+// TestPackageResolution_SharedDependencyEdge verifies that when the root project imports
+// both B and C directly, and B also depends on C, the B→C edge is recorded in the
+// dependency graph. Without this edge, topological sort has no reason to place C before
+// B, which would cause B to be compiled before its dependency C is available.
+//
+// Project structure:
+//
+//	root → middlepkg (direct)
+//	root → leafpkg   (direct)
+//	middlepkg → leafpkg (transitive, but already visited)
+func TestPackageResolution_SharedDependencyEdge(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	testRepoPath, err := filepath.Abs("testdata/repo/bala")
+	require.NoError(err)
+
+	absPath, err := filepath.Abs(filepath.Join("testdata", "project-with-shared-dep"))
+	require.NoError(err)
+
+	result, err := loadProject(absPath, projects.ProjectLoadConfig{
+		Repositories: []projects.Repository{
+			projects.NewFileSystemRepository(os.DirFS(testRepoPath), "."),
+		},
+	})
+	require.NoError(err)
+	require.NotNil(result)
+
+	pkg := result.Project().CurrentPackage()
+	require.NotNil(pkg)
+
+	compilation := pkg.Compilation()
+	require.NotNil(compilation)
+	assert.Equal(0, compilation.DiagnosticResult().DiagnosticCount())
+
+	resolution := pkg.Resolution()
+	require.NotNil(resolution)
+
+	graph := resolution.DependencyGraph()
+	require.NotNil(graph)
+
+	middleDesc, err := projects.NewPackageDescriptorFromStrings("mockorg", "middlepkg", "1.0.0")
+	require.NoError(err)
+	leafDesc, err := projects.NewPackageDescriptorFromStrings("mockorg", "leafpkg", "1.0.0")
+	require.NoError(err)
+
+	// middlepkg must declare leafpkg as a direct dependency in the graph,
+	// even though leafpkg is already a direct dependency of the root.
+	middleDeps := graph.DirectDependencies(middleDesc)
+	found := false
+	for _, d := range middleDeps {
+		if d.Equals(leafDesc) {
+			found = true
+			break
+		}
+	}
+	assert.True(found, "dependency graph must contain the middlepkg→leafpkg edge")
+
+	// leafpkg must appear before middlepkg in topological order.
+	sorted := graph.ToTopologicallySortedList()
+	leafIdx, middleIdx := -1, -1
+	for i, d := range sorted {
+		if d.Equals(leafDesc) {
+			leafIdx = i
+		}
+		if d.Equals(middleDesc) {
+			middleIdx = i
+		}
+	}
+	assert.True(leafIdx != -1, "leafpkg must be present in the topologically sorted list")
+	assert.True(middleIdx != -1, "middlepkg must be present in the topologically sorted list")
+	if leafIdx != -1 && middleIdx != -1 {
+		assert.True(leafIdx < middleIdx, "leafpkg must be ordered before middlepkg in topological sort")
+	}
 }
 
 // TestPackageResolution_MultiModuleDependencies tests package resolution with multi-module

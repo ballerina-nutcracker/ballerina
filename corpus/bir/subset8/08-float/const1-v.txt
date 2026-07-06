@@ -1,10 +1,9 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-A  float;
-B  float;
+A  3;
+B  2;
 C  float;
 D  float;
-E  float;
+E  3.5;
 F  float;
 G  float;
 main() -> nil{

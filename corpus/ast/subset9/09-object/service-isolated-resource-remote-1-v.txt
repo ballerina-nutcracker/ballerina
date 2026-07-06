@@ -1,0 +1,80 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (class-definition SimpleListener
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (union-type
+          (array-type
+            (value-type string) dimensions: 1 ([]))
+          (union-type
+            (value-type string)
+            (value-type null)))) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (service isolated
+    (on
+    (new
+      (user-defined-type SimpleListener) ()))
+    (variable foo (type
+      (value-type string)) (expr
+      (literal foo)))
+    (function $remote$greet () (
+      (value-type string))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (field-based-access foo
+                (simple-var-ref self)))))))
+    (resource-function get name:hello
+      (variable name (type
+        (value-type string)))
+      (value-type string)
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref name))))
+        (lock
+          (block-stmt
+            (return
+              (binary-expr +
+                (literal Hello, )
+                (field-based-access foo
+                  (simple-var-ref self)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

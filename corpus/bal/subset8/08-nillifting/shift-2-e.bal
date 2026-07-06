@@ -14,20 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 public function main() {
     int? x = 5;
     int? y = ();
 
-    int a = x << y; // @error
-    int b = x >> y; // @error
-    int c = x >>> y; // @error
+    int _ = x << y; // @error
+    int _ = x >> y; // @error
+    int _ = x >>> y; // @error
 
     int? i = ();
     int? j = 10;
 
-    int a1 = i << j; // @error
-    int b1 = i >> y; // @error
-    int c1 = i >>> y; // @error
+    int _ = i << j; // @error
+    int _ = i >> y; // @error
+    int _ = i >>> y; // @error
 }

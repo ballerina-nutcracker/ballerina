@@ -1,0 +1,59 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (literal 2.7)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (unary-expr -
+              (literal 2.3))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (unary-expr -
+              (literal 2))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (unary-expr -
+              (literal 0))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (binary-expr /
+              (literal 1)
+              (literal 0))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (binary-expr /
+              (unary-expr -
+                (literal 1))
+              (literal 0))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float floor (
+          (group-expr
+            (binary-expr /
+              (literal 0)
+              (literal 0))))))))
+  )
+)

@@ -16,7 +16,7 @@
 
 public function main() {
     int[] xs = [1, 2];
-    int[] out = from var x in xs
+    int[] _ = from var x in xs
         select x
         on conflict error("duplicate key"); // @error
 }

@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 foo() -> int|error{
   bb0 {
     %1 = ConstantLoad foo
@@ -55,40 +54,52 @@ main() -> nil{
     %3 ? bb2 : bb4;
   }
   bb2 {
-    %4 = println(fooResult) -> bb3;
+    PushScopeFrame 1
+    %0 = println((1, fooResult)) -> bb3;
   }
   bb3 {
+    PopScopeFrame
     GOTO bb4;
   }
   bb4 {
-    %5 = bar() -> bb5;
+    PushScopeFrame 3
+    %0 = bar() -> bb5;
   }
   bb5 {
-    barResult = %5;
-    %7 = barResult is error
-    %7 ? bb6 : bb8;
+    barResult = %0;
+    %2 = barResult is error
+    %2 ? bb6 : bb8;
   }
   bb6 {
-    %8 = println(barResult) -> bb7;
+    PushScopeFrame 1
+    %0 = println((1, barResult)) -> bb7;
   }
   bb7 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb8 {
-    %9 = baz() -> bb9;
+    PushScopeFrame 3
+    %0 = baz() -> bb9;
   }
   bb9 {
-    bazResult = %9;
-    %11 = bazResult is error
-    %11 ? bb10 : bb12;
+    bazResult = %0;
+    %2 = bazResult is error
+    %2 ? bb10 : bb12;
   }
   bb10 {
-    %12 = println(bazResult) -> bb11;
+    PushScopeFrame 1
+    %0 = println((1, bazResult)) -> bb11;
   }
   bb11 {
+    PopScopeFrame
     GOTO bb12;
   }
   bb12 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

@@ -17,6 +17,5 @@
 import testorg/import_function9_e.foo as bar;
 
 public function main() {
-    string test = "ignore";
-    _ = test;
+    _ = bar:foo(1);
 }

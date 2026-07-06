@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-fn-capture-shadow-e.bal:42:20
+   |
+42 |             return x + 1; // @error
+   |                    ^

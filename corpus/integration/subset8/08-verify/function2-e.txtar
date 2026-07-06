@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible arguments for function call
   --> function2-e.bal:18:13
    |
-18 |     int z = foo(1, "d"); // @error
+18 |     int _ = foo(1, "d"); // @error
    |             ^^^^^^^^^^^

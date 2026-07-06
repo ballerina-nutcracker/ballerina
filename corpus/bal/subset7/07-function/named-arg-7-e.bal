@@ -17,8 +17,10 @@
 import ballerina/io;
 
 function foo(int x, int y) returns int {
+        int _ = x;
+        int _ = y;
     return x * 2;
-}
+    }
 
 public function main() {
     io:println(foo(5, x = 6)); // @error

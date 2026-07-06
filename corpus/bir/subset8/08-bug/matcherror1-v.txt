@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 foo(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object) -> nil{
   bb0 {
     GOTO bb1;
@@ -8,10 +7,12 @@ foo(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|f
     return;
   }
   bb2 {
-    %2 = ConstantLoad should not match
-    %3 = println(%2) -> bb3;
+    PushScopeFrame 2
+    %0 = ConstantLoad should not match
+    %1 = println(%0) -> bb3;
   }
   bb3 {
+    PopScopeFrame
     GOTO bb1;
   }
 }

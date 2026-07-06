@@ -20,6 +20,6 @@ class Foo {
 
     function bar() returns int {
         return 1;
-        int x = 2; // @error
+        int _ = 2; // @error
     }
 }

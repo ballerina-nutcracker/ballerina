@@ -1,0 +1,70 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition LifecycleListener
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal listener init))))))
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal listener graceful stop))))))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal listener start)))))))
+  (variable l (type
+    (user-defined-type LifecycleListener)) (expr
+    (new ())))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal main))))))
+  (function testMain () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal testMain)))))))

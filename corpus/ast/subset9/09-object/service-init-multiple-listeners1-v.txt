@@ -1,0 +1,82 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Listener
+    (variable name (type
+      (value-type string)))
+    (function init (
+      (variable name (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access name
+            (simple-var-ref self))
+          (simple-var-ref name))))
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (literal attach )
+            (field-based-access name
+              (simple-var-ref self)))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable l1 (type
+    (user-defined-type Listener)) (expr
+    (new (
+      (literal one)))))
+  (variable l2 (type
+    (user-defined-type Listener)) (expr
+    (new (
+      (literal two)))))
+  (service
+    (on
+    (simple-var-ref l1)
+    (simple-var-ref l2))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal service init)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

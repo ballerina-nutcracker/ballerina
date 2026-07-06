@@ -1,0 +1,50 @@
+(foo
+  (foo.$resource$get$0
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (literal get test/)
+            (simple-var-ref name)))))
+    )
+  )
+  (foo.$resource$get$1
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal get other))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref id))))
+    )
+  )
+  (foo.$resource$post$2
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (literal post test/)
+            (simple-var-ref name)))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type foo)) (expr
+        (new ()))))
+    (expression-stmt
+      (client-resource-access get expr:
+        (simple-var-ref f) name:test computed:
+        (literal a)))
+    (expression-stmt
+      (client-resource-access get expr:
+        (simple-var-ref f) name:other computed:
+        (literal 42)))
+    (expression-stmt
+      (client-resource-access post expr:
+        (simple-var-ref f) name:test computed:
+        (literal b)))
+  )
+)

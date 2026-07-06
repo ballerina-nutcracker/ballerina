@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: repeated values for parameter x
-  --> named-arg-7-e.bal:24:23
+  --> named-arg-7-e.bal:26:23
    |
-24 |     io:println(foo(5, x = 6)); // @error
+26 |     io:println(foo(5, x = 6)); // @error
    |                       ^^^^^

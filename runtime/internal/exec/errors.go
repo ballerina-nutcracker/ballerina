@@ -25,9 +25,9 @@ import (
 	"ballerina-lang-go/values"
 )
 
-func getFormattedError(ctx *Context, r any) error {
+func getFormattedError(cs *callStack, r any) error {
 	message := panicMessage(r)
-	stack := formatCallStack(ctx)
+	stack := formatCallStack(cs)
 	return fmt.Errorf("%s", formatRuntimePanic(message, stack))
 }
 
@@ -42,24 +42,24 @@ func panicMessage(r any) string {
 	}
 }
 
-func formatCallStack(ctx *Context) []string {
-	frames := ctx.Frames()
+func formatCallStack(cs *callStack) []string {
+	entries := cs.Entries()
 	const maxFrames = 32
-	out := make([]string, 0, len(frames))
-	for i := len(frames) - 1; i >= 0; i-- {
+	out := make([]string, 0, len(entries))
+	for i := len(entries) - 1; i >= 0; i-- {
 		if len(out) >= maxFrames {
 			out = append(out, "...")
 			break
 		}
-		f := frames[i]
-		loc := f.location
+		entry := entries[i]
+		loc := entry.location
 		if bir.IsLocationEmpty(loc) {
-			out = append(out, fmt.Sprintf("%s(unknown)", f.functionKey))
+			out = append(out, fmt.Sprintf("%s(unknown)", prettyFunctionName(entry.frame.FunctionKey())))
 			continue
 		}
 		file := filepath.Base(loc.FilePath())
 		line := loc.StartLine() + 1
-		out = append(out, fmt.Sprintf("%s(%s:%d)", prettyFunctionName(f.functionKey), file, line))
+		out = append(out, fmt.Sprintf("%s(%s:%d)", prettyFunctionName(entry.frame.FunctionKey()), file, line))
 	}
 	return out
 }

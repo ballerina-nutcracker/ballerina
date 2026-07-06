@@ -1,0 +1,21 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable id (type
+          (value-type string)) (expr
+          (literal abc))))
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<row id='")
+            (xml-template-attribute-insertion
+              (simple-var-ref id))
+            (template-string "'/>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

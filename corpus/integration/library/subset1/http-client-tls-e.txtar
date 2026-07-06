@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got "yes"
+  --> http-client-tls-e.bal:20:79
+   |
+20 |     http:Client _ = check new ("https://example.com", {secureSocket: {enable: "yes"}}); // @error incompatible types: expected 'boolean', found 'string'
+   |                                                                               ^^^^^

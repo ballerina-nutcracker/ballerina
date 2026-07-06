@@ -1,0 +1,3 @@
+-- stdout --
+<root p:name="v" xmlns:p="https://example.com/attr">hello</root>
+-- stderr --

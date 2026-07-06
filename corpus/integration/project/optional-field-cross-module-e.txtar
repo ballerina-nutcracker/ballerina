@@ -9,5 +9,5 @@ error[SEMANTIC_ERROR]: incompatible type: expected int, got nil
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
   --> main.bal:21:13
    |
-21 |     int f = r.foo; // @error
+21 |     int _ = r.foo; // @error
    |             ^^^^^

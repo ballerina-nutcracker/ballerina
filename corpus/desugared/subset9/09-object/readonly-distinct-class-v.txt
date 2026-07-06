@@ -1,0 +1,60 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition distinct Person
+    (variable name (type
+      (value-type string)))
+    (function init (
+      (variable name (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal name))
+          (simple-var-ref name)))))
+  (class-definition public distinct Employee
+    (variable name (type
+      (value-type string)))
+    (function init (
+      (variable name (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal name))
+          (simple-var-ref name)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable person (type
+          (user-defined-type Person)) (expr
+          (new (
+            (literal John Smith))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref person)
+            (user-defined-type Employee)))))
+      (var-def
+        (variable employee (type
+          (user-defined-type Employee)) (expr
+          (new (
+            (literal Alice Johnson))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref employee)
+            (user-defined-type Person)))))
+      (var-def
+        (variable employeeAsPerson (type
+          (user-defined-type Person)) (expr
+          (simple-var-ref employee))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref employeeAsPerson)
+            (user-defined-type Employee))))))))

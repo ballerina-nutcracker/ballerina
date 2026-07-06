@@ -1,0 +1,22 @@
+(bumpBy
+  (bb0 () ()
+    (assignment
+      (simple-var-ref counter)
+      (binary-expr +
+        (simple-var-ref counter)
+        (simple-var-ref amount)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 5))))
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 7))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)

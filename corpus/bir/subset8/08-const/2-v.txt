@@ -1,6 +1,5 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-N  int;
+N  123;
 N1  100;
 N2  20;
 N3  3;

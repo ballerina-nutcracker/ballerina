@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: both operands must belong to same basic type
-  --> modules/foo/foo.bal:18:12
+  --> modules/foo/foo.bal:19:12
    |
-18 |     return a + "a"; // @error
+19 |     return a + "a"; // @error
    |            ^^^^^^^

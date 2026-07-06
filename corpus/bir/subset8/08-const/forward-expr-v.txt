@@ -1,8 +1,7 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 A  int;
 B  int;
-C  int;
+C  6;
 D  5;
 main() -> nil{
   bb0 {

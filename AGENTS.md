@@ -52,6 +52,14 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 
 ## Tests
 
+- IMPORTANT: prefer adding corpus tests over adding unit tests for modules. If you can't write a corpus test to validate a scenario then that means that scenario can't happen in real world
+
+### Corpus layout
+
+- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, etc.) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
+- `corpus/*_test.go` (`package corpus`) — end-to-end integration drivers (CLI, extern, package resolution, BIR roundtrip, etc.)
+- `corpus/<area>/testdata/` — fixtures for integration drivers (`extern/`, `cli/`, `package-resolution/`, etc.); no Go files in fixture dirs except embedded native modules under test balas
+
 ### Corpus tests
 
 - We have 3 kinds of tests indicated by file name in `./corpus/bal`

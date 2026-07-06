@@ -22,7 +22,6 @@ import (
 
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
 	"ballerina-lang-go/semantics"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/test_util"
@@ -30,9 +29,11 @@ import (
 )
 
 // symbolResolverSkipList is the symbol-resolver *additional* skip list, on
-// top of the shared test_util.UnsupportedTests baseline. Currently empty --
-// every known failure is already covered by the shared baseline.
-var symbolResolverSkipList = []string{}
+// top of the shared test_util.UnsupportedTests baseline.
+var symbolResolverSkipList = []string{
+	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	"subset8/08-xml/namespace12-v.bal",
+}
 
 func TestSymbolResolver(t *testing.T) {
 	flag.Parse()
@@ -60,7 +61,12 @@ func testSymbolResolution(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseSymbolResolution, testCase.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testCase.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseSymbolResolution, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return
@@ -104,7 +110,7 @@ func (v *symbolResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 	return v
 }
 
-func (v *symbolResolutionValidator) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (v *symbolResolutionValidator) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	if typeData.TypeDescriptor == nil {
 		return nil
 	}

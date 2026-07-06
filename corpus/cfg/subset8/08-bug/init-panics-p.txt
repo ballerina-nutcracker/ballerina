@@ -1,0 +1,10 @@
+(init
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal init panic))))
+  )
+)
+(main
+  (bb0 () ())
+)

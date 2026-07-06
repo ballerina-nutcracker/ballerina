@@ -1,20 +1,24 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: dependently-typed function must be external
-  --> dependent-fn-2-e.bal:23:1
+  --> dependent-fn-2-e.bal:22:1
    |
-23 | function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
+22 | function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     int _ = val;
+   |     ^^^^^^^^^^^^
 24 |     return 1;
    |     ^^^^^^^^^
 25 | }
    | ^
 
 error[SEMANTIC_ERROR]: dependently-typed function return type dependent and defined parts must be disjoint
-  --> dependent-fn-2-e.bal:23:1
+  --> dependent-fn-2-e.bal:22:1
    |
-23 | function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
+22 | function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     int _ = val;
+   |     ^^^^^^^^^^^^
 24 |     return 1;
    |     ^^^^^^^^^
 25 | }

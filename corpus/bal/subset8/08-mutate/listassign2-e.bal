@@ -27,5 +27,5 @@ type Q [NS];
 public function main() {
     S s = ["str"];
     Q q = [s];
-    P p = q; // @error
+    P _ = q; // @error
 }

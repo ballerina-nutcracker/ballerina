@@ -1,0 +1,4 @@
+[package]
+org = "myorg"
+name = "consumer"
+version = "0.1.0"

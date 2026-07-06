@@ -17,12 +17,13 @@
 package semantics
 
 import (
+	"slices"
+	"sync"
+
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
-	"slices"
-	"sync"
 )
 
 type basicBlock struct {
@@ -39,7 +40,7 @@ type basicBlock struct {
 	children []int
 	// Nodes inside this block. Almost always these are statements but ternary expression will have expressions
 	// as children.
-	nodes []model.Node
+	nodes []ast.Node
 }
 
 type bbRef int
@@ -126,46 +127,50 @@ func CreateControlFlowGraph(ctx *context.CompilerContext, pkg *ast.BLangPackage)
 			mu.Unlock()
 		}()
 	}
+	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
+		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
+			wg.Go(func() {
+				fnCfg := analyzeFunctionBody(ctx, body)
+				mu.Lock()
+				dest[sym] = fnCfg
+				mu.Unlock()
+			})
+		}
+		if initFn != nil {
+			analyzeMethod(initFn.Symbol(), initFn.Body)
+		}
+		for _, method := range methods {
+			analyzeMethod(method.Symbol(), method.Body)
+		}
+		for _, rm := range resourceMethods {
+			analyzeMethod(rm.Symbol(), rm.Body)
+		}
+	}
 	for i := range pkg.ClassDefinitions {
-		classDef := &pkg.ClassDefinitions[i]
-		classRef := classDef.Symbol()
-		mu.Lock()
-		cfg.methodCfgs[classRef] = make(map[model.SymbolRef]functionCFG)
-		mu.Unlock()
-		if classDef.InitFunction != nil {
-			wg.Add(1)
-			initFn := classDef.InitFunction
-			go func() {
-				defer wg.Done()
-				fnCfg := analyzeFunction(ctx, initFn)
-				mu.Lock()
-				cfg.methodCfgs[classRef][initFn.Symbol()] = fnCfg
-				mu.Unlock()
-			}()
-		}
-		for _, method := range classDef.Methods {
-			wg.Add(1)
-			method := method
-			go func() {
-				defer wg.Done()
-				fnCfg := analyzeFunction(ctx, method)
-				mu.Lock()
-				cfg.methodCfgs[classRef][method.Symbol()] = fnCfg
-				mu.Unlock()
-			}()
-		}
+		c := &pkg.ClassDefinitions[i]
+		methodCfgs := make(map[model.SymbolRef]functionCFG)
+		cfg.methodCfgs[c.Symbol()] = methodCfgs
+		analyzeClassBody(methodCfgs, c.InitFunction, c.Methods, c.ResourceMethods)
+	}
+	for i := range pkg.Services {
+		s := &pkg.Services[i]
+		analyzeClassBody(cfg.funcCfgs, s.InitFunction, s.Methods, s.ResourceMethods)
 	}
 	wg.Wait()
 	return cfg
 }
 
 func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) functionCFG {
+	return analyzeFunctionBody(ctx, fn.Body)
+}
+
+func analyzeFunctionBody(ctx *context.CompilerContext, body ast.FunctionBodyNode) functionCFG {
 	tyCtx := semtypes.ContextFrom(ctx.GetTypeEnv())
 	analyzer := functionControlFlowAnalyzer{
 		ctx:   ctx,
 		tyCtx: tyCtx,
 	}
-	return analyzer.analyzeFn(fn)
+	return analyzer.analyzeBody(body)
 }
 
 type functionControlFlowAnalyzer struct {
@@ -206,8 +211,8 @@ func continueEffect(bb bbRef) stmtEffect {
 	return stmtEffect{nextBB: bb}
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeFn(fn *ast.BLangFunction) functionCFG {
-	switch fnBody := fn.Body.(type) {
+func (analyzer *functionControlFlowAnalyzer) analyzeBody(body ast.FunctionBodyNode) functionCFG {
+	switch fnBody := body.(type) {
 	case *ast.BLangBlockFunctionBody:
 		analyzer.analyzeBlockFunctionBody(fnBody)
 	case *ast.BLangExprFunctionBody:
@@ -229,7 +234,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *as
 	_ = analyzer.analyzeStatements(rootBB.ref(), fnBody.Stmts)
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, statements []ast.BLangStatement) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, statements []ast.StatementNode) stmtEffect {
 	currentBB := curBB
 
 	for _, stmt := range statements {
@@ -278,12 +283,12 @@ func (analyzer *functionControlFlowAnalyzer) createNewBB() bbRef {
 }
 
 // addNode adds a node to a basic block
-func (analyzer *functionControlFlowAnalyzer) addNode(bb bbRef, node model.Node) {
+func (analyzer *functionControlFlowAnalyzer) addNode(bb bbRef, node ast.Node) {
 	analyzer.bbs[bb].nodes = append(analyzer.bbs[bb].nodes, node)
 }
 
 // analyzeStatement dispatches to the appropriate handler based on statement type
-func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.BLangStatement) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.StatementNode) stmtEffect {
 	ternaryChecker := &ternaryExpressionChecker{}
 	ast.Walk(ternaryChecker, stmt.(ast.BLangNode))
 	if ternaryChecker.hasTernaryExpression {
@@ -296,7 +301,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		return analyzer.analyzePanic(curBB, s)
 	case *ast.BLangExpressionStmt:
 		analyzer.addNode(curBB, stmt)
-		if expr, ok := s.Expr.(ast.BLangExpression); ok && alwaysTerminatesViaCheck(expr) {
+		if expr, ok := s.Expr.(ast.BLangExpression); ok && alwaysTerminatesViaCheck(analyzer.tyCtx, expr) {
 			return terminatedEffect()
 		}
 		return continueEffect(curBB)
@@ -304,6 +309,8 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		return analyzer.analyzeIf(curBB, s)
 	case *ast.BLangBlockStmt:
 		return analyzer.analyzeBlockStmt(curBB, s)
+	case *ast.BLangLock:
+		return analyzer.analyzeBlockStmt(curBB, &s.Body)
 	case *ast.BLangWhile:
 		return analyzer.analyzeWhile(curBB, s)
 	case *ast.BLangForeach:
@@ -327,9 +334,6 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		loopData := analyzer.loops[len(analyzer.loops)-1]
 		analyzer.addEdge(curBB, loopData.loopHead)
 		return terminatedEffect()
-	case *ast.BLangFunction:
-		analyzer.ctx.InternalError("nested functions not supported", stmt.GetPosition())
-		panic("unreachable")
 	case *ast.BLangMatchStatement:
 		return analyzer.analyzeMatch(curBB, s)
 	default:
@@ -339,14 +343,14 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 	}
 }
 
-func createTernaryExpressionEffect(analyzer *functionControlFlowAnalyzer, curBB bbRef, expressionNode1, expressionNode2 model.ExpressionNode) stmtEffect {
+func createTernaryExpressionEffect(analyzer *functionControlFlowAnalyzer, curBB bbRef, expressionNode1, expressionNode2 ast.BLangExpression) stmtEffect {
 	panic("unimplemented")
 }
 
 type ternaryExpressionChecker struct {
 	hasTernaryExpression bool
-	ifTrue               model.ExpressionNode
-	ifFalse              model.ExpressionNode
+	ifTrue               ast.BLangExpression
+	ifFalse              ast.BLangExpression
 }
 
 var _ ast.Visitor = &ternaryExpressionChecker{}
@@ -361,7 +365,7 @@ func (c *ternaryExpressionChecker) Visit(node ast.BLangNode) ast.Visitor {
 	return c
 }
 
-func (c *ternaryExpressionChecker) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (c *ternaryExpressionChecker) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	return nil
 }
 
@@ -382,7 +386,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzePanic(curBB bbRef, stmt *ast
 // `checkpanic` whose operand is statically a subtype of error. In that case the
 // `check` always returns from the enclosing function and the `checkpanic`
 // always panics, so following statements are unreachable.
-func alwaysTerminatesViaCheck(expr ast.BLangExpression) bool {
+func alwaysTerminatesViaCheck(tyCtx semtypes.Context, expr ast.BLangExpression) bool {
 	var inner ast.BLangExpression
 	switch e := expr.(type) {
 	case *ast.BLangCheckPanickedExpr:
@@ -397,7 +401,7 @@ func alwaysTerminatesViaCheck(expr ast.BLangExpression) bool {
 	if inner == nil {
 		return false
 	}
-	return semtypes.IsSubtypeSimple(inner.GetDeterminedType(), semtypes.ERROR)
+	return semtypes.IsSubtype(tyCtx, inner.GetDeterminedType(), semtypes.ERROR)
 }
 
 // Branching statement handlers

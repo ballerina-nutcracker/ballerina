@@ -14,11 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 public function main() {
     int? base = 5;
-    int a = +base; // @error 
-    int c = -base; // @error
-    int d = ~base; // @error
+    int _ = +base; // @error 
+    int _ = -base; // @error
+    int _ = ~base; // @error
 }

@@ -1,0 +1,17 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (xmlns
+    (literal https:foo/bar) as bar)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (xmlns
+        (literal https:foo/baz) as bar)
+      (var-def
+        (variable f (type
+          (value-type xml)) (expr
+          (xml-element-literal bar:foo))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f)))))))

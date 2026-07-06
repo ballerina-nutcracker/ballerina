@@ -1,0 +1,81 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang decimal (as decimals))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation decimals sum ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimals sum (
+            (literal 1.1d)
+            (literal 2.2d)
+            (unary-expr -
+              (literal 0.3d)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimals max (
+            (literal 1.1d)
+            (literal 2.2d)
+            (unary-expr -
+              (literal 3.0d)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimals min (
+            (literal 1.1d)
+            (literal 2.2d)
+            (unary-expr -
+              (literal 3.0d)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation abs expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.23d))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (literal 1.235d) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation quantize expr:
+            (literal 1.234d) (
+            (literal 0.00d))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floor expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.2d))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation ceiling expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.2d))) ()))))
+      (var-def
+        (variable parsed (type
+          (union-type
+            (value-type decimal)
+            (error-type))) (expr
+          (invocation decimals fromString (
+            (literal +12.30))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref parsed)
+          (value-type decimal))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref parsed))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation decimals fromString (
+                (literal bad)))
+              (error-type)))))))))

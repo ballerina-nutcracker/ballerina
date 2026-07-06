@@ -33,6 +33,7 @@ class TestConnector {
     # + ep - endpoint url
     # + return - whether successful or not
     public function testSend(string ep) returns boolean {
+        string _ = ep;
         boolean value = false;
         return value;
     }
@@ -64,6 +65,7 @@ class TestConnector2 {
     # + ep - endpoint url
     # + return - whether successful or not
     public function testSend(string ep) returns boolean {
+        string _ = ep;
         boolean value = false;
         return value;
     }

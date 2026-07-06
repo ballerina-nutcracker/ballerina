@@ -24,6 +24,7 @@ import (
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/decimal"
+	"ballerina-lang-go/desugar"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/values"
@@ -72,7 +73,6 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 	br.read(&pkgIdx)
 
 	pkgID := br.getPackageFromCP(int(pkgIdx))
-	imports := br.readImports()
 	globalVars := br.readGlobalVars(pkgID)
 	classDefs := br.readClassDefs()
 
@@ -92,16 +92,34 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 
 	functions := br.readFunctions()
 
-	return &bir.BIRPackage{
-		PackageID:     pkgID,
-		ImportModules: imports,
-		GlobalVars:    globalVars,
-		ClassDefs:     classDefs,
-		Functions:     functions,
-		InitFunction:  initFunction,
-		MainFunction:  mainFunction,
-		TypeEnv:       br.ctx.GetTypeEnv(),
-	}, nil
+	pkg = &bir.BIRPackage{
+		PackageID:    pkgID,
+		GlobalVars:   globalVars,
+		ClassDefs:    classDefs,
+		Functions:    functions,
+		InitFunction: initFunction,
+		MainFunction: mainFunction,
+	}
+	rebindLifecycleFunctions(pkg)
+	return pkg, nil
+}
+
+// rebindLifecycleFunctions restores StartFunction/GracefulStopFunction/
+// ImmediateStopFunction pointers on a deserialized BIR package. These are
+// generated as regular functions named `$start`, `$gracefulStop` and
+// `$immediateStop` and not serialized as dedicated slots.
+func rebindLifecycleFunctions(pkg *bir.BIRPackage) {
+	for i := range pkg.Functions {
+		fn := &pkg.Functions[i]
+		switch fn.Name.Value() {
+		case desugar.StartFunctionName:
+			pkg.StartFunction = fn
+		case desugar.GracefulStopFunctionName:
+			pkg.GracefulStopFunction = fn
+		case desugar.ImmediateStopFunctionName:
+			pkg.ImmediateStopFunction = fn
+		}
+	}
 }
 
 func (br *birReader) readTypePool() {
@@ -119,7 +137,7 @@ func (br *birReader) readType() semtypes.SemType {
 	var idx int32
 	br.read(&idx)
 	if idx == -1 {
-		return nil
+		return semtypes.SemType{}
 	}
 	return br.tp.Get(semtypes.TypePoolIndex(idx))
 }
@@ -196,23 +214,6 @@ func (br *birReader) getPackageFromCP(index int) *model.PackageID {
 	return v.(*model.PackageID)
 }
 
-func (br *birReader) readImports() []bir.BIRImportModule {
-	count := br.readLength()
-	imports := make([]bir.BIRImportModule, count)
-	for i := 0; i < int(count); i++ {
-		org := br.readStringCPEntry()
-		pkgName := br.readStringCPEntry()
-		_ = br.readStringCPEntry()
-		version := br.readStringCPEntry()
-
-		nameComps := model.CreateNameComps(pkgName)
-		imports[i] = bir.BIRImportModule{
-			PackageID: br.ctx.NewPackageID(org, nameComps, version),
-		}
-	}
-	return imports
-}
-
 func (br *birReader) readGlobalVars(pkgID *model.PackageID) map[string]bir.BIRGlobalVariableDcl {
 	count := br.readLength()
 	variables := make(map[string]bir.BIRGlobalVariableDcl, count)
@@ -221,14 +222,12 @@ func (br *birReader) readGlobalVars(pkgID *model.PackageID) map[string]bir.BIRGl
 		_ = br.readKind() // kind (ignored, concrete type determines it)
 		name := br.readStringCPEntry()
 		flags := br.readFlags()
-		origin := br.readOrigin()
 
 		ty := br.readType()
 
 		lookupKey := pkgID.OrgName.Value() + "/" + pkgID.PkgName.Value() + ":" + name.Value()
 		gv := bir.BIRGlobalVariableDcl{
 			Flags:              flags,
-			Origin:             origin,
 			GlobalVarLookupKey: lookupKey,
 		}
 		gv.Pos = pos
@@ -276,6 +275,34 @@ func (br *birReader) readClassDef(classDef *bir.BIRClassDef) {
 		vTable[methodName.Value()] = fn
 	}
 	classDef.VTable = vTable
+
+	rmCount := br.readLength()
+	rTable := make(map[string][]bir.BIRResourceMethod, rmCount)
+	for i := 0; i < int(rmCount); i++ {
+		methodNameN := br.readStringCPEntry()
+		methodName := methodNameN.Value()
+		entryCount := br.readLength()
+		entries := make([]bir.BIRResourceMethod, entryCount)
+		for j := 0; j < int(entryCount); j++ {
+			segCount := br.readLength()
+			segs := make([]bir.ResourcePathSegmentDef, segCount)
+			for k := 0; k < int(segCount); k++ {
+				segs[k] = bir.ResourcePathSegmentDef{Ty: br.readType()}
+			}
+			restTy := br.readType()
+			if semtypes.IsZero(restTy) {
+				restTy = semtypes.NEVER
+			}
+			fn := br.readFunction()
+			entries[j] = bir.BIRResourceMethod{
+				PathSegments:  segs,
+				RestSegmentTy: restTy,
+				Fn:            fn,
+			}
+		}
+		rTable[methodName] = entries
+	}
+	classDef.RTable = rTable
 }
 
 func (br *birReader) readFunctions() []bir.BIRFunction {
@@ -293,7 +320,6 @@ func (br *birReader) readFunction() *bir.BIRFunction {
 	name := br.readStringCPEntry()
 	originalName := br.readStringCPEntry()
 	flag := br.readFlags()
-	origin := br.readOrigin()
 	functionLookupKey := br.readStringCPEntry()
 	requiredParamsCount := br.readLength()
 
@@ -370,6 +396,18 @@ func (br *birReader) readFunction() *bir.BIRFunction {
 				}
 			case *bir.Panic:
 				// Panic has no ThenBB
+			case *bir.LockStart:
+				if target, ok := bbMap[t.ThenBB.Id.Value()]; ok {
+					t.ThenBB = target
+				}
+			case *bir.LockEnd:
+				if target, ok := bbMap[t.ThenBB.Id.Value()]; ok {
+					t.ThenBB = target
+				}
+			case *bir.ResourceFunctionCall:
+				if target, ok := bbMap[t.ThenBB.Id.Value()]; ok {
+					t.ThenBB = target
+				}
 			}
 		}
 	}
@@ -400,15 +438,12 @@ func (br *birReader) readFunction() *bir.BIRFunction {
 	}
 
 	return &bir.BIRFunction{
-		BIRDocumentableNodeBase: bir.BIRDocumentableNodeBase{
-			BIRNodeBase: bir.BIRNodeBase{
-				Pos: pos,
-			},
+		BIRNodeBase: bir.BIRNodeBase{
+			Pos: pos,
 		},
 		Name:              name,
 		OriginalName:      originalName,
 		Flags:             flag,
-		Origin:            origin,
 		FunctionLookupKey: string(functionLookupKey),
 		RequiredParams:    requiredParams,
 		RestParams:        restParams,
@@ -515,7 +550,7 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 		var tagByte int8
 		br.read(&tagByte)
 
-		tag := model.TypeTags(tagByte)
+		tag := typeTag(tagByte)
 		value := br.readConstValueByTag(tag)
 
 		if isWrapped {
@@ -561,6 +596,8 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 		ty := br.readType()
 		lhsOp := br.readOperand(varMap)
 		sizeOp := br.readOperand(varMap)
+		var isReadonly bool
+		br.read(&isReadonly)
 		valuesCount := br.readLength()
 		arrayValues := make([]*bir.BIROperand, valuesCount)
 		for k := 0; k < int(valuesCount); k++ {
@@ -571,10 +608,11 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 				BIRNodeBase: bir.BIRNodeBase{Pos: pos},
 				LhsOp:       lhsOp,
 			},
-			Type:   ty,
-			SizeOp: sizeOp,
-			Values: arrayValues,
-			Filler: br.restFillerFactoryForListType(ty),
+			Type:       ty,
+			SizeOp:     sizeOp,
+			Values:     arrayValues,
+			Filler:     br.restFillerFactoryForListType(ty),
+			IsReadonly: isReadonly,
 		}
 	case bir.INSTRUCTION_KIND_TYPE_CAST:
 		lhsOp := br.readOperand(varMap)
@@ -607,6 +645,8 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 	case bir.INSTRUCTION_KIND_NEW_STRUCTURE:
 		ty := br.readType()
 		lhsOp := br.readOperand(varMap)
+		var isReadonly bool
+		br.read(&isReadonly)
 		valuesCount := br.readLength()
 		values := make([]bir.MappingConstructorEntry, valuesCount)
 		for k := 0; k < int(valuesCount); k++ {
@@ -632,9 +672,10 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 				BIRNodeBase: bir.BIRNodeBase{Pos: pos},
 				LhsOp:       lhsOp,
 			},
-			Type:     ty,
-			Values:   values,
-			Defaults: defaults,
+			Type:       ty,
+			Values:     values,
+			Defaults:   defaults,
+			IsReadonly: isReadonly,
 		}
 	case bir.INSTRUCTION_KIND_NEW_ERROR:
 		ty := br.readType()
@@ -674,6 +715,19 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 			},
 			ClassDefRef: classDefRef.Value(),
 		}
+	case bir.INSTRUCTION_KIND_NEW_STREAM:
+		streamTy := br.readType()
+		lhsOp := br.readOperand(varMap)
+		implOp := br.readOperand(varMap)
+		return bir.NewStreamConstructor(streamTy, lhsOp, implOp, pos)
+	case bir.INSTRUCTION_KIND_STREAM_NEXT:
+		lhsOp := br.readOperand(varMap)
+		streamOp := br.readOperand(varMap)
+		return bir.NewStreamNext(lhsOp, streamOp, pos)
+	case bir.INSTRUCTION_KIND_STREAM_CLOSE:
+		lhsOp := br.readOperand(varMap)
+		streamOp := br.readOperand(varMap)
+		return bir.NewStreamClose(lhsOp, streamOp, pos)
 	case bir.INSTRUCTION_KIND_FP_LOAD:
 		functionLookupKey := br.readStringCPEntry()
 		ty := br.readType()
@@ -698,6 +752,66 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 				BIRNodeBase: bir.BIRNodeBase{Pos: pos},
 			},
 		}
+	case bir.INSTRUCTION_KIND_NEW_XML_ELEMENT:
+		nameOp := br.readOperand(varMap)
+		var hasChildren bool
+		br.read(&hasChildren)
+		var childrenOp *bir.BIROperand
+		if hasChildren {
+			childrenOp = br.readOperand(varMap)
+		}
+		var attrsOp *bir.BIROperand
+		var hasAttrs bool
+		br.read(&hasAttrs)
+		if hasAttrs {
+			attrsOp = br.readOperand(varMap)
+		}
+		var namespacesOp *bir.BIROperand
+		var hasNamespaces bool
+		br.read(&hasNamespaces)
+		if hasNamespaces {
+			namespacesOp = br.readOperand(varMap)
+		}
+		lhsOp := br.readOperand(varMap)
+		return bir.NewXMLElementInstr(lhsOp, nameOp, childrenOp, attrsOp, namespacesOp, pos)
+	case bir.INSTRUCTION_KIND_NEW_XML_PI:
+		targetOp := br.readOperand(varMap)
+		dataOp := br.readOperand(varMap)
+		lhsOp := br.readOperand(varMap)
+		return bir.NewXMLPIInstr(lhsOp, targetOp, dataOp, pos)
+	case bir.INSTRUCTION_KIND_NEW_XML_COMMENT:
+		bodyOp := br.readOperand(varMap)
+		lhsOp := br.readOperand(varMap)
+		return bir.NewXMLCommentInstr(lhsOp, bodyOp, pos)
+	case bir.INSTRUCTION_KIND_NEW_XML_TEXT:
+		bodyOp := br.readOperand(varMap)
+		lhsOp := br.readOperand(varMap)
+		return bir.NewXMLTextInstr(lhsOp, bodyOp, pos)
+	case bir.INSTRUCTION_KIND_NEW_XML_SEQUENCE:
+		count := br.readLength()
+		children := make([]*bir.BIROperand, count)
+		for k := 0; k < int(count); k++ {
+			children[k] = br.readOperand(varMap)
+		}
+		lhsOp := br.readOperand(varMap)
+		return bir.NewXMLSequenceInstr(lhsOp, children, pos)
+	case bir.INSTRUCTION_KIND_EVAL_TEMPLATE_EXPR:
+		var kind uint8
+		br.read(&kind)
+		strCount := br.readLength()
+		strs := make([]string, strCount)
+		for k := 0; k < int(strCount); k++ {
+			strs[k] = string(br.readStringCPEntry())
+		}
+		var totalLen int32
+		br.read(&totalLen)
+		insCount := br.readLength()
+		insertions := make([]*bir.BIROperand, insCount)
+		for k := 0; k < int(insCount); k++ {
+			insertions[k] = br.readOperand(varMap)
+		}
+		lhsOp := br.readOperand(varMap)
+		return bir.NewEvalTemplateExpr(bir.TemplateKind(kind), strs, insertions, lhsOp, pos)
 	default:
 		panic(fmt.Sprintf("unsupported instruction kind: %d", instructionKind))
 	}
@@ -813,6 +927,64 @@ func (br *birReader) readTerminator(varMap map[string]bir.BIRVariableDcl) bir.BI
 			},
 			ErrorOp: errorOp,
 		}
+	case bir.INSTRUCTION_KIND_LOCK:
+		key := br.readStringCPEntry()
+		thenBBId := br.readStringCPEntry()
+		return &bir.LockStart{
+			BIRTerminatorBase: bir.BIRTerminatorBase{
+				BIRInstructionBase: bir.BIRInstructionBase{
+					BIRNodeBase: bir.BIRNodeBase{Pos: pos},
+				},
+				ThenBB: &bir.BIRBasicBlock{Id: thenBBId},
+			},
+			LockKey: string(key),
+		}
+	case bir.INSTRUCTION_KIND_RESOURCE_CALL:
+		receiver := br.readOperand(varMap)
+		methodNameN := br.readStringCPEntry()
+		methodName := methodNameN.Value()
+		segCount := br.readLength()
+		pathSegments := make([]bir.BIROperand, segCount)
+		for k := 0; k < int(segCount); k++ {
+			pathSegments[k] = *br.readOperand(varMap)
+		}
+		argCount := br.readLength()
+		args := make([]bir.BIROperand, argCount)
+		for k := 0; k < int(argCount); k++ {
+			args[k] = *br.readOperand(varMap)
+		}
+		var lhsExists bool
+		br.read(&lhsExists)
+		var lhsOp *bir.BIROperand
+		if lhsExists {
+			lhsOp = br.readOperand(varMap)
+		}
+		thenBBId := br.readStringCPEntry()
+		return &bir.ResourceFunctionCall{
+			BIRTerminatorBase: bir.BIRTerminatorBase{
+				BIRInstructionBase: bir.BIRInstructionBase{
+					BIRNodeBase: bir.BIRNodeBase{Pos: pos},
+					LhsOp:       lhsOp,
+				},
+				ThenBB: &bir.BIRBasicBlock{Id: thenBBId},
+			},
+			Receiver:     *receiver,
+			MethodName:   methodName,
+			PathSegments: pathSegments,
+			Args:         args,
+		}
+	case bir.INSTRUCTION_KIND_UNLOCK:
+		key := br.readStringCPEntry()
+		thenBBId := br.readStringCPEntry()
+		return &bir.LockEnd{
+			BIRTerminatorBase: bir.BIRTerminatorBase{
+				BIRInstructionBase: bir.BIRInstructionBase{
+					BIRNodeBase: bir.BIRNodeBase{Pos: pos},
+				},
+				ThenBB: &bir.BIRBasicBlock{Id: thenBBId},
+			},
+			LockKey: string(key),
+		}
 	default:
 		panic(fmt.Sprintf("unsupported terminator kind: %d", termInstructionKind))
 	}
@@ -873,39 +1045,39 @@ func (br *birReader) readConstValue() any {
 	var tagByte int8
 	br.read(&tagByte)
 
-	tag := model.TypeTags(tagByte)
+	tag := typeTag(tagByte)
 	return br.readConstValueByTag(tag)
 }
 
-func (br *birReader) readConstValueByTag(tag model.TypeTags) any {
+func (br *birReader) readConstValueByTag(tag typeTag) any {
 	switch tag {
-	case model.TypeTags_INT,
-		model.TypeTags_SIGNED32_INT,
-		model.TypeTags_SIGNED16_INT,
-		model.TypeTags_SIGNED8_INT,
-		model.TypeTags_UNSIGNED32_INT,
-		model.TypeTags_UNSIGNED16_INT,
-		model.TypeTags_UNSIGNED8_INT:
+	case typeTagInt,
+		typeTagSigned32,
+		typeTagSigned16,
+		typeTagSigned8,
+		typeTagUnsigned32,
+		typeTagUnsigned16,
+		typeTagUnsigned8:
 		var val int64
 		br.read(&val)
 		return val
-	case model.TypeTags_BYTE:
+	case typeTagByte:
 		var val byte
 		br.read(&val)
 		return val
-	case model.TypeTags_FLOAT:
+	case typeTagFloat:
 		var val float64
 		br.read(&val)
 		return val
-	case model.TypeTags_BOOLEAN:
+	case typeTagBoolean:
 		var val bool
 		br.read(&val)
 		return val
-	case model.TypeTags_STRING, model.TypeTags_CHAR_STRING:
+	case typeTagString, typeTagCharString:
 		var idx int32
 		br.read(&idx)
 		return br.getStringFromCP(int(idx))
-	case model.TypeTags_DECIMAL:
+	case typeTagDecimal:
 		var idx int32
 		br.read(&idx)
 		str := br.getStringFromCP(int(idx))
@@ -914,7 +1086,7 @@ func (br *birReader) readConstValueByTag(tag model.TypeTags) any {
 			panic(fmt.Sprintf("invalid decimal value %q: %v", str, err))
 		}
 		return r
-	case model.TypeTags_NIL:
+	case typeTagNil:
 		var idx int32
 		br.read(&idx)
 		return nil
@@ -930,7 +1102,7 @@ func (br *birReader) readConstValueByTag(tag model.TypeTags) any {
 }
 
 func (br *birReader) restFillerFactoryForListType(ty semtypes.SemType) values.FillerFactory {
-	if ty == nil {
+	if semtypes.IsZero(ty) {
 		return nil
 	}
 	tyCx := semtypes.TypeCheckContext(br.ctx.GetTypeEnv())
@@ -955,16 +1127,10 @@ func (br *birReader) readKind() bir.VarKind {
 	return bir.VarKind(val)
 }
 
-func (br *birReader) readFlags() int64 {
+func (br *birReader) readFlags() model.Flag {
 	var val int64
 	br.read(&val)
-	return val
-}
-
-func (br *birReader) readOrigin() model.SymbolOrigin {
-	var val uint8
-	br.read(&val)
-	return model.SymbolOrigin(val)
+	return model.Flag(val)
 }
 
 func (br *birReader) readStringCPEntry() model.Name {

@@ -23,7 +23,7 @@ type Y record {|
 |};
 
 function foo(X & Y xy) { // @error
-
+    _ = xy;
 }
 
 public function main() {

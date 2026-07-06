@@ -14,9 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
-const int? base2 = ();
-const int? x = +base2; // @error
-const int? y = -base2;
-const int? z = ~base2;
+public const int? base2 = ();
+public const int? x = +base2; // @error
+public const int? y = -base2;
+public const int? z = ~base2;

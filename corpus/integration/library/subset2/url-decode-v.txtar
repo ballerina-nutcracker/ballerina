@@ -1,0 +1,7 @@
+-- stdout --
+param1=http://xyz.com/?a=12&b=55
+hello world
+hello world
+a*b
+a~b
+-- stderr --

@@ -1,0 +1,4 @@
+-- stdout --
+{"arr":[1,2,3],"b":true,"d":3.5,"f":2.5,"i":7,"n":null,"obj":{"k":"v"},"s":"hi"}
+[1,2.5,"three",true,null,[10,20],{"k":"v"}]
+-- stderr --

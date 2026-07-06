@@ -19,13 +19,11 @@ package desugar
 
 import (
 	"ballerina-lang-go/ast"
-	array "ballerina-lang-go/lib/array/compile"
-	maplib "ballerina-lang-go/lib/map/compile"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 )
 
-func walkStatement(cx *functionContext, node model.StatementNode) desugaredNode[model.StatementNode] {
+func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[ast.StatementNode] {
 	switch stmt := node.(type) {
 	case *ast.BLangBlockStmt:
 		return walkBlockStmt(cx, stmt)
@@ -41,6 +39,8 @@ func walkStatement(cx *functionContext, node model.StatementNode) desugaredNode[
 		return walkWhile(cx, stmt)
 	case *ast.BLangDo:
 		return walkDo(cx, stmt)
+	case *ast.BLangLock:
+		return walkLock(cx, stmt)
 	case *ast.BLangForeach:
 		return visitForEach(cx, stmt)
 	case *ast.BLangSimpleVariableDef:
@@ -50,18 +50,20 @@ func walkStatement(cx *functionContext, node model.StatementNode) desugaredNode[
 	case *ast.BLangPanic:
 		return walkPanic(cx, stmt)
 	case *ast.BLangBreak:
-		return desugaredNode[model.StatementNode]{replacementNode: stmt}
+		return desugaredNode[ast.StatementNode]{replacementNode: stmt}
 	case *ast.BLangContinue:
 		return walkContinue(cx, stmt)
 	case *ast.BLangMatchStatement:
 		return walkMatchStatement(cx, stmt)
+	case *ast.BLangXMLNS:
+		return desugaredNode[ast.StatementNode]{replacementNode: stmt}
 	default:
 		panic("unexpected statement type")
 	}
 }
 
-func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[model.StatementNode] {
-	var allStmts []model.StatementNode
+func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[ast.StatementNode] {
+	var allStmts []ast.StatementNode
 
 	for _, childStmt := range stmt.Stmts {
 		result := walkStatement(cx, childStmt)
@@ -70,11 +72,11 @@ func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[
 	}
 
 	stmt.Stmts = allStmts
-	return desugaredNode[model.StatementNode]{replacementNode: stmt}
+	return desugaredNode[ast.StatementNode]{replacementNode: stmt}
 }
 
-func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody) desugaredNode[model.StatementNode] {
-	var allStmts []ast.BLangStatement
+func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody) {
+	var allStmts []ast.StatementNode
 
 	for _, stmt := range body.Stmts {
 		result := walkStatement(cx, stmt)
@@ -83,16 +85,15 @@ func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody
 	}
 
 	body.Stmts = allStmts
-	return desugaredNode[model.StatementNode]{replacementNode: body}
 }
 
-func walkAssignment(cx *functionContext, stmt *ast.BLangAssignment) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkAssignment(cx *functionContext, stmt *ast.BLangAssignment) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.VarRef != nil {
 		result := walkExpression(cx, stmt.VarRef)
 		initStmts = append(initStmts, result.initStmts...)
-		stmt.VarRef = result.replacementNode.(ast.BLangExpression)
+		stmt.VarRef = result.replacementNode.(ast.LExpr)
 	}
 
 	if stmt.Expr != nil {
@@ -101,19 +102,19 @@ func walkAssignment(cx *functionContext, stmt *ast.BLangAssignment) desugaredNod
 		stmt.Expr = result.replacementNode
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkCompoundAssignment(cx *functionContext, stmt *ast.BLangCompoundAssignment) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkCompoundAssignment(cx *functionContext, stmt *ast.BLangCompoundAssignment) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.VarRef != nil {
-		result := walkExpression(cx, stmt.VarRef.(ast.BLangExpression))
+		result := walkExpression(cx, stmt.VarRef)
 		initStmts = append(initStmts, result.initStmts...)
-		stmt.VarRef = result.replacementNode.(ast.BLangExpression)
+		stmt.VarRef = result.replacementNode.(ast.LExpr)
 	}
 
 	if stmt.Expr != nil {
@@ -122,14 +123,14 @@ func walkCompoundAssignment(cx *functionContext, stmt *ast.BLangCompoundAssignme
 		stmt.Expr = result.replacementNode
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkExpressionStmt(cx *functionContext, stmt *ast.BLangExpressionStmt) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkExpressionStmt(cx *functionContext, stmt *ast.BLangExpressionStmt) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Expr != nil {
 		result := walkExpression(cx, stmt.Expr)
@@ -137,14 +138,14 @@ func walkExpressionStmt(cx *functionContext, stmt *ast.BLangExpressionStmt) desu
 		stmt.Expr = result.replacementNode
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkIf(cx *functionContext, stmt *ast.BLangIf) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkIf(cx *functionContext, stmt *ast.BLangIf) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Expr != nil {
 		result := walkExpression(cx, stmt.Expr)
@@ -171,14 +172,14 @@ func walkIf(cx *functionContext, stmt *ast.BLangIf) desugaredNode[model.Statemen
 		}
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkWhile(cx *functionContext, stmt *ast.BLangWhile) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkWhile(cx *functionContext, stmt *ast.BLangWhile) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Expr != nil {
 		result := walkExpression(cx, stmt.Expr)
@@ -201,13 +202,19 @@ func walkWhile(cx *functionContext, stmt *ast.BLangWhile) desugaredNode[model.St
 		stmt.OnFailClause = *onFailResult.replacementNode.(*ast.BLangOnFailClause)
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkDo(cx *functionContext, stmt *ast.BLangDo) desugaredNode[model.StatementNode] {
+func walkLock(cx *functionContext, stmt *ast.BLangLock) desugaredNode[ast.StatementNode] {
+	bodyResult := walkBlockStmt(cx, &stmt.Body)
+	stmt.Body = *bodyResult.replacementNode.(*ast.BLangBlockStmt)
+	return desugaredNode[ast.StatementNode]{replacementNode: stmt}
+}
+
+func walkDo(cx *functionContext, stmt *ast.BLangDo) desugaredNode[ast.StatementNode] {
 	bodyResult := walkBlockStmt(cx, &stmt.Body)
 	stmt.Body = *bodyResult.replacementNode.(*ast.BLangBlockStmt)
 
@@ -217,26 +224,26 @@ func walkDo(cx *functionContext, stmt *ast.BLangDo) desugaredNode[model.Statemen
 		stmt.OnFailClause = *onFailResult.replacementNode.(*ast.BLangOnFailClause)
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		replacementNode: stmt,
 	}
 }
 
-func walkOnFailClause(cx *functionContext, clause *ast.BLangOnFailClause) desugaredNode[model.StatementNode] {
+func walkOnFailClause(cx *functionContext, clause *ast.BLangOnFailClause) desugaredNode[ast.StatementNode] {
 	bodyResult := walkBlockStmt(cx, clause.Body)
 	clause.Body = bodyResult.replacementNode.(*ast.BLangBlockStmt)
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		replacementNode: clause,
 	}
 }
 
-func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Var != nil {
 		if typeNode := stmt.Var.TypeNode(); typeNode != nil {
-			result := desugarTypeDesc(cx, typeNode, stmt.Var.Symbol(), cx.currentScope())
+			result := desugarTypeDesc(cx, typeNode, cx.currentScope())
 			for _, rf := range result.recordFields {
 				rf.fn = desugarFunction(cx.pkgCtx, rf.fn)
 				fnType := cx.symbolType(rf.symRef)
@@ -263,14 +270,14 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef
 		}
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkPanic(cx *functionContext, stmt *ast.BLangPanic) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkPanic(cx *functionContext, stmt *ast.BLangPanic) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Expr != nil {
 		result := walkExpression(cx, stmt.Expr)
@@ -278,14 +285,14 @@ func walkPanic(cx *functionContext, stmt *ast.BLangPanic) desugaredNode[model.St
 		stmt.Expr = result.replacementNode.(ast.BLangExpression)
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func walkReturn(cx *functionContext, stmt *ast.BLangReturn) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkReturn(cx *functionContext, stmt *ast.BLangReturn) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Expr != nil {
 		result := walkExpression(cx, stmt.Expr)
@@ -293,13 +300,13 @@ func walkReturn(cx *functionContext, stmt *ast.BLangReturn) desugaredNode[model.
 		stmt.Expr = result.replacementNode
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}
 }
 
-func createIncrementStmt(loopVar ast.BLangExpression) *ast.BLangAssignment {
+func createIncrementStmt(loopVar ast.LExpr) *ast.BLangAssignment {
 	basePos := loopVar.GetPosition()
 
 	oneLiteral := &ast.BLangNumericLiteral{
@@ -307,7 +314,7 @@ func createIncrementStmt(loopVar ast.BLangExpression) *ast.BLangAssignment {
 			Value:         int64(1),
 			OriginalValue: "1",
 		},
-		Kind: model.NodeKind_NUMERIC_LITERAL,
+		Kind: ast.NodeKind_NUMERIC_LITERAL,
 	}
 	oneLiteral.SetDeterminedType(semtypes.INT)
 	addExpr := &ast.BLangBinaryExpr{
@@ -325,7 +332,7 @@ func createIncrementStmt(loopVar ast.BLangExpression) *ast.BLangAssignment {
 	return incrementStmt
 }
 
-func walkContinue(cx *functionContext, stmt *ast.BLangContinue) desugaredNode[model.StatementNode] {
+func walkContinue(cx *functionContext, stmt *ast.BLangContinue) desugaredNode[ast.StatementNode] {
 	// Check if we're in a desugared foreach (has a loop variable)
 	loopVar := cx.currentLoopVar()
 	if loopVar != nil {
@@ -333,37 +340,38 @@ func walkContinue(cx *functionContext, stmt *ast.BLangContinue) desugaredNode[mo
 		incrementStmt := createIncrementStmt(loopVar)
 
 		// Return increment as initStmts and continue as replacement
-		return desugaredNode[model.StatementNode]{
-			initStmts:       []model.StatementNode{incrementStmt},
+		return desugaredNode[ast.StatementNode]{
+			initStmts:       []ast.StatementNode{incrementStmt},
 			replacementNode: stmt,
 		}
 	}
 
 	// For native while loops, continue as-is
-	return desugaredNode[model.StatementNode]{
-		initStmts:       []model.StatementNode{},
+	return desugaredNode[ast.StatementNode]{
+		initStmts:       []ast.StatementNode{},
 		replacementNode: stmt,
 	}
 }
 
-func visitForEach(cx *functionContext, stmt *ast.BLangForeach) desugaredNode[model.StatementNode] {
+func visitForEach(cx *functionContext, stmt *ast.BLangForeach) desugaredNode[ast.StatementNode] {
 	cx.pushScope(stmt.Scope())
 	defer cx.popScope()
 	if isRangeExpr(stmt.Collection) {
 		rangeExpr := stmt.Collection.(*ast.BLangBinaryExpr)
 		return desugarForEachOnRange(cx, rangeExpr, stmt.VariableDef, &stmt.Body, stmt.Scope())
 	}
-	if semtypes.IsSubtypeSimple(stmt.Collection.GetDeterminedType(), semtypes.LIST) {
+	tyCtx := semtypes.ContextFrom(cx.typeEnv())
+	if semtypes.IsSubtype(tyCtx, stmt.Collection.GetDeterminedType(), semtypes.LIST) {
 		return desugarForEachOnList(cx, stmt.Collection, stmt.VariableDef, &stmt.Body, stmt.Scope())
 	}
-	if semtypes.IsSubtypeSimple(stmt.Collection.GetDeterminedType(), semtypes.MAPPING) {
+	if semtypes.IsSubtype(tyCtx, stmt.Collection.GetDeterminedType(), semtypes.MAPPING) {
 		return desugarForEachOnMap(cx, stmt.Collection, stmt.VariableDef, &stmt.Body, stmt.Scope())
 	}
 	return desugarForEachOnIterable(cx, stmt.Collection, stmt.VariableDef, &stmt.Body, stmt.Scope())
 }
 
-func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	basePos := collection.GetPosition()
 
@@ -393,7 +401,7 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 			Value:         int64(0),
 			OriginalValue: "0",
 		},
-		Kind: model.NodeKind_NUMERIC_LITERAL,
+		Kind: ast.NodeKind_NUMERIC_LITERAL,
 	}
 	zeroLiteral.SetDeterminedType(semtypes.INT)
 
@@ -450,7 +458,7 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 	incrementStmt := createIncrementStmt(idxVarRef)
 	cx.pushLoopVar(idxVarRef)
 
-	newBodyStmts := make([]model.StatementNode, 0, len(body.Stmts)+2)
+	newBodyStmts := make([]ast.StatementNode, 0, len(body.Stmts)+2)
 	newBodyStmts = append(newBodyStmts, loopVarDef)
 	newBodyStmts = append(newBodyStmts, body.Stmts...)
 	if len(newBodyStmts) > 0 {
@@ -474,14 +482,14 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 	whileStmt.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(whileStmt, basePos)
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: whileStmt,
 	}
 }
 
 func createLengthInvocation(cx *functionContext, collection ast.BLangExpression) *ast.BLangInvocation {
-	pkgName := array.PackageName
+	pkgName := "lang.array"
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
 		cx.internalError(pkgName + " symbol space not found")
@@ -516,11 +524,12 @@ func createLengthInvocation(cx *functionContext, collection ast.BLangExpression)
 	inv.ArgExprs = []ast.BLangExpression{collection}
 	inv.SetSymbol(symbolRef)
 	inv.SetDeterminedType(semtypes.INT)
+	setPositionIfMissing(inv, basePos)
 	return inv
 }
 
-func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	basePos := collection.GetPosition()
 
@@ -568,7 +577,7 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 			Value:         int64(0),
 			OriginalValue: "0",
 		},
-		Kind: model.NodeKind_NUMERIC_LITERAL,
+		Kind: ast.NodeKind_NUMERIC_LITERAL,
 	}
 	zeroLiteral.SetDeterminedType(semtypes.INT)
 
@@ -631,7 +640,7 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 	incrementStmt := createIncrementStmt(idxVarRef)
 	cx.pushLoopVar(idxVarRef)
 
-	newBodyStmts := make([]model.StatementNode, 0, len(body.Stmts)+2)
+	newBodyStmts := make([]ast.StatementNode, 0, len(body.Stmts)+2)
 	newBodyStmts = append(newBodyStmts, loopVarDef)
 	newBodyStmts = append(newBodyStmts, body.Stmts...)
 	if len(newBodyStmts) > 0 {
@@ -655,14 +664,14 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 	whileStmt.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(whileStmt, basePos)
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: whileStmt,
 	}
 }
 
 func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *ast.BLangInvocation {
-	pkgName := maplib.PackageName
+	pkgName := "lang.map"
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
 		cx.internalError(pkgName + " symbol space not found")
@@ -673,7 +682,7 @@ func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *
 		cx.internalError(pkgName + ":keys symbol not found")
 		return nil
 	}
-	fnSymbol := space.Main.SymbolAt(symbolRef.Index).(model.FunctionSymbol)
+	fnSymbol := cx.getSymbol(symbolRef).(model.FunctionSymbol)
 	returnType := fnSymbol.Signature().ReturnType
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
 		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
@@ -688,8 +697,8 @@ func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *
 	return inv
 }
 
-func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	basePos := rangeExpr.GetPosition()
 
@@ -746,7 +755,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 	// Note: foreach scope is already pushed by visitForEach at the top level
 	cx.pushLoopVar(loopVarRef)
 
-	newBodyStmts := make([]model.StatementNode, len(body.Stmts))
+	newBodyStmts := make([]ast.StatementNode, len(body.Stmts))
 	copy(newBodyStmts, body.Stmts)
 	if len(newBodyStmts) > 0 {
 		if isAppendReachable(newBodyStmts[len(newBodyStmts)-1]) {
@@ -756,7 +765,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 		// just replace it with a no-op
 		emptyBlock := &ast.BLangBlockStmt{}
 		setPositionIfMissing(emptyBlock, basePos)
-		return desugaredNode[model.StatementNode]{
+		return desugaredNode[ast.StatementNode]{
 			replacementNode: emptyBlock,
 		}
 	}
@@ -776,7 +785,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 	whileStmt.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(whileStmt, basePos)
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: whileStmt,
 	}
@@ -785,7 +794,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 // TODO: do we need to think about if-else here as well?
 // If the last statement in a block is something like panic, return, continue or break, then we shouldn't append
 // nodes after that. I would make that node unreacheable. We need to make sure desugared AST is still valid.
-func isAppendReachable(stmt ast.BLangStatement) bool {
+func isAppendReachable(stmt ast.StatementNode) bool {
 	switch stmt := stmt.(type) {
 	case *ast.BLangReturn, *ast.BLangContinue, *ast.BLangBreak, *ast.BLangPanic:
 		return false
@@ -812,8 +821,67 @@ func isRangeExpr(expr ast.BLangActionOrExpression) bool {
 	return false
 }
 
+func createIteratorInvocation(cx *functionContext, receiver ast.BLangExpression, receiverType semtypes.SemType) *ast.BLangInvocation {
+	if semtypes.IsSubtype(cx.typeCtx(), receiverType, semtypes.XML) {
+		return createXMLIteratorInvocation(cx, receiver, receiverType)
+	}
+	return createMethodInvocation(cx, receiver, "iterator", receiverType, []ast.BLangExpression{})
+}
+
+func createXMLIteratorInvocation(cx *functionContext, receiver ast.BLangExpression, receiverType semtypes.SemType) *ast.BLangInvocation {
+	pkgName := "lang.xml"
+	space, ok := cx.pkgCtx.getImportedSymbolSpace(pkgName)
+	if !ok {
+		cx.pkgCtx.internalError(pkgName + " symbol space not found")
+		return nil
+	}
+	iteratorRef, ok := space.GetSymbol("iterator")
+	if !ok {
+		cx.pkgCtx.internalError(pkgName + ":iterator symbol not found")
+		return nil
+	}
+	cx.pkgCtx.addImplicitImport(pkgName, ast.BLangImportPackage{
+		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
+		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "xml"}},
+		Alias:        &ast.BLangIdentifier{Value: pkgName},
+	})
+	inv := &ast.BLangInvocation{PkgAlias: &ast.BLangIdentifier{Value: pkgName}}
+	inv.Name = &ast.BLangIdentifier{Value: "iterator"}
+	inv.ArgExprs = []ast.BLangExpression{receiver}
+	inv.SetSymbol(iteratorRef)
+	inv.SetDeterminedType(cx.pkgCtx.xmlIteratorType(semtypes.XMLItemType(receiverType)))
+	inv.SetPosition(receiver.GetPosition())
+	return inv
+}
+
+func (ctx *packageContext) xmlIteratorType(itemTy semtypes.SemType) semtypes.SemType {
+	return ctx.xmlIteratorTypes.GetOrBuild(itemTy, func() semtypes.SemType {
+		return buildXMLIteratorType(ctx.typeEnv(), itemTy)
+	})
+}
+
+func buildXMLIteratorType(env semtypes.Env, itemTy semtypes.SemType) semtypes.SemType {
+	recordDef := semtypes.NewMappingDefinition()
+	recordTy := recordDef.DefineMappingTypeWrapped(env,
+		[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},
+		semtypes.NEVER)
+	nextReturnTy := semtypes.Union(recordTy, semtypes.NIL)
+	ld := semtypes.NewListDefinition()
+	emptyParams := ld.DefineListTypeWrapped(env, nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	fd := semtypes.NewFunctionDefinition()
+	nextFnTy := fd.Define(env, emptyParams, nextReturnTy, semtypes.FunctionQualifiersFrom(env, true, false))
+	iterOd := semtypes.NewObjectDefinition()
+	return iterOd.Define(env, semtypes.ObjectQualifiersDEFAULT, []semtypes.Member{{
+		Name:       "next",
+		ValueTy:    nextFnTy,
+		Kind:       semtypes.MemberKindMethod,
+		Visibility: semtypes.VisibilityPublic,
+		Immutable:  true,
+	}})
+}
+
 func createMethodInvocation(cx *functionContext, receiver ast.BLangExpression, methodName string, receiverType semtypes.SemType, args []ast.BLangExpression) *ast.BLangInvocation {
-	tyCtx := semtypes.ContextFrom(cx.typeEnv())
+	tyCtx := cx.typeCtx()
 	fnTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst(methodName), receiverType)
 
 	argTys := make([]semtypes.SemType, len(args))
@@ -835,10 +903,10 @@ func createMethodInvocation(cx *functionContext, receiver ast.BLangExpression, m
 	return inv
 }
 
-func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangSimpleVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 	basePos := collection.GetPosition()
-	tyCtx := semtypes.ContextFrom(cx.typeEnv())
+	tyCtx := cx.typeCtx()
 
 	// Step 1: Evaluate collection into temp var
 	collResult := walkExpression(cx, collection)
@@ -861,7 +929,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	collVarRef.SetDeterminedType(collType)
 
 	// Step 2: Create iterator = collection.iterator()
-	iteratorInv := createMethodInvocation(cx, collVarRef, "iterator", collType, []ast.BLangExpression{})
+	iteratorInv := createIteratorInvocation(cx, collVarRef, collType)
 	iteratorType := iteratorInv.GetDeterminedType()
 
 	iterName, iterSymbol := cx.addDesugardSymbol(iteratorType, model.SymbolKindVariable, false)
@@ -879,7 +947,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	trueLiteral.SetDeterminedType(semtypes.BOOLEAN)
 
 	// Step 4: Build while body
-	var whileBodyStmts []model.StatementNode
+	var whileBodyStmts []ast.StatementNode
 
 	// 4a: $next = $iterator.next()
 	iterVarRef := &ast.BLangSimpleVarRef{VariableName: iterVarName}
@@ -906,14 +974,14 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 
 	nilCheck := &ast.BLangTypeTestExpr{}
 	nilCheck.Expr = nextRefForNilCheck
-	nilCheck.Type = model.TypeData{Type: semtypes.NIL}
+	nilCheck.Type = ast.TypeData{Type: semtypes.NIL}
 	nilCheck.SetDeterminedType(semtypes.BOOLEAN)
 
 	breakStmt := &ast.BLangBreak{}
 	setPositionIfMissing(breakStmt, basePos)
 	nilCheckIf := &ast.BLangIf{
 		Expr: nilCheck,
-		Body: ast.BLangBlockStmt{Stmts: []model.StatementNode{breakStmt}},
+		Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{breakStmt}},
 	}
 	nilCheckIf.SetScope(foreachScope)
 	setPositionIfMissing(nilCheckIf, basePos)
@@ -928,7 +996,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 
 		errCheck := &ast.BLangTypeTestExpr{}
 		errCheck.Expr = nextRefForErrCheck
-		errCheck.Type = model.TypeData{Type: semtypes.ERROR}
+		errCheck.Type = ast.TypeData{Type: semtypes.ERROR}
 		errCheck.SetDeterminedType(semtypes.BOOLEAN)
 
 		nextRefForPanic := &ast.BLangSimpleVarRef{VariableName: nextVarName}
@@ -939,7 +1007,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 		setPositionIfMissing(panicStmt, basePos)
 		errCheckIf := &ast.BLangIf{
 			Expr: errCheck,
-			Body: ast.BLangBlockStmt{Stmts: []model.StatementNode{panicStmt}},
+			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{panicStmt}},
 		}
 		errCheckIf.SetScope(foreachScope)
 		setPositionIfMissing(errCheckIf, basePos)
@@ -949,7 +1017,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	// 4d: loopVar = $next.value (field access desugared to index access by walkBlockStmt)
 	nextRefForValue := &ast.BLangSimpleVarRef{VariableName: nextVarName}
 	nextRefForValue.SetSymbol(nextSymbol)
-	nextRefForValue.SetDeterminedType(nextReturnType)
+	nextRefForValue.SetDeterminedType(semtypes.MAPPING)
 
 	valueAccess := &ast.BLangFieldBaseAccess{
 		Field: ast.BLangIdentifier{Value: "value"},
@@ -982,14 +1050,14 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	whileStmt.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(whileStmt, basePos)
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: whileStmt,
 	}
 }
 
-func walkMatchStatement(cx *functionContext, stmt *ast.BLangMatchStatement) desugaredNode[model.StatementNode] {
-	var initStmts []model.StatementNode
+func walkMatchStatement(cx *functionContext, stmt *ast.BLangMatchStatement) desugaredNode[ast.StatementNode] {
+	var initStmts []ast.StatementNode
 
 	if stmt.Expr != nil {
 		result := walkExpression(cx, stmt.Expr)
@@ -1002,13 +1070,13 @@ func walkMatchStatement(cx *functionContext, stmt *ast.BLangMatchStatement) desu
 		if clause.Guard != nil {
 			guardResult := walkExpression(cx, clause.Guard)
 			initStmts = append(initStmts, guardResult.initStmts...)
-			clause.Guard = guardResult.replacementNode
+			clause.Guard = guardResult.replacementNode.(ast.BLangExpression)
 		}
 		bodyResult := walkBlockStmt(cx, &clause.Body)
 		clause.Body = *bodyResult.replacementNode.(*ast.BLangBlockStmt)
 	}
 
-	return desugaredNode[model.StatementNode]{
+	return desugaredNode[ast.StatementNode]{
 		initStmts:       initStmts,
 		replacementNode: stmt,
 	}

@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible type: expected {| x: {| x: int, never... |}|{| x: string, never... |}, never... |}, got {| x: {| x: int|string, never... |}, never... |}
   --> mappingassign2-e.bal:40:11
    |
-40 |     P p = q; // @error
+40 |     P _ = q; // @error
    |           ^

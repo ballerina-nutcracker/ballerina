@@ -1,0 +1,19 @@
+(foo
+  (bb0 () ()
+    (return
+      (literal 300))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type int Signed8)) (expr
+        (type-conversion-expr
+          (invocation foo ())
+          (user-defined-type int Signed8)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+  )
+)

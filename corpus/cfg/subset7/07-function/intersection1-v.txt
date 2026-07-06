@@ -1,5 +1,9 @@
 (bar
   (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
     (return
       (literal 5))
   )

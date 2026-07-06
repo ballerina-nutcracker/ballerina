@@ -1,0 +1,84 @@
+module $anon.. v 0.0.0;
+class Counter {
+  count int
+
+  get() -> int{
+    bb0 {
+      %3 = ConstantLoad count
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init(int) -> nil|error{
+    bb0 {
+      %3 = ConstantLoad 0
+      %4 = ConstantLoad count
+      self[%4] = %3;
+      %6 = v;
+      %7 = ConstantLoad 0
+      %8 = %7;
+      %5 = < %6 %8;
+      %5 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad negative value
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = ConstantLoad count
+      (1, self)[%0] = (1, v);
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = ConstantLoad 5
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = %4;
+    %7 = $desugar$0 is error
+    %7 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    c = $desugar$0;
+    %9 = get(c) -> bb7;
+  }
+  bb7 {
+    %10 = %9;
+    %11 = println(%10) -> bb8;
+  }
+  bb8 {
+    %12 = ConstantLoad <nil>
+    %0 = %12;
+    return;
+  }
+}

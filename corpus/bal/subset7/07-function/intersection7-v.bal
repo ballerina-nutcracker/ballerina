@@ -31,6 +31,7 @@ public function main() {
 }
 
 function foo(int|string a) returns 2 {
+    int|string _ = a;
     return 2;
 }
 

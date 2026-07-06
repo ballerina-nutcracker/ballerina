@@ -21,5 +21,6 @@ public function main() {
 }
 
 function foo(record {any a;} c) {
+    record {any a;} _ = c;
     io:println("unexpected");
 }

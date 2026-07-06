@@ -1,0 +1,33 @@
+(Base
+  (Base.$resource$get$0
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (literal Base get )
+            (simple-var-ref id)))))
+    )
+  )
+)
+(Derived
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access tag
+          (simple-var-ref self))
+        (literal 2))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (user-defined-type Derived)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access tag
+          (simple-var-ref d)))))
+  )
+)

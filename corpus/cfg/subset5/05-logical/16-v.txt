@@ -22,7 +22,7 @@
   )
   (bb1 (bb0) (bb2)
     (var-def
-      (variable unused1 (type
+      (variable _ (type
         (union-type
           (value-type float)
           (value-type string))) (expr
@@ -39,7 +39,7 @@
   )
   (bb3 (bb2) (bb4)
     (var-def
-      (variable unused2 (type
+      (variable _ (type
         (union-type
           (union-type
             (value-type int)
@@ -50,7 +50,7 @@
   (bb4 (bb3 bb5) ())
   (bb5 (bb2) (bb4)
     (var-def
-      (variable unused3 (type
+      (variable _ (type
         (value-type int)) (expr
         (simple-var-ref x))))
   )

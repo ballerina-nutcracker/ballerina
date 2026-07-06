@@ -18,6 +18,6 @@ import mockorg/middlepkg;
 
 public function main() {
     // middlepkg uses leafpkg transitively
-    int doubled = middlepkg:getDoubledValue();
-    int quadrupled = middlepkg:quadrupleValue();
+    int _ = middlepkg:getDoubledValue();
+    int _ = middlepkg:quadrupleValue();
 }

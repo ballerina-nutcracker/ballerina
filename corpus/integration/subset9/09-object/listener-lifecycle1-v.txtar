@@ -1,0 +1,7 @@
+-- stdout --
+listener init
+main
+listener start
+testMain
+listener graceful stop
+-- stderr --

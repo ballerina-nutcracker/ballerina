@@ -61,5 +61,13 @@
     (finite-type
       (literal 4)))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (union-type
+            (finite-type
+              (literal 1))
+            (finite-type
+              (literal 2)))) (expr
+          (simple-var-ref a))))
       (return
         (literal 4)))))

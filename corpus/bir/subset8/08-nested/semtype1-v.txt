@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 FLOAT  int;
 INT  int;
 LIST_RW  int;
@@ -71,64 +70,80 @@ main() -> nil{
     %36 ? bb2 : bb13;
   }
   bb2 {
-    %37 = ConstantLoad complex
-    %38 = println(%37) -> bb3;
+    PushScopeFrame 9
+    %0 = ConstantLoad complex
+    %1 = println(%0) -> bb3;
   }
   bb3 {
-    %40 = ConstantLoad subtypeDataList
-    %39 = semType[%40];
-    list = %39;
-    %43 = ConstantLoad 0
-    %42 = list[%43];
-    st = %42;
-    %45 = st is {| atom: int|{| atomicType: {| members: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}, never... |}|{| names: [string...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}, types: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}...], never... |}, index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}
-    %45 ? bb4 : bb12;
+    %3 = ConstantLoad subtypeDataList
+    %2 = (1, semType)[%3];
+    list = %2;
+    %6 = ConstantLoad 0
+    %5 = list[%6];
+    st = %5;
+    %8 = st is {| atom: int|{| atomicType: {| members: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}, never... |}|{| names: [string...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}, types: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|...|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|..., never... |}...], never... |}...], never... |}, index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}
+    %8 ? bb4 : bb12;
   }
   bb4 {
-    %46 = ConstantLoad bdd
-    %47 = println(%46) -> bb5;
+    PushScopeFrame 6
+    %0 = ConstantLoad bdd
+    %1 = println(%0) -> bb5;
   }
   bb5 {
-    %49 = ConstantLoad atom
-    %48 = st[%49];
-    atom = %48;
-    %51 = atom is {| atomicType: {| members: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}, never... |}|{| names: [string...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}, types: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}...], never... |}, index: int, never... |}
-    %51 ? bb6 : bb11;
+    %3 = ConstantLoad atom
+    %2 = (1, st)[%3];
+    atom = %2;
+    %5 = atom is {| atomicType: {| members: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}, never... |}|{| names: [string...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}, types: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|..., left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}...], never... |}, index: int, never... |}
+    %5 ? bb6 : bb11;
   }
   bb6 {
-    %53 = ConstantLoad index
-    %52 = atom[%53];
-    %54 = %52;
-    %55 = println(%54) -> bb7;
+    PushScopeFrame 8
+    %1 = ConstantLoad index
+    %0 = (1, atom)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb7;
   }
   bb7 {
-    %57 = ConstantLoad atomicType
-    %56 = atom[%57];
-    t = %56;
-    %59 = t is {| names: [string...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}, types: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}...], never... |}
-    %59 ? bb8 : bb10;
+    %5 = ConstantLoad atomicType
+    %4 = (1, atom)[%5];
+    t = %4;
+    %7 = t is {| names: [string...], rest: int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}, types: [int|{| all: int, some: int, subtypeDataList: [[{| max: int, min: int, never... |}...]|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}|{| char: {| allowed: boolean, values: [string...], never... |}, nonChar: {| allowed: boolean, values: [string...], never... |}, never... |}|{| allowed: boolean, values: [float...], never... |}|{| value: boolean, never... |}|{| primitives: int, sequence: boolean|{| atom: int|{| atomicType: {| members: [int|......], rest: int|..., never... |}|..., index: int, never... |}, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}...], never... |}...], never... |}
+    %7 ? bb8 : bb10;
   }
   bb8 {
-    %61 = ConstantLoad names
-    %60 = t[%61];
-    names = %60;
-    %64 = ConstantLoad 0
-    %63 = names[%64];
-    %65 = println(%63) -> bb9;
+    PushScopeFrame 6
+    %1 = ConstantLoad names
+    %0 = (1, t)[%1];
+    names = %0;
+    %4 = ConstantLoad 0
+    %3 = names[%4];
+    %5 = println(%3) -> bb9;
   }
   bb9 {
+    PopScopeFrame
     GOTO bb10;
   }
   bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb11;
   }
   bb11 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb12;
   }
   bb12 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb13;
   }
   bb13 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

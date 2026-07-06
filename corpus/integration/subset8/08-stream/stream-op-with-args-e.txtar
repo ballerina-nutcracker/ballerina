@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: stream method 'next' takes no arguments
+  --> stream-op-with-args-e.bal:27:9
+   |
+27 |     _ = s.next(1); // @error stream method 'next' takes no arguments
+   |         ^^^^^^^^^

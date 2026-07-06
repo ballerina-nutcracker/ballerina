@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: cannot infer typedesc argument for parameter 'retTy': no contextually expected type
-  --> dependent-fn-1-e.bal:20:5
+  --> dependent-fn-1-e.bal:19:5
    |
-20 |     baz(1); // @error
+19 |     baz(1); // @error
    |     ^^^^^^

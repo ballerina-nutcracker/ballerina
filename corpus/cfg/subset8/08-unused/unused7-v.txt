@@ -7,7 +7,16 @@
   )
 )
 (foo
-  (bb0 () ())
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
+    (var-def
+      (variable _ (type
+        (value-type string)) (expr
+        (simple-var-ref s))))
+  )
 )
 (main
   (bb0 () ()

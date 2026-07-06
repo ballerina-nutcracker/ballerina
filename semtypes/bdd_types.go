@@ -125,7 +125,7 @@ func (sc *bddSerializationContext) serializeXmlBdd(bdd Bdd) unionOfIntersections
 	return sc.serializeBdd(bdd, sc.xmlAtomMap, sc.serializeXMLAtom, kind_XML_ATOM)
 }
 
-func (sc *bddSerializationContext) serializeXmlSubtype(xs xmlSubtype) xmlSubtypeEntry {
+func (sc *bddSerializationContext) serializeXmlSubtype(xs *xmlSubtype) xmlSubtypeEntry {
 	return xmlSubtypeEntry{
 		primitives: int32(xs.Primitives),
 		sequence:   sc.serializeXmlBdd(xs.Sequence),
@@ -175,9 +175,14 @@ func (sc *bddSerializationContext) resolveAtom(
 	serializeAtom func(atom) int32,
 	atomKind kind,
 ) atomEntry {
-	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() == BDD_REC_ATOM_READONLY {
-		if atomKind == kind_LIST_ATOM || atomKind == kind_MAPPING_ATOM {
-			return atomEntry{isRec: false, index: 0}
+	if recAtom, ok := atom.(*recAtom); ok {
+		if recAtom.index() < 0 {
+			return atomEntry{isRec: true, index: int32(recAtom.index())}
+		}
+		if recAtom.index() == BDD_REC_ATOM_READONLY {
+			if atomKind == kind_LIST_ATOM || atomKind == kind_MAPPING_ATOM {
+				return atomEntry{isRec: false, index: 0}
+			}
 		}
 	}
 	if idx, ok := atomMap[atom]; ok {
@@ -196,7 +201,7 @@ func (sc *bddSerializationContext) serializeListAtom(atom atom) int32 {
 	initial := make([]TypePoolIndex, len(at.Members.initial))
 	var mut uint8
 	for i := range at.Members.initial {
-		cell := &at.Members.initial[i]
+		cell := at.Members.initial[i]
 		initial[i] = sc.pool.Put(cellInner(cell))
 		mut = uint8(cellMut(cell))
 	}
@@ -227,7 +232,7 @@ func (sc *bddSerializationContext) serializeMappingAtom(atom atom) int32 {
 	for i, name := range at.Names {
 		b := []byte(name)
 		names[i] = enumerableStringDataEntry{len: int32(len(b)), values: b}
-		atomTy := &at.Types[i]
+		atomTy := at.Types[i]
 		types[i] = sc.pool.Put(cellInner(atomTy))
 		muts[i] = uint8(cellMut(atomTy))
 	}
@@ -271,7 +276,7 @@ func (sc *bddSerializationContext) serializeXMLAtom(atom atom) int32 {
 	return idx
 }
 
-func cellMut(cell *ComplexSemType) CellMutability {
+func cellMut(cell SemType) CellMutability {
 	bdd := cell.subtypeDataList()[0].(bddNode)
 	cat := bdd.atom().(*typeAtom).AtomicType.(*cellAtomicType)
 	return cat.Mut
@@ -312,7 +317,7 @@ func newBddDeserializationContext(pool *TypePool, env Env, bp *binaryPool) *bddD
 }
 
 func (dc *bddDeserializationContext) deserializeType(poolIndex int) SemType {
-	if dc.pool.tys[poolIndex] != nil {
+	if !IsZero(dc.pool.tys[poolIndex]) {
 		return dc.pool.tys[poolIndex]
 	}
 	te := dc.bp.types[poolIndex]
@@ -342,6 +347,8 @@ func (dc *bddDeserializationContext) deserializeType(poolIndex int) SemType {
 			data = dc.deserializeBddFromDnf(dc.bp.tableBdds[sde.index], dc.deserializeListAtom)
 		case objectBddSubtypeData:
 			data = dc.deserializeBddFromDnf(dc.bp.objectBdds[sde.index], dc.deserializeMappingAtom)
+		case streamBddSubtypeData:
+			data = dc.deserializeBddFromDnf(dc.bp.streamBdds[sde.index], dc.deserializeListAtom)
 		case xmlSubtypeData:
 			entry := dc.bp.xmlSubtypes[sde.index]
 			sequence := dc.deserializeBddFromDnf(entry.sequence, dc.deserializeXmlAtom)
@@ -350,7 +357,7 @@ func (dc *bddDeserializationContext) deserializeType(poolIndex int) SemType {
 		subtypeDataList = append(subtypeDataList, data)
 	}
 	ty := createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(
-		BasicTypeBitSet(te.all), BasicTypeBitSet(te.some), subtypeDataList,
+		basicTypeBitSet(te.all), basicTypeBitSet(te.some), subtypeDataList,
 	)
 	dc.pool.tys[poolIndex] = ty
 	return ty
@@ -409,6 +416,10 @@ func (dc *bddDeserializationContext) deserializeListAtom(atomIndex int32) atom {
 }
 
 func (dc *bddDeserializationContext) deserializeMappingAtom(atomIndex int32) atom {
+	if atomIndex < 0 {
+		atom := createDistinctRecAtom(int(atomIndex))
+		return &atom
+	}
 	if atomIndex == 0 {
 		ro := createRecAtom(BDD_REC_ATOM_READONLY)
 		return &ro
@@ -432,7 +443,7 @@ func (dc *bddDeserializationContext) deserializeMappingAtom(atomIndex int32) ato
 		inner := dc.resolvePoolType(entry.types[j])
 		mut := CellMutability(entry.muts[j])
 		cellFields[j] = cellFieldFrom(string(entry.names[j].values),
-			*cellContainingWithEnvSemTypeCellMutability(dc.env, inner, mut))
+			cellContainingWithEnvSemTypeCellMutability(dc.env, inner, mut))
 	}
 	restInner := dc.resolvePoolType(entry.rest)
 	restCell := cellContainingWithEnvSemTypeCellMutability(dc.env, restInner, CellMutability(entry.restMut))
@@ -485,13 +496,13 @@ func (dc *bddDeserializationContext) deserializeXmlAtom(atomIndex int32) atom {
 func (dc *bddDeserializationContext) resolvePoolType(idx TypePoolIndex) SemType {
 	if idx <= 0 {
 		bits := idx & indexMask
-		return basicTypeBitSetFrom(int(bits))
+		return basicTypeBitSet(bits).semType()
 	}
 	return dc.deserializeType(int(idx - 1))
 }
 
 func extractAtom(ty SemType) atom {
-	cst := ty.(*ComplexSemType)
+	cst := ty
 	return cst.subtypeDataList()[0].(bddNode).atom()
 }
 

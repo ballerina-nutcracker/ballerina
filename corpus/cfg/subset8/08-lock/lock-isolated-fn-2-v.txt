@@ -1,0 +1,22 @@
+(bump
+  (bb0 () ()
+    (assignment
+      (simple-var-ref a)
+      (binary-expr +
+        (simple-var-ref a)
+        (literal 1)))
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
+    (return
+      (simple-var-ref x))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation bump ()))))
+  )
+)

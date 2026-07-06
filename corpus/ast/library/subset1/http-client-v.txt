@@ -1,0 +1,134 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable c1 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr)))))))
+      (var-def
+        (variable r1 (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c1) (
+              (literal /path)))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access statusCode
+            (simple-var-ref r1)))))
+      (var-def
+        (variable c2 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal timeout)
+                  (literal 30d))
+                (key-value
+                  (literal followRedirects)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal enabled)
+                      (literal false)))))))))))
+      (var-def
+        (variable r2 (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c2) (
+              (literal /path)))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access statusCode
+            (simple-var-ref r2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getTextPayload expr:
+            (simple-var-ref r2) ()))))
+      (var-def
+        (variable c3 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)))))))
+      (var-def
+        (variable r3 (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c3) (
+              (literal /path)))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access statusCode
+            (simple-var-ref r3)))))
+      (var-def
+        (variable c4 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)))))))
+      (var-def
+        (variable r4 (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c4) (
+              (literal /path)
+              (mapping-constructor-expr
+                (key-value
+                  (literal X-Custom)
+                  (literal value)))))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access statusCode
+            (simple-var-ref r4)))))
+      (var-def
+        (variable c5 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal httpVersion)
+                  (literal 1.1)))))))))
+      (var-def
+        (variable r5 (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c5) (
+              (literal /path)))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access statusCode
+            (simple-var-ref r5)))))
+      (var-def
+        (variable c6 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal httpVersion)
+                  (literal 2.0)))))))))
+      (var-def
+        (variable r6 (expr
+          (checked-expr
+            (remote-method-call get expr:
+              (simple-var-ref c6) (
+              (literal /path)))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access statusCode
+            (simple-var-ref r6)))))
+      (return
+        (literal <nil>)))))

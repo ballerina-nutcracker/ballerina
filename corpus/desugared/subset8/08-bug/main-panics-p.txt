@@ -1,0 +1,7 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal main panic)))))))

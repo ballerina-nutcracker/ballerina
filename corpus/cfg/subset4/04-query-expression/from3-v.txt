@@ -15,7 +15,7 @@
         (query-expr
           (from-clause
             (var-def
-              (variable x))
+              (variable _))
             (simple-var-ref xs))
           (select-clause
             (query-expr

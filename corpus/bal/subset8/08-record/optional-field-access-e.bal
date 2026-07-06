@@ -20,5 +20,5 @@ type R record {
 
 public function main() {
     R r = {foo: 10};
-    int f = r.foo; // @error
+    int _ = r.foo; // @error
 }

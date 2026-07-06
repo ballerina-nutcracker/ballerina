@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Text|xml:Element>, got xml:ProcessingInstruction
+  --> text-typed-e.bal:18:40
+   |
+18 |     xml<xml:Element|xml:Text> _ = xml `<?p?>`; // @error
+   |                                        ^^^^^

@@ -26,7 +26,7 @@ public function main() {
     int x = 17;
     int[] v = [];
     io:println(len); // @output 1000000
-    foreach int i in 0 ..< len {
+    foreach int _ in 0 ..< len {
         v.push(x);
         x = x * a % m;
     }

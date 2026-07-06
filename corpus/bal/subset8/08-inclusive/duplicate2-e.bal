@@ -20,5 +20,5 @@ type R record {
 };
 
 public function main() {
-    R r = {x: 17, y: 1, "x": 10}; // @error
+    R _ = {x: 17, y: 1, "x": 10}; // @error
 }

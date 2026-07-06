@@ -1,0 +1,64 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition ZoneOffset
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field hours optional
+          (value-type int))
+        (field minutes optional
+          (value-type int)))))
+  (type-definition RequiredX
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition OptionalXRequiredY
+    (record-type
+      (field x optional
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition RequiredXOptionalY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable z (type
+          (user-defined-type ZoneOffset)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal hours)
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref z))))
+      (var-def
+        (variable u1 (type
+          (union-type
+            (user-defined-type RequiredX)
+            (user-defined-type OptionalXRequiredY))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal y)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref u1))))
+      (var-def
+        (variable u2 (type
+          (union-type
+            (user-defined-type OptionalXRequiredY)
+            (user-defined-type RequiredXOptionalY))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref u2)))))))

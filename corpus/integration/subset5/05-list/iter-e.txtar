@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: invalid type for variable
+error[SEMANTIC_ERROR]: invalid variable type int
   --> iter-e.bal:22:13
    |
 22 |     foreach int i in f { // @error

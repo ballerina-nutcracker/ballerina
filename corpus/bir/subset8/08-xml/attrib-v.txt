@@ -1,0 +1,32 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad e
+    %2 = ConstantLoad tt
+    %3 = newXMLText(%2)
+    %4 = ConstantLoad attr1
+    %5 = ConstantLoad foo
+    %6 = newMap {| string... |}{%4=%5}
+    %7 = newXMLElement(%1, %3, %6)
+    e1 = %7;
+    %9 = println(e1) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad e2
+    %11 = ConstantLoad xx
+    %12 = newXMLText(%11)
+    %13 = ConstantLoad attr2
+    %14 = ConstantLoad bar
+    %15 = ConstantLoad attr3
+    %16 = ConstantLoad 1
+    %17 = newMap {| string... |}{%13=%14, %15=%16}
+    %18 = newXMLElement(%10, %12, %17)
+    e2 = %18;
+    %20 = + e1 e2;
+    e3 = %20;
+    %22 = println(e3) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

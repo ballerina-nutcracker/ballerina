@@ -30,8 +30,9 @@ class TestConnector {
 
   testSend(string) -> boolean{
     bb0 {
-      %3 = ConstantLoad false
-      value = %3;
+      _ = ep;
+      %4 = ConstantLoad false
+      value = %4;
       %0 = value;
       return;
     }
@@ -68,8 +69,9 @@ class TestConnector2 {
 
   testSend(string) -> boolean{
     bb0 {
-      %3 = ConstantLoad false
-      value = %3;
+      _ = ep;
+      %4 = ConstantLoad false
+      value = %4;
       %0 = value;
       return;
     }

@@ -1,0 +1,28 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_string2.txt))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteString (
+          (simple-var-ref path)
+          (literal First)))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteString (
+          (simple-var-ref path)
+          (literal Second)
+          (simple-var-ref io APPEND)))))
+    (var-def
+      (variable content (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation io fileReadString (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref content))))
+  )
+)

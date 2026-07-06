@@ -1,0 +1,79 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)))))))
+    (var-def
+      (variable r1 (expr
+        (checked-expr
+          (remote-method-call put expr:
+            (simple-var-ref c) (
+            (literal /put)
+            (literal body)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r1)))))
+    (var-def
+      (variable r2 (expr
+        (checked-expr
+          (remote-method-call patch expr:
+            (simple-var-ref c) (
+            (literal /patch)
+            (mapping-constructor-expr
+              (key-value
+                (literal key)
+                (literal val)))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r2)))))
+    (var-def
+      (variable r3 (expr
+        (checked-expr
+          (remote-method-call delete expr:
+            (simple-var-ref c) (
+            (literal /delete)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r3)))))
+    (var-def
+      (variable r4 (expr
+        (checked-expr
+          (remote-method-call head expr:
+            (simple-var-ref c) (
+            (literal /head)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r4)))))
+    (var-def
+      (variable r5 (expr
+        (checked-expr
+          (remote-method-call options expr:
+            (simple-var-ref c) (
+            (literal /options)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r5)))))
+    (var-def
+      (variable r6 (expr
+        (checked-expr
+          (remote-method-call execute expr:
+            (simple-var-ref c) (
+            (literal PATCH)
+            (literal /execute)
+            (literal exec body)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref r6)))))
+    (return
+      (literal <nil>))
+  )
+)

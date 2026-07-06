@@ -19,7 +19,7 @@ package bir
 import (
 	"ballerina-lang-go/common"
 	"ballerina-lang-go/model"
-	"ballerina-lang-go/values"
+	"ballerina-lang-go/runtime/extern"
 )
 
 type BIRTerminator = BIRInstruction
@@ -47,7 +47,7 @@ type (
 		// CachedMethodLookupKey is used only for method calls. It ensures CachedBIRFunc
 		// matches the receiver object's resolved method lookup key for this call site.
 		CachedMethodLookupKey string
-		CachedNativeFunc      func(args []values.BalValue) (values.BalValue, error)
+		CachedNativeFunc      extern.NativeFunc
 		FpOperand             *BIROperand // For FP_CALL: the operand holding the function value
 	}
 
@@ -66,6 +66,24 @@ type (
 		BIRTerminatorBase
 		ErrorOp *BIROperand
 	}
+
+	LockStart struct {
+		BIRTerminatorBase
+		LockKey string
+	}
+
+	LockEnd struct {
+		BIRTerminatorBase
+		LockKey string
+	}
+
+	ResourceFunctionCall struct {
+		BIRTerminatorBase
+		Receiver     BIROperand
+		MethodName   string
+		PathSegments []BIROperand
+		Args         []BIROperand
+	}
 )
 
 var (
@@ -74,6 +92,9 @@ var (
 	_ BIRTerminator        = &Return{}
 	_ BIRTerminator        = &Branch{}
 	_ BIRTerminator        = &Panic{}
+	_ BIRTerminator        = &LockStart{}
+	_ BIRTerminator        = &LockEnd{}
+	_ BIRAssignInstruction = &ResourceFunctionCall{}
 )
 
 func (g *Goto) GetKind() InstructionKind {
@@ -142,6 +163,38 @@ func (p *Panic) GetKind() InstructionKind {
 	return INSTRUCTION_KIND_PANIC
 }
 
+func (l *LockStart) GetKind() InstructionKind {
+	return INSTRUCTION_KIND_LOCK
+}
+
+func (l *LockEnd) GetKind() InstructionKind {
+	return INSTRUCTION_KIND_UNLOCK
+}
+
+func NewLockStart(key string, thenBB *BIRBasicBlock, pos Location) *LockStart {
+	return &LockStart{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{
+				BIRNodeBase: BIRNodeBase{Pos: pos},
+			},
+			ThenBB: thenBB,
+		},
+		LockKey: key,
+	}
+}
+
+func NewLockEnd(key string, thenBB *BIRBasicBlock, pos Location) *LockEnd {
+	return &LockEnd{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{
+				BIRNodeBase: BIRNodeBase{Pos: pos},
+			},
+			ThenBB: thenBB,
+		},
+		LockKey: key,
+	}
+}
+
 func NewPanic(errorOp *BIROperand, pos Location) *Panic {
 	return &Panic{
 		BIRTerminatorBase: BIRTerminatorBase{
@@ -152,6 +205,30 @@ func NewPanic(errorOp *BIROperand, pos Location) *Panic {
 			},
 		},
 		ErrorOp: errorOp,
+	}
+}
+
+func (r *ResourceFunctionCall) GetKind() InstructionKind {
+	return INSTRUCTION_KIND_RESOURCE_CALL
+}
+
+func (r *ResourceFunctionCall) GetLhsOperand() *BIROperand {
+	return r.LhsOp
+}
+
+func NewResourceFunctionCall(receiver BIROperand, methodName string, pathSegments, args []BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *ResourceFunctionCall {
+	return &ResourceFunctionCall{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{
+				BIRNodeBase: BIRNodeBase{Pos: pos},
+				LhsOp:       lhsOp,
+			},
+			ThenBB: thenBB,
+		},
+		Receiver:     receiver,
+		MethodName:   methodName,
+		PathSegments: pathSegments,
+		Args:         args,
 	}
 }
 

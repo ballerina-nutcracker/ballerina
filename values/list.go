@@ -24,13 +24,36 @@ import (
 )
 
 type List struct {
-	Type   semtypes.SemType
-	elems  []BalValue
-	filler FillerFactory
+	Type       semtypes.SemType
+	atomic     *semtypes.ListAtomicType
+	isReadonly bool
+	elems      []BalValue
+	filler     FillerFactory
 }
 
-func NewList(size int, ty semtypes.SemType, filler FillerFactory) *List {
-	return &List{elems: make([]BalValue, size), Type: ty, filler: filler}
+// NewList constructs a fully initialized list without applying any inherent
+// type or readonly checks. The resulting length is max(size, len(initial));
+// initial values occupy the low indices and any remaining slots are populated
+// by the filler factory.
+func NewList(ty semtypes.SemType, atomic *semtypes.ListAtomicType, isReadonly bool,
+	filler FillerFactory, size int, initial []BalValue,
+) *List {
+	if atomic == nil {
+		panic("values.NewList: atomic type must not be nil")
+	}
+	length := max(len(initial), size)
+	elems := make([]BalValue, length)
+	copy(elems, initial)
+	if len(initial) < length {
+		panic("values.NewList: missing values")
+	}
+	return &List{
+		Type:       ty,
+		atomic:     atomic,
+		isReadonly: isReadonly,
+		elems:      elems,
+		filler:     filler,
+	}
 }
 
 func (l *List) Len() int {
@@ -42,7 +65,11 @@ func (l *List) Get(idx int) BalValue {
 }
 
 // FillingSet stores value at idx, resizing the list if necessary.
-func (l *List) FillingSet(idx int, value BalValue) {
+// Panics if the list is readonly or value does not belong to the inherent
+// member type at idx. Filler-grown intermediate slots are not type-checked.
+func (l *List) FillingSet(tc semtypes.Context, idx int, value BalValue) {
+	l.checkMutable()
+	l.checkMemberType(tc, idx, value)
 	currentLen := len(l.elems)
 	if idx < currentLen {
 		l.elems[idx] = value
@@ -70,10 +97,12 @@ func (l *List) FillingSet(idx int, value BalValue) {
 }
 
 // FillingGet returns the value at idx, growing the list with filler values when idx is beyond the current length.
+// Panics if growth is required and the list is readonly.
 func (l *List) FillingGet(idx int) BalValue {
 	if idx < len(l.elems) {
 		return l.elems[idx]
 	}
+	l.checkMutable()
 	if l.filler == nil {
 		panic(NewErrorWithMessage("no filler value"))
 	}
@@ -86,8 +115,29 @@ func (l *List) FillingGet(idx int) BalValue {
 	return l.elems[idx]
 }
 
-func (l *List) Append(values ...BalValue) {
-	l.elems = append(l.elems, values...)
+// Append adds values at the tail, checking each against the inherent member
+// type at its eventual index.
+func (l *List) Append(tc semtypes.Context, vs ...BalValue) {
+	l.checkMutable()
+	base := len(l.elems)
+	for i, v := range vs {
+		l.checkMemberType(tc, base+i, v)
+	}
+	l.elems = append(l.elems, vs...)
+}
+
+func (l *List) checkMutable() {
+	if l.isReadonly {
+		panic(NewErrorWithMessage("inherent type violation: cannot mutate readonly value"))
+	}
+}
+
+func (l *List) checkMemberType(tc semtypes.Context, idx int, value BalValue) {
+	memberTy := l.atomic.MemberAtInnerVal(idx)
+	valueTy := SemTypeForValue(value)
+	if !semtypes.IsSubtype(tc, valueTy, memberTy) {
+		panic(NewErrorWithMessage("inherent type violation"))
+	}
 }
 
 func (l *List) String(visited map[uintptr]bool) string {

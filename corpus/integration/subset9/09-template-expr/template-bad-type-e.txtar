@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean|int|float|decimal|string, got xml
+  --> template-bad-type-e.bal:23:28
+   |
+23 |     xml _ = xml `<r attr="${elem}"/>`;  // @error xml not allowed in attribute
+   |                            ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean|int|float|decimal|string|xml, got [int...]
+  --> template-bad-type-e.bal:22:20
+   |
+22 |     xml _ = xml `${a}`;             // @error array not allowed in content
+   |                    ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean|int|float|decimal|string|xml, got nil
+  --> template-bad-type-e.bal:21:20
+   |
+21 |     xml _ = xml `${n}`;             // @error nil not allowed
+   |                    ^

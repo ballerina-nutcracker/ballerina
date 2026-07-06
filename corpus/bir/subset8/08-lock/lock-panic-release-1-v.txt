@@ -1,0 +1,65 @@
+module $anon.. v 0.0.0;
+counter  int;
+bump() -> nil{
+  bb0 {
+    lock-start "$anon/.:counter" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 5
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + counter %2;
+    counter = %0;
+    %3 = ConstantLoad boom
+    %4 = newError error(%3)
+    (1, %1) = %4;
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb2;
+  }
+  bb2 {
+    panic %1;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = bump() -> bb2;
+  }
+  bb2 {
+    %1 = %2;
+    GOTO bb3;
+  }
+  bb3 {
+    e = %1;
+    %4 = e is error
+    %5 = %4;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    lock-start "$anon/.:counter" GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 4
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + counter %2;
+    counter = %0;
+    %3 = println(counter) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb7;
+  }
+  bb7 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+  }
+}

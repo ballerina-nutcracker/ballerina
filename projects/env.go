@@ -22,6 +22,7 @@ import (
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semantics"
+	"ballerina-lang-go/semtypes"
 )
 
 // Environment represents an environment shared by a set of projects.
@@ -53,6 +54,16 @@ func newEnvironment(fsys fs.FS, env *context.CompilerEnvironment) *Environment {
 }
 
 func (e *Environment) compilerEnvironment() *context.CompilerEnvironment {
+	return e.compilerEnv
+}
+
+// TypeEnv returns the semantic type environment associated with this environment.
+func (e *Environment) TypeEnv() semtypes.Env {
+	return e.compilerEnv.GetTypeEnv()
+}
+
+// CompilerEnvironment returns the compiler environment associated with this environment.
+func (e *Environment) CompilerEnvironment() *context.CompilerEnvironment {
 	return e.compilerEnv
 }
 

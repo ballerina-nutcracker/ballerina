@@ -1,0 +1,74 @@
+name: Nightly Race Detector
+
+on:
+  schedule:
+    # 02:00 UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  race-tests:
+    name: Tests with -race
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
+      - name: Install Hyperfine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine
+
+      - name: Run all modules with race detector
+        run: python3 .github/scripts/run_native_tests.py --race
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v8
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const runUrl = process.env.RUN_URL;
+            const title = 'Nightly race detector build failing';
+            const body = [
+              `The nightly race detector workflow failed on \`${context.sha.substring(0, 7)}\`.`,
+              ``,
+              `Run: ${runUrl}`,
+            ].join('\n');
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-race-failure',
+              per_page: 1,
+            });
+
+            if (existing.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['nightly-race-failure'],
+              });
+            }

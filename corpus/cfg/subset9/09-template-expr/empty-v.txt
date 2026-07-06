@@ -1,0 +1,12 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (string-template-literal
+          (template-string "")))))
+    (expression-stmt
+      (invocation io println (
+        (string-template-literal
+          (template-string "plain literal")))))
+  )
+)

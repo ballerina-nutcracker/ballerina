@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable tz (type
+          (union-type
+            (user-defined-type time TimeZone)
+            (error-type))) (expr
+          (new
+            (user-defined-type time TimeZone) (
+            (literal Invalid/Zone))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref tz)
+            (error-type)))))
+      (var-def
+        (variable utcZone (type
+          (user-defined-type time TimeZone)) (expr
+          (checked-expr
+            (new
+              (user-defined-type time TimeZone) (
+              (literal UTC)))))))
+      (var-def
+        (variable civil (type
+          (user-defined-type time Civil)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal year)
+              (literal 2021))
+            (key-value
+              (literal month)
+              (literal 4))
+            (key-value
+              (literal day)
+              (literal 12))
+            (key-value
+              (literal hour)
+              (literal 10))
+            (key-value
+              (literal minute)
+              (literal 0))))))
+      (var-def
+        (variable result (type
+          (union-type
+            (user-defined-type time Utc)
+            (error-type))) (expr
+          (invocation utcFromCivil expr:
+            (simple-var-ref utcZone) (
+            (simple-var-ref civil))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type))))))))

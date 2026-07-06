@@ -1,0 +1,273 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function testFloatValue () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref b)
+        (literal 10.1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))))
+  (function testNegativeFloatValue () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable y (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref y)
+        (unary-expr -
+          (literal 10.1)))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref y))))))
+  (function testFloatAddition () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type float))))
+      (var-def
+        (variable a (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref a)
+        (literal 9.9))
+      (assignment
+        (simple-var-ref b)
+        (literal 10.1))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b)))))))
+  (function testFloatMultiplication () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type float))))
+      (var-def
+        (variable a (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref a)
+        (literal 2.5))
+      (assignment
+        (simple-var-ref b)
+        (literal 5.5))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (simple-var-ref a)
+            (simple-var-ref b)))))))
+  (function testFloatSubtraction () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type float))))
+      (var-def
+        (variable a (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref a)
+        (literal 25.5))
+      (assignment
+        (simple-var-ref b)
+        (literal 15.5))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (simple-var-ref a)
+            (simple-var-ref b)))))))
+  (function testFloatDivision () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type float))))
+      (var-def
+        (variable a (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref a)
+        (literal 25.5))
+      (assignment
+        (simple-var-ref b)
+        (literal 5.1))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref a)
+            (simple-var-ref b)))))))
+  (function testFloatParameter (
+    (variable a (type
+      (value-type float)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type float))))
+      (assignment
+        (simple-var-ref b)
+        (simple-var-ref a))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))))
+  (function testFloatValues () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type float)) (expr
+          (literal 123.4))))
+      (var-def
+        (variable b (type
+          (value-type float)) (expr
+          (literal 1.234e2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))))
+  (function testHexFloatingPointLiterals () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type float)) (expr
+          (literal 0X12Ab.0p0))))
+      (var-def
+        (variable b (type
+          (value-type float)) (expr
+          (literal 0x8.0p0))))
+      (var-def
+        (variable c (type
+          (value-type float)) (expr
+          (literal 0xaP-1))))
+      (var-def
+        (variable d (type
+          (value-type float)) (expr
+          (literal 0x3p2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))))
+  (function testIntLiteralAssignment () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type float)) (expr
+          (literal 12))))
+      (var-def
+        (variable y (type
+          (value-type float)) (expr
+          (literal 15))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref y))))))
+  (function testDiscriminatedFloatLiteral () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type float)) (expr
+          (literal 1.0f))))
+      (var-def
+        (variable b (expr
+          (literal 1.0f))))
+      (var-def
+        (variable d (type
+          (value-type float)) (expr
+          (literal 2.2e3f))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))))
+  (function testHexaDecimalLiteralsWithFloat () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f1 (type
+          (value-type float)) (expr
+          (literal 5))))
+      (var-def
+        (variable f2 (type
+          (value-type float)) (expr
+          (literal 1365))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (literal 5.0)
+            (simple-var-ref f1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (literal 1365.0)
+            (simple-var-ref f2)))))))
+  (function testOutOfRangeIntWithFloat () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f1 (type
+          (value-type float)) (expr
+          (literal 1e+30))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (literal 1.0E30)
+            (simple-var-ref f1)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation testFloatValue ()))
+      (expression-stmt
+        (invocation testNegativeFloatValue ()))
+      (expression-stmt
+        (invocation testFloatAddition ()))
+      (expression-stmt
+        (invocation testFloatMultiplication ()))
+      (expression-stmt
+        (invocation testFloatSubtraction ()))
+      (expression-stmt
+        (invocation testFloatDivision ()))
+      (expression-stmt
+        (invocation testFloatParameter (
+          (literal 5.3))))
+      (expression-stmt
+        (invocation testFloatValues ()))
+      (expression-stmt
+        (invocation testHexFloatingPointLiterals ()))
+      (expression-stmt
+        (invocation testIntLiteralAssignment ()))
+      (expression-stmt
+        (invocation testDiscriminatedFloatLiteral ()))
+      (expression-stmt
+        (invocation testHexaDecimalLiteralsWithFloat ()))
+      (expression-stmt
+        (invocation testOutOfRangeIntWithFloat ())))))

@@ -18,12 +18,14 @@ type F1 function(int) returns string;
 type F2 function(string) returns int;
 
 function foo(int a) returns string {
+        int _ = a;
     return "foo";
-}
+    }
 
 function bar(string a) returns int {
+        string _ = a;
     return 5;
-}
+    }
 
 public function main() {
     F1 f1 = foo;

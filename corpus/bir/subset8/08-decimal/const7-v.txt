@@ -1,13 +1,12 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 D1  1.1E+2;
 D10  decimal;
 D2  1.1E+2;
 D3  9.9E+23;
-D4  decimal;
-D5  decimal;
-D6  decimal;
-D7  decimal;
+D4  9.9000000000000000000011E+23;
+D5  9.9000000000000000000011E+23;
+D6  -9.8999999999999999999989E+23;
+D7  -9.8999999999999999999989E+23;
 D8  decimal;
 D9  decimal;
 main() -> nil{

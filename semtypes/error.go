@@ -50,6 +50,27 @@ func ErrorDetailAtomicType(ctx Context, errorType SemType) (MappingAtomicType, b
 	return MappingAtomicType{}, false
 }
 
+func errorDetailBddWithoutDistinctAtoms(bdd Bdd) Bdd {
+	return stripDistinctAtomsFromBdd(bdd)
+}
+
+func stripErrorDistinctAtoms(ty SemType) SemType {
+	return stripDistinctAtomsFromSemType(ty, BTError, stripDistinctAtomsFromBdd)
+}
+
+func stripDistinctAtomsFromBdd(bdd Bdd) Bdd {
+	var paths []bddPath
+	bddPathsPositive(bdd, &paths, bddPathFrom())
+	if len(paths) == 0 {
+		return bddNothing()
+	}
+	result := paths[0].bdd
+	for _, path := range paths[1:] {
+		result = bddUnion(result, path.bdd)
+	}
+	return result
+}
+
 func ErrorWithDetail(detail SemType) SemType {
 	mappingSd := subtypeData(detail, BTMapping)
 	if allOrNothingSubtype, ok := mappingSd.(allOrNothingSubtype); ok {
@@ -67,7 +88,7 @@ func ErrorWithDetail(detail SemType) SemType {
 }
 
 func errorDistinct(distinctId int) SemType {
-	common.Assert(distinctId >= 0)
+	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(((-distinctId) - 1))))
 	return getBasicSubtype(BTError, bdd)
 }

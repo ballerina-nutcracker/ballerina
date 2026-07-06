@@ -1,0 +1,26 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1.1
+    %2 = %1;
+    %3 = ConstantLoad 2.2
+    %4 = %3;
+    %5 = sum(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad 12.30
+    %9 = fromString(%8) -> bb3;
+  }
+  bb3 {
+    %10 = %9 is decimal
+    %11 = %10;
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

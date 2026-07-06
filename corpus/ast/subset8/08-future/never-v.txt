@@ -2,7 +2,7 @@
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
   (function foo () (
-    (builtin-ref-type never))
+    (value-type never))
     (block-function-body
       (panic
         (error-constructor-expr (

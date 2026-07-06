@@ -138,15 +138,6 @@ var UnsupportedTests = []string{
 	"subset8/08-const/6-e.bal",
 	// ----- End of constant folding -----
 
-	// Unused local variable detection
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/439
-	"subset8/08-unused/unused1-e.bal",
-	"subset8/08-unused/unused2-e.bal",
-	"subset8/08-unused/unused3-e.bal",
-	"subset8/08-unused/unused4-e.bal",
-	"subset8/08-unused/unused5-e.bal",
-	"subset8/08-unused/unused6-e.bal",
-
 	// ----- Float-related skips -----
 	// BIR type-tests use plain `float` instead of the singleton union `Special`, so
 	// `x is Special` matches every float. Re-enable after TypeTest.Type keeps the union.
@@ -159,9 +150,6 @@ var UnsupportedTests = []string{
 	"subset8/08-future/fieldexpr1-v.bal",
 	// https://github.com/ballerina-platform/ballerina-lang-go/issues/442
 	"subset8/08-future/main-v.bal",
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/443
-	"subset8/08-future/never-v.bal",
-
 	// https://github.com/ballerina-platform/ballerina-lang-go/issues/288
 	"subset8/08-future/xmlsubtype-v.bal", // xml:Element type unknown
 
@@ -170,38 +158,6 @@ var UnsupportedTests = []string{
 	// 	https://github.com/ballerina-platform/ballerina-lang-go/issues/162
 	"subset8/08-list/10-e.bal",
 	"subset8/08-mapping/9-e.bal",
-
-	// Runtime mutatation validation https://github.com/ballerina-platform/ballerina-lang-go/issues/176 and https://github.com/ballerina-platform/ballerina-lang-go/issues/177
-	"subset8/08-bytearr/2-p.bal",
-	"subset8/08-bytearr/3-p.bal",
-	"subset8/08-bytearr/4-p.bal",
-	"subset8/08-exact/array1-p.bal",
-	"subset8/08-exact/map1-p.bal",
-	"subset8/08-exact/push1-p.bal",
-	"subset8/08-exact/record1-p.bal",
-	"subset8/08-inclusive/inherent1-p.bal",
-	"subset8/08-inttest/typecast1-p.bal",
-	"subset8/08-list/push6-p.bal",
-	"subset8/08-map/int5-p.bal",
-	"subset8/08-nested/exact2-p.bal",
-	"subset8/08-nested/exact4-p.bal",
-	"subset8/08-nested/fill3-p.bal",
-	"subset8/08-nested/exact5-p.bal",
-	"subset8/08-nested/exact6-p.bal",
-	"subset8/08-record/inherent1-p.bal",
-	"subset8/08-record/inherent2-p.bal",
-	"subset8/08-tuple/exact1-p.bal",
-	"subset8/08-tuple/exact2-p.bal",
-	"subset8/08-tuple/push3-p.bal",
-	"subset8/08-nested/exact1-p.bal",
-	"subset8/08-nested/proj1-p.bal",
-	"subset8/08-rest/exact1-p.bal",
-	"subset8/08-list/int2-p.bal",
-	"subset8/08-list/int5-p.bal",
-	"subset8/08-map/int2-p.bal",
-
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/441
-	"subset8/08-bug/unusedimport-e.bal",
 
 	// rest param not supported in dependently typed functions
 	"subset8/08-function/dependent-fn-5-e.bal",

@@ -1,0 +1,10 @@
+{
+  "packages": [
+    {
+      "org": "testorg",
+      "name": "legacypkg",
+      "version": "1.0.0",
+      "dependencies": []
+    }
+  ]
+}

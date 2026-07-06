@@ -38,6 +38,10 @@
       (value-type boolean))
       (block-function-body
         (var-def
+          (variable _ (type
+            (value-type string)) (expr
+            (simple-var-ref ep))))
+        (var-def
           (variable value (type
             (value-type boolean)) (expr
             (literal false))))
@@ -81,6 +85,10 @@
         (value-type string)))) (
       (value-type boolean))
       (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type string)) (expr
+            (simple-var-ref ep))))
         (var-def
           (variable value (type
             (value-type boolean)) (expr

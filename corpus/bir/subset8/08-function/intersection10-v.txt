@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:moveFn
@@ -49,31 +48,35 @@ moveFn({| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|b
     %4 ? bb1 : bb3;
   }
   bb1 {
-    %5 = dx;
-    %6 = dy;
-    %7 = moveColoredPoint(p,%5,%6) -> bb2;
+    PushScopeFrame 3
+    %0 = (1, dx);
+    %1 = (1, dy);
+    %2 = moveColoredPoint((1, p),%0,%1) -> bb2;
   }
   bb2 {
-    %0 = %7;
+    (1, %0) = %2;
+    PopScopeFrame
     return;
   }
   bb3 {
-    %8 = dx;
-    %9 = dy;
-    %10 = movePoint(p,%8,%9) -> bb4;
+    PushScopeFrame 13
+    %0 = (1, dx);
+    %1 = (1, dy);
+    %2 = movePoint((1, p),%0,%1) -> bb4;
   }
   bb4 {
-    movedPoint = %10;
-    %12 = ConstantLoad x
-    %14 = ConstantLoad x
-    %13 = movedPoint[%14];
-    %15 = ConstantLoad y
-    %17 = ConstantLoad y
-    %16 = movedPoint[%17];
-    %18 = ConstantLoad colour
-    %19 = ConstantLoad white
-    %20 = newMap {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%12=%13, %15=%16, %18=%19}
-    %0 = %20;
+    movedPoint = %2;
+    %4 = ConstantLoad x
+    %6 = ConstantLoad x
+    %5 = movedPoint[%6];
+    %7 = ConstantLoad y
+    %9 = ConstantLoad y
+    %8 = movedPoint[%9];
+    %10 = ConstantLoad colour
+    %11 = ConstantLoad white
+    %12 = newMap {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%4=%5, %7=%8, %10=%11}
+    (1, %0) = %12;
+    PopScopeFrame
     return;
   }
 }
@@ -106,24 +109,28 @@ moveColoredPoint({| colour: string, x: int, y: int, nil|boolean|int|float|decima
     %4 ? bb1 : bb2;
   }
   bb1 {
-    %10 = ConstantLoad x
-    %9 = p[%10];
-    %11 = %9;
-    %12 = dx;
-    %8 = + %11 %12;
-    %13 = ConstantLoad x
-    p[%13] = %8;
-    %16 = ConstantLoad y
-    %15 = p[%16];
-    %17 = %15;
-    %18 = dy;
-    %14 = + %17 %18;
-    %19 = ConstantLoad y
-    p[%19] = %14;
+    PushScopeFrame 12
+    %2 = ConstantLoad x
+    %1 = (1, p)[%2];
+    %3 = %1;
+    %4 = (1, dx);
+    %0 = + %3 %4;
+    %5 = ConstantLoad x
+    (1, p)[%5] = %0;
+    %8 = ConstantLoad y
+    %7 = (1, p)[%8];
+    %9 = %7;
+    %10 = (1, dy);
+    %6 = + %9 %10;
+    %11 = ConstantLoad y
+    (1, p)[%11] = %6;
+    PopScopeFrame
     GOTO bb2;
   }
   bb2 {
-    %0 = p;
+    PushScopeFrame 0
+    (1, %0) = (1, p);
+    PopScopeFrame
     return;
   }
 }

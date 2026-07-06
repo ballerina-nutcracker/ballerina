@@ -1,0 +1,4 @@
+-- stdout --
+got error: boom
+ok
+-- stderr --

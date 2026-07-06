@@ -16,7 +16,7 @@
 
 package ast
 
-import "ballerina-lang-go/model"
+func (*BLangBindingPatternBase) isBindingPattern() {}
 
 type (
 	BLangBindingPatternBase struct {
@@ -60,7 +60,7 @@ type (
 	BLangNamedArgBindingPattern struct {
 		BLangBindingPatternBase
 		ArgName        *BLangIdentifier
-		BindingPattern model.BindingPatternNode
+		BindingPattern BindingPatternNode
 	}
 
 	BLangRestBindingPattern struct {
@@ -73,16 +73,18 @@ type (
 	}
 )
 
+func (*BLangWildCardBindingPattern) isWildCardBindingPattern() {}
+
 var (
-	_ model.CaptureBindingPatternNode      = &BLangCaptureBindingPattern{}
-	_ model.ErrorBindingPatternNode        = &BLangErrorBindingPattern{}
-	_ model.ErrorMessageBindingPatternNode = &BLangErrorMessageBindingPattern{}
-	_ model.ErrorCauseBindingPatternNode   = &BLangErrorCauseBindingPattern{}
-	_ model.ErrorFieldBindingPatternsNode  = &BLangErrorFieldBindingPatterns{}
-	_ model.SimpleBindingPatternNode       = &BLangSimpleBindingPattern{}
-	_ model.NamedArgBindingPatternNode     = &BLangNamedArgBindingPattern{}
-	_ model.RestBindingPatternNode         = &BLangRestBindingPattern{}
-	_ model.WildCardBindingPatternNode     = &BLangWildCardBindingPattern{}
+	_ CaptureBindingPatternNode      = &BLangCaptureBindingPattern{}
+	_ ErrorBindingPatternNode        = &BLangErrorBindingPattern{}
+	_ ErrorMessageBindingPatternNode = &BLangErrorMessageBindingPattern{}
+	_ ErrorCauseBindingPatternNode   = &BLangErrorCauseBindingPattern{}
+	_ ErrorFieldBindingPatternsNode  = &BLangErrorFieldBindingPatterns{}
+	_ SimpleBindingPatternNode       = &BLangSimpleBindingPattern{}
+	_ NamedArgBindingPatternNode     = &BLangNamedArgBindingPattern{}
+	_ RestBindingPatternNode         = &BLangRestBindingPattern{}
+	_ WildCardBindingPatternNode     = &BLangWildCardBindingPattern{}
 )
 
 var (
@@ -97,37 +99,19 @@ var (
 	_ BLangNode = &BLangWildCardBindingPattern{}
 )
 
-func (b *BLangCaptureBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangCaptureBindingPattern.java:55:5
-	return model.NodeKind_CAPTURE_BINDING_PATTERN
-}
-
-func (b *BLangCaptureBindingPattern) GetIdentifier() model.IdentifierNode {
-	// migrated from BLangCaptureBindingPattern.java:60:5
+func (b *BLangCaptureBindingPattern) GetIdentifier() *BLangIdentifier {
 	return &b.Identifier
 }
 
-func (b *BLangCaptureBindingPattern) SetIdentifier(identifier model.IdentifierNode) {
-	// migrated from BLangCaptureBindingPattern.java:65:5
-	if id, ok := identifier.(*BLangIdentifier); ok {
-		b.Identifier = *id
-		return
-	}
-	panic("identifier is not a BLangIdentifier")
+func (b *BLangCaptureBindingPattern) SetIdentifier(identifier *BLangIdentifier) {
+	b.Identifier = *identifier
 }
 
-func (b *BLangErrorBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangErrorBindingPattern.java:59:5
-	return model.NodeKind_ERROR_BINDING_PATTERN
-}
-
-func (b *BLangErrorBindingPattern) GetErrorTypeReference() model.UserDefinedTypeNode {
-	// migrated from BLangErrorBindingPattern.java:64:5
+func (b *BLangErrorBindingPattern) GetErrorTypeReference() UserDefinedTypeNode {
 	return b.ErrorTypeReference
 }
 
-func (b *BLangErrorBindingPattern) SetErrorTypeReference(userDefinedTypeNode model.UserDefinedTypeNode) {
-	// migrated from BLangErrorBindingPattern.java:69:5
+func (b *BLangErrorBindingPattern) SetErrorTypeReference(userDefinedTypeNode UserDefinedTypeNode) {
 	if userDefinedTypeNode, ok := userDefinedTypeNode.(*BLangUserDefinedType); ok {
 		b.ErrorTypeReference = userDefinedTypeNode
 		return
@@ -135,13 +119,11 @@ func (b *BLangErrorBindingPattern) SetErrorTypeReference(userDefinedTypeNode mod
 	panic("userDefinedTypeNode is not a BLangUserDefinedType")
 }
 
-func (b *BLangErrorBindingPattern) GetErrorMessageBindingPatternNode() model.ErrorMessageBindingPatternNode {
-	// migrated from BLangErrorBindingPattern.java:74:5
+func (b *BLangErrorBindingPattern) GetErrorMessageBindingPatternNode() ErrorMessageBindingPatternNode {
 	return b.ErrorMessageBindingPattern
 }
 
-func (b *BLangErrorBindingPattern) SetErrorMessageBindingPatternNode(errorMessageBindingPatternNode model.ErrorMessageBindingPatternNode) {
-	// migrated from BLangErrorBindingPattern.java:79:5
+func (b *BLangErrorBindingPattern) SetErrorMessageBindingPatternNode(errorMessageBindingPatternNode ErrorMessageBindingPatternNode) {
 	if errorMessageBindingPatternNode, ok := errorMessageBindingPatternNode.(*BLangErrorMessageBindingPattern); ok {
 		b.ErrorMessageBindingPattern = errorMessageBindingPatternNode
 		return
@@ -149,13 +131,11 @@ func (b *BLangErrorBindingPattern) SetErrorMessageBindingPatternNode(errorMessag
 	panic("errorMessageBindingPatternNode is not a BLangErrorMessageBindingPattern")
 }
 
-func (b *BLangErrorBindingPattern) GetErrorCauseBindingPatternNode() model.ErrorCauseBindingPatternNode {
-	// migrated from BLangErrorBindingPattern.java:84:5
+func (b *BLangErrorBindingPattern) GetErrorCauseBindingPatternNode() ErrorCauseBindingPatternNode {
 	return b.ErrorCauseBindingPattern
 }
 
-func (b *BLangErrorBindingPattern) SetErrorCauseBindingPatternNode(errorCauseBindingPatternNode model.ErrorCauseBindingPatternNode) {
-	// migrated from BLangErrorBindingPattern.java:89:5
+func (b *BLangErrorBindingPattern) SetErrorCauseBindingPatternNode(errorCauseBindingPatternNode ErrorCauseBindingPatternNode) {
 	if errorCauseBindingPatternNode, ok := errorCauseBindingPatternNode.(*BLangErrorCauseBindingPattern); ok {
 		b.ErrorCauseBindingPattern = errorCauseBindingPatternNode
 		return
@@ -163,13 +143,11 @@ func (b *BLangErrorBindingPattern) SetErrorCauseBindingPatternNode(errorCauseBin
 	panic("errorCauseBindingPatternNode is not a BLangErrorCauseBindingPattern")
 }
 
-func (b *BLangErrorBindingPattern) GetErrorFieldBindingPatternsNode() model.ErrorFieldBindingPatternsNode {
-	// migrated from BLangErrorBindingPattern.java:94:5
+func (b *BLangErrorBindingPattern) GetErrorFieldBindingPatternsNode() ErrorFieldBindingPatternsNode {
 	return b.ErrorFieldBindingPatterns
 }
 
-func (b *BLangErrorBindingPattern) SetErrorFieldBindingPatternsNode(errorFieldBindingPatternsNode model.ErrorFieldBindingPatternsNode) {
-	// migrated from BLangErrorBindingPattern.java:99:5
+func (b *BLangErrorBindingPattern) SetErrorFieldBindingPatternsNode(errorFieldBindingPatternsNode ErrorFieldBindingPatternsNode) {
 	if errorFieldBindingPatternsNode, ok := errorFieldBindingPatternsNode.(*BLangErrorFieldBindingPatterns); ok {
 		b.ErrorFieldBindingPatterns = errorFieldBindingPatternsNode
 		return
@@ -177,13 +155,11 @@ func (b *BLangErrorBindingPattern) SetErrorFieldBindingPatternsNode(errorFieldBi
 	panic("errorFieldBindingPatternsNode is not a BLangErrorFieldBindingPatterns")
 }
 
-func (b *BLangErrorMessageBindingPattern) GetSimpleBindingPattern() model.SimpleBindingPatternNode {
-	// migrated from BLangErrorMessageBindingPattern.java:37:5
+func (b *BLangErrorMessageBindingPattern) GetSimpleBindingPattern() SimpleBindingPatternNode {
 	return b.SimpleBindingPattern
 }
 
-func (b *BLangErrorMessageBindingPattern) SetSimpleBindingPattern(simpleBindingPattern model.SimpleBindingPatternNode) {
-	// migrated from BLangErrorMessageBindingPattern.java:42:5
+func (b *BLangErrorMessageBindingPattern) SetSimpleBindingPattern(simpleBindingPattern SimpleBindingPatternNode) {
 	if simpleBindingPattern, ok := simpleBindingPattern.(*BLangSimpleBindingPattern); ok {
 		b.SimpleBindingPattern = simpleBindingPattern
 		return
@@ -191,18 +167,11 @@ func (b *BLangErrorMessageBindingPattern) SetSimpleBindingPattern(simpleBindingP
 	panic("simpleBindingPattern is not a BLangSimpleBindingPattern")
 }
 
-func (b *BLangErrorMessageBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangErrorMessageBindingPattern.java:62:5
-	return model.NodeKind_ERROR_MESSAGE_BINDING_PATTERN
-}
-
-func (b *BLangErrorCauseBindingPattern) GetSimpleBindingPattern() model.SimpleBindingPatternNode {
-	// migrated from BLangErrorCauseBindingPattern.java:39:5
+func (b *BLangErrorCauseBindingPattern) GetSimpleBindingPattern() SimpleBindingPatternNode {
 	return b.SimpleBindingPattern
 }
 
-func (b *BLangErrorCauseBindingPattern) SetSimpleBindingPattern(simpleBindingPattern model.SimpleBindingPatternNode) {
-	// migrated from BLangErrorCauseBindingPattern.java:44:5
+func (b *BLangErrorCauseBindingPattern) SetSimpleBindingPattern(simpleBindingPattern SimpleBindingPatternNode) {
 	if simpleBindingPattern, ok := simpleBindingPattern.(*BLangSimpleBindingPattern); ok {
 		b.SimpleBindingPattern = simpleBindingPattern
 		return
@@ -210,13 +179,11 @@ func (b *BLangErrorCauseBindingPattern) SetSimpleBindingPattern(simpleBindingPat
 	panic("simpleBindingPattern is not a BLangSimpleBindingPattern")
 }
 
-func (b *BLangErrorCauseBindingPattern) GetErrorBindingPatternNode() model.ErrorBindingPatternNode {
-	// migrated from BLangErrorCauseBindingPattern.java:49:5
+func (b *BLangErrorCauseBindingPattern) GetErrorBindingPatternNode() ErrorBindingPatternNode {
 	return b.ErrorBindingPattern
 }
 
-func (b *BLangErrorCauseBindingPattern) SetErrorBindingPatternNode(errorBindingPatternNode model.ErrorBindingPatternNode) {
-	// migrated from BLangErrorCauseBindingPattern.java:54:5
+func (b *BLangErrorCauseBindingPattern) SetErrorBindingPatternNode(errorBindingPatternNode ErrorBindingPatternNode) {
 	if errorBindingPatternNode, ok := errorBindingPatternNode.(*BLangErrorBindingPattern); ok {
 		b.ErrorBindingPattern = errorBindingPatternNode
 		return
@@ -224,18 +191,11 @@ func (b *BLangErrorCauseBindingPattern) SetErrorBindingPatternNode(errorBindingP
 	panic("errorBindingPatternNode is not a BLangErrorBindingPattern")
 }
 
-func (b *BLangErrorCauseBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangErrorCauseBindingPattern.java:74:5
-	return model.NodeKind_ERROR_CAUSE_BINDING_PATTERN
-}
-
-func (b *BLangSimpleBindingPattern) GetCaptureBindingPattern() model.CaptureBindingPatternNode {
-	// migrated from BLangSimpleBindingPattern.java:39:5
+func (b *BLangSimpleBindingPattern) GetCaptureBindingPattern() CaptureBindingPatternNode {
 	return b.CaptureBindingPattern
 }
 
-func (b *BLangSimpleBindingPattern) SetCaptureBindingPattern(captureBindingPattern model.CaptureBindingPatternNode) {
-	// migrated from BLangSimpleBindingPattern.java:44:5
+func (b *BLangSimpleBindingPattern) SetCaptureBindingPattern(captureBindingPattern CaptureBindingPatternNode) {
 	if captureBindingPattern, ok := captureBindingPattern.(*BLangCaptureBindingPattern); ok {
 		b.CaptureBindingPattern = captureBindingPattern
 		return
@@ -243,13 +203,11 @@ func (b *BLangSimpleBindingPattern) SetCaptureBindingPattern(captureBindingPatte
 	panic("captureBindingPattern is not a BLangCaptureBindingPattern")
 }
 
-func (b *BLangSimpleBindingPattern) GetWildCardBindingPattern() model.WildCardBindingPatternNode {
-	// migrated from BLangSimpleBindingPattern.java:49:5
+func (b *BLangSimpleBindingPattern) GetWildCardBindingPattern() WildCardBindingPatternNode {
 	return b.WildCardBindingPattern
 }
 
-func (b *BLangSimpleBindingPattern) SetWildCardBindingPattern(wildCardBindingPattern model.WildCardBindingPatternNode) {
-	// migrated from BLangSimpleBindingPattern.java:54:5
+func (b *BLangSimpleBindingPattern) SetWildCardBindingPattern(wildCardBindingPattern WildCardBindingPatternNode) {
 	if wildCardBindingPatternNode, ok := wildCardBindingPattern.(*BLangWildCardBindingPattern); ok {
 		b.WildCardBindingPattern = wildCardBindingPatternNode
 		return
@@ -257,22 +215,15 @@ func (b *BLangSimpleBindingPattern) SetWildCardBindingPattern(wildCardBindingPat
 	panic("wildCardBindingPatternNode is not a BLangWildCardBindingPattern")
 }
 
-func (b *BLangSimpleBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangSimpleBindingPattern.java:74:5
-	return model.NodeKind_SIMPLE_BINDING_PATTERN
-}
-
-func (b *BLangErrorFieldBindingPatterns) GetNamedArgMatchPatterns() []model.NamedArgBindingPatternNode {
-	// migrated from BLangErrorFieldBindingPatterns.java:42:5
-	namedArgBindingPatterns := make([]model.NamedArgBindingPatternNode, len(b.NamedArgBindingPatterns))
-	for i, namedArgBindingPattern := range b.NamedArgBindingPatterns {
-		namedArgBindingPatterns[i] = &namedArgBindingPattern
+func (b *BLangErrorFieldBindingPatterns) GetNamedArgMatchPatterns() []NamedArgBindingPatternNode {
+	namedArgBindingPatterns := make([]NamedArgBindingPatternNode, len(b.NamedArgBindingPatterns))
+	for i := range b.NamedArgBindingPatterns {
+		namedArgBindingPatterns[i] = &b.NamedArgBindingPatterns[i]
 	}
 	return namedArgBindingPatterns
 }
 
-func (b *BLangErrorFieldBindingPatterns) AddNamedArgBindingPattern(namedArgBindingPatternNode model.NamedArgBindingPatternNode) {
-	// migrated from BLangErrorFieldBindingPatterns.java:47:5
+func (b *BLangErrorFieldBindingPatterns) AddNamedArgBindingPattern(namedArgBindingPatternNode NamedArgBindingPatternNode) {
 	if namedArgBindingPatternNode, ok := namedArgBindingPatternNode.(*BLangNamedArgBindingPattern); ok {
 		b.NamedArgBindingPatterns = append(b.NamedArgBindingPatterns, *namedArgBindingPatternNode)
 		return
@@ -280,13 +231,11 @@ func (b *BLangErrorFieldBindingPatterns) AddNamedArgBindingPattern(namedArgBindi
 	panic("namedArgBindingPatternNode is not a BLangNamedArgBindingPattern")
 }
 
-func (b *BLangErrorFieldBindingPatterns) GetRestBindingPattern() model.RestBindingPatternNode {
-	// migrated from BLangErrorFieldBindingPatterns.java:52:5
+func (b *BLangErrorFieldBindingPatterns) GetRestBindingPattern() RestBindingPatternNode {
 	return b.RestBindingPattern
 }
 
-func (b *BLangErrorFieldBindingPatterns) SetRestBindingPattern(restBindingPattern model.RestBindingPatternNode) {
-	// migrated from BLangErrorFieldBindingPatterns.java:57:5
+func (b *BLangErrorFieldBindingPatterns) SetRestBindingPattern(restBindingPattern RestBindingPatternNode) {
 	if restBindingPattern, ok := restBindingPattern.(*BLangRestBindingPattern); ok {
 		b.RestBindingPattern = restBindingPattern
 		return
@@ -294,63 +243,30 @@ func (b *BLangErrorFieldBindingPatterns) SetRestBindingPattern(restBindingPatter
 	panic("restBindingPattern is not a BLangRestBindingPattern")
 }
 
-func (b *BLangErrorFieldBindingPatterns) GetKind() model.NodeKind {
-	// migrated from BLangErrorFieldBindingPatterns.java:77:5
-	return model.NodeKind_ERROR_FIELD_BINDING_PATTERN
-}
-
-func (b *BLangNamedArgBindingPattern) GetIdentifier() model.IdentifierNode {
-	// migrated from BLangNamedArgBindingPattern.java:40:5
+func (b *BLangNamedArgBindingPattern) GetIdentifier() *BLangIdentifier {
 	return b.ArgName
 }
 
-func (b *BLangNamedArgBindingPattern) SetIdentifier(variableName model.IdentifierNode) {
-	// migrated from BLangNamedArgBindingPattern.java:45:5
-	if variableName, ok := variableName.(*BLangIdentifier); ok {
-		b.ArgName = variableName
-		return
-	}
-	panic("variableName is not a BLangIdentifier")
+func (b *BLangNamedArgBindingPattern) SetIdentifier(variableName *BLangIdentifier) {
+	b.ArgName = variableName
 }
 
-func (b *BLangNamedArgBindingPattern) GetBindingPattern() model.BindingPatternNode {
-	// migrated from BLangNamedArgBindingPattern.java:50:5
+func (b *BLangNamedArgBindingPattern) GetBindingPattern() BindingPatternNode {
 	return b.BindingPattern
 }
 
-func (b *BLangNamedArgBindingPattern) SetBindingPattern(bindingPattern model.BindingPatternNode) {
-	// migrated from BLangNamedArgBindingPattern.java:55:5
+func (b *BLangNamedArgBindingPattern) SetBindingPattern(bindingPattern BindingPatternNode) {
 	b.BindingPattern = bindingPattern
 }
 
-func (b *BLangNamedArgBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangNamedArgBindingPattern.java:75:5
-	return model.NodeKind_NAMED_ARG_BINDING_PATTERN
-}
-
-func (b *BLangRestBindingPattern) GetIdentifier() model.IdentifierNode {
-	// migrated from BLangRestBindingPattern.java:42:5
+func (b *BLangRestBindingPattern) GetIdentifier() *BLangIdentifier {
 	return b.VariableName
 }
 
-func (b *BLangRestBindingPattern) SetIdentifier(variableName model.IdentifierNode) {
-	// migrated from BLangRestBindingPattern.java:47:5
-	if variableName, ok := variableName.(*BLangIdentifier); ok {
-		b.VariableName = variableName
-		return
-	}
-	panic("variableName is not a BLangIdentifier")
-}
-
-func (b *BLangRestBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangRestBindingPattern.java:67:5
-	return model.NodeKind_REST_BINDING_PATTERN
-}
-
-func (b *BLangWildCardBindingPattern) GetKind() model.NodeKind {
-	// migrated from BLangWildCardBindingPattern.java:48:5
-	return model.NodeKind_WILDCARD_BINDING_PATTERN
+func (b *BLangRestBindingPattern) SetIdentifier(variableName *BLangIdentifier) {
+	b.VariableName = variableName
 }
 
 func (*BLangWildCardBindingPattern) actionOrExpression() {}
 func (*BLangWildCardBindingPattern) expressionNode()     {}
+func (*BLangWildCardBindingPattern) isLExpr()            {}

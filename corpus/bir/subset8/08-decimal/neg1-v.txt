@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 D1  2.1;
 D2  -2.1;
 D3  2.1E+2;

@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected int|object { int bar; int baz; function foo(int, int) returns int; function init(int) returns nil|error }, got error|object { int bar; int baz; function foo(int, int) returns int; function init(int) returns nil|error }
+error[SEMANTIC_ERROR]: incompatible type: expected int|object { private int bar; private int baz; private function foo(int, int) returns int; public function init(int) returns nil|error }, got error|object { private int bar; private int baz; private function foo(int, int) returns int; public function init(int) returns nil|error }
   --> init-type-check-3-e.bal:31:17
    |
-31 |     int|Bar f = new (5); // @error
+31 |     int|Bar _ = new (5); // @error
    |                 ^^^^^^^

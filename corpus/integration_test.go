@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -39,6 +40,8 @@ import (
 	"ballerina-lang-go/semantics"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/test_util"
+	"ballerina-lang-go/test_util/langlib"
+	"ballerina-lang-go/test_util/testharness"
 	"ballerina-lang-go/tools/diagnostics"
 	"ballerina-lang-go/tools/text"
 
@@ -81,6 +84,12 @@ var (
 		// panic or a compile-time `fatal[...]` bailout, so it does not satisfy
 		// the future-test contract yet. Tracked separately.
 		"subset8/08-future/fieldlvalue1-fp.bal",
+		// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+		"subset8/08-xml/namespace12-v.bal",
+		// https://github.com/ballerina-platform/ballerina-lang-go/issues/533
+		"subset9/09-template-expr/template-query-xml-sequence-fv.bal",
+		// https://github.com/ballerina-platform/ballerina-lang-go/issues/538
+		"subset9/09-object/readonly-distinct-object-fe.bal",
 	}
 
 	// Skip project-level integration tests with non-deterministic output.
@@ -122,35 +131,27 @@ type caseRun struct {
 }
 
 func TestIntegration(t *testing.T) {
-	testPairs := test_util.GetTests(t, test_util.Integration, func(path string) bool {
-		return true
-	})
-
-	for _, testPair := range testPairs {
-		t.Run(testPair.Name, func(t *testing.T) {
+	cases, err := testharness.GetSingleFileTestCases("../corpus/bal", test_util.Integration, test_util.SuffixAny)
+	if err != nil {
+		t.Fatalf("discovery: %v", err)
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			testIntegration(t, testPair)
+			runHarnessCase(t, tc)
 		})
 	}
 }
 
 func TestProjectIntegration(t *testing.T) {
-	if _, err := os.Stat(corpusProjectBaseDir); os.IsNotExist(err) {
-		return
+	cases, err := testharness.GetProjectTestCases("../corpus/project", test_util.Integration, test_util.SuffixAny)
+	if err != nil {
+		t.Fatalf("discovery: %v", err)
 	}
-
-	projectDirs := findProjectDirs(corpusProjectBaseDir)
-
-	for _, projDir := range projectDirs {
-		dirName := filepath.Base(projDir)
-		txtarPath := filepath.Join(corpusProjectIntegrationBaseDir, dirName+".txtar")
-
-		t.Run(dirName, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(filepath.Base(tc.InputPath), func(t *testing.T) {
 			t.Parallel()
-			if isProjectTestSkipped(dirName) {
-				t.Skipf("Skipping project integration test for %s", dirName)
-			}
-			testProjectIntegration(t, dirName, projDir, txtarPath)
+			runHarnessCase(t, tc)
 		})
 	}
 }
@@ -163,73 +164,42 @@ func TestProjectIntegration(t *testing.T) {
 // projects.Load auto-detects the workspace and WorkspaceProject.CurrentPackage
 // returns that first member, so the existing project pipeline works as-is.
 func TestWorkspaceIntegration(t *testing.T) {
-	if _, err := os.Stat(corpusWorkspaceBaseDir); os.IsNotExist(err) {
-		return
+	cases, err := testharness.GetProjectTestCases("../corpus/workspace", test_util.Integration, test_util.SuffixAny)
+	if err != nil {
+		t.Fatalf("discovery: %v", err)
 	}
-
-	workspaceDirs := findProjectDirs(corpusWorkspaceBaseDir)
-
-	for _, wsDir := range workspaceDirs {
-		dirName := filepath.Base(wsDir)
-		txtarPath := filepath.Join(corpusWorkspaceIntegrationBaseDir, dirName+".txtar")
-
-		t.Run(dirName, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(filepath.Base(tc.InputPath), func(t *testing.T) {
 			t.Parallel()
-			testProjectIntegration(t, dirName, wsDir, txtarPath)
+			runHarnessCase(t, tc)
 		})
 	}
 }
 
-func testIntegration(t *testing.T, testPair test_util.TestCase) {
-	if isTestSkipped(testPair) {
-		t.Skipf("Skipping integration test for %s", testPair.InputPath)
+// runHarnessCase wires Run + Validate/Update for one TestCase, applying the
+// integration-level skip lists before invoking the harness.
+func runHarnessCase(t *testing.T, tc test_util.TestCase) {
+	if harnessSkip(tc) {
+		t.Skipf("Skipping integration test for %s", tc.Name)
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("panic while running %s: %v", testPair.InputPath, r)
-		}
-	}()
-
-	run := runIntegrationCase(testPair.InputPath)
+	pal := testharness.NewTestPal()
+	testharness.Run(t, tc, pal, nil)
 	if *update {
-		normalizedStderr := normalizeIntegrationStderr(run.stderr)
-		checkExpectedOutputInvariants(t, testPair.Name, run.stdout, normalizedStderr, false)
-		if test_util.UpdateTxtarArchiveIfNeeded(t, testPair.ExpectedPath, test_util.TxtarFilesStdoutStderr(run.stdout, normalizedStderr)) {
-			t.Fatalf("Updated expected file: %s", testPair.ExpectedPath)
-		}
+		testharness.Update(t, tc, pal)
 		return
 	}
+	testharness.Validate(t, tc, pal)
+}
 
-	expectedStdout, expectedStderr, err := test_util.LoadTxtarStdoutStderr(testPair.ExpectedPath)
-	if err != nil {
-		t.Fatalf("failed to load expected from %s: %v", testPair.ExpectedPath, err)
-	}
-	checkExpectedOutputInvariants(t, testPair.Name, expectedStdout, expectedStderr, false)
-
-	result := evaluateTestResult(expectedStdout, expectedStderr, run.stdout, run.stderr)
-	assertAnnotations(t, collectSingleFileSources(testPair.InputPath), testPair.Name, run.stdout, run.stderr, run.diags)
-	if result.success {
-		return
-	}
-
-	stdoutMismatch := result.expectedStdout != result.actualStdout
-	stderrMismatch := result.expectedStderr != normalizeIntegrationStderr(result.actualStderr)
-
-	var msg strings.Builder
-	if stdoutMismatch {
-		fmt.Fprintf(&msg, "stdout mismatch\n%s", test_util.FormatExpectedGot(result.expectedStdout, result.actualStdout))
-	}
-	if stderrMismatch {
-		if msg.Len() > 0 {
-			msg.WriteString("\n\n")
+func harnessSkip(tc test_util.TestCase) bool {
+	if tc.IsProject {
+		dir := filepath.Base(tc.InputPath)
+		if isProjectTestSkipped(dir) {
+			return true
 		}
-		fmt.Fprintf(&msg, "stderr mismatch\n%s", test_util.FormatExpectedGot(
-			normalizeIntegrationStderr(result.expectedStderr),
-			normalizeIntegrationStderr(result.actualStderr),
-		))
+		return isSkipKey("project/" + dir)
 	}
-	t.Errorf("%s", msg.String())
+	return isTestSkipped(tc)
 }
 
 // suffixOf returns the trailing -v / -e / -p / -fv / -fe / -fp marker on a
@@ -400,12 +370,12 @@ func resolveErrorDiagnostics(result projects.DiagnosticResult, de *diagnostics.D
 func runIntegrationCase(balFile string) caseRun {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	birPkg, diags, compileErr := runCompilePhase(balFile, &stdoutBuf, &stderrBuf)
-	if birPkg == nil || compileErr != nil {
+	birPkgs, tyEnv, diags, compileErr := runCompilePhase(balFile, &stdoutBuf, &stderrBuf)
+	if len(birPkgs) == 0 || compileErr != nil {
 		return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
 	}
 
-	runInterpretPhase(birPkg, &stdoutBuf, &stderrBuf)
+	runInterpretPhase(birPkgs, tyEnv, &stdoutBuf, &stderrBuf)
 	return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
 }
 
@@ -420,7 +390,7 @@ func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStde
 	}
 }
 
-func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkg *bir.BIRPackage, diags []resolvedDiag, err error) {
+func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, diags []resolvedDiag, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			msg := fmt.Sprintf("%v", r)
@@ -435,7 +405,7 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkg *b
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
@@ -444,29 +414,68 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkg *b
 	})
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	tyEnv = result.Project().Environment().TypeEnv()
 	currentPkg := result.Project().CurrentPackage()
 	compilation := currentPkg.Compilation()
 
 	printDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	diags = resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if compilation.DiagnosticResult().HasErrors() {
-		return nil, diags, nil
+		return nil, tyEnv, diags, nil
 	}
 
 	backend := projects.NewBallerinaBackend(compilation)
-	return backend.BIR(), diags, nil
+	return backend.BIRPackages(), tyEnv, diags, nil
 }
 
-func runInterpretPhase(birPkg *bir.BIRPackage, stdoutBuf, stderrBuf *bytes.Buffer) {
-	if birPkg == nil {
+func runInterpretPhase(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, stdoutBuf, stderrBuf *bytes.Buffer) {
+	if len(birPkgs) == 0 {
 		return
 	}
 
-	rt := runtime.NewRuntime(test_util.TestPal(stdoutBuf, stderrBuf))
-	if err := rt.Interpret(*birPkg); err != nil {
-		// For now just write the error string to stderr to match corpus expectations
+	pal := testharness.NewTestPal()
+	defer pal.Close()
+	defer func() {
+		stdoutBuf.WriteString(pal.Stdout())
+		stderrBuf.WriteString(pal.Stderr())
+	}()
+	rt := runtime.NewRuntime(pal.Platform(), tyEnv)
+	hasLifecycle := false
+	for _, birPkg := range birPkgs {
+		if err := rt.Init(*birPkg); err != nil {
+			// For now just write the error string to stderr to match corpus expectations
+			fmt.Fprintln(stderrBuf, err.Error())
+			return
+		}
+		if birPkg.StartFunction != nil {
+			hasLifecycle = true
+		}
+	}
+	rt.Listen()
+	for _, birPkg := range birPkgs {
+		invokeTestMainOnPkg(rt, birPkg, stderrBuf)
+	}
+	if hasLifecycle {
+		pal.SendGracefulStop()
+	}
+	<-rt.ExitStatus
+}
+
+const testMainFunctionName = "testMain"
+
+func invokeTestMainOnPkg(rt *runtime.Runtime, pkg *bir.BIRPackage, stderrBuf *bytes.Buffer) {
+	if pkg == nil || pkg.PackageID == nil || pkg.PackageID.OrgName == nil || pkg.PackageID.PkgName == nil {
+		return
+	}
+	org := pkg.PackageID.OrgName.Value()
+	module := pkg.PackageID.PkgName.Value()
+	fn, ok := runtime.LookupFunction(rt, org, module, testMainFunctionName)
+	if !ok {
+		return
+	}
+	if _, err := runtime.InvokeFunction(rt, fn, nil); err != nil {
 		fmt.Fprintln(stderrBuf, err.Error())
 	}
 }
@@ -554,16 +563,16 @@ func runProjectIntegrationCase(projectDir string) caseRun {
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
 
-	birPkgs, diags, compileErr := runProjectCompilePhase(projectDir, &stdoutBuf, &stderrBuf)
+	birPkgs, tyEnv, diags, compileErr := runProjectCompilePhase(projectDir, &stdoutBuf, &stderrBuf)
 	if birPkgs == nil || compileErr != nil {
 		return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
 	}
 
-	runProjectInterpretPhase(birPkgs, &stdoutBuf, &stderrBuf)
+	runProjectInterpretPhase(birPkgs, tyEnv, &stdoutBuf, &stderrBuf)
 	return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
 }
 
-func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, diags []resolvedDiag, err error) {
+func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, diags []resolvedDiag, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			msg := fmt.Sprintf("%v", r)
@@ -578,7 +587,7 @@ func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffe
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
@@ -587,8 +596,9 @@ func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffe
 	})
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	tyEnv = result.Project().Environment().TypeEnv()
 	currentPkg := result.Project().CurrentPackage()
 	compilation := currentPkg.Compilation()
 
@@ -599,25 +609,43 @@ func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffe
 	printDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	diags = resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if result.Diagnostics().HasErrors() || compilation.DiagnosticResult().HasErrors() {
-		return nil, diags, nil
+		return nil, tyEnv, diags, nil
 	}
 
 	backend := projects.NewBallerinaBackend(compilation)
-	return backend.BIRPackages(), diags, nil
+	return backend.BIRPackages(), tyEnv, diags, nil
 }
 
-func runProjectInterpretPhase(birPkgs []*bir.BIRPackage, stdoutBuf, stderrBuf *bytes.Buffer) {
+func runProjectInterpretPhase(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, stdoutBuf, stderrBuf *bytes.Buffer) {
 	if len(birPkgs) == 0 {
 		return
 	}
 
-	rt := runtime.NewRuntime(test_util.TestPal(stdoutBuf, stderrBuf))
+	pal := testharness.NewTestPal()
+	defer pal.Close()
+	defer func() {
+		stdoutBuf.WriteString(pal.Stdout())
+		stderrBuf.WriteString(pal.Stderr())
+	}()
+	rt := runtime.NewRuntime(pal.Platform(), tyEnv)
+	hasLifecycle := false
 	for _, birPkg := range birPkgs {
-		if err := rt.Interpret(*birPkg); err != nil {
+		if err := rt.Init(*birPkg); err != nil {
 			fmt.Fprintln(stderrBuf, err.Error())
 			return
 		}
+		if birPkg.StartFunction != nil {
+			hasLifecycle = true
+		}
 	}
+	rt.Listen()
+	for _, birPkg := range birPkgs {
+		invokeTestMainOnPkg(rt, birPkg, stderrBuf)
+	}
+	if hasLifecycle {
+		pal.SendGracefulStop()
+	}
+	<-rt.ExitStatus
 }
 
 func TestProjectSerializationRoundtrip(t *testing.T) {
@@ -707,6 +735,8 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 		return stdoutBuf.String(), stderrBuf.String()
 	}
 	project := result.Project()
+	compilerEnv := project.Environment().CompilerEnvironment()
+	tyEnv := project.Environment().TypeEnv()
 	currentPkg := project.CurrentPackage()
 	compilation := currentPkg.Compilation()
 
@@ -743,13 +773,13 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 			return stdoutBuf.String(), stderrBuf.String()
 		}
 
-		symBytes, err := symbolpool.Marshal(exported, dep.TypeEnv)
+		symBytes, err := symbolpool.Marshal(exported, compilerEnv)
 		if err != nil {
 			fmt.Fprintf(&stdoutBuf, "symbol serialization failed: %v\n", err)
 			return stdoutBuf.String(), stderrBuf.String()
 		}
 
-		birBytes, err := bircodec.Marshal(dep)
+		birBytes, err := bircodec.Marshal(tyEnv, dep)
 		if err != nil {
 			fmt.Fprintf(&stdoutBuf, "BIR serialization failed: %v\n", err)
 			return stdoutBuf.String(), stderrBuf.String()
@@ -800,7 +830,7 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 
 	deserialized = append(deserialized, mainBirPkg)
 
-	runProjectInterpretPhase(deserialized, &stdoutBuf, &stderrBuf)
+	runProjectInterpretPhase(deserialized, freshEnv.GetTypeEnv(), &stdoutBuf, &stderrBuf)
 	return stdoutBuf.String(), stderrBuf.String()
 }
 
@@ -809,62 +839,23 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 ) (*bir.BIRPackage, error) {
 	cx := context.NewCompilerContext(env)
 
-	// Register source files with DiagnosticEnv
+	// Register source files with DiagnosticEnv and parse them.
 	de := cx.DiagnosticEnv()
+	var syntaxTrees []*ast.BLangCompilationUnit
 	for _, docID := range module.DocumentIDs() {
 		relPath := project.DocumentPath(docID)
 		absPath := filepath.Join(absProjectDir, relPath)
 		content, err := os.ReadFile(absPath)
-		if err == nil {
-			de.RegisterFile(absPath, text.NewStringTextDocument(string(content)))
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %v", relPath, err)
 		}
-	}
-
-	// Parse all source files in the module
-	docIDs := module.DocumentIDs()
-	var syntaxTrees []*ast.BLangCompilationUnit
-	for _, docID := range docIDs {
-		relPath := project.DocumentPath(docID)
-		absPath := filepath.Join(absProjectDir, relPath)
-		st, err := parser.GetSyntaxTree(cx, absPath)
+		de.RegisterFile(absPath, text.NewStringTextDocument(string(content)))
+		st, err := parser.GetSyntaxTree(cx, absPath, string(content))
 		if err != nil {
 			return nil, fmt.Errorf("parsing %s: %v", relPath, err)
 		}
 		cu := ast.GetCompilationUnit(cx, st)
 		syntaxTrees = append(syntaxTrees, cu)
-	}
-
-	// Build package from compilation units
-	var pkg *ast.BLangPackage
-	if len(syntaxTrees) == 1 {
-		pkg = ast.ToPackage(syntaxTrees[0])
-	} else {
-		pkg = &ast.BLangPackage{}
-		for _, cu := range syntaxTrees {
-			if pkg.PackageID == nil {
-				pkg.PackageID = cu.GetPackageID()
-			}
-			for _, node := range cu.GetTopLevelNodes() {
-				switch n := node.(type) {
-				case *ast.BLangImportPackage:
-					pkg.Imports = append(pkg.Imports, *n)
-				case *ast.BLangConstant:
-					pkg.Constants = append(pkg.Constants, *n)
-				case *ast.BLangService:
-					pkg.Services = append(pkg.Services, *n)
-				case *ast.BLangFunction:
-					pkg.Functions = append(pkg.Functions, *n)
-				case *ast.BLangTypeDefinition:
-					pkg.TypeDefinitions = append(pkg.TypeDefinitions, *n)
-				case *ast.BLangAnnotation:
-					pkg.Annotations = append(pkg.Annotations, *n)
-				case *ast.BLangClassDefinition:
-					pkg.ClassDefinitions = append(pkg.ClassDefinitions, *n)
-				default:
-					pkg.TopLevelNodes = append(pkg.TopLevelNodes, node)
-				}
-			}
-		}
 	}
 
 	// Set the package ID to match the module descriptor
@@ -879,13 +870,28 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	if version == "" {
 		version = model.DEFAULT_VERSION
 	}
-	pkg.PackageID = cx.NewPackageID(orgName, nameComps, version)
+	pkgID := cx.NewPackageID(orgName, nameComps, version)
+	for _, cu := range syntaxTrees {
+		cu.SetPackageID(pkgID)
+	}
 
 	// Run compilation pipeline
-	importedSymbols := semantics.ResolveImports(cx, pkg, semantics.GetImplicitImports(cx), publicSymbols, defaultOrg)
-	semantics.ResolveSymbols(cx, pkg, importedSymbols)
+	implicitImports, err := langlib.ImplicitImports(cx)
+	if err != nil {
+		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
+	}
+	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(cx, syntaxTrees, implicitImports, publicSymbols, defaultOrg)
+	pkgScope, _ := semantics.ResolveSymbols(cx, *pkgID, importedSymbolsByCU)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")
+	}
+	pkg := ast.ToPackageFromCompilationUnits(syntaxTrees)
+	pkg.Imports = nil
+	pkg.PackageID = pkgID
+	pkg.Scope = pkgScope
+	importedSymbols := make(map[string]model.ExportedSymbolSpace)
+	for _, cuImports := range importedSymbolsByCU {
+		maps.Copy(importedSymbols, cuImports.Imports)
 	}
 
 	semantics.ResolveTopLevelNodes(cx, pkg, importedSymbols)
@@ -899,7 +905,7 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	}
 
 	analyzer := semantics.NewSemanticAnalyzer(cx)
-	analyzer.Analyze(pkg)
+	analyzer.Analyze(pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("semantic analysis failed")
 	}
@@ -933,7 +939,11 @@ func BenchmarkIntegration(b *testing.B) {
 			var run caseRun
 			b.ResetTimer()
 			for b.Loop() {
-				run = runIntegrationCase(testPair.InputPath)
+				if testPair.IsProject {
+					run = runProjectIntegrationCase(testPair.InputPath)
+				} else {
+					run = runIntegrationCase(testPair.InputPath)
+				}
 			}
 			b.StopTimer()
 

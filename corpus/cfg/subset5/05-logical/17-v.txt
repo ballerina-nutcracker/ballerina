@@ -32,15 +32,15 @@
   )
   (bb1 (bb0) (bb2)
     (var-def
-      (variable unused1 (type
+      (variable _ (type
         (value-type int)) (expr
         (simple-var-ref x))))
     (var-def
-      (variable unused2 (type
+      (variable _ (type
         (value-type float)) (expr
         (simple-var-ref y))))
     (var-def
-      (variable unused3 (type
+      (variable _ (type
         (value-type int)) (expr
         (simple-var-ref z))))
   )

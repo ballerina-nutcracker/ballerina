@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = breakInNestedLoops() -> bb1;
@@ -23,7 +22,7 @@ breakInNestedLoops() -> nil{
     %5 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 15
+    PushScopeFrame 8
     %1 = (1, i);
     %2 = ConstantLoad 3
     %3 = %2;
@@ -34,24 +33,27 @@ breakInNestedLoops() -> nil{
     return;
   }
   bb4 {
+    PushScopeFrame 0
+    PopScopeFrame
     PopScopeFrame
     GOTO bb3;
   }
   bb5 {
-    %4 = ConstantLoad 1
-    j = %4;
-    %6 = ConstantLoad 5
-    $desugar$1 = %6;
+    PushScopeFrame 7
+    %0 = ConstantLoad 1
+    j = %0;
+    %2 = ConstantLoad 5
+    $desugar$1 = %2;
     GOTO bb6;
   }
   bb6 {
-    %9 = j;
-    %10 = $desugar$1;
-    %8 = < %9 %10;
-    %8 ? bb7 : bb8;
+    %5 = j;
+    %6 = $desugar$1;
+    %4 = < %5 %6;
+    %4 ? bb7 : bb8;
   }
   bb7 {
-    PushScopeFrame 17
+    PushScopeFrame 8
     %1 = (1, j);
     %2 = ConstantLoad 3
     %3 = %2;
@@ -59,35 +61,40 @@ breakInNestedLoops() -> nil{
     %0 ? bb9 : bb10;
   }
   bb8 {
-    %12 = (1, i);
-    %13 = ConstantLoad 1
-    %14 = %13;
-    %11 = + %12 %14;
-    (1, i) = %11;
+    PopScopeFrame
+    %5 = (1, i);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, i) = %4;
     PopScopeFrame
     GOTO bb1;
   }
   bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
     PopScopeFrame
     GOTO bb8;
   }
   bb10 {
-    %6 = (2, i);
-    %7 = ConstantLoad 10
-    %8 = %7;
-    %5 = * %6 %8;
-    %9 = %5;
-    %10 = (1, j);
-    %4 = + %9 %10;
-    %11 = %4;
-    %12 = println(%11) -> bb11;
+    PushScopeFrame 9
+    %2 = (4, i);
+    %3 = ConstantLoad 10
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = (2, j);
+    %0 = + %5 %6;
+    %7 = %0;
+    %8 = println(%7) -> bb11;
   }
   bb11 {
-    %14 = (1, j);
-    %15 = ConstantLoad 1
-    %16 = %15;
-    %13 = + %14 %16;
-    (1, j) = %13;
+    PopScopeFrame
+    %5 = (1, j);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, j) = %4;
     PopScopeFrame
     GOTO bb6;
   }

@@ -1,0 +1,205 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad n
+      %2 = self[%3];
+      current = %2;
+      %6 = current;
+      %7 = ConstantLoad 1
+      %8 = %7;
+      %5 = + %6 %8;
+      %9 = ConstantLoad n
+      self[%9] = %5;
+      %11 = current;
+      %12 = ConstantLoad 3
+      %13 = %12;
+      %10 = >= %11 %13;
+      %10 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 2
+      %0 = ConstantLoad value
+      %1 = newMap {| value: int, never... |}{%0=(1, current)}
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+class Doubler {
+  c object { public function init() returns nil; private int n; public function next() returns nil|{| value: int, never... |} }
+
+  init() -> nil{
+    bb0 {
+      %2 = newObject $anon/.:Counter
+      %3 = init(%2) -> bb1;
+    }
+    bb1 {
+      %5 = %3 is nil
+      %5 ? bb2 : bb3;
+    }
+    bb2 {
+      %4 = %2;
+      GOTO bb4;
+    }
+    bb3 {
+      %4 = %3;
+      GOTO bb4;
+    }
+    bb4 {
+      %6 = ConstantLoad c
+      self[%6] = %4;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad c
+      %2 = self[%3];
+      %4 = next(%2) -> bb1;
+    }
+    bb1 {
+      r = %4;
+      %6 = r is {| value: int, never... |}
+      %6 ? bb2 : bb3;
+    }
+    bb2 {
+      PushScopeFrame 8
+      %0 = ConstantLoad value
+      %3 = ConstantLoad value
+      %2 = (1, r)[%3];
+      %4 = %2;
+      %5 = ConstantLoad 2
+      %6 = %5;
+      %1 = * %4 %6;
+      %7 = newMap {| value: int, never... |}{%0=%1}
+      (1, %0) = %7;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Doubler
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %5 = newStream stream %3
+    doubled = %5;
+    %7 = streamNext doubled
+    r1 = %7;
+    %9 = r1 is {| value: int, never... |}
+    %9 ? bb5 : bb7;
+  }
+  bb5 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, r1)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 3
+    %0 = streamNext (1, doubled)
+    r2 = %0;
+    %2 = r2 is {| value: int, never... |}
+    %2 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, r2)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 3
+    %0 = streamNext (2, doubled)
+    r3 = %0;
+    %2 = r3 is {| value: int, never... |}
+    %2 ? bb11 : bb13;
+  }
+  bb11 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, r3)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 3
+    %0 = streamNext (3, doubled)
+    r4 = %0;
+    %2 = r4 is nil
+    %2 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

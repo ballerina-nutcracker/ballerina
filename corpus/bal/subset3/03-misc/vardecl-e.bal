@@ -19,6 +19,7 @@ import ballerina/io;
 
 public function main() {
     int x = 1;
+    int _ = x;
     int x = 2; // @error
     io:println(x);
 }

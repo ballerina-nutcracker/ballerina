@@ -1,0 +1,35 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)))))))
+    (var-def
+      (variable r (type
+        (user-defined-type http Response)) (expr
+        (checked-expr
+          (remote-method-call get expr:
+            (simple-var-ref c) (
+            (literal /path)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref r) (
+          (literal x-absent))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation getHeaderNames expr:
+            (simple-var-ref r) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref r) (
+          (literal x-absent)
+          (simple-var-ref http LEADING))))))
+    (return
+      (literal <nil>))
+  )
+)

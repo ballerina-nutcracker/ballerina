@@ -1,6 +1,8 @@
 module $anon.. v 0.0.0;
 foo(int,string) -> nil{
   bb0 {
+    _ = i;
+    _ = s;
     return;
   }
 }

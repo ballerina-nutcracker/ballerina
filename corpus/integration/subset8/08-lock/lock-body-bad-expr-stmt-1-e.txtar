@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> lock-body-bad-expr-stmt-1-e.bal:26:9
+   |
+26 |         returnsInt(); // @error
+   |         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> lock-body-bad-expr-stmt-1-e.bal:26:9
+   |
+26 |         returnsInt(); // @error
+   |         ^^^^^^^^^^^^

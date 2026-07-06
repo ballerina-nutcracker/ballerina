@@ -1,0 +1,4 @@
+-- stdout --
+<e attr1="foo">tt</e>
+<e attr1="foo">tt</e><e2 attr2="bar" attr3="1">xx</e2>
+-- stderr --

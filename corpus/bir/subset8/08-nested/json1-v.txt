@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad name
@@ -24,32 +23,40 @@ main() -> nil{
     %17 ? bb2 : bb8;
   }
   bb2 {
-    %18 = ConstantLoad array
-    %19 = println(%18) -> bb3;
+    PushScopeFrame 6
+    %0 = ConstantLoad array
+    %1 = println(%0) -> bb3;
   }
   bb3 {
-    %21 = ConstantLoad 0
-    %20 = j[%21];
-    j0 = %20;
-    %23 = j0 is {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}
-    %23 ? bb4 : bb7;
+    %3 = ConstantLoad 0
+    %2 = (1, j)[%3];
+    j0 = %2;
+    %5 = j0 is {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}
+    %5 ? bb4 : bb7;
   }
   bb4 {
-    %24 = ConstantLoad map
-    %25 = println(%24) -> bb5;
+    PushScopeFrame 5
+    %0 = ConstantLoad map
+    %1 = println(%0) -> bb5;
   }
   bb5 {
-    %27 = ConstantLoad age
-    %26 = j0[%27];
-    %28 = println(%26) -> bb6;
+    %3 = ConstantLoad age
+    %2 = (1, j0)[%3];
+    %4 = println(%2) -> bb6;
   }
   bb6 {
+    PopScopeFrame
     GOTO bb7;
   }
   bb7 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb8;
   }
   bb8 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

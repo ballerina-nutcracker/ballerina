@@ -1,0 +1,47 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (literal 2.0)) (
+            (literal 10.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (literal 2.0)) (
+            (literal 0.5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (literal 0.0)) (
+            (literal 0.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.0))) (
+            (literal 0.5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (binary-expr /
+                (literal 1.0)
+                (literal 0.0))) (
+            (literal 2.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation pow expr:
+            (group-expr
+              (binary-expr /
+                (literal 0.0)
+                (literal 0.0))) (
+            (literal 0.0)))))))))

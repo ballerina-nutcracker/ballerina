@@ -1,0 +1,12 @@
+(package
+  (import-package ballerina io (as _))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 3))))
+      (compound-assignment +
+        (simple-var-ref i)
+        (literal 1)))))

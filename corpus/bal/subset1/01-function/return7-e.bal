@@ -22,8 +22,9 @@ public function main() {
 }
 
 function ignore(int x) {
+        int _ = x;
     return;
-}
+    }
 
 function foo() returns int {
     return bar();  // @error

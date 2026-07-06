@@ -29,6 +29,6 @@ class Bar {
 }
 
 public function main() {
-    Foo f = new;
-    Bar b = new;
+    Foo _ = new;
+    Bar _ = new;
 }

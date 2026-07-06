@@ -1,0 +1,95 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_xml2.xml
+    path = %1;
+    %3 = ConstantLoad root
+    %4 = ConstantLoad child
+    %5 = newXMLElement(%4, ())
+    %6 = ConstantLoad attr
+    %7 = ConstantLoad val
+    %8 = newMap {| string... |}{%6=%7}
+    %9 = newXMLElement(%3, %5, %8)
+    data = %9;
+    $desugar$0 = path;
+    $desugar$1 = data;
+    %13 = $default$3($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %13;
+    %15 = fileWriteXml($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %15;
+    %17 = $desugar$3 is error
+    %17 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %18 = fileReadXml(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %18;
+    %20 = $desugar$4 is error
+    %20 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    result = $desugar$4;
+    %22 = println(result) -> bb8;
+  }
+  bb8 {
+    %23 = ConstantLoad updated
+    %24 = newXMLElement(%23, ())
+    data2 = %24;
+    $desugar$5 = path;
+    $desugar$6 = data2;
+    %28 = $default$3($desugar$5,$desugar$6) -> bb9;
+  }
+  bb9 {
+    $desugar$7 = %28;
+    %30 = fileWriteXml($desugar$5,$desugar$6,$desugar$7) -> bb10;
+  }
+  bb10 {
+    $desugar$8 = %30;
+    %32 = $desugar$8 is error
+    %32 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    %33 = fileReadXml(path) -> bb13;
+  }
+  bb13 {
+    $desugar$9 = %33;
+    %35 = $desugar$9 is error
+    %35 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    result2 = $desugar$9;
+    %37 = println(result2) -> bb16;
+  }
+  bb16 {
+    return;
+  }
+}

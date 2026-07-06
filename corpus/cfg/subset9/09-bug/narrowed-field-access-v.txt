@@ -1,0 +1,37 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref input)
+      (array-type
+        (value-type string) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal <nil>))
+  )
+  (bb2 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal A is: )
+        (field-based-access a
+          (simple-var-ref input)))))
+    (expression-stmt
+      (invocation io println (
+        (literal B is: )
+        (field-based-access b
+          (simple-var-ref input)))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal Value A))
+          (key-value
+            (literal b)
+            (literal Value B))))))
+  )
+)

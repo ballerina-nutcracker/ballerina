@@ -425,7 +425,7 @@ func TestObjectSimpleFields(t *testing.T) {
 		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
-	expected := "object { int x; string y }"
+	expected := "object { public int x; public string y }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -440,7 +440,7 @@ func TestObjectWithMethod(t *testing.T) {
 		{Name: "foo", ValueTy: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
-	expected := "object { function foo(int, int) returns int }"
+	expected := "object { public function foo(int, int) returns int }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -456,7 +456,7 @@ func TestObjectWithFieldsAndMethods(t *testing.T) {
 		{Name: "foo", ValueTy: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
-	expected := "object { int bar; function foo(int, int) returns int }"
+	expected := "object { public int bar; public function foo(int, int) returns int }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -470,7 +470,7 @@ func TestObjectIsolated(t *testing.T) {
 		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
-	expected := "isolated object { int x }"
+	expected := "isolated object { public int x }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -484,7 +484,7 @@ func TestObjectClient(t *testing.T) {
 		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
-	expected := "client object { int x }"
+	expected := "client object { public int x }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -498,7 +498,7 @@ func TestObjectService(t *testing.T) {
 		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
-	expected := "service object { int x }"
+	expected := "service object { public int x }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -512,7 +512,7 @@ func TestObjectIsolatedService(t *testing.T) {
 		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
-	expected := "isolated service object { int x }"
+	expected := "isolated service object { public int x }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -527,7 +527,7 @@ func TestObjectRemoteMethod(t *testing.T) {
 		{Name: "ping", ValueTy: methodTy, Kind: MemberKindRemoteMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
-	expected := "client object { remote function ping(int) returns string }"
+	expected := "client object { public remote function ping(int) returns string }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -542,7 +542,7 @@ func TestObjectResourceMethod(t *testing.T) {
 		{Name: "get", ValueTy: methodTy, Kind: MemberKindResourceMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
-	expected := "service object { resource function get() returns nil }"
+	expected := "service object { public resource function get() returns nil }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -568,7 +568,7 @@ func TestObjectReadonlyIntersect(t *testing.T) {
 		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Intersect(ty, VAL_READONLY))
-	expected := "readonly&object { int x }"
+	expected := "readonly&object { public int x }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -586,7 +586,7 @@ func TestObjectTypeUnion(t *testing.T) {
 		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Union(ty1, ty2))
-	expected := "object { int x }|object { string y }"
+	expected := "object { public int x }|object { public string y }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -604,7 +604,7 @@ func TestObjectTypeIntersect(t *testing.T) {
 		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Intersect(ty1, ty2))
-	expected := "object { int x }&object { string y }"
+	expected := "object { public int x }&object { public string y }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -622,7 +622,7 @@ func TestObjectTypeDiff(t *testing.T) {
 		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Diff(ty1, ty2))
-	expected := "object { int x }&¬object { string y }"
+	expected := "object { public int x }&¬object { public string y }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -633,6 +633,16 @@ func TestTypedescUnconstrained(t *testing.T) {
 	cx := ContextFrom(env)
 	actual := ToString(cx, TYPEDESC)
 	expected := "typedesc"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLTop(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	actual := ToString(cx, XML)
+	expected := "xml"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}
@@ -649,12 +659,96 @@ func TestTypedescConstrained(t *testing.T) {
 	}
 }
 
+func TestXMLElement(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	actual := ToString(cx, XML_ELEMENT)
+	expected := "xml:Element"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLComment(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	actual := ToString(cx, XML_COMMENT)
+	expected := "xml:Comment"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLText(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	actual := ToString(cx, XML_TEXT)
+	expected := "xml:Text"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLProcessingInstruction(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	actual := ToString(cx, XML_PI)
+	expected := "xml:ProcessingInstruction"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLSequenceOfElement(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	ty := XMLSequence(XML_ELEMENT)
+	actual := ToString(cx, ty)
+	expected := "xml<xml:Element>"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
 func TestTypedescConstrainedUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ty := TypedescContaining(env, Union(INT, STRING))
 	actual := ToString(cx, ty)
 	expected := "typedesc<int|string>"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLSequenceOfComment(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	ty := XMLSequence(XML_COMMENT)
+	actual := ToString(cx, ty)
+	expected := "xml<xml:Comment>"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLSequenceOfPI(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	ty := XMLSequence(XML_PI)
+	actual := ToString(cx, ty)
+	expected := "xml<xml:ProcessingInstruction>"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestXMLNeverSequence(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	ty := XMLSingleton(XML_PRIMITIVE_NEVER)
+	actual := ToString(cx, ty)
+	expected := "xml<never>"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}

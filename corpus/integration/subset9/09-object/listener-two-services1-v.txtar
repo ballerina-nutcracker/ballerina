@@ -1,0 +1,6 @@
+-- stdout --
+listener init
+attach
+attach
+start
+-- stderr --

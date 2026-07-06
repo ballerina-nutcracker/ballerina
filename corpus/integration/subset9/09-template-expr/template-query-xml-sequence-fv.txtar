@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: xml template content insertion of list values is not supported yet
+  --> template-query-xml-sequence-fv.bal:20:26
+   |
+20 |     xml x = xml `<root>${from var n in values select xml `<n>${n}</n>`}</root>`; // @error future: XML sequence insertion from query result
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

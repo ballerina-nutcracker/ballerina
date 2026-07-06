@@ -1,0 +1,49 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+package array
+
+import (
+	"ballerina-lang-go/runtime"
+	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/values"
+	"fmt"
+)
+
+const (
+	orgName    = "ballerina"
+	moduleName = "lang.array"
+)
+
+func initArrayModule(rt *runtime.Runtime) {
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "push", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		if list, ok := args[0].(*values.List); ok {
+			list.Append(ctx.TypeCtx, args[1:]...)
+			return nil, nil
+		}
+		return nil, fmt.Errorf("first argument must be an array")
+	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		if list, ok := args[0].(*values.List); ok {
+			return int64(list.Len()), nil
+		}
+		return nil, fmt.Errorf("first argument must be an array")
+	})
+}
+
+func init() {
+	runtime.RegisterModuleInitializer(initArrayModule)
+}
