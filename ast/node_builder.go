@@ -629,23 +629,13 @@ func diagnosticMessage(diagnostic tree.STNodeDiagnostic) string {
 	return strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " ")
 }
 
-func getPosition(de *diagnostics.DiagnosticEnv, node tree.Node) diagnostics.Location {
-	textRange := node.TextRange()
-	fileName := getFileName(node)
-	return diagnostics.NewLocation(de, fileName, textRange.StartOffset, textRange.EndOffset)
-}
-
-func getPositionWithMinutiae(de *diagnostics.DiagnosticEnv, node tree.Node) diagnostics.Location {
-	textRange := node.TextRangeWithMinutiae()
-	fileName := getFileName(node)
-	return diagnostics.NewLocation(de, fileName, textRange.StartOffset, textRange.EndOffset)
-}
-
 func (n *NodeBuilder) getPosition(node tree.Node) diagnostics.Location {
+	textRange := node.TextRange()
 	if n.recovering() {
-		return getPositionWithMinutiae(n.de(), node)
+		textRange = node.TextRangeWithMinutiae()
 	}
-	return getPosition(n.de(), node)
+	fileName := getFileName(node)
+	return diagnostics.NewLocation(n.de(), fileName, textRange.StartOffset, textRange.EndOffset)
 }
 
 func getPositionRange(de *diagnostics.DiagnosticEnv, startNode tree.Node, endNode tree.Node) diagnostics.Location {
@@ -761,7 +751,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 			} else {
 				bLangDocLine := BLangMarkdownDocumentationLine{}
 				bLangDocLine.Text = docText
-				bLangDocLine.pos = getPosition(n.de(), docLineNode)
+				bLangDocLine.pos = n.getPosition(docLineNode)
 				documentationLines = append(documentationLines, bLangDocLine)
 			}
 		case common.MARKDOWN_PARAMETER_DOCUMENTATION_LINE:
@@ -796,7 +786,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 			paraDocText := n.addReferencesAndReturnDocumentationText(&references, paraDocElements)
 
 			bLangParaDoc.ParameterDocumentationLines = append(bLangParaDoc.ParameterDocumentationLines, paraDocText)
-			bLangParaDoc.pos = getPosition(n.de(), parameterName)
+			bLangParaDoc.pos = n.getPosition(parameterName)
 		case common.MARKDOWN_RETURN_PARAMETER_DOCUMENTATION_LINE:
 			bLangReturnParaDoc = &BLangMarkdownReturnParameterDocumentation{}
 			returnParaDocLineNode := singleDocLine.(*tree.MarkdownParameterDocumentationLineNode)
@@ -805,7 +795,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 			returnParaDocText := n.addReferencesAndReturnDocumentationText(&references, returnParaDocElements)
 
 			bLangReturnParaDoc.ReturnParameterDocumentationLines = append(bLangReturnParaDoc.ReturnParameterDocumentationLines, returnParaDocText)
-			bLangReturnParaDoc.pos = getPosition(n.de(), returnParaDocLineNode)
+			bLangReturnParaDoc.pos = n.getPosition(returnParaDocLineNode)
 			doc.ReturnParameter = bLangReturnParaDoc
 		case common.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE:
 			bLangDeprecationDoc = &BLangMarkDownDeprecationDocumentation{}
@@ -820,7 +810,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 				}
 			}
 			bLangDeprecationDoc.AddDeprecationLine("# " + lineText)
-			bLangDeprecationDoc.pos = getPosition(n.de(), deprecationDocLineNode)
+			bLangDeprecationDoc.pos = n.getPosition(deprecationDocLineNode)
 		case common.MARKDOWN_CODE_BLOCK:
 			codeBlockNode := singleDocLine.(*tree.MarkdownCodeBlockNode)
 			n.transformCodeBlock(&documentationLines, codeBlockNode)
@@ -845,7 +835,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 	doc.References = references
 	doc.DeprecationDocumentation = bLangDeprecationDoc
 	doc.DeprecatedParametersDocumentation = bLangDeprecatedParaDoc
-	doc.pos = getPosition(n.de(), markdownDocumentationNode)
+	doc.pos = n.getPosition(markdownDocumentationNode)
 	return doc
 }
 
@@ -895,8 +885,8 @@ func createIdentifierFromTokenInternal(pos diagnostics.Location, token tree.Toke
 	return createIdentifier(pos, &identifierName, &identifierName)
 }
 
-func createIgnoreIdentifier(de *diagnostics.DiagnosticEnv, node tree.Node) BLangIdentifier {
-	pos := getPosition(de, node)
+func (n *NodeBuilder) createIgnoreIdentifier(node tree.Node) BLangIdentifier {
+	pos := n.getPosition(node)
 	ignoreValue := string(model.IGNORE)
 	identifier := createIdentifier(pos, &ignoreValue, &ignoreValue)
 	return identifier
@@ -942,7 +932,7 @@ func (n *NodeBuilder) createTypeNodeInner(typeNode tree.Node) (TypeDescriptor, e
 		}
 		bLUserDefinedType.PkgAlias = *pkgAlias
 		bLUserDefinedType.TypeName = *typeName
-		bLUserDefinedType.pos = getPosition(n.de(), typeNode)
+		bLUserDefinedType.pos = n.getPosition(typeNode)
 		return &bLUserDefinedType, nil
 	case common.SIMPLE_NAME_REFERENCE:
 		nameReferenceNode := typeNode.(*tree.SimpleNameReferenceNode)
@@ -969,10 +959,9 @@ func (n *NodeBuilder) createSimpleVarInner(name tree.Token, typeName tree.Node, 
 
 	var namePos diagnostics.Location
 	if name != nil {
-		namePos = getPosition(n.de(), name)
+		namePos = n.getPosition(name)
 	}
 	identifier := n.createIdentifierNodeFromToken(namePos, name)
-	identifier.SetPosition(namePos)
 	bLSimpleVar.SetName(identifier)
 
 	if isDeclaredWithVar(typeName) {
@@ -1007,9 +996,9 @@ func (n *NodeBuilder) createBuiltInTypeNode(typeNode tree.Node) TypeDescriptor {
 			return nil
 		} else if simpleNameRef.Name().IsMissing() {
 			name := getNextMissingNodeName(n.PackageID)
-			identifier := createIdentifier(getPosition(n.de(), simpleNameRef.Name()), &name, &name)
+			identifier := createIdentifier(n.getPosition(simpleNameRef.Name()), &name, &name)
 			pkgAlias := BLangIdentifier{}
-			return createUserDefinedType(getPosition(n.de(), typeNode), pkgAlias, identifier)
+			return createUserDefinedType(n.getPosition(typeNode), pkgAlias, identifier)
 		}
 		typeText = simpleNameRef.Name().Text()
 	} else {
@@ -1039,12 +1028,12 @@ func (n *NodeBuilder) createBuiltInTypeNode(typeNode tree.Node) TypeDescriptor {
 		common.NEVER_TYPE_DESC:
 		valueType := BLangValueType{}
 		valueType.TypeKind = typeKind
-		valueType.pos = getPosition(n.de(), typeNode)
+		valueType.pos = n.getPosition(typeNode)
 		return &valueType
 	default:
 		builtInValueType := BLangBuiltInRefTypeNode{}
 		builtInValueType.TypeKind = typeKind
-		builtInValueType.pos = getPosition(n.de(), typeNode)
+		builtInValueType.pos = n.getPosition(typeNode)
 		return &builtInValueType
 	}
 }
@@ -1084,8 +1073,8 @@ func (n *NodeBuilder) createBLangNameReference(node tree.Node) [2]IdentifierNode
 		iNode := node.(*tree.QualifiedNameReferenceNode)
 		modulePrefix := iNode.ModulePrefix()
 		identifier := iNode.Identifier()
-		pkgAlias := n.createIdentifierNodeFromToken(getPosition(n.de(), modulePrefix), modulePrefix)
-		namePos := getPosition(n.de(), identifier)
+		pkgAlias := n.createIdentifierNodeFromToken(n.getPosition(modulePrefix), modulePrefix)
+		namePos := n.getPosition(identifier)
 		name := n.createIdentifierNodeFromToken(namePos, identifier)
 		return [...]IdentifierNode{pkgAlias, name}
 	case common.ERROR_TYPE_DESC:
@@ -1106,7 +1095,7 @@ func (n *NodeBuilder) createBLangNameReference(node tree.Node) [2]IdentifierNode
 
 	emptyStr := ""
 	pkgAlias := createIdentifier(diagnostics.NewBuiltinLocation(), &emptyStr, &emptyStr)
-	name := n.createIdentifierNodeFromToken(getPosition(n.de(), iToken), iToken)
+	name := n.createIdentifierNodeFromToken(n.getPosition(iToken), iToken)
 	return [...]IdentifierNode{&pkgAlias, name}
 }
 
@@ -1198,13 +1187,13 @@ func (n *NodeBuilder) createSimpleLiteral(literal tree.Node) LiteralNode {
 }
 
 // getIntegerLiteral parses integer literals (decimal/hex)
-func getIntegerLiteral(cx *context.CompilerContext, literal tree.Node, textValue string) any {
+func (n *NodeBuilder) getIntegerLiteral(literal tree.Node, textValue string) any {
 	basicLiteralNode := literal.(*tree.BasicLiteralNode)
 	literalTokenKind := basicLiteralNode.LiteralToken().Kind()
 	switch literalTokenKind {
 	case common.DECIMAL_INTEGER_LITERAL_TOKEN:
 		if textValue[0] == '0' && len(textValue) > 1 {
-			cx.SyntaxError("invalid integer literal: leading zero", getPosition(cx.DiagnosticEnv(), literal))
+			n.cx.SyntaxError("invalid integer literal: leading zero", n.getPosition(literal))
 		}
 		return parseLong(textValue, textValue, 10)
 	case common.HEX_INTEGER_LITERAL_TOKEN:
@@ -1318,7 +1307,7 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node, isFiniteType b
 		switch literalTokenKind {
 		case common.DECIMAL_INTEGER_LITERAL_TOKEN, common.HEX_INTEGER_LITERAL_TOKEN:
 			typeTag = TypeTags_INT
-			value = getIntegerLiteral(n.cx, literal, textValue)
+			value = n.getIntegerLiteral(literal, textValue)
 			originalValue = &textValue
 			// TODO: can we fix below?
 			if literalTokenKind == common.HEX_INTEGER_LITERAL_TOKEN && withinByteRange(value) {
@@ -1346,7 +1335,7 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node, isFiniteType b
 			originalValue = &textValue
 		}
 		numericLiteral := &BLangNumericLiteral{}
-		numericLiteral.pos = getPosition(n.de(), literal)
+		numericLiteral.pos = n.getPosition(literal)
 		numericLiteral.SetValueType(n.types.getTypeFromTag(typeTag).(BType))
 		numericLiteral.Value = value
 		numericLiteral.OriginalValue = *originalValue
@@ -1376,7 +1365,7 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node, isFiniteType b
 
 		if kind != common.TEMPLATE_STRING && kind != common.XML_TEXT_CONTENT &&
 			kind != common.PROMPT_CONTENT && !isTokenInRegExp(kind) {
-			pos := getPosition(n.de(), literal)
+			pos := n.getPosition(literal)
 			validateUnicodePoints(text, pos)
 
 			// Try to unescape, but handle errors gracefully
@@ -1413,7 +1402,7 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node, isFiniteType b
 		return n.TransformSyntaxNode(literal).(LiteralNode)
 	}
 	bLangNode := bLiteral.(BLangNode)
-	bLangNode.SetPosition(getPosition(n.de(), literal))
+	bLangNode.SetPosition(n.getPosition(literal))
 	bType := n.types.getTypeFromTag(typeTag).(BType)
 	bType.BTypeSetTag(typeTag)
 	switch bl := bLiteral.(type) {
@@ -1433,7 +1422,7 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 	defer func() { n.currentCompUnit = nil }()
 	compilationUnit.Name = n.CurrentCompUnitName
 	compilationUnit.packageID = n.PackageID
-	pos := getPosition(n.de(), modulePartNode)
+	pos := n.getPosition(modulePartNode)
 	compUnit := createIdentifier(pos, &n.CurrentCompUnitName, &n.CurrentCompUnitName)
 
 	if modulePartNode.HasDiagnostics() {
@@ -1601,7 +1590,7 @@ func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *tree.FunctionDefi
 
 func (n *NodeBuilder) createFunctionNode(funcName *tree.IdentifierToken, qualifierList tree.NodeList[tree.Token], funcSignature *tree.FunctionSignatureNode, funcBody tree.FunctionBodyNode) *BLangFunction {
 	blFunction := BLangFunction{}
-	name := createIdentifierFromTokenInternal(getPosition(n.de(), funcName), funcName, false)
+	name := createIdentifierFromTokenInternal(n.getPosition(funcName), funcName, false)
 	n.populateFunctionNode(name, qualifierList, funcSignature, funcBody, &blFunction)
 	return &blFunction
 }
@@ -1676,13 +1665,13 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.Imp
 	prefixNode := importDeclarationNode.Prefix()
 
 	// 3. Get position for entire import declaration
-	position := getPosition(n.de(), importDeclarationNode)
+	position := n.getPosition(importDeclarationNode)
 
 	// 4. Process module name components
 	var pkgNameComps []BLangIdentifier
 	moduleNames := importDeclarationNode.ModuleName()
 	for name := range moduleNames.Iterator() {
-		namePos := getPosition(n.de(), name)
+		namePos := n.getPosition(name)
 		nameText := name.Text()
 		identifier := createIdentifier(namePos, &nameText, &nameText)
 		pkgNameComps = append(pkgNameComps, identifier)
@@ -1696,7 +1685,7 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.Imp
 	// 6. Set org name (create identifier even if token is nil)
 	var orgNamePos diagnostics.Location
 	if orgNameNode != nil && !orgNameNode.IsMissing() {
-		orgNamePos = getPosition(n.de(), orgNameNode)
+		orgNamePos = n.getPosition(orgNameNode)
 	}
 	var orgNameStr *string
 	if orgNameToken != nil {
@@ -1720,11 +1709,11 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.Imp
 
 	// Prefix exists - check if it's underscore or regular alias
 	prefix := prefixNode.Prefix()
-	prefixPos := getPosition(n.de(), prefix)
+	prefixPos := n.getPosition(prefix)
 
 	if prefix.Kind() == common.UNDERSCORE_KEYWORD {
 		// Create ignore identifier for underscore
-		aliasIdent := createIgnoreIdentifier(n.de(), prefix)
+		aliasIdent := n.createIgnoreIdentifier(prefix)
 		importDcl.Alias = &aliasIdent
 	} else {
 		// Use prefix token as alias
@@ -1741,7 +1730,7 @@ func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree
 
 	pos := getPositionWithoutMetadata(n.de(), listenerDeclarationNode)
 	nameToken := listenerDeclarationNode.VariableName()
-	namePos := getPosition(n.de(), nameToken)
+	namePos := n.getPosition(nameToken)
 	identifier := createIdentifierFromToken(namePos, nameToken)
 
 	bLSimpleVar := createSimpleVariableNode()
@@ -1788,7 +1777,7 @@ func isAllowedDistinctTypeDescriptor(kind common.SyntaxKind) bool {
 func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefinitionNode) BLangNode {
 	typeDef := NewBLangTypeDefinition()
 
-	identifierNode := createIdentifierFromToken(getPosition(n.de(), typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
+	identifierNode := createIdentifierFromToken(n.getPosition(typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
 	typeDef.Name = &identifierNode
 
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, typeDef.Name.GetValue())
@@ -1797,9 +1786,9 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*tree.DistinctTypeDescriptorNode); ok {
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
 		if innerTypeDescriptorNode == nil || !isAllowedDistinctTypeDescriptor(innerTypeDescriptorNode.Kind()) {
-			n.cx.SyntaxError("only object and error types can be distinct", getPosition(n.de(), distinctTypeDescriptorNode))
+			n.cx.SyntaxError("only object and error types can be distinct", n.getPosition(distinctTypeDescriptorNode))
 			neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
-			neverType.pos = getPosition(n.de(), distinctTypeDescriptorNode)
+			neverType.pos = n.getPosition(distinctTypeDescriptorNode)
 			typeDef.SetTypeData(TypeData{TypeDescriptor: neverType})
 			n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 			return typeDef
@@ -1885,17 +1874,17 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 		}
 		tok, ok := seg.(tree.Token)
 		if !ok {
-			n.cx.InternalError("unexpected node in service attach point", getPosition(n.de(), seg))
+			n.cx.InternalError("unexpected node in service attach point", n.getPosition(seg))
 			continue
 		}
 		switch tok.Kind() {
 		case common.IDENTIFIER_TOKEN:
-			ident := createIdentifierFromToken(getPosition(n.de(), tok), tok)
+			ident := createIdentifierFromToken(n.getPosition(tok), tok)
 			service.AbsoluteResourcePath = append(service.AbsoluteResourcePath, ident)
 		case common.SLASH_TOKEN:
 			// Slash tokens between segments are ignored.
 		default:
-			n.cx.InternalError(fmt.Sprintf("unexpected token in service attach point: %v", tok.Kind()), getPosition(n.de(), tok))
+			n.cx.InternalError(fmt.Sprintf("unexpected token in service attach point: %v", tok.Kind()), n.getPosition(tok))
 		}
 	}
 }
@@ -2191,7 +2180,7 @@ func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName tree.Node) BLangE
 	}
 	nameRef := n.createBLangNameReference(fieldName)
 	name := nameRef[1].GetValue()
-	pos := getPosition(n.de(), fieldName)
+	pos := n.getPosition(fieldName)
 	lit := &BLangLiteral{}
 	lit.SetPosition(pos)
 	bType := &BTypeBasic{}
@@ -2265,7 +2254,7 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node
 		actionOrExpression.Kind() == common.IDENTIFIER_TOKEN {
 		nameReference := n.createBLangNameReference(actionOrExpression)
 		bLVarRef := BLangSimpleVarRef{}
-		bLVarRef.pos = getPosition(n.de(), actionOrExpression)
+		bLVarRef.pos = n.getPosition(actionOrExpression)
 		pkgAliasValue := nameReference[0].GetValue()
 		variableNameValue := nameReference[1].GetValue()
 		pkgAlias := createIdentifier(nameReference[0].GetPosition(), &pkgAliasValue, &pkgAliasValue)
@@ -2281,12 +2270,12 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node
 			return nil, fmt.Errorf("braced syntax node %T transformed to non-expression node", actionOrExpression)
 		}
 		group.Expression = expr
-		group.pos = getPosition(n.de(), actionOrExpression)
+		group.pos = n.getPosition(actionOrExpression)
 		return &group, nil
 	}
 	if isType(actionOrExpression.Kind()) {
 		typeAccessExpr := BLangTypedescExpr{}
-		typeAccessExpr.pos = getPosition(n.de(), actionOrExpression)
+		typeAccessExpr.pos = n.getPosition(actionOrExpression)
 		typeAccessExpr.typeDescriptor = n.createTypeNode(actionOrExpression)
 		return &typeAccessExpr, nil
 	}
@@ -2306,7 +2295,7 @@ func (n *NodeBuilder) TransformContinueStatement(continueStatementNode *tree.Con
 
 func (n *NodeBuilder) TransformExternalFunctionBody(externalFunctionBodyNode *tree.ExternalFunctionBodyNode) BLangNode {
 	body := &BLangExternFunctionBody{}
-	body.pos = getPosition(n.de(), externalFunctionBodyNode)
+	body.pos = n.getPosition(externalFunctionBodyNode)
 	return body
 }
 
@@ -2357,7 +2346,7 @@ func (n *NodeBuilder) TransformReturnStatement(returnStatementNode *tree.ReturnS
 		bLReturn.SetActionOrExpression(n.createActionOrExpression(returnStatementNode.Expression()))
 	} else {
 		nilLiteral := &BLangLiteral{}
-		nilLiteral.pos = getPosition(n.de(), returnStatementNode)
+		nilLiteral.pos = n.getPosition(returnStatementNode)
 		nilLiteral.Value = nil
 		nilLiteral.SetValueType(n.types.getTypeFromTag(TypeTags_NIL).(BType))
 		bLReturn.SetActionOrExpression(nilLiteral)
@@ -2372,7 +2361,7 @@ func (n *NodeBuilder) TransformLocalTypeDefinitionStatement(localTypeDefinitionS
 
 func (n *NodeBuilder) TransformLockStatement(lockStatementNode *tree.LockStatementNode) BLangNode {
 	if lockStatementNode.OnFailClause() != nil {
-		n.cx.Unimplemented("on-fail clause on lock is not yet supported", getPosition(n.de(), lockStatementNode.OnFailClause()))
+		n.cx.Unimplemented("on-fail clause on lock is not yet supported", n.getPosition(lockStatementNode.OnFailClause()))
 	}
 	bLLock := &BLangLock{}
 	bLLock.pos = n.getPosition(lockStatementNode)
@@ -2391,7 +2380,7 @@ func (n *NodeBuilder) TransformForEachStatement(forEachStatementNode *tree.ForEa
 	bLForeach.pos = n.getPosition(forEachStatementNode)
 
 	varDef := n.createBLangVarDef(
-		getPosition(n.de(), forEachStatementNode.TypedBindingPattern()),
+		n.getPosition(forEachStatementNode.TypedBindingPattern()),
 		forEachStatementNode.TypedBindingPattern(),
 		nil,
 		nil,
@@ -2419,7 +2408,7 @@ func (n *NodeBuilder) TransformBinaryExpression(binaryBLangExpression *tree.Bina
 	}
 
 	bLBinaryExpr := BLangBinaryExpr{}
-	bLBinaryExpr.pos = getPosition(n.de(), binaryBLangExpression)
+	bLBinaryExpr.pos = n.getPosition(binaryBLangExpression)
 	bLBinaryExpr.LhsExpr = n.createExpression(binaryBLangExpression.LhsExpr())
 	bLBinaryExpr.RhsExpr = n.createExpression(binaryBLangExpression.RhsExpr())
 	if binaryBLangExpression.Operator() == nil {
@@ -2435,7 +2424,7 @@ func (n *NodeBuilder) TransformBracedExpression(bracedBLangExpression *tree.Brac
 }
 
 func (n *NodeBuilder) TransformCheckExpression(checkBLangExpression *tree.CheckExpressionNode) BLangNode {
-	pos := getPosition(n.de(), checkBLangExpression)
+	pos := n.getPosition(checkBLangExpression)
 	// we are deviating from the spec here (https://ballerina.io/spec/lang/master/#section_6.33) check is only suppose
 	// to work with expression but jBallerina also allow remote method calls (which is an action)
 	expr := n.createActionOrExpression(checkBLangExpression.Expression())
@@ -2459,7 +2448,7 @@ func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression 
 
 	bLFieldBasedAccess := &BLangFieldBaseAccess{}
 	simpleNameRef := fieldName.(*tree.SimpleNameReferenceNode)
-	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(getPosition(n.de(), fieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
+	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(fieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
 
 	containerExpr := fieldAccessBLangExpression.Expression()
 	if containerExpr.Kind() == common.BRACED_EXPRESSION {
@@ -2469,7 +2458,7 @@ func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression 
 		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
 	}
 
-	bLFieldBasedAccess.pos = getPosition(n.de(), fieldAccessBLangExpression)
+	bLFieldBasedAccess.pos = n.getPosition(fieldAccessBLangExpression)
 	return bLFieldBasedAccess
 }
 
@@ -2477,14 +2466,14 @@ func (n *NodeBuilder) TransformFunctionCallExpression(functionCallBLangExpressio
 	return n.createBLangInvocation(
 		functionCallBLangExpression.FunctionName(),
 		functionCallBLangExpression.Arguments(),
-		getPosition(n.de(), functionCallBLangExpression),
+		n.getPosition(functionCallBLangExpression),
 		n.isFunctionCallAsync(functionCallBLangExpression))
 }
 
 func (n *NodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *tree.MethodCallExpressionNode) BLangNode {
 	bLInvocation := n.createBLangInvocation(methodCallBLangExpression.MethodName(),
 		methodCallBLangExpression.Arguments(),
-		getPosition(n.de(), methodCallBLangExpression), false)
+		n.getPosition(methodCallBLangExpression), false)
 	bLInvocation.Expr = n.createExpression(methodCallBLangExpression.Expression())
 	return bLInvocation
 }
@@ -2506,12 +2495,12 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 				Expr: keyExpr,
 				Kind: MappingKeyComputed,
 			}
-			key.SetPosition(getPosition(n.de(), computedNameField.FieldNameExpr()))
+			key.SetPosition(n.getPosition(computedNameField.FieldNameExpr()))
 			keyValueField := &BLangMappingKeyValueField{
 				Key:       key,
 				ValueExpr: n.createExpression(computedNameField.ValueExpr()),
 			}
-			keyValueField.SetPosition(getPosition(n.de(), computedNameField))
+			keyValueField.SetPosition(n.getPosition(computedNameField))
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
 		case common.SPECIFIC_FIELD:
 			specificField := field.(*tree.SpecificFieldNode)
@@ -2527,25 +2516,25 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 				Expr: n.createSpecificFieldNameLiteral(specificField.FieldName()),
 				Kind: keyKind,
 			}
-			key.SetPosition(getPosition(n.de(), specificField.FieldName()))
+			key.SetPosition(n.getPosition(specificField.FieldName()))
 			keyValueField := &BLangMappingKeyValueField{
 				Key:       key,
 				ValueExpr: n.createExpression(specificField.ValueExpr()),
 				Readonly:  specificField.ReadonlyKeyword() != nil,
 			}
-			keyValueField.SetPosition(getPosition(n.de(), specificField))
+			keyValueField.SetPosition(n.getPosition(specificField))
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
 		default:
 			panic(fmt.Sprintf("unexpected mapping field kind: %v", field.Kind()))
 		}
 	}
-	mappingConstructor.SetPosition(getPosition(n.de(), mappingConstructorBLangExpression))
+	mappingConstructor.SetPosition(n.getPosition(mappingConstructorBLangExpression))
 	return mappingConstructor
 }
 
 func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *tree.IndexedExpressionNode) BLangNode {
 	indexBasedAccess := &BLangIndexBasedAccess{}
-	indexBasedAccess.pos = getPosition(n.de(), indexedBLangExpression)
+	indexBasedAccess.pos = n.getPosition(indexedBLangExpression)
 	keys := indexedBLangExpression.KeyExpression()
 	if keys.Size() == 0 {
 		panic("missing key expression in member access expression")
@@ -2571,7 +2560,7 @@ func (n *NodeBuilder) TransformTypeofExpression(typeofBLangExpression *tree.Type
 }
 
 func (n *NodeBuilder) TransformUnaryExpression(unaryBLangExpression *tree.UnaryExpressionNode) BLangNode {
-	pos := getPosition(n.de(), unaryBLangExpression)
+	pos := n.getPosition(unaryBLangExpression)
 	operator := model.OperatorKindValueFrom(unaryBLangExpression.UnaryOperator().Text())
 	expr := n.createExpression(unaryBLangExpression.Expression())
 	if operator == model.OperatorKind_SUB {
@@ -2620,7 +2609,7 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *tree
 
 	pos := getPositionWithoutMetadata(n.de(), constantDeclarationNode)
 
-	identifierPos := getPosition(n.de(), constantDeclarationNode.VariableName())
+	identifierPos := n.getPosition(constantDeclarationNode.VariableName())
 
 	nameIdentifier := createIdentifierFromToken(identifierPos, constantDeclarationNode.VariableName())
 	constantNode.Name = &nameIdentifier
@@ -2671,10 +2660,10 @@ func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *tr
 
 	simpleVar := n.createSimpleVarInner(paramName, defaultableParameterNode.TypeName(), defaultableParameterNode.Expression(), nil, defaultableParameterNode.Annotations())
 
-	simpleVar.pos = getPosition(n.de(), defaultableParameterNode)
+	simpleVar.pos = n.getPosition(defaultableParameterNode)
 
 	if paramName != nil {
-		simpleVar.Name.SetPosition(getPosition(n.de(), paramName))
+		simpleVar.Name.SetPosition(n.getPosition(paramName))
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 	} else if diagnostics.IsLocationEmpty(simpleVar.Name.GetPosition()) {
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
@@ -2701,10 +2690,10 @@ func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *tree.Req
 
 	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, requiredParameterNode.TypeName(), requiredParameterNode.Annotations())
 
-	simpleVar.pos = getPosition(n.de(), requiredParameterNode)
+	simpleVar.pos = n.getPosition(requiredParameterNode)
 
 	if paramName != nil {
-		simpleVar.Name.SetPosition(getPosition(n.de(), paramName))
+		simpleVar.Name.SetPosition(n.getPosition(paramName))
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 	} else if diagnostics.IsLocationEmpty(simpleVar.Name.GetPosition()) {
 		// Param doesn't have a name and also is not a missing node
@@ -2726,10 +2715,10 @@ func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNo
 
 	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, includedRecordParameterNode.TypeName(), includedRecordParameterNode.Annotations())
 
-	simpleVar.pos = getPosition(n.de(), includedRecordParameterNode)
+	simpleVar.pos = n.getPosition(includedRecordParameterNode)
 
 	if paramName != nil {
-		simpleVar.Name.SetPosition(getPosition(n.de(), paramName))
+		simpleVar.Name.SetPosition(n.getPosition(paramName))
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 	} else if diagnostics.IsLocationEmpty(simpleVar.Name.GetPosition()) {
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
@@ -2750,10 +2739,10 @@ func (n *NodeBuilder) TransformRestParameter(restParameterNode *tree.RestParamet
 
 	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, restParameterNode.TypeName(), restParameterNode.Annotations())
 
-	simpleVar.pos = getPosition(n.de(), restParameterNode)
+	simpleVar.pos = n.getPosition(restParameterNode)
 
 	if paramName != nil {
-		simpleVar.Name.SetPosition(getPosition(n.de(), paramName))
+		simpleVar.Name.SetPosition(n.getPosition(paramName))
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 	} else if diagnostics.IsLocationEmpty(simpleVar.Name.GetPosition()) {
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
@@ -2782,8 +2771,8 @@ func (n *NodeBuilder) TransformSpreadField(spreadFieldNode *tree.SpreadFieldNode
 
 func (n *NodeBuilder) TransformNamedArgument(namedArgumentNode *tree.NamedArgumentNode) BLangNode {
 	namedArg := &BLangNamedArgsExpression{}
-	namedArg.pos = getPosition(n.de(), namedArgumentNode)
-	name := createIdentifierFromToken(getPosition(n.de(), namedArgumentNode.ArgumentName()), namedArgumentNode.ArgumentName().Name())
+	namedArg.pos = n.getPosition(namedArgumentNode)
+	name := createIdentifierFromToken(n.getPosition(namedArgumentNode.ArgumentName()), namedArgumentNode.ArgumentName().Name())
 	namedArg.Name = &name
 	namedArg.Expr = n.createExpression(namedArgumentNode.Expression())
 	return namedArg
@@ -2799,7 +2788,7 @@ func (n *NodeBuilder) TransformRestArgument(restArgumentNode *tree.RestArgumentN
 
 func (n *NodeBuilder) TransformInferredTypedescDefault(inferredTypedescDefaultNode *tree.InferredTypedescDefaultNode) BLangNode {
 	node := &BLangInferredTypedescDefault{}
-	node.pos = getPosition(n.de(), inferredTypedescDefaultNode)
+	node.pos = n.getPosition(inferredTypedescDefaultNode)
 	return node
 }
 
@@ -2818,7 +2807,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 			objectType.Isolated = true
 		case common.READONLY_KEYWORD:
 			// https://github.com/ballerina-platform/ballerina-lang-go/issues/537",
-			n.cx.Unimplemented("readonly object type descriptors are not implemented", getPosition(n.de(), q))
+			n.cx.Unimplemented("readonly object type descriptors are not implemented", n.getPosition(q))
 		}
 	}
 
@@ -2834,7 +2823,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 				Ty: n.createTypeNode(objectField.TypeName()).(BType),
 			}
 			bField.name = fieldName
-			bField.pos = getPosition(n.de(), objectField)
+			bField.pos = n.getPosition(objectField)
 			if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == common.PUBLIC_KEYWORD {
 				bField.flags |= model.FlagPublic
 			}
@@ -2847,7 +2836,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 			methodName, _ := normalizedIdentifierValue(methodDecl.MethodName().Text())
 			bMethod := &BMethodDecl{}
 			bMethod.name = methodName
-			bMethod.pos = getPosition(n.de(), methodDecl)
+			bMethod.pos = n.getPosition(methodDecl)
 			bMethod.memberKind = ObjectMemberKindMethod
 
 			// Process visibility and method kind from qualifier list
@@ -2917,7 +2906,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 		}
 	}
 
-	objectType.pos = getPosition(n.de(), objectTypeDescriptorNode)
+	objectType.pos = n.getPosition(objectTypeDescriptorNode)
 	return objectType
 }
 
@@ -2938,7 +2927,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 				Name: model.Name(fieldName),
 				Type: n.createTypeNode(recordField.TypeName()).(BType),
 			}
-			bField.pos = getPosition(n.de(), recordField)
+			bField.pos = n.getPosition(recordField)
 			if recordField.ReadonlyKeyword() != nil {
 				bField.SetReadonly()
 			}
@@ -2955,7 +2944,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 				Type:        n.createTypeNode(recordFieldDV.TypeName()).(BType),
 				DefaultExpr: n.createExpression(recordFieldDV.Expression()),
 			}
-			bField.pos = getPosition(n.de(), recordFieldDV)
+			bField.pos = n.getPosition(recordFieldDV)
 			if recordFieldDV.ReadonlyKeyword() != nil {
 				bField.SetReadonly()
 			}
@@ -2972,7 +2961,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 		recordType.RestType = n.createTypeNode(restDesc.TypeName()).(BType)
 	}
 	recordType.IsOpen = recordTypeDescriptorNode.BodyStartDelimiter().Kind() == common.OPEN_BRACE_TOKEN
-	recordType.pos = getPosition(n.de(), recordTypeDescriptorNode)
+	recordType.pos = n.getPosition(recordTypeDescriptorNode)
 	return recordType
 }
 
@@ -2987,7 +2976,7 @@ func (n *NodeBuilder) TransformNilTypeDescriptor(nilTypeDescriptorNode *tree.Nil
 func (n *NodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode *tree.OptionalTypeDescriptorNode) BLangNode {
 	typeDesc := optionalTypeDescriptorNode.TypeDescriptor()
 	nilType := &BLangValueType{TypeKind: TypeKind_NIL}
-	nilType.pos = getPosition(n.de(), optionalTypeDescriptorNode.QuestionMarkToken())
+	nilType.pos = n.getPosition(optionalTypeDescriptorNode.QuestionMarkToken())
 	bLUnionType := &BLangUnionTypeNode{
 		lhs: TypeData{
 			TypeDescriptor: n.createTypeNode(typeDesc),
@@ -2996,7 +2985,7 @@ func (n *NodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode
 			TypeDescriptor: nilType,
 		},
 	}
-	bLUnionType.pos = getPosition(n.de(), optionalTypeDescriptorNode)
+	bLUnionType.pos = n.getPosition(optionalTypeDescriptorNode)
 	return bLUnionType
 }
 
@@ -3022,7 +3011,7 @@ func (n *NodeBuilder) TransformTypeReference(typeReferenceNode *tree.TypeReferen
 
 func (n *NodeBuilder) TransformAnnotation(annotationNode *tree.AnnotationNode) BLangNode {
 	annotation := &BLangAnnotationAttachment{}
-	annotation.SetPosition(getPosition(n.de(), annotationNode))
+	annotation.SetPosition(n.getPosition(annotationNode))
 	nameReference := n.createBLangNameReference(annotationNode.AnnotReference())
 	annotation.PkgAlias, _ = nameReference[0].(*BLangIdentifier)
 	annotation.AnnotationName, _ = nameReference[1].(*BLangIdentifier)
@@ -3102,18 +3091,18 @@ func (n *NodeBuilder) TransformTypeTestExpression(typeTestBLangExpression *tree.
 	typeTestExpr.isNegation = typeTestBLangExpression.IsKeyword().Kind() == common.NOT_IS_KEYWORD
 	typeTestExpr.Expr = n.createExpression(typeTestBLangExpression.Expression())
 	typeTestExpr.Type = TypeData{TypeDescriptor: n.createTypeNode(typeTestBLangExpression.TypeDescriptor())}
-	typeTestExpr.SetPosition(getPosition(n.de(), typeTestBLangExpression))
+	typeTestExpr.SetPosition(n.getPosition(typeTestBLangExpression))
 	return typeTestExpr
 }
 
 func (n *NodeBuilder) TransformRemoteMethodCallAction(remoteMethodCallActionNode *tree.RemoteMethodCallActionNode) BLangNode {
 	inv := n.createBLangInvocation(remoteMethodCallActionNode.MethodName(),
 		remoteMethodCallActionNode.Arguments(),
-		getPosition(n.de(), remoteMethodCallActionNode), false)
+		n.getPosition(remoteMethodCallActionNode), false)
 	action := &BLangRemoteMethodCallAction{}
 	action.bLangInvocationBase = inv.bLangInvocationBase
 	action.Expr = n.createExpression(remoteMethodCallActionNode.Expression())
-	action.pos = getPosition(n.de(), remoteMethodCallActionNode)
+	action.pos = n.getPosition(remoteMethodCallActionNode)
 	return action
 }
 
@@ -3121,7 +3110,7 @@ func (n *NodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *tree.Map
 	refType := &BLangBuiltInRefTypeNode{
 		TypeKind: TypeKind_MAP,
 	}
-	refType.SetPosition(getPosition(n.de(), mapTypeDescriptorNode))
+	refType.SetPosition(n.getPosition(mapTypeDescriptorNode))
 
 	mapTypeParamsNode := mapTypeDescriptorNode.MapTypeParamsNode()
 	if mapTypeParamsNode == nil || mapTypeParamsNode.TypeNode() == nil {
@@ -3143,8 +3132,8 @@ func (n *NodeBuilder) TransformNilLiteral(nilLiteralNode *tree.NilLiteralNode) B
 
 func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *tree.AnnotationDeclarationNode) BLangNode {
 	annotation := &BLangAnnotation{}
-	annotation.SetPosition(getPositionWithoutMetadata(n.de(), annotationDeclarationNode))
-	name := createIdentifierFromToken(getPosition(n.de(), annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
+	annotation.SetPosition(n.getPositionWithoutMetadata(annotationDeclarationNode))
+	name := createIdentifierFromToken(n.getPosition(annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
 	annotation.Name = &name
 	if visibility := annotationDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == common.PUBLIC_KEYWORD {
 		annotation.SetPublic()
@@ -3178,7 +3167,7 @@ func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *tre
 	}
 	point, ok := annotationAttachPointFromParts(parts)
 	if !ok {
-		n.cx.SyntaxError("unknown annotation attach point '"+strings.Join(parts, " ")+"'", getPosition(n.de(), annotationAttachPointNode))
+		n.cx.SyntaxError("unknown annotation attach point '"+strings.Join(parts, " ")+"'", n.getPosition(annotationAttachPointNode))
 	}
 	return AttachPoint{
 		Point:  point,
@@ -3240,7 +3229,7 @@ type xmlNamespaceDeclarationNode interface {
 }
 
 func (n *NodeBuilder) transformXMLNamespaceDeclaration(node xmlNamespaceDeclarationNode) BLangNode {
-	pos := getPosition(n.de(), node)
+	pos := n.getPosition(node)
 	xmlns := &BLangXMLNS{}
 	xmlns.SetPosition(pos)
 	n.populateXMLNS(xmlns, pos, node.Namespaceuri(), node.NamespacePrefix())
@@ -3260,7 +3249,7 @@ func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location
 		target.SetNamespaceURI(n.createExpression(uriNode))
 	}
 	if prefixTok != nil {
-		prefixIdent := createIdentifierFromToken(getPosition(n.de(), prefixTok), prefixTok)
+		prefixIdent := createIdentifierFromToken(n.getPosition(prefixTok), prefixTok)
 		target.SetPrefix(&prefixIdent)
 	}
 }
@@ -3278,7 +3267,7 @@ func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *tree.Fun
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &stmtList, 0, functionBodyBlockNode)
 
 	bLFuncBody.Stmts = stmtList
-	bLFuncBody.pos = getPosition(n.de(), functionBodyBlockNode)
+	bLFuncBody.pos = n.getPosition(functionBodyBlockNode)
 	n.isInLocalContext = false
 	return bLFuncBody
 }
@@ -3312,7 +3301,7 @@ func (n *NodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameRefer
 }
 
 func (n *NodeBuilder) TransformTrapExpression(trapBLangExpression *tree.TrapExpressionNode) BLangNode {
-	pos := getPosition(n.de(), trapBLangExpression)
+	pos := n.getPosition(trapBLangExpression)
 	expr := n.createExpression(trapBLangExpression.Expression())
 	trapExpr := &BLangTrapExpr{}
 	trapExpr.pos = pos
@@ -3343,13 +3332,13 @@ func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExp
 	for _, index := range spreadMemberIndexes {
 		listConstructorExpr.SetSpreadMember(index)
 	}
-	listConstructorExpr.pos = getPosition(n.de(), listConstructorBLangExpression)
+	listConstructorExpr.pos = n.getPosition(listConstructorBLangExpression)
 	return listConstructorExpr
 }
 
 func (n *NodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *tree.TypeCastExpressionNode) BLangNode {
 	typeConversionNode := &BLangTypeConversionExpr{}
-	typeConversionNode.SetPosition(getPosition(n.de(), typeCastBLangExpression))
+	typeConversionNode.SetPosition(n.getPosition(typeCastBLangExpression))
 	typeCastParamNode := typeCastBLangExpression.TypeCastParam()
 	if typeCastParamNode != nil && typeCastParamNode.Type() != nil {
 		typeConversionNode.TypeDescriptor = n.createTypeNode(typeCastParamNode.Type()).(BType)
@@ -3379,7 +3368,7 @@ func (n *NodeBuilder) TransformUnionTypeDescriptor(unionTypeDescriptorNode *tree
 			TypeDescriptor: n.createTypeNode(rhs),
 		},
 	}
-	bLUnionType.pos = getPosition(n.de(), unionTypeDescriptorNode)
+	bLUnionType.pos = n.getPosition(unionTypeDescriptorNode)
 	return bLUnionType
 }
 
@@ -3392,7 +3381,7 @@ func (n *NodeBuilder) TransformKeySpecifier(keySpecifierNode *tree.KeySpecifierN
 }
 
 func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *tree.StreamTypeDescriptorNode) BLangNode {
-	position := getPosition(n.de(), streamTypeDescriptorNode)
+	position := n.getPosition(streamTypeDescriptorNode)
 	paramsNode := streamTypeDescriptorNode.StreamTypeParamsNode()
 	if paramsNode == nil {
 		refType := &BLangBuiltInRefTypeNode{
@@ -3430,7 +3419,7 @@ func (n *NodeBuilder) TransformLetExpression(letBLangExpression *tree.LetExpress
 
 func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode *tree.LetVariableDeclarationNode) BLangNode {
 	varDef := n.createBLangVarDef(
-		getPosition(n.de(), letVariableDeclarationNode),
+		n.getPosition(letVariableDeclarationNode),
 		letVariableDeclarationNode.TypedBindingPattern(),
 		letVariableDeclarationNode.Expression(),
 		nil,
@@ -3444,7 +3433,7 @@ func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode
 
 func (n *NodeBuilder) TransformTemplateExpression(templateBLangExpression *tree.TemplateExpressionNode) BLangNode {
 	typeToken := templateBLangExpression.Type()
-	pos := getPosition(n.de(), templateBLangExpression)
+	pos := n.getPosition(templateBLangExpression)
 	if typeToken == nil {
 		n.cx.Unimplemented("raw templates not supported", pos)
 		return nil
@@ -3492,12 +3481,12 @@ func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *tree.Temp
 	for child := range content.Iterator() {
 		bl := n.TransformSyntaxNode(child)
 		if bl == nil {
-			n.cx.InternalError("xml template child did not produce BLangNode", getPosition(n.de(), child))
+			n.cx.InternalError("xml template child did not produce BLangNode", n.getPosition(child))
 			return nil
 		}
 		expr, ok := bl.(BLangExpression)
 		if !ok {
-			n.cx.InternalError("xml template child did not produce BLangExpression", getPosition(n.de(), child))
+			n.cx.InternalError("xml template child did not produce BLangExpression", n.getPosition(child))
 			return nil
 		}
 		children = append(children, expr)
@@ -3693,7 +3682,7 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 		if !ok {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation did not produce BLangExpression",
-				Position: getPosition(n.de(), x),
+				Position: n.getPosition(x),
 				Internal: true,
 			})
 		}
@@ -3711,7 +3700,7 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 		if ins := firstXMLInterpolation(x); ins != nil {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation is not allowed in xml comment",
-				Position: getPosition(n.de(), ins),
+				Position: n.getPosition(ins),
 			})
 		}
 		return yield(newXMLTemplateTextToken(tree.ToSourceCode(x.InternalNode())), nil)
@@ -3719,7 +3708,7 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 		if ins := firstXMLInterpolation(x); ins != nil {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation is not allowed in xml processing instruction",
-				Position: getPosition(n.de(), ins),
+				Position: n.getPosition(ins),
 			})
 		}
 		return n.flattenXMLTemplatePI(x, yield)
@@ -3727,7 +3716,7 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 		if ins := firstXMLInterpolation(x); ins != nil {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation is not allowed in xml CDATA section",
-				Position: getPosition(n.de(), ins),
+				Position: n.getPosition(ins),
 			})
 		}
 		return yield(newXMLTemplateTextToken(tree.ToSourceCode(x.InternalNode())), nil)
@@ -3865,7 +3854,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
 			if isXMLNS {
 				if !yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 					Message:  "interpolation is not allowed in xml xmlns attribute value",
-					Position: getPosition(n.de(), child),
+					Position: n.getPosition(child),
 				}) {
 					return false
 				}
@@ -4014,7 +4003,7 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *tree.TemplateExpressionNode,
 		switch c := child.(type) {
 		case tree.Token:
 			if c.Kind() != common.TEMPLATE_STRING {
-				n.cx.InternalError(fmt.Sprintf("unexpected token kind in string template: %v", c.Kind()), getPosition(n.de(), c))
+				n.cx.InternalError(fmt.Sprintf("unexpected token kind in string template: %v", c.Kind()), n.getPosition(c))
 				continue
 			}
 			strs = append(strs, c.Text())
@@ -4026,13 +4015,13 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *tree.TemplateExpressionNode,
 			expr := n.createActionOrExpression(c.Expression())
 			be, ok := expr.(BLangExpression)
 			if !ok {
-				n.cx.InternalError("interpolation did not produce BLangExpression", getPosition(n.de(), c))
+				n.cx.InternalError("interpolation did not produce BLangExpression", n.getPosition(c))
 				return nil
 			}
 			insertions = append(insertions, be)
 			lastStr = false
 		default:
-			n.cx.InternalError(fmt.Sprintf("unexpected node in string template: %T", c), getPosition(n.de(), child))
+			n.cx.InternalError(fmt.Sprintf("unexpected node in string template: %T", c), n.getPosition(child))
 		}
 	}
 	if !lastStr {
@@ -4044,7 +4033,7 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *tree.TemplateExpressionNode,
 }
 
 func (n *NodeBuilder) xmlNameToString(name tree.XMLNameNode) string {
-	pos := getPosition(n.de(), name)
+	pos := n.getPosition(name)
 	switch name := name.(type) {
 	case *tree.XMLSimpleNameNode:
 		tok := name.Name()
@@ -4084,7 +4073,7 @@ func (n *NodeBuilder) xmlAttributes(attrs tree.NodeList[*tree.XMLAttributeNode])
 
 func (n *NodeBuilder) TransformXMLElement(xMLElementNode *tree.XMLElementNode) BLangNode {
 	elem := &BLangXMLElementLiteral{}
-	elem.pos = getPosition(n.de(), xMLElementNode)
+	elem.pos = n.getPosition(xMLElementNode)
 	if start := xMLElementNode.StartTag(); start != nil {
 		elem.Name = n.xmlNameToString(start.Name())
 		elem.Attrs = n.xmlAttributes(start.Attributes())
@@ -4098,7 +4087,7 @@ func (n *NodeBuilder) TransformXMLElement(xMLElementNode *tree.XMLElementNode) B
 		}
 		expr, ok := bl.(BLangExpression)
 		if !ok {
-			n.cx.InternalError("xml element child did not produce BLangExpression", getPosition(n.de(), child))
+			n.cx.InternalError("xml element child did not produce BLangExpression", n.getPosition(child))
 			continue
 		}
 		children = append(children, expr)
@@ -4134,20 +4123,20 @@ func (n *NodeBuilder) TransformXMLQualifiedName(xMLQualifiedNameNode *tree.XMLQu
 
 func (n *NodeBuilder) TransformXMLEmptyElement(xMLEmptyElementNode *tree.XMLEmptyElementNode) BLangNode {
 	elem := &BLangXMLElementLiteral{}
-	elem.pos = getPosition(n.de(), xMLEmptyElementNode)
+	elem.pos = n.getPosition(xMLEmptyElementNode)
 	elem.Name = n.xmlNameToString(xMLEmptyElementNode.Name())
 	elem.Attrs = n.xmlAttributes(xMLEmptyElementNode.Attributes())
 	return elem
 }
 
 func (n *NodeBuilder) TransformInterpolation(interpolationNode *tree.InterpolationNode) BLangNode {
-	n.cx.Unimplemented("xml interpolation not yet supported", getPosition(n.de(), interpolationNode))
+	n.cx.Unimplemented("xml interpolation not yet supported", n.getPosition(interpolationNode))
 	return nil
 }
 
 func (n *NodeBuilder) TransformXMLText(xMLTextNode *tree.XMLTextNode) BLangNode {
 	text := &BLangXMLTextLiteral{}
-	text.pos = getPosition(n.de(), xMLTextNode)
+	text.pos = n.getPosition(xMLTextNode)
 	if c := xMLTextNode.Content(); c != nil {
 		text.Body = c.Text()
 	}
@@ -4156,7 +4145,7 @@ func (n *NodeBuilder) TransformXMLText(xMLTextNode *tree.XMLTextNode) BLangNode 
 
 func (n *NodeBuilder) TransformXMLAttribute(xMLAttributeNode *tree.XMLAttributeNode) BLangNode {
 	attr := &BLangXMLAttribute{}
-	attr.pos = getPosition(n.de(), xMLAttributeNode)
+	attr.pos = n.getPosition(xMLAttributeNode)
 	attr.Name = n.xmlNameToString(xMLAttributeNode.AttributeName())
 	if valueNode := xMLAttributeNode.Value(); valueNode != nil {
 		if transformed := n.TransformXMLAttributeValue(valueNode); transformed != nil {
@@ -4174,14 +4163,14 @@ func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *tree.XMLAttr
 	for child := range items.Iterator() {
 		tok, ok := child.(tree.Token)
 		if !ok {
-			n.cx.Unimplemented("xml attribute value interpolation not yet supported", getPosition(n.de(), child))
+			n.cx.Unimplemented("xml attribute value interpolation not yet supported", n.getPosition(child))
 			return nil
 		}
 		b.WriteString(tok.Text())
 	}
 	text := b.String()
 	lit := &BLangLiteral{}
-	lit.pos = getPosition(n.de(), xMLAttributeValue)
+	lit.pos = n.getPosition(xMLAttributeValue)
 	lit.SetValueType(n.types.getTypeFromTag(TypeTags_STRING).(BType))
 	lit.Value = text
 	lit.OriginalValue = text
@@ -4190,13 +4179,13 @@ func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *tree.XMLAttr
 
 func (n *NodeBuilder) TransformXMLComment(xMLComment *tree.XMLComment) BLangNode {
 	c := &BLangXMLCommentLiteral{}
-	c.pos = getPosition(n.de(), xMLComment)
+	c.pos = n.getPosition(xMLComment)
 	var b strings.Builder
 	content := xMLComment.Content()
 	for child := range content.Iterator() {
 		tok, ok := child.(tree.Token)
 		if !ok {
-			n.cx.Unimplemented("xml interpolation in comment not yet supported", getPosition(n.de(), child))
+			n.cx.Unimplemented("xml interpolation in comment not yet supported", n.getPosition(child))
 			continue
 		}
 		b.WriteString(tok.Text())
@@ -4206,20 +4195,20 @@ func (n *NodeBuilder) TransformXMLComment(xMLComment *tree.XMLComment) BLangNode
 }
 
 func (n *NodeBuilder) TransformXMLCDATA(xMLCDATANode *tree.XMLCDATANode) BLangNode {
-	n.cx.Unimplemented("xml CDATA not yet supported", getPosition(n.de(), xMLCDATANode))
+	n.cx.Unimplemented("xml CDATA not yet supported", n.getPosition(xMLCDATANode))
 	return nil
 }
 
 func (n *NodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction *tree.XMLProcessingInstruction) BLangNode {
 	pi := &BLangXMLPILiteral{}
-	pi.pos = getPosition(n.de(), xMLProcessingInstruction)
+	pi.pos = n.getPosition(xMLProcessingInstruction)
 	pi.Target = n.xmlNameToString(xMLProcessingInstruction.Target())
 	var b strings.Builder
 	data := xMLProcessingInstruction.Data()
 	for child := range data.Iterator() {
 		tok, ok := child.(tree.Token)
 		if !ok {
-			n.cx.Unimplemented("xml interpolation in processing instruction not yet supported", getPosition(n.de(), child))
+			n.cx.Unimplemented("xml interpolation in processing instruction not yet supported", n.getPosition(child))
 			continue
 		}
 		b.WriteString(tok.Text())
@@ -4309,11 +4298,11 @@ func (n *NodeBuilder) createFunctionTypeParam(param tree.ParameterNode) BLangFun
 	annotations := typedParam.Annotations()
 
 	ftParam := BLangFunctionTypeParam{}
-	ftParam.pos = getPosition(n.de(), param)
+	ftParam.pos = n.getPosition(param)
 
 	if paramName != nil {
-		name := createIdentifierFromToken(getPosition(n.de(), paramName), paramName)
-		name.pos = getPosition(n.de(), paramName)
+		name := createIdentifierFromToken(n.getPosition(paramName), paramName)
+		name.pos = n.getPosition(paramName)
 		ftParam.Name = &name
 	}
 
@@ -4343,7 +4332,7 @@ func (n *NodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprN
 	n.populateFuncSignature(bLFunction, anonFuncExprNode.FunctionSignature())
 	body := n.TransformSyntaxNode(anonFuncExprNode.FunctionBody()).(FunctionBodyNode)
 	bLFunction.Body = body
-	bLFunction.pos = getPosition(n.de(), anonFuncExprNode)
+	bLFunction.pos = n.getPosition(anonFuncExprNode)
 	bLFunction.SetAnonymous()
 	setFunctionQualifiers(bLFunction, anonFuncExprNode.QualifierList())
 
@@ -4355,7 +4344,7 @@ func (n *NodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprN
 func (n *NodeBuilder) TransformExpressionFunctionBody(expressionFunctionBodyNode *tree.ExpressionFunctionBodyNode) BLangNode {
 	exprBody := &BLangExprFunctionBody{}
 	exprBody.Expr = n.createExpression(expressionFunctionBodyNode.Expression())
-	exprBody.pos = getPosition(n.de(), expressionFunctionBodyNode)
+	exprBody.pos = n.getPosition(expressionFunctionBodyNode)
 	return exprBody
 }
 
@@ -4375,11 +4364,11 @@ func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *tree
 			member := BLangMemberTypeDesc{
 				TypeDesc: n.createTypeNode(memberNode.TypeDescriptor()),
 			}
-			member.pos = getPosition(n.de(), memberNode)
+			member.pos = n.getPosition(memberNode)
 			tupleTypeNode.Members = append(tupleTypeNode.Members, member)
 		}
 	}
-	tupleTypeNode.pos = getPosition(n.de(), tupleTypeDescriptorNode)
+	tupleTypeNode.pos = n.getPosition(tupleTypeDescriptorNode)
 	return tupleTypeNode
 }
 
@@ -4389,7 +4378,7 @@ func (n *NodeBuilder) TransformParenthesisedTypeDescriptor(parenthesisedTypeDesc
 
 func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression *tree.ExplicitNewExpressionNode) BLangNode {
 	typeInit := &BLangNewExpression{}
-	typeInit.pos = getPosition(n.de(), explicitNewBLangExpression)
+	typeInit.pos = n.getPosition(explicitNewBLangExpression)
 	typeInit.TypeDescriptor = n.createTypeNode(explicitNewBLangExpression.TypeDescriptor()).(BType)
 	if argList := explicitNewBLangExpression.ParenthesizedArgList(); argList != nil {
 		args := argList.Arguments()
@@ -4402,7 +4391,7 @@ func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression 
 
 func (n *NodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression *tree.ImplicitNewExpressionNode) BLangNode {
 	typeInit := &BLangNewExpression{}
-	typeInit.pos = getPosition(n.de(), implicitNewBLangExpression)
+	typeInit.pos = n.getPosition(implicitNewBLangExpression)
 	if argList := implicitNewBLangExpression.ParenthesizedArgList(); argList != nil {
 		args := argList.Arguments()
 		for arg := range args.Iterator() {
@@ -4421,17 +4410,17 @@ func (n *NodeBuilder) TransformQueryConstructType(queryConstructTypeNode *tree.Q
 	return &BLangIdentifier{
 		Value: keyword.Text(),
 		bLangNodeBase: bLangNodeBase{
-			pos: getPosition(n.de(), queryConstructTypeNode),
+			pos: n.getPosition(queryConstructTypeNode),
 		},
 	}
 }
 
 func (n *NodeBuilder) TransformFromClause(fromClauseNode *tree.FromClauseNode) BLangNode {
 	fromClause := &BLangFromClause{}
-	fromClause.pos = getPosition(n.de(), fromClauseNode)
+	fromClause.pos = n.getPosition(fromClauseNode)
 	fromClause.SetCollection(n.createExpression(fromClauseNode.Expression()))
 	bindingPatternNode := fromClauseNode.TypedBindingPattern()
-	fromClause.SetVariableDefinitionNode(n.createBLangVarDef(getPosition(n.de(), bindingPatternNode), bindingPatternNode,
+	fromClause.SetVariableDefinitionNode(n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode,
 		nil, nil))
 	fromClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	return fromClause
@@ -4439,14 +4428,14 @@ func (n *NodeBuilder) TransformFromClause(fromClauseNode *tree.FromClauseNode) B
 
 func (n *NodeBuilder) TransformWhereClause(whereClauseNode *tree.WhereClauseNode) BLangNode {
 	whereClause := &BLangWhereClause{}
-	whereClause.pos = getPosition(n.de(), whereClauseNode)
+	whereClause.pos = n.getPosition(whereClauseNode)
 	whereClause.Expression = n.createExpression(whereClauseNode.Expression())
 	return whereClause
 }
 
 func (n *NodeBuilder) TransformLetClause(letClauseNode *tree.LetClauseNode) BLangNode {
 	letClause := &BLangLetClause{}
-	letClause.pos = getPosition(n.de(), letClauseNode)
+	letClause.pos = n.getPosition(letClauseNode)
 	letVarDeclarations := letClauseNode.LetVarDeclarations()
 	letClause.LetVarDeclarations = make([]BLangSimpleVariableDef, 0, letVarDeclarations.Size())
 	for letVar := range letVarDeclarations.Iterator() {
@@ -4458,11 +4447,11 @@ func (n *NodeBuilder) TransformLetClause(letClauseNode *tree.LetClauseNode) BLan
 
 func (n *NodeBuilder) TransformJoinClause(joinClauseNode *tree.JoinClauseNode) BLangNode {
 	joinClause := &BLangJoinClause{}
-	joinClause.pos = getPosition(n.de(), joinClauseNode)
+	joinClause.pos = n.getPosition(joinClauseNode)
 	joinClause.SetCollection(n.createExpression(joinClauseNode.Expression()))
 	bindingPatternNode := joinClauseNode.TypedBindingPattern()
 	joinClause.SetVariableDefinitionNode(
-		n.createBLangVarDef(getPosition(n.de(), bindingPatternNode), bindingPatternNode, nil, nil),
+		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
 	)
 	joinClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	joinClause.IsOuterJoinFlag = joinClauseNode.OuterKeyword() != nil
@@ -4474,7 +4463,7 @@ func (n *NodeBuilder) TransformJoinClause(joinClauseNode *tree.JoinClauseNode) B
 
 func (n *NodeBuilder) TransformOnClause(onClauseNode *tree.OnClauseNode) BLangNode {
 	onClause := &BLangOnClause{}
-	onClause.pos = getPosition(n.de(), onClauseNode)
+	onClause.pos = n.getPosition(onClauseNode)
 	onClause.SetOnExpression(n.createExpression(onClauseNode.OnExpression()))
 	onClause.SetEqualsExpression(n.createExpression(onClauseNode.EqualsExpression()))
 	return onClause
@@ -4482,14 +4471,14 @@ func (n *NodeBuilder) TransformOnClause(onClauseNode *tree.OnClauseNode) BLangNo
 
 func (n *NodeBuilder) TransformLimitClause(limitClauseNode *tree.LimitClauseNode) BLangNode {
 	limitClause := &BLangLimitClause{}
-	limitClause.pos = getPosition(n.de(), limitClauseNode)
+	limitClause.pos = n.getPosition(limitClauseNode)
 	limitClause.SetExpression(n.createExpression(limitClauseNode.Expression()))
 	return limitClause
 }
 
 func (n *NodeBuilder) TransformOnConflictClause(onConflictClauseNode *tree.OnConflictClauseNode) BLangNode {
 	onConflictClause := &BLangOnConflictClause{}
-	onConflictClause.pos = getPosition(n.de(), onConflictClauseNode)
+	onConflictClause.pos = n.getPosition(onConflictClauseNode)
 	onConflictClause.SetExpression(n.createExpression(onConflictClauseNode.Expression()))
 	return onConflictClause
 }
@@ -4500,7 +4489,7 @@ func (n *NodeBuilder) TransformQueryPipeline(queryPipelineNode *tree.QueryPipeli
 
 func (n *NodeBuilder) TransformSelectClause(selectClauseNode *tree.SelectClauseNode) BLangNode {
 	selectClause := &BLangSelectClause{}
-	selectClause.pos = getPosition(n.de(), selectClauseNode)
+	selectClause.pos = n.getPosition(selectClauseNode)
 	selectClause.SetExpression(n.createExpression(selectClauseNode.Expression()))
 	return selectClause
 }
@@ -4509,21 +4498,21 @@ func (n *NodeBuilder) TransformCollectClause(collectClauseNode *tree.CollectClau
 	collectClause := &BLangCollectClause{
 		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
 	}
-	collectClause.pos = getPosition(n.de(), collectClauseNode)
+	collectClause.pos = n.getPosition(collectClauseNode)
 	collectClause.SetExpression(n.createExpression(collectClauseNode.Expression()))
 	return collectClause
 }
 
 func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryExpressionNode) BLangNode {
 	queryExpr := &BLangQueryExpr{}
-	queryExpr.pos = getPosition(n.de(), queryBLangExpression)
+	queryExpr.pos = n.getPosition(queryBLangExpression)
 
 	if constructType := queryBLangExpression.QueryConstructType(); constructType != nil {
 		switch constructType.Keyword().Text() {
 		case string(TypeKind_MAP):
 			queryExpr.QueryConstructType = TypeKind_MAP
 		default:
-			n.cx.Unimplemented("only map query construct type is supported for now", getPosition(n.de(), constructType))
+			n.cx.Unimplemented("only map query construct type is supported for now", n.getPosition(constructType))
 		}
 	}
 
@@ -4543,7 +4532,7 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryE
 			common.GROUP_BY_CLAUSE, common.LIMIT_CLAUSE, common.ORDER_BY_CLAUSE:
 			queryExpr.AddQueryClause(n.TransformSyntaxNode(clause))
 		default:
-			n.cx.Unimplemented("only from + join + let + where + group by + order by + limit + select/collect query clauses are supported for now", getPosition(n.de(), clause))
+			n.cx.Unimplemented("only from + join + let + where + group by + order by + limit + select/collect query clauses are supported for now", n.getPosition(clause))
 		}
 	}
 
@@ -4551,7 +4540,7 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryE
 	if resultClause != nil && (resultClause.Kind() == common.SELECT_CLAUSE || resultClause.Kind() == common.COLLECT_CLAUSE) {
 		queryExpr.AddQueryClause(n.TransformSyntaxNode(resultClause))
 	} else if resultClause != nil {
-		n.cx.Unimplemented("only select/collect result clauses are supported for now", getPosition(n.de(), resultClause))
+		n.cx.Unimplemented("only select/collect result clauses are supported for now", n.getPosition(resultClause))
 	}
 
 	if queryBLangExpression.OnConflictClause() != nil {
@@ -4576,7 +4565,7 @@ func (n *NodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescri
 			TypeDescriptor: n.createTypeNode(rhs),
 		},
 	}
-	bLIntersectionType.pos = getPosition(n.de(), intersectionTypeDescriptorNode)
+	bLIntersectionType.pos = n.getPosition(intersectionTypeDescriptorNode)
 	return bLIntersectionType
 }
 
@@ -4598,7 +4587,7 @@ func (n *NodeBuilder) TransformFlushAction(flushActionNode *tree.FlushActionNode
 
 func (n *NodeBuilder) TransformSingletonTypeDescriptor(singletonTypeDescriptorNode *tree.SingletonTypeDescriptorNode) BLangNode {
 	bLFiniteTypeNode := &BLangFiniteTypeNode{}
-	bLFiniteTypeNode.pos = getPosition(n.de(), singletonTypeDescriptorNode)
+	bLFiniteTypeNode.pos = n.getPosition(singletonTypeDescriptorNode)
 	bLFiniteTypeNode.ValueSpace = append(bLFiniteTypeNode.ValueSpace, n.createExpression(singletonTypeDescriptorNode.SimpleContExprNode()))
 	return bLFiniteTypeNode
 }
@@ -4617,7 +4606,7 @@ func (n *NodeBuilder) TransformCaptureBindingPattern(captureBindingPatternNode *
 
 func (n *NodeBuilder) TransformWildcardBindingPattern(wildcardBindingPatternNode *tree.WildcardBindingPatternNode) BLangNode {
 	bLWildCardBindingPattern := &BLangWildCardBindingPattern{}
-	bLWildCardBindingPattern.pos = getPosition(n.de(), wildcardBindingPatternNode)
+	bLWildCardBindingPattern.pos = n.getPosition(wildcardBindingPatternNode)
 	return bLWildCardBindingPattern
 }
 
@@ -4699,7 +4688,7 @@ func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression 
 	nameReference := n.createBLangNameReference(annotAccessBLangExpression.AnnotTagReference())
 	expr.PkgAlias, _ = nameReference[0].(*BLangIdentifier)
 	expr.AnnotationName, _ = nameReference[1].(*BLangIdentifier)
-	expr.SetPosition(getPosition(n.de(), annotAccessBLangExpression))
+	expr.SetPosition(n.getPosition(annotAccessBLangExpression))
 	return expr
 }
 
@@ -4714,7 +4703,7 @@ func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccess
 	bLFieldBasedAccess := &BLangFieldBaseAccess{}
 	bLFieldBasedAccess.SetOptionalAccess()
 	simpleNameRef := fieldName.(*tree.SimpleNameReferenceNode)
-	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(getPosition(n.de(), optionalFieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
+	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(optionalFieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
 
 	containerExpr := optionalFieldAccessBLangExpression.Expression()
 	if containerExpr.Kind() == common.BRACED_EXPRESSION {
@@ -4724,7 +4713,7 @@ func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccess
 		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
 	}
 
-	bLFieldBasedAccess.pos = getPosition(n.de(), optionalFieldAccessBLangExpression)
+	bLFieldBasedAccess.pos = n.getPosition(optionalFieldAccessBLangExpression)
 	return bLFieldBasedAccess
 }
 
@@ -4747,7 +4736,7 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 		}
 		enumMember := memberNode.(*tree.EnumMemberNode)
 		if enumMember.Identifier() == nil || enumMember.Identifier().IsMissing() {
-			n.cx.InternalError("missing enum member identifier", getPosition(n.de(), enumMember))
+			n.cx.InternalError("missing enum member identifier", n.getPosition(enumMember))
 			continue
 		}
 		constantNode, redeclared := n.transformEnumMember(enumMember, publicQualifier)
@@ -4755,7 +4744,7 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 			continue
 		}
 		if n.currentCompUnit == nil {
-			n.cx.InternalError("enum constants can only be added at module level", getPosition(n.de(), enumMember))
+			n.cx.InternalError("enum constants can only be added at module level", n.getPosition(enumMember))
 			continue
 		}
 		n.currentCompUnit.AddTopLevelNode(constantNode)
@@ -4768,7 +4757,7 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 		typeDef.SetPublic()
 	}
 
-	identifierPos := getPosition(n.de(), enumDeclarationNode.Identifier())
+	identifierPos := n.getPosition(enumDeclarationNode.Identifier())
 	identifier := createIdentifierFromToken(identifierPos, enumDeclarationNode.Identifier())
 	typeDef.Name = &identifier
 
@@ -4811,7 +4800,7 @@ func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, p
 		constantNode.SetPublic()
 	}
 
-	identifierPos := getPosition(n.de(), enumMemberNode.Identifier())
+	identifierPos := n.getPosition(enumMemberNode.Identifier())
 	identifier := createIdentifierFromToken(identifierPos, enumMemberNode.Identifier())
 	constantNode.Name = &identifier
 
@@ -4843,7 +4832,7 @@ func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, p
 }
 
 func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *tree.ArrayTypeDescriptorNode) BLangNode {
-	position := getPosition(n.de(), arrayTypeDescriptorNode)
+	position := n.getPosition(arrayTypeDescriptorNode)
 	dimensionNodes := arrayTypeDescriptorNode.Dimensions()
 	dimensionSize := dimensionNodes.Size()
 	var sizes []BLangExpression
@@ -4932,7 +4921,7 @@ func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *tree.MatchStat
 	matchClauses := matchStatementNode.MatchClauses()
 	for matchClauseNode := range matchClauses.Iterator() {
 		bLangMatchClause := &BLangMatchClause{}
-		bLangMatchClause.pos = getPosition(n.de(), matchClauseNode)
+		bLangMatchClause.pos = n.getPosition(matchClauseNode)
 
 		// Handle match guard
 		if matchClauseNode.MatchGuard() != nil {
@@ -4960,7 +4949,7 @@ func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *tree.MatchStat
 }
 
 func (n *NodeBuilder) transformMatchPattern(matchPattern tree.Node, matchStmtExpr BLangExpression) BLangMatchPattern {
-	matchPatternPos := getPosition(n.de(), matchPattern)
+	matchPatternPos := n.getPosition(matchPattern)
 	kind := matchPattern.Kind()
 
 	switch kind {
@@ -5019,9 +5008,9 @@ func (n *NodeBuilder) TransformMatchGuard(matchGuardNode *tree.MatchGuardNode) B
 }
 
 func (n *NodeBuilder) TransformDistinctTypeDescriptor(distinctTypeDescriptorNode *tree.DistinctTypeDescriptorNode) BLangNode {
-	n.cx.Unimplemented("anonymous distinct types not supported", getPosition(n.de(), distinctTypeDescriptorNode))
+	n.cx.Unimplemented("anonymous distinct types not supported", n.getPosition(distinctTypeDescriptorNode))
 	neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
-	neverType.pos = getPosition(n.de(), distinctTypeDescriptorNode)
+	neverType.pos = n.getPosition(distinctTypeDescriptorNode)
 	return neverType
 }
 
@@ -5059,7 +5048,7 @@ func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLan
 			bLangRefDoc := &BLangMarkdownReferenceDocumentation{}
 			balNameRefNode := element.(*tree.BallerinaNameReferenceNode)
 
-			bLangRefDoc.pos = getPosition(n.de(), balNameRefNode)
+			bLangRefDoc.pos = n.getPosition(balNameRefNode)
 
 			startBacktick := balNameRefNode.StartBacktick()
 			backtickContent := balNameRefNode.NameReference()
@@ -5233,7 +5222,7 @@ func (n *NodeBuilder) transformCodeBlock(documentationLines *[]BLangMarkdownDocu
 	}
 
 	bLangDocLine.Text = docText.String()
-	bLangDocLine.pos = getPosition(n.de(), codeBlockNode.StartLineHashToken())
+	bLangDocLine.pos = n.getPosition(codeBlockNode.StartLineHashToken())
 	*documentationLines = append(*documentationLines, bLangDocLine)
 }
 
@@ -5279,7 +5268,7 @@ func (n *NodeBuilder) trimLeftAtMostOne(text string) string {
 
 func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *tree.OrderByClauseNode) BLangNode {
 	orderByClause := &BLangOrderByClause{}
-	orderByClause.pos = getPosition(n.de(), orderByClauseNode)
+	orderByClause.pos = n.getPosition(orderByClauseNode)
 
 	orderKeys := orderByClauseNode.OrderKey()
 	orderByClause.OrderByKeyList = make([]BLangOrderKey, 0, orderKeys.Size())
@@ -5295,7 +5284,7 @@ func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *tree.OrderByClau
 
 func (n *NodeBuilder) TransformOrderKey(orderKeyNode *tree.OrderKeyNode) BLangNode {
 	orderKey := &BLangOrderKey{}
-	orderKey.pos = getPosition(n.de(), orderKeyNode)
+	orderKey.pos = n.getPosition(orderKeyNode)
 	orderKey.Expression = n.createExpression(orderKeyNode.Expression())
 	if dir := orderKeyNode.OrderDirection(); dir != nil && dir.Kind() == common.DESCENDING_KEYWORD {
 		orderKey.IsDescending = true
@@ -5309,7 +5298,7 @@ func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *tree.GroupByClau
 	groupByClause := &BLangGroupByClause{
 		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
 	}
-	groupByClause.pos = getPosition(n.de(), groupByClauseNode)
+	groupByClause.pos = n.getPosition(groupByClauseNode)
 
 	groupingKeys := groupByClauseNode.GroupingKey()
 	for node := range groupingKeys.Iterator() {
@@ -5317,7 +5306,7 @@ func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *tree.GroupByClau
 			continue
 		}
 		groupingKey := &BLangGroupingKey{}
-		groupingKey.pos = getPosition(n.de(), node)
+		groupingKey.pos = n.getPosition(node)
 		if node.Kind() == common.SIMPLE_NAME_REFERENCE || node.Kind() == common.IDENTIFIER_TOKEN {
 			varRef, ok := n.createExpression(node).(*BLangSimpleVarRef)
 			if !ok {
@@ -5337,7 +5326,7 @@ func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *tree.GroupByClau
 }
 
 func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarationNode *tree.GroupingKeyVarDeclarationNode) BLangNode {
-	pos := getPosition(n.de(), groupingKeyVarDeclarationNode)
+	pos := n.getPosition(groupingKeyVarDeclarationNode)
 	groupingKey := &BLangGroupingKey{}
 	groupingKey.pos = pos
 
@@ -5378,7 +5367,7 @@ func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *tree.ClassDe
 	n.populateMetadata(classDefinitionNode.Metadata(), &blangClass)
 
 	// Set name
-	nameIdentifier := createIdentifierFromToken(getPosition(n.de(), classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
+	nameIdentifier := createIdentifierFromToken(n.getPosition(classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
 	blangClass.Name = &nameIdentifier
 
 	// Handle visibility qualifier
@@ -5420,9 +5409,9 @@ func (n *NodeBuilder) setClassQualifiers(blangClass *BLangClassDefinition, quali
 
 func (n *NodeBuilder) transformClassField(objectField *tree.ObjectFieldNode) *BLangSimpleVariable {
 	bLSimpleVar := createSimpleVariableNode()
-	identifier := createIdentifierFromToken(getPosition(n.de(), objectField.FieldName()), objectField.FieldName())
+	identifier := createIdentifierFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
 	bLSimpleVar.SetName(&identifier)
-	bLSimpleVar.pos = getPosition(n.de(), objectField)
+	bLSimpleVar.pos = n.getPosition(objectField)
 	bLSimpleVar.SetTypeNode(n.createTypeNode(objectField.TypeName()).(BType))
 
 	if vis := objectField.VisibilityQualifier(); vis != nil {
@@ -5456,12 +5445,12 @@ func (n *NodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *
 	case common.RESOURCE_PATH_REST_PARAM:
 		seg.Kind = ResourcePathSegmentParamRest
 	default:
-		n.cx.InternalError(fmt.Sprintf("unexpected resource path parameter node kind: %v", resourcePathParameterNode.Kind()), getPosition(n.de(), resourcePathParameterNode))
+		n.cx.InternalError(fmt.Sprintf("unexpected resource path parameter node kind: %v", resourcePathParameterNode.Kind()), n.getPosition(resourcePathParameterNode))
 	}
-	seg.pos = getPosition(n.de(), resourcePathParameterNode)
+	seg.pos = n.getPosition(resourcePathParameterNode)
 	nameTok := resourcePathParameterNode.ParamName()
 	if nameTok != nil && !nameTok.IsMissing() {
-		seg.Name = createIdentifierFromToken(getPosition(n.de(), nameTok), nameTok).Value
+		seg.Name = createIdentifierFromToken(n.getPosition(nameTok), nameTok).Value
 	}
 	if td := resourcePathParameterNode.TypeDescriptor(); td != nil {
 		seg.ParamType = n.createTypeNode(td).(BType)
@@ -5472,7 +5461,7 @@ func (n *NodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *
 func (n *NodeBuilder) createResourceMethodNode(funcDef *tree.FunctionDefinition) *BLangResourceMethod {
 	rm := &BLangResourceMethod{}
 	rm.pos = n.getPositionWithoutMetadata(funcDef)
-	name := createIdentifierFromTokenInternal(getPosition(n.de(), funcDef.FunctionName()), funcDef.FunctionName(), false)
+	name := createIdentifierFromTokenInternal(n.getPosition(funcDef.FunctionName()), funcDef.FunctionName(), false)
 	rm.Name = &name
 	setFunctionQualifiersOnBase(&rm.bLangInvokableNodeBase, funcDef.QualifierList())
 	rm.SetAttached()
@@ -5506,13 +5495,13 @@ func (n *NodeBuilder) createResourcePathSegments(pathNodes tree.NodeList[tree.No
 		case common.IDENTIFIER_TOKEN:
 			tok := node.(tree.Token)
 			seg := BLangResourcePathSegment{Kind: ResourcePathSegmentName, Name: tok.Text()}
-			seg.pos = getPosition(n.de(), node)
+			seg.pos = n.getPosition(node)
 			segments = append(segments, seg)
 		case common.RESOURCE_PATH_SEGMENT_PARAM, common.RESOURCE_PATH_REST_PARAM:
 			param := node.(*tree.ResourcePathParameterNode)
 			segments = append(segments, *n.TransformResourcePathParameter(param).(*BLangResourcePathSegment))
 		default:
-			n.cx.InternalError(fmt.Sprintf("unexpected resource path node kind: %v", node.Kind()), getPosition(n.de(), node))
+			n.cx.InternalError(fmt.Sprintf("unexpected resource path node kind: %v", node.Kind()), n.getPosition(node))
 		}
 	}
 	return segments
@@ -5524,7 +5513,7 @@ func (n *NodeBuilder) TransformRequiredExpression(requiredBLangExpression *tree.
 
 func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangExpression *tree.ErrorConstructorExpressionNode) BLangNode {
 	result := &BLangErrorConstructorExpr{}
-	result.pos = getPosition(n.de(), errorConstructorBLangExpression)
+	result.pos = n.getPosition(errorConstructorBLangExpression)
 
 	typeRefNode := errorConstructorBLangExpression.TypeReference()
 	if typeRefNode != nil {
@@ -5552,9 +5541,9 @@ func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangE
 			namedArg := n.TransformNamedArgument(namedArgNode).(*BLangNamedArgsExpression)
 			namedArgs = append(namedArgs, *namedArg)
 		case common.REST_ARG:
-			n.cx.InternalError("rest arguments not supported in error constructor", getPosition(n.de(), arg))
+			n.cx.InternalError("rest arguments not supported in error constructor", n.getPosition(arg))
 		default:
-			n.cx.InternalError(fmt.Sprintf("unexpected argument kind: %v", arg.Kind()), getPosition(n.de(), arg))
+			n.cx.InternalError(fmt.Sprintf("unexpected argument kind: %v", arg.Kind()), n.getPosition(arg))
 		}
 	}
 
@@ -5580,14 +5569,14 @@ func (n *NodeBuilder) transformTypedescTypeDescriptor(node *tree.ParameterizedTy
 	typeParamNode := node.TypeParamNode()
 	if typeParamNode == nil {
 		valueType := &BLangValueType{}
-		valueType.pos = getPosition(n.de(), node)
+		valueType.pos = n.getPosition(node)
 		valueType.TypeKind = TypeKind_TYPEDESC
 		return valueType
 	}
 	constrainedType := &BLangConstrainedType{}
-	constrainedType.pos = getPosition(n.de(), node)
+	constrainedType.pos = n.getPosition(node)
 	base := &BLangValueType{}
-	base.pos = getPosition(n.de(), node)
+	base.pos = n.getPosition(node)
 	base.TypeKind = TypeKind_TYPEDESC
 	constrainedType.Type = TypeData{TypeDescriptor: base}
 	constraint := typeParamNode.TypeNode()
@@ -5600,7 +5589,7 @@ func (n *NodeBuilder) transformTypedescTypeDescriptor(node *tree.ParameterizedTy
 }
 
 func (n *NodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode *tree.ParameterizedTypeDescriptorNode) BLangNode {
-	pos := getPosition(n.de(), parameterizedTypeDescriptorNode)
+	pos := n.getPosition(parameterizedTypeDescriptorNode)
 	typeParamNode := parameterizedTypeDescriptorNode.TypeParamNode()
 	if typeParamNode == nil {
 		valueType := &BLangValueType{}
@@ -5623,7 +5612,7 @@ func (n *NodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode
 
 func (n *NodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *tree.ParameterizedTypeDescriptorNode) BLangNode {
 	errorType := &BLangErrorTypeNode{}
-	errorType.pos = getPosition(n.de(), errorTypeDescriptorNode)
+	errorType.pos = n.getPosition(errorTypeDescriptorNode)
 
 	// Handle optional type parameter
 	typeParamNode := errorTypeDescriptorNode.TypeParamNode()
@@ -5648,7 +5637,7 @@ func (n *NodeBuilder) TransformSpreadMember(spreadMemberNode *tree.SpreadMemberN
 
 func (n *NodeBuilder) TransformClientResourceAccessAction(node *tree.ClientResourceAccessActionNode) BLangNode {
 	action := &BLangClientResourceAccessAction{}
-	action.pos = getPosition(n.de(), node)
+	action.pos = n.getPosition(node)
 	action.Expr = n.createExpression(node.Expression())
 	action.MethodName = "get"
 	if methodName := node.MethodName(); methodName != nil {
@@ -5683,15 +5672,15 @@ func (n *NodeBuilder) createResourceAccessSegments(pathNodes tree.NodeList[tree.
 		case common.IDENTIFIER_TOKEN:
 			tok := node.(tree.Token)
 			seg := BLangResourceAccessSegment{Kind: ResourceAccessSegmentName, Name: tok.Text()}
-			seg.pos = getPosition(n.de(), node)
+			seg.pos = n.getPosition(node)
 			segments = append(segments, seg)
 		case common.COMPUTED_RESOURCE_ACCESS_SEGMENT:
 			computed := node.(*tree.ComputedResourceAccessSegmentNode)
 			segments = append(segments, *n.TransformComputedResourceAccessSegment(computed).(*BLangResourceAccessSegment))
 		case common.RESOURCE_ACCESS_REST_SEGMENT:
-			n.cx.Unimplemented("resource access rest segments are not yet supported", getPosition(n.de(), node))
+			n.cx.Unimplemented("resource access rest segments are not yet supported", n.getPosition(node))
 		default:
-			n.cx.InternalError(fmt.Sprintf("unexpected resource access segment kind: %v", node.Kind()), getPosition(n.de(), node))
+			n.cx.InternalError(fmt.Sprintf("unexpected resource access segment kind: %v", node.Kind()), n.getPosition(node))
 		}
 	}
 	return segments
@@ -5699,7 +5688,7 @@ func (n *NodeBuilder) createResourceAccessSegments(pathNodes tree.NodeList[tree.
 
 func (n *NodeBuilder) TransformComputedResourceAccessSegment(node *tree.ComputedResourceAccessSegmentNode) BLangNode {
 	seg := &BLangResourceAccessSegment{Kind: ResourceAccessSegmentComputed}
-	seg.pos = getPosition(n.de(), node)
+	seg.pos = n.getPosition(node)
 	seg.Expr = n.createExpression(node.Expression())
 	return seg
 }
@@ -5908,7 +5897,7 @@ func (n *NodeBuilder) getBLangVariableNode(bindingPattern tree.BindingPatternNod
 	var varName tree.Token
 	switch bindingPattern.Kind() {
 	case common.WILDCARD_BINDING_PATTERN:
-		ignore := createIgnoreIdentifier(n.de(), bindingPattern)
+		ignore := n.createIgnoreIdentifier(bindingPattern)
 		simpleVar := createSimpleVariableNode()
 		simpleVar.SetName(&ignore)
 		simpleVar.pos = varPos
@@ -5922,12 +5911,12 @@ func (n *NodeBuilder) getBLangVariableNode(bindingPattern tree.BindingPatternNod
 		varName = captureBindingPattern.VariableName()
 	}
 
-	return createSimpleVariableNodeWithLocationTokenLocation(varPos, varName, getPosition(n.de(), varName))
+	return createSimpleVariableNodeWithLocationTokenLocation(varPos, varName, n.getPosition(varName))
 }
 
 func (n *NodeBuilder) badTopLevel(node tree.Node) *BLangBadTopLevelNode {
 	bad := &BLangBadTopLevelNode{}
-	bad.SetPosition(getPosition(n.de(), node))
+	bad.SetPosition(n.getPosition(node))
 	return bad
 }
 
@@ -5940,7 +5929,7 @@ func (n *NodeBuilder) badStmt(node tree.Node) *BLangBadStmt {
 func (n *NodeBuilder) badExprOrAction(node tree.Node) *BLangBadExprOrAction {
 	bad := &BLangBadExprOrAction{}
 	if node != nil {
-		bad.SetPosition(getPosition(n.de(), node))
+		bad.SetPosition(n.getPosition(node))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}
@@ -5950,7 +5939,7 @@ func (n *NodeBuilder) badExprOrAction(node tree.Node) *BLangBadExprOrAction {
 func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 	bad := &BLangBadTypeNode{}
 	if node != nil {
-		bad.SetPosition(getPosition(n.de(), node))
+		bad.SetPosition(n.getPosition(node))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}
@@ -5960,7 +5949,7 @@ func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 func (n *NodeBuilder) badIdentifier(node tree.Node) *BLangBadIdentifier {
 	bad := &BLangBadIdentifier{}
 	if node != nil {
-		bad.SetPosition(getPosition(n.de(), node))
+		bad.SetPosition(n.getPosition(node))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}
@@ -5983,7 +5972,7 @@ func (n *NodeBuilder) syntaxError(node tree.Node) {
 				continue
 			}
 			n.reportedSyntaxDiagnostics[key] = struct{}{}
-			n.cx.SyntaxError(diagnosticMessage(diagnostic), getPosition(n.de(), diagnosticNode))
+			n.cx.SyntaxError(diagnosticMessage(diagnostic), n.getPosition(diagnosticNode))
 		}
 	}
 }
