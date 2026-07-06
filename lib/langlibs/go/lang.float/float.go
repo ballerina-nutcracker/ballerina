@@ -17,7 +17,6 @@
 package floatruntime
 
 import (
-	"fmt"
 	"math"
 	"regexp"
 	"strconv"
@@ -124,13 +123,13 @@ func floatRound(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 	if x == 0 || math.IsNaN(x) || math.IsInf(x, 0) {
 		return x, nil
 	}
-	if fractionDigits > 308 {
+	scale := math.Pow10(int(fractionDigits))
+	if math.IsInf(scale, 0) {
 		return x, nil
 	}
-	if fractionDigits < -323 {
+	if scale == 0 {
 		return 0.0, nil
 	}
-	scale := math.Pow10(int(fractionDigits))
 	scaled := x * scale
 	if math.IsInf(scaled, 0) {
 		return x, nil
@@ -163,10 +162,10 @@ func floatFromHexString(_ *extern.Context, args []values.BalValue) (values.BalVa
 	if !hexadecimalFloatingPointStringPattern.MatchString(s) {
 		return values.NewErrorWithMessage("invalid hexadecimal floating point string: " + s), nil
 	}
-	return parseFloat(normalizeHexFloatString(s))
+	return parseFloat(addMissingHexExponent(s))
 }
 
-func normalizeHexFloatString(s string) string {
+func addMissingHexExponent(s string) string {
 	unsigned := strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-")
 	if unsigned == "NaN" || unsigned == "Infinity" || strings.ContainsAny(unsigned, "pP") {
 		return s
@@ -187,25 +186,7 @@ func floatToHexString(_ *extern.Context, args []values.BalValue) (values.BalValu
 	if math.IsNaN(x) || math.IsInf(x, 0) {
 		return values.FormatFloat(x), nil
 	}
-	return normalizeHexFloat(strconv.FormatFloat(x, 'x', -1, 64)), nil
-}
-
-func normalizeHexFloat(s string) string {
-	idx := strings.LastIndexByte(s, 'p')
-	exp := s[idx+1:]
-	if exp[0] == '+' {
-		exp = exp[1:]
-	}
-	sign := ""
-	if strings.HasPrefix(exp, "-") {
-		sign = "-"
-		exp = exp[1:]
-	}
-	exp = strings.TrimLeft(exp, "0")
-	if exp == "" {
-		exp = "0"
-	}
-	return s[:idx+1] + sign + exp
+	return strconv.FormatFloat(x, 'x', -1, 64), nil
 }
 
 func floatToBitsInt(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -213,11 +194,7 @@ func floatToBitsInt(_ *extern.Context, args []values.BalValue) (values.BalValue,
 }
 
 func floatFromBitsInt(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	out := math.Float64frombits(uint64(args[0].(int64)))
-	if math.IsNaN(out) {
-		return math.NaN(), nil
-	}
-	return out, nil
+	return math.Float64frombits(uint64(args[0].(int64))), nil
 }
 
 func floatToFixedString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -225,14 +202,15 @@ func floatToFixedString(_ *extern.Context, args []values.BalValue) (values.BalVa
 	if math.IsNaN(x) || math.IsInf(x, 0) {
 		return values.FormatFloat(x), nil
 	}
-	if args[1] == nil {
-		return formatMinimalFixed(x), nil
+	digits := -1
+	if args[1] != nil {
+		fractionDigits := args[1].(int64)
+		if fractionDigits < 0 {
+			panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
+		}
+		digits = int(fractionDigits)
 	}
-	digits := args[1].(int64)
-	if digits < 0 {
-		panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
-	}
-	return fmt.Sprintf("%.*f", int(digits), x), nil
+	return strconv.FormatFloat(x, 'f', digits, 64), nil
 }
 
 func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -240,56 +218,15 @@ func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValu
 	if math.IsNaN(x) || math.IsInf(x, 0) {
 		return values.FormatFloat(x), nil
 	}
-	if args[1] == nil {
-		return normalizeExp(formatMinimalExp(x)), nil
+	digits := -1
+	if args[1] != nil {
+		fractionDigits := args[1].(int64)
+		if fractionDigits < 0 {
+			panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
+		}
+		digits = int(fractionDigits)
 	}
-	digits := args[1].(int64)
-	if digits < 0 {
-		panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
-	}
-	return normalizeExp(strconv.FormatFloat(x, 'e', int(digits), 64)), nil
-}
-
-func formatMinimalFixed(x float64) string {
-	out := strconv.FormatFloat(x, 'f', -1, 64)
-	if math.Abs(x) < 1e7 && math.Trunc(x) == x && !strings.ContainsRune(out, '.') {
-		return out + ".0"
-	}
-	return out
-}
-
-func formatMinimalExp(x float64) string {
-	out := strconv.FormatFloat(x, 'e', -1, 64)
-	idx := strings.LastIndexByte(out, 'e')
-	if idx < 0 || strings.ContainsRune(out[:idx], '.') {
-		return out
-	}
-	exp, err := strconv.Atoi(out[idx+1:])
-	if err != nil || math.Abs(x) >= 1e7 || math.Trunc(x) != x {
-		return out
-	}
-	zeros := exp
-	if zeros < 1 {
-		zeros = 1
-	}
-	return out[:idx] + "." + strings.Repeat("0", zeros) + out[idx:]
-}
-
-func normalizeExp(s string) string {
-	idx := strings.LastIndexByte(s, 'e')
-	if idx < 0 {
-		return s
-	}
-	exp, err := strconv.Atoi(s[idx+1:])
-	if err != nil {
-		return s
-	}
-	sign := "+"
-	if exp < 0 {
-		sign = "-"
-		exp = -exp
-	}
-	return fmt.Sprintf("%se%s%02d", s[:idx], sign, exp)
+	return strconv.FormatFloat(x, 'e', digits, 64), nil
 }
 
 func floatAvg(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {

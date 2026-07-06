@@ -75,10 +75,10 @@ public function main() {
     io:println(floats:fromString("1f") is error); // @output true
     io:println(floats:fromString("bad") is error); // @output true
 
-    io:println((-10.2453).toHexString()); // @output -0x1.47d97f62b6ae8p3
+    io:println((-10.2453).toHexString()); // @output -0x1.47d97f62b6ae8p+03
     io:println(floats:Infinity.toHexString()); // @output Infinity
-    io:println((1.0).toHexString()); // @output 0x1p0
-    io:println((0.5).toHexString()); // @output 0x1p-1
+    io:println((1.0).toHexString()); // @output 0x1p+00
+    io:println((0.5).toHexString()); // @output 0x1p-01
 
     io:println(floats:fromHexString("0x1.0a3d70a3d70a4p4")); // @output 16.64
     io:println(floats:fromHexString("0x1.0")); // @output 1.0
@@ -90,20 +90,21 @@ public function main() {
     io:println((4.16).toBitsInt()); // @output 4616369762039853220
     io:println(floats:fromBitsInt(4)); // @output 2e-323
     io:println(floats:fromBitsInt(9221120237041090561).isNaN()); // @output true
+    io:println(floats:fromBitsInt(9221120237041090561).toBitsInt()); // @output 9221120237041090561
 
     io:println((12.456).toFixedString(2)); // @output 12.46
     io:println((12.456).toFixedString(())); // @output 12.456
-    io:println((1.0).toFixedString(())); // @output 1.0
+    io:println((1.0).toFixedString(())); // @output 1
     io:println((1e7).toFixedString(())); // @output 10000000
     io:println((1e20).toFixedString(())); // @output 100000000000000000000
     io:println(floats:Infinity.toFixedString(2)); // @output Infinity
 
     io:println((12.456).toExpString(2)); // @output 1.25e+01
     io:println((12.456).toExpString(())); // @output 1.2456e+01
-    io:println((1.0).toExpString(())); // @output 1.0e+00
-    io:println((10.0).toExpString(())); // @output 1.0e+01
-    io:println((100.0).toExpString(())); // @output 1.00e+02
-    io:println((1000000.0).toExpString(())); // @output 1.000000e+06
+    io:println((1.0).toExpString(())); // @output 1e+00
+    io:println((10.0).toExpString(())); // @output 1e+01
+    io:println((100.0).toExpString(())); // @output 1e+02
+    io:println((1000000.0).toExpString(())); // @output 1e+06
     io:println((1e7).toExpString(())); // @output 1e+07
     io:println(floats:NaN.toExpString(2)); // @output NaN
     io:println((1.0).toExpString(0)); // @output 1e+00

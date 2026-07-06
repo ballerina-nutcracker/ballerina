@@ -449,7 +449,7 @@ main() -> nil{
     GOTO bb90;
   }
   bb90 {
-    PushScopeFrame 208
+    PushScopeFrame 215
     %0 = ConstantLoad 0x1p0
     %1 = fromString(%0) -> bb91;
   }
@@ -636,188 +636,201 @@ main() -> nil{
     %99 = println(%98) -> bb133;
   }
   bb133 {
-    %100 = ConstantLoad 12.456
+    %100 = ConstantLoad 9221120237041090561
     %101 = %100;
-    %102 = ConstantLoad 2
-    %103 = %102;
-    %104 = toFixedString(%101,%103) -> bb134;
+    %102 = fromBitsInt(%101) -> bb134;
   }
   bb134 {
-    %105 = println(%104) -> bb135;
+    %103 = %102;
+    %104 = toBitsInt(%103) -> bb135;
   }
   bb135 {
-    %106 = ConstantLoad 12.456
-    %107 = %106;
-    %108 = ConstantLoad <nil>
-    %109 = %108;
-    %110 = toFixedString(%107,%109) -> bb136;
+    %105 = %104;
+    %106 = println(%105) -> bb136;
   }
   bb136 {
-    %111 = println(%110) -> bb137;
+    %107 = ConstantLoad 12.456
+    %108 = %107;
+    %109 = ConstantLoad 2
+    %110 = %109;
+    %111 = toFixedString(%108,%110) -> bb137;
   }
   bb137 {
-    %112 = ConstantLoad 1
-    %113 = %112;
-    %114 = ConstantLoad <nil>
-    %115 = %114;
-    %116 = toFixedString(%113,%115) -> bb138;
+    %112 = println(%111) -> bb138;
   }
   bb138 {
-    %117 = println(%116) -> bb139;
+    %113 = ConstantLoad 12.456
+    %114 = %113;
+    %115 = ConstantLoad <nil>
+    %116 = %115;
+    %117 = toFixedString(%114,%116) -> bb139;
   }
   bb139 {
-    %118 = ConstantLoad 1e+07
-    %119 = %118;
-    %120 = ConstantLoad <nil>
-    %121 = %120;
-    %122 = toFixedString(%119,%121) -> bb140;
+    %118 = println(%117) -> bb140;
   }
   bb140 {
-    %123 = println(%122) -> bb141;
+    %119 = ConstantLoad 1
+    %120 = %119;
+    %121 = ConstantLoad <nil>
+    %122 = %121;
+    %123 = toFixedString(%120,%122) -> bb141;
   }
   bb141 {
-    %124 = ConstantLoad 1e+20
-    %125 = %124;
-    %126 = ConstantLoad <nil>
-    %127 = %126;
-    %128 = toFixedString(%125,%127) -> bb142;
+    %124 = println(%123) -> bb142;
   }
   bb142 {
-    %129 = println(%128) -> bb143;
+    %125 = ConstantLoad 1e+07
+    %126 = %125;
+    %127 = ConstantLoad <nil>
+    %128 = %127;
+    %129 = toFixedString(%126,%128) -> bb143;
   }
   bb143 {
-    %130 = ConstantLoad +Inf
-    %131 = %130;
-    %132 = ConstantLoad 2
-    %133 = %132;
-    %134 = toFixedString(%131,%133) -> bb144;
+    %130 = println(%129) -> bb144;
   }
   bb144 {
-    %135 = println(%134) -> bb145;
+    %131 = ConstantLoad 1e+20
+    %132 = %131;
+    %133 = ConstantLoad <nil>
+    %134 = %133;
+    %135 = toFixedString(%132,%134) -> bb145;
   }
   bb145 {
-    %136 = ConstantLoad 12.456
-    %137 = %136;
-    %138 = ConstantLoad 2
-    %139 = %138;
-    %140 = toExpString(%137,%139) -> bb146;
+    %136 = println(%135) -> bb146;
   }
   bb146 {
-    %141 = println(%140) -> bb147;
+    %137 = ConstantLoad +Inf
+    %138 = %137;
+    %139 = ConstantLoad 2
+    %140 = %139;
+    %141 = toFixedString(%138,%140) -> bb147;
   }
   bb147 {
-    %142 = ConstantLoad 12.456
-    %143 = %142;
-    %144 = ConstantLoad <nil>
-    %145 = %144;
-    %146 = toExpString(%143,%145) -> bb148;
+    %142 = println(%141) -> bb148;
   }
   bb148 {
-    %147 = println(%146) -> bb149;
+    %143 = ConstantLoad 12.456
+    %144 = %143;
+    %145 = ConstantLoad 2
+    %146 = %145;
+    %147 = toExpString(%144,%146) -> bb149;
   }
   bb149 {
-    %148 = ConstantLoad 1
-    %149 = %148;
-    %150 = ConstantLoad <nil>
-    %151 = %150;
-    %152 = toExpString(%149,%151) -> bb150;
+    %148 = println(%147) -> bb150;
   }
   bb150 {
-    %153 = println(%152) -> bb151;
+    %149 = ConstantLoad 12.456
+    %150 = %149;
+    %151 = ConstantLoad <nil>
+    %152 = %151;
+    %153 = toExpString(%150,%152) -> bb151;
   }
   bb151 {
-    %154 = ConstantLoad 10
-    %155 = %154;
-    %156 = ConstantLoad <nil>
-    %157 = %156;
-    %158 = toExpString(%155,%157) -> bb152;
+    %154 = println(%153) -> bb152;
   }
   bb152 {
-    %159 = println(%158) -> bb153;
+    %155 = ConstantLoad 1
+    %156 = %155;
+    %157 = ConstantLoad <nil>
+    %158 = %157;
+    %159 = toExpString(%156,%158) -> bb153;
   }
   bb153 {
-    %160 = ConstantLoad 100
-    %161 = %160;
-    %162 = ConstantLoad <nil>
-    %163 = %162;
-    %164 = toExpString(%161,%163) -> bb154;
+    %160 = println(%159) -> bb154;
   }
   bb154 {
-    %165 = println(%164) -> bb155;
+    %161 = ConstantLoad 10
+    %162 = %161;
+    %163 = ConstantLoad <nil>
+    %164 = %163;
+    %165 = toExpString(%162,%164) -> bb155;
   }
   bb155 {
-    %166 = ConstantLoad 1e+06
-    %167 = %166;
-    %168 = ConstantLoad <nil>
-    %169 = %168;
-    %170 = toExpString(%167,%169) -> bb156;
+    %166 = println(%165) -> bb156;
   }
   bb156 {
-    %171 = println(%170) -> bb157;
+    %167 = ConstantLoad 100
+    %168 = %167;
+    %169 = ConstantLoad <nil>
+    %170 = %169;
+    %171 = toExpString(%168,%170) -> bb157;
   }
   bb157 {
-    %172 = ConstantLoad 1e+07
-    %173 = %172;
-    %174 = ConstantLoad <nil>
-    %175 = %174;
-    %176 = toExpString(%173,%175) -> bb158;
+    %172 = println(%171) -> bb158;
   }
   bb158 {
-    %177 = println(%176) -> bb159;
+    %173 = ConstantLoad 1e+06
+    %174 = %173;
+    %175 = ConstantLoad <nil>
+    %176 = %175;
+    %177 = toExpString(%174,%176) -> bb159;
   }
   bb159 {
-    %178 = ConstantLoad NaN
-    %179 = %178;
-    %180 = ConstantLoad 2
-    %181 = %180;
-    %182 = toExpString(%179,%181) -> bb160;
+    %178 = println(%177) -> bb160;
   }
   bb160 {
-    %183 = println(%182) -> bb161;
+    %179 = ConstantLoad 1e+07
+    %180 = %179;
+    %181 = ConstantLoad <nil>
+    %182 = %181;
+    %183 = toExpString(%180,%182) -> bb161;
   }
   bb161 {
-    %184 = ConstantLoad 1
-    %185 = %184;
-    %186 = ConstantLoad 0
-    %187 = %186;
-    %188 = toExpString(%185,%187) -> bb162;
+    %184 = println(%183) -> bb162;
   }
   bb162 {
-    %189 = println(%188) -> bb163;
+    %185 = ConstantLoad NaN
+    %186 = %185;
+    %187 = ConstantLoad 2
+    %188 = %187;
+    %189 = toExpString(%186,%188) -> bb163;
   }
   bb163 {
-    %190 = ConstantLoad 0.001
-    %191 = %190;
-    %192 = ConstantLoad <nil>
-    %193 = %192;
-    %194 = toExpString(%191,%193) -> bb164;
+    %190 = println(%189) -> bb164;
   }
   bb164 {
-    %195 = println(%194) -> bb165;
+    %191 = ConstantLoad 1
+    %192 = %191;
+    %193 = ConstantLoad 0
+    %194 = %193;
+    %195 = toExpString(%192,%194) -> bb165;
   }
   bb165 {
-    %196 = ConstantLoad 2
-    %197 = %196;
-    %198 = ConstantLoad 4
-    %199 = %198;
-    %200 = avg(%197,%199) -> bb166;
+    %196 = println(%195) -> bb166;
   }
   bb166 {
-    %201 = %200;
-    %202 = println(%201) -> bb167;
+    %197 = ConstantLoad 0.001
+    %198 = %197;
+    %199 = ConstantLoad <nil>
+    %200 = %199;
+    %201 = toExpString(%198,%200) -> bb167;
   }
   bb167 {
-    %203 = avg() -> bb168;
+    %202 = println(%201) -> bb168;
   }
   bb168 {
+    %203 = ConstantLoad 2
     %204 = %203;
-    %205 = isNaN(%204) -> bb169;
+    %205 = ConstantLoad 4
+    %206 = %205;
+    %207 = avg(%204,%206) -> bb169;
   }
   bb169 {
-    %206 = %205;
-    %207 = println(%206) -> bb170;
+    %208 = %207;
+    %209 = println(%208) -> bb170;
   }
   bb170 {
+    %210 = avg() -> bb171;
+  }
+  bb171 {
+    %211 = %210;
+    %212 = isNaN(%211) -> bb172;
+  }
+  bb172 {
+    %213 = %212;
+    %214 = println(%213) -> bb173;
+  }
+  bb173 {
     PopScopeFrame
     return;
   }

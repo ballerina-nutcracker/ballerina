@@ -342,6 +342,11 @@
             (literal 9221120237041090561))))))))
     (expression-stmt
       (invocation io println (
+        (invocation lang.float toBitsInt (
+          (invocation floats fromBitsInt (
+            (literal 9221120237041090561))))))))
+    (expression-stmt
+      (invocation io println (
         (invocation lang.float toFixedString (
           (group-expr
             (literal 12.456))

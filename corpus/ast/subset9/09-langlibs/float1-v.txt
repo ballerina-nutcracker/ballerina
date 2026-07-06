@@ -346,6 +346,11 @@
                 (literal 9221120237041090561))) ()))))
         (expression-stmt
           (invocation io println (
+            (invocation toBitsInt expr:
+              (invocation floats fromBitsInt (
+                (literal 9221120237041090561))) ()))))
+        (expression-stmt
+          (invocation io println (
             (invocation toFixedString expr:
               (group-expr
                 (literal 12.456)) (
