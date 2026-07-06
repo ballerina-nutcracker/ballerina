@@ -520,7 +520,6 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		}
 	}
 	if !needInit {
-		clearModuleInitExprs(pkg)
 		return
 	}
 
