@@ -42,6 +42,7 @@ var (
 	cliIntegrationRepoRoot    string
 	cliIntegrationCoverDir    string
 	cliIntegrationBinsErr     error
+	cliIntegrationCoverMerge  sync.Mutex
 )
 
 func TestBalHelp(t *testing.T) {
@@ -500,7 +501,9 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 	cmd := exec.Command(balBin, args...)
 	cmd.Dir = repoRoot
 	if coverDir != "" {
-		cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
+		commandCoverDir := t.TempDir()
+		cmd.Env = append(os.Environ(), "GOCOVERDIR="+commandCoverDir)
+		defer mergeCLICoverageDir(t, commandCoverDir, coverDir)
 	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
@@ -526,6 +529,34 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 		stderrStr,
 	)
 	return "", "", 0
+}
+
+func mergeCLICoverageDir(t *testing.T, fromDir, toDir string) {
+	t.Helper()
+	entries, err := os.ReadDir(fromDir)
+	if err != nil {
+		t.Fatalf("failed to read CLI coverage dir %q: %v", fromDir, err)
+	}
+	cliIntegrationCoverMerge.Lock()
+	defer cliIntegrationCoverMerge.Unlock()
+	if err := os.MkdirAll(toDir, 0o755); err != nil {
+		t.Fatalf("failed to create CLI coverage dir %q: %v", toDir, err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		src := filepath.Join(fromDir, entry.Name())
+		dst := filepath.Join(toDir, entry.Name())
+		if _, err := os.Stat(dst); err == nil {
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("failed to stat CLI coverage file %q: %v", dst, err)
+		}
+		if err := os.Rename(src, dst); err != nil {
+			t.Fatalf("failed to move CLI coverage file %q to %q: %v", src, dst, err)
+		}
+	}
 }
 
 func listBalRunCorpusPaths(t *testing.T, dir string, balFilesOnly bool) []string {
