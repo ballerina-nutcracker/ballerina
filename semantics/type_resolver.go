@@ -6766,7 +6766,9 @@ var (
 
 func init() {
 	arrayOpaqueMonomorphizers = []opaqueFnMonomorphizer{
-		model.OpaqueFnArrayPush: monomorphizeArrayPush,
+		model.OpaqueFnArrayPush:    monomorphizeArrayPush,
+		model.OpaqueFnArrayIndexOf: monomorphizeArrayIndexOf,
+		model.OpaqueFnArrayRemove:  monomorphizeArrayRemove,
 	}
 	mapOpaqueMonomorphizers = []opaqueFnMonomorphizer{
 		model.OpaqueFnMapRemove: monomorphizeMapRemove,
@@ -6869,6 +6871,64 @@ func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, poly
 		RestParamType: valType,
 		ReturnType:    semtypes.NIL,
 		Flags:         model.FuncSymbolFlagIsolated,
+	}
+	return storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, containerTy), true
+}
+
+func monomorphizeArrayIndexOf(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, pos diagnostics.Location) (model.SymbolRef, bool) {
+	containerExpr, ok := containerArgExpr(args, "arr")
+	if !ok {
+		t.semanticError("missing container argument", pos)
+		return model.SymbolRef{}, false
+	}
+	containerTy, _, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	if sym.Lookup != nil {
+		if ref, ok := sym.Lookup(containerTy); ok {
+			return ref, true
+		}
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.LIST) {
+		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
+		return model.SymbolRef{}, false
+	}
+	valType := semtypes.ListProj(cx, containerTy, semtypes.INT)
+	sig := model.FunctionSignature{
+		ParamTypes: []semtypes.SemType{containerTy, valType, semtypes.INT},
+		ReturnType: semtypes.Union(semtypes.INT, semtypes.NIL),
+		Flags:      model.FuncSymbolFlagIsolated,
+	}
+	return storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, containerTy), true
+}
+
+func monomorphizeArrayRemove(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, pos diagnostics.Location) (model.SymbolRef, bool) {
+	containerExpr, ok := containerArgExpr(args, "arr")
+	if !ok {
+		t.semanticError("missing container argument", pos)
+		return model.SymbolRef{}, false
+	}
+	containerTy, _, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	if sym.Lookup != nil {
+		if ref, ok := sym.Lookup(containerTy); ok {
+			return ref, true
+		}
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.LIST) {
+		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
+		return model.SymbolRef{}, false
+	}
+	elementType := semtypes.ListProj(cx, containerTy, semtypes.INT)
+	sig := model.FunctionSignature{
+		ParamTypes: []semtypes.SemType{containerTy, semtypes.INT},
+		ReturnType: elementType,
+		Flags:      model.FuncSymbolFlagIsolated,
 	}
 	return storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, containerTy), true
 }

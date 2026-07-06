@@ -98,6 +98,11 @@
   - `ballerina/lang.array`
     - `length`
     - `push`
+    - `indexOf`
+    - `remove`
+    - `removeAll`
+    - `toBase16`
+    - `toBase64`
   - `ballerina/lang.int`
     - `Signed8`
     - `Signed16`
@@ -106,15 +111,26 @@
     - `Unsigned16`
     - `Unsigned32`
     - `toHexString`
+    - `fromString`
+    - `fromHexString`
   - `ballerina/lang.map`
     - `length`
     - `keys`
     - `remove`
+    - `hasKey`
   - `ballerina/lang.string`
     - `Char`
+    - `substring`
+    - `equalsIgnoreCaseAscii`
+    - `toLowerAscii`
+    - `toUpperAscii`
+    - `trim`
+    - `toBytes`
+    - `fromBytes`
   - `ballerina/lang.error`
     - `message`
   - `ballerina/lang.value`
+    - `toString`
   - `ballerina/lang.xml`
     - `Element`
     - `Text`

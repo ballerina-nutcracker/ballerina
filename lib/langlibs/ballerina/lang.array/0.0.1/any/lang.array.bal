@@ -19,3 +19,20 @@
 # + arr - the array
 # + return - number of members in `arr`
 public isolated function length((any|error)[] arr) returns int = external;
+
+# Removes all members of an array.
+#
+# + arr - the array
+public isolated function removeAll((any|error)[] arr) = external;
+
+# Returns the lowercase hexadecimal encoding of an array of bytes.
+#
+# + arr - the array to be encoded
+# + return - the lowercase hexadecimal-encoded string
+public isolated function toBase16(byte[] arr) returns string = external;
+
+# Returns the base64 encoding of an array of bytes.
+#
+# + arr - the array to be encoded
+# + return - the base64-encoded string
+public isolated function toBase64(byte[] arr) returns string = external;
