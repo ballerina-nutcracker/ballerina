@@ -153,6 +153,17 @@ main() -> nil|error{
     %78 = println(%77) -> bb27;
   }
   bb27 {
+    %79 = ConstantLoad 0
+    %80 = %79;
+    %81 = hkdfSha256(input,%80,salt,info) -> bb28;
+  }
+  bb28 {
+    badLen = %81;
+    %83 = badLen is error
+    %84 = %83;
+    %85 = println(%84) -> bb29;
+  }
+  bb29 {
     return;
   }
 }

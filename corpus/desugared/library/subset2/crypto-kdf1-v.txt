@@ -152,4 +152,20 @@
         (invocation io println (
           (invocation crypto equalConstantTime (
             (literal abc123)
-            (literal def456)))))))))
+            (literal def456))))))
+      (var-def
+        (variable badLen (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref input)
+            (literal 0)
+            (simple-var-ref salt)
+            (simple-var-ref info))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badLen)
+            (user-defined-type crypto Error))))))))

@@ -40,4 +40,8 @@ public function main() returns error? {
     // equalConstantTime over string HashValues (the string branch of hashValueToBytes).
     io:println(crypto:equalConstantTime("abc123", "abc123")); // @output true
     io:println(crypto:equalConstantTime("abc123", "def456")); // @output false
+
+    // A non-positive output length is rejected.
+    byte[]|crypto:Error badLen = crypto:hkdfSha256(input, 0, salt, info);
+    io:println(badLen is crypto:Error); // @output true
 }

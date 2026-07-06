@@ -46,4 +46,30 @@ public function main() returns error? {
     crypto:KeyStore ecKs = {path: "testdata/crypto-keystore-ec.p12", password: "secret"};
     crypto:PrivateKey|crypto:Error notRsaKey = crypto:decodeRsaPrivateKeyFromKeyStore(ecKs, "ballerina-ec", "secret");
     io:println(notRsaKey is crypto:Error); // @output true
+
+    // Recover the EC private key from the EC keystore and sign with it.
+    crypto:PrivateKey ecPk = check crypto:decodeEcPrivateKeyFromKeyStore(ecKs, "ballerina-ec", "secret");
+    byte[] ecSig = check crypto:signSha256withEcdsa([1, 2, 3, 4], ecPk);
+    io:println(ecSig.length() > 0); // @output true
+
+    // Recover the EC public key from the same file used as a trust store and
+    // verify the signature just produced.
+    crypto:TrustStore ecTs = {path: "testdata/crypto-keystore-ec.p12", password: "secret"};
+    crypto:PublicKey ecPub = check crypto:decodeEcPublicKeyFromTrustStore(ecTs, "ballerina-ec");
+    io:println(check crypto:verifySha256withEcdsaSignature([1, 2, 3, 4], ecSig, ecPub)); // @output true
+
+    // The RSA keystore decoded through the EC decoder fails: the recovered key
+    // is not EC.
+    crypto:PrivateKey|crypto:Error notEcKey = crypto:decodeEcPrivateKeyFromKeyStore(ks, "ballerina", "secret");
+    io:println(notEcKey is crypto:Error); // @output true
+
+    // The EC trust store decoded through the RSA public-key decoder fails: the
+    // certificate holds an EC key, not RSA.
+    crypto:PublicKey|crypto:Error notRsaPub = crypto:decodeRsaPublicKeyFromTrustStore(ecTs, "ballerina-ec");
+    io:println(notRsaPub is crypto:Error); // @output true
+
+    // A missing keystore file fails on the private-key path too.
+    crypto:KeyStore missingKs = {path: "testdata/does-not-exist.p12", password: "secret"};
+    crypto:PrivateKey|crypto:Error missingKeyErr = crypto:decodeRsaPrivateKeyFromKeyStore(missingKs, "ballerina", "secret");
+    io:println(missingKeyErr is crypto:Error); // @output true
 }
