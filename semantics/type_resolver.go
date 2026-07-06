@@ -4928,6 +4928,9 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	key := expr.Field.Value
+	if expr.IsOptionalAccess() {
+		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprTy, key)
+	}
 	tyCtx := t.typeContext()
 
 	var memberTy semtypes.SemType
@@ -4945,12 +4948,12 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 			mappingTy = semtypes.Diff(containerExprTy, semtypes.NIL)
 		}
 		var ok bool
-		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, expr.IsLexpr)
+		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, expr.IsLexpr())
 		if !ok {
 			t.semanticError("field base access is only possible for declared fields", expr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		if expr.IsCompoundAssignmentLValue {
+		if expr.IsCompoundAssignmentLValue() {
 			readTy, readOk := fieldBaseAccessMappingType(tyCtx, mappingTy, key, false)
 			writeTy, writeOk := fieldBaseAccessMappingType(tyCtx, mappingTy, key, true)
 			if readOk && writeOk && !semtypes.IsSubtype(tyCtx, readTy, writeTy) {
@@ -4969,6 +4972,42 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	setExpectedType(expr, memberTy)
 	expr.Field.SetDeterminedType(semtypes.NEVER)
 	return memberTy, defaultExpressionEffect(chain), true
+}
+
+func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, T semtypes.SemType, fieldname string) (semtypes.SemType, expressionEffect, bool) {
+	if expr.IsLexpr() {
+		t.semanticError("optional field access cannot be used as an lvalue", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	tyCtx := t.typeContext()
+	switch {
+	case semtypes.IsSubtype(tyCtx, T, semtypes.XML):
+		t.unimplemented("XML optional attribute access not supported", expr.GetPosition()) // https://github.com/ballerina-platform/ballerina-lang-go/issues/560
+		return semtypes.SemType{}, expressionEffect{}, false
+	case semtypes.IsSubtype(tyCtx, T, semtypes.Union(semtypes.MAPPING, semtypes.NIL)):
+		Tbar := semtypes.Intersect(T, semtypes.MAPPING)
+		if !semtypes.AnyMappingAtomHasFieldByName(tyCtx, Tbar, fieldname) {
+			t.semanticError(fmt.Sprintf("%s is not an individual field descriptor in %s", fieldname, semtypes.ToString(tyCtx, T)), expr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		K := semtypes.StringConst(fieldname)
+		M := semtypes.MappingMemberTypeInner(tyCtx, Tbar, K)
+		MBar := semtypes.Diff(M, semtypes.UNDEF)
+		N := semtypes.NEVER
+		if semtypes.IsSubtype(tyCtx, semtypes.NIL, T) || semtypes.ContainsUndef(M) {
+			N = semtypes.NIL
+		}
+		// TODO: update for lax case https://github.com/ballerina-platform/ballerina-lang-go/issues/558
+		E := semtypes.NEVER
+		resultTy := semtypes.Union(semtypes.Union(MBar, N), E)
+		setExpectedType(expr, resultTy)
+		expr.Field.SetDeterminedType(semtypes.NEVER)
+		return resultTy, defaultExpressionEffect(chain), true
+	default:
+		t.semanticError("optional field access must be subtype of xml|map|()", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 }
 
 func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, isLexpr bool) (semtypes.SemType, bool) {

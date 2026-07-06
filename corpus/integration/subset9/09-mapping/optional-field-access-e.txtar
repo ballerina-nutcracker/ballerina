@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: optional field access must be subtype of xml|map|()
+  --> optional-field-access-e.bal:39:9
+   |
+39 |     _ = i?.x; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: optional field access must be subtype of xml|map|()
+  --> optional-field-access-e.bal:44:9
+   |
+44 |     _ = l?.x; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: optional field access must be subtype of xml|map|()
+  --> optional-field-access-e.bal:49:9
+   |
+49 |     _ = value?.x; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: x is not an individual field descriptor in {| never... |}
+  --> optional-field-access-e.bal:65:9
+   |
+65 |     _ = value?.x; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: x is not an individual field descriptor in {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+  --> optional-field-access-e.bal:60:9
+   |
+60 |     _ = value?.x; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: x is not an individual field descriptor in {| y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}|{| z: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+  --> optional-field-access-e.bal:54:9
+   |
+54 |     _ = value?.x; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: z is not an individual field descriptor in {| x: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}&{| y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+  --> optional-field-access-e.bal:70:9
+   |
+70 |     _ = value?.z; // @error
+   |         ^^^^^^^^
