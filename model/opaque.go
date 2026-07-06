@@ -48,6 +48,8 @@ const (
 	OpaqueFnArrayPush = 0
 	// lang.map
 	OpaqueFnMapRemove = 0
+	// lang.xml
+	OpaqueFnXMLIterator = 4
 )
 
 func newOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
@@ -154,9 +156,10 @@ func langXMLOpaqueSymbols() []Symbol {
 		{"Text", semtypes.XML_TEXT},
 		{"ProcessingInstruction", semtypes.XML_PI},
 	}
-	syms := make([]Symbol, len(defs))
+	syms := make([]Symbol, len(defs)+1)
 	for i, def := range defs {
 		syms[i] = newOpaqueTypeSymbol(def.name, def.ty, i)
 	}
+	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator)
 	return syms
 }

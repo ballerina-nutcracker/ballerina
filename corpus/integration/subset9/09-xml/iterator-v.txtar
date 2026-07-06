@@ -1,0 +1,15 @@
+-- stdout --
+<a/>
+<a/>
+<a/>
+hello
+<!--c-->
+<e/>
+<e/>
+<!--comment-->
+<!--comment-->
+<?p data?>
+<?p data?>
+text
+text
+-- stderr --

@@ -59,7 +59,7 @@ func XMLSingleton(primitives int) SemType {
 }
 
 func XMLSequence(constituentType SemType) SemType {
-	common.Assert(IsSubtypeSimple(constituentType, XML))
+	common.Assert(func() bool { return IsSubtypeSimple(constituentType, XML) })
 	if IsNever(constituentType) {
 		return XMLSequence(XMLSingleton(XML_PRIMITIVE_NEVER))
 	}
@@ -73,6 +73,37 @@ func XMLSequence(constituentType SemType) SemType {
 		xmlSt = makeXmlSequence(xmlSt.(*xmlSubtype))
 	}
 	return createXmlSemtype(xmlSt)
+}
+
+func XMLItemType(t SemType) SemType {
+	if !IsSubtypeSimple(t, XML) {
+		return NEVER
+	}
+	if t.some() == 0 {
+		return t
+	}
+	xmlSt := getComplexSubtypeData(t, BTXML)
+	if allOrNothing, ok := xmlSt.(allOrNothingSubtype); ok {
+		if allOrNothing.IsAllSubtype() {
+			return XML
+		}
+		return NEVER
+	}
+	bits := xmlSt.(*xmlSubtype).Primitives &^ XML_PRIMITIVE_NEVER
+	var itemTy = NEVER
+	if bits&(XML_PRIMITIVE_ELEMENT_RO|XML_PRIMITIVE_ELEMENT_RW) != 0 {
+		itemTy = Union(itemTy, XML_ELEMENT)
+	}
+	if bits&(XML_PRIMITIVE_COMMENT_RO|XML_PRIMITIVE_COMMENT_RW) != 0 {
+		itemTy = Union(itemTy, XML_COMMENT)
+	}
+	if bits&(XML_PRIMITIVE_PI_RO|XML_PRIMITIVE_PI_RW) != 0 {
+		itemTy = Union(itemTy, XML_PI)
+	}
+	if bits&XML_PRIMITIVE_TEXT != 0 {
+		itemTy = Union(itemTy, XML_TEXT)
+	}
+	return itemTy
 }
 
 func makeXmlSequence(d *xmlSubtype) SubtypeData {

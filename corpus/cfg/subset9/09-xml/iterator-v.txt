@@ -1,0 +1,230 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (union-type
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text))
+            (user-defined-type xml Comment)))) (expr
+        (xml-sequence-literal
+          (xml-element-literal a)
+          (xml-text-literal hello)
+          (xml-comment-literal c)))))
+    (var-def
+      (variable methodNext (type
+        (union-type
+          (record-type
+            (field value
+              (union-type
+                (union-type
+                  (user-defined-type xml Element)
+                  (user-defined-type xml Text))
+                (user-defined-type xml Comment))))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation lang.xml iterator (
+            (simple-var-ref x))) ()))))
+    (binary-expr !=
+      (simple-var-ref methodNext)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref methodNext)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable functionNext (type
+        (union-type
+          (record-type
+            (field value
+              (union-type
+                (union-type
+                  (user-defined-type xml Element)
+                  (user-defined-type xml Text))
+                (user-defined-type xml Comment))))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation xml iterator (
+            (simple-var-ref x))) ()))))
+    (binary-expr !=
+      (simple-var-ref functionNext)
+      (literal <nil>))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref functionNext)))))
+  )
+  (bb4 (bb3 bb2) (bb5))
+  (bb5 (bb4 bb6) (bb6 bb7)
+    (simple-var-ref x)
+    (var-def
+      (variable item (type
+        (union-type
+          (union-type
+            (user-defined-type xml Element)
+            (user-defined-type xml Text))
+          (user-defined-type xml Comment)))))
+  )
+  (bb6 (bb5) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref item))))
+  )
+  (bb7 (bb5) (bb8 bb9)
+    (var-def
+      (variable element (type
+        (user-defined-type xml Element)) (expr
+        (xml-element-literal e))))
+    (var-def
+      (variable elementNext (type
+        (union-type
+          (record-type
+            (field value
+              (user-defined-type xml Element)))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation lang.xml iterator (
+            (simple-var-ref element))) ()))))
+    (binary-expr !=
+      (simple-var-ref elementNext)
+      (literal <nil>))
+  )
+  (bb8 (bb7) (bb9)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref elementNext)))))
+  )
+  (bb9 (bb8 bb7) (bb10))
+  (bb10 (bb9 bb11) (bb11 bb12)
+    (simple-var-ref element)
+    (var-def
+      (variable item (type
+        (user-defined-type xml Element))))
+  )
+  (bb11 (bb10) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref item))))
+  )
+  (bb12 (bb10) (bb13 bb14)
+    (var-def
+      (variable comment (type
+        (user-defined-type xml Comment)) (expr
+        (xml-comment-literal comment))))
+    (var-def
+      (variable commentNext (type
+        (union-type
+          (record-type
+            (field value
+              (user-defined-type xml Comment)))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation lang.xml iterator (
+            (simple-var-ref comment))) ()))))
+    (binary-expr !=
+      (simple-var-ref commentNext)
+      (literal <nil>))
+  )
+  (bb13 (bb12) (bb14)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref commentNext)))))
+  )
+  (bb14 (bb13 bb12) (bb15))
+  (bb15 (bb14 bb16) (bb16 bb17)
+    (simple-var-ref comment)
+    (var-def
+      (variable item (type
+        (user-defined-type xml Comment))))
+  )
+  (bb16 (bb15) (bb15)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref item))))
+  )
+  (bb17 (bb15) (bb18 bb19)
+    (var-def
+      (variable pi (type
+        (user-defined-type xml ProcessingInstruction)) (expr
+        (xml-pi-literal p data))))
+    (var-def
+      (variable piNext (type
+        (union-type
+          (record-type
+            (field value
+              (user-defined-type xml ProcessingInstruction)))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation lang.xml iterator (
+            (simple-var-ref pi))) ()))))
+    (binary-expr !=
+      (simple-var-ref piNext)
+      (literal <nil>))
+  )
+  (bb18 (bb17) (bb19)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref piNext)))))
+  )
+  (bb19 (bb18 bb17) (bb20))
+  (bb20 (bb19 bb21) (bb21 bb22)
+    (simple-var-ref pi)
+    (var-def
+      (variable item (type
+        (user-defined-type xml ProcessingInstruction))))
+  )
+  (bb21 (bb20) (bb20)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref item))))
+  )
+  (bb22 (bb20) (bb23 bb24)
+    (var-def
+      (variable text (type
+        (user-defined-type xml Text)) (expr
+        (xml-text-literal text))))
+    (var-def
+      (variable textNext (type
+        (union-type
+          (record-type
+            (field value
+              (user-defined-type xml Text)))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation lang.xml iterator (
+            (simple-var-ref text))) ()))))
+    (binary-expr !=
+      (simple-var-ref textNext)
+      (literal <nil>))
+  )
+  (bb23 (bb22) (bb24)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref textNext)))))
+  )
+  (bb24 (bb23 bb22) (bb25))
+  (bb25 (bb24 bb26) (bb26 bb27)
+    (simple-var-ref text)
+    (var-def
+      (variable item (type
+        (user-defined-type xml Text))))
+  )
+  (bb26 (bb25) (bb25)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref item))))
+  )
+  (bb27 (bb25) ())
+)
