@@ -719,6 +719,129 @@ func appendClassBodyMethodDecls(fns []functionDecl, initFn *ast.BLangFunction, m
 	return fns
 }
 
+type constantDepCollector struct {
+	t       typeResolver
+	nodeSet map[model.SymbolRef]int
+	deps    map[int]struct{}
+}
+
+func (c *constantDepCollector) depends(ref model.SymbolRef) {
+	unnarrowed := c.t.unnarrowedSymbol(ref)
+	if idx, ok := c.nodeSet[unnarrowed]; ok {
+		c.deps[idx] = struct{}{}
+	}
+}
+
+func (c *constantDepCollector) Visit(node ast.BLangNode) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.BLangSimpleVarRef:
+		c.depends(n.Symbol())
+	case *ast.BLangConstRef:
+		c.depends(n.Symbol())
+	}
+	return c
+}
+
+func (c *constantDepCollector) VisitTypeData(_ *ast.TypeData) ast.Visitor { return c }
+
+func resolvePackageConstants(t *packageTypeResolver, pkg *ast.BLangPackage) bool {
+	order, ok := topologicallySortConstants(t, pkg.Constants)
+	if !ok {
+		return false
+	}
+	for _, idx := range order {
+		constant := &pkg.Constants[idx]
+		ref := constant.Symbol()
+		if t.lazyResolutionStatus[ref] == resolutionDone {
+			continue
+		}
+		t.lazyResolutionStatus[ref] = resolutionInProgress
+		ok := resolveConstant(t, constant)
+		t.lazyResolutionStatus[ref] = resolutionDone
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func topologicallySortConstants(t typeResolver, constants []ast.BLangConstant) ([]int, bool) {
+	nodeSet := make(map[model.SymbolRef]int, len(constants))
+	for i := range constants {
+		nodeSet[constants[i].Symbol()] = i
+	}
+
+	deps := make([][]int, len(constants))
+	for i := range constants {
+		expr, ok := constants[i].Expr.(ast.BLangExpression)
+		if !ok {
+			continue
+		}
+		v := &constantDepCollector{
+			t:       t,
+			nodeSet: nodeSet,
+			deps:    make(map[int]struct{}),
+		}
+		ast.Walk(v, expr)
+		for d := range v.deps {
+			deps[i] = append(deps[i], d)
+		}
+		sort.Ints(deps[i])
+	}
+
+	const (
+		unvisited = 0
+		inStack   = 1
+		done      = 2
+	)
+	state := make([]int, len(constants))
+	order := make([]int, 0, len(constants))
+	stack := make([]int, 0, len(constants))
+
+	reportCycle := func(i int) {
+		reportIdx := i
+		if len(stack) > 1 {
+			reportIdx = stack[1]
+		}
+		pos := constants[reportIdx].GetPosition()
+		if constants[reportIdx].Name != nil {
+			pos = constants[reportIdx].Name.GetPosition()
+		}
+		t.semanticError(fmt.Sprintf("invalid cycle detected for %s", t.symbolName(constants[reportIdx].Symbol())), pos)
+	}
+
+	var visit func(int) bool
+	visit = func(i int) bool {
+		switch state[i] {
+		case inStack:
+			reportCycle(i)
+			return false
+		case done:
+			return true
+		}
+		state[i] = inStack
+		stack = append(stack, i)
+		defer func() {
+			stack = stack[:len(stack)-1]
+		}()
+		for _, d := range deps[i] {
+			if !visit(d) {
+				return false
+			}
+		}
+		state[i] = done
+		order = append(order, i)
+		return true
+	}
+
+	for i := range constants {
+		if !visit(i) {
+			return nil, false
+		}
+	}
+	return order, true
+}
+
 func resolveInvokableSignature(t typeResolver, fn functionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangSimpleVariable) (semtypes.SemType, []semtypes.SemType, semtypes.SemType, semtypes.SemType, bool) {
 	paramTypes := make([]semtypes.SemType, len(requiredParams))
 	for i := range requiredParams {
@@ -743,11 +866,11 @@ func resolveInvokableSignature(t typeResolver, fn functionDecl, fnSym model.Func
 	var returnTy semtypes.SemType
 	if retTd := fn.GetReturnTypeDescriptor(); retTd != nil {
 		var ok bool
-		returnTy, ok = resolveBType(t, retTd.(ast.BType), 0)
+		returnTy, ok = resolveBType(t, retTd, 0)
 		if !ok {
 			return semtypes.SemType{}, nil, semtypes.SemType{}, semtypes.SemType{}, false
 		}
-		setOtherNodesAsNever(retTd.(ast.BLangNode))
+		setOtherNodesAsNever(retTd)
 	} else {
 		returnTy = semtypes.NIL
 	}
@@ -862,24 +985,12 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	for i := range pkg.GlobalVars {
 		resolveGlobalVarType(t, &pkg.GlobalVars[i])
 	}
-	for i := range pkg.Constants {
-		if !resolveConstant(t, &pkg.Constants[i]) {
-			return
-		}
+	if !resolvePackageConstants(t, pkg) {
+		return
 	}
-	// Annotation attachments are resolved in a dedicated pass over the tree
-	// rather than inline as each node is resolved. Ordering is not the reason —
-	// annotation declarations, types, and constants are all resolved above
-	// (constants fold out of order via resolveConstant/ensureResolved), so an
-	// inline pass would read fully-resolved symbols. The dedicated pass exists
-	// because the work benefits from being batched:
-	//
-	//  1. Attachment values are constant expressions, and evaluateAnnotationTasks
-	//     folds the whole batch sequentially with one shared constant-evaluation
-	//     cache, avoiding repeated evaluation of referenced constants.
-	//  2. Repeated annotations on the same symbol are aggregated into a single
-	//     list value, which needs every attachment of that symbol collected
-	//     before the final value can be produced.
+	// Annotation values can depend on constants, so resolve them after constants
+	// have been folded even though the annotated type/function nodes were
+	// resolved earlier in the top-level pass.
 	resolveTopLevelAnnotationAttachments(t, pkg)
 	for i := range pkg.Imports {
 		setOtherNodesAsNever(&pkg.Imports[i])
@@ -969,7 +1080,7 @@ func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotatio
 	} else {
 		ty = semtypes.BooleanConst(true)
 	}
-	if annotationHasSourceAttachPoint(annotation) && !annotation.IsConst() {
+	if annotation.HasSourceAttachPoint() && !annotation.IsConst() {
 		t.semanticError("annotation declaration with source attach point must be const", annotation.GetPosition())
 		return false
 	}
@@ -978,33 +1089,23 @@ func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotatio
 	return true
 }
 
-func annotationHasSourceAttachPoint(annotation *ast.BLangAnnotation) bool {
-	for _, attachPoint := range annotation.AttachPoints() {
-		if attachPoint.Source {
-			return true
-		}
-	}
-	return false
-}
-
 func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage) {
 	initialGlobalCount := len(pkg.GlobalVars)
-	var tasks []annotationEvaluationTask
 	for i := range pkg.Annotations {
-		collectAnnotationEvaluationTasks(t, &pkg.Annotations[i], ast.Point_ANNOTATION, model.SymbolRef{}, &tasks)
+		resolveAnnotationAttachments(t, &pkg.Annotations[i], ast.Point_ANNOTATION, model.SymbolRef{})
 	}
 	for i := range pkg.TypeDefinitions {
 		defn := &pkg.TypeDefinitions[i]
-		collectAnnotationEvaluationTasks(t, defn, ast.Point_TYPE, defn.Symbol(), &tasks)
+		resolveAnnotationAttachments(t, defn, ast.Point_TYPE, defn.Symbol())
 		switch typeDesc := defn.GetTypeData().TypeDescriptor.(type) {
 		case *ast.BLangRecordType:
 			for _, field := range typeDesc.FieldPtrs() {
-				collectAnnotationEvaluationTasks(t, field, ast.Point_RECORD_FIELD, model.SymbolRef{}, &tasks)
+				resolveAnnotationAttachments(t, field, ast.Point_RECORD_FIELD, model.SymbolRef{})
 			}
 		case *ast.BLangObjectType:
 			for member := range typeDesc.Members() {
 				if field, ok := member.(*ast.BObjectField); ok {
-					collectAnnotationEvaluationTasks(t, field, ast.Point_OBJECT_FIELD, model.SymbolRef{}, &tasks)
+					resolveAnnotationAttachments(t, field, ast.Point_OBJECT_FIELD, model.SymbolRef{})
 				}
 			}
 		}
@@ -1015,37 +1116,32 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 		if classDef.IsService() {
 			classPoint = ast.Point_SERVICE
 		}
-		collectAnnotationEvaluationTasks(t, classDef, classPoint, classDef.Symbol(), &tasks)
+		resolveAnnotationAttachments(t, classDef, classPoint, classDef.Symbol())
 		for j := range classDef.Fields {
-			collectAnnotationEvaluationTasks(t, classDef.Fields[j], ast.Point_OBJECT_FIELD, model.SymbolRef{}, &tasks)
+			resolveAnnotationAttachments(t, classDef.Fields[j], ast.Point_OBJECT_FIELD, model.SymbolRef{})
 		}
 		if classDef.InitFunction != nil {
-			collectFunctionAnnotationEvaluationTasks(t, classDef.InitFunction, true, &tasks)
+			resolveFunctionAnnotationAttachments(t, classDef.InitFunction, true)
 		}
 		for _, method := range classDef.Methods {
-			collectFunctionAnnotationEvaluationTasks(t, method, true, &tasks)
+			resolveFunctionAnnotationAttachments(t, method, true)
 		}
 		for _, method := range classDef.ResourceMethods {
-			collectInvokableAnnotationEvaluationTasks(t, method, ast.Point_OBJECT_METHOD, &tasks)
+			resolveInvokableAnnotationAttachments(t, method, ast.Point_OBJECT_METHOD)
 		}
 	}
 	for i := range pkg.Functions {
-		collectFunctionAnnotationEvaluationTasks(t, &pkg.Functions[i], false, &tasks)
+		resolveFunctionAnnotationAttachments(t, &pkg.Functions[i], false)
 	}
 	if pkg.InitFunction != nil {
-		collectFunctionAnnotationEvaluationTasks(t, pkg.InitFunction, false, &tasks)
+		resolveFunctionAnnotationAttachments(t, pkg.InitFunction, false)
 	}
 	for i := range pkg.Constants {
-		collectAnnotationEvaluationTasks(t, &pkg.Constants[i], ast.Point_CONST, model.SymbolRef{}, &tasks)
+		resolveAnnotationAttachments(t, &pkg.Constants[i], ast.Point_CONST, model.SymbolRef{})
 	}
 	for i := range pkg.GlobalVars {
-		collectAnnotationEvaluationTasks(t, &pkg.GlobalVars[i], ast.Point_VAR, model.SymbolRef{}, &tasks)
+		resolveAnnotationAttachments(t, &pkg.GlobalVars[i], ast.Point_VAR, model.SymbolRef{})
 	}
-	// Collection performs attachment validation and records source order first.
-	// Evaluation then uses one shared constant cache and commits values in source
-	// order, preserving repeated-annotation order without concurrent mutation of
-	// type annotation maps.
-	evaluateAnnotationTasks(t, tasks)
 	if initialGlobalCount < len(pkg.GlobalVars) {
 		globals := make([]ast.BLangSimpleVariable, 0, len(pkg.GlobalVars))
 		globals = append(globals, pkg.GlobalVars[initialGlobalCount:]...)
@@ -1054,54 +1150,45 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 	}
 }
 
-func collectFunctionAnnotationEvaluationTasks(
+func resolveFunctionAnnotationAttachments(
 	t typeResolver,
 	fn *ast.BLangFunction,
 	attached bool,
-	tasks *[]annotationEvaluationTask,
 ) {
 	point := ast.Point_FUNCTION
 	if attached {
 		point = ast.Point_OBJECT_METHOD
 	}
-	collectInvokableAnnotationEvaluationTasks(t, fn, point, tasks)
+	resolveInvokableAnnotationAttachments(t, fn, point)
 }
 
-func collectInvokableAnnotationEvaluationTasks(
+func resolveInvokableAnnotationAttachments(
 	t typeResolver,
 	fn ast.InvokableNode,
 	point ast.Point,
-	tasks *[]annotationEvaluationTask,
 ) {
-	collectAnnotationEvaluationTasks(t, fn, point, model.SymbolRef{}, tasks)
+	resolveAnnotationAttachments(t, fn, point, model.SymbolRef{})
 	for _, parameter := range fn.GetParameters() {
-		collectAnnotationEvaluationTasks(t, parameter, ast.Point_PARAMETER, model.SymbolRef{}, tasks)
+		resolveAnnotationAttachments(t, parameter, ast.Point_PARAMETER, model.SymbolRef{})
 	}
 	if restParam := fn.GetRestParam(); restParam != nil {
-		collectAnnotationEvaluationTasks(t, restParam, ast.Point_PARAMETER, model.SymbolRef{}, tasks)
+		resolveAnnotationAttachments(t, restParam, ast.Point_PARAMETER, model.SymbolRef{})
 	}
-	if ret := ast.ReturnTypeAnnotatableOf(fn); ret != nil {
-		collectAnnotationEvaluationTasks(t, ret, ast.Point_RETURN, model.SymbolRef{}, tasks)
+	if ret := fn.GetReturnTypeDescriptor(); ret != nil {
+		resolveAnnotationAttachments(t, ret, ast.Point_RETURN, model.SymbolRef{})
 	}
 }
 
-type annotationEvaluationTask struct {
-	ann        *ast.BLangAnnotationAttachment
-	sym        *model.AnnotationSymbol
-	pointKey   string
-	typeSymbol model.SymbolRef
-	listType   semtypes.SemType
-	repeated   bool
-}
-
-func collectAnnotationEvaluationTasks(
+func resolveAnnotationAttachments(
 	t typeResolver,
 	node ast.AnnotatableNode,
 	point ast.Point,
 	typeSymbol model.SymbolRef,
-	tasks *[]annotationEvaluationTask,
 ) {
 	seen := make(map[string]bool)
+	repeatedValues := make(map[string]*repeatedAnnotationValue)
+	repeatedOrder := make([]string, 0)
+	pointKey := point.String()
 	for _, attachment := range node.GetAnnotationAttachments() {
 		ann, ok := attachment.(*ast.BLangAnnotationAttachment)
 		if !ok || !ast.SymbolIsSet(ann) {
@@ -1112,7 +1199,6 @@ func collectAnnotationEvaluationTasks(
 			t.internalError("annotation reference does not resolve to an annotation symbol", ann.GetPosition())
 			continue
 		}
-		pointKey := point.String()
 		if !sym.AllowsAttachPoint(pointKey) {
 			t.semanticError("annotation '"+sym.Name()+"' is not allowed on "+pointKey, ann.GetPosition())
 			continue
@@ -1150,14 +1236,67 @@ func collectAnnotationEvaluationTasks(
 		if ann.AnnotationName != nil {
 			setOtherNodesAsNever(ann.AnnotationName)
 		}
-		*tasks = append(*tasks, annotationEvaluationTask{
-			ann:        ann,
-			sym:        sym,
-			pointKey:   pointKey,
-			typeSymbol: typeSymbol,
-			listType:   expectedType,
-			repeated:   repeated,
-		})
+		value, err := evaluateAnnotationValue(t, ann.Expr)
+		runtimeValue := false
+		if err != nil {
+			if errors.Is(err, errNotConstantExpression) {
+				if sym.IsConst() {
+					t.semanticError("const annotation value must be a constant expression", ann.Expr.GetPosition())
+					continue
+				}
+				runtimeValue = true
+			} else {
+				t.semanticError("cannot evaluate annotation constant expression: "+err.Error(), ann.Expr.GetPosition())
+				continue
+			}
+		}
+		if !runtimeValue {
+			ann.AnnotationValue = value
+		}
+		storedOnType := typeSymbol != (model.SymbolRef{}) && sym.IsRuntimeVisibleAt(pointKey)
+		if repeated && storedOnType {
+			group := repeatedValues[key]
+			if group == nil {
+				group = &repeatedAnnotationValue{listType: expectedType}
+				repeatedValues[key] = group
+				repeatedOrder = append(repeatedOrder, key)
+			}
+			group.values = append(group.values, value)
+			group.expressions = append(group.expressions, ann.Expr)
+			group.runtime = group.runtime || runtimeValue
+			continue
+		}
+		if runtimeValue {
+			if storedOnType {
+				setTypeAnnotationValue(t, typeSymbol, key, createRuntimeAnnotationGlobal(t, ann.Expr))
+			}
+			continue
+		}
+		if storedOnType {
+			setTypeAnnotationValue(t, typeSymbol, key, value)
+		}
+	}
+
+	for _, key := range repeatedOrder {
+		group := repeatedValues[key]
+		atomic := semtypes.ToListAtomicType(t.typeContext(), group.listType)
+		if atomic == nil {
+			t.internalError("repeated annotation type is not an atomic list", diagnostics.Location{})
+			continue
+		}
+		if group.runtime {
+			expr := &ast.BLangListConstructorExpr{
+				Exprs:      group.expressions,
+				AtomicType: *atomic,
+			}
+			expr.SetPosition(group.expressions[0].GetPosition())
+			expr.SetDeterminedType(group.listType)
+			setTypeAnnotationValue(t, typeSymbol, key, createRuntimeAnnotationGlobal(t, expr))
+			continue
+		}
+		restFiller, _ := values.FillerFactoryFor(t.typeContext(), atomic.Rest())
+		value := values.NewList(group.listType, atomic, true, restFiller, len(group.values), group.values)
+		setTypeAnnotationValue(t, typeSymbol, key, value)
 	}
 }
 
@@ -1205,101 +1344,20 @@ func newImplicitBooleanLiteral(value bool, pos diagnostics.Location) *ast.BLangL
 	return lit
 }
 
-type annotationEvaluationResult struct {
-	value values.AnnotationValue
-	err   error
-}
-
-func evaluateAnnotationTasks(t typeResolver, tasks []annotationEvaluationTask) {
-	if len(tasks) == 0 {
-		return
-	}
-	results := make([]annotationEvaluationResult, len(tasks))
-	cache := newConstantEvaluationCache()
-	for i := range tasks {
-		results[i] = evaluateAnnotationTask(t, cache, tasks[i])
-	}
-
-	repeatedValues := make(map[repeatedAnnotationKey]*repeatedAnnotationValue)
-	repeatedOrder := make([]repeatedAnnotationKey, 0)
-	for i, task := range tasks {
-		result := results[i]
-		runtimeValue := false
-		if result.err != nil {
-			if errors.Is(result.err, errNotConstantExpression) {
-				if task.sym.IsConst() {
-					t.semanticError("const annotation value must be a constant expression", task.ann.Expr.GetPosition())
-					continue
-				}
-				runtimeValue = true
-			} else {
-				t.semanticError("cannot evaluate annotation constant expression: "+result.err.Error(), task.ann.Expr.GetPosition())
-				continue
-			}
-		}
-		if !runtimeValue {
-			task.ann.AnnotationValue = result.value
-		}
-		storedOnType := task.typeSymbol != (model.SymbolRef{}) && task.sym.IsRuntimeVisibleAt(task.pointKey)
-		key := model.AnnotationKey(t.compilerContext().SymbolPackage(task.ann.Symbol()), task.sym.Name())
-		if task.repeated && storedOnType {
-			groupKey := repeatedAnnotationKey{symbol: task.typeSymbol, key: key}
-			group := repeatedValues[groupKey]
-			if group == nil {
-				group = &repeatedAnnotationValue{listType: task.listType}
-				repeatedValues[groupKey] = group
-				repeatedOrder = append(repeatedOrder, groupKey)
-			}
-			group.values = append(group.values, result.value)
-			group.expressions = append(group.expressions, task.ann.Expr)
-			group.runtime = group.runtime || runtimeValue
-			continue
-		}
-		if runtimeValue {
-			ref := createRuntimeAnnotationGlobal(t, task.ann.Expr)
-			if storedOnType {
-				setTypeAnnotationValue(t, task.typeSymbol, key, ref)
-			}
-			continue
-		}
-		if storedOnType {
-			setTypeAnnotationValue(t, task.typeSymbol, key, result.value)
-		}
-	}
-
-	for _, key := range repeatedOrder {
-		group := repeatedValues[key]
-		atomic := semtypes.ToListAtomicType(t.typeContext(), group.listType)
-		if atomic == nil {
-			t.internalError("repeated annotation type is not an atomic list", diagnostics.Location{})
-			continue
-		}
-		if group.runtime {
-			expr := &ast.BLangListConstructorExpr{
-				Exprs:      group.expressions,
-				AtomicType: *atomic,
-			}
-			expr.SetPosition(group.expressions[0].GetPosition())
-			expr.SetDeterminedType(group.listType)
-			setTypeAnnotationValue(t, key.symbol, key.key, createRuntimeAnnotationGlobal(t, expr))
-			continue
-		}
-		restFiller, _ := values.FillerFactoryFor(t.typeContext(), atomic.Rest())
-		value := values.NewList(group.listType, atomic, true, restFiller, len(group.values), group.values)
-		setTypeAnnotationValue(t, key.symbol, key.key, value)
-	}
-}
-
-type repeatedAnnotationKey struct {
-	symbol model.SymbolRef
-	key    string
-}
-
 type repeatedAnnotationValue struct {
 	listType    semtypes.SemType
 	values      []values.BalValue
 	expressions []ast.BLangExpression
 	runtime     bool
+}
+
+func evaluateAnnotationValue(t typeResolver, expr ast.BLangExpression) (value values.AnnotationValue, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("constant expression evaluation panicked: %v", recovered)
+		}
+	}()
+	return evaluateConstantExpression(t, expr)
 }
 
 func createRuntimeAnnotationGlobal(t typeResolver, expr ast.BLangExpression) *values.RuntimeAnnotationValueRef {
@@ -1336,16 +1394,6 @@ func createRuntimeAnnotationGlobal(t typeResolver, expr ast.BLangExpression) *va
 		Module:       resolver.pkg.PackageID.PkgName.Value(),
 		GlobalName:   name,
 	}
-}
-
-func evaluateAnnotationTask(t typeResolver, cache *constantEvaluationCache, task annotationEvaluationTask) (result annotationEvaluationResult) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			result.err = fmt.Errorf("constant expression evaluation panicked: %v", recovered)
-		}
-	}()
-	value, err := evaluateConstantExpression(t, task.ann.Expr, cache)
-	return annotationEvaluationResult{value: value, err: err}
 }
 
 func setTypeAnnotationValue(t typeResolver, symbol model.SymbolRef, key string, value values.AnnotationValue) {
@@ -1733,8 +1781,8 @@ func resolveDependentlyTypedFunctionSignature(t typeResolver, fn *ast.BLangFunct
 		paramTypes[i] = p.GetDeterminedType()
 		paramsByName[p.GetName().GetValue()] = param{index: i, ty: paramTypes[i]}
 	}
-	retTd, ok := fn.GetReturnTypeDescriptor().(ast.BLangNode)
-	if !ok {
+	retTd := fn.GetReturnTypeDescriptor()
+	if retTd == nil {
 		t.internalError("dependently-typed function has no return type descriptor", fn.GetPosition())
 		return semtypes.SemType{}, false
 	}
@@ -1785,6 +1833,8 @@ type param struct {
 // and wrapped in an IdentityTypeOp.
 func buildReturnTypeOp(t typeResolver, params map[string]param, node ast.BLangNode) (model.TypeOp, bool) {
 	switch n := node.(type) {
+	case *ast.BLangReturnTypeDescriptor:
+		return buildReturnTypeOp(t, params, n.TypeDescriptor)
 	case *ast.BLangUnionTypeNode:
 		lhs, ok := buildReturnTypeOp(t, params, n.Lhs().TypeDescriptor.(ast.BLangNode))
 		if !ok {
@@ -6411,6 +6461,8 @@ func resolveTypeDataPair(t typeResolver, typeData *ast.TypeData, depth int) (sem
 
 func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.SemType, bool) {
 	switch ty := btype.(type) {
+	case *ast.BLangReturnTypeDescriptor:
+		return resolveBType(t, ty.TypeDescriptor, depth)
 	case *ast.BLangValueType:
 		switch ty.TypeKind {
 		case ast.TypeKind_BOOLEAN:
@@ -6967,7 +7019,7 @@ func resolveConstant(t typeResolver, constant *ast.BLangConstant) bool {
 	if !ok {
 		return false
 	}
-	value, err := evaluateConstantExpression(t, expr, newConstantEvaluationCache())
+	value, err := evaluateConstantExpression(t, expr)
 	if err != nil {
 		// A const-expr is evaluated at compile time (spec §6.4). A genuine
 		// evaluation failure — e.g. a cast that cannot be performed such as

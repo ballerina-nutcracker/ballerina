@@ -56,6 +56,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printFunction(t)
 	case *BLangResourceMethod:
 		p.printResourceMethod(t)
+	case *BLangReturnTypeDescriptor:
+		p.printReturnTypeDescriptor(t)
 	case *BLangBlockFunctionBody:
 		p.printBlockFunctionBody(t)
 	case *BLangSimpleVariable:
@@ -428,6 +430,11 @@ func (p *PrettyPrinter) printAnnotationAttachments(node AnnotatableNode) {
 	}
 }
 
+func (p *PrettyPrinter) printReturnTypeDescriptor(node *BLangReturnTypeDescriptor) {
+	p.printAnnotationAttachments(node)
+	p.PrintInner(node.TypeDescriptor)
+}
+
 func (p *PrettyPrinter) printTemplateExpr(node *BLangTemplateExpr) {
 	p.StartNode()
 	switch node.Kind {
@@ -679,11 +686,8 @@ func (p *PrettyPrinter) printResourceMethod(node *BLangResourceMethod) {
 	for i := range node.RequiredParams {
 		p.PrintInner(&node.RequiredParams[i])
 	}
-	if ret := ReturnTypeAnnotatableOf(node); ret != nil {
-		p.printAnnotationAttachments(ret)
-	}
 	if node.GetReturnTypeDescriptor() != nil {
-		p.PrintInner(node.GetReturnTypeDescriptor().(BLangNode))
+		p.PrintInner(node.GetReturnTypeDescriptor())
 	}
 	if node.Body != nil {
 		p.PrintInner(node.Body.(BLangNode))
@@ -884,14 +888,9 @@ func (p *PrettyPrinter) printFunction(node *BLangFunction) {
 
 	// Print return type
 	p.PrintString("(")
-	if ret := ReturnTypeAnnotatableOf(node); ret != nil {
-		p.indentLevel++
-		p.printAnnotationAttachments(ret)
-		p.indentLevel--
-	}
 	if node.GetReturnTypeDescriptor() != nil {
 		p.indentLevel++
-		p.PrintInner(node.GetReturnTypeDescriptor().(BLangNode))
+		p.PrintInner(node.GetReturnTypeDescriptor())
 		p.indentLevel--
 	}
 	p.printSticky(")")
@@ -1314,7 +1313,20 @@ func (p *PrettyPrinter) printAnnotation(node *BLangAnnotation) {
 	if node.typeDescriptor != nil {
 		p.PrintInner(node.typeDescriptor.(BLangNode))
 	}
-	for _, attachPoint := range node.AttachPoints() {
+	attachPoints := node.AttachPoints()
+	slices.SortFunc(attachPoints, func(a, b AttachPoint) int {
+		if a.Point != b.Point {
+			return cmp.Compare(a.Point.String(), b.Point.String())
+		}
+		if a.Source == b.Source {
+			return 0
+		}
+		if a.Source {
+			return 1
+		}
+		return -1
+	})
+	for _, attachPoint := range attachPoints {
 		p.StartNode()
 		p.PrintString("attach-point")
 		if attachPoint.Source {

@@ -1,7 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const BASE (
-    (value-type int)) ())
   (annotation tiny
     (user-defined-type TinyInfo)
     (attach-point type))

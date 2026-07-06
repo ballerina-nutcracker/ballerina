@@ -1,6 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const K () ())
   (variable A (type
     (value-type int)))
   (variable B (type

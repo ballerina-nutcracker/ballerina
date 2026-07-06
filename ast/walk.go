@@ -218,12 +218,7 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.RestParam.(BLangNode))
 		}
 		if node.returnTypeDescriptor != nil {
-			for i := range node.returnTypeDescriptor.AnnAttachments {
-				Walk(v, &node.returnTypeDescriptor.AnnAttachments[i])
-			}
-			if node.returnTypeDescriptor.TypeDescriptor != nil {
-				walkTypeDescriptor(v, node.returnTypeDescriptor.TypeDescriptor)
-			}
+			Walk(v, node.returnTypeDescriptor)
 		}
 		if node.Body != nil {
 			Walk(v, node.Body.(BLangNode))
@@ -246,16 +241,17 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.RestParam.(BLangNode))
 		}
 		if node.returnTypeDescriptor != nil {
-			for i := range node.returnTypeDescriptor.AnnAttachments {
-				Walk(v, &node.returnTypeDescriptor.AnnAttachments[i])
-			}
-			if node.returnTypeDescriptor.TypeDescriptor != nil {
-				walkTypeDescriptor(v, node.returnTypeDescriptor.TypeDescriptor)
-			}
+			Walk(v, node.returnTypeDescriptor)
 		}
 		if node.Body != nil {
 			Walk(v, node.Body.(BLangNode))
 		}
+
+	case *BLangReturnTypeDescriptor:
+		for i := range node.AnnAttachments {
+			Walk(v, &node.AnnAttachments[i])
+		}
+		walkTypeDescriptor(v, node.TypeDescriptor)
 
 	case *BLangBlockFunctionBody:
 		for _, stmt := range node.Stmts {

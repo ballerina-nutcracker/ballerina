@@ -1740,8 +1740,9 @@ func simpleVariableReference(ctx context, curBB *BIRBasicBlock, expr *ast.BLangS
 			block:  curBB,
 		}
 	}
-	// Folded constants are inlined during desugar, so a constant reference that
-	// reaches BIR is a non-foldable constant lowered to a global variable.
+	if sym.Kind() == model.SymbolKindConstant {
+		ctx.internalError("constant reference was not inlined during desugar", expr.GetPosition())
+	}
 
 	// Global variable reference
 	pkgId := packageIDFromIdentifier(ctx.compilerContext(), ctx.symbolPackage(symRef))

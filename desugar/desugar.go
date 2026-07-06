@@ -328,9 +328,6 @@ func clearModuleInitExprs(pkg *ast.BLangPackage) {
 	for i := range pkg.GlobalVars {
 		pkg.GlobalVars[i].Expr = nil
 	}
-	for i := range pkg.Constants {
-		pkg.Constants[i].Expr = nil
-	}
 }
 
 // Accumulate all the nodes referred by a given node. Assume all references to be valid
@@ -367,6 +364,7 @@ func (v *dependencyVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return 
 func (v *dependencyVisitor) dependsOnRuntimeAnnotation(expr *ast.BLangAnnotAccessExpr) {
 	receiver, ok := expr.Expr.(ast.BNodeWithSymbol)
 	if !ok {
+		v.compilerCtx.InternalError("annotation access receiver has no symbol", expr.GetPosition())
 		return
 	}
 	annotationSymbol := v.compilerCtx.GetSymbol(expr.Symbol())
@@ -1326,6 +1324,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		panic(panicErr)
 	}
 
+	pkg.Constants = nil
 	return pkg
 }
 

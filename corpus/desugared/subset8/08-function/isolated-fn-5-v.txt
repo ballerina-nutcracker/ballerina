@@ -1,6 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const val () ())
   (function foo (
     (variable x (type
       (value-type int)) (expr

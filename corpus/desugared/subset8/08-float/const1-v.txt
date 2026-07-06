@@ -1,12 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const A () ())
-  (const B () ())
-  (const C () ())
-  (const D () ())
-  (const E () ())
-  (const F () ())
-  (const G () ())
   (function main () (
     (value-type null))
     (block-function-body

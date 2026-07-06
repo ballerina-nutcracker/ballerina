@@ -1,8 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const R () ())
-  (const G () ())
-  (const B () ())
   (type-definition Color
     (union-type
       (union-type

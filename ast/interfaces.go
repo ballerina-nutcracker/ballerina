@@ -165,7 +165,7 @@ type InvokableNode interface {
 	SetName(name IdentifierNode)
 	GetParameters() []SimpleVariableNode
 	AddParameter(param SimpleVariableNode)
-	GetReturnTypeDescriptor() TypeDescriptor
+	GetReturnTypeDescriptor() ReturnTypeDescriptor
 	SetReturnTypeDescriptor(typeDescriptor TypeDescriptor)
 	GetBody() FunctionBodyNode
 	SetBody(body FunctionBodyNode)
@@ -204,6 +204,11 @@ type ServiceNode interface {
 type TypeDescriptor interface {
 	Node
 	IsGrouped() bool
+}
+
+type ReturnTypeDescriptor interface {
+	BType
+	AnnotatableNode
 }
 
 type ArrayTypeNode interface {

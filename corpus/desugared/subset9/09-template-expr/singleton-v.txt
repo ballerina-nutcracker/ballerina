@@ -1,6 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const GREETING () ())
   (type-definition Greeting
     (finite-type
       (literal hello world)))

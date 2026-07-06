@@ -492,10 +492,6 @@ func (ms *moduleSymbolResolver) isDependentlyTyped(fn *ast.BLangFunction) bool {
 	if retTd == nil {
 		return false
 	}
-	node, ok := retTd.(ast.BLangNode)
-	if !ok {
-		return false
-	}
 	typedescParams := make(map[string]struct{})
 	for i := range fn.RequiredParams {
 		param := &fn.RequiredParams[i]
@@ -509,11 +505,13 @@ func (ms *moduleSymbolResolver) isDependentlyTyped(fn *ast.BLangFunction) bool {
 	if len(typedescParams) == 0 {
 		return false
 	}
-	return returnTypeReferencesTypedescParam(node, typedescParams)
+	return returnTypeReferencesTypedescParam(retTd, typedescParams)
 }
 
 func returnTypeReferencesTypedescParam(node ast.BLangNode, typedescParams map[string]struct{}) bool {
 	switch n := node.(type) {
+	case *ast.BLangReturnTypeDescriptor:
+		return returnTypeReferencesTypedescParam(n.TypeDescriptor, typedescParams)
 	case *ast.BLangUserDefinedType:
 		if n.PkgAlias.Value != "" {
 			return false

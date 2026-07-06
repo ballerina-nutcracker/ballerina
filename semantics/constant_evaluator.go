@@ -33,55 +33,13 @@ var errNotConstantExpression = errors.New("not a constant expression")
 
 type constantExpressionEvaluator struct {
 	resolver typeResolver
-	cache    *constantEvaluationCache
-	visiting map[model.SymbolRef]bool
 }
 
-func evaluateConstantExpression(
-	t typeResolver,
-	expr ast.BLangExpression,
-	cache *constantEvaluationCache,
-) (values.BalValue, error) {
+func evaluateConstantExpression(t typeResolver, expr ast.BLangExpression) (values.BalValue, error) {
 	evaluator := constantExpressionEvaluator{
 		resolver: t,
-		cache:    cache,
-		visiting: make(map[model.SymbolRef]bool),
 	}
 	return evaluator.evaluate(expr)
-}
-
-type constantEvaluationResult struct {
-	value values.BalValue
-	err   error
-}
-
-type constantEvaluationCache struct {
-	results map[model.SymbolRef]constantEvaluationResult
-}
-
-func newConstantEvaluationCache() *constantEvaluationCache {
-	return &constantEvaluationCache{
-		results: make(map[model.SymbolRef]constantEvaluationResult),
-	}
-}
-
-func (c *constantEvaluationCache) get(ref model.SymbolRef) (constantEvaluationResult, bool) {
-	if c == nil {
-		return constantEvaluationResult{}, false
-	}
-	result, ok := c.results[ref]
-	return result, ok
-}
-
-func (c *constantEvaluationCache) set(ref model.SymbolRef, result constantEvaluationResult) constantEvaluationResult {
-	if c == nil {
-		return result
-	}
-	if existing, ok := c.results[ref]; ok {
-		return existing
-	}
-	c.results[ref] = result
-	return result
 }
 
 func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values.BalValue, error) {
@@ -141,36 +99,9 @@ func constantSingleShapeValue(ty semtypes.SemType) (values.BalValue, bool) {
 
 func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.SymbolRef, ty semtypes.SemType) (values.BalValue, error) {
 	ref = e.resolver.unnarrowedSymbol(ref)
-	if result, ok := e.cache.get(ref); ok {
-		return result.value, result.err
-	}
-	// A folded value on the symbol is authoritative — this covers both
-	// constants already folded earlier in this module and constants imported
-	// from another module (whose folded value was serialized with the symbol).
 	if sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol); ok {
 		if value, known := sym.ConstantValue(); known {
 			return value, nil
-		}
-	}
-	if p, ok := e.resolver.(*packageTypeResolver); ok {
-		if constant, ok := p.packageConstants[ref]; ok {
-			if e.visiting[ref] {
-				return nil, fmt.Errorf("cyclic constant reference to %s", e.resolver.symbolName(ref))
-			}
-			expr, ok := constant.Expr.(ast.BLangExpression)
-			if !ok {
-				return nil, errNotConstantExpression
-			}
-			e.visiting[ref] = true
-			value, err := e.evaluate(expr)
-			delete(e.visiting, ref)
-			if err == nil {
-				if sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol); ok {
-					sym.SetConstantValue(value)
-				}
-			}
-			result := e.cache.set(ref, constantEvaluationResult{value: value, err: err})
-			return result.value, result.err
 		}
 	}
 
@@ -562,82 +493,58 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 		return value, nil
 	}
 
+	converted, err := constantCastValue(e.resolver.typeContext(), value, targetType)
+	if err != nil {
+		return nil, err
+	}
+	return converted, nil
+}
+
+func constantCastValue(typeCtx semtypes.Context, value values.BalValue, targetType semtypes.SemType) (values.BalValue, error) {
 	var converted values.BalValue
+	var err error
 	switch {
 	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
-		converted, err = constantToInt(value)
+		converted, err = values.ToInt(value)
 	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
-		converted, err = constantToFloat(value)
+		converted, err = values.ToFloat(value)
 	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
-		converted, err = constantToDecimal(value)
+		converted, err = values.ToDecimal(value)
 	default:
 		return nil, fmt.Errorf("unsupported constant conversion from %T", value)
 	}
 	if err != nil {
-		return nil, err
+		var decimalErr *decimal.Error
+		if semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL) && errors.As(err, &decimalErr) {
+			return nil, decimalErr
+		}
+		return nil, constantConversionError(value, targetType)
 	}
-	if !semtypes.IsSubtype(e.resolver.typeContext(), values.SemTypeForValue(converted), targetType) {
+	if !semtypes.IsSubtype(typeCtx, values.SemTypeForValue(converted), targetType) {
 		return nil, fmt.Errorf("converted constant does not belong to target type")
 	}
 	return converted, nil
 }
 
-func constantToInt(value values.BalValue) (values.BalValue, error) {
-	switch value := value.(type) {
-	case int64:
-		return value, nil
-	case float64:
-		if math.IsNaN(value) || math.IsInf(value, 0) || value < float64(math.MinInt64) || value > float64(math.MaxInt64) {
-			return nil, fmt.Errorf("float value cannot be converted to int")
-		}
-		return int64(math.RoundToEven(value)), nil
-	case *decimal.Decimal:
-		result, ok, err := value.Int64()
-		if err != nil {
-			return nil, errors.New(err.Error())
-		}
-		if !ok {
-			return nil, fmt.Errorf("decimal value cannot be converted to int")
-		}
-		return result, nil
-	default:
-		return nil, fmt.Errorf("%T cannot be converted to int", value)
+func constantConversionError(value values.BalValue, targetType semtypes.SemType) error {
+	target := "target type"
+	switch {
+	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
+		target = "int"
+	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
+		target = "float"
+	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
+		target = "decimal"
 	}
-}
-
-func constantToFloat(value values.BalValue) (values.BalValue, error) {
-	switch value := value.(type) {
-	case int64:
-		return float64(value), nil
+	switch value.(type) {
+	case bool:
+		return fmt.Errorf("bool cannot be converted to %s", target)
 	case float64:
-		return value, nil
+		return fmt.Errorf("float value cannot be converted to %s", target)
 	case *decimal.Decimal:
-		return value.Float64(), nil
+		return fmt.Errorf("decimal value cannot be converted to %s", target)
 	default:
-		return nil, fmt.Errorf("%T cannot be converted to float", value)
-	}
-}
-
-func constantToDecimal(value values.BalValue) (values.BalValue, error) {
-	switch value := value.(type) {
-	case int64:
-		return decimal.FromInt64(value), nil
-	case float64:
-		if math.IsInf(value, 0) {
-			return nil, fmt.Errorf("arithmetic overflow")
-		}
-		if math.IsNaN(value) {
-			return nil, fmt.Errorf("not a valid decimal")
-		}
-		result, err := decimal.FromFloat64(value)
-		if err != nil {
-			return nil, errors.New(err.Error())
-		}
-		return result, nil
-	case *decimal.Decimal:
-		return value, nil
-	default:
-		return nil, fmt.Errorf("%T cannot be converted to decimal", value)
+		return fmt.Errorf("%T cannot be converted to %s", value, target)
 	}
 }
 

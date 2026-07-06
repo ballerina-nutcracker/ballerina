@@ -1014,7 +1014,11 @@ func walkMatchStatement(cx *functionContext, stmt *ast.BLangMatchStatement) desu
 		// dropped from the BIR package.
 		for _, pattern := range clause.Patterns {
 			constPattern, ok := pattern.(*ast.BLangConstPattern)
-			if !ok || constPattern.Expr == nil {
+			if !ok {
+				continue
+			}
+			if constPattern.Expr == nil {
+				cx.pkgCtx.compilerCtx.InternalError("constant match pattern expression is nil", constPattern.GetPosition())
 				continue
 			}
 			patternResult := walkExpression(cx, constPattern.Expr)

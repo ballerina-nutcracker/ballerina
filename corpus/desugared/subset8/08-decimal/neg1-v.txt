@@ -1,11 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const D1 () ())
-  (const D2 () ())
-  (const D3 (
-    (value-type decimal)) ())
-  (const D4 (
-    (value-type decimal)) ())
   (function main () (
     (value-type null))
     (block-function-body

@@ -1,11 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const RED (
-    (value-type string)) ())
-  (const GREEN (
-    (value-type string)) ())
-  (const BLUE (
-    (value-type string)) ())
   (type-definition Color
     (union-type
       (union-type

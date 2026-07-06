@@ -19,7 +19,6 @@ package ast
 import (
 	"fmt"
 	"iter"
-	"sort"
 	"strings"
 
 	"ballerina-lang-go/common"
@@ -572,15 +571,16 @@ func (b *BLangAnnotation) AttachPoints() []AttachPoint {
 	for attachPoint := range b.attachPoints.Values() {
 		result = append(result, attachPoint)
 	}
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Point != result[j].Point {
-			// Sort by the canonical key (alphabetical) to keep ordering stable
-			// across the byte-valued Point enum.
-			return result[i].Point.String() < result[j].Point.String()
-		}
-		return !result[i].Source && result[j].Source
-	})
 	return result
+}
+
+func (b *BLangAnnotation) HasSourceAttachPoint() bool {
+	for attachPoint := range b.attachPoints.Values() {
+		if attachPoint.Source {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *BLangAnnotation) GetAnnotationAttachments() []AnnotationAttachmentNode {
@@ -1064,13 +1064,10 @@ func (b *bLangInvokableNodeBase) SetMarkdownDocumentationAttachment(markdownDocu
 }
 
 // BLangReturnTypeDescriptor is the return type descriptor of an invokable node.
-// It holds the return type and its annotation attachments as real AST data, so a
-// single node serves as both a type-descriptor holder and an AnnotatableNode.
-// This replaces the former ReturnTypeAnnotatable view, keeping the AST pure data
-// rather than synthesizing an annotatable adaptor on demand.
+// It holds both the return type and its annotation attachments.
 type BLangReturnTypeDescriptor struct {
 	bLangNodeBase
-	TypeDescriptor TypeDescriptor
+	TypeDescriptor BType
 	AnnAttachments []BLangAnnotationAttachment
 }
 
@@ -1088,21 +1085,31 @@ func (r *BLangReturnTypeDescriptor) GetAnnotationAttachments() []AnnotationAttac
 	return result
 }
 
-// ReturnTypeAnnotatableOf returns the invokable node's return type descriptor as
-// an AnnotatableNode (it carries the return type's annotation attachments), or
-// nil if the node has no return type descriptor.
-func ReturnTypeAnnotatableOf(fn InvokableNode) AnnotatableNode {
-	switch n := fn.(type) {
-	case *BLangFunction:
-		if n.returnTypeDescriptor != nil {
-			return n.returnTypeDescriptor
-		}
-	case *BLangResourceMethod:
-		if n.returnTypeDescriptor != nil {
-			return n.returnTypeDescriptor
-		}
+func (r *BLangReturnTypeDescriptor) IsGrouped() bool { return r.innerType().IsGrouped() }
+
+func (r *BLangReturnTypeDescriptor) SetTypeData(ty TypeData) { r.innerType().SetTypeData(ty) }
+
+func (r *BLangReturnTypeDescriptor) GetTypeData() TypeData { return r.innerType().GetTypeData() }
+
+func (r *BLangReturnTypeDescriptor) BTypeGetTag() TypeTags { return r.innerType().BTypeGetTag() }
+
+func (r *BLangReturnTypeDescriptor) BTypeSetTag(tag TypeTags) { r.innerType().BTypeSetTag(tag) }
+
+func (r *BLangReturnTypeDescriptor) bTypeGetName() model.Name { return r.innerType().bTypeGetName() }
+
+func (r *BLangReturnTypeDescriptor) bTypeSetName(name model.Name) { r.innerType().bTypeSetName(name) }
+
+func (r *BLangReturnTypeDescriptor) bTypeGetFlags() model.Flag { return r.innerType().bTypeGetFlags() }
+
+func (r *BLangReturnTypeDescriptor) bTypeSetFlags(flags model.Flag) {
+	r.innerType().bTypeSetFlags(flags)
+}
+
+func (r *BLangReturnTypeDescriptor) innerType() BType {
+	if r.TypeDescriptor == nil {
+		panic("BLangReturnTypeDescriptor has nil TypeDescriptor")
 	}
-	return nil
+	return r.TypeDescriptor
 }
 
 func (b *bLangInvokableNodeBase) GetParameters() []SimpleVariableNode {
@@ -1162,24 +1169,24 @@ func (b *bLangInvokableNodeBase) HasBody() bool {
 	return b.Body != nil
 }
 
-func (b *bLangInvokableNodeBase) GetReturnTypeDescriptor() TypeDescriptor {
+func (b *bLangInvokableNodeBase) GetReturnTypeDescriptor() ReturnTypeDescriptor {
 	if b.returnTypeDescriptor == nil {
 		return nil
 	}
-	return b.returnTypeDescriptor.TypeDescriptor
+	return b.returnTypeDescriptor
 }
 
 func (b *bLangInvokableNodeBase) SetReturnTypeDescriptor(typeDescriptor TypeDescriptor) {
 	if typeDescriptor == nil {
-		if b.returnTypeDescriptor != nil {
-			b.returnTypeDescriptor.TypeDescriptor = nil
-		}
+		b.returnTypeDescriptor = nil
 		return
 	}
+	bType := typeDescriptor.(BType)
 	if b.returnTypeDescriptor == nil {
 		b.returnTypeDescriptor = &BLangReturnTypeDescriptor{}
 	}
-	b.returnTypeDescriptor.TypeDescriptor = typeDescriptor.(BType)
+	b.returnTypeDescriptor.TypeDescriptor = bType
+	b.returnTypeDescriptor.SetPosition(bType.GetPosition())
 }
 
 // ReturnTypeDescriptorNode returns the return type descriptor node, which carries

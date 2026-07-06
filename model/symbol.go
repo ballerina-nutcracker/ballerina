@@ -20,6 +20,7 @@ import (
 	"errors"
 	"iter"
 	"slices"
+	"strings"
 	"sync"
 
 	"ballerina-lang-go/semtypes"
@@ -192,6 +193,31 @@ const (
 
 const sourceAnnotationAttachPointPrefix = "source:"
 
+type annotationAttachPointSet uint64
+
+const sourceAnnotationAttachPointShift = 32
+
+var annotationAttachPointKeys = [...]string{
+	"type",
+	"object",
+	"function",
+	"objectfunction",
+	"serviceremotefunction",
+	"parameter",
+	"return",
+	"service",
+	"field",
+	"objectfield",
+	"recordfield",
+	"listener",
+	"annotation",
+	"external",
+	"var",
+	"const",
+	"worker",
+	"class",
+}
+
 type (
 	PackageIdentifier struct {
 		Organization string
@@ -260,7 +286,7 @@ type (
 	AnnotationSymbol struct {
 		symbolBase
 		isConst      bool
-		attachPoints map[string]bool
+		attachPoints annotationAttachPointSet
 	}
 
 	// memberHolderBase carries direct + type-inclusion-inherited members
@@ -312,24 +338,12 @@ type (
 	}
 
 	// ConstantValueSymbol is a VariableSymbol for a module constant whose
-	// expression has been folded at compile time. It carries the folded value
-	// (the "E" of the design): a restricted, non-cyclic, serializable BalValue.
-	//
-	// Folding lives at the symbol level rather than on the type (a type cannot
-	// recover every possible value, e.g. compound shapes) or on the AST (AST
-	// mutations are ephemeral and would not survive incremental compilation).
-	// The value is materialized back into an expression node by the desugar
-	// package (the "apply", analogous to TypeOp.Apply) — that step cannot live
-	// here because model must not import ast.
+	// expression has been folded at compile time. The value is stored on the
+	// symbol because it cannot always be recovered from the constant's type.
 	ConstantValueSymbol struct {
 		VariableSymbol
 		value values.BalValue
-		// valueKnown marks whether value has been folded yet. Folding is lazy:
-		// during resolution a forward-referenced constant may not be folded when
-		// another constant references it, and because nil is a valid constant
-		// value this flag is what distinguishes "not folded yet" from "folded to
-		// nil". After resolution every constant that compiled is folded (an
-		// unfoldable const-expr is a compile error), so it is always true then.
+		// valueKnown distinguishes "not folded yet" from "folded to nil".
 		valueKnown bool
 	}
 
@@ -816,12 +830,7 @@ func (as *AnnotationSymbol) Kind() SymbolKind {
 }
 
 func (as *AnnotationSymbol) Copy() Symbol {
-	cp := *as
-	cp.attachPoints = make(map[string]bool, len(as.attachPoints))
-	for key, value := range as.attachPoints {
-		cp.attachPoints[key] = value
-	}
-	return &cp
+	panic("AnnotationSymbol cannot be copied")
 }
 
 func (as *AnnotationSymbol) IsConst() bool {
@@ -829,36 +838,42 @@ func (as *AnnotationSymbol) IsConst() bool {
 }
 
 func (as *AnnotationSymbol) AttachPointKeys() []string {
-	keys := make([]string, 0, len(as.attachPoints))
-	for key := range as.attachPoints {
-		keys = append(keys, key)
+	keys := make([]string, 0, len(annotationAttachPointKeys))
+	for i, key := range annotationAttachPointKeys {
+		bit := annotationAttachPointSet(1 << i)
+		if as.attachPoints.has(bit) {
+			keys = append(keys, key)
+		}
+		if as.attachPoints.has(bit << sourceAnnotationAttachPointShift) {
+			keys = append(keys, SourceAnnotationAttachPointKey(key))
+		}
 	}
 	return keys
 }
 
 func (as *AnnotationSymbol) AllowsAttachPoint(point string) bool {
-	if len(as.attachPoints) == 0 {
+	if as.attachPoints == 0 {
 		return true
 	}
-	if as.attachPoints[point] {
+	if as.hasAttachPoint(point) {
 		return true
 	}
 	if point == "recordfield" || point == "objectfield" {
-		if as.attachPoints["field"] || as.attachPoints[SourceAnnotationAttachPointKey("field")] {
+		if as.hasAttachPoint("field") || as.hasSourceAttachPoint("field") {
 			return true
 		}
 	}
-	return as.attachPoints[SourceAnnotationAttachPointKey(point)]
+	return as.hasSourceAttachPoint(point)
 }
 
 func (as *AnnotationSymbol) IsRuntimeVisibleAt(point string) bool {
-	if len(as.attachPoints) == 0 {
+	if as.attachPoints == 0 {
 		return true
 	}
 	if point == "recordfield" || point == "objectfield" {
-		return as.attachPoints[point] || as.attachPoints["field"]
+		return as.hasAttachPoint(point) || as.hasAttachPoint("field")
 	}
-	return as.attachPoints[point]
+	return as.hasAttachPoint(point)
 }
 
 func AnnotationKey(pkg PackageIdentifier, name string) string {
@@ -867,6 +882,63 @@ func AnnotationKey(pkg PackageIdentifier, name string) string {
 
 func SourceAnnotationAttachPointKey(point string) string {
 	return sourceAnnotationAttachPointPrefix + point
+}
+
+func (as *AnnotationSymbol) hasAttachPoint(point string) bool {
+	bit, ok := annotationAttachPointBit(point)
+	return ok && as.attachPoints.has(bit)
+}
+
+func (as *AnnotationSymbol) hasSourceAttachPoint(point string) bool {
+	bit, ok := annotationAttachPointBit(point)
+	return ok && as.attachPoints.has(bit<<sourceAnnotationAttachPointShift)
+}
+
+func (s annotationAttachPointSet) has(bit annotationAttachPointSet) bool {
+	return s&bit != 0
+}
+
+func annotationAttachPointBit(point string) (annotationAttachPointSet, bool) {
+	switch point {
+	case "type":
+		return 1 << 0, true
+	case "object":
+		return 1 << 1, true
+	case "function":
+		return 1 << 2, true
+	case "objectfunction":
+		return 1 << 3, true
+	case "serviceremotefunction":
+		return 1 << 4, true
+	case "parameter":
+		return 1 << 5, true
+	case "return":
+		return 1 << 6, true
+	case "service":
+		return 1 << 7, true
+	case "field":
+		return 1 << 8, true
+	case "objectfield":
+		return 1 << 9, true
+	case "recordfield":
+		return 1 << 10, true
+	case "listener":
+		return 1 << 11, true
+	case "annotation":
+		return 1 << 12, true
+	case "external":
+		return 1 << 13, true
+	case "var":
+		return 1 << 14, true
+	case "const":
+		return 1 << 15, true
+	case "worker":
+		return 1 << 16, true
+	case "class":
+		return 1 << 17, true
+	default:
+		return 0, false
+	}
 }
 
 // MemberCarrier is implemented by symbols that carry direct + inclusion-inherited members.
@@ -986,16 +1058,13 @@ func (vs *VariableSymbol) Copy() Symbol {
 	return &cp
 }
 
-// SetConstantValue records the folded value for this constant. value must be a
-// restricted, serializable BalValue (see values.IsSerializableConstValue).
+// SetConstantValue records the folded value for this constant.
 func (cs *ConstantValueSymbol) SetConstantValue(value values.BalValue) {
 	cs.value = value
 	cs.valueKnown = true
 }
 
-// ConstantValue returns the folded value and whether folding succeeded. A
-// constant whose expression cannot be folded (e.g. a cast that panics at
-// runtime) keeps valueKnown false and still flows through BIR as a global.
+// ConstantValue returns the folded value and whether folding has completed.
 func (cs *ConstantValueSymbol) ConstantValue() (values.BalValue, bool) {
 	return cs.value, cs.valueKnown
 }
@@ -1183,14 +1252,26 @@ func NewTypeSymbol(name string, isPublic bool) TypeSymbol {
 }
 
 func NewAnnotationSymbol(name string, isPublic bool, isConst bool, attachPoints []string) AnnotationSymbol {
-	attachPointMap := make(map[string]bool)
+	var attachPointSet annotationAttachPointSet
 	for _, point := range attachPoints {
-		attachPointMap[point] = true
+		source := false
+		if strings.HasPrefix(point, sourceAnnotationAttachPointPrefix) {
+			source = true
+			point = strings.TrimPrefix(point, sourceAnnotationAttachPointPrefix)
+		}
+		bit, ok := annotationAttachPointBit(point)
+		if !ok {
+			panic("unknown annotation attach point")
+		}
+		if source {
+			bit <<= sourceAnnotationAttachPointShift
+		}
+		attachPointSet |= bit
 	}
 	return AnnotationSymbol{
 		symbolBase:   symbolBase{name: name, isPublic: isPublic},
 		isConst:      isConst,
-		attachPoints: attachPointMap,
+		attachPoints: attachPointSet,
 	}
 }
 

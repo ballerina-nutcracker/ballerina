@@ -26,30 +26,30 @@ import (
 )
 
 // materializeConstantRef replaces a reference to a folded constant with a
-// literal carrying the folded value — the "apply" of the symbol's stored value
-// (the E in the design), realized here because model cannot import ast. Returns
-// nil for non-foldable constants (e.g. casts that panic at runtime), which keep
-// flowing through BIR as global variables.
+// literal carrying the folded value.
 func materializeConstantRef(cx *functionContext, ref *ast.BLangSimpleVarRef) ast.BLangExpression {
 	constSym, ok := cx.getSymbol(ref.Symbol()).(*model.ConstantValueSymbol)
 	if !ok {
 		return nil
 	}
 	value, ok := constSym.ConstantValue()
-	if !ok || !values.IsSerializableConstValue(value) {
+	if !ok {
+		cx.pkgCtx.compilerCtx.InternalError("constant value is not folded", ref.GetPosition())
 		return nil
 	}
-	return constantValueLiteral(value, ref.GetPosition(), ref.GetDeterminedType())
+	ty := ref.GetDeterminedType()
+	if semtypes.IsZero(ty) {
+		cx.pkgCtx.compilerCtx.InternalError("constant reference type is not resolved", ref.GetPosition())
+		return nil
+	}
+	return constantValueLiteral(value, ref.GetPosition(), ty)
 }
 
 func constantValueLiteral(value values.BalValue, pos diagnostics.Location, ty semtypes.SemType) ast.BLangExpression {
-	if semtypes.IsZero(ty) {
-		ty = values.SemTypeForValue(value)
-	}
-
 	var expr ast.BLangExpression
 	var lit *ast.BLangLiteral
-	if isNumericConstantValue(value) {
+	info := constantValueLiteralInfo(value)
+	if info.numeric {
 		numeric := &ast.BLangNumericLiteral{}
 		expr = numeric
 		lit = &numeric.BLangLiteral
@@ -64,40 +64,37 @@ func constantValueLiteral(value values.BalValue, pos diagnostics.Location, ty se
 	lit.SetIsConstant(true)
 	lit.SetDeterminedType(ty)
 	lit.SetPosition(pos)
-	if tag, ok := constantValueTypeTag(value); ok {
+	if info.hasTag {
 		bt := &ast.BTypeBasic{}
-		bt.BTypeSetTag(tag)
+		bt.BTypeSetTag(info.tag)
 		lit.SetValueType(bt)
 	}
 	return expr
 }
 
-func isNumericConstantValue(value values.BalValue) bool {
-	switch value.(type) {
-	case int, int64, int32, int16, int8, byte, float64, float32, *decimal.Decimal:
-		return true
-	default:
-		return false
-	}
+type constantLiteralInfo struct {
+	numeric bool
+	tag     ast.TypeTags
+	hasTag  bool
 }
 
-func constantValueTypeTag(value values.BalValue) (ast.TypeTags, bool) {
+func constantValueLiteralInfo(value values.BalValue) constantLiteralInfo {
 	switch value.(type) {
 	case nil:
-		return ast.TypeTags_NIL, true
+		return constantLiteralInfo{tag: ast.TypeTags_NIL, hasTag: true}
 	case bool:
-		return ast.TypeTags_BOOLEAN, true
+		return constantLiteralInfo{tag: ast.TypeTags_BOOLEAN, hasTag: true}
 	case int, int64, int32, int16, int8:
-		return ast.TypeTags_INT, true
+		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_INT, hasTag: true}
 	case byte:
-		return ast.TypeTags_BYTE, true
+		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_BYTE, hasTag: true}
 	case float64, float32:
-		return ast.TypeTags_FLOAT, true
+		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_FLOAT, hasTag: true}
 	case *decimal.Decimal:
-		return ast.TypeTags_DECIMAL, true
+		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_DECIMAL, hasTag: true}
 	case string, *string:
-		return ast.TypeTags_STRING, true
+		return constantLiteralInfo{tag: ast.TypeTags_STRING, hasTag: true}
 	default:
-		return 0, false
+		return constantLiteralInfo{}
 	}
 }

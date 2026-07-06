@@ -72,36 +72,38 @@ func FillerFactoryFor(cx semtypes.Context, t semtypes.SemType) (FillerFactory, b
 	if !ok {
 		return nil, false
 	}
-	return fillerFactoryFromDesc(cx, filler), true
+	return fillerFactoryFromDesc(cx, filler)
 }
 
-func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) FillerFactory {
+func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) (FillerFactory, bool) {
 	switch f := f.(type) {
 	case semtypes.SingleValueFiller:
 		v := f.Value
-		return func() BalValue { return v }
+		return func() BalValue { return v }, true
 	case semtypes.MappingFiller:
 		ty := f.Type
 		atomic := f.Atomic
 		readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
-		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }
+		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }, true
 	case semtypes.ListFiller:
 		return listFillerFactory(cx, f)
 	case semtypes.XMLFiller:
-		return func() BalValue { return &XMLText{} }
+		return func() BalValue { return &XMLText{} }, true
 	case semtypes.ObjectFiller, semtypes.StreamFiller, semtypes.TableFiller:
-		return func() BalValue {
-			panic("internal error: filler factory not implemented for object/stream/table types")
-		}
+		return nil, false
 	default:
 		panic("unknown filler kind")
 	}
 }
 
-func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) FillerFactory {
+func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactory, bool) {
 	memberFactories := make([]FillerFactory, len(f.Members))
 	for i, m := range f.Members {
-		memberFactories[i] = fillerFactoryFromDesc(cx, m)
+		var ok bool
+		memberFactories[i], ok = fillerFactoryFromDesc(cx, m)
+		if !ok {
+			return nil, false
+		}
 	}
 	ty := f.Type
 	atomic := f.Atomic
@@ -124,7 +126,7 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) FillerFactory
 			initial[i] = mf()
 		}
 		return NewList(ty, atomic, readonly, getRestFactory(), len(memberFactories), initial)
-	}
+	}, true
 }
 
 // DeepClone returns an independent copy of mutable values, preserving cycles
@@ -204,70 +206,6 @@ func SemTypeForValue(v BalValue) semtypes.SemType {
 		return semtypes.TYPEDESC
 	default:
 		return semtypes.ANY
-	}
-}
-
-// IsSerializableConstValue reports whether v can be emitted as a BIR constant value.
-func IsSerializableConstValue(v BalValue) bool {
-	return isSerializableConstValue(v, make(map[any]bool))
-}
-
-func isSerializableConstValue(v BalValue, seen map[any]bool) bool {
-	switch v := v.(type) {
-	case nil, bool, int, int64, int32, int16, int8, byte, float64, float32, string:
-		return true
-	case *string, *decimal.Decimal:
-		return v != nil
-	case *Map:
-		if v == nil {
-			return false
-		}
-		if seen[v] {
-			return false
-		}
-		seen[v] = true
-		defer delete(seen, v)
-		for _, key := range v.Keys() {
-			elem, _ := v.Get(key)
-			if !isSerializableConstValue(elem, seen) {
-				return false
-			}
-		}
-		return true
-	case *List:
-		if v == nil {
-			return false
-		}
-		if seen[v] {
-			return false
-		}
-		seen[v] = true
-		defer delete(seen, v)
-		for i := 0; i < v.Len(); i++ {
-			if !isSerializableConstValue(v.Get(i), seen) {
-				return false
-			}
-		}
-		return true
-	case *TypeDesc:
-		if v == nil {
-			return false
-		}
-		if seen[v] {
-			return false
-		}
-		seen[v] = true
-		defer delete(seen, v)
-		for _, value := range v.Annotations {
-			if !isSerializableConstValue(value, seen) {
-				return false
-			}
-		}
-		return true
-	case *RuntimeAnnotationValueRef:
-		return v != nil
-	default:
-		return false
 	}
 }
 

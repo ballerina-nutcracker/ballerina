@@ -240,23 +240,24 @@ func canonicaliseInitFnBodies(e *sexp) {
 }
 
 func canonicalisePackageImports(e *sexp) {
-	if e.isAtom || len(e.list) == 0 || !isAtom(e.list[0], "package") {
+	if e.isAtom || !isPackageSExp(e) {
 		return
 	}
-	imports := e.list[1:]
-	sort.SliceStable(imports, func(i, j int) bool {
-		left := imports[i]
-		right := imports[j]
-		leftIsImport := isImportPackageSExp(left)
-		rightIsImport := isImportPackageSExp(right)
-		if leftIsImport != rightIsImport {
-			return leftIsImport
+
+	imports := make([]*sexp, 0)
+	importSlots := make([]int, 0)
+	for i := 1; i < len(e.list); i++ {
+		if isImportPackageSExp(e.list[i]) {
+			imports = append(imports, e.list[i])
+			importSlots = append(importSlots, i)
 		}
-		if !leftIsImport {
-			return false
-		}
-		return printSExp(left) < printSExp(right)
+	}
+	sort.Slice(imports, func(i, j int) bool {
+		return printSExp(imports[i]) < printSExp(imports[j])
 	})
+	for i, slot := range importSlots {
+		e.list[slot] = imports[i]
+	}
 }
 
 func isInitFnSExp(e *sexp) bool {
@@ -264,6 +265,10 @@ func isInitFnSExp(e *sexp) bool {
 		return false
 	}
 	return isAtom(e.list[0], "function") && isAtom(e.list[1], "init")
+}
+
+func isPackageSExp(e *sexp) bool {
+	return !e.isAtom && len(e.list) > 0 && isAtom(e.list[0], "package")
 }
 
 func isImportPackageSExp(e *sexp) bool {

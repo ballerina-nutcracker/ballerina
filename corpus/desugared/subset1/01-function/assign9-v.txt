@@ -1,6 +1,4 @@
 (package
-  (const c1 () ())
-  (const c2 () ())
   (function main () (
     (value-type null))
     (block-function-body

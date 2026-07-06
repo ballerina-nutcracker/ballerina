@@ -1,21 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const base (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (const a (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (const c (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (const d (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
   (function main () (
     (value-type null))
     (block-function-body
