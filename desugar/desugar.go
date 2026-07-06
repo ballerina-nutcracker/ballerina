@@ -371,6 +371,7 @@ func (v *dependencyVisitor) dependsOnRuntimeAnnotation(expr *ast.BLangAnnotAcces
 	key := model.AnnotationKey(v.compilerCtx.SymbolPackage(expr.Symbol()), annotationSymbol.Name())
 	ref, ok := v.compilerCtx.SymbolAnnotationValues(receiver.Symbol())[key].(*values.RuntimeAnnotationValueRef)
 	if !ok {
+		// Compile-time annotation values and absent annotations do not add module-init dependencies.
 		return
 	}
 	if global, ok := v.runtimeGlobals[ref.GlobalLookupKey()]; ok {
