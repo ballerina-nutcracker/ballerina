@@ -2044,6 +2044,8 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = result
 		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.MAPPING):
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(a.tyCtx(), collectionType, semtypes.STRING)
+		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.XML):
+			expectedValueType = semtypes.XMLItemType(collectionType)
 		default:
 			tyCtx := a.tyCtx()
 			iterableTy := semtypes.CreateIterable(tyCtx)
@@ -2063,7 +2065,7 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(tyCtx, recordPart, semtypes.StringConst("value"))
 		}
 		if !semtypes.IsSubtype(a.tyCtx(), expectedValueType, variableType) {
-			a.ctx().SemanticError("invalid type for variable", variable.GetPosition())
+			a.ctx().SemanticError(fmt.Sprintf("invalid variable type %s", semtypes.ToString(a.tyCtx(), variableType)), variable.GetPosition())
 			return false
 		}
 	}

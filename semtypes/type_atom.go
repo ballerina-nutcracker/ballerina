@@ -27,7 +27,7 @@ type typeAtom struct {
 var _ atom = &typeAtom{}
 
 func createTypeAtom(index int, atomicType atomicType) typeAtom {
-	common.Assert(index >= 0)
+	common.Assert(func() bool { return index >= 0 })
 
 	return typeAtom{
 		idx:        index,
@@ -36,8 +36,8 @@ func createTypeAtom(index int, atomicType atomicType) typeAtom {
 }
 
 func createEphemeralTypeAtom(index int, gen uint64, atomicType atomicType) *typeAtom {
-	common.Assert(index >= 0)
-	common.Assert(gen > 0)
+	common.Assert(func() bool { return index >= 0 })
+	common.Assert(func() bool { return gen > 0 })
 
 	return &typeAtom{
 		idx:        index,
