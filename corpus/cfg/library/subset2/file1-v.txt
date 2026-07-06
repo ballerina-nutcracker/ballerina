@@ -1,0 +1,203 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable cwd (type
+        (value-type string)) (expr
+        (invocation file getCurrentDir ()))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (invocation lang.string length (
+            (simple-var-ref cwd)))
+          (literal 0)))))
+    (var-def
+      (variable base (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file basename (
+            (literal /foo/bar/baz.txt)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref base))))
+    (var-def
+      (variable parent (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file parentPath (
+            (literal /foo/bar/baz.txt)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref parent))))
+    (var-def
+      (variable joined (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file joinPath (
+            (literal /foo)
+            (literal bar)
+            (literal baz)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref joined))))
+    (var-def
+      (variable parts (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation file splitPath (
+            (literal /foo/bar/baz)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref parts))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref parts)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref parts)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref parts)
+          (literal 2)))))
+    (var-def
+      (variable absTrue (type
+        (value-type boolean)) (expr
+        (checked-expr
+          (invocation file isAbsolutePath (
+            (literal /foo/bar)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref absTrue))))
+    (var-def
+      (variable absFalse (type
+        (value-type boolean)) (expr
+        (checked-expr
+          (invocation file isAbsolutePath (
+            (literal foo/bar)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref absFalse))))
+    (var-def
+      (variable cleaned (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file normalizePath (
+            (literal /foo/../bar/./baz)
+            (simple-var-ref file CLEAN)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref cleaned))))
+    (var-def
+      (variable rel (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file relativePath (
+            (literal /foo/bar)
+            (literal /foo/bar/baz)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref rel))))
+    (var-def
+      (variable absPath (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file getAbsolutePath (
+            (literal .)))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (invocation lang.string length (
+            (simple-var-ref absPath)))
+          (literal 0)))))
+    (expression-stmt
+      (checked-expr
+        (invocation file createDir (
+          (literal /tmp/bal-file-test-dir)))))
+    (var-def
+      (variable isDir (type
+        (value-type boolean)) (expr
+        (checked-expr
+          (invocation file test (
+            (literal /tmp/bal-file-test-dir)
+            (simple-var-ref file IS_DIR)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref isDir))))
+    (expression-stmt
+      (checked-expr
+        (invocation file remove (
+          (literal /tmp/bal-file-test-dir)))))
+    (var-def
+      (variable gone (type
+        (value-type boolean)) (expr
+        (checked-expr
+          (invocation file test (
+            (literal /tmp/bal-file-test-dir)
+            (simple-var-ref file EXISTS)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref gone))))
+    (expression-stmt
+      (checked-expr
+        (invocation file create (
+          (literal /tmp/bal-file-test.txt)))))
+    (var-def
+      (variable meta (type
+        (user-defined-type file MetaData)) (expr
+        (checked-expr
+          (invocation file getMetaData (
+            (literal /tmp/bal-file-test.txt)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access dir
+          (simple-var-ref meta)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access readable
+          (simple-var-ref meta)))))
+    (expression-stmt
+      (checked-expr
+        (invocation file remove (
+          (literal /tmp/bal-file-test.txt)))))
+    (var-def
+      (variable tmp (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file createTemp (
+            (named-arg suffix
+              (literal .txt))
+            (named-arg prefix
+              (literal bal-))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation file test (
+          (simple-var-ref tmp)
+          (simple-var-ref file EXISTS))))))
+    (expression-stmt
+      (checked-expr
+        (invocation file remove (
+          (simple-var-ref tmp)))))
+    (var-def
+      (variable tmpDir (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation file createTempDir (
+            (named-arg prefix
+              (literal bal-))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation file test (
+          (simple-var-ref tmpDir)
+          (simple-var-ref file IS_DIR))))))
+    (expression-stmt
+      (checked-expr
+        (invocation file remove (
+          (simple-var-ref tmpDir)))))
+  )
+)

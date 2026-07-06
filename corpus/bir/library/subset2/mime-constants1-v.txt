@@ -1,0 +1,30 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = println(APPLICATION_JSON) -> bb1;
+  }
+  bb1 {
+    %2 = println(TEXT_PLAIN) -> bb2;
+  }
+  bb2 {
+    %3 = println(APPLICATION_OCTET_STREAM) -> bb3;
+  }
+  bb3 {
+    %4 = println(CONTENT_TYPE) -> bb4;
+  }
+  bb4 {
+    %5 = println(CONTENT_LENGTH) -> bb5;
+  }
+  bb5 {
+    %6 = println(DEFAULT_CHARSET) -> bb6;
+  }
+  bb6 {
+    %7 = println(MULTIPART_FORM_DATA) -> bb7;
+  }
+  bb7 {
+    %8 = println(IMAGE_JPEG) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

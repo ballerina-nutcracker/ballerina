@@ -1,0 +1,84 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad form-data; name="file"; filename="test.txt"
+    %2 = getContentDispositionObject(%1) -> bb1;
+  }
+  bb1 {
+    cd = %2;
+    %5 = ConstantLoad disposition
+    %4 = cd[%5];
+    %6 = println(%4) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad name
+    %7 = cd[%8];
+    %9 = println(%7) -> bb3;
+  }
+  bb3 {
+    %11 = ConstantLoad fileName
+    %10 = cd[%11];
+    %12 = println(%10) -> bb4;
+  }
+  bb4 {
+    %13 = newObject ballerina/mime:ContentDisposition
+    %14 = init(%13) -> bb5;
+  }
+  bb5 {
+    %16 = %14 is nil
+    %16 ? bb6 : bb7;
+  }
+  bb6 {
+    %15 = %13;
+    GOTO bb8;
+  }
+  bb7 {
+    %15 = %14;
+    GOTO bb8;
+  }
+  bb8 {
+    newCd = %15;
+    %18 = ConstantLoad attachment
+    %19 = ConstantLoad disposition
+    newCd[%19] = %18;
+    %20 = ConstantLoad report.pdf
+    %21 = ConstantLoad fileName
+    newCd[%21] = %20;
+    %22 = toString(newCd) -> bb9;
+  }
+  bb9 {
+    %23 = println(%22) -> bb10;
+  }
+  bb10 {
+    %24 = newObject ballerina/mime:ContentDisposition
+    %25 = init(%24) -> bb11;
+  }
+  bb11 {
+    %27 = %25 is nil
+    %27 ? bb12 : bb13;
+  }
+  bb12 {
+    %26 = %24;
+    GOTO bb14;
+  }
+  bb13 {
+    %26 = %25;
+    GOTO bb14;
+  }
+  bb14 {
+    quotedCd = %26;
+    %29 = ConstantLoad attachment
+    %30 = ConstantLoad disposition
+    quotedCd[%30] = %29;
+    %31 = ConstantLoad my report.pdf
+    %32 = ConstantLoad fileName
+    quotedCd[%32] = %31;
+    %33 = toString(quotedCd) -> bb15;
+  }
+  bb15 {
+    %34 = println(%33) -> bb16;
+  }
+  bb16 {
+    return;
+  }
+}

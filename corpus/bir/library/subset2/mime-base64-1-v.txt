@@ -1,0 +1,209 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad Hello
+    $desugar$0 = %1;
+    %3 = $default$3($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = base64Encode($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    enc = %5;
+    %7 = enc is string
+    %7 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = println((1, enc)) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = ConstantLoad SGVsbG8=
+    $desugar$2 = %0;
+    %2 = $default$4($desugar$2) -> bb6;
+  }
+  bb6 {
+    $desugar$3 = %2;
+    %4 = base64Decode($desugar$2,$desugar$3) -> bb7;
+  }
+  bb7 {
+    dec = %4;
+    %6 = dec is string
+    %6 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = println((1, dec)) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 8
+    %0 = ConstantLoad 1
+    %1 = ConstantLoad 2
+    %2 = ConstantLoad 3
+    %3 = ConstantLoad 3
+    %4 = newArray [int:Unsigned8...][%3]{%0, %1, %2}
+    %5 = base64EncodeBlob(%4) -> bb11;
+  }
+  bb11 {
+    bEnc = %5;
+    %7 = bEnc is [int:Unsigned8...]
+    %7 ? bb12 : bb18;
+  }
+  bb12 {
+    PushScopeFrame 3
+    %0 = base64DecodeBlob((1, bEnc)) -> bb13;
+  }
+  bb13 {
+    bDec = %0;
+    %2 = bDec is [int:Unsigned8...]
+    %2 ? bb14 : bb17;
+  }
+  bb14 {
+    PushScopeFrame 3
+    %0 = length((1, bDec)) -> bb15;
+  }
+  bb15 {
+    %1 = %0;
+    %2 = println(%1) -> bb16;
+  }
+  bb16 {
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    PushScopeFrame 13
+    %0 = ConstantLoad 0
+    %1 = newArray [int:Unsigned8...][%0]{}
+    longInput = %1;
+    %3 = ConstantLoad 0
+    i = %3;
+    %5 = ConstantLoad 100
+    $desugar$4 = %5;
+    GOTO bb19;
+  }
+  bb19 {
+    %8 = i;
+    %9 = $desugar$4;
+    %7 = < %8 %9;
+    %7 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 7
+    %0 = <int:Unsigned8>((1, i))
+    %1 = %0;
+    %2 = push((1, longInput),%1) -> bb22;
+  }
+  bb21 {
+    %10 = base64EncodeBlob(longInput) -> bb23;
+  }
+  bb22 {
+    %4 = (1, i);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, i) = %3;
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb23 {
+    longEnc = %10;
+    %12 = longEnc is [int:Unsigned8...]
+    %12 ? bb24 : bb35;
+  }
+  bb24 {
+    PushScopeFrame 14
+    %0 = fromBytes((1, longEnc)) -> bb25;
+  }
+  bb25 {
+    $desugar$5 = %0;
+    %2 = $desugar$5 is error
+    %2 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (5, %0) = (1, $desugar$5);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    encStr = $desugar$5;
+    %5 = length(encStr) -> bb28;
+  }
+  bb28 {
+    %6 = %5;
+    %7 = ConstantLoad 76
+    %8 = %7;
+    %4 = > %6 %8;
+    %9 = %4;
+    %10 = println(%9) -> bb29;
+  }
+  bb29 {
+    %11 = base64DecodeBlob((1, longEnc)) -> bb30;
+  }
+  bb30 {
+    longDec = %11;
+    %13 = longDec is [int:Unsigned8...]
+    %13 ? bb31 : bb34;
+  }
+  bb31 {
+    PushScopeFrame 3
+    %0 = length((1, longDec)) -> bb32;
+  }
+  bb32 {
+    %1 = %0;
+    %2 = println(%1) -> bb33;
+  }
+  bb33 {
+    PopScopeFrame
+    GOTO bb34;
+  }
+  bb34 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb35;
+  }
+  bb35 {
+    PushScopeFrame 9
+    %0 = ConstantLoad not-valid-base64!!!
+    $desugar$6 = %0;
+    %2 = $default$4($desugar$6) -> bb36;
+  }
+  bb36 {
+    $desugar$7 = %2;
+    %4 = base64Decode($desugar$6,$desugar$7) -> bb37;
+  }
+  bb37 {
+    invalidDec = %4;
+    %6 = invalidDec is error
+    %7 = %6;
+    %8 = println(%7) -> bb38;
+  }
+  bb38 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

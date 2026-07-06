@@ -1,0 +1,63 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad   Hello World  
+    s = %1;
+    %3 = trim(s) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = trim(s) -> bb3;
+  }
+  bb3 {
+    %6 = toLowerAscii(%5) -> bb4;
+  }
+  bb4 {
+    %7 = println(%6) -> bb5;
+  }
+  bb5 {
+    %8 = trim(s) -> bb6;
+  }
+  bb6 {
+    %9 = toUpperAscii(%8) -> bb7;
+  }
+  bb7 {
+    %10 = println(%9) -> bb8;
+  }
+  bb8 {
+    %11 = trim(s) -> bb9;
+  }
+  bb9 {
+    %12 = ConstantLoad 0
+    %13 = %12;
+    %14 = ConstantLoad 5
+    %15 = %14;
+    %16 = substring(%11,%13,%15) -> bb10;
+  }
+  bb10 {
+    %17 = println(%16) -> bb11;
+  }
+  bb11 {
+    %18 = ConstantLoad HELLO
+    %19 = ConstantLoad hello
+    %20 = equalsIgnoreCaseAscii(%18,%19) -> bb12;
+  }
+  bb12 {
+    %21 = %20;
+    %22 = println(%21) -> bb13;
+  }
+  bb13 {
+    %23 = ConstantLoad HELLO
+    %24 = ConstantLoad world
+    %25 = equalsIgnoreCaseAscii(%23,%24) -> bb14;
+  }
+  bb14 {
+    %26 = %25;
+    %27 = println(%26) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

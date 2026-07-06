@@ -1,0 +1,164 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina mime (as mime))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable enc (type
+          (union-type
+            (union-type
+              (value-type string)
+              (array-type
+                (value-type byte) dimensions: 1 ([])))
+            (user-defined-type mime EncodeError))) (expr
+          (invocation mime base64Encode (
+            (literal Hello))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref enc)
+          (value-type string))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref enc))))) ())
+      (block-stmt
+        (var-def
+          (variable dec (type
+            (union-type
+              (union-type
+                (value-type string)
+                (array-type
+                  (value-type byte) dimensions: 1 ([])))
+              (user-defined-type mime DecodeError))) (expr
+            (invocation mime base64Decode (
+              (literal SGVsbG8=))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref dec)
+            (value-type string))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref dec))))) ())
+        (block-stmt
+          (var-def
+            (variable bEnc (type
+              (union-type
+                (array-type
+                  (value-type byte) dimensions: 1 ([]))
+                (user-defined-type mime EncodeError))) (expr
+              (invocation mime base64EncodeBlob (
+                (list-constructor-expr
+                  (literal 1)
+                  (literal 2)
+                  (literal 3)))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref bEnc)
+              (array-type
+                (value-type byte) dimensions: 1 ([])))
+            (block-stmt
+              (var-def
+                (variable bDec (type
+                  (union-type
+                    (array-type
+                      (value-type byte) dimensions: 1 ([]))
+                    (user-defined-type mime DecodeError))) (expr
+                  (invocation mime base64DecodeBlob (
+                    (simple-var-ref bEnc))))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref bDec)
+                  (array-type
+                    (value-type byte) dimensions: 1 ([])))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (invocation length expr:
+                        (simple-var-ref bDec) ()))))) ())
+              (block-stmt)) ())
+          (block-stmt
+            (var-def
+              (variable longInput (type
+                (array-type
+                  (value-type byte) dimensions: 1 ([]))) (expr
+                (list-constructor-expr))))
+            (foreach
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (binary-expr ..<
+                (literal 0)
+                (literal 100))
+              (block-stmt
+                (expression-stmt
+                  (invocation push expr:
+                    (simple-var-ref longInput) (
+                    (type-conversion-expr
+                      (simple-var-ref i)
+                      (value-type byte)))))))
+            (var-def
+              (variable longEnc (type
+                (union-type
+                  (array-type
+                    (value-type byte) dimensions: 1 ([]))
+                  (user-defined-type mime EncodeError))) (expr
+                (invocation mime base64EncodeBlob (
+                  (simple-var-ref longInput))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref longEnc)
+                (array-type
+                  (value-type byte) dimensions: 1 ([])))
+              (block-stmt
+                (var-def
+                  (variable encStr (type
+                    (value-type string)) (expr
+                    (checked-expr
+                      (invocation string fromBytes (
+                        (simple-var-ref longEnc)))))))
+                (expression-stmt
+                  (invocation io println (
+                    (binary-expr >
+                      (invocation length expr:
+                        (simple-var-ref encStr) ())
+                      (literal 76)))))
+                (var-def
+                  (variable longDec (type
+                    (union-type
+                      (array-type
+                        (value-type byte) dimensions: 1 ([]))
+                      (user-defined-type mime DecodeError))) (expr
+                    (invocation mime base64DecodeBlob (
+                      (simple-var-ref longEnc))))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref longDec)
+                    (array-type
+                      (value-type byte) dimensions: 1 ([])))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (invocation length expr:
+                          (simple-var-ref longDec) ()))))) ())
+                (block-stmt)) ())
+            (block-stmt
+              (var-def
+                (variable invalidDec (type
+                  (union-type
+                    (union-type
+                      (value-type string)
+                      (array-type
+                        (value-type byte) dimensions: 1 ([])))
+                    (user-defined-type mime DecodeError))) (expr
+                  (invocation mime base64Decode (
+                    (literal not-valid-base64!!!))))))
+              (expression-stmt
+                (invocation io println (
+                  (type-test-expr is
+                    (simple-var-ref invalidDec)
+                    (user-defined-type mime DecodeError))))))))))))

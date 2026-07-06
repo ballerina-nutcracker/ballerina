@@ -1,0 +1,496 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = $default$5() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = ConstantLoad bal-file2-
+    $desugar$1 = %3;
+    %5 = $default$7($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %5;
+    %7 = createTempDir($desugar$0,$desugar$1,$desugar$2) -> bb3;
+  }
+  bb3 {
+    $desugar$3 = %7;
+    %9 = $desugar$3 is error
+    %9 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    baseDir = $desugar$3;
+    %12 = ConstantLoad /a.txt
+    %11 = + baseDir %12;
+    f1 = %11;
+    %15 = ConstantLoad /b.txt
+    %14 = + baseDir %15;
+    f2 = %14;
+    %17 = create(f1) -> bb6;
+  }
+  bb6 {
+    $desugar$4 = %17;
+    %19 = $desugar$4 is error
+    %19 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    %20 = create(f2) -> bb9;
+  }
+  bb9 {
+    $desugar$5 = %20;
+    %22 = $desugar$5 is error
+    %22 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    %23 = readDir(baseDir) -> bb12;
+  }
+  bb12 {
+    $desugar$6 = %23;
+    %25 = $desugar$6 is error
+    %25 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    entries = $desugar$6;
+    %27 = length(entries) -> bb15;
+  }
+  bb15 {
+    %28 = %27;
+    %29 = println(%28) -> bb16;
+  }
+  bb16 {
+    %31 = ConstantLoad /a-copy.txt
+    %30 = + baseDir %31;
+    copyDest = %30;
+    %33 = copy(f1,copyDest) -> bb17;
+  }
+  bb17 {
+    $desugar$7 = %33;
+    %35 = $desugar$7 is error
+    %35 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    %36 = test(copyDest,EXISTS) -> bb20;
+  }
+  bb20 {
+    $desugar$8 = %36;
+    %38 = $desugar$8 is error
+    %38 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    copyExists = $desugar$8;
+    %40 = copyExists;
+    %41 = println(%40) -> bb23;
+  }
+  bb23 {
+    %42 = copy(f2,copyDest) -> bb24;
+  }
+  bb24 {
+    copyNoReplace = %42;
+    %44 = copyNoReplace is error
+    %45 = %44;
+    %46 = println(%45) -> bb25;
+  }
+  bb25 {
+    %47 = copy(f2,copyDest,REPLACE_EXISTING) -> bb26;
+  }
+  bb26 {
+    $desugar$9 = %47;
+    %49 = $desugar$9 is error
+    %49 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    %50 = test(copyDest,EXISTS) -> bb29;
+  }
+  bb29 {
+    $desugar$10 = %50;
+    %52 = $desugar$10 is error
+    %52 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$10);
+    PopScopeFrame
+    return;
+  }
+  bb31 {
+    %53 = println($desugar$10) -> bb32;
+  }
+  bb32 {
+    %55 = ConstantLoad /missing.txt
+    %54 = + baseDir %55;
+    %57 = ConstantLoad /x.txt
+    %56 = + baseDir %57;
+    %58 = copy(%54,%56) -> bb33;
+  }
+  bb33 {
+    copyMissing = %58;
+    %60 = copyMissing is error
+    %61 = %60;
+    %62 = println(%61) -> bb34;
+  }
+  bb34 {
+    %64 = ConstantLoad /a-renamed.txt
+    %63 = + baseDir %64;
+    renamed = %63;
+    %66 = rename(f1,renamed) -> bb35;
+  }
+  bb35 {
+    $desugar$11 = %66;
+    %68 = $desugar$11 is error
+    %68 ? bb36 : bb37;
+  }
+  bb36 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$11);
+    PopScopeFrame
+    return;
+  }
+  bb37 {
+    %69 = test(renamed,EXISTS) -> bb38;
+  }
+  bb38 {
+    $desugar$12 = %69;
+    %71 = $desugar$12 is error
+    %71 ? bb39 : bb40;
+  }
+  bb39 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb40 {
+    %72 = println($desugar$12) -> bb41;
+  }
+  bb41 {
+    %73 = test(f1,EXISTS) -> bb42;
+  }
+  bb42 {
+    $desugar$13 = %73;
+    %75 = $desugar$13 is error
+    %75 ? bb43 : bb44;
+  }
+  bb43 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb44 {
+    %76 = println($desugar$13) -> bb45;
+  }
+  bb45 {
+    %78 = ConstantLoad /y.txt
+    %77 = + baseDir %78;
+    %79 = rename(f1,%77) -> bb46;
+  }
+  bb46 {
+    renameMissing = %79;
+    %81 = renameMissing is error
+    %82 = %81;
+    %83 = println(%82) -> bb47;
+  }
+  bb47 {
+    %84 = test(f2,READABLE) -> bb48;
+  }
+  bb48 {
+    $desugar$14 = %84;
+    %86 = $desugar$14 is error
+    %86 ? bb49 : bb50;
+  }
+  bb49 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$14);
+    PopScopeFrame
+    return;
+  }
+  bb50 {
+    %87 = println($desugar$14) -> bb51;
+  }
+  bb51 {
+    %88 = test(f2,WRITABLE) -> bb52;
+  }
+  bb52 {
+    $desugar$15 = %88;
+    %90 = $desugar$15 is error
+    %90 ? bb53 : bb54;
+  }
+  bb53 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$15);
+    PopScopeFrame
+    return;
+  }
+  bb54 {
+    %91 = println($desugar$15) -> bb55;
+  }
+  bb55 {
+    %92 = test(f2,IS_SYMLINK) -> bb56;
+  }
+  bb56 {
+    $desugar$16 = %92;
+    %94 = $desugar$16 is error
+    %94 ? bb57 : bb58;
+  }
+  bb57 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$16);
+    PopScopeFrame
+    return;
+  }
+  bb58 {
+    %95 = println($desugar$16) -> bb59;
+  }
+  bb59 {
+    $desugar$17 = baseDir;
+    %97 = $default$0($desugar$17) -> bb60;
+  }
+  bb60 {
+    $desugar$18 = %97;
+    %99 = createDir($desugar$17,$desugar$18) -> bb61;
+  }
+  bb61 {
+    dirExistsErr = %99;
+    %101 = dirExistsErr is error
+    %102 = %101;
+    %103 = println(%102) -> bb62;
+  }
+  bb62 {
+    %105 = ConstantLoad /nested/child
+    %104 = + baseDir %105;
+    nested = %104;
+    %107 = createDir(nested,RECURSIVE) -> bb63;
+  }
+  bb63 {
+    $desugar$19 = %107;
+    %109 = $desugar$19 is error
+    %109 ? bb64 : bb65;
+  }
+  bb64 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$19);
+    PopScopeFrame
+    return;
+  }
+  bb65 {
+    %110 = test(nested,IS_DIR) -> bb66;
+  }
+  bb66 {
+    $desugar$20 = %110;
+    %112 = $desugar$20 is error
+    %112 ? bb67 : bb68;
+  }
+  bb67 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$20);
+    PopScopeFrame
+    return;
+  }
+  bb68 {
+    %113 = println($desugar$20) -> bb69;
+  }
+  bb69 {
+    %114 = create(f2) -> bb70;
+  }
+  bb70 {
+    createExistsErr = %114;
+    %116 = createExistsErr is error
+    %117 = %116;
+    %118 = println(%117) -> bb71;
+  }
+  bb71 {
+    %120 = ConstantLoad /does-not-exist.txt
+    %119 = + baseDir %120;
+    $desugar$21 = %119;
+    %122 = $default$1($desugar$21) -> bb72;
+  }
+  bb72 {
+    $desugar$22 = %122;
+    %124 = remove($desugar$21,$desugar$22) -> bb73;
+  }
+  bb73 {
+    removeMissingErr = %124;
+    %126 = removeMissingErr is error
+    %127 = %126;
+    %128 = println(%127) -> bb74;
+  }
+  bb74 {
+    %129 = getCurrentDir() -> bb75;
+  }
+  bb75 {
+    cwd = %129;
+    $desugar$23 = cwd;
+    %132 = $default$1($desugar$23) -> bb76;
+  }
+  bb76 {
+    $desugar$24 = %132;
+    %134 = remove($desugar$23,$desugar$24) -> bb77;
+  }
+  bb77 {
+    removeCwdErr = %134;
+    %136 = removeCwdErr is error
+    %137 = %136;
+    %138 = println(%137) -> bb78;
+  }
+  bb78 {
+    %139 = readDir(f2) -> bb79;
+  }
+  bb79 {
+    readDirOnFile = %139;
+    %141 = readDirOnFile is error
+    %142 = %141;
+    %143 = println(%142) -> bb80;
+  }
+  bb80 {
+    %145 = ConstantLoad /does-not-exist
+    %144 = + baseDir %145;
+    %146 = readDir(%144) -> bb81;
+  }
+  bb81 {
+    readDirMissing = %146;
+    %148 = readDirMissing is error
+    %149 = %148;
+    %150 = println(%149) -> bb82;
+  }
+  bb82 {
+    %152 = ConstantLoad /does-not-exist.txt
+    %151 = + baseDir %152;
+    %153 = getMetaData(%151) -> bb83;
+  }
+  bb83 {
+    metaMissing = %153;
+    %155 = metaMissing is error
+    %156 = %155;
+    %157 = println(%156) -> bb84;
+  }
+  bb84 {
+    %159 = ConstantLoad /no/such/parent
+    %158 = + baseDir %159;
+    $desugar$25 = %158;
+    %161 = $default$0($desugar$25) -> bb85;
+  }
+  bb85 {
+    $desugar$26 = %161;
+    %163 = createDir($desugar$25,$desugar$26) -> bb86;
+  }
+  bb86 {
+    dirNoParentErr = %163;
+    %165 = dirNoParentErr is error
+    %166 = %165;
+    %167 = println(%166) -> bb87;
+  }
+  bb87 {
+    %168 = $default$2() -> bb88;
+  }
+  bb88 {
+    $desugar$27 = %168;
+    %170 = $default$3($desugar$27) -> bb89;
+  }
+  bb89 {
+    $desugar$28 = %170;
+    %173 = ConstantLoad /does-not-exist
+    %172 = + baseDir %173;
+    %174 = createTemp($desugar$27,$desugar$28,%172) -> bb90;
+  }
+  bb90 {
+    tempMissingDir = %174;
+    %176 = tempMissingDir is error
+    %177 = %176;
+    %178 = println(%177) -> bb91;
+  }
+  bb91 {
+    %179 = $default$5() -> bb92;
+  }
+  bb92 {
+    $desugar$29 = %179;
+    %181 = $default$6($desugar$29) -> bb93;
+  }
+  bb93 {
+    $desugar$30 = %181;
+    %184 = ConstantLoad /does-not-exist
+    %183 = + baseDir %184;
+    %185 = createTempDir($desugar$29,$desugar$30,%183) -> bb94;
+  }
+  bb94 {
+    tempDirMissingDir = %185;
+    %187 = tempDirMissingDir is error
+    %188 = %187;
+    %189 = println(%188) -> bb95;
+  }
+  bb95 {
+    %190 = remove(baseDir,RECURSIVE) -> bb96;
+  }
+  bb96 {
+    $desugar$31 = %190;
+    %192 = $desugar$31 is error
+    %192 ? bb97 : bb98;
+  }
+  bb97 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$31);
+    PopScopeFrame
+    return;
+  }
+  bb98 {
+    %193 = test(baseDir,EXISTS) -> bb99;
+  }
+  bb99 {
+    $desugar$32 = %193;
+    %195 = $desugar$32 is error
+    %195 ? bb100 : bb101;
+  }
+  bb100 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$32);
+    PopScopeFrame
+    return;
+  }
+  bb101 {
+    %196 = println($desugar$32) -> bb102;
+  }
+  bb102 {
+    return;
+  }
+}

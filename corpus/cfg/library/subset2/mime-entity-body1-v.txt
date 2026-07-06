@@ -1,0 +1,112 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable textEntity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setText expr:
+        (simple-var-ref textEntity) (
+        (literal Hello World))))
+    (var-def
+      (variable textResult (type
+        (union-type
+          (value-type string)
+          (user-defined-type mime ParserError))) (expr
+        (invocation getText expr:
+          (simple-var-ref textEntity) ()))))
+    (type-test-expr is
+      (simple-var-ref textResult)
+      (value-type string))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref textResult))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable bytesEntity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setByteArray expr:
+        (simple-var-ref bytesEntity) (
+        (list-constructor-expr
+          (literal 72)
+          (literal 101)
+          (literal 108)
+          (literal 108)
+          (literal 111)))))
+    (var-def
+      (variable bytesResult (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type mime ParserError))) (expr
+        (invocation getByteArray expr:
+          (simple-var-ref bytesEntity) ()))))
+    (type-test-expr is
+      (simple-var-ref bytesResult)
+      (array-type
+        (value-type byte) dimensions: 1 ([])))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref bytesResult))))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (var-def
+      (variable bodyEntity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setBody expr:
+        (simple-var-ref bodyEntity) (
+        (literal dispatched text))))
+    (var-def
+      (variable dispatchResult (type
+        (union-type
+          (value-type string)
+          (user-defined-type mime ParserError))) (expr
+        (invocation getText expr:
+          (simple-var-ref bodyEntity) ()))))
+    (type-test-expr is
+      (simple-var-ref dispatchResult)
+      (value-type string))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref dispatchResult))))
+  )
+  (bb6 (bb5 bb4) (bb7 bb8)
+    (var-def
+      (variable wrongEntity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setText expr:
+        (simple-var-ref wrongEntity) (
+        (literal text))))
+    (var-def
+      (variable wrongResult (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type mime ParserError))) (expr
+        (invocation getByteArray expr:
+          (simple-var-ref wrongEntity) ()))))
+    (type-test-expr is
+      (simple-var-ref wrongResult)
+      (user-defined-type mime ParserError))
+  )
+  (bb7 (bb6) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal parser error))))
+  )
+  (bb8 (bb7 bb6) ())
+)

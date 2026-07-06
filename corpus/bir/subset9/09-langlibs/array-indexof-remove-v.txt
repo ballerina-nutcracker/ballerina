@@ -1,0 +1,100 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 10
+    %2 = ConstantLoad 20
+    %3 = ConstantLoad 30
+    %4 = ConstantLoad 40
+    %5 = ConstantLoad 30
+    %6 = ConstantLoad 5
+    %7 = newArray [int...][%6]{%1, %2, %3, %4, %5}
+    arr = %7;
+    %9 = ConstantLoad 30
+    %10 = %9;
+    %11 = ConstantLoad 0
+    %12 = %11;
+    %13 = indexOf(arr,%10,%12) -> bb1;
+  }
+  bb1 {
+    first = %13;
+    %15 = first is int
+    %15 ? bb2 : bb4;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = (1, first);
+    %1 = println(%0) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %0 = ConstantLoad 30
+    %1 = %0;
+    %2 = ConstantLoad 3
+    %3 = %2;
+    %4 = indexOf((1, arr),%1,%3) -> bb5;
+  }
+  bb5 {
+    afterFirst = %4;
+    %6 = afterFirst is int
+    %6 ? bb6 : bb8;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = (1, afterFirst);
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 22
+    %0 = ConstantLoad 99
+    %1 = %0;
+    %2 = ConstantLoad 0
+    %3 = %2;
+    %4 = indexOf((2, arr),%1,%3) -> bb9;
+  }
+  bb9 {
+    missing = %4;
+    %6 = missing is nil
+    %7 = %6;
+    %8 = println(%7) -> bb10;
+  }
+  bb10 {
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %11 = remove((2, arr),%10) -> bb11;
+  }
+  bb11 {
+    removed = %11;
+    %13 = removed;
+    %14 = println(%13) -> bb12;
+  }
+  bb12 {
+    %15 = length((2, arr)) -> bb13;
+  }
+  bb13 {
+    %16 = %15;
+    %17 = println(%16) -> bb14;
+  }
+  bb14 {
+    %18 = removeAll((2, arr)) -> bb15;
+  }
+  bb15 {
+    %19 = length((2, arr)) -> bb16;
+  }
+  bb16 {
+    %20 = %19;
+    %21 = println(%20) -> bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

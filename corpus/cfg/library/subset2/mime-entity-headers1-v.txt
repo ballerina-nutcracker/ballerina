@@ -1,0 +1,99 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable entity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setHeader expr:
+        (simple-var-ref entity) (
+        (literal Content-Type)
+        (literal application/json))))
+    (var-def
+      (variable ct (type
+        (union-type
+          (value-type string)
+          (user-defined-type mime HeaderNotFoundError))) (expr
+        (invocation getHeader expr:
+          (simple-var-ref entity) (
+          (literal content-type))))))
+    (type-test-expr is
+      (simple-var-ref ct)
+      (value-type string))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ct))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref entity) (
+          (literal content-type))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref entity) (
+          (literal accept))))))
+    (expression-stmt
+      (invocation addHeader expr:
+        (simple-var-ref entity) (
+        (literal Accept)
+        (literal text/html))))
+    (expression-stmt
+      (invocation addHeader expr:
+        (simple-var-ref entity) (
+        (literal Accept)
+        (literal application/json))))
+    (var-def
+      (variable accepts (type
+        (union-type
+          (array-type
+            (value-type string) dimensions: 1 ([]))
+          (user-defined-type mime HeaderNotFoundError))) (expr
+        (invocation getHeaders expr:
+          (simple-var-ref entity) (
+          (literal accept))))))
+    (type-test-expr is
+      (simple-var-ref accepts)
+      (array-type
+        (value-type string) dimensions: 1 ([])))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref accepts))))))
+  )
+  (bb4 (bb3 bb2) ()
+    (var-def
+      (variable names (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (invocation getHeaderNames expr:
+          (simple-var-ref entity) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref names))))))
+    (expression-stmt
+      (invocation removeHeader expr:
+        (simple-var-ref entity) (
+        (literal Accept))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref entity) (
+          (literal accept))))))
+    (expression-stmt
+      (invocation removeAllHeaders expr:
+        (simple-var-ref entity) ()))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref entity) (
+          (literal content-type))))))
+  )
+)

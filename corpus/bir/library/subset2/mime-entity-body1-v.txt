@@ -1,0 +1,188 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newObject ballerina/mime:Entity
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    textEntity = %3;
+    %6 = ConstantLoad Hello World
+    $desugar$0 = %6;
+    %8 = $default$2($desugar$0) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %8;
+    %10 = setText(textEntity,$desugar$0,$desugar$1) -> bb6;
+  }
+  bb6 {
+    %11 = getText(textEntity) -> bb7;
+  }
+  bb7 {
+    textResult = %11;
+    %13 = textResult is string
+    %13 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = println((1, textResult)) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 19
+    %0 = newObject ballerina/mime:Entity
+    %1 = init(%0) -> bb11;
+  }
+  bb11 {
+    %3 = %1 is nil
+    %3 ? bb12 : bb13;
+  }
+  bb12 {
+    %2 = %0;
+    GOTO bb14;
+  }
+  bb13 {
+    %2 = %1;
+    GOTO bb14;
+  }
+  bb14 {
+    bytesEntity = %2;
+    %5 = ConstantLoad 72
+    %6 = ConstantLoad 101
+    %7 = ConstantLoad 108
+    %8 = ConstantLoad 108
+    %9 = ConstantLoad 111
+    %10 = ConstantLoad 5
+    %11 = newArray [int:Unsigned8...][%10]{%5, %6, %7, %8, %9}
+    $desugar$2 = %11;
+    %13 = $default$0($desugar$2) -> bb15;
+  }
+  bb15 {
+    $desugar$3 = %13;
+    %15 = setByteArray(bytesEntity,$desugar$2,$desugar$3) -> bb16;
+  }
+  bb16 {
+    %16 = getByteArray(bytesEntity) -> bb17;
+  }
+  bb17 {
+    bytesResult = %16;
+    %18 = bytesResult is [int:Unsigned8...]
+    %18 ? bb18 : bb21;
+  }
+  bb18 {
+    PushScopeFrame 3
+    %0 = length((1, bytesResult)) -> bb19;
+  }
+  bb19 {
+    %1 = %0;
+    %2 = println(%1) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 10
+    %0 = newObject ballerina/mime:Entity
+    %1 = init(%0) -> bb22;
+  }
+  bb22 {
+    %3 = %1 is nil
+    %3 ? bb23 : bb24;
+  }
+  bb23 {
+    %2 = %0;
+    GOTO bb25;
+  }
+  bb24 {
+    %2 = %1;
+    GOTO bb25;
+  }
+  bb25 {
+    bodyEntity = %2;
+    %5 = ConstantLoad dispatched text
+    %6 = setBody(bodyEntity,%5) -> bb26;
+  }
+  bb26 {
+    %7 = getText(bodyEntity) -> bb27;
+  }
+  bb27 {
+    dispatchResult = %7;
+    %9 = dispatchResult is string
+    %9 ? bb28 : bb30;
+  }
+  bb28 {
+    PushScopeFrame 1
+    %0 = println((1, dispatchResult)) -> bb29;
+  }
+  bb29 {
+    PopScopeFrame
+    GOTO bb30;
+  }
+  bb30 {
+    PushScopeFrame 13
+    %0 = newObject ballerina/mime:Entity
+    %1 = init(%0) -> bb31;
+  }
+  bb31 {
+    %3 = %1 is nil
+    %3 ? bb32 : bb33;
+  }
+  bb32 {
+    %2 = %0;
+    GOTO bb34;
+  }
+  bb33 {
+    %2 = %1;
+    GOTO bb34;
+  }
+  bb34 {
+    wrongEntity = %2;
+    %5 = ConstantLoad text
+    $desugar$4 = %5;
+    %7 = $default$2($desugar$4) -> bb35;
+  }
+  bb35 {
+    $desugar$5 = %7;
+    %9 = setText(wrongEntity,$desugar$4,$desugar$5) -> bb36;
+  }
+  bb36 {
+    %10 = getByteArray(wrongEntity) -> bb37;
+  }
+  bb37 {
+    wrongResult = %10;
+    %12 = wrongResult is error
+    %12 ? bb38 : bb40;
+  }
+  bb38 {
+    PushScopeFrame 2
+    %0 = ConstantLoad parser error
+    %1 = println(%0) -> bb39;
+  }
+  bb39 {
+    PopScopeFrame
+    GOTO bb40;
+  }
+  bb40 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

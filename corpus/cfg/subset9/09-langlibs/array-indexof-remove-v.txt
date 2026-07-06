@@ -1,0 +1,86 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 10)
+          (literal 20)
+          (literal 30)
+          (literal 40)
+          (literal 30)))))
+    (var-def
+      (variable first (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 30)
+          (literal 0))))))
+    (type-test-expr is
+      (simple-var-ref first)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref first))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable afterFirst (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 30)
+          (literal 3))))))
+    (type-test-expr is
+      (simple-var-ref afterFirst)
+      (value-type int))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref afterFirst))))
+  )
+  (bb4 (bb3 bb2) ()
+    (var-def
+      (variable missing (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 99)
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref missing)
+          (value-type null)))))
+    (var-def
+      (variable removed (type
+        (value-type int)) (expr
+        (invocation lang.array remove (
+          (simple-var-ref arr)
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref removed))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref arr))))))
+    (expression-stmt
+      (invocation lang.array removeAll (
+        (simple-var-ref arr))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref arr))))))
+  )
+)

@@ -1,0 +1,433 @@
+(package
+  (import-package ballerina file (as file))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable cwd (type
+          (value-type string)) (expr
+          (invocation file getCurrentDir ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.string length (
+              (simple-var-ref cwd)))
+            (literal 0)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation file basename (
+            (literal /foo/bar/baz.txt))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable base (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref base))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation file parentPath (
+            (literal /foo/bar/baz.txt))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable parent (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref parent))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation file joinPath (
+            (literal /foo)
+            (literal bar)
+            (literal baz))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable joined (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref joined))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation file splitPath (
+            (literal /foo/bar/baz))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable parts (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref parts))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref parts)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref parts)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref parts)
+            (literal 2)))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation file isAbsolutePath (
+            (literal /foo/bar))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable absTrue (type
+          (value-type boolean)) (expr
+          (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref absTrue))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation file isAbsolutePath (
+            (literal foo/bar))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable absFalse (type
+          (value-type boolean)) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref absFalse))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation file normalizePath (
+            (literal /foo/../bar/./baz)
+            (simple-var-ref file CLEAN))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (var-def
+        (variable cleaned (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$6))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref cleaned))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation file relativePath (
+            (literal /foo/bar)
+            (literal /foo/bar/baz))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable rel (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$7))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rel))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation file getAbsolutePath (
+            (literal .))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (var-def
+        (variable absPath (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$8))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.string length (
+              (simple-var-ref absPath)))
+            (literal 0)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (literal /tmp/bal-file-test-dir))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$9))))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation file createDir (
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$11))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation file test (
+            (literal /tmp/bal-file-test-dir)
+            (simple-var-ref file IS_DIR))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$12))) ())
+      (var-def
+        (variable isDir (type
+          (value-type boolean)) (expr
+          (simple-var-ref $desugar$12))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref isDir))))
+      (var-def
+        (variable $desugar$13 (expr
+          (literal /tmp/bal-file-test-dir))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$13))))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation file remove (
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$14))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$15))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$15))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation file test (
+            (literal /tmp/bal-file-test-dir)
+            (simple-var-ref file EXISTS))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$16))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$16))) ())
+      (var-def
+        (variable gone (type
+          (value-type boolean)) (expr
+          (simple-var-ref $desugar$16))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref gone))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation file create (
+            (literal /tmp/bal-file-test.txt))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$17))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$17))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$17))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation file getMetaData (
+            (literal /tmp/bal-file-test.txt))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$18))) ())
+      (var-def
+        (variable meta (type
+          (user-defined-type file MetaData)) (expr
+          (simple-var-ref $desugar$18))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref meta)
+            (literal dir)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref meta)
+            (literal readable)))))
+      (var-def
+        (variable $desugar$19 (expr
+          (literal /tmp/bal-file-test.txt))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$19))))))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation file remove (
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$21))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$21))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$21))
+      (var-def
+        (variable $desugar$22 (expr
+          (literal .txt))))
+      (var-def
+        (variable $desugar$23 (expr
+          (literal bal-))))
+      (var-def
+        (variable $desugar$24 (expr
+          (invocation $default$4 (
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23))))))
+      (var-def
+        (variable $desugar$25 (expr
+          (invocation file createTemp (
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23)
+            (simple-var-ref $desugar$24))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$25))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$25))) ())
+      (var-def
+        (variable tmp (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$25))))
+      (expression-stmt
+        (invocation io println (
+          (invocation file test (
+            (simple-var-ref tmp)
+            (simple-var-ref file EXISTS))))))
+      (var-def
+        (variable $desugar$26 (expr
+          (simple-var-ref tmp))))
+      (var-def
+        (variable $desugar$27 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$26))))))
+      (var-def
+        (variable $desugar$28 (expr
+          (invocation file remove (
+            (simple-var-ref $desugar$26)
+            (simple-var-ref $desugar$27))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$28))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$28))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$28))
+      (var-def
+        (variable $desugar$29 (expr
+          (invocation $default$5 ()))))
+      (var-def
+        (variable $desugar$30 (expr
+          (literal bal-))))
+      (var-def
+        (variable $desugar$31 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$29)
+            (simple-var-ref $desugar$30))))))
+      (var-def
+        (variable $desugar$32 (expr
+          (invocation file createTempDir (
+            (simple-var-ref $desugar$29)
+            (simple-var-ref $desugar$30)
+            (simple-var-ref $desugar$31))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$32))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$32))) ())
+      (var-def
+        (variable tmpDir (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$32))))
+      (expression-stmt
+        (invocation io println (
+          (invocation file test (
+            (simple-var-ref tmpDir)
+            (simple-var-ref file IS_DIR))))))
+      (var-def
+        (variable $desugar$33 (expr
+          (simple-var-ref tmpDir))))
+      (var-def
+        (variable $desugar$34 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$33))))))
+      (var-def
+        (variable $desugar$35 (expr
+          (invocation file remove (
+            (simple-var-ref $desugar$33)
+            (simple-var-ref $desugar$34))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$35))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$35))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$35)))))

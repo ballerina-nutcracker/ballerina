@@ -1,0 +1,136 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina mime (as mime))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable textEntity (type
+          (user-defined-type mime Entity)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal Hello World))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation setText expr:
+          (simple-var-ref textEntity) (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable textResult (type
+          (union-type
+            (value-type string)
+            (user-defined-type mime ParserError))) (expr
+          (invocation getText expr:
+            (simple-var-ref textEntity) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref textResult)
+          (value-type string))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref textResult))))) ())
+      (block-stmt
+        (var-def
+          (variable bytesEntity (type
+            (user-defined-type mime Entity)) (expr
+            (new ()))))
+        (var-def
+          (variable $desugar$2 (expr
+            (list-constructor-expr
+              (literal 72)
+              (literal 101)
+              (literal 108)
+              (literal 108)
+              (literal 111)))))
+        (var-def
+          (variable $desugar$3 (expr
+            (invocation $default$0 (
+              (simple-var-ref $desugar$2))))))
+        (expression-stmt
+          (invocation setByteArray expr:
+            (simple-var-ref bytesEntity) (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3))))
+        (var-def
+          (variable bytesResult (type
+            (union-type
+              (array-type
+                (value-type byte) dimensions: 1 ([]))
+              (user-defined-type mime ParserError))) (expr
+            (invocation getByteArray expr:
+              (simple-var-ref bytesEntity) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref bytesResult)
+            (array-type
+              (value-type byte) dimensions: 1 ([])))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.array length (
+                  (simple-var-ref bytesResult))))))) ())
+        (block-stmt
+          (var-def
+            (variable bodyEntity (type
+              (user-defined-type mime Entity)) (expr
+              (new ()))))
+          (expression-stmt
+            (invocation setBody expr:
+              (simple-var-ref bodyEntity) (
+              (literal dispatched text))))
+          (var-def
+            (variable dispatchResult (type
+              (union-type
+                (value-type string)
+                (user-defined-type mime ParserError))) (expr
+              (invocation getText expr:
+                (simple-var-ref bodyEntity) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref dispatchResult)
+              (value-type string))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref dispatchResult))))) ())
+          (block-stmt
+            (var-def
+              (variable wrongEntity (type
+                (user-defined-type mime Entity)) (expr
+                (new ()))))
+            (var-def
+              (variable $desugar$4 (expr
+                (literal text))))
+            (var-def
+              (variable $desugar$5 (expr
+                (invocation $default$2 (
+                  (simple-var-ref $desugar$4))))))
+            (expression-stmt
+              (invocation setText expr:
+                (simple-var-ref wrongEntity) (
+                (simple-var-ref $desugar$4)
+                (simple-var-ref $desugar$5))))
+            (var-def
+              (variable wrongResult (type
+                (union-type
+                  (array-type
+                    (value-type byte) dimensions: 1 ([]))
+                  (user-defined-type mime ParserError))) (expr
+                (invocation getByteArray expr:
+                  (simple-var-ref wrongEntity) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref wrongResult)
+                (user-defined-type mime ParserError))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal parser error))))) ())
+            (block-stmt)))))))
