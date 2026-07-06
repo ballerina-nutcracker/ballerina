@@ -32,11 +32,7 @@ func materializeConstantRef(cx *functionContext, ref *ast.BLangSimpleVarRef) ast
 	if !ok {
 		return nil
 	}
-	value, ok := constSym.ConstantValue()
-	if !ok {
-		cx.pkgCtx.compilerCtx.InternalError("constant value is not folded", ref.GetPosition())
-		return nil
-	}
+	value := constSym.ConstantValue()
 	ty := ref.GetDeterminedType()
 	if semtypes.IsZero(ty) {
 		cx.pkgCtx.compilerCtx.InternalError("constant reference type is not resolved", ref.GetPosition())

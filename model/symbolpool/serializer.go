@@ -496,14 +496,7 @@ func (sw *symbolWriter) writeConstantValueSymbol(buf *bytes.Buffer, sym *model.C
 	if err := sw.writeValueSymbolBody(buf, &sym.VariableSymbol); err != nil {
 		return err
 	}
-	value, known := sym.ConstantValue()
-	if err := write(buf, known); err != nil {
-		return err
-	}
-	if known {
-		return sw.writeAnnotationValue(buf, value)
-	}
-	return nil
+	return sw.writeAnnotationValue(buf, sym.ConstantValue())
 }
 
 func (sw *symbolWriter) writeAnnotationSymbol(buf *bytes.Buffer, sym *model.AnnotationSymbol) error {

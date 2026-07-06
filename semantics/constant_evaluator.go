@@ -100,9 +100,7 @@ func constantSingleShapeValue(ty semtypes.SemType) (values.BalValue, bool) {
 func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.SymbolRef, ty semtypes.SemType) (values.BalValue, error) {
 	ref = e.resolver.unnarrowedSymbol(ref)
 	if sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol); ok {
-		if value, known := sym.ConstantValue(); known {
-			return value, nil
-		}
+		return sym.ConstantValue(), nil
 	}
 
 	value, ok := constantSingleShapeValue(ty)

@@ -343,8 +343,6 @@ type (
 	ConstantValueSymbol struct {
 		VariableSymbol
 		value values.BalValue
-		// valueKnown distinguishes "not folded yet" from "folded to nil".
-		valueKnown bool
 	}
 
 	XMLNSSymbol struct {
@@ -1061,12 +1059,11 @@ func (vs *VariableSymbol) Copy() Symbol {
 // SetConstantValue records the folded value for this constant.
 func (cs *ConstantValueSymbol) SetConstantValue(value values.BalValue) {
 	cs.value = value
-	cs.valueKnown = true
 }
 
-// ConstantValue returns the folded value and whether folding has completed.
-func (cs *ConstantValueSymbol) ConstantValue() (values.BalValue, bool) {
-	return cs.value, cs.valueKnown
+// ConstantValue returns the folded value.
+func (cs *ConstantValueSymbol) ConstantValue() values.BalValue {
+	return cs.value
 }
 
 func (cs *ConstantValueSymbol) Copy() Symbol {

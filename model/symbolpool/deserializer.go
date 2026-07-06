@@ -424,11 +424,7 @@ func (sr *symbolReader) readConstantValueSymbol(space *model.SymbolSpace) {
 	f := sr.readValueSymbolFields()
 	sym := model.NewConstantValueSymbol(f.name, f.isPublic)
 	applyValueSymbolFields(&sym.VariableSymbol, f)
-	var valueKnown bool
-	read(sr.r, &valueKnown)
-	if valueKnown {
-		sym.SetConstantValue(sr.readAnnotationValue())
-	}
+	sym.SetConstantValue(sr.readAnnotationValue())
 	addDeserializedSymbol(space, f.name, sym)
 }
 
