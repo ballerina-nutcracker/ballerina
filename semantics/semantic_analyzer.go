@@ -516,7 +516,7 @@ func initializeInvokableAnalyzer(parent analyzer, function invokableSignatureNod
 // the function's parameters (and `self` for methods). Body-local variables
 // are added later as normal semantic analysis encounters their definitions.
 func buildFunctionLocals(parent analyzer, fn invokableSignatureNode) *localScope {
-	scope := newLocalScope(nil, true)
+	scope := newLocalScope(enclosingFunctionLocals(parent), true)
 	finishBuildFunctionLocals(parent, scope, fn.RequiredParameters(), fn.GetRestParam())
 	return scope
 }
@@ -1013,15 +1013,13 @@ func analyzeCheckedExpr[A analyzer](a A, expr *ast.BLangCheckedExpr, expectedTyp
 		return false
 	}
 	retTy := expectedReturnType(a)
-	if semtypes.IsZero(retTy) {
-		a.ctx().SemanticError("check expression not allowed outside a function", expr.GetPosition())
-		return false
-	}
-	exprTy := expr.Expr.GetDeterminedType()
-	errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
-	if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
-		if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
-			a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
+	if !semtypes.IsZero(retTy) {
+		exprTy := expr.Expr.GetDeterminedType()
+		errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
+		if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
+			if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
+				a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
+			}
 		}
 	}
 	return validateResolvedType(a, expr, expectedType)
@@ -1296,9 +1294,21 @@ func validateStreamCloseMethod[A analyzer](a A, impl ast.BLangExpression, comple
 	return true
 }
 
+func enclosingFunctionIsIsolated(a analyzer) bool {
+	fa := enclosingFunctionAnalyzer(a)
+	if fa == nil {
+		return false
+	}
+	fn, ok := fa.function.(invokableSignatureNode)
+	return ok && fn.IsIsolated()
+}
+
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
 	fa := initializeFunctionAnalyzer(a, expr.Function)
 	fn := expr.Function
+	if fn.IsIsolated() && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
+		validateIsolatedCapture(a, enclosingFunctionLocals(a), fn.Body.(ast.BLangNode))
+	}
 	// Walk params + body directly rather than the BLangFunction node
 	// itself; otherwise the walker's first visit on BLangFunction would
 	// re-enter visitInner's BLangFunction case and re-initialize the

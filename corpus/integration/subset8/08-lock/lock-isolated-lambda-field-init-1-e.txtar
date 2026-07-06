@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> lock-isolated-lambda-field-init-1-e.bal:24:16
+   |
+24 |         return nonIsolated(); // @error
+   |                ^^^^^^^^^^^^^

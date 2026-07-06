@@ -1,0 +1,9 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (function-type () (
+          (value-type int)))) (expr
+        (simple-var-ref moduleLevelLambda))))
+  )
+)
