@@ -82,6 +82,7 @@ type typeResolver interface {
 	lookupClassMethodSymbol(receiverTy semtypes.SemType, methodName string) (model.SymbolRef, bool)
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
+	xmlIteratorTypeCache() *semtypes.SemTypeCache
 }
 
 // deferredEmptinessCheck is an emptiness check that was registered while the
@@ -132,6 +133,7 @@ type packageTypeResolver struct {
 	classAtomSymbols     map[*semtypes.MappingAtomicType]model.SymbolRef
 	classSymbolByType    map[semtypes.InternHandle]model.SymbolRef
 	semtypeInterner      *semtypes.SemtypeInterner
+	xmlIteratorTypes     *semtypes.SemTypeCache
 
 	deferredEmptinessChecks []deferredEmptinessCheck
 }
@@ -169,6 +171,9 @@ func (t *packageTypeResolver) typeContext() semtypes.Context        { return t.t
 func (t *packageTypeResolver) expectedReturnType() semtypes.SemType { return semtypes.SemType{} }
 func (t *packageTypeResolver) parent() typeResolver                 { return nil }
 func (t *packageTypeResolver) typeEnv() semtypes.Env                { return t.ctx.GetTypeEnv() }
+func (t *packageTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
+	return t.xmlIteratorTypes
+}
 
 func (t *packageTypeResolver) semanticError(msg string, loc diagnostics.Location) {
 	t.ctx.SemanticError(msg, loc)
@@ -321,6 +326,9 @@ func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.
 func (f *functionTypeResolver) expectedReturnType() semtypes.SemType { return f.retTy }
 func (f *functionTypeResolver) parent() typeResolver                 { return f.parentResolver }
 func (f *functionTypeResolver) typeEnv() semtypes.Env                { return f.parentResolver.typeEnv() }
+func (f *functionTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
+	return f.parentResolver.xmlIteratorTypeCache()
+}
 
 func (f *functionTypeResolver) semanticError(msg string, loc diagnostics.Location) {
 	f.parentResolver.semanticError(msg, loc)
@@ -472,6 +480,7 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
 		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
 		semtypeInterner:        semtypes.NewSemtypeInterner(),
+		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
 		monoCounters:           make(map[string]int),
 		scope:                  moduleScope,
 	}
@@ -3528,6 +3537,8 @@ func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpr
 		return semtypes.ListMemberTypeInnerVal(ctx, collectionTy, semtypes.INT), true
 	case semtypes.IsSubtype(ctx, collectionTy, semtypes.MAPPING):
 		return semtypes.MappingMemberTypeInnerVal(ctx, collectionTy, semtypes.STRING), true
+	case semtypes.IsSubtype(ctx, collectionTy, semtypes.XML):
+		return semtypes.XMLItemType(collectionTy), true
 	default:
 		ld := semtypes.NewListDefinition()
 		emptyListTy := ld.DefineListTypeWrapped(t.typeEnv(), nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
@@ -6762,6 +6773,7 @@ type opaqueFnMonomorphizer func(t typeResolver, sym *model.OpaqueFunctionSymbol,
 var (
 	arrayOpaqueMonomorphizers []opaqueFnMonomorphizer
 	mapOpaqueMonomorphizers   []opaqueFnMonomorphizer
+	xmlOpaqueMonomorphizers   []opaqueFnMonomorphizer
 )
 
 func init() {
@@ -6770,6 +6782,9 @@ func init() {
 	}
 	mapOpaqueMonomorphizers = []opaqueFnMonomorphizer{
 		model.OpaqueFnMapRemove: monomorphizeMapRemove,
+	}
+	xmlOpaqueMonomorphizers = []opaqueFnMonomorphizer{
+		model.OpaqueFnXMLIterator: monomorphizeXMLIterator,
 	}
 }
 
@@ -6785,6 +6800,8 @@ func opaqueFunctionMonomorphizerFor(org, pkg string, id int) (opaqueFnMonomorphi
 		monomorphizers = arrayOpaqueMonomorphizers
 	case "lang.map":
 		monomorphizers = mapOpaqueMonomorphizers
+	case "lang.xml":
+		monomorphizers = xmlOpaqueMonomorphizers
 	default:
 		return nil, false
 	}
@@ -6871,6 +6888,59 @@ func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, poly
 		Flags:         model.FuncSymbolFlagIsolated,
 	}
 	return storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, containerTy), true
+}
+
+func monomorphizeXMLIterator(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, pos diagnostics.Location) (model.SymbolRef, bool) {
+	containerExpr, ok := containerArgExpr(args, "x")
+	if !ok {
+		t.semanticError("missing container argument", pos)
+		return model.SymbolRef{}, false
+	}
+	containerTy, _, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	if sym.Lookup != nil {
+		if ref, ok := sym.Lookup(containerTy); ok {
+			return ref, true
+		}
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.XML) {
+		t.semanticError("expect first argument to be a subtype of xml", pos)
+		return model.SymbolRef{}, false
+	}
+	itemTy := semtypes.XMLItemType(containerTy)
+	sig := model.FunctionSignature{
+		ParamTypes:    []semtypes.SemType{containerTy},
+		RestParamType: semtypes.NEVER,
+		ReturnType:    createXMLIteratorType(t, itemTy),
+		Flags:         model.FuncSymbolFlagIsolated,
+	}
+	return storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, containerTy), true
+}
+
+func createXMLIteratorType(t typeResolver, itemTy semtypes.SemType) semtypes.SemType {
+	env := t.typeEnv()
+	return t.xmlIteratorTypeCache().GetOrBuild(itemTy, func() semtypes.SemType {
+		recordDef := semtypes.NewMappingDefinition()
+		recordTy := recordDef.DefineMappingTypeWrapped(env,
+			[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},
+			semtypes.NEVER)
+		nextReturnTy := semtypes.Union(recordTy, semtypes.NIL)
+		ld := semtypes.NewListDefinition()
+		emptyParams := ld.DefineListTypeWrapped(env, nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+		fd := semtypes.NewFunctionDefinition()
+		nextFnTy := fd.Define(env, emptyParams, nextReturnTy, semtypes.FunctionQualifiersFrom(env, true, false))
+		iterOd := semtypes.NewObjectDefinition()
+		return iterOd.Define(env, semtypes.ObjectQualifiersDEFAULT, []semtypes.Member{{
+			Name:       "next",
+			ValueTy:    nextFnTy,
+			Kind:       semtypes.MemberKindMethod,
+			Visibility: semtypes.VisibilityPublic,
+			Immutable:  true,
+		}})
+	})
 }
 
 func monomorphizeMapRemove(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, pos diagnostics.Location) (model.SymbolRef, bool) {

@@ -26,6 +26,7 @@ import (
 	_ "ballerina-lang-go/lib/langlibs/go/lang.int"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.map"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.string"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.xml"
 
 	// standard libraries
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.2/native"

@@ -27,7 +27,7 @@ func newFixedLengthArrayFromInitialFixedLength(initial []SemType, fixedLength in
 	this := fixedLengthArray{}
 	copiedInitial := make([]SemType, len(initial))
 	copy(copiedInitial, initial)
-	common.Assert(fixedLength >= 0)
+	common.Assert(func() bool { return fixedLength >= 0 })
 	this.initial = copiedInitial
 	this.FixedLength = fixedLength
 	return this

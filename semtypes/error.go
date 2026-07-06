@@ -88,7 +88,7 @@ func ErrorWithDetail(detail SemType) SemType {
 }
 
 func errorDistinct(distinctId int) SemType {
-	common.Assert(distinctId >= 0)
+	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(((-distinctId) - 1))))
 	return getBasicSubtype(BTError, bdd)
 }

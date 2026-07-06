@@ -32,7 +32,7 @@ func NewObjectDefinition() ObjectDefinition {
 }
 
 func ObjectDefinitionDistinct(distinctId int) SemType {
-	common.Assert(distinctId >= 0)
+	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(-distinctId - 1)))
 	return getBasicSubtype(BTObject, bdd)
 }
@@ -94,7 +94,7 @@ func stripDistinctAtomsFromSemType(ty SemType, typeCode BasicTypeCode, stripBdd 
 //	   }
 //	}
 func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members []Member) SemType {
-	common.Assert(objectDefinitionValidateMembers(members))
+	common.Assert(func() bool { return objectDefinitionValidateMembers(members) })
 	var mut CellMutability
 	if qualifiers.readonly {
 		mut = CellMutability_CELL_MUT_NONE
