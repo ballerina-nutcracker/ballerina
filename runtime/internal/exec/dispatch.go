@@ -112,8 +112,10 @@ func LookupResourceMethodByPath(ctx *extern.Context, obj *values.Object, accesso
 // resourceExtraArgCount returns how many parameters of the resource function
 // are not bound from the path (i.e. supplied by the caller). It mirrors the
 // arity accounting the path matcher relies on: total required params minus the
-// non-literal path-parameter segments (the rest segment, if any, lives in the
-// function's rest parameter, not RequiredParams).
+// path-bound segments. A rest path segment, if any, is folded into
+// RequiredParams as a single slot (see transformResourceMethodInner), so it
+// must be counted as path-bound here too, alongside the non-literal fixed
+// segments.
 func resourceExtraArgCount(ctx *extern.Context, entry *values.ResourceEntry) int {
 	fn := ctx.Env.Registry.(*modules.Registry).GetBIRFunction(entry.FunctionLookupKey)
 	if fn == nil {
@@ -124,6 +126,9 @@ func resourceExtraArgCount(ctx *extern.Context, entry *values.ResourceEntry) int
 		if _, isLit := values.LiteralPathSegment(entry.PathSegments[i]); !isLit {
 			nonLiteral++
 		}
+	}
+	if !semtypes.IsNever(entry.RestSegmentTy) {
+		nonLiteral++
 	}
 	if extra := len(fn.RequiredParams) - nonLiteral; extra > 0 {
 		return extra

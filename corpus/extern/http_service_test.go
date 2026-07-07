@@ -86,6 +86,14 @@ func TestHttpServiceTypedParams(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-typed-params-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceRestPathParam exercises a resource whose path ends in a rest
+// path parameter and declares no other parameters (regression: the dispatcher
+// must not miscount the rest segment as an extra caller-supplied argument).
+func TestHttpServiceRestPathParam(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-rest-path-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceDuplicateBasePath verifies that attaching two services at the
 // same base path fails at listener-init time with a runtime error.
 func TestHttpServiceDuplicateBasePath(t *testing.T) {
