@@ -19,6 +19,8 @@ package projects
 import (
 	"context"
 	"fmt"
+
+	"ballerina-lang-go/tools/diagnostics"
 )
 
 // PackageResolution holds the result of package dependency resolution.
@@ -31,8 +33,18 @@ type PackageResolution struct {
 	packageDependencyGraph        *DependencyGraph[PackageDescriptor]
 	topologicallySortedModuleList []*moduleContext
 	resolvedDependencies          map[string]*PackageDescriptor // org/name -> PackageDescriptor
+	diagnostics                   []diagnostics.Diagnostic
 	diagnosticResult              DiagnosticResult
 	environment                   *Environment
+	// blendedManifest is the per-resolution view of consumer dependency policy.
+	blendedManifest *blendedManifest
+}
+
+// addDiagnostic accumulates a diagnostic raised during dependency resolution.
+// Wired into blendedManifest so its validation warnings surface through
+// PackageCompilation diagnostics.
+func (r *PackageResolution) addDiagnostic(d diagnostics.Diagnostic) {
+	r.diagnostics = append(r.diagnostics, d)
 }
 
 func newPackageResolution(pkgCtx *packageContext, env *Environment) *PackageResolution {
@@ -42,8 +54,16 @@ func newPackageResolution(pkgCtx *packageContext, env *Environment) *PackageReso
 		environment:          env,
 	}
 
-	// Create module resolver using the environment's PackageResolver
-	r.moduleResolver = newModuleResolver(pkgCtx.getDescriptor(), env)
+	// Must run before any BFS work so dequeues can consult it.
+	r.blendedManifest = newBlendedManifest(
+		withPackageManifest(pkgCtx.getPackageManifest()),
+		withPackageResolver(env.PackageResolver(), env.ResolutionOptions()),
+		withDiagnosticReporter(r.addDiagnostic),
+	)
+
+	// moduleResolver consults blendedManifest for direct-import routing; the
+	// consumer's resolver runs before BFS cache pre-population.
+	r.moduleResolver = newModuleResolver(pkgCtx.getDescriptor(), r.blendedManifest, env)
 
 	// Build dependency graph from imports
 	r.buildModuleDependencyGraph()
@@ -178,8 +198,15 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 		current := queue[0]
 		queue = queue[1:]
 
-		// Load the package to get its manifest dependencies
-		request := NewResolutionRequest(current)
+		// Overlay the user-specified repository (if any) for this (org, name).
+		// Applies to both direct deps and transitive children since every
+		// request is built here at dequeue time.
+		var request ResolutionRequest
+		if blended, ok := r.blendedManifest.dependency(current.Org().Value(), current.Name().Value()); ok && blended.Repository() != "" {
+			request = newResolutionRequestWithRepository(current, blended.Repository())
+		} else {
+			request = NewResolutionRequest(current)
+		}
 		responses := resolver.ResolvePackages(ctx, []ResolutionRequest{request}, options)
 		if len(responses) == 0 || !responses[0].IsResolved() {
 			continue
@@ -362,7 +389,7 @@ func (r *PackageResolution) resolveDependencies() {
 	sortedModuleList = append(prependImplicitLangLibs(bundledModules, sortedModuleList), sortedModuleList...)
 
 	r.topologicallySortedModuleList = sortedModuleList
-	r.diagnosticResult = NewDiagnosticResult(nil)
+	r.diagnosticResult = NewDiagnosticResult(r.diagnostics)
 }
 
 // DiagnosticResult returns the diagnostics from resolution.
