@@ -89,7 +89,7 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 	rt := runtime.NewRuntime(test_util.TestPal(&stdout, &stderr), result.Project().Environment().TypeEnv())
 
 	for _, birPkg := range birPkgs {
-		if err := rt.Interpret(*birPkg); err != nil {
+		if err := rt.Init(*birPkg); err != nil {
 			t.Fatalf("runtime error: %v", err)
 		}
 	}
