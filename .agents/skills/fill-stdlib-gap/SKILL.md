@@ -116,6 +116,16 @@ If the new function performs a platform op (io, fs, time, http, env) not already
 
 Failing to update `TestPal` causes nil-pointer dereferences in corpus tests even when the CLI run succeeds.
 
+### Associating native state with a map/record value (only if needed)
+
+This applies to **map/record values (`values.Map`) only** — objects are unaffected (see below).
+
+If the gap requires a native extern to recover Go-side state (a parsed key, a compiled pattern, etc.) from a Ballerina **map or record** value on a later call, **do not** add a field or accessor to `values.Map` for this — `runtime/values` must not carry any library-specific native-data association on `Map`. Ballerina mapping/record values are pure data with no encapsulation, so a field on `values.Map` becomes a general escape hatch with no guarantee against another library colliding with it, and no way to stop a user constructing a same-shaped value that never goes through your constructor.
+
+Keep the association entirely inside your own `native/` package as a package-private, GC-friendly weak map keyed by `weak.Pointer[values.Map]`, cleaned up via `runtime.AddCleanup` once the value is unreachable. See `lib/stdlibs/ballerina/crypto/0.0.1/go1.2/native/keydata.go` (`setKeyData`/`keyDataOf`) for the reference implementation, and the same subsection in `add-stdlib-support`'s Step 7 for the full pattern and code sketch. Every reader must tolerate a miss (return a clean domain error) since nothing prevents a user from constructing the value without your native data attached.
+
+**Objects are different — no change needed there.** A Ballerina object can only be constructed via `new` plus a class definition, so a user cannot fabricate a same-shaped object bypassing your constructor. Keep using the existing pattern of storing the native handle directly as an internal field on the object (e.g. `os.go`'s `"$handle"` field on `Process`, read back via a small `getHandle` helper) — that mechanism is unaffected by this rule.
+
 ### Coding rules (full list in `AGENTS.md`)
 
 - License header on every new file (existing files retain theirs).
