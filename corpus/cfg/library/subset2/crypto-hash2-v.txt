@@ -23,27 +23,27 @@
       (invocation io println (
         (invocation lang.array length (
           (invocation crypto hashMd5 (
-            (simple-var-ref input))))))))
+            (simple-var-ref input) <default>)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (
           (invocation crypto hashSha1 (
-            (simple-var-ref input))))))))
+            (simple-var-ref input) <default>)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (
           (invocation crypto hashSha384 (
-            (simple-var-ref input))))))))
+            (simple-var-ref input) <default>)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (
           (invocation crypto hashSha512 (
-            (simple-var-ref input))))))))
+            (simple-var-ref input) <default>)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (
           (invocation crypto hashKeccak256 (
-            (simple-var-ref input))))))))
+            (simple-var-ref input) <default>)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (

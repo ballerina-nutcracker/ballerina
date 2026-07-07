@@ -9,6 +9,6 @@
   (bb0 () ()
     (expression-stmt
       (invocation foo (
-        (literal 5))))
+        (literal 5) <default>)))
   )
 )

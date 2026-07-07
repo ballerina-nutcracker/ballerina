@@ -14,7 +14,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref nsPath)
-          (simple-var-ref nsContent)))))
+          (simple-var-ref nsContent) <default>))))
     (var-def
       (variable nsResult (type
         (value-type xml)) (expr
@@ -36,7 +36,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref multiPath)
-          (simple-var-ref multiContent)))))
+          (simple-var-ref multiContent) <default>))))
     (var-def
       (variable multiResult (type
         (value-type xml)) (expr
@@ -55,7 +55,7 @@
         (invocation io fileWriteString (
           (simple-var-ref emptyPath)
           (literal    
-      )))))
+      ) <default>))))
     (var-def
       (variable emptyResult (type
         (value-type xml)) (expr
@@ -75,7 +75,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref badPath)
-          (literal <root><unclosed></root>)))))
+          (literal <root><unclosed></root>) <default>))))
     (var-def
       (variable badResult (type
         (union-type
@@ -96,7 +96,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref strayPath)
-          (literal </root>)))))
+          (literal </root>) <default>))))
     (var-def
       (variable strayResult (type
         (union-type

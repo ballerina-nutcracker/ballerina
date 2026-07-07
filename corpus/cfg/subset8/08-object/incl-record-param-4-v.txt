@@ -28,49 +28,41 @@
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg v1
-            (mapping-constructor-expr))
-          (named-arg v2
-            (mapping-constructor-expr)))))))
+          (mapping-constructor-expr)
+          (mapping-constructor-expr))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg v1
-            (mapping-constructor-expr
-              (key-value
-                (literal foo)
-                (literal 10))))
-          (named-arg v2
-            (mapping-constructor-expr)))))))
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 10)))
+          (mapping-constructor-expr))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg v1
-            (mapping-constructor-expr))
-          (named-arg v2
-            (mapping-constructor-expr
-              (key-value
-                (literal bar)
-                (literal 5)))))))))
+          (mapping-constructor-expr)
+          (mapping-constructor-expr
+            (key-value
+              (literal bar)
+              (literal 5))))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg v1
-            (mapping-constructor-expr
-              (key-value
-                (literal foo)
-                (literal 1))))
-          (named-arg v2
-            (mapping-constructor-expr
-              (key-value
-                (literal bar)
-                (literal 5)))))))))
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 1)))
+          (mapping-constructor-expr
+            (key-value
+              (literal bar)
+              (literal 5))))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:

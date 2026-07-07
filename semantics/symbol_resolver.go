@@ -503,6 +503,9 @@ func (ms *moduleSymbolResolver) allocateFunctionSymbolInner(fn *ast.BLangFunctio
 		if fn.RestParam != nil {
 			ms.ctx.Unimplemented("rest parameters are not supported on dependently-typed functions", fn.GetPosition())
 		}
+		if _, isExtern := fn.Body.(*ast.BLangExternFunctionBody); !isExtern {
+			ms.ctx.SemanticError("dependently typed function must be external", fn.GetPosition())
+		}
 		return model.NewDependentlyTypedFunctionSymbol(name, fn.FuncSymbolFlags(), isPublic, symbolLocationForNode(fn))
 	}
 	return model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, isPublic, symbolLocationForNode(fn))

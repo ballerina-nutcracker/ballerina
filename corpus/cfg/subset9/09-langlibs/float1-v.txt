@@ -56,26 +56,26 @@
       (invocation io println (
         (invocation lang.float round (
           (group-expr
-            (literal 0)))))))
+            (literal 0)) <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation lang.float isNaN (
           (invocation lang.float round (
-            (simple-var-ref floats NaN))))))))
+            (simple-var-ref floats NaN) <default>)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.float round (
-          (simple-var-ref floats Infinity))))))
-    (expression-stmt
-      (invocation io println (
-        (invocation lang.float round (
-          (group-expr
-            (literal 2.5)))))))
+          (simple-var-ref floats Infinity) <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation lang.float round (
           (group-expr
-            (literal 3.5)))))))
+            (literal 2.5)) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 3.5)) <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation lang.float round (

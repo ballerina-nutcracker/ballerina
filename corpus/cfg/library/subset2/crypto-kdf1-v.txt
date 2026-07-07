@@ -35,7 +35,7 @@
             (checked-expr
               (invocation crypto hkdfSha256 (
                 (simple-var-ref input)
-                (literal 32))))))))))
+                (literal 32) <default> <default>)))))))))
     (var-def
       (variable d1 (type
         (array-type

@@ -15,7 +15,7 @@
     (expression-stmt
       (invocation setTextPayload expr:
         (simple-var-ref req) (
-        (literal body text))))
+        (literal body text) <default>)))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -105,7 +105,7 @@
         (mapping-constructor-expr
           (key-value
             (literal k)
-            (literal v))))))
+            (literal v))) <default>)))
     (var-def
       (variable jp (type
         (builtin-ref-type json)) (expr
@@ -121,7 +121,7 @@
         (list-constructor-expr
           (literal 1)
           (literal 2)
-          (literal 3)))))
+          (literal 3)) <default>)))
     (var-def
       (variable bp (type
         (array-type
@@ -150,7 +150,7 @@
       (invocation addHeader expr:
         (simple-var-ref res) (
         (literal X-Resp)
-        (literal r2))))
+        (literal r2) <default>)))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -159,13 +159,13 @@
       (invocation io println (
         (invocation hasHeader expr:
           (simple-var-ref res) (
-          (literal X-Resp))))))
+          (literal X-Resp) <default>)))))
     (expression-stmt
       (invocation io println (
         (checked-expr
           (invocation getHeader expr:
             (simple-var-ref res) (
-            (literal X-Resp)))))))
+            (literal X-Resp) <default>))))))
     (var-def
       (variable rs (type
         (array-type
@@ -173,7 +173,7 @@
         (checked-expr
           (invocation getHeaders expr:
             (simple-var-ref res) (
-            (literal X-Resp)))))))
+            (literal X-Resp) <default>))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (
@@ -183,7 +183,7 @@
         (binary-expr >=
           (invocation lang.array length (
             (invocation getHeaderNames expr:
-              (simple-var-ref res) ())))
+              (simple-var-ref res) ( <default>))))
           (literal 1)))))
     (expression-stmt
       (checked-expr
@@ -197,7 +197,7 @@
     (expression-stmt
       (invocation setTextPayload expr:
         (simple-var-ref res) (
-        (literal resp body))))
+        (literal resp body) <default>)))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -209,7 +209,7 @@
         (list-constructor-expr
           (literal 1)
           (literal 2)
-          (literal 3)))))
+          (literal 3)) <default>)))
     (var-def
       (variable rj (type
         (builtin-ref-type json)) (expr
@@ -225,7 +225,7 @@
         (list-constructor-expr
           (literal 10)
           (literal 20)
-          (literal 30)))))
+          (literal 30)) <default>)))
     (var-def
       (variable rb (type
         (array-type
@@ -240,19 +240,19 @@
     (expression-stmt
       (invocation removeHeader expr:
         (simple-var-ref res) (
-        (literal X-Resp))))
+        (literal X-Resp) <default>)))
     (expression-stmt
       (invocation io println (
         (invocation hasHeader expr:
           (simple-var-ref res) (
-          (literal X-Resp))))))
+          (literal X-Resp) <default>)))))
     (expression-stmt
       (invocation removeAllHeaders expr:
-        (simple-var-ref res) ()))
+        (simple-var-ref res) ( <default>)))
     (expression-stmt
       (invocation io println (
         (invocation hasHeader expr:
           (simple-var-ref res) (
-          (literal Content-Type))))))
+          (literal Content-Type) <default>)))))
   )
 )
