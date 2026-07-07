@@ -1,0 +1,3 @@
+-- stdout --
+local-outer says local-inner
+-- stderr --

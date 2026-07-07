@@ -1,0 +1,4 @@
+-- stdout --
+central
+-- stderr --
+dependency mockorg/localpkg:1.0.0 cannot be found in the 'local' repository. falling back to default repositories

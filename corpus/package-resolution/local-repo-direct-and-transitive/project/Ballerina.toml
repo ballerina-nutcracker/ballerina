@@ -1,0 +1,16 @@
+[package]
+org = "testorg"
+name = "directandtransitiveconsumer"
+version = "0.1.0"
+
+[[dependency]]
+org = "mockorg"
+name = "outerpkg"
+version = "0.1.0"
+repository = "local"
+
+[[dependency]]
+org = "mockorg"
+name = "innerpkg"
+version = "0.1.0"
+repository = "local"

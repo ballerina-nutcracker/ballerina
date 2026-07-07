@@ -235,11 +235,13 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG analysis)
 	compilation := pkg.Compilation()
 
-	// Check for compilation errors
+	// Print all diagnostics; only errors abort the run.
 	compilationDiags := compilation.DiagnosticResult()
-	if compilationDiags.HasErrors() {
+	if compilationDiags.DiagnosticCount() > 0 {
 		printDiagnostics(fsys, os.Stderr, compilationDiags, !isTerminal(), compilation.DiagnosticEnv())
-		return fmt.Errorf("compilation failed with errors")
+	}
+	if compilationDiags.HasErrors() {
+		return fmt.Errorf("compilation contains errors")
 	}
 
 	// Create backend and generate BIR
