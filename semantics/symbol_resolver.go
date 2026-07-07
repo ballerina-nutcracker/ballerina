@@ -105,7 +105,10 @@ type (
 		packageSymbols map[string]model.SymbolRef
 		prevPos        map[string]prevPos
 		usedPrefixes   map[string]bool
-		defaultCounter int
+		// Shared across all compilation-unit resolvers of the module so that
+		// generated $default$N names are unique module-wide (they become
+		// runtime function lookup keys).
+		defaultCounter *int
 		varTracker     varTracker
 	}
 
@@ -218,6 +221,7 @@ func newCompilationUnitsSymbolResolver(ctx *context.CompilerContext, pkgID model
 		packageSymbols: make(map[string]model.SymbolRef),
 		prevPos:        make(map[string]prevPos),
 		usedPrefixes:   make(map[string]bool),
+		defaultCounter: new(int),
 	}
 }
 
@@ -302,8 +306,8 @@ func (ms *moduleSymbolResolver) TypeContext() semtypes.Context {
 }
 
 func (ms *moduleSymbolResolver) nextDefaultSymbolName() string {
-	name := fmt.Sprintf("$default$%d", ms.defaultCounter)
-	ms.defaultCounter++
+	name := fmt.Sprintf("$default$%d", *ms.defaultCounter)
+	*ms.defaultCounter++
 	return name
 }
 
