@@ -42,9 +42,15 @@ var (
 	cliIntegrationDebugBalBin string
 	cliIntegrationRepoRoot    string
 	cliIntegrationCoverDir    string
+	cliIntegrationBalEnv      string
 	cliIntegrationBinsErr     error
 	cliIntegrationCoverMerge  sync.Mutex
 )
+
+// cliIntegrationBalrtVersion must match cli/cmd/version.go's default
+// Version ("dev") since buildBalBinaryTo never overrides it via ldflags —
+// executable.ResolveStub looks up <BAL_ENV>/runtime/<version>/balrt.
+const cliIntegrationBalrtVersion = "dev"
 
 func TestBalHelp(t *testing.T) {
 	t.Parallel()
@@ -320,7 +326,8 @@ func TestBalBuildCorpus(t *testing.T) {
 			absProjectDir := filepath.Join(repoRoot, tt.projectDir)
 			t.Cleanup(func() { _ = os.RemoveAll(filepath.Join(absProjectDir, "target")) })
 
-			stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "build", tt.projectDir)
+			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", tt.projectDir)
 			if exitCode != 0 {
 				t.Fatalf("bal build failed for %s: exit=%d\nstdout:\n%s\nstderr:\n%s", tt.projectDir, exitCode, stdout, stderr)
 			}
@@ -333,8 +340,23 @@ func TestBalBuildCorpus(t *testing.T) {
 				binName += ".exe"
 			}
 			binPath := filepath.Join(absProjectDir, "target", "bin", binName)
-			if _, err := os.Stat(binPath); err != nil {
+			builtInfo, err := os.Stat(binPath)
+			if err != nil {
 				t.Fatalf("expected built binary at %s: %v", binPath, err)
+			}
+
+			// The produced binary must be built on the slim balrt stub
+			// looked up via BAL_ENV (executable.ResolveStub), not the full
+			// bal CLI binary — assert it's meaningfully smaller than bal
+			// itself so this fails loudly if that lookup ever silently used
+			// the wrong stub instead of erroring.
+			balInfo, err := os.Stat(balBin)
+			if err != nil {
+				t.Fatalf("failed to stat bal binary %s: %v", balBin, err)
+			}
+			if builtInfo.Size() >= balInfo.Size()/2 {
+				t.Fatalf("built binary %s (%d bytes) is not meaningfully smaller than bal (%d bytes); expected the slim balrt stub to be used",
+					binPath, builtInfo.Size(), balInfo.Size())
 			}
 
 			runOut, runErr, runExit := runCLICommand(t, binPath, repoRoot, coverDir)
@@ -467,6 +489,26 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 			cliIntegrationBinsErr = err
 			return
 		}
+
+		// bal build looks up its runner stub at
+		// <BAL_ENV>/runtime/<version>/balrt (executable.ResolveStub) — an
+		// isolated BAL_ENV under tmpDir keeps this from touching the real
+		// ~/.ballerina. Confirmed empty (no pre-populated stdlib bala cache)
+		// works fine for these fixtures' ballerina/time and ballerina/io
+		// imports, since core stdlib modules resolve from lib/stdlibs
+		// source, not a bala cache lookup.
+		cliIntegrationBalEnv = filepath.Join(tmpDir, "bal-env")
+		balrtName := "balrt"
+		if runtime.GOOS == "windows" {
+			balrtName += ".exe"
+		}
+		balrtPath := filepath.Join(cliIntegrationBalEnv, "runtime", cliIntegrationBalrtVersion, balrtName)
+		if cliIntegrationBinsErr = os.MkdirAll(filepath.Dir(balrtPath), 0o755); cliIntegrationBinsErr != nil {
+			return
+		}
+		if cliIntegrationBinsErr = buildBalrtBinaryTo(cliIntegrationRepoRoot, balrtPath); cliIntegrationBinsErr != nil {
+			return
+		}
 		for _, spec := range []struct {
 			debug   bool
 			destPtr *string
@@ -527,6 +569,19 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 	return nil
 }
 
+// buildBalrtBinaryTo builds the slim runtime-only balrt stub that
+// executable.ResolveStub looks up at a predefined installation location
+// (<BAL_ENV>/runtime/<version>/balrt) — no coverage instrumentation, since
+// it's a fixed artifact bal build reads, not CLI code under test itself.
+func buildBalrtBinaryTo(repoRoot, outputPath string) error {
+	cmd := exec.Command("go", "build", "-o", outputPath, "./cli/cmd/balrt")
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to build balrt binary: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
 func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRoot, coverDir string, args []string, txtarPathParts ...string) {
 	t.Helper()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
@@ -569,11 +624,14 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 
 	cmd := exec.Command(balBin, args...)
 	cmd.Dir = repoRoot
+	env := os.Environ()
 	if coverDir != "" {
 		commandCoverDir := t.TempDir()
 		cmd.Env = append(os.Environ(), "GOCOVERDIR="+commandCoverDir)
 		defer mergeCLICoverageDir(t, commandCoverDir, coverDir)
 	}
+	env = append(env, extraEnv...)
+	cmd.Env = env
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf

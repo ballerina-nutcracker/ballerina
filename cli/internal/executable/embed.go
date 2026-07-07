@@ -33,10 +33,13 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 
 	"ballerina-lang-go/bir"
 	bircodec "ballerina-lang-go/bir/codec"
 	balctx "ballerina-lang-go/context"
+	"ballerina-lang-go/platform/palnative"
+	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/semtypes"
 )
 
@@ -44,6 +47,89 @@ const (
 	magic       = "BALEXE\x00\x01"
 	trailerSize = 16 // 8-byte payload offset + 8-byte magic
 )
+
+// runtimeStubDirName and balrtStubName locate the slim runner stub under the
+// Ballerina env/home directory (the same root as BallerinaEnvFs):
+// <ballerinaEnvPath>/runtime/<version>/balrt[.exe]. See ResolveStub.
+const runtimeStubDirName = "runtime"
+const balrtStubName = "balrt"
+
+// Platform identifies a build target (GOOS/GOARCH).
+type Platform struct {
+	OS   string
+	Arch string
+}
+
+// HostPlatform is the platform bal itself is currently running on.
+func HostPlatform() Platform {
+	return Platform{OS: goruntime.GOOS, Arch: goruntime.GOARCH}
+}
+
+// Key identifies which stub ResolveStub should produce for a build.
+//
+// Fingerprint == "" means "no native Go dependencies" — resolved by looking
+// up a pre-built, installer-provided stub; no Go toolchain involved. A
+// non-empty Fingerprint (a hash over the resolved native-dependency set)
+// will route to a toolchain-based custom build with that native code woven
+// in, once that support lands (see
+// migration-docs/specs/build-command-architecture.md); ResolveStub rejects
+// it for now rather than mishandling it.
+type Key struct {
+	Platform    Platform
+	Fingerprint string
+}
+
+// ResolveStub returns the path to the runner stub that Pack should embed the
+// BIR payload into.
+//
+// For key.Fingerprint == "" (no native Go dependencies), bal build never
+// invokes the Go toolchain: it looks up a slim, runtime-only stub (no
+// compiler, no CLI) at a predefined installation location,
+// <ballerinaEnvPath>/runtime/<version>/balrt (".exe" on Windows) —
+// decoupled from wherever the bal binary itself happens to be, so a machine
+// with only a released bal install and no Go can still build pure-Ballerina
+// packages. That location is populated once by the installer (or, for local
+// development, by building cli/cmd/balrt and copying it there — see that
+// package's doc comment); ResolveStub itself only ever reads it. If it
+// isn't there, this returns a clear, actionable error rather than silently
+// falling back to anything else or compiling one on the spot.
+//
+// overridePath, when non-empty, is used as-is instead of computing the
+// predefined path — an explicit escape hatch so the default installation
+// layout can change later without breaking a bal build already compiled
+// against a specific stub location. It comes from cli/cmd.RuntimeStubPath,
+// a variable set via -ldflags at bal's own build time (the same mechanism
+// as Version) — not a bal build flag, so this stays entirely transparent to
+// whoever just runs bal build. It is still validated to exist before use,
+// with the same clear-error behavior as the default path.
+//
+// key.Platform is accepted for forward compatibility with cross-compilation
+// but not yet used.
+func ResolveStub(key Key, ballerinaEnvPath, version, overridePath string) (string, error) {
+	if key.Fingerprint != "" {
+		return "", fmt.Errorf("native Go dependencies are not yet supported by bal build")
+	}
+
+	stubPath := overridePath
+	if stubPath == "" {
+		name := balrtStubName
+		if goruntime.GOOS == "windows" {
+			name += ".exe"
+		}
+		stubPath = filepath.Join(ballerinaEnvPath, runtimeStubDirName, version, name)
+	}
+
+	if info, err := os.Stat(stubPath); err == nil && !info.IsDir() {
+		return stubPath, nil
+	}
+	if overridePath != "" {
+		return "", fmt.Errorf("runner stub not found at %s (overridden via RuntimeStubPath at bal's build time)", stubPath)
+	}
+	return "", fmt.Errorf(
+		"runner stub not found at %s; build and place it there before running bal build "+
+			"(go build -o %s ./cli/cmd/balrt, from the ballerina-lang-go module root)",
+		stubPath, stubPath)
+}
 
 // Pack writes a self-contained Ballerina executable to outPath.
 //
@@ -153,6 +239,33 @@ func TryLoad() ([]*bir.BIRPackage, semtypes.Env, error) {
 		return nil, nil, fmt.Errorf("corrupt embedded program: %w", err)
 	}
 	return pkgs, tyEnv, nil
+}
+
+// Run initializes and executes the given BIR packages against a fresh
+// runtime, blocking until the program's listening phase ends. It returns the
+// process exit code the caller should exit with (0 on success).
+//
+// Shared by bal's main() (embedded-program fast path) and balrt's main() (its
+// only path) so the two never drift on how a compiled Ballerina program is
+// actually run.
+func Run(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env) int {
+	pal, cleanupSignals := palnative.NewPlatform()
+	defer cleanupSignals()
+
+	rt := runtime.NewRuntime(pal, tyEnv)
+	var initErr error
+	for _, pkg := range birPkgs {
+		if err := rt.Init(*pkg); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			initErr = err
+			break
+		}
+	}
+	rt.Listen()
+	if initErr != nil {
+		return 1
+	}
+	return int(<-rt.ExitStatus)
 }
 
 func marshalPayload(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env) ([]byte, error) {

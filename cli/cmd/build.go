@@ -33,6 +33,15 @@ import (
 
 const binSubdir = "bin"
 
+// RuntimeStubPath overrides the default <ballerina-env>/runtime/<version>
+// runner-stub lookup (executable.ResolveStub) when non-empty. It is set via
+// -ldflags at bal's own build time (e.g. -X main.RuntimeStubPath=/custom/path),
+// the same mechanism as Version (see version.go) — not a bal build flag, so
+// the stub's location stays transparent to whoever just runs bal build. Only
+// whoever builds/packages bal itself would ever set this, e.g. to match a
+// non-default installation layout.
+var RuntimeStubPath = ""
+
 type buildOptions struct {
 	dumpTokens    bool
 	dumpST        bool
@@ -202,8 +211,15 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		outPath = filepath.Join(absPath, projects.TargetDir, binSubdir, pkgName)
 	}
 
-	// Use the currently running bal binary as the runner stub.
-	stubPath, err := os.Executable()
+	// Resolve the slim runner stub to embed the payload into. Fingerprint is
+	// empty until native-Go-dependency detection lands (see
+	// migration-docs/specs/build-command-architecture.md) — every build
+	// today looks up the installer-provided stub; no Go toolchain involved.
+	// RuntimeStubPath (set via -ldflags at bal's own build time, not a bal
+	// build flag) overrides the default <ballerina-env>/runtime/<version>
+	// lookup, so the predefined layout can change later without breaking a
+	// packager who already pins an explicit path.
+	stubPath, err := executable.ResolveStub(executable.Key{Platform: executable.HostPlatform()}, ballerinaEnvPath, Version, RuntimeStubPath)
 	if err != nil {
 		return buildError(stderr, "cannot locate runner stub: %w", err)
 	}

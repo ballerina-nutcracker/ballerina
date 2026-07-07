@@ -14,6 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// Command balrt is a slim runtime-only Ballerina executable: it embeds the
+// interpreter and all lib/rt native packages, but none of the compiler,
+// parser, semantic analysis, or CLI code that "bal" carries. It has no
+// standalone purpose — it only exists to be the stub that "bal build" embeds
+// a compiled program's BIR payload into (see
+// cli/internal/executable.ResolveStub), producing a smaller artifact than
+// using the full "bal" binary as the stub.
 package main
 
 import (
@@ -21,37 +28,18 @@ import (
 	"os"
 
 	"ballerina-lang-go/cli/internal/executable"
-
-	"github.com/spf13/cobra"
+	_ "ballerina-lang-go/lib/rt"
 )
 
-var rootCmd = &cobra.Command{
-	Use:           "bal",
-	Short:         "The build system and package manager of Ballerina",
-	Long:          `The build system and package manager of Ballerina`,
-	SilenceUsage:  true,
-	SilenceErrors: true,
-}
-
 func main() {
-	// Check whether this binary is a compiled Ballerina program (produced by
-	// bal build). If so, run the embedded BIR directly and skip the CLI.
 	birPkgs, tyEnv, err := executable.TryLoad()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ballerina:", err)
 		os.Exit(1)
 	}
-	if birPkgs != nil {
-		os.Exit(executable.Run(birPkgs, tyEnv))
-	}
-
-	rootCmd.AddCommand(newCmd)
-	rootCmd.AddCommand(runCmd)
-	rootCmd.AddCommand(packCmd)
-	rootCmd.AddCommand(buildCmd)
-	rootCmd.AddCommand(versionCmd)
-
-	if err := rootCmd.Execute(); err != nil {
+	if birPkgs == nil {
+		fmt.Fprintln(os.Stderr, "ballerina: balrt only runs compiled Ballerina executables produced by bal build")
 		os.Exit(1)
 	}
+	os.Exit(executable.Run(birPkgs, tyEnv))
 }
