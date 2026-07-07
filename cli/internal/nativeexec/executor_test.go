@@ -23,6 +23,7 @@ import (
 )
 
 func TestAppendNativeMode_AddsWhenAbsent(t *testing.T) {
+	t.Parallel()
 	env := []string{"HOME=/root", "PATH=/usr/bin"}
 	result := AppendNativeMode(env)
 	if !slices.Contains(result, "BAL_NATIVE=1") {
@@ -36,6 +37,7 @@ func TestAppendNativeMode_AddsWhenAbsent(t *testing.T) {
 }
 
 func TestAppendNativeMode_ReplacesExisting(t *testing.T) {
+	t.Parallel()
 	env := []string{"BAL_NATIVE=0", "HOME=/root"}
 	result := AppendNativeMode(env)
 	count := 0
@@ -53,6 +55,7 @@ func TestAppendNativeMode_ReplacesExisting(t *testing.T) {
 }
 
 func TestAppendNativeMode_NilEnv(t *testing.T) {
+	t.Parallel()
 	result := AppendNativeMode(nil)
 	if !slices.Contains(result, "BAL_NATIVE=1") {
 		t.Errorf("BAL_NATIVE=1 not found for nil input: %v", result)
@@ -60,6 +63,7 @@ func TestAppendNativeMode_NilEnv(t *testing.T) {
 }
 
 func TestAppendNativeMode_DoesNotMutateOriginal(t *testing.T) {
+	t.Parallel()
 	original := []string{"HOME=/root"}
 	AppendNativeMode(original)
 	for _, e := range original {

@@ -1,11 +1,11 @@
 ---
 name: stdlib-readme-format
-description: Authoritative format contract for `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md` files. Use when creating or updating any stdlib README, or when auditing an existing one for consistency.
+description: Authoritative format contract for `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md` files. Use when creating or updating any stdlib README, or when auditing an existing one for consistency.
 ---
 
 # stdlib README Format
 
-This skill defines the exact structure and rules for every `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md`. It can be invoked standalone to audit or fix an existing README, or embedded in another workflow (e.g. `add-stdlib-support`, `fill-stdlib-gap`) when writing a new one.
+This skill defines the exact structure and rules for every `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md`. It can be invoked standalone to audit or fix an existing README, or embedded in another workflow (e.g. `add-stdlib-support`, `fill-stdlib-gap`) when writing a new one.
 
 ## Template
 
@@ -110,9 +110,9 @@ Run this checklist against every README before saving. Every item must be YES.
 
 These existing READMEs already conform — useful for cross-reference when in doubt:
 
-- `lib/stdlibs/ballerina/io/0.0.1/go1.2/README.md` — multi-section coverage (print, file I/O, channels), one **Notable Behavioural Change** (`fileWriteJson` key ordering).
-- `lib/stdlibs/ballerina/time/0.0.1/go1.2/README.md` — parity-heavy library with multiple documented divergences.
-- `lib/stdlibs/ballerina/url/0.0.1/go1.2/README.md` — minimal stdlib README (good template for small surface).
+- `lib/stdlibs/ballerina/io/0.0.1/go1.26/README.md` — multi-section coverage (print, file I/O, channels), one **Notable Behavioural Change** (`fileWriteJson` key ordering).
+- `lib/stdlibs/ballerina/time/0.0.1/go1.26/README.md` — parity-heavy library with multiple documented divergences.
+- `lib/stdlibs/ballerina/url/0.0.1/go1.26/README.md` — minimal stdlib README (good template for small surface).
 
 ## Top-level summary aggregator
 

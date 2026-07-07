@@ -369,7 +369,7 @@ func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRo
 	return nil
 }
 
-// reexecWithNativeRunner checks whether any resolved dependency has Go-native
+// execWithNativeRunner checks whether any resolved dependency has Go-native
 // sources. If so, it builds a custom interpreter that embeds those sources and
 // re-executes the current command via that binary. On success this function never
 // returns — it calls os.Exit after the child process finishes.

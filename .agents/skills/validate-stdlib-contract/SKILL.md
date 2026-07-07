@@ -34,8 +34,8 @@ Ask the user for the path to the corresponding jBallerina **library implementati
 Then locate:
 
 - **jBallerina public API** — `.bal` files under `<root>/ballerina/` (exclude `tests/` and `build/`).
-- **Go implementation** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/*.bal`.
-- **Support matrix** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md`, the "Go Native Interpreter Support Status" table.
+- **Go implementation** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/*.bal`.
+- **Support matrix** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md`, the "Go Native Interpreter Support Status" table.
 
 Stop and ask if any of these is missing. If the Go module does not exist at all, this is a porting task — redirect to `add-stdlib-support`.
 
@@ -60,7 +60,7 @@ Ignore private declarations and `= external` plumbing — they are not part of t
 
 ## 3. Extract the Go public surface
 
-Run the same enumeration over `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/*.bal`.
+Run the same enumeration over `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/*.bal`.
 
 ## 4. Determine validation scope from the support matrix
 
@@ -97,7 +97,7 @@ So 🔵 covers both interpreter-limitation divergences and `Cannot Support` runt
 
 ## 7. Write the report
 
-Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/CONTRACT_VALIDATION.md`, summary-first, problems up top, not technically deep:
+Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/CONTRACT_VALIDATION.md`, summary-first, problems up top, not technically deep:
 
 ```markdown
 # Public Contract Validation — ballerina/<name>
@@ -107,7 +107,7 @@ Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/CONTRACT_VALIDATION.md`, summary
 
 ## Scope
 - jBallerina reference: <path> (commit/version if known)
-- Go implementation: lib/stdlibs/ballerina/<name>/0.0.1/go1.2/
+- Go implementation: lib/stdlibs/ballerina/<name>/0.0.1/go1.26/
 - Compared: public functions, types, constants, enums, classes, annotations, listeners
 - Enforcement scope: Supported / Partially Supported / Cannot Support rows (presence + signature). Not Yet Supported is out of scope.
 
