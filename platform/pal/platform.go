@@ -26,6 +26,7 @@ package pal
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"time"
 )
@@ -54,6 +55,7 @@ type (
 		OS      OS
 		Time    Time
 		HTTP    HTTP
+		Net     Net
 		Signals SignalSource
 	}
 	IO struct {
@@ -91,6 +93,13 @@ type (
 	Time struct {
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
+	}
+	// Net abstracts raw TCP(+TLS) socket dialing for non-HTTP wire protocols
+	// (e.g. ldap). HTTP-based stdlibs must keep using pal.HTTP instead.
+	Net struct {
+		// Dial opens a TCP connection to address, optionally upgrading it to
+		// TLS (tlsCfg != nil) before returning. Reuses TLSConfig from HTTP.
+		Dial func(ctx context.Context, network, address string, tlsCfg *TLSConfig) (net.Conn, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).

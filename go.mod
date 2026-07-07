@@ -19,7 +19,14 @@ require (
 
 require (
 	github.com/cockroachdb/apd/v3 v3.2.3
+	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667
+	github.com/go-ldap/ldap/v3 v3.4.13
 	github.com/sergi/go-diff v1.4.0
 	golang.org/x/term v0.43.0
 	golang.org/x/text v0.37.0
+)
+
+require (
+	github.com/Azure/go-ntlmssp v0.1.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 )

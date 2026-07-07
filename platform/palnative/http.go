@@ -31,7 +31,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -173,45 +172,7 @@ func (l *limitedBodyReadCloser) Close() error { return l.rc.Close() }
 // platform. It builds a *http.Client configured from cfg and wraps it so the
 // runtime sees only the pal.HTTPClient interface.
 func NewHTTPClient(cfg pal.ClientConfig) pal.HTTPClient {
-	tlsConfig := &tls.Config{InsecureSkipVerify: cfg.TLS.InsecureSkipVerify} //nolint:gosec
-	if len(cfg.TLS.CACertPEM) > 0 {
-		pool := x509.NewCertPool()
-		if !pool.AppendCertsFromPEM(cfg.TLS.CACertPEM) {
-			_, _ = fmt.Fprintf(os.Stderr, "ballerina: failed to parse CA certificate PEM (no valid certificates found); custom CA not loaded\n")
-		} else {
-			tlsConfig.RootCAs = pool
-			if !cfg.TLS.InsecureSkipVerify {
-				// Go 1.15+ requires SANs for hostname verification; many self-signed and
-				// Java-issued certs only set the CN field. When a custom CA is provided
-				// we do our own verification so CN-only certs are accepted as a fallback.
-				tlsConfig.InsecureSkipVerify = true //nolint:gosec
-				tlsConfig.VerifyConnection = tlsVerifyConnectionWithCNFallback(pool)
-			}
-		}
-	}
-	if len(cfg.TLS.ClientCertPEM) > 0 && len(cfg.TLS.ClientKeyPEM) > 0 {
-		if cert, err := tls.X509KeyPair(cfg.TLS.ClientCertPEM, cfg.TLS.ClientKeyPEM); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "ballerina: tls.X509KeyPair failed (client certificate not loaded): %v\n", err)
-		} else {
-			tlsConfig.Certificates = []tls.Certificate{cert}
-		}
-	}
-	tlsConfig.ServerName = cfg.TLS.ServerName
-	tlsConfig.SessionTicketsDisabled = cfg.TLS.DisableSessionTickets
-	tlsConfig.MinVersion = tls.VersionTLS12 // secure default; overridden below if configured
-	if cfg.TLS.MinVersion != 0 {
-		tlsConfig.MinVersion = cfg.TLS.MinVersion
-	}
-	if cfg.TLS.MaxVersion != 0 {
-		tlsConfig.MaxVersion = cfg.TLS.MaxVersion
-	}
-	if len(cfg.TLS.CipherSuiteNames) > 0 {
-		if resolved := resolveCipherSuites(cfg.TLS.CipherSuiteNames); len(resolved) > 0 {
-			tlsConfig.CipherSuites = resolved
-		} else {
-			fmt.Fprintf(os.Stderr, "warning: no valid cipher suites resolved from cfg.TLS.CipherSuiteNames %v; keeping secure defaults\n", cfg.TLS.CipherSuiteNames)
-		}
-	}
+	tlsConfig := buildTLSConfig(cfg.TLS)
 	// Build a net.Dialer with a configurable connect timeout.
 	// TCP keep-alive is disabled (KeepAlive:-1) to match jBallerina's default
 	// socketConfig.keepAlive=false; HTTP-level connection reuse is handled by the Transport pool.

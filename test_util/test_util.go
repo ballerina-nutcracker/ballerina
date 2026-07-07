@@ -482,6 +482,9 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 				return &stubHTTPClient{}
 			},
 		},
+		Net: pal.Net{
+			Dial: palnative.Dial,
+		},
 		Signals: func() pal.SignalSource {
 			src, _, _ := NewTestSignalSource(nil, TestSignalTimeout)
 			return src

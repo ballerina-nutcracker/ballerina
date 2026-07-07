@@ -16,6 +16,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [file](file/0.0.1/go1.2/README.md) | 20 | 0 | 0 | 95% |
 | [http](http/0.0.1/go1.2/README.md) | 24 | 2 | 46 | 33% |
 | [io](io/0.0.1/go1.2/README.md) | 14 | 1 | 11 | 54% |
+| [ldap](ldap/0.0.1/go1.2/README.md) | 15 | 2 | 0 | 83% |
 | [log](log/0.0.1/go1.2/README.md) | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.2/README.md) | 5 | 0 | 0 | 100% |
 | [mime](mime/0.0.1/go1.2/README.md) | 13 | 1 | 2 | 81% |
@@ -24,7 +25,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
-| **Total** | **176** | **11** | **81** | **65%** |
+| **Total** | **191** | **13** | **81** | **67%** |
 
 ## Notable Behavioural Changes
 
@@ -53,6 +54,13 @@ tables instead.
 ### io
 
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
+
+### ldap
+
+- **Corrected result-code strings for two operation statuses.** jBallerina derives `resultCode` from the underlying LDAP SDK's free-text display name, which for two codes doesn't actually match the declared `Status` enum literal (`StrongAuthRequired` renders as `"STRONG AUTH REQUIRED"` instead of `Status`'s `"STRONGER AUTH REQUIRED"`, and `NotAllowedOnNonLeaf` renders with a hyphen instead of `Status`'s space-separated `"NOT ALLOWED ON NON LEAF"`); the Go-native version emits the string that matches the declared `Status` enum literal for both codes.
+- **Client-side connection failures map to `OTHER`.** LDAP result codes that only ever originate client-side (e.g. connection timeouts, connect failures) have no dedicated `Status` member in either implementation; the Go-native version reports these as `OTHER` rather than an arbitrary unmatched string.
+- **TLS version constraints are connection-scoped.** jBallerina configures `tlsVersions` as a JVM-wide static setting shared by every LDAP connection in the process; the Go-native version scopes it to the individual connection, which is more correct but means concurrent connections with different `tlsVersions` no longer interfere with each other.
+- **A control with no value renders as an empty string instead of failing.** jBallerina's control-to-record conversion unconditionally dereferences the control's value and throws if one is absent; the Go-native version treats a valueless control as an empty string.
 
 ### log
 

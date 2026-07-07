@@ -33,6 +33,7 @@ import (
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/file/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/io/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/ldap/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/log/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/mime/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/os/0.0.1/go1.2/native"
