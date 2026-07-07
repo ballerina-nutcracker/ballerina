@@ -95,7 +95,6 @@ func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolu
 
 func writeBalaToml(zw *zip.Writer, pkg *Package) error {
 	manifest := pkg.Manifest()
-	exports := manifest.ExportedModules()
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "[bala]\n")
@@ -107,12 +106,6 @@ func writeBalaToml(zw *zip.Writer, pkg *Package) error {
 	fmt.Fprintf(&b, "language_spec_version  = %q\n", balaLanguageSpecVersion)
 	fmt.Fprintf(&b, "platform               = %q\n", BalaPlatformAny)
 
-	for _, mod := range pkg.Modules() {
-		modName := mod.ModuleName().String()
-		fmt.Fprintf(&b, "\n[[modules]]\nname   = %q\nexport = %t\n",
-			modName, slices.Contains(exports, modName))
-	}
-
 	return writeZipEntry(zw, BalaTomlFile, []byte(b.String()))
 }
 
@@ -121,7 +114,19 @@ func copyBallerinaToml(zw *zip.Writer, pkg *Package) error {
 	if bt == nil {
 		return fmt.Errorf("writeBala: package has no Ballerina.toml")
 	}
-	return writeZipEntry(zw, BallerinaTomlFile, []byte(bt.Content()))
+
+	manifest := pkg.Manifest()
+	exports := manifest.ExportedModules()
+
+	var b strings.Builder
+	b.WriteString(bt.Content())
+	for _, mod := range pkg.Modules() {
+		modName := mod.ModuleName().String()
+		fmt.Fprintf(&b, "\n[[modules]]\nname   = %q\nexport = %t\n",
+			modName, slices.Contains(exports, modName))
+	}
+
+	return writeZipEntry(zw, BallerinaTomlFile, []byte(b.String()))
 }
 
 // writeDependenciesToml emits Dependencies.toml into zw: a lock file with one
