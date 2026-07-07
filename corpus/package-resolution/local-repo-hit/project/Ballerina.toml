@@ -1,0 +1,10 @@
+[package]
+org = "testorg"
+name = "localrepoconsumer"
+version = "0.1.0"
+
+[[dependency]]
+org = "mockorg"
+name = "localpkg"
+version = "1.0.0"
+repository = "local"

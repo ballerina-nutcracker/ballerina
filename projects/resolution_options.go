@@ -63,6 +63,7 @@ func (o ResolutionOptions) WithDisableCache(disableCache bool) ResolutionOptions
 type ResolutionRequest struct {
 	descriptor PackageDescriptor
 	scope      PackageDependencyScope
+	repo       string // non-empty routes resolution to the user-specified custom repo (e.g., "local"); empty uses the default chain
 }
 
 // NewResolutionRequest creates a resolution request for a package descriptor.
@@ -81,11 +82,24 @@ func NewResolutionRequestWithScope(descriptor PackageDescriptor, scope PackageDe
 	}
 }
 
+// newResolutionRequestWithRepository builds a request routed to a user-specified
+// custom repository. An empty repo string falls back to NewResolutionRequest.
+func newResolutionRequestWithRepository(descriptor PackageDescriptor, repo string) ResolutionRequest {
+	return ResolutionRequest{
+		descriptor: descriptor,
+		scope:      PackageDependencyScopeDefault,
+		repo:       repo,
+	}
+}
+
 // Descriptor returns the package descriptor being requested.
 func (r ResolutionRequest) Descriptor() PackageDescriptor { return r.descriptor }
 
 // Scope returns the dependency scope.
 func (r ResolutionRequest) Scope() PackageDependencyScope { return r.scope }
+
+// repository returns the user-specified custom repository, or empty if unset.
+func (r ResolutionRequest) repository() string { return r.repo }
 
 // Org returns the package organization.
 func (r ResolutionRequest) Org() PackageOrg { return r.descriptor.Org() }

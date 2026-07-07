@@ -1,0 +1,10 @@
+[package]
+org = "testorg"
+name = "hierarchicalconsumer"
+version = "0.1.0"
+
+[[dependency]]
+org = "mockorg"
+name = "foo.bar"
+version = "1.0.0"
+repository = "local"

@@ -139,14 +139,15 @@ func (l *ProjectLoader) createWorkspaceEnvironment(cfg ProjectLoadConfig, worksp
 	// Build repository list: workspace repo first, then default repos
 	repos := []Repository{workspaceRepo}
 
-	// Add default repositories (local cache, etc.)
-	defaultRepos := l.getDefaultRepositories(cfg)
+	defaultRepos, customRepos := l.getDefaultRepositories(cfg)
 	repos = append(repos, defaultRepos...)
 
-	return NewProjectEnvironmentBuilder(l.projectFs).
+	env := NewProjectEnvironmentBuilder(l.projectFs).
 		WithRepositories(repos).
 		WithBuildOptions(buildOpts).
 		Build()
+	env.setCustomRepos(customRepos)
+	return env
 }
 
 // prependBundledRepositories ensures the binary-baked repositories (lang and
@@ -157,23 +158,25 @@ func prependBundledRepositories(repos []Repository) []Repository {
 	return append(bundledRepositories(), repos...)
 }
 
-// getDefaultRepositories returns the default repositories based on config.
-func (l *ProjectLoader) getDefaultRepositories(cfg ProjectLoadConfig) []Repository {
-	if len(cfg.Repositories) > 0 {
-		return prependBundledRepositories(cfg.Repositories)
-	}
-
+// getDefaultRepositories returns the default repository chain (cfg.Repositories
+// when set, otherwise derived from homeFs) and the custom-repo registry
+// (always derived from homeFs).
+func (l *ProjectLoader) getDefaultRepositories(cfg ProjectLoadConfig) ([]Repository, map[string]Repository) {
 	homeFs := l.ballerinaEnvFs
 	if homeFs == nil {
-		// Default to project-local .ballerina directory
 		if subFs, err := fs.Sub(l.projectFs, ".ballerina"); err == nil {
 			homeFs = subFs
 		}
 	}
+	customRepos := map[string]Repository{}
+	var chain []Repository
 	if homeFs != nil {
-		return defaultRepositories(homeFs)
+		chain, customRepos = defaultRepositories(homeFs)
 	}
-	return nil
+	if cfg.Repositories != nil {
+		return cfg.Repositories, customRepos
+	}
+	return chain, customRepos
 }
 
 // createEnvironmentWithRepositories creates an Environment with all repositories configured upfront.
@@ -191,27 +194,14 @@ func (l *ProjectLoader) getDefaultRepositories(cfg ProjectLoadConfig) []Reposito
 //     <project-path>/.ballerina for build projects and
 //     <file-path-parent>/.ballerina for single-file projects.
 func (l *ProjectLoader) createEnvironmentWithRepositories(cfg ProjectLoadConfig, buildOpts BuildOptions) *Environment {
-	repos := cfg.Repositories
-	if len(repos) > 0 {
-		repos = prependBundledRepositories(repos)
-	}
+	repos, customRepos := l.getDefaultRepositories(cfg)
 
-	if len(repos) == 0 {
-		homeFs := l.ballerinaEnvFs
-		if homeFs == nil {
-			if subFs, err := fs.Sub(l.projectFs, ".ballerina"); err == nil {
-				homeFs = subFs
-			}
-		}
-		if homeFs != nil {
-			repos = defaultRepositories(homeFs)
-		}
-	}
-
-	return NewProjectEnvironmentBuilder(l.projectFs).
+	env := NewProjectEnvironmentBuilder(l.projectFs).
 		WithRepositories(repos).
 		WithBuildOptions(buildOpts).
 		Build()
+	env.setCustomRepos(customRepos)
+	return env
 }
 
 // mergeManifestAndCLIBuildOptions returns BuildOptions whose values are the
