@@ -142,4 +142,66 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     io:println(check crypto:verifySha256withEcdsaSignature(data, e256, ecPub)); // @output true
     byte[] e384 = check crypto:signSha384withEcdsa(data, ecPk);
     io:println(check crypto:verifySha384withEcdsaSignature(data, e384, ecPub)); // @output true
+
+    // --- RSA encrypt using a private key (the PrivateKey|PublicKey key parameter
+    // permits either); decrypt with the same private key. ---
+    byte[] ctPriv = check crypto:encryptRsaEcb(data, rsaPk);
+    io:println(check crypto:decryptRsaEcb(ctPriv, rsaPk) == data); // @output true
+
+    // Decrypting malformed ciphertext fails.
+    byte[]|crypto:Error decErr = crypto:decryptRsaEcb(data, rsaPk);
+    io:println(decErr is crypto:Error); // @output true
+
+    // Decrypting with a public key (rather than the private key) is rejected.
+    byte[]|crypto:Error decPubErr = crypto:decryptRsaEcb(ct, rsaPub);
+    io:println(decPubErr is crypto:Error); // @output true
+
+    // A PSS signature over different data does not verify.
+    io:println(check crypto:verifyRsaSsaPss256Signature([9, 9, 9], sPss, rsaPub)); // @output false
+
+    // --- Passing a key of the wrong algorithm is rejected on every sign/verify. ---
+    byte[]|crypto:Error rsaSignEc = crypto:signRsaSha256(data, ecPk);
+    io:println(rsaSignEc is crypto:Error);                                        // @output true
+    boolean|crypto:Error rsaVerifyEc = crypto:verifyRsaSha256Signature(data, s256, ecPub);
+    io:println(rsaVerifyEc is crypto:Error);                                      // @output true
+    byte[]|crypto:Error pssSignEc = crypto:signRsaSsaPss256(data, ecPk);
+    io:println(pssSignEc is crypto:Error);                                        // @output true
+    boolean|crypto:Error pssVerifyEc = crypto:verifyRsaSsaPss256Signature(data, sPss, ecPub);
+    io:println(pssVerifyEc is crypto:Error);                                      // @output true
+    byte[]|crypto:Error ecSignRsa = crypto:signSha256withEcdsa(data, rsaPk);
+    io:println(ecSignRsa is crypto:Error);                                        // @output true
+    boolean|crypto:Error ecVerifyRsa = crypto:verifySha256withEcdsaSignature(data, e256, rsaPub);
+    io:println(ecVerifyRsa is crypto:Error);                                      // @output true
+
+    // --- Key/cert decoding error paths. ---
+    // Missing files.
+    crypto:PrivateKey|crypto:Error rsaKeyMissing = crypto:decodeRsaPrivateKeyFromKeyFile("/tmp/bal_no_such.pem");
+    io:println(rsaKeyMissing is crypto:Error);                                    // @output true
+    crypto:PrivateKey|crypto:Error ecKeyMissing = crypto:decodeEcPrivateKeyFromKeyFile("/tmp/bal_no_such.pem");
+    io:println(ecKeyMissing is crypto:Error);                                     // @output true
+    crypto:PublicKey|crypto:Error rsaCertMissing = crypto:decodeRsaPublicKeyFromCertFile("/tmp/bal_no_such.pem");
+    io:println(rsaCertMissing is crypto:Error);                                   // @output true
+    crypto:PublicKey|crypto:Error ecCertMissing = crypto:decodeEcPublicKeyFromCertFile("/tmp/bal_no_such.pem");
+    io:println(ecCertMissing is crypto:Error);                                    // @output true
+
+    // Decoding a key/cert of the wrong algorithm.
+    crypto:PrivateKey|crypto:Error ecAsRsaKey = crypto:decodeRsaPrivateKeyFromKeyFile("/tmp/bal_ec_key.pem");
+    io:println(ecAsRsaKey is crypto:Error);                                       // @output true
+    crypto:PrivateKey|crypto:Error rsaAsEcKey = crypto:decodeEcPrivateKeyFromKeyFile("/tmp/bal_rsa_key.pem");
+    io:println(rsaAsEcKey is crypto:Error);                                       // @output true
+    crypto:PublicKey|crypto:Error ecAsRsaCert = crypto:decodeRsaPublicKeyFromCertFile("/tmp/bal_ec_cert.pem");
+    io:println(ecAsRsaCert is crypto:Error);                                      // @output true
+    crypto:PublicKey|crypto:Error rsaAsEcCert = crypto:decodeEcPublicKeyFromCertFile("/tmp/bal_rsa_cert.pem");
+    io:println(rsaAsEcCert is crypto:Error);                                      // @output true
+
+    // Decoding from unparsable content.
+    byte[] junk = [1, 2, 3];
+    crypto:PrivateKey|crypto:Error junkKey = crypto:decodeRsaPrivateKeyFromContent(junk);
+    io:println(junkKey is crypto:Error);                                          // @output true
+    byte[] ecKeyBytes = check io:fileReadBytes("/tmp/bal_ec_key.pem");
+    crypto:PrivateKey|crypto:Error ecAsRsaContent = crypto:decodeRsaPrivateKeyFromContent(ecKeyBytes);
+    io:println(ecAsRsaContent is crypto:Error);                                   // @output true
+    byte[] ecCertBytes = check io:fileReadBytes("/tmp/bal_ec_cert.pem");
+    crypto:PublicKey|crypto:Error ecAsRsaCertContent = crypto:decodeRsaPublicKeyFromContent(ecCertBytes);
+    io:println(ecAsRsaCertContent is crypto:Error);                               // @output true
 }

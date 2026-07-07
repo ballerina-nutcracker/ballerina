@@ -58,10 +58,7 @@ func bytesToList(byteArrTy semtypes.SemType, ctx *extern.Context, data []byte) *
 
 // mapString reads a string field from a Ballerina Map.
 func mapString(m *values.Map, key string) string {
-	v, ok := m.Get(key)
-	if !ok {
-		return ""
-	}
+	v, _ := m.Get(key)
 	s, _ := v.(string)
 	return s
 }

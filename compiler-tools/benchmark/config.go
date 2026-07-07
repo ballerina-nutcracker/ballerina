@@ -22,10 +22,18 @@ import (
 	"os"
 )
 
+type benchmarkMode string
+
+const (
+	timeMode   benchmarkMode = "time"
+	memoryMode benchmarkMode = "memory"
+)
+
 type config struct {
 	baseRef    string
 	headRef    string
 	target     string
+	mode       benchmarkMode
 	warmup     int
 	runs       int
 	exportPath string
@@ -38,6 +46,7 @@ func parseConfig() (*config, error) {
 		fs.PrintDefaults()
 	}
 
+	mode := fs.String("mode", string(timeMode), "Benchmark mode: time or memory")
 	warmup := fs.Int("warmup", 4, "Number of warmup iterations")
 	runs := fs.Int("runs", 10, "Number of benchmark runs")
 	exportPath := fs.String("export-html", "", "Path to export HTML report")
@@ -56,6 +65,7 @@ func parseConfig() (*config, error) {
 		baseRef:    args[0],
 		headRef:    args[1],
 		target:     args[2],
+		mode:       benchmarkMode(*mode),
 		warmup:     *warmup,
 		runs:       *runs,
 		exportPath: *exportPath,
@@ -75,6 +85,12 @@ func (c *config) validate() error {
 	}
 	if _, err := os.Stat(c.target); os.IsNotExist(err) {
 		return fmt.Errorf("target does not exist: %s", c.target)
+	}
+	if c.mode == "" {
+		c.mode = timeMode
+	}
+	if c.mode != timeMode && c.mode != memoryMode {
+		return fmt.Errorf("mode must be one of: %s, %s", timeMode, memoryMode)
 	}
 	if c.warmup < 0 {
 		return fmt.Errorf("warmup must be non-negative")

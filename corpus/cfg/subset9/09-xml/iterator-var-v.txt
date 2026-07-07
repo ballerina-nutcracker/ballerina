@@ -1,0 +1,51 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable element (type
+        (user-defined-type xml Element)) (expr
+        (xml-element-literal e))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref element)
+    (var-def
+      (variable item))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable typed (type
+        (user-defined-type xml Element)) (expr
+        (simple-var-ref item))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref typed))))
+  )
+  (bb3 (bb1) (bb4)
+    (var-def
+      (variable elementOrText (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (union-type
+            (user-defined-type xml Element)
+            (user-defined-type xml Text)))) (expr
+        (xml-sequence-literal
+          (xml-element-literal e)
+          (xml-text-literal text)))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref elementOrText)
+    (var-def
+      (variable item))
+  )
+  (bb5 (bb4) (bb4)
+    (var-def
+      (variable typed (type
+        (union-type
+          (user-defined-type xml Element)
+          (user-defined-type xml Text))) (expr
+        (simple-var-ref item))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref typed))))
+  )
+  (bb6 (bb4) ())
+)

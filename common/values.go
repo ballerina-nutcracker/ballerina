@@ -54,12 +54,6 @@ func OptionalEmpty[T any]() Optional[T] {
 	}
 }
 
-func Assert(condition bool) {
-	if !condition {
-		panic("Assertion failed")
-	}
-}
-
 func PointerEqualToValue[T comparable](ptr any, value T) bool {
 	if val, ok := ptr.(T); ok {
 		return val == value

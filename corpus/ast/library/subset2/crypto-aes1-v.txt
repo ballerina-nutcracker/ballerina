@@ -269,4 +269,198 @@
         (invocation io println (
           (type-test-expr is
             (simple-var-ref sizeErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable cbcDecErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesCbc (
+            (simple-var-ref cbc)
+            (simple-var-ref badKey)
+            (simple-var-ref iv))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref cbcDecErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecbDecErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesEcb (
+            (simple-var-ref ecb)
+            (simple-var-ref badKey))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecbDecErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecbSizeErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesEcb (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))
+            (simple-var-ref key))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecbSizeErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecbPadErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesEcb (
+            (simple-var-ref zeros)
+            (simple-var-ref key))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecbPadErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable emptyErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesCbc (
+            (list-constructor-expr)
+            (simple-var-ref key)
+            (simple-var-ref iv))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref emptyErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable gcmEncTagErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto encryptAesGcm (
+            (simple-var-ref plaintext)
+            (simple-var-ref key)
+            (simple-var-ref iv12)
+            (simple-var-ref crypto NONE)
+            (literal 48))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref gcmEncTagErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable gcmDecTagErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesGcm (
+            (simple-var-ref gcm)
+            (simple-var-ref key)
+            (simple-var-ref iv12)
+            (simple-var-ref crypto NONE)
+            (literal 48))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref gcmDecTagErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable gcmEncCombo (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto encryptAesGcm (
+            (simple-var-ref plaintext)
+            (simple-var-ref key)
+            (simple-var-ref iv)
+            (simple-var-ref crypto NONE)
+            (literal 96))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref gcmEncCombo)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable gcmDecCombo (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesGcm (
+            (simple-var-ref gcm)
+            (simple-var-ref key)
+            (simple-var-ref iv)
+            (simple-var-ref crypto NONE)
+            (literal 96))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref gcmDecCombo)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable gcmDecKeyErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesGcm (
+            (simple-var-ref gcm)
+            (simple-var-ref badKey)
+            (simple-var-ref iv12))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref gcmDecKeyErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable key2 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 15)
+            (literal 14)
+            (literal 13)
+            (literal 12)
+            (literal 11)
+            (literal 10)
+            (literal 9)
+            (literal 8)
+            (literal 7)
+            (literal 6)
+            (literal 5)
+            (literal 4)
+            (literal 3)
+            (literal 2)
+            (literal 1)
+            (literal 0)))))
+      (var-def
+        (variable gcmAuthErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptAesGcm (
+            (simple-var-ref gcm)
+            (simple-var-ref key2)
+            (simple-var-ref iv12))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref gcmAuthErr)
             (user-defined-type crypto Error))))))))
