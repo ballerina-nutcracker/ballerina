@@ -27,6 +27,7 @@ import (
 )
 
 func TestVersionAtLeast(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		a, b string
 		want bool
@@ -50,6 +51,7 @@ func TestVersionAtLeast(t *testing.T) {
 }
 
 func TestModuleDirName(t *testing.T) {
+	t.Parallel()
 	cases := []struct{ in, want string }{
 		{"ballerinax/redis-native", "ballerinax_redis-native"},
 		{"a/b/c", "a_b_c"},
@@ -65,6 +67,7 @@ func TestModuleDirName(t *testing.T) {
 }
 
 func TestWriteNativeFiles_CopiesGoFiles(t *testing.T) {
+	t.Parallel()
 	srcFS := fstest.MapFS{
 		"main.go":       {Data: []byte("package main\n")},
 		"sub/helper.go": {Data: []byte("package sub\n")},
@@ -89,6 +92,7 @@ func TestWriteNativeFiles_CopiesGoFiles(t *testing.T) {
 }
 
 func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
+	t.Parallel()
 	interpRoot := t.TempDir()
 	origMod := "module ballerina-lang-go\n\ngo 1.26\n"
 	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), origMod)
@@ -118,6 +122,7 @@ func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
 }
 
 func TestWritePatchedGoMod_MultiplePayloads(t *testing.T) {
+	t.Parallel()
 	interpRoot := t.TempDir()
 	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
 	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
@@ -145,6 +150,7 @@ func TestWritePatchedGoMod_MultiplePayloads(t *testing.T) {
 }
 
 func TestWritePatchedGoMod_WritesPatchedGoSum(t *testing.T) {
+	t.Parallel()
 	interpRoot := t.TempDir()
 	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
 	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "github.com/foo/bar v1.0.0 h1:xxx\n")
@@ -166,6 +172,7 @@ func TestWritePatchedGoMod_WritesPatchedGoSum(t *testing.T) {
 }
 
 func TestWritePatchedGoMod_MissingGoMod(t *testing.T) {
+	t.Parallel()
 	_, err := writePatchedGoMod(t.TempDir(), "/nonexistent/root", nil, t.TempDir())
 	if err == nil {
 		t.Error("expected error when interpreter go.mod is missing")

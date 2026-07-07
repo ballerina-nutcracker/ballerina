@@ -50,6 +50,7 @@ func nativeTestRepoPath(t *testing.T) string {
 // the expected Go source file. This exercises the NativeGoSourceFS path in
 // bala_project.go end-to-end, including the fsys → fs.Sub plumbing.
 func TestNativeGoSourceFS_Pipeline(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -101,6 +102,7 @@ func TestNativeGoSourceFS_Pipeline(t *testing.T) {
 // distinguishable from user-defined native packages, mirroring the
 // isEmbeddedPackage check in cli/cmd/run.go.
 func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 
 	absProjectDir, err := filepath.Abs(filepath.Join(nativeTestDataDir, "native-multi-org-v"))
@@ -170,6 +172,7 @@ func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
 // the first call extracts the embedded source tree to a temp directory, and
 // a second call with the same version skips re-extraction (fast path).
 func TestInterpsrc_ExtractAndCache(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -197,6 +200,7 @@ func TestInterpsrc_ExtractAndCache(t *testing.T) {
 // stderr, confirming that isEmbeddedPackage correctly suppresses spurious
 // native interpreter rebuilds.
 func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
 	}
@@ -221,6 +225,7 @@ func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
 //   - Second run (cache hit): stderr must NOT contain "info: building", confirming
 //     that loadCachedRunner's fingerprint match bypasses the rebuild.
 func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
 	}

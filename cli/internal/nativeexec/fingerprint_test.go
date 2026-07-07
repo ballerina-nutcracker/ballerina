@@ -24,6 +24,7 @@ import (
 )
 
 func TestFingerprintPayloads_Deterministic(t *testing.T) {
+	t.Parallel()
 	p := &GoSourcePayload{
 		GoFiles: fstest.MapFS{"a.go": {Data: []byte("package a")}},
 		Module:  "example.com/a",
@@ -42,6 +43,7 @@ func TestFingerprintPayloads_Deterministic(t *testing.T) {
 }
 
 func TestFingerprintPayloads_OrderIndependent(t *testing.T) {
+	t.Parallel()
 	pa := &GoSourcePayload{
 		GoFiles: fstest.MapFS{"a.go": {Data: []byte("package a")}},
 		Module:  "example.com/a",
@@ -64,6 +66,7 @@ func TestFingerprintPayloads_OrderIndependent(t *testing.T) {
 }
 
 func TestFingerprintPayloads_SeedInfluence(t *testing.T) {
+	t.Parallel()
 	p := &GoSourcePayload{
 		GoFiles: fstest.MapFS{"a.go": {Data: []byte("package a")}},
 		Module:  "example.com/a",
@@ -82,6 +85,7 @@ func TestFingerprintPayloads_SeedInfluence(t *testing.T) {
 }
 
 func TestFingerprintPayloads_ContentChange(t *testing.T) {
+	t.Parallel()
 	p1 := &GoSourcePayload{
 		GoFiles: fstest.MapFS{"a.go": {Data: []byte("package a")}},
 		Module:  "example.com/a",
@@ -104,6 +108,7 @@ func TestFingerprintPayloads_ContentChange(t *testing.T) {
 }
 
 func TestFingerprintPayloads_NonGoFilesIgnored(t *testing.T) {
+	t.Parallel()
 	p1 := &GoSourcePayload{
 		GoFiles: fstest.MapFS{"a.go": {Data: []byte("package a")}},
 		Module:  "example.com/a",
@@ -129,6 +134,7 @@ func TestFingerprintPayloads_NonGoFilesIgnored(t *testing.T) {
 }
 
 func TestFingerprintPayloads_EmptyPayloads(t *testing.T) {
+	t.Parallel()
 	fp, err := FingerprintPayloads(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -139,6 +145,7 @@ func TestFingerprintPayloads_EmptyPayloads(t *testing.T) {
 }
 
 func TestFingerprintPath(t *testing.T) {
+	t.Parallel()
 	got := FingerprintPath("/path/to/bin/bal")
 	want := "/path/to/bin/bal.fingerprint"
 	if got != want {
@@ -147,6 +154,7 @@ func TestFingerprintPath(t *testing.T) {
 }
 
 func TestWriteFingerprint_CreatesFile(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	binPath := filepath.Join(dir, "bal")
 
@@ -163,6 +171,7 @@ func TestWriteFingerprint_CreatesFile(t *testing.T) {
 }
 
 func TestWriteFingerprint_Overwrites(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	binPath := filepath.Join(dir, "bal")
 
@@ -179,6 +188,7 @@ func TestWriteFingerprint_Overwrites(t *testing.T) {
 }
 
 func TestWriteFingerprint_MissingDir(t *testing.T) {
+	t.Parallel()
 	err := WriteFingerprint("/nonexistent/dir/bal", "fp")
 	if err == nil {
 		t.Error("expected error for non-existent directory")

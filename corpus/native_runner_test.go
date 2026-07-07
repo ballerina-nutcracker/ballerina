@@ -47,6 +47,7 @@ const nativeTestDataDir = "extern/testdata"
 //   - mockorg/greetpkg   — pure Ballerina, v4 bala format
 //   - mockorg/middlepkg  — pure Ballerina, transitive deps (leafpkg, aaaleafpkg)
 func TestNativeMultiOrgPackages(t *testing.T) {
+	t.Parallel()
 	projectDir := filepath.Join(nativeTestDataDir, "native-multi-org-v")
 	absProjectDir, err := filepath.Abs(projectDir)
 	if err != nil {
