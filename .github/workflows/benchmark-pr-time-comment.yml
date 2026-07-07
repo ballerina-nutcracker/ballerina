@@ -74,10 +74,6 @@ jobs:
                 );
             }
 
-            function fenceText(text) {
-              return text.replace(/```/g, "`\u200b``");
-            }
-
             function section(title, tablePath, errorPath) {
               let table = "";
               try {
@@ -85,9 +81,9 @@ jobs:
               } catch (e) {
                 core.warning(`Failed to extract table for "${title}": ${e.message}`);
               }
-              if (table) return [`## ${title}`, "", "```html", fenceText(table), "```"];
+              if (table) return [`## ${title}`, "", table];
               const error = readIfExists(errorPath);
-              if (error) return [`## ${title}`, "", "```text", fenceText(error.trim()), "```"];
+              if (error) return [`## ${title}`, "", "```text", error.trim(), "```"];
               return [`## ${title}`, "", "```text", "No benchmark output was produced.", "```"];
             }
 
