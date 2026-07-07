@@ -21,18 +21,16 @@
   (bb0 () ()
     (expression-stmt
       (invocation foo (
-        (named-arg stringConfig
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Alice))
-            (key-value
-              (literal city)
-              (literal New York))))
-        (named-arg intConfig
-          (mapping-constructor-expr
-            (key-value
-              (literal count)
-              (literal 2)))))))
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal city)
+            (literal New York)))
+        (mapping-constructor-expr
+          (key-value
+            (literal count)
+            (literal 2))))))
   )
 )

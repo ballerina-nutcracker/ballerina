@@ -43,7 +43,7 @@
         (type-test-expr is
           (invocation io fileWriteString (
             (simple-var-ref noParent)
-            (literal x)))
+            (literal x) <default>))
           (user-defined-type io Error)))))
     (expression-stmt
       (invocation io println (
@@ -51,7 +51,7 @@
           (invocation io fileWriteLines (
             (simple-var-ref noParent)
             (list-constructor-expr
-              (literal x))))
+              (literal x)) <default>))
           (user-defined-type io Error)))))
     (expression-stmt
       (invocation io println (
@@ -60,7 +60,7 @@
             (simple-var-ref noParent)
             (list-constructor-expr
               (literal 1)
-              (literal 2))))
+              (literal 2)) <default>))
           (user-defined-type io Error)))))
     (expression-stmt
       (invocation io println (
@@ -77,7 +77,7 @@
         (type-test-expr is
           (invocation io fileWriteXml (
             (simple-var-ref noParent)
-            (xml-element-literal a)))
+            (xml-element-literal a) <default>))
           (user-defined-type io Error)))))
     (var-def
       (variable badJson (type
@@ -87,7 +87,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref badJson)
-          (literal {not valid json})))))
+          (literal {not valid json}) <default>))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -102,7 +102,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref trailingJson)
-          (literal {"k": 1} extra)))))
+          (literal {"k": 1} extra) <default>))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is

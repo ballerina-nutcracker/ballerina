@@ -1724,30 +1724,19 @@ func analyzeStreamOperation[A analyzer](a A, invocation *ast.BLangInvocation, ex
 	return validateResolvedType(a, invocation, expectedType)
 }
 
-func analyzeDirectInvocation[A analyzer](a A, inv invocable, fnSymbol model.FunctionSymbol, paramListTy, expectedType semtypes.SemType) bool {
-	signature, ok := a.ctx().GetFunctionSignature(inv.ResolvedSymbol())
-	if !ok {
-		a.internalError("function signature not found", inv.GetPosition())
-		return false
-	}
+func analyzeDirectInvocation[A analyzer](a A, inv invocable, _ model.FunctionSymbol, paramListTy, expectedType semtypes.SemType) bool {
 	tyCtx := a.tyCtx()
 	for i, arg := range inv.CallArgs() {
-		switch arg := arg.(type) {
-		case *ast.BLangNamedArgsExpression:
-			name := arg.Name.Value
-			targetIndex, result := signature.Index(name)
-			if result != model.ParamIndexFound {
-				targetIndex = -1
-			}
-			key := semtypes.IntConst(int64(targetIndex))
-			if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
-				return false
-			}
-		default:
-			key := semtypes.IntConst(int64(i))
-			if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
-				return false
-			}
+		if arg == nil {
+			continue
+		}
+		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
+			a.internalError("named argument after call-argument lowering", arg.GetPosition())
+			return false
+		}
+		key := semtypes.IntConst(int64(i))
+		if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
+			return false
 		}
 	}
 
@@ -1758,6 +1747,10 @@ func analyzeLambdaInvocation[A analyzer](a A, invocation *ast.BLangInvocation, p
 	tyCtx := a.tyCtx()
 
 	for i, arg := range invocation.ArgExprs {
+		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
+			a.internalError("named argument after call-argument lowering", arg.GetPosition())
+			return false
+		}
 		key := semtypes.IntConst(int64(i))
 		if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
 			return false

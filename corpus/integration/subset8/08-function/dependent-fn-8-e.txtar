@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: dependently typed function must be external
+  --> dependent-fn-8-e.bal:17:1
+   |
+17 | function nonExternDependent(int val, typedesc retTy = <>) returns retTy { // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |     typedesc _ = retTy;
+   |     ^^^^^^^^^^^^^^^^^^^
+19 |     return val;
+   |     ^^^^^^^^^^^
+20 | }
+   | ^

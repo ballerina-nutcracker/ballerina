@@ -8,7 +8,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref path)
-          (literal First)))))
+          (literal First) <default>))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (

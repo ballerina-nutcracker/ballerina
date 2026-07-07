@@ -34,14 +34,15 @@ main() -> nil{
   }
   bb3 {
     $desugar$0 = %8;
-    %10 = $desugar$0;
-    %11 = ConstantLoad 5
-    %12 = %11;
-    %13 = bar(%10,%12) -> bb4;
+    %10 = ConstantLoad 5
+    $desugar$1 = %10;
+    %12 = $desugar$0;
+    %13 = $desugar$1;
+    %14 = bar(%12,%13) -> bb4;
   }
   bb4 {
-    %14 = %13;
-    %15 = println(%14) -> bb5;
+    %15 = %14;
+    %16 = println(%15) -> bb5;
   }
   bb5 {
     return;

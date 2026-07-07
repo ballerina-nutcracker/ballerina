@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-int y = 0; // @error
-
-function init() { // @error
+function nonExternDependent(int val, typedesc retTy = <>) returns retTy { // @error
+    typedesc _ = retTy;
+    return val;
 }

@@ -20,12 +20,12 @@
     (expression-stmt
       (invocation io println (
         (invocation bar expr:
-          (simple-var-ref f) ()))))
+          (simple-var-ref f) ( <default> <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation bar expr:
           (simple-var-ref f) (
-          (literal 5))))))
+          (literal 5) <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation bar expr:

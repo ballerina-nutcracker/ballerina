@@ -11,7 +11,7 @@
           (list-constructor-expr
             (literal Alpha)
             (literal Beta)
-            (literal Gamma))))))
+            (literal Gamma)) <default>))))
     (var-def
       (variable lines (type
         (array-type
