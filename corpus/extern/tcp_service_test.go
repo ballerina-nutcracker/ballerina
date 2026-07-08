@@ -45,3 +45,10 @@ func TestTcpServiceInline(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-inline-v"), newTcpPal(), nil)
 }
+
+// TestTcpServiceTimeouts exercises Client.readBytes' read-timeout error path
+// against a listener that never writes back.
+func TestTcpServiceTimeouts(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-timeouts-v"), newTcpPal(), nil)
+}

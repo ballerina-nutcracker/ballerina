@@ -159,7 +159,11 @@ service class EchoServer {
 }
 
 listener tcp:Listener tlsListener = new (19393, {
-    secureSocket: {key: {certFile: %q, keyFile: %q}}
+    secureSocket: {
+        key: {certFile: %q, keyFile: %q},
+        protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
+        ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
+    }
 });
 
 function init() returns error? {
@@ -168,7 +172,11 @@ function init() returns error? {
 
 public function testMain() returns error? {
     tcp:Client c = check new ("127.0.0.1", 19393, {
-        secureSocket: {cert: %q}
+        secureSocket: {
+            cert: %q,
+            protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
+            ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
+        }
     });
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
