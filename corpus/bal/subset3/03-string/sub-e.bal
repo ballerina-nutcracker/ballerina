@@ -16,5 +16,5 @@
 
 public function main() {
     string a = "x";
-    string b = a - "y"; // @error
+    string _ = a - "y"; // @error
 }

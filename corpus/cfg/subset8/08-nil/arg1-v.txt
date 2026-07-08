@@ -1,5 +1,9 @@
 (explode
   (bb0 () ()
+    (var-def
+      (variable _ (type
+        (user-defined-type Nothing)) (expr
+        (simple-var-ref n))))
     (return
       (literal 42))
   )

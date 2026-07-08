@@ -20,22 +20,22 @@ import (
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/semtypes"
 )
 
 type Registry struct {
 	birFunctions    map[string]*bir.BIRFunction
 	birClassDefs    map[string]*bir.BIRClassDef
 	nativeFunctions map[string]*ExternFunction
+	runtimeBuiltins map[string]extern.NativeFunc
 	modules         map[string]*BIRModule
-	typeEnv         semtypes.Env
 }
 
-func NewRegistry() *Registry {
+func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
 	return &Registry{
 		birFunctions:    make(map[string]*bir.BIRFunction),
 		birClassDefs:    make(map[string]*bir.BIRClassDef),
 		nativeFunctions: make(map[string]*ExternFunction),
+		runtimeBuiltins: builtins,
 		modules:         make(map[string]*BIRModule),
 	}
 }
@@ -59,6 +59,15 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 				}
 				r.birFunctions[fn.FunctionLookupKey] = fn
 			}
+			for _, entries := range classDef.RTable {
+				for i := range entries {
+					fn := entries[i].Fn
+					if fn.Flags.Has(model.FlagNative) {
+						continue
+					}
+					r.birFunctions[fn.FunctionLookupKey] = fn
+				}
+			}
 		}
 	}
 	if id != nil && !id.IsUnnamed() {
@@ -69,14 +78,6 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 
 func (r *Registry) GetModule(pkgId *model.PackageID) *BIRModule {
 	return r.modules[moduleKey(pkgId)]
-}
-
-func (r *Registry) SetTypeEnv(env semtypes.Env) {
-	r.typeEnv = env
-}
-
-func (r *Registry) GetTypeEnv() semtypes.Env {
-	return r.typeEnv
 }
 
 func (r *Registry) RegisterExternFunction(orgName string, moduleName string, funcName string, impl extern.NativeFunc) {
@@ -107,4 +108,8 @@ func (r *Registry) GetBIRFunction(funcName string) *bir.BIRFunction {
 
 func (r *Registry) GetNativeFunction(funcName string) *ExternFunction {
 	return r.nativeFunctions[funcName]
+}
+
+func (r *Registry) GetRuntimeBuiltin(lookupKey string) extern.NativeFunc {
+	return r.runtimeBuiltins[lookupKey]
 }

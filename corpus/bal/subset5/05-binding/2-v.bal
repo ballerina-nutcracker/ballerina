@@ -21,6 +21,7 @@ function stringFoo(string s) {
 }
 
 function intFoo(int i) {
+    int _ = i;
     io:println("This is integer");
 }
 

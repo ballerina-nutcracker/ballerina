@@ -21,5 +21,7 @@ public function main() {
 }
 
 function foo(int x, int y) {
+        int _ = x;
+        int _ = y;
     return;
-}
+    }

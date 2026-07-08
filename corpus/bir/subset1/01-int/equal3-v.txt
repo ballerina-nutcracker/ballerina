@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %2 = ConstantLoad 17
@@ -11,92 +10,108 @@ main() -> nil{
     b ? bb1 : bb3;
   }
   bb1 {
-    %7 = ConstantLoad 17
-    %8 = %7;
-    %9 = println(%8) -> bb2;
+    PushScopeFrame 3
+    %0 = ConstantLoad 17
+    %1 = %0;
+    %2 = println(%1) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb5;
   }
   bb3 {
-    %10 = ConstantLoad 0
-    %11 = %10;
-    %12 = println(%11) -> bb4;
+    PushScopeFrame 3
+    %0 = ConstantLoad 0
+    %1 = %0;
+    %2 = println(%1) -> bb4;
   }
   bb4 {
+    PopScopeFrame
     GOTO bb5;
   }
   bb5 {
-    %14 = ConstantLoad 21
-    %15 = %14;
-    %16 = ConstantLoad 21
-    %17 = %16;
-    %13 = != %15 %17;
-    b = %13;
+    %8 = ConstantLoad 21
+    %9 = %8;
+    %10 = ConstantLoad 21
+    %11 = %10;
+    %7 = != %9 %11;
+    b = %7;
     b ? bb6 : bb8;
   }
   bb6 {
-    %18 = ConstantLoad 0
-    %19 = %18;
-    %20 = println(%19) -> bb7;
+    PushScopeFrame 3
+    %0 = ConstantLoad 0
+    %1 = %0;
+    %2 = println(%1) -> bb7;
   }
   bb7 {
+    PopScopeFrame
     GOTO bb10;
   }
   bb8 {
-    %21 = ConstantLoad 21
-    %22 = %21;
-    %23 = println(%22) -> bb9;
+    PushScopeFrame 3
+    %0 = ConstantLoad 21
+    %1 = %0;
+    %2 = println(%1) -> bb9;
   }
   bb9 {
+    PopScopeFrame
     GOTO bb10;
   }
   bb10 {
-    %24 = ConstantLoad 42
-    x = %24;
-    %27 = x;
-    %28 = ConstantLoad 42
-    %29 = %28;
-    %26 = == %27 %29;
-    %26 ? bb11 : bb13;
+    %12 = ConstantLoad 42
+    x = %12;
+    %15 = x;
+    %16 = ConstantLoad 42
+    %17 = %16;
+    %14 = == %15 %17;
+    %14 ? bb11 : bb13;
   }
   bb11 {
-    %30 = ConstantLoad 42
-    %31 = %30;
-    %32 = println(%31) -> bb12;
+    PushScopeFrame 3
+    %0 = ConstantLoad 42
+    %1 = %0;
+    %2 = println(%1) -> bb12;
   }
   bb12 {
+    PopScopeFrame
     GOTO bb15;
   }
   bb13 {
-    %33 = ConstantLoad 0
-    %34 = %33;
-    %35 = println(%34) -> bb14;
+    PushScopeFrame 3
+    %0 = ConstantLoad 0
+    %1 = %0;
+    %2 = println(%1) -> bb14;
   }
   bb14 {
+    PopScopeFrame
     GOTO bb15;
   }
   bb15 {
-    %37 = ConstantLoad 42
-    %38 = %37;
-    %39 = x;
-    %36 = != %38 %39;
-    %36 ? bb16 : bb18;
+    %19 = ConstantLoad 42
+    %20 = %19;
+    %21 = x;
+    %18 = != %20 %21;
+    %18 ? bb16 : bb18;
   }
   bb16 {
-    %40 = ConstantLoad 0
-    %41 = %40;
-    %42 = println(%41) -> bb17;
+    PushScopeFrame 3
+    %0 = ConstantLoad 0
+    %1 = %0;
+    %2 = println(%1) -> bb17;
   }
   bb17 {
+    PopScopeFrame
     GOTO bb20;
   }
   bb18 {
-    %43 = ConstantLoad 42
-    %44 = %43;
-    %45 = println(%44) -> bb19;
+    PushScopeFrame 3
+    %0 = ConstantLoad 42
+    %1 = %0;
+    %2 = println(%1) -> bb19;
   }
   bb19 {
+    PopScopeFrame
     GOTO bb20;
   }
   bb20 {

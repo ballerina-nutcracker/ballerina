@@ -21,5 +21,5 @@ type R record {|
 
 public function main() {
     R r = {x: 1, y: 2};
-    anydata z = r.z; // @error
+    anydata _ = r.z; // @error
 }

@@ -1,0 +1,138 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (new
+            (user-defined-type time TimeZone) (
+            (literal Asia/Colombo))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable tz (type
+          (user-defined-type time TimeZone)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable offset (type
+          (union-type
+            (user-defined-type time ZoneOffset)
+            (value-type null))) (expr
+          (invocation fixedOffset expr:
+            (simple-var-ref tz) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref offset)
+            (value-type null)))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation time utcFromString (
+            (literal 2007-12-03T10:15:30.00Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable utc (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable civil (type
+          (user-defined-type time Civil)) (expr
+          (invocation utcToCivil expr:
+            (simple-var-ref tz) (
+            (simple-var-ref utc))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal year)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal month)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal day)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal hour)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal minute)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal timeAbbrev)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation utcFromCivil expr:
+            (simple-var-ref tz) (
+            (simple-var-ref civil))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable utc2 (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref utc2))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation civilAddDuration expr:
+            (simple-var-ref tz) (
+            (simple-var-ref civil)
+            (mapping-constructor-expr
+              (key-value
+                (literal months)
+                (literal 1))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable civil2 (type
+          (user-defined-type time Civil)) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil2)
+            (literal month)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil2)
+            (literal year)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil2)
+            (literal timeAbbrev))))))))

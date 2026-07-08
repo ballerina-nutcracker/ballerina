@@ -16,6 +16,8 @@
 
 // @productions return-stmt function-call-expr
 function foo(int i, string s) {
+    int _ = i;
+    string _ = s;
 }
 
 function bar(int i) returns int {

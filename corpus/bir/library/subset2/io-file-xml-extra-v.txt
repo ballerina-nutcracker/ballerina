@@ -1,0 +1,201 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_xml_ns.xml
+    nsPath = %1;
+    %4 = ConstantLoad <root xmlns="http://default" xmlns:a="http://a.com">
+    %5 = ConstantLoad <a:item a:key="v">text</a:item><child/></root>
+    %3 = + %4 %5;
+    nsContent = %3;
+    $desugar$0 = nsPath;
+    $desugar$1 = nsContent;
+    %9 = $default$0($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %9;
+    %11 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %11;
+    %13 = $desugar$3 is error
+    %13 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %14 = fileReadXml(nsPath) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %14;
+    %16 = $desugar$4 is error
+    %16 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    nsResult = $desugar$4;
+    %18 = println(nsResult) -> bb8;
+  }
+  bb8 {
+    %19 = ConstantLoad /tmp/bal_io_xml_multi.xml
+    multiPath = %19;
+    %21 = ConstantLoad <!DOCTYPE note><!-- a comment --><?target data?><a/><b/>
+    multiContent = %21;
+    $desugar$5 = multiPath;
+    $desugar$6 = multiContent;
+    %25 = $default$0($desugar$5,$desugar$6) -> bb9;
+  }
+  bb9 {
+    $desugar$7 = %25;
+    %27 = fileWriteString($desugar$5,$desugar$6,$desugar$7) -> bb10;
+  }
+  bb10 {
+    $desugar$8 = %27;
+    %29 = $desugar$8 is error
+    %29 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    %30 = fileReadXml(multiPath) -> bb13;
+  }
+  bb13 {
+    $desugar$9 = %30;
+    %32 = $desugar$9 is error
+    %32 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    multiResult = $desugar$9;
+    %34 = println(multiResult) -> bb16;
+  }
+  bb16 {
+    %35 = ConstantLoad /tmp/bal_io_xml_empty.xml
+    emptyPath = %35;
+    $desugar$10 = emptyPath;
+    %38 = ConstantLoad    
+  
+    $desugar$11 = %38;
+    %40 = $default$0($desugar$10,$desugar$11) -> bb17;
+  }
+  bb17 {
+    $desugar$12 = %40;
+    %42 = fileWriteString($desugar$10,$desugar$11,$desugar$12) -> bb18;
+  }
+  bb18 {
+    $desugar$13 = %42;
+    %44 = $desugar$13 is error
+    %44 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    %45 = fileReadXml(emptyPath) -> bb21;
+  }
+  bb21 {
+    $desugar$14 = %45;
+    %47 = $desugar$14 is error
+    %47 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$14);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    emptyResult = $desugar$14;
+    %50 = newXMLSequence{}
+    %49 = unknown emptyResult %50;
+    %51 = %49;
+    %52 = println(%51) -> bb24;
+  }
+  bb24 {
+    %53 = ConstantLoad /tmp/bal_io_xml_bad.xml
+    badPath = %53;
+    $desugar$15 = badPath;
+    %56 = ConstantLoad <root><unclosed></root>
+    $desugar$16 = %56;
+    %58 = $default$0($desugar$15,$desugar$16) -> bb25;
+  }
+  bb25 {
+    $desugar$17 = %58;
+    %60 = fileWriteString($desugar$15,$desugar$16,$desugar$17) -> bb26;
+  }
+  bb26 {
+    $desugar$18 = %60;
+    %62 = $desugar$18 is error
+    %62 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$18);
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    %63 = fileReadXml(badPath) -> bb29;
+  }
+  bb29 {
+    badResult = %63;
+    %65 = badResult is error
+    %66 = %65;
+    %67 = println(%66) -> bb30;
+  }
+  bb30 {
+    %68 = ConstantLoad /tmp/bal_io_xml_stray.xml
+    strayPath = %68;
+    $desugar$19 = strayPath;
+    %71 = ConstantLoad </root>
+    $desugar$20 = %71;
+    %73 = $default$0($desugar$19,$desugar$20) -> bb31;
+  }
+  bb31 {
+    $desugar$21 = %73;
+    %75 = fileWriteString($desugar$19,$desugar$20,$desugar$21) -> bb32;
+  }
+  bb32 {
+    $desugar$22 = %75;
+    %77 = $desugar$22 is error
+    %77 ? bb33 : bb34;
+  }
+  bb33 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$22);
+    PopScopeFrame
+    return;
+  }
+  bb34 {
+    %78 = fileReadXml(strayPath) -> bb35;
+  }
+  bb35 {
+    strayResult = %78;
+    %80 = strayResult is error
+    %81 = %80;
+    %82 = println(%81) -> bb36;
+  }
+  bb36 {
+    return;
+  }
+}

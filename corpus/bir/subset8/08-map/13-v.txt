@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 16
@@ -28,12 +27,12 @@ populate({| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp
     %5 = ConstantLoad 1
     xLen = %5;
     %7 = ConstantLoad 0
-    i = %7;
+    _ = %7;
     $desugar$0 = max;
     GOTO bb1;
   }
   bb1 {
-    %11 = i;
+    %11 = _;
     %12 = $desugar$0;
     %10 = < %11 %12;
     %10 ? bb2 : bb3;
@@ -103,11 +102,11 @@ populate({| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp
     %52 = ConstantLoad abcdefg
     %51 = + (1, x) %52;
     (1, m)[%51] = %47;
-    %54 = (1, i);
+    %54 = (1, _);
     %55 = ConstantLoad 1
     %56 = %55;
     %53 = + %54 %56;
-    (1, i) = %53;
+    (1, _) = %53;
     PopScopeFrame
     GOTO bb1;
   }
@@ -122,12 +121,12 @@ retrieve({| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp
     %5 = ConstantLoad 0
     res = %5;
     %7 = ConstantLoad 0
-    i = %7;
+    _ = %7;
     $desugar$0 = max;
     GOTO bb1;
   }
   bb1 {
-    %11 = i;
+    %11 = _;
     %12 = $desugar$0;
     %10 = < %11 %12;
     %10 ? bb2 : bb3;
@@ -193,11 +192,11 @@ retrieve({| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp
     %56 = %55;
     %1 = + %51 %56;
     (1, res) = %1;
-    %58 = (1, i);
+    %58 = (1, _);
     %59 = ConstantLoad 1
     %60 = %59;
     %57 = + %58 %60;
-    (1, i) = %57;
+    (1, _) = %57;
     PopScopeFrame
     GOTO bb1;
   }

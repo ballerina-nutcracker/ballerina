@@ -24,5 +24,5 @@ isolated class Foo {
 }
 
 public function main() {
-    Foo f = new;
+    Foo _ = new;
 }

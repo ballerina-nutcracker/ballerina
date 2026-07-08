@@ -40,7 +40,10 @@ type PackageResolver interface {
 // defaultPackageResolver is the default implementation of PackageResolver.
 type defaultPackageResolver struct {
 	cache        *PackageCache
-	repositories []Repository // Uses the Repository interface from repository.go
+	repositories []Repository
+	// customRepos holds repositories addressable by name (e.g., "local"),
+	// consulted only when a ResolutionRequest carries a non-empty repo name.
+	customRepos map[string]Repository
 }
 
 // AddRepository adds a repository to the resolver.
@@ -54,11 +57,22 @@ func (r *defaultPackageResolver) Repositories() []Repository {
 	return r.repositories
 }
 
-// NewPackageResolver creates a new PackageResolver with the given cache and repositories.
+// NewPackageResolver creates a new PackageResolver with no custom repositories.
+// Use newPackageResolverWithCustom to supply a custom-repo registry.
 func NewPackageResolver(cache *PackageCache, repositories ...Repository) PackageResolver {
+	return newPackageResolverWithCustom(cache, repositories, nil)
+}
+
+// newPackageResolverWithCustom creates a resolver with an ordered chain and a
+// custom-repo registry. A nil custom map is coerced to an empty non-nil map.
+func newPackageResolverWithCustom(cache *PackageCache, chain []Repository, custom map[string]Repository) PackageResolver {
+	if custom == nil {
+		custom = map[string]Repository{}
+	}
 	return &defaultPackageResolver{
 		cache:        cache,
-		repositories: repositories,
+		repositories: chain,
+		customRepos:  custom,
 	}
 }
 
@@ -87,6 +101,29 @@ func (r *defaultPackageResolver) resolvePackage(
 	org := desc.Org().Value()
 	name := desc.Name().Value()
 	version := desc.Version().String()
+
+	// A user-specified repository routes through customRepos only; misses are
+	// terminal and do not fall through to the default chain.
+	if repoName := request.repository(); repoName != "" {
+		if !options.DisableCache() {
+			pkg := r.cache.Get(org, name, version)
+			if pkg != nil {
+				return NewResolvedResponse(pkg, request)
+			}
+		}
+		repo, ok := r.customRepos[repoName]
+		if !ok {
+			return NewUnresolvedResponse(request)
+		}
+		pkg, err := repo.GetPackage(ctx, org, name, version, options)
+		if err != nil || pkg == nil {
+			return NewUnresolvedResponse(request)
+		}
+		if !options.DisableCache() {
+			r.cache.Cache(pkg)
+		}
+		return NewResolvedResponse(pkg, request)
+	}
 
 	// 1. Check cache first (unless disabled)
 	if !options.DisableCache() {

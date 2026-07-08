@@ -62,7 +62,7 @@ func testASTGeneration(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseAST, testCase.InputPath)
+	result, err := testphases.RunPipeline(env, cx, nil, testphases.PhaseAST, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return
@@ -156,7 +156,7 @@ func testWalkTraversal(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseAST, testCase.InputPath)
+	result, err := testphases.RunPipeline(env, cx, nil, testphases.PhaseAST, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return

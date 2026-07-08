@@ -1,0 +1,216 @@
+module $anon.. v 0.0.0;
+$moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
+l  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; public function start() returns nil|error };
+class SimpleListener {
+
+  attach(service object,nil) -> nil{
+    bb0 {
+      _ = svc;
+      _ = attachPoint;
+      return;
+    }
+  }
+
+  detach(service object) -> nil|error{
+    bb0 {
+      _ = svc;
+      return;
+    }
+  }
+
+  gracefulStop() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+
+  immediateStop() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  start() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+}
+class $service$0 {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+makeListener() -> error|object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; public function start() returns nil|error }{
+  bb0 {
+    %1 = ConstantLoad cannot init listener
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    return;
+  }
+}
+$default$0(service object) -> nil{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %0 = %2;
+    return;
+  }
+}
+$start() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %2 = start($listener) -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$gracefulStop() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %2 = gracefulStop($listener) -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$immediateStop() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %2 = immediateStop($listener) -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}

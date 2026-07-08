@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad true
@@ -92,11 +91,15 @@ ifElse(boolean,int,boolean) -> any{
     t ? bb1 : bb2;
   }
   bb1 {
-    %0 = n;
+    PushScopeFrame 0
+    (1, %0) = (1, n);
+    PopScopeFrame
     return;
   }
   bb2 {
-    %0 = b;
+    PushScopeFrame 0
+    (1, %0) = (1, b);
+    PopScopeFrame
     return;
   }
   bb3 {

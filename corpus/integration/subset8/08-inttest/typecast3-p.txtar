@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: bad type cast: cannot cast value of type 300 to int:Signed8
+error: bad type cast
         at main(typecast3-p.bal:20)

@@ -28,6 +28,7 @@ public function main() {
         v1 += a;
         return 5;
     }, 2) + v1 + v2 + runner(function(int b) returns int {
+        int _ = b;
         v2 += v1;
         return 0;
     }, 2);

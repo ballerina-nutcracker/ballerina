@@ -24,19 +24,17 @@ func MappingMemberTypeInnerValProj(cx Context, t SemType, k SemType) SemType {
 // for when T is a subtype of mapping, and K is either `string` or a singleton string.
 // This is what Castagna calls projection.
 func mappingMemberTypeInner(cx Context, t SemType, k SemType) SemType {
-	if b, ok := t.(BasicTypeBitSet); ok {
-		if (b.all() & MAPPING.all()) != 0 {
+	if t.some() == 0 {
+		if (t.all() & MAPPING.all()) != 0 {
 			return VAL
-		} else {
-			return UNDEF
 		}
-	} else {
-		keyData := getStringSubtype(k)
-		if isNothingSubtype(keyData) {
-			return UNDEF
-		}
-		return bddMappingMemberTypeInner(cx, getComplexSubtypeData(t.(*ComplexSemType), BTMapping).(Bdd), keyData, INNER)
+		return UNDEF
 	}
+	keyData := getStringSubtype(k)
+	if isNothingSubtype(keyData) {
+		return UNDEF
+	}
+	return bddMappingMemberTypeInner(cx, getComplexSubtypeData(t, BTMapping).(Bdd), keyData, INNER)
 }
 
 func bddMappingMemberTypeInner(cx Context, b Bdd, key SubtypeData, accum SemType) SemType {
@@ -48,6 +46,12 @@ func bddMappingMemberTypeInner(cx Context, b Bdd, key SubtypeData, accum SemType
 		}
 	} else {
 		bn := b.(bddNode)
+		if !isPositiveAtom(bn.atom()) {
+			return Union(
+				bddMappingMemberTypeInner(cx, bn.left(), key, accum),
+				Union(bddMappingMemberTypeInner(cx, bn.middle(), key, accum),
+					bddMappingMemberTypeInner(cx, bn.right(), key, accum)))
+		}
 		return Union(
 			bddMappingMemberTypeInner(cx, bn.left(), key,
 				Intersect(mappingAtomicMemberTypeInnerProj(cx.MappingAtomType(bn.atom()), key), accum)),
@@ -57,15 +61,15 @@ func bddMappingMemberTypeInner(cx Context, b Bdd, key SubtypeData, accum SemType
 }
 
 func mappingAtomicMemberTypeInnerProj(atomic *MappingAtomicType, key SubtypeData) SemType {
-	var memberType SemType = nil
+	var memberType SemType
 	for _, ty := range mappingAtomicApplicableMemberTypesInnerProj(atomic, key) {
-		if memberType == nil {
+		if IsZero(memberType) {
 			memberType = ty
 		} else {
 			memberType = Union(memberType, ty)
 		}
 	}
-	if memberType == nil {
+	if IsZero(memberType) {
 		return UNDEF
 	} else {
 		return memberType
@@ -75,7 +79,7 @@ func mappingAtomicMemberTypeInnerProj(atomic *MappingAtomicType, key SubtypeData
 func mappingAtomicApplicableMemberTypesInnerProj(atomic *MappingAtomicType, key SubtypeData) []SemType {
 	types := make([]SemType, len(atomic.Types))
 	for i := range atomic.Types {
-		types[i] = cellInner(&atomic.Types[i])
+		types[i] = cellInner(atomic.Types[i])
 	}
 
 	var memberTypes []SemType

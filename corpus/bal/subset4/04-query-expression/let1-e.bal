@@ -16,7 +16,7 @@
 
 public function main() {
     int[] xs = [1, 2, 3];
-    int[] out = from var x in xs
+    string[] _ = from var x in xs
         let string y = x * 2 // @error
-        select x;
+        select y;
 }

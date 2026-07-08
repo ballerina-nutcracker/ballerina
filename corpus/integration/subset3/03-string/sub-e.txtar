@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: unsupported operation - for string (only addition is supported)
   --> sub-e.bal:19:16
    |
-19 |     string b = a - "y"; // @error
+19 |     string _ = a - "y"; // @error
    |                ^^^^^^^

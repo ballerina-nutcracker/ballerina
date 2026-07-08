@@ -1,0 +1,7 @@
+-- stdout --
+param1%3Dhttp%3A%2F%2Fxyz.com%2F%3Fa%3D12%26b%3D55
+hello%20world
+a%2Ab
+a~b
+a.b-c_d
+-- stderr --

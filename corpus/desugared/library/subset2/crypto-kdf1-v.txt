@@ -1,0 +1,171 @@
+(package
+  (import-package ballerina crypto (as crypto))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable input (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 104)
+            (literal 101)
+            (literal 108)
+            (literal 108)
+            (literal 111)))))
+      (var-def
+        (variable salt (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 115)
+            (literal 97)
+            (literal 108)
+            (literal 116)))))
+      (var-def
+        (variable info (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 105)
+            (literal 110)
+            (literal 102)
+            (literal 111)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref input))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 32))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$15 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$16 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (group-expr
+              (simple-var-ref $desugar$4)))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref input)
+            (literal 64)
+            (simple-var-ref salt)
+            (simple-var-ref info))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable d1 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref d1))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref input)
+            (literal 64)
+            (simple-var-ref salt)
+            (simple-var-ref info))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (var-def
+        (variable d2 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$6))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (simple-var-ref d1)
+            (simple-var-ref d2))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref input)
+            (literal 64)
+            (simple-var-ref info)
+            (simple-var-ref salt))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable other (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$7))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (simple-var-ref d1)
+            (simple-var-ref other))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (literal abc123)
+            (literal abc123))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (literal abc123)
+            (literal def456))))))
+      (var-def
+        (variable badLen (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref input)
+            (literal 0)
+            (simple-var-ref salt)
+            (simple-var-ref info))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badLen)
+            (user-defined-type crypto Error))))))))

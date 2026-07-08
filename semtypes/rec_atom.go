@@ -47,12 +47,17 @@ func createDistinctRecAtom(index int) recAtom {
 	return newRecAtomFromInt(index)
 }
 
+func isDistinctRecAtom(atom atom) bool {
+	rec, ok := atom.(*recAtom)
+	return ok && rec.index() < 0
+}
+
 func (r *recAtom) index() int {
 	return r.idx
 }
 
-func (r *recAtom) canonicalKey() string {
-	return fmt.Sprintf("r%d", r.idx)
+func (r *recAtom) canonicalKey() atomKey {
+	return recAtomKey(r.idx)
 }
 
 func (r *recAtom) String() string {

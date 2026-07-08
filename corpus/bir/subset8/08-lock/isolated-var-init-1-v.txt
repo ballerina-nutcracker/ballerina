@@ -1,0 +1,30 @@
+module $anon.. v 0.0.0;
+counter  int;
+xs  [int...];
+main() -> nil{
+  bb0 {
+    lock-start "$anon/.:counter" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = println(counter) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb3;
+  }
+  bb3 {
+    lock-start "$anon/.:xs" GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = println(xs) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    lock-end "$anon/.:xs" GOTO bb6;
+  }
+  bb6 {
+    return;
+  }
+}

@@ -61,6 +61,14 @@ const (
 	// BalaFileExtension is the extension for compiled package archives.
 	BalaFileExtension = ".bala"
 
+	// BalaTomlFile carries the bala-format schema version, build metadata
+	// (compiler version, vendor, language spec) and the module list.
+	BalaTomlFile = "Bala.toml"
+
+	// BalaPlatformAny indicates a platform-independent bala. Java-platform
+	// targets are not migrated to the Go port.
+	BalaPlatformAny = "any"
+
 	// TomlFileExtension is the extension for TOML files.
 	TomlFileExtension = ".toml"
 

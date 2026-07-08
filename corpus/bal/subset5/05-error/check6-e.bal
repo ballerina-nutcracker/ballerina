@@ -19,4 +19,6 @@ public function main() {
 }
 
 public function foo(any x) {
-}
+        any _ = x;
+    
+    }

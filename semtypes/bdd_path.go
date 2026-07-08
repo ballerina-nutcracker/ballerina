@@ -65,6 +65,38 @@ func bddPaths(b Bdd, paths *[]bddPath, accum bddPath) {
 	}
 }
 
+func bddPathsPositive(b Bdd, paths *[]bddPath, accum bddPath) {
+	allOrNothing, ok := b.(*bddAllOrNothing)
+	if ok {
+		if allOrNothing.IsAll() {
+			*paths = append(*paths, accum)
+		}
+	} else {
+		left := bddPathClone(accum)
+		right := bddPathClone(accum)
+		bn, ok := b.(bddNode)
+		if !ok {
+			panic("b is not a bddNode")
+		}
+		if isPositiveAtom(bn.atom()) {
+			left.pos = append(left.pos, bn.atom())
+			left.bdd = bddIntersect(left.bdd, bddAtom(bn.atom()))
+			right.neg = append(right.neg, bn.atom())
+			right.bdd = bddDiff(right.bdd, bddAtom(bn.atom()))
+		}
+		bddPathsPositive(bn.left(), paths, left)
+		bddPathsPositive(bn.middle(), paths, accum)
+		bddPathsPositive(bn.right(), paths, right)
+	}
+}
+
+func isPositiveAtom(atom atom) bool {
+	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() < 0 {
+		return false
+	}
+	return true
+}
+
 func bddPathClone(path bddPath) bddPath {
 
 	return newBddPathFromBddPath(path)

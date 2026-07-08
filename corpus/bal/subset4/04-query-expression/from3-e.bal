@@ -16,5 +16,5 @@
 
 public function main() {
     map<int> xs = {"a": 1, "b": 2, "c": 3};
-    map<int> out = from var x in xs select ["k", x]; // @error
+    map<int> _ = from var x in xs select ["k", x]; // @error
 }

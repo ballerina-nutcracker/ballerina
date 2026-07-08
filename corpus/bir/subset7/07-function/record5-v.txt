@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad lhs
@@ -103,14 +102,18 @@ foo(int|float|string,int|float|string) -> int{
     %3 ? bb3 : bb4;
   }
   bb3 {
-    %6 = + a b;
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = + (1, a) (1, b);
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
-    %7 = ConstantLoad 1
-    %8 = unknown %7;
-    %0 = %8;
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = unknown %0;
+    (1, %0) = %1;
+    PopScopeFrame
     return;
   }
 }
@@ -129,14 +132,18 @@ bar(int|float|string,int|float|string) -> float{
     %3 ? bb3 : bb4;
   }
   bb3 {
-    %6 = + a b;
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = + (1, a) (1, b);
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
-    %7 = ConstantLoad 1
-    %8 = unknown %7;
-    %0 = %8;
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = unknown %0;
+    (1, %0) = %1;
+    PopScopeFrame
     return;
   }
 }
@@ -155,14 +162,18 @@ baz(int|float|string,int|float|string) -> int|string{
     %3 ? bb3 : bb4;
   }
   bb3 {
-    %6 = + a b;
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = + (1, a) (1, b);
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
-    %7 = ConstantLoad 1
-    %8 = unknown %7;
-    %0 = %8;
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = unknown %0;
+    (1, %0) = %1;
+    PopScopeFrame
     return;
   }
 }

@@ -25,14 +25,6 @@ type functionAtomicType struct {
 
 var _ atomicType = &functionAtomicType{}
 
-func (f *functionAtomicType) equals(other atomicType) bool {
-	if other, ok := other.(*functionAtomicType); ok {
-		return other.ParamType == f.ParamType && other.RetType == f.RetType &&
-			other.Qualifiers == f.Qualifiers && other.IsGeneric == f.IsGeneric
-	}
-	return false
-}
-
 func functionAtomicTypeFrom(paramType SemType, rest SemType, qualifiers SemType) functionAtomicType {
 
 	return newFunctionAtomicType(paramType, rest, qualifiers, false)

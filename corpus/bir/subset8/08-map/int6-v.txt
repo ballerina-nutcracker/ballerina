@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = newMap {| int... |}{}
@@ -8,46 +7,62 @@ main() -> nil{
     %3 ? bb1 : bb3;
   }
   bb1 {
-    %4 = ConstantLoad map<any>
-    %5 = println(%4) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad map<any>
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %6 = im is {| string... |}
-    %6 ? bb4 : bb6;
+    PushScopeFrame 1
+    %0 = (1, im) is {| string... |}
+    %0 ? bb4 : bb6;
   }
   bb4 {
-    %7 = ConstantLoad map<string>
-    %8 = println(%7) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad map<string>
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
-    %9 = im is {| nil|int... |}
-    %9 ? bb7 : bb9;
+    PushScopeFrame 1
+    %0 = (2, im) is {| nil|int... |}
+    %0 ? bb7 : bb9;
   }
   bb7 {
-    %10 = ConstantLoad map<int?>
-    %11 = println(%10) -> bb8;
+    PushScopeFrame 2
+    %0 = ConstantLoad map<int?>
+    %1 = println(%0) -> bb8;
   }
   bb8 {
+    PopScopeFrame
     GOTO bb9;
   }
   bb9 {
-    %12 = im is {| int|string... |}
-    %12 ? bb10 : bb12;
+    PushScopeFrame 1
+    %0 = (3, im) is {| int|string... |}
+    %0 ? bb10 : bb12;
   }
   bb10 {
-    %13 = ConstantLoad map<int|string>
-    %14 = println(%13) -> bb11;
+    PushScopeFrame 2
+    %0 = ConstantLoad map<int|string>
+    %1 = println(%0) -> bb11;
   }
   bb11 {
+    PopScopeFrame
     GOTO bb12;
   }
   bb12 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

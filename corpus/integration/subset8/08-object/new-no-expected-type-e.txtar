@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer type for implicit new expression
+  --> new-no-expected-type-e.bal:18:13
+   |
+18 |     var _ = new (5); // @error cannot infer type for implicit new expression
+   |             ^^^^^^^

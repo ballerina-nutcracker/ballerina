@@ -5,5 +5,7 @@ error[SEMANTIC_ERROR]: 'init' function cannot have parameters
    |
 17 | function init(int x) { // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-18 | }
+18 |     int _ = x;
+   |     ^^^^^^^^^^
+19 | }
    | ^

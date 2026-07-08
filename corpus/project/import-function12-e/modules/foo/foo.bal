@@ -15,5 +15,6 @@
 // under the License.
 
 function foo(int a) returns string {
+        int _ = a;
     return "a";
-}
+    }

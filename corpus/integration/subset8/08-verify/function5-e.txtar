@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: missing required parameter 'y'
   --> function5-e.bal:18:13
    |
-18 |     int z = foo(1); // @error
+18 |     int _ = foo(1); // @error
    |             ^^^^^^

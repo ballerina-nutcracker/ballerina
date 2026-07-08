@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
   --> proj2-e.bal:27:13
    |
-27 |     int x = p[xy]; // @error
+27 |     int _ = p[xy]; // @error
    |             ^^^^^

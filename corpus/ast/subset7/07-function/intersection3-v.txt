@@ -36,5 +36,10 @@
   (function foo () (
     (value-type byte))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (simple-var-ref args))))
       (return
         (literal 0)))))

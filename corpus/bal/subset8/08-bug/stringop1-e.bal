@@ -20,4 +20,6 @@ public function main() {
 }
 
 function ignore(string s) {
-}
+        string _ = s;
+    
+    }

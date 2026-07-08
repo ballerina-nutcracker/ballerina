@@ -27,12 +27,14 @@ import (
 type symbolLookup interface {
 	getSymbol(ref model.SymbolRef) model.Symbol
 	internalError(message string, loc diagnostics.Location)
+	unimplemented(message string, loc diagnostics.Location)
 }
 
 func padArgTypesForDefaults(lookup symbolLookup, symbolRef model.SymbolRef, argTys []semtypes.SemType, loc diagnostics.Location) []semtypes.SemType {
 	sym := lookup.getSymbol(symbolRef)
-	if _, ok := sym.(model.ContainerGenericFunctionSymbol); ok {
-		lookup.internalError("generic function should have been monomorphized", loc)
+	if _, ok := sym.(*model.OpaqueFunctionSymbol); ok {
+		// TODO: there are type param functions with default params need to think how to implement this
+		lookup.unimplemented("generic functions with default params not implemented", loc)
 		return argTys
 	}
 	switch fnSym := sym.(type) {

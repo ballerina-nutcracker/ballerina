@@ -1,0 +1,94 @@
+(DistinctPerson
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access name
+          (simple-var-ref self))
+        (simple-var-ref name))
+    )
+  )
+)
+(EvenMoreDistinctPerson
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access name
+          (simple-var-ref self))
+        (simple-var-ref name))
+    )
+  )
+)
+(Person
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access name
+          (simple-var-ref self))
+        (simple-var-ref name))
+    )
+  )
+)
+(SomeWhatDistinctPerson
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access name
+          (simple-var-ref self))
+        (simple-var-ref name))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable person (type
+        (user-defined-type Person)) (expr
+        (new (
+          (literal John Smith))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref person)
+          (user-defined-type DistinctPerson)))))
+    (var-def
+      (variable distinctPerson (type
+        (user-defined-type DistinctPerson)) (expr
+        (new (
+          (literal Alice Johnson))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref distinctPerson)
+          (user-defined-type Person)))))
+    (var-def
+      (variable someWhatDistinctPerson (type
+        (user-defined-type SomeWhatDistinctPerson)) (expr
+        (new (
+          (literal Michael Brown))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref someWhatDistinctPerson)
+          (user-defined-type DistinctPerson)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref distinctPerson)
+          (user-defined-type SomeWhatDistinctPerson)))))
+    (var-def
+      (variable evenMoreDistinctPerson (type
+        (user-defined-type EvenMoreDistinctPerson)) (expr
+        (new (
+          (literal Sarah Wilson))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref evenMoreDistinctPerson)
+          (user-defined-type DistinctPerson)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref distinctPerson)
+          (user-defined-type EvenMoreDistinctPerson)))))
+  )
+)

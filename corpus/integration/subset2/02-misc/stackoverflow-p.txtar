@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error: stack overflow
-        at $anon/stackoverflow-p:f(unknown)
+        at f(unknown)
            f(stackoverflow-p.bal:24)
            f(stackoverflow-p.bal:24)
            f(stackoverflow-p.bal:24)

@@ -1,0 +1,52 @@
+(TaggedListener
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access tag
+          (simple-var-ref self))
+        (simple-var-ref tag))
+    )
+  )
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation io println (
+          (literal attached: )
+          (field-based-access tag
+            (simple-var-ref self)))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(main
+  (bb0 () ())
+)
+(makeListener
+  (bb0 () ()
+    (return
+      (new
+        (user-defined-type TaggedListener) (
+        (simple-var-ref tag))))
+  )
+)

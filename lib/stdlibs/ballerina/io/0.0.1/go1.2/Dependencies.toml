@@ -1,0 +1,7 @@
+[ballerina]
+dependencies-toml-version = "2"
+
+[[package]]
+org     = "ballerina"
+name    = "io"
+version = "0.0.1"

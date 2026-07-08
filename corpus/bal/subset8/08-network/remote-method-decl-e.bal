@@ -16,6 +16,6 @@
 
 class Client {
     remote function get(string path) returns string { // @error
-
+        string _ = path;
     }
 }

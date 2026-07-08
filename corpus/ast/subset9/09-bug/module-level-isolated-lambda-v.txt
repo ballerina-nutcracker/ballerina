@@ -1,0 +1,21 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (variable moduleLevelLambda (type
+    (function-type () (
+      (value-type int)))) (expr
+    (lambda
+      (function $anonFunc$_0 () (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 50)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (function-type () (
+                (value-type int)))) (expr
+              (simple-var-ref moduleLevelLambda)))))))))

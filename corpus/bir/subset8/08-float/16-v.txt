@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %2 = ConstantLoad 0
@@ -191,21 +190,30 @@ exactEq(float,float) -> any{
     %15 ? bb4 : bb5;
   }
   bb4 {
-    %16 = ConstantLoad a1
-    %0 = %16;
+    PushScopeFrame 1
+    %0 = ConstantLoad a1
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb5 {
-    %17 = != b2 b3;
-    %17 ? bb6 : bb7;
+    PushScopeFrame 1
+    %0 = != (1, b2) (1, b3);
+    %0 ? bb6 : bb7;
   }
   bb6 {
-    %18 = ConstantLoad a2
-    %0 = %18;
+    PushScopeFrame 1
+    %0 = ConstantLoad a2
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb7 {
-    %0 = b1;
+    PushScopeFrame 0
+    (2, %0) = (2, b1);
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }
@@ -223,24 +231,28 @@ exactEqAF(any,float) -> string{
     %9 ? bb1 : bb2;
   }
   bb1 {
-    %12 = ConstantLoad b
-    %0 = %12;
+    PushScopeFrame 1
+    %0 = ConstantLoad b
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
     eq ? bb3 : bb4;
   }
   bb3 {
-    %13 = ConstantLoad true
-    %0 = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
     GOTO bb5;
   }
   bb5 {
-    %14 = ConstantLoad false
-    %0 = %14;
+    %12 = ConstantLoad false
+    %0 = %12;
     return;
   }
 }
@@ -258,24 +270,28 @@ exactEqFA(float,any) -> string{
     %9 ? bb1 : bb2;
   }
   bb1 {
-    %12 = ConstantLoad c
-    %0 = %12;
+    PushScopeFrame 1
+    %0 = ConstantLoad c
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
     eq ? bb3 : bb4;
   }
   bb3 {
-    %13 = ConstantLoad true
-    %0 = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
     GOTO bb5;
   }
   bb5 {
-    %14 = ConstantLoad false
-    %0 = %14;
+    %12 = ConstantLoad false
+    %0 = %12;
     return;
   }
 }
@@ -291,24 +307,28 @@ exactEqAA(any,any) -> string{
     %7 ? bb1 : bb2;
   }
   bb1 {
-    %10 = ConstantLoad d
-    %0 = %10;
+    PushScopeFrame 1
+    %0 = ConstantLoad d
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
     eq ? bb3 : bb4;
   }
   bb3 {
-    %11 = ConstantLoad true
-    %0 = %11;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
     GOTO bb5;
   }
   bb5 {
-    %12 = ConstantLoad false
-    %0 = %12;
+    %10 = ConstantLoad false
+    %0 = %10;
     return;
   }
 }

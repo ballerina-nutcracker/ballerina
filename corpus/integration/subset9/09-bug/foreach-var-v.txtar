@@ -1,0 +1,13 @@
+-- stdout --
+Hello, John
+Hello, Jane
+Hello, Doe
+10
+20
+1
+2
+3
+0
+1
+2
+-- stderr --

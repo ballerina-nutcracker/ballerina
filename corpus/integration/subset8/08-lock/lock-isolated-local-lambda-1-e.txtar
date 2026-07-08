@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-local-lambda-1-e.bal:20:30
+   |
+20 |     var f = function(int n = seed) returns int { // @error
+   |                              ^^^^

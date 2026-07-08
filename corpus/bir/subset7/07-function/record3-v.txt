@@ -1,6 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad lhs
@@ -50,28 +48,32 @@ executeOp({| fn: function(int, int) returns int|function(int) returns int, lhs: 
     %5 ? bb1 : bb3;
   }
   bb1 {
-    %7 = ConstantLoad lhs
-    %6 = op[%7];
-    %8 = %6;
-    %10 = ConstantLoad rhs
-    %9 = op[%10];
-    %11 = %9;
-    %12 = fn(%8,%11) -> bb2;
+    PushScopeFrame 7
+    %1 = ConstantLoad lhs
+    %0 = (1, op)[%1];
+    %2 = %0;
+    %4 = ConstantLoad rhs
+    %3 = (1, op)[%4];
+    %5 = %3;
+    %6 = fn(%2,%5) -> bb2;
   }
   bb2 {
-    %0 = %12;
+    (1, %0) = %6;
+    PopScopeFrame
     return;
   }
   bb3 {
-    %13 = <function(int) returns int>(fn)
-    f = %13;
-    %16 = ConstantLoad lhs
-    %15 = op[%16];
-    %17 = %15;
-    %18 = f(%17) -> bb4;
+    PushScopeFrame 6
+    %0 = <function(int) returns int>((1, fn))
+    f = %0;
+    %3 = ConstantLoad lhs
+    %2 = (1, op)[%3];
+    %4 = %2;
+    %5 = f(%4) -> bb4;
   }
   bb4 {
-    %0 = %18;
+    (1, %0) = %5;
+    PopScopeFrame
     return;
   }
   bb5 {

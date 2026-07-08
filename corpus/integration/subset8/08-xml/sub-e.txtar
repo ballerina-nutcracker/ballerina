@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: unsupported operation - for xml (only addition is supported)
   --> sub-e.bal:20:13
    |
-20 |     xml c = a - b; // @error
+20 |     xml _ = a - b; // @error
    |             ^^^^^

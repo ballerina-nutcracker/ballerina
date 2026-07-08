@@ -1,0 +1,314 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))
+              (user-defined-type xml Comment)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal hello)
+            (xml-comment-literal c)))))
+      (var-def
+        (variable methodNext (type
+          (union-type
+            (record-type
+              (field value
+                (union-type
+                  (union-type
+                    (user-defined-type xml Element)
+                    (user-defined-type xml Text))
+                  (user-defined-type xml Comment))))
+            (value-type null))) (expr
+          (invocation next expr:
+            (invocation lang.xml iterator (
+              (simple-var-ref x))) ()))))
+      (if
+        (binary-expr !=
+          (simple-var-ref methodNext)
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref methodNext)
+                (literal value)))))) ())
+      (block-stmt
+        (var-def
+          (variable functionNext (type
+            (union-type
+              (record-type
+                (field value
+                  (union-type
+                    (union-type
+                      (user-defined-type xml Element)
+                      (user-defined-type xml Text))
+                    (user-defined-type xml Comment))))
+              (value-type null))) (expr
+            (invocation next expr:
+              (invocation xml iterator (
+                (simple-var-ref x))) ()))))
+        (if
+          (binary-expr !=
+            (simple-var-ref functionNext)
+            (literal <nil>))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref functionNext)
+                  (literal value)))))) ())
+        (block-stmt
+          (var-def
+            (variable $desugar$0 (expr
+              (simple-var-ref x))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation lang.xml iterator (
+                (simple-var-ref $desugar$0))))))
+          (while
+            (literal true)
+            (block-stmt
+              (var-def
+                (variable $desugar$3 (expr
+                  (invocation next expr:
+                    (simple-var-ref $desugar$1) ()))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref $desugar$3))
+                (block-stmt
+                  (break)) ())
+              (var-def
+                (variable item (type
+                  (union-type
+                    (union-type
+                      (user-defined-type xml Element)
+                      (user-defined-type xml Text))
+                    (user-defined-type xml Comment))) (expr
+                  (index-based-access
+                    (simple-var-ref $desugar$3)
+                    (literal value)))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref item))))))
+          (var-def
+            (variable element (type
+              (user-defined-type xml Element)) (expr
+              (xml-element-literal e))))
+          (var-def
+            (variable elementNext (type
+              (union-type
+                (record-type
+                  (field value
+                    (user-defined-type xml Element)))
+                (value-type null))) (expr
+              (invocation next expr:
+                (invocation lang.xml iterator (
+                  (simple-var-ref element))) ()))))
+          (if
+            (binary-expr !=
+              (simple-var-ref elementNext)
+              (literal <nil>))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref elementNext)
+                    (literal value)))))) ())
+          (block-stmt
+            (var-def
+              (variable $desugar$4 (expr
+                (simple-var-ref element))))
+            (var-def
+              (variable $desugar$5 (expr
+                (invocation lang.xml iterator (
+                  (simple-var-ref $desugar$4))))))
+            (while
+              (literal true)
+              (block-stmt
+                (var-def
+                  (variable $desugar$7 (expr
+                    (invocation next expr:
+                      (simple-var-ref $desugar$5) ()))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref $desugar$7))
+                  (block-stmt
+                    (break)) ())
+                (var-def
+                  (variable item (type
+                    (user-defined-type xml Element)) (expr
+                    (index-based-access
+                      (simple-var-ref $desugar$7)
+                      (literal value)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref item))))))
+            (var-def
+              (variable comment (type
+                (user-defined-type xml Comment)) (expr
+                (xml-comment-literal comment))))
+            (var-def
+              (variable commentNext (type
+                (union-type
+                  (record-type
+                    (field value
+                      (user-defined-type xml Comment)))
+                  (value-type null))) (expr
+                (invocation next expr:
+                  (invocation lang.xml iterator (
+                    (simple-var-ref comment))) ()))))
+            (if
+              (binary-expr !=
+                (simple-var-ref commentNext)
+                (literal <nil>))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (simple-var-ref commentNext)
+                      (literal value)))))) ())
+            (block-stmt
+              (var-def
+                (variable $desugar$8 (expr
+                  (simple-var-ref comment))))
+              (var-def
+                (variable $desugar$9 (expr
+                  (invocation lang.xml iterator (
+                    (simple-var-ref $desugar$8))))))
+              (while
+                (literal true)
+                (block-stmt
+                  (var-def
+                    (variable $desugar$11 (expr
+                      (invocation next expr:
+                        (simple-var-ref $desugar$9) ()))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref $desugar$11))
+                    (block-stmt
+                      (break)) ())
+                  (var-def
+                    (variable item (type
+                      (user-defined-type xml Comment)) (expr
+                      (index-based-access
+                        (simple-var-ref $desugar$11)
+                        (literal value)))))
+                  (expression-stmt
+                    (invocation io println (
+                      (simple-var-ref item))))))
+              (var-def
+                (variable pi (type
+                  (user-defined-type xml ProcessingInstruction)) (expr
+                  (xml-pi-literal p data))))
+              (var-def
+                (variable piNext (type
+                  (union-type
+                    (record-type
+                      (field value
+                        (user-defined-type xml ProcessingInstruction)))
+                    (value-type null))) (expr
+                  (invocation next expr:
+                    (invocation lang.xml iterator (
+                      (simple-var-ref pi))) ()))))
+              (if
+                (binary-expr !=
+                  (simple-var-ref piNext)
+                  (literal <nil>))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (index-based-access
+                        (simple-var-ref piNext)
+                        (literal value)))))) ())
+              (block-stmt
+                (var-def
+                  (variable $desugar$12 (expr
+                    (simple-var-ref pi))))
+                (var-def
+                  (variable $desugar$13 (expr
+                    (invocation lang.xml iterator (
+                      (simple-var-ref $desugar$12))))))
+                (while
+                  (literal true)
+                  (block-stmt
+                    (var-def
+                      (variable $desugar$15 (expr
+                        (invocation next expr:
+                          (simple-var-ref $desugar$13) ()))))
+                    (if
+                      (type-test-expr is
+                        (simple-var-ref $desugar$15))
+                      (block-stmt
+                        (break)) ())
+                    (var-def
+                      (variable item (type
+                        (user-defined-type xml ProcessingInstruction)) (expr
+                        (index-based-access
+                          (simple-var-ref $desugar$15)
+                          (literal value)))))
+                    (expression-stmt
+                      (invocation io println (
+                        (simple-var-ref item))))))
+                (var-def
+                  (variable text (type
+                    (user-defined-type xml Text)) (expr
+                    (xml-text-literal text))))
+                (var-def
+                  (variable textNext (type
+                    (union-type
+                      (record-type
+                        (field value
+                          (user-defined-type xml Text)))
+                      (value-type null))) (expr
+                    (invocation next expr:
+                      (invocation lang.xml iterator (
+                        (simple-var-ref text))) ()))))
+                (if
+                  (binary-expr !=
+                    (simple-var-ref textNext)
+                    (literal <nil>))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (index-based-access
+                          (simple-var-ref textNext)
+                          (literal value)))))) ())
+                (block-stmt
+                  (var-def
+                    (variable $desugar$16 (expr
+                      (simple-var-ref text))))
+                  (var-def
+                    (variable $desugar$17 (expr
+                      (invocation lang.xml iterator (
+                        (simple-var-ref $desugar$16))))))
+                  (while
+                    (literal true)
+                    (block-stmt
+                      (var-def
+                        (variable $desugar$19 (expr
+                          (invocation next expr:
+                            (simple-var-ref $desugar$17) ()))))
+                      (if
+                        (type-test-expr is
+                          (simple-var-ref $desugar$19))
+                        (block-stmt
+                          (break)) ())
+                      (var-def
+                        (variable item (type
+                          (user-defined-type xml Text)) (expr
+                          (index-based-access
+                            (simple-var-ref $desugar$19)
+                            (literal value)))))
+                      (expression-stmt
+                        (invocation io println (
+                          (simple-var-ref item)))))))))))))))

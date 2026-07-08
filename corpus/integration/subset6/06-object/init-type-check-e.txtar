@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: failed to determine object type with fitting init function
   --> init-type-check-e.bal:31:13
    |
-31 |     Bar f = new (); // @error
+31 |     Bar _ = new (); // @error
    |             ^^^^^^

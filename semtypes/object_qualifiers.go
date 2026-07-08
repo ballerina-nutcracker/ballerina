@@ -55,15 +55,15 @@ func (nq *NetworkQualifier) field() Field {
 
 func IsIsolatedObject(ctx Context, ty SemType) bool {
 	objectTy := convertObjectToMappingTy(ctx, ty)
-	if objectTy == nil {
+	if IsZero(objectTy) {
 		return false
 	}
 	qualifiersMap := mappingMemberTypeInner(ctx, objectTy, StringConst("$qualifiers"))
-	if qualifiersMap == nil {
+	if IsZero(qualifiersMap) {
 		return false
 	}
 	isolatedTy := mappingMemberTypeInner(ctx, qualifiersMap, StringConst("isolated"))
-	if isolatedTy == nil {
+	if IsZero(isolatedTy) {
 		return false
 	}
 	return IsSubtype(ctx, isolatedTy, BooleanConst(true))
@@ -83,15 +83,15 @@ func IsServiceObject(ctx Context, ty SemType) bool {
 
 func objectHasNetworkQualifier(ctx Context, ty SemType, qualifierTag SemType) bool {
 	objectTy := convertObjectToMappingTy(ctx, ty)
-	if objectTy == nil {
+	if IsZero(objectTy) {
 		return false
 	}
 	qualifiersMap := mappingMemberTypeInner(ctx, objectTy, StringConst("$qualifiers"))
-	if qualifiersMap == nil {
+	if IsZero(qualifiersMap) {
 		return false
 	}
 	networkTy := mappingMemberTypeInner(ctx, qualifiersMap, StringConst("network"))
-	if networkTy == nil {
+	if IsZero(networkTy) {
 		return false
 	}
 	return IsSubtype(ctx, networkTy, qualifierTag)
@@ -141,5 +141,5 @@ func (oq *ObjectQualifiers) Field(env Env) CellField {
 		NEVER,
 		CellMutability_CELL_MUT_NONE,
 	)
-	return cellFieldFrom("$qualifiers", *cellContaining(env, ty))
+	return cellFieldFrom("$qualifiers", cellContaining(env, ty))
 }

@@ -15,5 +15,5 @@
 // under the License.
 
 public function main() {
-    xml<int> x = xml `<a/>`; // @error
+    xml<int> _ = xml `<a/>`; // @error
 }

@@ -61,14 +61,15 @@ type (
 
 	BIRPackage struct {
 		BIRNodeBase
-		PackageID *model.PackageID
-		// TODO: avoid duplicates here
-		ImportModules []BIRImportModule
-		GlobalVars    map[string]BIRGlobalVariableDcl
-		Functions     []BIRFunction
-		InitFunction  *BIRFunction
-		ClassDefs     []BIRClassDef
-		MainFunction  *BIRFunction
+		PackageID             *model.PackageID
+		GlobalVars            map[string]BIRGlobalVariableDcl
+		Functions             []BIRFunction
+		InitFunction          *BIRFunction
+		ClassDefs             []BIRClassDef
+		MainFunction          *BIRFunction
+		StartFunction         *BIRFunction
+		GracefulStopFunction  *BIRFunction
+		ImmediateStopFunction *BIRFunction
 	}
 
 	ObjectField struct {
@@ -81,11 +82,19 @@ type (
 		LookupKey string
 		Fields    []ObjectField
 		VTable    map[string]*BIRFunction
+		RTable    map[string][]BIRResourceMethod
 	}
 
-	BIRImportModule struct {
-		BIRNodeBase
-		PackageID *model.PackageID
+	BIRResourceMethod struct {
+		PathSegments  []ResourcePathSegmentDef
+		RestSegmentTy semtypes.SemType
+		Fn            *BIRFunction
+	}
+
+	ResourcePathSegmentDef struct {
+		// Ty is a singleton string type for literal path segments
+		// and the parameter type for path-parameter segments.
+		Ty semtypes.SemType
 	}
 
 	birVariableDclBase struct {
@@ -240,6 +249,7 @@ const (
 	INSTRUCTION_KIND_WAIT_ALL
 	INSTRUCTION_KIND_WK_ALT_RECEIVE
 	INSTRUCTION_KIND_WK_MULTIPLE_RECEIVE
+	INSTRUCTION_KIND_RESOURCE_CALL
 )
 
 const (
@@ -277,10 +287,13 @@ const (
 	INSTRUCTION_KIND_NEW_TABLE
 	INSTRUCTION_KIND_NEW_TYPEDESC
 	INSTRUCTION_KIND_NEW_STREAM
+	INSTRUCTION_KIND_STREAM_NEXT
+	INSTRUCTION_KIND_STREAM_CLOSE
 	INSTRUCTION_KIND_TABLE_STORE
 	INSTRUCTION_KIND_TABLE_LOAD
 	INSTRUCTION_KIND_ARRAY_FILLING_LOAD
 	INSTRUCTION_KIND_MAP_FILLING_LOAD
+	INSTRUCTION_KIND_EVAL_TEMPLATE_EXPR
 )
 
 const (

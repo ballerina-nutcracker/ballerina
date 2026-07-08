@@ -15,5 +15,5 @@
 // under the License.
 
 public function main() {
-    xml<xml:Element|xml:Text> e = xml `<?p?>`; // @error
+    xml<xml:Element|xml:Text> _ = xml `<?p?>`; // @error
 }

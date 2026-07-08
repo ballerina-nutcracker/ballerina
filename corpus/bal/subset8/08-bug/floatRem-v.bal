@@ -30,7 +30,7 @@ function getFloat(int seed, int iterations) returns float {
     float currentVal = 0;
     int bufferSize = buffer.length();
     int currentIndex = (seed + seed) % bufferSize;
-    foreach int i in 0 ..< iterations {
+    foreach int _ in 0 ..< iterations {
         currentVal += buffer[currentIndex];
         currentIndex = (currentIndex + seed) % bufferSize;
     }

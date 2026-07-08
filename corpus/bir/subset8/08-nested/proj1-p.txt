@@ -18,12 +18,16 @@ main() -> nil{
     %12 ? bb1 : bb2;
   }
   bb1 {
-    %15 = ConstantLoad 1
-    %16 = ConstantLoad 0
-    x[%16] = %15;
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = ConstantLoad 0
+    (1, x)[%1] = %0;
+    PopScopeFrame
     GOTO bb2;
   }
   bb2 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

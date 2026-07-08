@@ -87,7 +87,12 @@ func testBIRGeneration(t *testing.T, testPair test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseBIR, testPair.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testPair.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseBIR, testPair.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testPair.InputPath, err)
 		return

@@ -1,0 +1,17 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation runtime onGracefulStop (
+        (simple-var-ref stopHandler))))
+    (expression-stmt
+      (invocation io println (
+        (literal done))))
+  )
+)
+(stopHandler
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal handler))))
+  )
+)

@@ -16,7 +16,17 @@
 
 package projects
 
-import "fmt"
+import (
+	"cmp"
+	"fmt"
+)
+
+// moduleDescriptorCmp orders ModuleDescriptors lexicographically by their
+// fully qualified string form. Used as the canonical comparator for
+// DependencyGraph[ModuleDescriptor].
+func moduleDescriptorCmp(a, b ModuleDescriptor) int {
+	return cmp.Compare(a.String(), b.String())
+}
 
 // ModuleDescriptor represents immutable metadata that uniquely identifies a module.
 // A module is identified by its package descriptor and module name.

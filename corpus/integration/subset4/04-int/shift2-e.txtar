@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
   --> shift2-e.bal:19:23
    |
-19 |     int:Unsigned8 y = x << 2; // @error
+19 |     int:Unsigned8 _ = x << 2; // @error
    |                       ^^^^^^

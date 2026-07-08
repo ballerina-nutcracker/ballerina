@@ -10,5 +10,14 @@
   (bb0 () ())
 )
 (process
-  (bb0 () ())
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref x))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref y))))
+  )
 )

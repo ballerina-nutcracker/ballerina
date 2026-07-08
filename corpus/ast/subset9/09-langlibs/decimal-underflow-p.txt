@@ -1,0 +1,10 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (binary-expr *
+          (literal 1E-6143d)
+          (literal 0.1d))))))

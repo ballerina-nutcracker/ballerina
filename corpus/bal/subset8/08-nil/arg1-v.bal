@@ -27,5 +27,6 @@ public function main() {
 }
 
 function explode(Nothing n) returns Everything {
+    Nothing _ = n;
     return 42;
 }

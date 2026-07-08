@@ -1,0 +1,36 @@
+(bump
+  (bb0 () ()
+    (assignment
+      (simple-var-ref counter)
+      (binary-expr +
+        (simple-var-ref counter)
+        (literal 1)))
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation bump ())))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref e)
+          (error-type)))))
+    (assignment
+      (simple-var-ref counter)
+      (binary-expr +
+        (simple-var-ref counter)
+        (literal 1)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)

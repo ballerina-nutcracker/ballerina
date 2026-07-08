@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
   --> optional-field-access-e.bal:23:13
    |
-23 |     int f = r.foo; // @error
+23 |     int _ = r.foo; // @error
    |             ^^^^^

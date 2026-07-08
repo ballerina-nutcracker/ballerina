@@ -17,5 +17,5 @@
 function ofInt(int val, typedesc<int> retTy = <>) returns retTy = external;
 
 public function main() {
-    string s = ofInt(1); // @error
+    string _ = ofInt(1); // @error
 }

@@ -37,5 +37,5 @@ type Q record {|
 public function main() {
     S s = {x: "str"};
     Q q = {x: s};
-    P p = q; // @error
+    P _ = q; // @error
 }

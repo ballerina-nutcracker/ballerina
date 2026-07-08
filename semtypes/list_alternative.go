@@ -32,8 +32,8 @@ type ListAlternative struct {
 }
 
 func ListAlternatives(cx Context, t SemType) []ListAlternative {
-	if b, ok := t.(BasicTypeBitSet); ok {
-		if (b.all() & LIST.all()) == 0 {
+	if t.some() == 0 {
+		if (t.all() & LIST.all()) == 0 {
 			return nil
 		}
 		return []ListAlternative{{
@@ -44,7 +44,7 @@ func ListAlternatives(cx Context, t SemType) []ListAlternative {
 	}
 
 	paths := []bddPath{}
-	bddPaths(getComplexSubtypeData(t.(*ComplexSemType), BTList).(Bdd), &paths, bddPathFrom())
+	bddPaths(getComplexSubtypeData(t, BTList).(Bdd), &paths, bddPathFrom())
 	alts := []ListAlternative{}
 	for _, bddPath := range paths {
 		posAtoms := make([]*ListAtomicType, len(bddPath.pos))
@@ -69,27 +69,27 @@ func ListAlternatives(cx Context, t SemType) []ListAlternative {
 
 func intersectListAtoms(env Env, atoms []*ListAtomicType) (SemType, ListAtomicType, bool) {
 	if len(atoms) == 0 {
-		return nil, ListAtomicType{}, false
+		return SemType{}, ListAtomicType{}, false
 	}
 	atom := atoms[0]
 	for i := 1; i < len(atoms); i++ {
 		next := atoms[i]
 		members, rest, ok := listIntersectWith(env, atom.Members, atom.rest, next.Members, next.rest)
 		if !ok {
-			return nil, ListAtomicType{}, false
+			return SemType{}, ListAtomicType{}, false
 		}
 		for i := range members.initial {
-			if IsNever(cellInner(&members.initial[i])) {
-				return nil, ListAtomicType{}, false
+			if IsNever(cellInner(members.initial[i])) {
+				return SemType{}, ListAtomicType{}, false
 			}
 		}
 		atom = &ListAtomicType{
-			Members: *members,
-			rest:    *rest,
+			Members: members,
+			rest:    rest,
 		}
 	}
 	typeAtom := env.listAtom(atom)
-	ty := createBasicSemType(BTList, bddAtom(&typeAtom))
+	ty := createBasicSemType(BTList, bddAtom(typeAtom))
 	return ty, *atom, true
 }
 

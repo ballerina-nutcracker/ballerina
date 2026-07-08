@@ -1,0 +1,117 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition NumberIterator
+    (variable items (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))) (expr
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)
+        (literal 3))))
+    (variable idx (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (field-based-access idx
+              (simple-var-ref self))
+            (literal 3))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (var-def
+            (variable val (type
+              (value-type int)) (expr
+              (index-based-access
+                (field-based-access items
+                  (simple-var-ref self))
+                (field-based-access idx
+                  (simple-var-ref self))))))
+          (compound-assignment +
+            (field-based-access idx
+              (simple-var-ref self))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (simple-var-ref val))))))))
+  (class-definition NumberGenerator
+    (function iterator () (
+      (user-defined-type NumberIterator))
+      (block-function-body
+        (return
+          (new ())))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable names (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal John)
+            (literal Jane)
+            (literal Doe)))))
+      (foreach
+        (var-def
+          (variable name))
+        (simple-var-ref names)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal Hello, )
+              (simple-var-ref name))))))
+      (var-def
+        (variable scores (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal alice)
+              (literal 10))
+            (key-value
+              (literal bob)
+              (literal 20))))))
+      (foreach
+        (var-def
+          (variable score))
+        (simple-var-ref scores)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref score))))))
+      (var-def
+        (variable gen (type
+          (user-defined-type NumberGenerator)) (expr
+          (new ()))))
+      (foreach
+        (var-def
+          (variable value))
+        (simple-var-ref gen)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value))))))
+      (foreach
+        (var-def
+          (variable i))
+        (binary-expr ..<
+          (literal 0)
+          (literal 3))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i)))))))))

@@ -1,0 +1,45 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 10
+    %2 = %1;
+    %3 = ConstantLoad 20
+    %4 = %3;
+    %5 = createIntInRange(%2,%4) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %5;
+    %7 = $desugar$0 is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    n = $desugar$0;
+    %11 = n;
+    %12 = ConstantLoad 10
+    %13 = %12;
+    %10 = >= %11 %13;
+    %9 = %10;
+    %10 ? bb4 : bb5;
+  }
+  bb4 {
+    %15 = n;
+    %16 = ConstantLoad 20
+    %17 = %16;
+    %14 = < %15 %17;
+    %9 = %14;
+    GOTO bb5;
+  }
+  bb5 {
+    %18 = %9;
+    %19 = println(%18) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

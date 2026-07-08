@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 type Foo record {|
     int value = 5;
@@ -25,5 +24,5 @@ type Bar record {|
 |};
 
 public function main() {
-    Foo|Bar f = {}; // @error
+    Foo|Bar _ = {}; // @error
 }

@@ -1,0 +1,85 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal https://example.com))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$13 (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (new (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable c (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable $desugar$3 (expr
+          (literal /path))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation $default$19 (
+            (simple-var-ref $desugar$3))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (remote-method-call get expr:
+            (simple-var-ref c) (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable r (type
+          (user-defined-type http Response)) (expr
+          (simple-var-ref $desugar$5))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref r) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (var-def
+        (variable b (expr
+          (simple-var-ref $desugar$6))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref b))))))
+      (var-def
+        (variable payload (type
+          (union-type
+            (builtin-ref-type json)
+            (error-type))) (expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref r) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref payload)
+            (error-type)))))
+      (return
+        (literal <nil>)))))

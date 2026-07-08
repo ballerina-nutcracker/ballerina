@@ -1,0 +1,46 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation build (
+            (literal ok))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation build (
+            (literal bad))))))))
+  (function build (
+    (variable s (type
+      (value-type string)))) (
+    (union-type
+      (value-type string)
+      (error-type)))
+    (block-function-body
+      (return
+        (string-template-literal
+          (template-string "hello ")
+          (checked-expr
+            (invocation validate (
+              (simple-var-ref s))))
+          (template-string "")))))
+  (function validate (
+    (variable s (type
+      (value-type string)))) (
+    (union-type
+      (value-type string)
+      (error-type)))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (simple-var-ref s)
+          (literal bad))
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal bad input))))) ())
+      (block-stmt
+        (return
+          (simple-var-ref s))))))

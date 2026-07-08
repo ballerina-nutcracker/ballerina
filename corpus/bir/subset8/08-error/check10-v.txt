@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = passAlong() -> bb1;
@@ -21,7 +20,9 @@ passAlong() -> nil|error{
     %3 ? bb2 : bb3;
   }
   bb2 {
-    %0 = $desugar$0;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
     return;
   }
   bb3 {
@@ -30,7 +31,10 @@ passAlong() -> nil|error{
     %5 ? bb4 : bb5;
   }
   bb4 {
-    panic $desugar$1;
+    PushScopeFrame 0
+    (1, %6) = (1, $desugar$1);
+    PopScopeFrame
+    panic %6;
   }
   bb5 {
     return;

@@ -1,0 +1,17 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal sum (
+            (literal 1.1d)
+            (literal 2.2d))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 12.30)))
+            (value-type decimal))))))))

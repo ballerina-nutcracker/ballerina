@@ -1,19 +1,19 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: undefined member 'x'
-  --> self-field-shadow-e.bal:21:14
+  --> self-field-shadow-e.bal:22:14
    |
-21 |         self.x = 10; // @error
+22 |         self.x = 10; // @error
    |              ^
 
 error[SEMANTIC_ERROR]: undefined member 'y'
-  --> self-field-shadow-e.bal:25:21
+  --> self-field-shadow-e.bal:27:21
    |
-25 |         return self.y; // @error
+27 |         return self.y; // @error
    |                     ^
 
 error[SEMANTIC_ERROR]: undefined member 'z'
-  --> self-field-shadow-e.bal:30:21
+  --> self-field-shadow-e.bal:33:21
    |
-30 |         return self.z; // @error
+33 |         return self.z; // @error
    |                     ^

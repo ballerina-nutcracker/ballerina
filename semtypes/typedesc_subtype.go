@@ -16,10 +16,8 @@
 
 package semtypes
 
-import "ballerina-lang-go/common"
-
 func TypedescContaining(env Env, constraint SemType) SemType {
-	if common.PointerEqualToValue(VAL, constraint) {
+	if sameSemType(VAL, constraint) {
 		return TYPEDESC
 	}
 
@@ -33,9 +31,9 @@ func TypedescContaining(env Env, constraint SemType) SemType {
 // Returns VAL when td is the unconstrained typedesc, nil if td is not a typedesc built via TypedescContaining.
 func TypedescConstraint(ctx Context, td SemType) SemType {
 	if !IsSubtypeSimple(td, TYPEDESC) {
-		return nil
+		return SemType{}
 	}
-	if _, ok := td.(BasicTypeBitSet); ok {
+	if td.some() == 0 {
 		return VAL
 	}
 	mappingTy := convertTypeDescToMapping(ctx, td)
@@ -45,7 +43,7 @@ func TypedescConstraint(ctx Context, td SemType) SemType {
 func convertTypeDescToMapping(ctx Context, ty SemType) SemType {
 	td := Intersect(ty, TYPEDESC)
 	if IsEmpty(ctx, td) {
-		return nil
+		return SemType{}
 	}
 	bdd := subtypeData(td, BTTypeDesc)
 	return createBasicSemType(BTMapping, bdd)

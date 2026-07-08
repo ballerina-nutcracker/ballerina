@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: missing required member at index 0: type '{| a: int, never... |}' has no filler value
   --> 21-e.bal:22:14
    |
-22 |     T[2] a = []; // @error
+22 |     T[2] _ = []; // @error
    |              ^^

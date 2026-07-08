@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %2 = ConstantLoad 0
@@ -186,12 +185,16 @@ eq(float,float) -> string{
     %11 ? bb3 : bb4;
   }
   bb3 {
-    %12 = ConstantLoad a
-    %0 = %12;
+    PushScopeFrame 1
+    %0 = ConstantLoad a
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
-    %0 = b1;
+    PushScopeFrame 0
+    (1, %0) = (1, b1);
+    PopScopeFrame
     return;
   }
 }
@@ -209,24 +212,28 @@ eqAF(any,float) -> string{
     %9 ? bb1 : bb2;
   }
   bb1 {
-    %12 = ConstantLoad b
-    %0 = %12;
+    PushScopeFrame 1
+    %0 = ConstantLoad b
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
     eq ? bb3 : bb4;
   }
   bb3 {
-    %13 = ConstantLoad true
-    %0 = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
     GOTO bb5;
   }
   bb5 {
-    %14 = ConstantLoad false
-    %0 = %14;
+    %12 = ConstantLoad false
+    %0 = %12;
     return;
   }
 }
@@ -244,24 +251,28 @@ eqFA(float,any) -> string{
     %9 ? bb1 : bb2;
   }
   bb1 {
-    %12 = ConstantLoad c
-    %0 = %12;
+    PushScopeFrame 1
+    %0 = ConstantLoad c
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
     eq ? bb3 : bb4;
   }
   bb3 {
-    %13 = ConstantLoad true
-    %0 = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
     GOTO bb5;
   }
   bb5 {
-    %14 = ConstantLoad false
-    %0 = %14;
+    %12 = ConstantLoad false
+    %0 = %12;
     return;
   }
 }

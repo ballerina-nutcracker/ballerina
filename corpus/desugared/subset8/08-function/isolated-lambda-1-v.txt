@@ -1,0 +1,97 @@
+(package
+  (import-package ballerina io (as io))
+  (function capturedParam (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref n))))))))
+      (return
+        (invocation f ()))))
+  (function nestedLayeredCapture (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable f1 (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable f2 (type
+                    (function-type () (
+                      (value-type int)))) (expr
+                    (lambda
+                      (function $anonFunc$_2 () (
+                        (value-type int))
+                        (block-function-body
+                          (var-def
+                            (variable f3 (type
+                              (function-type () (
+                                (value-type int)))) (expr
+                              (lambda
+                                (function $anonFunc$_3 () (
+                                  (value-type int))
+                                  (block-function-body
+                                    (return
+                                      (simple-var-ref n))))))))
+                          (return
+                            (invocation f3 ()))))))))
+                (return
+                  (invocation f2 ()))))))))
+      (return
+        (invocation f1 ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable noCapture (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_4 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 10))))))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (literal 20))))
+      (var-def
+        (variable capturedFinal (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_5 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref x))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation noCapture ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedFinal ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedParam (
+            (literal 30))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedLayeredCapture (
+            (literal 40)))))))))

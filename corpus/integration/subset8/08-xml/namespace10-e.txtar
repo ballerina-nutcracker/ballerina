@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: default XML namespace already declared in this scope
-  --> namespace10-e.bal:20:1
+  --> namespace10-e.bal:19:1
    |
-20 | xmlns "https:foo/baz"; // @error
+19 | xmlns "https:foo/baz"; // @error
    | ^^^^^^^^^^^^^^^^^^^^^^

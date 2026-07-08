@@ -14,10 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 public function main() {
     xml:Element e1 = xml `<e>tt</e>`;
     xml:Element e2 = xml `<e2><ee>tt</ee><xx>xx</xx></e2>`;
-    xml:Element e3 = e1 + e2; // @error
+    xml:Element _ = e1 + e2; // @error
 }

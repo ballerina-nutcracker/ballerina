@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 class Bar {
   val int
 
@@ -24,14 +23,18 @@ class Bar {
       %5 ? bb1 : bb2;
     }
     bb1 {
-      %9 = ConstantLoad value must be non-negative
-      %10 = newError error(%9)
-      %0 = %10;
+      PushScopeFrame 2
+      %0 = ConstantLoad value must be non-negative
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
       return;
     }
     bb2 {
-      %11 = ConstantLoad val
-      self[%11] = v;
+      PushScopeFrame 1
+      %0 = ConstantLoad val
+      (1, self)[%0] = (1, v);
+      PopScopeFrame
       return;
     }
   }
@@ -56,49 +59,57 @@ main() -> nil{
   }
   bb4 {
     r1 = %4;
-    %7 = r1 is object { function getVal() returns int; function init(int) returns nil|error; int val }
+    %7 = r1 is object { private function getVal() returns int; public function init(int) returns nil|error; private int val }
     %7 ? bb5 : bb8;
   }
   bb5 {
-    %8 = getVal(r1) -> bb6;
+    PushScopeFrame 3
+    %0 = getVal((1, r1)) -> bb6;
   }
   bb6 {
-    %9 = %8;
-    %10 = println(%9) -> bb7;
+    %1 = %0;
+    %2 = println(%1) -> bb7;
   }
   bb7 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb8 {
-    %11 = newObject $anon/.:Bar
-    %12 = ConstantLoad 1
-    %13 = unknown %12;
-    %14 = init(%11,%13) -> bb9;
+    PushScopeFrame 8
+    %0 = newObject $anon/.:Bar
+    %1 = ConstantLoad 1
+    %2 = unknown %1;
+    %3 = init(%0,%2) -> bb9;
   }
   bb9 {
-    %16 = %14 is nil
-    %16 ? bb10 : bb11;
+    %5 = %3 is nil
+    %5 ? bb10 : bb11;
   }
   bb10 {
-    %15 = %11;
+    %4 = %0;
     GOTO bb12;
   }
   bb11 {
-    %15 = %14;
+    %4 = %3;
     GOTO bb12;
   }
   bb12 {
-    r2 = %15;
-    %18 = r2 is error
-    %18 ? bb13 : bb15;
+    r2 = %4;
+    %7 = r2 is error
+    %7 ? bb13 : bb15;
   }
   bb13 {
-    %19 = println(r2) -> bb14;
+    PushScopeFrame 1
+    %0 = println((1, r2)) -> bb14;
   }
   bb14 {
+    PopScopeFrame
     GOTO bb15;
   }
   bb15 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

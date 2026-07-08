@@ -1,0 +1,97 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable utcZone (type
+          (user-defined-type time TimeZone)) (expr
+          (checked-expr
+            (new
+              (user-defined-type time TimeZone) (
+              (literal UTC)))))))
+      (var-def
+        (variable offset (type
+          (union-type
+            (user-defined-type time ZoneOffset)
+            (value-type null))) (expr
+          (invocation fixedOffset expr:
+            (simple-var-ref utcZone) ()))))
+      (if
+        (unary-expr !
+          (group-expr
+            (type-test-expr is
+              (simple-var-ref offset)
+              (value-type null))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access hours
+                (simple-var-ref offset)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access minutes
+                (simple-var-ref offset)))))) ())
+      (block-stmt
+        (var-def
+          (variable utc (type
+            (user-defined-type time Utc)) (expr
+            (checked-expr
+              (invocation time utcFromString (
+                (literal 2007-12-03T10:15:30.00Z)))))))
+        (var-def
+          (variable civil (type
+            (user-defined-type time Civil)) (expr
+            (invocation utcToCivil expr:
+              (simple-var-ref utcZone) (
+              (simple-var-ref utc))))))
+        (expression-stmt
+          (invocation io println (
+            (field-based-access year
+              (simple-var-ref civil)))))
+        (expression-stmt
+          (invocation io println (
+            (field-based-access month
+              (simple-var-ref civil)))))
+        (expression-stmt
+          (invocation io println (
+            (field-based-access day
+              (simple-var-ref civil)))))
+        (expression-stmt
+          (invocation io println (
+            (field-based-access hour
+              (simple-var-ref civil)))))
+        (expression-stmt
+          (invocation io println (
+            (field-based-access minute
+              (simple-var-ref civil)))))
+        (var-def
+          (variable utc2 (type
+            (user-defined-type time Utc)) (expr
+            (checked-expr
+              (invocation utcFromCivil expr:
+                (simple-var-ref utcZone) (
+                (simple-var-ref civil)))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation time utcToString (
+              (simple-var-ref utc2))))))
+        (var-def
+          (variable civil2 (type
+            (user-defined-type time Civil)) (expr
+            (checked-expr
+              (invocation civilAddDuration expr:
+                (simple-var-ref utcZone) (
+                (simple-var-ref civil)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal days)
+                    (literal 1)))))))))
+        (expression-stmt
+          (invocation io println (
+            (field-based-access day
+              (simple-var-ref civil2)))))))))

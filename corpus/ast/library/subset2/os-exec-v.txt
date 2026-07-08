@@ -1,0 +1,170 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type os Process)) (expr
+          (checked-expr
+            (invocation os exec (
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal echo))
+                (key-value
+                  (literal arguments)
+                  (list-constructor-expr
+                    (literal hello))))))))))
+      (var-def
+        (variable code (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation waitForExit expr:
+              (simple-var-ref p) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref code))))
+      (var-def
+        (variable out (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation output expr:
+              (simple-var-ref p) ())))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation length expr:
+              (simple-var-ref out) ())
+            (literal 0)))))
+      (var-def
+        (variable p2 (type
+          (user-defined-type os Process)) (expr
+          (checked-expr
+            (invocation os exec (
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal echo))
+                (key-value
+                  (literal arguments)
+                  (list-constructor-expr
+                    (literal world))))))))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation waitForExit expr:
+              (simple-var-ref p2) ())))))
+      (var-def
+        (variable err (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation output expr:
+              (simple-var-ref p2) (
+              (simple-var-ref io stderr)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref err) ()))))
+      (var-def
+        (variable dirWithSpace (type
+          (value-type string)) (expr
+          (literal /tmp/bal_exec_space_test/foo bar))))
+      (var-def
+        (variable mk (type
+          (user-defined-type os Process)) (expr
+          (checked-expr
+            (invocation os exec (
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal mkdir))
+                (key-value
+                  (literal arguments)
+                  (list-constructor-expr
+                    (literal -p)
+                    (simple-var-ref dirWithSpace))))))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation waitForExit expr:
+              (simple-var-ref mk) ())))))
+      (var-def
+        (variable lsProc (type
+          (user-defined-type os Process)) (expr
+          (checked-expr
+            (invocation os exec (
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal ls))
+                (key-value
+                  (literal arguments)
+                  (list-constructor-expr
+                    (simple-var-ref dirWithSpace))))))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation waitForExit expr:
+              (simple-var-ref lsProc) ())))))
+      (var-def
+        (variable rm (type
+          (user-defined-type os Process)) (expr
+          (checked-expr
+            (invocation os exec (
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal rm))
+                (key-value
+                  (literal arguments)
+                  (list-constructor-expr
+                    (literal -rf)
+                    (literal /tmp/bal_exec_space_test))))))))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation waitForExit expr:
+              (simple-var-ref rm) ())))))
+      (var-def
+        (variable bad (type
+          (union-type
+            (user-defined-type os Process)
+            (user-defined-type os Error))) (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal no_such_command_xyz_123))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bad)
+            (user-defined-type os Error)))))
+      (var-def
+        (variable p3 (type
+          (user-defined-type os Process)) (expr
+          (checked-expr
+            (invocation os exec (
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal echo))
+                (key-value
+                  (literal arguments)
+                  (list-constructor-expr
+                    (literal bye))))))))))
+      (expression-stmt
+        (invocation exit expr:
+          (simple-var-ref p3) ()))
+      (expression-stmt
+        (invocation io println (
+          (literal exited)))))))

@@ -16,11 +16,9 @@
 
 package semtypes
 
-import "fmt"
-
 type bddNodeSimple struct {
 	_atom     atom
-	canonical string
+	canonical bddKey
 }
 
 var _ bddNode = &bddNodeSimple{}
@@ -43,11 +41,16 @@ func (b *bddNodeSimple) atom() atom {
 
 func newBddNodeSimple(atom atom) *bddNodeSimple {
 	return &bddNodeSimple{
-		_atom:     atom,
-		canonical: fmt.Sprintf("(%s (true) (false) (false))", atom.canonicalKey()),
+		_atom: atom,
+		canonical: internBddNodeKey(bddNodeKey{
+			atom:   atom.canonicalKey(),
+			left:   bddKeyAll,
+			middle: bddKeyNothing,
+			right:  bddKeyNothing,
+		}),
 	}
 }
 
-func (b *bddNodeSimple) canonicalKey() string {
+func (b *bddNodeSimple) canonicalKey() bddKey {
 	return b.canonical
 }

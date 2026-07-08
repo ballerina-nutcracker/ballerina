@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad string
@@ -60,113 +59,212 @@ isKeyword(string) -> boolean{
     %2 ? bb1 : bb2;
   }
   bb1 {
-    %4 = ConstantLoad true
-    %0 = %4;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
-    %6 = ConstantLoad boolean
-    %5 = == s %6;
-    %5 ? bb3 : bb4;
+    PushScopeFrame 2
+    %1 = ConstantLoad boolean
+    %0 = == (1, s) %1;
+    %0 ? bb3 : bb4;
   }
   bb3 {
-    %7 = ConstantLoad true
-    %0 = %7;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb4 {
-    %9 = ConstantLoad int
-    %8 = == s %9;
-    %8 ? bb5 : bb6;
+    PushScopeFrame 2
+    %1 = ConstantLoad int
+    %0 = == (2, s) %1;
+    %0 ? bb5 : bb6;
   }
   bb5 {
-    %10 = ConstantLoad true
-    %0 = %10;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb6 {
-    %12 = ConstantLoad string
-    %11 = == s %12;
-    %11 ? bb7 : bb8;
+    PushScopeFrame 2
+    %1 = ConstantLoad string
+    %0 = == (3, s) %1;
+    %0 ? bb7 : bb8;
   }
   bb7 {
-    %13 = ConstantLoad true
-    %0 = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb8 {
-    %15 = ConstantLoad while
-    %14 = == s %15;
-    %14 ? bb9 : bb10;
+    PushScopeFrame 2
+    %1 = ConstantLoad while
+    %0 = == (4, s) %1;
+    %0 ? bb9 : bb10;
   }
   bb9 {
-    %16 = ConstantLoad true
-    %0 = %16;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (5, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb10 {
-    %18 = ConstantLoad foreach
-    %17 = == s %18;
-    %17 ? bb11 : bb12;
+    PushScopeFrame 2
+    %1 = ConstantLoad foreach
+    %0 = == (5, s) %1;
+    %0 ? bb11 : bb12;
   }
   bb11 {
-    %19 = ConstantLoad true
-    %0 = %19;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (6, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb12 {
-    %21 = ConstantLoad if
-    %20 = == s %21;
-    %20 ? bb13 : bb14;
+    PushScopeFrame 2
+    %1 = ConstantLoad if
+    %0 = == (6, s) %1;
+    %0 ? bb13 : bb14;
   }
   bb13 {
-    %22 = ConstantLoad true
-    %0 = %22;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (7, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb14 {
-    %24 = ConstantLoad else
-    %23 = == s %24;
-    %23 ? bb15 : bb16;
+    PushScopeFrame 2
+    %1 = ConstantLoad else
+    %0 = == (7, s) %1;
+    %0 ? bb15 : bb16;
   }
   bb15 {
-    %25 = ConstantLoad true
-    %0 = %25;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (8, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb16 {
-    %27 = ConstantLoad map
-    %26 = == s %27;
-    %26 ? bb17 : bb18;
+    PushScopeFrame 2
+    %1 = ConstantLoad map
+    %0 = == (8, s) %1;
+    %0 ? bb17 : bb18;
   }
   bb17 {
-    %28 = ConstantLoad true
-    %0 = %28;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (9, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb18 {
-    %30 = ConstantLoad true
-    %29 = == s %30;
-    %29 ? bb19 : bb20;
+    PushScopeFrame 2
+    %1 = ConstantLoad true
+    %0 = == (9, s) %1;
+    %0 ? bb19 : bb20;
   }
   bb19 {
-    %31 = ConstantLoad true
-    %0 = %31;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (10, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb20 {
-    %33 = ConstantLoad false
-    %32 = == s %33;
-    %32 ? bb21 : bb22;
+    PushScopeFrame 2
+    %1 = ConstantLoad false
+    %0 = == (10, s) %1;
+    %0 ? bb21 : bb22;
   }
   bb21 {
-    %34 = ConstantLoad true
-    %0 = %34;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (11, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb22 {
-    %35 = ConstantLoad false
-    %0 = %35;
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (11, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

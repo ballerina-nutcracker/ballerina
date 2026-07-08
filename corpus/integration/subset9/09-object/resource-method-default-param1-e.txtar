@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> resource-method-default-param1-e.bal:20:49
+   |
+20 |     isolated resource function get test(int x = counter) { // @error resource method default parameter expressions must be semantically analyzed
+   |                                                 ^^^^^^^

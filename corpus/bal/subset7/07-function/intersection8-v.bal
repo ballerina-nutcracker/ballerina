@@ -33,5 +33,6 @@ public function main() {
 }
 
 function foo(1|2|3|4|5|6 a) returns "c" {
+    1|2|3|4|5|6 _ = a;
     return "c";
 }

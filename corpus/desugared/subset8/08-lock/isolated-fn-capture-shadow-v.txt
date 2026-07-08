@@ -1,0 +1,61 @@
+(package
+  (import-package ballerina io (as io))
+  (function foo (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (simple-var-ref n))
+        (block-stmt
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (binary-expr *
+                (simple-var-ref i)
+                (literal 2)))))
+          (assignment
+            (simple-var-ref sum)
+            (binary-expr +
+              (simple-var-ref sum)
+              (simple-var-ref x)))
+          (assignment
+            (simple-var-ref i)
+            (binary-expr +
+              (simple-var-ref i)
+              (literal 1)))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (literal 100))))
+      (var-def
+        (variable f (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (literal 1)))))))))
+      (return
+        (binary-expr +
+          (simple-var-ref sum)
+          (invocation f ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 3)))))))))

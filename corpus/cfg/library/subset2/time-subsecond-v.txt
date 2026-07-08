@@ -1,0 +1,112 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable ms (type
+        (user-defined-type time Utc)) (expr
+        (checked-expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.123Z)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation time utcToString (
+          (simple-var-ref ms))))))
+    (var-def
+      (variable us (type
+        (user-defined-type time Utc)) (expr
+        (checked-expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.123456Z)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation time utcToString (
+          (simple-var-ref us))))))
+    (var-def
+      (variable ns (type
+        (user-defined-type time Utc)) (expr
+        (checked-expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.123456789Z)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation time utcToString (
+          (simple-var-ref ns))))))
+    (var-def
+      (variable half (type
+        (user-defined-type time Utc)) (expr
+        (checked-expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.5Z)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation time utcToString (
+          (simple-var-ref half))))))
+    (var-def
+      (variable neg (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation time civilToString (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 6))
+              (key-value
+                (literal day)
+                (literal 15))
+              (key-value
+                (literal hour)
+                (literal 10))
+              (key-value
+                (literal minute)
+                (literal 30))
+              (key-value
+                (literal second)
+                (literal 45.5))
+              (key-value
+                (literal timeAbbrev)
+                (literal -08:00)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref neg))))
+    (var-def
+      (variable fromNeg (type
+        (user-defined-type time Utc)) (expr
+        (checked-expr
+          (invocation time utcFromCivil (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 6))
+              (key-value
+                (literal day)
+                (literal 15))
+              (key-value
+                (literal hour)
+                (literal 2))
+              (key-value
+                (literal minute)
+                (literal 30))
+              (key-value
+                (literal second)
+                (literal 45))
+              (key-value
+                (literal utcOffset)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal hours)
+                    (unary-expr -
+                      (literal 8)))
+                  (key-value
+                    (literal minutes)
+                    (literal 0)))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation time utcToString (
+          (simple-var-ref fromNeg))))))
+  )
+)

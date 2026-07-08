@@ -1,0 +1,84 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_lines1.txt))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref path))))
+      (var-def
+        (variable $desugar$1 (expr
+          (list-constructor-expr
+            (literal Alpha)
+            (literal Beta)
+            (literal Gamma)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteLines (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io fileReadLines (
+            (simple-var-ref path))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable lines (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref lines))))
+      (var-def
+        (variable $desugar$6 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$5))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$6)
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (var-def
+            (variable line (type
+              (value-type string)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$5)
+                (simple-var-ref $desugar$6)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref line))))
+          (assignment
+            (simple-var-ref $desugar$6)
+            (binary-expr +
+              (simple-var-ref $desugar$6)
+              (numeric-literal 1))))))))

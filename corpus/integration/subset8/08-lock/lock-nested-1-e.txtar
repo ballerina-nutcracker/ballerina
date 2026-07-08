@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: lock statement cannot be nested inside another lock statement
+  --> lock-nested-1-e.bal:24:9
+   |
+24 |         lock { // @error
+   |         ^^^^^^^^^^^^^^^^
+25 |             counter = counter + 1;
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+26 |         }
+   |         ^

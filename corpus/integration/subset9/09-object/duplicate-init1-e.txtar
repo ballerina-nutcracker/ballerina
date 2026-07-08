@@ -1,0 +1,9 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: redeclared symbol 'init'
+  --> duplicate-init1-e.bal:21:5
+   |
+21 |     function init() { // @error duplicate init method must be rejected
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     }
+   |     ^

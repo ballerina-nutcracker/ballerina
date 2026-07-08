@@ -1,6 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 N  10;
 main() -> nil{
   bb0 {
@@ -8,12 +6,12 @@ main() -> nil{
     %2 = newArray [{| x: float, y: float, never... |}...][%1]{}
     v = %2;
     %4 = ConstantLoad 0
-    i = %4;
+    _ = %4;
     $desugar$0 = N;
     GOTO bb1;
   }
   bb1 {
-    %8 = i;
+    %8 = _;
     %9 = $desugar$0;
     %7 = < %8 %9;
     %7 ? bb2 : bb3;
@@ -34,11 +32,11 @@ main() -> nil{
     GOTO bb5;
   }
   bb4 {
-    %7 = (1, i);
+    %7 = (1, _);
     %8 = ConstantLoad 1
     %9 = %8;
     %6 = + %7 %9;
-    (1, i) = %6;
+    (1, _) = %6;
     PopScopeFrame
     GOTO bb1;
   }

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: invalid type for variable
+error[SEMANTIC_ERROR]: invalid variable type boolean
   --> foreach2-e.bal:21:13
    |
 21 |     foreach boolean val in m { // @error

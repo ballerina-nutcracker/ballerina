@@ -17,6 +17,7 @@
 package projects
 
 import (
+	"cmp"
 	"strings"
 
 	"ballerina-lang-go/tools/diagnostics"
@@ -43,7 +44,9 @@ func newWorkspaceResolution(workspace *WorkspaceProject) *WorkspaceResolution {
 // buildDependencyGraph builds the dependency graph between workspace packages.
 // It leverages each package's resolved dependencies to find workspace-internal dependencies.
 func (r *WorkspaceResolution) buildDependencyGraph() *DependencyGraph[*BuildProject] {
-	builder := newDependencyGraphBuilder[*BuildProject]()
+	builder := newDependencyGraphBuilder(func(a, b *BuildProject) int {
+		return cmp.Compare(a.SourceRoot(), b.SourceRoot())
+	})
 	var diags []diagnostics.Diagnostic
 
 	// Build a lookup map: org/name -> BuildProject

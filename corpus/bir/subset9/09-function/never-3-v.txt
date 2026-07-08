@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 foo(int) -> never{
   bb0 {
     %3 = a;
@@ -9,14 +8,20 @@ foo(int) -> never{
     %2 ? bb1 : bb2;
   }
   bb1 {
-    %6 = ConstantLoad less that five
-    %7 = newError error(%6)
-    panic %7;
+    PushScopeFrame 2
+    %0 = ConstantLoad less that five
+    %1 = newError error(%0)
+    (1, %6) = %1;
+    PopScopeFrame
+    panic %6;
   }
   bb2 {
-    %8 = ConstantLoad greater than five
-    %9 = newError error(%8)
-    panic %9;
+    PushScopeFrame 2
+    %0 = ConstantLoad greater than five
+    %1 = newError error(%0)
+    (1, %7) = %1;
+    PopScopeFrame
+    panic %7;
   }
   bb3 {
     return;

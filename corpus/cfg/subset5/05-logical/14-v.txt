@@ -9,7 +9,7 @@
   )
   (bb1 (bb0) ()
     (var-def
-      (variable unused1 (type
+      (variable _ (type
         (value-type string)) (expr
         (simple-var-ref x))))
     (expression-stmt
@@ -20,7 +20,7 @@
   )
   (bb2 (bb5) ()
     (var-def
-      (variable unused3 (type
+      (variable _ (type
         (value-type string)) (expr
         (simple-var-ref x))))
     (expression-stmt
@@ -34,7 +34,7 @@
   )
   (bb4 (bb3) ()
     (var-def
-      (variable unused2 (type
+      (variable _ (type
         (value-type int)) (expr
         (simple-var-ref x))))
     (expression-stmt

@@ -24,5 +24,6 @@ public function main() {
 }
 
 function foo(int x) {
+    int _ = x;
     io:println("unexpected");
 }

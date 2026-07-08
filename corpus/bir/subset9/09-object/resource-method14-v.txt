@@ -1,0 +1,47 @@
+module $anon.. v 0.0.0;
+class foo {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get items/[string...] foo.$resource$get$0([string...]) -> nil{
+    bb0 {
+      %3 = println(rest) -> bb1;
+    }
+    bb1 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:foo
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    f = %3;
+    %6 = ConstantLoad items
+    %7 = ConstantLoad a
+    %8 = ConstantLoad b
+    %9 = ConstantLoad c
+    %10 = f->[%6,%7,%8,%9].get() -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

@@ -15,4 +15,6 @@
 // under the License.
 
 public function hello(string s) {
-}
+        string _ = s;
+    
+    }

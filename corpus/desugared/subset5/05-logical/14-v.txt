@@ -28,7 +28,7 @@
             (simple-var-ref x))))
         (block-stmt
           (var-def
-            (variable unused1 (type
+            (variable _ (type
               (value-type string)) (expr
               (simple-var-ref x))))
           (expression-stmt
@@ -42,7 +42,7 @@
             (value-type int))
           (block-stmt
             (var-def
-              (variable unused2 (type
+              (variable _ (type
                 (value-type int)) (expr
                 (simple-var-ref x))))
             (expression-stmt
@@ -51,7 +51,7 @@
             (return
               (literal <nil>))) ())))
       (var-def
-        (variable unused3 (type
+        (variable _ (type
           (value-type string)) (expr
           (simple-var-ref x))))
       (expression-stmt

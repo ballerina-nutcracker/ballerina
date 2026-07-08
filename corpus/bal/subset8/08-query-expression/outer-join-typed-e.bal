@@ -28,7 +28,7 @@ public function main() {
     Person[] people = [{id: 1, name: "Alex"}];
     Department[] departments = [{id: 1, name: "HR"}];
 
-    string[] joined = from var person in people
+    string[] _ = from var person in people
         outer join Department dept in departments // @error
         on person.id equals dept.id
         select person.name;

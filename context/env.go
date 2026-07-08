@@ -25,6 +25,41 @@ import (
 	"ballerina-lang-go/tools/diagnostics"
 )
 
+type distinctTypeTracker struct {
+	mu     sync.Mutex
+	ids    map[model.SymbolRef]int
+	refs   map[int]model.SymbolRef
+	nextID int
+}
+
+func newDistinctTypeTracker() distinctTypeTracker {
+	return distinctTypeTracker{
+		ids:  make(map[model.SymbolRef]int),
+		refs: make(map[int]model.SymbolRef),
+	}
+}
+
+func (t *distinctTypeTracker) id(symbol model.SymbolRef) int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if id, ok := t.ids[symbol]; ok {
+		return id
+	}
+	id := t.nextID
+	t.nextID++
+	t.ids[symbol] = id
+	t.refs[id] = symbol
+	return id
+}
+
+func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	ref, ok := t.refs[id]
+	return ref, ok
+}
+
+// CompilerEnvironment maintain the shared state of the frontend.
 type CompilerEnvironment struct {
 	anonTypeCount     map[*model.PackageID]int
 	anonFuncCount     map[*model.PackageID]int
@@ -33,6 +68,7 @@ type CompilerEnvironment struct {
 	symbolSpacesMu    sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
 	typeEnv           semtypes.Env
 	underlyingSymbol  sync.Map
+	distinctTypes     distinctTypeTracker
 	statsEnabled      bool
 	diagnosticContext *diagnostics.DiagnosticEnv
 }
@@ -49,12 +85,22 @@ func (c *CompilerEnvironment) NewSymbolSpace(packageID model.PackageID) *model.S
 	return space
 }
 
+func (c *CompilerEnvironment) NewModuleScope(pkg model.PackageID, prefixes map[string]model.ExportedSymbolSpace) *model.ModuleScope {
+	if prefixes == nil {
+		prefixes = make(map[string]model.ExportedSymbolSpace)
+	}
+	return &model.ModuleScope{
+		Main:       c.NewSymbolSpace(pkg),
+		Prefix:     prefixes,
+		Annotation: c.NewSymbolSpace(pkg),
+	}
+}
+
 func (c *CompilerEnvironment) NewFunctionScope(parent model.Scope, pkg model.PackageID) *model.FunctionScope {
 	return &model.FunctionScope{
 		BlockScopeBase: model.BlockScopeBase{
 			Parent: parent,
 			Main:   c.NewSymbolSpace(pkg),
-			XMLNS:  map[string]string{},
 		},
 	}
 }
@@ -64,22 +110,47 @@ func (c *CompilerEnvironment) NewBlockScope(parent model.Scope, pkg model.Packag
 		BlockScopeBase: model.BlockScopeBase{
 			Parent: parent,
 			Main:   c.NewSymbolSpace(pkg),
-			XMLNS:  map[string]string{},
 		},
 	}
 }
 
 func (c *CompilerEnvironment) GetSymbol(symbol model.SymbolRef) model.Symbol {
+	return c.symbolSpace(symbol.SpaceIndex).SymbolAt(symbol.Index)
+}
+
+func (c *CompilerEnvironment) symbolSpace(index int) *model.SymbolSpace {
 	c.symbolSpacesMu.RLock()
-	symbolSpace := c.symbolSpaces[symbol.SpaceIndex]
+	defer c.symbolSpacesMu.RUnlock()
+	// We treat 0,0 as empty space
+	return c.symbolSpaces[index-1]
+}
+
+func (c *CompilerEnvironment) SymbolPackage(symbol model.SymbolRef) model.PackageIdentifier {
+	if symbol.IsEmpty() {
+		panic("cannot get package for empty symbol ref")
+	}
+	return c.symbolSpace(symbol.SpaceIndex).Pkg
+}
+
+// FindSymbol is used for symbol serialization, and is not meant to be used by other parts. This lookup is
+// potentially very slow and you should have a symbolRef in the AST for anywhere that you may need a symbol
+func (c *CompilerEnvironment) FindSymbol(pkg model.PackageIdentifier, name string) (model.SymbolRef, bool) {
+	c.symbolSpacesMu.RLock()
+	spaces := append([]*model.SymbolSpace(nil), c.symbolSpaces...)
 	c.symbolSpacesMu.RUnlock()
-	return symbolSpace.SymbolAt(symbol.Index)
+	for _, space := range spaces {
+		if space.Pkg != pkg {
+			continue
+		}
+		if ref, ok := space.GetSymbol(name); ok {
+			return ref, true
+		}
+	}
+	return model.SymbolRef{}, false
 }
 
 func (c *CompilerEnvironment) AddSymbolToSameSpace(ref model.SymbolRef, name string, symbol model.Symbol) model.SymbolRef {
-	c.symbolSpacesMu.RLock()
-	space := c.symbolSpaces[ref.SpaceIndex]
-	c.symbolSpacesMu.RUnlock()
+	space := c.symbolSpace(ref.SpaceIndex)
 	space.AddSymbol(name, symbol)
 	newRef, _ := space.GetSymbol(name)
 	return newRef
@@ -88,13 +159,10 @@ func (c *CompilerEnvironment) AddSymbolToSameSpace(ref model.SymbolRef, name str
 // CreateNarrowedSymbol create a narrowed symbol for the given baseRef symbol. IMPORTANT: baseRef must be the actual symbol
 // not a narrowed symbol.
 func (c *CompilerEnvironment) CreateNarrowedSymbol(baseRef model.SymbolRef) model.SymbolRef {
-	c.symbolSpacesMu.RLock()
-	symbolSpace := c.symbolSpaces[baseRef.SpaceIndex]
-	c.symbolSpacesMu.RUnlock()
+	symbolSpace := c.symbolSpace(baseRef.SpaceIndex)
 	underlyingSymbolCopy := c.GetSymbol(baseRef).Copy()
 	symbolIndex := symbolSpace.AppendSymbol(underlyingSymbolCopy)
 	narrowedSymbol := model.SymbolRef{
-		Package:    baseRef.Package,
 		SpaceIndex: baseRef.SpaceIndex,
 		Index:      symbolIndex,
 	}
@@ -136,6 +204,14 @@ func (c *CompilerEnvironment) SetSymbolType(symbol model.SymbolRef, ty semtypes.
 	c.GetSymbol(symbol).SetType(ty)
 }
 
+func (c *CompilerEnvironment) DistinctTypeID(symbol model.SymbolRef) int {
+	return c.distinctTypes.id(symbol)
+}
+
+func (c *CompilerEnvironment) DistinctTypeSymbolRef(id int) (model.SymbolRef, bool) {
+	return c.distinctTypes.symbolRef(id)
+}
+
 func (c *CompilerEnvironment) GetDefaultPackage() *model.PackageID {
 	return c.packageInterner.GetDefaultPackage()
 }
@@ -149,6 +225,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		anonTypeCount:     make(map[*model.PackageID]int),
 		anonFuncCount:     make(map[*model.PackageID]int),
 		packageInterner:   model.DefaultPackageIDInterner,
+		distinctTypes:     newDistinctTypeTracker(),
 		typeEnv:           typeEnv,
 		statsEnabled:      statsEnabled,
 		diagnosticContext: diagnostics.NewDiagnosticEnv(),
@@ -161,22 +238,22 @@ func (c *CompilerEnvironment) GetTypeEnv() semtypes.Env {
 }
 
 const (
-	ANON_PREFIX       = "$anon"
-	BUILTIN_ANON_TYPE = ANON_PREFIX + "Type$builtin$"
-	ANON_TYPE         = ANON_PREFIX + "Type$"
+	anonPrefix      = "$anon"
+	builtinAnonType = anonPrefix + "Type$builtin$"
+	anonType        = anonPrefix + "Type$"
 )
 
 func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.PackageID) string {
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
-	return ANON_PREFIX + "Func$_" + strconv.Itoa(nextValue)
+	return anonPrefix + "Func$_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {
 	nextValue := c.anonTypeCount[packageID]
 	c.anonTypeCount[packageID] = nextValue + 1
 	if packageID != nil && model.ANNOTATIONS_PKG != packageID {
-		return BUILTIN_ANON_TYPE + "_" + strconv.Itoa(nextValue)
+		return builtinAnonType + "_" + strconv.Itoa(nextValue)
 	}
-	return ANON_TYPE + "_" + strconv.Itoa(nextValue)
+	return anonType + "_" + strconv.Itoa(nextValue)
 }

@@ -139,5 +139,25 @@
     (finite-type
       (literal c)))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (union-type
+            (union-type
+              (union-type
+                (union-type
+                  (union-type
+                    (finite-type
+                      (literal 1))
+                    (finite-type
+                      (literal 2)))
+                  (finite-type
+                    (literal 3)))
+                (finite-type
+                  (literal 4)))
+              (finite-type
+                (literal 5)))
+            (finite-type
+              (literal 6)))) (expr
+          (simple-var-ref a))))
       (return
         (literal c)))))

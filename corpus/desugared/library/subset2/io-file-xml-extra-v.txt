@@ -1,0 +1,240 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable nsPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_ns.xml))))
+      (var-def
+        (variable nsContent (type
+          (value-type string)) (expr
+          (binary-expr +
+            (literal <root xmlns="http://default" xmlns:a="http://a.com">)
+            (literal <a:item a:key="v">text</a:item><child/></root>)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref nsPath))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref nsContent))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io fileReadXml (
+            (simple-var-ref nsPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable nsResult (type
+          (value-type xml)) (expr
+          (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nsResult))))
+      (var-def
+        (variable multiPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_multi.xml))))
+      (var-def
+        (variable multiContent (type
+          (value-type string)) (expr
+          (literal <!DOCTYPE note><!-- a comment --><?target data?><a/><b/>))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref multiPath))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref multiContent))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$8))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation io fileReadXml (
+            (simple-var-ref multiPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (var-def
+        (variable multiResult (type
+          (value-type xml)) (expr
+          (simple-var-ref $desugar$9))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref multiResult))))
+      (var-def
+        (variable emptyPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_empty.xml))))
+      (var-def
+        (variable $desugar$10 (expr
+          (simple-var-ref emptyPath))))
+      (var-def
+        (variable $desugar$11 (expr
+          (literal    
+  ))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$13))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation io fileReadXml (
+            (simple-var-ref emptyPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (var-def
+        (variable emptyResult (type
+          (value-type xml)) (expr
+          (simple-var-ref $desugar$14))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref emptyResult)
+            (xml-sequence-literal)))))
+      (var-def
+        (variable badPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_bad.xml))))
+      (var-def
+        (variable $desugar$15 (expr
+          (simple-var-ref badPath))))
+      (var-def
+        (variable $desugar$16 (expr
+          (literal <root><unclosed></root>))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16))))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$18))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$18))
+      (var-def
+        (variable badResult (type
+          (union-type
+            (value-type xml)
+            (user-defined-type io Error))) (expr
+          (invocation io fileReadXml (
+            (simple-var-ref badPath))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badResult)
+            (user-defined-type io Error)))))
+      (var-def
+        (variable strayPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_stray.xml))))
+      (var-def
+        (variable $desugar$19 (expr
+          (simple-var-ref strayPath))))
+      (var-def
+        (variable $desugar$20 (expr
+          (literal </root>))))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20))))))
+      (var-def
+        (variable $desugar$22 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20)
+            (simple-var-ref $desugar$21))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$22))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$22))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$22))
+      (var-def
+        (variable strayResult (type
+          (union-type
+            (value-type xml)
+            (user-defined-type io Error))) (expr
+          (invocation io fileReadXml (
+            (simple-var-ref strayPath))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref strayResult)
+            (user-defined-type io Error))))))))

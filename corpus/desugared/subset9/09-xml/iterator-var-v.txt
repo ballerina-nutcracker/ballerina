@@ -1,0 +1,84 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (user-defined-type xml Element)) (expr
+          (xml-element-literal e))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref element))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.xml iterator (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$1) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$3))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable item (expr
+              (index-based-access
+                (simple-var-ref $desugar$3)
+                (literal value)))))
+          (var-def
+            (variable typed (type
+              (user-defined-type xml Element)) (expr
+              (simple-var-ref item))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref typed))))))
+      (var-def
+        (variable elementOrText (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal e)
+            (xml-text-literal text)))))
+      (var-def
+        (variable $desugar$4 (expr
+          (simple-var-ref elementOrText))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation lang.xml iterator (
+            (simple-var-ref $desugar$4))))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$7 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$5) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$7))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable item (expr
+              (index-based-access
+                (simple-var-ref $desugar$7)
+                (literal value)))))
+          (var-def
+            (variable typed (type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))) (expr
+              (simple-var-ref item))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref typed)))))))))

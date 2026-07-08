@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+foo([string...]|{| a: string, b: string, never... |}) -> nil{
+  bb0 {
+    %2 = input is [string...]
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 8
+    %0 = ConstantLoad A is: 
+    %2 = ConstantLoad a
+    %1 = (1, input)[%2];
+    %3 = println(%0,%1) -> bb3;
+  }
+  bb3 {
+    %4 = ConstantLoad B is: 
+    %6 = ConstantLoad b
+    %5 = (1, input)[%6];
+    %7 = println(%4,%5) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad Value A
+    %3 = ConstantLoad b
+    %4 = ConstantLoad Value B
+    %5 = newMap {| a: string, b: string, never... |}{%1=%2, %3=%4}
+    %6 = foo(%5) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

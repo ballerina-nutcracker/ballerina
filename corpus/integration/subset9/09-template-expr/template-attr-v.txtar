@@ -1,0 +1,4 @@
+-- stdout --
+<row id="7"/>
+<root value="a&amp;b&quot;c&lt;d"/>
+-- stderr --

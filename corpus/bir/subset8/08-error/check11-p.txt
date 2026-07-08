@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = doPanic() -> bb1;
@@ -22,15 +21,20 @@ doPanic() -> nil{
     %3 ? bb2 : bb3;
   }
   bb2 {
-    panic $desugar$0;
+    PushScopeFrame 0
+    (1, %4) = (1, $desugar$0);
+    PopScopeFrame
+    panic %4;
   }
   bb3 {
     $desugar$1 = $desugar$0;
-    %5 = $desugar$1 is error
-    %5 ? bb4 : bb5;
+    %6 = $desugar$1 is error
+    %6 ? bb4 : bb5;
   }
   bb4 {
-    %0 = $desugar$1;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
     return;
   }
   bb5 {

@@ -73,8 +73,6 @@ type CompilationUnitNode interface {
 
 type PackageNode interface {
 	Node
-	GetCompilationUnits() []CompilationUnitNode
-	AddCompilationUnit(compUnit CompilationUnitNode)
 	GetImports() []ImportPackageNode
 	AddImport(importPkg ImportPackageNode)
 	GetNamespaceDeclarations() []XMLNSDeclarationNode
@@ -86,8 +84,8 @@ type PackageNode interface {
 	AddService(service ServiceNode)
 	GetFunctions() []FunctionNode
 	AddFunction(function FunctionNode)
-	GetTypeDefinitions() []TypeDefinition
-	AddTypeDefinition(typeDefinition TypeDefinition)
+	GetTypeDefinitions() []*BLangTypeDefinition
+	AddTypeDefinition(typeDefinition *BLangTypeDefinition)
 	GetAnnotations() []AnnotationNode
 	AddAnnotation(annotation AnnotationNode)
 	GetClassDefinitions() []ClassDefinition
@@ -188,7 +186,6 @@ type ClassDefinition interface {
 	AnnotatableNode
 	DocumentableNode
 	TopLevelNode
-	OrderedNode
 	GetName() *BLangIdentifier
 	GetMethods() iter.Seq2[string, FunctionNode]
 	GetMethod(name string) FunctionNode
@@ -199,30 +196,9 @@ type ServiceNode interface {
 	AnnotatableNode
 	DocumentableNode
 	TopLevelNode
-	GetName() *BLangIdentifier
-	SetName(name *BLangIdentifier)
-	IsAnonymousService() bool
 	GetAttachedExprs() []BLangExpression
-	GetServiceClass() ClassDefinition
 	GetAbsolutePath() []*BLangIdentifier
-	GetServiceNameLiteral() LiteralNode
-}
-
-// Type-definition node (carries either a BLangTypeDefinition or a
-// BLangClassDefinition).
-type TypeDefinition interface {
-	AnnotatableNode
-	DocumentableNode
-	TopLevelNode
-	OrderedNode
-	NodeWithSymbol
-	GetName() *BLangIdentifier
-	SetName(name *BLangIdentifier)
-	GetTypeData() TypeData
-	SetTypeData(typeData TypeData)
-	SetDeterminedType(ty semtypes.SemType)
-	GetCycleDepth() int
-	SetCycleDepth(depth int)
+	GetAttachPointLiteral() LiteralNode
 }
 
 type TypeDescriptor interface {
@@ -752,6 +728,18 @@ type OnClauseNode interface {
 	SetEqualsExpression(expression BLangExpression)
 }
 
+type GroupByClauseNode interface {
+	Node
+	AddGroupingKey(groupingKey GroupingKeyNode)
+	GetGroupingKeyList() []GroupingKeyNode
+}
+
+type GroupingKeyNode interface {
+	Node
+	GetGroupingKey() Node
+	SetGroupingKey(groupingKey Node)
+}
+
 type SelectClauseNode interface {
 	Node
 	GetExpression() BLangExpression
@@ -837,12 +825,6 @@ type AnnotatableNode interface {
 	IsPublic() bool
 	GetAnnotationAttachments() []AnnotationAttachmentNode
 	AddAnnotationAttachment(annAttachment AnnotationAttachmentNode)
-}
-
-type OrderedNode interface {
-	Node
-	GetPrecedence() int
-	SetPrecedence(precedence int)
 }
 
 type AttachPoint struct {

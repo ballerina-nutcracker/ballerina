@@ -17,5 +17,5 @@
 public function main() {
     xml a = xml `<a/>`;
     xml b = xml `<b/>`;
-    xml c = a - b; // @error
+    xml _ = a - b; // @error
 }

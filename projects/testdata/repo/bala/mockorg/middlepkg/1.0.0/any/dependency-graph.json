@@ -13,6 +13,14 @@
           "transitive": false,
           "dependencies": [],
           "modules": []
+        },
+        {
+          "org": "mockorg",
+          "name": "aaaleafpkg",
+          "version": "1.0.0",
+          "transitive": false,
+          "dependencies": [],
+          "modules": []
         }
       ],
       "modules": []

@@ -1,0 +1,580 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 72
+    %2 = ConstantLoad 101
+    %3 = ConstantLoad 108
+    %4 = ConstantLoad 108
+    %5 = ConstantLoad 111
+    %6 = ConstantLoad 87
+    %7 = ConstantLoad 111
+    %8 = ConstantLoad 114
+    %9 = ConstantLoad 108
+    %10 = ConstantLoad 100
+    %11 = ConstantLoad 10
+    %12 = newArray [int:Unsigned8...][%11]{%1, %2, %3, %4, %5, %6, %7, %8, %9, %10}
+    plaintext = %12;
+    %14 = ConstantLoad 0
+    %15 = ConstantLoad 1
+    %16 = ConstantLoad 2
+    %17 = ConstantLoad 3
+    %18 = ConstantLoad 4
+    %19 = ConstantLoad 5
+    %20 = ConstantLoad 6
+    %21 = ConstantLoad 7
+    %22 = ConstantLoad 8
+    %23 = ConstantLoad 9
+    %24 = ConstantLoad 10
+    %25 = ConstantLoad 11
+    %26 = ConstantLoad 12
+    %27 = ConstantLoad 13
+    %28 = ConstantLoad 14
+    %29 = ConstantLoad 15
+    %30 = ConstantLoad 16
+    %31 = newArray [int:Unsigned8...][%30]{%14, %15, %16, %17, %18, %19, %20, %21, %22, %23, %24, %25, %26, %27, %28, %29}
+    key = %31;
+    %33 = ConstantLoad 1
+    %34 = ConstantLoad 2
+    %35 = ConstantLoad 3
+    %36 = ConstantLoad 4
+    %37 = ConstantLoad 5
+    %38 = ConstantLoad 6
+    %39 = ConstantLoad 7
+    %40 = ConstantLoad 8
+    %41 = ConstantLoad 9
+    %42 = ConstantLoad 10
+    %43 = ConstantLoad 11
+    %44 = ConstantLoad 12
+    %45 = ConstantLoad 13
+    %46 = ConstantLoad 14
+    %47 = ConstantLoad 15
+    %48 = ConstantLoad 16
+    %49 = ConstantLoad 16
+    %50 = newArray [int:Unsigned8...][%49]{%33, %34, %35, %36, %37, %38, %39, %40, %41, %42, %43, %44, %45, %46, %47, %48}
+    iv = %50;
+    %52 = ConstantLoad 1
+    %53 = ConstantLoad 2
+    %54 = ConstantLoad 3
+    %55 = ConstantLoad 4
+    %56 = ConstantLoad 5
+    %57 = ConstantLoad 6
+    %58 = ConstantLoad 7
+    %59 = ConstantLoad 8
+    %60 = ConstantLoad 9
+    %61 = ConstantLoad 10
+    %62 = ConstantLoad 11
+    %63 = ConstantLoad 12
+    %64 = ConstantLoad 12
+    %65 = newArray [int:Unsigned8...][%64]{%52, %53, %54, %55, %56, %57, %58, %59, %60, %61, %62, %63}
+    iv12 = %65;
+    $desugar$0 = plaintext;
+    $desugar$1 = key;
+    $desugar$2 = iv;
+    %70 = $default$18($desugar$0,$desugar$1,$desugar$2) -> bb1;
+  }
+  bb1 {
+    $desugar$3 = %70;
+    %72 = encryptAesCbc($desugar$0,$desugar$1,$desugar$2,$desugar$3) -> bb2;
+  }
+  bb2 {
+    $desugar$4 = %72;
+    %74 = $desugar$4 is error
+    %74 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    cbc = $desugar$4;
+    %77 = length(cbc) -> bb5;
+  }
+  bb5 {
+    %78 = %77;
+    %79 = length(plaintext) -> bb6;
+  }
+  bb6 {
+    %80 = %79;
+    %76 = > %78 %80;
+    %81 = %76;
+    %82 = println(%81) -> bb7;
+  }
+  bb7 {
+    $desugar$5 = cbc;
+    $desugar$6 = key;
+    $desugar$7 = iv;
+    %86 = $default$23($desugar$5,$desugar$6,$desugar$7) -> bb8;
+  }
+  bb8 {
+    $desugar$8 = %86;
+    %88 = decryptAesCbc($desugar$5,$desugar$6,$desugar$7,$desugar$8) -> bb9;
+  }
+  bb9 {
+    $desugar$9 = %88;
+    %90 = $desugar$9 is error
+    %90 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    %91 = == $desugar$9 plaintext;
+    %92 = %91;
+    %93 = println(%92) -> bb12;
+  }
+  bb12 {
+    $desugar$10 = plaintext;
+    $desugar$11 = key;
+    %96 = $default$19($desugar$10,$desugar$11) -> bb13;
+  }
+  bb13 {
+    $desugar$12 = %96;
+    %98 = encryptAesEcb($desugar$10,$desugar$11,$desugar$12) -> bb14;
+  }
+  bb14 {
+    $desugar$13 = %98;
+    %100 = $desugar$13 is error
+    %100 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb16 {
+    ecb = $desugar$13;
+    $desugar$14 = ecb;
+    $desugar$15 = key;
+    %104 = $default$24($desugar$14,$desugar$15) -> bb17;
+  }
+  bb17 {
+    $desugar$16 = %104;
+    %106 = decryptAesEcb($desugar$14,$desugar$15,$desugar$16) -> bb18;
+  }
+  bb18 {
+    $desugar$17 = %106;
+    %108 = $desugar$17 is error
+    %108 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$17);
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    %109 = == $desugar$17 plaintext;
+    %110 = %109;
+    %111 = println(%110) -> bb21;
+  }
+  bb21 {
+    $desugar$18 = plaintext;
+    $desugar$19 = key;
+    $desugar$20 = iv12;
+    %115 = $default$20($desugar$18,$desugar$19,$desugar$20) -> bb22;
+  }
+  bb22 {
+    $desugar$21 = %115;
+    %117 = $default$21($desugar$18,$desugar$19,$desugar$20,$desugar$21) -> bb23;
+  }
+  bb23 {
+    $desugar$22 = %117;
+    %119 = $desugar$22;
+    %120 = encryptAesGcm($desugar$18,$desugar$19,$desugar$20,$desugar$21,%119) -> bb24;
+  }
+  bb24 {
+    $desugar$23 = %120;
+    %122 = $desugar$23 is error
+    %122 ? bb25 : bb26;
+  }
+  bb25 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$23);
+    PopScopeFrame
+    return;
+  }
+  bb26 {
+    gcm = $desugar$23;
+    $desugar$24 = gcm;
+    $desugar$25 = key;
+    $desugar$26 = iv12;
+    %127 = $default$25($desugar$24,$desugar$25,$desugar$26) -> bb27;
+  }
+  bb27 {
+    $desugar$27 = %127;
+    %129 = $default$26($desugar$24,$desugar$25,$desugar$26,$desugar$27) -> bb28;
+  }
+  bb28 {
+    $desugar$28 = %129;
+    %131 = $desugar$28;
+    %132 = decryptAesGcm($desugar$24,$desugar$25,$desugar$26,$desugar$27,%131) -> bb29;
+  }
+  bb29 {
+    $desugar$29 = %132;
+    %134 = $desugar$29 is error
+    %134 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$29);
+    PopScopeFrame
+    return;
+  }
+  bb31 {
+    %135 = == $desugar$29 plaintext;
+    %136 = %135;
+    %137 = println(%136) -> bb32;
+  }
+  bb32 {
+    %138 = ConstantLoad 96
+    %139 = %138;
+    %140 = encryptAesGcm(plaintext,key,iv12,NONE,%139) -> bb33;
+  }
+  bb33 {
+    $desugar$30 = %140;
+    %142 = $desugar$30 is error
+    %142 ? bb34 : bb35;
+  }
+  bb34 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$30);
+    PopScopeFrame
+    return;
+  }
+  bb35 {
+    gcm96 = $desugar$30;
+    %144 = ConstantLoad 96
+    %145 = %144;
+    %146 = decryptAesGcm(gcm96,key,iv12,NONE,%145) -> bb36;
+  }
+  bb36 {
+    $desugar$31 = %146;
+    %148 = $desugar$31 is error
+    %148 ? bb37 : bb38;
+  }
+  bb37 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$31);
+    PopScopeFrame
+    return;
+  }
+  bb38 {
+    %149 = == $desugar$31 plaintext;
+    %150 = %149;
+    %151 = println(%150) -> bb39;
+  }
+  bb39 {
+    %152 = ConstantLoad 0
+    %153 = ConstantLoad 1
+    %154 = ConstantLoad 2
+    %155 = ConstantLoad 3
+    %156 = ConstantLoad 4
+    %157 = ConstantLoad 5
+    %158 = newArray [int:Unsigned8...][%157]{%152, %153, %154, %155, %156}
+    badKey = %158;
+    $desugar$32 = plaintext;
+    $desugar$33 = badKey;
+    $desugar$34 = iv;
+    %163 = $default$18($desugar$32,$desugar$33,$desugar$34) -> bb40;
+  }
+  bb40 {
+    $desugar$35 = %163;
+    %165 = encryptAesCbc($desugar$32,$desugar$33,$desugar$34,$desugar$35) -> bb41;
+  }
+  bb41 {
+    cbcErr = %165;
+    %167 = cbcErr is error
+    %168 = %167;
+    %169 = println(%168) -> bb42;
+  }
+  bb42 {
+    $desugar$36 = plaintext;
+    $desugar$37 = badKey;
+    %172 = $default$19($desugar$36,$desugar$37) -> bb43;
+  }
+  bb43 {
+    $desugar$38 = %172;
+    %174 = encryptAesEcb($desugar$36,$desugar$37,$desugar$38) -> bb44;
+  }
+  bb44 {
+    ecbErr = %174;
+    %176 = ecbErr is error
+    %177 = %176;
+    %178 = println(%177) -> bb45;
+  }
+  bb45 {
+    $desugar$39 = plaintext;
+    $desugar$40 = badKey;
+    $desugar$41 = iv12;
+    %182 = $default$20($desugar$39,$desugar$40,$desugar$41) -> bb46;
+  }
+  bb46 {
+    $desugar$42 = %182;
+    %184 = $default$21($desugar$39,$desugar$40,$desugar$41,$desugar$42) -> bb47;
+  }
+  bb47 {
+    $desugar$43 = %184;
+    %186 = $desugar$43;
+    %187 = encryptAesGcm($desugar$39,$desugar$40,$desugar$41,$desugar$42,%186) -> bb48;
+  }
+  bb48 {
+    gcmErr = %187;
+    %189 = gcmErr is error
+    %190 = %189;
+    %191 = println(%190) -> bb49;
+  }
+  bb49 {
+    %192 = ConstantLoad 0
+    %193 = ConstantLoad 0
+    %194 = ConstantLoad 0
+    %195 = ConstantLoad 0
+    %196 = ConstantLoad 0
+    %197 = ConstantLoad 0
+    %198 = ConstantLoad 0
+    %199 = ConstantLoad 0
+    %200 = ConstantLoad 0
+    %201 = ConstantLoad 0
+    %202 = ConstantLoad 0
+    %203 = ConstantLoad 0
+    %204 = ConstantLoad 0
+    %205 = ConstantLoad 0
+    %206 = ConstantLoad 0
+    %207 = ConstantLoad 0
+    %208 = ConstantLoad 16
+    %209 = newArray [int:Unsigned8...][%208]{%192, %193, %194, %195, %196, %197, %198, %199, %200, %201, %202, %203, %204, %205, %206, %207}
+    zeros = %209;
+    $desugar$44 = zeros;
+    $desugar$45 = key;
+    $desugar$46 = iv;
+    %214 = $default$23($desugar$44,$desugar$45,$desugar$46) -> bb50;
+  }
+  bb50 {
+    $desugar$47 = %214;
+    %216 = decryptAesCbc($desugar$44,$desugar$45,$desugar$46,$desugar$47) -> bb51;
+  }
+  bb51 {
+    padErr = %216;
+    %218 = padErr is error
+    %219 = %218;
+    %220 = println(%219) -> bb52;
+  }
+  bb52 {
+    %221 = ConstantLoad 1
+    %222 = ConstantLoad 2
+    %223 = ConstantLoad 3
+    %224 = ConstantLoad 3
+    %225 = newArray [int:Unsigned8...][%224]{%221, %222, %223}
+    $desugar$48 = %225;
+    $desugar$49 = key;
+    $desugar$50 = iv;
+    %229 = $default$23($desugar$48,$desugar$49,$desugar$50) -> bb53;
+  }
+  bb53 {
+    $desugar$51 = %229;
+    %231 = decryptAesCbc($desugar$48,$desugar$49,$desugar$50,$desugar$51) -> bb54;
+  }
+  bb54 {
+    sizeErr = %231;
+    %233 = sizeErr is error
+    %234 = %233;
+    %235 = println(%234) -> bb55;
+  }
+  bb55 {
+    $desugar$52 = cbc;
+    $desugar$53 = badKey;
+    $desugar$54 = iv;
+    %239 = $default$23($desugar$52,$desugar$53,$desugar$54) -> bb56;
+  }
+  bb56 {
+    $desugar$55 = %239;
+    %241 = decryptAesCbc($desugar$52,$desugar$53,$desugar$54,$desugar$55) -> bb57;
+  }
+  bb57 {
+    cbcDecErr = %241;
+    %243 = cbcDecErr is error
+    %244 = %243;
+    %245 = println(%244) -> bb58;
+  }
+  bb58 {
+    $desugar$56 = ecb;
+    $desugar$57 = badKey;
+    %248 = $default$24($desugar$56,$desugar$57) -> bb59;
+  }
+  bb59 {
+    $desugar$58 = %248;
+    %250 = decryptAesEcb($desugar$56,$desugar$57,$desugar$58) -> bb60;
+  }
+  bb60 {
+    ecbDecErr = %250;
+    %252 = ecbDecErr is error
+    %253 = %252;
+    %254 = println(%253) -> bb61;
+  }
+  bb61 {
+    %255 = ConstantLoad 1
+    %256 = ConstantLoad 2
+    %257 = ConstantLoad 3
+    %258 = ConstantLoad 3
+    %259 = newArray [int:Unsigned8...][%258]{%255, %256, %257}
+    $desugar$59 = %259;
+    $desugar$60 = key;
+    %262 = $default$24($desugar$59,$desugar$60) -> bb62;
+  }
+  bb62 {
+    $desugar$61 = %262;
+    %264 = decryptAesEcb($desugar$59,$desugar$60,$desugar$61) -> bb63;
+  }
+  bb63 {
+    ecbSizeErr = %264;
+    %266 = ecbSizeErr is error
+    %267 = %266;
+    %268 = println(%267) -> bb64;
+  }
+  bb64 {
+    $desugar$62 = zeros;
+    $desugar$63 = key;
+    %271 = $default$24($desugar$62,$desugar$63) -> bb65;
+  }
+  bb65 {
+    $desugar$64 = %271;
+    %273 = decryptAesEcb($desugar$62,$desugar$63,$desugar$64) -> bb66;
+  }
+  bb66 {
+    ecbPadErr = %273;
+    %275 = ecbPadErr is error
+    %276 = %275;
+    %277 = println(%276) -> bb67;
+  }
+  bb67 {
+    %278 = ConstantLoad 0
+    %279 = newArray [int:Unsigned8...][%278]{}
+    $desugar$65 = %279;
+    $desugar$66 = key;
+    $desugar$67 = iv;
+    %283 = $default$23($desugar$65,$desugar$66,$desugar$67) -> bb68;
+  }
+  bb68 {
+    $desugar$68 = %283;
+    %285 = decryptAesCbc($desugar$65,$desugar$66,$desugar$67,$desugar$68) -> bb69;
+  }
+  bb69 {
+    emptyErr = %285;
+    %287 = emptyErr is error
+    %288 = %287;
+    %289 = println(%288) -> bb70;
+  }
+  bb70 {
+    %290 = ConstantLoad 48
+    %291 = %290;
+    %292 = encryptAesGcm(plaintext,key,iv12,NONE,%291) -> bb71;
+  }
+  bb71 {
+    gcmEncTagErr = %292;
+    %294 = gcmEncTagErr is error
+    %295 = %294;
+    %296 = println(%295) -> bb72;
+  }
+  bb72 {
+    %297 = ConstantLoad 48
+    %298 = %297;
+    %299 = decryptAesGcm(gcm,key,iv12,NONE,%298) -> bb73;
+  }
+  bb73 {
+    gcmDecTagErr = %299;
+    %301 = gcmDecTagErr is error
+    %302 = %301;
+    %303 = println(%302) -> bb74;
+  }
+  bb74 {
+    %304 = ConstantLoad 96
+    %305 = %304;
+    %306 = encryptAesGcm(plaintext,key,iv,NONE,%305) -> bb75;
+  }
+  bb75 {
+    gcmEncCombo = %306;
+    %308 = gcmEncCombo is error
+    %309 = %308;
+    %310 = println(%309) -> bb76;
+  }
+  bb76 {
+    %311 = ConstantLoad 96
+    %312 = %311;
+    %313 = decryptAesGcm(gcm,key,iv,NONE,%312) -> bb77;
+  }
+  bb77 {
+    gcmDecCombo = %313;
+    %315 = gcmDecCombo is error
+    %316 = %315;
+    %317 = println(%316) -> bb78;
+  }
+  bb78 {
+    $desugar$69 = gcm;
+    $desugar$70 = badKey;
+    $desugar$71 = iv12;
+    %321 = $default$25($desugar$69,$desugar$70,$desugar$71) -> bb79;
+  }
+  bb79 {
+    $desugar$72 = %321;
+    %323 = $default$26($desugar$69,$desugar$70,$desugar$71,$desugar$72) -> bb80;
+  }
+  bb80 {
+    $desugar$73 = %323;
+    %325 = $desugar$73;
+    %326 = decryptAesGcm($desugar$69,$desugar$70,$desugar$71,$desugar$72,%325) -> bb81;
+  }
+  bb81 {
+    gcmDecKeyErr = %326;
+    %328 = gcmDecKeyErr is error
+    %329 = %328;
+    %330 = println(%329) -> bb82;
+  }
+  bb82 {
+    %331 = ConstantLoad 15
+    %332 = ConstantLoad 14
+    %333 = ConstantLoad 13
+    %334 = ConstantLoad 12
+    %335 = ConstantLoad 11
+    %336 = ConstantLoad 10
+    %337 = ConstantLoad 9
+    %338 = ConstantLoad 8
+    %339 = ConstantLoad 7
+    %340 = ConstantLoad 6
+    %341 = ConstantLoad 5
+    %342 = ConstantLoad 4
+    %343 = ConstantLoad 3
+    %344 = ConstantLoad 2
+    %345 = ConstantLoad 1
+    %346 = ConstantLoad 0
+    %347 = ConstantLoad 16
+    %348 = newArray [int:Unsigned8...][%347]{%331, %332, %333, %334, %335, %336, %337, %338, %339, %340, %341, %342, %343, %344, %345, %346}
+    key2 = %348;
+    $desugar$74 = gcm;
+    $desugar$75 = key2;
+    $desugar$76 = iv12;
+    %353 = $default$25($desugar$74,$desugar$75,$desugar$76) -> bb83;
+  }
+  bb83 {
+    $desugar$77 = %353;
+    %355 = $default$26($desugar$74,$desugar$75,$desugar$76,$desugar$77) -> bb84;
+  }
+  bb84 {
+    $desugar$78 = %355;
+    %357 = $desugar$78;
+    %358 = decryptAesGcm($desugar$74,$desugar$75,$desugar$76,$desugar$77,%357) -> bb85;
+  }
+  bb85 {
+    gcmAuthErr = %358;
+    %360 = gcmAuthErr is error
+    %361 = %360;
+    %362 = println(%361) -> bb86;
+  }
+  bb86 {
+    return;
+  }
+}

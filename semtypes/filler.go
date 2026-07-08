@@ -82,46 +82,46 @@ func FillerValue(cx Context, t SemType) (Filler, bool) {
 	if shape := SingleShape(t); !shape.IsEmpty() {
 		return SingleValueFiller(shape.Get()), true
 	}
-	bitset := WidenToBasicTypes(t)
+	bitset := widenToBasicTypeBits(t)
 	if bitCount(bitset) != 1 {
 		// Only nil containing unions can have filler values
 		return nil, false
 	}
 	switch bitset {
-	case BOOLEAN:
+	case booleanBits:
 		return SingleValueFiller(valueFrom(false)), true
-	case INT:
+	case intBits:
 		if IsSubtype(cx, IntConst(0), t) {
 			return SingleValueFiller(valueFrom(int64(0))), true
 		}
 		return nil, false
-	case FLOAT:
+	case floatBits:
 		if IsSubtype(cx, FloatConst(0), t) {
 			return SingleValueFiller(valueFrom(float64(0))), true
 		}
 		return nil, false
-	case DECIMAL:
+	case decimalBits:
 		zero := decimal.FromInt64(0)
 		if IsSubtype(cx, DecimalConst(*zero), t) {
 			return SingleValueFiller(valueFrom(zero)), true
 		}
 		return nil, false
-	case STRING:
+	case stringBits:
 		if IsSubtype(cx, StringConst(""), t) {
 			return SingleValueFiller(valueFrom("")), true
 		}
 		return nil, false
-	case LIST:
+	case listBits:
 		return listFiller(cx, t)
-	case MAPPING:
+	case mappingBits:
 		return mappingFiller(cx, t)
-	case TABLE:
+	case tableBits:
 		return TableFiller{Type: t}, true
-	case OBJECT:
+	case objectBits:
 		return objectFiller(cx, t)
-	case STREAM:
+	case streamBits:
 		return StreamFiller{Type: t}, true
-	case XML:
+	case xmlBits:
 		return xmlFiller(cx, t)
 	default:
 		return nil, false
@@ -150,11 +150,11 @@ func initFnFillerCompatible(cx Context, initFnTy SemType) bool {
 	ld := NewListDefinition()
 	emptyArgList := ld.TupleTypeWrapped(cx.Env())
 	paramListTy := FunctionParamListType(cx, initFnTy)
-	if paramListTy == nil || !IsSubtype(cx, emptyArgList, paramListTy) {
+	if IsZero(paramListTy) || !IsSubtype(cx, emptyArgList, paramListTy) {
 		return false
 	}
 	retTy := FunctionReturnType(cx, initFnTy, emptyArgList)
-	if retTy == nil {
+	if IsZero(retTy) {
 		return false
 	}
 	return !ContainsBasicType(retTy, ERROR)

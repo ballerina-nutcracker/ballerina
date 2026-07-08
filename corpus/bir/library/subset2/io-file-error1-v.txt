@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_nonexistent_file_xyz.txt
+    %2 = fileReadString(%1) -> bb1;
+  }
+  bb1 {
+    result = %2;
+    %4 = result is error
+    %4 ? bb2 : bb4;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad got error
+    %1 = println(%0) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected success
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    return;
+  }
+}

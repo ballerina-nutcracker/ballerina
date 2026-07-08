@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: initializer of an isolated variable must be an isolated expression
+  --> isolated-var-init-1-e.bal:21:21
+   |
+21 | isolated int[] xs = makeList(); // @error
+   |                     ^^^^^^^^^^

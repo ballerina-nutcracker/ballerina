@@ -9,7 +9,7 @@
       (literal 0)
       (literal 1000))
     (var-def
-      (variable i (type
+      (variable _ (type
         (value-type int))))
   )
   (bb2 (bb1) (bb1))

@@ -17,36 +17,64 @@
 package semtypes
 
 const (
-	NEVER            = BasicTypeBitSet(0)
-	NIL              = BasicTypeBitSet(1 << int(BTNil))
-	BOOLEAN          = BasicTypeBitSet(1 << int(BTBoolean))
-	INT              = BasicTypeBitSet(1 << int(BTInt))
-	FLOAT            = BasicTypeBitSet(1 << int(BTFloat))
-	DECIMAL          = BasicTypeBitSet(1 << int(BTDecimal))
-	STRING           = BasicTypeBitSet(1 << int(BTString))
-	ERROR            = BasicTypeBitSet(1 << int(BTError))
-	LIST             = BasicTypeBitSet(1 << int(BTList))
-	MAPPING          = BasicTypeBitSet(1 << int(BTMapping))
-	TABLE            = BasicTypeBitSet(1 << int(BTTable))
-	CELL             = BasicTypeBitSet(1 << int(BTCell))
-	UNDEF            = BasicTypeBitSet(1 << int(BTUndef))
-	REGEXP           = BasicTypeBitSet(1 << int(BTRegexp))
-	FUNCTION         = BasicTypeBitSet(1 << int(BTFunction))
-	TYPEDESC         = BasicTypeBitSet(1 << int(BTTypeDesc))
-	HANDLE           = BasicTypeBitSet(1 << int(BTHandle))
-	XML              = BasicTypeBitSet(1 << int(BTXML))
-	OBJECT           = BasicTypeBitSet(1 << int(BTObject))
-	STREAM           = BasicTypeBitSet(1 << int(BTStream))
-	FUTURE           = BasicTypeBitSet(1 << int(BTFuture))
-	VAL              = BasicTypeBitSet(ValueTypeMask)
-	INNER            = BasicTypeBitSet(VAL | UNDEF)
-	ANY              = BasicTypeBitSet(ValueTypeMask & ^(1 << int(BTError)))
-	SIMPLE_OR_STRING = BasicTypeBitSet((1 << int(BTNil)) | (1 << int(BTBoolean)) | (1 << int(BTInt)) | (1 << int(BTFloat)) | (1 << int(BTDecimal)) | (1 << int(BTString)))
-	NUMBER           = BasicTypeBitSet((1 << int(BTInt)) | (1 << int(BTFloat)) | (1 << int(BTDecimal)))
-	SIMPLE_BASIC     = NIL | BOOLEAN | INT | FLOAT | DECIMAL
+	neverBits          = basicTypeBitSet(0)
+	nilBits            = basicTypeBitSet(1 << int(BTNil))
+	booleanBits        = basicTypeBitSet(1 << int(BTBoolean))
+	intBits            = basicTypeBitSet(1 << int(BTInt))
+	floatBits          = basicTypeBitSet(1 << int(BTFloat))
+	decimalBits        = basicTypeBitSet(1 << int(BTDecimal))
+	stringBits         = basicTypeBitSet(1 << int(BTString))
+	errorBits          = basicTypeBitSet(1 << int(BTError))
+	listBits           = basicTypeBitSet(1 << int(BTList))
+	mappingBits        = basicTypeBitSet(1 << int(BTMapping))
+	tableBits          = basicTypeBitSet(1 << int(BTTable))
+	cellBits           = basicTypeBitSet(1 << int(BTCell))
+	undefBits          = basicTypeBitSet(1 << int(BTUndef))
+	regexpBits         = basicTypeBitSet(1 << int(BTRegexp))
+	functionBits       = basicTypeBitSet(1 << int(BTFunction))
+	typedescBits       = basicTypeBitSet(1 << int(BTTypeDesc))
+	handleBits         = basicTypeBitSet(1 << int(BTHandle))
+	xmlBits            = basicTypeBitSet(1 << int(BTXML))
+	objectBits         = basicTypeBitSet(1 << int(BTObject))
+	streamBits         = basicTypeBitSet(1 << int(BTStream))
+	futureBits         = basicTypeBitSet(1 << int(BTFuture))
+	valBits            = basicTypeBitSet(ValueTypeMask)
+	innerBits          = basicTypeBitSet(ValueTypeMask) | undefBits
+	anyBits            = basicTypeBitSet(ValueTypeMask & ^(1 << int(BTError)))
+	simpleOrStringBits = basicTypeBitSet((1 << int(BTNil)) | (1 << int(BTBoolean)) | (1 << int(BTInt)) | (1 << int(BTFloat)) | (1 << int(BTDecimal)) | (1 << int(BTString)))
+	numberBits         = basicTypeBitSet((1 << int(BTInt)) | (1 << int(BTFloat)) | (1 << int(BTDecimal)))
+	simpleBasicBits    = nilBits | booleanBits | intBits | floatBits | decimalBits
 )
 
 var (
+	NEVER            = neverBits.semType()
+	NIL              = nilBits.semType()
+	BOOLEAN          = booleanBits.semType()
+	INT              = intBits.semType()
+	FLOAT            = floatBits.semType()
+	DECIMAL          = decimalBits.semType()
+	STRING           = stringBits.semType()
+	ERROR            = errorBits.semType()
+	LIST             = listBits.semType()
+	MAPPING          = mappingBits.semType()
+	TABLE            = tableBits.semType()
+	CELL             = cellBits.semType()
+	UNDEF            = undefBits.semType()
+	REGEXP           = regexpBits.semType()
+	FUNCTION         = functionBits.semType()
+	TYPEDESC         = typedescBits.semType()
+	HANDLE           = handleBits.semType()
+	XML              = xmlBits.semType()
+	OBJECT           = objectBits.semType()
+	STREAM           = streamBits.semType()
+	FUTURE           = futureBits.semType()
+	VAL              = valBits.semType()
+	INNER            = innerBits.semType()
+	ANY              = anyBits.semType()
+	SIMPLE_OR_STRING = simpleOrStringBits.semType()
+	NUMBER           = numberBits.semType()
+	SIMPLE_BASIC     = simpleBasicBits.semType()
+
 	predefTypeEnv                         = predefinedTypeEnvGetInstance()
 	BYTE                                  = intWidthUnsigned(8)
 	STRING_CHAR                           = stringChar()
@@ -125,15 +153,15 @@ var (
 	LIST_ATOMIC_RO                        = predefTypeEnv.listAtomicRO()
 )
 
-func basicTypeUnion(bitset BasicTypeBitSet) BasicTypeBitSet {
-	return bitset
+func basicTypeUnion(bitset basicTypeBitSet) SemType {
+	return bitset.semType()
 }
 
-func basicType(code BasicTypeCode) BasicTypeBitSet {
-	return basicTypeBitSetFrom((1 << code.Code()))
+func basicType(code BasicTypeCode) SemType {
+	return basicTypeBitSet(1 << code.Code()).semType()
 }
 
-func getBasicSubtype(code BasicTypeCode, data ProperSubtypeData) *ComplexSemType {
+func getBasicSubtype(code BasicTypeCode, data ProperSubtypeData) SemType {
 	if code == BTCell {
 		return createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(0, CELL.all(), []ProperSubtypeData{data})
 	}

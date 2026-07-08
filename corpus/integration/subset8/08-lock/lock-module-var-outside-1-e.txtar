@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-1-e.bal:22:16
+   |
+22 |     io:println(counter); // @error
+   |                ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-1-e.bal:23:15
+   |
+23 |     counter = counter + 1; // @error LHS // @error RHS
+   |               ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-1-e.bal:23:5
+   |
+23 |     counter = counter + 1; // @error LHS // @error RHS
+   |     ^^^^^^^

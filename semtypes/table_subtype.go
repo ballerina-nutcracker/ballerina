@@ -32,7 +32,7 @@ func tableContainingKeyConstraint(cx Context, tableConstraint SemType, keyConstr
 		case 0:
 			normalizedKc = VAL
 		case 1:
-			normalizedKc = getCellAtomicType(&members.initial[0]).Ty
+			normalizedKc = getCellAtomicType(members.initial[0]).Ty
 		default:
 			normalizedKc = keyConstraint
 		}
@@ -67,8 +67,8 @@ func tableContainingDefault(env Env, tableConstraint SemType) SemType {
 }
 
 func tableContainingWithEnvSemTypeCellMutability(env Env, tableConstraint SemType, mut CellMutability) SemType {
-	var normalizedKc SemType = VAL
-	var normalizedKs SemType = VAL
+	var normalizedKc = VAL
+	var normalizedKs = VAL
 	return tableContaining(env, tableConstraint, normalizedKc, normalizedKs, mut)
 }
 

@@ -17,12 +17,24 @@
 package rt
 
 import (
-	_ "ballerina-lang-go/lib/array/runtime"
-	_ "ballerina-lang-go/lib/error/runtime"
-	_ "ballerina-lang-go/lib/http/runtime"
-	_ "ballerina-lang-go/lib/int/runtime"
-	_ "ballerina-lang-go/lib/io/runtime"
 	_ "ballerina-lang-go/lib/langinternal/runtime"
-	_ "ballerina-lang-go/lib/map/runtime"
-	_ "ballerina-lang-go/lib/string/runtime"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.array"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.boolean"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.decimal"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.error"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.float"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.int"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.map"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.string"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.xml"
+
+	// standard libraries
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/crypto/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/io/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/log/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/os/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/random/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/time/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/url/0.0.1/go1.2/native"
 )

@@ -1,0 +1,7 @@
+-- stdout --
+%00A%00B
+%00h%00i
+AB
+hi
+true
+-- stderr --

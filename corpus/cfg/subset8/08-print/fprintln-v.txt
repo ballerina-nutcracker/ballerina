@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io fprintln (
+        (simple-var-ref io stdout))))
+    (expression-stmt
+      (invocation io fprintln (
+        (simple-var-ref io stdout)
+        (literal hello))))
+    (expression-stmt
+      (invocation io fprintln (
+        (simple-var-ref io stdout)
+        (literal a)
+        (literal b))))
+    (expression-stmt
+      (invocation io fprintln (
+        (simple-var-ref io stdout)
+        (literal 1)
+        (literal 2)
+        (literal 3))))
+  )
+)

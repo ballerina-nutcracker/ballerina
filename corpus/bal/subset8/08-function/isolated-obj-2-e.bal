@@ -27,5 +27,5 @@ isolated class Counter {
 }
 
 public function main() {
-    Counter c = new;
+    Counter _ = new;
 }

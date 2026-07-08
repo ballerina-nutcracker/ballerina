@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+class Node {
+  id int
+  next nil|object { public int id; public function init() returns nil; private nil|... next }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad id
+      self[%3] = %2;
+      %4 = ConstantLoad <nil>
+      %5 = ConstantLoad next
+      self[%5] = %4;
+      return;
+    }
+  }
+}
+class Child {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Child
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    _ = %3;
+    %6 = ConstantLoad ok
+    %7 = println(%6) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

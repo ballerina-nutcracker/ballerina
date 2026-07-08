@@ -1,5 +1,13 @@
 (foo
   (bb0 () ()
+    (var-def
+      (variable _ (type
+        (union-type
+          (finite-type
+            (literal 1))
+          (finite-type
+            (literal 2)))) (expr
+        (simple-var-ref a))))
     (return
       (literal 4))
   )

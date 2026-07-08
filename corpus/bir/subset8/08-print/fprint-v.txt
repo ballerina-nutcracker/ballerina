@@ -1,0 +1,39 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hello
+    %2 = fprint(stdout,%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad  world
+    %4 = fprint(stdout,%3) -> bb2;
+  }
+  bb2 {
+    %5 = fprintln(stdout) -> bb3;
+  }
+  bb3 {
+    %6 = ConstantLoad a
+    %7 = ConstantLoad b
+    %8 = ConstantLoad c
+    %9 = fprint(stdout,%6,%7,%8) -> bb4;
+  }
+  bb4 {
+    %10 = fprintln(stdout) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %13 = fprint(stdout,%12) -> bb6;
+  }
+  bb6 {
+    %14 = ConstantLoad 2
+    %15 = %14;
+    %16 = fprint(stdout,%15) -> bb7;
+  }
+  bb7 {
+    %17 = fprintln(stdout) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

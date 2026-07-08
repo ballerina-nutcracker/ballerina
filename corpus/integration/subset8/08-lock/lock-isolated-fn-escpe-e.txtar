@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-isolated-fn-escpe-e.bal:23:18
+   |
+23 |         sneaky = a; // @error
+   |                  ^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-isolated-fn-escpe-e.bal:23:9
+   |
+23 |         sneaky = a; // @error
+   |         ^^^^^^

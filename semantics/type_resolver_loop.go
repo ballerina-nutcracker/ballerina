@@ -51,6 +51,9 @@ func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 	return l.parentResolver.nextMonoFnName(origName)
 }
 func (l *loopTypeResolver) typeEnv() semtypes.Env { return l.parentResolver.typeEnv() }
+func (l *loopTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
+	return l.parentResolver.xmlIteratorTypeCache()
+}
 
 func (l *loopTypeResolver) semanticError(msg string, loc diagnostics.Location) {
 	l.parentResolver.semanticError(msg, loc)

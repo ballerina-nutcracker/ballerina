@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable reference cannot be used as a spread member for a fixed-length list constructor
+  --> group-by-map-array-spread-e.bal:24:22
+   |
+24 |         select [key, n]; // @error
+   |                      ^

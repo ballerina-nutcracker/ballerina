@@ -88,11 +88,53 @@ type (
 	}
 )
 
+// AbstractExpression expression is there to allow other packages (such as Desugar) to define their
+// own ast nodes. All stages after that will need to be aware on how to handle them.
+type AbstractExpression = bLangExpressionBase
+
 func (*bLangExpressionBase) actionOrExpression() {}
 func (*bLangExpressionBase) expressionNode()     {}
 
+func (b *BLangValueExpressionBase) IsCompoundAssignmentLValue() bool {
+	return b.flags.Has(valueExpressionFlagCompoundAssignmentLValue)
+}
+
+func (b *BLangValueExpressionBase) SetCompoundAssignmentLValue() {
+	b.flags |= valueExpressionFlagCompoundAssignmentLValue
+}
+
+func (b *BLangValueExpressionBase) IsLexpr() bool {
+	return b.flags.Has(valueExpressionFlagLexpr)
+}
+
+func (b *BLangValueExpressionBase) SetLexpr() {
+	b.flags |= valueExpressionFlagLexpr
+}
+
+func (b *BLangValueExpressionBase) IsOptionalAccess() bool {
+	return b.flags.Has(valueExpressionFlagOptionalAccess)
+}
+
+func (b *BLangValueExpressionBase) SetOptionalAccess() {
+	b.flags |= valueExpressionFlagOptionalAccess
+}
+
+func (f BLangValueExpressionFlags) Has(flag BLangValueExpressionFlags) bool {
+	return f&flag == flag
+}
+
 func (*BLangRemoteMethodCallAction) actionNode()         {}
 func (*BLangRemoteMethodCallAction) actionOrExpression() {}
+
+func (*BLangClientResourceAccessAction) actionNode()         {}
+func (*BLangClientResourceAccessAction) actionOrExpression() {}
+
+type ResourceAccessSegmentKind uint8
+
+const (
+	ResourceAccessSegmentName ResourceAccessSegmentKind = iota
+	ResourceAccessSegmentComputed
+)
 
 type MappingKeyKind uint8
 
@@ -100,6 +142,27 @@ const (
 	MappingKeyStringLiteral MappingKeyKind = iota
 	MappingKeyIdentifier
 	MappingKeyComputed
+)
+
+const (
+	valueExpressionFlagCompoundAssignmentLValue BLangValueExpressionFlags = 1 << iota
+	valueExpressionFlagLexpr
+	valueExpressionFlagOptionalAccess
+)
+
+type TemplateExprKind uint8
+
+type XMLTemplateInsertionKind uint8
+
+const (
+	TemplateExprKindString TemplateExprKind = iota
+	TemplateExprKindXML
+	TemplateExprKindRaw
+)
+
+const (
+	XMLTemplateInsertionKindContent XMLTemplateInsertionKind = iota
+	XMLTemplateInsertionKindAttribute
 )
 
 type (
@@ -114,16 +177,17 @@ type (
 		TypeDescriptor BType
 	}
 
+	BLangValueExpressionFlags byte
+
 	BLangValueExpressionBase struct {
 		bLangExpressionBase
-		IsCompoundAssignmentLValue bool
+		flags BLangValueExpressionFlags
 	}
 
 	bLangAccessExpressionBase struct {
 		BLangValueExpressionBase
 		Expr         BLangExpression
 		OriginalType BType
-		IsLexpr      bool
 	}
 
 	BLangFieldBaseAccess struct {
@@ -270,6 +334,20 @@ type (
 		bLangInvocationBase
 	}
 
+	BLangResourceAccessSegment struct {
+		bLangNodeBase
+		Kind ResourceAccessSegmentKind
+		Name string
+		Expr BLangExpression
+	}
+
+	BLangClientResourceAccessAction struct {
+		bLangNodeBase
+		bLangInvocationBase
+		Path       []BLangResourceAccessSegment
+		MethodName string
+	}
+
 	BLangGroupExpr struct {
 		bLangExpressionBase
 		Expression BLangExpression
@@ -301,8 +379,9 @@ type (
 
 	BLangListConstructorExpr struct {
 		bLangExpressionBase
-		Exprs      []BLangExpression
-		AtomicType semtypes.ListAtomicType
+		Exprs         []BLangExpression
+		AtomicType    semtypes.ListAtomicType
+		SpreadMembers []bool
 	}
 
 	BLangErrorConstructorExpr struct {
@@ -348,10 +427,10 @@ type (
 
 	BLangNewExpression struct {
 		bLangExpressionBase
-		AtomicType      *semtypes.MappingAtomicType
-		ClassSymbol     model.SymbolRef
-		UserDefinedType *BLangUserDefinedType
-		ArgsExprs       []BLangExpression
+		AtomicType     *semtypes.MappingAtomicType
+		ClassSymbol    model.SymbolRef
+		TypeDescriptor BType
+		ArgsExprs      []BLangExpression
 	}
 
 	BLangXMLSequenceLiteral struct {
@@ -360,17 +439,32 @@ type (
 		Children []BLangExpression
 	}
 
+	BLangTemplateExpr struct {
+		bLangExpressionBase
+		Kind       TemplateExprKind
+		Strings    []string
+		Insertions []BLangExpression
+	}
+
+	XMLTemplateNamespaceInsertion struct {
+		Offset         int // this is the offest in the string where we need to insert the namespace declarations when we desugar to BLangTemplateExpr
+		UsedPrefixes   map[string]struct{}
+		NeedsDefaultNS bool
+		Namespaces     []model.SymbolRef // Namespaces referred from this node
+	}
+
+	BLangXMLTemplateExpr struct {
+		BLangTemplateExpr
+		InsertionKinds      []XMLTemplateInsertionKind        // This tracks where do we do the insertion for each expression
+		NamespaceInsertions [][]XMLTemplateNamespaceInsertion // namespace insertion points for each template string
+	}
+
 	BLangXMLElementLiteral struct {
 		bLangExpressionBase
-		Name    string
-		Attrs   []BLangXMLAttribute
-		Content BLangExpression
-		// Namespaces holds XML namespace declarations to emit on this element.
-		// Keys are stored in already-printable form: "xmlns" for the default
-		// namespace, "xmlns:<prefix>" otherwise. Values are URIs.
-		// Populated by the symbol resolver from inline xmlns attributes and
-		// from outer-scope xmlns declarations referenced inside this literal.
-		Namespaces map[string]string
+		Name       string
+		Attrs      []BLangXMLAttribute
+		Content    BLangExpression
+		Namespaces []model.SymbolRef // Namespaces referred from this node
 	}
 
 	BLangXMLAttribute struct {
@@ -416,6 +510,7 @@ var (
 	_ InvocationNode                                         = &BLangInvocation{}
 	_ BLangExpression                                        = &BLangInvocation{}
 	_ BLangAction                                            = &BLangRemoteMethodCallAction{}
+	_ BLangAction                                            = &BLangClientResourceAccessAction{}
 	_ BLangExpression                                        = &BLangQueryExpr{}
 	_ GroupExpressionNode                                    = &BLangGroupExpr{}
 	_ TypedescExpressionNode                                 = &BLangTypedescExpr{}
@@ -521,6 +616,14 @@ func (n *BLangRemoteMethodCallAction) MethodSymbol() model.SymbolRef {
 }
 
 func (n *BLangRemoteMethodCallAction) SetMethodSymbol(symbolRef model.SymbolRef) {
+	n.RawSymbol = &symbolRef
+}
+
+func (n *BLangClientResourceAccessAction) MethodSymbol() model.SymbolRef {
+	return *n.RawSymbol.(*model.SymbolRef)
+}
+
+func (n *BLangClientResourceAccessAction) SetMethodSymbol(symbolRef model.SymbolRef) {
 	n.RawSymbol = &symbolRef
 }
 
@@ -879,6 +982,26 @@ func (b *BLangListConstructorExpr) GetExpressions() []BLangExpression {
 	return result
 }
 
+func (b *BLangListConstructorExpr) SetSpreadMember(index int) {
+	if len(b.SpreadMembers) != len(b.Exprs) {
+		b.SpreadMembers = make([]bool, len(b.Exprs))
+	}
+	b.SpreadMembers[index] = true
+}
+
+func (b *BLangListConstructorExpr) IsSpreadMember(index int) bool {
+	return index >= 0 && index < len(b.SpreadMembers) && b.SpreadMembers[index]
+}
+
+func (b *BLangListConstructorExpr) HasSpreadMembers() bool {
+	for _, isSpread := range b.SpreadMembers {
+		if isSpread {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *BLangErrorConstructorExpr) GetPositionalArgs() []BLangExpression {
 	result := make([]BLangExpression, len(b.PositionalArgs))
 	copy(result, b.PositionalArgs)
@@ -944,6 +1067,17 @@ func (b *BLangTrapExpr) GetExpression() BLangExpression {
 	return b.Expr
 }
 
+// IsStreamOperation use to distinguish stream operations from method calls.
+func IsStreamOperation(inv interface{ Receiver() BLangExpression }) bool {
+	recv := inv.Receiver()
+	return recv != nil && semtypes.IsSubtypeSimple(recv.GetDeterminedType(), semtypes.STREAM)
+}
+
+// IsStreamNewExpression returns true when the new expression constructs a stream value.
+func IsStreamNewExpression(expr *BLangNewExpression) bool {
+	return semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.STREAM)
+}
+
 func createBLangUnaryExpr(location diagnostics.Location, operator model.OperatorKind, expr BLangExpression) *BLangUnaryExpr {
 	exprNode := &BLangUnaryExpr{}
 	exprNode.pos = location
@@ -954,12 +1088,16 @@ func createBLangUnaryExpr(location diagnostics.Location, operator model.Operator
 
 var (
 	_ BLangExpression = &BLangXMLSequenceLiteral{}
+	_ BLangExpression = &BLangTemplateExpr{}
+	_ BLangExpression = &BLangXMLTemplateExpr{}
 	_ BLangExpression = &BLangXMLElementLiteral{}
 	_ BLangExpression = &BLangXMLAttribute{}
 	_ BLangExpression = &BLangXMLPILiteral{}
 	_ BLangExpression = &BLangXMLCommentLiteral{}
 	_ BLangExpression = &BLangXMLTextLiteral{}
 	_ BLangNode       = &BLangXMLSequenceLiteral{}
+	_ BLangNode       = &BLangTemplateExpr{}
+	_ BLangNode       = &BLangXMLTemplateExpr{}
 	_ BLangNode       = &BLangXMLElementLiteral{}
 	_ BLangNode       = &BLangXMLAttribute{}
 	_ BLangNode       = &BLangXMLPILiteral{}

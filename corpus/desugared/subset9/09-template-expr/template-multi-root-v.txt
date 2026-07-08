@@ -1,0 +1,21 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type string)) (expr
+          (literal mid))))
+      (var-def
+        (variable v (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<a/>")
+            (invocation lang.__internal escapeXMLContent (
+              (simple-var-ref x)))
+            (template-string "<b/>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v)))))))

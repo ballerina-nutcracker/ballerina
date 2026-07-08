@@ -17,6 +17,5 @@
 import testorg/import_function3_e.foo;
 
 public function main() {
-    string test = "ignore";
-    _ = test;
+    _ = foo:foo(1);
 }

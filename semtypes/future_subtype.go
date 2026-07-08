@@ -16,10 +16,8 @@
 
 package semtypes
 
-import "ballerina-lang-go/common"
-
 func futureContaining(env Env, constraint SemType) SemType {
-	if common.PointerEqualToValue(VAL, constraint) {
+	if sameSemType(VAL, constraint) {
 		return FUTURE
 	}
 

@@ -1,0 +1,135 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = sum() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = ConstantLoad 1.1
+    %5 = %4;
+    %6 = ConstantLoad 2.2
+    %7 = %6;
+    %8 = ConstantLoad 0.3
+    %9 = unknown %8;
+    %10 = %9;
+    %11 = sum(%5,%7,%10) -> bb3;
+  }
+  bb3 {
+    %12 = %11;
+    %13 = println(%12) -> bb4;
+  }
+  bb4 {
+    %14 = ConstantLoad 1.1
+    %15 = %14;
+    %16 = ConstantLoad 2.2
+    %17 = %16;
+    %18 = ConstantLoad 3.0
+    %19 = unknown %18;
+    %20 = %19;
+    %21 = max(%15,%17,%20) -> bb5;
+  }
+  bb5 {
+    %22 = %21;
+    %23 = println(%22) -> bb6;
+  }
+  bb6 {
+    %24 = ConstantLoad 1.1
+    %25 = %24;
+    %26 = ConstantLoad 2.2
+    %27 = %26;
+    %28 = ConstantLoad 3.0
+    %29 = unknown %28;
+    %30 = %29;
+    %31 = min(%25,%27,%30) -> bb7;
+  }
+  bb7 {
+    %32 = %31;
+    %33 = println(%32) -> bb8;
+  }
+  bb8 {
+    %34 = ConstantLoad 1.23
+    %35 = unknown %34;
+    %36 = %35;
+    %37 = abs(%36) -> bb9;
+  }
+  bb9 {
+    %38 = %37;
+    %39 = println(%38) -> bb10;
+  }
+  bb10 {
+    %40 = ConstantLoad 1.235
+    %41 = %40;
+    %42 = ConstantLoad 2
+    %43 = %42;
+    %44 = round(%41,%43) -> bb11;
+  }
+  bb11 {
+    %45 = %44;
+    %46 = println(%45) -> bb12;
+  }
+  bb12 {
+    %47 = ConstantLoad 1.234
+    %48 = %47;
+    %49 = ConstantLoad 0.00
+    %50 = %49;
+    %51 = quantize(%48,%50) -> bb13;
+  }
+  bb13 {
+    %52 = %51;
+    %53 = println(%52) -> bb14;
+  }
+  bb14 {
+    %54 = ConstantLoad 1.2
+    %55 = unknown %54;
+    %56 = %55;
+    %57 = floor(%56) -> bb15;
+  }
+  bb15 {
+    %58 = %57;
+    %59 = println(%58) -> bb16;
+  }
+  bb16 {
+    %60 = ConstantLoad 1.2
+    %61 = unknown %60;
+    %62 = %61;
+    %63 = ceiling(%62) -> bb17;
+  }
+  bb17 {
+    %64 = %63;
+    %65 = println(%64) -> bb18;
+  }
+  bb18 {
+    %66 = ConstantLoad +12.30
+    %67 = fromString(%66) -> bb19;
+  }
+  bb19 {
+    parsed = %67;
+    %69 = parsed is decimal
+    %69 ? bb20 : bb22;
+  }
+  bb20 {
+    PushScopeFrame 1
+    %0 = println((1, parsed)) -> bb21;
+  }
+  bb21 {
+    PopScopeFrame
+    GOTO bb22;
+  }
+  bb22 {
+    PushScopeFrame 5
+    %0 = ConstantLoad bad
+    %1 = fromString(%0) -> bb23;
+  }
+  bb23 {
+    %2 = %1 is error
+    %3 = %2;
+    %4 = println(%3) -> bb24;
+  }
+  bb24 {
+    PopScopeFrame
+    return;
+  }
+}

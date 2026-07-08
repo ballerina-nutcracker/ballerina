@@ -14,7 +14,7 @@
       (invocation io println (
         (simple-var-ref BLUE))))
     (var-def
-      (variable x (type
+      (variable _ (type
         (union-type
           (union-type
             (finite-type
@@ -25,7 +25,7 @@
             (literal BLUE)))) (expr
         (simple-var-ref c))))
     (var-def
-      (variable y (type
+      (variable _ (type
         (value-type string)) (expr
         (simple-var-ref c))))
   )

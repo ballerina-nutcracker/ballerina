@@ -18,7 +18,7 @@ package semtypes
 
 type atom interface {
 	index() int
-	canonicalKey() string
+	canonicalKey() atomKey
 }
 
 type kind uint

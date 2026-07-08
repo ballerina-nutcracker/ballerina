@@ -14,10 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 type MyNil ();
 
 public function main() {
-    MyNil n = false; // @error
+    MyNil _ = false; // @error
 }

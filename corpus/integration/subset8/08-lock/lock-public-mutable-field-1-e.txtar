@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: public field of an isolated object must be "final" and have a type that is a subtype of "readonly"
+  --> lock-public-mutable-field-1-e.bal:18:5
+   |
+18 |     public int count = 0; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^

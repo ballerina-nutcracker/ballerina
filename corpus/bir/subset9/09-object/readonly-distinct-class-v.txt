@@ -1,0 +1,80 @@
+module $anon.. v 0.0.0;
+class Person {
+  name string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = name;
+      return;
+    }
+  }
+}
+class Employee {
+  name string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = name;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Person
+    %2 = ConstantLoad John Smith
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    person = %4;
+    %7 = person is object&object&object { public function init(string) returns nil; public string name }
+    %8 = %7;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %10 = newObject $anon/.:Employee
+    %11 = ConstantLoad Alice Johnson
+    %12 = init(%10,%11) -> bb6;
+  }
+  bb6 {
+    %14 = %12 is nil
+    %14 ? bb7 : bb8;
+  }
+  bb7 {
+    %13 = %10;
+    GOTO bb9;
+  }
+  bb8 {
+    %13 = %12;
+    GOTO bb9;
+  }
+  bb9 {
+    employee = %13;
+    %16 = employee is object&object { public function init(string) returns nil; public string name }
+    %17 = %16;
+    %18 = println(%17) -> bb10;
+  }
+  bb10 {
+    employeeAsPerson = employee;
+    %20 = employeeAsPerson is object&object&object { public function init(string) returns nil; public string name }
+    %21 = %20;
+    %22 = println(%21) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}

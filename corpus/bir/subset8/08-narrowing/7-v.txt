@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -30,61 +29,69 @@ foo(float) -> nil{
     %2 ? bb1 : bb9;
   }
   bb1 {
-    %8 = ConstantLoad 1
-    %9 = %8;
-    %10 = f;
-    %7 = / %9 %10;
-    %11 = %7;
-    %13 = ConstantLoad 2
-    %14 = %13;
-    %15 = ConstantLoad 0
-    %16 = %15;
-    %12 = / %14 %16;
-    %17 = %12;
-    %6 = == %11 %17;
-    %6 ? bb2 : bb4;
+    PushScopeFrame 25
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = (1, f);
+    %1 = / %3 %4;
+    %5 = %1;
+    %7 = ConstantLoad 2
+    %8 = %7;
+    %9 = ConstantLoad 0
+    %10 = %9;
+    %6 = / %8 %10;
+    %11 = %6;
+    %0 = == %5 %11;
+    %0 ? bb2 : bb4;
   }
   bb2 {
-    %18 = ConstantLoad positive zero
-    %19 = println(%18) -> bb3;
+    PushScopeFrame 2
+    %0 = ConstantLoad positive zero
+    %1 = println(%0) -> bb3;
   }
   bb3 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb4 {
-    %22 = ConstantLoad 3
+    %14 = ConstantLoad 3
+    %15 = %14;
+    %16 = (1, f);
+    %13 = / %15 %16;
+    %17 = %13;
+    %19 = ConstantLoad 4
+    %20 = %19;
+    %21 = ConstantLoad 0
+    %22 = unknown %21;
     %23 = %22;
-    %24 = f;
-    %21 = / %23 %24;
-    %25 = %21;
-    %27 = ConstantLoad 4
-    %28 = %27;
-    %29 = ConstantLoad 0
-    %30 = unknown %29;
-    %31 = %30;
-    %26 = / %28 %31;
-    %32 = %26;
-    %20 = == %25 %32;
-    %20 ? bb5 : bb7;
+    %18 = / %20 %23;
+    %24 = %18;
+    %12 = == %17 %24;
+    %12 ? bb5 : bb7;
   }
   bb5 {
-    %33 = ConstantLoad negative zero
-    %34 = println(%33) -> bb6;
+    PushScopeFrame 2
+    %0 = ConstantLoad negative zero
+    %1 = println(%0) -> bb6;
   }
   bb6 {
+    PopScopeFrame
     GOTO bb7;
   }
   bb7 {
     GOTO bb8;
   }
   bb8 {
+    PopScopeFrame
     GOTO bb11;
   }
   bb9 {
-    %35 = ConstantLoad non-zero
-    %36 = println(%35) -> bb10;
+    PushScopeFrame 2
+    %0 = ConstantLoad non-zero
+    %1 = println(%0) -> bb10;
   }
   bb10 {
+    PopScopeFrame
     GOTO bb11;
   }
   bb11 {

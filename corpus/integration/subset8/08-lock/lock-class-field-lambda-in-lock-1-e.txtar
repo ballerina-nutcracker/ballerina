@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> lock-class-field-lambda-in-lock-1-e.bal:27:24
+   |
+27 |                 return self.count; // @error
+   |                        ^^^^^^^^^^

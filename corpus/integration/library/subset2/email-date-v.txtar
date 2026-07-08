@@ -1,0 +1,9 @@
+-- stdout --
+Sat, 15 Jun 2024 10:30:45 +0000
+Sat, 15 Jun 2024 10:30:45 GMT
+false
+false
+true
+true
+Sat, 15 Jun 2024 10:30:45 +0000
+-- stderr --

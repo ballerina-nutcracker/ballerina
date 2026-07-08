@@ -18,6 +18,7 @@ package semantics
 
 import (
 	"ballerina-lang-go/model"
+	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
 )
 
@@ -32,7 +33,7 @@ func collectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, depth 
 			t.internalError("inclusion symbol is not a type symbol", diagnostics.Location{})
 			return nil, true
 		}
-		if t.symbolType(symRef) == nil {
+		if semtypes.IsZero(t.symbolType(symRef)) {
 			return nil, true
 		}
 		result = append(result, incSym.Members()...)

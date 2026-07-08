@@ -15,9 +15,9 @@
 // under the License.
 
 public function main() {
-    xml:ProcessingInstruction pe = xml `<foo></foo>`; // @error
-    xml:Element el = xml `<?pi?>`; // @error
-    xml:Comment cm = xml `<foo></foo>`; // @error
-    xml:Text tx = xml `<!--c-->`; // @error
-    xml:ProcessingInstruction pe2 = xml `<!--c-->`; // @error
+    xml:ProcessingInstruction _ = xml `<foo></foo>`; // @error
+    xml:Element _ = xml `<?pi?>`; // @error
+    xml:Comment _ = xml `<foo></foo>`; // @error
+    xml:Text _ = xml `<!--c-->`; // @error
+    xml:ProcessingInstruction _ = xml `<!--c-->`; // @error
 }

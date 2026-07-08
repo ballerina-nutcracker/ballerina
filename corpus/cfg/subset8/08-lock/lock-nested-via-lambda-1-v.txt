@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (assignment
+      (simple-var-ref a)
+      (binary-expr +
+        (simple-var-ref a)
+        (literal 1)))
+    (var-def
+      (variable _ (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type null))
+            (block-function-body
+              (lock
+                (block-stmt
+                  (assignment
+                    (simple-var-ref a)
+                    (binary-expr +
+                      (simple-var-ref a)
+                      (literal 1)))))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+  )
+)

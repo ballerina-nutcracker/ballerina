@@ -21,11 +21,11 @@ public function main() {
 
 function f(int|string x) returns int|string {
     if x is int && true {
-        int unused1 = x;
+        int _ = x;
         return x + 1;
     }
     else {
-        string unused2 = x;
+        string _ = x;
         return x + " world";
     }
 }

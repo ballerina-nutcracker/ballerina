@@ -16,36 +16,21 @@
 
 package semtypes
 
-import (
-	"slices"
-)
-
 type ListAtomicType struct {
 	Members fixedLengthArray
-	rest    *ComplexSemType
+	rest    SemType
 }
 
 var _ atomicType = &ListAtomicType{}
 
-func (l *ListAtomicType) equals(other atomicType) bool {
-	if other, ok := other.(*ListAtomicType); ok {
-		if !l.rest.equals(other.rest) {
-			return false
-		}
-		return other.Members.FixedLength == l.Members.FixedLength &&
-			slices.EqualFunc(other.Members.initial, l.Members.initial, func(a, b ComplexSemType) bool { return a.equals(&b) })
-	}
-	return false
-}
-
-func newListAtomicTypeFromMembersRest(members fixedLengthArray, rest *ComplexSemType) ListAtomicType {
+func newListAtomicTypeFromMembersRest(members fixedLengthArray, rest SemType) ListAtomicType {
 	this := ListAtomicType{}
 	this.Members = members
 	this.rest = rest
 	return this
 }
 
-func listAtomicTypeFrom(members fixedLengthArray, rest *ComplexSemType) ListAtomicType {
+func listAtomicTypeFrom(members fixedLengthArray, rest SemType) ListAtomicType {
 	return newListAtomicTypeFromMembersRest(members, rest)
 }
 
@@ -57,7 +42,7 @@ func (atomic *ListAtomicType) MemberAtInnerVal(index int) SemType {
 	return cellInnerVal(atomic.MemberAt(index))
 }
 
-func (atomic *ListAtomicType) MemberAt(index int) *ComplexSemType {
+func (atomic *ListAtomicType) MemberAt(index int) SemType {
 	return listMemberAt(atomic.Members, atomic.rest, index)
 }
 

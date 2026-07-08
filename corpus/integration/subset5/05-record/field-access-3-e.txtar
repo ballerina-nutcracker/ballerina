@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: field base access is only possible for declared fields
   --> field-access-3-e.bal:24:17
    |
-24 |     anydata z = r.z; // @error
+24 |     anydata _ = r.z; // @error
    |                 ^^^

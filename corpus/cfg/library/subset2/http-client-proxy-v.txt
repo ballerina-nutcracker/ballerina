@@ -1,0 +1,51 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)))))))
+    (var-def
+      (variable _ (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal proxy)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal host)
+                    (literal proxy.example.com))
+                  (key-value
+                    (literal port)
+                    (literal 3128)))))))))))
+    (var-def
+      (variable _ (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal proxy)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal host)
+                    (literal proxy.example.com))
+                  (key-value
+                    (literal port)
+                    (literal 3128))
+                  (key-value
+                    (literal userName)
+                    (literal user))
+                  (key-value
+                    (literal password)
+                    (literal secret)))))))))))
+    (expression-stmt
+      (invocation io println (
+        (literal ok))))
+  )
+)

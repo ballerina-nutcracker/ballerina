@@ -34,7 +34,7 @@ class Bar {
 public function main() {
     Bar|error r1 = new (5);
     if r1 is Bar {
-        io:println(r1.getVal());
+        io:println(r1.getVal()); // @output 5
     }
 
     Bar|error r2 = new (-1);

@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: bad type cast: cannot cast value of type function(1|2|3) returns "a"|"b" to function(1|2) returns "a"|"b"&function(2|3) returns "b"|"c"
-        at main(typeCast2-p.bal:29)
+error: bad type cast
+        at main(typeCast2-p.bal:30)

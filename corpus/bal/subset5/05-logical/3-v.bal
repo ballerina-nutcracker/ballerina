@@ -21,10 +21,10 @@ public function main() {
 
 function f(int|string x) {
     if true && x is string {
-        string unused1 = x;
+        string _ = x;
         io:println("s");
         return;
     }
-    int unused2 = x;
+    int _ = x;
     io:println("i");
 }

@@ -11,7 +11,7 @@
       (literal 0)
       (simple-var-ref N))
     (var-def
-      (variable i (type
+      (variable _ (type
         (value-type int))))
   )
   (bb2 (bb1) (bb1)

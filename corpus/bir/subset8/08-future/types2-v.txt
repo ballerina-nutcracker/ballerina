@@ -1,0 +1,20 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 21
+    %2 = %1;
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+foo(int) -> nil{
+  bb0 {
+    %2 = n;
+    %3 = println(%2) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

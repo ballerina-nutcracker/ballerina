@@ -23,6 +23,8 @@ class Foo {
     }
 
     function foo(int a, int b) returns int {
+        int _ = a;
+        int _ = b;
         return self.gg; // @error
     }
 

@@ -1,0 +1,35 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml1.xml))))
+      (var-def
+        (variable data (type
+          (value-type xml)) (expr
+          (xml-element-literal book
+            (xml-sequence-literal
+              (xml-element-literal title
+                (xml-text-literal Clean Code))
+              (xml-element-literal author
+                (xml-text-literal Robert C. Martin)))))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteXml (
+            (simple-var-ref path)
+            (simple-var-ref data)))))
+      (var-def
+        (variable result (type
+          (value-type xml)) (expr
+          (checked-expr
+            (invocation io fileReadXml (
+              (simple-var-ref path)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result)))))))

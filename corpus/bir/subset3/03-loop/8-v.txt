@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = loop() -> bb1;
@@ -30,6 +29,7 @@ loop() -> int{
   bb2 {
     PushScopeFrame 0
     (1, %0) = (1, i);
+    PopScopeFrame
     return;
   }
   bb3 {

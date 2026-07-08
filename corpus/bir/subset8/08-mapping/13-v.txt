@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad a
@@ -11,33 +10,41 @@ main() -> nil{
     %6 ? bb1 : bb3;
   }
   bb1 {
-    %7 = ConstantLoad correct
-    %8 = println(%7) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad correct
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %10 = ConstantLoad x
-    %11 = ConstantLoad x
-    %12 = ConstantLoad a
-    %13 = ConstantLoad 2
-    %14 = ConstantLoad b
-    %15 = ConstantLoad 3
-    %16 = newMap {| a: int, b: float, never... |}{%12=%13, %14=%15}
-    %17 = newMap {| x: {| a: int, b: float, never... |}, never... |}{%11=%16}
-    %9 = %17[%10];
-    %18 = %9 is {| a: int, b: float, never... |}
-    %18 ? bb4 : bb6;
+    PushScopeFrame 10
+    %1 = ConstantLoad x
+    %2 = ConstantLoad x
+    %3 = ConstantLoad a
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad b
+    %6 = ConstantLoad 3
+    %7 = newMap {| a: int, b: float, never... |}{%3=%4, %5=%6}
+    %8 = newMap {| x: {| a: int, b: float, never... |}, never... |}{%2=%7}
+    %0 = %8[%1];
+    %9 = %0 is {| a: int, b: float, never... |}
+    %9 ? bb4 : bb6;
   }
   bb4 {
-    %19 = ConstantLoad correct
-    %20 = println(%19) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad correct
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

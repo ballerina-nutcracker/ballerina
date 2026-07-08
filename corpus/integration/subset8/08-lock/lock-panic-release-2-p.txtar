@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: divide by zero
+        at bump(lock-panic-release-2-p.bal:25)
+           main(lock-panic-release-2-p.bal:31)

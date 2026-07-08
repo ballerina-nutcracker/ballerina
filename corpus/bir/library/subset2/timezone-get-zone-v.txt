@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad Asia/Colombo
+    %2 = getZone(%1) -> bb1;
+  }
+  bb1 {
+    zone = %2;
+    %5 = ConstantLoad <nil>
+    %6 = %5;
+    %4 = != zone %6;
+    %7 = %4;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %9 = ConstantLoad Not/AZone
+    %10 = getZone(%9) -> bb3;
+  }
+  bb3 {
+    bad = %10;
+    %13 = ConstantLoad <nil>
+    %14 = %13;
+    %12 = == bad %14;
+    %15 = %12;
+    %16 = println(%15) -> bb4;
+  }
+  bb4 {
+    %17 = ConstantLoad +05:30
+    %18 = getZone(%17) -> bb5;
+  }
+  bb5 {
+    fixedZone = %18;
+    %21 = ConstantLoad <nil>
+    %22 = %21;
+    %20 = != fixedZone %22;
+    %23 = %20;
+    %24 = println(%23) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

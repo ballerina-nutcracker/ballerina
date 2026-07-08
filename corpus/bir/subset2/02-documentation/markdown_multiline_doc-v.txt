@@ -1,8 +1,10 @@
 module $anon.. v 0.0.0;
 test(string,string) -> string{
   bb0 {
-    %3 = ConstantLoad 
-    %0 = %3;
+    _ = param1;
+    _ = param2;
+    %5 = ConstantLoad 
+    %0 = %5;
     return;
   }
 }

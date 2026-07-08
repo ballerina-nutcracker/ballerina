@@ -1,0 +1,45 @@
+(CountingListener
+  (init
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal listener init))))
+    )
+  )
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation io println (
+          (literal attach))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal start))))
+    )
+  )
+)
+(main
+  (bb0 () ())
+)

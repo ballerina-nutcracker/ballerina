@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: expression is not a constant expression
-  --> 27-e.bal:21:11
+  --> 27-e.bal:21:18
    |
-21 | const X = Y; // @error
-   |           ^
+21 | public const X = Y; // @error
+   |                  ^

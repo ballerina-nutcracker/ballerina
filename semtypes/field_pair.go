@@ -24,13 +24,13 @@ import (
 
 type fieldPair struct {
 	Name   string
-	Type1  *ComplexSemType
-	Type2  *ComplexSemType
+	Type1  SemType
+	Type2  SemType
 	Index1 int
 	Index2 int
 }
 
-func createFieldPair(name string, type1 *ComplexSemType, type2 *ComplexSemType, index1 int, index2 int) fieldPair {
+func createFieldPair(name string, type1 SemType, type2 SemType, index1 int, index2 int) fieldPair {
 
 	return fieldPair{
 		Name:   name,
@@ -44,14 +44,14 @@ func createFieldPair(name string, type1 *ComplexSemType, type2 *ComplexSemType, 
 type mappingPairIterator struct {
 	names1          []string
 	names2          []string
-	types1          []ComplexSemType
-	types2          []ComplexSemType
+	types1          []SemType
+	types2          []SemType
 	len1            int
 	len2            int
 	i1              int
 	i2              int
-	rest1           *ComplexSemType
-	rest2           *ComplexSemType
+	rest1           SemType
+	rest2           SemType
 	doneIteration   bool
 	shouldCalculate bool
 	cache           *fieldPair
@@ -116,16 +116,16 @@ func (i *mappingPairIterator) internalNext() *fieldPair {
 	return p
 }
 
-func (i *mappingPairIterator) curType1() *ComplexSemType {
-	return &i.types1[i.i1]
+func (i *mappingPairIterator) curType1() SemType {
+	return i.types1[i.i1]
 }
 
 func (i *mappingPairIterator) curName1() string {
 	return i.names1[i.i1]
 }
 
-func (i *mappingPairIterator) curType2() *ComplexSemType {
-	return &i.types2[i.i2]
+func (i *mappingPairIterator) curType2() SemType {
+	return i.types2[i.i2]
 }
 
 func (i *mappingPairIterator) curName2() string {
