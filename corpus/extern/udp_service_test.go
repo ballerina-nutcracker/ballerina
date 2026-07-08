@@ -39,3 +39,10 @@ func TestUdpServiceLifecycle(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("udp-service/udp-svc-lifecycle-v"), newUdpPal(), nil)
 }
+
+// TestUdpServiceInline exercises the anonymous
+// `service on new udp:Listener(...) { ... }` declaration style.
+func TestUdpServiceInline(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("udp-service/udp-svc-inline-v"), newUdpPal(), nil)
+}

@@ -14,46 +14,29 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// See tcp-svc-inline-v.bal for the anonymous `service on new tcp:Listener(...)
-// { ... }` declaration style; named service classes with explicit
-// `*tcp:Service;`/`*tcp:ConnectionService;` inclusion are used here instead.
+// Exercises the anonymous `service on new tcp:Listener(...) { ... }`
+// declaration style, now that tcp:Service/tcp:ConnectionService are plain
+// (non-distinct) service object types.
 import ballerina/io;
 import ballerina/tcp;
 
-service class EchoService {
+service class EchoConnectionService {
     *tcp:ConnectionService;
 
     remote function onBytes(tcp:Caller caller, readonly & byte[] data) returns tcp:Error? {
         check caller->writeBytes(data);
     }
-
-    remote function onClose() returns tcp:Error? {
-        // Fires asynchronously relative to the client's own close() call, so
-        // it is not asserted on here to keep this fixture's output
-        // deterministic — see tcp-svc-close-once-v.bal for that assertion.
-    }
 }
 
-service class EchoServer {
-    *tcp:Service;
-
+service on new tcp:Listener(19394) {
     remote function onConnect(tcp:Caller caller) returns tcp:ConnectionService {
         _ = caller.id;
-        io:println("onConnect"); // @output onConnect
-        return new EchoService();
+        return new EchoConnectionService();
     }
 }
 
-listener tcp:Listener echoListener = new (19390);
-
-function init() returns error? {
-    check echoListener.attach(new EchoServer());
-}
-
-// testMain is invoked by the harness while the runtime is parked in the
-// listening state. It drives the live service over a real tcp:Client.
 public function testMain() returns error? {
-    tcp:Client c = check new ("localhost", 19390, {});
+    tcp:Client c = check new ("127.0.0.1", 19394, {});
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
     io:println('string:fromBytes(echoed)); // @output hello

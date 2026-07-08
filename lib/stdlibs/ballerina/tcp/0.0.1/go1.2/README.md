@@ -79,7 +79,8 @@ Support Levels:
 | Dispatching connection errors | Supported | |
 | Dispatching connection close | Supported | |
 | Caller write/close operations and connection identity fields | Supported | |
-| Declaring a listener service inline | Not Yet Supported | An anonymous `service on new tcp:Listener(...) { ... }` body cannot currently be attached to a `distinct service object` target type. Declare a named service class with explicit `*tcp:Service;`/`*tcp:ConnectionService;` inclusion instead — see this module's own corpus tests for the pattern. |
+| Declaring a listener service inline | Supported | An anonymous `service on new tcp:Listener(...) { ... }` body attaches directly. |
+| Service and connection service as distinct types | Not Yet Supported | jBallerina declares `Service`/`ConnectionService` as `distinct service object` types. This port declares them as plain (non-distinct) `service object` types instead — this interpreter cannot yet attach an anonymous `service on new tcp:Listener(...) { ... }` body to a `distinct service object` target type, and supporting the inline declaration style was prioritized over `distinct` typing. |
 | Error type | Partially Supported | `distinct` error types are not yet supported, so `Error` is currently an alias for `error`. |
 
 ### Notable Behavioural Changes

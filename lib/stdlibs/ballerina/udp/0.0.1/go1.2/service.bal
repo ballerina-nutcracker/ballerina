@@ -20,5 +20,5 @@
 //   remote function onBytes(readonly & byte[] data, Caller caller) returns byte[]|Datagram|Error?;
 //   remote function onDatagram(readonly & Datagram datagram, Caller caller) returns byte[]|Datagram|Error?;
 //   remote function onError(readonly & Error err);
-public type Service distinct service object {
+public type Service service object {
 };

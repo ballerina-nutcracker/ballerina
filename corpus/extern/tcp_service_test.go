@@ -38,3 +38,10 @@ func TestTcpServiceLifecycle(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-lifecycle-v"), newTcpPal(), nil)
 }
+
+// TestTcpServiceInline exercises the anonymous
+// `service on new tcp:Listener(...) { ... }` declaration style.
+func TestTcpServiceInline(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-inline-v"), newTcpPal(), nil)
+}

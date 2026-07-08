@@ -18,7 +18,7 @@
 // Represents the TCP listener service type.
 // A tcp:Service may declare the following remote method:
 //   remote function onConnect(Caller caller) returns ConnectionService|Error?;
-public type Service distinct service object {
+public type Service service object {
 };
 
 // Represents the TCP listener connection service type, returned from onConnect.
@@ -26,5 +26,5 @@ public type Service distinct service object {
 //   remote function onBytes(Caller caller, readonly & byte[] data) returns byte[]|Error?;
 //   remote function onError(readonly & Error err) returns Error?;
 //   remote function onClose() returns Error?;
-public type ConnectionService distinct service object {
+public type ConnectionService service object {
 };

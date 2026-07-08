@@ -68,7 +68,8 @@ Support Levels:
 | Automatically replying with bytes or a datagram returned from a handler | Supported | |
 | Dispatching listener-level errors to the service | Supported | |
 | Caller send operations | Supported | |
-| Declaring a listener service inline | Not Yet Supported | An anonymous `service on new udp:Listener(...) { ... }` body cannot currently be attached to a `distinct service object` target type. Declare a named service class with explicit `*udp:Service;` inclusion instead. |
+| Declaring a listener service inline | Supported | An anonymous `service on new udp:Listener(...) { ... }` body attaches directly. |
+| Service as a distinct type | Not Yet Supported | jBallerina declares `Service` as a `distinct service object` type. This port declares it as a plain (non-distinct) `service object` type instead — this interpreter cannot yet attach an anonymous `service on new udp:Listener(...) { ... }` body to a `distinct service object` target type, and supporting the inline declaration style was prioritized over `distinct` typing. |
 | Error type | Partially Supported | `distinct` error types are not yet supported, so `Error` is currently an alias for `error`. |
 
 ### Notable Behavioural Changes

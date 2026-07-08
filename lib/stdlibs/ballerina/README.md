@@ -22,12 +22,12 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [mime](mime/0.0.1/go1.2/README.md) | 13 | 1 | 2 | 81% |
 | [os](os/0.0.1/go1.2/README.md) | 11 | 1 | 0 | 92% |
 | [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
-| [tcp](tcp/0.0.1/go1.2/README.md) | 16 | 2 | 1 | 76% |
+| [tcp](tcp/0.0.1/go1.2/README.md) | 17 | 2 | 1 | 77% |
 | [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
-| [udp](udp/0.0.1/go1.2/README.md) | 14 | 2 | 2 | 78% |
+| [udp](udp/0.0.1/go1.2/README.md) | 15 | 2 | 2 | 79% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
-| **Total** | **221** | **17** | **84** | **68%** |
+| **Total** | **223** | **17** | **84** | **68%** |
 
 ## Notable Behavioural Changes
 
