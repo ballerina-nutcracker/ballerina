@@ -106,6 +106,14 @@ type (
 		// TLS (tlsCfg != nil). Reuses ServerTLSConfig from HTTP. The caller
 		// owns the accept loop and per-connection dispatch.
 		Listen func(network, address string, tlsCfg *ServerTLSConfig) (net.Listener, error)
+		// DialPacket opens a connected datagram socket (e.g. UDP) to address,
+		// optionally binding to localAddr first (empty = OS-chosen). The
+		// returned net.Conn's Read/Write only exchange data with address.
+		DialPacket func(ctx context.Context, network, address, localAddr string) (net.Conn, error)
+		// ListenPacket binds an unconnected datagram socket (e.g. UDP) on
+		// address. The returned net.PacketConn's ReadFrom/WriteTo carry an
+		// explicit per-datagram peer address, unlike DialPacket's net.Conn.
+		ListenPacket func(network, address string) (net.PacketConn, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).

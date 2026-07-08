@@ -483,8 +483,10 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 			},
 		},
 		Net: pal.Net{
-			Dial:   palnative.Dial,
-			Listen: palnative.ListenTCP,
+			Dial:         palnative.Dial,
+			Listen:       palnative.ListenTCP,
+			DialPacket:   palnative.DialPacket,
+			ListenPacket: palnative.ListenPacket,
 		},
 		Signals: func() pal.SignalSource {
 			src, _, _ := NewTestSignalSource(nil, TestSignalTimeout)

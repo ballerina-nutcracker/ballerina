@@ -95,6 +95,7 @@ var builtinStdlibs = []stdlibEntry{
 	{"ballerina", "file", "0.0.1"},
 	{"ballerina", "ldap", "0.0.1"},
 	{"ballerina", "tcp", "0.0.1"},
+	{"ballerina", "udp", "0.0.1"},
 }
 
 // loadBuiltinPublicSymbols compiles the embedded standard-library packages into

@@ -40,6 +40,7 @@ import (
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/random/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/tcp/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/time/0.0.1/go1.2/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/udp/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/url/0.0.1/go1.2/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/uuid/0.0.1/go1.2/native"
 )

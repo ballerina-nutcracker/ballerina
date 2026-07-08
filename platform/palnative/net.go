@@ -89,3 +89,25 @@ func ListenTCP(network, address string, tlsCfg *pal.ServerTLSConfig) (net.Listen
 	}
 	return tls.NewListener(ln, cfg), nil
 }
+
+// DialPacket is the pal.Net.DialPacket factory for the native-CLI platform.
+// It opens a connected datagram socket (e.g. UDP) to address, optionally
+// bound to localAddr first. There is no TLS analogue for datagram sockets.
+func DialPacket(ctx context.Context, network, address, localAddr string) (net.Conn, error) {
+	dialer := net.Dialer{}
+	if localAddr != "" {
+		addr, err := net.ResolveUDPAddr(network, localAddr)
+		if err != nil {
+			return nil, err
+		}
+		dialer.LocalAddr = addr
+	}
+	return dialer.DialContext(ctx, network, address)
+}
+
+// ListenPacket is the pal.Net.ListenPacket factory for the native-CLI
+// platform. It binds an unconnected datagram socket (e.g. UDP) on address;
+// the caller owns the read loop and per-datagram dispatch.
+func ListenPacket(network, address string) (net.PacketConn, error) {
+	return net.ListenPacket(network, address)
+}

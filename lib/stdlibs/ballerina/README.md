@@ -24,9 +24,10 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
 | [tcp](tcp/0.0.1/go1.2/README.md) | 16 | 2 | 1 | 76% |
 | [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
+| [udp](udp/0.0.1/go1.2/README.md) | 14 | 2 | 2 | 78% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
-| **Total** | **207** | **15** | **82** | **67%** |
+| **Total** | **221** | **17** | **84** | **68%** |
 
 ## Notable Behavioural Changes
 
@@ -85,6 +86,12 @@ tables instead.
 - **`Caller`'s fields are computed once, at accept time.** jBallerina constructs a fresh `Caller` object (recomputing `remoteHost`/`remotePort`/`localHost`/`localPort`/`id`, including a potential reverse-DNS lookup) on every single `onConnect`/`onBytes` dispatch. This port computes these fields once when the connection is accepted and reuses them for its lifetime.
 - **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
 - **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
+
+### udp
+
+- **`Client.init`/`ConnectClient.init`/`Listener.init` take a plain default-valued configuration record.** jBallerina declares these as `*ClientConfiguration`/`*ConnectClientConfiguration`/`*ListenerConfiguration` included-record parameters, which allow named-argument-style construction at the call site (e.g. `check new(8080, localHost = "x")`). This interpreter cannot currently resolve an included-record parameter that follows other positional parameters when the calling module also imports a second package, so this port uses a plain default-valued parameter instead (e.g. `ListenerConfiguration config = {}`); call sites pass a record literal instead (`check new(8080, {localHost: "x"})`).
+- **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
+- **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation), while `gracefulStop()` performs the real socket close. This port makes `immediateStop()` force-close the listener's socket immediately, same as `gracefulStop()` — UDP has no per-connection state to drain, so both reduce to the same operation.
 
 ### time
 
