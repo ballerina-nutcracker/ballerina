@@ -175,6 +175,28 @@ func TestHttpServiceTLSOptions(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-tls-options-v"), newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
 
+// TestHttpServiceGracefulStop verifies that a resource calling
+// ep.gracefulStop() on the listener it is attached to does not self-deadlock:
+// the extern runs inline on the handler's own goroutine, so it must return
+// immediately (letting the drain happen in the background) rather than
+// blocking on server.Shutdown until this very connection goes idle. Before
+// the fix this test hangs forever.
+func TestHttpServiceGracefulStop(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-graceful-stop-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceImmediateStop covers immediate stop and requests-after-stop.
+// immediateStop calls Close(), which severs active connections and shuts the
+// listener down synchronously (unlike graceful stop, whose listener-close is
+// backgrounded and would be racy to assert on). So the stop call itself errors
+// (its connection is cut before the response arrives) and any request after
+// stop is connection-refused.
+func TestHttpServiceImmediateStop(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-immediate-stop-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceMTLS covers the mutual-TLS branch of buildListenerTLSConfig: a
 // listener configured with mutualSsl + a CA cert requires the client to present
 // a cert signed by that CA. Certs are generated at runtime (reusing
