@@ -1,8 +1,62 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `tcp` and `udp`
-modules: low-level, connection-oriented and (for `udp`) connectionless socket
-client and server APIs, with no built-in framing or protocol.
+Subset 3 extends the released [subset 2](subset2.md) with the `file`, `ldap`,
+`mime`, `tcp`, `udp`, and `uuid` modules.
+
+## [file](https://github.com/ballerina-platform/module-ballerina-file/blob/master/docs/spec/spec.md)
+
+File, directory, and path manipulation utilities.
+
+| Feature | Notes |
+|---|---|
+| `create` / `remove` / `rename` / `copy` | Create, remove (non-recursive and recursive), rename/move, and copy (with `REPLACE_EXISTING`, `COPY_ATTRIBUTES`, `NO_FOLLOW_LINKS` options) files and directories |
+| `getMetaData` | File size, modification time, permissions, and type |
+| `readDir` | Read directory contents |
+| `createTemp` / `createTempDir` | Create a temporary file / directory |
+| `test` | Test file/directory properties: `EXISTS`, `IS_DIR`, `IS_SYMLINK`, `READABLE`, `WRITABLE` |
+| `getCurrentDir` | Get the current working directory |
+| `getAbsolutePath` / `isAbsolutePath` / `basename` / `parentPath` / `normalizePath` / `splitPath` / `joinPath` / `relativePath` | Cross-platform path manipulation |
+
+`file:Error`'s `distinct` subtypes (`FileNotFoundError`, `PermissionError`, etc.)
+are declared as plain type aliases of `Error` instead — they are structurally
+identical at runtime, so `error is file:FileNotFoundError`-style checks don't
+narrow. The directory-change listener and file-watcher service are not
+supported (requires a `distinct service object` type and a start/stop service
+lifecycle).
+
+## [ldap](https://github.com/ballerina-platform/module-ballerina-ldap/blob/master/docs/spec/spec.md)
+
+Connect, authenticate, and interact with LDAP directory servers.
+
+| Feature | Notes |
+|---|---|
+| `new ldap:Client(config)` | Simple bind (`hostName`, `port`, `domainName`, `password`), optionally over TLS with a PEM certificate file, host-name verification, and TLS version selection |
+| `add` / `delete` / `modify` / `rename` | Create, delete, update (attribute replace), and rename directory entries |
+| `compare` | Compare an entry's attribute value against an assertion value |
+| `getEntry` / `search` / `searchWithType` | Retrieve a single entry, or search a subtree, converted into a caller-specified record type or the generic `ldap:Entry` type |
+| `close` / `isConnected` | Close the connection and check connection status |
+| Binary attribute decoding | `objectGUID`/`objectSid` decoded to canonical string forms; other binary/non-ASCII values are base64-encoded (RFC 2849) |
+
+`ldap:Error` is a plain `error` alias; `distinct` error types are not yet
+supported.
+
+## [mime](https://github.com/ballerina-platform/module-ballerina-mime/blob/master/docs/spec/spec.md)
+
+MIME (RFC 2045/2046) media type, content disposition, and entity handling.
+
+| Feature | Notes |
+|---|---|
+| `getMediaType` / `MediaType` | Parse and construct MIME media types (`primaryType`, `subType`, `suffix`, `parameters`) |
+| `getContentDispositionObject` / `ContentDisposition` | Parse and construct content disposition headers |
+| `Entity` header management | `setHeader`, `getHeader`, `getHeaders`, `getHeaderNames`, `addHeader`, `removeHeader`, `removeAllHeaders`, `hasHeader` |
+| `Entity` content metadata | `setContentType`, `getContentType`, `setContentId`, `getContentId`, `setContentLength`, `getContentLength`, `setContentDisposition`, `getContentDisposition` |
+| `Entity` body | `setText`/`getText`, `setJson`/`getJson`, `setByteArray`/`getByteArray`, `setBody(string\|json\|byte[])` |
+| `base64Encode` / `base64Decode` | Base64 encode/decode of strings and byte arrays (`Blob` variants included) |
+| Media type and header name constants | `APPLICATION_JSON`, `TEXT_PLAIN`, `CONTENT_TYPE`, etc. |
+
+XML and multipart entity bodies (`setXml`/`getXml`, `setBodyParts`/`getBodyParts`)
+are not yet supported (require XML and stream support). `mime:Error` and its
+subtypes are plain `error` aliases; `distinct` is not yet supported.
 
 ## [tcp](https://github.com/ballerina-platform/module-ballerina-tcp/blob/master/docs/spec/spec.md)
 
@@ -63,3 +117,22 @@ Datagram sockets, connectionless or connection-oriented.
 
 `udp:Error` is a plain `error` alias, and `udp:Service` is a plain
 (non-distinct) `service object` type — `distinct` typing is not yet supported.
+
+## [uuid](https://github.com/ballerina-platform/module-ballerina-uuid/blob/master/docs/spec/spec.md)
+
+Generate, validate, and convert UUIDs (RFC 4122).
+
+| Feature | Notes |
+|---|---|
+| `createType1AsString` / `createType1AsRecord` | Type 1 (time-based) UUID |
+| `createType3AsString` / `createType3AsRecord` | Type 3 (MD5 namespace) UUID |
+| `createType4AsString` / `createType4AsRecord` / `createRandomUuid` | Type 4 (random) UUID |
+| `createType5AsString` / `createType5AsRecord` | Type 5 (SHA-1 namespace) UUID |
+| `nilAsString` / `nilAsRecord` | The nil UUID |
+| `validate` / `getVersion` | Validate a UUID string and detect its version (`V1`, `V3`, `V4`, `V5`) |
+| `toBytes` / `toString` / `toRecord` | Convert between string, byte array, and the structured `Uuid` record |
+| Namespace UUID constants | `NAME_SPACE_DNS`, `NAME_SPACE_URL`, `NAME_SPACE_OID`, `NAME_SPACE_X500`, `NAME_SPACE_NIL` |
+
+Type 1 UUIDs use a random 6-byte node identifier (RFC 4122 §4.5) rather than
+the host's MAC address. `uuid:Error` is a plain `error` alias; `distinct` is
+not yet supported.
