@@ -94,12 +94,18 @@ type (
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
 	}
-	// Net abstracts raw TCP(+TLS) socket dialing for non-HTTP wire protocols
-	// (e.g. ldap). HTTP-based stdlibs must keep using pal.HTTP instead.
+	// Net abstracts raw TCP(+TLS) socket dialing and listening for non-HTTP
+	// wire protocols (e.g. ldap, tcp). HTTP-based stdlibs must keep using
+	// pal.HTTP instead.
 	Net struct {
-		// Dial opens a TCP connection to address, optionally upgrading it to
+		// Dial opens a TCP connection to address, optionally binding to
+		// localAddr first (empty = OS-chosen) and optionally upgrading to
 		// TLS (tlsCfg != nil) before returning. Reuses TLSConfig from HTTP.
-		Dial func(ctx context.Context, network, address string, tlsCfg *TLSConfig) (net.Conn, error)
+		Dial func(ctx context.Context, network, address, localAddr string, tlsCfg *TLSConfig) (net.Conn, error)
+		// Listen binds a TCP listener on address, optionally wrapping it in
+		// TLS (tlsCfg != nil). Reuses ServerTLSConfig from HTTP. The caller
+		// owns the accept loop and per-connection dispatch.
+		Listen func(network, address string, tlsCfg *ServerTLSConfig) (net.Listener, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).

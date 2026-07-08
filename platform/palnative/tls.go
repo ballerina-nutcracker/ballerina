@@ -45,7 +45,7 @@ func buildTLSConfig(cfg pal.TLSConfig) *tls.Config {
 				// Java-issued certs only set the CN field. When a custom CA is provided
 				// we do our own verification so CN-only certs are accepted as a fallback.
 				tlsConfig.InsecureSkipVerify = true //nolint:gosec
-				tlsConfig.VerifyConnection = tlsVerifyConnectionWithCNFallback(pool)
+				tlsConfig.VerifyConnection = tlsVerifyConnectionWithCNFallback(pool, cfg.ServerName)
 			}
 		}
 	}

@@ -289,7 +289,14 @@ func resolveCipherSuites(names []string) []uint16 {
 // server's certificate chain against rootCAs and falls back to CN-based hostname matching
 // when no SANs are present. Go 1.15+ disabled CN-only hostname verification (RFC 6125 §2.3),
 // but many self-signed and Java-issued certificates still rely on it.
-func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool) func(tls.ConnectionState) error {
+// tlsVerifyConnectionWithCNFallback verifies the peer certificate chain
+// against rootCAs and its hostname against expectedServerName. expectedServerName
+// is the originally configured name, not tls.ConnectionState.ServerName — Go's
+// TLS client only echoes ServerName into ConnectionState when it was actually
+// sent as the SNI extension, and Go deliberately never sends SNI for IP-literal
+// server names (RFC 6066), so relying on cs.ServerName would always fail
+// hostname verification when dialing a bare IP address.
+func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool, expectedServerName string) func(tls.ConnectionState) error {
 	return func(cs tls.ConnectionState) error {
 		opts := x509.VerifyOptions{
 			Roots:         rootCAs,
@@ -301,15 +308,15 @@ func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool) func(tls.Connecti
 		if _, err := cs.PeerCertificates[0].Verify(opts); err != nil {
 			return err
 		}
-		// cs.ServerName is the SNI hostname (no port). Try SAN-based verification first.
-		// Only fall back to CN matching for certs that genuinely have no SANs — when SANs
-		// are present but don't match, that is a real mismatch and must not be bypassed.
+		// Try SAN-based verification first. Only fall back to CN matching for
+		// certs that genuinely have no SANs — when SANs are present but don't
+		// match, that is a real mismatch and must not be bypassed.
 		leaf := cs.PeerCertificates[0]
-		if err := leaf.VerifyHostname(cs.ServerName); err != nil {
+		if err := leaf.VerifyHostname(expectedServerName); err != nil {
 			if len(leaf.DNSNames) > 0 || len(leaf.IPAddresses) > 0 {
 				return err
 			}
-			return tlsMatchCN(leaf.Subject.CommonName, cs.ServerName)
+			return tlsMatchCN(leaf.Subject.CommonName, expectedServerName)
 		}
 		return nil
 	}

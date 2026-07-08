@@ -22,10 +22,11 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [mime](mime/0.0.1/go1.2/README.md) | 13 | 1 | 2 | 81% |
 | [os](os/0.0.1/go1.2/README.md) | 11 | 1 | 0 | 92% |
 | [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
+| [tcp](tcp/0.0.1/go1.2/README.md) | 16 | 2 | 1 | 76% |
 | [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
-| **Total** | **191** | **13** | **81** | **67%** |
+| **Total** | **207** | **15** | **82** | **67%** |
 
 ## Notable Behavioural Changes
 
@@ -75,6 +76,15 @@ tables instead.
 
 - **`createDecimal()` — improved entropy precision.** jBallerina delegates to `java.security.SecureRandom.nextFloat()`, which returns a Java 32-bit `float` (24 bits of mantissa) widened to a 64-bit Ballerina `float`. The Go-native version reads 53 bits from `crypto/rand`, producing a full-precision IEEE 754 `float64`. The range [0.0, 1.0) is preserved; values have higher randomness quality.
 - **`createIntInRange()` — corrected range distribution.** The jBallerina formula `startRange + int(rand × (endRange−1−startRange))` never produces `endRange−1` due to an off-by-one in the original implementation. The Go-native version uses `math/rand/v2.Int64N(endRange−startRange) + startRange`, which correctly produces uniform values across the full `[startRange, endRange)` range per the documented specification.
+
+### tcp
+
+- **`Client.init`/`Listener.init` take a plain default-valued configuration record.** jBallerina declares these as `*ClientConfiguration`/`*ListenerConfiguration` included-record parameters, which allow named-argument-style construction at the call site (e.g. `check new("host", 80, localHost = "x")`). This interpreter cannot currently resolve an included-record parameter that follows other positional parameters when the calling module also imports a second package, so this port uses a plain default-valued parameter instead (`ClientConfiguration config = {}` / `ListenerConfiguration config = {}`); call sites pass a record literal instead (`check new("host", 80, {localHost: "x"})`).
+- **A connection is closed if `onConnect` returns an error.** jBallerina leaves the connection open with reads permanently paused in this case — a bug in the reference implementation. This port closes the connection instead.
+- **`onClose` is invoked exactly once.** jBallerina can invoke `onClose` twice for a locally-initiated `Caller.close()` (once synchronously from `close()`, once again from the resulting disconnect event) — a bug in the reference implementation. This port guards with per-connection state so `onClose` fires exactly once regardless of who triggers the close.
+- **`Caller`'s fields are computed once, at accept time.** jBallerina constructs a fresh `Caller` object (recomputing `remoteHost`/`remotePort`/`localHost`/`localPort`/`id`, including a potential reverse-DNS lookup) on every single `onConnect`/`onBytes` dispatch. This port computes these fields once when the connection is accepted and reuses them for its lifetime.
+- **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
+- **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
 
 ### time
 

@@ -109,7 +109,7 @@ func buildSecureSocketTLSConfig(rt *runtime.Runtime, secureSocket *values.Map) (
 // the bind DN (see ConnectionConfig doc comment).
 func dialAndBind(rt *runtime.Runtime, hostName string, port int64, domainName, password string, tlsCfg *pal.TLSConfig) (*goldap.Conn, *values.Error) {
 	address := fmt.Sprintf("%s:%d", hostName, port)
-	netConn, err := rt.Platform().Net.Dial(context.Background(), "tcp", address, tlsCfg)
+	netConn, err := rt.Platform().Net.Dial(context.Background(), "tcp", address, "", tlsCfg)
 	if err != nil {
 		return nil, ldapError("failed to connect to " + address + ": " + err.Error())
 	}
