@@ -16,5 +16,7 @@
 
 function foo() returns int {
     int a = 5;
+    int _ = a;
     float a = 4; // @error
+    float _ = a;
 }

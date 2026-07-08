@@ -1,0 +1,93 @@
+module $anon.. v 0.0.0;
+class Counter {
+  count int
+
+  get() -> int{
+    bb0 {
+      lock-start "$anon/.:Counter.count" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %1 = ConstantLoad count
+      %0 = (1, self)[%1];
+      (1, %0) = %0;
+      PopScopeFrame
+      lock-end "$anon/.:Counter.count" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+
+  inc() -> nil{
+    bb0 {
+      lock-start "$anon/.:Counter.count" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 7
+      %2 = ConstantLoad count
+      %1 = (1, self)[%2];
+      %3 = %1;
+      %4 = ConstantLoad 1
+      %5 = %4;
+      %0 = + %3 %5;
+      %6 = ConstantLoad count
+      (1, self)[%6] = %0;
+      PopScopeFrame
+      lock-end "$anon/.:Counter.count" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+  }
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad count
+      self[%3] = initial;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = ConstantLoad 0
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %4;
+    %7 = inc(c) -> bb5;
+  }
+  bb5 {
+    %8 = inc(c) -> bb6;
+  }
+  bb6 {
+    %9 = inc(c) -> bb7;
+  }
+  bb7 {
+    %10 = get(c) -> bb8;
+  }
+  bb8 {
+    %11 = %10;
+    %12 = println(%11) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

@@ -1,0 +1,174 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (value-type xml)) (expr
+          (xml-element-literal a
+            (xml-attribute x
+              (literal 1))
+            (xml-attribute xmlns:p
+              (literal urn:p))
+            (xml-element-literal p:b
+              (xml-text-literal text))))))
+      (var-def
+        (variable e2 (type
+          (value-type xml)) (expr
+          (xml-element-literal a
+            (xml-attribute x
+              (literal 1))
+            (xml-attribute xmlns:p
+              (literal urn:p))
+            (xml-element-literal p:b
+              (xml-text-literal text))))))
+      (var-def
+        (variable e3 (type
+          (value-type xml)) (expr
+          (simple-var-ref e1))))
+      (var-def
+        (variable e4 (type
+          (value-type xml)) (expr
+          (xml-element-literal a
+            (xml-attribute x
+              (literal 2))
+            (xml-attribute xmlns:p
+              (literal urn:p))
+            (xml-element-literal p:b
+              (xml-text-literal text))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref e1)
+            (simple-var-ref e2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref e1)
+            (simple-var-ref e4)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref e1)
+            (simple-var-ref e3)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref e1)
+            (simple-var-ref e2)))))
+      (var-def
+        (variable c1 (type
+          (value-type xml)) (expr
+          (xml-comment-literal x))))
+      (var-def
+        (variable c2 (type
+          (value-type xml)) (expr
+          (xml-comment-literal x))))
+      (var-def
+        (variable c3 (type
+          (value-type xml)) (expr
+          (simple-var-ref c1))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref c1)
+            (simple-var-ref c2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref c1)
+            (simple-var-ref c3)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref c1)
+            (simple-var-ref c2)))))
+      (var-def
+        (variable p1 (type
+          (value-type xml)) (expr
+          (xml-pi-literal p data))))
+      (var-def
+        (variable p2 (type
+          (value-type xml)) (expr
+          (xml-pi-literal p data))))
+      (var-def
+        (variable p3 (type
+          (value-type xml)) (expr
+          (simple-var-ref p1))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref p1)
+            (simple-var-ref p2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref p1)
+            (simple-var-ref p3)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref p1)
+            (simple-var-ref p2)))))
+      (var-def
+        (variable t1 (type
+          (value-type xml)) (expr
+          (xml-text-literal hello))))
+      (var-def
+        (variable t2 (type
+          (value-type xml)) (expr
+          (xml-text-literal hello))))
+      (var-def
+        (variable t3 (type
+          (value-type xml)) (expr
+          (xml-text-literal world))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref t1)
+            (simple-var-ref t2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref t1)
+            (simple-var-ref t2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref t1)
+            (simple-var-ref t3)))))
+      (var-def
+        (variable s1 (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal hello)))))
+      (var-def
+        (variable s2 (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal hello)))))
+      (var-def
+        (variable s3 (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal world)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref s1)
+            (simple-var-ref s2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref s1)
+            (simple-var-ref s2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref s1)
+            (simple-var-ref s3))))))))

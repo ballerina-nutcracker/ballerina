@@ -1,0 +1,16 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad tail
+    body = %1;
+    %3 = escapeXMLContent(body) -> bb1;
+  }
+  bb1 {
+    %4 = evalTemplate[xml]("<?empty?>", %3, "")
+    x = %4;
+    %6 = println(x) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

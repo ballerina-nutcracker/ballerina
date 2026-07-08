@@ -1,0 +1,109 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable utc (type
+          (user-defined-type time Utc)) (expr
+          (checked-expr
+            (invocation time utcFromString (
+              (literal 2024-06-15T10:30:45.00Z)))))))
+      (var-def
+        (variable emailStr (type
+          (value-type string)) (expr
+          (invocation time utcToEmailString (
+            (simple-var-ref utc))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref emailStr))))
+      (var-def
+        (variable emailGmt (type
+          (value-type string)) (expr
+          (invocation time utcToEmailString (
+            (simple-var-ref utc)
+            (literal GMT))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref emailGmt))))
+      (var-def
+        (variable parsed (type
+          (union-type
+            (user-defined-type time Civil)
+            (error-type))) (expr
+          (invocation time civilFromEmailString (
+            (literal Sat, 15 Jun 2024 10:30:45 +0000))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parsed)
+            (error-type)))))
+      (var-def
+        (variable parsed2 (type
+          (union-type
+            (user-defined-type time Civil)
+            (error-type))) (expr
+          (invocation time civilFromEmailString (
+            (literal Mon, 3 Jun 2024 08:00:00 +0000))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parsed2)
+            (error-type)))))
+      (var-def
+        (variable bad (type
+          (union-type
+            (user-defined-type time Civil)
+            (error-type))) (expr
+          (invocation time civilFromEmailString (
+            (literal not a date))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bad)
+            (error-type)))))
+      (var-def
+        (variable tz (type
+          (user-defined-type time TimeZone)) (expr
+          (checked-expr
+            (new
+              (user-defined-type time TimeZone) (
+              (literal +00:00)))))))
+      (var-def
+        (variable utcBase (type
+          (user-defined-type time Utc)) (expr
+          (checked-expr
+            (invocation time utcFromString (
+              (literal 2024-06-15T10:30:45.00Z)))))))
+      (var-def
+        (variable civil (type
+          (user-defined-type time Civil)) (expr
+          (invocation utcToCivil expr:
+            (simple-var-ref tz) (
+            (simple-var-ref utcBase))))))
+      (var-def
+        (variable emailCivil (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (invocation time civilToEmailString (
+            (simple-var-ref civil)
+            (simple-var-ref time PREFER_ZONE_OFFSET))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref emailCivil)
+            (value-type string)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref emailCivil)
+          (value-type string))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref emailCivil))))) ())
+      (block-stmt))))

@@ -20,22 +20,18 @@ import (
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/runtime/extern"
+	runtimeframe "ballerina-lang-go/runtime/internal/frame"
 	"ballerina-lang-go/runtime/internal/modules"
 	"ballerina-lang-go/values"
 )
 
-type Frame struct {
-	locals      []values.BalValue // variable index → value (indexed by BIROperand.Address.FrameIndex)
-	functionKey string            // function key (package name + function name)
-	location    bir.Location      // source location of the currently executing instruction/terminator
-	parent      *Frame
-}
+type Frame = runtimeframe.Frame
 
 func resolveFrame(frame *Frame, address bir.Address) *Frame {
 	if address.Mode == bir.AddressingModeAbsolute {
 		f := frame
 		for i := 0; i < address.BaseIndex; i++ {
-			f = f.parent
+			f = f.Parent()
 		}
 		return f
 	}
@@ -44,12 +40,12 @@ func resolveFrame(frame *Frame, address bir.Address) *Frame {
 
 // Load retrieves the value at the given address in the frame.
 func Load(frame *Frame, address bir.Address) values.BalValue {
-	return resolveFrame(frame, address).locals[address.FrameIndex]
+	return resolveFrame(frame, address).Local(address.FrameIndex)
 }
 
 // Store sets the value at the given address in the frame.
 func Store(frame *Frame, address bir.Address, value values.BalValue) {
-	resolveFrame(frame, address).locals[address.FrameIndex] = value
+	resolveFrame(frame, address).SetLocal(address.FrameIndex, value)
 }
 
 func getOperandValue(ctx *extern.Context, op *bir.BIROperand, currentFrame *Frame) values.BalValue {

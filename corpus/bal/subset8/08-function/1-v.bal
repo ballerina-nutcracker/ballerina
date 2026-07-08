@@ -50,4 +50,5 @@ function bar() {
 }
 
 function baz(int... i) {
+    int[] _ = i;
 }

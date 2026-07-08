@@ -1,0 +1,17 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable home (type
+          (value-type string)) (expr
+          (invocation os getUserHome ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation length expr:
+              (simple-var-ref home) ())
+            (literal 0))))))))

@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 foo(decimal) -> decimal{
   bb0 {
     %3 = d;
@@ -9,12 +8,16 @@ foo(decimal) -> decimal{
     %2 ? bb1 : bb2;
   }
   bb1 {
-    %6 = unknown d;
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = unknown (1, d);
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
-    %0 = d;
+    PushScopeFrame 0
+    (1, %0) = (1, d);
+    PopScopeFrame
     return;
   }
 }

@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public function main() {
+public function main() returns error? {
     error err = error("msg", 123);  // @error
+    return err;
 }

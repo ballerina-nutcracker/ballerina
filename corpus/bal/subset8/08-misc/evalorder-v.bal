@@ -101,4 +101,6 @@ public function main() {
 }
 
 function ignore(int a, int b) {
+    int _ = a;
+    int _ = b;
 }

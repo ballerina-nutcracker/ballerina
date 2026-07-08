@@ -17,13 +17,13 @@
             (value-type string)))
         (block-stmt
           (var-def
-            (variable unused1 (type
+            (variable _ (type
               (value-type string)) (expr
               (simple-var-ref x))))
           (return
             (literal <nil>))) ())
       (block-stmt
         (var-def
-          (variable unused2 (type
+          (variable _ (type
             (value-type int)) (expr
             (simple-var-ref x))))))))

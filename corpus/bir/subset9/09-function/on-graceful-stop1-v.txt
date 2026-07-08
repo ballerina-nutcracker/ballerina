@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+stopHandler() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad handler
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:stopHandler
+    %2 = onGracefulStop(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad done
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

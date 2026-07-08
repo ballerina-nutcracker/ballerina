@@ -1,0 +1,53 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable XML_VALUE (type
+    (value-type xml)) (expr
+    (xml-template-literal
+      (template-string "<root>")
+      (xml-template-content-insertion
+        (literal x))
+      (template-string "</root>"))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable name (type
+          (value-type string)) (expr
+          (literal world))))
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<greeting>Hello, ")
+            (xml-template-content-insertion
+              (simple-var-ref name))
+            (template-string "!</greeting>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x))))
+      (var-def
+        (variable markup (type
+          (value-type string)) (expr
+          (literal <child/>))))
+      (var-def
+        (variable amp (type
+          (value-type string)) (expr
+          (literal a&b))))
+      (var-def
+        (variable escaped (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<root>")
+            (xml-template-content-insertion
+              (simple-var-ref markup))
+            (template-string "|")
+            (xml-template-content-insertion
+              (simple-var-ref amp))
+            (template-string "</root>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref escaped))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref XML_VALUE)))))))

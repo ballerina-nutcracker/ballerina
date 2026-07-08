@@ -17,6 +17,7 @@
 package values
 
 import (
+	"fmt"
 	"unsafe"
 
 	"ballerina-lang-go/decimal"
@@ -64,6 +65,12 @@ func deepEqual(v1, v2 BalValue, visited map[refPair]struct{}) bool {
 			return false
 		}
 		return mapDeepEqual(a, b, visited)
+	case XMLValue:
+		b, ok := v2.(XMLValue)
+		if !ok {
+			return false
+		}
+		return xmlDeepEqual(a, b, visited)
 	default:
 		return v1 == v2
 	}
@@ -123,6 +130,64 @@ func mapDeepEqual(a, b *Map, visited map[refPair]struct{}) bool {
 			return false
 		}
 		if !deepEqual(e.value, other, visited) {
+			return false
+		}
+	}
+	return true
+}
+
+func xmlDeepEqual(a, b XMLValue, visited map[refPair]struct{}) bool {
+	if a == b {
+		return true
+	}
+	switch x := a.(type) {
+	case *XMLText:
+		y, ok := b.(*XMLText)
+		return ok && x.Body == y.Body
+	case *XMLProcessingInstruction:
+		y, ok := b.(*XMLProcessingInstruction)
+		return ok && x.Target == y.Target && x.Data == y.Data
+	case *XMLComment:
+		y, ok := b.(*XMLComment)
+		return ok && x.Body == y.Body
+	case *XMLElement:
+		y, ok := b.(*XMLElement)
+		return ok && xmlElementDeepEqual(x, y, visited)
+	case *XMLSequence:
+		y, ok := b.(*XMLSequence)
+		return ok && xmlSequenceDeepEqual(x, y, visited)
+	default:
+		panic(fmt.Sprintf("internal error: unsupported XML value type %T", a))
+	}
+}
+
+func xmlElementDeepEqual(a, b *XMLElement, visited map[refPair]struct{}) bool {
+	if a == b {
+		return true
+	}
+	visited, cycle := markVisited(unsafe.Pointer(a), unsafe.Pointer(b), visited)
+	if cycle {
+		return true
+	}
+	return a.Name == b.Name &&
+		mapDeepEqual(a.Attributes, b.Attributes, visited) &&
+		mapDeepEqual(a.Namespaces, b.Namespaces, visited) &&
+		xmlDeepEqual(a.Children, b.Children, visited)
+}
+
+func xmlSequenceDeepEqual(a, b *XMLSequence, visited map[refPair]struct{}) bool {
+	if a == b {
+		return true
+	}
+	if len(a.Children) != len(b.Children) {
+		return false
+	}
+	visited, cycle := markVisited(unsafe.Pointer(a), unsafe.Pointer(b), visited)
+	if cycle {
+		return true
+	}
+	for i := range a.Children {
+		if !xmlDeepEqual(a.Children[i], b.Children[i], visited) {
 			return false
 		}
 	}

@@ -18,8 +18,8 @@ public function main() {
     boolean|float y = true;
     int|float z = 0.2;
     if x is int && y is float && z is int {
-        int unused1 = x;
-        float unused2 = y;
-        int unused3 = z;
+        int _ = x;
+        float _ = y;
+        int _ = z;
     }
 }

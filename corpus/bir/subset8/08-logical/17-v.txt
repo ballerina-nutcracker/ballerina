@@ -29,12 +29,16 @@ main() -> nil{
     %7 ? bb5 : bb6;
   }
   bb5 {
-    _ = x;
-    _ = y;
-    _ = z;
+    PushScopeFrame 3
+    _ = (1, x);
+    _ = (1, y);
+    _ = (1, z);
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

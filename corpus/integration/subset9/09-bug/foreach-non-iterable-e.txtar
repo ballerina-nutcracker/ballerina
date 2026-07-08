@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible types: expected an iterable collection
+  --> foreach-non-iterable-e.bal:21:22
+   |
+21 |     foreach int _ in 5 { // @error
+   |                      ^
+
+error[SEMANTIC_ERROR]: incompatible types: expected an iterable collection
+  --> foreach-non-iterable-e.bal:25:22
+   |
+25 |     foreach int _ in f { // @error
+   |                      ^

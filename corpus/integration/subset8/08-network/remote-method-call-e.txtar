@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: remote methods must be invoked using '->' notation
-  --> remote-method-call-e.bal:31:18
+  --> remote-method-call-e.bal:30:16
    |
-31 |     string res = c.get("foo"); // @error
-   |                  ^^^^^^^^^^^^
+30 |     string _ = c.get("foo"); // @error
+   |                ^^^^^^^^^^^^

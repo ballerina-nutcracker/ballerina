@@ -15,9 +15,11 @@
 // under the License.
 
 public function main() {
-    int z = foo(1, "d"); // @error
+    int _ = foo(1, "d"); // @error
 }
 
 function foo(int x, int y) returns int {
+        int _ = x;
+        int _ = y;
     return x;
-}
+    }

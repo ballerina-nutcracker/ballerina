@@ -1,0 +1,21 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang runtime (as runtime))
+  (function stopHandler () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal handler))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation runtime onGracefulStop (
+          (simple-var-ref stopHandler))))
+      (expression-stmt
+        (invocation io println (
+          (literal done)))))))

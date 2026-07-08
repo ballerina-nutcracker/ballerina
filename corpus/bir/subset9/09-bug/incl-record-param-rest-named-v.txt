@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+foo({| string... |}) -> nil{
+  bb0 {
+    %3 = ConstantLoad name
+    %2 = config[%3];
+    %4 = println(%2) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad age
+    %5 = config[%6];
+    %7 = println(%5) -> bb2;
+  }
+  bb2 {
+    %9 = ConstantLoad city
+    %8 = config[%9];
+    %10 = println(%8) -> bb3;
+  }
+  bb3 {
+    %12 = ConstantLoad country
+    %11 = config[%12];
+    %13 = println(%11) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad Alice
+    %3 = ConstantLoad age
+    %4 = ConstantLoad 30
+    %5 = ConstantLoad city
+    %6 = ConstantLoad New York
+    %7 = ConstantLoad country
+    %8 = ConstantLoad USA
+    %9 = newMap {| string... |}{%1=%2, %3=%4, %5=%6, %7=%8}
+    %10 = foo(%9) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

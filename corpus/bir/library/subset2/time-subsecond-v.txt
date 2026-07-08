@@ -1,0 +1,168 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 2024-06-15T10:30:45.123Z
+    %2 = utcFromString(%1) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = $desugar$0 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    ms = $desugar$0;
+    %6 = utcToString(ms) -> bb4;
+  }
+  bb4 {
+    %7 = println(%6) -> bb5;
+  }
+  bb5 {
+    %8 = ConstantLoad 2024-06-15T10:30:45.123456Z
+    %9 = utcFromString(%8) -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %9;
+    %11 = $desugar$1 is error
+    %11 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    us = $desugar$1;
+    %13 = utcToString(us) -> bb9;
+  }
+  bb9 {
+    %14 = println(%13) -> bb10;
+  }
+  bb10 {
+    %15 = ConstantLoad 2024-06-15T10:30:45.123456789Z
+    %16 = utcFromString(%15) -> bb11;
+  }
+  bb11 {
+    $desugar$2 = %16;
+    %18 = $desugar$2 is error
+    %18 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb13 {
+    ns = $desugar$2;
+    %20 = utcToString(ns) -> bb14;
+  }
+  bb14 {
+    %21 = println(%20) -> bb15;
+  }
+  bb15 {
+    %22 = ConstantLoad 2024-06-15T10:30:45.5Z
+    %23 = utcFromString(%22) -> bb16;
+  }
+  bb16 {
+    $desugar$3 = %23;
+    %25 = $desugar$3 is error
+    %25 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb18 {
+    half = $desugar$3;
+    %27 = utcToString(half) -> bb19;
+  }
+  bb19 {
+    %28 = println(%27) -> bb20;
+  }
+  bb20 {
+    %29 = ConstantLoad year
+    %30 = ConstantLoad 2024
+    %31 = ConstantLoad month
+    %32 = ConstantLoad 6
+    %33 = ConstantLoad day
+    %34 = ConstantLoad 15
+    %35 = ConstantLoad hour
+    %36 = ConstantLoad 10
+    %37 = ConstantLoad minute
+    %38 = ConstantLoad 30
+    %39 = ConstantLoad second
+    %40 = ConstantLoad 45.5
+    %41 = ConstantLoad timeAbbrev
+    %42 = ConstantLoad -08:00
+    %43 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%29=%30, %31=%32, %33=%34, %35=%36, %37=%38, %39=%40, %41=%42}
+    %44 = civilToString(%43) -> bb21;
+  }
+  bb21 {
+    $desugar$4 = %44;
+    %46 = $desugar$4 is error
+    %46 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    neg = $desugar$4;
+    %48 = println(neg) -> bb24;
+  }
+  bb24 {
+    %49 = ConstantLoad year
+    %50 = ConstantLoad 2024
+    %51 = ConstantLoad month
+    %52 = ConstantLoad 6
+    %53 = ConstantLoad day
+    %54 = ConstantLoad 15
+    %55 = ConstantLoad hour
+    %56 = ConstantLoad 2
+    %57 = ConstantLoad minute
+    %58 = ConstantLoad 30
+    %59 = ConstantLoad second
+    %60 = ConstantLoad 45
+    %61 = ConstantLoad utcOffset
+    %62 = ConstantLoad hours
+    %63 = ConstantLoad 8
+    %64 = unknown %63;
+    %65 = ConstantLoad minutes
+    %66 = ConstantLoad 0
+    %67 = newMap {| hours: int, minutes: int, seconds: decimal, never... |}{%62=%64, %65=%66} defaults{minutes=ballerina/time:$desugar$0}
+    %68 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%49=%50, %51=%52, %53=%54, %55=%56, %57=%58, %59=%60, %61=%67}
+    %69 = utcFromCivil(%68) -> bb25;
+  }
+  bb25 {
+    $desugar$5 = %69;
+    %71 = $desugar$5 is error
+    %71 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    fromNeg = $desugar$5;
+    %73 = utcToString(fromNeg) -> bb28;
+  }
+  bb28 {
+    %74 = println(%73) -> bb29;
+  }
+  bb29 {
+    return;
+  }
+}

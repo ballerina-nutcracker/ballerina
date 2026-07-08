@@ -17,13 +17,17 @@ main() -> nil{
     %5 ? bb3 : bb4;
   }
   bb3 {
-    _ = x;
-    %8 = ConstantLoad <nil>
-    %0 = %8;
+    PushScopeFrame 2
+    _ = (1, x);
+    %1 = ConstantLoad <nil>
+    (1, %0) = %1;
+    PopScopeFrame
     return;
   }
   bb4 {
-    _ = x;
+    PushScopeFrame 1
+    _ = (1, x);
+    PopScopeFrame
     return;
   }
 }

@@ -1,0 +1,110 @@
+(MyListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation onAttach expr:
+          (simple-var-ref svc) (
+          (literal attached))))
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (simple-var-ref svc))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (expression-stmt
+        (invocation onDetach expr:
+          (simple-var-ref svc) (
+          (literal detached))))
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (literal <nil>))
+    )
+  )
+  (gracefulStop
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal graceful stop))))
+    )
+  )
+  (immediateStop
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal immediate Stop))))
+    )
+  )
+  (start
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal listener start))))
+    )
+  )
+  (trigger
+    (bb0 () (bb1 bb2)
+      (var-def
+        (variable svc (expr
+          (field-based-access s
+            (simple-var-ref self)))))
+      (binary-expr ==
+        (simple-var-ref svc)
+        (literal <nil>))
+    )
+    (bb1 (bb0) ()
+      (panic
+        (error-constructor-expr (
+          (literal no service))))
+    )
+    (bb2 (bb0) ()
+      (expression-stmt
+        (invocation trigger expr:
+          (simple-var-ref svc) (
+          (simple-var-ref message))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation trigger expr:
+        (simple-var-ref l) (
+        (literal foo))))
+  )
+)
+(onAttach
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal listener-> )
+        (simple-var-ref message))))
+  )
+)
+(onDetach
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal listener-> )
+        (simple-var-ref message))))
+  )
+)
+(trigger
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal trigger-> )
+        (simple-var-ref message))))
+  )
+)

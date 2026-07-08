@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected float, got boolean|int|float
-  --> if16-e.bal:32:15
+  --> if16-e.bal:31:15
    |
-32 |     float _ = x; // @error
+31 |     float _ = x; // @error
    |               ^

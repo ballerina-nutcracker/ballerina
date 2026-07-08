@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: union types not supported for +
-  --> additive-3-e.bal:23:16
+  --> additive-3-e.bal:23:23
    |
-23 | const int? a = x + y; // @error
-   |                ^^^^^
+23 | public const int? a = x + y; // @error
+   |                       ^^^^^

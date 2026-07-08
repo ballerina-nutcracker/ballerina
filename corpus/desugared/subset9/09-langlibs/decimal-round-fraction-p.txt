@@ -1,0 +1,10 @@
+(package
+  (import-package ballerina lang decimal (as lang.decimal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.decimal round (
+          (literal 1.23)
+          (literal 2147483649)))))))

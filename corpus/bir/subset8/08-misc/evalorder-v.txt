@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 one() -> int{
   bb0 {
     %1 = ConstantLoad 1
@@ -228,6 +227,8 @@ main() -> nil{
 }
 ignore(int,int) -> nil{
   bb0 {
+    _ = a;
+    _ = b;
     return;
   }
 }

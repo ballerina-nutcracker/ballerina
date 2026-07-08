@@ -17,8 +17,8 @@ public function main() {
     boolean b = true;
     int|string x = 1;
     if  x is string || b {
-        int|string unused1 = x;
+        int|string _ = x;
         return;
     }
-    int unused2 = x;
+    int _ = x;
 }

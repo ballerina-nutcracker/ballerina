@@ -17,5 +17,5 @@
 import testorg/import_function10_e.foo as bar;
 
 public function main() {
-    string test = bar:foo(5);
+    string _ = bar:foo(5);
 }

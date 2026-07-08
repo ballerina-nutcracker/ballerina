@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected {| x: int, never... |}|{| x: string, never... |}, got {| x: int|string, never... |}
-  --> mappingassign1-e.bal:33:17
+  --> mappingassign1-e.bal:33:14
    |
-33 |     NorS nOrS = ns; // @error
-   |                 ^^
+33 |     NorS _ = ns; // @error
+   |              ^^

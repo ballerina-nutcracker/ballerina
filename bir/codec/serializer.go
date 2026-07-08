@@ -30,7 +30,7 @@ import (
 
 const (
 	BIR_MAGIC   = "\xba\x10\xc0\xde"
-	BIR_VERSION = 76
+	BIR_VERSION = 77
 )
 
 type birWriter struct {
@@ -58,7 +58,6 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 
 	birbuf := &bytes.Buffer{}
 	bw.writePackageCPEntry(birbuf, pkg.PackageID)
-	bw.writeImportModuleDecls(birbuf, pkg)
 	bw.writeGlobalVars(birbuf, pkg)
 	bw.writeClassDefs(birbuf, pkg)
 	bw.writeFunctions(birbuf, pkg)
@@ -94,16 +93,6 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 	}
 
 	return buf.Bytes(), nil
-}
-
-func (bw *birWriter) writeImportModuleDecls(buf *bytes.Buffer, pkg *bir.BIRPackage) {
-	bw.writeLength(buf, len(pkg.ImportModules))
-	for _, imp := range pkg.ImportModules {
-		bw.writeStringCPEntry(buf, imp.PackageID.OrgName.Value())
-		bw.writeStringCPEntry(buf, imp.PackageID.PkgName.Value())
-		bw.writeStringCPEntry(buf, imp.PackageID.Name.Value())
-		bw.writeStringCPEntry(buf, imp.PackageID.Version.Value())
-	}
 }
 
 func (bw *birWriter) writeGlobalVars(buf *bytes.Buffer, pkg *bir.BIRPackage) {
@@ -142,6 +131,26 @@ func (bw *birWriter) writeClassDef(buf *bytes.Buffer, classDef *bir.BIRClassDef)
 	for _, name := range methodNames {
 		bw.writeStringCPEntry(buf, name)
 		bw.writeFunction(buf, classDef.VTable[name])
+	}
+	var rmNames []string
+	for name := range classDef.RTable {
+		rmNames = append(rmNames, name)
+	}
+	sort.Strings(rmNames)
+	bw.writeLength(buf, len(rmNames))
+	for _, name := range rmNames {
+		entries := classDef.RTable[name]
+		bw.writeStringCPEntry(buf, name)
+		bw.writeLength(buf, len(entries))
+		for i := range entries {
+			entry := &entries[i]
+			bw.writeLength(buf, len(entry.PathSegments))
+			for _, seg := range entry.PathSegments {
+				bw.writeType(buf, seg.Ty)
+			}
+			bw.writeType(buf, entry.RestSegmentTy)
+			bw.writeFunction(buf, entry.Fn)
+		}
 	}
 }
 
@@ -325,6 +334,16 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 	case *bir.NewObject:
 		bw.writeStringCPEntry(buf, instr.ClassDefRef)
 		bw.writeOperand(buf, instr.LhsOp)
+	case *bir.NewStream:
+		bw.writeType(buf, instr.StreamType)
+		bw.writeOperand(buf, instr.LhsOp)
+		bw.writeOperand(buf, instr.ImplOp)
+	case *bir.StreamNext:
+		bw.writeOperand(buf, instr.LhsOp)
+		bw.writeOperand(buf, instr.StreamOp)
+	case *bir.StreamClose:
+		bw.writeOperand(buf, instr.LhsOp)
+		bw.writeOperand(buf, instr.StreamOp)
 	case *bir.FPLoad:
 		bw.writeStringCPEntry(buf, instr.FunctionLookupKey)
 		bw.writeType(buf, instr.Type)
@@ -363,6 +382,18 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 		bw.writeLength(buf, len(instr.Children))
 		for _, child := range instr.Children {
 			bw.writeOperand(buf, child)
+		}
+		bw.writeOperand(buf, instr.LhsOp)
+	case *bir.EvalTemplateExpr:
+		write(buf, uint8(instr.Kind))
+		bw.writeLength(buf, len(instr.Strings))
+		for _, s := range instr.Strings {
+			bw.writeStringCPEntry(buf, s)
+		}
+		write(buf, int32(instr.LiteralsTotalLen))
+		bw.writeLength(buf, len(instr.Insertions))
+		for _, op := range instr.Insertions {
+			bw.writeOperand(buf, op)
 		}
 		bw.writeOperand(buf, instr.LhsOp)
 	default:
@@ -404,6 +435,30 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 	case *bir.Return:
 	case *bir.Panic:
 		bw.writeOperand(buf, term.ErrorOp)
+	case *bir.LockStart:
+		bw.writeStringCPEntry(buf, term.LockKey)
+		bw.writeStringCPEntry(buf, term.ThenBB.Id.Value())
+	case *bir.LockEnd:
+		bw.writeStringCPEntry(buf, term.LockKey)
+		bw.writeStringCPEntry(buf, term.ThenBB.Id.Value())
+	case *bir.ResourceFunctionCall:
+		bw.writeOperand(buf, &term.Receiver)
+		bw.writeStringCPEntry(buf, term.MethodName)
+		bw.writeLength(buf, len(term.PathSegments))
+		for i := range term.PathSegments {
+			bw.writeOperand(buf, &term.PathSegments[i])
+		}
+		bw.writeLength(buf, len(term.Args))
+		for i := range term.Args {
+			bw.writeOperand(buf, &term.Args[i])
+		}
+		if term.LhsOp != nil {
+			write(buf, uint8(1))
+			bw.writeOperand(buf, term.LhsOp)
+		} else {
+			write(buf, uint8(0))
+		}
+		bw.writeStringCPEntry(buf, term.ThenBB.Id.Value())
 	default:
 		panic(fmt.Sprintf("unsupported terminator type: %T", term))
 	}
@@ -592,7 +647,7 @@ func (bw *birWriter) writeBufferLength(buf *bytes.Buffer, birbuf *bytes.Buffer) 
 }
 
 func (bw *birWriter) writeType(buf *bytes.Buffer, ty semtypes.SemType) {
-	if ty == nil {
+	if semtypes.IsZero(ty) {
 		write(buf, int32(-1))
 		return
 	}

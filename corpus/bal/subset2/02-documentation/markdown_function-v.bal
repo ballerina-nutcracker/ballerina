@@ -25,6 +25,7 @@ public class File {
     # + accessMode - read or write mode
     # + return - success or not
     public function open(string accessMode) returns boolean {
+        string _ = accessMode;
         return true;
     }
 }
@@ -34,7 +35,9 @@ public class File {
 # + anInt - value of param2
 # + rest - value of rest param
 function insert(string|int|float anUnion, int anInt, string... rest) {
-
+    string|int|float _ = anUnion;
+    int _ = anInt;
+    string[] _ = rest;
 }
 
 #
@@ -47,7 +50,8 @@ function getX() returns string|error {
 # + aTuple - a `Tuple` where the values should represent name, age and weight of a person, in order
 # + anInt - index
 function updatePeople([string, int, float] aTuple, int anInt) {
-
+    [string, int, float] _ = aTuple;
+    int _ = anInt;
 }
 
 #
@@ -73,8 +77,12 @@ function add(int x, int y) returns int {
 
 # + 'example - The error struct to be logged
 function foo(error 'example) {
+    if 'example is error {
+    }
 }
 
 # + 'foo_\u{2345}\u{0376} - The error struct to be logged with unicode name
 function foo_unicode(error 'foo_\u{2345}\u{0376}) {
+    if 'foo_\u{2345}\u{0376} is error {
+    }
 }

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: failed to determine object type with fitting init function
+  --> http-client-e.bal:20:27
+   |
+20 |     http:Client _ = check new (42, {}); // @error incompatible argument: url must be string
+   |                           ^^^^^^^^^^^^

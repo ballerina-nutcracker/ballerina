@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: expression is not a constant expression
-  --> 26-e.bal:20:42
+  --> 26-e.bal:20:49
    |
-20 | const boolean obviouslyFalse = a != 2 && f(); // @error
-   |                                          ^^^
+20 | public const boolean obviouslyFalse = a != 2 && f(); // @error
+   |                                                 ^^^

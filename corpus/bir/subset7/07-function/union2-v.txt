@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:foo
@@ -35,8 +34,9 @@ foo(int) -> int{
 }
 bar(int) -> string{
   bb0 {
-    %2 = ConstantLoad hello
-    %0 = %2;
+    _ = x;
+    %3 = ConstantLoad hello
+    %0 = %3;
     return;
   }
 }

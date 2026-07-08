@@ -24,9 +24,14 @@ import (
 
 // DependencyGraph represents a directed graph of dependencies between nodes.
 // It supports topological sorting, cycle detection, and dependency traversal.
+//
+// The graph carries a comparator (supplied at build time) so that
+// ToTopologicallySortedList produces deterministic output: siblings at equal
+// topological depth are ordered by the comparator instead of map-iteration order.
 type DependencyGraph[T comparable] struct {
 	rootNode            *T
 	dependencies        map[T]map[T]struct{}
+	cmp                 func(a, b T) int
 	topologicallySorted []T
 	cyclicDependencies  [][]T
 	sortOnce            sync.Once
@@ -47,8 +52,10 @@ func (g *DependencyGraph[T]) DirectDependencies(node T) []T {
 	return slices.Collect(maps.Keys(deps))
 }
 
-// ToTopologicallySortedList returns nodes in dependency order (dependencies first).
-// The result is computed lazily and cached for subsequent calls.
+// ToTopologicallySortedList returns nodes in dependency order (dependencies
+// first). Siblings at equal topological depth are ordered by the graph's
+// comparator so the output is deterministic across runs. The result is
+// computed lazily and cached for subsequent calls.
 func (g *DependencyGraph[T]) ToTopologicallySortedList() []T {
 	g.ensureSorted()
 	return slices.Clone(g.topologicallySorted)
@@ -76,10 +83,12 @@ func (g *DependencyGraph[T]) ensureSorted() {
 }
 
 // computeTopologicalSort performs DFS-based topological sort on the graph.
-// Returns nodes in dependency order (dependencies before dependents)
-// and any cycles detected.
+// Returns nodes in dependency order (dependencies before dependents) and any
+// cycles detected. Siblings are visited in g.cmp order so output is stable.
 func (g *DependencyGraph[T]) computeTopologicalSort() ([]T, [][]T) {
 	nodes := g.nodes()
+	slices.SortFunc(nodes, g.cmp)
+
 	visited := make(map[T]bool, len(nodes))
 	stackPos := make(map[T]int, len(nodes))
 	var stack []T
@@ -91,9 +100,10 @@ func (g *DependencyGraph[T]) computeTopologicalSort() ([]T, [][]T) {
 		stackPos[vertex] = len(stack)
 		stack = append(stack, vertex)
 
-		for dep := range g.dependencies[vertex] {
+		deps := slices.Collect(maps.Keys(g.dependencies[vertex]))
+		slices.SortFunc(deps, g.cmp)
+		for _, dep := range deps {
 			if pos, inStack := stackPos[dep]; inStack {
-				// Found a cycle - extract it from the stack
 				cycles = append(cycles, slices.Clone(stack[pos:]))
 			} else if !visited[dep] {
 				visit(dep)
@@ -118,11 +128,16 @@ func (g *DependencyGraph[T]) computeTopologicalSort() ([]T, [][]T) {
 type dependencyGraphBuilder[T comparable] struct {
 	rootNode     *T
 	dependencies map[T]map[T]struct{}
+	cmp          func(a, b T) int
 }
 
-func newDependencyGraphBuilder[T comparable]() *dependencyGraphBuilder[T] {
+// newDependencyGraphBuilder constructs a builder for a DependencyGraph of T.
+// cmp is the comparator used to order siblings deterministically in
+// ToTopologicallySortedList; it must define a total order on the node type.
+func newDependencyGraphBuilder[T comparable](cmp func(a, b T) int) *dependencyGraphBuilder[T] {
 	return &dependencyGraphBuilder[T]{
 		dependencies: make(map[T]map[T]struct{}),
+		cmp:          cmp,
 	}
 }
 
@@ -156,6 +171,7 @@ func (b *dependencyGraphBuilder[T]) build() *DependencyGraph[T] {
 	return &DependencyGraph[T]{
 		rootNode:     rootCopy,
 		dependencies: cloned,
+		cmp:          b.cmp,
 	}
 }
 

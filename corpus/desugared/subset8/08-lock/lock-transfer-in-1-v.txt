@@ -1,0 +1,35 @@
+(package
+  (import-package ballerina io (as io))
+  (variable counter (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref counter)
+        (literal 0))))
+  (function bumpBy (
+    (variable amount (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (simple-var-ref counter)
+            (binary-expr +
+              (simple-var-ref counter)
+              (simple-var-ref amount)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation bumpBy (
+          (literal 5))))
+      (expression-stmt
+        (invocation bumpBy (
+          (literal 7))))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref counter)))))))))

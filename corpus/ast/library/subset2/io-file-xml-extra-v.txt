@@ -1,0 +1,117 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable nsPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_ns.xml))))
+      (var-def
+        (variable nsContent (type
+          (value-type string)) (expr
+          (binary-expr +
+            (literal <root xmlns="http://default" xmlns:a="http://a.com">)
+            (literal <a:item a:key="v">text</a:item><child/></root>)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref nsPath)
+            (simple-var-ref nsContent)))))
+      (var-def
+        (variable nsResult (type
+          (value-type xml)) (expr
+          (checked-expr
+            (invocation io fileReadXml (
+              (simple-var-ref nsPath)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nsResult))))
+      (var-def
+        (variable multiPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_multi.xml))))
+      (var-def
+        (variable multiContent (type
+          (value-type string)) (expr
+          (literal <!DOCTYPE note><!-- a comment --><?target data?><a/><b/>))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref multiPath)
+            (simple-var-ref multiContent)))))
+      (var-def
+        (variable multiResult (type
+          (value-type xml)) (expr
+          (checked-expr
+            (invocation io fileReadXml (
+              (simple-var-ref multiPath)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref multiResult))))
+      (var-def
+        (variable emptyPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_empty.xml))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref emptyPath)
+            (literal    
+  )))))
+      (var-def
+        (variable emptyResult (type
+          (value-type xml)) (expr
+          (checked-expr
+            (invocation io fileReadXml (
+              (simple-var-ref emptyPath)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref emptyResult)
+            (xml-sequence-literal)))))
+      (var-def
+        (variable badPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_bad.xml))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref badPath)
+            (literal <root><unclosed></root>)))))
+      (var-def
+        (variable badResult (type
+          (union-type
+            (value-type xml)
+            (user-defined-type io Error))) (expr
+          (invocation io fileReadXml (
+            (simple-var-ref badPath))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badResult)
+            (user-defined-type io Error)))))
+      (var-def
+        (variable strayPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_xml_stray.xml))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref strayPath)
+            (literal </root>)))))
+      (var-def
+        (variable strayResult (type
+          (union-type
+            (value-type xml)
+            (user-defined-type io Error))) (expr
+          (invocation io fileReadXml (
+            (simple-var-ref strayPath))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref strayResult)
+            (user-defined-type io Error))))))))

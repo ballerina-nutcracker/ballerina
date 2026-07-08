@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type string)
+            (user-defined-type io Error))) (expr
+          (invocation io fileReadString (
+            (literal /tmp/bal_io_nonexistent_file_xyz.txt))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref result)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal got error))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected success))))))))))

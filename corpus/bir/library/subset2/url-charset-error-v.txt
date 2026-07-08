@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad hello
+    %2 = ConstantLoad Shift_JIS
+    %3 = encode(%1,%2) -> bb1;
+  }
+  bb1 {
+    encResult = %3;
+    %5 = encResult is error
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad hello
+    %9 = ConstantLoad Shift_JIS
+    %10 = decode(%8,%9) -> bb3;
+  }
+  bb3 {
+    decResult = %10;
+    %12 = decResult is error
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

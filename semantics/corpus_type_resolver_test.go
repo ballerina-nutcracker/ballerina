@@ -62,7 +62,12 @@ func testTypeResolution(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseTypeNarrowing, testCase.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testCase.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseTypeNarrowing, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return
@@ -91,18 +96,21 @@ func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 	// `check newError()` or `checkpanic newError()` whose inner type is
 	// exactly `error`, so the non-error remainder is empty).
 	if expr, ok := node.(ast.BLangExpression); ok {
-		if expr.GetDeterminedType() == nil {
+		if semtypes.IsZero(expr.GetDeterminedType()) {
 			v.t.Errorf("expression %T at %v does not have determined type set", expr, expr.GetPosition())
 		}
 	}
 
+	if inv, ok := node.(*ast.BLangInvocation); ok && ast.IsStreamOperation(inv) {
+		return v
+	}
 	if nodeWithSymbol, ok := node.(ast.BNodeWithSymbol); ok {
 		symbol := nodeWithSymbol.Symbol()
 		// Skip constant symbols (kind: 1) since they're resolved during semantic analysis
 		if v.ctx.SymbolKind(symbol) == model.SymbolKindConstant {
 			return v
 		}
-		if v.ctx.SymbolType(symbol) == nil {
+		if semtypes.IsZero(v.ctx.SymbolType(symbol)) {
 			// FIXME: get rid of this
 			if _, ok := node.(*ast.BLangConstant); ok {
 				// constants will get their type set during semantic analysis
@@ -120,7 +128,7 @@ func (v *typeResolutionValidator) VisitTypeData(typeData *ast.TypeData) ast.Visi
 	if typeData.TypeDescriptor == nil {
 		return nil
 	}
-	if typeData.Type == nil {
+	if semtypes.IsZero(typeData.Type) {
 		v.t.Errorf("type not resolved for %+v", typeData)
 	}
 	return v

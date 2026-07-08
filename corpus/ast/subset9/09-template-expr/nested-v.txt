@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable name (type
+          (value-type string)) (expr
+          (literal world))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (literal 7))))
+      (expression-stmt
+        (invocation io println (
+          (string-template-literal
+            (template-string "outer[")
+            (string-template-literal
+              (template-string "inner=")
+              (simple-var-ref name)
+              (template-string ""))
+            (template-string "/")
+            (simple-var-ref n)
+            (template-string "]"))))))))

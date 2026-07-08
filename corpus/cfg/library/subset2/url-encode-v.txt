@@ -1,0 +1,38 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable encoded (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation url encode (
+            (literal param1=http://xyz.com/?a=12&b=55)
+            (literal UTF-8)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref encoded))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal hello world)
+            (literal UTF-8)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal a*b)
+            (literal UTF-8)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal a~b)
+            (literal UTF-8)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation url encode (
+            (literal a.b-c_d)
+            (literal UTF-8)))))))
+  )
+)

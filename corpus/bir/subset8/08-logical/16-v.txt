@@ -18,31 +18,39 @@ main() -> nil{
     %5 ? bb3 : bb4;
   }
   bb3 {
-    _ = x;
+    PushScopeFrame 1
+    _ = (1, x);
+    PopScopeFrame
     GOTO bb4;
   }
   bb4 {
-    %9 = b;
-    b ? bb6 : bb5;
+    PushScopeFrame 3
+    %0 = (1, b);
+    (1, b) ? bb6 : bb5;
   }
   bb5 {
-    %10 = x is int
-    %11 = ! %10;
-    %9 = %11;
+    %1 = (1, x) is int
+    %2 = ! %1;
+    %0 = %2;
     GOTO bb6;
   }
   bb6 {
-    %9 ? bb7 : bb8;
+    %0 ? bb7 : bb8;
   }
   bb7 {
-    _ = x;
+    PushScopeFrame 1
+    _ = (2, x);
+    PopScopeFrame
     GOTO bb9;
   }
   bb8 {
-    _ = x;
+    PushScopeFrame 1
+    _ = (2, x);
+    PopScopeFrame
     GOTO bb9;
   }
   bb9 {
+    PopScopeFrame
     return;
   }
 }

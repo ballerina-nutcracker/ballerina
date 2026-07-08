@@ -49,12 +49,11 @@ func (a *allOrNothingSubtype) IsNothingSubtype() bool {
 	return (!a.isAll)
 }
 
-func (a *allOrNothingSubtype) canonicalKey() string {
+func (a *allOrNothingSubtype) canonicalKey() bddKey {
 	if a.isAll {
-		return "true"
-	} else {
-		return "false"
+		return bddKeyAll
 	}
+	return bddKeyNothing
 }
 
 func (a *allOrNothingSubtype) String() string {

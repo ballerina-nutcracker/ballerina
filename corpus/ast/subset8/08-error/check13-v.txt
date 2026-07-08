@@ -1,0 +1,22 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function mayFail () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (literal 1))))
+  (variable moduleValue (type
+    (value-type int)) (expr
+    (checked-expr
+      (invocation mayFail ()))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref moduleValue)))))))

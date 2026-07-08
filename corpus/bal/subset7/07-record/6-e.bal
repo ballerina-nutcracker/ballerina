@@ -16,5 +16,5 @@
 
 public function main() {
     int c = 10;
-    record {|int value = c;|} f = {}; // @error
+    record {|int value = c;|} _ = {}; // @error
 }

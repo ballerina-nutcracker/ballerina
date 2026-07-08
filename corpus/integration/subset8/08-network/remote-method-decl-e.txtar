@@ -5,7 +5,7 @@ error[SEMANTIC_ERROR]: remote methods are only allowed in client or service clas
    |
 18 |     remote function get(string path) returns string { // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 | 
-   | 
+19 |         string _ = path;
+   |         ^^^^^^^^^^^^^^^^
 20 |     }
    |     ^

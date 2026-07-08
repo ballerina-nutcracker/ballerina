@@ -18,6 +18,6 @@ import testorg/optional_field_cross_module_e.types;
 
 public function main() {
     types:R r = {foo: 10, bar: 10};
-    int f = r.foo; // @error
+    int _ = r.foo; // @error
     r.bar = (); // @error
 }

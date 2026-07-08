@@ -25,7 +25,7 @@ const N = 10;
 
 public function main() {
     C[] v = [];
-    foreach int i in 0 ..< N {
+    foreach int _ in 0 ..< N {
         v.push({x: 1, y: 2});
     }
     foreach int i in 0 ..< N {

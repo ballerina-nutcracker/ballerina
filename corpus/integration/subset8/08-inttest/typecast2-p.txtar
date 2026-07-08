@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: bad type cast: cannot cast value of type 2.7 to 1|2
+error: bad type cast
         at main(typecast2-p.bal:22)

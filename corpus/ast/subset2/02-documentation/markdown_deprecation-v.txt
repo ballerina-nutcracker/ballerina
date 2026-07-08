@@ -46,7 +46,15 @@
     (variable y (type
       (value-type int)))) (
     (value-type null))
-    (block-function-body))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref x))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref y))))))
   (function main () (
     (value-type null))
     (block-function-body)))

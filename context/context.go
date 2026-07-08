@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// Package context represents the front end state
 package context
 
 import (
@@ -56,6 +57,7 @@ type activeStage struct {
 	start time.Time
 }
 
+// CompilerContext maintains frontend stage state for a package.
 type CompilerContext struct {
 	env         *CompilerEnvironment
 	mu          sync.Mutex
@@ -72,6 +74,10 @@ func (c *CompilerContext) NewSymbolSpace(packageID model.PackageID) *model.Symbo
 	return c.env.NewSymbolSpace(packageID)
 }
 
+func (c *CompilerContext) NewModuleScope(pkg model.PackageID, prefixes map[string]model.ExportedSymbolSpace) *model.ModuleScope {
+	return c.env.NewModuleScope(pkg, prefixes)
+}
+
 func (c *CompilerContext) NewFunctionScope(parent model.Scope, pkg model.PackageID) *model.FunctionScope {
 	return c.env.NewFunctionScope(parent, pkg)
 }
@@ -86,6 +92,10 @@ func (c *CompilerContext) AddSymbolToSameSpace(ref model.SymbolRef, name string,
 
 func (c *CompilerContext) GetSymbol(symbol model.SymbolRef) model.Symbol {
 	return c.env.GetSymbol(symbol)
+}
+
+func (c *CompilerContext) SymbolPackage(symbol model.SymbolRef) model.PackageIdentifier {
+	return c.env.SymbolPackage(symbol)
 }
 
 // CreateNarrowedSymbol create a narrowed symbol for the given baseRef symbol. IMPORTANT: baseRef must be the actual symbol
@@ -120,6 +130,14 @@ func (c *CompilerContext) SymbolIsPublic(symbol model.SymbolRef) bool {
 
 func (c *CompilerContext) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
 	c.GetSymbol(symbol).SetType(ty)
+}
+
+func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {
+	return c.env.DistinctTypeID(symbol)
+}
+
+func (c *CompilerContext) DistinctTypeSymbolRef(id int) (model.SymbolRef, bool) {
+	return c.env.DistinctTypeSymbolRef(id)
 }
 
 func (c *CompilerContext) GetDefaultPackage() *model.PackageID {

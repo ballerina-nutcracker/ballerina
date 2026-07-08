@@ -15,4 +15,5 @@
 // under the License.
 
 function init(int x) { // @error
+    int _ = x;
 }

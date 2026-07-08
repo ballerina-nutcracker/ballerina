@@ -16,9 +16,21 @@
 
 package semtypes
 
-// SemType is an opaque pointer representing a type in Ballerina.
-type SemType interface {
-	all() BasicTypeBitSet
-	some() BasicTypeBitSet
-	subtypeDataList() []ProperSubtypeData
+// SemType represents a type in Ballerina.
+type SemType struct {
+	allBits  basicTypeBitSet
+	someBits basicTypeBitSet
+	dataList []ProperSubtypeData
+}
+
+func (t SemType) all() basicTypeBitSet {
+	return t.allBits & basicTypeMask
+}
+
+func (t SemType) some() basicTypeBitSet {
+	return t.someBits & basicTypeMask
+}
+
+func (t SemType) subtypeDataList() []ProperSubtypeData {
+	return t.dataList
 }

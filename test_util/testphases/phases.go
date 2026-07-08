@@ -20,15 +20,18 @@ package testphases
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/desugar"
+	"ballerina-lang-go/lib/stdlibs"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/parser"
 	"ballerina-lang-go/semantics"
+	"ballerina-lang-go/test_util/langlib"
 	"ballerina-lang-go/tools/text"
 )
 
@@ -66,19 +69,117 @@ type PipelineResult struct {
 	BIRPackage      *bir.BIRPackage
 }
 
+// stdlibEntry describes one embedded standard-library package to pre-compile.
+type stdlibEntry struct {
+	org     string
+	name    string
+	version string
+}
+
+// builtinStdlibs is the ordered list of standard-library packages baked into the
+// binary that are still seeded manually for hand-rolled compile drivers.
+// Order matters: a package must appear after all packages it imports
+// (e.g. io before os, time before crypto).
+var builtinStdlibs = []stdlibEntry{
+	{"ballerina", "io", "0.0.1"},
+	{"ballerina", "http", "0.0.1"},
+	{"ballerina", "log", "0.0.1"},
+	{"ballerina", "math.vector", "0.0.1"},
+	{"ballerina", "os", "0.0.1"},
+	{"ballerina", "random", "0.0.1"},
+	{"ballerina", "time", "0.0.1"},
+	{"ballerina", "url", "0.0.1"},
+	{"ballerina", "crypto", "0.0.1"},
+}
+
+// loadBuiltinPublicSymbols compiles the embedded standard-library packages into
+// sibling CompilerContexts that share env (and thus the same type-env and
+// symbol table). The returned map can be merged directly into the publicSymbols
+// passed to semantics.ResolveImports.
+func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.PackageIdentifier]model.ExportedSymbolSpace {
+	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
+
+	for _, entry := range builtinStdlibs {
+		balPath := fmt.Sprintf("ballerina/%s/%s/go1.2/%s.bal", entry.name, entry.version, entry.name)
+		contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
+		if err != nil {
+			continue
+		}
+		content := string(contentBytes)
+
+		cx := context.NewCompilerContext(env)
+		virtualPath := fmt.Sprintf("$stdlib/ballerina/%s.bal", entry.name)
+		cx.DiagnosticEnv().RegisterFile(virtualPath, text.NewStringTextDocument(content))
+
+		st, err := parser.GetSyntaxTree(cx, virtualPath, content)
+		if err != nil || cx.HasDiagnostics() {
+			continue
+		}
+
+		cu := ast.GetCompilationUnit(cx, st)
+		if cu == nil || cx.HasDiagnostics() {
+			continue
+		}
+		pkgID := cx.NewPackageID(
+			model.Name(entry.org),
+			[]model.Name{model.Name(entry.name)},
+			model.DEFAULT_VERSION,
+		)
+		cu.SetPackageID(pkgID)
+		compilationUnits := []*ast.BLangCompilationUnit{cu}
+
+		// Pass accumulated stdlib symbols so packages that import other stdlibs (e.g. os→io, crypto→time) resolve correctly.
+		importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, semantics.GetImplicitImports(cx),
+			result, entry.org)
+		pkgScope, exported := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
+		if cx.HasErrors() {
+			continue
+		}
+		pkg := ast.ToPackageFromCompilationUnits(compilationUnits)
+		pkg.PackageID = pkgID
+		pkg.Scope = pkgScope
+		pkg.Imports = nil
+
+		semantics.ResolveTopLevelNodes(cx, pkg, importedByCU[0].Imports)
+		if cx.HasErrors() {
+			continue
+		}
+
+		result[semantics.PackageIdentifier{OrgName: entry.org, ModuleName: entry.name}] = exported
+	}
+
+	return result
+}
+
+func LoadLanglibs(env *context.CompilerEnvironment, cx *context.CompilerContext) (*langlib.Symbols, error) {
+	stdlibSymbols := loadBuiltinPublicSymbols(env)
+	symbols, err := langlib.Build(cx, stdlibSymbols)
+	if err != nil {
+		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
+	}
+	return symbols, nil
+}
+
 // RunPipeline runs the frontend compilation pipeline up to the specified phase.
 // It returns a PipelineResult containing the outputs relevant to that phase.
-func RunPipeline(cx *context.CompilerContext, phase Phase, inputPath string) (*PipelineResult, error) {
+func RunPipeline(env *context.CompilerEnvironment, cx *context.CompilerContext, langlibs *langlib.Symbols, phase Phase, inputPath string) (*PipelineResult, error) {
+	content, err := os.ReadFile(inputPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", inputPath, err)
+	}
+	return RunPipelineWithContent(env, cx, langlibs, phase, inputPath, string(content))
+}
+
+// RunPipelineWithContent runs the frontend compilation pipeline for preloaded content.
+// It returns a PipelineResult containing the outputs relevant to that phase.
+func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.CompilerContext, langlibs *langlib.Symbols, phase Phase, inputPath string, content string) (*PipelineResult, error) {
 	result := &PipelineResult{}
 
 	// Register source file with DiagnosticEnv
-	content, err := os.ReadFile(inputPath)
-	if err == nil {
-		cx.DiagnosticEnv().RegisterFile(inputPath, text.NewStringTextDocument(string(content)))
-	}
+	cx.DiagnosticEnv().RegisterFile(inputPath, text.NewStringTextDocument(content))
 
 	// Phase 1: Parse
-	syntaxTree, err := parser.GetSyntaxTree(cx, inputPath)
+	syntaxTree, err := parser.GetSyntaxTree(cx, inputPath, content)
 	if err != nil {
 		return nil, fmt.Errorf("parsing failed: %w", err)
 	}
@@ -91,14 +192,28 @@ func RunPipeline(cx *context.CompilerContext, phase Phase, inputPath string) (*P
 	if result.CompilationUnit == nil || cx.HasDiagnostics() {
 		return nil, fmt.Errorf("AST generation failed: compilation unit is nil")
 	}
-	result.Package = ast.ToPackage(result.CompilationUnit)
 	if phase == PhaseAST {
+		result.Package = ast.ToPackageFromCompilationUnits([]*ast.BLangCompilationUnit{result.CompilationUnit})
 		return result, nil
 	}
 
 	// Phase 3: Symbol Resolution
-	importedSymbols := semantics.ResolveImports(cx, result.Package, semantics.GetImplicitImports(cx), make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace), "")
-	semantics.ResolveSymbols(cx, result.Package, importedSymbols)
+	if langlibs == nil {
+		var err error
+		langlibs, err = LoadLanglibs(env, cx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pkgID := result.CompilationUnit.GetPackageID()
+	result.CompilationUnit.SetPackageID(pkgID)
+	compilationUnits := []*ast.BLangCompilationUnit{result.CompilationUnit}
+	importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, langlibs.ImplicitImports, langlibs.PublicSymbols, "")
+	pkgScope, _ := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
+	result.Package = ast.ToPackageFromCompilationUnits(compilationUnits)
+	result.Package.PackageID = pkgID
+	result.Package.Scope = pkgScope
+	importedSymbols := importedByCU[0].Imports
 	if phase == PhaseSymbolResolution || cx.HasDiagnostics() {
 		return result, nil
 	}
@@ -117,7 +232,7 @@ func RunPipeline(cx *context.CompilerContext, phase Phase, inputPath string) (*P
 
 	// Phase 6: Semantic Analysis
 	semanticAnalyzer := semantics.NewSemanticAnalyzer(cx)
-	semanticAnalyzer.Analyze(result.Package)
+	semanticAnalyzer.Analyze(result.Package, importedSymbols)
 	if phase == PhaseSemanticAnalysis || cx.HasDiagnostics() {
 		return result, nil
 	}

@@ -1,0 +1,4 @@
+[package]
+org = "ballerina"
+name = "lang.map"
+version = "0.0.1"

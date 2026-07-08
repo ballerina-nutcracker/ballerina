@@ -37,7 +37,7 @@
       (literal 0)
       (simple-var-ref max))
     (var-def
-      (variable i (type
+      (variable _ (type
         (value-type int))))
   )
   (bb2 (bb1) (bb1)
@@ -142,7 +142,7 @@
       (literal 0)
       (simple-var-ref max))
     (var-def
-      (variable i (type
+      (variable _ (type
         (value-type int))))
   )
   (bb2 (bb1) (bb1)

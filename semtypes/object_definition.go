@@ -31,10 +31,44 @@ func NewObjectDefinition() ObjectDefinition {
 	return this
 }
 
-func objectDefinitionDistinct(distinctId int) SemType {
-	common.Assert(distinctId >= 0)
+func ObjectDefinitionDistinct(distinctId int) SemType {
+	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(-distinctId - 1)))
 	return getBasicSubtype(BTObject, bdd)
+}
+
+func stripObjectDistinctAtoms(ty SemType) SemType {
+	return stripDistinctAtomsFromSemType(ty, BTObject, stripDistinctAtomsFromBdd)
+}
+
+func stripDistinctAtomsFromSemType(ty SemType, typeCode BasicTypeCode, stripBdd func(Bdd) Bdd) SemType {
+	typeBit := basicTypeBitSet(1 << typeCode.Code())
+	if ty.some()&typeBit == 0 {
+		return ty
+	}
+	all := ty.all()
+	var subtypes []basicSubtype
+	dataIndex := 0
+	for code := 0; code <= typeCodeUndef; code++ {
+		bit := basicTypeBitSet(1 << code)
+		if ty.some()&bit == 0 {
+			continue
+		}
+		data := ty.subtypeDataList()[dataIndex]
+		dataIndex++
+		if code == typeCode.Code() {
+			stripped := stripBdd(data.(Bdd))
+			if allOrNothing, ok := stripped.(*bddAllOrNothing); ok {
+				if allOrNothing.IsAll() {
+					all |= bit
+				}
+				continue
+			}
+			data = stripped.(ProperSubtypeData)
+		}
+		subtypes = append(subtypes, basicSubtypeFrom(basicTypeCodeFrom(code), data))
+	}
+	return createComplexSemType(all, subtypes...)
 }
 
 // Each object type is represented as mapping type (with its basic type set to object) as fallows
@@ -60,7 +94,7 @@ func objectDefinitionDistinct(distinctId int) SemType {
 //	   }
 //	}
 func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members []Member) SemType {
-	common.Assert(objectDefinitionValidateMembers(members))
+	common.Assert(func() bool { return objectDefinitionValidateMembers(members) })
 	var mut CellMutability
 	if qualifiers.readonly {
 		mut = CellMutability_CELL_MUT_NONE
@@ -96,7 +130,7 @@ func (o *ObjectDefinition) objectContaining(mappingType SemType) SemType {
 	return createBasicSemType(BTObject, bdd)
 }
 
-func (o *ObjectDefinition) restMemberType(env Env, mut CellMutability, immutable bool) *ComplexSemType {
+func (o *ObjectDefinition) restMemberType(env Env, mut CellMutability, immutable bool) SemType {
 	fieldDefn := NewMappingDefinition()
 	var fieldValueTy SemType
 	if immutable {
@@ -141,7 +175,7 @@ func memberField(env Env, member *Member, mut CellMutability) CellField {
 			(&member.Visibility).field(),
 		},
 		NEVER)
-	return cellFieldFrom(member.Name, *cellContainingWithEnvSemTypeCellMutability(env, semtype, fieldMut))
+	return cellFieldFrom(member.Name, cellContainingWithEnvSemTypeCellMutability(env, semtype, fieldMut))
 }
 
 func (o *ObjectDefinition) GetSemType(env Env) SemType {

@@ -14,8 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 public function main() {
-    null n = 1; // @error
+    null _ = 1; // @error
 }

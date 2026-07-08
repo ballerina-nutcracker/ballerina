@@ -21,4 +21,7 @@ public function main() {
     ignore(m[i]); // @error
 }
 
-function ignore(any x) { }
+function ignore(any x) {
+        any _ = x;
+    
+    }

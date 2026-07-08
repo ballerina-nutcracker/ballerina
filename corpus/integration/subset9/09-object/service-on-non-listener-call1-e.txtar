@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression in 'on' clause is not a listener
+  --> service-on-non-listener-call1-e.bal:21:12
+   |
+21 | service on notAListener() { // @error expression in 'on' clause is not a listener
+   |            ^^^^^^^^^^^^^^

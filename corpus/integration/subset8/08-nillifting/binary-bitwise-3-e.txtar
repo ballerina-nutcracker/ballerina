@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: union types not supported for &
-  --> binary-bitwise-3-e.bal:23:16
+  --> binary-bitwise-3-e.bal:23:23
    |
-23 | const int? a = x & y; // @error
-   |                ^^^^^
+23 | public const int? a = x & y; // @error
+   |                       ^^^^^

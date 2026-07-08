@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable home (type
+        (value-type string)) (expr
+        (invocation os getUserHome ()))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (invocation lang.string length (
+            (simple-var-ref home)))
+          (literal 0)))))
+  )
+)

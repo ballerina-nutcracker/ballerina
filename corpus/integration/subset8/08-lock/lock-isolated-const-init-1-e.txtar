@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-const-init-1-e.bal:24:34
+   |
+24 |         var _ = function(int n = seed) returns int { // @error
+   |                                  ^^^^

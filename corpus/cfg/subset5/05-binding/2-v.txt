@@ -22,6 +22,10 @@
 )
 (intFoo
   (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
     (expression-stmt
       (invocation io println (
         (literal This is integer))))

@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected anydata, got {| error... |}
-  --> map3-e.bal:19:19
+  --> map3-e.bal:19:17
    |
-19 |     anydata val = errMap; // @error
-   |                   ^^^^^^
+19 |     anydata _ = errMap; // @error
+   |                 ^^^^^^

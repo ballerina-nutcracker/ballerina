@@ -1,6 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 foo(int) -> int{
   bb0 {
     %3 = x;
@@ -13,11 +11,11 @@ foo(int) -> int{
 }
 $anonFunc$_0(int) -> int{
   bb0 {
-    %4 = (1, v);
+    %4 = (2, v);
     %5 = x;
     %3 = + %4 %5;
     %6 = %3;
-    %7 = (2, base);
+    %7 = (3, base);
     %2 = + %6 %7;
     %0 = %2;
     return;
@@ -41,7 +39,7 @@ genFs(int) -> [function(int) returns int...]{
     %9 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 18
+    PushScopeFrame 13
     v = (1, i);
     %3 = (1, i);
     %4 = ConstantLoad 2
@@ -58,26 +56,30 @@ genFs(int) -> [function(int) returns int...]{
     return;
   }
   bb4 {
-    %9 = closure_fp $anon/.:$anonFunc$_0
-    f = %9;
-    %11 = push((1, array),f) -> bb5;
+    PushScopeFrame 3
+    %0 = closure_fp $anon/.:$anonFunc$_0
+    f = %0;
+    %2 = push((2, array),f) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb6 {
-    %12 = fp $anon/.:foo
-    %13 = push((1, array),%12) -> bb7;
+    PushScopeFrame 2
+    %0 = fp $anon/.:foo
+    %1 = push((2, array),%0) -> bb7;
   }
   bb7 {
+    PopScopeFrame
     GOTO bb8;
   }
   bb8 {
-    %15 = (1, i);
-    %16 = ConstantLoad 1
-    %17 = %16;
-    %14 = + %15 %17;
-    (1, i) = %14;
+    %10 = (1, i);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, i) = %9;
     PopScopeFrame
     GOTO bb1;
   }

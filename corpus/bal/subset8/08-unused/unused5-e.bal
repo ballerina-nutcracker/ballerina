@@ -15,7 +15,7 @@
 // under the License.
 
 // @productions const-defn local-var-decl-stmt string-literal
-const int x = 2;
+const int x = 2; // @error
 
 public function main() {
     string x = "str"; // @error

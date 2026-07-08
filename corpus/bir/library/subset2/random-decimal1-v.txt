@@ -1,0 +1,30 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = createDecimal() -> bb1;
+  }
+  bb1 {
+    f = %1;
+    %5 = f;
+    %6 = ConstantLoad 0
+    %7 = %6;
+    %4 = >= %5 %7;
+    %3 = %4;
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %9 = f;
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = < %9 %11;
+    %3 = %8;
+    GOTO bb3;
+  }
+  bb3 {
+    %12 = %3;
+    %13 = println(%12) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: boom
+        at main(lock-panic-static-1-p.bal:22)

@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: union types not supported for +
   --> 6-e.bal:19:14
    |
-19 |     int? b = a + (); // @error
+19 |     int? _ = a + (); // @error
    |              ^^^^^^

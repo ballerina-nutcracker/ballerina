@@ -1,0 +1,140 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+import ballerina/crypto;
+import ballerina/io;
+
+public function main() returns error? {
+    // PBES2 (PBKDF2 + AES-256-CBC) encrypted PKCS#8 key.
+    string pbes2 = string `
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIba1oPEjXWZkCAggA
+MAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBCpntLqaIEuOa6HfQoVEmtTBIIE
+0Jz8FuHIArJ93w0mcqt3wgSvRGyTfOmCIiR3r5xSZLJwyGgMsJf3e8kD2A8mBdls
+FPjRaaTCEUqGjZx6N2zFJSqzbzKnWqOn3LCYK1MfYsnFEfxTv+LClsv777gmUusa
+BLmEoL46uQ2iw13Ow9a2AglS1wlG85gAUeVoAPK60UGk824hCQEzMJyOQZ/C8w8d
+Iu6hR/aSbbyCvW9y2FNYFJ9EOqtROCeufx9Jkd8SZnvZnQDoPwDcjApwytGNRZbh
+tjgpZ2VTRP/hLJuUT/FD8rurPL5UacWD1I5f0OMb8VPHmjP08RUTJJPb+Ey4zc3O
+GaBUsf/TaW5ooVRBuqFWp9+/bHOiZFWUC3Arqzg5l8OF1vwD/56gaXy2mb42mbyG
+JsmYNtPABk029IfFspiScFSggaDfMkN57NcQdVSvgT32sdRUuNNnX+4Z82PylJqu
+5fjXiK+0wytipWIJNNMZygXrC5Z3BpLfVhp7YANNWhOuEPeBUyOhl3ueqGDom9+z
+xILmHaetzvAR652kSoTDGdbVReFRfbVJlZRhneB60iNgObUlBQqqQVtBAa60Msjh
+DqRn6ZNlDFfuvPlDrSS+lc6c8/dd+f507NBh22nNANNx02VOqNRb5/o2tPg0cXt5
+MNsqtxw/NhYIJ0Ypc4K9da8nUndvgPfjiQZk3ghOwvN7apkwHDCEMcytqeJ30WNK
+bTxP9ZJy0pEW6YsAzekuVozV5anm7R+MfvvoA9MEyp9KKwKfzu9/sf0nbMPfBHOQ
+41L3ldzQJed40T/SJIqs18QeAM5Tz9VImGeq7RqWMayqFkVQl9zFWIWVVv09aTB0
+CB3450jAktXOlE6bgu8wQML3PkNxT+3oLYwUWjqejIpM0/3uegGFSKYAgVNYsSCt
+nRpAN+ISiIY8fFZ/zZYJuWr6tzKiFkyQg/8WWj2LELNsFNxmKDw6vXYXCT/VW9FD
+ZseKHBvfxlvJ1tOeWiM6PtDonqVVjzbWq8WYs02C0CAovNe35BSfsTHxmzVwmwSr
+lBphLE9pGDKARmGtXec5Lq6UX2nWti4+Y34gQ60mSR3A+db2PbITFxeqrFPb02h8
+A51H4ZzqVORWSRp1GCCCLmUl7m1YIkKHDD3P6UI7QywiB2I9ALo/Ow3Hzd8gU2Gs
+wiNT35vGUOkABaya7EQGkLvbFxb/M3t7U5yC+CCMz4ummFt4oLG/FuYFWE2MG2c1
+Y4unteJrWPQVvLsWVPflw1LTSS0Ae6YUvBbK6b9KhPVw+i7xvD1xe31gVoBOK6ht
+MaZ4HYhrGstGd4K8LwFmspFZ25CeZYdETxt/b3mL60WgQiayPka6lOA9N4pSgBLZ
+YMcbgppoER9dZwaXI0ZK/50hVMozuOgWkcVe9eldKJ/eVVa8AKyd0wLPMeODKSUF
+hmUofn1BvlFbG9+gK8sJJZcfbQ4qHPtkU2zDjQ+xDFOpqtImLg1ot224pPaFW+IZ
+IUWtAnhDqLqtXHTQj6PbxzmbhiygtL4ID0qimS/IFb+Y9pT/IN8rdiiGYUicQbwu
+Eubczj1asLiR3WmG1u2v/ntgx3FESVPFlpEMX66jA4DTWUF8aSNSNZIhKoIorIVZ
+7zHOeuPbInRBgp4S7e5u4P6yRVVcCQiiETIIa78EvdjF
+-----END ENCRYPTED PRIVATE KEY-----
+`;
+    // PKCS#12 PBE with SHA1 + 3DES encrypted PKCS#8 key.
+    string pbe3des = string `
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIE6jAcBgoqhkiG9w0BDAEDMA4ECJuqLPOnQa2JAgIIAASCBMh9IsInoSBq7Q5H
+LYPZcfZd43+62d8TQEcomLPXgnyfDbYKfpT6Kqn9M0C23RKfRbHTZzMVz5OoLVyX
+QRklhuoQ1UaqAX2cWAGRqN7vCoOuHKwbgcrRJaDJZTfXPSwLZTOrX98RXrCkFJSm
+JOnAnhPld/EXnTnWJ5bIm/z4cxIJ36VK7ALnaLGWFbYqmO2W4PmpNv0EpOlnvsHJ
+7rINWVYWiY94O/Z+rcM6SDxHKgu0Avab3xxsDuD5ZWdDxNYZ9IPWhTPU70YQlyLH
+vvkbn79V8K9xtiZSQGitmjrRgcPFQiZVHmwAhmL+2LapcICeKpbzwcAg2JDHZXX2
+7c6FyGtaHxobAy6qfKiAbLZD/ZqJcqzUNzUW1n5F489GW6BtJj1o5RUo76s8VsQX
+OlJE4VFuQ1kkWyQl99/V7gLkYhUyv7IS46ZT2LMLDqp3Ut4oQJ7jBg6gmPoWDXG9
+RHSeZi+D+oaEFNJAzg4TE4k2bH72ResKqEsCerUdq6OhGTBUDq9GbPtxx3lq/g5k
+T1OWI8d5Do1OSSPaiqnZ7lq/FGKmLY0n6r8cBF0NUGQuzqzkI2d69E5ypgQRXbql
+i5fKjJq0ApyHkLG056LEZBnslqsfhJFtzF+fGTl3Qp4Z5Upkx3bHVYgM3x48lZI8
+PWaSwVjknvJZz1zgD4S/leRpIX/OAyZjV2U7s+C3NzJGItS6oLFJ1AqwvPt8lALB
+HQWaAHPA2nTSgiMxUHge4s9B5D4DkrxmkdYn4dhkGGEDIAQEKlrNLnLLPVW7S178
+zqh5bTKtxmE4DsOQYdB6gACYBlmvneDyGJcD3pqnUAZ4r3x3h9k5GPd0BxKy9EHY
+GdjoI5iBTMn+isnyU12VBqpKMfJQJ2iFpCIBm1wsEMgOhG+ApWY1Ey0Ueq+GgXnF
+1gP3Kg2hJd3cAgQQyDkRhuLgiaq3FUyzOxOM0K4hYskKcdYUW8Q4BOjAdc/Dg/38
+nP6g1mP4UYFWvCrcXPd+cvzSsPnBUCNjlm9As7qrXhOE8JjHi3czlZ8WVb6ztn3j
+V8uXoBzWito7CLBKuRH3xlwTdu2HoNYc1VWvBw0ev41Vdsjvt/yYU5xkqHnl0toj
+r9gZSjRWqQFVrMMnNaCfLEjtUoaO7bMP8jswDAWg5yo3JGlRTbLK4nhuQnELBYF/
+M3GEI70LF8D7XV2990j+DCeTaFBUvoVmx+ejFgHNkCl7MDHWYpudAOcSZkg1Khcx
+T7QxBKZBNWgsYPpqh9nV06X/B2wTQQR4cCGbJpNtC0Iz3FhwtmcJgcssihMcPh+A
+/JAEObH6NjwM4EZDZ1DpXHYrNd3RpdRAaw3W78eroLcOgtaPQhYSLurjFoBkTn1f
+sLDuc82BCOJX2x7H61DBsyKXjaK2PxipNzp6CnOzuK7spqicX75TPxhd0veVYoz1
+0C1C2tySFiNuloRjX+cjDnLaMc+NHMGNgWUnRLNMSzSPYVYCH7JhEIqfpl/qhxEa
+mtXQfoIfTjPw0jhmVJFgGzdS3oGT55OsHwPU52RVAsZy9fPkdUwljiKqh/FNqwln
+YK0XHn/365pT5B9JmZv67pYshER89jrsiIzIJWtCuCunbQjPqBpUnrwS7JnGePb+
+98uNed8A/P4KLyjarx0=
+-----END ENCRYPTED PRIVATE KEY-----
+`;
+    // PKCS#12 PBE with SHA1 + 40-bit RC2 encrypted PKCS#8 key.
+    string pbeRc2 = string `
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIE6jAcBgoqhkiG9w0BDAEGMA4ECFEItfcbqDcdAgIIAASCBMhke/d+8rGk9cin
+XpDDa/Qqf9m1H7l4op8RsvlWNCj9nNb84F3b91laJTdFqA3CvTQCI8duxuPxh0lM
+Gaz/RNfmFIeb4ApQb1hIQLowdTcJb/TmiUdYPY8MdEYXs0txi9X2UWzDV59jje78
+oi3FK6o3UwfTz/HR2eDqcBGlECfO6+lob8IhrOcxr5N7HWPkKZsGkAk1g3LdR1Cy
+6T+pRSv3zugyRNLbZITO56qxMUzmlA6sglE547LQdktCSgJwQQsoy9OadLhNxrrA
+d4D7r1ZIguNZFZepzqVLKhsZfklNr3NvAsTBB2i5cj7VaaVo3jrO6Sp5XtcKvbvY
+qwVNzQ+R17jcnY/LszzS0DawIsRI/2/fCK5A6WOe9bzKyPQEaMem/3N8AyIwdkkW
+cUkmwucovzhPZLS8edgbTZH42mSnnd4v/IGt3hfijlUj20d5B+/QinHGPbAFT0+l
+KYW8yG0r6y2wAzbo4KiA2QPwxIKh6VOLQA4LWw2Hvk6eeHfLwY1SreWsb499X5Qs
+6Gu4zKPLGlUTdUFaw+7C7slKwzg7gJQzcYjKlm0h6AT0T7FFoUwvtE8TMNVpMNDu
+Xf4heOPSnNc9pjtcmShGKNzXOLgY4Q/Uu9ZGE7HN1DA34Zs5n8vIKAlm2CwS/bmW
+YHesQzEI7Z6DcGdlzFkGkR9RdJIvh7HDQuOWcSB+so0J+7zUCuj4xT2pUAbWIhVO
+RWiA3VHEK0Yqnu3bo/LuIplHGOGDWqmOH6jpW3vcFnXWAqkj/hpA9Lek6+sOJFD9
+NNW8/uOBcgAcL/abuALRNHgfMKgEY5TulAO9MPMa4s8AdaHUWjckBzrvjkCdpR5d
+WcdKgIoJ/fcljqPo5avKi+gXOeA0wksu9X9tCDJ+bSltAj7WeZ051sDC2/kRIYP7
+05lmjtFDFRN8SpuejfErIX5Jo4jTh888Gbq15TfRyzj2Ei4PKl/0BpkZPY9AgutC
+8/o4oog9J6SBJf0j0F/neVvczmFCbJG8dhV0JlPMROwssvckQhLy4+Wud1b8eu1d
+CjhdvnaAr5zMjR1iBpHjqaEwazR45ZW8pQXlb3R0Vd5yrFnvlqGy5fD1Pq5Y+F6p
+8kNEd8RdUg7ZDCZty3SlbYyiFAKQQZ3ch4sbP0vyyW5hX+5FgFARbjkEUlxYXfuW
+oz0M182BKRDPHPNUgOk1w4L+9Lzo8TUby1bnRLQsMn2GEhhuu7lzOPxAfS+DNW7D
+dgkhyp17rc45UOzB1xxktnxcJ5vhSJF7ajAhR0heD04sJWLD+ZzgE/LtDV3pAbK/
+exNeNjvOfxEJe9E2gPAix+lZRTALz1hchlxwyUHTJrqEBMOF5ku6FhggGCmW4u5v
+JeMDjKzXE99A5ypkeEtTANLGbLJLlVkNJNGE0yWA9mVYID408XpktkIUFglJe20/
+yNSt+WNK5w6djf/vV7XI0M9AC2DP2Z9fHTUM/cKaOM5tdj6mKbEhgHDu2XP5TXij
+A8FmC8IWesumx8u1VLbBDzTYnBrzGwcko0C1O3EkXEETvDTsy0tR+JbFlvFkWLt/
+nLeTNwUJiopn9b9ithE4KXI//iJ/NX9+gU1kkmGufLJW8sLYO+PeDDJ7hANniUh2
+O7ekKjOszIhNsvlgkHI=
+-----END ENCRYPTED PRIVATE KEY-----
+`;
+
+    byte[] data = [1, 2, 3, 4];
+
+    // PBES2 (PBKDF2 + AES) decrypts and yields a usable signing key.
+    check io:fileWriteString("/tmp/bal_crypto_enc.pem", pbes2);
+    crypto:PrivateKey pkPbes2 = check crypto:decodeRsaPrivateKeyFromKeyFile("/tmp/bal_crypto_enc.pem", "secret");
+    io:println((check crypto:signRsaSha256(data, pkPbes2)).length() > 0); // @output true
+
+    // PKCS#12-PBE with 3DES decrypts (exercises pkcs12KDF + 3DES path).
+    check io:fileWriteString("/tmp/bal_crypto_enc.pem", pbe3des);
+    crypto:PrivateKey pk3des = check crypto:decodeRsaPrivateKeyFromKeyFile("/tmp/bal_crypto_enc.pem", "secret");
+    io:println((check crypto:signRsaSha256(data, pk3des)).length() > 0); // @output true
+
+    // PKCS#12-PBE with 40-bit RC2 decrypts (exercises the RC2 cipher path).
+    check io:fileWriteString("/tmp/bal_crypto_enc.pem", pbeRc2);
+    crypto:PrivateKey pkRc2 = check crypto:decodeRsaPrivateKeyFromKeyFile("/tmp/bal_crypto_enc.pem", "secret");
+    io:println((check crypto:signRsaSha256(data, pkRc2)).length() > 0); // @output true
+
+    // A wrong password fails decryption.
+    check io:fileWriteString("/tmp/bal_crypto_enc.pem", pbes2);
+    crypto:PrivateKey|crypto:Error bad = crypto:decodeRsaPrivateKeyFromKeyFile("/tmp/bal_crypto_enc.pem", "wrong");
+    io:println(bad is crypto:Error); // @output true
+}

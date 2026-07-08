@@ -51,6 +51,7 @@ const (
 )
 
 type BType interface {
+	BLangNode
 	TypeDescriptor
 	SetTypeData(ty TypeData)
 	GetTypeData() TypeData
@@ -179,6 +180,13 @@ type (
 		Definition semtypes.Definition
 	}
 
+	BLangStreamType struct {
+		bLangTypeBase
+		ValueType      TypeData
+		CompletionType TypeData
+		Definition     semtypes.Definition
+	}
+
 	BLangTupleTypeNode struct {
 		bLangTypeBase
 		Definition semtypes.Definition
@@ -231,6 +239,9 @@ var (
 	_ IntersectionTypeNode = &BLangIntersectionTypeNode{}
 	_ ErrorTypeNode        = &BLangErrorTypeNode{}
 	_ ConstrainedTypeNode  = &BLangConstrainedType{}
+	_ BType                = &BLangStreamType{}
+	_ BLangNode            = &BLangStreamType{}
+	_ TypeDescriptor       = &BLangStreamType{}
 	_ TupleTypeNode        = &BLangTupleTypeNode{}
 	_ MemberTypeDesc       = &BLangMemberTypeDesc{}
 	_ RecordTypeNode       = &BLangRecordType{}
@@ -420,6 +431,10 @@ func (b *bLangTypeBase) bTypeSetFlags(flags model.Flag) {
 	b.flags = flags
 }
 
+func (b *BTypeBasic) SetDeterminedType(ty semtypes.SemType) {
+	b.ty.Type = ty
+}
+
 func (b *BTypeBasic) BTypeGetTag() TypeTags {
 	return b.tag
 }
@@ -529,6 +544,7 @@ func (b *BLangErrorTypeNode) IsTop() bool {
 func (b *BLangErrorTypeNode) IsDistinct() bool {
 	return b.bTypeGetFlags().Has(model.FlagDistinct)
 }
+
 func (b *BLangErrorTypeNode) SetDistinct() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagDistinct)
 }
@@ -540,12 +556,15 @@ func (b *BLangFunctionType) IsIsolated() bool { return b.bTypeGetFlags().Has(mod
 func (b *BLangFunctionType) IsTransactional() bool {
 	return b.bTypeGetFlags().Has(model.FlagTransactional)
 }
+
 func (b *BLangFunctionType) SetAnyFunction() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagAnyFunction)
 }
+
 func (b *BLangFunctionType) SetIsolated() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagIsolated)
 }
+
 func (b *BLangFunctionType) SetTransactional() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagTransactional)
 }
@@ -569,6 +588,17 @@ func (b *BLangConstrainedType) ConstraintKind() TypeKind {
 		return t.TypeKind
 	}
 	panic("BLangConstrainedType.Type has unexpected type descriptor")
+}
+
+func NewBLangStreamType(valueType, completionType TypeData) *BLangStreamType {
+	return &BLangStreamType{
+		ValueType:      valueType,
+		CompletionType: completionType,
+	}
+}
+
+func (b *BLangStreamType) GetTypeKind() TypeKind {
+	return TypeKind_STREAM
 }
 
 func (b *BLangTupleTypeNode) GetMembers() []MemberTypeDesc {

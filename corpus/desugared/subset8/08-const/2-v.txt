@@ -7,14 +7,14 @@
   (function init () ()
     (block-function-body
       (assignment
+        (simple-var-ref N3)
+        (literal 3))
+      (assignment
         (simple-var-ref N1)
         (literal 100))
       (assignment
         (simple-var-ref N2)
         (literal 20))
-      (assignment
-        (simple-var-ref N3)
-        (literal 3))
       (assignment
         (simple-var-ref N)
         (binary-expr +

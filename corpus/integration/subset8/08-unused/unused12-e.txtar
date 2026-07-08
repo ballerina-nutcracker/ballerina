@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'f'
+  --> unused12-e.bal:19:5
+   |
+19 |     var f = function () returns int { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |         return 1;
+   |         ^^^^^^^^^
+21 |     };
+   |     ^^

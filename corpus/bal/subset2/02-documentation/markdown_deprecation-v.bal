@@ -31,6 +31,8 @@ function add(int x, int y) returns int {
 # # Deprecated
 # + x - This parameter is deprecated
 function process(int x, int y) {
+    int _ = x;
+    int _ = y;
     // implementation
 }
 

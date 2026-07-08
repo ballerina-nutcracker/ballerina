@@ -19,44 +19,32 @@ package exec
 import (
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/values"
 )
 
-func Interpret(pkg bir.BIRPackage, env *extern.Env) (err error) {
-	ctx := extern.CreateContext(env)
-	cs := &callStack{elements: make([]*Frame, 0, 32)}
-	ctx.CallStack = cs
-	env.Registry.(*modules.Registry).RegisterModule(pkg.PackageID, modules.NewBIRModule(ctx, &pkg))
+// RunEntrypoints runs the package's init and (if present) main functions on
+// a fresh context. A non-nil error? returned by init/main is surfaced as a
+// formatted Go error via the panic/recover path so callers see
+// "error: <message>" with the call trace intact. This is exec's
+// responsibility (and not the runtime's) because the formatting requires
+// the call stack to still be on `ctx` when getFormattedError runs.
+func RunEntrypoints(pkg bir.BIRPackage, env *extern.Env) (err error) {
+	ctx := CreateContext(env)
+	cs := ctx.CallStack.(*callStack)
 	defer func() {
 		if r := recover(); r != nil {
+			ctx.ReleaseAllHeldLocks()
 			err = getFormattedError(cs, r)
 		}
 	}()
 	if pkg.InitFunction != nil {
-		defer func() {
-			if r := recover(); r != nil {
-				err = getFormattedError(cs, r)
-			}
-		}()
-		if result := executeFunction(ctx, *pkg.InitFunction, nil, nil); result != nil {
-			if _, ok := result.(*values.Error); ok {
-				err = getFormattedError(cs, result)
-				return
-			}
+		if result := executeFunction(ctx, pkg.InitFunction, nil, nil); result != nil {
+			panic(result)
 		}
 	}
 	if pkg.MainFunction != nil {
-		defer func() {
-			if r := recover(); r != nil {
-				err = getFormattedError(cs, r)
-			}
-		}()
-		if result := executeFunction(ctx, *pkg.MainFunction, nil, nil); result != nil {
-			if _, ok := result.(*values.Error); ok {
-				err = getFormattedError(cs, result)
-			}
+		if result := executeFunction(ctx, pkg.MainFunction, nil, nil); result != nil {
+			panic(result)
 		}
 	}
-	return err
+	return nil
 }

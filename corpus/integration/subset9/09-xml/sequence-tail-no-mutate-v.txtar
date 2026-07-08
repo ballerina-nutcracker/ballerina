@@ -1,0 +1,5 @@
+-- stdout --
+<x/>hello
+<x/>hello
+<x/>helloworld
+-- stderr --

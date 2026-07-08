@@ -1,0 +1,155 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/time:TimeZone
+    %2 = ConstantLoad Asia/Colombo
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = %4;
+    %7 = $desugar$0 is error
+    %7 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    tz = $desugar$0;
+    %9 = fixedOffset(tz) -> bb7;
+  }
+  bb7 {
+    offset = %9;
+    %11 = offset is nil
+    %12 = %11;
+    %13 = println(%12) -> bb8;
+  }
+  bb8 {
+    %14 = ConstantLoad 2007-12-03T10:15:30.00Z
+    %15 = utcFromString(%14) -> bb9;
+  }
+  bb9 {
+    $desugar$1 = %15;
+    %17 = $desugar$1 is error
+    %17 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    utc = $desugar$1;
+    %19 = utcToCivil(tz,utc) -> bb12;
+  }
+  bb12 {
+    civil = %19;
+    %22 = ConstantLoad year
+    %21 = civil[%22];
+    %23 = %21;
+    %24 = println(%23) -> bb13;
+  }
+  bb13 {
+    %26 = ConstantLoad month
+    %25 = civil[%26];
+    %27 = %25;
+    %28 = println(%27) -> bb14;
+  }
+  bb14 {
+    %30 = ConstantLoad day
+    %29 = civil[%30];
+    %31 = %29;
+    %32 = println(%31) -> bb15;
+  }
+  bb15 {
+    %34 = ConstantLoad hour
+    %33 = civil[%34];
+    %35 = %33;
+    %36 = println(%35) -> bb16;
+  }
+  bb16 {
+    %38 = ConstantLoad minute
+    %37 = civil[%38];
+    %39 = %37;
+    %40 = println(%39) -> bb17;
+  }
+  bb17 {
+    %42 = ConstantLoad timeAbbrev
+    %41 = civil[%42];
+    %43 = println(%41) -> bb18;
+  }
+  bb18 {
+    %44 = utcFromCivil(tz,civil) -> bb19;
+  }
+  bb19 {
+    $desugar$2 = %44;
+    %46 = $desugar$2 is error
+    %46 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    utc2 = $desugar$2;
+    %48 = utcToString(utc2) -> bb22;
+  }
+  bb22 {
+    %49 = println(%48) -> bb23;
+  }
+  bb23 {
+    %50 = ConstantLoad months
+    %51 = ConstantLoad 1
+    %52 = newMap {| days: int, hours: int, minutes: int, months: int, seconds: decimal, weeks: int, years: int, never... |}{%50=%51} defaults{years=ballerina/time:$desugar$2, months=ballerina/time:$desugar$3, weeks=ballerina/time:$desugar$4, days=ballerina/time:$desugar$5, hours=ballerina/time:$desugar$6, minutes=ballerina/time:$desugar$7, seconds=ballerina/time:$desugar$8}
+    %53 = civilAddDuration(tz,civil,%52) -> bb24;
+  }
+  bb24 {
+    $desugar$3 = %53;
+    %55 = $desugar$3 is error
+    %55 ? bb25 : bb26;
+  }
+  bb25 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb26 {
+    civil2 = $desugar$3;
+    %58 = ConstantLoad month
+    %57 = civil2[%58];
+    %59 = %57;
+    %60 = println(%59) -> bb27;
+  }
+  bb27 {
+    %62 = ConstantLoad year
+    %61 = civil2[%62];
+    %63 = %61;
+    %64 = println(%63) -> bb28;
+  }
+  bb28 {
+    %66 = ConstantLoad timeAbbrev
+    %65 = civil2[%66];
+    %67 = println(%65) -> bb29;
+  }
+  bb29 {
+    return;
+  }
+}

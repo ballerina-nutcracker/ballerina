@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    PushScopeFrame 8
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %1 = / %3 %5;
+    %0 = %1;
+    GOTO bb2;
+  }
+  bb2 {
+    res = %0;
+    %7 = println(res) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb1, bb1] -> bb2, %0
+  }
+}

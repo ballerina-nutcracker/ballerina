@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/io;
 
 type R record {
     int x;
@@ -22,5 +21,5 @@ type R record {
 
 public function main() {
     R r = {x: 1, y: 2};
-    anydata z = r.z; // @error
+    anydata _ = r.z; // @error
 }

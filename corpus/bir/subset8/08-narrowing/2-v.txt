@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 2
@@ -25,44 +24,52 @@ foo(any) -> nil{
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %3 = + x %5;
-    %6 = %3;
-    %7 = println(%6) -> bb2;
+    PushScopeFrame 5
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + (1, x) %2;
+    %3 = %0;
+    %4 = println(%3) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb13;
   }
   bb3 {
-    %8 = x is string
-    %8 ? bb4 : bb6;
+    %3 = x is string
+    %3 ? bb4 : bb6;
   }
   bb4 {
-    %11 = ConstantLoad , 
-    %10 = + x %11;
-    %9 = + %10 x;
-    %12 = println(%9) -> bb5;
+    PushScopeFrame 4
+    %2 = ConstantLoad , 
+    %1 = + (1, x) %2;
+    %0 = + %1 (1, x);
+    %3 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb12;
   }
   bb6 {
-    %13 = x is boolean
-    %13 ? bb7 : bb9;
+    %4 = x is boolean
+    %4 ? bb7 : bb9;
   }
   bb7 {
-    %14 = ! x;
-    %15 = %14;
-    %16 = println(%15) -> bb8;
+    PushScopeFrame 3
+    %0 = ! (1, x);
+    %1 = %0;
+    %2 = println(%1) -> bb8;
   }
   bb8 {
+    PopScopeFrame
     GOTO bb11;
   }
   bb9 {
-    %17 = println(x) -> bb10;
+    PushScopeFrame 1
+    %0 = println((1, x)) -> bb10;
   }
   bb10 {
+    PopScopeFrame
     GOTO bb11;
   }
   bb11 {

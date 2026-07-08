@@ -24,7 +24,7 @@ public function f(int|string x) returns boolean {
         // unreachable
     }
     else {
-        int|string unused1 = x;
+        int|string _ = x;
         return true;
     }
 }

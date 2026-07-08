@@ -16,7 +16,23 @@
 
 package projects
 
-import "fmt"
+import (
+	"cmp"
+	"fmt"
+)
+
+// packageDescriptorCmp orders PackageDescriptors lexicographically by
+// org, then name, then version. Used as the canonical comparator for
+// DependencyGraph[PackageDescriptor].
+func packageDescriptorCmp(a, b PackageDescriptor) int {
+	if r := cmp.Compare(a.org.Value(), b.org.Value()); r != 0 {
+		return r
+	}
+	if r := cmp.Compare(a.name.Value(), b.name.Value()); r != 0 {
+		return r
+	}
+	return cmp.Compare(a.version.String(), b.version.String())
+}
 
 // PackageDescriptor represents immutable metadata that uniquely identifies a package.
 // Unlike PackageID (which is a UUID), PackageDescriptor identifies a package by its

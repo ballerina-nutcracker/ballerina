@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: not a valid decimal
+error: arithmetic overflow
         at main(sub6-p.bal:22)

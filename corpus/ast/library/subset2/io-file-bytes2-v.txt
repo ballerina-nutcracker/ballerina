@@ -1,0 +1,39 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_bytes2.bin))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal 4)
+              (literal 5))
+            (simple-var-ref io APPEND)))))
+      (var-def
+        (variable readBack (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadBytes (
+              (simple-var-ref path)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref readBack) ())))))))

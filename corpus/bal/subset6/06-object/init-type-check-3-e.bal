@@ -28,5 +28,5 @@ class Bar {
 }
 
 public function main() {
-    int|Bar f = new (5); // @error
+    int|Bar _ = new (5); // @error
 }

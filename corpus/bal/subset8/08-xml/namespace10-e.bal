@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 xmlns "https:foo/bar";
 xmlns "https:foo/baz"; // @error

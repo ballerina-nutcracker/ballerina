@@ -23,10 +23,10 @@ function runner(F f, int val) returns int {
 public function main() {
     int|boolean v1 = 10;
     if v1 is int {
-        int res = runner(function(int a) returns int {
+        int res = runner(function(int a) returns int { // @error
                     v1 = true;
-                    return 5;
-                  }, 2) + v1; // @error
+                    return a;
+                  }, 2) + v1;
         io:println(res);
     }
 }

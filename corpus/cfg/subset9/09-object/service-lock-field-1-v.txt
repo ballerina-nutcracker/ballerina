@@ -1,0 +1,113 @@
+(SimpleListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (simple-var-ref svc))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (literal <nil>))
+    )
+  )
+  (get
+    (bb0 () (bb1 bb2)
+      (var-def
+        (variable svc (expr
+          (field-based-access s
+            (simple-var-ref self)))))
+      (binary-expr ==
+        (simple-var-ref svc)
+        (literal <nil>))
+    )
+    (bb1 (bb0) ()
+      (panic
+        (error-constructor-expr (
+          (literal no service))))
+    )
+    (bb2 (bb0) ()
+      (return
+        (invocation get expr:
+          (simple-var-ref svc) ()))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (inc
+    (bb0 () (bb1 bb2)
+      (var-def
+        (variable svc (expr
+          (field-based-access s
+            (simple-var-ref self)))))
+      (binary-expr ==
+        (simple-var-ref svc)
+        (literal <nil>))
+    )
+    (bb1 (bb0) ()
+      (panic
+        (error-constructor-expr (
+          (literal no service))))
+    )
+    (bb2 (bb0) ()
+      (expression-stmt
+        (invocation inc expr:
+          (simple-var-ref svc) ()))
+    )
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(get
+  (bb0 () ()
+    (return
+      (field-based-access count
+        (simple-var-ref self)))
+  )
+)
+(inc
+  (bb0 () ()
+    (assignment
+      (field-based-access count
+        (simple-var-ref self))
+      (binary-expr +
+        (field-based-access count
+          (simple-var-ref self))
+        (literal 1)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation inc expr:
+        (simple-var-ref l) ()))
+    (expression-stmt
+      (invocation inc expr:
+        (simple-var-ref l) ()))
+    (expression-stmt
+      (invocation inc expr:
+        (simple-var-ref l) ()))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref l) ()))))
+  )
+)

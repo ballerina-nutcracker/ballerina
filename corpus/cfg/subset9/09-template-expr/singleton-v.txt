@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable g (type
+        (user-defined-type Greeting)) (expr
+        (string-template-literal
+          (template-string "hello ")
+          (literal world)
+          (template-string "")))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref g))))
+    (assignment
+      (simple-var-ref g)
+      (simple-var-ref GREETING))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref GREETING))))
+  )
+)

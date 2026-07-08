@@ -1,0 +1,61 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang float (as lang.float))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (value-type float)) (expr
+          (invocation lang.float sqrt (
+            (group-expr
+              (binary-expr +
+                (invocation lang.float pow (
+                  (group-expr
+                    (literal 3))
+                  (literal 2)))
+                (invocation lang.float pow (
+                  (group-expr
+                    (literal 4))
+                  (literal 2))))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref h))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation lang.float ceiling (
+              (group-expr
+                (unary-expr -
+                  (literal 2.3)))))
+            (unary-expr -
+              (group-expr
+                (invocation lang.float floor (
+                  (group-expr
+                    (literal 2.3))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float abs (
+            (group-expr
+              (invocation lang.float floor (
+                (group-expr
+                  (unary-expr -
+                    (literal 3.7)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float abs (
+            (group-expr
+              (invocation lang.float ceiling (
+                (group-expr
+                  (unary-expr -
+                    (literal 3.7)))))))))))
+      (var-def
+        (variable x (type
+          (value-type float)) (expr
+          (literal 5))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation lang.float round (
+              (simple-var-ref x)))
+            (simple-var-ref x))))))))

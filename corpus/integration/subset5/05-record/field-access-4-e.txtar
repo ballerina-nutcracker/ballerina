@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: field base access is only possible for declared fields
-  --> field-access-4-e.bal:25:17
+  --> field-access-4-e.bal:24:17
    |
-25 |     anydata z = r.z; // @error
+24 |     anydata _ = r.z; // @error
    |                 ^^^

@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -141,87 +140,119 @@ d(any) -> nil{
     %4 ? bb1 : bb2;
   }
   bb1 {
-    %6 = ConstantLoad s8
-    %5 = + s %6;
-    s = %5;
+    PushScopeFrame 2
+    %1 = ConstantLoad s8
+    %0 = + (1, s) %1;
+    (1, s) = %0;
+    PopScopeFrame
     GOTO bb2;
   }
   bb2 {
-    %7 = n is int:Signed16
-    %7 ? bb3 : bb4;
+    PushScopeFrame 1
+    %0 = (1, n) is int:Signed16
+    %0 ? bb3 : bb4;
   }
   bb3 {
-    %9 = ConstantLoad s16
-    %8 = + s %9;
-    s = %8;
+    PushScopeFrame 2
+    %1 = ConstantLoad s16
+    %0 = + (2, s) %1;
+    (2, s) = %0;
+    PopScopeFrame
     GOTO bb4;
   }
   bb4 {
-    %10 = n is int:Signed32
-    %10 ? bb5 : bb6;
+    PushScopeFrame 1
+    %0 = (2, n) is int:Signed32
+    %0 ? bb5 : bb6;
   }
   bb5 {
-    %12 = ConstantLoad s32
-    %11 = + s %12;
-    s = %11;
+    PushScopeFrame 2
+    %1 = ConstantLoad s32
+    %0 = + (3, s) %1;
+    (3, s) = %0;
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
-    %13 = n is int:Unsigned8
-    %13 ? bb7 : bb8;
+    PushScopeFrame 1
+    %0 = (3, n) is int:Unsigned8
+    %0 ? bb7 : bb8;
   }
   bb7 {
-    %15 = ConstantLoad u8
-    %14 = + s %15;
-    s = %14;
+    PushScopeFrame 2
+    %1 = ConstantLoad u8
+    %0 = + (4, s) %1;
+    (4, s) = %0;
+    PopScopeFrame
     GOTO bb8;
   }
   bb8 {
-    %16 = n is int:Unsigned16
-    %16 ? bb9 : bb10;
+    PushScopeFrame 1
+    %0 = (4, n) is int:Unsigned16
+    %0 ? bb9 : bb10;
   }
   bb9 {
-    %18 = ConstantLoad u16
-    %17 = + s %18;
-    s = %17;
+    PushScopeFrame 2
+    %1 = ConstantLoad u16
+    %0 = + (5, s) %1;
+    (5, s) = %0;
+    PopScopeFrame
     GOTO bb10;
   }
   bb10 {
-    %19 = n is int:Unsigned32
-    %19 ? bb11 : bb12;
+    PushScopeFrame 1
+    %0 = (5, n) is int:Unsigned32
+    %0 ? bb11 : bb12;
   }
   bb11 {
-    %21 = ConstantLoad u32
-    %20 = + s %21;
-    s = %20;
+    PushScopeFrame 2
+    %1 = ConstantLoad u32
+    %0 = + (6, s) %1;
+    (6, s) = %0;
+    PopScopeFrame
     GOTO bb12;
   }
   bb12 {
-    %23 = ConstantLoad 
-    %22 = == s %23;
-    %22 ? bb13 : bb17;
+    PushScopeFrame 2
+    %1 = ConstantLoad 
+    %0 = == (6, s) %1;
+    %0 ? bb13 : bb17;
   }
   bb13 {
-    %24 = n is int
-    %24 ? bb14 : bb15;
+    PushScopeFrame 1
+    %0 = (7, n) is int
+    %0 ? bb14 : bb15;
   }
   bb14 {
-    %25 = ConstantLoad int
-    s = %25;
+    PushScopeFrame 1
+    %0 = ConstantLoad int
+    (8, s) = %0;
+    PopScopeFrame
     GOTO bb16;
   }
   bb15 {
-    %26 = ConstantLoad any
-    s = %26;
+    PushScopeFrame 1
+    %0 = ConstantLoad any
+    (8, s) = %0;
+    PopScopeFrame
     GOTO bb16;
   }
   bb16 {
+    PopScopeFrame
     GOTO bb17;
   }
   bb17 {
-    %27 = println(s) -> bb18;
+    PushScopeFrame 1
+    %0 = println((7, s)) -> bb18;
   }
   bb18 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }

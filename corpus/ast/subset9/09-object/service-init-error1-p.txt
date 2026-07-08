@@ -1,0 +1,59 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (class-definition SimpleListener
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable l (type
+    (user-defined-type SimpleListener)) (expr
+    (new ())))
+  (service
+    (on
+    (simple-var-ref l))
+    (function init () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (return
+          (error-constructor-expr (
+            (literal service init failed)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

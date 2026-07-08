@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad true
@@ -9,27 +8,36 @@ main() -> nil{
     b ? bb1 : bb4;
   }
   bb1 {
-    %5 = x is float
-    %5 ? bb2 : bb3;
+    PushScopeFrame 1
+    %0 = (1, x) is float
+    %0 ? bb2 : bb3;
   }
   bb2 {
-    %6 = ConstantLoad <nil>
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb3 {
-    _ = x;
+    PushScopeFrame 1
+    _ = (2, x);
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb5;
   }
   bb4 {
-    %8 = ConstantLoad <nil>
-    %0 = %8;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb5 {
     ib = x;
-    %10 = ib;
-    %11 = println(%10) -> bb6;
+    %6 = ib;
+    %7 = println(%6) -> bb6;
   }
   bb6 {
     return;

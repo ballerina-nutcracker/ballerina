@@ -1,0 +1,300 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/http:Client
+    %2 = ConstantLoad https://example.com
+    %3 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| 'type: "OCSP_CRL"|"OCSP_STAPLING", cacheSize: int, cacheValidityPeriod: int, never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %4 = init(%1,%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = %5;
+    %8 = $desugar$0 is error
+    %8 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    c1 = $desugar$0;
+    %10 = ConstantLoad /path
+    $desugar$1 = %10;
+    %12 = $default$19($desugar$1) -> bb7;
+  }
+  bb7 {
+    $desugar$2 = %12;
+    %14 = $remote$get(c1,$desugar$1,$desugar$2) -> bb8;
+  }
+  bb8 {
+    $desugar$3 = %14;
+    %16 = $desugar$3 is error
+    %16 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    r1 = $desugar$3;
+    %19 = ConstantLoad statusCode
+    %18 = r1[%19];
+    %20 = %18;
+    %21 = println(%20) -> bb11;
+  }
+  bb11 {
+    %22 = newObject ballerina/http:Client
+    %23 = ConstantLoad https://example.com
+    %24 = ConstantLoad compression
+    %25 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| 'type: "OCSP_CRL"|"OCSP_STAPLING", cacheSize: int, cacheValidityPeriod: int, never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%24=COMPRESSION_AUTO} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %26 = init(%22,%23,%25) -> bb12;
+  }
+  bb12 {
+    %28 = %26 is nil
+    %28 ? bb13 : bb14;
+  }
+  bb13 {
+    %27 = %22;
+    GOTO bb15;
+  }
+  bb14 {
+    %27 = %26;
+    GOTO bb15;
+  }
+  bb15 {
+    $desugar$4 = %27;
+    %30 = $desugar$4 is error
+    %30 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb17 {
+    c2 = $desugar$4;
+    %32 = ConstantLoad /path
+    $desugar$5 = %32;
+    %34 = $default$19($desugar$5) -> bb18;
+  }
+  bb18 {
+    $desugar$6 = %34;
+    %36 = $remote$get(c2,$desugar$5,$desugar$6) -> bb19;
+  }
+  bb19 {
+    $desugar$7 = %36;
+    %38 = $desugar$7 is error
+    %38 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    r2 = $desugar$7;
+    %41 = ConstantLoad statusCode
+    %40 = r2[%41];
+    %42 = %40;
+    %43 = println(%42) -> bb22;
+  }
+  bb22 {
+    %44 = newObject ballerina/http:Client
+    %45 = ConstantLoad https://example.com
+    %46 = ConstantLoad compression
+    %47 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| 'type: "OCSP_CRL"|"OCSP_STAPLING", cacheSize: int, cacheValidityPeriod: int, never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%46=COMPRESSION_ALWAYS} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %48 = init(%44,%45,%47) -> bb23;
+  }
+  bb23 {
+    %50 = %48 is nil
+    %50 ? bb24 : bb25;
+  }
+  bb24 {
+    %49 = %44;
+    GOTO bb26;
+  }
+  bb25 {
+    %49 = %48;
+    GOTO bb26;
+  }
+  bb26 {
+    $desugar$8 = %49;
+    %52 = $desugar$8 is error
+    %52 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    c3 = $desugar$8;
+    %54 = ConstantLoad /path
+    $desugar$9 = %54;
+    %56 = $default$19($desugar$9) -> bb29;
+  }
+  bb29 {
+    $desugar$10 = %56;
+    %58 = $remote$get(c3,$desugar$9,$desugar$10) -> bb30;
+  }
+  bb30 {
+    $desugar$11 = %58;
+    %60 = $desugar$11 is error
+    %60 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$11);
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    r3 = $desugar$11;
+    %63 = ConstantLoad statusCode
+    %62 = r3[%63];
+    %64 = %62;
+    %65 = println(%64) -> bb33;
+  }
+  bb33 {
+    %66 = newObject ballerina/http:Client
+    %67 = ConstantLoad https://example.com
+    %68 = ConstantLoad compression
+    %69 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| 'type: "OCSP_CRL"|"OCSP_STAPLING", cacheSize: int, cacheValidityPeriod: int, never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%68=COMPRESSION_NEVER} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %70 = init(%66,%67,%69) -> bb34;
+  }
+  bb34 {
+    %72 = %70 is nil
+    %72 ? bb35 : bb36;
+  }
+  bb35 {
+    %71 = %66;
+    GOTO bb37;
+  }
+  bb36 {
+    %71 = %70;
+    GOTO bb37;
+  }
+  bb37 {
+    $desugar$12 = %71;
+    %74 = $desugar$12 is error
+    %74 ? bb38 : bb39;
+  }
+  bb38 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb39 {
+    c4 = $desugar$12;
+    %76 = ConstantLoad /path
+    $desugar$13 = %76;
+    %78 = $default$19($desugar$13) -> bb40;
+  }
+  bb40 {
+    $desugar$14 = %78;
+    %80 = $remote$get(c4,$desugar$13,$desugar$14) -> bb41;
+  }
+  bb41 {
+    $desugar$15 = %80;
+    %82 = $desugar$15 is error
+    %82 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$15);
+    PopScopeFrame
+    return;
+  }
+  bb43 {
+    r4 = $desugar$15;
+    %85 = ConstantLoad statusCode
+    %84 = r4[%85];
+    %86 = %84;
+    %87 = println(%86) -> bb44;
+  }
+  bb44 {
+    %88 = newObject ballerina/http:Client
+    %89 = ConstantLoad https://example.com
+    %90 = ConstantLoad timeout
+    %91 = ConstantLoad 15
+    %92 = ConstantLoad httpVersion
+    %93 = ConstantLoad compression
+    %94 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| 'type: "OCSP_CRL"|"OCSP_STAPLING", cacheSize: int, cacheValidityPeriod: int, never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%90=%91, %92=HTTP_1_1, %93=COMPRESSION_NEVER} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %95 = init(%88,%89,%94) -> bb45;
+  }
+  bb45 {
+    %97 = %95 is nil
+    %97 ? bb46 : bb47;
+  }
+  bb46 {
+    %96 = %88;
+    GOTO bb48;
+  }
+  bb47 {
+    %96 = %95;
+    GOTO bb48;
+  }
+  bb48 {
+    $desugar$16 = %96;
+    %99 = $desugar$16 is error
+    %99 ? bb49 : bb50;
+  }
+  bb49 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$16);
+    PopScopeFrame
+    return;
+  }
+  bb50 {
+    c5 = $desugar$16;
+    %101 = ConstantLoad /path
+    $desugar$17 = %101;
+    %103 = $default$19($desugar$17) -> bb51;
+  }
+  bb51 {
+    $desugar$18 = %103;
+    %105 = $remote$get(c5,$desugar$17,$desugar$18) -> bb52;
+  }
+  bb52 {
+    $desugar$19 = %105;
+    %107 = $desugar$19 is error
+    %107 ? bb53 : bb54;
+  }
+  bb53 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$19);
+    PopScopeFrame
+    return;
+  }
+  bb54 {
+    r5 = $desugar$19;
+    %110 = ConstantLoad statusCode
+    %109 = r5[%110];
+    %111 = %109;
+    %112 = println(%111) -> bb55;
+  }
+  bb55 {
+    %113 = ConstantLoad <nil>
+    %0 = %113;
+    return;
+  }
+}

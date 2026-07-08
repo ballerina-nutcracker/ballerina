@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 client class Client {
     remote function get(string path) returns string {
@@ -28,7 +27,7 @@ client class Client {
 
 public function main() {
     Client c = new ();
-    string res2 = c->notExist1("foo"); // @error
-    string res3 = c.notExist2("foo"); // @error
+    string _ = c->notExist1("foo"); // @error
+    string _ = c.notExist2("foo"); // @error
 }
 

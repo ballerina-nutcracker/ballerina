@@ -235,11 +235,13 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG analysis)
 	compilation := pkg.Compilation()
 
-	// Check for compilation errors
+	// Print all diagnostics; only errors abort the run.
 	compilationDiags := compilation.DiagnosticResult()
-	if compilationDiags.HasErrors() {
+	if compilationDiags.DiagnosticCount() > 0 {
 		printDiagnostics(fsys, os.Stderr, compilationDiags, !isTerminal(), compilation.DiagnosticEnv())
-		return fmt.Errorf("compilation failed with errors")
+	}
+	if compilationDiags.HasErrors() {
+		return fmt.Errorf("compilation contains errors")
 	}
 
 	// Create backend and generate BIR
@@ -258,12 +260,19 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		fmt.Fprint(os.Stderr, compilation.StatsReport())
 	}
 
-	// Dump BIR if requested
+	// Dump BIR if requested — only include packages belonging to the root package
+	// (same org + package name), so all sub-modules are covered while external
+	// imports are excluded.
 	tyEnv := project.Environment().TypeEnv()
 	if buildOpts.DumpBIR() {
 		prettyPrinter := bir.PrettyPrinter{}
 		tyCtx := semtypes.ContextFrom(tyEnv)
+		rootOrgName := pkg.PackageOrg().Value()
+		rootPkgName := pkg.PackageName().Value()
 		for _, birPkg := range birPkgs {
+			if birPkg.PackageID.OrgName.Value() != rootOrgName || birPkg.PackageID.PkgName.Value() != rootPkgName {
+				continue
+			}
 			fmt.Fprintln(os.Stderr)
 			fmt.Fprintln(os.Stderr, "==================BEGIN BIR==================")
 			fmt.Fprintln(os.Stderr, strings.TrimSpace(prettyPrinter.Print(tyCtx, *birPkg)))
@@ -271,12 +280,24 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	rt := runtime.NewRuntime(palnative.NewPlatform(), tyEnv)
+	pal, cleanupSignals := palnative.NewPlatform()
+	defer cleanupSignals()
+	rt := runtime.NewRuntime(pal, tyEnv)
+	var initErr error
 	for _, birPkg := range birPkgs {
-		if err := rt.Interpret(*birPkg); err != nil {
+		if err := rt.Init(*birPkg); err != nil {
 			printRuntimeError(err)
-			return err
+			initErr = err
+			break
 		}
+	}
+	rt.Listen()
+	if initErr != nil {
+		return initErr
+	}
+	exitCode := <-rt.ExitStatus
+	if exitCode != 0 {
+		return fmt.Errorf("exit: %d", exitCode)
 	}
 	return nil
 }

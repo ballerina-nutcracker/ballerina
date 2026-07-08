@@ -1,0 +1,6 @@
+-- stdout --
+3.14
+2.5
+42
+[1,2.5,true,null,"x"]
+-- stderr --

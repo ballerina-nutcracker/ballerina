@@ -1,0 +1,30 @@
+(bumpBy
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (simple-var-ref amount))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref counter)
+      (literal 1))
+  )
+  (bb3 (bb1) ())
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 3))))
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 4))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)

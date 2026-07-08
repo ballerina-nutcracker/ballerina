@@ -1,0 +1,109 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 1)
+          (literal 3)
+          (literal 2)))))
+    (var-def
+      (variable grouped (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (let-clause
+            (var-def
+              (variable y (type
+                (value-type int)) (expr
+                (binary-expr +
+                  (simple-var-ref x)
+                  (literal 10))))))
+          (group-by-clause
+            (grouping-key
+              (simple-var-ref x)))
+          (select-clause
+            (list-constructor-expr
+              (simple-var-ref x)
+              (simple-var-ref y)))))))
+    (var-def
+      (variable groupedWithDeclaredKey (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (group-by-clause
+            (grouping-key
+              (var-def
+                (variable even (expr
+                  (binary-expr ==
+                    (binary-expr %
+                      (simple-var-ref x)
+                      (literal 2))
+                    (literal 0)))))))
+          (select-clause
+            (list-constructor-expr
+              (simple-var-ref even)
+              (simple-var-ref x)))))))
+    (var-def
+      (variable groupedWithMultipleKeys (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (group-by-clause
+            (grouping-key
+              (var-def
+                (variable even (expr
+                  (binary-expr ==
+                    (binary-expr %
+                      (simple-var-ref x)
+                      (literal 2))
+                    (literal 0))))))
+            (grouping-key
+              (var-def
+                (variable value (expr
+                  (simple-var-ref x))))))
+          (select-clause
+            (list-constructor-expr
+              (simple-var-ref even)
+              (simple-var-ref value)
+              (simple-var-ref x)))))))
+    (var-def
+      (variable groupedWithContextualDecimalKey (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable _))
+            (simple-var-ref xs))
+          (group-by-clause
+            (grouping-key
+              (var-def
+                (variable one (type
+                  (value-type decimal)) (expr
+                  (literal 1))))))
+          (select-clause
+            (type-test-expr is
+              (simple-var-ref one)
+              (value-type decimal)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref grouped))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref groupedWithDeclaredKey))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref groupedWithMultipleKeys))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref groupedWithContextualDecimalKey))))
+  )
+)

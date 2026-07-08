@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad a
@@ -23,46 +22,54 @@ main() -> nil{
     %9 ? bb3 : bb4;
   }
   bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
     GOTO bb5;
   }
   bb4 {
-    %12 = + $desugar$0 $desugar$1;
-    $desugar$2 = %12;
+    PushScopeFrame 1
+    %0 = + (1, $desugar$0) (1, $desugar$1);
+    (1, $desugar$2) = %0;
+    PopScopeFrame
     GOTO bb5;
   }
   bb5 {
     c = $desugar$2;
-    %14 = println(c) -> bb6;
+    %13 = println(c) -> bb6;
   }
   bb6 {
-    %15 = ConstantLoad <nil>
-    d = %15;
+    %14 = ConstantLoad <nil>
+    d = %14;
     $desugar$3 = c;
     $desugar$4 = d;
-    %19 = ConstantLoad <nil>
-    $desugar$5 = %19;
-    %22 = $desugar$3 is nil
-    %21 = %22;
-    %22 ? bb8 : bb7;
+    %18 = ConstantLoad <nil>
+    $desugar$5 = %18;
+    %21 = $desugar$3 is nil
+    %20 = %21;
+    %21 ? bb8 : bb7;
   }
   bb7 {
-    %23 = $desugar$4 is nil
-    %21 = %23;
+    %22 = $desugar$4 is nil
+    %20 = %22;
     GOTO bb8;
   }
   bb8 {
-    %21 ? bb9 : bb10;
+    %20 ? bb9 : bb10;
   }
   bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
     GOTO bb11;
   }
   bb10 {
-    %24 = + $desugar$3 $desugar$4;
-    $desugar$5 = %24;
+    PushScopeFrame 1
+    %0 = + (1, $desugar$3) (1, $desugar$4);
+    (1, $desugar$5) = %0;
+    PopScopeFrame
     GOTO bb11;
   }
   bb11 {
-    %25 = println($desugar$5) -> bb12;
+    %23 = println($desugar$5) -> bb12;
   }
   bb12 {
     return;

@@ -1,0 +1,3 @@
+-- stdout --
+<p:a xmlns:p="https://example.com/outer"/><p:b xmlns:p="https://example.com/outer"/>
+-- stderr --

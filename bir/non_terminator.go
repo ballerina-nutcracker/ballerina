@@ -118,6 +118,22 @@ type (
 		ClassDefRef string
 	}
 
+	NewStream struct {
+		BIRInstructionBase
+		StreamType semtypes.SemType
+		ImplOp     *BIROperand
+	}
+
+	StreamNext struct {
+		BIRInstructionBase
+		StreamOp *BIROperand
+	}
+
+	StreamClose struct {
+		BIRInstructionBase
+		StreamOp *BIROperand
+	}
+
 	FPLoad struct {
 		BIRInstructionBase
 		FunctionLookupKey string
@@ -162,6 +178,22 @@ type (
 		BIRInstructionBase
 		Children []*BIROperand
 	}
+
+	EvalTemplateExpr struct {
+		BIRInstructionBase
+		Kind             TemplateKind
+		Strings          []string
+		LiteralsTotalLen int
+		Insertions       []*BIROperand
+	}
+)
+
+type TemplateKind uint8
+
+const (
+	TemplateKindString TemplateKind = iota
+	TemplateKindXML
+	TemplateKindRaw
 )
 
 type (
@@ -183,6 +215,9 @@ var (
 	_ BIRInstruction          = &NewMap{}
 	_ BIRAssignInstruction    = &NewError{}
 	_ BIRAssignInstruction    = &NewObject{}
+	_ BIRAssignInstruction    = &NewStream{}
+	_ BIRAssignInstruction    = &StreamNext{}
+	_ BIRAssignInstruction    = &StreamClose{}
 	_ BIRAssignInstruction    = &FPLoad{}
 	_ BIRInstruction          = &PushScopeFrame{}
 	_ BIRInstruction          = &PopScopeFrame{}
@@ -191,6 +226,7 @@ var (
 	_ BIRAssignInstruction    = &NewXMLComment{}
 	_ BIRAssignInstruction    = &NewXMLText{}
 	_ BIRAssignInstruction    = &NewXMLSequence{}
+	_ BIRAssignInstruction    = &EvalTemplateExpr{}
 	_ MappingConstructorEntry = &MappingConstructorKeyValueEntry{}
 )
 
@@ -440,6 +476,61 @@ func NewObjectConstructor(classDefRef string, lhsOp *BIROperand, pos Location) *
 	}
 }
 
+func (n *NewStream) GetKind() InstructionKind {
+	return INSTRUCTION_KIND_NEW_STREAM
+}
+
+func (n *NewStream) GetLhsOperand() *BIROperand {
+	return n.LhsOp
+}
+
+func NewStreamConstructor(streamType semtypes.SemType, lhsOp, implOp *BIROperand, pos Location) *NewStream {
+	return &NewStream{
+		BIRInstructionBase: BIRInstructionBase{
+			BIRNodeBase: BIRNodeBase{Pos: pos},
+			LhsOp:       lhsOp,
+		},
+		StreamType: streamType,
+		ImplOp:     implOp,
+	}
+}
+
+func (n *StreamNext) GetKind() InstructionKind {
+	return INSTRUCTION_KIND_STREAM_NEXT
+}
+
+func (n *StreamNext) GetLhsOperand() *BIROperand {
+	return n.LhsOp
+}
+
+func NewStreamNext(lhsOp, streamOp *BIROperand, pos Location) *StreamNext {
+	return &StreamNext{
+		BIRInstructionBase: BIRInstructionBase{
+			BIRNodeBase: BIRNodeBase{Pos: pos},
+			LhsOp:       lhsOp,
+		},
+		StreamOp: streamOp,
+	}
+}
+
+func (n *StreamClose) GetKind() InstructionKind {
+	return INSTRUCTION_KIND_STREAM_CLOSE
+}
+
+func (n *StreamClose) GetLhsOperand() *BIROperand {
+	return n.LhsOp
+}
+
+func NewStreamClose(lhsOp, streamOp *BIROperand, pos Location) *StreamClose {
+	return &StreamClose{
+		BIRInstructionBase: BIRInstructionBase{
+			BIRNodeBase: BIRNodeBase{Pos: pos},
+			LhsOp:       lhsOp,
+		},
+		StreamOp: streamOp,
+	}
+}
+
 func (p *PushScopeFrame) GetKind() InstructionKind {
 	return INSTRUCTION_KIND_PUSH_SCOPE
 }
@@ -554,5 +645,25 @@ func NewXMLSequenceInstr(lhsOp *BIROperand, children []*BIROperand, pos Location
 			LhsOp:       lhsOp,
 		},
 		Children: children,
+	}
+}
+
+func (e *EvalTemplateExpr) GetLhsOperand() *BIROperand { return e.LhsOp }
+func (e *EvalTemplateExpr) GetKind() InstructionKind   { return INSTRUCTION_KIND_EVAL_TEMPLATE_EXPR }
+
+func NewEvalTemplateExpr(kind TemplateKind, strings []string, insertions []*BIROperand, lhsOp *BIROperand, pos Location) *EvalTemplateExpr {
+	literalTotalLen := 0
+	for _, each := range strings {
+		literalTotalLen += len(each)
+	}
+	return &EvalTemplateExpr{
+		BIRInstructionBase: BIRInstructionBase{
+			BIRNodeBase: BIRNodeBase{Pos: pos},
+			LhsOp:       lhsOp,
+		},
+		Kind:             kind,
+		Strings:          strings,
+		LiteralsTotalLen: literalTotalLen,
+		Insertions:       insertions,
 	}
 }

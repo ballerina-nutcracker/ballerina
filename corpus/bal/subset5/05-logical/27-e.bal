@@ -15,6 +15,6 @@
 // under the License.
 public function main() {
     int a = 1;
-    boolean b = a && true; // @error
-    boolean c = false || a; // @error
+    boolean _ = a && true; // @error
+    boolean _ = false || a; // @error
 }

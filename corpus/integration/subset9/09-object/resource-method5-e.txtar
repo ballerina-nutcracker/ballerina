@@ -1,0 +1,9 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> resource-method5-e.bal:18:5
+   |
+18 |     resource function get test/[string s]() { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     }
+   |     ^

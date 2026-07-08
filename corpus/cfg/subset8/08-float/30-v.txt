@@ -1,0 +1,45 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (literal 4)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (unary-expr -
+              (literal 0))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (unary-expr -
+              (literal 1))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (binary-expr /
+              (literal 1)
+              (literal 0))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float sqrt (
+          (group-expr
+            (binary-expr /
+              (literal 0)
+              (literal 0))))))))
+  )
+)

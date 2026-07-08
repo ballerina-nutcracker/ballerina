@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 class Counter {
   count int
 
@@ -24,14 +23,18 @@ class Counter {
       %5 ? bb1 : bb2;
     }
     bb1 {
-      %9 = ConstantLoad negative value
-      %10 = newError error(%9)
-      %0 = %10;
+      PushScopeFrame 2
+      %0 = ConstantLoad negative value
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
       return;
     }
     bb2 {
-      %11 = ConstantLoad count
-      self[%11] = v;
+      PushScopeFrame 1
+      %0 = ConstantLoad count
+      (1, self)[%0] = (1, v);
+      PopScopeFrame
       return;
     }
   }
@@ -60,7 +63,9 @@ main() -> nil|error{
     %7 ? bb5 : bb6;
   }
   bb5 {
-    %0 = $desugar$0;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
     return;
   }
   bb6 {

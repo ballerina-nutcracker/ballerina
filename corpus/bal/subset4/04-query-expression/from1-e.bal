@@ -16,5 +16,5 @@
 
 public function main() {
     int[] xs = [1, 2, 3];
-    string[] out = from var x in xs select x; // @error
+    string[] _ = from var x in xs select x; // @error
 }

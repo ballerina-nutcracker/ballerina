@@ -1,0 +1,45 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 104
+    %2 = ConstantLoad 101
+    %3 = ConstantLoad 108
+    %4 = ConstantLoad 108
+    %5 = ConstantLoad 111
+    %6 = ConstantLoad 5
+    %7 = newArray [int:Unsigned8...][%6]{%1, %2, %3, %4, %5}
+    input = %7;
+    %9 = ConstantLoad 115
+    %10 = ConstantLoad 101
+    %11 = ConstantLoad 99
+    %12 = ConstantLoad 114
+    %13 = ConstantLoad 101
+    %14 = ConstantLoad 116
+    %15 = ConstantLoad 6
+    %16 = newArray [int:Unsigned8...][%15]{%9, %10, %11, %12, %13, %14}
+    key = %16;
+    %18 = hmacSha256(input,key) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %18;
+    %20 = $desugar$0 is error
+    %20 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    mac = $desugar$0;
+    %22 = length(mac) -> bb4;
+  }
+  bb4 {
+    %23 = %22;
+    %24 = println(%23) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

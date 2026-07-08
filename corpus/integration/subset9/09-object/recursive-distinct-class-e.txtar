@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected object&object { public function init() returns nil; public nil|object&... next }, got object { public function init() returns nil; public nil|object&object { public function init() returns nil; public nil|object&... next } next }
+  --> recursive-distinct-class-e.bal:27:15
+   |
+27 |     T value = other; // @error
+   |               ^^^^^

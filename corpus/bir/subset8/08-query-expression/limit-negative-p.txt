@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
@@ -28,23 +27,26 @@ main() -> nil{
     %19 ? bb2 : bb3;
   }
   bb2 {
-    %23 = ConstantLoad limit cannot be negative
-    %24 = newError error(%23)
-    panic %24;
+    PushScopeFrame 2
+    %0 = ConstantLoad limit cannot be negative
+    %1 = newError error(%0)
+    (1, %23) = %1;
+    PopScopeFrame
+    panic %23;
   }
   bb3 {
-    %25 = ConstantLoad 0
-    $desugar$5 = %25;
+    %24 = ConstantLoad 0
+    $desugar$5 = %24;
     GOTO bb4;
   }
   bb4 {
-    %28 = $desugar$3;
-    %29 = $desugar$1;
-    %27 = < %28 %29;
-    %27 ? bb5 : bb6;
+    %27 = $desugar$3;
+    %28 = $desugar$1;
+    %26 = < %27 %28;
+    %26 ? bb5 : bb6;
   }
   bb5 {
-    PushScopeFrame 18
+    PushScopeFrame 14
     %0 = (1, $desugar$0)[(1, $desugar$3)];
     (1, x) = %0;
     %2 = (1, $desugar$5);
@@ -53,33 +55,35 @@ main() -> nil{
     %1 ? bb7 : bb8;
   }
   bb6 {
-    %30 = $desugar$2;
+    %29 = $desugar$2;
     return;
   }
   bb7 {
-    %5 = (1, $desugar$3);
-    %6 = ConstantLoad 1
-    %7 = %6;
-    %4 = + %5 %7;
-    (1, $desugar$3) = %4;
+    PushScopeFrame 4
+    %1 = (2, $desugar$3);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, $desugar$3) = %0;
+    PopScopeFrame
     PopScopeFrame
     GOTO bb4;
   }
   bb8 {
-    %9 = (1, $desugar$5);
-    %10 = ConstantLoad 1
-    %11 = %10;
-    %8 = + %9 %11;
-    (1, $desugar$5) = %8;
-    %12 = (1, x);
-    %13 = push((1, $desugar$2),%12) -> bb9;
+    %5 = (1, $desugar$5);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$5) = %4;
+    %8 = (1, x);
+    %9 = push((1, $desugar$2),%8) -> bb9;
   }
   bb9 {
-    %15 = (1, $desugar$3);
-    %16 = ConstantLoad 1
-    %17 = %16;
-    %14 = + %15 %17;
-    (1, $desugar$3) = %14;
+    %11 = (1, $desugar$3);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$3) = %10;
     PopScopeFrame
     GOTO bb4;
   }

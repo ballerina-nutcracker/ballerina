@@ -1,0 +1,83 @@
+module $anon.. v 0.0.0;
+class foo {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get test/[string] foo.$resource$get$0(string) -> nil{
+    bb0 {
+      %4 = ConstantLoad get test/
+      %3 = + %4 name;
+      %5 = println(%3) -> bb1;
+    }
+    bb1 {
+      return;
+    }
+  }
+
+  resource get other/[int] foo.$resource$get$1(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad get other
+      %4 = println(%3) -> bb1;
+    }
+    bb1 {
+      %5 = id;
+      %6 = println(%5) -> bb2;
+    }
+    bb2 {
+      return;
+    }
+  }
+
+  resource post test/[string] foo.$resource$post$2(string) -> nil{
+    bb0 {
+      %4 = ConstantLoad post test/
+      %3 = + %4 name;
+      %5 = println(%3) -> bb1;
+    }
+    bb1 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:foo
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    f = %3;
+    %6 = ConstantLoad test
+    %7 = ConstantLoad a
+    %8 = f->[%6,%7].get() -> bb5;
+  }
+  bb5 {
+    %9 = ConstantLoad other
+    %10 = ConstantLoad 42
+    %11 = %10;
+    %12 = f->[%9,%11].get() -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad test
+    %14 = ConstantLoad b
+    %15 = f->[%13,%14].post() -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

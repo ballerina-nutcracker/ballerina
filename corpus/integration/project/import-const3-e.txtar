@@ -11,3 +11,9 @@ error[SEMANTIC_ERROR]: Unknown symbol: A
    |
 20 | const B = selfref:A; // @error
    |           ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'B'
+  --> modules/selfref/selfref.bal:20:1
+   |
+20 | const B = selfref:A; // @error
+   | ^^^^^^^^^^^^^^^^^^^^

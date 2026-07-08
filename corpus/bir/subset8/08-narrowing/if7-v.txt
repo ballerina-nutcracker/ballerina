@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad b
@@ -27,56 +26,82 @@ func({| b: boolean, never... |}) -> nil{
     %6 ? bb1 : bb6;
   }
   bb1 {
-    %12 = x is boolean|int
-    %12 ? bb2 : bb3;
+    PushScopeFrame 1
+    %0 = (1, x) is boolean|int
+    %0 ? bb2 : bb3;
   }
   bb2 {
-    %13 = ConstantLoad <nil>
-    %0 = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb3 {
-    %14 = y is int|float
-    %14 ? bb4 : bb5;
+    PushScopeFrame 1
+    %0 = (2, y) is int|float
+    %0 ? bb4 : bb5;
   }
   bb4 {
-    %15 = ConstantLoad <nil>
-    %0 = %15;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb11;
   }
   bb6 {
-    %16 = x is boolean|float
-    %16 ? bb7 : bb8;
+    PushScopeFrame 1
+    %0 = (1, x) is boolean|float
+    %0 ? bb7 : bb8;
   }
   bb7 {
-    %17 = ConstantLoad <nil>
-    %0 = %17;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb8 {
-    %18 = y is boolean|int
-    %18 ? bb9 : bb10;
+    PushScopeFrame 1
+    %0 = (2, y) is boolean|int
+    %0 ? bb9 : bb10;
   }
   bb9 {
-    %19 = ConstantLoad <nil>
-    %0 = %19;
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     GOTO bb11;
   }
   bb11 {
     fi = x;
     bi = y;
-    %22 = fi;
-    %23 = println(%22) -> bb12;
+    %14 = fi;
+    %15 = println(%14) -> bb12;
   }
   bb12 {
-    %24 = bi;
-    %25 = println(%24) -> bb13;
+    %16 = bi;
+    %17 = println(%16) -> bb13;
   }
   bb13 {
     return;

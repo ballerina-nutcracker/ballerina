@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: stream implementor close method is incompatible
+  --> stream-close-e.bal:29:30
+   |
+29 |     stream<int, ()> s = new (new BadClose()); // @error
+   |                              ^^^^^^^^^^^^^^

@@ -28,5 +28,5 @@ class Bar {
 }
 
 public function main() {
-    Bar f = new (); // @error
+    Bar _ = new (); // @error
 }

@@ -1,0 +1,58 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 1))
+          (key-value
+            (literal c)
+            (literal 2))
+          (key-value
+            (literal d)
+            (literal 3))
+          (key-value
+            (literal e)
+            (literal 1))))))
+    (var-def
+      (variable grouped (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (group-by-clause
+            (grouping-key
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+    (var-def
+      (variable groupedAfterOrder (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (group-by-clause
+            (grouping-key
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref grouped))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref groupedAfterOrder))))
+  )
+)

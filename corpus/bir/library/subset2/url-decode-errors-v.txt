@@ -1,0 +1,96 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad %GG
+    %2 = ConstantLoad UTF-8
+    %3 = decode(%1,%2) -> bb1;
+  }
+  bb1 {
+    badHex = %3;
+    %5 = badHex is error
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad %FF
+    %9 = ConstantLoad UTF-8
+    %10 = decode(%8,%9) -> bb3;
+  }
+  bb3 {
+    badUtf8 = %10;
+    %12 = badUtf8 is error
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad a%
+    %16 = ConstantLoad UTF-8
+    %17 = decode(%15,%16) -> bb5;
+  }
+  bb5 {
+    $desugar$0 = %17;
+    %19 = $desugar$0 is error
+    %19 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %20 = println($desugar$0) -> bb8;
+  }
+  bb8 {
+    %21 = ConstantLoad %2a%2b
+    %22 = ConstantLoad UTF-8
+    %23 = decode(%21,%22) -> bb9;
+  }
+  bb9 {
+    $desugar$1 = %23;
+    %25 = $desugar$1 is error
+    %25 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    %26 = println($desugar$1) -> bb12;
+  }
+  bb12 {
+    %27 = ConstantLoad café
+    %28 = ConstantLoad ISO-8859-1
+    %29 = decode(%27,%28) -> bb13;
+  }
+  bb13 {
+    $desugar$2 = %29;
+    %31 = $desugar$2 is error
+    %31 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    %32 = println($desugar$2) -> bb16;
+  }
+  bb16 {
+    %33 = ConstantLoad %FFé
+    %34 = ConstantLoad US-ASCII
+    %35 = decode(%33,%34) -> bb17;
+  }
+  bb17 {
+    flushErr = %35;
+    %37 = flushErr is error
+    %38 = %37;
+    %39 = println(%38) -> bb18;
+  }
+  bb18 {
+    return;
+  }
+}

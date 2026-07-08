@@ -1,0 +1,25 @@
+-- stdout --
+body text
+text/plain
+v1
+2
+true
+false
+application/json
+false
+true
+true
+{"k":"v"}
+3
+201
+true
+r1
+2
+true
+text/plain
+resp body
+[1,2,3]
+3
+false
+false
+-- stderr --

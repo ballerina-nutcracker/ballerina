@@ -24,6 +24,7 @@ type Fx F1&F2;
 public function main() {
     final "b" returnVal = "b";
     F1 f = function(1|2|3 a) returns "a"|"b" {
+        1|2|3 _ = a;
         return returnVal;
     };
     Fx fx = <Fx>f; // @panic bad type cast

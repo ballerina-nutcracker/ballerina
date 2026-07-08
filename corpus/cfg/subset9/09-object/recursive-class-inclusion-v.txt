@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (user-defined-type Child)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (literal ok))))
+  )
+)

@@ -22,7 +22,7 @@
             (user-defined-type C) dimensions: 1 ([]))) (expr
           (list-constructor-expr))))
       (var-def
-        (variable i (type
+        (variable _ (type
           (value-type int)) (expr
           (literal 0))))
       (var-def
@@ -30,7 +30,7 @@
           (simple-var-ref N))))
       (while
         (binary-expr <
-          (simple-var-ref i)
+          (simple-var-ref _)
           (simple-var-ref $desugar$0))
         (block-stmt
           (expression-stmt
@@ -44,9 +44,9 @@
                   (literal y)
                   (literal 2))))))
           (assignment
-            (simple-var-ref i)
+            (simple-var-ref _)
             (binary-expr +
-              (simple-var-ref i)
+              (simple-var-ref _)
               (numeric-literal 1)))))
       (var-def
         (variable i (type

@@ -5,15 +5,3 @@ error[SEMANTIC_ERROR]: cannot assign to parameter
    |
 22 |         offset *= 10; // @error
    |         ^^^^^^
-
-error[SEMANTIC_ERROR]: cannot assign to parameter
-  --> assign-e.bal:22:9
-   |
-22 |         offset *= 10; // @error
-   |         ^^^^^^
-
-error[SEMANTIC_ERROR]: cannot assign to parameter
-  --> assign-e.bal:22:9
-   |
-22 |         offset *= 10; // @error
-   |         ^^^^^^

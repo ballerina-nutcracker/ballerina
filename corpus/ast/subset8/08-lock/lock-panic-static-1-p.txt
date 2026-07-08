@@ -1,0 +1,18 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (simple-var-ref counter)
+            (binary-expr +
+              (simple-var-ref counter)
+              (literal 1)))
+          (panic
+            (error-constructor-expr (
+              (literal boom)))))))))

@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 // @productions module-enum-decl
-import ballerina/io;
 
 public enum Color {
     RED,
@@ -25,6 +24,6 @@ public enum Color {
 public function main() {
     Color c = GREEN;
 
-    "RED"|"GREEN"|"BLUE" x = c; // @error
-    int y = c; // @error
+    "RED"|"GREEN"|"BLUE" _ = c; // @error
+    int _ = c; // @error
 }

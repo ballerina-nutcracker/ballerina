@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 's'
+  --> unused2-e.bal:20:9
+   |
+20 |         string s = "100"; // @error
+   |         ^^^^^^^^^^^^^^^^^

@@ -1,6 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:foo
@@ -83,14 +81,18 @@ foo(int|string,int|string) -> int{
     %3 ? bb3 : bb4;
   }
   bb3 {
-    %6 = + a b;
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = + (1, a) (1, b);
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb4 {
-    %7 = ConstantLoad 1
-    %8 = unknown %7;
-    %0 = %8;
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = unknown %0;
+    (1, %0) = %1;
+    PopScopeFrame
     return;
   }
 }
@@ -142,35 +144,39 @@ baz([int|string...]...) -> int{
     %6 ? bb1 : bb2;
   }
   bb1 {
-    %7 = ConstantLoad 0
-    init = %7;
+    PushScopeFrame 1
+    %0 = ConstantLoad 0
+    (1, init) = %0;
+    PopScopeFrame
     GOTO bb2;
   }
   bb2 {
-    %8 = ConstantLoad 0
-    result = %8;
-    %10 = ConstantLoad 0
-    i = %10;
-    %12 = length(vals) -> bb3;
+    PushScopeFrame 9
+    %0 = ConstantLoad 0
+    result = %0;
+    %2 = ConstantLoad 0
+    i = %2;
+    %4 = length((1, vals)) -> bb3;
   }
   bb3 {
-    $desugar$0 = %12;
+    $desugar$0 = %4;
     GOTO bb4;
   }
   bb4 {
-    %15 = i;
-    %16 = $desugar$0;
-    %14 = < %15 %16;
-    %14 ? bb5 : bb6;
+    %7 = i;
+    %8 = $desugar$0;
+    %6 = < %7 %8;
+    %6 ? bb5 : bb6;
   }
   bb5 {
     PushScopeFrame 9
     %1 = (1, result);
-    %2 = (1, vals)[(1, i)];
-    %3 = foo((1, init),%2) -> bb7;
+    %2 = (2, vals)[(1, i)];
+    %3 = foo((2, init),%2) -> bb7;
   }
   bb6 {
-    %0 = result;
+    (1, %0) = result;
+    PopScopeFrame
     return;
   }
   bb7 {

@@ -11,6 +11,7 @@ linters:
           files:
             - "$all"
             - "!$test"
+            - "!**/test_util/**"
           deny:
             - pkg: "ballerina-lang-go/test_util"
               desc: "test_util is test-only; import only from *_test.go"

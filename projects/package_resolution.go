@@ -16,7 +16,12 @@
 
 package projects
 
-import "context"
+import (
+	"context"
+	"fmt"
+
+	"ballerina-lang-go/tools/diagnostics"
+)
 
 // PackageResolution holds the result of package dependency resolution.
 // It builds a topologically sorted list of modules within the root package,
@@ -28,8 +33,18 @@ type PackageResolution struct {
 	packageDependencyGraph        *DependencyGraph[PackageDescriptor]
 	topologicallySortedModuleList []*moduleContext
 	resolvedDependencies          map[string]*PackageDescriptor // org/name -> PackageDescriptor
+	diagnostics                   []diagnostics.Diagnostic
 	diagnosticResult              DiagnosticResult
 	environment                   *Environment
+	// blendedManifest is the per-resolution view of consumer dependency policy.
+	blendedManifest *blendedManifest
+}
+
+// addDiagnostic accumulates a diagnostic raised during dependency resolution.
+// Wired into blendedManifest so its validation warnings surface through
+// PackageCompilation diagnostics.
+func (r *PackageResolution) addDiagnostic(d diagnostics.Diagnostic) {
+	r.diagnostics = append(r.diagnostics, d)
 }
 
 func newPackageResolution(pkgCtx *packageContext, env *Environment) *PackageResolution {
@@ -39,8 +54,16 @@ func newPackageResolution(pkgCtx *packageContext, env *Environment) *PackageReso
 		environment:          env,
 	}
 
-	// Create module resolver using the environment's PackageResolver
-	r.moduleResolver = newModuleResolver(pkgCtx.getDescriptor(), env)
+	// Must run before any BFS work so dequeues can consult it.
+	r.blendedManifest = newBlendedManifest(
+		withPackageManifest(pkgCtx.getPackageManifest()),
+		withPackageResolver(env.PackageResolver(), env.ResolutionOptions()),
+		withDiagnosticReporter(r.addDiagnostic),
+	)
+
+	// moduleResolver consults blendedManifest for direct-import routing; the
+	// consumer's resolver runs before BFS cache pre-population.
+	r.moduleResolver = newModuleResolver(pkgCtx.getDescriptor(), r.blendedManifest, env)
 
 	// Build dependency graph from imports
 	r.buildModuleDependencyGraph()
@@ -67,7 +90,7 @@ func (r *PackageResolution) collectModuleDescriptors() []ModuleDescriptor {
 
 func (r *PackageResolution) buildModuleDependencyGraph() {
 	pkgCtx := r.rootPackageContext
-	builder := newDependencyGraphBuilder[ModuleDescriptor]()
+	builder := newDependencyGraphBuilder(moduleDescriptorCmp)
 
 	// Add all modules as nodes first
 	for _, modID := range pkgCtx.moduleIDs {
@@ -107,7 +130,7 @@ func (r *PackageResolution) buildModuleDependencyGraph() {
 }
 
 func (r *PackageResolution) buildPackageDependencyGraph() {
-	builder := newDependencyGraphBuilder[PackageDescriptor]()
+	builder := newDependencyGraphBuilder(packageDescriptorCmp)
 	ctx := context.Background()
 
 	// Add root package as a node
@@ -175,8 +198,15 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 		current := queue[0]
 		queue = queue[1:]
 
-		// Load the package to get its manifest dependencies
-		request := NewResolutionRequest(current)
+		// Overlay the user-specified repository (if any) for this (org, name).
+		// Applies to both direct deps and transitive children since every
+		// request is built here at dequeue time.
+		var request ResolutionRequest
+		if blended, ok := r.blendedManifest.dependency(current.Org().Value(), current.Name().Value()); ok && blended.Repository() != "" {
+			request = newResolutionRequestWithRepository(current, blended.Repository())
+		} else {
+			request = NewResolutionRequest(current)
+		}
 		responses := resolver.ResolvePackages(ctx, []ResolutionRequest{request}, options)
 		if len(responses) == 0 || !responses[0].IsResolved() {
 			continue
@@ -191,8 +221,13 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 		for _, dep := range pkg.Manifest().Dependencies() {
 			key := dep.Org().Value() + "/" + dep.Name().Value()
 
-			// Skip if already visited (first-seen wins)
 			if visited[key] {
+				// Node was already discovered via another path (e.g. as a direct
+				// dep of root). We must still record this edge so that topological
+				// sort preserves the correct compilation order.
+				if existing := r.resolvedDependencies[key]; existing != nil {
+					builder.addDependency(current, *existing)
+				}
 				continue
 			}
 			visited[key] = true
@@ -210,6 +245,83 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 			queue = append(queue, depDesc)
 		}
 	}
+}
+
+// bundledLangLibs lists the lang libraries that are migrated to bala bundles
+// and are used implicitly (without an import statement), so they must be
+// compiled ahead of the root package's modules and seeded into the
+// implicit-imports map. Explicitly imported bundles (e.g. ballerina/io) are
+// not listed here; they resolve through normal dependency resolution from the
+// bundled langlibs repository.
+var bundledLangLibs = []struct{ org, name, version string }{
+	{"ballerina", "lang.int", "0.0.1"},
+	{"ballerina", "lang.boolean", "0.0.1"},
+	{"ballerina", "lang.decimal", "0.0.1"},
+	{"ballerina", "lang.error", "0.0.1"},
+	{"ballerina", "lang.string", "0.0.1"},
+	{"ballerina", "lang.value", "0.0.1"},
+	{"ballerina", "lang.xml", "0.0.1"},
+	{"ballerina", "lang.float", "0.0.1"},
+	{"ballerina", "lang.array", "0.0.1"},
+	{"ballerina", "lang.map", "0.0.1"},
+	{"ballerina", "lang.runtime", "0.0.1"},
+}
+
+// bundledLangLibModules resolves the migrated lang libraries and returns their
+// module contexts (compiled ahead of the root package's modules). They are not
+// added to the package dependency graph. A lib is skipped when the root package
+// is that lib itself.
+func (r *PackageResolution) bundledLangLibModules() []*moduleContext {
+	rootDesc := r.rootPackageContext.getDescriptor()
+	resolver := r.environment.PackageResolver()
+	options := r.environment.ResolutionOptions()
+	var modules []*moduleContext
+	for _, lib := range bundledLangLibs {
+		if rootDesc.Org().Value() == lib.org && rootDesc.Name().Value() == lib.name {
+			continue
+		}
+		// Bundled lang libs ship with the compiler, so a resolution failure is
+		// an internal bug rather than a user error: fail fast instead of
+		// letting it surface as downstream undefined-symbol/type errors.
+		desc, err := NewPackageDescriptorFromStrings(lib.org, lib.name, lib.version)
+		if err != nil {
+			panic(fmt.Sprintf("failed to build descriptor for bundled lang library %q: %v", bundledLangLibID(lib.org, lib.name, lib.version), err))
+		}
+		responses := resolver.ResolvePackages(context.Background(), []ResolutionRequest{NewResolutionRequest(desc)}, options)
+		if len(responses) == 0 || !responses[0].IsResolved() {
+			panic(fmt.Sprintf("failed to resolve bundled lang library %q", bundledLangLibID(lib.org, lib.name, lib.version)))
+		}
+		pkgCtx := responses[0].Package().packageCtx
+		for _, modDesc := range pkgCtx.moduleDependencyGraph().ToTopologicallySortedList() {
+			if modCtx := pkgCtx.getModuleContextByName(modDesc.Name()); modCtx != nil {
+				modules = append(modules, modCtx)
+			}
+		}
+	}
+	return modules
+}
+
+func bundledLangLibID(org, name, version string) string {
+	return fmt.Sprintf("%s/%s:%s", org, name, version)
+}
+
+// prependImplicitLangLibs returns the bundled lang-lib modules that are not
+// already present in resolved, so an explicitly imported lang lib (resolved via
+// normal dependency resolution) is not compiled and published a second time.
+func prependImplicitLangLibs(bundled, resolved []*moduleContext) []*moduleContext {
+	existing := make(map[ModuleID]bool, len(resolved))
+	for _, mod := range resolved {
+		existing[mod.getModuleID()] = true
+	}
+	var implicit []*moduleContext
+	for _, mod := range bundled {
+		if existing[mod.getModuleID()] {
+			continue
+		}
+		existing[mod.getModuleID()] = true
+		implicit = append(implicit, mod)
+	}
+	return implicit
 }
 
 // ResolvedDependencies returns the map of resolved external package dependencies.
@@ -271,8 +383,13 @@ func (r *PackageResolution) resolveDependencies() {
 	// TODO(P7): Create proper cycle diagnostics with DiagnosticCode
 	_ = cycles
 
+	// TODO: avoid always adding implicit lang libs here. Instead we need to think of away from front end to signal
+	// to driver which implicit imports were added.
+	bundledModules := r.bundledLangLibModules()
+	sortedModuleList = append(prependImplicitLangLibs(bundledModules, sortedModuleList), sortedModuleList...)
+
 	r.topologicallySortedModuleList = sortedModuleList
-	r.diagnosticResult = NewDiagnosticResult(nil)
+	r.diagnosticResult = NewDiagnosticResult(r.diagnostics)
 }
 
 // DiagnosticResult returns the diagnostics from resolution.

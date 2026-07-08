@@ -21,5 +21,6 @@ public function main() {
 }
 
 function foo(int... args) {
+    int[] _ = args;
     io:println("unexpected");
 }

@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (value-type string)) (expr
+        (literal A))))
+    (var-def
+      (variable b (type
+        (value-type string)) (expr
+        (literal B))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (literal 42))))
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-template-literal
+          (template-string "<elem first=\"")
+          (xml-template-attribute-insertion
+            (simple-var-ref a))
+          (template-string "-")
+          (xml-template-attribute-insertion
+            (simple-var-ref b))
+          (template-string "\" n=\"")
+          (xml-template-attribute-insertion
+            (simple-var-ref n))
+          (template-string "\" mixed=\"lit-")
+          (xml-template-attribute-insertion
+            (simple-var-ref a))
+          (template-string "\"/>")))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

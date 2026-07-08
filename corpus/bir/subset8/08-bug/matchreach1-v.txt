@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 btoi(boolean) -> int{
   bb0 {
     %2 = ConstantLoad true
@@ -10,18 +9,22 @@ btoi(boolean) -> int{
     return;
   }
   bb2 {
-    %4 = ConstantLoad 1
-    %0 = %4;
+    PushScopeFrame 1
+    %0 = ConstantLoad 1
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb3 {
-    %5 = ConstantLoad false
-    %6 = == b %5;
-    %6 ? bb4 : bb5;
+    %4 = ConstantLoad false
+    %5 = == b %4;
+    %5 ? bb4 : bb5;
   }
   bb4 {
-    %7 = ConstantLoad 0
-    %0 = %7;
+    PushScopeFrame 1
+    %0 = ConstantLoad 0
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb5 {

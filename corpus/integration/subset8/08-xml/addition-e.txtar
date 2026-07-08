@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected xml:Element, got xml<xml:Element>
-  --> addition-e.bal:22:22
+  --> addition-e.bal:21:21
    |
-22 |     xml:Element e3 = e1 + e2; // @error
-   |                      ^^^^^^^
+21 |     xml:Element _ = e1 + e2; // @error
+   |                     ^^^^^^^

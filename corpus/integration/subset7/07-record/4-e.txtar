@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
-  --> 4-e.bal:28:17
+  --> 4-e.bal:27:17
    |
-28 |     Foo|Bar f = {}; // @error
+27 |     Foo|Bar _ = {}; // @error
    |                 ^^

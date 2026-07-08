@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "externresourcemethod"
+version = "0.1.0"

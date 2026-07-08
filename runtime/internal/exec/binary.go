@@ -49,7 +49,7 @@ func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Add, v2))
 	case values.XMLValue:
 		v2 := op2.(values.XMLValue)
-		setOperandValue(ctx, binaryOp.LhsOp, frame, values.NewXMLSequence([]values.XMLValue{v1, v2}))
+		setOperandValue(ctx, binaryOp.LhsOp, frame, values.NewXMLConcatSequence(v1, v2))
 	default:
 		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
 	}
@@ -251,6 +251,10 @@ func refEqual(op1, op2 values.BalValue) bool {
 	if op1 == nil || op2 == nil {
 		return false
 	}
+	if xml1, ok := op1.(values.XMLValue); ok {
+		xml2, ok := op2.(values.XMLValue)
+		return ok && xmlRefEqual(xml1, xml2)
+	}
 	if f1, ok := op1.(*values.Function); ok {
 		if f2, ok := op2.(*values.Function); ok {
 			return f1.LookupKey == f2.LookupKey
@@ -269,6 +273,43 @@ func refEqual(op1, op2 values.BalValue) bool {
 		return ok && values.FloatExactEqual(f1, f2)
 	}
 	return op1 == op2
+}
+
+func xmlRefEqual(op1, op2 values.XMLValue) bool {
+	switch v1 := op1.(type) {
+	case *values.XMLElement:
+		v2, ok := op2.(*values.XMLElement)
+		return ok && v1 == v2
+	case *values.XMLProcessingInstruction:
+		v2, ok := op2.(*values.XMLProcessingInstruction)
+		return ok && v1 == v2
+	case *values.XMLComment:
+		v2, ok := op2.(*values.XMLComment)
+		return ok && v1 == v2
+	case *values.XMLSequence:
+		v2, ok := op2.(*values.XMLSequence)
+		return ok && xmlSequenceRefEqual(v1, v2)
+	case *values.XMLText:
+		_, ok := op2.(*values.XMLText)
+		return ok && values.DeepEquals(op1, op2)
+	default:
+		panic(fmt.Sprintf("internal error: unsupported XML value type %T", op1))
+	}
+}
+
+func xmlSequenceRefEqual(op1, op2 *values.XMLSequence) bool {
+	if len(op1.Children) != len(op2.Children) {
+		return false
+	}
+	if len(op1.Children) == 1 {
+		return values.DeepEquals(op1.Children[0], op2.Children[0])
+	}
+	for i := range op1.Children {
+		if !refEqual(op1.Children[i], op2.Children[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 func execBinaryOpBitwiseAnd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {

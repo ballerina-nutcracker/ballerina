@@ -19,5 +19,5 @@ type T record {|
 |};
 
 public function main() {
-    T[2] a = []; // @error
+    T[2] _ = []; // @error
 }

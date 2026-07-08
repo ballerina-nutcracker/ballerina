@@ -1,0 +1,149 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition serviceLifeCycle
+    (object-type service
+      (method-decl onAttach public (
+        (param message
+          (value-type string))) (
+        (value-type null)))
+      (method-decl onDetach public (
+        (param message
+          (value-type string))) (
+        (value-type null)))
+      (method-decl trigger (
+        (param message
+          (value-type string))) (
+        (value-type null)))))
+  (class-definition MyListener
+    (variable s (type
+      (union-type
+        (user-defined-type serviceLifeCycle)
+        (value-type null))) (expr
+      (literal <nil>)))
+    (function attach (
+      (variable svc (type
+        (user-defined-type serviceLifeCycle)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation onAttach expr:
+            (simple-var-ref svc) (
+            (literal attached))))
+        (assignment
+          (field-based-access s
+            (simple-var-ref self))
+          (simple-var-ref svc))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type serviceLifeCycle)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (expression-stmt
+          (invocation onDetach expr:
+            (simple-var-ref svc) (
+            (literal detached))))
+        (assignment
+          (field-based-access s
+            (simple-var-ref self))
+          (literal <nil>))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal graceful stop))))))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal immediate Stop))))))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal listener start))))))
+    (function trigger (
+      (variable message (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable svc (expr
+            (field-based-access s
+              (simple-var-ref self)))))
+        (if
+          (binary-expr ==
+            (simple-var-ref svc)
+            (literal <nil>))
+          (block-stmt
+            (panic
+              (error-constructor-expr (
+                (literal no service))))) ())
+        (block-stmt
+          (expression-stmt
+            (invocation trigger expr:
+              (simple-var-ref svc) (
+              (simple-var-ref message))))))))
+  (variable l (type
+    (user-defined-type MyListener)) (expr
+    (new ())))
+  (service
+    (on
+    (simple-var-ref l))
+    (function onAttach (
+      (variable message (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal listener-> )
+            (simple-var-ref message))))))
+    (function onDetach (
+      (variable message (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal listener-> )
+            (simple-var-ref message))))))
+    (function trigger (
+      (variable message (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal trigger-> )
+            (simple-var-ref message)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation trigger expr:
+          (simple-var-ref l) (
+          (literal foo)))))))

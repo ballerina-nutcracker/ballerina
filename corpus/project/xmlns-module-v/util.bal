@@ -14,6 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+xmlns "https:foo/bar" as bar;
+
 function makeBaz() returns xml {
     return xml `<bar:elem></bar:elem>`;
 }

@@ -13,9 +13,8 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/io;
 
 public function main() {
     map<int> foo = {"a": 1};
-    int a = foo["a"]; // @error
+    int _ = foo["a"]; // @error
 }

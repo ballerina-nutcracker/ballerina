@@ -1,0 +1,39 @@
+(build
+  (bb0 () ()
+    (return
+      (string-template-literal
+        (template-string "hello ")
+        (checked-expr
+          (invocation validate (
+            (simple-var-ref s))))
+        (template-string "")))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation build (
+          (literal ok))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation build (
+          (literal bad))))))
+  )
+)
+(validate
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal bad))
+  )
+  (bb1 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal bad input))))
+  )
+  (bb2 (bb0) ()
+    (return
+      (simple-var-ref s))
+  )
+)

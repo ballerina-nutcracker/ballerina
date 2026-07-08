@@ -28,7 +28,7 @@
         (block-stmt) (
         (block-stmt
           (var-def
-            (variable unused1 (type
+            (variable _ (type
               (union-type
                 (value-type int)
                 (value-type string))) (expr

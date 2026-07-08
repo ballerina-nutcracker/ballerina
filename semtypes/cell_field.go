@@ -18,10 +18,10 @@ package semtypes
 
 type CellField struct {
 	Name string
-	Type ComplexSemType
+	Type SemType
 }
 
-func cellFieldFrom(name string, ty ComplexSemType) CellField {
+func cellFieldFrom(name string, ty SemType) CellField {
 	return CellField{
 		Name: name,
 		Type: ty,

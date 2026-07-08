@@ -14,5 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package model provide shared representations for both front end and backend
+// Package model provides shared representations for both front-end and back-end.
 package model

@@ -1,0 +1,321 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable named (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation time civilToString (
+              (mapping-constructor-expr
+                (key-value
+                  (literal year)
+                  (literal 2021))
+                (key-value
+                  (literal month)
+                  (literal 4))
+                (key-value
+                  (literal day)
+                  (literal 12))
+                (key-value
+                  (literal hour)
+                  (literal 23))
+                (key-value
+                  (literal minute)
+                  (literal 20))
+                (key-value
+                  (literal second)
+                  (literal 50))
+                (key-value
+                  (literal timeAbbrev)
+                  (literal Asia/Colombo)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref named))))
+      (var-def
+        (variable numeric (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation time civilToString (
+              (mapping-constructor-expr
+                (key-value
+                  (literal year)
+                  (literal 2021))
+                (key-value
+                  (literal month)
+                  (literal 4))
+                (key-value
+                  (literal day)
+                  (literal 12))
+                (key-value
+                  (literal hour)
+                  (literal 23))
+                (key-value
+                  (literal minute)
+                  (literal 20))
+                (key-value
+                  (literal second)
+                  (literal 50))
+                (key-value
+                  (literal timeAbbrev)
+                  (literal +05:30)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref numeric))))
+      (var-def
+        (variable utc (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation time civilToString (
+              (mapping-constructor-expr
+                (key-value
+                  (literal year)
+                  (literal 2021))
+                (key-value
+                  (literal month)
+                  (literal 4))
+                (key-value
+                  (literal day)
+                  (literal 12))
+                (key-value
+                  (literal hour)
+                  (literal 17))
+                (key-value
+                  (literal minute)
+                  (literal 50))
+                (key-value
+                  (literal second)
+                  (literal 50))
+                (key-value
+                  (literal timeAbbrev)
+                  (literal Z)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref utc))))
+      (var-def
+        (variable noZone (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (invocation time civilToString (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2021))
+              (key-value
+                (literal month)
+                (literal 4))
+              (key-value
+                (literal day)
+                (literal 12))
+              (key-value
+                (literal hour)
+                (literal 17))
+              (key-value
+                (literal minute)
+                (literal 50))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref noZone)
+            (error-type)))))
+      (var-def
+        (variable withSeconds (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation time civilToString (
+              (mapping-constructor-expr
+                (key-value
+                  (literal year)
+                  (literal 2021))
+                (key-value
+                  (literal month)
+                  (literal 4))
+                (key-value
+                  (literal day)
+                  (literal 12))
+                (key-value
+                  (literal hour)
+                  (literal 23))
+                (key-value
+                  (literal minute)
+                  (literal 20))
+                (key-value
+                  (literal second)
+                  (literal 50))
+                (key-value
+                  (literal utcOffset)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal hours)
+                      (literal 5))
+                    (key-value
+                      (literal minutes)
+                      (literal 30))
+                    (key-value
+                      (literal seconds)
+                      (literal 30)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withSeconds))))
+      (var-def
+        (variable west (type
+          (user-defined-type time TimeZone)) (expr
+          (checked-expr
+            (new
+              (user-defined-type time TimeZone) (
+              (literal -05:00)))))))
+      (var-def
+        (variable westOffset (type
+          (union-type
+            (user-defined-type time ZoneOffset)
+            (value-type null))) (expr
+          (invocation fixedOffset expr:
+            (simple-var-ref west) ()))))
+      (if
+        (type-test-expr !is
+          (simple-var-ref westOffset)
+          (value-type null))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access hours
+                (simple-var-ref westOffset)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access minutes
+                (simple-var-ref westOffset)))))) ())
+      (block-stmt
+        (var-def
+          (variable tooBig (type
+            (union-type
+              (user-defined-type time TimeZone)
+              (error-type))) (expr
+            (new
+              (user-defined-type time TimeZone) (
+              (literal +25:00))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref tooBig)
+              (error-type)))))
+        (var-def
+          (variable utcZone (type
+            (user-defined-type time TimeZone)) (expr
+            (checked-expr
+              (new
+                (user-defined-type time TimeZone) (
+                (literal UTC)))))))
+        (var-def
+          (variable invalidDate (type
+            (union-type
+              (user-defined-type time Utc)
+              (error-type))) (expr
+            (invocation utcFromCivil expr:
+              (simple-var-ref utcZone) (
+              (mapping-constructor-expr
+                (key-value
+                  (literal year)
+                  (literal 2021))
+                (key-value
+                  (literal month)
+                  (literal 2))
+                (key-value
+                  (literal day)
+                  (literal 30))
+                (key-value
+                  (literal hour)
+                  (literal 10))
+                (key-value
+                  (literal minute)
+                  (literal 0))
+                (key-value
+                  (literal timeAbbrev)
+                  (literal Z))))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref invalidDate)
+              (error-type)))))
+        (var-def
+          (variable emailComment (type
+            (value-type string)) (expr
+            (checked-expr
+              (invocation time civilToEmailString (
+                (mapping-constructor-expr
+                  (key-value
+                    (literal year)
+                    (literal 2024))
+                  (key-value
+                    (literal month)
+                    (literal 6))
+                  (key-value
+                    (literal day)
+                    (literal 15))
+                  (key-value
+                    (literal hour)
+                    (literal 10))
+                  (key-value
+                    (literal minute)
+                    (literal 30))
+                  (key-value
+                    (literal second)
+                    (literal 45))
+                  (key-value
+                    (literal utcOffset)
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal hours)
+                        (literal 0))
+                      (key-value
+                        (literal minutes)
+                        (literal 0))))
+                  (key-value
+                    (literal timeAbbrev)
+                    (literal GMT)))
+                (simple-var-ref time ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT)))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref emailComment))))
+        (var-def
+          (variable noAbbrev (type
+            (value-type string)) (expr
+            (checked-expr
+              (invocation time civilToEmailString (
+                (mapping-constructor-expr
+                  (key-value
+                    (literal year)
+                    (literal 2024))
+                  (key-value
+                    (literal month)
+                    (literal 6))
+                  (key-value
+                    (literal day)
+                    (literal 15))
+                  (key-value
+                    (literal hour)
+                    (literal 10))
+                  (key-value
+                    (literal minute)
+                    (literal 30))
+                  (key-value
+                    (literal second)
+                    (literal 45))
+                  (key-value
+                    (literal utcOffset)
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal hours)
+                        (literal 0))
+                      (key-value
+                        (literal minutes)
+                        (literal 0)))))
+                (simple-var-ref time ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT)))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref noAbbrev))))))))

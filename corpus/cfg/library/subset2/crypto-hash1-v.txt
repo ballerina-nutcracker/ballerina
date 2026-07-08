@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable input (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 104)
+          (literal 101)
+          (literal 108)
+          (literal 108)
+          (literal 111)))))
+    (var-def
+      (variable sha256 (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (invocation crypto hashSha256 (
+          (simple-var-ref input))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref sha256))))))
+  )
+)

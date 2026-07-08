@@ -1,0 +1,37 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition foo
+    (function init () ()
+      (block-function-body))
+    (resource-function get name:test
+      (param foo
+        (value-type string))
+      (param bar
+        (value-type int))
+      (variable vals (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (value-type null)
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref foo))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref bar))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref vals)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (user-defined-type foo)) (expr
+          (new ()))))
+      (expression-stmt
+        (client-resource-access get expr:
+          (simple-var-ref f) name:test computed:
+          (literal foo) computed:
+          (literal 4)
+          (list-constructor-expr))))))

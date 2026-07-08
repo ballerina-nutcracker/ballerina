@@ -1,0 +1,156 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_json_float.json
+    floatPath = %1;
+    %3 = ConstantLoad 3.14
+    %4 = %3;
+    %5 = fileWriteJson(floatPath,%4) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %5;
+    %7 = $desugar$0 is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %8 = fileReadJson(floatPath) -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %8;
+    %10 = $desugar$1 is error
+    %10 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    floatBack = $desugar$1;
+    %12 = println(floatBack) -> bb7;
+  }
+  bb7 {
+    %13 = ConstantLoad /tmp/bal_io_json_decimal.json
+    decimalPath = %13;
+    %15 = ConstantLoad 2.5
+    %16 = %15;
+    %17 = fileWriteJson(decimalPath,%16) -> bb8;
+  }
+  bb8 {
+    $desugar$2 = %17;
+    %19 = $desugar$2 is error
+    %19 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    %20 = fileReadJson(decimalPath) -> bb11;
+  }
+  bb11 {
+    $desugar$3 = %20;
+    %22 = $desugar$3 is error
+    %22 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb13 {
+    decimalBack = $desugar$3;
+    %24 = println(decimalBack) -> bb14;
+  }
+  bb14 {
+    %25 = ConstantLoad /tmp/bal_io_json_int.json
+    intPath = %25;
+    %27 = ConstantLoad 42
+    %28 = %27;
+    %29 = fileWriteJson(intPath,%28) -> bb15;
+  }
+  bb15 {
+    $desugar$4 = %29;
+    %31 = $desugar$4 is error
+    %31 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb17 {
+    %32 = fileReadJson(intPath) -> bb18;
+  }
+  bb18 {
+    $desugar$5 = %32;
+    %34 = $desugar$5 is error
+    %34 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    intBack = $desugar$5;
+    %36 = println(intBack) -> bb21;
+  }
+  bb21 {
+    %37 = ConstantLoad /tmp/bal_io_json_arr.json
+    arrPath = %37;
+    %39 = ConstantLoad 1
+    %40 = ConstantLoad 2.5
+    %41 = ConstantLoad true
+    %42 = ConstantLoad <nil>
+    %43 = ConstantLoad x
+    %44 = ConstantLoad 5
+    %45 = newArray [nil|boolean|int|float|decimal|string|...|......][%44]{%39, %40, %41, %42, %43}
+    arr = %45;
+    %47 = fileWriteJson(arrPath,arr) -> bb22;
+  }
+  bb22 {
+    $desugar$6 = %47;
+    %49 = $desugar$6 is error
+    %49 ? bb23 : bb24;
+  }
+  bb23 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb24 {
+    %50 = fileReadJson(arrPath) -> bb25;
+  }
+  bb25 {
+    $desugar$7 = %50;
+    %52 = $desugar$7 is error
+    %52 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    arrBack = $desugar$7;
+    %54 = println(arrBack) -> bb28;
+  }
+  bb28 {
+    return;
+  }
+}

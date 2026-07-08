@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 
 class Bar {
     int bar = 5;
@@ -44,5 +43,5 @@ class Foo {
 type FooBar Foo|Bar;
 
 public function main() {
-    FooBar f = new FooBar(5); // @error
+    FooBar _ = new FooBar(5); // @error
 }

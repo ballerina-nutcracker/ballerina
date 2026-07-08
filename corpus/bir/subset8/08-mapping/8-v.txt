@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad a
@@ -67,17 +66,21 @@ foo(any) -> nil{
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad unexpected
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %5 = ConstantLoad any
-    %6 = println(%5) -> bb4;
+    PushScopeFrame 2
+    %0 = ConstantLoad any
+    %1 = println(%0) -> bb4;
   }
   bb4 {
+    PopScopeFrame
     return;
   }
 }
@@ -87,28 +90,36 @@ foo1({| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad unexpected
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %5 = c is {| a: 2, b: 3, never... |}
-    %5 ? bb4 : bb6;
+    PushScopeFrame 1
+    %0 = (1, c) is {| a: 2, b: 3, never... |}
+    %0 ? bb4 : bb6;
   }
   bb4 {
-    %6 = ConstantLoad unexpected
-    %7 = println(%6) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
-    %8 = ConstantLoad { any a; }
-    %9 = println(%8) -> bb7;
+    PushScopeFrame 2
+    %0 = ConstantLoad { any a; }
+    %1 = println(%0) -> bb7;
   }
   bb7 {
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }
@@ -118,28 +129,36 @@ foo2({| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad unexpected
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb3;
   }
   bb3 {
-    %5 = c is {| a: 2, b: 3, never... |}
-    %5 ? bb4 : bb6;
+    PushScopeFrame 1
+    %0 = (1, c) is {| a: 2, b: 3, never... |}
+    %0 ? bb4 : bb6;
   }
   bb4 {
-    %6 = ConstantLoad unexpected
-    %7 = println(%6) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
-    %8 = ConstantLoad {| any a; any b; |}
-    %9 = println(%8) -> bb7;
+    PushScopeFrame 2
+    %0 = ConstantLoad {| any a; any b; |}
+    %1 = println(%0) -> bb7;
   }
   bb7 {
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
 }
@@ -149,17 +168,21 @@ foo3({| a: int, b: int, never... |}) -> nil{
     %2 ? bb1 : bb3;
   }
   bb1 {
-    %3 = ConstantLoad unexpected
-    %4 = println(%3) -> bb2;
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
   }
   bb2 {
+    PopScopeFrame
     GOTO bb5;
   }
   bb3 {
-    %5 = ConstantLoad {| int a; int b; |}
-    %6 = println(%5) -> bb4;
+    PushScopeFrame 2
+    %0 = ConstantLoad {| int a; int b; |}
+    %1 = println(%0) -> bb4;
   }
   bb4 {
+    PopScopeFrame
     GOTO bb5;
   }
   bb5 {

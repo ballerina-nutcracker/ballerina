@@ -1,0 +1,302 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad echo
+    %3 = ConstantLoad arguments
+    %4 = ConstantLoad hello
+    %5 = ConstantLoad 1
+    %6 = newArray [string...][%5]{%4}
+    %7 = newMap {| arguments: [string...], value: string, never... |}{%1=%2, %3=%6} defaults{arguments=ballerina/os:$desugar$0}
+    %8 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %9 = exec(%7,%8) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %9;
+    %11 = $desugar$0 is error
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    p = $desugar$0;
+    %13 = waitForExit(p) -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %13;
+    %15 = $desugar$1 is error
+    %15 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    code = $desugar$1;
+    %17 = code;
+    %18 = println(%17) -> bb7;
+  }
+  bb7 {
+    %19 = $default$0() -> bb8;
+  }
+  bb8 {
+    $desugar$2 = %19;
+    %21 = $desugar$2;
+    %22 = output(p,%21) -> bb9;
+  }
+  bb9 {
+    $desugar$3 = %22;
+    %24 = $desugar$3 is error
+    %24 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    out = $desugar$3;
+    %27 = length(out) -> bb12;
+  }
+  bb12 {
+    %28 = %27;
+    %29 = ConstantLoad 0
+    %30 = %29;
+    %26 = > %28 %30;
+    %31 = %26;
+    %32 = println(%31) -> bb13;
+  }
+  bb13 {
+    %33 = ConstantLoad value
+    %34 = ConstantLoad echo
+    %35 = ConstantLoad arguments
+    %36 = ConstantLoad world
+    %37 = ConstantLoad 1
+    %38 = newArray [string...][%37]{%36}
+    %39 = newMap {| arguments: [string...], value: string, never... |}{%33=%34, %35=%38} defaults{arguments=ballerina/os:$desugar$0}
+    %40 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %41 = exec(%39,%40) -> bb14;
+  }
+  bb14 {
+    $desugar$4 = %41;
+    %43 = $desugar$4 is error
+    %43 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb16 {
+    p2 = $desugar$4;
+    %45 = waitForExit(p2) -> bb17;
+  }
+  bb17 {
+    $desugar$5 = %45;
+    %47 = $desugar$5 is error
+    %47 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    _ = $desugar$5;
+    %49 = output(p2,stderr) -> bb20;
+  }
+  bb20 {
+    $desugar$6 = %49;
+    %51 = $desugar$6 is error
+    %51 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    err = $desugar$6;
+    %53 = length(err) -> bb23;
+  }
+  bb23 {
+    %54 = %53;
+    %55 = println(%54) -> bb24;
+  }
+  bb24 {
+    %56 = ConstantLoad /tmp/bal_exec_space_test/foo bar
+    dirWithSpace = %56;
+    %58 = ConstantLoad value
+    %59 = ConstantLoad mkdir
+    %60 = ConstantLoad arguments
+    %61 = ConstantLoad -p
+    %62 = ConstantLoad 2
+    %63 = newArray [string...][%62]{%61, dirWithSpace}
+    %64 = newMap {| arguments: [string...], value: string, never... |}{%58=%59, %60=%63} defaults{arguments=ballerina/os:$desugar$0}
+    %65 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %66 = exec(%64,%65) -> bb25;
+  }
+  bb25 {
+    $desugar$7 = %66;
+    %68 = $desugar$7 is error
+    %68 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    mk = $desugar$7;
+    %70 = waitForExit(mk) -> bb28;
+  }
+  bb28 {
+    $desugar$8 = %70;
+    %72 = $desugar$8 is error
+    %72 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb30 {
+    %73 = println($desugar$8) -> bb31;
+  }
+  bb31 {
+    %74 = ConstantLoad value
+    %75 = ConstantLoad ls
+    %76 = ConstantLoad arguments
+    %77 = ConstantLoad 1
+    %78 = newArray [string...][%77]{dirWithSpace}
+    %79 = newMap {| arguments: [string...], value: string, never... |}{%74=%75, %76=%78} defaults{arguments=ballerina/os:$desugar$0}
+    %80 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %81 = exec(%79,%80) -> bb32;
+  }
+  bb32 {
+    $desugar$9 = %81;
+    %83 = $desugar$9 is error
+    %83 ? bb33 : bb34;
+  }
+  bb33 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb34 {
+    lsProc = $desugar$9;
+    %85 = waitForExit(lsProc) -> bb35;
+  }
+  bb35 {
+    $desugar$10 = %85;
+    %87 = $desugar$10 is error
+    %87 ? bb36 : bb37;
+  }
+  bb36 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$10);
+    PopScopeFrame
+    return;
+  }
+  bb37 {
+    %88 = println($desugar$10) -> bb38;
+  }
+  bb38 {
+    %89 = ConstantLoad value
+    %90 = ConstantLoad rm
+    %91 = ConstantLoad arguments
+    %92 = ConstantLoad -rf
+    %93 = ConstantLoad /tmp/bal_exec_space_test
+    %94 = ConstantLoad 2
+    %95 = newArray [string...][%94]{%92, %93}
+    %96 = newMap {| arguments: [string...], value: string, never... |}{%89=%90, %91=%95} defaults{arguments=ballerina/os:$desugar$0}
+    %97 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %98 = exec(%96,%97) -> bb39;
+  }
+  bb39 {
+    $desugar$11 = %98;
+    %100 = $desugar$11 is error
+    %100 ? bb40 : bb41;
+  }
+  bb40 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$11);
+    PopScopeFrame
+    return;
+  }
+  bb41 {
+    rm = $desugar$11;
+    %102 = waitForExit(rm) -> bb42;
+  }
+  bb42 {
+    $desugar$12 = %102;
+    %104 = $desugar$12 is error
+    %104 ? bb43 : bb44;
+  }
+  bb43 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb44 {
+    _ = $desugar$12;
+    %106 = ConstantLoad value
+    %107 = ConstantLoad no_such_command_xyz_123
+    %108 = newMap {| arguments: [string...], value: string, never... |}{%106=%107} defaults{arguments=ballerina/os:$desugar$0}
+    %109 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %110 = exec(%108,%109) -> bb45;
+  }
+  bb45 {
+    bad = %110;
+    %112 = bad is error
+    %113 = %112;
+    %114 = println(%113) -> bb46;
+  }
+  bb46 {
+    %115 = ConstantLoad value
+    %116 = ConstantLoad echo
+    %117 = ConstantLoad arguments
+    %118 = ConstantLoad bye
+    %119 = ConstantLoad 1
+    %120 = newArray [string...][%119]{%118}
+    %121 = newMap {| arguments: [string...], value: string, never... |}{%115=%116, %117=%120} defaults{arguments=ballerina/os:$desugar$0}
+    %122 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %123 = exec(%121,%122) -> bb47;
+  }
+  bb47 {
+    $desugar$13 = %123;
+    %125 = $desugar$13 is error
+    %125 ? bb48 : bb49;
+  }
+  bb48 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb49 {
+    p3 = $desugar$13;
+    %127 = exit(p3) -> bb50;
+  }
+  bb50 {
+    %128 = ConstantLoad exited
+    %129 = println(%128) -> bb51;
+  }
+  bb51 {
+    return;
+  }
+}

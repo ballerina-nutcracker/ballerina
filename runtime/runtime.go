@@ -17,6 +17,8 @@
 package runtime
 
 import (
+	"errors"
+
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/platform/pal"
@@ -27,10 +29,53 @@ import (
 	"ballerina-lang-go/values"
 )
 
+// LookupFunction resolves a top-level Ballerina function (BIR or native)
+// by qualified name. The returned payload is opaque; pass it to
+// InvokeFunction.
+func LookupFunction(rt *Runtime, org, module, name string) (any, bool) {
+	return exec.LookupFunction(rt.env, org, module, name)
+}
+
+func InvokeFunction(rt *Runtime, fn any, args []values.BalValue) (values.BalValue, error) {
+	cx := exec.CreateContext(rt.env)
+	return exec.Invoke(cx, fn, args)
+}
+
+const onGracefulStopLookupKey = "ballerina/lang.runtime:onGracefulStop"
+
+func (rt *Runtime) runtimeBuiltins() map[string]extern.NativeFunc {
+	return map[string]extern.NativeFunc{
+		onGracefulStopLookupKey: rt.invokeOnGracefulStop,
+	}
+}
+
+func (rt *Runtime) invokeOnGracefulStop(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	if len(args) != 1 {
+		return nil, errors.New("lang.runtime:onGracefulStop expects one argument")
+	}
+	handler, ok := args[0].(*values.Function)
+	if !ok {
+		return nil, errors.New("lang.runtime:onGracefulStop expects a function")
+	}
+	handle, err := exec.NewFunctionValueHandle(rt.env, handler)
+	if err != nil {
+		return nil, err
+	}
+	if err := rt.registerGracefulStopHandler(handle); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 // Runtime represents a Ballerina runtime instance that owns a module registry
 // and is used as the execution context for interpreting BIR packages.
+//
+// The embedded lifeCycle holds all lifecycle state machine fields; they are
+// private to this package and mutated only via the methods in lifecycle.go.
 type Runtime struct {
-	env *extern.Env
+	lifeCycle
+	env        *extern.Env
+	ExitStatus <-chan uint8
 }
 
 // ModuleInitializer is a function that can install modules (e.g. stdlibs) into
@@ -42,9 +87,25 @@ var moduleInitializers []ModuleInitializer
 // NewRuntime constructs a new runtime with an empty registry and runs all
 // registered module initializers.
 func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
-	registry := modules.NewRegistry()
-	env := extern.InitEnv(platform, tyEnv, registry)
-	rt := &Runtime{env}
+	exitChanel := make(chan uint8, 1)
+	rt := &Runtime{
+		ExitStatus: exitChanel,
+		lifeCycle: lifeCycle{
+			exitCodeChan: exitChanel,
+		},
+	}
+	registry := modules.NewRegistry(rt.runtimeBuiltins())
+	env := extern.InitEnv(platform, tyEnv, registry, extern.DispatchHandles{
+		LookupObject:   exec.LookupObjectMethod,
+		LookupRemote:   exec.LookupRemoteMethod,
+		LookupResource: exec.LookupResourceMethod,
+		Invoke:         exec.Invoke,
+		Start:          exec.StartMethod,
+		LookupFunction: func(cx *extern.Context, org, module, name string) (any, bool) {
+			return exec.LookupFunction(cx.Env, org, module, name)
+		},
+	})
+	rt.env = env
 	for _, init := range moduleInitializers {
 		init(rt)
 	}
@@ -60,9 +121,63 @@ func (rt *Runtime) registry() *modules.Registry {
 	return rt.env.Registry.(*modules.Registry)
 }
 
-// Interpret interprets a BIR package using this runtime instance.
-func (rt *Runtime) Interpret(pkg bir.BIRPackage) (err error) {
-	return exec.Interpret(pkg, rt.env)
+// Init registers and initializes a single BIR package. Callers must invoke
+// Init in module-topological order. After every Init succeeds (or one
+// fails), call Listen.
+func (rt *Runtime) Init(pkg bir.BIRPackage) error {
+	rt.transition(StateInitializing)
+	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(nil, &pkg))
+	if err := rt.recordLifecycleHooks(&pkg); err != nil {
+		return rt.abortInitialization(err)
+	}
+	if err := exec.RunEntrypoints(pkg, rt.env); err != nil {
+		return rt.abortInitialization(err)
+	}
+	return nil
+}
+
+func (rt *Runtime) abortInitialization(err error) error {
+	rt.mu.Lock()
+	if rt.exitCode == 0 {
+		rt.exitCode = 1
+	}
+	rt.mu.Unlock()
+	rt.transition(StateGracefulStopping)
+	return err
+}
+
+// recordLifecycleHooks appends the package's lifecycle dispatch handles onto the
+// runtime's per-state slices in module-topological order. The three handles
+// must be set together; partial population is a packager bug.
+func (rt *Runtime) recordLifecycleHooks(pkg *bir.BIRPackage) error {
+	hasAny := pkg.StartFunction != nil || pkg.GracefulStopFunction != nil || pkg.ImmediateStopFunction != nil
+	if !hasAny {
+		return nil
+	}
+	if pkg.StartFunction == nil || pkg.GracefulStopFunction == nil || pkg.ImmediateStopFunction == nil {
+		return errors.New("malformed package lifecycle hooks: $start/$gracefulStop/$immediateStop must be set together")
+	}
+	rt.startFns = append(rt.startFns, exec.NewBIRHandle(pkg.StartFunction))
+	rt.gracefulStopFns = append(rt.gracefulStopFns, exec.NewBIRHandle(pkg.GracefulStopFunction))
+	rt.immediateStopFns = append(rt.immediateStopFns, exec.NewBIRHandle(pkg.ImmediateStopFunction))
+	return nil
+}
+
+// Listen transitions the runtime into the Listening state. If no $start
+// hooks have been registered the runtime moves straight to Stopped.
+func (rt *Runtime) Listen() {
+	rt.mu.Lock()
+	stopped := rt.state == StateStopped
+	hasListeners := len(rt.startFns) > 0
+	rt.mu.Unlock()
+	if stopped {
+		return
+	}
+	if !hasListeners {
+		rt.transition(StateGracefulStopping)
+		return
+	}
+	rt.transition(StateListening)
 }
 
 // RegisterModuleInitializer registers a module initializer that will be invoked

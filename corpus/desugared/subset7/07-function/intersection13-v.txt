@@ -169,5 +169,13 @@
         (user-defined-type S2))
       (user-defined-type S3)))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (union-type
+            (union-type
+              (user-defined-type S1)
+              (user-defined-type S2))
+            (user-defined-type S3))) (expr
+          (simple-var-ref s))))
       (return
         (literal 3)))))

@@ -30,5 +30,5 @@ type NorS N|S;
 
 public function main() {
     NS ns = {x: "str"};
-    NorS nOrS = ns; // @error
+    NorS _ = ns; // @error
 }

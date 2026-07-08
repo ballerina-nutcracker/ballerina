@@ -15,5 +15,6 @@
 // under the License.
 
 public function foo(int a) returns string {
+    int _ = a;
     return a + "a"; // @error
 }

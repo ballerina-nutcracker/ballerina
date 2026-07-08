@@ -50,7 +50,7 @@ func bddEveryPositive(cx Context, b Bdd, pos conjunctionHandle, neg conjunctionH
 }
 
 func andIfPositive(cx Context, atom atom, next conjunctionHandle) conjunctionHandle {
-	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() < 0 {
+	if !isPositiveAtom(atom) {
 		return next
 	}
 	return cx.pushConjunction(atom, next)
@@ -113,8 +113,9 @@ func isNothingSubtype(t SubtypeData) bool {
 	return false
 }
 
-func memoSubtypeIsEmpty(cx Context, memoTable map[string]*bddMemo, isEmptyPredicate bddIsEmptyPredicate, b Bdd) bool {
-	mm := memoTable[b.canonicalKey()]
+func memoSubtypeIsEmpty(cx Context, memoTable map[bddKey]*bddMemo, isEmptyPredicate bddIsEmptyPredicate, b Bdd) bool {
+	key := b.canonicalKey()
+	mm := memoTable[key]
 	var m *bddMemo
 	if mm != nil {
 		res := mm.isEmpty
@@ -134,7 +135,7 @@ func memoSubtypeIsEmpty(cx Context, memoTable map[string]*bddMemo, isEmptyPredic
 	} else {
 		tmp := newBddMemo()
 		m = &tmp
-		memoTable[b.canonicalKey()] = m
+		memoTable[key] = m
 	}
 	m.isEmpty = MemoStatus_PROVISIONAL
 	initStackDepth := cx.getMemoStackDepth()

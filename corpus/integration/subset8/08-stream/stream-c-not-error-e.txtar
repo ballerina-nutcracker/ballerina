@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: stream completion type must be a subtype of error?
+  --> stream-c-not-error-e.bal:17:34
+   |
+17 | type IntStringStream stream<int, string>; // @error
+   |                                  ^^^^^^

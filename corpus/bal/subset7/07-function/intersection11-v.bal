@@ -57,5 +57,6 @@ public function main() {
 }
 
 function foo(S1|S2|S3 s) returns S1 & S2 & S3 {
+    S1|S2|S3 _ = s;
     return 13;
 }

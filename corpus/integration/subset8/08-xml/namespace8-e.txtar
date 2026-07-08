@@ -1,13 +1,13 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: undefined XML namespace prefix 'bar'
-  --> namespace8-e.bal:20:21
+  --> namespace8-e.bal:19:18
    |
-20 |     xml elem = xml `<bar:f foo="ff"><bar:x></bar:x></bar:f>`; // @error
-   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     xml _ = xml `<bar:f foo="ff"><bar:x></bar:x></bar:f>`; // @error
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: undefined XML namespace prefix 'bar'
-  --> namespace8-e.bal:20:35
+  --> namespace8-e.bal:19:32
    |
-20 |     xml elem = xml `<bar:f foo="ff"><bar:x></bar:x></bar:f>`; // @error
-   |                                   ^^^^^^^^^^^^^^^
+19 |     xml _ = xml `<bar:f foo="ff"><bar:x></bar:x></bar:f>`; // @error
+   |                                ^^^^^^^^^^^^^^^

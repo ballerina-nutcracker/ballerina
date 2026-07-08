@@ -1,0 +1,83 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition TaggedListener
+    (variable tag (type
+      (value-type string)))
+    (function init (
+      (variable tag (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access tag
+            (simple-var-ref self))
+          (simple-var-ref tag))))
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (literal attached: )
+            (field-based-access tag
+              (simple-var-ref self)))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (function makeListener (
+    (variable tag (type
+      (value-type string)))) (
+    (user-defined-type TaggedListener))
+    (block-function-body
+      (return
+        (new
+          (user-defined-type TaggedListener) (
+          (simple-var-ref tag))))))
+  (variable l (type
+    (user-defined-type TaggedListener)) (expr
+    (new (
+      (literal var)))))
+  (service
+    (on
+    (simple-var-ref l)
+    (new
+      (user-defined-type TaggedListener) (
+      (literal inline)))
+    (invocation makeListener (
+      (literal call)))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

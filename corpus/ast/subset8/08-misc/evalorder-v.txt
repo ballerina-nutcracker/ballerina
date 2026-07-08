@@ -184,4 +184,12 @@
     (variable b (type
       (value-type int)))) (
     (value-type null))
-    (block-function-body)))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref a))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref b)))))))

@@ -19,12 +19,16 @@ main() -> nil{
     %13 ? bb1 : bb2;
   }
   bb1 {
-    %16 = ConstantLoad <nil>
-    %17 = ConstantLoad 0
-    xy[%17] = %16;
+    PushScopeFrame 2
+    %0 = ConstantLoad <nil>
+    %1 = ConstantLoad 0
+    (1, xy)[%1] = %0;
+    PopScopeFrame
     GOTO bb2;
   }
   bb2 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

@@ -27,5 +27,9 @@
       (user-defined-type Nothing)))) (
     (user-defined-type Everything))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (user-defined-type Nothing)) (expr
+          (simple-var-ref n))))
       (return
         (literal 42)))))

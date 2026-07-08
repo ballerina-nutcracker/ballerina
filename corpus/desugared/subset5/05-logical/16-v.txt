@@ -24,7 +24,7 @@
                 (value-type int)))))
         (block-stmt
           (var-def
-            (variable unused1 (type
+            (variable _ (type
               (union-type
                 (value-type float)
                 (value-type string))) (expr
@@ -40,7 +40,7 @@
                   (value-type int)))))
           (block-stmt
             (var-def
-              (variable unused2 (type
+              (variable _ (type
                 (union-type
                   (union-type
                     (value-type int)
@@ -49,6 +49,6 @@
                 (simple-var-ref x))))) (
           (block-stmt
             (var-def
-              (variable unused3 (type
+              (variable _ (type
                 (value-type int)) (expr
                 (simple-var-ref x)))))))))))

@@ -19,6 +19,7 @@ package exec
 import (
 	"fmt"
 	"math"
+	"unsafe"
 
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/decimal"
@@ -65,12 +66,12 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 			continue
 		}
 		fn := ctx.Env.Registry.(*modules.Registry).GetBIRFunction(def.FunctionLookupKey)
-		val := executeFunction(ctx, *fn, nil, frame)
+		val := executeFunction(ctx, fn, nil, frame)
 		entries = append(entries, values.MapEntry{Key: def.FieldName, Value: val})
 	}
 	atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx, newMap.Type)
 	if atomic == nil {
-		panic(fmt.Sprintf("mapping inherent type has no atomic representation: %s", semtypes.ToString(ctx.TypeCtx, newMap.Type)))
+		panic("mapping inherent type has no atomic representation")
 	}
 	m := values.NewMap(newMap.Type, atomic, newMap.IsReadonly, entries)
 	setOperandValue(ctx, newMap.GetLhsOperand(), frame, m)
@@ -96,16 +97,28 @@ func execNewError(ctx *extern.Context, newError *bir.NewError, frame *Frame) {
 func execNewObject(ctx *extern.Context, newObject *bir.NewObject, frame *Frame) {
 	classDef := ctx.Env.Registry.(*modules.Registry).GetClassDef(newObject.ClassDefRef)
 	fieldValues := make(map[string]values.BalValue, len(classDef.Fields))
-	for _, field := range classDef.Fields {
-		fv, _ := values.FillerValue(ctx.TypeCtx, field.Ty)
-		fieldValues[field.Name] = fv
-	}
 	methodKeys := make(map[string]string, len(classDef.VTable))
 	for methodName, method := range classDef.VTable {
 		methodKeys[methodName] = method.FunctionLookupKey
 	}
+	rtable := make(map[string][]values.ResourceEntry, len(classDef.RTable))
+	for methodName, entries := range classDef.RTable {
+		copied := make([]values.ResourceEntry, len(entries))
+		for i, entry := range entries {
+			segs := make([]values.ResourcePathSegmentDef, len(entry.PathSegments))
+			for j, seg := range entry.PathSegments {
+				segs[j] = values.ResourcePathSegmentDef{Ty: seg.Ty}
+			}
+			copied[i] = values.ResourceEntry{
+				PathSegments:      segs,
+				RestSegmentTy:     entry.RestSegmentTy,
+				FunctionLookupKey: entry.Fn.FunctionLookupKey,
+			}
+		}
+		rtable[methodName] = copied
+	}
 	objType := newObject.GetLhsOperand().VariableDcl.GetType()
-	obj := values.NewObject(objType, fieldValues, methodKeys)
+	obj := values.NewObject(objType, fieldValues, methodKeys, rtable)
 	setOperandValue(ctx, newObject.GetLhsOperand(), frame, obj)
 }
 
@@ -197,6 +210,7 @@ func execFPLoad(ctx *extern.Context, fpLoad *bir.FPLoad, frame *Frame) {
 		LookupKey: fpLoad.FunctionLookupKey,
 	}
 	if fpLoad.IsClosure {
+		frame.MarkEscaped()
 		fn.ParentFrame = frame
 	}
 	setOperandValue(ctx, fpLoad.LhsOp, frame, fn)
@@ -225,19 +239,18 @@ func castValue(ctx *extern.Context, value values.BalValue, targetType semtypes.S
 	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
 		converted = toDecimal(value)
 	default:
-		panic(badTypeCastError(typeCtx, valueType, targetType))
+		panic(badTypeCastError())
 	}
 	// Numeric conversion only guarantees the basic type; narrow subtypes
 	// (e.g. `2|3|4`, `int:Signed8`, `byte`) still require a membership check.
 	if !semtypes.IsSubtype(typeCtx, values.SemTypeForValue(converted), targetType) {
-		panic(badTypeCastError(typeCtx, valueType, targetType))
+		panic(badTypeCastError())
 	}
 	return converted
 }
 
-func badTypeCastError(typeCtx semtypes.Context, valueType, targetType semtypes.SemType) *values.Error {
-	return values.NewErrorWithMessage(fmt.Sprintf("bad type cast: cannot cast value of type %s to %s",
-		semtypes.ToString(typeCtx, valueType), semtypes.ToString(typeCtx, targetType)))
+func badTypeCastError() *values.Error {
+	return values.NewErrorWithMessage("bad type cast")
 }
 
 func toInt(value any) int64 {
@@ -309,18 +322,18 @@ func toDecimal(value any) *decimal.Decimal {
 
 func execNewXMLText(ctx *extern.Context, instr *bir.NewXMLText, frame *Frame) {
 	body := getOperandValue(ctx, instr.BodyOp, frame).(string)
-	setOperandValue(ctx, instr.LhsOp, frame, &values.XMLText{Body: body})
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLText(body))
 }
 
 func execNewXMLComment(ctx *extern.Context, instr *bir.NewXMLComment, frame *Frame) {
 	body := getOperandValue(ctx, instr.BodyOp, frame).(string)
-	setOperandValue(ctx, instr.LhsOp, frame, &values.XMLComment{Body: body})
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLComment(body, xmlResultReadonly(ctx, instr.LhsOp)))
 }
 
 func execNewXMLPI(ctx *extern.Context, instr *bir.NewXMLPI, frame *Frame) {
 	target := getOperandValue(ctx, instr.TargetOp, frame).(string)
 	data := getOperandValue(ctx, instr.DataOp, frame).(string)
-	setOperandValue(ctx, instr.LhsOp, frame, &values.XMLProcessingInstruction{Target: target, Data: data})
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLProcessingInstruction(target, data, xmlResultReadonly(ctx, instr.LhsOp)))
 }
 
 func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Frame) {
@@ -342,7 +355,37 @@ func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Fra
 	if instr.NamespacesOp != nil {
 		namespaces = getOperandValue(ctx, instr.NamespacesOp, frame).(*values.Map)
 	}
-	setOperandValue(ctx, instr.LhsOp, frame, &values.XMLElement{Name: name, Attributes: attrs, Namespaces: namespaces, Children: children})
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(name, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
+}
+
+func xmlResultReadonly(ctx *extern.Context, op *bir.BIROperand) bool {
+	return semtypes.IsSubtype(ctx.TypeCtx, op.VariableDcl.GetType(), semtypes.VAL_READONLY)
+}
+
+func execEvalTemplateExpr(ctx *extern.Context, instr *bir.EvalTemplateExpr, frame *Frame) {
+	n := len(instr.Insertions)
+	buf := make([]byte, 0, instr.LiteralsTotalLen+8*n)
+	for i := 0; i < n; i++ {
+		buf = append(buf, instr.Strings[i]...)
+		buf = append(buf, values.String(getOperandValue(ctx, instr.Insertions[i], frame), nil)...)
+	}
+	buf = append(buf, instr.Strings[n]...)
+	var result string
+	if len(buf) > 0 {
+		result = unsafe.String(&buf[0], len(buf))
+	}
+	switch instr.Kind {
+	case bir.TemplateKindString:
+		setOperandValue(ctx, instr.LhsOp, frame, result)
+	case bir.TemplateKindXML:
+		xmlValue, err := values.ParseAsXMLValue(ctx.TypeCtx, result, values.XMLTemplateMode)
+		if err != nil {
+			panic(err)
+		}
+		setOperandValue(ctx, instr.LhsOp, frame, xmlValue)
+	default:
+		panic(fmt.Sprintf("unsupported template kind: %d", instr.Kind))
+	}
 }
 
 func execNewXMLSequence(ctx *extern.Context, instr *bir.NewXMLSequence, frame *Frame) {
@@ -355,5 +398,5 @@ func execNewXMLSequence(ctx *extern.Context, instr *bir.NewXMLSequence, frame *F
 		}
 		items = append(items, x)
 	}
-	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLSequence(items))
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewNormalizedXMLSequence(items))
 }

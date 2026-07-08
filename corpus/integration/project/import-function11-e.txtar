@@ -5,3 +5,9 @@ error[SEMANTIC_ERROR]: Unknown symbol: bar
    |
 20 |     string test = bar:bar(5); // @error
    |                   ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'test'
+  --> main.bal:20:5
+   |
+20 |     string test = bar:bar(5); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of (any|error)[]
+  --> remove-e.bal:21:5
+   |
+21 |     array:push(1, 2); // @error invalid lang.array container
+   |     ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of map<any|error>
+  --> remove-e.bal:22:5
+   |
+22 |     map:remove(1, "alice"); // @error invalid lang.map container
+   |     ^^^^^^^^^^^^^^^^^^^^^^

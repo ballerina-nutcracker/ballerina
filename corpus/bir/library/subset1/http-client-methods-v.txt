@@ -1,0 +1,234 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad https://example.com
+    $desugar$0 = %1;
+    %3 = $default$13($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = newObject ballerina/http:Client
+    %6 = init(%5,$desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %8 = %6 is nil
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    %7 = %5;
+    GOTO bb5;
+  }
+  bb4 {
+    %7 = %6;
+    GOTO bb5;
+  }
+  bb5 {
+    $desugar$2 = %7;
+    %10 = $desugar$2 is error
+    %10 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    c = $desugar$2;
+    %12 = ConstantLoad /put
+    $desugar$3 = %12;
+    %14 = ConstantLoad body
+    $desugar$4 = %14;
+    %16 = $default$26($desugar$3,$desugar$4) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %16;
+    %18 = $default$27($desugar$3,$desugar$4,$desugar$5) -> bb9;
+  }
+  bb9 {
+    $desugar$6 = %18;
+    %20 = $remote$put(c,$desugar$3,$desugar$4,$desugar$5,$desugar$6) -> bb10;
+  }
+  bb10 {
+    $desugar$7 = %20;
+    %22 = $desugar$7 is error
+    %22 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    r1 = $desugar$7;
+    %25 = ConstantLoad statusCode
+    %24 = r1[%25];
+    %26 = %24;
+    %27 = println(%26) -> bb13;
+  }
+  bb13 {
+    %28 = ConstantLoad /patch
+    $desugar$8 = %28;
+    %30 = ConstantLoad key
+    %31 = ConstantLoad val
+    %32 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%30=%31}
+    $desugar$9 = %32;
+    %34 = $default$22($desugar$8,$desugar$9) -> bb14;
+  }
+  bb14 {
+    $desugar$10 = %34;
+    %36 = $default$23($desugar$8,$desugar$9,$desugar$10) -> bb15;
+  }
+  bb15 {
+    $desugar$11 = %36;
+    %38 = $remote$patch(c,$desugar$8,$desugar$9,$desugar$10,$desugar$11) -> bb16;
+  }
+  bb16 {
+    $desugar$12 = %38;
+    %40 = $desugar$12 is error
+    %40 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb18 {
+    r2 = $desugar$12;
+    %43 = ConstantLoad statusCode
+    %42 = r2[%43];
+    %44 = %42;
+    %45 = println(%44) -> bb19;
+  }
+  bb19 {
+    %46 = ConstantLoad /delete
+    $desugar$13 = %46;
+    %48 = $default$14($desugar$13) -> bb20;
+  }
+  bb20 {
+    $desugar$14 = %48;
+    %50 = $default$15($desugar$13,$desugar$14) -> bb21;
+  }
+  bb21 {
+    $desugar$15 = %50;
+    %52 = $default$16($desugar$13,$desugar$14,$desugar$15) -> bb22;
+  }
+  bb22 {
+    $desugar$16 = %52;
+    %54 = $remote$delete(c,$desugar$13,$desugar$14,$desugar$15,$desugar$16) -> bb23;
+  }
+  bb23 {
+    $desugar$17 = %54;
+    %56 = $desugar$17 is error
+    %56 ? bb24 : bb25;
+  }
+  bb24 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$17);
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    r3 = $desugar$17;
+    %59 = ConstantLoad statusCode
+    %58 = r3[%59];
+    %60 = %58;
+    %61 = println(%60) -> bb26;
+  }
+  bb26 {
+    %62 = ConstantLoad /head
+    $desugar$18 = %62;
+    %64 = $default$20($desugar$18) -> bb27;
+  }
+  bb27 {
+    $desugar$19 = %64;
+    %66 = $remote$head(c,$desugar$18,$desugar$19) -> bb28;
+  }
+  bb28 {
+    $desugar$20 = %66;
+    %68 = $desugar$20 is error
+    %68 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$20);
+    PopScopeFrame
+    return;
+  }
+  bb30 {
+    r4 = $desugar$20;
+    %71 = ConstantLoad statusCode
+    %70 = r4[%71];
+    %72 = %70;
+    %73 = println(%72) -> bb31;
+  }
+  bb31 {
+    %74 = ConstantLoad /options
+    $desugar$21 = %74;
+    %76 = $default$21($desugar$21) -> bb32;
+  }
+  bb32 {
+    $desugar$22 = %76;
+    %78 = $remote$options(c,$desugar$21,$desugar$22) -> bb33;
+  }
+  bb33 {
+    $desugar$23 = %78;
+    %80 = $desugar$23 is error
+    %80 ? bb34 : bb35;
+  }
+  bb34 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$23);
+    PopScopeFrame
+    return;
+  }
+  bb35 {
+    r5 = $desugar$23;
+    %83 = ConstantLoad statusCode
+    %82 = r5[%83];
+    %84 = %82;
+    %85 = println(%84) -> bb36;
+  }
+  bb36 {
+    %86 = ConstantLoad PATCH
+    $desugar$24 = %86;
+    %88 = ConstantLoad /execute
+    $desugar$25 = %88;
+    %90 = ConstantLoad exec body
+    $desugar$26 = %90;
+    %92 = $default$17($desugar$24,$desugar$25,$desugar$26) -> bb37;
+  }
+  bb37 {
+    $desugar$27 = %92;
+    %94 = $default$18($desugar$24,$desugar$25,$desugar$26,$desugar$27) -> bb38;
+  }
+  bb38 {
+    $desugar$28 = %94;
+    %96 = $remote$execute(c,$desugar$24,$desugar$25,$desugar$26,$desugar$27,$desugar$28) -> bb39;
+  }
+  bb39 {
+    $desugar$29 = %96;
+    %98 = $desugar$29 is error
+    %98 ? bb40 : bb41;
+  }
+  bb40 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$29);
+    PopScopeFrame
+    return;
+  }
+  bb41 {
+    r6 = $desugar$29;
+    %101 = ConstantLoad statusCode
+    %100 = r6[%101];
+    %102 = %100;
+    %103 = println(%102) -> bb42;
+  }
+  bb42 {
+    %104 = ConstantLoad <nil>
+    %0 = %104;
+    return;
+  }
+}

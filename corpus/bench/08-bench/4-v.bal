@@ -16,7 +16,6 @@
 
 import ballerina/io;
 
-const int MagicMul = 17;
 const int MagicMod = 100000;
 
 type ComparableValue record {
@@ -79,7 +78,7 @@ function computeChecksum(ComparableValue[] values) returns int {
 
 function repeatedComputeLoop(ComparableValue[] values, int iterations) returns int {
     int result = 0;
-    foreach int iter in 0 ..< iterations {
+    foreach int _ in 0 ..< iterations {
         int partial = computeChecksum(values);
         result = (result + partial) % MagicMod;
     }

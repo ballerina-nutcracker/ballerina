@@ -1,0 +1,31 @@
+(package
+  (import-package ballerina io (as io))
+  (variable counter (type
+    (value-type int)))
+  (variable xs (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref counter)
+        (literal 0))
+      (assignment
+        (simple-var-ref xs)
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref counter))))))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref xs)))))))))

@@ -1,0 +1,9 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate resource method 'get'
+  --> resource-method6-e.bal:20:5
+   |
+20 |     resource function get test/[string b]() { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     }
+   |     ^

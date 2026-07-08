@@ -3,5 +3,5 @@
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
   --> 7-e.bal:20:13
    |
-20 |     int c = a + b; // @error
+20 |     int _ = a + b; // @error
    |             ^^^^^

@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -143,6 +144,169 @@ func TestBalRunWorkspaceCorpus(t *testing.T) {
 	})
 }
 
+// TestBalPackCorpus exercises `bal pack` end-to-end through the coverage-aware
+// CLI harness. Each subtest invokes the binary with the scenario's args and
+// substring-matches the captured stdout/stderr/exitcode against the txtar at
+// corpus/cli/output/pack/<scenario>.txtar. This is the corpus replacement for
+// the in-process cli/cmd/pack_test.go suite — running via the real binary
+// keeps subprocess coverage flowing into the cli/cmd profile.
+//
+// Java equivalent: N/A — pack is Go-only CLI integration coverage.
+func TestBalPackCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "pack")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "pack")
+
+	// Use a guaranteed-missing path under the testdata root for the
+	// nonexistent-path scenario. The directory's parent exists (testdata/pack)
+	// so the stat error is "no such file or directory" rather than something
+	// else like "permission denied".
+	missingPath := filepath.Join(testdataRoot, "this-path-does-not-exist")
+
+	basicProject := filepath.Join(testdataRoot, "basic", "project")
+
+	// useDebugBinary, when true, dispatches through the debug-tagged bal binary
+	// instead of the release binary. Scenarios that exercise debug-only flags
+	// (e.g. --prof, which is registered by prof_debug.go) must set this. If the
+	// debug binary build failed (e.g. missing -tags debug support), the scenario
+	// is t.Skip()ed rather than failed.
+	tests := []struct {
+		name           string
+		args           []string
+		txtar          string
+		useDebugBinary bool
+	}{
+		{
+			name:  "basic",
+			args:  []string{"pack", basicProject},
+			txtar: "basic.txtar",
+		},
+		{
+			name:  "rejects-single-file",
+			args:  []string{"pack", filepath.Join(testdataRoot, "rejects-single-file", "main.bal")},
+			txtar: "rejects-single-file.txtar",
+		},
+		{
+			name:  "nonexistent-path",
+			args:  []string{"pack", missingPath},
+			txtar: "nonexistent-path.txtar",
+		},
+		{
+			name:  "not-ballerina-project",
+			args:  []string{"pack", filepath.Join(testdataRoot, "not-ballerina-project", "empty")},
+			txtar: "not-ballerina-project.txtar",
+		},
+		{
+			name:  "too-many-args",
+			args:  []string{"pack", "a", "b"},
+			txtar: "too-many-args.txtar",
+		},
+		{
+			name:  "compile-error",
+			args:  []string{"pack", filepath.Join(testdataRoot, "compile-error", "project")},
+			txtar: "compile-error.txtar",
+		},
+		{
+			name:  "help",
+			args:  []string{"pack", "--help"},
+			txtar: "help.txtar",
+		},
+		{
+			name:  "pack-with-dump-tokens",
+			args:  []string{"pack", basicProject, "--dump-tokens"},
+			txtar: "pack-with-dump-tokens.txtar",
+		},
+		{
+			name:  "pack-with-dump-st",
+			args:  []string{"pack", basicProject, "--dump-st"},
+			txtar: "pack-with-dump-st.txtar",
+		},
+		{
+			name:  "pack-with-trace-recovery",
+			args:  []string{"pack", basicProject, "--trace-recovery"},
+			txtar: "pack-with-trace-recovery.txtar",
+		},
+		{
+			name:  "pack-with-log-file",
+			args:  []string{"pack", basicProject, "--dump-tokens", "--log-file={{TMPDIR}}/bal.log"},
+			txtar: "pack-with-log-file.txtar",
+		},
+		{
+			name:           "pack-with-prof",
+			args:           []string{"pack", basicProject, "--prof"},
+			txtar:          "pack-with-prof.txtar",
+			useDebugBinary: true,
+		},
+		{
+			name:  "pack-malformed-manifest",
+			args:  []string{"pack", filepath.Join(testdataRoot, "malformed-manifest", "project")},
+			txtar: "pack-malformed-manifest.txtar",
+		},
+		{
+			name:  "rejects-workspace",
+			args:  []string{"pack", filepath.Join(testdataRoot, "rejects-workspace", "project")},
+			txtar: "rejects-workspace.txtar",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			binToUse := balBin
+			if tt.useDebugBinary {
+				if cliIntegrationDebugBalBin == "" {
+					t.Skip("debug-tagged bal binary unavailable; skipping debug-only scenario")
+				}
+				binToUse = cliIntegrationDebugBalBin
+			}
+
+			// Substitute the per-scenario {{TMPDIR}} placeholder in each arg
+			// with t.TempDir(). The TempDir is created lazily on first use
+			// per subtest and cleaned up by the testing package. Only the
+			// literal token "{{TMPDIR}}" is recognised — any other "{{...}}"
+			// placeholder is rejected to prevent silent typos.
+			args := substituteScenarioPlaceholders(t, tt.args)
+
+			assertBalCommandMatchesTxtarFragmentsLoose(t, binToUse, repoRoot, coverDir,
+				args, filepath.Join(outputsRoot, tt.txtar))
+		})
+	}
+}
+
+// substituteScenarioPlaceholders replaces the token "{{TMPDIR}}" in each arg
+// with a fresh t.TempDir() (one TempDir per scenario, reused across args).
+// Any other "{{...}}" token is treated as an unknown placeholder and fails
+// the test — only TMPDIR is supported today.
+func substituteScenarioPlaceholders(t *testing.T, args []string) []string {
+	t.Helper()
+	const tmpdirToken = "{{TMPDIR}}"
+	var tmpDir string
+	out := make([]string, len(args))
+	for i, a := range args {
+		if strings.Contains(a, tmpdirToken) {
+			if tmpDir == "" {
+				tmpDir = t.TempDir()
+			}
+			a = strings.ReplaceAll(a, tmpdirToken, tmpDir)
+		}
+		// Detect any leftover placeholder of the form "{{NAME}}" — these are
+		// unsupported and must fail loudly rather than be passed verbatim.
+		if openIdx := strings.Index(a, "{{"); openIdx != -1 {
+			closeIdx := strings.Index(a[openIdx:], "}}")
+			if closeIdx != -1 {
+				t.Fatalf("unsupported scenario placeholder %q in arg %q (only {{TMPDIR}} is supported)",
+					a[openIdx:openIdx+closeIdx+2], a)
+			}
+		}
+		out[i] = a
+	}
+	return out
+}
+
 // assertBalCommandMatchesTxtarFragmentsLoose is like assertBalCommandMatchesTxtarFragmentsForBinary
 // but uses fragment (substring) matching for both stdout and stderr. This is needed when stderr
 // contains machine-specific absolute paths that cannot be captured exactly in a txtar fixture.
@@ -156,22 +320,15 @@ func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, 
 	stdout = test_util.NormalizeNewlines(stdout)
 	stderr = test_util.NormalizeNewlines(stderr)
 
-	if *update {
-		if test_util.UpdateTxtarArchiveIfNeeded(t, txtarPath, test_util.TxtarFilesStdoutStderrExitcode(stdout, stderr, strconv.Itoa(exitCode))) {
-			t.Fatalf("Updated expected file: %s", txtarPath)
-		}
-		return
-	}
-
 	expectedStdoutFragments, expectedStderrFragments, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(txtarPath)
 	if err != nil {
 		t.Fatalf("failed to parse txtar file %s: %v", txtarPath, err)
 	}
 
 	if strconv.Itoa(exitCode) != expectedExitCode {
-		t.Fatalf("unexpected exit code for command %q with expected file %s\n%s",
+		t.Fatalf("unexpected exit code for command %q with expected file %s\n%s\nstdout:\n%s\nstderr:\n%s",
 			strings.Join(args, " "), txtarPath,
-			test_util.FormatExpectedGot(expectedExitCode, strconv.Itoa(exitCode)))
+			test_util.FormatExpectedGot(expectedExitCode, strconv.Itoa(exitCode)), stdout, stderr)
 	}
 
 	combinedOut := stdout + "\n" + stderr
@@ -301,13 +458,6 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 	stderr = test_util.NormalizeNewlines(stderr)
 	expectedPath := filepath.Join(append([]string{repoRoot, "corpus", "cli", "output"}, txtarPathParts...)...)
 
-	if *update {
-		if test_util.UpdateTxtarArchiveIfNeeded(t, expectedPath, test_util.TxtarFilesStdoutStderrExitcode(stdout, stderr, strconv.Itoa(exitCode))) {
-			t.Fatalf("Updated expected file: %s", expectedPath)
-		}
-		return
-	}
-
 	expectedStdoutFragments, expectedStderr, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
 	if err != nil {
 		t.Fatalf("failed to parse txtar file %s: %v", expectedPath, err)
@@ -317,7 +467,9 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 		t.Fatalf("unexpected stderr for command %q with expected file %s\n%s", strings.Join(args, " "), expectedPath, test_util.FormatExpectedGot(expectedStderr, stderr))
 	}
 	if strconv.Itoa(exitCode) != expectedExitCode {
-		t.Fatalf("unexpected exit code for command %q with expected file %s\n%s", strings.Join(args, " "), expectedPath, test_util.FormatExpectedGot(expectedExitCode, strconv.Itoa(exitCode)))
+		t.Fatalf("unexpected exit code for command %q with expected file %s\n%s\nstdout:\n%s\nstderr:\n%s",
+			strings.Join(args, " "), expectedPath,
+			test_util.FormatExpectedGot(expectedExitCode, strconv.Itoa(exitCode)), stdout, stderr)
 	}
 	combinedOut := stdout + "\n" + stderr
 	for _, fragment := range strings.Split(expectedStdoutFragments, "\n") {
@@ -332,6 +484,8 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 
 func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...string) (stdout, stderr string, exitCode int) {
 	t.Helper()
+	args = sandboxCLICommandArgs(t, repoRoot, args)
+
 	cmd := exec.Command(balBin, args...)
 	cmd.Dir = repoRoot
 	if coverDir != "" {
@@ -361,6 +515,123 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 		stderrStr,
 	)
 	return "", "", 0
+}
+
+func sandboxCLICommandArgs(t *testing.T, repoRoot string, args []string) []string {
+	t.Helper()
+
+	const relTestdataRoot = "corpus/cli/testdata"
+	absTestdataRoot := filepath.Join(repoRoot, filepath.FromSlash(relTestdataRoot))
+	var sandboxTestdataRoot string
+	rewritten := make([]string, len(args))
+	copy(rewritten, args)
+
+	for i, arg := range rewritten {
+		if newArg, ok := rewriteCLIArgToSandbox(t, arg, relTestdataRoot, absTestdataRoot, &sandboxTestdataRoot); ok {
+			rewritten[i] = newArg
+		}
+	}
+	return rewritten
+}
+
+func rewriteCLIArgToSandbox(t *testing.T, arg, relTestdataRoot, absTestdataRoot string, sandboxTestdataRoot *string) (string, bool) {
+	t.Helper()
+
+	if strings.HasPrefix(arg, "--") {
+		name, value, ok := strings.Cut(arg, "=")
+		if !ok {
+			return arg, false
+		}
+		if rewritten, changed := rewriteCLIPathToSandbox(t, value, relTestdataRoot, absTestdataRoot, sandboxTestdataRoot); changed {
+			return name + "=" + rewritten, true
+		}
+		return arg, false
+	}
+	return rewriteCLIPathToSandbox(t, arg, relTestdataRoot, absTestdataRoot, sandboxTestdataRoot)
+}
+
+func rewriteCLIPathToSandbox(t *testing.T, value, relTestdataRoot, absTestdataRoot string, sandboxTestdataRoot *string) (string, bool) {
+	t.Helper()
+
+	if value == "" {
+		return value, false
+	}
+	if filepath.IsAbs(value) {
+		if rel, err := filepath.Rel(absTestdataRoot, value); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return filepath.Join(ensureCLITestdataSandbox(t, absTestdataRoot, sandboxTestdataRoot), rel), true
+		}
+		return value, false
+	}
+
+	nativeRelRoot := filepath.FromSlash(relTestdataRoot)
+	if value == nativeRelRoot {
+		return ensureCLITestdataSandbox(t, absTestdataRoot, sandboxTestdataRoot), true
+	}
+	if strings.HasPrefix(value, nativeRelRoot+string(filepath.Separator)) {
+		rel := strings.TrimPrefix(value, nativeRelRoot+string(filepath.Separator))
+		return filepath.Join(ensureCLITestdataSandbox(t, absTestdataRoot, sandboxTestdataRoot), rel), true
+	}
+	if strings.HasPrefix(value, relTestdataRoot+"/") {
+		rel := strings.TrimPrefix(value, relTestdataRoot+"/")
+		return filepath.Join(ensureCLITestdataSandbox(t, absTestdataRoot, sandboxTestdataRoot), filepath.FromSlash(rel)), true
+	}
+	return value, false
+}
+
+func ensureCLITestdataSandbox(t *testing.T, absTestdataRoot string, sandboxTestdataRoot *string) string {
+	t.Helper()
+	if *sandboxTestdataRoot != "" {
+		return *sandboxTestdataRoot
+	}
+	root := filepath.Join(t.TempDir(), "corpus", "cli", "testdata")
+	copyDir(t, absTestdataRoot, root)
+	*sandboxTestdataRoot = root
+	return root
+}
+
+func copyDir(t *testing.T, src, dst string) {
+	t.Helper()
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		t.Fatalf("failed to read directory %s: %v", src, err)
+	}
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		t.Fatalf("failed to create directory %s: %v", dst, err)
+	}
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+		info, err := entry.Info()
+		if err != nil {
+			t.Fatalf("failed to stat %s: %v", srcPath, err)
+		}
+		if info.IsDir() {
+			copyDir(t, srcPath, dstPath)
+			continue
+		}
+		copyFile(t, srcPath, dstPath, info.Mode())
+	}
+}
+
+func copyFile(t *testing.T, src, dst string, mode os.FileMode) {
+	t.Helper()
+	in, err := os.Open(src)
+	if err != nil {
+		t.Fatalf("failed to open %s: %v", src, err)
+	}
+	defer func() { _ = in.Close() }()
+
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode.Perm())
+	if err != nil {
+		t.Fatalf("failed to create %s: %v", dst, err)
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		_ = out.Close()
+		t.Fatalf("failed to copy %s to %s: %v", src, dst, err)
+	}
+	if err := out.Close(); err != nil {
+		t.Fatalf("failed to close %s: %v", dst, err)
+	}
 }
 
 func listBalRunCorpusPaths(t *testing.T, dir string, balFilesOnly bool) []string {
@@ -393,13 +664,6 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 		actualOutput := test_util.NormalizeNewlines(stdout)
 		actualError := test_util.NormalizeNewlines(stderr)
 		actualExitCode := strconv.Itoa(exitCode)
-
-		if *update {
-			if test_util.UpdateTxtarArchiveIfNeeded(t, expectedPath, test_util.TxtarFilesStdoutStderrExitcode(actualOutput, actualError, actualExitCode)) {
-				t.Fatalf("Updated expected file: %s", expectedPath)
-			}
-			return
-		}
 
 		expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
 		if err != nil {

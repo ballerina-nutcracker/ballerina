@@ -38,5 +38,7 @@
 
 # return description line 3
 function test(string param1, string param2) returns string {
+    string _ = param1;
+    string _ = param2;
     return "";
 }

@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,19 +82,54 @@ func resolveTarget(path string) (*benchmarkTarget, error) {
 
 func collectBalFiles(dir string) ([]string, error) {
 	var files []string
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	visited := make(map[string]struct{})
+
+	var walk func(path string) error
+	walk = func(path string) error {
+		canonical, err := filepath.EvalSymlinks(path)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to resolve symlinks for %q: %w", path, err)
 		}
-		if d.IsDir() {
+		abs, err := filepath.Abs(canonical)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for %q: %w", canonical, err)
+		}
+
+		if _, seen := visited[abs]; seen {
 			return nil
 		}
-		if strings.HasSuffix(d.Name(), ".bal") {
+		visited[abs] = struct{}{}
+
+		if _, err := os.Stat(filepath.Join(path, "Ballerina.toml")); err == nil {
 			files = append(files, path)
+			return nil
+		}
+
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return fmt.Errorf("failed to read directory %q: %w", path, err)
+		}
+
+		for _, entry := range entries {
+			entryPath := filepath.Join(path, entry.Name())
+
+			info, err := os.Stat(entryPath)
+			if err != nil {
+				return fmt.Errorf("failed to stat %q: %w", entryPath, err)
+			}
+
+			if info.IsDir() {
+				if err := walk(entryPath); err != nil {
+					return err
+				}
+			} else if strings.HasSuffix(entry.Name(), ".bal") {
+				files = append(files, entryPath)
+			}
 		}
 		return nil
-	})
-	if err != nil {
+	}
+
+	if err := walk(dir); err != nil {
 		return nil, fmt.Errorf("failed to collect .bal files: %w", err)
 	}
 	return files, nil

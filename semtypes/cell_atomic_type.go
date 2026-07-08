@@ -16,10 +16,6 @@
 
 package semtypes
 
-import (
-	"ballerina-lang-go/common"
-)
-
 type CellMutability uint
 
 type cellAtomicType struct {
@@ -33,25 +29,16 @@ const (
 	CellMutability_CELL_MUT_UNLIMITED
 )
 
-func (c *cellAtomicType) equals(other atomicType) bool {
-	if other, ok := other.(*cellAtomicType); ok {
-		return other.Ty == c.Ty && other.Mut == c.Mut
-	}
-	return false
-}
-
 var _ atomicType = &cellAtomicType{}
 
 func newCellAtomicTypeFromTyMut(ty SemType, mut CellMutability) cellAtomicType {
 	this := cellAtomicType{}
-	common.Assert(ty != nil)
 	this.Ty = ty
 	this.Mut = mut
 	return this
 }
 
 func cellAtomicTypeFrom(ty SemType, mut CellMutability) cellAtomicType {
-	common.Assert(ty != nil)
 	return newCellAtomicTypeFromTyMut(ty, mut)
 }
 
