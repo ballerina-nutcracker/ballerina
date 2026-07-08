@@ -327,4 +327,296 @@
             (invocation crypto verifySha384withEcdsaSignature (
               (simple-var-ref data)
               (simple-var-ref e384)
-              (simple-var-ref ecPub))))))))))
+              (simple-var-ref ecPub)))))))
+      (var-def
+        (variable ctPriv (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation crypto encryptRsaEcb (
+              (simple-var-ref data)
+              (simple-var-ref rsaPk)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (checked-expr
+              (invocation crypto decryptRsaEcb (
+                (simple-var-ref ctPriv)
+                (simple-var-ref rsaPk))))
+            (simple-var-ref data)))))
+      (var-def
+        (variable decErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptRsaEcb (
+            (simple-var-ref data)
+            (simple-var-ref rsaPk))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref decErr)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable decPubErr (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decryptRsaEcb (
+            (simple-var-ref ct)
+            (simple-var-ref rsaPub))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref decPubErr)
+            (user-defined-type crypto Error)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation crypto verifyRsaSsaPss256Signature (
+              (list-constructor-expr
+                (literal 9)
+                (literal 9)
+                (literal 9))
+              (simple-var-ref sPss)
+              (simple-var-ref rsaPub)))))))
+      (var-def
+        (variable rsaSignEc (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto signRsaSha256 (
+            (simple-var-ref data)
+            (simple-var-ref ecPk))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref rsaSignEc)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable rsaVerifyEc (type
+          (union-type
+            (value-type boolean)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto verifyRsaSha256Signature (
+            (simple-var-ref data)
+            (simple-var-ref s256)
+            (simple-var-ref ecPub))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref rsaVerifyEc)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable pssSignEc (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto signRsaSsaPss256 (
+            (simple-var-ref data)
+            (simple-var-ref ecPk))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref pssSignEc)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable pssVerifyEc (type
+          (union-type
+            (value-type boolean)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto verifyRsaSsaPss256Signature (
+            (simple-var-ref data)
+            (simple-var-ref sPss)
+            (simple-var-ref ecPub))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref pssVerifyEc)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecSignRsa (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto signSha256withEcdsa (
+            (simple-var-ref data)
+            (simple-var-ref rsaPk))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecSignRsa)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecVerifyRsa (type
+          (union-type
+            (value-type boolean)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto verifySha256withEcdsaSignature (
+            (simple-var-ref data)
+            (simple-var-ref e256)
+            (simple-var-ref rsaPub))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecVerifyRsa)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable rsaKeyMissing (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPrivateKeyFromKeyFile (
+            (literal /tmp/bal_no_such.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref rsaKeyMissing)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecKeyMissing (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeEcPrivateKeyFromKeyFile (
+            (literal /tmp/bal_no_such.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecKeyMissing)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable rsaCertMissing (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPublicKeyFromCertFile (
+            (literal /tmp/bal_no_such.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref rsaCertMissing)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecCertMissing (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeEcPublicKeyFromCertFile (
+            (literal /tmp/bal_no_such.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecCertMissing)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecAsRsaKey (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPrivateKeyFromKeyFile (
+            (literal /tmp/bal_ec_key.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecAsRsaKey)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable rsaAsEcKey (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeEcPrivateKeyFromKeyFile (
+            (literal /tmp/bal_rsa_key.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref rsaAsEcKey)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecAsRsaCert (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPublicKeyFromCertFile (
+            (literal /tmp/bal_ec_cert.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecAsRsaCert)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable rsaAsEcCert (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeEcPublicKeyFromCertFile (
+            (literal /tmp/bal_rsa_cert.pem))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref rsaAsEcCert)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable junk (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable junkKey (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPrivateKeyFromContent (
+            (simple-var-ref junk))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref junkKey)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecKeyBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadBytes (
+              (literal /tmp/bal_ec_key.pem)))))))
+      (var-def
+        (variable ecAsRsaContent (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPrivateKeyFromContent (
+            (simple-var-ref ecKeyBytes))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecAsRsaContent)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable ecCertBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadBytes (
+              (literal /tmp/bal_ec_cert.pem)))))))
+      (var-def
+        (variable ecAsRsaCertContent (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPublicKeyFromContent (
+            (simple-var-ref ecCertBytes))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref ecAsRsaCertContent)
+            (user-defined-type crypto Error))))))))

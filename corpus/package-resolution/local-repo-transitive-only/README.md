@@ -1,0 +1,1 @@
+Local repository transitive-only pin: the consumer pins only `mockorg/inner` (the transitive dependency) to `repository = "local"`. The direct dependency `mockorg/outer` is not pinned and resolves via the default chain (central). The test verifies that central's `outer` is loaded while local's `inner` is used for the transitive — output contains `outer says local-inner`.

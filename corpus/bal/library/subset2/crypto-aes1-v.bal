@@ -56,4 +56,41 @@ public function main() returns error? {
     // Ciphertext whose length is not a multiple of the block size fails.
     byte[]|crypto:Error sizeErr = crypto:decryptAesCbc([1, 2, 3], key, iv);
     io:println(sizeErr is crypto:Error);                                 // @output true
+
+    // An invalid AES key length is rejected on the decrypt side too.
+    byte[]|crypto:Error cbcDecErr = crypto:decryptAesCbc(cbc, badKey, iv);
+    io:println(cbcDecErr is crypto:Error);                               // @output true
+    byte[]|crypto:Error ecbDecErr = crypto:decryptAesEcb(ecb, badKey);
+    io:println(ecbDecErr is crypto:Error);                               // @output true
+
+    // ECB decrypt rejects a non-block-multiple length and invalid padding.
+    byte[]|crypto:Error ecbSizeErr = crypto:decryptAesEcb([1, 2, 3], key);
+    io:println(ecbSizeErr is crypto:Error);                              // @output true
+    byte[]|crypto:Error ecbPadErr = crypto:decryptAesEcb(zeros, key);
+    io:println(ecbPadErr is crypto:Error);                               // @output true
+
+    // A zero-length ciphertext fails PKCS7 unpadding.
+    byte[]|crypto:Error emptyErr = crypto:decryptAesCbc([], key, iv);
+    io:println(emptyErr is crypto:Error);                                // @output true
+
+    // GCM rejects an invalid authentication tag size on both sides.
+    byte[]|crypto:Error gcmEncTagErr = crypto:encryptAesGcm(plaintext, key, iv12, crypto:NONE, 48);
+    io:println(gcmEncTagErr is crypto:Error);                            // @output true
+    byte[]|crypto:Error gcmDecTagErr = crypto:decryptAesGcm(gcm, key, iv12, crypto:NONE, 48);
+    io:println(gcmDecTagErr is crypto:Error);                            // @output true
+
+    // GCM rejects a non-standard nonce+tag combination (16-byte IV with a
+    // 96-bit tag matches neither the standard nonce nor the standard tag size).
+    byte[]|crypto:Error gcmEncCombo = crypto:encryptAesGcm(plaintext, key, iv, crypto:NONE, 96);
+    io:println(gcmEncCombo is crypto:Error);                             // @output true
+    byte[]|crypto:Error gcmDecCombo = crypto:decryptAesGcm(gcm, key, iv, crypto:NONE, 96);
+    io:println(gcmDecCombo is crypto:Error);                             // @output true
+
+    // GCM decrypt rejects a bad key length and, with a valid key, a failed
+    // authentication tag (wrong key over otherwise-valid ciphertext).
+    byte[]|crypto:Error gcmDecKeyErr = crypto:decryptAesGcm(gcm, badKey, iv12);
+    io:println(gcmDecKeyErr is crypto:Error);                            // @output true
+    byte[] key2 = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+    byte[]|crypto:Error gcmAuthErr = crypto:decryptAesGcm(gcm, key2, iv12);
+    io:println(gcmAuthErr is crypto:Error);                              // @output true
 }

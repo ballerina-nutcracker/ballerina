@@ -41,8 +41,12 @@ type (
 )
 
 func (b *benchmark) run() error {
-	if _, err := exec.LookPath("hyperfine"); err != nil {
-		return fmt.Errorf("hyperfine is required but was not found in PATH; please install it and retry: %w", err)
+	if b.mode == timeMode {
+		if _, err := exec.LookPath("hyperfine"); err != nil {
+			return fmt.Errorf("hyperfine is required but was not found in PATH; please install it and retry: %w", err)
+		}
+	} else if err := requireMemoryTool(); err != nil {
+		return err
 	}
 
 	target, err := resolveTarget(b.target)
@@ -85,23 +89,15 @@ func (b *benchmark) run() error {
 	}
 	defer func() { _ = os.RemoveAll(exportDir) }()
 
-	results := make([]runResult, 0, len(target.paths))
-	for _, path := range target.paths {
-		cmds := b.benchmarkCmdPair(baseWorktree, headWorktree, target.root, path, target.mode, interpreterBin)
-		exportPath := filepath.Join(exportDir, fmt.Sprintf("%s.json", sanitize(path)))
-		export, err := b.runHyperfine(cmds, exportPath)
-		if err != nil {
-			return err
-		}
-		results = append(results, runResult{
-			label:  benchmarkResultLabel(target, path),
-			export: *export,
-		})
+	results, err := b.runBenchmarks(baseWorktree, headWorktree, target, interpreterBin, exportDir)
+	if err != nil {
+		return err
 	}
 
 	rep := report{
 		BaseRef:   b.baseRef,
 		HeadRef:   b.headRef,
+		Mode:      b.mode,
 		Generated: time.Now(),
 		results:   results,
 	}
@@ -112,6 +108,29 @@ func (b *benchmark) run() error {
 		fmt.Printf("Benchmark report exported to %s\n", b.config.exportPath)
 	}
 	return nil
+}
+
+func (b *benchmark) runBenchmarks(baseWorktree, headWorktree string, target *benchmarkTarget, interpreterBin, exportDir string) ([]runResult, error) {
+	results := make([]runResult, 0, len(target.paths))
+	for _, path := range target.paths {
+		var export *benchExport
+		var err error
+		if b.mode == memoryMode {
+			export, err = b.runMemoryBenchmark(baseWorktree, headWorktree, path, interpreterBin)
+		} else {
+			cmds := b.benchmarkCmdPair(baseWorktree, headWorktree, target.root, path, target.mode, interpreterBin)
+			exportPath := filepath.Join(exportDir, fmt.Sprintf("%s.json", sanitize(path)))
+			export, err = b.runHyperfine(cmds, exportPath)
+		}
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, runResult{
+			label:  benchmarkResultLabel(target, path),
+			export: *export,
+		})
+	}
+	return results, nil
 }
 
 func (b *benchmark) checkoutWorktree(ref string) (string, error) {

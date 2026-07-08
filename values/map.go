@@ -43,18 +43,6 @@ type Map struct {
 
 	data       map[string]*mapEntry
 	head, tail *mapEntry
-
-	nativeData any
-}
-
-// SetNativeData stores an opaque Go value alongside the map for use by native externs.
-func (m *Map) SetNativeData(data any) {
-	m.nativeData = data
-}
-
-// GetNativeData returns the opaque Go value previously stored via SetNativeData.
-func (m *Map) GetNativeData() any {
-	return m.nativeData
 }
 
 // NewMap constructs a fully initialized map without applying any inherent

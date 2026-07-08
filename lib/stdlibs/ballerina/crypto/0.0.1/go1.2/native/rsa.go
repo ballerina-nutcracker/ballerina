@@ -40,7 +40,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			keyMap, _ := args[1].(*values.Map)
 			padding, _ := args[2].(string)
 			oaepHash := oaepHashForPadding(padding)
-			switch k := keyMap.GetNativeData().(type) {
+			switch k := keyDataOf(keyMap).(type) {
 			case *rsa.PublicKey:
 				var out []byte
 				var err error
@@ -77,7 +77,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			keyMap, _ := args[1].(*values.Map)
 			padding, _ := args[2].(string)
 			oaepHash := oaepHashForPadding(padding)
-			switch k := keyMap.GetNativeData().(type) {
+			switch k := keyDataOf(keyMap).(type) {
 			case *rsa.PrivateKey:
 				var out []byte
 				var err error
@@ -114,7 +114,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			input := listToBytes(args[0].(*values.List))
 			keyMap, _ := args[1].(*values.Map)
-			privKey, ok := keyMap.GetNativeData().(*rsa.PrivateKey)
+			privKey, ok := keyDataOf(keyMap).(*rsa.PrivateKey)
 			if !ok {
 				return cryptoError("Uninitialized private key: not an RSA key"), nil
 			}
@@ -154,7 +154,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			data := listToBytes(args[0].(*values.List))
 			sig := listToBytes(args[1].(*values.List))
 			keyMap, _ := args[2].(*values.Map)
-			pubKey, ok := keyMap.GetNativeData().(*rsa.PublicKey)
+			pubKey, ok := keyDataOf(keyMap).(*rsa.PublicKey)
 			if !ok {
 				return cryptoError("Uninitialized public key: not an RSA key"), nil
 			}
@@ -179,7 +179,7 @@ func rsaSignFunc(hashID crypto.Hash, newHash func() hash.Hash, types cryptoTypes
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		input := listToBytes(args[0].(*values.List))
 		keyMap, _ := args[1].(*values.Map)
-		privKey, ok := keyMap.GetNativeData().(*rsa.PrivateKey)
+		privKey, ok := keyDataOf(keyMap).(*rsa.PrivateKey)
 		if !ok {
 			return cryptoError("Uninitialized private key: not an RSA key"), nil
 		}
@@ -198,7 +198,7 @@ func rsaVerifyFunc(hashID crypto.Hash, newHash func() hash.Hash) extern.NativeFu
 		data := listToBytes(args[0].(*values.List))
 		sig := listToBytes(args[1].(*values.List))
 		keyMap, _ := args[2].(*values.Map)
-		pubKey, ok := keyMap.GetNativeData().(*rsa.PublicKey)
+		pubKey, ok := keyDataOf(keyMap).(*rsa.PublicKey)
 		if !ok {
 			return cryptoError("Uninitialized public key: not an RSA key"), nil
 		}
@@ -216,7 +216,7 @@ func ecdsaSignFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFun
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		input := listToBytes(args[0].(*values.List))
 		keyMap, _ := args[1].(*values.Map)
-		privKey, ok := keyMap.GetNativeData().(*ecdsa.PrivateKey)
+		privKey, ok := keyDataOf(keyMap).(*ecdsa.PrivateKey)
 		if !ok {
 			return cryptoError("Uninitialized private key: not an EC key"), nil
 		}
@@ -235,7 +235,7 @@ func ecdsaVerifyFunc(newHash func() hash.Hash) extern.NativeFunc {
 		data := listToBytes(args[0].(*values.List))
 		sig := listToBytes(args[1].(*values.List))
 		keyMap, _ := args[2].(*values.Map)
-		pubKey, ok := keyMap.GetNativeData().(*ecdsa.PublicKey)
+		pubKey, ok := keyDataOf(keyMap).(*ecdsa.PublicKey)
 		if !ok {
 			return cryptoError("Uninitialized public key: not an EC key"), nil
 		}

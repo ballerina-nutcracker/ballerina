@@ -66,66 +66,14 @@ func rc2ExpandKey(key []byte, t1 int) [64]uint16 {
 	return k
 }
 
+// Encrypt is unreachable: rc2Cipher is only ever used to decrypt legacy
+// PKCS#12 blobs encrypted with pbeWithSHAAnd40BitRC2-CBC (see
+// cbcDecryptAndUnpad, which calls only Decrypt via cipher.NewCBCDecrypter).
+// It exists solely because rc2New returns a cipher.Block, which requires
+// both methods; cipher.Block has no error return, so a panic is the only way
+// to signal that this path is not supported.
 func (c *rc2Cipher) Encrypt(dst, src []byte) {
-	r0 := binary.LittleEndian.Uint16(src[0:])
-	r1 := binary.LittleEndian.Uint16(src[2:])
-	r2 := binary.LittleEndian.Uint16(src[4:])
-	r3 := binary.LittleEndian.Uint16(src[6:])
-	j := 0
-	for j <= 16 {
-		r0 = r0 + c.k[j] + (r3 & r2) + ((^r3) & r1)
-		r0 = bits.RotateLeft16(r0, 1)
-		j++
-		r1 = r1 + c.k[j] + (r0 & r3) + ((^r0) & r2)
-		r1 = bits.RotateLeft16(r1, 2)
-		j++
-		r2 = r2 + c.k[j] + (r1 & r0) + ((^r1) & r3)
-		r2 = bits.RotateLeft16(r2, 3)
-		j++
-		r3 = r3 + c.k[j] + (r2 & r1) + ((^r2) & r0)
-		r3 = bits.RotateLeft16(r3, 5)
-		j++
-	}
-	r0 += c.k[r3&63]
-	r1 += c.k[r0&63]
-	r2 += c.k[r1&63]
-	r3 += c.k[r2&63]
-	for j <= 40 {
-		r0 = r0 + c.k[j] + (r3 & r2) + ((^r3) & r1)
-		r0 = bits.RotateLeft16(r0, 1)
-		j++
-		r1 = r1 + c.k[j] + (r0 & r3) + ((^r0) & r2)
-		r1 = bits.RotateLeft16(r1, 2)
-		j++
-		r2 = r2 + c.k[j] + (r1 & r0) + ((^r1) & r3)
-		r2 = bits.RotateLeft16(r2, 3)
-		j++
-		r3 = r3 + c.k[j] + (r2 & r1) + ((^r2) & r0)
-		r3 = bits.RotateLeft16(r3, 5)
-		j++
-	}
-	r0 += c.k[r3&63]
-	r1 += c.k[r0&63]
-	r2 += c.k[r1&63]
-	r3 += c.k[r2&63]
-	for j <= 60 {
-		r0 = r0 + c.k[j] + (r3 & r2) + ((^r3) & r1)
-		r0 = bits.RotateLeft16(r0, 1)
-		j++
-		r1 = r1 + c.k[j] + (r0 & r3) + ((^r0) & r2)
-		r1 = bits.RotateLeft16(r1, 2)
-		j++
-		r2 = r2 + c.k[j] + (r1 & r0) + ((^r1) & r3)
-		r2 = bits.RotateLeft16(r2, 3)
-		j++
-		r3 = r3 + c.k[j] + (r2 & r1) + ((^r2) & r0)
-		r3 = bits.RotateLeft16(r3, 5)
-		j++
-	}
-	binary.LittleEndian.PutUint16(dst[0:], r0)
-	binary.LittleEndian.PutUint16(dst[2:], r1)
-	binary.LittleEndian.PutUint16(dst[4:], r2)
-	binary.LittleEndian.PutUint16(dst[6:], r3)
+	panic("crypto: rc2Cipher.Encrypt is not supported; RC2 is only used to decrypt legacy PKCS#12 data")
 }
 
 func (c *rc2Cipher) Decrypt(dst, src []byte) {

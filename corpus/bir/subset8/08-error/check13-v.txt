@@ -1,0 +1,17 @@
+module $anon.. v 0.0.0;
+moduleValue  int;
+mayFail() -> int|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = println(moduleValue) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

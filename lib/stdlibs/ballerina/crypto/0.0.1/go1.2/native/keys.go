@@ -298,13 +298,14 @@ func parseCertificatePEM(data []byte) (*x509.Certificate, error) {
 	return x509.ParseCertificate(block.Bytes)
 }
 
-// buildPrivateKeyMap constructs a Ballerina PrivateKey record, storing the Go
-// key via nativeData so sign/decrypt externs can retrieve it.
+// buildPrivateKeyMap constructs a Ballerina PrivateKey record, associating the
+// Go key with it via keyData (see keydata.go) so sign/decrypt externs can
+// retrieve it.
 func buildPrivateKeyMap(types cryptoTypes, ctx *extern.Context, key any, algorithm string) *values.Map {
 	m := values.NewMap(types.keyMapTy, semtypes.ToMappingAtomicType(ctx.TypeCtx, types.keyMapTy), false, []values.MapEntry{
 		{Key: "algorithm", Value: algorithm},
 	})
-	m.SetNativeData(key)
+	setKeyData(m, key)
 	return m
 }
 
@@ -315,7 +316,7 @@ func buildPublicKeyMap(types cryptoTypes, ctx *extern.Context, key any, algorith
 		entries = append(entries, values.MapEntry{Key: "certificate", Value: buildCertMap(types, ctx, cert)})
 	}
 	m := values.NewMap(types.keyMapTy, semtypes.ToMappingAtomicType(ctx.TypeCtx, types.keyMapTy), false, entries)
-	m.SetNativeData(key)
+	setKeyData(m, key)
 	return m
 }
 
