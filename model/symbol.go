@@ -445,29 +445,31 @@ const (
 	DefaultableParamKindInferredTypedesc
 )
 
-func NewUntypedFunctionSignature(paramNames []string, hasRest bool, flags []ParamFlag, defaults []*DefaultableParam, includedRecords []*IncludedRecordMetadata) UntypedFunctionSignature {
-	paramCount := len(paramNames)
-	if flags == nil {
-		flags = make([]ParamFlag, paramCount)
-	} else if len(flags) != paramCount {
-		panic("function signature flags length mismatch")
-	}
-	if defaults == nil {
-		defaults = make([]*DefaultableParam, paramCount)
-	} else if len(defaults) != paramCount {
-		panic("function signature defaults length mismatch")
-	}
-	if includedRecords == nil {
-		includedRecords = make([]*IncludedRecordMetadata, paramCount)
-	} else if len(includedRecords) != paramCount {
-		panic("function signature included records length mismatch")
+type Param struct {
+	Name           string
+	Flag           ParamFlag
+	Default        *DefaultableParam
+	IncludedRecord *IncludedRecordMetadata
+}
+
+func NewUntypedFunctionSignature(params []Param, hasRest bool) UntypedFunctionSignature {
+	size := len(params)
+	paramNames := make([]string, size)
+	flags := make([]ParamFlag, size)
+	defaults := make([]*DefaultableParam, size)
+	inclRecord := make([]*IncludedRecordMetadata, size)
+	for i, param := range params {
+		paramNames[i] = param.Name
+		flags[i] = param.Flag
+		defaults[i] = param.Default
+		inclRecord[i] = param.IncludedRecord
 	}
 	return UntypedFunctionSignature{
 		HasRest:                hasRest,
 		ParamNames:             paramNames,
 		ParamFlags:             flags,
 		Default:                defaults,
-		IncludedRecordMetadata: includedRecords,
+		IncludedRecordMetadata: inclRecord,
 	}
 }
 

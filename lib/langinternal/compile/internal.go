@@ -60,7 +60,9 @@ func addInternalFunction(ctx *context.CompilerContext, space *model.SymbolSpace,
 	space.AddSymbol(name, symbol)
 	ref, _ := space.GetSymbol(name)
 	ctx.SetSymbolType(ref, libcommon.FunctionSignatureToSemType(ctx.GetTypeEnv(), &sig))
-	if !ctx.SetFunctionSignature(ref, model.NewUntypedFunctionSignature(make([]string, len(sig.ParamTypes)), false, nil, nil, nil)) {
+	// We currently don't support defaults, incl record for these so this is fine
+	handle := ctx.AllocateFunctionSignature(make([]model.Param, len(sig.ParamTypes)), false)
+	if !ctx.AssociateFunctionSignature(ref, handle) {
 		ctx.InternalError("function signature already set", diagnostics.NewBuiltinLocation())
 	}
 }

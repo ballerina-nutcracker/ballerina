@@ -968,24 +968,19 @@ func attachFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model
 		return
 	}
 	cx := alloc.GetCtx()
-	paramNames := make([]string, 0, len(fnType.RequiredParams))
-	flags := make([]model.ParamFlag, 0, len(fnType.RequiredParams))
-	defaults := make([]*model.DefaultableParam, 0, len(fnType.RequiredParams))
-	includedRecords := make([]*model.IncludedRecordMetadata, 0, len(fnType.RequiredParams))
+	params := make([]model.Param, 0, len(fnType.RequiredParams)+1)
 	for i := range fnType.RequiredParams {
 		param := &fnType.RequiredParams[i]
 		name := ""
 		if param.Name != nil {
 			name = param.Name.GetValue()
 		}
-		paramNames = append(paramNames, name)
 
 		var flag model.ParamFlag
+		var includedRecord *model.IncludedRecordMetadata
 		if param.IsIncludedRecordParam() {
 			flag |= model.ParamFlagIncludedRecordParam
-			includedRecords = append(includedRecords, &model.IncludedRecordMetadata{})
-		} else {
-			includedRecords = append(includedRecords, nil)
+			includedRecord = &model.IncludedRecordMetadata{}
 		}
 
 		var defaultParam *model.DefaultableParam
@@ -998,8 +993,7 @@ func attachFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model
 			param.DefaultFnRef = symRef
 			defaultParam = &model.DefaultableParam{Symbol: symRef, Kind: model.DefaultableParamKindExpr}
 		}
-		flags = append(flags, flag)
-		defaults = append(defaults, defaultParam)
+		params = append(params, model.Param{Name: name, Flag: flag, Default: defaultParam, IncludedRecord: includedRecord})
 	}
 	if fnType.RestParam != nil {
 		restParam := fnType.RestParam
@@ -1007,49 +1001,40 @@ func attachFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model
 		if restParam.Name != nil {
 			name = restParam.Name.GetValue()
 		}
-		paramNames = append(paramNames, name)
-		flags = append(flags, model.ParamFlagRestParam)
-		defaults = append(defaults, nil)
-		includedRecords = append(includedRecords, nil)
+		params = append(params, model.Param{Name: name, Flag: model.ParamFlagRestParam})
 	}
-	if !cx.SetFunctionSignature(fnRef, model.NewUntypedFunctionSignature(paramNames, fnType.RestParam != nil, flags, defaults, includedRecords)) {
+	handle := cx.AllocateFunctionSignature(params, fnType.RestParam != nil)
+	if !cx.AssociateFunctionSignature(fnRef, handle) {
 		cx.InternalError("function signature already set", pos)
 	}
 }
 
 func setBasicFunctionSignature(ctx *context.CompilerContext, function *ast.BLangFunction) {
-	paramNames := make([]string, 0, len(function.RequiredParams)+1)
-	flags := make([]model.ParamFlag, 0, len(function.RequiredParams)+1)
+	params := make([]model.Param, 0, len(function.RequiredParams)+1)
 	for i := range function.RequiredParams {
-		paramNames = append(paramNames, function.RequiredParams[i].GetName().GetValue())
-		flags = append(flags, 0)
+		params = append(params, model.Param{Name: function.RequiredParams[i].GetName().GetValue()})
 	}
 	if function.RestParam != nil {
 		restParam := function.RestParam.(*ast.BLangSimpleVariable)
-		paramNames = append(paramNames, restParam.GetName().GetValue())
-		flags = append(flags, model.ParamFlagRestParam)
+		params = append(params, model.Param{Name: restParam.GetName().GetValue(), Flag: model.ParamFlagRestParam})
 	}
-	if !ctx.SetFunctionSignature(function.Symbol(), model.NewUntypedFunctionSignature(paramNames, function.RestParam != nil, flags, nil, nil)) {
+	handle := ctx.AllocateFunctionSignature(params, function.RestParam != nil)
+	if !ctx.AssociateFunctionSignature(function.Symbol(), handle) {
 		ctx.InternalError("function signature already set", function.GetPosition())
 	}
 }
 
 func allocateDefaultParamSymbols(alloc defaultSymbolAllocator, targetScope model.Scope, function *ast.BLangFunction) {
 	cx := alloc.GetCtx()
-	paramNames := make([]string, 0, len(function.RequiredParams)+1)
-	flags := make([]model.ParamFlag, 0, len(function.RequiredParams)+1)
-	defaults := make([]*model.DefaultableParam, 0, len(function.RequiredParams)+1)
-	includedRecords := make([]*model.IncludedRecordMetadata, 0, len(function.RequiredParams)+1)
+	params := make([]model.Param, 0, len(function.RequiredParams)+1)
 	for i := range function.RequiredParams {
 		param := &function.RequiredParams[i]
-		paramNames = append(paramNames, param.GetName().GetValue())
 		var flag model.ParamFlag
 		var defaultParam *model.DefaultableParam
+		var includedRecord *model.IncludedRecordMetadata
 		if param.IsIncludedRecordParam() {
 			flag |= model.ParamFlagIncludedRecordParam
-			includedRecords = append(includedRecords, &model.IncludedRecordMetadata{})
-		} else {
-			includedRecords = append(includedRecords, nil)
+			includedRecord = &model.IncludedRecordMetadata{}
 		}
 		if param.IsDefaultableParam() {
 			flag |= model.ParamFlagDefaultable
@@ -1064,17 +1049,14 @@ func allocateDefaultParamSymbols(alloc defaultSymbolAllocator, targetScope model
 				defaultParam = &model.DefaultableParam{Symbol: symRef, Kind: model.DefaultableParamKindExpr}
 			}
 		}
-		flags = append(flags, flag)
-		defaults = append(defaults, defaultParam)
+		params = append(params, model.Param{Name: param.GetName().GetValue(), Flag: flag, Default: defaultParam, IncludedRecord: includedRecord})
 	}
 	if function.RestParam != nil {
 		restParam := function.RestParam.(*ast.BLangSimpleVariable)
-		paramNames = append(paramNames, restParam.GetName().GetValue())
-		flags = append(flags, model.ParamFlagRestParam)
-		defaults = append(defaults, nil)
-		includedRecords = append(includedRecords, nil)
+		params = append(params, model.Param{Name: restParam.GetName().GetValue(), Flag: model.ParamFlagRestParam})
 	}
-	if !cx.SetFunctionSignature(function.Symbol(), model.NewUntypedFunctionSignature(paramNames, function.RestParam != nil, flags, defaults, includedRecords)) {
+	handle := cx.AllocateFunctionSignature(params, function.RestParam != nil)
+	if !cx.AssociateFunctionSignature(function.Symbol(), handle) {
 		cx.InternalError("function signature already set", function.GetPosition())
 	}
 }
