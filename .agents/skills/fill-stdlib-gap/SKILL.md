@@ -126,11 +126,23 @@ Failing to update `TestPal` causes nil-pointer dereferences in corpus tests even
 
 ### Tests
 
-Add corpus tests under the existing `corpus/bal/subset8/<NN>-<name>/` directory for this stdlib. If no directory exists for this stdlib yet, pick the next free `<NN>` prefix. Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts.
+Library corpus tests live under `corpus/bal/library/subset<N>/` — a flat directory of `<name>-<suffix>.bal` files, e.g. `corpus/bal/library/subset2/crypto-hash1-v.bal` — a different, stdlib-specific directory family from the generic `corpus/bal/subset1..9/NN-category/` language-feature tests. Each `library/subset<N>` is a released library-support milestone documented in `doc/library/subset<N>.md`.
+
+Find this stdlib's existing tests first: `find corpus/bal/library -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts.
 
 Cover the new behaviour from `.bal` — a corpus test exercises the full compiler → BIR → interpreter pipeline and is measured by the native-coverage harness (`-coverpkg=./lib/stdlibs/...` over `./corpus/...`). Add a Go unit test only for branches genuinely unreachable from Ballerina (defensive type/arity guards, nil guards, interface-contract paths), kept minimal with a comment explaining why. Don't write wrong-type extern arg guards — the type checker rejects wrong types at compile time. See the **`manage-corpus-tests`** "Test philosophy" section. If you find existing native code that can never execute through Ballerina, remove it rather than testing it.
 
-Regenerate goldens via the **`update-corpus-tests`** skill:
+**Coverage gate, same as `add-stdlib-support`:** `.github/workflows/native-ci.yml` uploads coverage to Codecov (`flags: native`), and `codecov.yml`'s `coverage.status.patch.default.target: 80%` fails the PR if **patch coverage** — coverage of just the lines this change adds or touches — drops below 80%. Unlike a brand-new stdlib, the package's overall coverage % is *not* a reliable stand-in here: the existing, already-tested code dilutes it, so a poorly-tested new function can hide inside a healthy-looking package total. Check the touched lines directly:
+
+```shell
+go test -count=1 -coverpkg=./lib/stdlibs/ballerina/<name>/... \
+  -coverprofile=/tmp/<name>-coverage.out -covermode=atomic \
+  ./corpus/... ./lib/stdlibs/ballerina/<name>/...
+go tool cover -func=/tmp/<name>-coverage.out | grep '<newFunctionName>'
+```
+or open an annotated view of just the new/changed lines with `go tool cover -html=/tmp/<name>-coverage.out`. Add corpus cases until every new branch is exercised — don't rely on the package-total percentage looking fine.
+
+Regenerate goldens via the **`manage-corpus-tests`** skill:
 ```shell
 go test ./corpus --update
 ```
@@ -144,6 +156,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - If the parity check in Step 3 surfaced an unavoidable divergence, add it to **Notable Behavioural Changes**.
 - Update the top-level aggregator `lib/stdlibs/ballerina/README.md`: recount this package's row and recompute the **Total** footer; if a behavioural change was added or removed, mirror it into the package's `### <name>` subsection of the consolidated section.
 - Re-run the full `stdlib-readme-format` validation checklist against the updated README (catches pre-existing violations too).
+- Update `doc/library/subset<N>.md` (the subset the tests were added to above) to document the newly-covered surface — this is separate from, and in addition to, the per-package `README.md`.
 
 ### Verify checklist
 
@@ -151,6 +164,9 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] `go vet ./...` — no vet warnings.
 - [ ] `go test ./corpus/...` — all corpus tests pass.
 - [ ] `go run ./cli/cmd run <test>.bal` for the new corpus test(s) — output matches `@output` markers.
+- [ ] New corpus test files live under `corpus/bal/library/subset<N>/` (the subset confirmed with the developer above), not the generic `corpus/bal/subset1..9/` tree.
+- [ ] `doc/library/subset<N>.md` documents the newly-covered surface.
+- [ ] Every new/touched line in `native/` is exercised (checked via `go tool cover -func=...` or `-html=...`, not the package-total %) — Codecov's patch-coverage check (`codecov.yml`, `native-ci.yml`) targets 80% on just the diff and will fail the PR otherwise.
 - [ ] README row status reflects what's now implemented.
 - [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed).
 - [ ] `stdlib-readme-format` validation checklist passes.
@@ -160,4 +176,4 @@ Update the README row via the **`stdlib-readme-format`** skill:
 
 ### Final report
 
-In one short paragraph: which row was promoted, what was added (function names, file paths), any divergences recorded.
+In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/bal/library/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, and confirmation that the new/touched lines are covered (per the coverage-gate check above).

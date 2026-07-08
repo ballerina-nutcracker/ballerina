@@ -305,13 +305,40 @@ func init() {
 
 ## 8. Tests
 
-Add corpus tests under `corpus/bal/subset8/<NN>-<name>/`, where `<NN>` is the next free 2-digit prefix in that directory. Targeting **≥80% coverage** of the new Go code under `native/`.
+### Where library corpus tests live
+
+Corpus tests for a stdlib port go under `corpus/bal/library/subset<N>/` — a **flat** directory of `<name>-<suffix>.bal` files, e.g. `corpus/bal/library/subset2/crypto-hash1-v.bal`. This is a different directory family from the generic language-feature subsets (`corpus/bal/subset1/` … `corpus/bal/subset9/`, each internally split into `NN-category/` subfolders like `08-network/`) — do not put library tests there.
+
+Each `library/subset<N>` is a released library-support milestone, documented in `doc/library/subset<N>.md` (compare with the language-feature milestones in `doc/lang/subset<N>.md`, which describe an unrelated numbering track — `library/subset2` and `lang/subset2` are not the same milestone). For example, `doc/library/subset2.md` documents the `crypto`, `io` (file I/O), `log`, `os`, `random`, `math.vector`, `time`, and `url` surface, plus expanded `http`.
+
+**Ask the developer which subset this port's tests belong in before writing any test file** — this is a release-scoping decision, not something to infer:
+- An **existing** subset (e.g. `subset2`) — the new module joins that release milestone, alongside `corpus/bal/library/subset2/`'s existing files.
+- A **new** subset (`subset<N+1>`, one past the highest existing `library/subsetN` directory) — create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern ("Subset N extends the released subset N-1 with …").
+
+Per-stage golden directories (`corpus/ast/library/subset<N>/`, `corpus/bir/library/subset<N>/`, `corpus/cfg/library/subset<N>/`, `corpus/desugared/library/subset<N>/`, `corpus/parser/library/subset<N>/`) mirror this same layout and are generated automatically via `-update` (Step 8's golden-regeneration step below) — no special handling needed, they follow whichever subset directory the `.bal` files live in.
+
+After the tests pass, add (or extend) the `## [<name>](<jBallerina spec URL>)` section in that subset's `doc/library/subset<N>.md`, documenting the surface actually exercised by these corpus tests — follow the existing heading + `Function | Notes` table (or bullet list) style in `subset1.md`/`subset2.md`. This is a separate, lighter-weight doc from the per-package `README.md` (Step 9) — both need updating.
+
+### Coverage target
+
+Targeting **≥80% coverage** of the new Go code under `native/`.
+
+**This is a real CI gate, not a suggestion.** `.github/workflows/native-ci.yml` runs `.github/scripts/run_native_tests.py --with-coverage` and uploads the resulting profiles to Codecov (`flags: native`); `codecov.yml` sets `coverage.status.patch.default.target: 80%`, which fails the PR check if **patch coverage** (coverage of just the lines added/changed in the diff) drops below 80%. For a brand-new stdlib, essentially every line under `native/` is new, so the whole-package coverage number below is a reliable local stand-in for that patch-coverage check.
+
+**Measure it locally before declaring done** — this mirrors what CI does, without the full 2h suite:
+```shell
+go test -count=1 -coverpkg=./lib/stdlibs/ballerina/<name>/... \
+  -coverprofile=/tmp/<name>-coverage.out -covermode=atomic \
+  ./corpus/... ./lib/stdlibs/ballerina/<name>/...
+go tool cover -func=/tmp/<name>-coverage.out | grep total
+```
+If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-coverage.out` (sort by the trailing `%` column) or `go tool cover -html=/tmp/<name>-coverage.out` for an annotated view, then add corpus `.bal` cases to exercise the missing branches — repeat until ≥80%. Do not move on to Step 9 with a known shortfall.
 
 **Drive coverage from `.bal`, not Go unit tests.** The coverage harness runs `./corpus/...` under `-coverpkg=./lib/stdlibs/...`, so a corpus test that calls your extern functions exercises and measures the native Go through the full compiler → BIR → interpreter pipeline. Reach for a Go unit test (`native/<name>_test.go`) **only** for branches genuinely unreachable from Ballerina — defensive type/arity guards, nil guards, interface-contract paths — and keep them minimal with a comment stating why they cannot be hit from `.bal`. Do not add a wrong-type extern arg guard at all (the type checker rejects wrong types at compile time; use `x, _ := args[i].(T)`). See the **`manage-corpus-tests`** skill's "Test philosophy" section.
 
 - Suffixes per `AGENTS.md`: `*-v.bal` (valid, end-to-end with `@output` markers), `*-e.bal` (compile-time errors, `@error` markers), `*-p.bal` (runtime panics, `@panic` markers), `*-f{v|e|p}.bal` (future, scope-deferred).
 - Name files **without leading zeros** in numeric parts (e.g. `print1-v.bal`, not `print01-v.bal`).
-- Hand off golden-file regeneration to the **`update-corpus-tests`** skill:
+- Hand off golden-file regeneration to the **`manage-corpus-tests`** skill:
   ```shell
   go test ./corpus --update
   ```
@@ -322,6 +349,8 @@ Add corpus tests under `corpus/bal/subset8/<NN>-<name>/`, where `<NN>` is the ne
 Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
 
 Then update the top-level aggregator `lib/stdlibs/ballerina/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any).
+
+Separately, confirm Step 8's `doc/library/subset<N>.md` update is done — it documents released library-feature milestones and is independent of the per-package `README.md` (which tracks jBallerina-parity status, not release scoping).
 
 ## 10. Verify
 
@@ -335,7 +364,8 @@ Before declaring done, check every box:
 - [ ] `go test ./corpus/...` — all corpus tests pass.
 - [ ] `go run ./cli/cmd run <showcase>.bal` (or `./bal run <showcase>.bal` if the binary is built) — output matches the `@output` markers exactly.
 - [ ] `git diff corpus/` reviewed; every regenerated golden-file line is intentional.
-- [ ] New corpus test files follow naming (no leading zeros, correct suffix).
+- [ ] New corpus test files follow naming (no leading zeros, correct suffix) and live under `corpus/bal/library/subset<N>/` (the subset confirmed with the developer in Step 8), not the generic `corpus/bal/subset1..9/` tree.
+- [ ] Local coverage of the new `native/` package is **≥80%** (Step 8's `go tool cover -func=... | grep total` command). This is what Codecov's patch-coverage check in CI (`native-ci.yml` + `codecov.yml`) will otherwise fail the PR on.
 
 ### Parity
 - [ ] Every Step 5 parity-table row marked **"Avoidable / Fixed"** manually verified against jBallerina for at least one representative input.
@@ -345,6 +375,7 @@ Before declaring done, check every box:
 - [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
 - [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (new row, recomputed Total footer, behavioural changes mirrored).
 - [ ] `stdlib-readme-format` validation checklist passes.
+- [ ] `doc/library/subset<N>.md` (the subset agreed with the developer in Step 8) documents this module's newly-supported surface — created fresh if it's a new subset, extended if existing.
 
 ### Wire-up
 - [ ] `lib/rt/libs.go` blank import added (skip only if pure Ballerina).
@@ -358,3 +389,5 @@ Summarise:
 - What was implemented and what was scoped out (with reasons).
 - Any new PAL methods or external Go dependencies added.
 - The complete parity table from Step 5.
+- The measured `native/` coverage % from Step 8's verify command.
+- Which `corpus/bal/library/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
