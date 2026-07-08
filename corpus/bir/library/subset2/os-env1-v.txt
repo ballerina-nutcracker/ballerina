@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = getUserHome() -> bb1;
+  }
+  bb1 {
+    home = %1;
+    %4 = length(home) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = ConstantLoad 0
+    %7 = %6;
+    %3 = > %5 %7;
+    %8 = %3;
+    %9 = println(%8) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

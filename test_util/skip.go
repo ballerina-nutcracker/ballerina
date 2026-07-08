@@ -18,8 +18,26 @@ package test_util
 
 import (
 	"path/filepath"
+	"runtime"
 	"strings"
 )
+
+// WindowsUnsupportedTests lists corpus tests that cannot run on the Windows CI
+// runner but are valid elsewhere — e.g. tests that exec a command which only
+// exists on Unix. They are skipped only when GOOS == "windows"; on every other
+// platform they run normally. Entries are corpus-relative path suffixes.
+var WindowsUnsupportedTests = []string{
+	// os:exec runs a real `echo` subprocess, which is not an executable on Windows.
+	"library/subset2/os-exec-v.bal",
+}
+
+// WASMUnsupportedTests lists corpus tests that cannot run under GOOS=js (the
+// WASM CI target) because the WASM sandbox provides no executable binaries.
+// Entries are corpus-relative path suffixes.
+var WASMUnsupportedTests = []string{
+	// os:exec requires spawning a subprocess; no executables exist in the WASM sandbox.
+	"library/subset2/os-exec-v.bal",
+}
 
 // UnsupportedTests is the single authoritative list of corpus tests that pi
 // cannot run end-to-end yet. It is owned by the integration test (which
@@ -167,6 +185,12 @@ var UnsupportedTests = []string{
 // UnsupportedTests. The path may be relative (e.g.
 // "subset8/08-foo/bar-v.bal") or absolute; entries are matched by suffix.
 func IsUnsupported(path string) bool {
+	if runtime.GOOS == "windows" && MatchesSkip(path, WindowsUnsupportedTests) {
+		return true
+	}
+	if runtime.GOOS == "js" && MatchesSkip(path, WASMUnsupportedTests) {
+		return true
+	}
 	return MatchesSkip(path, UnsupportedTests)
 }
 

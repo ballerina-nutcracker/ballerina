@@ -2,7 +2,6 @@
   (import-package ballerina http (as http))
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
-  (import-package ballerina lang map (as lang.map))
   (function main () (
     (union-type
       (error-type)
@@ -131,18 +130,10 @@
           (invocation hasHeader expr:
             (simple-var-ref req) (
             (literal X-One))))))
-      (var-def
-        (variable qp (type
-          (constrained-type
-            (builtin-ref-type map)
-            (array-type
-              (value-type string) dimensions: 1 ([])))) (expr
-          (invocation getQueryParams expr:
-            (simple-var-ref req) ()))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.map length (
-            (simple-var-ref qp))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation getQueryParams expr:
+          (simple-var-ref req) ()))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -377,46 +368,112 @@
           (simple-var-ref $desugar$27))))
       (var-def
         (variable $desugar$28 (expr
-          (literal X-Resp))))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
       (var-def
         (variable $desugar$29 (expr
-          (invocation $default$6 (
+          (invocation $default$8 (
             (simple-var-ref $desugar$28))))))
       (expression-stmt
-        (invocation removeHeader expr:
+        (invocation setJsonPayload expr:
           (simple-var-ref res) (
           (simple-var-ref $desugar$28)
           (simple-var-ref $desugar$29))))
       (var-def
         (variable $desugar$30 (expr
-          (literal X-Resp))))
+          (invocation getJsonPayload expr:
+            (simple-var-ref res) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$30))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$30))) ())
+      (var-def
+        (variable rj (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$30))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rj))))
       (var-def
         (variable $desugar$31 (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)))))
+      (var-def
+        (variable $desugar$32 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$31))))))
+      (expression-stmt
+        (invocation setBinaryPayload expr:
+          (simple-var-ref res) (
+          (simple-var-ref $desugar$31)
+          (simple-var-ref $desugar$32))))
+      (var-def
+        (variable $desugar$33 (expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref res) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$33))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$33))) ())
+      (var-def
+        (variable rb (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$33))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref rb))))))
+      (var-def
+        (variable $desugar$34 (expr
+          (literal X-Resp))))
+      (var-def
+        (variable $desugar$35 (expr
+          (invocation $default$6 (
+            (simple-var-ref $desugar$34))))))
+      (expression-stmt
+        (invocation removeHeader expr:
+          (simple-var-ref res) (
+          (simple-var-ref $desugar$34)
+          (simple-var-ref $desugar$35))))
+      (var-def
+        (variable $desugar$36 (expr
+          (literal X-Resp))))
+      (var-def
+        (variable $desugar$37 (expr
           (invocation $default$4 (
-            (simple-var-ref $desugar$30))))))
+            (simple-var-ref $desugar$36))))))
       (expression-stmt
         (invocation io println (
           (invocation hasHeader expr:
             (simple-var-ref res) (
-            (simple-var-ref $desugar$30)
-            (simple-var-ref $desugar$31))))))
+            (simple-var-ref $desugar$36)
+            (simple-var-ref $desugar$37))))))
       (var-def
-        (variable $desugar$32 (expr
+        (variable $desugar$38 (expr
           (invocation $default$5 ()))))
       (expression-stmt
         (invocation removeAllHeaders expr:
           (simple-var-ref res) (
-          (simple-var-ref $desugar$32))))
+          (simple-var-ref $desugar$38))))
       (var-def
-        (variable $desugar$33 (expr
+        (variable $desugar$39 (expr
           (literal Content-Type))))
       (var-def
-        (variable $desugar$34 (expr
+        (variable $desugar$40 (expr
           (invocation $default$4 (
-            (simple-var-ref $desugar$33))))))
+            (simple-var-ref $desugar$39))))))
       (expression-stmt
         (invocation io println (
           (invocation hasHeader expr:
             (simple-var-ref res) (
-            (simple-var-ref $desugar$33)
-            (simple-var-ref $desugar$34)))))))))
+            (simple-var-ref $desugar$39)
+            (simple-var-ref $desugar$40)))))))))

@@ -46,7 +46,8 @@ func initFloatModule(rt *runtime.Runtime) {
 		return math.Floor(args[0].(float64)), nil
 	})
 	reg("round", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return math.Round(args[0].(float64)), nil
+		// Ballerina float:round is IEEE roundToIntegralTiesToEven, not half-away-from-zero.
+		return math.RoundToEven(args[0].(float64)), nil
 	})
 	reg("sqrt", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return math.Sqrt(args[0].(float64)), nil

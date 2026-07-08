@@ -1,0 +1,45 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad BAL_TEST_VAR
+    %2 = ConstantLoad hello
+    %3 = setEnv(%1,%2) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %5 = $desugar$0 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %6 = ConstantLoad BAL_TEST_VAR
+    %7 = getEnv(%6) -> bb4;
+  }
+  bb4 {
+    v = %7;
+    %9 = println(v) -> bb5;
+  }
+  bb5 {
+    %10 = ConstantLoad BAL_TEST_VAR
+    %11 = unsetEnv(%10) -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %11;
+    %13 = $desugar$1 is error
+    %13 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    return;
+  }
+}

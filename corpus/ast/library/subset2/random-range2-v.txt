@@ -1,0 +1,33 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina random (as random))
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable equal (type
+          (union-type
+            (value-type int)
+            (user-defined-type random Error))) (expr
+          (invocation random createIntInRange (
+            (literal 5)
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref equal)
+            (user-defined-type random Error)))))
+      (var-def
+        (variable inverted (type
+          (union-type
+            (value-type int)
+            (user-defined-type random Error))) (expr
+          (invocation random createIntInRange (
+            (literal 20)
+            (literal 10))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref inverted)
+            (user-defined-type random Error))))))))

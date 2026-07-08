@@ -1,0 +1,37 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable input (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 104)
+          (literal 101)
+          (literal 108)
+          (literal 108)
+          (literal 111)))))
+    (var-def
+      (variable key (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 115)
+          (literal 101)
+          (literal 99)
+          (literal 114)
+          (literal 101)
+          (literal 116)))))
+    (var-def
+      (variable mac (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation crypto hmacSha256 (
+            (simple-var-ref input)
+            (simple-var-ref key)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref mac))))))
+  )
+)

@@ -1,0 +1,21 @@
+(package
+  (import-package ballerina log (as log))
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal filtered debug message))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation log printDebug (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))
