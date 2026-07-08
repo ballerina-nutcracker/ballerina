@@ -171,7 +171,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Header value parsing utility | Supported | `parseHeader()` parses comma-separated header values with parameters into `HeaderValue[]`. |
-| `HttpVersion` enum | Supported | `HTTP_1_0`, `HTTP_1_1`, and `HTTP_2_0` enum constants are present. `HTTP_1_0` prints a runtime warning and falls back to HTTP/1.1. |
+| HTTP version enum | Supported | `HttpVersion` with `HTTP_1_0`, `HTTP_1_1`, and `HTTP_2_0` enum constants. `HTTP_1_0` prints a runtime warning and falls back to HTTP/1.1. |
 | Distinct HTTP error types | Not Yet Supported | All errors surface as the generic `error` type; `http:ClientError`, `http:HeaderNotFoundError`, and similar subtypes are not declared — `is http:ClientError` type checks will not work. |
 | Observability and metrics | Not Yet Supported | Metrics and tracing integration via `ballerina/observe` is not implemented. |
 | XML payloads | Not Yet Supported | The `xml` type and related payload handling methods (`getXmlPayload()`, `setXmlPayload()`) are not implemented due to the lack of XML support in the Go runtime. |
