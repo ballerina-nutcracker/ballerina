@@ -1,0 +1,224 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Pair
+    (record-type
+      (field left
+        (value-type int))
+      (field right
+        (value-type int))))
+  (type-definition F
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable base (type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)) (expr
+                (literal 10)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref x))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation base ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation base (
+            (named-arg a
+              (literal 6)))))))
+      (var-def
+        (variable localFn (type
+          (function-type (
+            (value-type int)
+            (value-type int)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_1 (
+              (variable x (type
+                (value-type int)))
+              (variable y (type
+                (value-type int)) (expr
+                (literal 100)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (simple-var-ref y)))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation localFn (
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation localFn (
+            (named-arg first
+              (literal 4))
+            (named-arg second
+              (literal 5)))))))
+      (var-def
+        (variable copied (type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))) (expr
+          (simple-var-ref base))))
+      (expression-stmt
+        (invocation io println (
+          (invocation copied ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation takesFn (
+            (simple-var-ref base))))))
+      (var-def
+        (variable recordFn (type
+          (function-type (
+            (user-defined-type Pair)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_2 (
+              (variable q (type
+                (user-defined-type Pair)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (field-based-access left
+                      (simple-var-ref q))
+                    (field-based-access right
+                      (simple-var-ref q))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation recordFn (
+            (named-arg left
+              (literal 8))
+            (named-arg right
+              (literal 9)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation applyFns (
+            (literal 10)
+            (lambda
+              (function $anonFunc$_3 (
+                (variable b (type
+                  (value-type int)) (expr
+                  (literal 10)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (simple-var-ref b)))))
+            (lambda
+              (function $anonFunc$_4 (
+                (variable c (type
+                  (value-type int)) (expr
+                  (literal 6)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (binary-expr +
+                      (simple-var-ref c)
+                      (literal 1)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation applyInlineFns (
+            (literal 10)
+            (lambda
+              (function $anonFunc$_5 (
+                (variable b (type
+                  (value-type int)) (expr
+                  (literal 10)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (simple-var-ref b)))))
+            (lambda
+              (function $anonFunc$_6 (
+                (variable c (type
+                  (value-type int)) (expr
+                  (literal 6)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (binary-expr +
+                      (simple-var-ref c)
+                      (literal 1)))))))))))))
+  (function takesFn (
+    (variable f (type
+      (function-type (
+        (value-type int)) (
+        (value-type int)))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation f ()))))
+  (function applyFns (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (invocation length expr:
+            (simple-var-ref fns) ())
+          (literal 0))
+        (block-stmt
+          (return
+            (simple-var-ref a))) ())
+      (block-stmt
+        (var-def
+          (variable res (type
+            (value-type int)) (expr
+            (simple-var-ref a))))
+        (foreach
+          (var-def
+            (variable fn (type
+              (user-defined-type F))))
+          (simple-var-ref fns)
+          (block-stmt
+            (assignment
+              (simple-var-ref res)
+              (invocation fn (
+                (simple-var-ref res))))))
+        (return
+          (simple-var-ref res)))))
+  (function applyInlineFns (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (invocation length expr:
+            (simple-var-ref fns) ())
+          (literal 0))
+        (block-stmt
+          (return
+            (simple-var-ref a))) ())
+      (block-stmt
+        (var-def
+          (variable res (type
+            (value-type int)) (expr
+            (simple-var-ref a))))
+        (foreach
+          (var-def
+            (variable fn (type
+              (function-type (
+                (value-type int)) (
+                (value-type int))))))
+          (simple-var-ref fns)
+          (block-stmt
+            (assignment
+              (simple-var-ref res)
+              (invocation fn (
+                (simple-var-ref res))))))
+        (return
+          (simple-var-ref res))))))

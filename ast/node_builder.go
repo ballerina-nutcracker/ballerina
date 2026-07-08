@@ -4238,9 +4238,12 @@ func (n *NodeBuilder) createFunctionTypeParam(param tree.ParameterNode) BLangFun
 
 	ftParam.TypeDesc = n.createTypeNode(typeName).(BType)
 
-	if dp, ok := param.(*tree.DefaultableParameterNode); ok {
-		defaultExpr := dp.Expression()
+	switch p := param.(type) {
+	case *tree.DefaultableParameterNode:
+		defaultExpr := p.Expression()
 		ftParam.InitExpr = n.createExpression(defaultExpr)
+	case *tree.IncludedRecordParameterNode:
+		ftParam.SetIncludedRecordParam()
 	}
 
 	if annotations.Size() > 0 {

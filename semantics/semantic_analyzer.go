@@ -1759,6 +1759,9 @@ func analyzeLambdaInvocation[A analyzer](a A, invocation *ast.BLangInvocation, p
 	tyCtx := a.tyCtx()
 
 	for i, arg := range invocation.ArgExprs {
+		if arg == nil {
+			continue
+		}
 		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
 			a.internalError("named argument after call-argument lowering", arg.GetPosition())
 			return false

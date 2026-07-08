@@ -385,6 +385,14 @@ func (bs *blockSymbolResolver) GetCtx() *context.CompilerContext {
 	return bs.parent.GetCtx()
 }
 
+func (bs *blockSymbolResolver) nextDefaultSymbolName() string {
+	if alloc, ok := bs.parent.(defaultSymbolAllocator); ok {
+		return alloc.nextDefaultSymbolName()
+	}
+	bs.GetCtx().InternalError("default symbol allocator not found", diagnostics.Location{})
+	return "$default$error"
+}
+
 func (bs *blockSymbolResolver) TypeContext() semtypes.Context {
 	return bs.parent.TypeContext()
 }
@@ -776,8 +784,11 @@ func (ms *moduleSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.BLangSimp
 			return
 		}
 	}
+	symRef, _, _ := ms.GetSymbol(name)
+	if fnType, ok := globalVar.TypeNode().(*ast.BLangFunctionType); ok {
+		attachFunctionTypeSignature(ms, ms.scope, symRef, fnType, globalVar.GetPosition())
+	}
 	if !isPublic {
-		symRef, _, _ := ms.GetSymbol(name)
 		markInit(ms, name, symRef, globalVar.GetPosition())
 	}
 }
@@ -921,11 +932,16 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 		}
 		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(param))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, param)
+		if fnType, ok := param.TypeNode().(*ast.BLangFunctionType); ok {
+			attachFunctionTypeSignature(functionResolver, functionResolver.scope, param.Symbol(), fnType, param.GetPosition())
+		}
 		if trackParams {
 			markInit(functionResolver, name, param.Symbol(), param.GetPosition())
 		}
 	}
 	if restParam != nil {
+		// We don't need to support rest given you can't invoke with index access expression.
+		// User must always assign it to a variable and we don't support (not sure if we should) `var f` form for default params
 		rest := restParam.(*ast.BLangSimpleVariable)
 		name := rest.Name.GetValue()
 		if _, exists := scope.GetSymbol(name); exists {
@@ -945,6 +961,60 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
 	_, ok := body.(*ast.BLangExternFunctionBody)
 	return ok
+}
+
+func attachFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model.Scope, fnRef model.SymbolRef, fnType *ast.BLangFunctionType, pos diagnostics.Location) {
+	if fnType.IsAnyFunction() {
+		return
+	}
+	cx := alloc.GetCtx()
+	paramNames := make([]string, 0, len(fnType.RequiredParams))
+	flags := make([]model.ParamFlag, 0, len(fnType.RequiredParams))
+	defaults := make([]*model.DefaultableParam, 0, len(fnType.RequiredParams))
+	includedRecords := make([]*model.IncludedRecordMetadata, 0, len(fnType.RequiredParams))
+	for i := range fnType.RequiredParams {
+		param := &fnType.RequiredParams[i]
+		name := ""
+		if param.Name != nil {
+			name = param.Name.GetValue()
+		}
+		paramNames = append(paramNames, name)
+
+		var flag model.ParamFlag
+		if param.IsIncludedRecordParam() {
+			flag |= model.ParamFlagIncludedRecordParam
+			includedRecords = append(includedRecords, &model.IncludedRecordMetadata{})
+		} else {
+			includedRecords = append(includedRecords, nil)
+		}
+
+		var defaultParam *model.DefaultableParam
+		if param.InitExpr != nil {
+			flag |= model.ParamFlagDefaultable
+			name := alloc.nextDefaultSymbolName()
+			defaultFnSym := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false, param.GetPosition())
+			targetScope.AddSymbol(name, defaultFnSym)
+			symRef, _ := targetScope.GetSymbol(name)
+			param.DefaultFnRef = symRef
+			defaultParam = &model.DefaultableParam{Symbol: symRef, Kind: model.DefaultableParamKindExpr}
+		}
+		flags = append(flags, flag)
+		defaults = append(defaults, defaultParam)
+	}
+	if fnType.RestParam != nil {
+		restParam := fnType.RestParam
+		name := ""
+		if restParam.Name != nil {
+			name = restParam.Name.GetValue()
+		}
+		paramNames = append(paramNames, name)
+		flags = append(flags, model.ParamFlagRestParam)
+		defaults = append(defaults, nil)
+		includedRecords = append(includedRecords, nil)
+	}
+	if !cx.SetFunctionSignature(fnRef, model.NewUntypedFunctionSignature(paramNames, fnType.RestParam != nil, flags, defaults, includedRecords)) {
+		cx.InternalError("function signature already set", pos)
+	}
 }
 
 func setBasicFunctionSignature(ctx *context.CompilerContext, function *ast.BLangFunction) {
@@ -1019,6 +1089,9 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 		}
 		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(param))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, param)
+		if fnType, ok := param.TypeNode().(*ast.BLangFunctionType); ok {
+			attachFunctionTypeSignature(functionResolver, functionResolver.scope, param.Symbol(), fnType, param.GetPosition())
+		}
 		markInit(functionResolver, name, param.Symbol(), param.GetPosition())
 	}
 
@@ -1169,9 +1242,51 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	return bs
 }
 
+func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangFunctionType) {
+	paramScope := resolver.GetCtx().NewBlockScope(resolver.GetScope(), resolver.GetPkgID())
+	paramResolver := &blockSymbolResolver{parent: resolver, scope: paramScope, node: fnType}
+	for i := range fnType.RequiredParams {
+		param := &fnType.RequiredParams[i]
+		if param.TypeDesc != nil {
+			ast.Walk(resolver, param.TypeDesc.(ast.BLangNode))
+		}
+		if param.Name != nil {
+			name := param.Name.GetValue()
+			symbol := model.NewVariableSymbol(name, false, false, true, param.Name.GetPosition())
+			paramScope.AddSymbol(name, &symbol)
+			ref, _ := paramScope.GetSymbol(name)
+			param.SymbolRef = ref
+			param.Name.SetDeterminedType(semtypes.NEVER)
+		}
+		if param.InitExpr != nil {
+			ast.Walk(paramResolver, param.InitExpr.(ast.BLangNode))
+		}
+	}
+	if fnType.RestParam != nil {
+		param := fnType.RestParam
+		if param.TypeDesc != nil {
+			ast.Walk(resolver, param.TypeDesc.(ast.BLangNode))
+		}
+		if param.Name != nil {
+			name := param.Name.GetValue()
+			symbol := model.NewVariableSymbol(name, false, false, true, param.Name.GetPosition())
+			paramScope.AddSymbol(name, &symbol)
+			ref, _ := paramScope.GetSymbol(name)
+			param.SymbolRef = ref
+			param.Name.SetDeterminedType(semtypes.NEVER)
+		}
+	}
+	if fnType.ReturnTypeDescriptor != nil {
+		ast.Walk(resolver, fnType.ReturnTypeDescriptor.(ast.BLangNode))
+	}
+}
+
 func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) ast.Visitor {
 	switch n := node.(type) {
 	case ast.BLangBadNode:
+		return nil
+	case *ast.BLangFunctionType:
+		resolveFunctionTypeSymbols(resolver, n)
 		return nil
 	case *ast.BLangXMLElementLiteral:
 		rootNeeds := map[string]model.SymbolRef{}
@@ -1420,6 +1535,9 @@ func defineVariable(resolver *blockSymbolResolver, variable ast.VariableNode, is
 			symbol.SetFinal()
 		}
 		addSymbolAndSetOnNode(resolver, name, &symbol, variable)
+		if fnType, ok := variable.TypeNode().(*ast.BLangFunctionType); ok {
+			attachFunctionTypeSignature(resolver, resolver.scope, variable.Symbol(), fnType, variable.GetPosition())
+		}
 		markInit(resolver, name, variable.Symbol(), variable.GetPosition())
 	default:
 		internalError(resolver, "Unsupported variable", variable.GetPosition())

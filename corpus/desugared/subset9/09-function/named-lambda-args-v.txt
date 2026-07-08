@@ -1,0 +1,310 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Pair
+    (record-type
+      (field left
+        (value-type int))
+      (field right
+        (value-type int))))
+  (type-definition F
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable base (type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)) (expr
+                (literal 10)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref x))))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation base (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation base (
+            (literal 6))))))
+      (var-def
+        (variable localFn (type
+          (function-type (
+            (value-type int)
+            (value-type int)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_1 (
+              (variable x (type
+                (value-type int)))
+              (variable y (type
+                (value-type int)) (expr
+                (literal 100)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (simple-var-ref y)))))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 4))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation localFn (
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation localFn (
+            (literal 4)
+            (literal 5))))))
+      (var-def
+        (variable copied (type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))) (expr
+          (simple-var-ref base))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$2 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation copied (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation takesFn (
+            (simple-var-ref base))))))
+      (var-def
+        (variable recordFn (type
+          (function-type (
+            (user-defined-type Pair)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_2 (
+              (variable q (type
+                (user-defined-type Pair)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (index-based-access
+                      (simple-var-ref q)
+                      (literal left))
+                    (index-based-access
+                      (simple-var-ref q)
+                      (literal right))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation recordFn (
+            (mapping-constructor-expr
+              (key-value
+                (literal left)
+                (literal 8))
+              (key-value
+                (literal right)
+                (literal 9))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation applyFns (
+            (literal 10)
+            (lambda
+              (function $anonFunc$_3 (
+                (variable b (type
+                  (value-type int)) (expr
+                  (literal 10)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (simple-var-ref b)))))
+            (lambda
+              (function $anonFunc$_4 (
+                (variable c (type
+                  (value-type int)) (expr
+                  (literal 6)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (binary-expr +
+                      (simple-var-ref c)
+                      (literal 1)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation applyInlineFns (
+            (literal 10)
+            (lambda
+              (function $anonFunc$_5 (
+                (variable b (type
+                  (value-type int)) (expr
+                  (literal 10)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (simple-var-ref b)))))
+            (lambda
+              (function $anonFunc$_6 (
+                (variable c (type
+                  (value-type int)) (expr
+                  (literal 6)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (binary-expr +
+                      (simple-var-ref c)
+                      (literal 1)))))))))))))
+  (function takesFn (
+    (variable f (type
+      (function-type (
+        (value-type int)) (
+        (value-type int)))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$3 ()))))
+      (return
+        (invocation f (
+          (simple-var-ref $desugar$0))))))
+  (function applyFns (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (invocation lang.array length (
+            (simple-var-ref fns)))
+          (literal 0))
+        (block-stmt
+          (return
+            (simple-var-ref a))) ())
+      (block-stmt
+        (var-def
+          (variable res (type
+            (value-type int)) (expr
+            (simple-var-ref a))))
+        (var-def
+          (variable $desugar$0 (expr
+            (simple-var-ref fns))))
+        (var-def
+          (variable $desugar$1 (expr
+            (numeric-literal 0))))
+        (var-def
+          (variable $desugar$2 (expr
+            (invocation lang.array length (
+              (simple-var-ref $desugar$0))))))
+        (while
+          (binary-expr <
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))
+          (block-stmt
+            (var-def
+              (variable fn (type
+                (user-defined-type F)) (expr
+                (index-based-access
+                  (simple-var-ref $desugar$0)
+                  (simple-var-ref $desugar$1)))))
+            (assignment
+              (simple-var-ref res)
+              (invocation fn (
+                (simple-var-ref res))))
+            (assignment
+              (simple-var-ref $desugar$1)
+              (binary-expr +
+                (simple-var-ref $desugar$1)
+                (numeric-literal 1)))))
+        (return
+          (simple-var-ref res)))))
+  (function applyInlineFns (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (invocation lang.array length (
+            (simple-var-ref fns)))
+          (literal 0))
+        (block-stmt
+          (return
+            (simple-var-ref a))) ())
+      (block-stmt
+        (var-def
+          (variable res (type
+            (value-type int)) (expr
+            (simple-var-ref a))))
+        (var-def
+          (variable $desugar$0 (expr
+            (simple-var-ref fns))))
+        (var-def
+          (variable $desugar$1 (expr
+            (numeric-literal 0))))
+        (var-def
+          (variable $desugar$2 (expr
+            (invocation lang.array length (
+              (simple-var-ref $desugar$0))))))
+        (while
+          (binary-expr <
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))
+          (block-stmt
+            (var-def
+              (variable fn (type
+                (function-type (
+                  (value-type int)) (
+                  (value-type int)))) (expr
+                (index-based-access
+                  (simple-var-ref $desugar$0)
+                  (simple-var-ref $desugar$1)))))
+            (assignment
+              (simple-var-ref res)
+              (invocation fn (
+                (simple-var-ref res))))
+            (assignment
+              (simple-var-ref $desugar$1)
+              (binary-expr +
+                (simple-var-ref $desugar$1)
+                (numeric-literal 1)))))
+        (return
+          (simple-var-ref res)))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 20))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$1 (
+    (variable first)) ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref first)
+          (literal 3)))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 7))))
+  (function $default$4 () ()
+    (block-function-body
+      (return
+        (literal 5)))))

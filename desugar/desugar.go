@@ -1152,52 +1152,119 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 	}
 }
 
+func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignature,
+	paramTypeSupplier func(int) semtypes.SemType, paramExprSupplier func(int) ast.BLangExpression, paramSymbolSupplier func(int) model.SymbolRef,
+	scope model.Scope,
+) []*ast.BLangFunction {
+	var prevParamNames []string
+	var prevParamTypes []semtypes.SemType
+	var prevParamSymbol []model.SymbolRef
+	var defaultClosures []*ast.BLangFunction
+	for i := range sig.FixedParamCount() {
+		def := sig.Default[i]
+		if def != nil && def.Kind != model.DefaultableParamKindInferredTypedesc {
+			expr := paramExprSupplier(i)
+			if expr == nil {
+				ctx.internalError("missing expression for defaultable param")
+				return nil
+			}
+			defaultClosure := createDefaultClosure(ctx, def.Symbol, expr, scope, prevParamNames, prevParamTypes, prevParamSymbol)
+			defaultClosures = append(defaultClosures, defaultClosure)
+		}
+		prevParamNames = append(prevParamNames, sig.ParamNames[i])
+		prevParamTypes = append(prevParamTypes, paramTypeSupplier(i))
+		prevParamSymbol = append(prevParamSymbol, paramSymbolSupplier(i))
+	}
+	return defaultClosures
+}
+
+func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.BLangExpression, scope model.Scope,
+	prevParamNames []string, prevParamTypes []semtypes.SemType, prevParamSymbol []model.SymbolRef,
+) *ast.BLangFunction {
+	fnName := ctx.getSymbol(symRef).Name()
+	fnScope := ctx.newFunctionScope(scope)
+	defaultClosure := createDefaultValueFunction(fnName, expr)
+	defaultClosure.SetSymbol(symRef)
+	defaultClosure.SetScope(fnScope)
+	symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
+	for j := range len(prevParamNames) {
+		paramName := prevParamNames[j]
+		paramTy := prevParamTypes[j]
+		param := newSimpleVariable(paramName, paramTy)
+		param.SetRequiredParam()
+		fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, ctx.getSymbol(prevParamSymbol[j]).Location())))
+		paramSymRef, _ := fnScope.GetSymbol(paramName)
+		ctx.setSymbolType(paramSymRef, paramTy)
+		param.SetSymbol(paramSymRef)
+		defaultClosure.AddParameter(param)
+		symbolMapping[prevParamSymbol[j]] = paramSymRef
+	}
+	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping)
+	return defaultClosure
+}
+
 func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*ast.BLangFunction {
 	sig, ok := ctx.functionSignature(fn.Symbol())
 	if !ok {
 		ctx.internalError("function signature not found")
 		return nil
 	}
-	var results []*ast.BLangFunction
-	for j := range fn.RequiredParams {
-		param := &fn.RequiredParams[j]
-		dp, ok := sig.DefaultableParam(j)
-		if !ok {
-			if param.IsDefaultableParam() {
-				ctx.internalError("defaultable param info missing for parameter marked as defaultable")
+	results := createDefaultClosures(ctx, sig,
+		func(i int) semtypes.SemType {
+			return ctx.symbolType(fn.RequiredParams[i].Symbol())
+		},
+		func(i int) ast.BLangExpression {
+			if fn.RequiredParams[i].Expr == nil {
+				return nil
 			}
-			continue
+			return fn.RequiredParams[i].Expr.(ast.BLangExpression)
+		},
+		func(i int) model.SymbolRef {
+			return fn.RequiredParams[i].Symbol()
+		},
+		fn.Scope(),
+	)
+	for i := range fn.RequiredParams {
+		param := &fn.RequiredParams[i]
+		if fnType, ok := param.TypeNode().(*ast.BLangFunctionType); ok {
+			results = append(results, desugarFunctionTypeParamDefaults(ctx, param.Symbol(), fnType, fn.Scope())...)
 		}
-		if dp.Kind == model.DefaultableParamKindInferredTypedesc {
-			continue
-		}
-		symRef := dp.Symbol
-		fnName := ctx.getSymbol(symRef).Name()
-		fnScope := ctx.newFunctionScope(fn.Scope())
-
-		defaultFn := createDefaultValueFunction(fnName, param.Expr.(ast.BLangExpression))
-		defaultFn.SetSymbol(symRef)
-		defaultFn.SetScope(fnScope)
-
-		symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
-		for k := range fn.RequiredParams[:j] {
-			precedingParam := fn.RequiredParams[k]
-			paramName := precedingParam.Name.GetValue()
-			paramTy := ctx.symbolType(precedingParam.Symbol())
-			newParam := newSimpleVariable(paramName, paramTy)
-			newParam.SetRequiredParam()
-			fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, precedingParam.Name.GetPosition())))
-			paramSymRef, _ := fnScope.GetSymbol(paramName)
-			ctx.setSymbolType(paramSymRef, paramTy)
-			newParam.SetSymbol(paramSymRef)
-			defaultFn.AddParameter(newParam)
-			symbolMapping[precedingParam.Symbol()] = paramSymRef
-		}
-		remapSymbolRefs(defaultFn.Body.(ast.BLangNode), symbolMapping)
-
-		results = append(results, defaultFn)
 	}
 	return results
+}
+
+func desugarFunctionTypeParamDefaults(ctx desugarContext, owner model.SymbolRef, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
+	if fnType == nil || fnType.IsAnyFunction() {
+		return nil
+	}
+	sig, ok := ctx.functionSignature(owner)
+	if !ok {
+		ctx.internalError("function signature not found")
+		return nil
+	}
+	return createDefaultClosures(ctx, sig,
+		func(i int) semtypes.SemType {
+			return fnType.RequiredParams[i].GetDeterminedType()
+		},
+		func(i int) ast.BLangExpression {
+			return fnType.RequiredParams[i].InitExpr
+		},
+		func(i int) model.SymbolRef {
+			return fnType.RequiredParams[i].SymbolRef
+		},
+		scope,
+	)
+}
+
+func desugarGlobalFunctionTypeDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
+	for i := range pkg.GlobalVars {
+		gv := &pkg.GlobalVars[i]
+		if fnType, ok := gv.TypeNode().(*ast.BLangFunctionType); ok {
+			for _, fn := range desugarFunctionTypeParamDefaults(pkgCtx, gv.Symbol(), fnType, nil) {
+				pkg.Functions = append(pkg.Functions, *fn)
+			}
+		}
+	}
 }
 
 func desugarTopLevelFunctionDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
@@ -1282,6 +1349,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	// Desugar type definition default expressions into standalone functions
 	desugarTopLevelTypeDescs(pkgCtx, pkg)
 
+	desugarGlobalFunctionTypeDefaults(pkgCtx, pkg)
 	desugarTopLevelFunctionDefaults(pkgCtx, pkg)
 	desugarClassMethodDefaults(pkgCtx, pkg)
 

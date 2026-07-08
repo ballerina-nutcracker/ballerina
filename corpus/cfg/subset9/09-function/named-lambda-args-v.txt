@@ -1,0 +1,217 @@
+(applyFns
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (invocation lang.array length (
+        (simple-var-ref fns)))
+      (literal 0))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref a))
+  )
+  (bb2 (bb0) (bb3)
+    (var-def
+      (variable res (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
+  )
+  (bb3 (bb2 bb4) (bb4 bb5)
+    (simple-var-ref fns)
+    (var-def
+      (variable fn (type
+        (user-defined-type F))))
+  )
+  (bb4 (bb3) (bb3)
+    (assignment
+      (simple-var-ref res)
+      (invocation fn (
+        (simple-var-ref res))))
+  )
+  (bb5 (bb3) ()
+    (return
+      (simple-var-ref res))
+  )
+)
+(applyInlineFns
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (invocation lang.array length (
+        (simple-var-ref fns)))
+      (literal 0))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref a))
+  )
+  (bb2 (bb0) (bb3)
+    (var-def
+      (variable res (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
+  )
+  (bb3 (bb2 bb4) (bb4 bb5)
+    (simple-var-ref fns)
+    (var-def
+      (variable fn (type
+        (function-type (
+          (value-type int)) (
+          (value-type int))))))
+  )
+  (bb4 (bb3) (bb3)
+    (assignment
+      (simple-var-ref res)
+      (invocation fn (
+        (simple-var-ref res))))
+  )
+  (bb5 (bb3) ()
+    (return
+      (simple-var-ref res))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable base (type
+        (function-type (
+          (value-type int)) (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable x (type
+              (value-type int)) (expr
+              (literal 10)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref x))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation base ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation base (
+          (literal 6))))))
+    (var-def
+      (variable localFn (type
+        (function-type (
+          (value-type int)
+          (value-type int)) (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable x (type
+              (value-type int)))
+            (variable y (type
+              (value-type int)) (expr
+              (literal 100)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref y)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation localFn (
+          (literal 4) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation localFn (
+          (literal 4)
+          (literal 5))))))
+    (var-def
+      (variable copied (type
+        (function-type (
+          (value-type int)) (
+          (value-type int)))) (expr
+        (simple-var-ref base))))
+    (expression-stmt
+      (invocation io println (
+        (invocation copied ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation takesFn (
+          (simple-var-ref base))))))
+    (var-def
+      (variable recordFn (type
+        (function-type (
+          (user-defined-type Pair)) (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable q (type
+              (user-defined-type Pair)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (field-based-access left
+                    (simple-var-ref q))
+                  (field-based-access right
+                    (simple-var-ref q))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation recordFn (
+          (mapping-constructor-expr
+            (key-value
+              (literal left)
+              (literal 8))
+            (key-value
+              (literal right)
+              (literal 9))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation applyFns (
+          (literal 10)
+          (lambda
+            (function $anonFunc$_3 (
+              (variable b (type
+                (value-type int)) (expr
+                (literal 10)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref b)))))
+          (lambda
+            (function $anonFunc$_4 (
+              (variable c (type
+                (value-type int)) (expr
+                (literal 6)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref c)
+                    (literal 1)))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation applyInlineFns (
+          (literal 10)
+          (lambda
+            (function $anonFunc$_5 (
+              (variable b (type
+                (value-type int)) (expr
+                (literal 10)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref b)))))
+          (lambda
+            (function $anonFunc$_6 (
+              (variable c (type
+                (value-type int)) (expr
+                (literal 6)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref c)
+                    (literal 1)))))))))))
+  )
+)
+(takesFn
+  (bb0 () ()
+    (return
+      (invocation f ( <default>)))
+  )
+)

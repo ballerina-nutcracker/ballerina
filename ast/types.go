@@ -226,10 +226,13 @@ type (
 
 	BLangFunctionTypeParam struct {
 		bLangNodeBase
-		Name           *BLangIdentifier
-		TypeDesc       BType
-		InitExpr       BLangExpression
-		AnnAttachments []BLangAnnotationAttachment
+		Name                *BLangIdentifier
+		TypeDesc            BType
+		InitExpr            BLangExpression
+		AnnAttachments      []BLangAnnotationAttachment
+		SymbolRef           model.SymbolRef
+		DefaultFnRef        model.SymbolRef
+		IncludedRecordParam bool
 	}
 )
 
@@ -666,6 +669,14 @@ func (b *BLangFunctionTypeParam) GetName() *string {
 
 func (b *BLangFunctionTypeParam) GetTypeDesc() Type {
 	return b.TypeDesc
+}
+
+func (b *BLangFunctionTypeParam) IsIncludedRecordParam() bool {
+	return b.IncludedRecordParam
+}
+
+func (b *BLangFunctionTypeParam) SetIncludedRecordParam() {
+	b.IncludedRecordParam = true
 }
 
 func (b *BLangFunctionType) GetParams() []FunctionTypeParam {

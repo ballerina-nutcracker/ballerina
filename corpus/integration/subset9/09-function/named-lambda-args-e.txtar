@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no such parameter x
+  --> named-lambda-args-e.bal:21:15
+   |
+21 |     int _ = f(x = 1); // @error
+   |               ^^^^^

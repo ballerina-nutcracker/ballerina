@@ -859,9 +859,15 @@ func topologicallySortConstants(t typeResolver, constants []ast.BLangConstant) (
 func resolveInvokableSignature(t typeResolver, fn functionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangSimpleVariable, depth int) (semtypes.SemType, []semtypes.SemType, semtypes.SemType, semtypes.SemType, bool) {
 	paramTypes := make([]semtypes.SemType, len(requiredParams))
 	for i := range requiredParams {
-		resolveSimpleVariableInner(t, nil, &requiredParams[i], depth+1)
-		setOtherNodesAsNever(&requiredParams[i])
-		paramTypes[i] = requiredParams[i].GetDeterminedType()
+		param := &requiredParams[i]
+		resolveSimpleVariableInner(t, nil, param, depth+1)
+		if fnType, ok := param.TypeNode().(*ast.BLangFunctionType); ok {
+			if !finalizeFunctionTypeValueSignature(t, param.Symbol(), fnType, param.GetPosition()) {
+				return semtypes.SemType{}, nil, semtypes.SemType{}, semtypes.SemType{}, false
+			}
+		}
+		setOtherNodesAsNever(param)
+		paramTypes[i] = param.GetDeterminedType()
 	}
 	restTy := semtypes.NEVER
 	if rp := fn.GetRestParam(); rp != nil {
@@ -1622,6 +1628,10 @@ func resolveStatementInner(t typeResolver, chain *binding, stmt ast.StatementNod
 			updateSymbolType(t, variable, variableTy)
 		} else if !resolveSimpleVariable(t, chain, variable) {
 			return defaultStmtEffect(chain), false
+		} else if fnType, ok := variable.TypeNode().(*ast.BLangFunctionType); ok {
+			if !finalizeFunctionTypeValueSignature(t, variable.Symbol(), fnType, variable.GetPosition()) {
+				return defaultStmtEffect(chain), false
+			}
 		}
 		s.VariableDef.SetDeterminedType(semtypes.NEVER)
 		// foreach may run zero times, so the post-loop chain starts from the
@@ -1727,25 +1737,43 @@ func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) 
 }
 
 func validateIncludedRecordParams(t typeResolver, fn *ast.BLangFunction, sig model.UntypedFunctionSignature) bool {
+	params := make([]includedRecordParamData, len(fn.RequiredParams))
+	for i := range fn.RequiredParams {
+		param := &fn.RequiredParams[i]
+		params[i] = includedRecordParamData{typeDesc: param.TypeNode(), pos: param.GetPosition()}
+	}
+	restName := ""
+	if fn.RestParam != nil {
+		restParam := fn.RestParam.(*ast.BLangSimpleVariable)
+		restName = restParam.GetName().GetValue()
+	}
+	return validateIncludedRecordParamMetadata(t, fn.Symbol(), sig, params, restName, fn.GetPosition())
+}
+
+type includedRecordParamData struct {
+	typeDesc ast.BType
+	pos      diagnostics.Location
+}
+
+func validateIncludedRecordParamMetadata(t typeResolver, owner model.SymbolRef, sig model.UntypedFunctionSignature, params []includedRecordParamData, restName string, loc diagnostics.Location) bool {
 	paramNames := sig.ParamNames
 	fieldOrigin := make(map[string]int)
 	includedRecords := make([]*model.IncludedRecordMetadata, len(sig.ParamNames))
 	updated := false
-	for i := range fn.RequiredParams {
-		param := &fn.RequiredParams[i]
+	for i, param := range params {
 		if i >= len(sig.ParamFlags) || sig.ParamFlags[i]&model.ParamFlagIncludedRecordParam == 0 {
 			continue
 		}
-		udt, ok := param.TypeNode().(*ast.BLangUserDefinedType)
+		udt, ok := param.typeDesc.(*ast.BLangUserDefinedType)
 		if !ok {
-			t.semanticError("included record parameter must be a record type", param.GetPosition())
+			t.semanticError("included record parameter must be a record type", param.pos)
 			return false
 		}
 		recRef := udt.Symbol()
 		t.ensureResolved(recRef, 0)
 		recSym, ok := t.getSymbol(recRef).(*model.RecordSymbol)
 		if !ok {
-			t.semanticError("included record parameter must be a record type", param.GetPosition())
+			t.semanticError("included record parameter must be a record type", param.pos)
 			return false
 		}
 		metadata := &model.IncludedRecordMetadata{}
@@ -1765,25 +1793,22 @@ func validateIncludedRecordParams(t typeResolver, fn *ast.BLangFunction, sig mod
 				if pname == name {
 					t.semanticError(
 						fmt.Sprintf("parameter '%s' conflicts with field of included record parameter '%s'", name, paramNames[i]),
-						param.GetPosition(),
+						param.pos,
 					)
 					return false
 				}
 			}
-			if fn.RestParam != nil {
-				restParam := fn.RestParam.(*ast.BLangSimpleVariable)
-				if restParam.GetName().GetValue() == name {
-					t.semanticError(
-						fmt.Sprintf("parameter '%s' conflicts with field of included record parameter '%s'", name, paramNames[i]),
-						param.GetPosition(),
-					)
-					return false
-				}
+			if restName == name {
+				t.semanticError(
+					fmt.Sprintf("parameter '%s' conflicts with field of included record parameter '%s'", name, paramNames[i]),
+					param.pos,
+				)
+				return false
 			}
 			if prev, seen := fieldOrigin[name]; seen {
 				t.semanticError(
 					fmt.Sprintf("duplicate field '%s' in included record parameters '%s' and '%s'", name, paramNames[prev], paramNames[i]),
-					param.GetPosition(),
+					param.pos,
 				)
 				return false
 			}
@@ -1792,8 +1817,9 @@ func validateIncludedRecordParams(t typeResolver, fn *ast.BLangFunction, sig mod
 		includedRecords[i] = metadata
 		updated = true
 	}
-	if updated && !t.compilerContext().UpdateFunctionSignatureIncludedRecords(fn.Symbol(), includedRecords) {
-		t.internalError("function signature not set", fn.GetPosition())
+	if updated && !t.compilerContext().UpdateFunctionSignatureIncludedRecords(owner, includedRecords) {
+		t.internalError("function signature not set", loc)
+		return false
 	}
 	return true
 }
@@ -1804,6 +1830,11 @@ func resolveDependentlyTypedFunctionSignature(t typeResolver, fn *ast.BLangFunct
 	for i := range fn.RequiredParams {
 		p := &fn.RequiredParams[i]
 		resolveSimpleVariableInner(t, nil, p, depth+1)
+		if fnType, ok := p.TypeNode().(*ast.BLangFunctionType); ok {
+			if !finalizeFunctionTypeValueSignature(t, p.Symbol(), fnType, p.GetPosition()) {
+				return semtypes.SemType{}, false
+			}
+		}
 		paramTypes[i] = p.GetDeterminedType()
 		paramsByName[p.GetName().GetValue()] = param{index: i, ty: paramTypes[i]}
 	}
@@ -2903,6 +2934,11 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangSimpleVa
 		}
 		setExpectedType(variable, semType)
 		updateSymbolType(t, variable, semType)
+		if fnType, ok := typeNode.(*ast.BLangFunctionType); ok {
+			if !finalizeFunctionTypeValueSignature(t, variable.Symbol(), fnType, variable.GetPosition()) {
+				return defaultStmtEffect(chain), false
+			}
+		}
 	}
 
 	effectChain := chain
@@ -3043,6 +3079,9 @@ func resolveGlobalVarType(t typeResolver, node *ast.BLangSimpleVariable) bool {
 	}
 	setExpectedType(node, semType)
 	updateSymbolType(t, node, semType)
+	if fnType, ok := typeNode.(*ast.BLangFunctionType); ok {
+		return finalizeFunctionTypeValueSignature(t, node.Symbol(), fnType, node.GetPosition())
+	}
 	return true
 }
 
@@ -3168,6 +3207,36 @@ func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemT
 	}
 	listDefn := semtypes.NewListDefinition()
 	return listDefn.DefineListTypeWrapped(t.typeEnv(), segmentTypes, len(segmentTypes), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+}
+
+func finalizeFunctionTypeValueSignature(t typeResolver, owner model.SymbolRef, fnType *ast.BLangFunctionType, loc diagnostics.Location) bool {
+	if fnType.IsAnyFunction() {
+		return true
+	}
+	sig, ok := t.compilerContext().GetFunctionSignature(owner)
+	if !ok {
+		t.internalError("function signature not found", loc)
+		return false
+	}
+	paramTypes := make([]semtypes.SemType, len(fnType.RequiredParams))
+	for i := range fnType.RequiredParams {
+		paramTypes[i] = fnType.RequiredParams[i].GetDeterminedType()
+	}
+	setDefaultableParamFnSignatures(t, sig, paramTypes, loc)
+	return validateFunctionTypeIncludedRecordParams(t, owner, fnType, sig)
+}
+
+func validateFunctionTypeIncludedRecordParams(t typeResolver, owner model.SymbolRef, fnType *ast.BLangFunctionType, sig model.UntypedFunctionSignature) bool {
+	params := make([]includedRecordParamData, len(fnType.RequiredParams))
+	for i := range fnType.RequiredParams {
+		param := &fnType.RequiredParams[i]
+		params[i] = includedRecordParamData{typeDesc: param.TypeDesc, pos: param.GetPosition()}
+	}
+	restName := ""
+	if fnType.RestParam != nil && fnType.RestParam.Name != nil {
+		restName = fnType.RestParam.Name.Value
+	}
+	return validateIncludedRecordParamMetadata(t, owner, sig, params, restName, fnType.GetPosition())
 }
 
 func resolveSimpleVariable(t typeResolver, chain *binding, node *ast.BLangSimpleVariable) bool {
@@ -6226,6 +6295,16 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 			return nil, narrowedSymbol, chain, false
 		}
 
+		baseSymbol := t.unnarrowedSymbol(narrowedSymbol)
+		if _, hasSig := t.compilerContext().GetFunctionSignature(baseSymbol); hasSig {
+			inv.SetResolvedSymbol(baseSymbol)
+			args, ok := lowerInvocationArgs(t, inv.CallArgs(), baseSymbol, expectedType, inv.GetPosition())
+			if !ok {
+				return nil, narrowedSymbol, chain, false
+			}
+			inv.SetCallArgs(args)
+		}
+
 		paramListTy := semtypes.FunctionParamListType(t.typeContext(), fnTy)
 		if semtypes.IsZero(paramListTy) {
 			// I don't think this can happen given we have already checked fnTy to be subtype of function
@@ -6234,12 +6313,16 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		}
 		var argTys []semtypes.SemType
 		for i, arg := range inv.CallArgs() {
+			key := semtypes.IntConst(int64(i))
+			paramTy := semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, key)
+			if arg == nil {
+				argTys = append(argTys, paramTy)
+				continue
+			}
 			if _, namedParam := arg.(*ast.BLangNamedArgsExpression); namedParam {
 				t.unimplemented("named arguments not supported in this context", arg.GetPosition())
 				return nil, narrowedSymbol, chain, false
 			}
-			key := semtypes.IntConst(int64(i))
-			paramTy := semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, key)
 			argTy, argEffect, ok := resolveActionOrExpression(t, chain, arg, paramTy)
 			if !ok {
 				return nil, narrowedSymbol, chain, false
@@ -6951,8 +7034,16 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			}
 			paramTypes[i] = paramTy
 			ty.RequiredParams[i].SetDeterminedType(paramTy)
+			if !ty.RequiredParams[i].SymbolRef.IsEmpty() {
+				t.setSymbolType(ty.RequiredParams[i].SymbolRef, paramTy)
+			}
 			if ty.RequiredParams[i].Name != nil {
 				ty.RequiredParams[i].Name.SetDeterminedType(semtypes.NEVER)
+			}
+			if ty.RequiredParams[i].InitExpr != nil {
+				if _, _, ok := resolveActionOrExpression(t, nil, ty.RequiredParams[i].InitExpr, paramTy); !ok {
+					return semtypes.SemType{}, false
+				}
 			}
 		}
 		restTy := semtypes.NEVER
@@ -6963,6 +7054,9 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			}
 			restTy = restParamTy
 			ty.RestParam.SetDeterminedType(restParamTy)
+			if !ty.RestParam.SymbolRef.IsEmpty() {
+				t.setSymbolType(ty.RestParam.SymbolRef, restParamTy)
+			}
 		}
 		paramListDefn := semtypes.NewListDefinition()
 		paramListTy := paramListDefn.DefineListTypeWrapped(t.typeEnv(), paramTypes, len(paramTypes), restTy, semtypes.CellMutability_CELL_MUT_NONE)
