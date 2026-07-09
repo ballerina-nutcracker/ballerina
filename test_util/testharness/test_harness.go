@@ -213,6 +213,17 @@ func normalizePath(path string) string {
 	return path
 }
 
+// createParentDirs creates any missing ancestor directories for path, mirroring
+// jBallerina's io module, which creates parent directories before opening a
+// file for writing or appending.
+func createParentDirs(path string) error {
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0o755)
+	}
+	return nil
+}
+
 func (p *testPal) Platform() pal.Platform {
 	p.ensureSignalSource()
 	return pal.Platform{
@@ -233,10 +244,18 @@ func (p *testPal) Platform() pal.Platform {
 				return os.ReadFile(normalizePath(path))
 			},
 			WriteFile: func(path string, data []byte) error {
-				return os.WriteFile(normalizePath(path), data, 0o644)
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
+				return os.WriteFile(path, data, 0o644)
 			},
 			AppendFile: func(path string, data []byte) (err error) {
-				f, err := os.OpenFile(normalizePath(path), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
+				f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 				if err != nil {
 					return err
 				}
