@@ -114,6 +114,11 @@
     (block-function-body
       (return
         (literal <nil>))))
+  (function $default$1 (
+    (variable svc)) ()
+    (block-function-body
+      (return
+        (literal <nil>))))
   (function $start () ()
     (block-function-body
       (var-def

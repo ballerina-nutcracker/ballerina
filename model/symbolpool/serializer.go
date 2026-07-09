@@ -45,6 +45,7 @@ const (
 	symTagResourceMethod
 	symTagConstantValue
 	symTagOpaque
+	symTagHandle
 	symTagErrorType
 )
 
@@ -258,13 +259,15 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 	case *model.ErrorTypeSymbol:
 		return sw.writeErrorTypeSymbol(buf, s, sw.symbolAnnotations(ref))
 	case *model.TypeSymbol:
-		return sw.writeTypeSymbol(buf, s, sw.symbolAnnotations(ref))
+		return sw.writeTypeSymbol(buf, ref, s, sw.symbolAnnotations(ref))
 	case *model.ConstantValueSymbol:
-		return sw.writeConstantValueSymbol(buf, s)
+		return sw.writeConstantValueSymbol(buf, ref, s)
 	case *model.VariableSymbol:
-		return sw.writeValueSymbol(buf, s)
+		return sw.writeValueSymbol(buf, ref, s)
 	case *model.AnnotationSymbol:
 		return sw.writeAnnotationSymbol(buf, s)
+	case *model.HandleSymbol:
+		return sw.writeHandleSymbol(buf, ref, s)
 	case model.DependentlyTypedFunctionSymbol:
 		return sw.writeDependentlyTypedFunctionSymbol(buf, ref, s)
 	case *model.ResourceMethodSymbol:
@@ -298,7 +301,7 @@ func (sw *symbolWriter) writeSymbolBaseWithType(buf *bytes.Buffer, sym model.Sym
 	return writeType(buf, ty)
 }
 
-func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, sym *model.TypeSymbol, annotations values.AnnotationValues) error {
+func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.TypeSymbol, annotations values.AnnotationValues) error {
 	if err := write(buf, symTagType); err != nil {
 		return err
 	}
@@ -308,7 +311,10 @@ func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, sym *model.TypeSymbol
 	if err := sw.writeAnnotationValues(buf, annotations); err != nil {
 		return err
 	}
-	return sw.writeInclusionMembers(buf, nil)
+	if err := sw.writeInclusionMembers(buf, nil); err != nil {
+		return err
+	}
+	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
 func (sw *symbolWriter) writeRecordSymbol(buf *bytes.Buffer, sym *model.RecordSymbol, annotations values.AnnotationValues) error {
@@ -520,14 +526,14 @@ func (sw *symbolWriter) writeClassSymbol(buf *bytes.Buffer, tag uint8, sym model
 	return nil
 }
 
-func (sw *symbolWriter) writeValueSymbol(buf *bytes.Buffer, sym *model.VariableSymbol) error {
+func (sw *symbolWriter) writeValueSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.VariableSymbol) error {
 	if err := write(buf, symTagValue); err != nil {
 		return err
 	}
-	return sw.writeValueSymbolBody(buf, sym)
+	return sw.writeValueSymbolBody(buf, ref, sym)
 }
 
-func (sw *symbolWriter) writeValueSymbolBody(buf *bytes.Buffer, sym *model.VariableSymbol) error {
+func (sw *symbolWriter) writeValueSymbolBody(buf *bytes.Buffer, ref model.SymbolRef, sym *model.VariableSymbol) error {
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
 		return err
 	}
@@ -543,14 +549,27 @@ func (sw *symbolWriter) writeValueSymbolBody(buf *bytes.Buffer, sym *model.Varia
 	if err := write(buf, sym.IsConfigurable()); err != nil {
 		return err
 	}
-	return write(buf, sym.IsIsolated())
+	if err := write(buf, sym.IsIsolated()); err != nil {
+		return err
+	}
+	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
-func (sw *symbolWriter) writeConstantValueSymbol(buf *bytes.Buffer, sym *model.ConstantValueSymbol) error {
+func (sw *symbolWriter) writeHandleSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.HandleSymbol) error {
+	if err := write(buf, symTagHandle); err != nil {
+		return err
+	}
+	if err := sw.writeSymbolBase(buf, sym); err != nil {
+		return err
+	}
+	return sw.writeFunctionSignatureIndex(buf, ref)
+}
+
+func (sw *symbolWriter) writeConstantValueSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.ConstantValueSymbol) error {
 	if err := write(buf, symTagConstantValue); err != nil {
 		return err
 	}
-	if err := sw.writeValueSymbolBody(buf, &sym.VariableSymbol); err != nil {
+	if err := sw.writeValueSymbolBody(buf, ref, &sym.VariableSymbol); err != nil {
 		return err
 	}
 	return sw.writeAnnotationValue(buf, sym.ConstantValue())

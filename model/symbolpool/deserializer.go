@@ -167,6 +167,8 @@ func (sr *symbolReader) readSymbol(space *model.SymbolSpace, opaque []model.Symb
 			fn.SymbolSpace = space
 		}
 		space.AddSymbol(sym.Name(), sym)
+	case symTagHandle:
+		sr.readHandleSymbol(space)
 	case symTagType:
 		sr.readTypeSymbol(space)
 	case symTagClass:
@@ -209,8 +211,13 @@ func (sr *symbolReader) readTypeSymbol(space *model.SymbolSpace) {
 	sym.SetType(ty)
 	annotations := sr.readAnnotationValues()
 	_ = sr.readInclusionMembers(space)
+	var sigHandle int64
+	read(sr.r, &sigHandle)
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
 }
 
 func (sr *symbolReader) readRecordSymbol(space *model.SymbolSpace) {
@@ -424,6 +431,7 @@ type valueSymbolFields struct {
 	isFinal        bool
 	isConfigurable bool
 	isIsolated     bool
+	sigHandle      int64
 }
 
 func (sr *symbolReader) readValueSymbolFields() valueSymbolFields {
@@ -434,6 +442,7 @@ func (sr *symbolReader) readValueSymbolFields() valueSymbolFields {
 	read(sr.r, &f.isFinal)
 	read(sr.r, &f.isConfigurable)
 	read(sr.r, &f.isIsolated)
+	read(sr.r, &f.sigHandle)
 	return f
 }
 
@@ -454,7 +463,10 @@ func (sr *symbolReader) readValueSymbol(space *model.SymbolSpace) {
 	f := sr.readValueSymbolFields()
 	sym := model.NewVariableSymbol(f.name, f.isPublic, f.isConst, f.isParameter, diagnostics.NewBuiltinLocation())
 	applyValueSymbolFields(&sym, f)
-	addDeserializedSymbol(space, f.name, &sym)
+	ref := addDeserializedSymbol(space, f.name, &sym)
+	if f.sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[f.sigHandle])
+	}
 }
 
 func (sr *symbolReader) readConstantValueSymbol(space *model.SymbolSpace) {
@@ -462,7 +474,10 @@ func (sr *symbolReader) readConstantValueSymbol(space *model.SymbolSpace) {
 	sym := model.NewConstantValueSymbol(f.name, f.isPublic, diagnostics.NewBuiltinLocation())
 	applyValueSymbolFields(&sym.VariableSymbol, f)
 	sym.SetConstantValue(sr.readAnnotationValue())
-	addDeserializedSymbol(space, f.name, sym)
+	ref := addDeserializedSymbol(space, f.name, sym)
+	if f.sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[f.sigHandle])
+	}
 }
 
 func (sr *symbolReader) readAnnotationSymbol(space *model.SymbolSpace) {
@@ -478,6 +493,18 @@ func (sr *symbolReader) readAnnotationSymbol(space *model.SymbolSpace) {
 	sym := model.NewAnnotationSymbol(name, isPublic, isConst, attachPoints, diagnostics.NewBuiltinLocation())
 	sym.SetType(ty)
 	addDeserializedSymbol(space, name, &sym)
+}
+
+func (sr *symbolReader) readHandleSymbol(space *model.SymbolSpace) {
+	name, isPublic, ty := sr.readSymbolBase()
+	var sigHandle int64
+	read(sr.r, &sigHandle)
+	sym := model.NewHandleSymbol(name, isPublic, diagnostics.NewBuiltinLocation())
+	sym.SetType(ty)
+	ref := addDeserializedSymbol(space, name, sym)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
 }
 
 func (sr *symbolReader) readFunctionSymbol(space *model.SymbolSpace) {

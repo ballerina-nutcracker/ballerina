@@ -1109,19 +1109,80 @@ type desugaredRecordFieldResult struct {
 
 type desugaredTypeDescResult struct {
 	recordFields []desugaredRecordFieldResult
+	functions    []*ast.BLangFunction
+}
+
+func (r *desugaredTypeDescResult) append(other desugaredTypeDescResult) {
+	r.recordFields = append(r.recordFields, other.recordFields...)
+	r.functions = append(r.functions, other.functions...)
 }
 
 func desugarTypeDesc(ctx desugarContext, typeDesc ast.BType, parentScope model.Scope) desugaredTypeDescResult {
 	switch td := typeDesc.(type) {
 	case *ast.BLangRecordType:
 		return desugarRecordTypeDesc(ctx, td, parentScope)
+	case *ast.BLangFunctionType:
+		return desugarFunctionTypeDesc(ctx, td, parentScope)
+	case *ast.BLangObjectType:
+		return desugarObjectTypeDesc(ctx, td, parentScope)
+	case *ast.BLangArrayType:
+		if elem, ok := td.Elemtype.TypeDescriptor.(ast.BType); ok {
+			return desugarTypeDesc(ctx, elem, parentScope)
+		}
+	case *ast.BLangConstrainedType:
+		if constraint, ok := td.Constraint.TypeDescriptor.(ast.BType); ok {
+			return desugarTypeDesc(ctx, constraint, parentScope)
+		}
+	case *ast.BLangTupleTypeNode:
+		var result desugaredTypeDescResult
+		for i := range td.Members {
+			if member, ok := td.Members[i].TypeDesc.(ast.BType); ok {
+				result.append(desugarTypeDesc(ctx, member, parentScope))
+			}
+		}
+		if td.Rest != nil {
+			result.append(desugarTypeDesc(ctx, td.Rest, parentScope))
+		}
+		return result
+	case *ast.BLangUnionTypeNode:
+		var result desugaredTypeDescResult
+		if lhs, ok := td.Lhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, lhs, parentScope))
+		}
+		if rhs, ok := td.Rhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, rhs, parentScope))
+		}
+		return result
+	case *ast.BLangIntersectionTypeNode:
+		var result desugaredTypeDescResult
+		if lhs, ok := td.Lhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, lhs, parentScope))
+		}
+		if rhs, ok := td.Rhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, rhs, parentScope))
+		}
+		return result
 	}
 	return desugaredTypeDescResult{}
 }
 
+func desugarFunctionTypeDesc(ctx desugarContext, fnType *ast.BLangFunctionType, parentScope model.Scope) desugaredTypeDescResult {
+	result := desugaredTypeDescResult{functions: desugarFunctionTypeParamDefaults(ctx, fnType, parentScope)}
+	for i := range fnType.RequiredParams {
+		result.append(desugarTypeDesc(ctx, fnType.RequiredParams[i].TypeDesc, parentScope))
+	}
+	if fnType.RestParam != nil && fnType.RestParam.TypeDesc != nil {
+		result.append(desugarTypeDesc(ctx, fnType.RestParam.TypeDesc, parentScope))
+	}
+
+	result.append(desugarTypeDesc(ctx, fnType.ReturnTypeDescriptor, parentScope))
+	return result
+}
+
 func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, parentScope model.Scope) desugaredTypeDescResult {
-	var fields []desugaredRecordFieldResult
+	var result desugaredTypeDescResult
 	for _, field := range recType.FieldPtrs() {
+		result.append(desugarTypeDesc(ctx, field.Type, parentScope))
 		if field.DefaultExpr == nil {
 			continue
 		}
@@ -1131,10 +1192,26 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 		fn.SetSymbol(symRef)
 		fn.SetScope(fnScope)
 
-		fields = append(fields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
+		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
 
 	}
-	return desugaredTypeDescResult{recordFields: fields}
+	if recType.RestType != nil {
+		result.append(desugarTypeDesc(ctx, recType.RestType, parentScope))
+	}
+	return result
+}
+
+func desugarObjectTypeDesc(ctx desugarContext, objType *ast.BLangObjectType, parentScope model.Scope) desugaredTypeDescResult {
+	var result desugaredTypeDescResult
+	for member := range objType.Members() {
+		switch m := member.(type) {
+		case *ast.BObjectField:
+			result.append(desugarTypeDesc(ctx, m.Ty, parentScope))
+		case *ast.BMethodDecl:
+			result.append(desugarFunctionTypeDesc(ctx, &m.BLangFunctionType, parentScope))
+		}
+	}
+	return result
 }
 
 func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
@@ -1146,6 +1223,9 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 			return
 		}
 		result := desugarTypeDesc(cx, typeDesc, nil)
+		for _, fn := range result.functions {
+			pkg.Functions = append(pkg.Functions, *fn)
+		}
 		for _, rf := range result.recordFields {
 			pkg.Functions = append(pkg.Functions, *rf.fn)
 		}
@@ -1226,18 +1306,17 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*
 	)
 	for i := range fn.RequiredParams {
 		param := &fn.RequiredParams[i]
-		if fnType, ok := param.TypeNode().(*ast.BLangFunctionType); ok {
-			results = append(results, desugarFunctionTypeParamDefaults(ctx, param.Symbol(), fnType, fn.Scope())...)
-		}
+		result := desugarTypeDesc(ctx, param.TypeNode(), fn.Scope())
+		results = append(results, result.functions...)
 	}
 	return results
 }
 
-func desugarFunctionTypeParamDefaults(ctx desugarContext, owner model.SymbolRef, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
-	if fnType == nil || fnType.IsAnyFunction() {
+func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
+	if fnType.IsAnyFunction() {
 		return nil
 	}
-	sig, ok := ctx.functionSignature(owner)
+	sig, ok := ctx.functionSignature(fnType.Symbol())
 	if !ok {
 		ctx.internalError("function signature not found")
 		return nil
@@ -1256,11 +1335,12 @@ func desugarFunctionTypeParamDefaults(ctx desugarContext, owner model.SymbolRef,
 	)
 }
 
-func desugarGlobalFunctionTypeDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
+func desugarGlobalVars(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	for i := range pkg.GlobalVars {
 		gv := &pkg.GlobalVars[i]
-		if fnType, ok := gv.TypeNode().(*ast.BLangFunctionType); ok {
-			for _, fn := range desugarFunctionTypeParamDefaults(pkgCtx, gv.Symbol(), fnType, nil) {
+		if typeNode := gv.TypeNode(); typeNode != nil {
+			result := desugarTypeDesc(pkgCtx, typeNode, nil)
+			for _, fn := range result.functions {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
 		}
@@ -1349,7 +1429,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	// Desugar type definition default expressions into standalone functions
 	desugarTopLevelTypeDescs(pkgCtx, pkg)
 
-	desugarGlobalFunctionTypeDefaults(pkgCtx, pkg)
+	desugarGlobalVars(pkgCtx, pkg)
 	desugarTopLevelFunctionDefaults(pkgCtx, pkg)
 	desugarClassMethodDefaults(pkgCtx, pkg)
 

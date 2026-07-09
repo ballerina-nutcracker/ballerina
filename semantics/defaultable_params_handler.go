@@ -28,6 +28,7 @@ import (
 type symbolLookup interface {
 	getSymbol(ref model.SymbolRef) model.Symbol
 	compilerContext() *context.CompilerContext
+	typeContext() semtypes.Context
 	internalError(message string, loc diagnostics.Location)
 	unimplemented(message string, loc diagnostics.Location)
 }
@@ -39,25 +40,24 @@ func padArgTypesForDefaults(lookup symbolLookup, symbolRef model.SymbolRef, argT
 		lookup.unimplemented("generic functions with default params not implemented", loc)
 		return argTys
 	}
+	sig, ok := lookup.compilerContext().GetFunctionSignature(symbolRef)
+	if !ok {
+		return argTys
+	}
 	switch fnSym := sym.(type) {
 	case model.FunctionSymbol:
-		sig, ok := lookup.compilerContext().GetFunctionSignature(symbolRef)
-		if !ok {
-			return argTys
-		}
-		return padFunctionDefaults(fnSym, sig, argTys)
+		return padFunctionDefaults(fnSym.TypedSignature().ParamTypes, sig, argTys)
 	case model.ValueSymbol:
-		// When we support lambdas we need to have a way to get a function symbol from the declaration (this means it have to be atomic) and then use the
-		// same logic
-		return argTys
+		fnTy := lookup.compilerContext().SymbolType(symbolRef)
+		return padFunctionDefaults(functionValueParamTypes(lookup, fnTy, sig.FixedParamCount()), sig, argTys)
 	default:
 		lookup.internalError(fmt.Sprintf("unexpected symbol type %T in padArgTypesForDefaults", sym), loc)
 		return argTys
 	}
 }
 
-func padFunctionDefaults(fnSym model.FunctionSymbol, sig model.UntypedFunctionSignature, argTys []semtypes.SemType) []semtypes.SemType {
-	totalParams := len(fnSym.TypedSignature().ParamTypes)
+func padFunctionDefaults(paramTypes []semtypes.SemType, sig model.UntypedFunctionSignature, argTys []semtypes.SemType) []semtypes.SemType {
+	totalParams := len(paramTypes)
 	if len(argTys) >= totalParams {
 		return argTys
 	}
@@ -68,11 +68,19 @@ func padFunctionDefaults(fnSym model.FunctionSymbol, sig model.UntypedFunctionSi
 			return argTys
 		}
 	}
-	paramTypes := fnSym.TypedSignature().ParamTypes
 	padded := make([]semtypes.SemType, totalParams)
 	copy(padded, argTys)
 	for i := len(argTys); i < totalParams; i++ {
 		padded[i] = paramTypes[i]
 	}
 	return padded
+}
+
+func functionValueParamTypes(lookup symbolLookup, fnTy semtypes.SemType, count int) []semtypes.SemType {
+	paramListTy := semtypes.FunctionParamListType(lookup.typeContext(), fnTy)
+	paramTypes := make([]semtypes.SemType, count)
+	for i := range paramTypes {
+		paramTypes[i] = semtypes.ListMemberTypeInnerVal(lookup.typeContext(), paramListTy, semtypes.IntConst(int64(i)))
+	}
+	return paramTypes
 }

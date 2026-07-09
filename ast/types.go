@@ -222,6 +222,7 @@ type (
 		RestParam            *BLangFunctionTypeParam
 		ReturnTypeDescriptor BType
 		ParamListPos         Location
+		symbol               model.SymbolRef
 	}
 
 	BLangFunctionTypeParam struct {
@@ -231,7 +232,6 @@ type (
 		InitExpr            BLangExpression
 		AnnAttachments      []BLangAnnotationAttachment
 		SymbolRef           model.SymbolRef
-		DefaultFnRef        model.SymbolRef
 		IncludedRecordParam bool
 	}
 )
@@ -255,21 +255,22 @@ var (
 	_ RecordTypeNode       = &BLangRecordType{}
 	_ ObjectType           = &BLangObjectType{}
 	_ ObjectMember         = &BMethodDecl{}
+	_ FunctionSignature    = &BMethodDecl{}
 	_ ObjectMember         = &BObjectField{}
 	_ BLangNode            = &BObjectField{}
 	_ BLangNode            = &BMethodDecl{}
 	_ FunctionTypeNode     = &BLangFunctionType{}
+	_ FunctionSignature    = &BLangFunctionType{}
 	_ FunctionTypeParam    = &BLangFunctionTypeParam{}
-)
-
-var (
-	_ BType     = &BLangUserDefinedType{}
-	_ BType     = &BLangBuiltInRefTypeNode{}
-	_ BType     = &BLangUserDefinedType{}
-	_ BType     = &BTypeBasic{}
-	_ BType     = &BLangFunctionType{}
-	_ BType     = &BLangRecordType{}
-	_ BLangNode = &BLangFunctionType{}
+	_ Param                = &BLangFunctionTypeParam{}
+	_ BType                = &BLangUserDefinedType{}
+	_ BType                = &BLangBuiltInRefTypeNode{}
+	_ BType                = &BLangUserDefinedType{}
+	_ BType                = &BTypeBasic{}
+	_ BType                = &BLangFunctionType{}
+	_ BType                = &BLangRecordType{}
+	_ BLangNode            = &BLangFunctionType{}
+	_ BNodeWithSymbol      = &BLangFunctionType{}
 )
 
 var (
@@ -557,6 +558,33 @@ func (b *BLangErrorTypeNode) SetDistinct() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagDistinct)
 }
 
+func (b *BLangFunctionType) Symbol() model.SymbolRef {
+	return b.symbol
+}
+
+func (b *BLangFunctionType) SetSymbol(symbolRef model.SymbolRef) {
+	b.symbol = symbolRef
+}
+
+func (b *BLangFunctionType) Parameters() []Param {
+	params := make([]Param, len(b.RequiredParams))
+	for i := range b.RequiredParams {
+		params[i] = &b.RequiredParams[i]
+	}
+	return params
+}
+
+func (b *BLangFunctionType) RestParameter() Param {
+	if b.RestParam == nil {
+		return nil
+	}
+	return b.RestParam
+}
+
+func (b *BLangFunctionType) ReturnType() TypeDescriptor {
+	return b.ReturnTypeDescriptor
+}
+
 func (b *BLangFunctionType) IsAnyFunction() bool {
 	return b.bTypeGetFlags().Has(model.FlagAnyFunction)
 }
@@ -665,6 +693,29 @@ func (b *BLangFunctionTypeParam) GetName() *string {
 	}
 	name := b.Name.GetValue()
 	return &name
+}
+
+func (b *BLangFunctionTypeParam) ParamName() string {
+	if b.Name == nil {
+		return ""
+	}
+	return b.Name.Value
+}
+
+func (b *BLangFunctionTypeParam) Type() BType {
+	return b.TypeDesc
+}
+
+func (b *BLangFunctionTypeParam) DefaultExpr() BLangExpression {
+	return b.InitExpr
+}
+
+func (b *BLangFunctionTypeParam) Symbol() model.SymbolRef {
+	return b.SymbolRef
+}
+
+func (b *BLangFunctionTypeParam) IsDefaultable() bool {
+	return b.InitExpr != nil
 }
 
 func (b *BLangFunctionTypeParam) GetTypeDesc() Type {

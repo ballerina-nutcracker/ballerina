@@ -313,6 +313,25 @@ func (b *bLangInvokableNodeBase) FuncSymbolFlags() model.FuncSymbolFlags {
 	return model.FuncSymbolFlags(b.flags)
 }
 
+func (b *bLangInvokableNodeBase) Parameters() []Param {
+	params := make([]Param, len(b.RequiredParams))
+	for i := range b.RequiredParams {
+		params[i] = &b.RequiredParams[i]
+	}
+	return params
+}
+
+func (b *bLangInvokableNodeBase) RestParameter() Param {
+	if b.RestParam == nil {
+		return nil
+	}
+	return b.RestParam.(Param)
+}
+
+func (b *bLangInvokableNodeBase) ReturnType() TypeDescriptor {
+	return b.returnTypeDescriptor
+}
+
 // BLangVariableBase flag methods
 func (b *BLangVariableBase) IsPublic() bool           { return b.flags.Has(model.FlagPublic) }
 func (b *BLangVariableBase) IsFinal() bool            { return b.flags.Has(model.FlagFinal) }
@@ -420,6 +439,21 @@ func (n *BLangVariableBase) SetTypeNode(bt BType) {
 	n.typeNode = bt
 }
 
+func (n *BLangVariableBase) Type() BType {
+	return n.typeNode
+}
+
+func (n *BLangVariableBase) DefaultExpr() BLangExpression {
+	if n.Expr == nil {
+		return nil
+	}
+	return n.Expr.(BLangExpression)
+}
+
+func (n *BLangVariableBase) IsDefaultable() bool {
+	return n.IsDefaultableParam()
+}
+
 func (n *bLangInvokableNodeBase) Symbol() model.SymbolRef {
 	return n.symbol
 }
@@ -471,6 +505,9 @@ var (
 	_ MarkdownDocumentationReferenceAttributeNode = &BLangMarkdownReferenceDocumentation{}
 	_ ExprFunctionBodyNode                        = &BLangExprFunctionBody{}
 	_ FunctionNode                                = &BLangFunction{}
+	_ FunctionSignature                           = &BLangFunction{}
+	_ FunctionSignature                           = &BLangResourceMethod{}
+	_ Param                                       = &BLangSimpleVariable{}
 	_ FunctionBodyNode                            = &BLangExternFunctionBody{}
 )
 
@@ -854,6 +891,13 @@ func (b *BLangConstant) GetAssociatedType() semtypes.SemType {
 
 func (b *BLangSimpleVariable) GetName() IdentifierNode {
 	return b.Name
+}
+
+func (b *BLangSimpleVariable) ParamName() string {
+	if b.Name == nil {
+		return ""
+	}
+	return b.Name.GetValue()
 }
 
 func (b *BLangSimpleVariable) SetName(name IdentifierNode) {

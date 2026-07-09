@@ -63,7 +63,7 @@ main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
     base = %1;
-    %3 = $default$0() -> bb1;
+    %3 = $default$1() -> bb1;
   }
   bb1 {
     $desugar$0 = %3;
@@ -89,7 +89,7 @@ main() -> nil{
     %16 = ConstantLoad 4
     $desugar$1 = %16;
     %18 = $desugar$1;
-    %19 = $default$1(%18) -> bb6;
+    %19 = $default$3(%18) -> bb6;
   }
   bb6 {
     $desugar$2 = %19;
@@ -114,7 +114,7 @@ main() -> nil{
   }
   bb10 {
     copied = base;
-    %34 = $default$2() -> bb11;
+    %34 = $default$5() -> bb11;
   }
   bb11 {
     $desugar$3 = %34;
@@ -174,7 +174,7 @@ main() -> nil{
 }
 takesFn(function(int) returns int) -> int{
   bb0 {
-    %2 = $default$3() -> bb1;
+    %2 = $default$10() -> bb1;
   }
   bb1 {
     $desugar$0 = %2;
@@ -302,13 +302,6 @@ applyInlineFns(int,[function(int) returns int...]...) -> int{
     GOTO bb5;
   }
 }
-$default$3() -> int{
-  bb0 {
-    %1 = ConstantLoad 20
-    %0 = %1;
-    return;
-  }
-}
 $default$0() -> int{
   bb0 {
     %1 = ConstantLoad 5
@@ -316,7 +309,21 @@ $default$0() -> int{
     return;
   }
 }
-$default$1(int) -> int{
+$default$10() -> int{
+  bb0 {
+    %1 = ConstantLoad 20
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$3(int) -> int{
   bb0 {
     %3 = first;
     %4 = ConstantLoad 3
@@ -326,14 +333,14 @@ $default$1(int) -> int{
     return;
   }
 }
-$default$2() -> int{
+$default$5() -> int{
   bb0 {
     %1 = ConstantLoad 7
     %0 = %1;
     return;
   }
 }
-$default$4() -> int{
+$default$12() -> int{
   bb0 {
     %1 = ConstantLoad 5
     %0 = %1;

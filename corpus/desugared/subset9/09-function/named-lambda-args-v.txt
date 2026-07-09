@@ -31,7 +31,7 @@
                   (simple-var-ref x))))))))
       (var-def
         (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
+          (invocation $default$1 ()))))
       (expression-stmt
         (invocation io println (
           (invocation base (
@@ -64,7 +64,7 @@
           (literal 4))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$1 (
+          (invocation $default$3 (
             (simple-var-ref $desugar$1))))))
       (expression-stmt
         (invocation io println (
@@ -84,7 +84,7 @@
           (simple-var-ref base))))
       (var-def
         (variable $desugar$3 (expr
-          (invocation $default$2 ()))))
+          (invocation $default$5 ()))))
       (expression-stmt
         (invocation io println (
           (invocation copied (
@@ -179,7 +179,7 @@
     (block-function-body
       (var-def
         (variable $desugar$0 (expr
-          (invocation $default$3 ()))))
+          (invocation $default$10 ()))))
       (return
         (invocation f (
           (simple-var-ref $desugar$0))))))
@@ -285,26 +285,30 @@
                 (numeric-literal 1)))))
         (return
           (simple-var-ref res)))))
-  (function $default$3 () ()
-    (block-function-body
-      (return
-        (literal 20))))
   (function $default$0 () ()
     (block-function-body
       (return
         (literal 5))))
-  (function $default$1 (
+  (function $default$10 () ()
+    (block-function-body
+      (return
+        (literal 20))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$3 (
     (variable first)) ()
     (block-function-body
       (return
         (binary-expr +
           (simple-var-ref first)
           (literal 3)))))
-  (function $default$2 () ()
+  (function $default$5 () ()
     (block-function-body
       (return
         (literal 7))))
-  (function $default$4 () ()
+  (function $default$12 () ()
     (block-function-body
       (return
         (literal 5)))))
