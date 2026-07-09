@@ -7,7 +7,6 @@ true
 false
 application/json
 false
-0
 true
 true
 {"k":"v"}
@@ -19,6 +18,8 @@ r1
 true
 text/plain
 resp body
+[1,2,3]
+3
 false
 false
 -- stderr --

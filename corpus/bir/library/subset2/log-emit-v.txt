@@ -1,0 +1,35 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad server started
+    $desugar$0 = %1;
+    %3 = $default$2($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %6 = printInfo($desugar$0,$desugar$1,%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad low disk space
+    $desugar$2 = %7;
+    %9 = $default$3($desugar$2) -> bb3;
+  }
+  bb3 {
+    $desugar$3 = %9;
+    %11 = ConstantLoad diskPct
+    %12 = ConstantLoad 12
+    %13 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%11=%12}
+    %14 = printWarn($desugar$2,$desugar$3,%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad request failed
+    %16 = ConstantLoad disk full
+    %17 = newError error(%16)
+    %18 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %19 = printError(%15,%17,%18) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

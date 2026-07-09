@@ -29,5 +29,11 @@ public function main() returns error? {
     // deflate-encoded response -> decompressResponseBody + deflateReadCloser.
     http:Response df = check c->get("/deflate");
     io:println(df.getTextPayload()); // @output hello deflated world
+
+    // A response advertising gzip but carrying a malformed body must surface a
+    // read error rather than silently returning the raw compressed bytes.
+    http:Response bad = check c->get("/badgzip");
+    string|error payload = bad.getTextPayload();
+    io:println(payload is error); // @output true
     return;
 }

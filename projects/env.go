@@ -102,6 +102,20 @@ func (e *Environment) addRepository(repo Repository) {
 	e.packageResolver.AddRepository(repo)
 }
 
+// setCustomRepos installs the custom-repository registry on the resolver and
+// binds each repo to this environment so balas loaded through them share the
+// same CompilerEnvironment. Post-Build to avoid exporting builder surface for a
+// single internal caller.
+func (e *Environment) setCustomRepos(custom map[string]Repository) {
+	r := e.packageResolver.(*defaultPackageResolver)
+	for _, repo := range custom {
+		if bindable, ok := repo.(bindableRepository); ok {
+			bindable.bind(e)
+		}
+	}
+	r.customRepos = custom
+}
+
 // Duplicate creates a new Environment with fresh caches but the same repository
 // configuration and resolution options.
 func (e *Environment) Duplicate() *Environment {
@@ -111,6 +125,15 @@ func (e *Environment) Duplicate() *Environment {
 	// Copy repositories from original resolver
 	for _, repo := range e.packageResolver.Repositories() {
 		newEnv.addRepository(repo)
+	}
+
+	// Copy custom repositories.
+	if r, ok := e.packageResolver.(*defaultPackageResolver); ok {
+		custom := make(map[string]Repository, len(r.customRepos))
+		for k, v := range r.customRepos {
+			custom[k] = v
+		}
+		newEnv.setCustomRepos(custom)
 	}
 
 	return newEnv

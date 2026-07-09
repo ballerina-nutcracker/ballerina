@@ -159,309 +159,368 @@ main() -> nil|error{
     %60 = getQueryParams(req) -> bb36;
   }
   bb36 {
-    qp = %60;
-    %62 = length(qp) -> bb37;
+    %61 = %60;
+    %62 = ConstantLoad q
+    %63 = getQueryParamValue(req,%62) -> bb37;
   }
   bb37 {
-    %63 = %62;
-    %64 = println(%63) -> bb38;
+    %64 = %63 is nil
+    %65 = %64;
+    %66 = println(%65) -> bb38;
   }
   bb38 {
-    %65 = ConstantLoad q
-    %66 = getQueryParamValue(req,%65) -> bb39;
+    %67 = ConstantLoad tag
+    %68 = getQueryParamValues(req,%67) -> bb39;
   }
   bb39 {
-    %67 = %66 is nil
-    %68 = %67;
-    %69 = println(%68) -> bb40;
+    %69 = %68 is nil
+    %70 = %69;
+    %71 = println(%70) -> bb40;
   }
   bb40 {
-    %70 = ConstantLoad tag
-    %71 = getQueryParamValues(req,%70) -> bb41;
+    %72 = ConstantLoad k
+    %73 = ConstantLoad v
+    %74 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%72=%73}
+    $desugar$6 = %74;
+    %76 = $default$11($desugar$6) -> bb41;
   }
   bb41 {
-    %72 = %71 is nil
-    %73 = %72;
-    %74 = println(%73) -> bb42;
+    $desugar$7 = %76;
+    %78 = setJsonPayload(req,$desugar$6,$desugar$7) -> bb42;
   }
   bb42 {
-    %75 = ConstantLoad k
-    %76 = ConstantLoad v
-    %77 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%75=%76}
-    $desugar$6 = %77;
-    %79 = $default$11($desugar$6) -> bb43;
+    %79 = getJsonPayload(req) -> bb43;
   }
   bb43 {
-    $desugar$7 = %79;
-    %81 = setJsonPayload(req,$desugar$6,$desugar$7) -> bb44;
+    $desugar$8 = %79;
+    %81 = $desugar$8 is error
+    %81 ? bb44 : bb45;
   }
   bb44 {
-    %82 = getJsonPayload(req) -> bb45;
-  }
-  bb45 {
-    $desugar$8 = %82;
-    %84 = $desugar$8 is error
-    %84 ? bb46 : bb47;
-  }
-  bb46 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$8);
     PopScopeFrame
     return;
   }
-  bb47 {
+  bb45 {
     jp = $desugar$8;
-    %86 = println(jp) -> bb48;
+    %83 = println(jp) -> bb46;
+  }
+  bb46 {
+    %84 = ConstantLoad 1
+    %85 = ConstantLoad 2
+    %86 = ConstantLoad 3
+    %87 = ConstantLoad 3
+    %88 = newArray [int:Unsigned8...][%87]{%84, %85, %86}
+    $desugar$9 = %88;
+    %90 = $default$10($desugar$9) -> bb47;
+  }
+  bb47 {
+    $desugar$10 = %90;
+    %92 = setBinaryPayload(req,$desugar$9,$desugar$10) -> bb48;
   }
   bb48 {
-    %87 = ConstantLoad 1
-    %88 = ConstantLoad 2
-    %89 = ConstantLoad 3
-    %90 = ConstantLoad 3
-    %91 = newArray [int:Unsigned8...][%90]{%87, %88, %89}
-    $desugar$9 = %91;
-    %93 = $default$10($desugar$9) -> bb49;
+    %93 = getBinaryPayload(req) -> bb49;
   }
   bb49 {
-    $desugar$10 = %93;
-    %95 = setBinaryPayload(req,$desugar$9,$desugar$10) -> bb50;
+    $desugar$11 = %93;
+    %95 = $desugar$11 is error
+    %95 ? bb50 : bb51;
   }
   bb50 {
-    %96 = getBinaryPayload(req) -> bb51;
-  }
-  bb51 {
-    $desugar$11 = %96;
-    %98 = $desugar$11 is error
-    %98 ? bb52 : bb53;
-  }
-  bb52 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$11);
     PopScopeFrame
     return;
   }
-  bb53 {
+  bb51 {
     bp = $desugar$11;
-    %100 = length(bp) -> bb54;
+    %97 = length(bp) -> bb52;
+  }
+  bb52 {
+    %98 = %97;
+    %99 = println(%98) -> bb53;
+  }
+  bb53 {
+    %100 = newObject ballerina/http:Response
+    %101 = init(%100) -> bb54;
   }
   bb54 {
-    %101 = %100;
-    %102 = println(%101) -> bb55;
+    %103 = %101 is nil
+    %103 ? bb55 : bb56;
   }
   bb55 {
-    %103 = newObject ballerina/http:Response
-    %104 = init(%103) -> bb56;
+    %102 = %100;
+    GOTO bb57;
   }
   bb56 {
-    %106 = %104 is nil
-    %106 ? bb57 : bb58;
+    %102 = %101;
+    GOTO bb57;
   }
   bb57 {
-    %105 = %103;
-    GOTO bb59;
+    res = %102;
+    %105 = ConstantLoad 201
+    %106 = ConstantLoad statusCode
+    res[%106] = %105;
+    %107 = ConstantLoad X-Resp
+    %108 = ConstantLoad r1
+    %109 = setHeader(res,%107,%108) -> bb58;
   }
   bb58 {
-    %105 = %104;
-    GOTO bb59;
+    %110 = ConstantLoad X-Resp
+    $desugar$12 = %110;
+    %112 = ConstantLoad r2
+    $desugar$13 = %112;
+    %114 = $default$0($desugar$12,$desugar$13) -> bb59;
   }
   bb59 {
-    res = %105;
-    %108 = ConstantLoad 201
-    %109 = ConstantLoad statusCode
-    res[%109] = %108;
-    %110 = ConstantLoad X-Resp
-    %111 = ConstantLoad r1
-    %112 = setHeader(res,%110,%111) -> bb60;
+    $desugar$14 = %114;
+    %116 = addHeader(res,$desugar$12,$desugar$13,$desugar$14) -> bb60;
   }
   bb60 {
-    %113 = ConstantLoad X-Resp
-    $desugar$12 = %113;
-    %115 = ConstantLoad r2
-    $desugar$13 = %115;
-    %117 = $default$0($desugar$12,$desugar$13) -> bb61;
+    %118 = ConstantLoad statusCode
+    %117 = res[%118];
+    %119 = %117;
+    %120 = println(%119) -> bb61;
   }
   bb61 {
-    $desugar$14 = %117;
-    %119 = addHeader(res,$desugar$12,$desugar$13,$desugar$14) -> bb62;
+    %121 = ConstantLoad X-Resp
+    $desugar$15 = %121;
+    %123 = $default$4($desugar$15) -> bb62;
   }
   bb62 {
-    %121 = ConstantLoad statusCode
-    %120 = res[%121];
-    %122 = %120;
-    %123 = println(%122) -> bb63;
+    $desugar$16 = %123;
+    %125 = hasHeader(res,$desugar$15,$desugar$16) -> bb63;
   }
   bb63 {
-    %124 = ConstantLoad X-Resp
-    $desugar$15 = %124;
-    %126 = $default$4($desugar$15) -> bb64;
+    %126 = %125;
+    %127 = println(%126) -> bb64;
   }
   bb64 {
-    $desugar$16 = %126;
-    %128 = hasHeader(res,$desugar$15,$desugar$16) -> bb65;
+    %128 = ConstantLoad X-Resp
+    $desugar$17 = %128;
+    %130 = $default$1($desugar$17) -> bb65;
   }
   bb65 {
-    %129 = %128;
-    %130 = println(%129) -> bb66;
+    $desugar$18 = %130;
+    %132 = getHeader(res,$desugar$17,$desugar$18) -> bb66;
   }
   bb66 {
-    %131 = ConstantLoad X-Resp
-    $desugar$17 = %131;
-    %133 = $default$1($desugar$17) -> bb67;
+    $desugar$19 = %132;
+    %134 = $desugar$19 is error
+    %134 ? bb67 : bb68;
   }
   bb67 {
-    $desugar$18 = %133;
-    %135 = getHeader(res,$desugar$17,$desugar$18) -> bb68;
-  }
-  bb68 {
-    $desugar$19 = %135;
-    %137 = $desugar$19 is error
-    %137 ? bb69 : bb70;
-  }
-  bb69 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$19);
     PopScopeFrame
     return;
   }
+  bb68 {
+    %135 = println($desugar$19) -> bb69;
+  }
+  bb69 {
+    %136 = ConstantLoad X-Resp
+    $desugar$20 = %136;
+    %138 = $default$3($desugar$20) -> bb70;
+  }
   bb70 {
-    %138 = println($desugar$19) -> bb71;
+    $desugar$21 = %138;
+    %140 = getHeaders(res,$desugar$20,$desugar$21) -> bb71;
   }
   bb71 {
-    %139 = ConstantLoad X-Resp
-    $desugar$20 = %139;
-    %141 = $default$3($desugar$20) -> bb72;
+    $desugar$22 = %140;
+    %142 = $desugar$22 is error
+    %142 ? bb72 : bb73;
   }
   bb72 {
-    $desugar$21 = %141;
-    %143 = getHeaders(res,$desugar$20,$desugar$21) -> bb73;
-  }
-  bb73 {
-    $desugar$22 = %143;
-    %145 = $desugar$22 is error
-    %145 ? bb74 : bb75;
-  }
-  bb74 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$22);
     PopScopeFrame
     return;
   }
-  bb75 {
+  bb73 {
     rs = $desugar$22;
-    %147 = length(rs) -> bb76;
+    %144 = length(rs) -> bb74;
+  }
+  bb74 {
+    %145 = %144;
+    %146 = println(%145) -> bb75;
+  }
+  bb75 {
+    %147 = $default$2() -> bb76;
   }
   bb76 {
-    %148 = %147;
-    %149 = println(%148) -> bb77;
+    $desugar$23 = %147;
+    %150 = getHeaderNames(res,$desugar$23) -> bb77;
   }
   bb77 {
-    %150 = $default$2() -> bb78;
+    %151 = length(%150) -> bb78;
   }
   bb78 {
-    $desugar$23 = %150;
-    %153 = getHeaderNames(res,$desugar$23) -> bb79;
+    %152 = %151;
+    %153 = ConstantLoad 1
+    %154 = %153;
+    %149 = >= %152 %154;
+    %155 = %149;
+    %156 = println(%155) -> bb79;
   }
   bb79 {
-    %154 = length(%153) -> bb80;
+    %157 = ConstantLoad text/plain
+    %158 = setContentType(res,%157) -> bb80;
   }
   bb80 {
-    %155 = %154;
-    %156 = ConstantLoad 1
-    %157 = %156;
-    %152 = >= %155 %157;
-    %158 = %152;
-    %159 = println(%158) -> bb81;
+    $desugar$24 = %158;
+    %160 = $desugar$24 is error
+    %160 ? bb81 : bb82;
   }
   bb81 {
-    %160 = ConstantLoad text/plain
-    %161 = setContentType(res,%160) -> bb82;
-  }
-  bb82 {
-    $desugar$24 = %161;
-    %163 = $desugar$24 is error
-    %163 ? bb83 : bb84;
-  }
-  bb83 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$24);
     PopScopeFrame
     return;
   }
+  bb82 {
+    %161 = getContentType(res) -> bb83;
+  }
+  bb83 {
+    %162 = println(%161) -> bb84;
+  }
   bb84 {
-    %164 = getContentType(res) -> bb85;
+    %163 = ConstantLoad resp body
+    $desugar$25 = %163;
+    %165 = $default$9($desugar$25) -> bb85;
   }
   bb85 {
-    %165 = println(%164) -> bb86;
+    $desugar$26 = %165;
+    %167 = setTextPayload(res,$desugar$25,$desugar$26) -> bb86;
   }
   bb86 {
-    %166 = ConstantLoad resp body
-    $desugar$25 = %166;
-    %168 = $default$9($desugar$25) -> bb87;
+    %168 = getTextPayload(res) -> bb87;
   }
   bb87 {
-    $desugar$26 = %168;
-    %170 = setTextPayload(res,$desugar$25,$desugar$26) -> bb88;
+    $desugar$27 = %168;
+    %170 = $desugar$27 is error
+    %170 ? bb88 : bb89;
   }
   bb88 {
-    %171 = getTextPayload(res) -> bb89;
-  }
-  bb89 {
-    $desugar$27 = %171;
-    %173 = $desugar$27 is error
-    %173 ? bb90 : bb91;
-  }
-  bb90 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$27);
     PopScopeFrame
     return;
   }
+  bb89 {
+    %171 = println($desugar$27) -> bb90;
+  }
+  bb90 {
+    %172 = ConstantLoad 1
+    %173 = ConstantLoad 2
+    %174 = ConstantLoad 3
+    %175 = ConstantLoad 3
+    %176 = newArray [nil|boolean|int|float|decimal|string|...|......][%175]{%172, %173, %174}
+    $desugar$28 = %176;
+    %178 = $default$8($desugar$28) -> bb91;
+  }
   bb91 {
-    %174 = println($desugar$27) -> bb92;
+    $desugar$29 = %178;
+    %180 = setJsonPayload(res,$desugar$28,$desugar$29) -> bb92;
   }
   bb92 {
-    %175 = ConstantLoad X-Resp
-    $desugar$28 = %175;
-    %177 = $default$6($desugar$28) -> bb93;
+    %181 = getJsonPayload(res) -> bb93;
   }
   bb93 {
-    $desugar$29 = %177;
-    %179 = removeHeader(res,$desugar$28,$desugar$29) -> bb94;
+    $desugar$30 = %181;
+    %183 = $desugar$30 is error
+    %183 ? bb94 : bb95;
   }
   bb94 {
-    %180 = ConstantLoad X-Resp
-    $desugar$30 = %180;
-    %182 = $default$4($desugar$30) -> bb95;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$30);
+    PopScopeFrame
+    return;
   }
   bb95 {
-    $desugar$31 = %182;
-    %184 = hasHeader(res,$desugar$30,$desugar$31) -> bb96;
+    rj = $desugar$30;
+    %185 = println(rj) -> bb96;
   }
   bb96 {
-    %185 = %184;
-    %186 = println(%185) -> bb97;
+    %186 = ConstantLoad 10
+    %187 = ConstantLoad 20
+    %188 = ConstantLoad 30
+    %189 = ConstantLoad 3
+    %190 = newArray [int:Unsigned8...][%189]{%186, %187, %188}
+    $desugar$31 = %190;
+    %192 = $default$7($desugar$31) -> bb97;
   }
   bb97 {
-    %187 = $default$5() -> bb98;
+    $desugar$32 = %192;
+    %194 = setBinaryPayload(res,$desugar$31,$desugar$32) -> bb98;
   }
   bb98 {
-    $desugar$32 = %187;
-    %189 = removeAllHeaders(res,$desugar$32) -> bb99;
+    %195 = getBinaryPayload(res) -> bb99;
   }
   bb99 {
-    %190 = ConstantLoad Content-Type
-    $desugar$33 = %190;
-    %192 = $default$4($desugar$33) -> bb100;
+    $desugar$33 = %195;
+    %197 = $desugar$33 is error
+    %197 ? bb100 : bb101;
   }
   bb100 {
-    $desugar$34 = %192;
-    %194 = hasHeader(res,$desugar$33,$desugar$34) -> bb101;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$33);
+    PopScopeFrame
+    return;
   }
   bb101 {
-    %195 = %194;
-    %196 = println(%195) -> bb102;
+    rb = $desugar$33;
+    %199 = length(rb) -> bb102;
   }
   bb102 {
+    %200 = %199;
+    %201 = println(%200) -> bb103;
+  }
+  bb103 {
+    %202 = ConstantLoad X-Resp
+    $desugar$34 = %202;
+    %204 = $default$6($desugar$34) -> bb104;
+  }
+  bb104 {
+    $desugar$35 = %204;
+    %206 = removeHeader(res,$desugar$34,$desugar$35) -> bb105;
+  }
+  bb105 {
+    %207 = ConstantLoad X-Resp
+    $desugar$36 = %207;
+    %209 = $default$4($desugar$36) -> bb106;
+  }
+  bb106 {
+    $desugar$37 = %209;
+    %211 = hasHeader(res,$desugar$36,$desugar$37) -> bb107;
+  }
+  bb107 {
+    %212 = %211;
+    %213 = println(%212) -> bb108;
+  }
+  bb108 {
+    %214 = $default$5() -> bb109;
+  }
+  bb109 {
+    $desugar$38 = %214;
+    %216 = removeAllHeaders(res,$desugar$38) -> bb110;
+  }
+  bb110 {
+    %217 = ConstantLoad Content-Type
+    $desugar$39 = %217;
+    %219 = $default$4($desugar$39) -> bb111;
+  }
+  bb111 {
+    $desugar$40 = %219;
+    %221 = hasHeader(res,$desugar$39,$desugar$40) -> bb112;
+  }
+  bb112 {
+    %222 = %221;
+    %223 = println(%222) -> bb113;
+  }
+  bb113 {
     return;
   }
 }

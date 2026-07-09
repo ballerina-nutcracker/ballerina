@@ -1,0 +1,10 @@
+-- stdout --
+forwarded body
+200
+200
+200
+200
+204
+200
+200
+-- stderr --

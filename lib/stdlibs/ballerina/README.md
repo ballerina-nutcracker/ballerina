@@ -12,18 +12,26 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 
 | Package | Supported | Partially Supported | Not Yet Supported | Support % |
 |---|---|---|---|---|
+| [crypto](crypto/0.0.1/go1.2/README.md) | 26 | 1 | 5 | 81% |
 | [http](http/0.0.1/go1.2/README.md) | 24 | 2 | 46 | 33% |
 | [io](io/0.0.1/go1.2/README.md) | 14 | 1 | 11 | 54% |
+| [log](log/0.0.1/go1.2/README.md) | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.2/README.md) | 5 | 0 | 0 | 100% |
+| [os](os/0.0.1/go1.2/README.md) | 11 | 1 | 0 | 92% |
+| [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
-| **Total** | **77** | **4** | **58** | **55%** |
+| **Total** | **124** | **9** | **79** | **58%** |
 
 ## Notable Behavioural Changes
 
 Consolidated from each package's README. Only permanent, architectural Go-level divergences are
 listed here; temporary language gaps are tracked as `Not Yet Supported` rows in the per-package
 tables instead.
+
+### crypto
+
+- **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
 
 ### http
 
@@ -37,6 +45,20 @@ tables instead.
 ### io
 
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
+
+### log
+
+- **Module name always empty.** jBallerina uses JVM `StackWalker` to detect the calling module name at runtime; the Go-native version has no equivalent mechanism, so `module=""` in all log records.
+- **Error field format.** jBallerina serialises a full `FullErrorDetails` record (message, stack trace, cause chain) for the `error` field; the Go-native version formats the error as `error("message")` using the Ballerina `toBalString` representation of the error value.
+
+### os
+
+- **Environment mutations are process-wide.** jBallerina uses per-strand env maps for isolation; the Go-native version calls `os.Setenv` / `os.Unsetenv` directly, mutating the process-wide environment. This is safe for single-threaded Ballerina programs but not for concurrent strand execution.
+
+### random
+
+- **`createDecimal()` — improved entropy precision.** jBallerina delegates to `java.security.SecureRandom.nextFloat()`, which returns a Java 32-bit `float` (24 bits of mantissa) widened to a 64-bit Ballerina `float`. The Go-native version reads 53 bits from `crypto/rand`, producing a full-precision IEEE 754 `float64`. The range [0.0, 1.0) is preserved; values have higher randomness quality.
+- **`createIntInRange()` — corrected range distribution.** The jBallerina formula `startRange + int(rand × (endRange−1−startRange))` never produces `endRange−1` due to an off-by-one in the original implementation. The Go-native version uses `math/rand/v2.Int64N(endRange−startRange) + startRange`, which correctly produces uniform values across the full `[startRange, endRange)` range per the documented specification.
 
 ### time
 

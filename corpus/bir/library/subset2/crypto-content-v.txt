@@ -1,0 +1,416 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 
+-----BEGIN CERTIFICATE-----
+MIIC/zCCAeegAwIBAgIUBXoOP/FQ9aBoHTSUMU7hq5YHkTowDQYJKoZIhvcNAQEL
+BQAwDzENMAsGA1UEAwwEdGVzdDAeFw0yNjA2MjQwOTQxNDFaFw0zNjA2MjEwOTQx
+NDFaMA8xDTALBgNVBAMMBHRlc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+AoIBAQC1PPPztnW/FG3c7bpGpp7SFhjSfMFUef4mBtEWSc1ZRUkfhNb/fHIsoQMP
+7PRv7kGE/ZxmKQ9KopDxoEvZ+yIndHsAmFoIz1d4qHFo9s/ZbGJjlPHI0rPbmkde
+3/gSevQgs0p8zqS4HtFWdZR5yIYkY0ldI7bD7bTaYyMkxeBhg06nTbZ3UqqwKwv+
+c38zDW+e1MqNdlN+XLWRHe9xVz05WoWypZWFCdfk4YeVoo7ccAfqNv6AiKWsk8VP
+icoMz53kHoitlGRM6EGjLaVuiWn4V18N0HNYGM7zc743VxRd5d7VID2CO7mN2fiD
+HGj65+bwQLkh5188V0abjiwbzhNlAgMBAAGjUzBRMB0GA1UdDgQWBBTccyUbTLdq
+ZINgfGuVW/Olk4SfsjAfBgNVHSMEGDAWgBTccyUbTLdqZINgfGuVW/Olk4SfsjAP
+BgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCfjarBf3GgaL3TpKg3
+tBirLaYtl2wTuTyKgf7ZYYSpWxxyP0cs255s8Im/GcoLfb86WikeZ0lnbWvb7C4F
+SobLlJ+ajRYr7TxVsmz6BNr+Dd04LSF9Mf2toZ4jy08/AdmbbmF7a+CZPIlsNSXI
+uVasyeTYd0v52SJ9i+7cs1j+R5WBTxrptjv39KfXJe4/hbdIf8wQMtsZLAokFl7G
+VVljwBVzGfmmzowf60HpSnfpEwAle7utOAmARLyf+hp3FNPRwqylDMcXEFD+/OJJ
+M3vuL+Gkbuifdee3xayNRQOcT7wegwhqX18AgeJRP8JnksSCOqswYqQXI10chsgv
+4uEG
+-----END CERTIFICATE-----
+
+    certPem = %1;
+    %3 = ConstantLoad 
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC1PPPztnW/FG3c
+7bpGpp7SFhjSfMFUef4mBtEWSc1ZRUkfhNb/fHIsoQMP7PRv7kGE/ZxmKQ9KopDx
+oEvZ+yIndHsAmFoIz1d4qHFo9s/ZbGJjlPHI0rPbmkde3/gSevQgs0p8zqS4HtFW
+dZR5yIYkY0ldI7bD7bTaYyMkxeBhg06nTbZ3UqqwKwv+c38zDW+e1MqNdlN+XLWR
+He9xVz05WoWypZWFCdfk4YeVoo7ccAfqNv6AiKWsk8VPicoMz53kHoitlGRM6EGj
+LaVuiWn4V18N0HNYGM7zc743VxRd5d7VID2CO7mN2fiDHGj65+bwQLkh5188V0ab
+jiwbzhNlAgMBAAECggEAPWz/MaaxmaWO5sYb0D5AreuXVh+6VqtSHAlLbEZvNsZo
+1inrxIOlHsMjio5A+n7B7hUWoPlhmWYnwf0WODcJiF3OIpGAUmQTvW05ot2j7Ijz
+f9THbc0b8F4Fun4mUf0iKMMbh9lxsoWfZbJMNEpmTIbqIossMpOqLCpViu0V83Y+
+jics/bavFPAV2XpEW/uj+iN1OUXmZgHtlxoekl5qeL2DEjfrqLYOzF+gfeJGf0cK
+RQSpehhuxZo7RR8Twp3hr7sKWnEkzVg6LignEw1vsDU0KQ7lgkVjWlFInWHorohH
+U2BgJgCbzl28qYC5yBg+eRmne1MKH+EmfVxBLvIvgQKBgQDxFlCryrjryTb598Ee
+PMsuqd4lVhJ5AafwHvAKIhgml1uAwZT0hxOaZ9h8LaglbMy2I756RA1zGHIMqBYv
+yCRRA5YNuobx9Zc2F817mcobdHoSg3RDaozIbIf7xRJwvd4vW8z+a4ucP9/ynURb
+1VxEJvzN3FvU1mO5c8ZCTW29/QKBgQDAcukW+RYSTbj7jo5CpcQfDU+4YtPWSwFZ
+mnme6EqDBsYKVq8Cz7+pebv0D8EyJJFGqgnkGFDd3gU4gA3Y2qneH5dY0UQhoqJT
+tiFzmiWS3T6Re1eMKbjFY7E5LB59WyTMzFtdoFZhdDkN+WvEkuuWyM2GQKzmtI/y
+CsBqZEIziQKBgQC6aknYfDk+wGiNImCmM9Xb8CdAcWx5OqmThyiOfUx1UqXDSmwW
+I/gpdVC0vEz/G0CzObJIMiTAMU/Gr5XwPm6uYfp+BRPhNchFYGRXxVO8pPTbKeAV
+XOcc9qazK/AVUwrhTbeVpqzeFZnhrG82HyVn4UmrGE+9pESaGoZbsClCNQKBgQCF
+3ymf7nPZFbHpY9g4KoHMLAFZvX2o4xI0V43k6afzj4Gx7Wze4s9rwB/r/g2hqOha
+JKyuu+989xXgoMuBH1LtDkLE6QWg9DZBTz/j38XlbPw6TXewK9G5lcjRgYxQHVfz
+EvE3pvKP5j5OJ0Q9QQqbIGI/0ruz3MUJVUtWdxnKKQKBgD+XDq4K2S3Lu4TTDKlq
+n2tibFB+z1Bf+UNeqXSH6l5hBetLFO1sxBCgEXJqdqZQzGcbwKiyxvR0Xq27avk6
+XqWeJHCOAoR8Xuwe+xA8tfvr/cSGsrOK3xKUYnppx6wx2Goxsegyc8Uq9pxU6ub+
+sMbVENrDBjGHSNDcwP4bsjzU
+-----END PRIVATE KEY-----
+
+    keyPem = %3;
+    %5 = ConstantLoad 
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIba1oPEjXWZkCAggA
+MAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBCpntLqaIEuOa6HfQoVEmtTBIIE
+0Jz8FuHIArJ93w0mcqt3wgSvRGyTfOmCIiR3r5xSZLJwyGgMsJf3e8kD2A8mBdls
+FPjRaaTCEUqGjZx6N2zFJSqzbzKnWqOn3LCYK1MfYsnFEfxTv+LClsv777gmUusa
+BLmEoL46uQ2iw13Ow9a2AglS1wlG85gAUeVoAPK60UGk824hCQEzMJyOQZ/C8w8d
+Iu6hR/aSbbyCvW9y2FNYFJ9EOqtROCeufx9Jkd8SZnvZnQDoPwDcjApwytGNRZbh
+tjgpZ2VTRP/hLJuUT/FD8rurPL5UacWD1I5f0OMb8VPHmjP08RUTJJPb+Ey4zc3O
+GaBUsf/TaW5ooVRBuqFWp9+/bHOiZFWUC3Arqzg5l8OF1vwD/56gaXy2mb42mbyG
+JsmYNtPABk029IfFspiScFSggaDfMkN57NcQdVSvgT32sdRUuNNnX+4Z82PylJqu
+5fjXiK+0wytipWIJNNMZygXrC5Z3BpLfVhp7YANNWhOuEPeBUyOhl3ueqGDom9+z
+xILmHaetzvAR652kSoTDGdbVReFRfbVJlZRhneB60iNgObUlBQqqQVtBAa60Msjh
+DqRn6ZNlDFfuvPlDrSS+lc6c8/dd+f507NBh22nNANNx02VOqNRb5/o2tPg0cXt5
+MNsqtxw/NhYIJ0Ypc4K9da8nUndvgPfjiQZk3ghOwvN7apkwHDCEMcytqeJ30WNK
+bTxP9ZJy0pEW6YsAzekuVozV5anm7R+MfvvoA9MEyp9KKwKfzu9/sf0nbMPfBHOQ
+41L3ldzQJed40T/SJIqs18QeAM5Tz9VImGeq7RqWMayqFkVQl9zFWIWVVv09aTB0
+CB3450jAktXOlE6bgu8wQML3PkNxT+3oLYwUWjqejIpM0/3uegGFSKYAgVNYsSCt
+nRpAN+ISiIY8fFZ/zZYJuWr6tzKiFkyQg/8WWj2LELNsFNxmKDw6vXYXCT/VW9FD
+ZseKHBvfxlvJ1tOeWiM6PtDonqVVjzbWq8WYs02C0CAovNe35BSfsTHxmzVwmwSr
+lBphLE9pGDKARmGtXec5Lq6UX2nWti4+Y34gQ60mSR3A+db2PbITFxeqrFPb02h8
+A51H4ZzqVORWSRp1GCCCLmUl7m1YIkKHDD3P6UI7QywiB2I9ALo/Ow3Hzd8gU2Gs
+wiNT35vGUOkABaya7EQGkLvbFxb/M3t7U5yC+CCMz4ummFt4oLG/FuYFWE2MG2c1
+Y4unteJrWPQVvLsWVPflw1LTSS0Ae6YUvBbK6b9KhPVw+i7xvD1xe31gVoBOK6ht
+MaZ4HYhrGstGd4K8LwFmspFZ25CeZYdETxt/b3mL60WgQiayPka6lOA9N4pSgBLZ
+YMcbgppoER9dZwaXI0ZK/50hVMozuOgWkcVe9eldKJ/eVVa8AKyd0wLPMeODKSUF
+hmUofn1BvlFbG9+gK8sJJZcfbQ4qHPtkU2zDjQ+xDFOpqtImLg1ot224pPaFW+IZ
+IUWtAnhDqLqtXHTQj6PbxzmbhiygtL4ID0qimS/IFb+Y9pT/IN8rdiiGYUicQbwu
+Eubczj1asLiR3WmG1u2v/ntgx3FESVPFlpEMX66jA4DTWUF8aSNSNZIhKoIorIVZ
+7zHOeuPbInRBgp4S7e5u4P6yRVVcCQiiETIIa78EvdjF
+-----END ENCRYPTED PRIVATE KEY-----
+
+    encKeyPem = %5;
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad 2
+    %9 = ConstantLoad 3
+    %10 = ConstantLoad 4
+    %11 = ConstantLoad 4
+    %12 = newArray [int:Unsigned8...][%11]{%7, %8, %9, %10}
+    data = %12;
+    %14 = ConstantLoad /tmp/bal_crypto_content.pem
+    $desugar$0 = %14;
+    $desugar$1 = certPem;
+    %17 = $default$0($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %17;
+    %19 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %19;
+    %21 = $desugar$3 is error
+    %21 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %22 = ConstantLoad /tmp/bal_crypto_content.pem
+    %23 = fileReadBytes(%22) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %23;
+    %25 = $desugar$4 is error
+    %25 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    certBytes = $desugar$4;
+    %27 = decodeRsaPublicKeyFromContent(certBytes) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %27;
+    %29 = $desugar$5 is error
+    %29 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    pub = $desugar$5;
+    $desugar$6 = data;
+    $desugar$7 = pub;
+    %33 = $default$17($desugar$6,$desugar$7) -> bb11;
+  }
+  bb11 {
+    $desugar$8 = %33;
+    %35 = encryptRsaEcb($desugar$6,$desugar$7,$desugar$8) -> bb12;
+  }
+  bb12 {
+    $desugar$9 = %35;
+    %37 = $desugar$9 is error
+    %37 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    %39 = length($desugar$9) -> bb15;
+  }
+  bb15 {
+    %40 = %39;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %38 = > %40 %42;
+    %43 = %38;
+    %44 = println(%43) -> bb16;
+  }
+  bb16 {
+    %45 = ConstantLoad /tmp/bal_crypto_content.pem
+    $desugar$10 = %45;
+    $desugar$11 = keyPem;
+    %48 = $default$0($desugar$10,$desugar$11) -> bb17;
+  }
+  bb17 {
+    $desugar$12 = %48;
+    %50 = fileWriteString($desugar$10,$desugar$11,$desugar$12) -> bb18;
+  }
+  bb18 {
+    $desugar$13 = %50;
+    %52 = $desugar$13 is error
+    %52 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    %53 = ConstantLoad /tmp/bal_crypto_content.pem
+    %54 = fileReadBytes(%53) -> bb21;
+  }
+  bb21 {
+    $desugar$14 = %54;
+    %56 = $desugar$14 is error
+    %56 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$14);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    keyBytes = $desugar$14;
+    $desugar$15 = keyBytes;
+    %59 = $default$1($desugar$15) -> bb24;
+  }
+  bb24 {
+    $desugar$16 = %59;
+    %61 = decodeRsaPrivateKeyFromContent($desugar$15,$desugar$16) -> bb25;
+  }
+  bb25 {
+    $desugar$17 = %61;
+    %63 = $desugar$17 is error
+    %63 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$17);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    pk = $desugar$17;
+    %65 = signRsaSha256(data,pk) -> bb28;
+  }
+  bb28 {
+    $desugar$18 = %65;
+    %67 = $desugar$18 is error
+    %67 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$18);
+    PopScopeFrame
+    return;
+  }
+  bb30 {
+    %69 = length($desugar$18) -> bb31;
+  }
+  bb31 {
+    %70 = %69;
+    %71 = ConstantLoad 0
+    %72 = %71;
+    %68 = > %70 %72;
+    %73 = %68;
+    %74 = println(%73) -> bb32;
+  }
+  bb32 {
+    %75 = ConstantLoad /tmp/bal_crypto_content.pem
+    $desugar$19 = %75;
+    $desugar$20 = encKeyPem;
+    %78 = $default$0($desugar$19,$desugar$20) -> bb33;
+  }
+  bb33 {
+    $desugar$21 = %78;
+    %80 = fileWriteString($desugar$19,$desugar$20,$desugar$21) -> bb34;
+  }
+  bb34 {
+    $desugar$22 = %80;
+    %82 = $desugar$22 is error
+    %82 ? bb35 : bb36;
+  }
+  bb35 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$22);
+    PopScopeFrame
+    return;
+  }
+  bb36 {
+    %83 = ConstantLoad /tmp/bal_crypto_content.pem
+    %84 = fileReadBytes(%83) -> bb37;
+  }
+  bb37 {
+    $desugar$23 = %84;
+    %86 = $desugar$23 is error
+    %86 ? bb38 : bb39;
+  }
+  bb38 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$23);
+    PopScopeFrame
+    return;
+  }
+  bb39 {
+    encBytes = $desugar$23;
+    %88 = ConstantLoad secret
+    %89 = decodeRsaPrivateKeyFromContent(encBytes,%88) -> bb40;
+  }
+  bb40 {
+    $desugar$24 = %89;
+    %91 = $desugar$24 is error
+    %91 ? bb41 : bb42;
+  }
+  bb41 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$24);
+    PopScopeFrame
+    return;
+  }
+  bb42 {
+    encPk = $desugar$24;
+    %93 = signRsaSha256(data,encPk) -> bb43;
+  }
+  bb43 {
+    $desugar$25 = %93;
+    %95 = $desugar$25 is error
+    %95 ? bb44 : bb45;
+  }
+  bb44 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$25);
+    PopScopeFrame
+    return;
+  }
+  bb45 {
+    %97 = length($desugar$25) -> bb46;
+  }
+  bb46 {
+    %98 = %97;
+    %99 = ConstantLoad 0
+    %100 = %99;
+    %96 = > %98 %100;
+    %101 = %96;
+    %102 = println(%101) -> bb47;
+  }
+  bb47 {
+    %103 = ConstantLoad 1
+    %104 = ConstantLoad 2
+    %105 = ConstantLoad 3
+    %106 = ConstantLoad 3
+    %107 = newArray [int:Unsigned8...][%106]{%103, %104, %105}
+    junk = %107;
+    %109 = decodeRsaPublicKeyFromContent(junk) -> bb48;
+  }
+  bb48 {
+    bad = %109;
+    %111 = bad is error
+    %112 = %111;
+    %113 = println(%112) -> bb49;
+  }
+  bb49 {
+    %114 = ConstantLoad B53CF3F3B675BF146DDCEDBA46A69ED21618D27CC15479FE2606D11649CD5945491F84D6FF7C722CA1030FECF46FEE4184FD9C66290F4AA290F1A04BD9FB2227747B00985A08CF5778A87168F6CFD96C626394F1C8D2B3DB9A475EDFF8127AF420B34A7CCEA4B81ED156759479C8862463495D23B6C3EDB4DA632324C5E061834EA74DB67752AAB02B0BFE737F330D6F9ED4CA8D76537E5CB5911DEF71573D395A85B2A5958509D7E4E18795A28EDC7007EA36FE8088A5AC93C54F89CA0CCF9DE41E88AD94644CE841A32DA56E8969F8575F0DD0735818CEF373BE3757145DE5DED5203D823BB98DD9F8831C68FAE7E6F040B921E75F3C57469B8E2C1BCE1365
+    %115 = ConstantLoad 10001
+    %116 = buildRsaPublicKey(%114,%115) -> bb50;
+  }
+  bb50 {
+    $desugar$26 = %116;
+    %118 = $desugar$26 is error
+    %118 ? bb51 : bb52;
+  }
+  bb51 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$26);
+    PopScopeFrame
+    return;
+  }
+  bb52 {
+    built = $desugar$26;
+    $desugar$27 = data;
+    $desugar$28 = built;
+    %122 = $default$17($desugar$27,$desugar$28) -> bb53;
+  }
+  bb53 {
+    $desugar$29 = %122;
+    %124 = encryptRsaEcb($desugar$27,$desugar$28,$desugar$29) -> bb54;
+  }
+  bb54 {
+    $desugar$30 = %124;
+    %126 = $desugar$30 is error
+    %126 ? bb55 : bb56;
+  }
+  bb55 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$30);
+    PopScopeFrame
+    return;
+  }
+  bb56 {
+    %128 = length($desugar$30) -> bb57;
+  }
+  bb57 {
+    %129 = %128;
+    %130 = ConstantLoad 0
+    %131 = %130;
+    %127 = > %129 %131;
+    %132 = %127;
+    %133 = println(%132) -> bb58;
+  }
+  bb58 {
+    %134 = ConstantLoad nothex
+    %135 = ConstantLoad 10001
+    %136 = buildRsaPublicKey(%134,%135) -> bb59;
+  }
+  bb59 {
+    badBuilt = %136;
+    %138 = badBuilt is error
+    %139 = %138;
+    %140 = println(%139) -> bb60;
+  }
+  bb60 {
+    return;
+  }
+}

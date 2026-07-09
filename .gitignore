@@ -31,8 +31,13 @@ go.work.sum
 /bal
 /bal-debug
 
-# Generated test data files (run ./init.sh to regenerate)
+# Generated test data files (run ./init.sh to regenerate).
+# package.json and dependency-graph.json are bala-format metadata fixtures
+# that must be tracked even though the broader corpus/**/*.json rule ignores
+# generated parser outputs.
 corpus/**/*.json
+!corpus/**/package.json
+!corpus/**/dependency-graph.json
 parser/testdata/**/*.json
 /corpus/parser/*
 # Hand-authored bala fixture data (not generated)

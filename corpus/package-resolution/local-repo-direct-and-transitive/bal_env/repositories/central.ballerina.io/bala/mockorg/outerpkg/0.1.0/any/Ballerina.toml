@@ -1,0 +1,8 @@
+[package]
+org = "mockorg"
+name = "outerpkg"
+version = "0.1.0"
+
+[[modules]]
+name   = "outerpkg"
+export = true

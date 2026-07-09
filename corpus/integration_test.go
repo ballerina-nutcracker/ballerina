@@ -23,6 +23,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -319,12 +320,18 @@ func splitStderrDiagnostics(stderr string) []string {
 	return diagnostics
 }
 
+// logTimestampPattern matches the leading "time=<RFC3339>" field of a
+// ballerina/log LOGFMT record so it can be normalized to a stable token,
+// keeping golden files deterministic across runs.
+var logTimestampPattern = regexp.MustCompile(`time=\S+`)
+
 func normalizeIntegrationStderr(stderr string) string {
 	stderr = strings.TrimSpace(stderr)
 	if stderr == "" {
 		return ""
 	}
 
+	stderr = logTimestampPattern.ReplaceAllString(stderr, "time=<TIME>")
 	diagnostics := splitStderrDiagnostics(stderr)
 
 	slices.Sort(diagnostics)

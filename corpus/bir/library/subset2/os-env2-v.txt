@@ -1,0 +1,61 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %2 = getUsername() -> bb1;
+  }
+  bb1 {
+    %3 = length(%2) -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %1 = > %4 %6;
+    %7 = %1;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad BAL_TEST_LISTENV
+    %10 = ConstantLoad present
+    %11 = setEnv(%9,%10) -> bb4;
+  }
+  bb4 {
+    $desugar$0 = %11;
+    %13 = $desugar$0 is error
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %14 = listEnv() -> bb7;
+  }
+  bb7 {
+    envs = %14;
+    %17 = ConstantLoad BAL_TEST_LISTENV
+    %16 = envs[%17];
+    v = %16;
+    %19 = println(v) -> bb8;
+  }
+  bb8 {
+    %20 = ConstantLoad BAL_TEST_LISTENV
+    %21 = unsetEnv(%20) -> bb9;
+  }
+  bb9 {
+    $desugar$1 = %21;
+    %23 = $desugar$1 is error
+    %23 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    return;
+  }
+}

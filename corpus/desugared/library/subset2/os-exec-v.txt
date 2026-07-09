@@ -1,0 +1,285 @@
+(package
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal echo))
+              (key-value
+                (literal arguments)
+                (list-constructor-expr
+                  (literal hello))))
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable p (type
+          (user-defined-type os Process)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation waitForExit expr:
+            (simple-var-ref p) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable code (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref code))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 ()))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation output expr:
+            (simple-var-ref p) (
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable out (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.array length (
+              (simple-var-ref out)))
+            (literal 0)))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal echo))
+              (key-value
+                (literal arguments)
+                (list-constructor-expr
+                  (literal world))))
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable p2 (type
+          (user-defined-type os Process)) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation waitForExit expr:
+            (simple-var-ref p2) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$5))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation output expr:
+            (simple-var-ref p2) (
+            (numeric-literal 2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (var-def
+        (variable err (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$6))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref err))))))
+      (var-def
+        (variable dirWithSpace (type
+          (value-type string)) (expr
+          (literal /tmp/bal_exec_space_test/foo bar))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal mkdir))
+              (key-value
+                (literal arguments)
+                (list-constructor-expr
+                  (literal -p)
+                  (simple-var-ref dirWithSpace))))
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable mk (type
+          (user-defined-type os Process)) (expr
+          (simple-var-ref $desugar$7))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation waitForExit expr:
+            (simple-var-ref mk) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$8))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal ls))
+              (key-value
+                (literal arguments)
+                (list-constructor-expr
+                  (simple-var-ref dirWithSpace))))
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (var-def
+        (variable lsProc (type
+          (user-defined-type os Process)) (expr
+          (simple-var-ref $desugar$9))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation waitForExit expr:
+            (simple-var-ref lsProc) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$10))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$10))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$10))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal rm))
+              (key-value
+                (literal arguments)
+                (list-constructor-expr
+                  (literal -rf)
+                  (literal /tmp/bal_exec_space_test))))
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (var-def
+        (variable rm (type
+          (user-defined-type os Process)) (expr
+          (simple-var-ref $desugar$11))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation waitForExit expr:
+            (simple-var-ref rm) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$12))) ())
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$12))))
+      (var-def
+        (variable bad (type
+          (union-type
+            (user-defined-type os Process)
+            (user-defined-type os Error))) (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal no_such_command_xyz_123)))
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bad)
+            (user-defined-type os Error)))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation os exec (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal echo))
+              (key-value
+                (literal arguments)
+                (list-constructor-expr
+                  (literal bye))))
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (var-def
+        (variable p3 (type
+          (user-defined-type os Process)) (expr
+          (simple-var-ref $desugar$13))))
+      (expression-stmt
+        (invocation exit expr:
+          (simple-var-ref p3) ()))
+      (expression-stmt
+        (invocation io println (
+          (literal exited)))))))

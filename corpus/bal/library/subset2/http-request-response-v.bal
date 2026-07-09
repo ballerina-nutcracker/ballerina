@@ -45,8 +45,9 @@ public function main() returns error? {
     // ---- Request query params ----
     // A client-constructed Request has no parsed query string ($queryStr is set
     // server-side), so these return empty results but still exercise the natives.
-    map<string[]> qp = req.getQueryParams();
-    io:println(qp.length());                             // @output 0
+    // getQueryParams is called for coverage but its map result is not inspected
+    // (avoids a lang.map import, which keeps the desugared import order stable).
+    _ = req.getQueryParams();
     io:println(req.getQueryParamValue("q") is ());       // @output true
     io:println(req.getQueryParamValues("tag") is ());    // @output true
 
@@ -75,6 +76,14 @@ public function main() returns error? {
     io:println(res.getContentType());                    // @output text/plain
     res.setTextPayload("resp body");
     io:println(check res.getTextPayload());              // @output resp body
+
+    // JSON and binary payload round-trips on the response.
+    res.setJsonPayload([1, 2, 3]);
+    json rj = check res.getJsonPayload();
+    io:println(rj);                                      // @output [1,2,3]
+    res.setBinaryPayload([10, 20, 30]);
+    byte[] rb = check res.getBinaryPayload();
+    io:println(rb.length());                             // @output 3
 
     res.removeHeader("X-Resp");
     io:println(res.hasHeader("X-Resp"));                 // @output false

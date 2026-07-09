@@ -349,6 +349,34 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 				return err
 			},
 		},
+		OS: pal.OS{
+			GetEnv:      os.Getenv,
+			GetUsername: func() string { return "test" },
+			GetUserHome: func() string {
+				home, err := os.UserHomeDir()
+				if err != nil {
+					return ""
+				}
+				return home
+			},
+			SetEnv:   os.Setenv,
+			UnsetEnv: os.Unsetenv,
+			ListEnv: func() map[string]string {
+				result := make(map[string]string)
+				for _, e := range os.Environ() {
+					for i := 0; i < len(e); i++ {
+						if e[i] == '=' {
+							result[e[:i]] = e[i+1:]
+							break
+						}
+					}
+				}
+				return result
+			},
+			Exec: func(command string, args []string, envOverride map[string]string) (pal.ProcessHandle, error) {
+				return nil, nil
+			},
+		},
 		Time: pal.Time{
 			Now:          func() time.Time { return time.Time{} },
 			MonotonicNow: func() time.Duration { return 0 },

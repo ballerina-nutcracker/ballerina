@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation random createIntInRange (
+            (literal 10)
+            (literal 20)))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr &&
+          (binary-expr >=
+            (simple-var-ref n)
+            (literal 10))
+          (binary-expr <
+            (simple-var-ref n)
+            (literal 20))))))
+  )
+)

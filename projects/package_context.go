@@ -253,7 +253,9 @@ func (p *packageContext) buildModuleDependencyGraph() *DependencyGraph[ModuleDes
 	// For source packages, analyze imports to find intra-package dependencies
 	if p.project.Kind() != ProjectKindBala {
 		env := p.project.Environment()
-		moduleResolver := newModuleResolver(p.getDescriptor(), env)
+		// nil blendedManifest: intra-package edges never trip the
+		// user-specified-repository branch in resolveRequest.
+		moduleResolver := newModuleResolver(p.getDescriptor(), nil, env)
 
 		for _, modID := range p.moduleIDs {
 			modCtx := p.moduleContextMap[modID]

@@ -69,9 +69,30 @@ If every row is "No risk identified", say so and move on.
 
 You are editing existing files, **not** creating new ones. In particular:
 
-- **Do not** create new manifest files (`Ballerina.toml`, `Bala.toml`, `Dependencies.toml` already exist).
+- **Do not** create new manifest files (`Ballerina.toml`, `Bala.toml` already exist).
 - **Do not** modify `lib/rt/libs.go` — the blank import is already there.
 - **Do not** modify `test_util/testphases/phases.go` — the `builtinStdlibs` entry is already there.
+- **Exception — `Dependencies.toml`**: if the gap being filled adds a new `import ballerina/<dep>;` to the `.bal` source that was not there before, you **must** update `Dependencies.toml` to declare the dependency. Add one `[[package]]` entry for each new stdlib import, then add a `dependencies = [...]` field on this package's own entry. Without this, the project resolver's BFS will not compile the dependency before this package, causing `Unknown import: ballerina/<dep>` at runtime. Example:
+
+  ```toml
+  [ballerina]
+  dependencies-toml-version = "2"
+
+  [[package]]
+  org     = "ballerina"
+  name    = "<dep>"
+  version = "0.0.1"
+
+  [[package]]
+  org     = "ballerina"
+  name    = "<this-package>"
+  version = "0.0.1"
+  dependencies = [
+      {org = "ballerina", name = "<dep>"}
+  ]
+  ```
+
+  Also ensure `<dep>` appears before `<this-package>` in the `builtinStdlibs` list in `test_util/testphases/phases.go` (it almost certainly already does, but verify).
 
 What you *do* edit:
 
@@ -94,6 +115,16 @@ If the new function performs a platform op (io, fs, time, http, env) not already
 3. `test_util/test_util.go` → `TestPal` — wire in (start from `palnative.NewNative<Category>PAL()` and override only test-specific fields).
 
 Failing to update `TestPal` causes nil-pointer dereferences in corpus tests even when the CLI run succeeds.
+
+### Associating native state with a map/record value (only if needed)
+
+This applies to **map/record values (`values.Map`) only** — objects are unaffected (see below).
+
+If the gap requires a native extern to recover Go-side state (a parsed key, a compiled pattern, etc.) from a Ballerina **map or record** value on a later call, **do not** add a field or accessor to `values.Map` for this — `runtime/values` must not carry any library-specific native-data association on `Map`. Ballerina mapping/record values are pure data with no encapsulation, so a field on `values.Map` becomes a general escape hatch with no guarantee against another library colliding with it, and no way to stop a user constructing a same-shaped value that never goes through your constructor.
+
+Keep the association entirely inside your own `native/` package as a package-private, GC-friendly weak map keyed by `weak.Pointer[values.Map]`, cleaned up via `runtime.AddCleanup` once the value is unreachable. See `lib/stdlibs/ballerina/crypto/0.0.1/go1.2/native/keydata.go` (`setKeyData`/`keyDataOf`) for the reference implementation, and the same subsection in `add-stdlib-support`'s Step 7 for the full pattern and code sketch. Every reader must tolerate a miss (return a clean domain error) since nothing prevents a user from constructing the value without your native data attached.
+
+**Objects are different — no change needed there.** A Ballerina object can only be constructed via `new` plus a class definition, so a user cannot fabricate a same-shaped object bypassing your constructor. Keep using the existing pattern of storing the native handle directly as an internal field on the object (e.g. `os.go`'s `"$handle"` field on `Process`, read back via a small `getHandle` helper) — that mechanism is unaffected by this rule.
 
 ### Coding rules (full list in `AGENTS.md`)
 
@@ -134,6 +165,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed).
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] Any unavoidable divergence is in **Notable Behavioural Changes**.
+- [ ] If a new `import ballerina/<dep>` was added to the `.bal` source: `Dependencies.toml` updated with the new entry and `dependencies = [...]` field.
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.
 
 ### Final report

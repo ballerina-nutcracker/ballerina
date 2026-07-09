@@ -1,0 +1,38 @@
+(package
+  (import-package ballerina log (as log))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal server started))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation log printInfo (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (mapping-constructor-expr))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal low disk space))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation log printWarn (
+          (simple-var-ref $desugar$2)
+          (simple-var-ref $desugar$3)
+          (mapping-constructor-expr
+            (key-value
+              (literal diskPct)
+              (literal 12))))))
+      (expression-stmt
+        (invocation log printError (
+          (literal request failed)
+          (error-constructor-expr (
+            (literal disk full)))
+          (mapping-constructor-expr)))))))

@@ -32,6 +32,10 @@ import (
 const (
 	// centralCacheSubpath is the path under BALLERINA_HOME for cached packages.
 	centralCacheSubpath = "repositories/central.ballerina.io/bala"
+	// localRepoCacheSubpath is the path under BALLERINA_HOME for packages
+	// the user routed via `repository = "local"` in Ballerina.toml. Layout:
+	// <HOME>/repositories/local/bala/.
+	localRepoCacheSubpath = "repositories/local/bala"
 	// platformAny is the platform directory name for platform-independent packages.
 	platformAny = "any"
 	// platformGoPrefix marks platform directories that target a specific Go
@@ -240,9 +244,12 @@ var _ bindableRepository = (*FileSystemRepository)(nil)
 // The central repository is exposed as a RemoteRepository whose on-disk cache
 // is the central bala directory. The RemoteRepository currently has no remote
 // source wired in, so it behaves as a cache-only read until that arrives.
-func defaultRepositories(ballerinaEnvFs fs.FS) []Repository {
+func defaultRepositories(ballerinaEnvFs fs.FS) ([]Repository, map[string]Repository) {
 	centralCache := NewFileSystemRepository(ballerinaEnvFs, centralCacheSubpath)
-	return append(bundledRepositories(), NewRemoteRepository(centralCache))
+	localCache := NewFileSystemRepository(ballerinaEnvFs, localRepoCacheSubpath)
+	chain := append(bundledRepositories(), NewRemoteRepository(centralCache))
+	custom := map[string]Repository{"local": localCache}
+	return chain, custom
 }
 
 // bundledRepositories returns the repositories baked into the binary: the lang
