@@ -67,6 +67,7 @@ func TestResolveFromUserSpecifiedRepo_Hit(t *testing.T) {
 	resp := mr.resolveFromUserSpecifiedRepo(context.Background(), "mockorg", "mockpkg", "mockpkg")
 	if resp == nil {
 		t.Fatal("expected non-nil response for module found in local repo")
+		return
 	}
 	if resp.resolutionStatus != resolutionStatusResolved {
 		t.Errorf("resolutionStatus = %v, want resolved", resp.resolutionStatus)
@@ -118,6 +119,7 @@ func TestResolveRequest_UserSpecifiedRepoTakesPriority(t *testing.T) {
 	resp := mr.resolveRequest(context.Background(), req)
 	if resp == nil {
 		t.Fatal("expected non-nil response")
+		return
 	}
 	if resp.resolutionStatus != resolutionStatusResolved {
 		t.Errorf("resolutionStatus = %v, want resolved", resp.resolutionStatus)
