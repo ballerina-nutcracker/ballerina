@@ -47,7 +47,7 @@ class $service$0 {
 
   $remote$greet() -> string{
     bb0 {
-      lock-start "$anon/.:$service.419.1.foo" GOTO bb1;
+      lock-start "$anon/.:$service.386.1.foo" GOTO bb1;
     }
     bb1 {
       PushScopeFrame 2
@@ -55,7 +55,7 @@ class $service$0 {
       %0 = (1, self)[%1];
       (1, %0) = %0;
       PopScopeFrame
-      lock-end "$anon/.:$service.419.1.foo" GOTO bb2;
+      lock-end "$anon/.:$service.386.1.foo" GOTO bb2;
     }
     bb2 {
       return;
@@ -77,7 +77,7 @@ class $service$0 {
   resource get hello $resource$get$0(string) -> string{
     bb0 {
       _ = name;
-      lock-start "$anon/.:$service.419.1.foo" GOTO bb1;
+      lock-start "$anon/.:$service.386.1.foo" GOTO bb1;
     }
     bb1 {
       PushScopeFrame 4
@@ -87,7 +87,7 @@ class $service$0 {
       %0 = + %1 %2;
       (1, %0) = %0;
       PopScopeFrame
-      lock-end "$anon/.:$service.419.1.foo" GOTO bb2;
+      lock-end "$anon/.:$service.386.1.foo" GOTO bb2;
     }
     bb2 {
       return;

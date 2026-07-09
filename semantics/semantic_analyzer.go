@@ -2019,6 +2019,14 @@ func analyzeWhile[A analyzer](a A, whileStmt *ast.BLangWhile) bool {
 	return analyzeActionOrExpression(a, whileStmt.Expr, semtypes.BOOLEAN)
 }
 
+func getIterableType(cx *context.CompilerContext, symbolType func(model.SymbolRef) semtypes.SemType) (semtypes.SemType, bool) {
+	ref, ok := cx.LangLibDistinctTypeSymbol("lang.object", "Iterable")
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	return symbolType(ref), true
+}
+
 func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 	collection := foreachStmt.Collection
 	if !analyzeActionOrExpression(a, collection, semtypes.SemType{}) {
@@ -2037,7 +2045,7 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 		switch {
 		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.LIST):
 			memberTypes := semtypes.ListAllMemberTypesInner(a.tyCtx(), collectionType)
-			var result = semtypes.NEVER
+			result := semtypes.NEVER
 			for _, each := range memberTypes.SemTypes {
 				result = semtypes.Union(result, each)
 			}
@@ -2048,9 +2056,13 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = semtypes.XMLItemType(collectionType)
 		default:
 			tyCtx := a.tyCtx()
-			iterableTy := semtypes.CreateIterable(tyCtx)
+			iterableTy, ok := getIterableType(a.ctx(), a.ctx().SymbolType)
+			if !ok {
+				a.semanticErr("foreach collection must be subtype of object:Iterable", collection.GetPosition())
+				return false
+			}
 			if !semtypes.IsSubtype(tyCtx, collectionType, iterableTy) {
-				a.semanticErr("incompatible types: expected an iterable collection", collection.GetPosition())
+				a.semanticErr("foreach collection must be subtype of object:Iterable", collection.GetPosition())
 				return false
 			}
 			// Extract value type from the iterator's next() return type
