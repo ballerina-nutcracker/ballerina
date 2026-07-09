@@ -452,7 +452,7 @@ func mergeCompilationUnitImports(imports []semantics.CompilationUnitImports) map
 // their langlib key, so they are usable without an import statement. No-op
 // until the lib has been compiled (e.g. while compiling the lib itself).
 func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) {
-	for _, name := range []string{"lang.int", "lang.boolean", "lang.decimal", "lang.error", "lang.string", "lang.value", "lang.xml", "lang.float", "lang.array", "lang.map"} {
+	for _, name := range []string{"lang.int", "lang.boolean", "lang.decimal", "lang.error", "lang.string", "lang.value", "lang.xml", "lang.float", "lang.array", "lang.map", "lang.object"} {
 		if space, ok := publicSymbols[semantics.PackageIdentifier{OrgName: "ballerina", ModuleName: name}]; ok {
 			implicitImports[name] = space
 		}
