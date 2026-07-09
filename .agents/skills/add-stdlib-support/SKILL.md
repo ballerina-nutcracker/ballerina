@@ -54,6 +54,8 @@ Scan the jBallerina source for `import ballerina/<X>` statements.
 
 Do not silently drop features because of a missing import or inherited dependency gap — always flag and confirm.
 
+If a dependency's README claims a feature is `Supported` but it actually diverges from its own documented behaviour — a bug, not a catalogued gap — that's separate from the check above: follow `references/reporting-limitations.md`.
+
 ## 3. Cross-check language support
 
 Read `AGENTS.md` (root) in full, especially the **Interpreter stages** and **Coding style** sections. If a planned feature uses a construct known to fail in this interpreter (`distinct` error subtypes, `readonly &` intersections, `stream` type, XML, full `typedesc` parameter handling), drop or defer the feature and note it in the plan.
@@ -72,7 +74,7 @@ When the interpreter panics or emits compile errors that are **not explained** b
 >
 > Which option do you prefer?
 
-After the developer responds, apply the chosen resolution before continuing.
+After the developer responds, apply the chosen resolution before continuing. Regardless of which option is chosen, this is a language limitation worth tracking upstream independently of the local workaround — draft an issue per `references/reporting-limitations.md` and point the developer to https://github.com/ballerina-nutcracker/ballerina/issues.
 
 ## 4. Propose a plan and a showcase `.bal` file *(GATE: wait for user approval)*
 
@@ -101,6 +103,7 @@ Add a row to the parity table for every behavioural claim the spec makes about a
 
 - **Avoidable** divergences (resolvable in the Go layer) — fix before merging.
 - **Unavoidable** divergences (architectural Go/JVM constraint) — record in the README under **Notable Behavioural Changes** *before* implementing.
+- **A divergence traced to an actual bug in a dependency stdlib** (not an architectural constraint, and not already a catalogued gap) — don't just record it as unavoidable; also follow `references/reporting-limitations.md` to get it tracked upstream.
 - Do not proceed to Step 6 without a complete parity table, even if every row says "No risk identified."
 
 ## 6. Evaluate Go libraries *(GATE: wait for approval before touching `go.mod`)*
@@ -270,3 +273,4 @@ Summarise:
 - The measured `native/` coverage % from Step 8's verify command.
 - The `validate-stdlib-contract` verdict.
 - Which `corpus/bal/library/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
+- Any language-limitation or dependency-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it.

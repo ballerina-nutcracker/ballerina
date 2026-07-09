@@ -65,6 +65,7 @@ If `docs/spec/spec.md` exists: check every behavioural claim it makes about the 
 Rules:
 - **Avoidable** divergences — fix during Step 4.
 - **Unavoidable** divergences — record in the README under **Notable Behavioural Changes** during Step 5.
+- **A genuine bug** — either in this stdlib's own previously-`Supported` behaviour, or in a stdlib it depends on, rather than a new architectural constraint — isn't just an "unavoidable" row: also follow `../add-stdlib-support/references/reporting-limitations.md` to get it tracked upstream.
 
 If every row is "No risk identified", say so and move on.
 
@@ -95,6 +96,10 @@ Shared patterns — read the relevant file only when the situation applies:
 - **PAL hookup** (new platform op not already covered by the PAL) — `../add-stdlib-support/references/pal.md`. Three files must change; missing `TestPal` = nil-pointer panics in corpus tests.
 - **Native state behind a map/record or object value** — `../add-stdlib-support/references/native-state.md`. Never add fields to `values.Map` for this; see `crypto/native/keydata.go` for the weak-map reference implementation.
 - **bal↔Go JSON conversion** — reuse the shared helpers `values.BalToGoJSON` / `values.GoToBalValue`; never duplicate the conversion per-stdlib.
+
+### Handling unexpected compile failures
+
+If implementing this gap triggers an interpreter panic or compile error not explained by `AGENTS.md`, don't silently pick a workaround — present the developer with the same options as `add-stdlib-support` Step 3 (fix the interpreter / work around in Ballerina / move to Go native / scope out). Whichever they choose, draft an issue per `../add-stdlib-support/references/reporting-limitations.md` and point them to https://github.com/ballerina-nutcracker/ballerina/issues — this is a language limitation worth tracking upstream independently of the local workaround.
 
 Coding rules: follow `AGENTS.md` (license header on every new file, no per-line comments, no new public symbols unless required by the public API).
 
@@ -151,7 +156,8 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] If a new `import ballerina/<dep>` was added to the `.bal` source: `Dependencies.toml` updated with the new entry and `dependencies = [...]` field.
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.
 - [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every behavioural claim it makes about the touched surface matches the shipped Go implementation exactly — any mismatch found during Step 3 or implementation has been resolved, not left unreconciled.
+- [ ] Any language-limitation or dependency-bug issue drafted per `../add-stdlib-support/references/reporting-limitations.md`, and the developer told where to file it.
 
 ### Final report
 
-In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/bal/library/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, and confirmation that the new/touched lines are covered (per the coverage-gate check above).
+In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/bal/library/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.
