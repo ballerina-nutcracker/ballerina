@@ -31,6 +31,8 @@ class NumberIterator {
 }
 
 class NumberGenerator {
+    *object:Iterable;
+
     public function iterator() returns NumberIterator {
         return new;
     }
