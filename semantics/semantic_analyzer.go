@@ -1498,12 +1498,13 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 	if !analyzeActionOrExpression(a, msgArg, semtypes.STRING) {
 		return false
 	}
-	mat, ok := semtypes.ErrorDetailAtomicType(tyCtx, expr.DeterminedType)
+	detailTy, ok := semtypes.ErrorDetailType(tyCtx, expr.DeterminedType)
 	if !ok {
-		a.unimplementedErr("non-atomic detail types not supported", expr.GetPosition())
+		a.unimplementedErr("error detail type not supported", expr.GetPosition())
 		return false
 	}
 	seen := make(map[string]bool, len(expr.NamedArgs))
+	providedFields := make([]semtypes.Field, 0, len(expr.NamedArgs))
 	clonableTy := semtypes.CreateCloneable(tyCtx)
 	for _, namedArg := range expr.NamedArgs {
 		name := namedArg.Name.GetValue()
@@ -1512,22 +1513,24 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 			return false
 		}
 		seen[name] = true
-		fieldType := mat.FieldInnerVal(name)
+		fieldType := semtypes.MappingMemberTypeInnerValProj(tyCtx, detailTy, semtypes.StringConst(name))
 		if !analyzeActionOrExpression(a, namedArg.Expr, fieldType) {
 			return false
 		}
-		if !semtypes.IsSubtype(tyCtx, namedArg.Expr.GetDeterminedType(), clonableTy) {
+		namedArgTy := namedArg.Expr.GetDeterminedType()
+		if !semtypes.IsSubtype(tyCtx, namedArgTy, clonableTy) {
 			a.semanticErr("named arguments must be subtypes of cloneable", namedArg.GetPosition())
 			return false
 		}
+		providedFields = append(providedFields, semtypes.FieldFrom(name, namedArgTy, false, false))
 	}
 
-	// Every field in the atom must be provided
-	for _, name := range mat.Names {
-		if !seen[name] {
-			a.semanticErr(fmt.Sprintf("missing required field '%s' in error constructor", name), expr.GetPosition())
-			return false
-		}
+	providedDetailDef := semtypes.NewMappingDefinition()
+	providedDetailTy := providedDetailDef.DefineMappingTypeWrapped(tyCtx.Env(), providedFields, semtypes.NEVER)
+	providedDetailTy = semtypes.Intersect(providedDetailTy, semtypes.VAL_READONLY)
+	if !semtypes.IsSubtype(tyCtx, providedDetailTy, detailTy) {
+		a.semanticErr("error detail arguments are incompatible with error detail type", expr.GetPosition())
+		return false
 	}
 
 	if argCount == 2 {

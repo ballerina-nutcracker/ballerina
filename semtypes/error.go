@@ -18,42 +18,28 @@ package semtypes
 
 import "ballerina-lang-go/common"
 
-func ErrorDetailAtomicType(ctx Context, errorType SemType) (MappingAtomicType, bool) {
+func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
 	errorType = Intersect(errorType, ERROR)
 	if IsNever(errorType) || !IsSubtype(ctx, errorType, ERROR) {
-		return MappingAtomicType{}, false
+		return SemType{}, false
 	}
 
 	if IsSameType(ctx, errorType, ERROR) {
-		return mappingAtomicTypeFrom(nil, nil, cellContaining(ctx.Env(), CreateCloneable(ctx))), true
+		return errorDetailTop(ctx), true
 	}
 	mappingSd := errorDetailBddWithoutDistinctAtoms(subtypeData(errorType, BTError).(Bdd))
 	if allOrNothing, ok := mappingSd.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
-			return mappingAtomicTypeFrom(nil, nil, cellContaining(ctx.Env(), CreateCloneable(ctx))), true
+			return errorDetailTop(ctx), true
 		}
-		return MappingAtomicType{}, false
+		return SemType{}, false
 	}
-	if bn, ok := mappingSd.(bddNode); ok {
-		if bn.atom().index() != 0 {
-			// Not readonly. Not sure if this can happen (due to ErroWithDetail) but just in case
-			return MappingAtomicType{}, false
-		}
-		if !isNothing(bn.middle()) || !isNothing(bn.right()) {
-			// Not atomic
-			return MappingAtomicType{}, false
-		}
-		if leftNode, ok := bn.left().(bddNode); ok {
-			if !isSimpleNode(leftNode.left(), leftNode.middle(), leftNode.right()) {
-				// Also not atomic
-				return MappingAtomicType{}, false
-			}
-			return *ctx.MappingAtomType(leftNode.atom()), true
-		} else {
-			return MappingAtomicType{}, false
-		}
-	}
-	return MappingAtomicType{}, false
+	return getBasicSubtype(BTMapping, mappingSd.(ProperSubtypeData)), true
+}
+
+func errorDetailTop(ctx Context) SemType {
+	md := NewMappingDefinition()
+	return md.DefineMappingTypeWrapped(ctx.Env(), nil, CreateCloneable(ctx))
 }
 
 func errorDetailBddWithoutDistinctAtoms(bdd Bdd) Bdd {

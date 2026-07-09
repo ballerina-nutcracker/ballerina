@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: missing required field 'message' in error constructor
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
   --> constructor-2-e.bal:25:12
    |
 25 |     return error ErrorWithDetail("bar", id = 1); // @error

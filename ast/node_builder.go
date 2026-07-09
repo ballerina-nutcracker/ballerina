@@ -4756,7 +4756,7 @@ func (n *NodeBuilder) TransformMatchGuard(matchGuardNode *tree.MatchGuardNode) B
 }
 
 func (n *NodeBuilder) TransformDistinctTypeDescriptor(distinctTypeDescriptorNode *tree.DistinctTypeDescriptorNode) BLangNode {
-	n.cx.Unimplemented("inline distinct object type definitions are not supported", getPosition(n.de(), distinctTypeDescriptorNode))
+	n.cx.Unimplemented("anonymous distinct types not supported", getPosition(n.de(), distinctTypeDescriptorNode))
 	neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
 	neverType.pos = getPosition(n.de(), distinctTypeDescriptorNode)
 	return neverType
