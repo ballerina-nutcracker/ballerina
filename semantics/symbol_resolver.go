@@ -583,6 +583,7 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 			ms.ctx.Unimplemented("distinct types are only supported for object types", typeDef.GetPosition())
 		} else {
 			carrier.SetDistinctTypeIDs([]int{ms.ctx.DistinctTypeID(symRef)})
+			registerLangLibDistinctTypeSymbol(ms, typeDef.Name.Value, symRef, typeDef.GetPosition())
 		}
 	}
 	ms.typeDefns[symRef] = typeDef
@@ -642,8 +643,19 @@ func (ms *moduleSymbolResolver) allocateClassSymbol(classDef *ast.BLangClassDefi
 	symRef, _, _ := ms.GetSymbol(name)
 	if classDef.IsDistinct() {
 		symbol.SetDistinctTypeIDs([]int{ms.ctx.DistinctTypeID(symRef)})
+		registerLangLibDistinctTypeSymbol(ms, classDef.Name.Value, symRef, classDef.GetPosition())
 	}
 	ms.classDefns[symRef] = classDef
+}
+
+func registerLangLibDistinctTypeSymbol(ms *moduleSymbolResolver, typeName string, ref model.SymbolRef, pos diagnostics.Location) {
+	if ms.pkgID.OrgName == nil || ms.pkgID.PkgName == nil ||
+		ms.pkgID.OrgName.Value() != "ballerina" || !strings.HasPrefix(ms.pkgID.PkgName.Value(), "lang.") {
+		return
+	}
+	if !ms.ctx.RegisterLangLibDistinctTypeSymbol(ms.pkgID.PkgName.Value(), typeName, ref) {
+		ms.ctx.InternalError("failed to register lang library distinct type symbol: "+ms.pkgID.PkgName.Value()+":"+typeName, pos)
+	}
 }
 
 func compilationUnitImports(cu *ast.BLangCompilationUnit) []ast.BLangImportPackage {

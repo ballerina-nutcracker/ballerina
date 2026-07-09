@@ -442,7 +442,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 	state.mu.RUnlock()
 
 	if found == nil {
-		writeErrorJSON(w, r, http.StatusNotFound, "no matching resource found for path")
+		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path")
 		return
 	}
 
@@ -477,10 +477,10 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 		}
 		result, err := ctx.InvokeMethod(handle, invocationArgs)
 		if err != nil {
-			writeErrorJSON(w, r, http.StatusInternalServerError, err.Error())
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResult(ctx.TypeCtx, w, r, result)
+		writeResult(rt, ctx.TypeCtx, w, r, result)
 		return
 	}
 	// The path matched a service but no resource under the requested method. If
@@ -490,11 +490,11 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			continue
 		}
 		if _, _, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessor, segments); ok {
-			writeErrorJSON(w, r, http.StatusMethodNotAllowed, "method not allowed for path")
+			writeErrorJSON(rt, w, r, http.StatusMethodNotAllowed, "method not allowed for path")
 			return
 		}
 	}
-	writeErrorJSON(w, r, http.StatusNotFound, "no matching resource found for path")
+	writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path")
 }
 
 // matchBasePath reports whether path is under the attach point basePath,
@@ -589,7 +589,7 @@ func buildRequest(tc semtypes.Context, method, rawPath, httpVersion string, head
 }
 
 // writeErrorJSON writes a JSON error response in the standard Ballerina HTTP error format.
-func writeErrorJSON(w http.ResponseWriter, r *http.Request, status int, message string) {
+func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request, status int, message string) {
 	type errorPayload struct {
 		Timestamp string `json:"timestamp"`
 		Status    int    `json:"status"`
@@ -599,7 +599,7 @@ func writeErrorJSON(w http.ResponseWriter, r *http.Request, status int, message 
 		Method    string `json:"method"`
 	}
 	payload := errorPayload{
-		Timestamp: time.Now().UTC().Format("2006-01-02T15:04:05.000000") + "Z",
+		Timestamp: rt.Platform().Time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
 		Status:    status,
 		Reason:    http.StatusText(status),
 		Message:   message,
@@ -613,12 +613,12 @@ func writeErrorJSON(w http.ResponseWriter, r *http.Request, status int, message 
 }
 
 // writeResult writes a Ballerina resource method return value as an HTTP response.
-func writeResult(_ semtypes.Context, w http.ResponseWriter, r *http.Request, result values.BalValue) {
+func writeResult(rt *runtime.Runtime, _ semtypes.Context, w http.ResponseWriter, r *http.Request, result values.BalValue) {
 	switch v := result.(type) {
 	case nil:
 		w.WriteHeader(http.StatusAccepted)
 	case *values.Error:
-		writeErrorJSON(w, r, http.StatusInternalServerError, v.Message)
+		writeErrorJSON(rt, w, r, http.StatusInternalServerError, v.Message)
 	case *values.Object:
 		statusCodeVal, _ := v.Get("statusCode")
 		statusCode := http.StatusOK
@@ -661,7 +661,7 @@ func writeResult(_ semtypes.Context, w http.ResponseWriter, r *http.Request, res
 			_ = holder.writeStream(w)
 		}
 	default:
-		writeErrorJSON(w, r, http.StatusInternalServerError, "unexpected return type from resource method")
+		writeErrorJSON(rt, w, r, http.StatusInternalServerError, "unexpected return type from resource method")
 	}
 }
 

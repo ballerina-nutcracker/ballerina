@@ -9,7 +9,9 @@ Lightweight 5-step workflow for adding a missing function, promoting a `Not Yet 
 
 If the user wants to port a brand-new stdlib (`lib/stdlibs/ballerina/<name>/` does not exist), use `add-stdlib-support` instead.
 
-Coding rules and the PAL constraint live in `AGENTS.md` at the repo root — read it before editing.
+Coding rules and the PAL constraint live in `AGENTS.md` at the repo root — read it before editing. Shared templates and patterns live in `add-stdlib-support`'s directory (`../add-stdlib-support/templates/`, `../add-stdlib-support/references/`) — this skill points there rather than repeating them.
+
+**Golden rule** (same as `add-stdlib-support`): the Ballerina public interface must stay identical to jBallerina's, and if the jBallerina reference ships a `docs/spec/spec.md`, its prose must exactly match the Go implementation's actual behaviour for the surface being touched. A spec/implementation mismatch is a defect to resolve before the gap-fill is done — not something to leave unreconciled.
 
 ## 1. Identify the gap
 
@@ -34,6 +36,8 @@ Read only the `.bal` and Java code relevant to the targeted function(s) — do n
 - Edge cases handled in Java (empty input, malformed input, large inputs, encoding).
 - Whether the function is `isolated`, `public`, has a default value, etc.
 
+If `<root>/docs/spec/spec.md` exists *(optional — not every jBallerina repo ships one)*, read the section covering the targeted surface. It's prose written for humans and often states intent or edge-case handling that neither the `.bal` signature nor the Java code spells out directly. Treat any mismatch between the spec and the Java/`.bal` source as something to raise with the user, not something to silently resolve one way.
+
 ### What to read for config fields, enums, and modes
 
 When the feature involves a configuration record, enum, or multi-mode flag (e.g. a `compression`, `httpVersion`, or `retryConfig` field), doc comments and type signatures are **insufficient** — they describe intent, not mechanics. For these cases you **must** also read the Java action or handler that consumes the config value at runtime and trace the actual code path for each enum variant or flag value. Common locations:
@@ -54,14 +58,14 @@ Produce a focused 3-column table for the touched surface only:
 |---|---|---|
 | ... | ... | ... |
 
-Look for the same hot-spots as in `add-stdlib-support` Step 5, scoped to just this surface:
+Check the hot-spots in `../add-stdlib-support/references/parity-risks.md`, scoped to just this surface (decimal precision, UTF-8 vs UTF-16 string ops, NaN/overflow, error-message wording on the outer error, plus the module's domain-specific risks). Where a row's behaviour is verifiable by running code, verify it with the **`run-jballerina`** skill — run a small probe on jBallerina (`bal run`) and on this interpreter, and compare — rather than reasoning from documentation.
 
-- Decimal precision, UTF-8 vs UTF-16 string ops, NaN/overflow, error message wording on the outer error.
-- Domain-specific risks for the module (see exemplars in `add-stdlib-support` Step 5).
+If `docs/spec/spec.md` exists: check every behavioural claim it makes about the touched surface against what the Go implementation will actually do. Carry any mismatch found here forward to Step 5's verify checklist to confirm it was resolved, not just noticed.
 
 Rules:
 - **Avoidable** divergences — fix during Step 4.
 - **Unavoidable** divergences — record in the README under **Notable Behavioural Changes** during Step 5.
+- **A genuine bug** — either in this stdlib's own previously-`Supported` behaviour, or in a stdlib it depends on, rather than a new architectural constraint — isn't just an "unavoidable" row: also follow `../add-stdlib-support/references/reporting-limitations.md` to get it tracked upstream.
 
 If every row is "No risk identified", say so and move on.
 
@@ -72,27 +76,8 @@ You are editing existing files, **not** creating new ones. In particular:
 - **Do not** create new manifest files (`Ballerina.toml`, `Bala.toml` already exist).
 - **Do not** modify `lib/rt/libs.go` — the blank import is already there.
 - **Do not** modify `test_util/testphases/phases.go` — the `builtinStdlibs` entry is already there.
-- **Exception — `Dependencies.toml`**: if the gap being filled adds a new `import ballerina/<dep>;` to the `.bal` source that was not there before, you **must** update `Dependencies.toml` to declare the dependency. Add one `[[package]]` entry for each new stdlib import, then add a `dependencies = [...]` field on this package's own entry. Without this, the project resolver's BFS will not compile the dependency before this package, causing `Unknown import: ballerina/<dep>` at runtime. Example:
-
-  ```toml
-  [ballerina]
-  dependencies-toml-version = "2"
-
-  [[package]]
-  org     = "ballerina"
-  name    = "<dep>"
-  version = "0.0.1"
-
-  [[package]]
-  org     = "ballerina"
-  name    = "<this-package>"
-  version = "0.0.1"
-  dependencies = [
-      {org = "ballerina", name = "<dep>"}
-  ]
-  ```
-
-  Also ensure `<dep>` appears before `<this-package>` in the `builtinStdlibs` list in `test_util/testphases/phases.go` (it almost certainly already does, but verify).
+- **Exception — `Dependencies.toml`**: if the gap being filled adds a new `import ballerina/<dep>;` to the `.bal` source that was not there before, you **must** declare the dependency in `Dependencies.toml` — format and rationale in `../add-stdlib-support/templates/manifests.md` (missing entries cause `Unknown import: ballerina/<dep>` at runtime). Also verify `<dep>` appears before this package in the `builtinStdlibs` list in `test_util/testphases/phases.go` (it almost certainly already does).
+- **Langlib imports**: if the gap adds an `import ballerina/lang.<x>;`, that import only resolves through the `isLangImport` switch in `semantics/symbol_resolver.go` — check the langlib is wired there.
 
 What you *do* edit:
 
@@ -106,31 +91,17 @@ What you *do* edit:
   ```
   If the new logic is large enough to warrant a new file, create `native/<feature>.go` alongside the existing ones — keep `package native` and reuse the `orgName` / `moduleName` constants already defined.
 
-### PAL hookup (only if needed)
+Shared patterns — read the relevant file only when the situation applies:
 
-If the new function performs a platform op (io, fs, time, http, env) not already covered by the PAL, add it across three files — same as `add-stdlib-support`:
+- **PAL hookup** (new platform op not already covered by the PAL) — `../add-stdlib-support/references/pal.md`. Three files must change; missing `TestPal` = nil-pointer panics in corpus tests.
+- **Native state behind a map/record or object value** — `../add-stdlib-support/references/native-state.md`. Never add fields to `values.Map` for this; see `crypto/native/keydata.go` for the weak-map reference implementation.
+- **bal↔Go JSON conversion** — reuse the shared helpers `values.BalToGoJSON` / `values.GoToBalValue`; never duplicate the conversion per-stdlib.
 
-1. `platform/pal/platform.go` — add the field.
-2. `platform/palnative/<category>.go` — implement for CLI.
-3. `test_util/test_util.go` → `TestPal` — wire in (start from `palnative.NewNative<Category>PAL()` and override only test-specific fields).
+### Handling unexpected compile failures
 
-Failing to update `TestPal` causes nil-pointer dereferences in corpus tests even when the CLI run succeeds.
+If implementing this gap triggers an interpreter panic or compile error not explained by `AGENTS.md`, don't silently pick a workaround — present the developer with the same options as `add-stdlib-support` Step 3 (fix the interpreter / work around in Ballerina / move to Go native / scope out). Whichever they choose, draft an issue per `../add-stdlib-support/references/reporting-limitations.md` and point them to https://github.com/ballerina-nutcracker/ballerina/issues — this is a language limitation worth tracking upstream independently of the local workaround.
 
-### Associating native state with a map/record value (only if needed)
-
-This applies to **map/record values (`values.Map`) only** — objects are unaffected (see below).
-
-If the gap requires a native extern to recover Go-side state (a parsed key, a compiled pattern, etc.) from a Ballerina **map or record** value on a later call, **do not** add a field or accessor to `values.Map` for this — `runtime/values` must not carry any library-specific native-data association on `Map`. Ballerina mapping/record values are pure data with no encapsulation, so a field on `values.Map` becomes a general escape hatch with no guarantee against another library colliding with it, and no way to stop a user constructing a same-shaped value that never goes through your constructor.
-
-Keep the association entirely inside your own `native/` package as a package-private, GC-friendly weak map keyed by `weak.Pointer[values.Map]`, cleaned up via `runtime.AddCleanup` once the value is unreachable. See `lib/stdlibs/ballerina/crypto/0.0.1/go1.2/native/keydata.go` (`setKeyData`/`keyDataOf`) for the reference implementation, and the same subsection in `add-stdlib-support`'s Step 7 for the full pattern and code sketch. Every reader must tolerate a miss (return a clean domain error) since nothing prevents a user from constructing the value without your native data attached.
-
-**Objects are different — no change needed there.** A Ballerina object can only be constructed via `new` plus a class definition, so a user cannot fabricate a same-shaped object bypassing your constructor. Keep using the existing pattern of storing the native handle directly as an internal field on the object (e.g. `os.go`'s `"$handle"` field on `Process`, read back via a small `getHandle` helper) — that mechanism is unaffected by this rule.
-
-### Coding rules (full list in `AGENTS.md`)
-
-- License header on every new file (existing files retain theirs).
-- No per-line comments — extract named functions instead.
-- No new public symbols unless required by the public API.
+Coding rules: follow `AGENTS.md` (license header on every new file, no per-line comments, no new public symbols unless required by the public API).
 
 ## 5. Test, document, and verify
 
@@ -138,7 +109,7 @@ Keep the association entirely inside your own `native/` package as a package-pri
 
 Library corpus tests live under `corpus/bal/library/subset<N>/` — a flat directory of `<name>-<suffix>.bal` files, e.g. `corpus/bal/library/subset2/crypto-hash1-v.bal` — a different, stdlib-specific directory family from the generic `corpus/bal/subset1..9/NN-category/` language-feature tests. Each `library/subset<N>` is a released library-support milestone documented in `doc/library/subset<N>.md`.
 
-Find this stdlib's existing tests first: `find corpus/bal/library -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts.
+Find this stdlib's existing tests first: `find corpus/bal/library -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts. **`*-v.bal` tests must produce empty stderr** — structure the test (e.g. filtered log levels) so nothing is emitted there.
 
 Cover the new behaviour from `.bal` — a corpus test exercises the full compiler → BIR → interpreter pipeline and is measured by the native-coverage harness (`-coverpkg=./lib/stdlibs/...` over `./corpus/...`). Add a Go unit test only for branches genuinely unreachable from Ballerina (defensive type/arity guards, nil guards, interface-contract paths), kept minimal with a comment explaining why. Don't write wrong-type extern arg guards — the type checker rejects wrong types at compile time. See the **`manage-corpus-tests`** "Test philosophy" section. If you find existing native code that can never execute through Ballerina, remove it rather than testing it.
 
@@ -154,9 +125,9 @@ or open an annotated view of just the new/changed lines with `go tool cover -htm
 
 Regenerate goldens via the **`manage-corpus-tests`** skill:
 ```shell
-go test ./corpus --update
+go test ./corpus -update
 ```
-Review `git diff corpus/` before committing, and revert any unrelated golden drift `--update` introduces (some stages have non-deterministic ordering).
+Review `git diff corpus/` before committing, and revert any unrelated golden drift `-update` introduces (some stages have non-deterministic ordering).
 
 ### Documentation
 
@@ -181,9 +152,12 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed).
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] Any unavoidable divergence is in **Notable Behavioural Changes**.
+- [ ] **Run the `validate-stdlib-contract` skill on this package** (at minimum, review its diff output for the touched surface) — the verdict must be PASS, or PASS with notes that you have reviewed.
 - [ ] If a new `import ballerina/<dep>` was added to the `.bal` source: `Dependencies.toml` updated with the new entry and `dependencies = [...]` field.
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.
+- [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every behavioural claim it makes about the touched surface matches the shipped Go implementation exactly — any mismatch found during Step 3 or implementation has been resolved, not left unreconciled.
+- [ ] Any language-limitation or dependency-bug issue drafted per `../add-stdlib-support/references/reporting-limitations.md`, and the developer told where to file it.
 
 ### Final report
 
-In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/bal/library/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, and confirmation that the new/touched lines are covered (per the coverage-gate check above).
+In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/bal/library/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.

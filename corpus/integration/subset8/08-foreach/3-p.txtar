@@ -3,4 +3,4 @@
 1
 -- stderr --
 error: iterator failed
-        at main(3-p.bal:40)
+        at main(3-p.bal:42)
