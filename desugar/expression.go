@@ -711,7 +711,7 @@ func walkCallArgs(cx *functionContext, args []ast.BLangExpression, pos diagnosti
 // invoke operations (such as function calls) twice
 func shouldHoistArgs(args []ast.BLangExpression) bool {
 	for _, arg := range args {
-		if arg == nil {
+		if _, ok := arg.(*ast.BLangDefaultArg); ok {
 			return true
 		}
 	}
@@ -724,8 +724,8 @@ func hoistAndAddDefaultInvocations(cx *functionContext, args []ast.BLangExpressi
 	hoistedArgs := make([]ast.BLangExpression, len(args))
 	for i := range fixedCount {
 		arg := args[i]
-		if arg == nil {
-			defaultClosureSym := fnSig.Default[i].Symbol
+		if defaultArg, ok := arg.(*ast.BLangDefaultArg); ok {
+			defaultClosureSym := defaultArg.DefaultClosure
 			defaultCall := &ast.BLangInvocation{}
 			defaultCall.Name = &ast.BLangIdentifier{Value: cx.pkgCtx.compilerCtx.GetSymbol(defaultClosureSym).Name()}
 			defaultCall.ArgExprs = append([]ast.BLangExpression(nil), hoistedArgs[:i]...)

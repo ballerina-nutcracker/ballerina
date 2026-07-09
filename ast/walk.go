@@ -462,9 +462,7 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.Expr.(BLangNode))
 		}
 		for _, arg := range node.ArgExprs {
-			if arg != nil {
-				Walk(v, arg.(BLangNode))
-			}
+			Walk(v, arg.(BLangNode))
 		}
 	case *BLangLambdaFunction:
 		if node.Function != nil {
@@ -494,6 +492,9 @@ func Walk(v Visitor, node BLangNode) {
 		walkTypeDescriptor(v, node.typeDescriptor)
 
 	case *BLangInferredTypedescDefault:
+		// leaf — no children
+
+	case *BLangDefaultArg:
 		// leaf — no children
 
 	case *BLangTypeConversionExpr:
@@ -927,9 +928,7 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.TypeDescriptor)
 		}
 		for _, arg := range node.ArgsExprs {
-			if arg != nil {
-				Walk(v, arg.(BLangNode))
-			}
+			Walk(v, arg.(BLangNode))
 		}
 
 	case *BLangRemoteMethodCallAction:
@@ -940,9 +939,7 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.Expr.(BLangNode))
 		}
 		for _, arg := range node.ArgExprs {
-			if arg != nil {
-				Walk(v, arg.(BLangNode))
-			}
+			Walk(v, arg.(BLangNode))
 		}
 
 	case *BLangClientResourceAccessAction:
@@ -955,9 +952,7 @@ func Walk(v Visitor, node BLangNode) {
 			}
 		}
 		for _, arg := range node.ArgExprs {
-			if arg != nil {
-				Walk(v, arg)
-			}
+			Walk(v, arg)
 		}
 
 	default:

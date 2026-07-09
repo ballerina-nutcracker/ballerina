@@ -65,7 +65,7 @@ type (
 
 	functionAnalyzer struct {
 		analyzerBase
-		function ast.BLangNode
+		function invokableSignatureNode
 		retTy    semtypes.SemType
 		// enclosingClass is set when the function is a method of a class or
 		// service body. nil for free functions.
@@ -984,6 +984,8 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeClientResourceAccessAction(a, expr, expectedType)
 	case *ast.BLangInferredTypedescDefault:
 		return validateResolvedType(a, expr, expectedType)
+	case *ast.BLangDefaultArg:
+		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangTypedescExpr:
 		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangAnnotAccessExpr:
@@ -1308,8 +1310,7 @@ func enclosingFunctionIsIsolated(a analyzer) bool {
 	if fa == nil {
 		return false
 	}
-	fn, ok := fa.function.(invokableSignatureNode)
-	return ok && fn.IsIsolated()
+	return fa.function.IsIsolated()
 }
 
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
@@ -1739,9 +1740,6 @@ func analyzeStreamOperation[A analyzer](a A, invocation *ast.BLangInvocation, ex
 func analyzeDirectInvocation[A analyzer](a A, inv invocable, _ model.FunctionSymbol, paramListTy, expectedType semtypes.SemType) bool {
 	tyCtx := a.tyCtx()
 	for i, arg := range inv.CallArgs() {
-		if arg == nil {
-			continue
-		}
 		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
 			a.internalError("named argument after call-argument lowering", arg.GetPosition())
 			return false
@@ -1759,9 +1757,6 @@ func analyzeLambdaInvocation[A analyzer](a A, invocation *ast.BLangInvocation, p
 	tyCtx := a.tyCtx()
 
 	for i, arg := range invocation.ArgExprs {
-		if arg == nil {
-			continue
-		}
 		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
 			a.internalError("named argument after call-argument lowering", arg.GetPosition())
 			return false

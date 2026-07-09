@@ -183,7 +183,6 @@ type FunctionNode interface {
 
 type FunctionSignature interface {
 	BLangNode
-	Symbol() model.SymbolRef
 	Parameters() []Param
 	RestParameter() Param
 	ReturnType() TypeDescriptor

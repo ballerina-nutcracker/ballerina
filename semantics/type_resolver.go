@@ -60,11 +60,12 @@ type typeResolver interface {
 	symbolName(ref model.SymbolRef) string
 	createNarrowedSymbol(ref model.SymbolRef) model.SymbolRef
 	createFunctionSymbol(space *model.SymbolSpace, name string, sig model.TypedFunctionSignature, fnTy semtypes.SemType) model.SymbolRef
-	allocateFunctionSignature(params []model.Param, hasRest bool) context.FunctionSignatureHandle
-	associateFunctionSignature(ref model.SymbolRef, handle context.FunctionSignatureHandle) bool
-	functionSignatureHandle(ref model.SymbolRef) (context.FunctionSignatureHandle, bool)
-	updateFunctionSignatureIncludedRecords(handle context.FunctionSignatureHandle, includedRecords []*model.IncludedRecordMetadata) bool
-	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
+	allocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef
+	associateFunctionSignature(owner model.SymbolRef, ref model.FunctionSignatureRef) bool
+	functionSignatureRef(owner model.SymbolRef) (model.FunctionSignatureRef, bool)
+	updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata)
+	functionSignature(owner model.SymbolRef) (model.UntypedFunctionSignature, bool)
+	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
 	compilerContext() *context.CompilerContext
 
 	// Import management
@@ -232,24 +233,28 @@ func (t *packageTypeResolver) createFunctionSymbol(space *model.SymbolSpace, nam
 	return t.ctx.CreateFunctionSymbol(space, name, sig, fnTy)
 }
 
-func (t *packageTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) context.FunctionSignatureHandle {
+func (t *packageTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
 	return t.ctx.AllocateFunctionSignature(params, hasRest)
 }
 
-func (t *packageTypeResolver) associateFunctionSignature(ref model.SymbolRef, handle context.FunctionSignatureHandle) bool {
-	return t.ctx.AssociateFunctionSignature(ref, handle)
+func (t *packageTypeResolver) associateFunctionSignature(owner model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return t.ctx.AssociateFunctionSignature(owner, ref)
 }
 
-func (t *packageTypeResolver) functionSignatureHandle(ref model.SymbolRef) (context.FunctionSignatureHandle, bool) {
-	return t.ctx.FunctionSignatureHandle(ref)
+func (t *packageTypeResolver) functionSignatureRef(owner model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return t.ctx.FunctionSignatureRef(owner)
 }
 
-func (t *packageTypeResolver) updateFunctionSignatureIncludedRecords(handle context.FunctionSignatureHandle, includedRecords []*model.IncludedRecordMetadata) bool {
-	return t.ctx.UpdateFunctionSignatureIncludedRecords(handle, includedRecords)
+func (t *packageTypeResolver) updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	t.ctx.UpdateFunctionSignatureIncludedRecords(ref, includedRecords)
 }
 
-func (t *packageTypeResolver) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
-	return t.ctx.GetFunctionSignature(ref)
+func (t *packageTypeResolver) functionSignature(owner model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return t.ctx.GetFunctionSignature(owner)
+}
+
+func (t *packageTypeResolver) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return t.ctx.GetFunctionSignatureByRef(ref)
 }
 
 func (t *packageTypeResolver) compilerContext() *context.CompilerContext {
@@ -407,24 +412,28 @@ func (f *functionTypeResolver) createFunctionSymbol(space *model.SymbolSpace, na
 	return f.parentResolver.createFunctionSymbol(space, name, sig, fnTy)
 }
 
-func (f *functionTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) context.FunctionSignatureHandle {
+func (f *functionTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
 	return f.parentResolver.allocateFunctionSignature(params, hasRest)
 }
 
-func (f *functionTypeResolver) associateFunctionSignature(ref model.SymbolRef, handle context.FunctionSignatureHandle) bool {
-	return f.parentResolver.associateFunctionSignature(ref, handle)
+func (f *functionTypeResolver) associateFunctionSignature(owner model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return f.parentResolver.associateFunctionSignature(owner, ref)
 }
 
-func (f *functionTypeResolver) functionSignatureHandle(ref model.SymbolRef) (context.FunctionSignatureHandle, bool) {
-	return f.parentResolver.functionSignatureHandle(ref)
+func (f *functionTypeResolver) functionSignatureRef(owner model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return f.parentResolver.functionSignatureRef(owner)
 }
 
-func (f *functionTypeResolver) updateFunctionSignatureIncludedRecords(handle context.FunctionSignatureHandle, includedRecords []*model.IncludedRecordMetadata) bool {
-	return f.parentResolver.updateFunctionSignatureIncludedRecords(handle, includedRecords)
+func (f *functionTypeResolver) updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	f.parentResolver.updateFunctionSignatureIncludedRecords(ref, includedRecords)
 }
 
-func (f *functionTypeResolver) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
-	return f.parentResolver.functionSignature(ref)
+func (f *functionTypeResolver) functionSignature(owner model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return f.parentResolver.functionSignature(owner)
+}
+
+func (f *functionTypeResolver) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return f.parentResolver.functionSignatureByRef(ref)
 }
 
 func (f *functionTypeResolver) compilerContext() *context.CompilerContext {
@@ -1776,14 +1785,8 @@ func finalizeResolvedFunctionSignature(t typeResolver, fn ast.FunctionSignature)
 	if fnType, ok := fn.(*ast.BLangFunctionType); ok && fnType.IsAnyFunction() {
 		return true
 	}
-	owner := fn.Symbol()
-	if owner.IsEmpty() {
-		t.internalError("function signature symbol not set", fn.GetPosition())
-		return false
-	}
-	sig, ok := t.functionSignature(owner)
+	sig, ref, ok := functionSignatureForNode(t, fn)
 	if !ok {
-		t.internalError("function signature not found", fn.GetPosition())
 		return false
 	}
 	params := fn.Parameters()
@@ -1792,10 +1795,24 @@ func finalizeResolvedFunctionSignature(t typeResolver, fn ast.FunctionSignature)
 		paramTypes[i] = param.GetDeterminedType()
 	}
 	setDefaultableParamFnSignatures(t, sig, paramTypes, fn.GetPosition())
-	return validateIncludedRecordParams(t, fn, sig)
+	return validateIncludedRecordParams(t, fn, ref, sig)
 }
 
-func validateIncludedRecordParams(t typeResolver, fn ast.FunctionSignature, sig model.UntypedFunctionSignature) bool {
+func functionSignatureForNode(t typeResolver, fn ast.FunctionSignature) (model.UntypedFunctionSignature, model.FunctionSignatureRef, bool) {
+	if fnType, ok := fn.(*ast.BLangFunctionType); ok {
+		ref := fnType.SignatureRef()
+		return t.functionSignatureByRef(ref), ref, true
+	}
+	owner := fn.(symbolFunctionSignature).Symbol()
+	ref, ok := t.functionSignatureRef(owner)
+	if !ok {
+		t.internalError("function signature not found", fn.GetPosition())
+		return model.UntypedFunctionSignature{}, 0, false
+	}
+	return t.functionSignatureByRef(ref), ref, true
+}
+
+func validateIncludedRecordParams(t typeResolver, fn ast.FunctionSignature, ref model.FunctionSignatureRef, sig model.UntypedFunctionSignature) bool {
 	requiredParams := fn.Parameters()
 	params := make([]includedRecordParamData, len(requiredParams))
 	for i, param := range requiredParams {
@@ -1805,7 +1822,7 @@ func validateIncludedRecordParams(t typeResolver, fn ast.FunctionSignature, sig 
 	if restParam := fn.RestParameter(); restParam != nil {
 		restName = restParam.ParamName()
 	}
-	return validateIncludedRecordParamMetadata(t, fn.Symbol(), sig, params, restName, fn.GetPosition())
+	return validateIncludedRecordParamMetadata(t, ref, sig, params, restName)
 }
 
 type includedRecordParamData struct {
@@ -1813,7 +1830,7 @@ type includedRecordParamData struct {
 	pos      diagnostics.Location
 }
 
-func validateIncludedRecordParamMetadata(t typeResolver, owner model.SymbolRef, sig model.UntypedFunctionSignature, params []includedRecordParamData, restName string, loc diagnostics.Location) bool {
+func validateIncludedRecordParamMetadata(t typeResolver, ref model.FunctionSignatureRef, sig model.UntypedFunctionSignature, params []includedRecordParamData, restName string) bool {
 	paramNames := sig.ParamNames
 	fieldOrigin := make(map[string]int)
 	includedRecords := make([]*model.IncludedRecordMetadata, len(sig.ParamNames))
@@ -1876,11 +1893,7 @@ func validateIncludedRecordParamMetadata(t typeResolver, owner model.SymbolRef, 
 		updated = true
 	}
 	if updated {
-		handle, ok := t.functionSignatureHandle(owner)
-		if !ok || !t.updateFunctionSignatureIncludedRecords(handle, includedRecords) {
-			t.internalError("function signature not set", loc)
-			return false
-		}
+		t.updateFunctionSignatureIncludedRecords(ref, includedRecords)
 	}
 	return true
 }
@@ -1937,15 +1950,15 @@ func setDefaultableParamFnSignatures(t typeResolver, sig model.UntypedFunctionSi
 		}
 		defaultFnSym.SetTypedSignature(defaultSig)
 		t.setSymbolType(dp.Symbol, typeFromFunctionSignature(t, defaultSig))
-		if _, ok := t.functionSignatureHandle(dp.Symbol); ok {
+		if _, ok := t.functionSignatureRef(dp.Symbol); ok {
 			continue
 		}
 		params := make([]model.Param, i)
 		for j := range params {
 			params[j] = model.Param{Name: sig.ParamNames[j], Flag: sig.ParamFlags[j]}
 		}
-		handle := t.allocateFunctionSignature(params, false)
-		if !t.associateFunctionSignature(dp.Symbol, handle) {
+		ref := t.allocateFunctionSignature(params, false)
+		if !t.associateFunctionSignature(dp.Symbol, ref) {
 			t.internalError("function signature already set", loc)
 		}
 	}
@@ -3403,6 +3416,11 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolveClientResourceAccessAction(t, chain, e, expectedType)
 	case *ast.BLangInferredTypedescDefault:
 		return resolveInferredTypedescDefault(t, chain, e, expectedType)
+	case *ast.BLangDefaultArg:
+		defaultFn := t.getSymbol(e.DefaultClosure).(model.FunctionSymbol)
+		returnType := defaultFn.TypedSignature().ReturnType
+		setExpectedType(e, returnType)
+		return returnType, defaultExpressionEffect(chain), true
 	case *ast.BLangXMLSequenceLiteral:
 		return resolveXMLSequenceLiteral(t, chain, e, expectedType)
 	case *ast.BLangTemplateExpr:
@@ -3665,10 +3683,6 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 		paramTypes = fnSym.TypedSignature().ParamTypes
 	}
 	for i, arg := range e.ArgsExprs {
-		if arg == nil {
-			argTys[i] = paramTypes[i]
-			continue
-		}
 		var paramTy semtypes.SemType
 		if i < len(paramTypes) {
 			paramTy = paramTypes[i]
@@ -6252,8 +6266,8 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 			t.internalError("monomorphized symbol missing from scope", inv.GetPosition())
 			return nil, fnSymbol, chain, false
 		}
-		if handle, ok := t.functionSignatureHandle(fnSymbol); ok {
-			if !t.associateFunctionSignature(monoRef, handle) {
+		if ref, ok := t.functionSignatureRef(fnSymbol); ok {
+			if !t.associateFunctionSignature(monoRef, ref) {
 				t.internalError("function signature already set", inv.GetPosition())
 				return nil, fnSymbol, chain, false
 			}
@@ -6335,10 +6349,6 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		for i, arg := range inv.CallArgs() {
 			key := semtypes.IntConst(int64(i))
 			paramTy := semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, key)
-			if arg == nil {
-				argTys = append(argTys, paramTy)
-				continue
-			}
 			if _, namedParam := arg.(*ast.BLangNamedArgsExpression); namedParam {
 				t.unimplemented("named arguments not supported in this context", arg.GetPosition())
 				return nil, narrowedSymbol, chain, false
@@ -6369,17 +6379,13 @@ type lowerArgSlot struct {
 	includedFieldPos diagnostics.Location
 }
 
-func (l lowerArgSlot) isEmpty() bool {
-	return l.expr == nil && len(l.includedFields) == 0
-}
-
 // lowerInvocationArgs lower arguments for invocation "like" expression (function/method call, new expression, client remote method call action, etc), such that after lowering
 // we only have positional arguments. This means,
 //
 //	   positional arguments -> positional arguments
 //	   named arguments      -> if name is a parameter then positional argument else field of a mapping constructor in the position of included record parameter
-//	   defaulted arguments  -> nil if default expresson != `<>` else type desc
-//		    This nil is marker for desugar since for default expresion closures we need to hoist all the arguments before that, which is more convienient to do in desugar
+//	   defaulted arguments  -> default-argument marker if default expression != `<>`, otherwise typedesc
+//		    The marker is replaced with a default-expression closure invocation during desugaring, after explicit arguments are hoisted.
 //	NOTE: lowering depends on there being a UntypedFunctionSignature, if not using non positional arguments in an unsupported error. If you need to handle any such case you need to
 //	properly set the UntypedFunctionSignature.
 //	NOTE: lowering also validate the arguments it lower to be valid except for their type (lowering is untyped)
@@ -6424,7 +6430,7 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 			return nil, false
 		}
 		if i < fixedCount {
-			if !slots[i].isEmpty() {
+			if slots[i].expr != nil || len(slots[i].includedFields) > 0 {
 				t.semanticError(fmt.Sprintf("repeated values for parameter %s", sig.ParamNames[i]), arg.GetPosition())
 				return nil, false
 			}
@@ -6468,7 +6474,11 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 				return nil, false
 			}
 			slots[i].expr = defaultArg
+			continue
 		}
+		defaultArg := &ast.BLangDefaultArg{DefaultClosure: dp.Symbol}
+		defaultArg.SetPosition(pos)
+		slots[i].expr = defaultArg
 	}
 
 	newArgs := make([]ast.BLangExpression, fixedCount+len(restArgs))
@@ -6565,10 +6575,6 @@ func resolveArgs(t typeResolver, paramTypes []semtypes.SemType, restParamTy semt
 	args := inv.CallArgs()
 	tys := make([]semtypes.SemType, 0, len(args))
 	for i, arg := range args {
-		if arg == nil {
-			tys = append(tys, paramTypes[i])
-			continue
-		}
 		if _, namedParam := arg.(*ast.BLangNamedArgsExpression); namedParam {
 			// See lowerInvocationArgs
 			t.unimplemented("named arguments not supported in this context", arg.GetPosition())
@@ -7039,13 +7045,10 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		return semType, true
 	case *ast.BLangFunctionType:
 		if ty.IsAnyFunction() {
-			t.setSymbolType(ty.Symbol(), semtypes.FUNCTION)
 			return semtypes.FUNCTION, true
 		}
 		if ty.Definition != nil {
-			fnType := ty.Definition.GetSemType(t.typeEnv())
-			t.setSymbolType(ty.Symbol(), fnType)
-			return fnType, true
+			return ty.Definition.GetSemType(t.typeEnv()), true
 		}
 		fd := semtypes.NewFunctionDefinition()
 		ty.Definition = &fd
@@ -7097,7 +7100,6 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		transactional := ty.IsTransactional()
 		fnType := fd.Define(t.typeEnv(), paramListTy, returnTy,
 			semtypes.FunctionQualifiersFrom(t.typeEnv(), isolated, transactional))
-		t.setSymbolType(ty.Symbol(), fnType)
 		if !finalizeResolvedFunctionSignature(t, ty) {
 			return semtypes.SemType{}, false
 		}
@@ -7450,11 +7452,36 @@ func resolveObjectMemberType(t typeResolver, m ast.ObjectMember, depth int) (sem
 		valueTy, ok := resolveBType(t, &m.BLangFunctionType, depth+1)
 		if ok {
 			m.SetDeterminedType(valueTy)
+			t.setSymbolType(m.Symbol(), valueTy)
+			t.getSymbol(m.Symbol()).(model.FunctionSymbol).SetTypedSignature(functionTypeTypedSignature(&m.BLangFunctionType))
 		}
 		return valueTy, ok
 	default:
 		return semtypes.SemType{}, false
 	}
+}
+
+func functionTypeTypedSignature(fnType *ast.BLangFunctionType) model.TypedFunctionSignature {
+	paramTypes := make([]semtypes.SemType, len(fnType.RequiredParams))
+	for i := range fnType.RequiredParams {
+		paramTypes[i] = fnType.RequiredParams[i].GetDeterminedType()
+	}
+	var restType semtypes.SemType
+	if fnType.RestParam != nil {
+		restType = fnType.RestParam.GetDeterminedType()
+	}
+	returnType := semtypes.NIL
+	if fnType.ReturnTypeDescriptor != nil {
+		returnType = fnType.ReturnTypeDescriptor.GetDeterminedType()
+	}
+	var flags model.FuncSymbolFlags
+	if fnType.IsIsolated() {
+		flags |= model.FuncSymbolFlagIsolated
+	}
+	if fnType.IsTransactional() {
+		flags |= model.FuncSymbolFlagTransactional
+	}
+	return model.TypedFunctionSignature{ParamTypes: paramTypes, ReturnType: returnType, RestParamType: restType, Flags: flags}
 }
 
 func resolveMatchClause(t typeResolver, chain *binding, clause *ast.BLangMatchClause) (statementEffect, bool) {

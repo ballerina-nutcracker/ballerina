@@ -98,6 +98,10 @@ func (ctx *packageContext) functionSignature(ref model.SymbolRef) (model.Untyped
 	return ctx.compilerCtx.GetFunctionSignature(ref)
 }
 
+func (ctx *packageContext) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return ctx.compilerCtx.GetFunctionSignatureByRef(ref)
+}
+
 func (ctx *packageContext) getSymbolType(ref model.SymbolRef) semtypes.SemType {
 	return ctx.compilerCtx.SymbolType(ref)
 }
@@ -166,6 +170,10 @@ func (ctx *functionContext) unimplemented(msg string) {
 
 func (ctx *functionContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return ctx.pkgCtx.functionSignature(ref)
+}
+
+func (ctx *functionContext) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return ctx.pkgCtx.functionSignatureByRef(ref)
 }
 
 func (ctx *functionContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
@@ -250,6 +258,7 @@ type desugarContext interface {
 	symbolType(ref model.SymbolRef) semtypes.SemType
 	getSymbol(ref model.SymbolRef) model.Symbol
 	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
+	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
 	typeEnv() semtypes.Env
 	internalError(msg string)
 }
@@ -1316,11 +1325,7 @@ func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunct
 	if fnType.IsAnyFunction() {
 		return nil
 	}
-	sig, ok := ctx.functionSignature(fnType.Symbol())
-	if !ok {
-		ctx.internalError("function signature not found")
-		return nil
-	}
+	sig := ctx.functionSignatureByRef(fnType.SignatureRef())
 	return createDefaultClosures(ctx, sig,
 		func(i int) semtypes.SemType {
 			return fnType.RequiredParams[i].GetDeterminedType()

@@ -45,7 +45,6 @@ const (
 	symTagResourceMethod
 	symTagConstantValue
 	symTagOpaque
-	symTagHandle
 	symTagErrorType
 )
 
@@ -78,8 +77,8 @@ type symbolWriter struct {
 	tp              *semtypes.TypePool
 	compilerEnv     *context.CompilerEnvironment
 	refMap          map[model.SymbolRef]int
-	sigMap          map[context.FunctionSignatureHandle]int
-	sigHandles      []context.FunctionSignatureHandle
+	sigMap          map[model.FunctionSignatureRef]int
+	sigRefs         []model.FunctionSignatureRef
 	externalRefMap  map[serializedSymbolRefKey]int
 	externalRefKeys []serializedSymbolRefKey
 }
@@ -181,8 +180,8 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 	}
 
 	sw.refMap = make(map[model.SymbolRef]int, totalLen)
-	sw.sigMap = make(map[context.FunctionSignatureHandle]int)
-	sw.sigHandles = nil
+	sw.sigMap = make(map[model.FunctionSignatureRef]int)
+	sw.sigRefs = nil
 	nextIndex := 0
 	for _, refs := range snapshots {
 		for _, ref := range refs {
@@ -207,23 +206,23 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 }
 
 func (sw *symbolWriter) collectFunctionSignature(ref model.SymbolRef) {
-	handle, ok := sw.compilerEnv.FunctionSignatureHandle(ref)
+	sigRef, ok := sw.compilerEnv.FunctionSignatureRef(ref)
 	if !ok {
 		return
 	}
-	if _, exists := sw.sigMap[handle]; exists {
+	if _, exists := sw.sigMap[sigRef]; exists {
 		return
 	}
-	sw.sigMap[handle] = len(sw.sigHandles)
-	sw.sigHandles = append(sw.sigHandles, handle)
+	sw.sigMap[sigRef] = len(sw.sigRefs)
+	sw.sigRefs = append(sw.sigRefs, sigRef)
 }
 
 func (sw *symbolWriter) writeFunctionSignatureTable(buf *bytes.Buffer) error {
-	if err := write(buf, int64(len(sw.sigHandles))); err != nil {
+	if err := write(buf, int64(len(sw.sigRefs))); err != nil {
 		return err
 	}
-	for _, handle := range sw.sigHandles {
-		if err := sw.writeUntypedFunctionSignature(buf, sw.compilerEnv.GetFunctionSignatureByHandle(handle)); err != nil {
+	for _, ref := range sw.sigRefs {
+		if err := sw.writeUntypedFunctionSignature(buf, sw.compilerEnv.GetFunctionSignatureByRef(ref)); err != nil {
 			return err
 		}
 	}
@@ -266,8 +265,6 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 		return sw.writeValueSymbol(buf, ref, s)
 	case *model.AnnotationSymbol:
 		return sw.writeAnnotationSymbol(buf, s)
-	case *model.HandleSymbol:
-		return sw.writeHandleSymbol(buf, ref, s)
 	case model.DependentlyTypedFunctionSymbol:
 		return sw.writeDependentlyTypedFunctionSymbol(buf, ref, s)
 	case *model.ResourceMethodSymbol:
@@ -555,16 +552,6 @@ func (sw *symbolWriter) writeValueSymbolBody(buf *bytes.Buffer, ref model.Symbol
 	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
-func (sw *symbolWriter) writeHandleSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.HandleSymbol) error {
-	if err := write(buf, symTagHandle); err != nil {
-		return err
-	}
-	if err := sw.writeSymbolBase(buf, sym); err != nil {
-		return err
-	}
-	return sw.writeFunctionSignatureIndex(buf, ref)
-}
-
 func (sw *symbolWriter) writeConstantValueSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.ConstantValueSymbol) error {
 	if err := write(buf, symTagConstantValue); err != nil {
 		return err
@@ -710,10 +697,10 @@ func (sw *symbolWriter) writeTypeOp(buf *bytes.Buffer, op model.TypeOp) error {
 }
 
 func (sw *symbolWriter) writeFunctionSignatureIndex(buf *bytes.Buffer, ref model.SymbolRef) error {
-	handle, ok := sw.compilerEnv.FunctionSignatureHandle(ref)
+	sigRef, ok := sw.compilerEnv.FunctionSignatureRef(ref)
 	index := int64(-1)
 	if ok {
-		index = int64(sw.sigMap[handle])
+		index = int64(sw.sigMap[sigRef])
 	}
 	return write(buf, index)
 }

@@ -142,6 +142,7 @@ type (
 		bObjectFieldBase
 		BLangFunctionType
 		memberKind ObjectMemberKind
+		symbol     model.SymbolRef
 	}
 
 	BLangObjectType struct {
@@ -222,7 +223,7 @@ type (
 		RestParam            *BLangFunctionTypeParam
 		ReturnTypeDescriptor BType
 		ParamListPos         Location
-		symbol               model.SymbolRef
+		signatureRef         model.FunctionSignatureRef
 	}
 
 	BLangFunctionTypeParam struct {
@@ -259,6 +260,7 @@ var (
 	_ ObjectMember         = &BObjectField{}
 	_ BLangNode            = &BObjectField{}
 	_ BLangNode            = &BMethodDecl{}
+	_ BNodeWithSymbol      = &BMethodDecl{}
 	_ FunctionTypeNode     = &BLangFunctionType{}
 	_ FunctionSignature    = &BLangFunctionType{}
 	_ FunctionTypeParam    = &BLangFunctionTypeParam{}
@@ -270,7 +272,6 @@ var (
 	_ BType                = &BLangFunctionType{}
 	_ BType                = &BLangRecordType{}
 	_ BLangNode            = &BLangFunctionType{}
-	_ BNodeWithSymbol      = &BLangFunctionType{}
 )
 
 var (
@@ -406,6 +407,14 @@ func (b *BObjectField) MemberKind() ObjectMemberKind {
 
 func (b *BMethodDecl) MemberKind() ObjectMemberKind {
 	return b.memberKind
+}
+
+func (b *BMethodDecl) Symbol() model.SymbolRef {
+	return b.symbol
+}
+
+func (b *BMethodDecl) SetSymbol(ref model.SymbolRef) {
+	b.symbol = ref
 }
 
 func (b *bLangTypeBase) GetTypeData() TypeData {
@@ -558,12 +567,12 @@ func (b *BLangErrorTypeNode) SetDistinct() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagDistinct)
 }
 
-func (b *BLangFunctionType) Symbol() model.SymbolRef {
-	return b.symbol
+func (b *BLangFunctionType) SignatureRef() model.FunctionSignatureRef {
+	return b.signatureRef
 }
 
-func (b *BLangFunctionType) SetSymbol(symbolRef model.SymbolRef) {
-	b.symbol = symbolRef
+func (b *BLangFunctionType) SetSignatureRef(ref model.FunctionSignatureRef) {
+	b.signatureRef = ref
 }
 
 func (b *BLangFunctionType) Parameters() []Param {

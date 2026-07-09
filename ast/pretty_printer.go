@@ -102,6 +102,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printClientResourceAccessAction(t)
 	case *BLangNamedArgsExpression:
 		p.printNamedArgsExpression(t)
+	case *BLangDefaultArg:
+		p.PrintString("<default>")
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:
@@ -724,10 +726,6 @@ func (p *PrettyPrinter) printInvocation(node *BLangInvocation) {
 	if len(node.ArgExprs) > 0 {
 		p.indentLevel++
 		for _, arg := range node.ArgExprs {
-			if arg == nil {
-				p.PrintString("<default>")
-				continue
-			}
 			p.PrintInner(arg.(BLangNode))
 		}
 		p.indentLevel--
@@ -799,10 +797,6 @@ func (p *PrettyPrinter) printClientResourceAccessAction(node *BLangClientResourc
 		}
 	}
 	for _, arg := range node.ArgExprs {
-		if arg == nil {
-			p.PrintString("<default>")
-			continue
-		}
 		p.PrintInner(arg)
 	}
 	p.indentLevel--
@@ -825,10 +819,6 @@ func (p *PrettyPrinter) printRemoteMethodCallAction(node *BLangRemoteMethodCallA
 	if len(node.ArgExprs) > 0 {
 		p.indentLevel++
 		for _, arg := range node.ArgExprs {
-			if arg == nil {
-				p.PrintString("<default>")
-				continue
-			}
 			p.PrintInner(arg.(BLangNode))
 		}
 		p.indentLevel--
@@ -2187,10 +2177,6 @@ func (p *PrettyPrinter) printNewExpression(node *BLangNewExpression) {
 	if len(node.ArgsExprs) > 0 {
 		p.indentLevel++
 		for _, arg := range node.ArgsExprs {
-			if arg == nil {
-				p.PrintString("<default>")
-				continue
-			}
 			p.PrintInner(arg.(BLangNode))
 		}
 		p.indentLevel--

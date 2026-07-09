@@ -99,24 +99,28 @@ func (l *loopTypeResolver) createFunctionSymbol(space *model.SymbolSpace, name s
 	return l.parentResolver.createFunctionSymbol(space, name, sig, fnTy)
 }
 
-func (l *loopTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) context.FunctionSignatureHandle {
+func (l *loopTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
 	return l.parentResolver.allocateFunctionSignature(params, hasRest)
 }
 
-func (l *loopTypeResolver) associateFunctionSignature(ref model.SymbolRef, handle context.FunctionSignatureHandle) bool {
-	return l.parentResolver.associateFunctionSignature(ref, handle)
+func (l *loopTypeResolver) associateFunctionSignature(owner model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return l.parentResolver.associateFunctionSignature(owner, ref)
 }
 
-func (l *loopTypeResolver) functionSignatureHandle(ref model.SymbolRef) (context.FunctionSignatureHandle, bool) {
-	return l.parentResolver.functionSignatureHandle(ref)
+func (l *loopTypeResolver) functionSignatureRef(owner model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return l.parentResolver.functionSignatureRef(owner)
 }
 
-func (l *loopTypeResolver) updateFunctionSignatureIncludedRecords(handle context.FunctionSignatureHandle, includedRecords []*model.IncludedRecordMetadata) bool {
-	return l.parentResolver.updateFunctionSignatureIncludedRecords(handle, includedRecords)
+func (l *loopTypeResolver) updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	l.parentResolver.updateFunctionSignatureIncludedRecords(ref, includedRecords)
 }
 
-func (l *loopTypeResolver) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
-	return l.parentResolver.functionSignature(ref)
+func (l *loopTypeResolver) functionSignature(owner model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return l.parentResolver.functionSignature(owner)
+}
+
+func (l *loopTypeResolver) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return l.parentResolver.functionSignatureByRef(ref)
 }
 
 func (l *loopTypeResolver) compilerContext() *context.CompilerContext {

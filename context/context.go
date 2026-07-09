@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"ballerina-lang-go/context/internal/functionsignatures"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
@@ -43,8 +42,6 @@ const (
 	StageDesugaring             CompilationStage = "Desugaring"
 	StageBIRGeneration          CompilationStage = "BIR Generation"
 )
-
-type FunctionSignatureHandle = functionsignatures.Handle
 
 type StageTiming struct {
 	Name     CompilationStage
@@ -112,24 +109,28 @@ func (c *CompilerContext) CreateFunctionSymbol(space *model.SymbolSpace, name st
 	return c.env.CreateFunctionSymbol(space, name, signature, fnTy)
 }
 
-func (c *CompilerContext) AllocateFunctionSignature(params []model.Param, hasRest bool) FunctionSignatureHandle {
+func (c *CompilerContext) AllocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
 	return c.env.AllocateFunctionSignature(params, hasRest)
 }
 
-func (c *CompilerContext) AssociateFunctionSignature(fn model.SymbolRef, handle FunctionSignatureHandle) bool {
-	return c.env.AssociateFunctionSignature(fn, handle)
+func (c *CompilerContext) AssociateFunctionSignature(fn model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return c.env.AssociateFunctionSignature(fn, ref)
 }
 
-func (c *CompilerContext) FunctionSignatureHandle(fn model.SymbolRef) (FunctionSignatureHandle, bool) {
-	return c.env.FunctionSignatureHandle(fn)
+func (c *CompilerContext) FunctionSignatureRef(fn model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return c.env.FunctionSignatureRef(fn)
 }
 
-func (c *CompilerContext) UpdateFunctionSignatureIncludedRecords(handle FunctionSignatureHandle, includedRecords []*model.IncludedRecordMetadata) bool {
-	return c.env.UpdateFunctionSignatureIncludedRecords(handle, includedRecords)
+func (c *CompilerContext) UpdateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	c.env.UpdateFunctionSignatureIncludedRecords(ref, includedRecords)
 }
 
 func (c *CompilerContext) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return c.env.GetFunctionSignature(fn)
+}
+
+func (c *CompilerContext) GetFunctionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return c.env.GetFunctionSignatureByRef(ref)
 }
 
 func (c *CompilerContext) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {

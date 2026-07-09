@@ -234,28 +234,28 @@ func (c *CompilerEnvironment) CreateFunctionSymbol(space *model.SymbolSpace, nam
 	return space.RefAt(symbolIndex)
 }
 
-func (c *CompilerEnvironment) AllocateFunctionSignature(params []model.Param, hasRest bool) functionsignatures.Handle {
+func (c *CompilerEnvironment) AllocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
 	return c.functionSignatures.Allocate(params, hasRest)
 }
 
-func (c *CompilerEnvironment) AssociateFunctionSignature(sym model.SymbolRef, handle functionsignatures.Handle) bool {
-	return c.functionSignatures.Associate(sym, handle)
+func (c *CompilerEnvironment) AssociateFunctionSignature(sym model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return c.functionSignatures.Associate(sym, ref)
 }
 
-func (c *CompilerEnvironment) FunctionSignatureHandle(sym model.SymbolRef) (functionsignatures.Handle, bool) {
-	return c.functionSignatures.Handle(sym)
+func (c *CompilerEnvironment) FunctionSignatureRef(sym model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return c.functionSignatures.Ref(sym)
 }
 
-func (c *CompilerEnvironment) UpdateFunctionSignatureIncludedRecords(handle functionsignatures.Handle, includedRecords []*model.IncludedRecordMetadata) bool {
-	return c.functionSignatures.UpdateIncludedRecords(handle, includedRecords)
+func (c *CompilerEnvironment) UpdateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	c.functionSignatures.UpdateIncludedRecords(ref, includedRecords)
 }
 
 func (c *CompilerEnvironment) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return c.functionSignatures.Get(fn)
 }
 
-func (c *CompilerEnvironment) GetFunctionSignatureByHandle(handle functionsignatures.Handle) model.UntypedFunctionSignature {
-	return c.functionSignatures.GetByHandle(handle)
+func (c *CompilerEnvironment) GetFunctionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return c.functionSignatures.GetByRef(ref)
 }
 
 func (c *CompilerEnvironment) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {

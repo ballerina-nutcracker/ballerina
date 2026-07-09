@@ -34,7 +34,7 @@ type symbolReader struct {
 	tp              *semtypes.TypePool
 	env             *context.CompilerEnvironment
 	externalRefKeys []serializedSymbolRefKey
-	sigHandles      []context.FunctionSignatureHandle
+	sigHandles      []model.FunctionSignatureRef
 }
 
 func Unmarshal(env *context.CompilerEnvironment, data []byte) (model.ExportedSymbolSpace, error) {
@@ -167,8 +167,6 @@ func (sr *symbolReader) readSymbol(space *model.SymbolSpace, opaque []model.Symb
 			fn.SymbolSpace = space
 		}
 		space.AddSymbol(sym.Name(), sym)
-	case symTagHandle:
-		sr.readHandleSymbol(space)
 	case symTagType:
 		sr.readTypeSymbol(space)
 	case symTagClass:
@@ -495,18 +493,6 @@ func (sr *symbolReader) readAnnotationSymbol(space *model.SymbolSpace) {
 	addDeserializedSymbol(space, name, &sym)
 }
 
-func (sr *symbolReader) readHandleSymbol(space *model.SymbolSpace) {
-	name, isPublic, ty := sr.readSymbolBase()
-	var sigHandle int64
-	read(sr.r, &sigHandle)
-	sym := model.NewHandleSymbol(name, isPublic, diagnostics.NewBuiltinLocation())
-	sym.SetType(ty)
-	ref := addDeserializedSymbol(space, name, sym)
-	if sigHandle >= 0 {
-		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
-	}
-}
-
 func (sr *symbolReader) readFunctionSymbol(space *model.SymbolSpace) {
 	name, isPublic, ty := sr.readSymbolBase()
 
@@ -549,7 +535,7 @@ func (sr *symbolReader) readFunctionSignatureBody(space *model.SymbolSpace) (mod
 func (sr *symbolReader) readFunctionSignatureTable(space *model.SymbolSpace) {
 	var count int64
 	read(sr.r, &count)
-	sr.sigHandles = make([]context.FunctionSignatureHandle, count)
+	sr.sigHandles = make([]model.FunctionSignatureRef, count)
 	for i := int64(0); i < count; i++ {
 		params, hasRest := sr.readUntypedFunctionSignatureParams(space)
 		sr.sigHandles[i] = sr.env.AllocateFunctionSignature(params, hasRest)

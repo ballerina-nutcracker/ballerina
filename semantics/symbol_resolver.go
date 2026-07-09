@@ -65,10 +65,9 @@ type symbolResolver interface {
 	GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool)
 	AddSymbol(name string, symbol model.Symbol)
 	GetPkgID() model.PackageID
-	GetScope() model.Scope
+	GetScope() model.BlockLevelScope
 	GetCtx() *context.CompilerContext
 	TypeContext() semtypes.Context
-	functionSignatureAssociations() *functionSignatureAssociationStore
 	GetTypeDefns() map[model.SymbolRef]*ast.BLangTypeDefinition
 	GetClassDefns() map[model.SymbolRef]*ast.BLangClassDefinition
 }
@@ -82,22 +81,11 @@ type (
 	defaultSymbolAllocator interface {
 		GetCtx() *context.CompilerContext
 		nextDefaultSymbolName() string
-		nextHandleSymbolName() string
-		functionSignatureAssociations() *functionSignatureAssociationStore
 	}
 
 	prevPos struct {
 		pos      diagnostics.Location
 		reported bool
-	}
-
-	functionSignatureAssociation struct {
-		owner model.SymbolRef
-		pos   diagnostics.Location
-	}
-
-	functionSignatureAssociationStore struct {
-		pending map[model.SymbolRef][]functionSignatureAssociation
 	}
 
 	varTracker struct {
@@ -118,22 +106,20 @@ type (
 	}
 
 	moduleSymbolResolver struct {
-		ctx                *context.CompilerContext
-		tyCtx              semtypes.Context
-		scope              *model.ModuleScope
-		packageScope       *model.ModuleScope
-		pkgID              model.PackageID
-		typeDefns          map[model.SymbolRef]*ast.BLangTypeDefinition
-		classDefns         map[model.SymbolRef]*ast.BLangClassDefinition
-		packageSymbols     map[string]model.SymbolRef
-		prevPos            map[string]prevPos
-		prevAnnotPos       map[string]prevPos
-		usedPrefixes       map[string]bool
-		defaultCounter     int
-		handleCounter      int
-		varTracker         varTracker
-		moduleNodes        moduleAstNodeHolder
-		functionSignatures *functionSignatureAssociationStore
+		ctx            *context.CompilerContext
+		tyCtx          semtypes.Context
+		scope          *model.ModuleScope
+		packageScope   *model.ModuleScope
+		pkgID          model.PackageID
+		typeDefns      map[model.SymbolRef]*ast.BLangTypeDefinition
+		classDefns     map[model.SymbolRef]*ast.BLangClassDefinition
+		packageSymbols map[string]model.SymbolRef
+		prevPos        map[string]prevPos
+		prevAnnotPos   map[string]prevPos
+		usedPrefixes   map[string]bool
+		defaultCounter int
+		varTracker     varTracker
+		moduleNodes    moduleAstNodeHolder
 	}
 
 	blockSymbolResolver struct {
@@ -250,7 +236,6 @@ func newCompilationUnitsSymbolResolver(ctx *context.CompilerContext, pkgID model
 			typeDefns:  make(map[string]moduleAstNode[*ast.BLangTypeDefinition]),
 			classDefns: make(map[string]moduleAstNode[*ast.BLangClassDefinition]),
 		},
-		functionSignatures: newFunctionSignatureAssociationStore(),
 	}
 }
 
@@ -267,22 +252,20 @@ func (m *moduleAstNodeHolder) add(cu *ast.BLangCompilationUnit, resolver *module
 
 func (ms *moduleSymbolResolver) forCompilationUnit(scope *model.ModuleScope) *moduleSymbolResolver {
 	return &moduleSymbolResolver{
-		ctx:                ms.ctx,
-		tyCtx:              ms.tyCtx,
-		scope:              scope,
-		packageScope:       ms.packageScope,
-		pkgID:              ms.pkgID,
-		typeDefns:          ms.typeDefns,
-		classDefns:         ms.classDefns,
-		packageSymbols:     ms.packageSymbols,
-		prevPos:            ms.prevPos,
-		prevAnnotPos:       ms.prevAnnotPos,
-		usedPrefixes:       make(map[string]bool),
-		defaultCounter:     ms.defaultCounter,
-		handleCounter:      ms.handleCounter,
-		varTracker:         ms.varTracker,
-		moduleNodes:        ms.moduleNodes,
-		functionSignatures: ms.functionSignatures,
+		ctx:            ms.ctx,
+		tyCtx:          ms.tyCtx,
+		scope:          scope,
+		packageScope:   ms.packageScope,
+		pkgID:          ms.pkgID,
+		typeDefns:      ms.typeDefns,
+		classDefns:     ms.classDefns,
+		packageSymbols: ms.packageSymbols,
+		prevPos:        ms.prevPos,
+		prevAnnotPos:   ms.prevAnnotPos,
+		usedPrefixes:   make(map[string]bool),
+		defaultCounter: ms.defaultCounter,
+		varTracker:     ms.varTracker,
+		moduleNodes:    ms.moduleNodes,
 	}
 }
 
@@ -326,7 +309,7 @@ func (ms *moduleSymbolResolver) GetPkgID() model.PackageID {
 	return ms.pkgID
 }
 
-func (ms *moduleSymbolResolver) GetScope() model.Scope {
+func (ms *moduleSymbolResolver) GetScope() model.BlockLevelScope {
 	return ms.scope
 }
 
@@ -362,12 +345,6 @@ func (ms *moduleSymbolResolver) nextDefaultSymbolName() string {
 	return name
 }
 
-func (ms *moduleSymbolResolver) nextHandleSymbolName() string {
-	name := fmt.Sprintf("$handle$%d", ms.handleCounter)
-	ms.handleCounter++
-	return name
-}
-
 func (ms *moduleSymbolResolver) GetTypeDefns() map[model.SymbolRef]*ast.BLangTypeDefinition {
 	return ms.typeDefns
 }
@@ -400,7 +377,7 @@ func (bs *blockSymbolResolver) GetPkgID() model.PackageID {
 	return bs.parent.GetPkgID()
 }
 
-func (bs *blockSymbolResolver) GetScope() model.Scope {
+func (bs *blockSymbolResolver) GetScope() model.BlockLevelScope {
 	return bs.scope
 }
 
@@ -416,71 +393,13 @@ func (bs *blockSymbolResolver) nextDefaultSymbolName() string {
 	return "$default$error"
 }
 
-func (bs *blockSymbolResolver) nextHandleSymbolName() string {
-	if alloc, ok := bs.parent.(defaultSymbolAllocator); ok {
-		return alloc.nextHandleSymbolName()
-	}
-	bs.GetCtx().InternalError("handle symbol allocator not found", diagnostics.Location{})
-	return "$handle$error"
-}
-
 func (bs *blockSymbolResolver) TypeContext() semtypes.Context {
 	return bs.parent.TypeContext()
 }
 
-func (ms *moduleSymbolResolver) functionSignatureAssociations() *functionSignatureAssociationStore {
-	return ms.functionSignatures
-}
-
-func (bs *blockSymbolResolver) functionSignatureAssociations() *functionSignatureAssociationStore {
-	return bs.parent.functionSignatureAssociations()
-}
-
-func newFunctionSignatureAssociationStore() *functionSignatureAssociationStore {
-	return &functionSignatureAssociationStore{pending: make(map[model.SymbolRef][]functionSignatureAssociation)}
-}
-
-func (s *functionSignatureAssociationStore) associateSource(ctx *context.CompilerContext, owner, source model.SymbolRef, pos diagnostics.Location) {
-	if owner.IsEmpty() || source.IsEmpty() {
-		return
-	}
-	if _, ok := ctx.FunctionSignatureHandle(owner); ok {
-		return
-	}
-	if handle, ok := ctx.FunctionSignatureHandle(source); ok {
-		s.associateHandle(ctx, owner, handle, pos)
-		return
-	}
-	s.addPending(source, owner, pos)
-}
-
-func (s *functionSignatureAssociationStore) addPending(source, owner model.SymbolRef, pos diagnostics.Location) {
-	for _, pending := range s.pending[source] {
-		if pending.owner == owner {
-			return
-		}
-	}
-	s.pending[source] = append(s.pending[source], functionSignatureAssociation{owner: owner, pos: pos})
-}
-
-func (s *functionSignatureAssociationStore) associateHandle(ctx *context.CompilerContext, owner model.SymbolRef, handle context.FunctionSignatureHandle, pos diagnostics.Location) {
-	if owner.IsEmpty() {
-		return
-	}
-	if existing, ok := ctx.FunctionSignatureHandle(owner); ok {
-		if existing != handle {
-			ctx.InternalError("function signature already set", pos)
-		}
-		return
-	}
-	if !ctx.AssociateFunctionSignature(owner, handle) {
+func associateFunctionSignatureRef(ctx *context.CompilerContext, owner model.SymbolRef, ref model.FunctionSignatureRef, pos diagnostics.Location) {
+	if !ctx.AssociateFunctionSignature(owner, ref) {
 		ctx.InternalError("function signature already set", pos)
-		return
-	}
-	pending := s.pending[owner]
-	delete(s.pending, owner)
-	for _, association := range pending {
-		s.associateHandle(ctx, association.owner, handle, association.pos)
 	}
 }
 
@@ -734,6 +653,8 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 	}
 	isPublic := typeDef.IsPublic()
 	var symbol model.Symbol
+	var signatureRef model.FunctionSignatureRef
+	hasUntypeFunctionSignature := false
 	switch ty := typeDef.GetTypeData().TypeDescriptor.(type) {
 	case *ast.BLangRecordType:
 		symbol = new(model.NewRecordSymbol(name, isPublic, typeDef.Name.GetPosition()))
@@ -741,6 +662,9 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 		symbol = new(model.NewObjectTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 	case *ast.BLangErrorTypeNode:
 		symbol = new(model.NewErrorTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
+	case *ast.BLangFunctionType:
+		symbol = new(model.NewTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
+		signatureRef, hasUntypeFunctionSignature = ensureFunctionTypeSignature(ms, ms.scope, ty)
 	case *ast.BLangUserDefinedType:
 		seen[name] = struct{}{}
 		prefix := ty.PkgAlias.Value
@@ -759,6 +683,8 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 			symbol = new(model.NewTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 			break
 		}
+		ty.SetSymbol(symRef)
+		signatureRef, hasUntypeFunctionSignature = ms.ctx.FunctionSignatureRef(symRef)
 		switch ms.ctx.GetSymbol(symRef).(type) {
 		case *model.RecordSymbol:
 			symbol = new(model.NewRecordSymbol(name, isPublic, typeDef.Name.GetPosition()))
@@ -789,6 +715,9 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 		}
 	}
 	ms.typeDefns[symRef] = typeDef
+	if hasUntypeFunctionSignature {
+		associateFunctionSignatureRef(ms.ctx, symRef, signatureRef, typeDef.GetPosition())
+	}
 }
 
 func (ms *moduleSymbolResolver) ensureTypeAllocated(ref *ast.BLangUserDefinedType, seen map[string]struct{}) {
@@ -1044,52 +973,61 @@ func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
 	return ok
 }
 
-func ensureFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model.Scope, fnType *ast.BLangFunctionType, pos diagnostics.Location) {
-	if fnType.Symbol().IsEmpty() {
-		name := alloc.nextHandleSymbolName()
-		symbol := model.NewHandleSymbol(name, false, pos)
-		targetScope.AddSymbol(name, symbol)
-		symRef, _ := targetScope.GetSymbol(name)
-		fnType.SetSymbol(symRef)
+func ensureFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model.Scope, fnType *ast.BLangFunctionType) (model.FunctionSignatureRef, bool) {
+	if fnType.IsAnyFunction() {
+		return 0, false
 	}
-	allocateSymbols(alloc, targetScope, fnType, pos)
+	if ref := fnType.SignatureRef(); ref != 0 {
+		return ref, true
+	}
+	params := signatureParams(alloc, targetScope, fnType)
+	ref := alloc.GetCtx().AllocateFunctionSignature(params, fnType.RestParameter() != nil)
+	fnType.SetSignatureRef(ref)
+	return ref, true
 }
 
 func associateFunctionSignatureFromTypeDescriptor[T symbolResolver](resolver T, owner model.SymbolRef, typeNode any, pos diagnostics.Location) {
-	if owner.IsEmpty() {
+	ref, ok := functionSignatureRefFromTypeDescriptor(resolver, typeNode, pos)
+	if !ok {
 		return
 	}
-	var source model.SymbolRef
+	associateFunctionSignatureRef(resolver.GetCtx(), owner, ref, pos)
+}
+
+func functionSignatureRefFromTypeDescriptor[T symbolResolver](resolver T, typeNode any, pos diagnostics.Location) (model.FunctionSignatureRef, bool) {
 	switch ty := typeNode.(type) {
 	case *ast.BLangFunctionType:
 		alloc, ok := any(resolver).(defaultSymbolAllocator)
 		if !ok {
 			internalError(resolver, "default symbol allocator not found", pos)
-			return
+			return 0, false
 		}
-		ensureFunctionTypeSignature(alloc, resolver.GetScope(), ty, pos)
-		source = ty.Symbol()
+		return ensureFunctionTypeSignature(alloc, resolver.GetScope(), ty)
 	case *ast.BLangUserDefinedType:
-		source = ty.Symbol()
+		return resolver.GetCtx().FunctionSignatureRef(ty.Symbol())
 	default:
-		return
+		return 0, false
 	}
-	resolver.functionSignatureAssociations().associateSource(resolver.GetCtx(), owner, source, pos)
 }
 
-func allocateSymbols(alloc defaultSymbolAllocator, targetScope model.Scope, sig ast.FunctionSignature, pos diagnostics.Location) {
+type symbolFunctionSignature interface {
+	ast.FunctionSignature
+	Symbol() model.SymbolRef
+}
+
+func allocateSymbols(alloc defaultSymbolAllocator, targetScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) (model.FunctionSignatureRef, bool) {
 	cx := alloc.GetCtx()
 	owner := sig.Symbol()
 	if owner.IsEmpty() {
-		return
+		return 0, false
 	}
-	if _, ok := cx.FunctionSignatureHandle(owner); ok {
-		return
+	if ref, ok := cx.FunctionSignatureRef(owner); ok {
+		return ref, true
 	}
 	params := signatureParams(alloc, targetScope, sig)
-	hasRest := sig.RestParameter() != nil
-	handle := cx.AllocateFunctionSignature(params, hasRest)
-	alloc.functionSignatureAssociations().associateHandle(cx, owner, handle, pos)
+	ref := cx.AllocateFunctionSignature(params, sig.RestParameter() != nil)
+	associateFunctionSignatureRef(cx, owner, ref, pos)
+	return ref, true
 }
 
 func signatureParams(alloc defaultSymbolAllocator, targetScope model.Scope, sig ast.FunctionSignature) []model.Param {
@@ -1312,7 +1250,7 @@ func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangF
 		internalError(resolver, "default symbol allocator not found", fnType.GetPosition())
 		return
 	}
-	ensureFunctionTypeSignature(alloc, resolver.GetScope(), fnType, fnType.GetPosition())
+	ensureFunctionTypeSignature(alloc, resolver.GetScope(), fnType)
 	paramScope := resolver.GetCtx().NewBlockScope(resolver.GetScope(), resolver.GetPkgID())
 	paramResolver := &blockSymbolResolver{parent: resolver, scope: paramScope, node: fnType}
 	for i := range fnType.RequiredParams {
@@ -1362,6 +1300,12 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		return nil
 	case *ast.BMethodDecl:
 		resolveFunctionTypeSymbols(resolver, &n.BLangFunctionType)
+		if n.Symbol().IsEmpty() {
+			space := resolver.GetScope().MainSpace()
+			index := space.AppendSymbol(model.NewFunctionSymbol(n.Name(), model.TypedFunctionSignature{}, n.IsPublic(), n.GetPosition()))
+			n.SetSymbol(space.RefAt(index))
+		}
+		associateFunctionSignatureRef(resolver.GetCtx(), n.Symbol(), n.SignatureRef(), n.GetPosition())
 		return nil
 	case *ast.BLangXMLElementLiteral:
 		rootNeeds := map[string]model.SymbolRef{}

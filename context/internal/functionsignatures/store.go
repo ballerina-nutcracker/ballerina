@@ -23,82 +23,79 @@ import (
 	"ballerina-lang-go/model"
 )
 
-// Handle is a an opaque pointer to signatures already stored in the store
-type Handle struct {
-	index int
-}
-
 // Store keeps the untyped signatures associated with function symbols.
 type Store struct {
 	mu         sync.RWMutex
 	signatures []model.UntypedFunctionSignature
-	associated map[model.SymbolRef]int
+	associated map[model.SymbolRef]model.FunctionSignatureRef
 }
 
 func NewStore() Store {
 	return Store{
-		associated: make(map[model.SymbolRef]int),
+		associated: make(map[model.SymbolRef]model.FunctionSignatureRef),
 	}
 }
 
-func (s *Store) Allocate(params []model.Param, hasRest bool) Handle {
+func (s *Store) Allocate(params []model.Param, hasRest bool) model.FunctionSignatureRef {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	sig := model.NewUntypedFunctionSignature(params, hasRest)
-	index := len(s.signatures)
+	ref := model.FunctionSignatureRef(len(s.signatures) + 1)
 	s.signatures = append(s.signatures, sig)
-	return Handle{index}
+	return ref
 }
 
-func (s *Store) Associate(sym model.SymbolRef, handle Handle) bool {
+func (s *Store) Associate(sym model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	signatureIndex(ref)
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.associated[sym]; ok {
-		return false
+	if existing, ok := s.associated[sym]; ok {
+		return ref == existing
 	}
-	s.associated[sym] = handle.index
+	s.associated[sym] = ref
 	return true
 }
 
-func (s *Store) Handle(sym model.SymbolRef) (Handle, bool) {
+func (s *Store) Ref(sym model.SymbolRef) (model.FunctionSignatureRef, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	idx, ok := s.associated[sym]
-	return Handle{idx}, ok
+	ref, ok := s.associated[sym]
+	return ref, ok
 }
 
-func (s *Store) UpdateIncludedRecords(handle Handle, includedRecords []*model.IncludedRecordMetadata) bool {
+func (s *Store) UpdateIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	sig := s.signatures[handle.index]
+	index := signatureIndex(ref)
+	sig := s.signatures[index]
 	for i, metadata := range includedRecords {
 		if metadata == nil {
 			continue
 		}
 		sig.SetIncludedRecordMetadata(i, *metadata)
 	}
-	s.signatures[handle.index] = sig
-	return true
+	s.signatures[index] = sig
 }
 
-func (s *Store) Get(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+func (s *Store) Get(owner model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	sig, _, ok := s.getUnsafe(ref)
-	return sig, ok
-}
-
-func (s *Store) GetByHandle(handle Handle) model.UntypedFunctionSignature {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.signatures[handle.index]
-}
-
-func (s *Store) getUnsafe(ref model.SymbolRef) (model.UntypedFunctionSignature, int, bool) {
-	handle, ok := s.associated[ref]
+	ref, ok := s.associated[owner]
 	if !ok {
-		return model.UntypedFunctionSignature{}, 0, false
+		return model.UntypedFunctionSignature{}, false
 	}
-	sig := s.signatures[handle]
-	return sig, handle, true
+	return s.signatures[signatureIndex(ref)], true
+}
+
+func (s *Store) GetByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.signatures[signatureIndex(ref)]
+}
+
+func signatureIndex(ref model.FunctionSignatureRef) int {
+	if ref == 0 {
+		panic("function signature reference is unset")
+	}
+	return int(ref) - 1
 }
