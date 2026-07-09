@@ -19,6 +19,7 @@ package symbolpool
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
@@ -96,14 +97,16 @@ func (sr *symbolReader) readResourceMethodSymbol(space *model.SymbolSpace) {
 	addDeserializedSymbol(space, name, rm)
 }
 
-func addDeserializedSymbol(space *model.SymbolSpace, name string, sym model.Symbol) {
+func addDeserializedSymbol(space *model.SymbolSpace, name string, sym model.Symbol) model.SymbolRef {
 	if !sym.IsPublic() {
 		if _, exists := space.GetSymbol(name); exists {
-			space.AppendSymbol(sym)
-			return
+			idx := space.AppendSymbol(sym)
+			return space.RefAt(idx)
 		}
 	}
 	space.AddSymbol(name, sym)
+	ref, _ := space.GetSymbol(name)
+	return ref
 }
 
 func (sr *symbolReader) readPackageIdentifier() *model.PackageID {
@@ -209,7 +212,8 @@ func (sr *symbolReader) readObjectTypeSymbol(space *model.SymbolSpace) {
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
 	sym.SetType(addObjectDistinctAtoms(ty, ids))
-	addDeserializedSymbol(space, name, &sym)
+	ref := addDeserializedSymbol(space, name, &sym)
+	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
 }
 
 func (sr *symbolReader) readDistinctTypes(space *model.SymbolSpace) []int {
@@ -231,6 +235,21 @@ func addObjectDistinctAtoms(ty semtypes.SemType, ids []int) semtypes.SemType {
 		ty = semtypes.Intersect(ty, semtypes.ObjectDefinitionDistinct(id))
 	}
 	return ty
+}
+
+func (sr *symbolReader) registerLangLibDistinctTypeSymbol(space *model.SymbolSpace, name string, ref model.SymbolRef, ids []int) {
+	if space.Pkg.Organization != "ballerina" || !strings.HasPrefix(space.Pkg.Package, "lang.") {
+		return
+	}
+	for _, id := range ids {
+		distinctRef, ok := sr.env.DistinctTypeSymbolRef(id)
+		if ok && distinctRef == ref {
+			if !sr.env.RegisterLangLibDistinctTypeSymbol(space.Pkg.Package, name, ref) {
+				panic(fmt.Sprintf("conflicting lang library distinct type symbol: %s:%s", space.Pkg.Package, name))
+			}
+			return
+		}
+	}
 }
 
 func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.InclusionMember {
@@ -352,7 +371,8 @@ func (sr *symbolReader) readClassSymbol(space *model.SymbolSpace, isNetwork bool
 			networkSym.AddResourceMethod(sr.readSymbolRef(space))
 		}
 	}
-	addDeserializedSymbol(space, name, sym)
+	ref := addDeserializedSymbol(space, name, sym)
+	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
 }
 
 func (sr *symbolReader) readValueSymbol(space *model.SymbolSpace) {

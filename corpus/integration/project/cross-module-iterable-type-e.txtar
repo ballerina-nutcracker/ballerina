@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid variable type string
+  --> main.bal:21:13
+   |
+21 |     foreach string value in gen { // @error foreach variable type mismatch
+   |             ^^^^^^^^^^^^

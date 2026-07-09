@@ -14,42 +14,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
-class WordIterator {
-    string[] data;
-    int idx = 0;
-    int len;
-
-    function init(string[] data, int len) {
-        self.data = data;
-        self.len = len;
-    }
-
-    public function next() returns record {|string value;|}? {
-        if self.idx >= self.len {
-            return ();
-        }
-        string val = self.data[self.idx];
-        self.idx += 1;
-        return {value: val};
+class NumberIterator {
+    public function next() returns record {|int value;|}? {
+        return {value: 1};
     }
 }
 
-class Words {
+class NumberGenerator {
     *object:Iterable;
 
-    string[] data = ["hello", "world"];
-
-    public function iterator() returns WordIterator {
-        return new (self.data, 2);
+    public function iterator() returns NumberIterator {
+        return new;
     }
 }
 
 public function main() {
-    Words w = new;
-    foreach string word in w {
-        io:println(word); // @output hello
-                          // @output world
+    NumberGenerator gen = new;
+    foreach string value in gen { // @error foreach variable type mismatch
+        if value == "" {
+        }
     }
 }

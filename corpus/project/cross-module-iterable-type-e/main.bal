@@ -14,34 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
-class NumberIterator {
-    int[] items = [1, 2, 3];
-    int idx = 0;
-
-    public function next() returns record {|int value;|}? {
-        if self.idx >= 3 {
-            return ();
-        }
-        int val = self.items[self.idx];
-        self.idx += 1;
-        return {value: val};
-    }
-}
-
-class NumberGenerator {
-    *object:Iterable;
-    public function iterator() returns NumberIterator {
-        return new;
-    }
-}
+import testorg/cross_module_iterable_type_e.iters;
 
 public function main() {
-    NumberGenerator gen = new;
-    foreach int val in gen {
-        io:println(val); // @output 1
-                         // @output 2
-                         // @output 3
+    iters:NumberGenerator gen = new;
+    foreach string value in gen { // @error foreach variable type mismatch
+        if value == "" {
+        }
     }
 }
