@@ -16,32 +16,13 @@
 
 import ballerina/io;
 
-class NumberIterator {
-    int[] items = [1, 2, 3];
-    int idx = 0;
-
-    public function next() returns record {|int value;|}? {
-        if self.idx >= 3 {
-            return ();
-        }
-        int val = self.items[self.idx];
-        self.idx += 1;
-        return {value: val};
-    }
-}
-
-class NumberGenerator {
-    *object:Iterable;
-    public function iterator() returns NumberIterator {
-        return new;
-    }
-}
+import testorg/cross_module_iterable_v.iters;
 
 public function main() {
-    NumberGenerator gen = new;
-    foreach int val in gen {
-        io:println(val); // @output 1
-                         // @output 2
-                         // @output 3
+    iters:NumberGenerator gen = new;
+    foreach var value in gen {
+        io:println(value); // @output 1
+                           // @output 2
+                           // @output 3
     }
 }

@@ -32,6 +32,38 @@ type distinctTypeTracker struct {
 	nextID int
 }
 
+type langLibDistinctTypeKey struct {
+	packageName string
+	typeName    string
+}
+
+type langLibDistinctTypeRegistry struct {
+	mu      sync.RWMutex
+	symbols map[langLibDistinctTypeKey]model.SymbolRef
+}
+
+func newLangLibDistinctTypeRegistry() langLibDistinctTypeRegistry {
+	return langLibDistinctTypeRegistry{symbols: make(map[langLibDistinctTypeKey]model.SymbolRef)}
+}
+
+func (r *langLibDistinctTypeRegistry) register(packageName, typeName string, ref model.SymbolRef) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	key := langLibDistinctTypeKey{packageName: packageName, typeName: typeName}
+	if existing, ok := r.symbols[key]; ok {
+		return existing == ref
+	}
+	r.symbols[key] = ref
+	return true
+}
+
+func (r *langLibDistinctTypeRegistry) lookup(packageName, typeName string) (model.SymbolRef, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	ref, ok := r.symbols[langLibDistinctTypeKey{packageName: packageName, typeName: typeName}]
+	return ref, ok
+}
+
 func newDistinctTypeTracker() distinctTypeTracker {
 	return distinctTypeTracker{
 		ids:  make(map[model.SymbolRef]int),
@@ -61,16 +93,17 @@ func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
 
 // CompilerEnvironment maintain the shared state of the frontend.
 type CompilerEnvironment struct {
-	anonTypeCount     map[*model.PackageID]int
-	anonFuncCount     map[*model.PackageID]int
-	packageInterner   *model.PackageIDInterner
-	symbolSpaces      []*model.SymbolSpace
-	symbolSpacesMu    sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
-	typeEnv           semtypes.Env
-	underlyingSymbol  sync.Map
-	distinctTypes     distinctTypeTracker
-	statsEnabled      bool
-	diagnosticContext *diagnostics.DiagnosticEnv
+	anonTypeCount              map[*model.PackageID]int
+	anonFuncCount              map[*model.PackageID]int
+	packageInterner            *model.PackageIDInterner
+	symbolSpaces               []*model.SymbolSpace
+	symbolSpacesMu             sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
+	typeEnv                    semtypes.Env
+	underlyingSymbol           sync.Map
+	distinctTypes              distinctTypeTracker
+	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
+	statsEnabled               bool
+	diagnosticContext          *diagnostics.DiagnosticEnv
 }
 
 func (c *CompilerEnvironment) DiagnosticEnv() *diagnostics.DiagnosticEnv {
@@ -212,6 +245,14 @@ func (c *CompilerEnvironment) DistinctTypeSymbolRef(id int) (model.SymbolRef, bo
 	return c.distinctTypes.symbolRef(id)
 }
 
+func (c *CompilerEnvironment) RegisterLangLibDistinctTypeSymbol(packageName, typeName string, ref model.SymbolRef) bool {
+	return c.langLibDistinctTypeSymbols.register(packageName, typeName, ref)
+}
+
+func (c *CompilerEnvironment) LangLibDistinctTypeSymbol(packageName, typeName string) (model.SymbolRef, bool) {
+	return c.langLibDistinctTypeSymbols.lookup(packageName, typeName)
+}
+
 func (c *CompilerEnvironment) GetDefaultPackage() *model.PackageID {
 	return c.packageInterner.GetDefaultPackage()
 }
@@ -222,13 +263,14 @@ func (c *CompilerEnvironment) NewPackageID(orgName model.Name, nameComps []model
 
 func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEnvironment {
 	return &CompilerEnvironment{
-		anonTypeCount:     make(map[*model.PackageID]int),
-		anonFuncCount:     make(map[*model.PackageID]int),
-		packageInterner:   model.DefaultPackageIDInterner,
-		distinctTypes:     newDistinctTypeTracker(),
-		typeEnv:           typeEnv,
-		statsEnabled:      statsEnabled,
-		diagnosticContext: diagnostics.NewDiagnosticEnv(),
+		anonTypeCount:              make(map[*model.PackageID]int),
+		anonFuncCount:              make(map[*model.PackageID]int),
+		packageInterner:            model.DefaultPackageIDInterner,
+		distinctTypes:              newDistinctTypeTracker(),
+		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
+		typeEnv:                    typeEnv,
+		statsEnabled:               statsEnabled,
+		diagnosticContext:          diagnostics.NewDiagnosticEnv(),
 	}
 }
 
