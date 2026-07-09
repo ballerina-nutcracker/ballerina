@@ -35,6 +35,17 @@ import (
 
 var processStart = time.Now()
 
+// createParentDirs creates any missing ancestor directories for path, mirroring
+// jBallerina's io module, which creates parent directories before opening a
+// file for writing or appending.
+func createParentDirs(path string) error {
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0o755)
+	}
+	return nil
+}
+
 // NewPlatform returns the native-CLI pal.Platform, wiring os.Stdout/Stderr for
 // IO and NewHTTPClient for HTTP. The returned cleanup function releases signal
 // resources owned by the platform.
@@ -50,9 +61,15 @@ func NewPlatform() (pal.Platform, func()) {
 				return os.ReadFile(path)
 			},
 			WriteFile: func(path string, data []byte) error {
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
 				return os.WriteFile(path, data, 0o644)
 			},
 			AppendFile: func(path string, data []byte) (err error) {
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
 				f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 				if err != nil {
 					return err

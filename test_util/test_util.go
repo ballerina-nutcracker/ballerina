@@ -308,6 +308,17 @@ func computeExpectedPath(inputPath, inputBaseDir, outputBaseDir, outputExt strin
 	return filepath.Join(outputBaseDir, relPath)
 }
 
+// createParentDirs creates any missing ancestor directories for path, mirroring
+// jBallerina's io module, which creates parent directories before opening a
+// file for writing or appending.
+func createParentDirs(path string) error {
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0o755)
+	}
+	return nil
+}
+
 // normalizePath maps /tmp/-prefixed paths to os.TempDir() on Windows, where
 // the Unix /tmp directory does not exist.
 func normalizePath(path string) string {
@@ -334,10 +345,18 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 				return os.ReadFile(normalizePath(path))
 			},
 			WriteFile: func(path string, data []byte) error {
-				return os.WriteFile(normalizePath(path), data, 0o644)
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
+				return os.WriteFile(path, data, 0o644)
 			},
 			AppendFile: func(path string, data []byte) (err error) {
-				f, err := os.OpenFile(normalizePath(path), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
+				f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 				if err != nil {
 					return err
 				}
