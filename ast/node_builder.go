@@ -1620,6 +1620,15 @@ func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree
 	return bLSimpleVar
 }
 
+func isAllowedDistinctTypeDescriptor(kind common.SyntaxKind) bool {
+	switch kind {
+	case common.OBJECT_TYPE_DESC, common.ERROR_TYPE_DESC, common.SIMPLE_NAME_REFERENCE, common.QUALIFIED_NAME_REFERENCE, common.IDENTIFIER_TOKEN:
+		return true
+	default:
+		return false
+	}
+}
+
 func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefinitionNode) BLangNode {
 	typeDef := NewBLangTypeDefinition()
 
@@ -1631,7 +1640,7 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 	typeDescriptorNode := typeDefinitionNode.TypeDescriptor()
 	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*tree.DistinctTypeDescriptorNode); ok {
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
-		if innerTypeDescriptorNode == nil || (innerTypeDescriptorNode.Kind() != common.OBJECT_TYPE_DESC && innerTypeDescriptorNode.Kind() != common.ERROR_TYPE_DESC) {
+		if innerTypeDescriptorNode == nil || !isAllowedDistinctTypeDescriptor(innerTypeDescriptorNode.Kind()) {
 			n.cx.SyntaxError("only object and error types can be distinct", getPosition(n.de(), distinctTypeDescriptorNode))
 			neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
 			neverType.pos = getPosition(n.de(), distinctTypeDescriptorNode)

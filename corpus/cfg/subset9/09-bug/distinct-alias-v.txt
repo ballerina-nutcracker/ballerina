@@ -1,0 +1,62 @@
+(ChildObjectImpl
+  (id
+    (bb0 () ()
+      (return
+        (literal 1))
+    )
+  )
+)
+(ParentObjectImpl
+  (id
+    (bb0 () ()
+      (return
+        (literal 0))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable childError (type
+        (user-defined-type ChildError)) (expr
+        (error-constructor-expr
+          (user-defined-type ChildError) (
+          (literal child))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref childError)
+          (user-defined-type ParentError)))))
+    (var-def
+      (variable parentError (type
+        (user-defined-type ParentError)) (expr
+        (error-constructor-expr
+          (user-defined-type ParentError) (
+          (literal parent))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref parentError)
+          (user-defined-type ChildError)))))
+    (var-def
+      (variable childObject (type
+        (user-defined-type ChildObject)) (expr
+        (new
+          (user-defined-type ChildObjectImpl) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref childObject)
+          (user-defined-type ParentObject)))))
+    (var-def
+      (variable parentObject (type
+        (user-defined-type ParentObject)) (expr
+        (new
+          (user-defined-type ParentObjectImpl) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref parentObject)
+          (user-defined-type ChildObject)))))
+  )
+)

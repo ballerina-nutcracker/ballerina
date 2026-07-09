@@ -28,6 +28,12 @@ func ErrorDetailAtomicType(ctx Context, errorType SemType) (MappingAtomicType, b
 		return mappingAtomicTypeFrom(nil, nil, cellContaining(ctx.Env(), CreateCloneable(ctx))), true
 	}
 	mappingSd := errorDetailBddWithoutDistinctAtoms(subtypeData(errorType, BTError).(Bdd))
+	if allOrNothing, ok := mappingSd.(*bddAllOrNothing); ok {
+		if allOrNothing.IsAll() {
+			return mappingAtomicTypeFrom(nil, nil, cellContaining(ctx.Env(), CreateCloneable(ctx))), true
+		}
+		return MappingAtomicType{}, false
+	}
 	if bn, ok := mappingSd.(bddNode); ok {
 		if bn.atom().index() != 0 {
 			// Not readonly. Not sure if this can happen (due to ErroWithDetail) but just in case

@@ -95,6 +95,11 @@ type (
 		symbol    []model.SymbolRef
 	}
 
+	moduleAstNodeHolder struct {
+		typeDefns  map[string]*ast.BLangTypeDefinition
+		classDefns map[string]*ast.BLangClassDefinition
+	}
+
 	moduleSymbolResolver struct {
 		ctx            *context.CompilerContext
 		tyCtx          semtypes.Context
@@ -109,6 +114,7 @@ type (
 		usedPrefixes   map[string]bool
 		defaultCounter int
 		varTracker     varTracker
+		moduleNodes    moduleAstNodeHolder
 	}
 
 	blockSymbolResolver struct {
@@ -221,6 +227,21 @@ func newCompilationUnitsSymbolResolver(ctx *context.CompilerContext, pkgID model
 		prevPos:        make(map[string]prevPos),
 		prevAnnotPos:   make(map[string]prevPos),
 		usedPrefixes:   make(map[string]bool),
+		moduleNodes: moduleAstNodeHolder{
+			typeDefns:  make(map[string]*ast.BLangTypeDefinition),
+			classDefns: make(map[string]*ast.BLangClassDefinition),
+		},
+	}
+}
+
+func (m *moduleAstNodeHolder) add(cu *ast.BLangCompilationUnit) {
+	for _, node := range cu.TopLevelNodes {
+		switch n := node.(type) {
+		case *ast.BLangTypeDefinition:
+			m.typeDefns[n.Name.Value] = n
+		case *ast.BLangClassDefinition:
+			m.classDefns[n.Name.Value] = n
+		}
 	}
 }
 
@@ -550,8 +571,9 @@ func ResolveSymbols(cx *context.CompilerContext, pkgID model.PackageID, cuImport
 		scope := cx.NewModuleScope(pkgID, cuImports.Imports)
 		cuImports.CompilationUnit.Scope = scope
 		cuResolvers[i] = packageResolver.forCompilationUnit(scope)
+		cuResolvers[i].moduleNodes = packageResolver.moduleNodes
+		packageResolver.moduleNodes.add(cuImports.CompilationUnit)
 	}
-
 	for i, resolver := range cuResolvers {
 		resolver.allocateTopLevelSymbols(cuImportsList[i].CompilationUnit)
 	}
@@ -581,7 +603,7 @@ func (ms *moduleSymbolResolver) allocateTopLevelSymbols(cu *ast.BLangCompilation
 	for _, node := range cu.TopLevelNodes {
 		switch n := node.(type) {
 		case *ast.BLangTypeDefinition:
-			ms.allocateTypeSymbol(n)
+			ms.allocateTypeSymbol(n, make(map[string]struct{}))
 		case *ast.BLangFunction:
 			ms.allocateFunctionSymbol(n)
 		case *ast.BLangConstant:
@@ -596,17 +618,48 @@ func (ms *moduleSymbolResolver) allocateTopLevelSymbols(cu *ast.BLangCompilation
 	}
 }
 
-func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinition) {
+func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinition, seen map[string]struct{}) {
 	name := typeDef.Name.Value
+	if ref, ok := ms.packageSymbols[name]; ok {
+		if existing, ok := ms.typeDefns[ref]; ok && existing == typeDef {
+			return
+		}
+	}
 	isPublic := typeDef.IsPublic()
 	var symbol model.Symbol
-	switch typeDef.GetTypeData().TypeDescriptor.(type) {
+	switch ty := typeDef.GetTypeData().TypeDescriptor.(type) {
 	case *ast.BLangRecordType:
 		symbol = new(model.NewRecordSymbol(name, isPublic))
 	case *ast.BLangObjectType:
 		symbol = new(model.NewObjectTypeSymbol(name, isPublic))
 	case *ast.BLangErrorTypeNode:
 		symbol = new(model.NewErrorTypeSymbol(name, isPublic))
+	case *ast.BLangUserDefinedType:
+		seen[name] = struct{}{}
+		if ty.ModulePrefix() == "" {
+			ms.ensureTypeAllocated(ty, seen)
+		}
+		var symRef model.SymbolRef
+		var ok bool
+		if ty.ModulePrefix() != "" {
+			symRef, ok = ms.GetPrefixedSymbol(ty.ModulePrefix(), ty.Name())
+		} else {
+			symRef, _, ok = ms.GetSymbol(ty.Name())
+		}
+		if !ok {
+			symbol = new(model.NewTypeSymbol(name, isPublic))
+			break
+		}
+		switch ms.ctx.GetSymbol(symRef).(type) {
+		case *model.RecordSymbol:
+			symbol = new(model.NewRecordSymbol(name, isPublic))
+		case *model.ObjectTypeSymbol:
+			symbol = new(model.NewObjectTypeSymbol(name, isPublic))
+		case *model.ErrorTypeSymbol:
+			symbol = new(model.NewErrorTypeSymbol(name, isPublic))
+		default:
+			symbol = new(model.NewTypeSymbol(name, isPublic))
+		}
 	default:
 		symbol = new(model.NewTypeSymbol(name, isPublic))
 	}
@@ -627,6 +680,33 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 		}
 	}
 	ms.typeDefns[symRef] = typeDef
+}
+
+func (ms *moduleSymbolResolver) ensureTypeAllocated(identifer ast.Reference, seen map[string]struct{}) {
+	if identifer.ModulePrefix() != "" {
+		// Imported symbol should have been resolved already
+		return
+	}
+	name := identifer.Name()
+	if _, ok := ms.packageSymbols[name]; ok {
+		return
+	}
+
+	if _, ok := seen[name]; ok {
+		return
+	}
+	seen[name] = struct{}{}
+	td, ok := ms.moduleNodes.typeDefns[name]
+	if ok {
+		ms.allocateTypeSymbol(td, seen)
+		return
+	}
+	c, ok := ms.moduleNodes.classDefns[name]
+	if !ok {
+		// no such symbol to allocate.
+		return
+	}
+	ms.allocateClassSymbol(c)
 }
 
 func (ms *moduleSymbolResolver) allocateFunctionSymbol(fn *ast.BLangFunction) {
@@ -686,6 +766,11 @@ func (ms *moduleSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.BLangSimp
 
 func (ms *moduleSymbolResolver) allocateClassSymbol(classDef *ast.BLangClassDefinition) {
 	name := classDef.Name.Value
+	if ref, ok := ms.packageSymbols[name]; ok {
+		if existing, ok := ms.classDefns[ref]; ok && existing == classDef {
+			return
+		}
+	}
 	symbol := newClassSymbolForDefn(classDef)
 	if !addTopLevelSymbol(ms, name, symbol, classDef.Name.GetPosition()) {
 		return
@@ -1438,8 +1523,10 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 		symRef := inc.Symbol()
 		if tDefn, ok := localTypeDefns[symRef]; ok {
 			if _, ok := tDefn.GetTypeData().TypeDescriptor.(*ast.BLangObjectType); !ok {
-				ctx.SemanticError("type inclusion must be an object type or class", inc.GetPosition())
-				continue
+				if _, ok := ctx.GetSymbol(symRef).(*model.ObjectTypeSymbol); !ok {
+					ctx.SemanticError("type inclusion must be an object type or class", inc.GetPosition())
+					continue
+				}
 			}
 			includedFields = append(includedFields, collectTransitiveFieldsFromTypeDefn(ctx, tDefn, localTypeDefns, localClassDefns)...)
 		} else if classDefn, ok := localClassDefns[symRef]; ok {

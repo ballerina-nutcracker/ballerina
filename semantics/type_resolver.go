@@ -35,6 +35,11 @@ import (
 	"ballerina-lang-go/values"
 )
 
+type distinctTypeSymbol interface {
+	DistinctTypeIDs() []int
+	SetDistinctTypeIDs([]int)
+}
+
 type typeResolver interface {
 	typeContext() semtypes.Context
 	expectedReturnType() semtypes.SemType
@@ -2048,9 +2053,56 @@ func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinit
 		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions), true
 	case *ast.BLangErrorTypeNode:
 		return appendDistinctErrorAtoms(t, semType, typeDef)
+	case *ast.BLangUserDefinedType:
+		if !typeDef.IsDistinct() {
+			return semType, true
+		}
+		parent := t.getSymbol(typeDesc.Symbol())
+		switch parent.(type) {
+		case *model.ErrorTypeSymbol:
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct, typeDef.GetPosition())
+		case model.ObjectType:
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct, typeDef.GetPosition())
+		default:
+			return semType, true
+		}
 	default:
 		return semType, true
 	}
+}
+
+func appendDistinctAliasAtoms(t typeResolver, semType semtypes.SemType, childRef, parentRef model.SymbolRef, atom func(int) semtypes.SemType, pos diagnostics.Location) (semtypes.SemType, bool) {
+	child, ok := t.getSymbol(childRef).(distinctTypeSymbol)
+	if !ok {
+		t.internalError("distinct type alias symbol does not support distinct type IDs", pos)
+		return semtypes.SemType{}, false
+	}
+	parent, ok := t.getSymbol(parentRef).(distinctTypeSymbol)
+	if !ok {
+		t.internalError("distinct parent type symbol does not support distinct type IDs", pos)
+		return semtypes.SemType{}, false
+	}
+
+	idsByID := make(map[int]bool)
+	for _, id := range parent.DistinctTypeIDs() {
+		idsByID[id] = true
+	}
+	for _, id := range child.DistinctTypeIDs() {
+		idsByID[id] = true
+	}
+
+	ids := make([]int, 0, len(idsByID))
+	for id := range idsByID {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	child.SetDistinctTypeIDs(ids)
+
+	current := semType
+	for _, distinctTypeID := range ids {
+		current = semtypes.Intersect(current, atom(distinctTypeID))
+	}
+	return current, true
 }
 
 func appendDistinctObjectAtoms(t typeResolver, semType semtypes.SemType, symbol model.SymbolRef, inclusions []model.SymbolRef) semtypes.SemType {
@@ -2113,6 +2165,9 @@ func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
 		members = recordTypeMembers(t, td)
 	case *ast.BLangObjectType:
 		members = objectTypeMembers(t, td)
+	case *ast.BLangUserDefinedType:
+		copyAliasMembersToTypeSymbol(t, defn.Symbol(), td.Symbol())
+		return
 	default:
 		return
 	}
@@ -2122,6 +2177,26 @@ func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
 	}
 	for _, m := range members {
 		carrier.AddMember(m)
+	}
+}
+
+func copyAliasMembersToTypeSymbol(t typeResolver, aliasRef, targetRef model.SymbolRef) {
+	if targetRef.IsEmpty() {
+		return
+	}
+	aliasCarrier, ok := t.getSymbol(aliasRef).(model.MemberCarrier)
+	if !ok {
+		return
+	}
+	if !t.ensureResolved(targetRef, 0) {
+		return
+	}
+	targetCarrier, ok := t.getSymbol(targetRef).(model.MemberCarrier)
+	if !ok {
+		return
+	}
+	for _, m := range targetCarrier.Members() {
+		aliasCarrier.AddMember(m)
 	}
 }
 

@@ -806,6 +806,11 @@ type MarkdownDocumentationNode interface {
 	AddReference(reference MarkdownDocumentationReferenceAttributeNode)
 }
 
+type Reference interface {
+	ModulePrefix() string
+	Name() string
+}
+
 // Other interfaces.
 
 type IdentifierNode interface {

@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+class ParentObjectImpl {
+
+  id() -> int{
+    bb0 {
+      %2 = ConstantLoad 0
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class ChildObjectImpl {
+
+  id() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad child
+    %2 = newError error<error&error>(%1)
+    childError = %2;
+    %4 = childError is error<error>
+    %5 = %4;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad parent
+    %8 = newError error<error>(%7)
+    parentError = %8;
+    %10 = parentError is error<error&error>
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = newObject $anon/.:ChildObjectImpl
+    %14 = init(%13) -> bb3;
+  }
+  bb3 {
+    %16 = %14 is nil
+    %16 ? bb4 : bb5;
+  }
+  bb4 {
+    %15 = %13;
+    GOTO bb6;
+  }
+  bb5 {
+    %15 = %14;
+    GOTO bb6;
+  }
+  bb6 {
+    childObject = %15;
+    %18 = childObject is object&object { private function id() returns int }
+    %19 = %18;
+    %20 = println(%19) -> bb7;
+  }
+  bb7 {
+    %21 = newObject $anon/.:ParentObjectImpl
+    %22 = init(%21) -> bb8;
+  }
+  bb8 {
+    %24 = %22 is nil
+    %24 ? bb9 : bb10;
+  }
+  bb9 {
+    %23 = %21;
+    GOTO bb11;
+  }
+  bb10 {
+    %23 = %22;
+    GOTO bb11;
+  }
+  bb11 {
+    parentObject = %23;
+    %26 = parentObject is object&object&object { private function id() returns int }
+    %27 = %26;
+    %28 = println(%27) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}
