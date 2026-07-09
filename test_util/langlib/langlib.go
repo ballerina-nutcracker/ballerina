@@ -129,6 +129,14 @@ var migratedLangLibs = []bundledLib{
 		version:    "0.0.1",
 	},
 	{
+		org:        "ballerina",
+		nameComps:  []string{"lang", "object"},
+		implicitID: "lang.object",
+		srcFS:      langlibs.FS,
+		balPath:    "ballerina/lang.object/0.0.1/any/lang.object.bal",
+		version:    "0.0.1",
+	},
+	{
 		org:       "ballerina",
 		nameComps: []string{"lang", "runtime"},
 		srcFS:     langlibs.FS,
@@ -165,27 +173,29 @@ func Build(cx *context.CompilerContext, publicSymbols map[semantics.PackageIdent
 
 	cache := make(map[string]model.ExportedSymbolSpace)
 	for _, lib := range migratedLangLibs {
-		space, err := compileBundledLib(cx, cache, lib)
-		if err != nil {
-			return nil, err
+		pkgID := semantics.PackageIdentifier{OrgName: lib.org, ModuleName: strings.Join(lib.nameComps, ".")}
+		space, ok := publicSymbols[pkgID]
+		if !ok {
+			var err error
+			space, err = compileBundledLib(cx, cache, lib)
+			if err != nil {
+				return nil, err
+			}
+			publicSymbols[pkgID] = space
 		}
 		if lib.implicitID != "" {
 			implicitImports[lib.implicitID] = space
 		}
-		publicSymbols[semantics.PackageIdentifier{
-			OrgName:    lib.org,
-			ModuleName: strings.Join(lib.nameComps, "."),
-		}] = space
 	}
 	for _, lib := range bundledStdlibs {
-		space, err := compileBundledLib(cx, cache, lib)
-		if err != nil {
-			return nil, err
+		pkgID := semantics.PackageIdentifier{OrgName: lib.org, ModuleName: strings.Join(lib.nameComps, ".")}
+		if _, ok := publicSymbols[pkgID]; !ok {
+			space, err := compileBundledLib(cx, cache, lib)
+			if err != nil {
+				return nil, err
+			}
+			publicSymbols[pkgID] = space
 		}
-		publicSymbols[semantics.PackageIdentifier{
-			OrgName:    lib.org,
-			ModuleName: strings.Join(lib.nameComps, "."),
-		}] = space
 	}
 
 	return &Symbols{ImplicitImports: implicitImports, PublicSymbols: publicSymbols}, nil
