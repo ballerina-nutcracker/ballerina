@@ -319,7 +319,7 @@ func TestResolveQueryExprMapCollection(t *testing.T) {
 	resolver, cx := newTestQueryResolver()
 
 	space := cx.NewSymbolSpace(*cx.GetDefaultPackage())
-	mapSymbol := model.NewVariableSymbol("m", false, false, false)
+	mapSymbol := model.NewVariableSymbol("m", false, false, false, queryTestPos)
 	space.AddSymbol("m", &mapSymbol)
 	mapSymbolRef, _ := space.GetSymbol("m")
 	cx.SetSymbolType(mapSymbolRef, semtypes.MAPPING)
@@ -658,7 +658,7 @@ func TestResolveQueryExprOrderByRejectsMixedSimpleUnion(t *testing.T) {
 	resolver, cx := newTestQueryResolver()
 
 	space := cx.NewSymbolSpace(*cx.GetDefaultPackage())
-	keySymbol := model.NewVariableSymbol("k", false, false, false)
+	keySymbol := model.NewVariableSymbol("k", false, false, false, queryTestPos)
 	space.AddSymbol("k", &keySymbol)
 	keySymbolRef, _ := space.GetSymbol("k")
 	cx.SetSymbolType(keySymbolRef, semtypes.Union(semtypes.INT, semtypes.STRING))
@@ -957,7 +957,7 @@ func newSimpleVarDef(name string, typeNode ast.BType, expr ast.BLangExpression) 
 }
 
 func addTestValueSymbol(cx *context.CompilerContext, space *model.SymbolSpace, name string, ty semtypes.SemType) model.SymbolRef {
-	valueSymbol := model.NewVariableSymbol(name, false, false, false)
+	valueSymbol := model.NewVariableSymbol(name, false, false, false, queryTestPos)
 	space.AddSymbol(name, &valueSymbol)
 	symbolRef, _ := space.GetSymbol(name)
 	if !semtypes.IsZero(ty) {

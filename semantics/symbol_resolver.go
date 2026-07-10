@@ -422,7 +422,6 @@ func addTopLevelSymbol(resolver *moduleSymbolResolver, name string, symbol model
 		semanticError(resolver, msg, pos)
 		return false
 	}
-	symbol.SetLocation(pos)
 	resolver.AddSymbol(name, symbol)
 	ref, _, _ := resolver.GetSymbolFromCurrentScope(name)
 	resolver.packageSymbols[name] = ref
@@ -508,9 +507,9 @@ func (ms *moduleSymbolResolver) allocateFunctionSymbolInner(fn *ast.BLangFunctio
 		if fn.RestParam != nil {
 			ms.ctx.Unimplemented("rest parameters are not supported on dependently-typed functions", fn.GetPosition())
 		}
-		return model.NewDependentlyTypedFunctionSymbol(name, paramNames, len(fn.RequiredParams), fn.FuncSymbolFlags(), isPublic)
+		return model.NewDependentlyTypedFunctionSymbol(name, paramNames, len(fn.RequiredParams), fn.FuncSymbolFlags(), isPublic, symbolLocationForNode(fn))
 	}
-	return model.NewFunctionSymbol(name, model.FunctionSignature{}, isPublic)
+	return model.NewFunctionSymbol(name, model.FunctionSignature{}, isPublic, symbolLocationForNode(fn))
 }
 
 // isDependentlyTyped reports whether a function's return type references one of its typedesc
@@ -565,35 +564,17 @@ func returnTypeReferencesTypedescParam(node ast.BLangNode, typedescParams map[st
 }
 
 func addSymbolAndSetOnNode[T symbolResolver](resolver T, name string, symbol model.Symbol, node ast.BNodeWithSymbol) {
-	symbol.SetLocation(symbolLocationForNode(node))
 	resolver.AddSymbol(name, symbol)
 	symRef, _, _ := resolver.GetSymbol(name)
 	node.SetSymbol(symRef)
 }
 
-func symbolLocationForNode(node ast.BLangNode) diagnostics.Location {
-	switch n := node.(type) {
-	case *ast.BLangFunction:
-		return locationOrNodePosition(n.Name, node)
-	case *ast.BLangResourceMethod:
-		return locationOrNodePosition(n.Name, node)
-	case *ast.BLangSimpleVariable:
-		return locationOrNodePosition(n.Name, node)
-	case *ast.BLangConstant:
-		return locationOrNodePosition(n.Name, node)
-	case *ast.BLangTypeDefinition:
-		return locationOrNodePosition(n.Name, node)
-	case *ast.BLangClassDefinition:
-		return locationOrNodePosition(n.Name, node)
-	}
-	return node.GetPosition()
+type namedDeclaration interface {
+	GetName() ast.IdentifierNode
 }
 
-func locationOrNodePosition(name ast.IdentifierNode, node ast.BLangNode) diagnostics.Location {
-	if name == nil || diagnostics.IsLocationEmpty(name.GetPosition()) {
-		return node.GetPosition()
-	}
-	return name.GetPosition()
+func symbolLocationForNode(node namedDeclaration) diagnostics.Location {
+	return node.GetName().GetPosition()
 }
 
 func ResolveSymbols(cx *context.CompilerContext, pkgID model.PackageID, cuImportsList []CompilationUnitImports) (model.Scope, model.ExportedSymbolSpace) {
@@ -661,11 +642,11 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 	var symbol model.Symbol
 	switch ty := typeDef.GetTypeData().TypeDescriptor.(type) {
 	case *ast.BLangRecordType:
-		symbol = new(model.NewRecordSymbol(name, isPublic))
+		symbol = new(model.NewRecordSymbol(name, isPublic, typeDef.Name.GetPosition()))
 	case *ast.BLangObjectType:
-		symbol = new(model.NewObjectTypeSymbol(name, isPublic))
+		symbol = new(model.NewObjectTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 	case *ast.BLangErrorTypeNode:
-		symbol = new(model.NewErrorTypeSymbol(name, isPublic))
+		symbol = new(model.NewErrorTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 	case *ast.BLangUserDefinedType:
 		seen[name] = struct{}{}
 		prefix := ty.PkgAlias.Value
@@ -681,21 +662,21 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 			symRef, _, ok = ms.GetSymbol(targetName)
 		}
 		if !ok {
-			symbol = new(model.NewTypeSymbol(name, isPublic))
+			symbol = new(model.NewTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 			break
 		}
 		switch ms.ctx.GetSymbol(symRef).(type) {
 		case *model.RecordSymbol:
-			symbol = new(model.NewRecordSymbol(name, isPublic))
+			symbol = new(model.NewRecordSymbol(name, isPublic, typeDef.Name.GetPosition()))
 		case *model.ErrorTypeSymbol:
-			symbol = new(model.NewErrorTypeSymbol(name, isPublic))
+			symbol = new(model.NewErrorTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 		case model.ObjectType:
-			symbol = new(model.NewObjectTypeSymbol(name, isPublic))
+			symbol = new(model.NewObjectTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 		default:
-			symbol = new(model.NewTypeSymbol(name, isPublic))
+			symbol = new(model.NewTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 		}
 	default:
-		symbol = new(model.NewTypeSymbol(name, isPublic))
+		symbol = new(model.NewTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
 	}
 	if !addTopLevelSymbol(ms, name, symbol, typeDef.Name.GetPosition()) {
 		return
@@ -755,14 +736,14 @@ func (ms *moduleSymbolResolver) allocateAnnotationSymbol(annotation *ast.BLangAn
 	for _, attachPoint := range annotation.AttachPoints() {
 		attachPoints = append(attachPoints, annotationAttachPointKey(attachPoint))
 	}
-	symbol := model.NewAnnotationSymbol(name, annotation.IsPublic(), annotation.IsConst(), attachPoints)
+	symbol := model.NewAnnotationSymbol(name, annotation.IsPublic(), annotation.IsConst(), attachPoints, annotation.Name.GetPosition())
 	addTopLevelAnnotationSymbol(ms, name, &symbol, annotation.Name.GetPosition())
 }
 
 func (ms *moduleSymbolResolver) allocateConstantSymbol(constDef *ast.BLangConstant) {
 	name := constDef.Name.GetValue()
 	isPublic := constDef.IsPublic()
-	if !addTopLevelSymbol(ms, name, model.NewConstantValueSymbol(name, isPublic), constDef.Name.GetPosition()) {
+	if !addTopLevelSymbol(ms, name, model.NewConstantValueSymbol(name, isPublic, constDef.Name.GetPosition()), constDef.Name.GetPosition()) {
 		return
 	}
 	if !isPublic {
@@ -775,7 +756,7 @@ func (ms *moduleSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.BLangSimp
 	name := globalVar.Name.GetValue()
 	isPublic := globalVar.IsPublic()
 	{
-		symbol := model.NewVariableSymbol(name, isPublic, false, false)
+		symbol := model.NewVariableSymbol(name, isPublic, false, false, globalVar.Name.GetPosition())
 		if globalVar.IsFinal() {
 			symbol.SetFinal()
 		}
@@ -861,10 +842,11 @@ func reportUnusedImports(resolver *moduleSymbolResolver, imports []ast.BLangImpo
 func newClassSymbolForDefn(classDef *ast.BLangClassDefinition) model.ClassSymbol {
 	name := classDef.Name.GetValue()
 	isPublic := classDef.IsPublic()
+	location := classDef.Name.GetPosition()
 	if classDef.IsClient() || classDef.IsService() {
-		return model.NewNetworkClassSymbol(name, isPublic)
+		return model.NewNetworkClassSymbol(name, isPublic, location)
 	}
-	return model.NewClassSymbol(name, isPublic)
+	return model.NewClassSymbol(name, isPublic, location)
 }
 
 // injectOpaqueSymbols adds the Go-defined symbols of a builtin lang library to
@@ -934,7 +916,7 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 			semanticError(functionResolver, "redeclared symbol '"+name+"'", param.GetPosition())
 			continue
 		}
-		symbol := model.NewVariableSymbol(name, false, false, true)
+		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(param))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, param)
 		if trackParams {
 			markInit(functionResolver, name, param.Symbol(), param.GetPosition())
@@ -946,7 +928,7 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 		if _, exists := scope.GetSymbol(name); exists {
 			semanticError(functionResolver, "redeclared symbol '"+name+"'", rest.GetPosition())
 		} else {
-			symbol := model.NewVariableSymbol(name, false, false, true)
+			symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(rest))
 			addSymbolAndSetOnNode(functionResolver, name, &symbol, rest)
 			if trackParams {
 				markInit(functionResolver, name, rest.Symbol(), rest.GetPosition())
@@ -989,7 +971,7 @@ func allocateDefaultParamSymbols(alloc defaultSymbolAllocator, targetScope model
 		}
 		name := alloc.nextDefaultSymbolName()
 		// Until type resolution we don't know the type of the parametes to create this function signature
-		defaultFnSym := model.NewFunctionSymbol(name, model.FunctionSignature{}, false)
+		defaultFnSym := model.NewFunctionSymbol(name, model.FunctionSignature{}, false, param.GetPosition())
 		targetScope.AddSymbol(name, defaultFnSym)
 		symRef, _ := targetScope.GetSymbol(name)
 		info.SetDefaultable(i, symRef)
@@ -1006,7 +988,7 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 		if isShadowed(parent, name) {
 			semanticError(functionResolver, "Variable already defined: "+name, param.GetPosition())
 		}
-		symbol := model.NewVariableSymbol(name, false, false, true)
+		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(param))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, param)
 		markInit(functionResolver, name, param.Symbol(), param.GetPosition())
 	}
@@ -1017,7 +999,7 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 		if isShadowed(parent, name) {
 			semanticError(functionResolver, "Variable already defined: "+name, restParam.GetPosition())
 		}
-		symbol := model.NewVariableSymbol(name, false, false, true)
+		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(restParam))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, restParam)
 		markInit(functionResolver, name, restParam.Symbol(), restParam.GetPosition())
 	}
@@ -1145,7 +1127,7 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		fn := n.Function
 		name := fn.Name.GetValue()
 		signature := model.FunctionSignature{}
-		symbol := model.NewFunctionSymbol(name, signature, false)
+		symbol := model.NewFunctionSymbol(name, signature, false, symbolLocationForNode(fn))
 		addSymbolAndSetOnNode(bs, name, symbol, fn)
 		functionResolver := newFunctionResolver(bs, fn)
 		fn.SetScope(functionResolver.scope)
@@ -1403,7 +1385,7 @@ func defineVariable(resolver *blockSymbolResolver, variable ast.VariableNode, is
 		if isShadowed(resolver, name) {
 			semanticError(resolver, "Variable already defined: "+name, variable.GetPosition())
 		}
-		symbol := model.NewVariableSymbol(name, false, isFinal, false)
+		symbol := model.NewVariableSymbol(name, false, isFinal, false, symbolLocationForNode(variable))
 		if isFinal {
 			symbol.SetFinal()
 		}
@@ -1532,7 +1514,7 @@ func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		fn := n.Function
 		name := fn.Name.GetValue()
 		signature := model.FunctionSignature{}
-		symbol := model.NewFunctionSymbol(name, signature, false)
+		symbol := model.NewFunctionSymbol(name, signature, false, symbolLocationForNode(fn))
 		ms.AddSymbol(name, symbol)
 		symRef, _, _ := ms.GetSymbolFromCurrentScope(name)
 		fn.SetSymbol(symRef)
@@ -1782,8 +1764,7 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 			continue
 		}
 		isPublic := field.IsPublic()
-		symbol := model.NewVariableSymbol(name, isPublic, false, false)
-		symbol.SetLocation(symbolLocationForNode(field.(ast.BLangNode)))
+		symbol := model.NewVariableSymbol(name, isPublic, false, false, symbolLocationForNode(field))
 		blockRes.AddSymbol(name, &symbol)
 	}
 
@@ -1795,7 +1776,6 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 		}
 		isPublic := m.method.IsPublic()
 		symbol := ms.allocateFunctionSymbolInner(m.method, m.name, isPublic)
-		symbol.SetLocation(symbolLocationForNode(m.method))
 		symbolName := methodSymbolName(m.name)
 		methodTargetScope.AddSymbol(symbolName, symbol)
 		symRef, _ := methodTargetScope.MainSpace().GetSymbol(symbolName)
@@ -1806,19 +1786,17 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 		if _, _, exists := blockRes.GetSymbol(m.name); exists {
 			continue
 		}
-		symbol := model.NewVariableSymbol(m.name, m.isPublic, false, false)
-		symbol.SetLocation(diagnostics.NewBuiltinLocation())
+		symbol := model.NewVariableSymbol(m.name, m.isPublic, false, false, diagnostics.NewBuiltinLocation())
 		blockRes.AddSymbol(m.name, &symbol)
 	}
 
 	if initFn != nil {
 		signature := model.FunctionSignature{}
-		symbol := model.NewFunctionSymbol("init", signature, false)
+		symbol := model.NewFunctionSymbol("init", signature, false, symbolLocationForNode(initFn))
 		addSymbolAndSetOnNode(blockRes, "init", symbol, initFn)
 	}
 
-	selfSymbol := model.NewVariableSymbol("self", false, false, false)
-	selfSymbol.SetLocation(diagnostics.NewBuiltinLocation())
+	selfSymbol := model.NewVariableSymbol("self", false, false, false, diagnostics.NewBuiltinLocation())
 	blockRes.AddSymbol("self", &selfSymbol)
 
 	for _, field := range fields {
@@ -1875,8 +1853,7 @@ func allocateServiceResourceMethodSymbols(blockRes *blockSymbolResolver, resourc
 }
 
 func allocateResourceMethodSymbol(targetScope methodSymbolTargetScope, rm *ast.BLangResourceMethod, symbolName string, isPublic bool) model.SymbolRef {
-	symbol := model.NewResourceMethodSymbol(symbolName, rm.Name.GetValue(), isPublic)
-	symbol.SetLocation(symbolLocationForNode(rm))
+	symbol := model.NewResourceMethodSymbol(symbolName, rm.Name.GetValue(), isPublic, symbolLocationForNode(rm))
 	targetScope.AddSymbol(symbolName, symbol)
 	symRef, _ := targetScope.MainSpace().GetSymbol(symbolName)
 	rm.SetSymbol(symRef)
@@ -1914,8 +1891,7 @@ func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangR
 			semanticError(functionResolver, "redeclared symbol '"+name+"'", seg.GetPosition())
 			continue
 		}
-		symbol := model.NewVariableSymbol(name, false, false, true)
-		symbol.SetLocation(seg.GetPosition())
+		symbol := model.NewVariableSymbol(name, false, false, true, seg.GetPosition())
 		functionResolver.AddSymbol(name, &symbol)
 	}
 	resolveFunctionInner(functionResolver, rm.RequiredParams, rm.RestParam, rm, rm.Body)

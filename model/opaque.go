@@ -63,8 +63,7 @@ func (s *OpaqueFunctionSymbol) Kind() SymbolKind { return SymbolKindFunction }
 func (s *OpaqueFunctionSymbol) Location() diagnostics.Location {
 	return diagnostics.NewBuiltinLocation()
 }
-func (s *OpaqueFunctionSymbol) SetLocation(diagnostics.Location) {}
-func (s *OpaqueFunctionSymbol) IsPublic() bool                   { return true }
+func (s *OpaqueFunctionSymbol) IsPublic() bool { return true }
 func (s *OpaqueFunctionSymbol) Type() semtypes.SemType {
 	panic("opaque function must be monomorphized")
 }
@@ -98,7 +97,7 @@ var (
 )
 
 func newOpaqueTypeSymbol(name string, ty semtypes.SemType, index int) *OpaqueTypeSymbol {
-	ts := NewTypeSymbol(name, true)
+	ts := NewTypeSymbol(name, true, diagnostics.NewBuiltinLocation())
 	ts.SetType(ty)
 	return &OpaqueTypeSymbol{TypeSymbol: ts, opaqueID: index}
 }

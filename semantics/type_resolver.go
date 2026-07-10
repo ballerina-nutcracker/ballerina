@@ -1388,7 +1388,7 @@ func createRuntimeAnnotationGlobal(t typeResolver, expr ast.BLangExpression) *va
 			break
 		}
 	}
-	symbol := model.NewVariableSymbol(name, false, false, false)
+	symbol := model.NewVariableSymbol(name, false, false, false, diagnostics.NewBuiltinLocation())
 	symbol.SetType(semtypes.ANY)
 	resolver.scope.AddSymbol(name, &symbol)
 	ref, _ := resolver.scope.GetSymbol(name)
@@ -1990,7 +1990,7 @@ func setOtherNodesAsNever(node ast.BLangNode) {
 func allocateDefaultFnSymbol(t typeResolver, fieldTy semtypes.SemType) model.SymbolRef {
 	fnName := t.nextDefaultFnName()
 	sig := model.FunctionSignature{ReturnType: fieldTy}
-	fnSymbol := model.NewFunctionSymbol(fnName, sig, false)
+	fnSymbol := model.NewFunctionSymbol(fnName, sig, false, diagnostics.NewBuiltinLocation())
 	scope := t.currentScope()
 	scope.AddSymbol(fnName, fnSymbol)
 	ref, _ := scope.GetSymbol(fnName)
@@ -7520,7 +7520,7 @@ func containerArgExpr(args []ast.BLangExpression, paramName string) (ast.BLangEx
 // storeMonomorphizedOpaqueFn builds the monomorphic symbol for sig, adds it to
 // the opaque symbol's space, sets its type, and caches it under containerTy.
 func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, sig model.FunctionSignature, containerTy semtypes.SemType) model.SymbolRef {
-	mono := &monomorphicOpaqueFn{FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true), poly: polymorphicRef}
+	mono := &monomorphicOpaqueFn{FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true, diagnostics.NewBuiltinLocation()), poly: polymorphicRef}
 	mono.SetType(typeFromFunctionSignature(t, sig))
 	space := sym.SymbolSpace
 	idx := space.AppendSymbol(mono)
