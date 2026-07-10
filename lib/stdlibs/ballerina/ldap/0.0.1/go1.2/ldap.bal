@@ -22,7 +22,7 @@ public isolated client class Client {
     #
     # + config - The configurations to be used when initializing the client
     # + return - An `ldap:Error` if client initialization failed
-    public isolated function init(*ConnectionConfig config) returns Error? {
+    public isolated function init(ConnectionConfig config) returns Error? {
         return self.initLdapConnection(config);
     }
 
