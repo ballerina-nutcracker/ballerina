@@ -1529,15 +1529,6 @@ func (b *BLangTestablePackage) AddIsLegacyMockingMap(id string, isLegacy bool) {
 	b.isLegacyMockingMap[id] = isLegacy
 }
 
-func createSimpleVariableNodeWithLocationTokenLocation(location diagnostics.Location, identifier tree.Token, identifierPos diagnostics.Location) *BLangSimpleVariable {
-	memberVar := createSimpleVariableNode()
-	memberVar.pos = location
-	name := createIdentifierFromToken(identifierPos, identifier)
-	BLangNode(&name).SetPosition(identifierPos)
-	memberVar.SetName(&name)
-	return memberVar
-}
-
 func createSimpleVariableNode() *BLangSimpleVariable {
 	return &BLangSimpleVariable{}
 }

@@ -46,6 +46,27 @@ func TestRecoveringNodeBuilderIncludesMinutiaeInNodeRanges(t *testing.T) {
 	assertLocationOffsets(t, recoveringReturn.GetPosition(), strings.Index(source, "\treturn;"), strings.Index(source, "\n}")+1)
 }
 
+func TestRecoveringNodeBuilderHandlesMissingIdentifiers(t *testing.T) {
+	testCases := []struct {
+		name   string
+		source string
+	}{
+		{name: "function name", source: "function () {}"},
+		{name: "parameter name", source: "function foo(int ) {}"},
+		{name: "variable name", source: "function foo() { int = 1; }"},
+		{name: "named argument name", source: "function foo() { foo(=1); }"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			compilationUnit, _ := buildNodeBuilderCompilationUnit(t, testCase.source, true)
+			if len(compilationUnit.TopLevelNodes) == 0 {
+				t.Fatal("expected recovered top-level node")
+			}
+		})
+	}
+}
+
 func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
 	source := "// doc\nfunction foo() {}"
 	_, syntaxTree := buildNodeBuilderCompilationUnit(t, source, true)
