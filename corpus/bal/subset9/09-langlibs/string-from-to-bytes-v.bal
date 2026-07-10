@@ -21,4 +21,8 @@ public function main() returns error? {
 
     io:println(check string:fromBytes(bytes)); // @output Hello
     io:println(string:toBytes("Hello")); // @output [72,101,108,108,111]
+
+    // error case
+    byte[] bad = [255];
+    io:println(string:fromBytes(bad)); // @output error("invalid UTF-8 byte array")
 }
