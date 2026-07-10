@@ -26,7 +26,7 @@ This key can also be found at `keys.openpgp.org`.
 
 ### Vulnerability Report Template
 
-Please include the following information when reporting vulnerabilities so that it contains all the required information that helps expedite the analysis and mitigation process.
+Please include the following information when reporting vulnerabilities to expedite the analysis and mitigation process.
 
 - **Vulnerable Ballerina artifact(s) and version(s):** list the vulnerable Ballerina artifact(s) and version(s)
 - **Overview:** provide a high-level overview of the issue and self-assessed severity
@@ -34,9 +34,9 @@ Please include the following information when reporting vulnerabilities so that 
 - **Impact:** state self-assessed impact
 - **Solution:** propose a solution if you have one
 
-We will keep you informed of the progress towards fixing and disclosing the vulnerability if the reported issue is identified as a true positive.
+If the reported issue is confirmed to be valid, we will keep you informed of the progress of the fix and disclosure.
 
-## Handle a Vulnerability
+## Vulnerability Handling Process
 
 Here is an overview of our approach to handling vulnerabilities:
 
