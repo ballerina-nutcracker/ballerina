@@ -23,6 +23,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -319,12 +320,18 @@ func splitStderrDiagnostics(stderr string) []string {
 	return diagnostics
 }
 
+// logTimestampPattern matches the leading "time=<RFC3339>" field of a
+// ballerina/log LOGFMT record so it can be normalized to a stable token,
+// keeping golden files deterministic across runs.
+var logTimestampPattern = regexp.MustCompile(`time=\S+`)
+
 func normalizeIntegrationStderr(stderr string) string {
 	stderr = strings.TrimSpace(stderr)
 	if stderr == "" {
 		return ""
 	}
 
+	stderr = logTimestampPattern.ReplaceAllString(stderr, "time=<TIME>")
 	diagnostics := splitStderrDiagnostics(stderr)
 
 	slices.Sort(diagnostics)
@@ -876,11 +883,11 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	}
 
 	// Run compilation pipeline
-	implicitImports, err := langlib.ImplicitImports(cx)
+	langlibs, err := langlib.Build(cx, publicSymbols)
 	if err != nil {
 		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
 	}
-	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(cx, syntaxTrees, implicitImports, publicSymbols, defaultOrg)
+	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(cx, syntaxTrees, langlibs.ImplicitImports, langlibs.PublicSymbols, defaultOrg)
 	pkgScope, _ := semantics.ResolveSymbols(cx, *pkgID, importedSymbolsByCU)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")

@@ -1,0 +1,117 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina crypto (as crypto))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable pbes2 (type
+          (value-type string)) (expr
+          (string-template-literal
+            (template-string "\n-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIba1oPEjXWZkCAggA\nMAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBCpntLqaIEuOa6HfQoVEmtTBIIE\n0Jz8FuHIArJ93w0mcqt3wgSvRGyTfOmCIiR3r5xSZLJwyGgMsJf3e8kD2A8mBdls\nFPjRaaTCEUqGjZx6N2zFJSqzbzKnWqOn3LCYK1MfYsnFEfxTv+LClsv777gmUusa\nBLmEoL46uQ2iw13Ow9a2AglS1wlG85gAUeVoAPK60UGk824hCQEzMJyOQZ/C8w8d\nIu6hR/aSbbyCvW9y2FNYFJ9EOqtROCeufx9Jkd8SZnvZnQDoPwDcjApwytGNRZbh\ntjgpZ2VTRP/hLJuUT/FD8rurPL5UacWD1I5f0OMb8VPHmjP08RUTJJPb+Ey4zc3O\nGaBUsf/TaW5ooVRBuqFWp9+/bHOiZFWUC3Arqzg5l8OF1vwD/56gaXy2mb42mbyG\nJsmYNtPABk029IfFspiScFSggaDfMkN57NcQdVSvgT32sdRUuNNnX+4Z82PylJqu\n5fjXiK+0wytipWIJNNMZygXrC5Z3BpLfVhp7YANNWhOuEPeBUyOhl3ueqGDom9+z\nxILmHaetzvAR652kSoTDGdbVReFRfbVJlZRhneB60iNgObUlBQqqQVtBAa60Msjh\nDqRn6ZNlDFfuvPlDrSS+lc6c8/dd+f507NBh22nNANNx02VOqNRb5/o2tPg0cXt5\nMNsqtxw/NhYIJ0Ypc4K9da8nUndvgPfjiQZk3ghOwvN7apkwHDCEMcytqeJ30WNK\nbTxP9ZJy0pEW6YsAzekuVozV5anm7R+MfvvoA9MEyp9KKwKfzu9/sf0nbMPfBHOQ\n41L3ldzQJed40T/SJIqs18QeAM5Tz9VImGeq7RqWMayqFkVQl9zFWIWVVv09aTB0\nCB3450jAktXOlE6bgu8wQML3PkNxT+3oLYwUWjqejIpM0/3uegGFSKYAgVNYsSCt\nnRpAN+ISiIY8fFZ/zZYJuWr6tzKiFkyQg/8WWj2LELNsFNxmKDw6vXYXCT/VW9FD\nZseKHBvfxlvJ1tOeWiM6PtDonqVVjzbWq8WYs02C0CAovNe35BSfsTHxmzVwmwSr\nlBphLE9pGDKARmGtXec5Lq6UX2nWti4+Y34gQ60mSR3A+db2PbITFxeqrFPb02h8\nA51H4ZzqVORWSRp1GCCCLmUl7m1YIkKHDD3P6UI7QywiB2I9ALo/Ow3Hzd8gU2Gs\nwiNT35vGUOkABaya7EQGkLvbFxb/M3t7U5yC+CCMz4ummFt4oLG/FuYFWE2MG2c1\nY4unteJrWPQVvLsWVPflw1LTSS0Ae6YUvBbK6b9KhPVw+i7xvD1xe31gVoBOK6ht\nMaZ4HYhrGstGd4K8LwFmspFZ25CeZYdETxt/b3mL60WgQiayPka6lOA9N4pSgBLZ\nYMcbgppoER9dZwaXI0ZK/50hVMozuOgWkcVe9eldKJ/eVVa8AKyd0wLPMeODKSUF\nhmUofn1BvlFbG9+gK8sJJZcfbQ4qHPtkU2zDjQ+xDFOpqtImLg1ot224pPaFW+IZ\nIUWtAnhDqLqtXHTQj6PbxzmbhiygtL4ID0qimS/IFb+Y9pT/IN8rdiiGYUicQbwu\nEubczj1asLiR3WmG1u2v/ntgx3FESVPFlpEMX66jA4DTWUF8aSNSNZIhKoIorIVZ\n7zHOeuPbInRBgp4S7e5u4P6yRVVcCQiiETIIa78EvdjF\n-----END ENCRYPTED PRIVATE KEY-----\n")))))
+      (var-def
+        (variable pbe3des (type
+          (value-type string)) (expr
+          (string-template-literal
+            (template-string "\n-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIE6jAcBgoqhkiG9w0BDAEDMA4ECJuqLPOnQa2JAgIIAASCBMh9IsInoSBq7Q5H\nLYPZcfZd43+62d8TQEcomLPXgnyfDbYKfpT6Kqn9M0C23RKfRbHTZzMVz5OoLVyX\nQRklhuoQ1UaqAX2cWAGRqN7vCoOuHKwbgcrRJaDJZTfXPSwLZTOrX98RXrCkFJSm\nJOnAnhPld/EXnTnWJ5bIm/z4cxIJ36VK7ALnaLGWFbYqmO2W4PmpNv0EpOlnvsHJ\n7rINWVYWiY94O/Z+rcM6SDxHKgu0Avab3xxsDuD5ZWdDxNYZ9IPWhTPU70YQlyLH\nvvkbn79V8K9xtiZSQGitmjrRgcPFQiZVHmwAhmL+2LapcICeKpbzwcAg2JDHZXX2\n7c6FyGtaHxobAy6qfKiAbLZD/ZqJcqzUNzUW1n5F489GW6BtJj1o5RUo76s8VsQX\nOlJE4VFuQ1kkWyQl99/V7gLkYhUyv7IS46ZT2LMLDqp3Ut4oQJ7jBg6gmPoWDXG9\nRHSeZi+D+oaEFNJAzg4TE4k2bH72ResKqEsCerUdq6OhGTBUDq9GbPtxx3lq/g5k\nT1OWI8d5Do1OSSPaiqnZ7lq/FGKmLY0n6r8cBF0NUGQuzqzkI2d69E5ypgQRXbql\ni5fKjJq0ApyHkLG056LEZBnslqsfhJFtzF+fGTl3Qp4Z5Upkx3bHVYgM3x48lZI8\nPWaSwVjknvJZz1zgD4S/leRpIX/OAyZjV2U7s+C3NzJGItS6oLFJ1AqwvPt8lALB\nHQWaAHPA2nTSgiMxUHge4s9B5D4DkrxmkdYn4dhkGGEDIAQEKlrNLnLLPVW7S178\nzqh5bTKtxmE4DsOQYdB6gACYBlmvneDyGJcD3pqnUAZ4r3x3h9k5GPd0BxKy9EHY\nGdjoI5iBTMn+isnyU12VBqpKMfJQJ2iFpCIBm1wsEMgOhG+ApWY1Ey0Ueq+GgXnF\n1gP3Kg2hJd3cAgQQyDkRhuLgiaq3FUyzOxOM0K4hYskKcdYUW8Q4BOjAdc/Dg/38\nnP6g1mP4UYFWvCrcXPd+cvzSsPnBUCNjlm9As7qrXhOE8JjHi3czlZ8WVb6ztn3j\nV8uXoBzWito7CLBKuRH3xlwTdu2HoNYc1VWvBw0ev41Vdsjvt/yYU5xkqHnl0toj\nr9gZSjRWqQFVrMMnNaCfLEjtUoaO7bMP8jswDAWg5yo3JGlRTbLK4nhuQnELBYF/\nM3GEI70LF8D7XV2990j+DCeTaFBUvoVmx+ejFgHNkCl7MDHWYpudAOcSZkg1Khcx\nT7QxBKZBNWgsYPpqh9nV06X/B2wTQQR4cCGbJpNtC0Iz3FhwtmcJgcssihMcPh+A\n/JAEObH6NjwM4EZDZ1DpXHYrNd3RpdRAaw3W78eroLcOgtaPQhYSLurjFoBkTn1f\nsLDuc82BCOJX2x7H61DBsyKXjaK2PxipNzp6CnOzuK7spqicX75TPxhd0veVYoz1\n0C1C2tySFiNuloRjX+cjDnLaMc+NHMGNgWUnRLNMSzSPYVYCH7JhEIqfpl/qhxEa\nmtXQfoIfTjPw0jhmVJFgGzdS3oGT55OsHwPU52RVAsZy9fPkdUwljiKqh/FNqwln\nYK0XHn/365pT5B9JmZv67pYshER89jrsiIzIJWtCuCunbQjPqBpUnrwS7JnGePb+\n98uNed8A/P4KLyjarx0=\n-----END ENCRYPTED PRIVATE KEY-----\n")))))
+      (var-def
+        (variable pbeRc2 (type
+          (value-type string)) (expr
+          (string-template-literal
+            (template-string "\n-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIE6jAcBgoqhkiG9w0BDAEGMA4ECFEItfcbqDcdAgIIAASCBMhke/d+8rGk9cin\nXpDDa/Qqf9m1H7l4op8RsvlWNCj9nNb84F3b91laJTdFqA3CvTQCI8duxuPxh0lM\nGaz/RNfmFIeb4ApQb1hIQLowdTcJb/TmiUdYPY8MdEYXs0txi9X2UWzDV59jje78\noi3FK6o3UwfTz/HR2eDqcBGlECfO6+lob8IhrOcxr5N7HWPkKZsGkAk1g3LdR1Cy\n6T+pRSv3zugyRNLbZITO56qxMUzmlA6sglE547LQdktCSgJwQQsoy9OadLhNxrrA\nd4D7r1ZIguNZFZepzqVLKhsZfklNr3NvAsTBB2i5cj7VaaVo3jrO6Sp5XtcKvbvY\nqwVNzQ+R17jcnY/LszzS0DawIsRI/2/fCK5A6WOe9bzKyPQEaMem/3N8AyIwdkkW\ncUkmwucovzhPZLS8edgbTZH42mSnnd4v/IGt3hfijlUj20d5B+/QinHGPbAFT0+l\nKYW8yG0r6y2wAzbo4KiA2QPwxIKh6VOLQA4LWw2Hvk6eeHfLwY1SreWsb499X5Qs\n6Gu4zKPLGlUTdUFaw+7C7slKwzg7gJQzcYjKlm0h6AT0T7FFoUwvtE8TMNVpMNDu\nXf4heOPSnNc9pjtcmShGKNzXOLgY4Q/Uu9ZGE7HN1DA34Zs5n8vIKAlm2CwS/bmW\nYHesQzEI7Z6DcGdlzFkGkR9RdJIvh7HDQuOWcSB+so0J+7zUCuj4xT2pUAbWIhVO\nRWiA3VHEK0Yqnu3bo/LuIplHGOGDWqmOH6jpW3vcFnXWAqkj/hpA9Lek6+sOJFD9\nNNW8/uOBcgAcL/abuALRNHgfMKgEY5TulAO9MPMa4s8AdaHUWjckBzrvjkCdpR5d\nWcdKgIoJ/fcljqPo5avKi+gXOeA0wksu9X9tCDJ+bSltAj7WeZ051sDC2/kRIYP7\n05lmjtFDFRN8SpuejfErIX5Jo4jTh888Gbq15TfRyzj2Ei4PKl/0BpkZPY9AgutC\n8/o4oog9J6SBJf0j0F/neVvczmFCbJG8dhV0JlPMROwssvckQhLy4+Wud1b8eu1d\nCjhdvnaAr5zMjR1iBpHjqaEwazR45ZW8pQXlb3R0Vd5yrFnvlqGy5fD1Pq5Y+F6p\n8kNEd8RdUg7ZDCZty3SlbYyiFAKQQZ3ch4sbP0vyyW5hX+5FgFARbjkEUlxYXfuW\noz0M182BKRDPHPNUgOk1w4L+9Lzo8TUby1bnRLQsMn2GEhhuu7lzOPxAfS+DNW7D\ndgkhyp17rc45UOzB1xxktnxcJ5vhSJF7ajAhR0heD04sJWLD+ZzgE/LtDV3pAbK/\nexNeNjvOfxEJe9E2gPAix+lZRTALz1hchlxwyUHTJrqEBMOF5ku6FhggGCmW4u5v\nJeMDjKzXE99A5ypkeEtTANLGbLJLlVkNJNGE0yWA9mVYID408XpktkIUFglJe20/\nyNSt+WNK5w6djf/vV7XI0M9AC2DP2Z9fHTUM/cKaOM5tdj6mKbEhgHDu2XP5TXij\nA8FmC8IWesumx8u1VLbBDzTYnBrzGwcko0C1O3EkXEETvDTsy0tR+JbFlvFkWLt/\nnLeTNwUJiopn9b9ithE4KXI//iJ/NX9+gU1kkmGufLJW8sLYO+PeDDJ7hANniUh2\nO7ekKjOszIhNsvlgkHI=\n-----END ENCRYPTED PRIVATE KEY-----\n")))))
+      (var-def
+        (variable data (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (literal /tmp/bal_crypto_enc.pem)
+            (simple-var-ref pbes2)))))
+      (var-def
+        (variable pkPbes2 (type
+          (user-defined-type crypto PrivateKey)) (expr
+          (checked-expr
+            (invocation crypto decodeRsaPrivateKeyFromKeyFile (
+              (literal /tmp/bal_crypto_enc.pem)
+              (literal secret)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation length expr:
+              (group-expr
+                (checked-expr
+                  (invocation crypto signRsaSha256 (
+                    (simple-var-ref data)
+                    (simple-var-ref pkPbes2))))) ())
+            (literal 0)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (literal /tmp/bal_crypto_enc.pem)
+            (simple-var-ref pbe3des)))))
+      (var-def
+        (variable pk3des (type
+          (user-defined-type crypto PrivateKey)) (expr
+          (checked-expr
+            (invocation crypto decodeRsaPrivateKeyFromKeyFile (
+              (literal /tmp/bal_crypto_enc.pem)
+              (literal secret)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation length expr:
+              (group-expr
+                (checked-expr
+                  (invocation crypto signRsaSha256 (
+                    (simple-var-ref data)
+                    (simple-var-ref pk3des))))) ())
+            (literal 0)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (literal /tmp/bal_crypto_enc.pem)
+            (simple-var-ref pbeRc2)))))
+      (var-def
+        (variable pkRc2 (type
+          (user-defined-type crypto PrivateKey)) (expr
+          (checked-expr
+            (invocation crypto decodeRsaPrivateKeyFromKeyFile (
+              (literal /tmp/bal_crypto_enc.pem)
+              (literal secret)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation length expr:
+              (group-expr
+                (checked-expr
+                  (invocation crypto signRsaSha256 (
+                    (simple-var-ref data)
+                    (simple-var-ref pkRc2))))) ())
+            (literal 0)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (literal /tmp/bal_crypto_enc.pem)
+            (simple-var-ref pbes2)))))
+      (var-def
+        (variable bad (type
+          (union-type
+            (user-defined-type crypto PrivateKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPrivateKeyFromKeyFile (
+            (literal /tmp/bal_crypto_enc.pem)
+            (literal wrong))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bad)
+            (user-defined-type crypto Error))))))))

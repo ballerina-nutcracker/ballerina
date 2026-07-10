@@ -79,11 +79,18 @@ type stdlibEntry struct {
 
 // builtinStdlibs is the ordered list of standard-library packages baked into the
 // binary that are still seeded manually for hand-rolled compile drivers.
+// Order matters: a package must appear after all packages it imports
+// (e.g. io before os, time before crypto).
 var builtinStdlibs = []stdlibEntry{
+	{"ballerina", "io", "0.0.1", "go1.26"},
 	{"ballerina", "http", "0.0.1", "go1.26"},
+	{"ballerina", "log", "0.0.1", "go1.26"},
 	{"ballerina", "math.vector", "0.0.1", "go1.26"},
+	{"ballerina", "os", "0.0.1", "go1.26"},
+	{"ballerina", "random", "0.0.1", "go1.26"},
 	{"ballerina", "time", "0.0.1", "go1.26"},
 	{"ballerina", "url", "0.0.1", "go1.26"},
+	{"ballerina", "crypto", "0.0.1", "go1.26"},
 }
 
 // loadBuiltinPublicSymbols compiles the embedded standard-library packages into
@@ -122,9 +129,9 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 		cu.SetPackageID(pkgID)
 		compilationUnits := []*ast.BLangCompilationUnit{cu}
 
-		// The stdlib packages have no imports of their own.
+		// Pass accumulated stdlib symbols so packages that import other stdlibs (e.g. os→io, crypto→time) resolve correctly.
 		importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, semantics.GetImplicitImports(cx),
-			make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace), entry.org)
+			result, entry.org)
 		pkgScope, exported := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
 		if cx.HasErrors() {
 			continue

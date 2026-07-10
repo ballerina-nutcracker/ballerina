@@ -1,0 +1,169 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 104
+    %2 = ConstantLoad 101
+    %3 = ConstantLoad 108
+    %4 = ConstantLoad 108
+    %5 = ConstantLoad 111
+    %6 = ConstantLoad 5
+    %7 = newArray [int:Unsigned8...][%6]{%1, %2, %3, %4, %5}
+    input = %7;
+    %9 = ConstantLoad 115
+    %10 = ConstantLoad 97
+    %11 = ConstantLoad 108
+    %12 = ConstantLoad 116
+    %13 = ConstantLoad 4
+    %14 = newArray [int:Unsigned8...][%13]{%9, %10, %11, %12}
+    salt = %14;
+    %16 = ConstantLoad 105
+    %17 = ConstantLoad 110
+    %18 = ConstantLoad 102
+    %19 = ConstantLoad 111
+    %20 = ConstantLoad 4
+    %21 = newArray [int:Unsigned8...][%20]{%16, %17, %18, %19}
+    info = %21;
+    $desugar$0 = input;
+    %24 = ConstantLoad 32
+    $desugar$1 = %24;
+    %26 = $desugar$1;
+    %27 = $default$15($desugar$0,%26) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %27;
+    %29 = $desugar$1;
+    %30 = $default$16($desugar$0,%29,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %30;
+    %32 = $desugar$1;
+    %33 = hkdfSha256($desugar$0,%32,$desugar$2,$desugar$3) -> bb3;
+  }
+  bb3 {
+    $desugar$4 = %33;
+    %35 = $desugar$4 is error
+    %35 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    %36 = length($desugar$4) -> bb6;
+  }
+  bb6 {
+    %37 = %36;
+    %38 = println(%37) -> bb7;
+  }
+  bb7 {
+    %39 = ConstantLoad 64
+    %40 = %39;
+    %41 = hkdfSha256(input,%40,salt,info) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %41;
+    %43 = $desugar$5 is error
+    %43 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    d1 = $desugar$5;
+    %45 = length(d1) -> bb11;
+  }
+  bb11 {
+    %46 = %45;
+    %47 = println(%46) -> bb12;
+  }
+  bb12 {
+    %48 = ConstantLoad 64
+    %49 = %48;
+    %50 = hkdfSha256(input,%49,salt,info) -> bb13;
+  }
+  bb13 {
+    $desugar$6 = %50;
+    %52 = $desugar$6 is error
+    %52 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    d2 = $desugar$6;
+    %54 = == d1 d2;
+    %55 = %54;
+    %56 = println(%55) -> bb16;
+  }
+  bb16 {
+    %57 = equalConstantTime(d1,d2) -> bb17;
+  }
+  bb17 {
+    %58 = %57;
+    %59 = println(%58) -> bb18;
+  }
+  bb18 {
+    %60 = ConstantLoad 64
+    %61 = %60;
+    %62 = hkdfSha256(input,%61,info,salt) -> bb19;
+  }
+  bb19 {
+    $desugar$7 = %62;
+    %64 = $desugar$7 is error
+    %64 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    other = $desugar$7;
+    %66 = equalConstantTime(d1,other) -> bb22;
+  }
+  bb22 {
+    %67 = %66;
+    %68 = println(%67) -> bb23;
+  }
+  bb23 {
+    %69 = ConstantLoad abc123
+    %70 = ConstantLoad abc123
+    %71 = equalConstantTime(%69,%70) -> bb24;
+  }
+  bb24 {
+    %72 = %71;
+    %73 = println(%72) -> bb25;
+  }
+  bb25 {
+    %74 = ConstantLoad abc123
+    %75 = ConstantLoad def456
+    %76 = equalConstantTime(%74,%75) -> bb26;
+  }
+  bb26 {
+    %77 = %76;
+    %78 = println(%77) -> bb27;
+  }
+  bb27 {
+    %79 = ConstantLoad 0
+    %80 = %79;
+    %81 = hkdfSha256(input,%80,salt,info) -> bb28;
+  }
+  bb28 {
+    badLen = %81;
+    %83 = badLen is error
+    %84 = %83;
+    %85 = println(%84) -> bb29;
+  }
+  bb29 {
+    return;
+  }
+}

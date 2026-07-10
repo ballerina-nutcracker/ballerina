@@ -1,0 +1,17 @@
+(package
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable home (type
+          (value-type string)) (expr
+          (invocation os getUserHome ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.string length (
+              (simple-var-ref home)))
+            (literal 0))))))))

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: foreach iterator does not have a next method
+error[SEMANTIC_ERROR]: foreach collection must be subtype of object:Iterable
   --> foreach-var-no-next-e.bal:25:22
    |
 25 |     foreach var _ in b { // @error

@@ -37,6 +37,8 @@ class WordIterator {
 }
 
 class Words {
+    *object:Iterable;
+
     string[] data = ["hello", "world"];
 
     public function iterator() returns WordIterator {

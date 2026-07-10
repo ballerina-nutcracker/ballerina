@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (invocation lang.string length (
+            (invocation os getUsername ())))
+          (literal 0)))))
+    (expression-stmt
+      (checked-expr
+        (invocation os setEnv (
+          (literal BAL_TEST_LISTENV)
+          (literal present)))))
+    (var-def
+      (variable envs (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type string))) (expr
+        (invocation os listEnv ()))))
+    (var-def
+      (variable v (type
+        (union-type
+          (value-type string)
+          (value-type null))) (expr
+        (index-based-access
+          (simple-var-ref envs)
+          (literal BAL_TEST_LISTENV)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+    (expression-stmt
+      (checked-expr
+        (invocation os unsetEnv (
+          (literal BAL_TEST_LISTENV)))))
+  )
+)

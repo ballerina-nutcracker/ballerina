@@ -58,3 +58,6 @@ parser/testdata/**/*.json
 
 # Local lint tool binary
 /bin/golangci-lint
+
+# Ephemeral report produced by the validate-stdlib-contract skill
+CONTRACT_VALIDATION.md

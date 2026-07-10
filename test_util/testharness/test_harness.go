@@ -40,6 +40,7 @@ import (
 
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/platform/pal"
+	"ballerina-lang-go/platform/palnative"
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
@@ -247,6 +248,34 @@ func (p *testPal) Platform() pal.Platform {
 				_, err = f.Write(data)
 				return err
 			},
+		},
+		OS: pal.OS{
+			GetEnv:      os.Getenv,
+			GetUsername: func() string { return "test" },
+			GetUserHome: func() string {
+				home, err := os.UserHomeDir()
+				if err != nil {
+					return ""
+				}
+				return home
+			},
+			SetEnv:   os.Setenv,
+			UnsetEnv: os.Unsetenv,
+			ListEnv: func() map[string]string {
+				result := make(map[string]string)
+				for _, e := range os.Environ() {
+					for i := 0; i < len(e); i++ {
+						if e[i] == '=' {
+							result[e[:i]] = e[i+1:]
+							break
+						}
+					}
+				}
+				return result
+			},
+			// Real subprocess execution (like SetEnv/GetEnv above, which hit the
+			// real OS) so os:exec can be exercised end-to-end from corpus tests.
+			Exec: palnative.Exec,
 		},
 		Time: pal.Time{
 			Now:          time.Now,
@@ -557,8 +586,10 @@ func checkExpectedOutputInvariants(t *testing.T, tc test_util.TestCase, stdout, 
 	stderrNonEmpty := strings.TrimSpace(stderr) != ""
 	switch tc.Suffix() {
 	case test_util.SuffixValid:
-		if stderrNonEmpty {
-			t.Fatalf("-v test %q has non-empty expected stderr:\n%s", tc.Name, stderr)
+		// A -v test may write to stderr intentionally (e.g. ballerina/log
+		// records), but it must never leak a compile diagnostic there.
+		if stderrNonEmpty && strings.HasPrefix(strings.TrimSpace(stderr), "error[") {
+			t.Fatalf("-v test %q leaked a compile diagnostic to stderr:\n%s", tc.Name, stderr)
 		}
 		if strings.Contains(stdout, "panic:") {
 			t.Fatalf("-v test %q has a runtime panic in expected stdout:\n%s", tc.Name, stdout)
@@ -610,11 +641,17 @@ func splitStderrDiagnostics(stderr string) []string {
 	return out
 }
 
+// logTimestampPattern matches the leading "time=<RFC3339>" field of a
+// ballerina/log LOGFMT record so it can be normalized to a stable token,
+// keeping golden files deterministic across runs.
+var logTimestampPattern = regexp.MustCompile(`time=\S+`)
+
 func normalizeIntegrationStderr(stderr string) string {
 	stderr = strings.TrimSpace(stderr)
 	if stderr == "" {
 		return ""
 	}
+	stderr = logTimestampPattern.ReplaceAllString(stderr, "time=<TIME>")
 	diags := splitStderrDiagnostics(stderr)
 	slices.Sort(diags)
 	return strings.Join(diags, "\n\n") + "\n"
@@ -749,8 +786,10 @@ func assertAnnotations(t *testing.T, tc test_util.TestCase, stdout, stderr strin
 
 func assertOutputAnnotations(t *testing.T, anns annotations, stdout, stderr string) {
 	t.Helper()
-	if strings.TrimRight(stderr, "\n") != "" {
-		t.Errorf("expected empty stderr for -v test, got:\n%s", stderr)
+	// A -v test may write to stderr intentionally (e.g. ballerina/log records),
+	// but it must never leak a compile diagnostic there.
+	if s := strings.TrimSpace(stderr); s != "" && strings.HasPrefix(s, "error[") {
+		t.Errorf("-v test leaked a compile diagnostic to stderr:\n%s", stderr)
 	}
 	outputs, ok := singleOutputFile(t, anns)
 	if !ok {

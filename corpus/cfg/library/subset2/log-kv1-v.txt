@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation log printDebug (
+        (literal request received)
+        (named-arg keyValues
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 845315))
+            (key-value
+              (literal path)
+              (literal /api/v1)))))))
+    (expression-stmt
+      (invocation log printDebug (
+        (literal user details)
+        (named-arg keyValues
+          (mapping-constructor-expr
+            (key-value
+              (literal username)
+              (literal alice))
+            (key-value
+              (literal active)
+              (literal true))
+            (key-value
+              (literal score)
+              (literal 9.8)))))))
+    (expression-stmt
+      (invocation io println (
+        (literal ok))))
+  )
+)

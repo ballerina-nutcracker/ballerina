@@ -39,38 +39,43 @@ Then locate:
 
 Stop and ask if any of these is missing. If the Go module does not exist at all, this is a porting task — redirect to `add-stdlib-support`.
 
-## 2. Extract the jBallerina public surface
+## 2. Extract both public surfaces (tool-driven)
 
-Read every `.bal` under `<root>/ballerina/` and enumerate **only `public` declarations**:
+Do **not** enumerate public symbols by reading `.bal` files by eye — that is slow and misses symbols on large surfaces. Use the extraction tool shipped with this skill, which parses each `.bal` tree with this repo's own parser and emits a sorted, stable dump of every `public` declaration with its caller-observable signature:
 
-- functions (`public function` / `public isolated function`)
-- types — records, unions, aliases, object types, tuples (`public type`)
-- classes — including `client`, `service`, `readonly`, `isolated` (`public class`)
-- constants (`public const`), enums (`public enum`), annotations (`public annotation`)
-- public listeners and public module-level variables
+```shell
+go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface <jball-root>/ballerina > /tmp/<name>-jball.surface
+go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface lib/stdlibs/ballerina/<name>/0.0.1/go1.2 > /tmp/<name>-go.surface
+```
 
-Capture what a caller can observe:
+(Run from this repo's root. The tool skips `tests/` and `build/` subdirectories automatically and reports files it failed to parse on stderr — a parse failure means that file must be reviewed by hand; do not silently drop it.)
+
+The dump covers, per symbol kind:
 
 - **Functions** — name, parameter names + types + defaults, rest parameter, return type (including the error union).
 - **Types / records** — field names, types, optionality, `readonly`, defaults, and any inclusions.
-- **Classes / objects** — public methods (full signatures) and public fields, plus `client`/`service`/`readonly` qualifiers.
-- **Enums / consts** — members and values.
+- **Classes / objects** — public methods (full signatures) and public fields, plus `client`/`service`/`readonly`/`isolated` qualifiers.
+- **Enums / consts** — members and values. Also annotations, listeners, and public module-level variables.
 
-Ignore private declarations and `= external` plumbing — they are not part of the contract.
+Private declarations and `= external` plumbing are excluded — they are not part of the contract.
 
-## 3. Extract the Go public surface
+Then diff the two dumps:
 
-Run the same enumeration over `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/*.bal`.
+```shell
+diff -u /tmp/<name>-jball.surface /tmp/<name>-go.surface
+```
 
-## 4. Determine validation scope from the support matrix
+An empty diff over the in-scope symbols is a strong PASS signal; every diff hunk must be classified in Step 5. Spot-check a couple of symbols against the raw `.bal` source to confirm the tool's output is faithful before relying on it.
+
+## 3. Determine validation scope from the support matrix
 
 Read the README support table. Map each row whose status is **Supported**, **Partially Supported**, or **Cannot Support** (the Feature/API column is prose, per `stdlib-readme-format` — interpret it to the concrete public symbols it covers) into the **in-scope contract**. Rows marked **Not Yet Supported** are out of scope (deferred coverage).
 
 If a matrix row's prose can't be mapped to concrete symbols with confidence, note it as a 🟡 documentation gap rather than guessing.
 
-## 5. Compare and classify
+## 4. Compare and classify
 
-Compare the jBallerina surface (Step 2) and the Go surface (Step 3), bounded by the in-scope set (Step 4). Classify every symbol:
+Walk the Step 2 diff, bounded by the in-scope set (Step 3). Classify every symbol:
 
 - ✅ **Compatible** — in-scope (`Supported`/`Partially`), present in Go, signature matches jBallerina.
 - 🔵 **Gracefully degraded** — present in Go with a matching signature, but the implementation degrades to a documented **runtime error/warning**. Expected for `Cannot Support` rows and limited `Partially Supported` cases. **Acceptable** (does not fail) *provided* the degradation is documented in the README (matrix Comments / Notable Behavioural Changes) and is a runtime error/warning — not a compile error, not silent wrong behaviour.
@@ -88,16 +93,19 @@ Compare the jBallerina surface (Step 2) and the Go surface (Step 3), bounded by 
 - For records: field name, type, optionality, `readonly`, defaults, and inclusions all count.
 - For classes/objects: public methods + fields, and `client`/`service`/`readonly` qualifiers that affect the caller.
 - Qualifier differences a caller cannot observe (e.g. an `isolated` that doesn't change the call site) are **notes**, not breaks.
+- The tool dumps signatures as written in source; a purely textual difference that is semantically identical (e.g. whitespace inside a union, `int[] ` vs `int[]`) is **not** a break — confirm against the raw source before recording a 🔴.
 
-## 6. Cross-check accepted divergences
+## 5. Cross-check accepted divergences
 
 Read `AGENTS.md` for known interpreter limitations (`distinct` error subtypes aliased to `error`, `readonly &` intersections, `stream`, XML, full `typedesc` handling). A signature divergence wholly attributable to one of these is **🔵 Accepted (interpreter limitation)** — surfaced, not failed — *provided* it is recorded in the README **Notable Behavioural Changes**. If it is not documented there, downgrade it to 🟡 (documentation gap).
 
 So 🔵 covers both interpreter-limitation divergences and `Cannot Support` runtime-error degradations: both are acceptable only when documented.
 
-## 7. Write the report
+## 6. Write the report
 
-Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/CONTRACT_VALIDATION.md`, summary-first, problems up top, not technically deep:
+Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/CONTRACT_VALIDATION.md`, summary-first, problems up top, not technically deep.
+
+**Lifecycle:** this report is an ephemeral review artifact — regenerated in full on every run, never committed (`CONTRACT_VALIDATION.md` is gitignored). Overwrite any existing copy without preserving its content; the git-tracked contract of record remains the README support matrix.
 
 ```markdown
 # Public Contract Validation — ballerina/<name>
@@ -147,7 +155,7 @@ Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/CONTRACT_VALIDATION.md`, summar
 
 Keep each section short. Omit a 🔴/🟡/🔵 section entirely if it has no entries (but always keep Verdict, Summary, and Coverage).
 
-## 8. Verdict
+## 7. Verdict
 
 - **FAIL** if any 🔴 exists.
 - **PASS (with notes)** if only 🟡 / 🔵 / ⚪ exist.

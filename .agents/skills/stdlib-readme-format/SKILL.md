@@ -9,7 +9,7 @@ This skill defines the exact structure and rules for every `lib/stdlibs/ballerin
 
 ## Template
 
-Use this skeleton exactly. Do not add, remove, or reorder sections.
+Use this skeleton exactly. Do not add, remove, or reorder sections. One permitted extension: a large module may group its support tables under `###` subsections inside **Go Native Interpreter Support Status** (e.g. http's `### Client` / `### Request` / `### Response`), each subsection holding its own three-column table.
 
 ````markdown
 # Ballerina <Name> Library
@@ -83,25 +83,27 @@ Always `|---|---|---|`. Never wide-padded column separators.
   - Future potential divergences for features that are `Not Yet Supported` — document those in the Comments column of the relevant table row instead.
 - If there are no permanent changes, write the "no changes" sentence from the template rather than omitting the section.
 
-## Validation checklist
+## Validation
 
-Run this checklist against every README before saving. Every item must be YES.
+### Mechanical checks — run the script
 
-### Support table
-- [ ] Every Feature/API cell is prose — no backtick names, no parenthetical function names
-- [ ] Every `Supported` row with no meaningful caveat has an empty Comments cell
-- [ ] Table separator is `|---|---|---|` on every table
-- [ ] Module-level error type (e.g. `io:Error`) appears as a row in the table with status `Partially Supported` and a comment about `distinct` not yet supported
+From the repo root:
 
-### Notable Behavioural Changes
-- [ ] Section uses bullet list only — not a table, not numbered list
-- [ ] Each bullet has format `- **Title.** Explanation.`
-- [ ] No bullet describes behaviour that is identical to jBallerina
-- [ ] No bullet describes a temporary language gap (`distinct`, `readonly &`, `stream`, etc.)
+```shell
+python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py
+```
+
+It validates every per-package README **and** the aggregator in one pass: required sections and their order, status values, `|---|---|---|` separators, no backticks in Feature/API cells, no "Fully implemented and tested" filler in Supported rows, non-empty Comments on every gap row, bullet format, bullets-vs-"no changes"-sentence consistency, aggregator counts/percentages/Total footer recomputed from the per-package tables, verbatim bullet mirroring, and the closing "no changes" sentence membership. **It must exit 0 before you save** — fix every `FAIL` line it prints.
+
+### Judgment checks — verify by hand
+
+The script cannot check these; confirm each is YES:
+
+- [ ] Every `Supported` row's Comments cell is either empty or a *meaningful* caveat
+- [ ] If the module declares a module-level error type (e.g. `io:Error`), the table has a row tracking it with an accurate status — `Partially Supported` with a `distinct` comment when the type ships as a plain alias, `Not Yet Supported` when it isn't declared at all
+- [ ] No bullet describes behaviour identical to jBallerina
+- [ ] No bullet describes a temporary language gap (`distinct`, `readonly &`, `stream`, etc.) — those belong in the support table
 - [ ] No bullet describes a future feature's potential divergence
-- [ ] If no permanent changes exist, the "no changes" sentence is present
-
-### Content accuracy
 - [ ] Key Functionalities reflects only currently supported features
 - [ ] Examples use only currently supported APIs
 - [ ] No `Not Yet Supported` row that was just implemented in this session
@@ -121,9 +123,11 @@ The repo ships a top-level aggregator at `lib/stdlibs/ballerina/README.md` — a
 Maintenance rules — after every per-package README change:
 
 - Recount `Supported`, `Partially Supported`, and `Not Yet Supported` rows from the updated per-package `README.md`, and update that package's row in the aggregator table.
-- Recompute support %: `round(Supported / Total * 100)` where `Total = Supported + Partially Supported + Not Yet Supported + Cannot Support`.
-- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo).
-- Recompute the **Total** footer row (sum of each column; the % cell is `round(TotalSupported / TotalTotal * 100)`).
-- Mirror the package's **Notable Behavioural Changes** bullets verbatim into the matching `### <package>` subsection of the aggregator. Add a `### <package>` subsection when a package gains its first behavioural change; remove it (and add the package to the closing "no notable behavioural changes" sentence) when it has none.
+- Recompute support %: `round(Supported / Total * 100)` where `Total = Supported + Partially Supported + Not Yet Supported + Cannot Support`. **Note the asymmetry:** the aggregator table has no `Cannot Support` column, but `Cannot Support` rows still count in the % denominator — that's why a package with zero visible gaps can show less than 100% (e.g. file at 95%). Don't "fix" such a percentage without recounting the per-package table.
+- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](<name>/0.0.1/go1.2/README.md) | S | P | N | X% |`.
+- Recompute the **Total** footer row (sum of each column; the % cell is `round(TotalSupported / TotalTotal * 100)`, where `TotalTotal` again includes the invisible `Cannot Support` rows).
+- Mirror the package's **Notable Behavioural Changes** bullets verbatim into the matching `### <package>` subsection of the aggregator — copy the exact bullet text, don't paraphrase; the checker compares them word for word. Add a `### <package>` subsection when a package gains its first behavioural change; remove it (and add the package to the closing "no notable behavioural changes" sentence) when it has none.
 
 When **adding a brand-new package**, add a new table row (alphabetical), recompute the Total footer, and add a `### <package>` subsection only if that package has notable behavioural changes.
+
+The `check_readmes.py` script (see Validation above) verifies all of this arithmetic and mirroring — run it after every aggregator edit instead of trusting manual recounts.

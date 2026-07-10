@@ -88,18 +88,10 @@
           (invocation hasHeader expr:
             (simple-var-ref req) (
             (literal X-One))))))
-      (var-def
-        (variable qp (type
-          (constrained-type
-            (builtin-ref-type map)
-            (array-type
-              (value-type string) dimensions: 1 ([])))) (expr
-          (invocation getQueryParams expr:
-            (simple-var-ref req) ()))))
-      (expression-stmt
-        (invocation io println (
-          (invocation length expr:
-            (simple-var-ref qp) ()))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation getQueryParams expr:
+          (simple-var-ref req) ()))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -218,6 +210,40 @@
           (checked-expr
             (invocation getTextPayload expr:
               (simple-var-ref res) ())))))
+      (expression-stmt
+        (invocation setJsonPayload expr:
+          (simple-var-ref res) (
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable rj (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation getJsonPayload expr:
+              (simple-var-ref res) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rj))))
+      (expression-stmt
+        (invocation setBinaryPayload expr:
+          (simple-var-ref res) (
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)))))
+      (var-def
+        (variable rb (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation getBinaryPayload expr:
+              (simple-var-ref res) ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref rb) ()))))
       (expression-stmt
         (invocation removeHeader expr:
           (simple-var-ref res) (

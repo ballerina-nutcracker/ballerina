@@ -1,0 +1,64 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable input (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 104)
+          (literal 101)
+          (literal 108)
+          (literal 108)
+          (literal 111)))))
+    (var-def
+      (variable salt (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 115)
+          (literal 97)
+          (literal 108)
+          (literal 116)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashMd5 (
+            (simple-var-ref input))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashSha1 (
+            (simple-var-ref input))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashSha384 (
+            (simple-var-ref input))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashSha512 (
+            (simple-var-ref input))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashKeccak256 (
+            (simple-var-ref input))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashMd5 (
+            (simple-var-ref input)
+            (simple-var-ref salt))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation crypto hashSha256 (
+            (simple-var-ref input)
+            (simple-var-ref salt))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation crypto crc32b (
+          (simple-var-ref input))))))
+  )
+)

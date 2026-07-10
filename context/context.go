@@ -140,6 +140,14 @@ func (c *CompilerContext) DistinctTypeSymbolRef(id int) (model.SymbolRef, bool) 
 	return c.env.DistinctTypeSymbolRef(id)
 }
 
+func (c *CompilerContext) RegisterLangLibDistinctTypeSymbol(packageName, typeName string, ref model.SymbolRef) bool {
+	return c.env.RegisterLangLibDistinctTypeSymbol(packageName, typeName, ref)
+}
+
+func (c *CompilerContext) LangLibDistinctTypeSymbol(packageName, typeName string) (model.SymbolRef, bool) {
+	return c.env.LangLibDistinctTypeSymbol(packageName, typeName)
+}
+
 func (c *CompilerContext) GetDefaultPackage() *model.PackageID {
 	return c.env.GetDefaultPackage()
 }
