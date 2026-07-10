@@ -17,6 +17,7 @@
 package projects
 
 import (
+	"sync"
 	"testing"
 
 	compilercontext "ballerina-lang-go/context"
@@ -36,10 +37,17 @@ func TestParseWithStatsRecordsCachedParseDuration(t *testing.T) {
 	cx := compilercontext.NewCompilerContext(env)
 	cx.InitModuleStats("test/module")
 
-	if syntaxTree := docContext.parseWithStats(cx); syntaxTree == nil {
-		t.Fatal("expected cached syntax tree")
+	var wg sync.WaitGroup
+	for range 16 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if syntaxTree := docContext.parseWithStats(cx); syntaxTree == nil {
+				t.Error("expected cached syntax tree")
+			}
+		}()
 	}
-	docContext.parseWithStats(cx)
+	wg.Wait()
 
 	stats := cx.GetModuleStats()
 	if stats == nil {

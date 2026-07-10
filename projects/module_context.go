@@ -86,7 +86,6 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 	// Copy dependencies
 	depsCopy := slices.Clone(moduleConfig.Dependencies())
 
-	env := project.Environment().compilerEnvironment()
 	return &moduleContext{
 		project:                project,
 		moduleID:               moduleConfig.ModuleID(),
@@ -97,7 +96,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 		testDocContextMap:      testDocContextMap,
 		testSrcDocIDs:          testSrcDocIDs,
 		moduleDescDependencies: depsCopy,
-		compilerCtx:            context.NewCompilerContext(env),
+		compilerCtx:            newModuleCompilerContext(project.Environment().compilerEnvironment(), moduleConfig.ModuleDescriptor().Name()),
 	}
 }
 
@@ -149,7 +148,6 @@ func newModuleContextFromMaps(
 		testDocContextMap = make(map[DocumentID]*documentContext)
 	}
 
-	env := project.Environment().compilerEnvironment()
 	return &moduleContext{
 		project:                project,
 		moduleID:               moduleID,
@@ -160,8 +158,14 @@ func newModuleContextFromMaps(
 		testDocContextMap:      testDocContextMap,
 		testSrcDocIDs:          testSrcDocIDs,
 		moduleDescDependencies: slices.Clone(moduleDescDependencies),
-		compilerCtx:            context.NewCompilerContext(env),
+		compilerCtx:            newModuleCompilerContext(project.Environment().compilerEnvironment(), moduleDescriptor.Name()),
 	}
+}
+
+func newModuleCompilerContext(env *context.CompilerEnvironment, name ModuleName) *context.CompilerContext {
+	compilerCtx := context.NewCompilerContext(env)
+	compilerCtx.InitModuleStats(name.String())
+	return compilerCtx
 }
 
 // getModuleID returns the module identifier.

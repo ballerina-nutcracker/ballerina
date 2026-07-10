@@ -42,9 +42,8 @@ type documentContext struct {
 	syntaxTreeOnce sync.Once
 	textDocOnce    sync.Once
 
-	parseDurationMu       sync.Mutex
-	parseDuration         time.Duration
-	parseDurationRecorded bool
+	parseDuration           time.Duration
+	parseDurationRecordOnce sync.Once
 }
 
 // newDocumentContext creates a documentContext from DocumentConfig.
@@ -143,14 +142,9 @@ func (d *documentContext) recordCachedParseDuration(cx *compilercontext.Compiler
 	if !cx.CanRecordStageDuration() {
 		return
 	}
-
-	d.parseDurationMu.Lock()
-	defer d.parseDurationMu.Unlock()
-	if d.parseDurationRecorded {
-		return
-	}
-	d.parseDurationRecorded = true
-	recordParseDuration(cx, d.parseDuration)
+	d.parseDurationRecordOnce.Do(func() {
+		cx.RecordStageDuration(compilercontext.StageParse, d.parseDuration)
+	})
 }
 
 func recordParseDuration(cx *compilercontext.CompilerContext, duration time.Duration) {
