@@ -95,9 +95,14 @@ type (
 		symbol    []model.SymbolRef
 	}
 
+	moduleAstNode[T ast.BLangNode] struct {
+		node     T
+		resolver *moduleSymbolResolver
+	}
+
 	moduleAstNodeHolder struct {
-		typeDefns  map[string]*ast.BLangTypeDefinition
-		classDefns map[string]*ast.BLangClassDefinition
+		typeDefns  map[string]moduleAstNode[*ast.BLangTypeDefinition]
+		classDefns map[string]moduleAstNode[*ast.BLangClassDefinition]
 	}
 
 	moduleSymbolResolver struct {
@@ -228,19 +233,19 @@ func newCompilationUnitsSymbolResolver(ctx *context.CompilerContext, pkgID model
 		prevAnnotPos:   make(map[string]prevPos),
 		usedPrefixes:   make(map[string]bool),
 		moduleNodes: moduleAstNodeHolder{
-			typeDefns:  make(map[string]*ast.BLangTypeDefinition),
-			classDefns: make(map[string]*ast.BLangClassDefinition),
+			typeDefns:  make(map[string]moduleAstNode[*ast.BLangTypeDefinition]),
+			classDefns: make(map[string]moduleAstNode[*ast.BLangClassDefinition]),
 		},
 	}
 }
 
-func (m *moduleAstNodeHolder) add(cu *ast.BLangCompilationUnit) {
+func (m *moduleAstNodeHolder) add(cu *ast.BLangCompilationUnit, resolver *moduleSymbolResolver) {
 	for _, node := range cu.TopLevelNodes {
 		switch n := node.(type) {
 		case *ast.BLangTypeDefinition:
-			m.typeDefns[n.Name.Value] = n
+			m.typeDefns[n.Name.Value] = moduleAstNode[*ast.BLangTypeDefinition]{node: n, resolver: resolver}
 		case *ast.BLangClassDefinition:
-			m.classDefns[n.Name.Value] = n
+			m.classDefns[n.Name.Value] = moduleAstNode[*ast.BLangClassDefinition]{node: n, resolver: resolver}
 		}
 	}
 }
@@ -260,6 +265,7 @@ func (ms *moduleSymbolResolver) forCompilationUnit(scope *model.ModuleScope) *mo
 		usedPrefixes:   make(map[string]bool),
 		defaultCounter: ms.defaultCounter,
 		varTracker:     ms.varTracker,
+		moduleNodes:    ms.moduleNodes,
 	}
 }
 
@@ -571,8 +577,7 @@ func ResolveSymbols(cx *context.CompilerContext, pkgID model.PackageID, cuImport
 		scope := cx.NewModuleScope(pkgID, cuImports.Imports)
 		cuImports.CompilationUnit.Scope = scope
 		cuResolvers[i] = packageResolver.forCompilationUnit(scope)
-		cuResolvers[i].moduleNodes = packageResolver.moduleNodes
-		packageResolver.moduleNodes.add(cuImports.CompilationUnit)
+		packageResolver.moduleNodes.add(cuImports.CompilationUnit, cuResolvers[i])
 	}
 	for i, resolver := range cuResolvers {
 		resolver.allocateTopLevelSymbols(cuImportsList[i].CompilationUnit)
@@ -698,15 +703,15 @@ func (ms *moduleSymbolResolver) ensureTypeAllocated(identifer ast.Reference, see
 	seen[name] = struct{}{}
 	td, ok := ms.moduleNodes.typeDefns[name]
 	if ok {
-		ms.allocateTypeSymbol(td, seen)
+		td.resolver.allocateTypeSymbol(td.node, seen)
 		return
 	}
-	c, ok := ms.moduleNodes.classDefns[name]
+	classDef, ok := ms.moduleNodes.classDefns[name]
 	if !ok {
 		// no such symbol to allocate.
 		return
 	}
-	ms.allocateClassSymbol(c)
+	classDef.resolver.allocateClassSymbol(classDef.node)
 }
 
 func (ms *moduleSymbolResolver) allocateFunctionSymbol(fn *ast.BLangFunction) {
