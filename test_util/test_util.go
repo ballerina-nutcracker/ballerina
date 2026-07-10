@@ -463,6 +463,9 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 			Readlink: func(path string) (string, error) {
 				return os.Readlink(normalizePath(path))
 			},
+			Watch: func(path string, recursive bool, handler pal.WatchHandler) (pal.WatchHandle, error) {
+				return palnative.Watch(normalizePath(path), recursive, handler)
+			},
 		},
 		OS: pal.OS{
 			GetEnv:      os.Getenv,
@@ -495,6 +498,7 @@ func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
 		Time: pal.Time{
 			Now:          func() time.Time { return time.Time{} },
 			MonotonicNow: func() time.Duration { return 0 },
+			Sleep:        time.Sleep,
 		},
 		HTTP: pal.HTTP{
 			NewClient: func(_ pal.ClientConfig) pal.HTTPClient {

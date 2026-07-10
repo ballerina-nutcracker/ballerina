@@ -122,6 +122,82 @@ public enum CopyOption {
 }
 
 // ---------------------------------------------------------------------------
+// Directory listener endpoint  (from service_endpoint.bal)
+// ---------------------------------------------------------------------------
+
+// Represents the configurations that are required for a directory listener.
+//
+// + path - Directory path which need to listen
+// + recursive - Recursively monitor all sub folders or not in the given directory path
+public type ListenerConfig record {|
+    string path;
+    boolean recursive = false;
+|};
+
+// Represents a File service.
+public type Service service object {};
+
+# Represents the directory listener endpoint, which is used to listen to a directory in the local file system.
+public isolated class Listener {
+
+    # Creates a new Directory listener.
+    #
+    # + listenerConfig - The `ListenerConfig` record with the directory details
+    public isolated function init(*ListenerConfig listenerConfig) returns error? {
+        return initListener(self, listenerConfig);
+    }
+
+    # Starts the `file:Listener`.
+    #
+    # + return - `()` or else an `error` upon failure to start the listener
+    public isolated function 'start() returns error? {
+        return startListener(self);
+    }
+
+    # Stops the `file:Listener` gracefully.
+    #
+    # + return - `()` or else an `error` upon failure to stop the listener
+    public isolated function gracefulStop() returns error? {
+        return stopListener(self);
+    }
+
+    # Stops the `file:Listener` forcefully.
+    #
+    # + return - `()` or else an `error` upon failure to stop the listener
+    public isolated function immediateStop() returns error? {
+        return stopListener(self);
+    }
+
+    # Binds a service to the `file:Listener`.
+    #
+    # + s - The service to be attached
+    # + name - Name of the service
+    # + return - `()` or else an `error` upon failure to attach the service
+    public isolated function attach(Service s, string[]|string? name = ()) returns error? {
+        _ = name;
+        return registerListener(self, s);
+    }
+
+    # Stops listening to the directory and detaches the service from the `file:Listener`.
+    #
+    # + s - The service to be detached
+    # + return - `()` or else an `error` upon failure to detach the service
+    public isolated function detach(Service s) returns error? {
+        return deregisterListener(self, s);
+    }
+}
+
+isolated function initListener(Listener l, ListenerConfig config) returns error? = external;
+
+isolated function registerListener(Listener l, service object {} s) returns error? = external;
+
+isolated function deregisterListener(Listener l, service object {} s) returns error? = external;
+
+isolated function startListener(Listener l) returns error? = external;
+
+isolated function stopListener(Listener l) returns error? = external;
+
+// ---------------------------------------------------------------------------
 // Metadata record  (from meta_data.bal)
 // ---------------------------------------------------------------------------
 

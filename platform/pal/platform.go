@@ -80,6 +80,11 @@ type (
 		CreateTemp    func(prefix, suffix, dir string) (string, error)
 		CreateTempDir func(prefix, suffix, dir string) (string, error)
 		Readlink      func(path string) (string, error)
+		// Watch starts monitoring path for filesystem changes, optionally
+		// descending into subdirectories, delivering each change to handler on
+		// a platform-owned goroutine. The returned handle's Close stops
+		// watching and releases OS resources (e.g. inotify/kqueue handles).
+		Watch func(path string, recursive bool, handler WatchHandler) (WatchHandle, error)
 	}
 	OS struct {
 		GetEnv      func(name string) string
@@ -93,6 +98,7 @@ type (
 	Time struct {
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
+		Sleep        func(d time.Duration)
 	}
 	// Net abstracts raw TCP(+TLS) socket dialing and listening for non-HTTP
 	// wire protocols (e.g. ldap, tcp). HTTP-based stdlibs must keep using
@@ -265,4 +271,30 @@ type CopyOptions struct {
 	ReplaceExisting bool
 	CopyAttributes  bool
 	NoFollowLinks   bool
+}
+
+// WatchOp identifies the kind of filesystem change reported by FS.Watch.
+type WatchOp uint8
+
+const (
+	WatchCreate WatchOp = iota
+	WatchModify
+	WatchDelete
+)
+
+// WatchEvent carries a single filesystem change notification from FS.Watch.
+type WatchEvent struct {
+	Path string
+	Op   WatchOp
+}
+
+// WatchHandler receives filesystem change notifications from FS.Watch. It is
+// invoked on a platform-owned goroutine, independent of the strand that
+// called FS.Watch.
+type WatchHandler func(WatchEvent)
+
+// WatchHandle is an opaque handle to an active filesystem watch, returned by
+// FS.Watch. Close stops watching and releases OS resources.
+type WatchHandle interface {
+	Close() error
 }

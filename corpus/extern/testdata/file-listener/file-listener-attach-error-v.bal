@@ -14,11 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public type StopHandler function() returns error?;
+import ballerina/file;
+import ballerina/io;
 
-public isolated function onGracefulStop(StopHandler handler) = external;
+service class EmptyService {
+    *file:Service;
+}
 
-# Halts the current strand for a predetermined amount of time.
-#
-# + seconds - An amount of time to sleep in seconds
-public isolated function sleep(decimal seconds) = external;
+public function testMain() returns error? {
+    string watchDir = check file:createTempDir();
+    file:Listener dirListener = check new ({path: watchDir, recursive: false});
+
+    error? result = dirListener.attach(new EmptyService());
+    if result is error {
+        io:println(result.message()); // @output At least a single resource required from following: onCreate ,onDelete ,onModify. Parameter should be of type - file:FileEvent
+    } else {
+        io:println("unexpected success");
+    }
+}

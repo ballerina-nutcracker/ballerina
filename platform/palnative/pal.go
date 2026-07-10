@@ -160,6 +160,7 @@ func NewPlatform() (pal.Platform, func()) {
 			CreateTemp:    CreateTemp,
 			CreateTempDir: CreateTempDir,
 			Readlink:      os.Readlink,
+			Watch:         Watch,
 		},
 		OS: pal.OS{
 			GetEnv: func(name string) string {
@@ -202,6 +203,7 @@ func NewPlatform() (pal.Platform, func()) {
 		Time: pal.Time{
 			Now:          time.Now,
 			MonotonicNow: func() time.Duration { return time.Since(processStart) },
+			Sleep:        time.Sleep,
 		},
 		HTTP: pal.HTTP{
 			NewClient: NewHTTPClient,
