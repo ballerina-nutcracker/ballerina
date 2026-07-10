@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: select clause in query action
+  --> query-action-final-clause-e.bal:18:27
+   |
+18 |     from var i in [1, 2, 3] // @error
+   |                           ^
