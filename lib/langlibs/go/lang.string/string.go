@@ -17,11 +17,11 @@
 package stringruntime
 
 import (
-	"fmt"
 	"unicode/utf8"
 
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/values"
 )
 
@@ -30,13 +30,58 @@ const (
 	moduleName = "lang.string"
 )
 
-func initStringModule(rt *runtime.Runtime) {
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		s, ok := args[0].(string)
-		if !ok {
-			return nil, fmt.Errorf("first argument must be a string")
+func stringLength(args []values.BalValue) (values.BalValue, error) {
+	return int64(utf8.RuneCountInString(args[0].(string))), nil
+}
+
+func stringToBytes(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return byteSliceToList(byteArrTy, ctx, []byte(args[0].(string))), nil
+}
+
+func stringFromBytes(args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	data, _ := listToByteSlice(list)
+	if !utf8.Valid(data) {
+		return values.NewErrorWithMessage("invalid UTF-8 byte array"), nil
+	}
+	return string(data), nil
+}
+
+func listToByteSlice(list *values.List) ([]byte, bool) {
+	b := make([]byte, list.Len())
+	for i := 0; i < list.Len(); i++ {
+		n, ok := list.Get(i).(int64)
+		if !ok || n < 0 || n > 255 {
+			return nil, false
 		}
-		return int64(utf8.RuneCountInString(s)), nil
+		b[i] = byte(n)
+	}
+	return b, true
+}
+
+func byteSliceToList(byteArrTy semtypes.SemType, ctx *extern.Context, data []byte) *values.List {
+	items := make([]values.BalValue, len(data))
+	for i, b := range data {
+		items[i] = int64(b)
+	}
+	return values.NewList(byteArrTy, semtypes.ToListAtomicType(ctx.TypeCtx, byteArrTy), false, nil, 0, items)
+}
+
+func initStringModule(rt *runtime.Runtime) {
+	env := rt.GetTypeEnv()
+	ld := semtypes.NewListDefinition()
+	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE)
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return stringLength(args)
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBytes", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return stringToBytes(byteArrTy, ctx, args)
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBytes", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return stringFromBytes(args)
 	})
 }
 
