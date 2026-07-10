@@ -497,9 +497,6 @@ var (
 	_ BinaryExpressionNode                                   = &BLangBinaryExpr{}
 	_ QueryExpressionNode                                    = &BLangQueryExpr{}
 	_ SimpleVariableReferenceNode                            = &BLangSimpleVarRef{}
-	_ Reference                                              = &BLangSimpleVarRef{}
-	_ Reference                                              = &BLangLocalVarRef{}
-	_ Reference                                              = &BLangConstRef{}
 	_ SimpleVariableReferenceNode                            = &BLangLocalVarRef{}
 	_ LiteralNode                                            = &BLangConstRef{}
 	_ LiteralNode                                            = &BLangLiteral{}
@@ -735,20 +732,6 @@ func (b *BLangCheckedExpr) GetOperatorKind() model.OperatorKind {
 
 func (b *BLangCheckPanickedExpr) GetOperatorKind() model.OperatorKind {
 	return model.OperatorKind_CHECK_PANIC
-}
-
-func (b *BLangSimpleVarRef) ModulePrefix() string {
-	if b.PkgAlias == nil {
-		return ""
-	}
-	return b.PkgAlias.Value
-}
-
-func (b *BLangSimpleVarRef) Name() string {
-	if b.VariableName == nil {
-		return ""
-	}
-	return b.VariableName.Value
 }
 
 func (b *BLangSimpleVarRef) GetPackageAlias() *BLangIdentifier {

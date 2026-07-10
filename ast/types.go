@@ -235,7 +235,6 @@ type (
 var (
 	_ ArrayTypeNode        = &BLangArrayType{}
 	_ UserDefinedTypeNode  = &BLangUserDefinedType{}
-	_ Reference            = &BLangUserDefinedType{}
 	_ Field                = &BField{}
 	_ BNodeWithSymbol      = &BLangUserDefinedType{}
 	_ FiniteTypeNode       = &BLangFiniteTypeNode{}
@@ -299,14 +298,6 @@ func (b *BLangArrayType) IsOpenArray() bool {
 
 func (b *bLangTypeBase) IsGrouped() bool {
 	return b.Grouped
-}
-
-func (b *BLangUserDefinedType) ModulePrefix() string {
-	return b.PkgAlias.Value
-}
-
-func (b *BLangUserDefinedType) Name() string {
-	return b.TypeName.Value
 }
 
 func (b *BLangUserDefinedType) GetPackageAlias() *BLangIdentifier {

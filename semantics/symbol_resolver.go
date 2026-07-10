@@ -641,15 +641,17 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 		symbol = new(model.NewErrorTypeSymbol(name, isPublic))
 	case *ast.BLangUserDefinedType:
 		seen[name] = struct{}{}
-		if ty.ModulePrefix() == "" {
+		prefix := ty.PkgAlias.Value
+		targetName := ty.TypeName.Value
+		if prefix == "" {
 			ms.ensureTypeAllocated(ty, seen)
 		}
 		var symRef model.SymbolRef
 		var ok bool
-		if ty.ModulePrefix() != "" {
-			symRef, ok = ms.GetPrefixedSymbol(ty.ModulePrefix(), ty.Name())
+		if prefix != "" {
+			symRef, ok = ms.GetPrefixedSymbol(prefix, targetName)
 		} else {
-			symRef, _, ok = ms.GetSymbol(ty.Name())
+			symRef, _, ok = ms.GetSymbol(targetName)
 		}
 		if !ok {
 			symbol = new(model.NewTypeSymbol(name, isPublic))
@@ -687,12 +689,12 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 	ms.typeDefns[symRef] = typeDef
 }
 
-func (ms *moduleSymbolResolver) ensureTypeAllocated(identifer ast.Reference, seen map[string]struct{}) {
-	if identifer.ModulePrefix() != "" {
+func (ms *moduleSymbolResolver) ensureTypeAllocated(ref *ast.BLangUserDefinedType, seen map[string]struct{}) {
+	if ref.PkgAlias.Value != "" {
 		// Imported symbol should have been resolved already
 		return
 	}
-	name := identifer.Name()
+	name := ref.TypeName.Value
 	if _, ok := ms.packageSymbols[name]; ok {
 		return
 	}
