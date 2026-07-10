@@ -3735,26 +3735,6 @@ func initMethodSymbol(t typeResolver, objectTy semtypes.SemType) (model.SymbolRe
 	return classSym.MethodSymbol("init")
 }
 
-func padNewExprArgTypesForDefaults(t typeResolver, objectTy semtypes.SemType, argTys []semtypes.SemType, loc diagnostics.Location) ([]semtypes.SemType, bool) {
-	oat := semtypes.ToObjectAtomicType(t.typeContext(), objectTy)
-	if oat == nil {
-		return argTys, false
-	}
-	classRef, ok := t.getClassAtomSymbol(oat)
-	if !ok {
-		return argTys, false
-	}
-	classSym, ok := t.getSymbol(classRef).(model.ClassSymbol)
-	if !ok {
-		return argTys, false
-	}
-	initRef, ok := classSym.MethodSymbol("init")
-	if !ok {
-		return argTys, false
-	}
-	return padArgTypesForDefaults(t, initRef, argTys, loc), true
-}
-
 func resolveStreamNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, streamTy semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	if len(e.ArgsExprs) != 1 {
 		t.semanticError("new stream expression requires exactly one argument", e.GetPosition())
@@ -3785,9 +3765,8 @@ func determineObjectType(t typeResolver, expr *ast.BLangNewExpression, argTys []
 	}
 	var candidates []candidate
 	for _, alt := range alts {
-		altArgTys, _ := padNewExprArgTypesForDefaults(t, alt.ObjectType, argTys, expr.GetPosition())
 		argLd := semtypes.NewListDefinition()
-		altArgListTy := argLd.DefineListTypeWrapped(cx.Env(), altArgTys, len(altArgTys), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+		altArgListTy := argLd.DefineListTypeWrapped(cx.Env(), argTys, len(argTys), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
 		paramListTy := semtypes.FunctionParamListType(cx, alt.InitFnType)
 		if semtypes.IsSubtype(cx, altArgListTy, paramListTy) {
 			retTy := semtypes.FunctionReturnType(cx, alt.InitFnType, altArgListTy)
