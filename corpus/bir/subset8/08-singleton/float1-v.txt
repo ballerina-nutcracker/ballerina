@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-Inf  float;
 main() -> nil{
   bb0 {
     %3 = ConstantLoad 1
@@ -8,7 +7,9 @@ main() -> nil{
     %6 = %5;
     %2 = / %4 %6;
     %7 = %2;
-    %1 = != %7 Inf;
+    %8 = ConstantLoad +Inf
+    %9 = %8;
+    %1 = != %7 %9;
     %1 ? bb1 : bb3;
   }
   bb1 {

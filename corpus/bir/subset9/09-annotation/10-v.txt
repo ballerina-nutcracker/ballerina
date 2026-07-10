@@ -1,0 +1,45 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:meta
+    %3 = .@ %1 %2;
+    metaValue = %3;
+    %5 = metaValue is {| code: int, name: string, never... |}
+    %6 = %5;
+    %7 = println(%6) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad typedesc
+    %9 = ConstantLoad $anon/.:0.0.0:tag
+    %10 = .@ %8 %9;
+    tags = %10;
+    %12 = tags is [{| code: int, name: string, never... |}...]
+    %12 ? bb2 : bb5;
+  }
+  bb2 {
+    PushScopeFrame 11
+    %1 = ConstantLoad name
+    %3 = ConstantLoad 0
+    %2 = (1, tags)[%3];
+    %0 = %2[%1];
+    %4 = println(%0) -> bb3;
+  }
+  bb3 {
+    %6 = ConstantLoad code
+    %8 = ConstantLoad 1
+    %7 = (1, tags)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

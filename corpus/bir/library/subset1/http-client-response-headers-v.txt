@@ -84,15 +84,16 @@ main() -> nil|error{
   }
   bb18 {
     %33 = ConstantLoad x-absent
-    %34 = hasHeader(r,%33,LEADING) -> bb19;
+    %34 = ConstantLoad LEADING
+    %35 = hasHeader(r,%33,%34) -> bb19;
   }
   bb19 {
-    %35 = %34;
-    %36 = println(%35) -> bb20;
+    %36 = %35;
+    %37 = println(%36) -> bb20;
   }
   bb20 {
-    %37 = ConstantLoad <nil>
-    %0 = %37;
+    %38 = ConstantLoad <nil>
+    %0 = %38;
     return;
   }
 }

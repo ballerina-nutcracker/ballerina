@@ -85,10 +85,16 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 	case *ast.BLangNumericLiteral:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangSimpleVarRef:
+		if replacement := materializeConstantRef(cx, expr); replacement != nil {
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
+		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangLocalVarRef:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangConstRef:
+		if replacement := materializeConstantRef(cx, &expr.BLangSimpleVarRef); replacement != nil {
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
+		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangNewExpression:
 		return walkNewExpression(cx, expr)

@@ -36,7 +36,19 @@ type Function struct {
 // TypeDesc is the runtime representation of a typedesc value — a thin wrapper
 // around a semtype.
 type TypeDesc struct {
-	Type semtypes.SemType
+	Type        semtypes.SemType
+	Annotations AnnotationValues
+}
+
+// NewTypeDesc returns a fully initialized TypeDesc.
+func NewTypeDesc(ty semtypes.SemType, annotations AnnotationValues) *TypeDesc {
+	if annotations == nil {
+		annotations = NewAnnotationValues()
+	}
+	return &TypeDesc{
+		Type:        ty,
+		Annotations: annotations,
+	}
 }
 
 // FillerFactory produces a fresh filler value each time it is invoked.
@@ -60,36 +72,38 @@ func FillerFactoryFor(cx semtypes.Context, t semtypes.SemType) (FillerFactory, b
 	if !ok {
 		return nil, false
 	}
-	return fillerFactoryFromDesc(cx, filler), true
+	return fillerFactoryFromDesc(cx, filler)
 }
 
-func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) FillerFactory {
+func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) (FillerFactory, bool) {
 	switch f := f.(type) {
 	case semtypes.SingleValueFiller:
 		v := f.Value
-		return func() BalValue { return v }
+		return func() BalValue { return v }, true
 	case semtypes.MappingFiller:
 		ty := f.Type
 		atomic := f.Atomic
 		readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
-		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }
+		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }, true
 	case semtypes.ListFiller:
 		return listFillerFactory(cx, f)
 	case semtypes.XMLFiller:
-		return func() BalValue { return &XMLText{} }
+		return func() BalValue { return &XMLText{} }, true
 	case semtypes.ObjectFiller, semtypes.StreamFiller, semtypes.TableFiller:
-		return func() BalValue {
-			panic("internal error: filler factory not implemented for object/stream/table types")
-		}
+		return nil, false
 	default:
 		panic("unknown filler kind")
 	}
 }
 
-func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) FillerFactory {
+func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactory, bool) {
 	memberFactories := make([]FillerFactory, len(f.Members))
 	for i, m := range f.Members {
-		memberFactories[i] = fillerFactoryFromDesc(cx, m)
+		var ok bool
+		memberFactories[i], ok = fillerFactoryFromDesc(cx, m)
+		if !ok {
+			return nil, false
+		}
 	}
 	ty := f.Type
 	atomic := f.Atomic
@@ -112,7 +126,7 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) FillerFactory
 			initial[i] = mf()
 		}
 		return NewList(ty, atomic, readonly, getRestFactory(), len(memberFactories), initial)
-	}
+	}, true
 }
 
 func SemTypeForValue(v BalValue) semtypes.SemType {

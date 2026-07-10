@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared annotation 'first'
+  --> 16-e.bal:17:12
+   |
+17 | annotation first on type; // @error
+   |            ^^^^^
+
+error[SEMANTIC_ERROR]: redeclared annotation 'first'
+  --> 16-e.bal:18:12
+   |
+18 | annotation first on type; // @error
+   |            ^^^^^

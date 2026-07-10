@@ -1,0 +1,9 @@
+-- stdout --
+-5
+true
+6
+0
+8
+runtime-5
+coverage-margin
+-- stderr --
