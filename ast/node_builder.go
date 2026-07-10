@@ -631,30 +631,29 @@ func diagnosticMessage(diagnostic tree.STNodeDiagnostic) string {
 
 func (n *NodeBuilder) getPosition(node tree.Node) diagnostics.Location {
 	textRange := node.TextRange()
-	if n.recovering() {
+	if n.mode == NodeBuilderModeRecover {
 		textRange = node.TextRangeWithMinutiae()
 	}
-	fileName := getFileName(node)
-	return diagnostics.NewLocation(n.de(), fileName, textRange.StartOffset, textRange.EndOffset)
+	return n.location(node, textRange)
 }
 
-func getPositionRange(de *diagnostics.DiagnosticEnv, startNode tree.Node, endNode tree.Node) diagnostics.Location {
+func (n *NodeBuilder) getRecoveryPosition(node tree.Node) diagnostics.Location {
+	return n.location(node, node.TextRangeWithMinutiae())
+}
+
+func (n *NodeBuilder) location(node tree.Node, textRange tree.TextRange) diagnostics.Location {
+	return diagnostics.NewLocation(n.de(), getFileName(node), textRange.StartOffset, textRange.EndOffset)
+}
+
+func (n *NodeBuilder) getPositionRange(startNode tree.Node, endNode tree.Node) diagnostics.Location {
 	startRange := startNode.TextRange()
 	endRange := endNode.TextRange()
-	fileName := getFileName(startNode)
-	return diagnostics.NewLocation(de, fileName, startRange.StartOffset, endRange.EndOffset)
-}
-
-func getPositionWithoutMetadata(de *diagnostics.DiagnosticEnv, node tree.Node) diagnostics.Location {
-	textRange := node.TextRange()
-	fileName := getFileName(node)
-	return diagnostics.NewLocation(de, fileName, metadataExcludedStartOffset(node, textRange.StartOffset), textRange.EndOffset)
+	return diagnostics.NewLocation(n.de(), getFileName(startNode), startRange.StartOffset, endRange.EndOffset)
 }
 
 func (n *NodeBuilder) getPositionWithoutMetadata(node tree.Node) diagnostics.Location {
 	pos := n.getPosition(node)
-	fileName := getFileName(node)
-	return diagnostics.NewLocation(n.de(), fileName, metadataExcludedStartOffset(node, pos.StartOffset()), pos.EndOffset())
+	return diagnostics.NewLocation(n.de(), getFileName(node), metadataExcludedStartOffset(node, pos.StartOffset()), pos.EndOffset())
 }
 
 func metadataExcludedStartOffset(node tree.Node, defaultStartOffset int) int {
@@ -1522,7 +1521,7 @@ func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNode
 	openParen := funcSignature.OpenParenToken()
 	closeParen := funcSignature.CloseParenToken()
 	if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
-		bLFunction.ParamListPos = getPositionRange(n.de(), openParen, closeParen)
+		bLFunction.ParamListPos = n.getPositionRange(openParen, closeParen)
 	}
 
 	// Set Parameters
@@ -1728,7 +1727,7 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.Imp
 func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree.ListenerDeclarationNode) BLangNode {
 	metadata := listenerDeclarationNode.Metadata()
 
-	pos := getPositionWithoutMetadata(n.de(), listenerDeclarationNode)
+	pos := n.getPositionWithoutMetadata(listenerDeclarationNode)
 	nameToken := listenerDeclarationNode.VariableName()
 	namePos := n.getPosition(nameToken)
 	identifier := createIdentifierFromToken(namePos, nameToken)
@@ -1808,7 +1807,7 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 		typeDef.SetPublic()
 	}
 
-	typeDef.pos = getPositionWithoutMetadata(n.de(), typeDefinitionNode)
+	typeDef.pos = n.getPositionWithoutMetadata(typeDefinitionNode)
 
 	n.populateMetadata(typeDefinitionNode.Metadata(), typeDef)
 
@@ -1819,7 +1818,7 @@ func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *tree.S
 	metadata := serviceDeclarationNode.Metadata()
 
 	service := NewBLangService()
-	service.pos = getPositionWithoutMetadata(n.de(), serviceDeclarationNode)
+	service.pos = n.getPositionWithoutMetadata(serviceDeclarationNode)
 
 	if metadata != nil && !metadata.IsMissing() {
 		if annotations := metadata.Annotations(); annotations.Size() > 0 {
@@ -2131,7 +2130,7 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 			if j == lastStmtIndex {
 				// Add an empty block statement if there are no statements following the `if` statement.
 				emptyBlock := &BLangBlockStmt{}
-				emptyBlock.pos = getPositionRange(n.de(), currentStatement, endNode)
+				emptyBlock.pos = n.getPositionRange(currentStatement, endNode)
 				*statements = append(*statements, emptyBlock)
 				break
 			}
@@ -2141,7 +2140,7 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 			n.generateAndAddBLangStatements(statementNodes, &bLBlockStmt.Stmts, nextStmtIndex, endNode)
 			n.isInLocalContext = false
 			if nextStmtIndex <= lastStmtIndex {
-				bLBlockStmt.pos = getPositionRange(n.de(), statementNodes.Get(nextStmtIndex), endNode)
+				bLBlockStmt.pos = n.getPositionRange(statementNodes.Get(nextStmtIndex), endNode)
 			}
 			*statements = append(*statements, bLBlockStmt)
 			break
@@ -2535,7 +2534,7 @@ func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *tree.In
 		indexBasedAccess.IndexExpr = n.createExpression(keys.Get(0))
 	} else {
 		listConstructorExpr := &BLangListConstructorExpr{}
-		listConstructorExpr.pos = getPositionRange(n.de(), keys.Get(0), keys.Get(keys.Size()-1))
+		listConstructorExpr.pos = n.getPositionRange(keys.Get(0), keys.Get(keys.Size()-1))
 		exprs := make([]BLangExpression, 0, keys.Size())
 		for i := 0; i < keys.Size(); i++ {
 			exprs = append(exprs, n.createExpression(keys.Get(i)))
@@ -2600,7 +2599,7 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *tree
 	// Line 940: BLangConstant constantNode = (BLangConstant) TreeBuilder.createConstantNode();
 	constantNode := createConstantNode()
 
-	pos := getPositionWithoutMetadata(n.de(), constantDeclarationNode)
+	pos := n.getPositionWithoutMetadata(constantDeclarationNode)
 
 	identifierPos := n.getPosition(constantDeclarationNode.VariableName())
 
@@ -2860,7 +2859,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 				openParen := funcSig.OpenParenToken()
 				closeParen := funcSig.CloseParenToken()
 				if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
-					bMethod.ParamListPos = getPositionRange(n.de(), openParen, closeParen)
+					bMethod.ParamListPos = n.getPositionRange(openParen, closeParen)
 				}
 
 				// Process parameters
@@ -3028,7 +3027,7 @@ func (n *NodeBuilder) TransformMetadata(metadataNode *tree.MetadataNode) BLangNo
 func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarationNode *tree.ModuleVariableDeclarationNode) BLangNode {
 	typedBindingPattern := moduleVariableDeclarationNode.TypedBindingPattern()
 	bindingPattern := typedBindingPattern.BindingPattern()
-	pos := getPositionWithoutMetadata(n.de(), moduleVariableDeclarationNode)
+	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
 
 	variable := n.getBLangVariableNode(bindingPattern, pos)
 	simpleVar := variable.(*BLangSimpleVariable)
@@ -4236,7 +4235,7 @@ func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode
 		openParen := funcSignature.OpenParenToken()
 		closeParen := funcSignature.CloseParenToken()
 		if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
-			funcType.ParamListPos = getPositionRange(n.de(), openParen, closeParen)
+			funcType.ParamListPos = n.getPositionRange(openParen, closeParen)
 		}
 
 		// Set Parameters
@@ -4750,7 +4749,7 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 	}
 
 	typeDef := NewBLangTypeDefinition()
-	typeDef.pos = getPositionWithoutMetadata(n.de(), enumDeclarationNode)
+	typeDef.pos = n.getPositionWithoutMetadata(enumDeclarationNode)
 	if publicQualifier {
 		typeDef.SetPublic()
 	}
@@ -4793,7 +4792,7 @@ func (n *NodeBuilder) TransformEnumMember(enumMemberNode *tree.EnumMemberNode) B
 
 func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, publicQualifier bool) (*BLangConstant, bool) {
 	constantNode := createConstantNode()
-	constantNode.pos = getPositionWithoutMetadata(n.de(), enumMemberNode)
+	constantNode.pos = n.getPositionWithoutMetadata(enumMemberNode)
 	if publicQualifier {
 		constantNode.SetPublic()
 	}
@@ -5360,7 +5359,7 @@ func (n *NodeBuilder) TransformDoStatement(doStatementNode *tree.DoStatementNode
 
 func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *tree.ClassDefinitionNode) BLangNode {
 	blangClass := NewBLangClassDefinition()
-	blangClass.pos = getPositionWithoutMetadata(n.de(), classDefinitionNode)
+	blangClass.pos = n.getPositionWithoutMetadata(classDefinitionNode)
 
 	n.populateMetadata(classDefinitionNode.Metadata(), &blangClass)
 
@@ -5914,20 +5913,20 @@ func (n *NodeBuilder) getBLangVariableNode(bindingPattern tree.BindingPatternNod
 
 func (n *NodeBuilder) badTopLevel(node tree.Node) *BLangBadTopLevelNode {
 	bad := &BLangBadTopLevelNode{}
-	bad.SetPosition(n.getPosition(node))
+	bad.SetPosition(n.getRecoveryPosition(node))
 	return bad
 }
 
 func (n *NodeBuilder) badStmt(node tree.Node) *BLangBadStmt {
 	bad := &BLangBadStmt{}
-	bad.SetPosition(n.getPosition(node))
+	bad.SetPosition(n.getRecoveryPosition(node))
 	return bad
 }
 
 func (n *NodeBuilder) badExprOrAction(node tree.Node) *BLangBadExprOrAction {
 	bad := &BLangBadExprOrAction{}
 	if node != nil {
-		bad.SetPosition(n.getPosition(node))
+		bad.SetPosition(n.getRecoveryPosition(node))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}
@@ -5937,7 +5936,7 @@ func (n *NodeBuilder) badExprOrAction(node tree.Node) *BLangBadExprOrAction {
 func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 	bad := &BLangBadTypeNode{}
 	if node != nil {
-		bad.SetPosition(n.getPosition(node))
+		bad.SetPosition(n.getRecoveryPosition(node))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}
@@ -5947,7 +5946,7 @@ func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 func (n *NodeBuilder) badIdentifier(node tree.Node) *BLangBadIdentifier {
 	bad := &BLangBadIdentifier{}
 	if node != nil {
-		bad.SetPosition(n.getPosition(node))
+		bad.SetPosition(n.getRecoveryPosition(node))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}
