@@ -566,7 +566,7 @@ type PanicNode interface {
 
 type TrapNode interface {
 	BLangExpression
-	GetExpression() BLangExpression
+	GetExpression() BLangActionOrExpression
 }
 
 type DoNode interface {
@@ -703,8 +703,8 @@ type ConstPatternNode interface {
 
 type InputClauseNode interface {
 	Node
-	GetCollection() BLangExpression
-	SetCollection(collection BLangExpression)
+	GetCollection() BLangActionOrExpression
+	SetCollection(collection BLangActionOrExpression)
 	GetVariableDefinitionNode() VariableDefinitionNode
 	SetVariableDefinitionNode(variableDefinitionNode VariableDefinitionNode)
 	IsDeclaredWithVar() bool
@@ -750,6 +750,14 @@ type QueryExpressionNode interface {
 	BLangExpression
 	GetQueryClauses() []Node
 	AddQueryClause(queryClause Node)
+}
+
+type QueryActionNode interface {
+	BLangAction
+	GetQueryClauses() []Node
+	AddQueryClause(queryClause Node)
+	GetDoClause() DoClauseNode
+	SetDoClause(doClause DoClauseNode)
 }
 
 type CollectClauseNode interface {

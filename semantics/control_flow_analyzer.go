@@ -294,6 +294,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 	if ternaryChecker.hasTernaryExpression {
 		return createTernaryExpressionEffect(analyzer, curBB, ternaryChecker.ifTrue, ternaryChecker.ifFalse)
 	}
+	analyzer.analyzeQueryActionsInStatement(curBB, stmt)
 	switch s := stmt.(type) {
 	case *ast.BLangReturn:
 		return analyzer.analyzeReturn(curBB, s)
@@ -341,6 +342,43 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		analyzer.addNode(curBB, stmt)
 		return continueEffect(curBB)
 	}
+}
+
+func (analyzer *functionControlFlowAnalyzer) analyzeQueryActionsInStatement(curBB bbRef, stmt ast.StatementNode) {
+	collector := &queryActionCollector{}
+	ast.Walk(collector, stmt.(ast.BLangNode))
+	for _, action := range collector.actions {
+		if action.DoClause == nil || action.DoClause.Body == nil {
+			continue
+		}
+		bodyBB := analyzer.createNewBB()
+		analyzer.addEdge(curBB, bodyBB)
+		bodyEffect := analyzer.analyzeBlockStmt(bodyBB, action.DoClause.Body)
+		if !bodyEffect.isTerminal() {
+			analyzer.addEdge(bodyEffect.nextBB, curBB)
+		}
+	}
+}
+
+type queryActionCollector struct {
+	actions []*ast.BLangQueryAction
+}
+
+var _ ast.Visitor = &queryActionCollector{}
+
+func (c *queryActionCollector) Visit(node ast.BLangNode) ast.Visitor {
+	if node == nil {
+		return nil
+	}
+	if action, ok := node.(*ast.BLangQueryAction); ok {
+		c.actions = append(c.actions, action)
+		return nil
+	}
+	return c
+}
+
+func (c *queryActionCollector) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
+	return nil
 }
 
 func createTernaryExpressionEffect(analyzer *functionControlFlowAnalyzer, curBB bbRef, expressionNode1, expressionNode2 ast.BLangExpression) stmtEffect {

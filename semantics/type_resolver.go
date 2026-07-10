@@ -2668,6 +2668,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolveGroupExpr(t, chain, e, expectedType)
 	case *ast.BLangQueryExpr:
 		return resolveQueryExpr(t, chain, e, expectedType)
+	case *ast.BLangQueryAction:
+		return resolveQueryAction(t, chain, e)
 	case *ast.BLangWildCardBindingPattern:
 		ty := semtypes.ANY
 		setExpectedType(e, ty)
@@ -3421,7 +3423,7 @@ func resolveQueryExpr(
 		updateSymbolType(t, varDef.Var, variableTy)
 	}
 
-	queryChain, ok := resolveQueryIntermediateClauses(t, chain, expr, lastClauseIndex)
+	queryChain, ok := resolveQueryIntermediateClauses(t, chain, expr.QueryClauseList, lastClauseIndex)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -3464,8 +3466,8 @@ func resolveQueryExpr(
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		collectChain := queryChain
-		groupAggregatedSymbols := queryGroupAggregatedSymbolsBeforeClause(expr, lastClauseIndex)
-		for _, variable := range queryVariablesBeforeClause(expr, lastClauseIndex) {
+		groupAggregatedSymbols := queryGroupAggregatedSymbolsBeforeClause(expr.QueryClauseList, lastClauseIndex)
+		for _, variable := range queryVariablesBeforeClause(expr.QueryClauseList, lastClauseIndex) {
 			if groupAggregatedSymbols[variable.symbol] {
 				continue
 			}
@@ -3504,6 +3506,83 @@ func resolveQueryExpr(
 	}
 	setExpectedType(expr, queryTy)
 	return queryTy, defaultExpressionEffect(chain), true
+}
+
+func resolveQueryAction(
+	t typeResolver,
+	chain *binding,
+	action *ast.BLangQueryAction,
+) (semtypes.SemType, expressionEffect, bool) {
+	if len(action.QueryClauseList) < 1 {
+		t.semanticError("query action requires a from clause", action.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	fromClause, ok := action.QueryClauseList[0].(*ast.BLangFromClause)
+	if !ok {
+		t.semanticError("query action must start with a from clause", action.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	fromClause.SetDeterminedType(semtypes.NEVER)
+
+	collectionTy, _, ok := resolveActionOrExpression(t, chain, fromClause.Collection, semtypes.SemType{})
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	elementTy, ok := resolveQueryCollectionElementType(t, collectionTy, fromClause.GetPosition())
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	if fromClause.VariableDefinitionNode != nil {
+		varDef := fromClause.VariableDefinitionNode
+		if varDef.Var == nil {
+			t.unimplemented("only simple variable bindings are supported in from clause", fromClause.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		varDef.SetDeterminedType(semtypes.NEVER)
+
+		variableTy := elementTy
+		if !fromClause.IsDeclaredWithVarFlag && varDef.Var.TypeNode() != nil {
+			variableTy, ok = resolveBType(t, varDef.Var.TypeNode(), 0)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			if !semtypes.IsSubtype(t.typeContext(), elementTy, variableTy) {
+				t.semanticError("from clause variable type is incompatible with collection member type",
+					varDef.GetPosition())
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		}
+
+		if varDef.Var.Name != nil {
+			varDef.Var.Name.SetDeterminedType(semtypes.NEVER)
+		}
+		varDef.Var.SetDeterminedType(semtypes.NEVER)
+		updateSymbolType(t, varDef.Var, variableTy)
+	}
+
+	queryChain, ok := resolveQueryIntermediateClauses(t, chain, action.QueryClauseList, len(action.QueryClauseList))
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	if action.DoClause == nil || action.DoClause.Body == nil {
+		t.semanticError("query action requires a do clause", action.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	action.DoClause.SetDeterminedType(semtypes.NEVER)
+	bodyEffect, ok := resolveBlockStatements(t, queryChain, action.DoClause.Body.Stmts)
+	action.DoClause.Body.SetDeterminedType(semtypes.NEVER)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	if !bodyEffect.nonCompletion {
+		reportOutsideQueryActionAssignments(t, []*binding{bodyEffect.binding}, queryChain)
+	}
+
+	setExpectedType(action, semtypes.NIL)
+	return semtypes.NIL, defaultExpressionEffect(chain), true
 }
 
 func resolveQueryCollectionElementType(
@@ -3636,11 +3715,11 @@ type queryVariableInfo struct {
 	symbol model.SymbolRef
 }
 
-func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []queryVariableInfo {
+func queryVariablesBeforeClause(queryClauses []ast.BLangNode, endIndex int) []queryVariableInfo {
 	var variables []queryVariableInfo
 	seen := make(map[model.SymbolRef]bool)
 	for i := 0; i < endIndex; i++ {
-		switch clause := queryExpr.QueryClauseList[i].(type) {
+		switch clause := queryClauses[i].(type) {
 		case *ast.BLangFromClause:
 			variables = appendQueryVariableInfo(variables, seen, clause.VariableDefinitionNode)
 		case *ast.BLangJoinClause:
@@ -3658,14 +3737,14 @@ func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []q
 	return variables
 }
 
-func queryGroupAggregatedSymbolsBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) map[model.SymbolRef]bool {
+func queryGroupAggregatedSymbolsBeforeClause(queryClauses []ast.BLangNode, endIndex int) map[model.SymbolRef]bool {
 	aggregated := make(map[model.SymbolRef]bool)
 	for i := 0; i < endIndex; i++ {
-		groupByClause, ok := queryExpr.QueryClauseList[i].(*ast.BLangGroupByClause)
+		groupByClause, ok := queryClauses[i].(*ast.BLangGroupByClause)
 		if !ok || groupByClause.NonGroupingKeys == nil {
 			continue
 		}
-		for _, variable := range queryVariablesBeforeClause(queryExpr, i) {
+		for _, variable := range queryVariablesBeforeClause(queryClauses, i) {
 			if variable.name != "" && groupByClause.NonGroupingKeys.Contains(variable.name) {
 				aggregated[variable.symbol] = true
 			}
@@ -3748,7 +3827,7 @@ func resolveQueryGroupingKeyVarDef(t typeResolver, chain *binding, varDef *ast.B
 			return semtypes.SemType{}, false
 		}
 	}
-	initTy, _, ok := resolveActionOrExpression(t, chain, varDef.Var.Expr.(ast.BLangExpression), variableTy)
+	initTy, _, ok := resolveActionOrExpression(t, chain, varDef.Var.Expr, variableTy)
 	if !ok {
 		return semtypes.SemType{}, false
 	}
@@ -3769,12 +3848,12 @@ func resolveQueryGroupingKeyVarDef(t typeResolver, chain *binding, varDef *ast.B
 func resolveQueryGroupByClause(
 	t typeResolver,
 	chain *binding,
-	queryExpr *ast.BLangQueryExpr,
+	queryClauses []ast.BLangNode,
 	clause *ast.BLangGroupByClause,
 	clauseIndex int,
 ) (*binding, bool) {
 	clause.SetDeterminedType(semtypes.NEVER)
-	queryVariables := queryVariablesBeforeClause(queryExpr, clauseIndex)
+	queryVariables := queryVariablesBeforeClause(queryClauses, clauseIndex)
 	nonGroupingKeys := &balCommon.OrderedSet[string]{}
 	for _, variable := range queryVariables {
 		if variable.name != "" && variable.name != "_" {
@@ -3824,10 +3903,10 @@ func resolveQueryGroupByClause(
 	return resultChain, true
 }
 
-func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *ast.BLangQueryExpr, selectClauseIndex int) (*binding, bool) {
+func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryClauses []ast.BLangNode, endClauseIndex int) (*binding, bool) {
 	currentChain := chain
-	for i := 1; i < selectClauseIndex; i++ {
-		switch clause := queryExpr.QueryClauseList[i].(type) {
+	for i := 1; i < endClauseIndex; i++ {
+		switch clause := queryClauses[i].(type) {
 		case *ast.BLangJoinClause:
 			clause.SetDeterminedType(semtypes.NEVER)
 			collectionTy, _, ok := resolveActionOrExpression(t, currentChain, clause.Collection, semtypes.SemType{})
@@ -3901,7 +3980,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 						varDef.GetPosition())
 					return nil, false
 				}
-				initTy, _, ok := resolveActionOrExpression(t, currentChain, varDef.Var.Expr.(ast.BLangExpression), semtypes.SemType{})
+				initTy, _, ok := resolveActionOrExpression(t, currentChain, varDef.Var.Expr, semtypes.SemType{})
 				if !ok {
 					return nil, false
 				}
@@ -3936,7 +4015,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 			currentChain = effect.ifTrue
 		case *ast.BLangGroupByClause:
 			var ok bool
-			currentChain, ok = resolveQueryGroupByClause(t, currentChain, queryExpr, clause, i)
+			currentChain, ok = resolveQueryGroupByClause(t, currentChain, queryClauses, clause, i)
 			if !ok {
 				return nil, false
 			}

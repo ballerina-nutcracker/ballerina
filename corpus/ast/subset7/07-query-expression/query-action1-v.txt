@@ -1,0 +1,82 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)
+            (literal 5)))))
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (query-action
+            (from-clause
+              (var-def
+                (variable x))
+              (simple-var-ref xs))
+            (where-clause
+              (binary-expr ==
+                (binary-expr %
+                  (simple-var-ref x)
+                  (literal 2))
+                (literal 1)))
+            (let-clause
+              (var-def
+                (variable y (type
+                  (value-type int)) (expr
+                  (binary-expr *
+                    (simple-var-ref x)
+                    (literal 10))))))
+            (limit-clause
+              (literal 2))
+            (do-clause
+              (block-stmt
+                (assignment
+                  (simple-var-ref total)
+                  (binary-expr +
+                    (simple-var-ref total)
+                    (simple-var-ref y)))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total))))
+      (var-def
+        (variable firstTwo (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (limit-clause
+            (literal 2))
+          (do-clause
+            (block-stmt
+              (assignment
+                (simple-var-ref firstTwo)
+                (binary-expr +
+                  (simple-var-ref firstTwo)
+                  (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref firstTwo)))))))

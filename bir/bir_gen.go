@@ -1008,6 +1008,13 @@ func handleActionOrExpression(ctx context, curBB *BIRBasicBlock, expr ast.BLangA
 		return generateCall(ctx, curBB, expr)
 	case *ast.BLangClientResourceAccessAction:
 		return generateResourceAccessCall(ctx, curBB, expr)
+	case *ast.BLangQueryAction:
+		ctx.internalError("query action reached BIR generation without being desugared", expr.GetPosition())
+		fallback := &ast.BLangLiteral{}
+		fallback.SetValue(nil)
+		fallback.SetDeterminedType(expr.GetDeterminedType())
+		fallback.SetPosition(expr.GetPosition())
+		return literal(ctx, curBB, fallback)
 	case *ast.BLangTypedescExpr:
 		return typedescExpression(ctx, curBB, expr)
 	case *ast.BLangXMLSequenceLiteral:

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: cannot assign to constant
+error[SEMANTIC_ERROR]: cannot assign to final variable
   --> modify-e.bal:24:13
    |
 24 |             a = 10; // @error

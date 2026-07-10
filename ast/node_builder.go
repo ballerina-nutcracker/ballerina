@@ -2020,8 +2020,13 @@ func (n *NodeBuilder) createActionOrExpression(actionOrExpression tree.Node) BLa
 		return &bLVarRef
 
 	} else if actionOrExpression.Kind() == common.BRACED_EXPRESSION {
+		bracedExpr := actionOrExpression.(*tree.BracedExpressionNode)
+		expr := n.createActionOrExpression(bracedExpr.Expression())
+		if action, ok := expr.(BLangAction); ok {
+			return action
+		}
 		group := BLangGroupExpr{}
-		group.Expression = n.TransformSyntaxNode(actionOrExpression).(BLangExpression)
+		group.Expression = expr.(BLangExpression)
 		group.pos = getPosition(n.de(), actionOrExpression)
 		return &group
 	} else if isType(actionOrExpression.Kind()) {
@@ -2941,7 +2946,7 @@ func (n *NodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameRefer
 
 func (n *NodeBuilder) TransformTrapExpression(trapBLangExpression *tree.TrapExpressionNode) BLangNode {
 	pos := getPosition(n.de(), trapBLangExpression)
-	expr := n.createExpression(trapBLangExpression.Expression())
+	expr := n.createActionOrExpression(trapBLangExpression.Expression())
 	trapExpr := &BLangTrapExpr{}
 	trapExpr.pos = pos
 	trapExpr.Expr = expr
@@ -3066,6 +3071,9 @@ func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode
 	annotations := letVariableDeclarationNode.Annotations()
 	if annotations.Size() > 0 {
 		panic("annotations not yet supported")
+	}
+	if variableDef, ok := varDef.(*BLangSimpleVariableDef); ok && variableDef.Var != nil {
+		variableDef.Var.SetFinal()
 	}
 	return varDef.(BLangNode)
 }
@@ -4046,10 +4054,13 @@ func (n *NodeBuilder) TransformQueryConstructType(queryConstructTypeNode *tree.Q
 func (n *NodeBuilder) TransformFromClause(fromClauseNode *tree.FromClauseNode) BLangNode {
 	fromClause := &BLangFromClause{}
 	fromClause.pos = getPosition(n.de(), fromClauseNode)
-	fromClause.SetCollection(n.createExpression(fromClauseNode.Expression()))
+	fromClause.SetCollection(n.createActionOrExpression(fromClauseNode.Expression()))
 	bindingPatternNode := fromClauseNode.TypedBindingPattern()
 	fromClause.SetVariableDefinitionNode(n.createBLangVarDef(getPosition(n.de(), bindingPatternNode), bindingPatternNode,
 		nil, nil))
+	if fromClause.VariableDefinitionNode != nil && fromClause.VariableDefinitionNode.Var != nil {
+		fromClause.VariableDefinitionNode.Var.SetFinal()
+	}
 	fromClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	return fromClause
 }
@@ -4076,11 +4087,14 @@ func (n *NodeBuilder) TransformLetClause(letClauseNode *tree.LetClauseNode) BLan
 func (n *NodeBuilder) TransformJoinClause(joinClauseNode *tree.JoinClauseNode) BLangNode {
 	joinClause := &BLangJoinClause{}
 	joinClause.pos = getPosition(n.de(), joinClauseNode)
-	joinClause.SetCollection(n.createExpression(joinClauseNode.Expression()))
+	joinClause.SetCollection(n.createActionOrExpression(joinClauseNode.Expression()))
 	bindingPatternNode := joinClauseNode.TypedBindingPattern()
 	joinClause.SetVariableDefinitionNode(
 		n.createBLangVarDef(getPosition(n.de(), bindingPatternNode), bindingPatternNode, nil, nil),
 	)
+	if joinClause.VariableDefinitionNode != nil && joinClause.VariableDefinitionNode.Var != nil {
+		joinClause.VariableDefinitionNode.Var.SetFinal()
+	}
 	joinClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	joinClause.IsOuterJoinFlag = joinClauseNode.OuterKeyword() != nil
 	if onClauseNode := joinClauseNode.JoinOnCondition(); onClauseNode != nil {
@@ -4115,6 +4129,26 @@ func (n *NodeBuilder) TransformQueryPipeline(queryPipelineNode *tree.QueryPipeli
 	panic("TransformQueryPipeline unimplemented")
 }
 
+func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQueryClause(Node) }, queryPipeline *tree.QueryPipelineNode) {
+	if queryPipeline == nil || queryPipeline.FromClause() == nil {
+		return
+	}
+
+	queryClauseAdder.AddQueryClause(n.TransformSyntaxNode(queryPipeline.FromClause()))
+
+	intermediateClauses := queryPipeline.IntermediateClauses()
+	for i := 0; i < intermediateClauses.Size(); i++ {
+		clause := intermediateClauses.Get(i)
+		switch clause.Kind() {
+		case common.FROM_CLAUSE, common.JOIN_CLAUSE, common.LET_CLAUSE, common.WHERE_CLAUSE,
+			common.GROUP_BY_CLAUSE, common.LIMIT_CLAUSE, common.ORDER_BY_CLAUSE:
+			queryClauseAdder.AddQueryClause(n.TransformSyntaxNode(clause))
+		default:
+			n.cx.Unimplemented("only from + join + let + where + group by + order by + limit query clauses are supported for now", getPosition(n.de(), clause))
+		}
+	}
+}
+
 func (n *NodeBuilder) TransformSelectClause(selectClauseNode *tree.SelectClauseNode) BLangNode {
 	selectClause := &BLangSelectClause{}
 	selectClause.pos = getPosition(n.de(), selectClauseNode)
@@ -4145,24 +4179,7 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryE
 	}
 
 	queryPipeline := queryBLangExpression.QueryPipeline()
-	if queryPipeline == nil || queryPipeline.FromClause() == nil {
-		return queryExpr
-	}
-
-	fromClause := n.TransformSyntaxNode(queryPipeline.FromClause())
-	queryExpr.AddQueryClause(fromClause)
-
-	intermediateClauses := queryPipeline.IntermediateClauses()
-	for i := 0; i < intermediateClauses.Size(); i++ {
-		clause := intermediateClauses.Get(i)
-		switch clause.Kind() {
-		case common.FROM_CLAUSE, common.JOIN_CLAUSE, common.LET_CLAUSE, common.WHERE_CLAUSE,
-			common.GROUP_BY_CLAUSE, common.LIMIT_CLAUSE, common.ORDER_BY_CLAUSE:
-			queryExpr.AddQueryClause(n.TransformSyntaxNode(clause))
-		default:
-			n.cx.Unimplemented("only from + join + let + where + group by + order by + limit + select/collect query clauses are supported for now", getPosition(n.de(), clause))
-		}
-	}
+	n.addQueryPipelineClauses(queryExpr, queryPipeline)
 
 	resultClause := queryBLangExpression.ResultClause()
 	if resultClause != nil && (resultClause.Kind() == common.SELECT_CLAUSE || resultClause.Kind() == common.COLLECT_CLAUSE) {
@@ -4179,7 +4196,18 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryE
 }
 
 func (n *NodeBuilder) TransformQueryAction(queryActionNode *tree.QueryActionNode) BLangNode {
-	panic("TransformQueryAction unimplemented")
+	queryAction := &BLangQueryAction{}
+	queryAction.pos = getPosition(n.de(), queryActionNode)
+
+	n.addQueryPipelineClauses(queryAction, queryActionNode.QueryPipeline())
+
+	doClause := &BLangDoClause{}
+	doClause.pos = getPosition(n.de(), queryActionNode)
+	if blockStmt := queryActionNode.BlockStatement(); blockStmt != nil {
+		doClause.Body = n.TransformBlockStatement(blockStmt).(*BLangBlockStmt)
+	}
+	queryAction.SetDoClause(doClause)
+	return queryAction
 }
 
 func (n *NodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *tree.IntersectionTypeDescriptorNode) BLangNode {
@@ -4959,6 +4987,7 @@ func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarati
 	}
 	simpleVar.SetPosition(pos)
 	simpleVar.SetInitialExpression(n.createExpression(groupingKeyVarDeclarationNode.Expression()))
+	simpleVar.SetFinal()
 
 	typeDesc := groupingKeyVarDeclarationNode.TypeDescriptor()
 	if isDeclaredWithVar(typeDesc) {

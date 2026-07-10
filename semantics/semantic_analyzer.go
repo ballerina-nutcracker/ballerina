@@ -956,6 +956,9 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 	case *ast.BLangQueryExpr:
 		return analyzeQueryExpr(a, expr, expectedType)
 
+	case *ast.BLangQueryAction:
+		return analyzeQueryAction(a, expr, expectedType)
+
 	case *ast.BLangWildCardBindingPattern:
 		return validateResolvedType(a, expr, expectedType)
 
@@ -1121,19 +1124,15 @@ func queryExprClausesForAnalysis[A analyzer](
 	}, true
 }
 
-func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedType semtypes.SemType) bool {
-	// Query clause ordering and shape are validated during type resolution.
-	clauses, ok := queryExprClausesForAnalysis(a, queryExpr)
-	if !ok {
-		return false
-	}
-	if !analyzeActionOrExpression(a, clauses.fromClause.Collection, semtypes.SemType{}) {
-		return false
-	}
+func analyzeQueryIntermediateClauses[A analyzer](
+	a A,
+	queryClauses []ast.BLangNode,
+	endClauseIndex int,
+) bool {
 	orderedTy := semtypes.CreateOrdered(a.tyCtx())
 
-	for i := 1; i < clauses.lastClauseIndex; i++ {
-		switch clause := queryExpr.QueryClauseList[i].(type) {
+	for i := 1; i < endClauseIndex; i++ {
+		switch clause := queryClauses[i].(type) {
 		case *ast.BLangJoinClause:
 			if !analyzeActionOrExpression(a, clause.Collection, semtypes.SemType{}) {
 				return false
@@ -1159,7 +1158,7 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 				if ast.SymbolIsSet(varDef.Var) {
 					expectedType = a.ctx().SymbolType(varDef.Var.Symbol())
 				}
-				if !analyzeActionOrExpression(a, varDef.Var.Expr.(ast.BLangExpression), expectedType) {
+				if !analyzeActionOrExpression(a, varDef.Var.Expr, expectedType) {
 					return false
 				}
 			}
@@ -1184,7 +1183,7 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 					if ast.SymbolIsSet(varDef.Var) {
 						expectedType = a.ctx().SymbolType(varDef.Var.Symbol())
 					}
-					if !analyzeActionOrExpression(a, varDef.Var.Expr.(ast.BLangExpression), expectedType) {
+					if !analyzeActionOrExpression(a, varDef.Var.Expr, expectedType) {
 						return false
 					}
 					if !semtypes.IsZero(expectedType) && !semtypes.IsSubtype(a.tyCtx(), expectedType, anyData) {
@@ -1204,6 +1203,21 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 				}
 			}
 		}
+	}
+	return true
+}
+
+func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedType semtypes.SemType) bool {
+	// Query clause ordering and shape are validated during type resolution.
+	clauses, ok := queryExprClausesForAnalysis(a, queryExpr)
+	if !ok {
+		return false
+	}
+	if !analyzeActionOrExpression(a, clauses.fromClause.Collection, semtypes.SemType{}) {
+		return false
+	}
+	if !analyzeQueryIntermediateClauses(a, queryExpr.QueryClauseList, clauses.lastClauseIndex) {
+		return false
 	}
 
 	if clauses.selectClause != nil {
@@ -1240,6 +1254,30 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 	}
 
 	return validateResolvedType(a, queryExpr, expectedType)
+}
+
+func analyzeQueryAction[A analyzer](a A, action *ast.BLangQueryAction, expectedType semtypes.SemType) bool {
+	if len(action.QueryClauseList) < 1 {
+		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
+		return false
+	}
+	fromClause, ok := action.QueryClauseList[0].(*ast.BLangFromClause)
+	if !ok {
+		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
+		return false
+	}
+	if !analyzeActionOrExpression(a, fromClause.Collection, semtypes.SemType{}) {
+		return false
+	}
+	if !analyzeQueryIntermediateClauses(a, action.QueryClauseList, len(action.QueryClauseList)) {
+		return false
+	}
+	if action.DoClause == nil || action.DoClause.Body == nil {
+		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
+		return false
+	}
+	ast.Walk(a, action.DoClause.Body)
+	return validateResolvedType(a, action, expectedType)
 }
 
 func analyzeNewExpression[A analyzer](a A, expr *ast.BLangNewExpression, expectedType semtypes.SemType) bool {
@@ -1796,6 +1834,10 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		// to avoid re-initializing/re-walking the same lambda body.
 		_ = n
 		return nil
+	case *ast.BLangQueryAction:
+		// Query actions are analyzed exactly once via analyzeQueryAction
+		// (called from analyzeActionOrExpression), including their do body.
+		return nil
 	case *ast.BLangFunction:
 		if _, isDep := a.ctx().GetSymbol(n.Symbol()).(model.DependentlyTypedFunctionSymbol); isDep {
 			initializeFunctionAnalyzer(a, n)
@@ -1987,6 +2029,10 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 			return false
 		case model.SymbolKindType:
 			a.semanticErr("cannot assign to type", variable.GetPosition())
+			return false
+		}
+		if valueSym, ok := ctx.GetSymbol(symbol).(*model.ValueSymbol); ok && valueSym.IsFinal() {
+			a.semanticErr("cannot assign to final variable", variable.GetPosition())
 			return false
 		}
 	}

@@ -306,7 +306,7 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 				newSelectClause(newIntLiteral(1)),
 			)
 			resolver, cx := newTestQueryResolver()
-			_, ok := resolveQueryIntermediateClauses(resolver, nil, query, len(query.QueryClauseList)-1)
+			_, ok := resolveQueryIntermediateClauses(resolver, nil, query.QueryClauseList, len(query.QueryClauseList)-1)
 			if ok {
 				t.Fatalf("expected resolveQueryIntermediateClauses to fail")
 			}

@@ -28,7 +28,7 @@ type TypeParamEntry struct {
 type (
 	BLangInputClause struct {
 		bLangNodeBase
-		Collection BLangExpression
+		Collection BLangActionOrExpression
 		// PR-TODO: can this be nil?
 		VariableDefinitionNode *BLangSimpleVariableDef
 		IsDeclaredWithVarFlag  bool
@@ -141,11 +141,11 @@ var (
 	_ BLangNode = &BLangOnFailClause{}
 )
 
-func (b *BLangJoinClause) GetCollection() BLangExpression {
+func (b *BLangJoinClause) GetCollection() BLangActionOrExpression {
 	return b.Collection
 }
 
-func (b *BLangJoinClause) SetCollection(collection BLangExpression) {
+func (b *BLangJoinClause) SetCollection(collection BLangActionOrExpression) {
 	b.Collection = collection
 }
 
@@ -195,11 +195,11 @@ func (b *BLangOnClause) SetEqualsExpression(expression BLangExpression) {
 	b.EqualsExpr = expression
 }
 
-func (b *BLangFromClause) GetCollection() BLangExpression {
+func (b *BLangFromClause) GetCollection() BLangActionOrExpression {
 	return b.Collection
 }
 
-func (b *BLangFromClause) SetCollection(collection BLangExpression) {
+func (b *BLangFromClause) SetCollection(collection BLangActionOrExpression) {
 	b.Collection = collection
 }
 

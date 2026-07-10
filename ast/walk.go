@@ -360,6 +360,14 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.QueryClauseList[i])
 		}
 
+	case *BLangQueryAction:
+		for i := range node.QueryClauseList {
+			Walk(v, node.QueryClauseList[i])
+		}
+		if node.DoClause != nil {
+			Walk(v, node.DoClause)
+		}
+
 	case *BLangUnaryExpr:
 		if node.Expr != nil {
 			Walk(v, node.Expr.(BLangNode))

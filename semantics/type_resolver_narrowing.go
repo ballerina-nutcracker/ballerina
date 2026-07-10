@@ -151,9 +151,23 @@ func unnarrowSymbolAt(t typeResolver, chain *binding, symbol model.SymbolRef, po
 // whose target is narrowed in the loop's entry chain. The walk stops at
 // loopEntry: anything below it belongs to the surrounding scope.
 func reportOutsideLoopAssignments(t typeResolver, chains []*binding, loopEntry *binding) {
+	reportOutsideRepeatedBlockAssignments(
+		t,
+		chains,
+		loopEntry,
+		"cannot assign to a variable narrowed outside the enclosing loop",
+	)
+}
+
+func reportOutsideRepeatedBlockAssignments(
+	t typeResolver,
+	chains []*binding,
+	entry *binding,
+	message string,
+) {
 	for _, chain := range chains {
 		seen := make(map[model.SymbolRef]bool)
-		for c := chain; c != nil && c != loopEntry; c = c.prev {
+		for c := chain; c != nil && c != entry; c = c.prev {
 			if c.hasFlag(bindingFlagFunctionBoundary) {
 				continue
 			}
@@ -164,8 +178,8 @@ func reportOutsideLoopAssignments(t typeResolver, chains []*binding, loopEntry *
 			if !c.isAssignment() {
 				continue
 			}
-			if _, isNarrowed, _ := lookupBinding(loopEntry, c.ref); isNarrowed {
-				t.semanticError("cannot assign to a variable narrowed outside the enclosing loop", c.assignmentPos)
+			if _, isNarrowed, _ := lookupBinding(entry, c.ref); isNarrowed {
+				t.semanticError(message, c.assignmentPos)
 			}
 		}
 	}

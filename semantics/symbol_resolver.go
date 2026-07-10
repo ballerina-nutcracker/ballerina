@@ -1009,7 +1009,7 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		}
 	case *ast.BLangMappingConstructorExpr:
 		return resolveMappingConstructor(resolver, n)
-	case *ast.BLangQueryExpr:
+	case *ast.BLangQueryExpr, *ast.BLangQueryAction:
 		return newBlockSymbolResolverWithBlockScope(resolver, n)
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {
@@ -1191,7 +1191,7 @@ func defineVariable(resolver *blockSymbolResolver, variable ast.VariableNode, is
 		if isShadowed(resolver, name) {
 			semanticError(resolver, "Variable already defined: "+name, variable.GetPosition())
 		}
-		symbol := model.NewValueSymbol(name, false, isFinal, false)
+		symbol := model.NewValueSymbol(name, false, false, false)
 		if isFinal {
 			symbol.SetFinal()
 		}

@@ -161,6 +161,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printErrorConstructorExpr(t)
 	case *BLangQueryExpr:
 		p.printQueryExpr(t)
+	case *BLangQueryAction:
+		p.printQueryAction(t)
 	case *BLangFromClause:
 		p.printFromClause(t)
 	case *BLangJoinClause:
@@ -187,6 +189,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printOnConflictClause(t)
 	case *BLangCollectClause:
 		p.printCollectClause(t)
+	case *BLangDoClause:
+		p.printDoClause(t)
 	case *BLangCheckedExpr:
 		p.printCheckedExpr(t)
 	case *BLangCheckPanickedExpr:
@@ -911,6 +915,20 @@ func (p *PrettyPrinter) printQueryExpr(node *BLangQueryExpr) {
 	p.EndNode()
 }
 
+func (p *PrettyPrinter) printQueryAction(node *BLangQueryAction) {
+	p.StartNode()
+	p.PrintString("query-action")
+	p.indentLevel++
+	for i := range node.QueryClauseList {
+		p.PrintInner(node.QueryClauseList[i])
+	}
+	if node.DoClause != nil {
+		p.PrintInner(node.DoClause)
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
 func (p *PrettyPrinter) printFromClause(node *BLangFromClause) {
 	p.StartNode()
 	p.PrintString("from-clause")
@@ -1070,6 +1088,17 @@ func (p *PrettyPrinter) printCollectClause(node *BLangCollectClause) {
 	p.indentLevel++
 	if node.Expression != nil {
 		p.PrintInner(node.Expression.(BLangNode))
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printDoClause(node *BLangDoClause) {
+	p.StartNode()
+	p.PrintString("do-clause")
+	p.indentLevel++
+	if node.Body != nil {
+		p.PrintInner(node.Body)
 	}
 	p.indentLevel--
 	p.EndNode()

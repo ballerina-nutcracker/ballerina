@@ -183,3 +183,12 @@ func validateLoopAssignments(t typeResolver, loopT *loopTypeResolver, bodyEffect
 	chains = append(chains, loopT.continues...)
 	reportOutsideLoopAssignments(t, chains, loopEntry)
 }
+
+func reportOutsideQueryActionAssignments(t typeResolver, chains []*binding, queryActionEntry *binding) {
+	reportOutsideRepeatedBlockAssignments(
+		t,
+		chains,
+		queryActionEntry,
+		"cannot assign to a variable narrowed outside the enclosing query action",
+	)
+}

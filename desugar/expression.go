@@ -78,6 +78,8 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 		return walkArrowFunction(cx, expr)
 	case *ast.BLangQueryExpr:
 		return walkQueryExpr(cx, expr)
+	case *ast.BLangQueryAction:
+		return walkQueryAction(cx, expr)
 	case *ast.BLangTypedescExpr:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangLiteral:
@@ -804,6 +806,14 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 }
 
 func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangSimpleVarRef) {
+	return assignActionOrExpressionToLocal(cx, initExpr, pos)
+}
+
+func assignActionOrExpressionToLocal(
+	cx *functionContext,
+	initExpr ast.BLangActionOrExpression,
+	pos diagnostics.Location,
+) (ast.StatementNode, *ast.BLangSimpleVarRef) {
 	ty := initExpr.GetDeterminedType()
 	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false)
 	tempVar := &ast.BLangSimpleVariable{Name: &ast.BLangIdentifier{Value: tempName}}
@@ -968,7 +978,7 @@ func walkTrapExpr(cx *functionContext, expr *ast.BLangTrapExpr) desugaredNode[as
 		// trap region in BIR gen
 		cx.internalError("Init statements will be hoisted outside of trap region")
 	}
-	expr.Expr = result.replacementNode.(ast.BLangExpression)
+	expr.Expr = result.replacementNode
 	return desugaredNode[ast.BLangActionOrExpression]{initStmts: nil, replacementNode: expr}
 }
 
