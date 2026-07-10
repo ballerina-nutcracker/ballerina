@@ -648,6 +648,34 @@ func getDocumentationString(metadata *tree.MetadataNode) tree.Node {
 	return metadata.DocumentationString()
 }
 
+func (n *NodeBuilder) populateMetadata(metadata *tree.MetadataNode, target AnnotatableNode) {
+	if metadata == nil || metadata.IsMissing() {
+		return
+	}
+	if docTarget, ok := target.(DocumentableNode); ok {
+		docString := getDocumentationString(metadata)
+		if docString != nil && !docString.IsMissing() {
+			docTarget.SetMarkdownDocumentationAttachment(n.createMarkdownDocumentationAttachment(docString))
+		}
+	}
+	n.addAnnotationAttachments(metadata.Annotations(), target)
+}
+
+func (n *NodeBuilder) addAnnotationAttachments(annotations tree.NodeList[*tree.AnnotationNode], target AnnotatableNode) {
+	for annotation := range annotations.Iterator() {
+		target.AddAnnotationAttachment(n.TransformAnnotation(annotation).(*BLangAnnotationAttachment))
+	}
+}
+
+func (n *NodeBuilder) createTrueLiteral(pos diagnostics.Location) *BLangLiteral {
+	literal := &BLangLiteral{}
+	literal.SetValueType(n.types.booleanType)
+	literal.SetValue(true)
+	literal.SetOriginalValue("true")
+	literal.SetPosition(pos)
+	return literal
+}
+
 // createMarkdownDocumentationAttachment creates a BLangMarkdownDocumentation from a documentation string node
 func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.Node) *BLangMarkdownDocumentation {
 	if docStringNode == nil || docStringNode.IsMissing() {
@@ -900,10 +928,7 @@ func (n *NodeBuilder) createSimpleVarInner(name tree.Token, typeName tree.Node, 
 		bLSimpleVar.SetInitialExpression(n.createExpression(initializer))
 	}
 
-	if annotations.Size() > 0 {
-		// Panic instead of processing annotations (not yet implemented)
-		panic("annotations not yet supported")
-	}
+	n.addAnnotationAttachments(annotations, bLSimpleVar)
 
 	return bLSimpleVar
 }
@@ -1426,9 +1451,7 @@ func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNode
 		// Pop "return" from the stack
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 		annots := retTypeDescNode.Annotations()
-		if annots.Size() > 0 {
-			panic("unimplemented")
-		}
+		n.addAnnotationAttachments(annots, bLFunction.ReturnTypeDescriptorNode())
 	} else {
 		// Default return type is nil when not specified
 		nilReturnType := &BLangValueType{TypeKind: TypeKind_NIL}
@@ -1450,11 +1473,7 @@ func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *tree.FunctionDefi
 	bLFunction.pos = getPositionWithoutMetadata(n.de(), funcDefNode)
 
 	metadata := funcDefNode.Metadata()
-	if metadata != nil && !metadata.IsMissing() {
-		// TODO: Handle annotations
-		docString := getDocumentationString(metadata)
-		bLFunction.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(docString)
-	}
+	n.populateMetadata(metadata, bLFunction)
 
 	return bLFunction
 }
@@ -1602,11 +1621,6 @@ func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree
 }
 
 func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefinitionNode) BLangNode {
-	metadata := typeDefinitionNode.Metadata()
-	if metadata != nil && !metadata.IsMissing() {
-		panic("TransformTypeDefinition: metadata not yet supported")
-	}
-
 	typeDef := NewBLangTypeDefinition()
 
 	identifierNode := createIdentifierFromToken(getPosition(n.de(), typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
@@ -1642,7 +1656,7 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 
 	typeDef.pos = getPositionWithoutMetadata(n.de(), typeDefinitionNode)
 
-	// Skipping annotations since we've asserted no metadata
+	n.populateMetadata(typeDefinitionNode.Metadata(), typeDef)
 
 	return typeDef
 }
@@ -1774,6 +1788,7 @@ func (n *NodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *tre
 	bLFunction := n.createFunctionNode(funcDef.FunctionName(), funcDef.QualifierList(), funcDef.FunctionSignature(), funcDef.FunctionBody())
 	bLFunction.pos = getPositionWithoutMetadata(n.de(), funcDef)
 	bLFunction.SetAttached()
+	n.populateMetadata(funcDef.Metadata(), bLFunction)
 
 	funcName := bLFunction.Name.Value
 	if model.Name(funcName) == model.USER_DEFINED_INIT_SUFFIX {
@@ -1844,8 +1859,8 @@ func (n *NodeBuilder) TransformVariableDeclaration(variableDeclarationNode *tree
 		variableDeclarationNode.FinalKeyword(),
 	)
 	annotations := variableDeclarationNode.Annotations()
-	if annotations.Size() > 0 {
-		panic("annotations not yet supported")
+	if simpleVarDef, ok := varNode.(*BLangSimpleVariableDef); ok {
+		n.addAnnotationAttachments(annotations, simpleVarDef.Var)
 	}
 
 	return varNode.(BLangNode)
@@ -2370,14 +2385,7 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *tree
 		constantNode.SetTypeNode(n.createTypeNode(typeDescriptor).(BType))
 	}
 
-	// Lines 950-952: Skip annotations
-
-	metadata := constantDeclarationNode.Metadata()
-	if metadata != nil && !metadata.IsMissing() {
-		// TODO: Handle annotations
-		docString := getDocumentationString(metadata)
-		constantNode.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(docString)
-	}
+	n.populateMetadata(constantDeclarationNode.Metadata(), constantNode)
 
 	visibilityQualifier := constantDeclarationNode.VisibilityQualifier()
 	if visibilityQualifier != nil && visibilityQualifier.Kind() == common.PUBLIC_KEYWORD {
@@ -2580,6 +2588,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 			if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == common.PUBLIC_KEYWORD {
 				bField.flags |= model.FlagPublic
 			}
+			n.populateMetadata(objectField.Metadata(), bField)
 			if objectType.AddMember(bField) {
 				n.cx.SyntaxError("redeclared symbol '"+fieldName+"'", bField.pos)
 			}
@@ -2675,6 +2684,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 			if recordField.QuestionMarkToken() != nil {
 				bField.SetOptional()
 			}
+			n.populateMetadata(recordField.Metadata(), &bField)
 			recordType.AddField(fieldName, bField)
 		case common.RECORD_FIELD_WITH_DEFAULT_VALUE:
 			recordFieldDV := field.(*tree.RecordFieldWithDefaultValueNode)
@@ -2688,6 +2698,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 			if recordFieldDV.ReadonlyKeyword() != nil {
 				bField.SetReadonly()
 			}
+			n.populateMetadata(recordFieldDV.Metadata(), &bField)
 			recordType.AddField(fieldName, bField)
 		case common.TYPE_REFERENCE:
 			typeRef := field.(*tree.TypeReferenceNode)
@@ -2749,11 +2760,26 @@ func (n *NodeBuilder) TransformTypeReference(typeReferenceNode *tree.TypeReferen
 }
 
 func (n *NodeBuilder) TransformAnnotation(annotationNode *tree.AnnotationNode) BLangNode {
-	panic("TransformAnnotation unimplemented")
+	annotation := &BLangAnnotationAttachment{}
+	annotation.SetPosition(getPosition(n.de(), annotationNode))
+	nameReference := n.createBLangNameReference(annotationNode.AnnotReference())
+	annotation.PkgAlias = &nameReference[0]
+	annotation.AnnotationName = &nameReference[1]
+	if value := annotationNode.AnnotValue(); value != nil && !value.IsMissing() {
+		annotation.Expr = n.createExpression(value)
+		annotation.HasValue = true
+	} else {
+		annotation.Expr = n.createTrueLiteral(annotation.GetPosition())
+	}
+	return annotation
 }
 
 func (n *NodeBuilder) TransformMetadata(metadataNode *tree.MetadataNode) BLangNode {
-	panic("TransformMetadata unimplemented")
+	docString := getDocumentationString(metadataNode)
+	if docString == nil || docString.IsMissing() {
+		return nil
+	}
+	return n.createMarkdownDocumentationAttachment(docString)
 }
 
 func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarationNode *tree.ModuleVariableDeclarationNode) BLangNode {
@@ -2784,6 +2810,7 @@ func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarati
 	}
 
 	n.populateModuleVariableVisibilityAndQualifiers(moduleVariableDeclarationNode, simpleVar)
+	n.populateMetadata(moduleVariableDeclarationNode.Metadata(), simpleVar)
 
 	simpleVar.pos = pos
 	return simpleVar
@@ -2854,11 +2881,95 @@ func (n *NodeBuilder) TransformNilLiteral(nilLiteralNode *tree.NilLiteralNode) B
 }
 
 func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *tree.AnnotationDeclarationNode) BLangNode {
-	panic("TransformAnnotationDeclaration unimplemented")
+	annotation := &BLangAnnotation{}
+	annotation.SetPosition(getPositionWithoutMetadata(n.de(), annotationDeclarationNode))
+	name := createIdentifierFromToken(getPosition(n.de(), annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
+	annotation.Name = &name
+	if visibility := annotationDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == common.PUBLIC_KEYWORD {
+		annotation.SetPublic()
+	}
+	if constKeyword := annotationDeclarationNode.ConstKeyword(); constKeyword != nil && !constKeyword.IsMissing() {
+		annotation.SetConst()
+	}
+	if typeDesc := annotationDeclarationNode.TypeDescriptor(); typeDesc != nil && !typeDesc.IsMissing() {
+		annotation.SetTypeDescriptor(n.createTypeNode(typeDesc))
+	}
+	attachPoints := annotationDeclarationNode.AttachPoints()
+	for attachPoint := range attachPoints.Iterator() {
+		if attachPoint, ok := attachPoint.(*tree.AnnotationAttachPointNode); ok {
+			annotation.AddAttachPoint(n.createAnnotationAttachPoint(attachPoint))
+		}
+	}
+	n.populateMetadata(annotationDeclarationNode.Metadata(), annotation)
+	return annotation
 }
 
 func (n *NodeBuilder) TransformAnnotationAttachPoint(annotationAttachPointNode *tree.AnnotationAttachPointNode) BLangNode {
-	panic("TransformAnnotationAttachPoint unimplemented")
+	n.createAnnotationAttachPoint(annotationAttachPointNode)
+	return nil
+}
+
+func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *tree.AnnotationAttachPointNode) AttachPoint {
+	parts := []string{}
+	identifiers := annotationAttachPointNode.Identifiers()
+	for i := 0; i < identifiers.Size(); i++ {
+		parts = append(parts, identifiers.Get(i).Text())
+	}
+	point, ok := annotationAttachPointFromParts(parts)
+	if !ok {
+		n.cx.SyntaxError("unknown annotation attach point '"+strings.Join(parts, " ")+"'", getPosition(n.de(), annotationAttachPointNode))
+	}
+	return AttachPoint{
+		Point:  point,
+		Source: annotationAttachPointNode.SourceKeyword() != nil,
+	}
+}
+
+// annotationAttachPointFromParts maps the space-separated source spelling of an
+// annotation attach point to its Point. This is the inverse of Point.String(),
+// but keyed on the spelled-out source form (e.g. "object function"), which
+// differs from the canonical key (e.g. "objectfunction").
+func annotationAttachPointFromParts(parts []string) (Point, bool) {
+	switch strings.Join(parts, " ") {
+	case "type":
+		return Point_TYPE, true
+	case "object":
+		return Point_OBJECT, true
+	case "function":
+		return Point_FUNCTION, true
+	case "object function":
+		return Point_OBJECT_METHOD, true
+	case "service remote function":
+		return Point_SERVICE_REMOTE, true
+	case "parameter":
+		return Point_PARAMETER, true
+	case "return":
+		return Point_RETURN, true
+	case "service":
+		return Point_SERVICE, true
+	case "field":
+		return Point_FIELD, true
+	case "object field":
+		return Point_OBJECT_FIELD, true
+	case "record field":
+		return Point_RECORD_FIELD, true
+	case "listener":
+		return Point_LISTENER, true
+	case "annotation":
+		return Point_ANNOTATION, true
+	case "external":
+		return Point_EXTERNAL, true
+	case "var":
+		return Point_VAR, true
+	case "const":
+		return Point_CONST, true
+	case "worker":
+		return Point_WORKER, true
+	case "class":
+		return Point_CLASS, true
+	default:
+		return 0, false
+	}
 }
 
 type xmlNamespaceDeclarationNode interface {
@@ -4311,7 +4422,13 @@ func (n *NodeBuilder) TransformWaitField(waitFieldNode *tree.WaitFieldNode) BLan
 }
 
 func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression *tree.AnnotAccessExpressionNode) BLangNode {
-	panic("TransformAnnotAccessExpression unimplemented")
+	expr := &BLangAnnotAccessExpr{}
+	expr.Expr = n.createExpression(annotAccessBLangExpression.Expression())
+	nameReference := n.createBLangNameReference(annotAccessBLangExpression.AnnotTagReference())
+	expr.PkgAlias = &nameReference[0]
+	expr.AnnotationName = &nameReference[1]
+	expr.SetPosition(getPosition(n.de(), annotAccessBLangExpression))
+	return expr
 }
 
 func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *tree.OptionalFieldAccessExpressionNode) BLangNode {
@@ -4986,12 +5103,7 @@ func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *tree.ClassDe
 	blangClass := NewBLangClassDefinition()
 	blangClass.pos = getPositionWithoutMetadata(n.de(), classDefinitionNode)
 
-	metadata := classDefinitionNode.Metadata()
-	if metadata != nil && !metadata.IsMissing() {
-		// TODO: Handle annotations
-		docString := getDocumentationString(metadata)
-		blangClass.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(docString)
-	}
+	n.populateMetadata(classDefinitionNode.Metadata(), &blangClass)
 
 	// Set name
 	nameIdentifier := createIdentifierFromToken(getPosition(n.de(), classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
@@ -5060,6 +5172,7 @@ func (n *NodeBuilder) transformClassField(objectField *tree.ObjectFieldNode) *BL
 		bLSimpleVar.SetInitialExpression(n.createExpression(expr))
 	}
 
+	n.populateMetadata(objectField.Metadata(), bLSimpleVar)
 	return bLSimpleVar
 }
 
@@ -5105,6 +5218,7 @@ func (n *NodeBuilder) createResourceMethodNode(funcDef *tree.FunctionDefinition)
 		}
 	}
 	rm.ResourcePath = n.createResourcePathSegments(funcDef.RelativeResourcePath())
+	n.populateMetadata(funcDef.Metadata(), rm)
 	return rm
 }
 

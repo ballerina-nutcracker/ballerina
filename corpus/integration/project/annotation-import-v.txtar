@@ -1,0 +1,26 @@
+-- stdout --
+local
+imported
+11
+12
+true
+true
+dependency
+17
+18
+true
+true
+runtime-dependency
+23
+24
+3.14
+2.5
+
+const-ref
+99
+99
+100
+const-list-ref
+31
+32
+-- stderr --

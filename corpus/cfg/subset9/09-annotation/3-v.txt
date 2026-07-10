@@ -1,0 +1,22 @@
+(add
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref left)
+        (simple-var-ref right)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal 2)
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref LIMIT)
+          (simple-var-ref offset)))))
+  )
+)

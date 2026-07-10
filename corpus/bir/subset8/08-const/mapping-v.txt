@@ -1,16 +1,16 @@
 module $anon.. v 0.0.0;
-A  {| x: int, y: int, never... |};
-B  {| name: string, value: int, never... |};
-C  {| nested: {| a: int, b: int, never... |}, never... |};
 main() -> nil{
   bb0 {
-    %1 = println(A) -> bb1;
+    %1 = ConstantLoad {"x":1,"y":2}
+    %2 = println(%1) -> bb1;
   }
   bb1 {
-    %2 = println(B) -> bb2;
+    %3 = ConstantLoad {"name":"hello","value":42}
+    %4 = println(%3) -> bb2;
   }
   bb2 {
-    %3 = println(C) -> bb3;
+    %5 = ConstantLoad {"nested":{"a":1,"b":2}}
+    %6 = println(%5) -> bb3;
   }
   bb3 {
     return;

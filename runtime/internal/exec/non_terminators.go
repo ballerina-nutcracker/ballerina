@@ -17,12 +17,11 @@
 package exec
 
 import (
+	"errors"
 	"fmt"
-	"math"
 	"unsafe"
 
 	"ballerina-lang-go/bir"
-	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/runtime/internal/modules"
 	"ballerina-lang-go/semtypes"
@@ -225,99 +224,18 @@ func execTypeTest(ctx *extern.Context, typeTest *bir.TypeTest, frame *Frame) {
 }
 
 func castValue(ctx *extern.Context, value values.BalValue, targetType semtypes.SemType) values.BalValue {
-	typeCtx := ctx.TypeCtx
-	valueType := values.SemTypeForValue(value)
-	if semtypes.IsSubtype(typeCtx, valueType, targetType) {
-		return value
+	converted, err := values.CastValue(ctx.TypeCtx, value, targetType)
+	if err == nil {
+		return converted
 	}
-	var converted values.BalValue
-	switch {
-	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
-		converted = toInt(value)
-	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
-		converted = toFloat(value)
-	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
-		converted = toDecimal(value)
-	default:
+	if errors.Is(err, values.ErrBadTypeCast) {
 		panic(badTypeCastError())
 	}
-	// Numeric conversion only guarantees the basic type; narrow subtypes
-	// (e.g. `2|3|4`, `int:Signed8`, `byte`) still require a membership check.
-	if !semtypes.IsSubtype(typeCtx, values.SemTypeForValue(converted), targetType) {
-		panic(badTypeCastError())
-	}
-	return converted
+	panic(values.NewErrorWithMessage(err.Error()))
 }
 
 func badTypeCastError() *values.Error {
 	return values.NewErrorWithMessage("bad type cast")
-}
-
-func toInt(value any) int64 {
-	switch v := value.(type) {
-	case int64:
-		return v
-	case float64:
-		if math.IsNaN(v) || math.IsInf(v, 0) {
-			panic(values.NewErrorWithMessage(fmt.Sprintf("bad type cast: cannot cast non-finite value %v to int", v)))
-		}
-		if v < float64(math.MinInt64) || v > float64(math.MaxInt64) {
-			panic(values.NewErrorWithMessage(fmt.Sprintf("bad type cast: cannot cast out-of-range value %v to int", v)))
-		}
-		return int64(math.RoundToEven(v))
-	case *decimal.Decimal:
-		return decimalToInt(v)
-	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("bad type cast: cannot cast %v to int", value)))
-	}
-}
-
-func decimalToInt(v *decimal.Decimal) int64 {
-	n, ok, err := v.Int64()
-	if err != nil {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("cannot convert %v to int: %v", v, err)))
-	}
-	if !ok {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("cannot convert %v to int64: value out of range", v)))
-	}
-	return n
-}
-
-func toFloat(value any) float64 {
-	switch v := value.(type) {
-	case int64:
-		return float64(v)
-	case float64:
-		return v
-	case *decimal.Decimal:
-		return v.Float64()
-	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("bad type cast: cannot cast %v to float", value)))
-	}
-}
-
-// floatToDecimal converts an IEEE 754 float64 into a Ballerina decimal.
-// Ballerina decimals do not support NaN, infinities, or subnormals, so any
-// such input triggers a runtime panic with the spec-mandated message.
-func floatToDecimal(v float64) *decimal.Decimal {
-	d, err := decimal.FromFloat64(v)
-	if err != nil {
-		panic(values.NewErrorWithMessage(err.Error()))
-	}
-	return d
-}
-
-func toDecimal(value any) *decimal.Decimal {
-	switch v := value.(type) {
-	case int64:
-		return decimal.FromInt64(v)
-	case float64:
-		return floatToDecimal(v)
-	case *decimal.Decimal:
-		return v
-	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("bad type cast: cannot cast %v to decimal", value)))
-	}
 }
 
 func execNewXMLText(ctx *extern.Context, instr *bir.NewXMLText, frame *Frame) {

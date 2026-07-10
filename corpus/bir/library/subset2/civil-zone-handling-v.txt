@@ -213,7 +213,7 @@ main() -> nil|error{
     GOTO bb29;
   }
   bb29 {
-    PushScopeFrame 85
+    PushScopeFrame 87
     %0 = newObject ballerina/time:TimeZone
     %1 = ConstantLoad +25:00
     %2 = init(%0,%1) -> bb30;
@@ -310,12 +310,13 @@ main() -> nil|error{
     %53 = ConstantLoad timeAbbrev
     %54 = ConstantLoad GMT
     %55 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%35=%36, %37=%38, %39=%40, %41=%42, %43=%44, %45=%46, %47=%52, %53=%54}
-    %56 = civilToEmailString(%55,ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT) -> bb43;
+    %56 = ConstantLoad ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT
+    %57 = civilToEmailString(%55,%56) -> bb43;
   }
   bb43 {
-    $desugar$6 = %56;
-    %58 = $desugar$6 is error
-    %58 ? bb44 : bb45;
+    $desugar$6 = %57;
+    %59 = $desugar$6 is error
+    %59 ? bb44 : bb45;
   }
   bb44 {
     PushScopeFrame 0
@@ -326,34 +327,35 @@ main() -> nil|error{
   }
   bb45 {
     emailComment = $desugar$6;
-    %60 = println(emailComment) -> bb46;
+    %61 = println(emailComment) -> bb46;
   }
   bb46 {
-    %61 = ConstantLoad year
-    %62 = ConstantLoad 2024
-    %63 = ConstantLoad month
-    %64 = ConstantLoad 6
-    %65 = ConstantLoad day
-    %66 = ConstantLoad 15
-    %67 = ConstantLoad hour
-    %68 = ConstantLoad 10
-    %69 = ConstantLoad minute
-    %70 = ConstantLoad 30
-    %71 = ConstantLoad second
-    %72 = ConstantLoad 45
-    %73 = ConstantLoad utcOffset
-    %74 = ConstantLoad hours
-    %75 = ConstantLoad 0
-    %76 = ConstantLoad minutes
-    %77 = ConstantLoad 0
-    %78 = newMap {| hours: int, minutes: int, seconds: decimal, never... |}{%74=%75, %76=%77} defaults{minutes=ballerina/time:$desugar$0}
-    %79 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%61=%62, %63=%64, %65=%66, %67=%68, %69=%70, %71=%72, %73=%78}
-    %80 = civilToEmailString(%79,ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT) -> bb47;
+    %62 = ConstantLoad year
+    %63 = ConstantLoad 2024
+    %64 = ConstantLoad month
+    %65 = ConstantLoad 6
+    %66 = ConstantLoad day
+    %67 = ConstantLoad 15
+    %68 = ConstantLoad hour
+    %69 = ConstantLoad 10
+    %70 = ConstantLoad minute
+    %71 = ConstantLoad 30
+    %72 = ConstantLoad second
+    %73 = ConstantLoad 45
+    %74 = ConstantLoad utcOffset
+    %75 = ConstantLoad hours
+    %76 = ConstantLoad 0
+    %77 = ConstantLoad minutes
+    %78 = ConstantLoad 0
+    %79 = newMap {| hours: int, minutes: int, seconds: decimal, never... |}{%75=%76, %77=%78} defaults{minutes=ballerina/time:$desugar$0}
+    %80 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%62=%63, %64=%65, %66=%67, %68=%69, %70=%71, %72=%73, %74=%79}
+    %81 = ConstantLoad ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT
+    %82 = civilToEmailString(%80,%81) -> bb47;
   }
   bb47 {
-    $desugar$7 = %80;
-    %82 = $desugar$7 is error
-    %82 ? bb48 : bb49;
+    $desugar$7 = %82;
+    %84 = $desugar$7 is error
+    %84 ? bb48 : bb49;
   }
   bb48 {
     PushScopeFrame 0
@@ -364,7 +366,7 @@ main() -> nil|error{
   }
   bb49 {
     noAbbrev = $desugar$7;
-    %84 = println(noAbbrev) -> bb50;
+    %86 = println(noAbbrev) -> bb50;
   }
   bb50 {
     PopScopeFrame

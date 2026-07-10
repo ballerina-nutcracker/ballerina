@@ -175,6 +175,9 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Name != nil {
 			Walk(v, node.Name)
 		}
+		for _, ann := range node.AnnAttachments {
+			Walk(v, ann.(BLangNode))
+		}
 		if node.Expr != nil {
 			Walk(v, node.Expr.(BLangNode))
 		}
@@ -185,6 +188,9 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangSimpleVariable:
 		if node.Name != nil {
 			Walk(v, node.Name)
+		}
+		for _, ann := range node.AnnAttachments {
+			Walk(v, ann.(BLangNode))
 		}
 		if tn := node.TypeNode(); tn != nil {
 			Walk(v, tn.(BLangNode))
@@ -202,6 +208,9 @@ func Walk(v Visitor, node BLangNode) {
 	// Section 3: Function & Body
 	case *BLangFunction:
 		Walk(v, &node.Name)
+		for i := range node.AnnAttachments {
+			Walk(v, &node.AnnAttachments[i])
+		}
 		for i := range node.RequiredParams {
 			Walk(v, &node.RequiredParams[i])
 		}
@@ -209,7 +218,7 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.RestParam.(BLangNode))
 		}
 		if node.returnTypeDescriptor != nil {
-			walkTypeDescriptor(v, node.returnTypeDescriptor)
+			Walk(v, node.returnTypeDescriptor)
 		}
 		if node.Body != nil {
 			Walk(v, node.Body.(BLangNode))
@@ -217,6 +226,9 @@ func Walk(v Visitor, node BLangNode) {
 
 	case *BLangResourceMethod:
 		Walk(v, &node.Name)
+		for i := range node.AnnAttachments {
+			Walk(v, &node.AnnAttachments[i])
+		}
 		for i := range node.ResourcePath {
 			if tn := node.ResourcePath[i].ParamType; tn != nil {
 				walkTypeDescriptor(v, tn)
@@ -229,11 +241,17 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.RestParam.(BLangNode))
 		}
 		if node.returnTypeDescriptor != nil {
-			walkTypeDescriptor(v, node.returnTypeDescriptor)
+			Walk(v, node.returnTypeDescriptor)
 		}
 		if node.Body != nil {
 			Walk(v, node.Body.(BLangNode))
 		}
+
+	case *BLangReturnTypeDescriptor:
+		for i := range node.AnnAttachments {
+			Walk(v, &node.AnnAttachments[i])
+		}
+		walkTypeDescriptor(v, node.TypeDescriptor)
 
 	case *BLangBlockFunctionBody:
 		for _, stmt := range node.Stmts {
@@ -624,7 +642,11 @@ func Walk(v Visitor, node BLangNode) {
 		for _, inclusion := range node.TypeInclusions {
 			Walk(v, inclusion.(BLangNode))
 		}
-		for _, field := range node.fields {
+		for i := range node.fields {
+			field := &node.fields[i]
+			for j := range field.AnnAttachments {
+				Walk(v, &field.AnnAttachments[j])
+			}
 			Walk(v, field.Type.(BLangNode))
 			if field.DefaultExpr != nil {
 				Walk(v, field.DefaultExpr.(BLangNode))
@@ -640,6 +662,9 @@ func Walk(v Visitor, node BLangNode) {
 		}
 
 	case *BObjectField:
+		for i := range node.AnnAttachments {
+			Walk(v, &node.AnnAttachments[i])
+		}
 		Walk(v, node.Ty.(BLangNode))
 
 	case *BMethodDecl:

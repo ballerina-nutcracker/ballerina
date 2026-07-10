@@ -1,8 +1,9 @@
 module $anon.. v 0.0.0;
-B  boolean;
 main() -> nil{
   bb0 {
-    %1 = println(B) -> bb1;
+    %1 = ConstantLoad false
+    %2 = %1;
+    %3 = println(%2) -> bb1;
   }
   bb1 {
     return;

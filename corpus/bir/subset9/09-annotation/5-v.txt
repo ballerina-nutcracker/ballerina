@@ -1,0 +1,61 @@
+module $anon.. v 0.0.0;
+personType() -> typedesc<{| name: string, never... |}>{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = personType() -> bb1;
+  }
+  bb1 {
+    descriptor = %1;
+    copied = descriptor;
+    %4 = ConstantLoad $anon/.:0.0.0:info
+    %5 = .@ copied %4;
+    infoValue = %5;
+    %7 = infoValue is {| code: int, name: string, never... |}
+    %7 ? bb2 : bb5;
+  }
+  bb2 {
+    PushScopeFrame 7
+    %1 = ConstantLoad name
+    %0 = (1, infoValue)[%1];
+    %2 = println(%0) -> bb3;
+  }
+  bb3 {
+    %4 = ConstantLoad code
+    %3 = (1, infoValue)[%4];
+    %5 = %3;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 4
+    %0 = ConstantLoad $anon/.:0.0.0:marker
+    %1 = .@ (1, copied) %0;
+    markerValue = %1;
+    %3 = markerValue is boolean
+    %3 ? bb6 : bb8;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = (1, markerValue);
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
