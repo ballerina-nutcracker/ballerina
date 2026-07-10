@@ -26,6 +26,7 @@ import (
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
+	"ballerina-lang-go/values"
 )
 
 type desugaredNode[E ast.Node] struct {
@@ -303,8 +304,12 @@ type moduleInitNode struct {
 	name *ast.BLangIdentifier
 }
 
+// collectModuleInitNodes gathers module-level global variables for the synthetic
+// init function. Constants are not included: a foldable constant is inlined at
+// its use sites and an unfoldable one is a compile-time error, so no constant
+// needs runtime initialization.
 func collectModuleInitNodes(pkg *ast.BLangPackage) []moduleInitNode {
-	nodes := make([]moduleInitNode, 0, len(pkg.GlobalVars)+len(pkg.Constants))
+	nodes := make([]moduleInitNode, 0, len(pkg.GlobalVars))
 	for i := range pkg.GlobalVars {
 		gv := &pkg.GlobalVars[i]
 		var expr ast.BLangExpression
@@ -317,37 +322,23 @@ func collectModuleInitNodes(pkg *ast.BLangPackage) []moduleInitNode {
 			name: gv.Name,
 		})
 	}
-	for i := range pkg.Constants {
-		c := &pkg.Constants[i]
-		var expr ast.BLangExpression
-		if c.Expr != nil {
-			expr = c.Expr.(ast.BLangExpression)
-		}
-		nodes = append(nodes, moduleInitNode{
-			sym:  c.Symbol(),
-			expr: expr,
-			name: c.Name,
-		})
-	}
 	return nodes
 }
 
-// We desugar by moving all these to the init function, so they should no longer be there
+// We desugar module initializers into the init function, so they should no longer be there.
 func clearModuleInitExprs(pkg *ast.BLangPackage) {
 	for i := range pkg.GlobalVars {
 		pkg.GlobalVars[i].Expr = nil
-	}
-	for i := range pkg.Constants {
-		pkg.Constants[i].Expr = nil
 	}
 }
 
 // Accumulate all the nodes referred by a given node. Assume all references to be valid
 // (semantic analysis should have cought any invalid cases) and is agnostic towards the exact expression
 type dependencyVisitor struct {
-	compilerCtx *context.CompilerContext
-	nodeSet     map[model.SymbolRef]int // symbol → index into nodes slice
-	deps        map[int]struct{}
+	compilerCtx    *context.CompilerContext
+	nodeSet        map[model.SymbolRef]int // symbol → index into nodes slice
+	runtimeGlobals map[string]model.SymbolRef
+	deps           map[int]struct{}
 }
 
 // mark current node depnds on on the given
@@ -364,16 +355,40 @@ func (v *dependencyVisitor) Visit(node ast.BLangNode) ast.Visitor {
 		v.depends(n.Symbol())
 	case *ast.BLangSimpleVarRef:
 		v.depends(n.Symbol())
+	case *ast.BLangAnnotAccessExpr:
+		v.dependsOnRuntimeAnnotation(n)
 	}
 	return v
 }
 
 func (v *dependencyVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return v }
 
+func (v *dependencyVisitor) dependsOnRuntimeAnnotation(expr *ast.BLangAnnotAccessExpr) {
+	receiver, ok := expr.Expr.(ast.BNodeWithSymbol)
+	if !ok {
+		v.compilerCtx.InternalError("annotation access receiver has no symbol", expr.GetPosition())
+		return
+	}
+	annotationSymbol := v.compilerCtx.GetSymbol(expr.Symbol())
+	key := model.AnnotationKey(v.compilerCtx.SymbolPackage(expr.Symbol()), annotationSymbol.Name())
+	ref, ok := v.compilerCtx.SymbolAnnotationValues(receiver.Symbol())[key].(*values.RuntimeAnnotationValueRef)
+	if !ok {
+		// Compile-time annotation values and absent annotations do not add module-init dependencies.
+		return
+	}
+	if global, ok := v.runtimeGlobals[ref.GlobalLookupKey()]; ok {
+		v.depends(global)
+	}
+}
+
 func toplogicallySortInits(compilerCtx *context.CompilerContext, nodes []moduleInitNode) ([]int, bool) {
 	nodeSet := make(map[model.SymbolRef]int, len(nodes))
+	runtimeGlobals := make(map[string]model.SymbolRef, len(nodes))
 	for i, n := range nodes {
 		nodeSet[n.sym] = i
+		ref := n.sym
+		pkg := compilerCtx.SymbolPackage(ref)
+		runtimeGlobals[pkg.Organization+"/"+pkg.Package+":"+n.name.GetValue()] = ref
 	}
 
 	deps := make([][]int, len(nodes))
@@ -382,9 +397,10 @@ func toplogicallySortInits(compilerCtx *context.CompilerContext, nodes []moduleI
 			continue
 		}
 		v := &dependencyVisitor{
-			compilerCtx: compilerCtx,
-			nodeSet:     nodeSet,
-			deps:        make(map[int]struct{}),
+			compilerCtx:    compilerCtx,
+			nodeSet:        nodeSet,
+			runtimeGlobals: runtimeGlobals,
+			deps:           make(map[int]struct{}),
 		}
 		ast.Walk(v, nodes[i].expr)
 		for d := range v.deps {
@@ -534,7 +550,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		if node.expr == nil {
 			continue
 		}
-		if vs, ok := compilerCtx.GetSymbol(node.sym).(*model.ValueSymbol); ok && vs.IsListener() {
+		if vs, ok := compilerCtx.GetSymbol(node.sym).(*model.VariableSymbol); ok && vs.IsListener() {
 			initStmts = append(initStmts, buildListnerInit(pkgCtx, node, moduleListenersRef)...)
 		} else {
 			initStmts = append(initStmts, buildInitAssignment(compilerCtx, node))
@@ -692,7 +708,7 @@ func ListenerMethodFor(name string) string {
 
 func hasModuleListenerVar(compilerCtx *context.CompilerContext, nodes []moduleInitNode) bool {
 	for _, n := range nodes {
-		if vs, ok := compilerCtx.GetSymbol(n.sym).(*model.ValueSymbol); ok && vs.IsListener() {
+		if vs, ok := compilerCtx.GetSymbol(n.sym).(*model.VariableSymbol); ok && vs.IsListener() {
 			return true
 		}
 	}
@@ -800,7 +816,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 		arrTy = listDefn.DefineListTypeWrapped(env, nil, 0, listnerTop, semtypes.CellMutability_CELL_MUT_LIMITED)
 	}
 
-	sym := model.NewValueSymbol(moduleListenersGlobalName, false, false, false)
+	sym := model.NewVariableSymbol(moduleListenersGlobalName, false, false, false)
 	symRef := pkgCtx.addModuleSymbol(moduleListenersGlobalName, &sym)
 	pkgCtx.setSymbolType(symRef, arrTy)
 
@@ -882,7 +898,7 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 			}
 			ty := semtypes.Diff(exprTy, semtypes.ERROR)
 			name := pkgCtx.nextDesugarSymbolName()
-			sym := model.NewValueSymbol(name, false, false, false)
+			sym := model.NewVariableSymbol(name, false, false, false)
 			sym.SetListener()
 			symRef := pkgCtx.addModuleSymbol(name, &sym)
 			pkgCtx.setSymbolType(symRef, ty)
@@ -1150,7 +1166,7 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*
 			paramTy := ctx.symbolType(precedingParam.Symbol())
 			newParam := newSimpleVariable(paramName, paramTy)
 			newParam.SetRequiredParam()
-			fnScope.AddSymbol(paramName, new(model.NewValueSymbol(paramName, false, false, true)))
+			fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true)))
 			paramSymRef, _ := fnScope.GetSymbol(paramName)
 			ctx.setSymbolType(paramSymRef, paramTy)
 			newParam.SetSymbol(paramSymRef)
@@ -1308,6 +1324,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		panic(panicErr)
 	}
 
+	pkg.Constants = nil
 	return pkg
 }
 

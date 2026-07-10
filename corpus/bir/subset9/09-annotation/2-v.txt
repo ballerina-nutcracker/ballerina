@@ -1,0 +1,35 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:runtimeInfo
+    %3 = .@ %1 %2;
+    runtimeValue = %3;
+    %5 = runtimeValue is readonly&{| label: string, never... |}
+    %5 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 3
+    %1 = ConstantLoad label
+    %0 = (1, runtimeValue)[%1];
+    %2 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 7
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:sourceInfo
+    %2 = .@ %0 %1;
+    sourceValue = %2;
+    %4 = sourceValue is nil
+    %5 = %4;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    return;
+  }
+}

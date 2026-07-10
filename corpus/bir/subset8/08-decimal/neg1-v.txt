@@ -1,8 +1,4 @@
 module $anon.. v 0.0.0;
-D1  2.1;
-D2  -2.1;
-D3  2.1E+2;
-D4  -2.1E+2;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -41,10 +37,14 @@ main() -> nil{
     %22 = println(%21) -> bb5;
   }
   bb5 {
-    %23 = println(D2) -> bb6;
+    %23 = ConstantLoad -2.1
+    %24 = %23;
+    %25 = println(%24) -> bb6;
   }
   bb6 {
-    %24 = println(D4) -> bb7;
+    %26 = ConstantLoad -2.1E+2
+    %27 = %26;
+    %28 = println(%27) -> bb7;
   }
   bb7 {
     return;

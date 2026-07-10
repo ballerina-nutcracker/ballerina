@@ -43,7 +43,7 @@
             (simple-var-ref path)
             (list-constructor-expr
               (literal Line3))
-            (simple-var-ref io APPEND))))))
+            (literal APPEND))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$4))

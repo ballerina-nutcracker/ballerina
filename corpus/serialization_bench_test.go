@@ -78,10 +78,15 @@ func compileForSerializationBench(b *testing.B, tc test_util.TestCase) *serializ
 		b.Fatalf("nil BIR for %s", tc.InputPath)
 		return nil
 	}
+	pkgID := birPkg.PackageID
+	if pkgID == nil || pkgID.OrgName == nil || pkgID.PkgName == nil {
+		b.Fatalf("BIR package has incomplete package ID for %s", tc.InputPath)
+		return nil
+	}
 
 	pkgIdent := semantics.PackageIdentifier{
-		OrgName:    birPkg.PackageID.OrgName.Value(),
-		ModuleName: birPkg.PackageID.PkgName.Value(),
+		OrgName:    pkgID.OrgName.Value(),
+		ModuleName: pkgID.PkgName.Value(),
 	}
 	exported, ok := backend.ExportedSymbols()[pkgIdent]
 	if !ok {

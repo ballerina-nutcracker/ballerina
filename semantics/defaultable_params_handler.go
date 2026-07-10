@@ -40,7 +40,7 @@ func padArgTypesForDefaults(lookup symbolLookup, symbolRef model.SymbolRef, argT
 	switch fnSym := sym.(type) {
 	case model.FunctionSymbol:
 		return padFunctionDefaults(fnSym, argTys)
-	case *model.ValueSymbol:
+	case model.ValueSymbol:
 		// When we support lambdas we need to have a way to get a function symbol from the declaration (this means it have to be atomic) and then use the
 		// same logic
 		return argTys

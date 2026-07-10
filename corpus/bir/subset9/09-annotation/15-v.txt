@@ -1,0 +1,142 @@
+module $anon.. v 0.0.0;
+class Counter {
+  value int
+
+  add(int,[int...]...) -> int{
+    bb0 {
+      %4 = ConstantLoad value
+      %5 = self[%4];
+      %6 = %5;
+      %7 = amount;
+      %8 = + %6 %7;
+      self[%4] = %8;
+      $desugar$0 = extras;
+      %10 = ConstantLoad 0
+      $desugar$1 = %10;
+      %12 = length($desugar$0) -> bb1;
+    }
+    bb1 {
+      $desugar$2 = %12;
+      GOTO bb2;
+    }
+    bb2 {
+      %15 = $desugar$1;
+      %16 = $desugar$2;
+      %14 = < %15 %16;
+      %14 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 11
+      %0 = (1, $desugar$0)[(1, $desugar$1)];
+      extra = %0;
+      %2 = ConstantLoad value
+      %3 = (1, self)[%2];
+      %4 = %3;
+      %5 = extra;
+      %6 = + %4 %5;
+      (1, self)[%2] = %6;
+      %8 = (1, $desugar$1);
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %7 = + %8 %10;
+      (1, $desugar$1) = %7;
+      PopScopeFrame
+      GOTO bb2;
+    }
+    bb4 {
+      %18 = ConstantLoad value
+      %17 = self[%18];
+      %0 = %17;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad value
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class MetadataClient {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get value MetadataClient.$resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+}
+class MetadataService {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    counter = %3;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %10 = ConstantLoad 3
+    %11 = %10;
+    %12 = add(counter,%7,%9,%11) -> bb5;
+  }
+  bb5 {
+    result = %12;
+    %14 = result;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %16 = ConstantLoad typedesc
+    %17 = ConstantLoad $anon/.:0.0.0:serviceMeta
+    %18 = .@ %16 %17;
+    serviceInfo = %18;
+    %20 = serviceInfo is readonly&{| name: string, never... |}
+    %20 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 3
+    %1 = ConstantLoad name
+    %0 = (1, serviceInfo)[%1];
+    %2 = println(%0) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

@@ -1,0 +1,45 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:operations
+    %3 = .@ %1 %2;
+    value = %3;
+    %5 = value is {| addDecimal: decimal, addFloat: float, addInt: int, bitAnd: int, bitOr: int, bitXor: int, booleanRefEqual: boolean, decimalRefEqual: boolean, decimalToFloat: float, decimalToInt: int, divDecimal: decimal, divDecimalInt: decimal, divFloat: float, divFloatInt: float, divInt: int, equal: boolean, floatRefEqual: boolean, floatToDecimal: decimal, floatToInt: int, greater: boolean, greaterEqual: boolean, identityConversion: int, intToDecimal: decimal, intToFloat: float, leftShift: int, less: boolean, lessEqual: boolean, listRefEqual: boolean, mapRefEqual: boolean, modDecimal: decimal, modFloat: float, modInt: int, mulDecimal: decimal, mulDecimalInt: decimal, mulFloat: float, mulFloatInt: float, mulInt: int, mulIntDecimal: decimal, mulIntFloat: float, negDecimal: decimal, negFloat: float, nilLess: nil|boolean, nilMultiply: nil|int, nilRefEqual: boolean, nilUnary: nil|int, notEqual: boolean, notFalse: boolean, refEqual: boolean, refNotEqual: boolean, rightShift: int, shortAnd: boolean, shortOr: boolean, stringRefEqual: boolean, subDecimal: decimal, subFloat: float, subInt: int, unaryPlus: int, unsignedRightShift: int, never... |}
+    %5 ? bb1 : bb6;
+  }
+  bb1 {
+    PushScopeFrame 16
+    %1 = ConstantLoad addInt
+    %0 = (1, value)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad mulDecimal
+    %4 = (1, value)[%5];
+    %6 = %4;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad unsignedRightShift
+    %8 = (1, value)[%9];
+    %10 = %8;
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad floatToDecimal
+    %12 = (1, value)[%13];
+    %14 = %12;
+    %15 = println(%14) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

@@ -252,7 +252,7 @@ func execInstruction(ctx *extern.Context, inst bir.BIRNonTerminator, frame *Fram
 		case bir.INSTRUCTION_KIND_HALF_OPEN_RANGE:
 			fmt.Println("NOT IMPLEMENTED: INSTRUCTION_KIND_HALF_OPEN_RANGE")
 		case bir.INSTRUCTION_KIND_ANNOT_ACCESS:
-			fmt.Println("NOT IMPLEMENTED: INSTRUCTION_KIND_ANNOT_ACCESS")
+			execBinaryOpAnnotAccess(ctx, v, frame)
 		case bir.INSTRUCTION_KIND_BITWISE_AND:
 			execBinaryOpBitwiseAnd(ctx, v, frame)
 		case bir.INSTRUCTION_KIND_BITWISE_OR:
