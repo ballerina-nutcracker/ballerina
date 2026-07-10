@@ -19,6 +19,7 @@ package symbolpool
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
@@ -231,6 +232,7 @@ func (sr *symbolReader) readObjectTypeSymbol(space *model.SymbolSpace) {
 	sym.SetType(addObjectDistinctAtoms(ty, ids))
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
+	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
 }
 
 func (sr *symbolReader) readDistinctTypes(space *model.SymbolSpace) []int {
@@ -252,6 +254,21 @@ func addObjectDistinctAtoms(ty semtypes.SemType, ids []int) semtypes.SemType {
 		ty = semtypes.Intersect(ty, semtypes.ObjectDefinitionDistinct(id))
 	}
 	return ty
+}
+
+func (sr *symbolReader) registerLangLibDistinctTypeSymbol(space *model.SymbolSpace, name string, ref model.SymbolRef, ids []int) {
+	if space.Pkg.Organization != "ballerina" || !strings.HasPrefix(space.Pkg.Package, "lang.") {
+		return
+	}
+	for _, id := range ids {
+		distinctRef, ok := sr.env.DistinctTypeSymbolRef(id)
+		if ok && distinctRef == ref {
+			if !sr.env.RegisterLangLibDistinctTypeSymbol(space.Pkg.Package, name, ref) {
+				panic(fmt.Sprintf("conflicting lang library distinct type symbol: %s:%s", space.Pkg.Package, name))
+			}
+			return
+		}
+	}
 }
 
 func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.InclusionMember {
@@ -376,6 +393,7 @@ func (sr *symbolReader) readClassSymbol(space *model.SymbolSpace, isNetwork bool
 	}
 	ref := addDeserializedSymbol(space, name, sym)
 	sr.storeAnnotations(ref, annotations)
+	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
 }
 
 type valueSymbolFields struct {

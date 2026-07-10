@@ -639,6 +639,8 @@ func mapToLangPrefixIfNeeded(prefix string) string {
 		return "lang.string"
 	case "xml":
 		return "lang.xml"
+	case "object":
+		return "lang.object"
 	default:
 		return prefix
 	}
