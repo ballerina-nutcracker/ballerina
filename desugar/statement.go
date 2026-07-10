@@ -266,6 +266,8 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef
 				setPositionIfMissing(varDef, rf.fn.GetPosition())
 				initStmts = append(initStmts, varDef)
 			}
+		} else {
+			cx.pkgCtx.addDefaultClosureOwner(stmt.Var.Expr)
 		}
 		if stmt.Var.Expr != nil {
 			result := walkExpression(cx, stmt.Var.Expr)

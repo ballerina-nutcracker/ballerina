@@ -42,16 +42,18 @@ type desugaredNode[E ast.Node] struct {
 // Worker goroutines (per-function/class/service) must use their own non-shared
 // typeContext via functionContext.typeCtx().
 type packageContext struct {
-	compilerCtx          *context.CompilerContext
-	pkg                  *ast.BLangPackage
-	importedSymbols      map[string]model.ExportedSymbolSpace
-	importMu             sync.Mutex
-	addedImplicitImports map[string]bool
-	generatedFunctionsMu sync.Mutex
-	generatedFunctions   []*ast.BLangFunction
-	desugarSymbolCounter int
-	typeContext          semtypes.Context
-	xmlIteratorTypes     *semtypes.SemTypeCache
+	compilerCtx            *context.CompilerContext
+	pkg                    *ast.BLangPackage
+	importedSymbols        map[string]model.ExportedSymbolSpace
+	importMu               sync.Mutex
+	addedImplicitImports   map[string]bool
+	generatedFunctionsMu   sync.Mutex
+	generatedFunctions     []*ast.BLangFunction
+	defaultClosureOwnersMu sync.Mutex
+	defaultClosureOwners   map[model.SymbolRef]struct{}
+	desugarSymbolCounter   int
+	typeContext            semtypes.Context
+	xmlIteratorTypes       *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -62,6 +64,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		pkg:                  pkg,
 		importedSymbols:      importedSymbols,
 		addedImplicitImports: make(map[string]bool),
+		defaultClosureOwners: make(map[model.SymbolRef]struct{}),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
 		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
 	}
@@ -98,6 +101,34 @@ func (ctx *packageContext) takeGeneratedFunctions() []*ast.BLangFunction {
 		return functions[i].Name.GetValue() < functions[j].Name.GetValue()
 	})
 	return functions
+}
+
+func (ctx *packageContext) addDefaultClosureOwner(expr ast.BLangActionOrExpression) {
+	lambda := inferredLambda(expr)
+	if lambda == nil {
+		return
+	}
+	ctx.defaultClosureOwnersMu.Lock()
+	defer ctx.defaultClosureOwnersMu.Unlock()
+	ctx.defaultClosureOwners[lambda.Function.Symbol()] = struct{}{}
+}
+
+func (ctx *packageContext) needsDefaultClosures(owner model.SymbolRef) bool {
+	ctx.defaultClosureOwnersMu.Lock()
+	defer ctx.defaultClosureOwnersMu.Unlock()
+	_, ok := ctx.defaultClosureOwners[owner]
+	return ok
+}
+
+func inferredLambda(expr ast.BLangActionOrExpression) *ast.BLangLambdaFunction {
+	switch expr := expr.(type) {
+	case *ast.BLangGroupExpr:
+		return inferredLambda(expr.Expression)
+	case *ast.BLangLambdaFunction:
+		return expr
+	default:
+		return nil
+	}
 }
 
 func (ctx *packageContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
@@ -1371,7 +1402,9 @@ func desugarGlobalVars(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 			for _, fn := range result.functions {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
+			continue
 		}
+		pkgCtx.addDefaultClosureOwner(gv.Expr)
 	}
 }
 

@@ -221,8 +221,7 @@ type (
 
 	BLangLambdaFunction struct {
 		bLangExpressionBase
-		Function                *BLangFunction
-		GenerateDefaultClosures bool
+		Function *BLangFunction
 	}
 
 	BLangBinaryExpr struct {

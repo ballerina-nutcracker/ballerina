@@ -3307,9 +3307,6 @@ func associateInferredFunctionSignature(t typeResolver, variable *ast.BLangSimpl
 		t.internalError("function signature already set", variable.GetPosition())
 		return false
 	}
-	if lambda != nil {
-		lambda.GenerateDefaultClosures = true
-	}
 	return true
 }
 
