@@ -14,7 +14,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 |---|---|---|---|---|
 | [crypto](crypto/0.0.1/go1.2/README.md) | 26 | 1 | 5 | 81% |
 | [file](file/0.0.1/go1.2/README.md) | 21 | 0 | 0 | 100% |
-| [http](http/0.0.1/go1.2/README.md) | 24 | 2 | 46 | 33% |
+| [http](http/0.0.1/go1.2/README.md) | 25 | 4 | 46 | 33% |
 | [io](io/0.0.1/go1.2/README.md) | 14 | 1 | 12 | 52% |
 | [ldap](ldap/0.0.1/go1.2/README.md) | 15 | 2 | 0 | 83% |
 | [log](log/0.0.1/go1.2/README.md) | 7 | 2 | 15 | 29% |
@@ -27,7 +27,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [udp](udp/0.0.1/go1.2/README.md) | 15 | 2 | 2 | 79% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
-| **Total** | **224** | **17** | **85** | **68%** |
+| **Total** | **225** | **19** | **85** | **68%** |
 
 ## Notable Behavioural Changes
 

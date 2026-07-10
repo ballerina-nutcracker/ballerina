@@ -1,0 +1,219 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable reqText (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal plain text))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$13 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref reqText) (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation getTextPayload expr:
+            (simple-var-ref reqText) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable reqBytes (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.string toBytes (
+            (literal bin))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation $default$13 (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref reqBytes) (
+          (simple-var-ref $desugar$3)
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref reqBytes) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable reqBytesResult (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref reqBytesResult))))))
+      (var-def
+        (variable reqJson (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$6 (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))
+            (key-value
+              (literal age)
+              (literal 30))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$13 (
+            (simple-var-ref $desugar$6))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref reqJson) (
+          (simple-var-ref $desugar$6)
+          (simple-var-ref $desugar$7))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref reqJson) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (var-def
+        (variable reqJsonResult (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$8))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref reqJsonResult))))
+      (var-def
+        (variable resText (type
+          (user-defined-type http Response)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$9 (expr
+          (literal resp text))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation $default$9 (
+            (simple-var-ref $desugar$9))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref resText) (
+          (simple-var-ref $desugar$9)
+          (simple-var-ref $desugar$10))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation getTextPayload expr:
+            (simple-var-ref resText) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$11))))
+      (var-def
+        (variable resBytes (type
+          (user-defined-type http Response)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation lang.string toBytes (
+            (literal xyz))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation $default$9 (
+            (simple-var-ref $desugar$12))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref resBytes) (
+          (simple-var-ref $desugar$12)
+          (simple-var-ref $desugar$13))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref resBytes) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (var-def
+        (variable resBytesResult (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$14))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref resBytesResult))))))
+      (var-def
+        (variable resJson (type
+          (user-defined-type http Response)) (expr
+          (new ()))))
+      (var-def
+        (variable resPayload (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$15 (expr
+          (simple-var-ref resPayload))))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation $default$9 (
+            (simple-var-ref $desugar$15))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref resJson) (
+          (simple-var-ref $desugar$15)
+          (simple-var-ref $desugar$16))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref resJson) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$17))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$17))) ())
+      (var-def
+        (variable resJsonResult (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$17))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref resJsonResult)))))))

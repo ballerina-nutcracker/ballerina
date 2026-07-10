@@ -1,0 +1,139 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/http:Request
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    noHeader = %3;
+    %6 = getFormParams(noHeader) -> bb5;
+  }
+  bb5 {
+    noHeaderResult = %6;
+    %8 = noHeaderResult is error
+    %9 = %8;
+    %10 = println(%9) -> bb6;
+  }
+  bb6 {
+    %11 = newObject ballerina/http:Request
+    %12 = init(%11) -> bb7;
+  }
+  bb7 {
+    %14 = %12 is nil
+    %14 ? bb8 : bb9;
+  }
+  bb8 {
+    %13 = %11;
+    GOTO bb10;
+  }
+  bb9 {
+    %13 = %12;
+    GOTO bb10;
+  }
+  bb10 {
+    wrongType = %13;
+    %16 = ConstantLoad a=1
+    %17 = ConstantLoad text/plain
+    %18 = setTextPayload(wrongType,%16,%17) -> bb11;
+  }
+  bb11 {
+    %19 = getFormParams(wrongType) -> bb12;
+  }
+  bb12 {
+    wrongTypeResult = %19;
+    %21 = wrongTypeResult is error
+    %22 = %21;
+    %23 = println(%22) -> bb13;
+  }
+  bb13 {
+    %24 = newObject ballerina/http:Request
+    %25 = init(%24) -> bb14;
+  }
+  bb14 {
+    %27 = %25 is nil
+    %27 ? bb15 : bb16;
+  }
+  bb15 {
+    %26 = %24;
+    GOTO bb17;
+  }
+  bb16 {
+    %26 = %25;
+    GOTO bb17;
+  }
+  bb17 {
+    noEquals = %26;
+    %29 = ConstantLoad justastring
+    %30 = ConstantLoad application/x-www-form-urlencoded
+    %31 = setTextPayload(noEquals,%29,%30) -> bb18;
+  }
+  bb18 {
+    %32 = getFormParams(noEquals) -> bb19;
+  }
+  bb19 {
+    noEqualsResult = %32;
+    %34 = noEqualsResult is error
+    %34 ? bb20 : bb23;
+  }
+  bb20 {
+    PushScopeFrame 2
+    %0 = message((1, noEqualsResult)) -> bb21;
+  }
+  bb21 {
+    %1 = println(%0) -> bb22;
+  }
+  bb22 {
+    PopScopeFrame
+    GOTO bb23;
+  }
+  bb23 {
+    PushScopeFrame 14
+    %0 = newObject ballerina/http:Request
+    %1 = init(%0) -> bb24;
+  }
+  bb24 {
+    %3 = %1 is nil
+    %3 ? bb25 : bb26;
+  }
+  bb25 {
+    %2 = %0;
+    GOTO bb27;
+  }
+  bb26 {
+    %2 = %1;
+    GOTO bb27;
+  }
+  bb27 {
+    badEncoding = %2;
+    %5 = ConstantLoad a=%zz
+    %6 = ConstantLoad application/x-www-form-urlencoded
+    %7 = setTextPayload(badEncoding,%5,%6) -> bb28;
+  }
+  bb28 {
+    %8 = getFormParams(badEncoding) -> bb29;
+  }
+  bb29 {
+    badEncodingResult = %8;
+    %10 = badEncodingResult is error
+    %11 = %10;
+    %12 = println(%11) -> bb30;
+  }
+  bb30 {
+    %13 = ConstantLoad <nil>
+    (1, %0) = %13;
+    PopScopeFrame
+    return;
+  }
+}

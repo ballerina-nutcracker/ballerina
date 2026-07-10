@@ -1,0 +1,127 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/http:Request
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    req = %3;
+    %6 = ConstantLoad a=1&b=hello%20world&c=x%3Dy&noeq&=orphan&d=
+    %7 = ConstantLoad application/x-www-form-urlencoded
+    %8 = setTextPayload(req,%6,%7) -> bb5;
+  }
+  bb5 {
+    %9 = getFormParams(req) -> bb6;
+  }
+  bb6 {
+    $desugar$0 = %9;
+    %11 = $desugar$0 is error
+    %11 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    params = $desugar$0;
+    %14 = ConstantLoad a
+    %13 = params[%14];
+    %15 = println(%13) -> bb9;
+  }
+  bb9 {
+    %17 = ConstantLoad b
+    %16 = params[%17];
+    %18 = println(%16) -> bb10;
+  }
+  bb10 {
+    %20 = ConstantLoad c
+    %19 = params[%20];
+    %21 = println(%19) -> bb11;
+  }
+  bb11 {
+    %23 = ConstantLoad 
+    %22 = params[%23];
+    %24 = println(%22) -> bb12;
+  }
+  bb12 {
+    %26 = ConstantLoad d
+    %25 = params[%26];
+    %27 = println(%25) -> bb13;
+  }
+  bb13 {
+    %28 = ConstantLoad noeq
+    %29 = hasKey(params,%28) -> bb14;
+  }
+  bb14 {
+    %30 = %29;
+    %31 = println(%30) -> bb15;
+  }
+  bb15 {
+    %32 = length(params) -> bb16;
+  }
+  bb16 {
+    %33 = %32;
+    %34 = println(%33) -> bb17;
+  }
+  bb17 {
+    %35 = newObject ballerina/http:Request
+    %36 = init(%35) -> bb18;
+  }
+  bb18 {
+    %38 = %36 is nil
+    %38 ? bb19 : bb20;
+  }
+  bb19 {
+    %37 = %35;
+    GOTO bb21;
+  }
+  bb20 {
+    %37 = %36;
+    GOTO bb21;
+  }
+  bb21 {
+    emptyBody = %37;
+    %40 = ConstantLoad 
+    %41 = ConstantLoad application/x-www-form-urlencoded
+    %42 = setTextPayload(emptyBody,%40,%41) -> bb22;
+  }
+  bb22 {
+    %43 = getFormParams(emptyBody) -> bb23;
+  }
+  bb23 {
+    $desugar$1 = %43;
+    %45 = $desugar$1 is error
+    %45 ? bb24 : bb25;
+  }
+  bb24 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    emptyParams = $desugar$1;
+    %47 = length(emptyParams) -> bb26;
+  }
+  bb26 {
+    %48 = %47;
+    %49 = println(%48) -> bb27;
+  }
+  bb27 {
+    return;
+  }
+}

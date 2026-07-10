@@ -1,7 +1,8 @@
 # Supported ballerina library features
 
 Subset 3 extends the released [subset 2](subset2.md) with the `file`, `ldap`,
-`mime`, `tcp`, `udp`, and `uuid` modules.
+`mime`, `tcp`, `udp`, and `uuid` modules, plus two additions to `http` that
+depend on `mime` types now available in this subset.
 
 ## [file](https://github.com/ballerina-platform/module-ballerina-file/blob/master/docs/spec/spec.md)
 
@@ -27,6 +28,17 @@ narrow. `file:Service` is likewise declared as a plain (non-`distinct`)
 immediately (same as `immediateStop()`) rather than leaving it running until
 process exit, and `attach()` returns its "at least one resource required"
 validation error through its `error?` return type instead of throwing it.
+
+## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
+
+Subsets 1 and 2 covered the basic http client and server. Subset 3 adds two
+`Request`/`Response` methods that depend on `mime` types now available in
+this subset.
+
+| Feature | Notes |
+|---|---|
+| `getFormParams()` | `Request`-only. Decodes an `application/x-www-form-urlencoded` body into a `map<string>`, ported from jBallerina's logic (`mime:getMediaType` content-type check, then percent-decoding). Returns an `error` if the `Content-Type` header is missing, invalid, or not `application/x-www-form-urlencoded`. |
+| `setPayload(payload, contentType?)` | `Request` and `Response`. Dispatches by runtime type to `setTextPayload`/`setBinaryPayload`/`setJsonPayload`. Accepts `json\|byte[]` rather than jBallerina's full `anydata\|mime:Entity[]\|stream<byte[], io:Error?>\|stream<SseEvent, error?>` union — the `mime:Entity[]` (multipart) and `stream` branches aren't accepted since neither `http` nor `mime` support those payload kinds yet. |
 
 ## [ldap](https://github.com/ballerina-platform/module-ballerina-ldap/blob/master/docs/spec/spec.md)
 

@@ -26,7 +26,7 @@ main() -> nil|error{
     req[%9] = %8;
     %10 = ConstantLoad body text
     $desugar$0 = %10;
-    %12 = $default$12($desugar$0) -> bb5;
+    %12 = $default$14($desugar$0) -> bb5;
   }
   bb5 {
     $desugar$1 = %12;
@@ -182,7 +182,7 @@ main() -> nil|error{
     %73 = ConstantLoad v
     %74 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%72=%73}
     $desugar$6 = %74;
-    %76 = $default$11($desugar$6) -> bb41;
+    %76 = $default$12($desugar$6) -> bb41;
   }
   bb41 {
     $desugar$7 = %76;
@@ -213,7 +213,7 @@ main() -> nil|error{
     %87 = ConstantLoad 3
     %88 = newArray [int:Unsigned8...][%87]{%84, %85, %86}
     $desugar$9 = %88;
-    %90 = $default$10($desugar$9) -> bb47;
+    %90 = $default$11($desugar$9) -> bb47;
   }
   bb47 {
     $desugar$10 = %90;
@@ -389,7 +389,7 @@ main() -> nil|error{
   bb84 {
     %163 = ConstantLoad resp body
     $desugar$25 = %163;
-    %165 = $default$9($desugar$25) -> bb85;
+    %165 = $default$10($desugar$25) -> bb85;
   }
   bb85 {
     $desugar$26 = %165;

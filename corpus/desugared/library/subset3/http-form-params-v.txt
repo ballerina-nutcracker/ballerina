@@ -1,0 +1,97 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable req (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setTextPayload expr:
+          (simple-var-ref req) (
+          (literal a=1&b=hello%20world&c=x%3Dy&noeq&=orphan&d=)
+          (literal application/x-www-form-urlencoded))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation getFormParams expr:
+            (simple-var-ref req) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable params (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref params)
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref params)
+            (literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref params)
+            (literal c)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref params)
+            (literal )))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref params)
+            (literal d)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map hasKey (
+            (simple-var-ref params)
+            (literal noeq))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref params))))))
+      (var-def
+        (variable emptyBody (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setTextPayload expr:
+          (simple-var-ref emptyBody) (
+          (literal )
+          (literal application/x-www-form-urlencoded))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation getFormParams expr:
+            (simple-var-ref emptyBody) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable emptyParams (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref emptyParams)))))))))

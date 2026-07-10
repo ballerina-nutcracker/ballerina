@@ -1,0 +1,117 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable reqText (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref reqText) (
+        (literal plain text))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getTextPayload expr:
+            (simple-var-ref reqText) ())))))
+    (var-def
+      (variable reqBytes (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref reqBytes) (
+        (invocation lang.string toBytes (
+          (literal bin))))))
+    (var-def
+      (variable reqBytesResult (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref reqBytes) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref reqBytesResult))))))
+    (var-def
+      (variable reqJson (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref reqJson) (
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal 30))))))
+    (var-def
+      (variable reqJsonResult (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref reqJson) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref reqJsonResult))))
+    (var-def
+      (variable resText (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref resText) (
+        (literal resp text))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getTextPayload expr:
+            (simple-var-ref resText) ())))))
+    (var-def
+      (variable resBytes (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref resBytes) (
+        (invocation lang.string toBytes (
+          (literal xyz))))))
+    (var-def
+      (variable resBytesResult (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref resBytes) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref resBytesResult))))))
+    (var-def
+      (variable resJson (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (var-def
+      (variable resPayload (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref resJson) (
+        (simple-var-ref resPayload))))
+    (var-def
+      (variable resJsonResult (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref resJson) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref resJsonResult))))
+  )
+)

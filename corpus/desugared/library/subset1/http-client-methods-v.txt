@@ -11,7 +11,7 @@
           (literal https://example.com))))
       (var-def
         (variable $desugar$1 (expr
-          (invocation $default$15 (
+          (invocation $default$17 (
             (simple-var-ref $desugar$0))))))
       (var-def
         (variable $desugar$2 (expr
@@ -36,12 +36,12 @@
           (literal body))))
       (var-def
         (variable $desugar$5 (expr
-          (invocation $default$28 (
+          (invocation $default$30 (
             (simple-var-ref $desugar$3)
             (simple-var-ref $desugar$4))))))
       (var-def
         (variable $desugar$6 (expr
-          (invocation $default$29 (
+          (invocation $default$31 (
             (simple-var-ref $desugar$3)
             (simple-var-ref $desugar$4)
             (simple-var-ref $desugar$5))))))
@@ -78,12 +78,12 @@
               (literal val))))))
       (var-def
         (variable $desugar$10 (expr
-          (invocation $default$24 (
+          (invocation $default$26 (
             (simple-var-ref $desugar$8)
             (simple-var-ref $desugar$9))))))
       (var-def
         (variable $desugar$11 (expr
-          (invocation $default$25 (
+          (invocation $default$27 (
             (simple-var-ref $desugar$8)
             (simple-var-ref $desugar$9)
             (simple-var-ref $desugar$10))))))
@@ -114,16 +114,16 @@
           (literal /delete))))
       (var-def
         (variable $desugar$14 (expr
-          (invocation $default$16 (
+          (invocation $default$18 (
             (simple-var-ref $desugar$13))))))
       (var-def
         (variable $desugar$15 (expr
-          (invocation $default$17 (
+          (invocation $default$19 (
             (simple-var-ref $desugar$13)
             (simple-var-ref $desugar$14))))))
       (var-def
         (variable $desugar$16 (expr
-          (invocation $default$18 (
+          (invocation $default$20 (
             (simple-var-ref $desugar$13)
             (simple-var-ref $desugar$14)
             (simple-var-ref $desugar$15))))))
@@ -154,7 +154,7 @@
           (literal /head))))
       (var-def
         (variable $desugar$19 (expr
-          (invocation $default$22 (
+          (invocation $default$24 (
             (simple-var-ref $desugar$18))))))
       (var-def
         (variable $desugar$20 (expr
@@ -181,7 +181,7 @@
           (literal /options))))
       (var-def
         (variable $desugar$22 (expr
-          (invocation $default$23 (
+          (invocation $default$25 (
             (simple-var-ref $desugar$21))))))
       (var-def
         (variable $desugar$23 (expr
@@ -214,13 +214,13 @@
           (literal exec body))))
       (var-def
         (variable $desugar$27 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$24)
             (simple-var-ref $desugar$25)
             (simple-var-ref $desugar$26))))))
       (var-def
         (variable $desugar$28 (expr
-          (invocation $default$20 (
+          (invocation $default$22 (
             (simple-var-ref $desugar$24)
             (simple-var-ref $desugar$25)
             (simple-var-ref $desugar$26)

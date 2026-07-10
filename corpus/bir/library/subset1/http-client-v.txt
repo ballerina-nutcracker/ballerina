@@ -33,7 +33,7 @@ main() -> nil|error{
     c1 = $desugar$0;
     %10 = ConstantLoad /path
     $desugar$1 = %10;
-    %12 = $default$21($desugar$1) -> bb7;
+    %12 = $default$23($desugar$1) -> bb7;
   }
   bb7 {
     $desugar$2 = %12;
@@ -96,7 +96,7 @@ main() -> nil|error{
     c2 = $desugar$4;
     %37 = ConstantLoad /path
     $desugar$5 = %37;
-    %39 = $default$21($desugar$5) -> bb18;
+    %39 = $default$23($desugar$5) -> bb18;
   }
   bb18 {
     $desugar$6 = %39;
@@ -129,7 +129,7 @@ main() -> nil|error{
   bb24 {
     %51 = ConstantLoad https://example.com
     $desugar$8 = %51;
-    %53 = $default$15($desugar$8) -> bb25;
+    %53 = $default$17($desugar$8) -> bb25;
   }
   bb25 {
     $desugar$9 = %53;
@@ -163,7 +163,7 @@ main() -> nil|error{
     c3 = $desugar$10;
     %62 = ConstantLoad /path
     $desugar$11 = %62;
-    %64 = $default$21($desugar$11) -> bb32;
+    %64 = $default$23($desugar$11) -> bb32;
   }
   bb32 {
     $desugar$12 = %64;
@@ -190,7 +190,7 @@ main() -> nil|error{
   bb36 {
     %74 = ConstantLoad https://example.com
     $desugar$14 = %74;
-    %76 = $default$15($desugar$14) -> bb37;
+    %76 = $default$17($desugar$14) -> bb37;
   }
   bb37 {
     $desugar$15 = %76;
@@ -281,7 +281,7 @@ main() -> nil|error{
     c5 = $desugar$18;
     %108 = ConstantLoad /path
     $desugar$19 = %108;
-    %110 = $default$21($desugar$19) -> bb54;
+    %110 = $default$23($desugar$19) -> bb54;
   }
   bb54 {
     $desugar$20 = %110;
@@ -340,7 +340,7 @@ main() -> nil|error{
     c6 = $desugar$22;
     %131 = ConstantLoad /path
     $desugar$23 = %131;
-    %133 = $default$21($desugar$23) -> bb65;
+    %133 = $default$23($desugar$23) -> bb65;
   }
   bb65 {
     $desugar$24 = %133;

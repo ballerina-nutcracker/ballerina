@@ -82,7 +82,6 @@ type stdlibEntry struct {
 // (e.g. io before os, time before crypto).
 var builtinStdlibs = []stdlibEntry{
 	{"ballerina", "io", "0.0.1"},
-	{"ballerina", "http", "0.0.1"},
 	{"ballerina", "log", "0.0.1"},
 	{"ballerina", "math.vector", "0.0.1"},
 	{"ballerina", "os", "0.0.1"},
@@ -92,6 +91,7 @@ var builtinStdlibs = []stdlibEntry{
 	{"ballerina", "crypto", "0.0.1"},
 	{"ballerina", "uuid", "0.0.1"},
 	{"ballerina", "mime", "0.0.1"},
+	{"ballerina", "http", "0.0.1"},
 	{"ballerina", "file", "0.0.1"},
 	{"ballerina", "ldap", "0.0.1"},
 	{"ballerina", "tcp", "0.0.1"},

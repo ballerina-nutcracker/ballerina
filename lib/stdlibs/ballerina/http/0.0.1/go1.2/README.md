@@ -21,6 +21,8 @@ The Go Native Interpreter currently supports the **HTTP client subset only**: th
 - Inspect response headers by name or enumerate all header names.
 - Construct `Response` objects in resource functions and populate them with `setTextPayload`, `setJsonPayload`, `setBinaryPayload`, `setHeader`, and direct field assignment (`response.statusCode = 404`).
 - Construct outbound `Request` objects and populate them for forwarding.
+- Set a request or response body generically via `setPayload`, dispatched by the runtime type of the value.
+- Decode an `application/x-www-form-urlencoded` request body into a parameter map via `getFormParams`.
 - Parse structured header values (value + parameter map) with the header parsing utility.
 
 ## Examples
@@ -116,11 +118,13 @@ Support Levels:
 | Request object construction | Supported | `new http:Request()` creates an outbound request with `rawPath`, `method`, and `httpVersion` fields. |
 | Request write methods | Supported | `setTextPayload`, `setJsonPayload`, `setBinaryPayload` (each with optional `contentType`), `setHeader`, `addHeader`, `removeHeader`, `removeAllHeaders`, and `setContentType` populate the request. |
 | Request read methods | Supported | `getTextPayload`, `getJsonPayload`, `getBinaryPayload`, `getHeader`, `getHeaders`, `hasHeader`, `getHeaderNames`, `getContentType`, `getQueryParams`, `getQueryParamValue`, and `getQueryParamValues` read from client-constructed or inbound requests. |
+| Generic payload setter | Partially Supported | `setPayload(json\|byte[] payload, string? contentType = ())` dispatches by runtime type to `setTextPayload`/`setBinaryPayload`/`setJsonPayload`. jBallerina's signature also accepts `mime:Entity[]` (multipart) and `stream<byte[], io:Error?>`/`stream<SseEvent, error?>`, none of which are accepted here since neither `http` nor `mime` support those payload kinds yet; `anydata` values outside `json` (e.g. `xml`, `table`) are also not accepted, since there is no `toJson()`-style conversion available in this port. |
+| Form-urlencoded payload parsing | Supported | `getFormParams()` decodes an `application/x-www-form-urlencoded` body into a `map<string>`. Returns an `error` if the `Content-Type` header is missing, invalid, or not `application/x-www-form-urlencoded`, or if the body cannot be decoded. |
 | Path parameter binding | Not Yet Supported | Automatic extraction of URL path segments into resource function parameters is not implemented. |
 | Query parameter binding | Not Yet Supported | Automatic binding of URL query parameters to resource function parameters is not implemented. |
 | Inbound header binding | Not Yet Supported | Automatic binding of request headers to resource function parameters via `@http:Header` is not implemented. |
 | Inbound payload binding | Not Yet Supported | Automatic deserialization of the request body into typed resource function parameters via `@http:Payload` is not implemented. |
-| Multipart and form-data payload | Not Yet Supported | `mime:Entity[]` as a request body type and the associated `getBodyParts()` response method are not implemented. |
+| Multipart and form-data payload | Not Yet Supported | `mime:Entity[]` as a request body type and the associated `getBodyParts()` response method are not implemented; blocked on `ballerina/mime`, which does not yet support `setBodyParts`/`getBodyParts` either. |
 | Streaming request body | Not Yet Supported | `stream<byte[], io:Error?>` as a request payload type is not implemented. |
 
 ### Response
@@ -134,9 +138,10 @@ Support Levels:
 | Response header inspection | Supported | `hasHeader`, `getHeader`, `getHeaders`, and `getHeaderNames` operate on transport (leading) headers. Trailing header position is accepted at compile time but has no runtime effect. |
 | Response object construction | Supported | `new http:Response()` creates a response with status code 200; initialised via `init()`. |
 | Response write methods | Supported | `setTextPayload`, `setJsonPayload`, `setBinaryPayload` (each with optional `contentType`), `setHeader`, `addHeader`, `removeHeader`, `removeAllHeaders`, and `setContentType` populate a constructed `Response`. Status code is set by direct field assignment (`resp.statusCode = 404`). |
+| Generic payload setter | Partially Supported | `setPayload(json\|byte[] payload, string? contentType = ())` dispatches by runtime type to `setTextPayload`/`setBinaryPayload`/`setJsonPayload`. jBallerina's signature also accepts `mime:Entity[]` (multipart) and `stream<byte[], io:Error?>`/`stream<SseEvent, error?>`, none of which are accepted here since neither `http` nor `mime` support those payload kinds yet; `anydata` values outside `json` (e.g. `xml`, `table`) are also not accepted, since there is no `toJson()`-style conversion available in this port. |
 | Streaming response body | Not Yet Supported | `getByteStream()` is not implemented. |
 | Server-Sent Events | Not Yet Supported | `getSseEventStream()` and consuming a `stream<SseEvent, error?>` response are not implemented. |
-| Response XML payload | Not Yet Supported | The `xml` type and related payload handling methods (`getXmlPayload()`, `setXmlPayload()`) are not implemented due to the lack of XML support in the Go runtime. |
+| Response XML payload | Not Yet Supported | The `xml` type and related payload handling methods (`getXmlPayload()`, `setXmlPayload()`) are not implemented due to the lack of XML support in the Go runtime; the same limitation exists in `ballerina/mime`'s `setXml`/`getXml`. |
 
 ### Listener
 
@@ -174,7 +179,7 @@ Support Levels:
 | HTTP version enum | Supported | `HttpVersion` with `HTTP_1_0`, `HTTP_1_1`, and `HTTP_2_0` enum constants. `HTTP_1_0` prints a runtime warning and falls back to HTTP/1.1. |
 | Distinct HTTP error types | Not Yet Supported | All errors surface as the generic `error` type; `http:ClientError`, `http:HeaderNotFoundError`, and similar subtypes are not declared — `is http:ClientError` type checks will not work. |
 | Observability and metrics | Not Yet Supported | Metrics and tracing integration via `ballerina/observe` is not implemented. |
-| XML payloads | Not Yet Supported | The `xml` type and related payload handling methods (`getXmlPayload()`, `setXmlPayload()`) are not implemented due to the lack of XML support in the Go runtime. |
+| XML payloads | Not Yet Supported | The `xml` type and related payload handling methods (`getXmlPayload()`, `setXmlPayload()`) are not implemented due to the lack of XML support in the Go runtime; the same limitation exists in `ballerina/mime`'s `setXml`/`getXml`. |
 
 ### Notable Behavioural Changes
 

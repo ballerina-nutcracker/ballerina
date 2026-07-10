@@ -110,7 +110,13 @@ func collectBalFiles(root string) ([]string, error) {
 	return files, err
 }
 
-func extractFile(env *context.CompilerEnvironment, path string) ([]symbol, bool) {
+func extractFile(env *context.CompilerEnvironment, path string) (syms []symbol, ok bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "warning: %s: parser panic: %v\n", path, r)
+			syms, ok = nil, false
+		}
+	}()
 	content, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: %s: %v\n", path, err)
@@ -131,7 +137,6 @@ func extractFile(env *context.CompilerEnvironment, path string) ([]symbol, bool)
 		fmt.Fprintf(os.Stderr, "warning: %s: has syntax diagnostics; extraction may be incomplete\n", path)
 	}
 	ex := &extractor{src: string(content)}
-	var syms []symbol
 	for m := range items(mp.Members()) {
 		if s, found := ex.member(m); found {
 			syms = append(syms, s)

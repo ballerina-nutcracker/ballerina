@@ -1,0 +1,106 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable noHeader (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (var-def
+        (variable noHeaderResult (type
+          (union-type
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type string))
+            (error-type))) (expr
+          (invocation getFormParams expr:
+            (simple-var-ref noHeader) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref noHeaderResult)
+            (error-type)))))
+      (var-def
+        (variable wrongType (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setTextPayload expr:
+          (simple-var-ref wrongType) (
+          (literal a=1)
+          (named-arg contentType
+            (literal text/plain)))))
+      (var-def
+        (variable wrongTypeResult (type
+          (union-type
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type string))
+            (error-type))) (expr
+          (invocation getFormParams expr:
+            (simple-var-ref wrongType) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref wrongTypeResult)
+            (error-type)))))
+      (var-def
+        (variable noEquals (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setTextPayload expr:
+          (simple-var-ref noEquals) (
+          (literal justastring)
+          (named-arg contentType
+            (literal application/x-www-form-urlencoded)))))
+      (var-def
+        (variable noEqualsResult (type
+          (union-type
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type string))
+            (error-type))) (expr
+          (invocation getFormParams expr:
+            (simple-var-ref noEquals) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref noEqualsResult)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref noEqualsResult) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable badEncoding (type
+            (user-defined-type http Request)) (expr
+            (new ()))))
+        (expression-stmt
+          (invocation setTextPayload expr:
+            (simple-var-ref badEncoding) (
+            (literal a=%zz)
+            (named-arg contentType
+              (literal application/x-www-form-urlencoded)))))
+        (var-def
+          (variable badEncodingResult (type
+            (union-type
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type string))
+              (error-type))) (expr
+            (invocation getFormParams expr:
+              (simple-var-ref badEncoding) ()))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref badEncodingResult)
+              (error-type)))))
+        (return
+          (literal <nil>))))))
