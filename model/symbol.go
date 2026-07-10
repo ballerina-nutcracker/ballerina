@@ -522,6 +522,9 @@ var (
 	_ MemberCarrier                  = &NetworkClassSymbol{}
 	_ MemberCarrier                  = &RecordSymbol{}
 	_ MemberCarrier                  = &ObjectTypeSymbol{}
+	_ ObjectType                     = &classSymbol{}
+	_ ObjectType                     = &NetworkClassSymbol{}
+	_ ObjectType                     = &ObjectTypeSymbol{}
 	_ Symbol                         = &VariableSymbol{}
 	_ Symbol                         = &ConstantValueSymbol{}
 	_ ValueSymbol                    = &VariableSymbol{}
@@ -960,6 +963,7 @@ type MemberCarrier interface {
 type ObjectType interface {
 	DistinctTypeIDs() []int
 	SetDistinctTypeIDs(typeIDs []int)
+	isObjectType()
 }
 
 type ClassSymbol interface {
@@ -992,6 +996,9 @@ func (d *distinctTypeBase) DistinctTypeIDs() []int {
 func (d *distinctTypeBase) SetDistinctTypeIDs(typeIDs []int) {
 	d.typeIDs = typeIDs
 }
+
+func (c *classSymbolBase) isObjectType()  {}
+func (o *ObjectTypeSymbol) isObjectType() {}
 
 func (r *RecordSymbol) Fields() iter.Seq2[string, *FieldDescriptor] {
 	return func(yield func(string, *FieldDescriptor) bool) {
