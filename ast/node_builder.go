@@ -1056,14 +1056,18 @@ func (n *NodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, to
 		}
 		panic("missing identifier token")
 	}
-	if token.IsMissing() {
+	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
 		if n.recovering() {
 			return n.badIdentifier(token)
 		}
-		panic("missing identifier")
+		panic("invalid identifier")
 	}
 	identifier := createIdentifierFromToken(pos, token)
 	return &identifier
+}
+
+func isUnsupportedIdentifierToken(token tree.Token) bool {
+	return token.Text() == "'" || token.Text() == "_" || token.Text() == "'_"
 }
 
 func (n *NodeBuilder) createBLangNameReference(node tree.Node) [2]IdentifierNode {
@@ -2249,12 +2253,8 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node
 		nameReference := n.createBLangNameReference(actionOrExpression)
 		bLVarRef := BLangSimpleVarRef{}
 		bLVarRef.pos = n.getPosition(actionOrExpression)
-		pkgAliasValue := nameReference[0].GetValue()
-		variableNameValue := nameReference[1].GetValue()
-		pkgAlias := createIdentifier(nameReference[0].GetPosition(), &pkgAliasValue, &pkgAliasValue)
-		variableName := createIdentifier(nameReference[1].GetPosition(), &variableNameValue, &variableNameValue)
-		bLVarRef.PkgAlias = &pkgAlias
-		bLVarRef.VariableName = &variableName
+		bLVarRef.PkgAlias = nameReference[0]
+		bLVarRef.VariableName = nameReference[1]
 		return &bLVarRef, nil
 	}
 	if actionOrExpression.Kind() == common.BRACED_EXPRESSION {
@@ -5947,10 +5947,12 @@ func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 	return bad
 }
 
-func (n *NodeBuilder) badIdentifier(node tree.Node) *BLangBadIdentifier {
+func (n *NodeBuilder) badIdentifier(token tree.Token) *BLangBadIdentifier {
 	bad := &BLangBadIdentifier{}
-	if node != nil {
-		bad.SetPosition(n.getRecoveryPosition(node))
+	if token != nil {
+		bad.Value, _ = normalizedIdentifierValue(token.Text())
+		bad.OriginalValue = token.Text()
+		bad.SetPosition(n.getRecoveryPosition(token))
 	} else {
 		bad.SetPosition(diagnostics.NewBuiltinLocation())
 	}

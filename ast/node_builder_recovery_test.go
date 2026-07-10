@@ -46,6 +46,60 @@ func TestRecoveringNodeBuilderIncludesMinutiaeInNodeRanges(t *testing.T) {
 	assertLocationOffsets(t, recoveringReturn.GetPosition(), strings.Index(source, "\treturn;"), strings.Index(source, "\n}")+1)
 }
 
+func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.T) {
+	testCases := []struct {
+		name        string
+		source      string
+		aliasValue  string
+		nameValue   string
+		badOriginal string
+		missingName bool
+	}{
+		{
+			name:       "valid",
+			source:     "function foo() { x = mod:name; }",
+			aliasValue: "mod",
+			nameValue:  "name",
+		},
+		{
+			name:        "missing name",
+			source:      "function foo() { x = mod:; }",
+			aliasValue:  "mod",
+			missingName: true,
+		},
+		{
+			name:        "unsupported identifier",
+			source:      "function foo() { x = mod:_ ; }",
+			aliasValue:  "mod",
+			nameValue:   "_",
+			badOriginal: "_",
+			missingName: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			compilationUnit, _ := buildNodeBuilderCompilationUnit(t, testCase.source, true)
+			function := compilationUnit.TopLevelNodes[0].(*BLangFunction)
+			assignment := function.Body.(*BLangBlockFunctionBody).Stmts[0].(*BLangAssignment)
+			reference := assignment.GetExpression().(*BLangSimpleVarRef)
+
+			assertIdentifierValue(t, reference.PkgAlias, testCase.aliasValue)
+			if testCase.missingName {
+				bad, ok := reference.VariableName.(*BLangBadIdentifier)
+				if !ok {
+					t.Fatalf("variable name = %T, want *BLangBadIdentifier", reference.VariableName)
+				}
+				if bad.Value != testCase.nameValue || bad.OriginalValue != testCase.badOriginal {
+					t.Fatalf("bad identifier values = %q, %q, want %q, %q", bad.Value, bad.OriginalValue, testCase.nameValue, testCase.badOriginal)
+				}
+				return
+			}
+			assertIdentifierValue(t, reference.VariableName, testCase.nameValue)
+		})
+	}
+}
+
 func TestRecoveringNodeBuilderHandlesMissingIdentifiers(t *testing.T) {
 	testCases := []struct {
 		name   string
@@ -98,6 +152,16 @@ func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering boo
 	}
 	builder := NewRecoveringNodeBuilder(cx)
 	return builder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart)).(*BLangCompilationUnit), syntaxTree
+}
+
+func assertIdentifierValue(t *testing.T, identifier IdentifierNode, value string) {
+	t.Helper()
+	if _, ok := identifier.(*BLangIdentifier); !ok {
+		t.Fatalf("identifier = %T, want *BLangIdentifier", identifier)
+	}
+	if got := identifier.GetValue(); got != value {
+		t.Fatalf("identifier value = %q, want %q", got, value)
+	}
 }
 
 func assertLocationOffsets(t *testing.T, location diagnostics.Location, start, end int) {
