@@ -23,9 +23,9 @@ import (
 	goruntime "runtime"
 	"testing"
 
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/test_util/testharness"
+	"ballerina/platform/pal"
+	"ballerina/test_util"
+	"ballerina/test_util/testharness"
 )
 
 const (

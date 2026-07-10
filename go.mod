@@ -1,4 +1,4 @@
-module ballerina-lang-go
+module ballerina
 
 go 1.26
 

@@ -19,14 +19,14 @@ package runtime
 import (
 	"errors"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/exec"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/model"
+	"ballerina/platform/pal"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/exec"
+	"ballerina/runtime/internal/modules"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 // LookupFunction resolves a top-level Ballerina function (BIR or native)

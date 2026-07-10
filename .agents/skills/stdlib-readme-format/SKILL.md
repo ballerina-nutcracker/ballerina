@@ -9,14 +9,14 @@ This skill defines the exact structure and rules for every `lib/stdlibs/ballerin
 
 ## Template
 
-Use this skeleton exactly. Do not add, remove, or reorder sections. One permitted extension: a large module may group its support tables under `###` subsections inside **Go Native Interpreter Support Status** (e.g. http's `### Client` / `### Request` / `### Response`), each subsection holding its own three-column table.
+Use this skeleton exactly. Do not add, remove, or reorder sections. One permitted extension: a large module may group its support tables under `###` subsections inside **Ballerina Nutcracker Support Status** (e.g. http's `### Client` / `### Request` / `### Response`), each subsection holding its own three-column table.
 
 ````markdown
 # Ballerina <Name> Library
 
 ## Overview
 
-<Brief description of the full jBallerina module scope, ending with one sentence stating which subset the Go Native Interpreter currently supports.>
+<Brief description of the full jBallerina module scope, ending with one sentence stating which subset Ballerina Nutcracker currently supports.>
 
 ## Key Functionalities
 
@@ -28,9 +28,9 @@ Use this skeleton exactly. Do not add, remove, or reorder sections. One permitte
 <Short working example using only currently supported APIs.>
 ```
 
-## Go Native Interpreter Support Status
+## Ballerina Nutcracker Support Status
 
-This library is currently being migrated to Go to support the Ballerina Native Interpreter. The table below outlines the current support level for various features of this library in the Go implementation.
+This library is currently being migrated to Go to support Ballerina Nutcracker. The table below outlines the current support level for various features of this library in the Go implementation.
 
 Support Levels:
 

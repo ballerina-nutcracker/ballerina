@@ -26,12 +26,12 @@ import (
 	"testing"
 	"time"
 
-	_ "ballerina-lang-go/lib/rt"
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	_ "ballerina/lib/rt"
+	"ballerina/platform/pal"
+	"ballerina/projects"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 )
 
 // This defines tests that validate exit status and signal handling since we can't validate those

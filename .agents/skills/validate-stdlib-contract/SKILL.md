@@ -5,7 +5,7 @@ description: Validate that a ballerina/<name> stdlib's Go public contract does n
 
 # Validating a Standard Library's Public Contract
 
-This Go-native interpreter re-implements `ballerina/*` standard libraries that originated in jBallerina (Java). Customer Ballerina code is written against the **jBallerina public interface**.
+Ballerina Nutcracker, a native Ballerina interpreter written in Go, re-implements `ballerina/*` standard libraries that originated in jBallerina (Java). Customer Ballerina code is written against the **jBallerina public interface**.
 
 **The golden rule:** the Go implementation must **never break that public interface** — doing so breaks existing customer code at compile time. This skill checks a single `ballerina/<name>` package against that rule and writes a readable, summary-level report.
 
@@ -35,7 +35,7 @@ Then locate:
 
 - **jBallerina public API** — `.bal` files under `<root>/ballerina/` (exclude `tests/` and `build/`).
 - **Go implementation** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/*.bal`.
-- **Support matrix** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md`, the "Go Native Interpreter Support Status" table.
+- **Support matrix** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md`, the "Ballerina Nutcracker Support Status" table.
 
 Stop and ask if any of these is missing. If the Go module does not exist at all, this is a porting task — redirect to `add-stdlib-support`.
 

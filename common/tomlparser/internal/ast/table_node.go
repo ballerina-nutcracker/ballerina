@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 // TableNode represents a [table] section or the implicit root document table.
 type TableNode struct {

@@ -21,12 +21,12 @@ import (
 	"fmt"
 	"testing"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/test_util/testphases"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/semtypes"
+	"ballerina/test_util"
+	"ballerina/test_util/testphases"
+	"ballerina/tools/diagnostics"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )

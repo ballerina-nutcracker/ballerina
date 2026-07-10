@@ -17,10 +17,10 @@
 package semantics
 
 import (
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/ast"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 type bindingFlags uint8

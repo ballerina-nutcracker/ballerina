@@ -21,8 +21,8 @@ import (
 	"reflect"
 	"strings"
 
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/parser/common"
+	"ballerina/tools/diagnostics"
 )
 
 // This represent green nodes in the syntax tree. Green nodes satisfy fallowing properties:

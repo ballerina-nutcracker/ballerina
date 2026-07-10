@@ -8,7 +8,7 @@ This module provides the HTTP client and listener APIs for building and consumin
 
 **Service / Listener** — an HTTP listener with configurable host, TLS, HTTP version, and request limits; service definition with path-based routing and resource function dispatch; automatic binding of path parameters, query parameters, headers, and payloads in resource signatures; caller-based response dispatch; request/response interceptor pipeline; service-level and resource-level annotations (`@http:ServiceConfig`, `@http:ResourceConfig`, `@http:Payload`, `@http:Header`, `@http:Query`, `@http:Cache`); CORS configuration; listener authentication and authorization (File user store, LDAP, JWT, OAuth2); status code response types from resources; and SSE streaming responses.
 
-The Go Native Interpreter currently supports the **HTTP client subset only**: the nine core remote methods (including `forward`), TLS/mTLS (PEM-based), redirect following, connection pooling, and manual payload extraction from responses. The service/listener side is not yet implemented.
+Ballerina Nutcracker currently supports the **HTTP client subset only**: the nine core remote methods (including `forward`), TLS/mTLS (PEM-based), redirect following, connection pooling, and manual payload extraction from responses. The service/listener side is not yet implemented.
 
 ## Key Functionalities
 
@@ -63,9 +63,9 @@ public function main() returns error? {
 }
 ```
 
-## Go Native Interpreter Support Status
+## Ballerina Nutcracker Support Status
 
-This library is currently being migrated to Go to support the Ballerina Native Interpreter. The tables below outline the current support level for various features of this library in the Go implementation.
+This library is currently being migrated to Go to support Ballerina Nutcracker. The tables below outline the current support level for various features of this library in the Go implementation.
 
 Support Levels:
 

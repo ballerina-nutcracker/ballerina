@@ -20,7 +20,7 @@ import (
 	"cmp"
 	"strings"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // WorkspaceResolution holds the result of workspace-level dependency resolution.

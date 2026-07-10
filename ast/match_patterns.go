@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 type BLangMatchPattern interface {

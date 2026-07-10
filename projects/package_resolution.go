@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // PackageResolution holds the result of package dependency resolution.

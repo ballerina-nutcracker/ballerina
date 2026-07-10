@@ -30,9 +30,9 @@ public function main() {
 }
 ```
 
-## Go Native Interpreter Support Status
+## Ballerina Nutcracker Support Status
 
-This library is currently being migrated to Go to support the Ballerina Native Interpreter. The table below outlines the current support level for various features of this library in the Go implementation.
+This library is currently being migrated to Go to support Ballerina Nutcracker. The table below outlines the current support level for various features of this library in the Go implementation.
 
 Support Levels:
 

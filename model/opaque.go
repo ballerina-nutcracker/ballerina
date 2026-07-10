@@ -17,7 +17,7 @@
 package model
 
 import (
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 // OpaqueSymbol is a symbol whose definition cannot be written in Ballerina

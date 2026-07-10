@@ -17,7 +17,7 @@
 package common
 
 import (
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // FIXME: make this private

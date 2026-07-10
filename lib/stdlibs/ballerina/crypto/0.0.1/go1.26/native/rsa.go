@@ -28,9 +28,9 @@ import (
 	"fmt"
 	"hash"
 
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 )
 
 func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {

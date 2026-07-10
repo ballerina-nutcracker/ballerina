@@ -25,9 +25,9 @@ import (
 	"hash"
 	"hash/crc32"
 
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 	"golang.org/x/crypto/sha3"
 )
 

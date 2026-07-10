@@ -32,7 +32,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/cli/internal/nativeexec"
+	"ballerina/cli/internal/nativeexec"
 )
 
 const (
@@ -43,7 +43,7 @@ const (
 // LocalExecutor builds a custom interpreter binary using the local Go toolchain.
 // It implements nativeexec.NativeExecutor.
 type LocalExecutor struct {
-	// interpreterRoot is the directory that contains the ballerina-lang-go go.mod.
+	// interpreterRoot is the directory that contains the ballerina go.mod.
 	interpreterRoot string
 	// outputBinary is the path where the compiled native binary is written.
 	// Relative paths are resolved against the interpreter root.
@@ -53,7 +53,7 @@ type LocalExecutor struct {
 var _ nativeexec.NativeExecutor = (*LocalExecutor)(nil)
 
 // New creates a LocalExecutor. interpreterRoot is the directory containing the
-// ballerina-lang-go go.mod; outputBinary is the destination path for the
+// ballerina go.mod; outputBinary is the destination path for the
 // compiled native interpreter (typically <project>/target/bin/bal).
 func New(interpreterRoot, outputBinary string) *LocalExecutor {
 	return &LocalExecutor{
@@ -155,7 +155,7 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 		if err := writeNativeFiles(pkgDir, payload); err != nil {
 			return nil, err
 		}
-		modContent := fmt.Sprintf("module %s\n\ngo %s\n\nrequire ballerina-lang-go v0.0.0\nreplace ballerina-lang-go => %s\n",
+		modContent := fmt.Sprintf("module %s\n\ngo %s\n\nrequire ballerina v0.0.0\nreplace ballerina => %s\n",
 			payload.GoModuleName(), MinGoVersion, e.interpreterRoot)
 		if err := os.WriteFile(filepath.Join(pkgDir, "go.mod"), []byte(modContent), 0o600); err != nil {
 			return nil, fmt.Errorf("writing go.mod for %s: %w", payload.GoModuleName(), err)

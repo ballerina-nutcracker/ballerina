@@ -19,10 +19,10 @@ package semantics
 import (
 	"fmt"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/ast"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 // enclosingClassOf walks the analyzer parent chain and returns the

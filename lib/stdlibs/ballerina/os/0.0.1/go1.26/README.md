@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides operating-system interaction for Ballerina programs. It covers environment variable management, current-user queries, and subprocess execution. The Go Native Interpreter supports the full surface of the jBallerina `os` module.
+This module provides operating-system interaction for Ballerina programs. It covers environment variable management, current-user queries, and subprocess execution. Ballerina Nutcracker supports the full surface of the jBallerina `os` module.
 
 ## Key Functionalities
 
@@ -40,9 +40,9 @@ public function main() returns error? {
 }
 ```
 
-## Go Native Interpreter Support Status
+## Ballerina Nutcracker Support Status
 
-This library is currently being migrated to Go to support the Ballerina Native Interpreter. The table below outlines the current support level for various features of this library in the Go implementation.
+This library is currently being migrated to Go to support Ballerina Nutcracker. The table below outlines the current support level for various features of this library in the Go implementation.
 
 Support Levels:
 

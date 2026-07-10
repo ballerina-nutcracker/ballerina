@@ -1,10 +1,12 @@
-## Ballerina Nutcracker
+# Ballerina Nutcracker
 
+[![Native CI](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/native-ci.yml/badge.svg)](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/native-ci.yml)
+[![golangci-lint](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/golangci-lint.yml)
+[![codecov](https://codecov.io/gh/ballerina-nutcracker/ballerina/graph/badge.svg)](https://codecov.io/gh/ballerina-nutcracker/ballerina)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
 [![stackoverflow](https://img.shields.io/badge/Get%20Support%20on%20Stack%20Overflow-ballerina-52C3C2)](https://stackoverflow.com/questions/tagged/ballerina)
 [![Join the community on Discord](https://img.shields.io/badge/Join%20us%20on%20Discord-Ballerina-52C3C2)](https://discord.gg/ballerinalang)
-[![codecov](https://codecov.io/gh/ballerina-platform/ballerina-lang-go/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/ballerina-lang-go)
 
 [Ballerina](https://ballerina.io) is an open-source, cloud-native programming language optimized for integration. It has built-in support for JSON and XML, first-class constructs for services and concurrency, and structural typing. It is developed and supported by WSO2.
 
@@ -12,9 +14,9 @@
 
 ## Goals
 
-Ballerina Nutcracker is a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
+**Ballerina Nutcracker** is a native Ballerina interpreter written in Go: it compiles Ballerina source to **Ballerina Intermediate Representation (BIR)** and interprets the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
 
-- **Progress:** [GitHub Milestones](https://github.com/ballerina-platform/ballerina-lang-go/milestones)
+- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
 - **Subset docs:** [doc/](doc/) (language features and restrictions per subset)
 
 ## Usage
@@ -23,7 +25,7 @@ Ballerina Nutcracker is a **native Ballerina interpreter in Go**: compile Baller
 
 The project is built using the [Go programming language](https://go.dev/). The following dependencies are required:
 
-- [Go 1.24 or later](https://go.dev/dl/)
+- [Go 1.26 or later](https://go.dev/dl/)
 
 ### Build the CLI
 
@@ -113,7 +115,7 @@ go test ./...
 
 ### Open an issue
 
-- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to the Ballerina Nutcracker.
+- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to Ballerina Nutcracker.
 
 ### Report security issues
 
@@ -121,11 +123,11 @@ go test ./...
 
 ## Contribute to Ballerina Nutcracker
 
-As an open-source project, Ballerina Nutcracker welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
+As an open-source project, this repository welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 
-Ballerina code is distributed under [Apache License 2.0](./LICENSE).
+This project is distributed under [Apache License 2.0](./LICENSE).
 
 ## Join the community
 

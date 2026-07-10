@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ballerina-lang-go/common"
+	"ballerina/common"
 )
 
 type intSubtype struct {

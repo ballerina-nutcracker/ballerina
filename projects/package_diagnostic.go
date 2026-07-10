@@ -17,7 +17,7 @@
 package projects
 
 import (
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // Compile-time interface check.

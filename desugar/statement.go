@@ -18,9 +18,9 @@
 package desugar
 
 import (
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
+	"ballerina/ast"
+	"ballerina/model"
+	"ballerina/semtypes"
 )
 
 func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[ast.StatementNode] {

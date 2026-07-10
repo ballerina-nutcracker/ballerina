@@ -19,7 +19,7 @@ package extern_test
 import (
 	"testing"
 
-	"ballerina-lang-go/test_util/testharness"
+	"ballerina/test_util/testharness"
 )
 
 // TestCryptoKeyStore drives the PKCS#12 keystore/trust-store decode paths

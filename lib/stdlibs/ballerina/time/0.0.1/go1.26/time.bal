@@ -128,7 +128,7 @@ public enum HeaderZoneHandling {
 }
 
 // Zone is an abstract object type for handling time zones.
-// Note: jBallerina declares this as `readonly & object`; the Go-native interpreter uses a plain
+// Note: jBallerina declares this as `readonly & object`; Ballerina Nutcracker uses a plain
 // object type because `readonly & object` type descriptors are not yet supported.
 public type Zone object {
     # If always at a fixed offset from UTC, returns it; otherwise nil.
@@ -153,7 +153,7 @@ public type Zone object {
 };
 
 # Localized time zone implementation for IANA zone IDs and fixed zone offsets.
-# Note: jBallerina declares this as `readonly class`; the Go-native interpreter uses a plain class
+# Note: jBallerina declares this as `readonly class`; Ballerina Nutcracker uses a plain class
 # because readonly classes are not yet supported.
 public class TimeZone {
     *Zone;

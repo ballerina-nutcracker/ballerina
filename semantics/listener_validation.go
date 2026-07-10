@@ -16,7 +16,7 @@
 
 package semantics
 
-import "ballerina-lang-go/semtypes"
+import "ballerina/semtypes"
 
 // validateListenerType structurally checks whether ty is a valid listener
 // object type and, on success, returns its projected service-target type T

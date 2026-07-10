@@ -17,9 +17,9 @@
 package semantics
 
 import (
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/model"
 )
 
 type initState struct {

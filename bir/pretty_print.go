@@ -21,9 +21,9 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type PrettyPrinter struct {

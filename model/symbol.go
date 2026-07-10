@@ -23,8 +23,8 @@ import (
 	"strings"
 	"sync"
 
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type Scope interface {

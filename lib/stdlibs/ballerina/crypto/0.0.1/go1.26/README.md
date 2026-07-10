@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides cryptographic operations for Ballerina programs. The full jBallerina `crypto` module covers hashing, HMAC, password hashing, symmetric encryption (AES), asymmetric encryption and signing (RSA, ECDSA), key derivation (HKDF), and post-quantum primitives (ML-KEM, ML-DSA, HPKE, PGP). The Go Native Interpreter supports the core cryptographic subset.
+This module provides cryptographic operations for Ballerina programs. The full jBallerina `crypto` module covers hashing, HMAC, password hashing, symmetric encryption (AES), asymmetric encryption and signing (RSA, ECDSA), key derivation (HKDF), and post-quantum primitives (ML-KEM, ML-DSA, HPKE, PGP). Ballerina Nutcracker supports the core cryptographic subset.
 
 ## Key Functionalities
 
@@ -47,9 +47,9 @@ public function main() returns error? {
 }
 ```
 
-## Go Native Interpreter Support Status
+## Ballerina Nutcracker Support Status
 
-This library is currently being migrated to Go to support the Ballerina Native Interpreter. The table below outlines the current support level for various features of this library in the Go implementation.
+This library is currently being migrated to Go to support Ballerina Nutcracker. The table below outlines the current support level for various features of this library in the Go implementation.
 
 Support Levels:
 

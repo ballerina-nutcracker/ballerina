@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 	"golang.org/x/sys/windows"
 )
 

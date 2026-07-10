@@ -19,12 +19,12 @@ import (
 	"slices"
 	"strings"
 
-	debugcommon "ballerina-lang-go/common"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/parser/common"
-	tree "ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/tools/text"
+	debugcommon "ballerina/common"
+	"ballerina/context"
+	"ballerina/parser/common"
+	tree "ballerina/parser/tree"
+	"ballerina/tools/diagnostics"
+	"ballerina/tools/text"
 )
 
 type OperatorPrecedence uint8

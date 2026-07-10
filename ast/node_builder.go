@@ -24,13 +24,13 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
+	"ballerina/tools/diagnostics"
 
-	balCommon "ballerina-lang-go/common"
+	balCommon "ballerina/common"
 )
 
 type typeTable struct {
@@ -2569,7 +2569,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 		case common.ISOLATED_KEYWORD:
 			objectType.Isolated = true
 		case common.READONLY_KEYWORD:
-			// https://github.com/ballerina-platform/ballerina-lang-go/issues/537",
+			// https://github.com/ballerina-nutcracker/ballerina/issues/537",
 			n.cx.Unimplemented("readonly object type descriptors are not implemented", getPosition(n.de(), q))
 		}
 	}

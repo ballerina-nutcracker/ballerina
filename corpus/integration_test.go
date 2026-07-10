@@ -28,24 +28,24 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/bir"
-	bircodec "ballerina-lang-go/bir/codec"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/desugar"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/model/symbolpool"
-	"ballerina-lang-go/parser"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/test_util/langlib"
-	"ballerina-lang-go/test_util/testharness"
-	"ballerina-lang-go/tools/text"
+	"ballerina/ast"
+	"ballerina/bir"
+	bircodec "ballerina/bir/codec"
+	"ballerina/context"
+	"ballerina/desugar"
+	"ballerina/model"
+	"ballerina/model/symbolpool"
+	"ballerina/parser"
+	"ballerina/projects"
+	"ballerina/runtime"
+	"ballerina/semantics"
+	"ballerina/semtypes"
+	"ballerina/test_util"
+	"ballerina/test_util/langlib"
+	"ballerina/test_util/testharness"
+	"ballerina/tools/text"
 
-	_ "ballerina-lang-go/lib/rt"
+	_ "ballerina/lib/rt"
 )
 
 const (
@@ -84,11 +84,11 @@ var (
 		// panic or a compile-time `fatal[...]` bailout, so it does not satisfy
 		// the future-test contract yet. Tracked separately.
 		"subset8/08-future/fieldlvalue1-fp.bal",
-		// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+		// https://github.com/ballerina-nutcracker/ballerina/issues/417
 		"subset8/08-xml/namespace12-v.bal",
-		// https://github.com/ballerina-platform/ballerina-lang-go/issues/533
+		// https://github.com/ballerina-nutcracker/ballerina/issues/533
 		"subset9/09-template-expr/template-query-xml-sequence-fv.bal",
-		// https://github.com/ballerina-platform/ballerina-lang-go/issues/538
+		// https://github.com/ballerina-nutcracker/ballerina/issues/538
 		"subset9/09-object/readonly-distinct-object-fe.bal",
 	}
 

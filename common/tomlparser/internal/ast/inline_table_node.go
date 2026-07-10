@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 // InlineTableValueNode holds an inline table { k = v, ... }.
 // It implements ValueNode so it can appear as the RHS of a key-value pair.

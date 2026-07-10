@@ -22,11 +22,11 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/ast"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type invocable interface {
@@ -461,7 +461,7 @@ func walkOptionalFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAc
 	elseBody.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(elseBody, basePos)
 
-	// TODO: update when handling lax case https://github.com/ballerina-platform/ballerina-lang-go/issues/558
+	// TODO: update when handling lax case https://github.com/ballerina-nutcracker/ballerina/issues/558
 	ifStmt := &ast.BLangIf{
 		Expr:     createErrorTypeTest(VName, VSymbol, baseTy, basePos),
 		Body:     *errorBody,

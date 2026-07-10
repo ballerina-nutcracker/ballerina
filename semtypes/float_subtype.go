@@ -19,7 +19,7 @@ package semtypes
 import (
 	"slices"
 
-	"ballerina-lang-go/common"
+	"ballerina/common"
 )
 
 type floatSubtype struct {

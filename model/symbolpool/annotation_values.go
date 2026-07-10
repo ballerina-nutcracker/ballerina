@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"sort"
 
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/decimal"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type annotationValueTag int8

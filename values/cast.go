@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"math"
 
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/semtypes"
+	"ballerina/decimal"
+	"ballerina/semtypes"
 )
 
 var ErrBadTypeCast = errors.New("bad type cast")

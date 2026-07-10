@@ -33,7 +33,7 @@ func stateOf(m *values.Map) any {
 }
 ```
 
-(`stdruntime` = Go's standard `"runtime"` package, aliased to avoid clashing with this project's `ballerina-lang-go/runtime`.) `weak.Pointer[T]` is documented as comparable and safe as a map key — two weak pointers compare equal iff their source pointers do — so pairing it with `runtime.AddCleanup` means the entry disappears once the value becomes unreachable: no leak, no runtime-level guarantee needed.
+(`stdruntime` = Go's standard `"runtime"` package, aliased to avoid clashing with this project's `ballerina/runtime`.) `weak.Pointer[T]` is documented as comparable and safe as a map key — two weak pointers compare equal iff their source pointers do — so pairing it with `runtime.AddCleanup` means the entry disappears once the value becomes unreachable: no leak, no runtime-level guarantee needed.
 
 **Reference implementation:** `lib/stdlibs/ballerina/crypto/0.0.1/go1.26/native/keydata.go` (`setKeyData`/`keyDataOf`), which recovers the parsed `*rsa.PrivateKey`/`*ecdsa.PrivateKey`/etc. behind a `crypto:PrivateKey`/`PublicKey` record.
 

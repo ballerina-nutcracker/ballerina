@@ -22,9 +22,9 @@ import (
 	"crypto/cipher"
 	"fmt"
 
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 )
 
 // validGcmTagSizes mirrors Java's VALID_GCM_TAG_SIZES (in bits).

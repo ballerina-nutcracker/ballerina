@@ -16,7 +16,7 @@
 
 package values
 
-import "ballerina-lang-go/semtypes"
+import "ballerina/semtypes"
 
 type Object struct {
 	Type       semtypes.SemType

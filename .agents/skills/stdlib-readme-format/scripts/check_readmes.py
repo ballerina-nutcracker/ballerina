@@ -38,7 +38,7 @@ REQUIRED_SECTIONS = [
     "## Overview",
     "## Key Functionalities",
     "## Examples",
-    "## Go Native Interpreter Support Status",
+    "## Ballerina Nutcracker Support Status",
     "### Notable Behavioural Changes",
 ]
 NO_CHANGES_RE = re.compile(r"\*\*no\*\* notable behavioural changes", re.IGNORECASE)
@@ -78,7 +78,7 @@ def parse_package_readme(path):
     behavioural_text = []
     in_behavioural = False
     for i, line in enumerate(lines, 1):
-        if line.startswith("## Go Native Interpreter Support Status"):
+        if line.startswith("## Ballerina Nutcracker Support Status"):
             in_support, in_behavioural = True, False
             continue
         if line.startswith("### Notable Behavioural Changes"):

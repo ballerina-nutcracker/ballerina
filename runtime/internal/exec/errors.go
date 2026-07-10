@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/values"
 )
 
 func getFormattedError(cs *callStack, r any) error {

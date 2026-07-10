@@ -23,8 +23,8 @@ import (
 	"slices"
 	"strings"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/values"
+	"ballerina/model"
+	"ballerina/values"
 )
 
 // TODO: may be we should rewrite this on top of a visitor.

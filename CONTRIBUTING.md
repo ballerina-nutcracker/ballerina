@@ -1,6 +1,6 @@
 # Contributing to Ballerina Nutcracker
 
-Ballerina Nutcracker is a native Ballerina compiler frontend written in Go. It is licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0) and is part of the Ballerina ecosystem.
+Ballerina Nutcracker is a native Ballerina interpreter written in Go: it compiles Ballerina source to Ballerina Intermediate Representation (BIR) and interprets the BIR. It is licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0) and is part of the Ballerina ecosystem.
 
 We appreciate your help!
 
@@ -18,7 +18,7 @@ We appreciate your help!
 
 ## Build the source code
 
-- Ensure you have [Go 1.24 or later](https://go.dev/dl/).
+- Ensure you have [Go 1.26 or later](https://go.dev/dl/).
 - Production build: `go build -o bal ./cli/cmd`
 - Debug build (enables profiling): `go build -tags debug -o bal-debug ./cli/cmd`
 

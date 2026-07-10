@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"strings"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type symbolReader struct {

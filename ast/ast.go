@@ -21,13 +21,13 @@ import (
 	"iter"
 	"strings"
 
-	"ballerina-lang-go/common"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/common"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/parser/tree"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type BNodeWithSymbol interface {

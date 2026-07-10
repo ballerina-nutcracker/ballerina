@@ -1,6 +1,6 @@
 ---
 name: add-stdlib-support
-description: Port a new ballerina/<name> stdlib package from jBallerina to this Go-native interpreter. Use when the user asks to migrate, port, or add a Ballerina standard library module that does not yet exist under `lib/stdlibs/ballerina/`. For filling gaps in an existing stdlib, use `fill-stdlib-gap` instead.
+description: Port a new ballerina/<name> stdlib package from jBallerina to Ballerina Nutcracker. Use when the user asks to migrate, port, or add a Ballerina standard library module that does not yet exist under `lib/stdlibs/ballerina/`. For filling gaps in an existing stdlib, use `fill-stdlib-gap` instead.
 ---
 
 # Adding a New Standard Library Package
@@ -151,7 +151,7 @@ Shared patterns — read the relevant file only when the situation applies:
 
 1. **`lib/rt/libs.go`** — add a blank import so the `init()` in the native package runs at binary start:
    ```go
-   _ "ballerina-lang-go/lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native"
+   _ "ballerina/lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native"
    ```
    Without this, all `= external` functions produce "function not found" at runtime even though the binary compiles cleanly. Skip this line if your stdlib has no `native/` directory.
 
