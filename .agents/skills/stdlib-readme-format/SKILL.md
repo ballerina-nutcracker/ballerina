@@ -124,7 +124,7 @@ Maintenance rules — after every per-package README change:
 
 - Recount `Supported`, `Partially Supported`, and `Not Yet Supported` rows from the updated per-package `README.md`, and update that package's row in the aggregator table.
 - Recompute support %: `round(Supported / Total * 100)` where `Total = Supported + Partially Supported + Not Yet Supported + Cannot Support`. **Note the asymmetry:** the aggregator table has no `Cannot Support` column, but `Cannot Support` rows still count in the % denominator — that's why a package with zero visible gaps can show less than 100% (e.g. file at 95%). Don't "fix" such a percentage without recounting the per-package table.
-- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](<name>/0.0.1/go1.2/README.md) | S | P | N | X% |`.
+- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](<name>/0.0.1/go1.26/README.md) | S | P | N | X% |`.
 - Recompute the **Total** footer row (sum of each column; the % cell is `round(TotalSupported / TotalTotal * 100)`, where `TotalTotal` again includes the invisible `Cannot Support` rows).
 - Mirror the package's **Notable Behavioural Changes** bullets verbatim into the matching `### <package>` subsection of the aggregator — copy the exact bullet text, don't paraphrase; the checker compares them word for word. Add a `### <package>` subsection when a package gains its first behavioural change; remove it (and add the package to the closing "no notable behavioural changes" sentence) when it has none.
 

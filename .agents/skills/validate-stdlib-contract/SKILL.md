@@ -45,7 +45,7 @@ Do **not** enumerate public symbols by reading `.bal` files by eye — that is s
 
 ```shell
 go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface <jball-root>/ballerina > /tmp/<name>-jball.surface
-go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface lib/stdlibs/ballerina/<name>/0.0.1/go1.2 > /tmp/<name>-go.surface
+go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface lib/stdlibs/ballerina/<name>/0.0.1/go1.26 > /tmp/<name>-go.surface
 ```
 
 (Run from this repo's root. The tool skips `tests/` and `build/` subdirectories automatically and reports files it failed to parse on stderr — a parse failure means that file must be reviewed by hand; do not silently drop it.)

@@ -237,17 +237,13 @@ func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
 	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
-	if err := copyDir(srcRepo, centralCache); err != nil {
-		t.Fatalf("setting up temp Ballerina home: %v", err)
-	}
+	copyDir(t, srcRepo, centralCache)
 
 	// Copy the project to a temp dir so the output binary goes to a fresh location
 	// (preventing leftover binaries from a previous run from masking cache misses).
 	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
 	tempProject := t.TempDir()
-	if err := copyDir(srcProject, tempProject); err != nil {
-		t.Fatalf("copying project to temp dir: %v", err)
-	}
+	copyDir(t, srcProject, tempProject)
 
 	runNative := func() (stdout, stderr string, code int) {
 		env := append(os.Environ(),
@@ -313,29 +309,4 @@ func runCLICommandWithEnv(t *testing.T, balBin, workDir string, args, env []stri
 		stderrStr,
 	)
 	return "", "", 0
-}
-
-// copyDir recursively copies src into dst, creating dst if needed.
-func copyDir(src, dst string) error {
-	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		target := filepath.Join(dst, rel)
-		if d.IsDir() {
-			return os.MkdirAll(target, 0o755)
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		return os.WriteFile(target, data, 0o644)
-	})
 }
