@@ -129,51 +129,6 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactor
 	}, true
 }
 
-// DeepClone returns an independent copy of mutable values, preserving cycles
-// and shared references within the cloned value graph.
-func DeepClone(v BalValue) BalValue {
-	return deepClone(v, make(map[any]BalValue))
-}
-
-func deepClone(v BalValue, clones map[any]BalValue) BalValue {
-	switch val := v.(type) {
-	case *Map:
-		if clone, ok := clones[val]; ok {
-			return clone
-		}
-		clone := NewMap(val.Type, val.atomic, val.isReadonly, nil)
-		clones[val] = clone
-		for _, key := range val.Keys() {
-			elem, _ := val.Get(key)
-			clone.putUnchecked(key, deepClone(elem, clones))
-		}
-		return clone
-	case *List:
-		if clone, ok := clones[val]; ok {
-			return clone
-		}
-		elems := make([]BalValue, len(val.elems))
-		clone := NewList(val.Type, val.atomic, val.isReadonly, val.filler, len(elems), elems)
-		clones[val] = clone
-		for i := range val.elems {
-			clone.elems[i] = deepClone(val.elems[i], clones)
-		}
-		return clone
-	case *TypeDesc:
-		if clone, ok := clones[val]; ok {
-			return clone
-		}
-		clone := NewTypeDesc(val.Type, nil)
-		clones[val] = clone
-		for key, annotation := range val.Annotations {
-			clone.Annotations[key] = deepClone(annotation, clones)
-		}
-		return clone
-	default:
-		return v
-	}
-}
-
 func SemTypeForValue(v BalValue) semtypes.SemType {
 	switch v := v.(type) {
 	case nil:
