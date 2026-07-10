@@ -2052,7 +2052,7 @@ func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinit
 	case *ast.BLangObjectType:
 		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions), true
 	case *ast.BLangErrorTypeNode:
-		return appendDistinctErrorAtoms(t, semType, typeDef)
+		return appendDistinctErrorAtoms(t, semType, typeDef), true
 	case *ast.BLangUserDefinedType:
 		if !typeDef.IsDistinct() {
 			return semType, true
@@ -2060,9 +2060,9 @@ func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinit
 		parent := t.getSymbol(typeDesc.Symbol())
 		switch parent.(type) {
 		case *model.ErrorTypeSymbol:
-			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct, typeDef.GetPosition())
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct), true
 		case model.ObjectType:
-			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct, typeDef.GetPosition())
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct), true
 		default:
 			return semType, true
 		}
@@ -2071,17 +2071,9 @@ func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinit
 	}
 }
 
-func appendDistinctAliasAtoms(t typeResolver, semType semtypes.SemType, childRef, parentRef model.SymbolRef, atom func(int) semtypes.SemType, pos diagnostics.Location) (semtypes.SemType, bool) {
-	child, ok := t.getSymbol(childRef).(distinctTypeSymbol)
-	if !ok {
-		t.internalError("distinct type alias symbol does not support distinct type IDs", pos)
-		return semtypes.SemType{}, false
-	}
-	parent, ok := t.getSymbol(parentRef).(distinctTypeSymbol)
-	if !ok {
-		t.internalError("distinct parent type symbol does not support distinct type IDs", pos)
-		return semtypes.SemType{}, false
-	}
+func appendDistinctAliasAtoms(t typeResolver, semType semtypes.SemType, childRef, parentRef model.SymbolRef, atom func(int) semtypes.SemType) semtypes.SemType {
+	child := t.getSymbol(childRef).(distinctTypeSymbol)
+	parent := t.getSymbol(parentRef).(distinctTypeSymbol)
 
 	idsByID := make(map[int]bool)
 	for _, id := range parent.DistinctTypeIDs() {
@@ -2097,19 +2089,18 @@ func appendDistinctAliasAtoms(t typeResolver, semType semtypes.SemType, childRef
 	}
 	sort.Ints(ids)
 	child.SetDistinctTypeIDs(ids)
+	return intersectDistinctAtoms(semType, ids, atom)
+}
 
-	current := semType
-	for _, distinctTypeID := range ids {
-		current = semtypes.Intersect(current, atom(distinctTypeID))
+func intersectDistinctAtoms(semType semtypes.SemType, ids []int, atom func(int) semtypes.SemType) semtypes.SemType {
+	for _, id := range ids {
+		semType = semtypes.Intersect(semType, atom(id))
 	}
-	return current, true
+	return semType
 }
 
 func appendDistinctObjectAtoms(t typeResolver, semType semtypes.SemType, symbol model.SymbolRef, inclusions []model.SymbolRef) semtypes.SemType {
-	carrier, ok := t.getSymbol(symbol).(model.ObjectType)
-	if !ok {
-		return semType
-	}
+	carrier := t.getSymbol(symbol).(model.ObjectType)
 
 	seen := make(map[int]bool)
 	var ids []int
@@ -2125,34 +2116,19 @@ func appendDistinctObjectAtoms(t typeResolver, semType semtypes.SemType, symbol 
 
 	addIDs(carrier)
 	for _, inc := range inclusions {
-		incCarrier, ok := t.getSymbol(inc).(model.ObjectType)
-		if ok {
-			addIDs(incCarrier)
-		}
+		addIDs(t.getSymbol(inc).(model.ObjectType))
 	}
 
 	carrier.SetDistinctTypeIDs(ids)
-	current := semType
-	for _, distinctTypeID := range ids {
-		current = semtypes.Intersect(current, semtypes.ObjectDefinitionDistinct(distinctTypeID))
-	}
-	return current
+	return intersectDistinctAtoms(semType, ids, semtypes.ObjectDefinitionDistinct)
 }
 
-func appendDistinctErrorAtoms(t typeResolver, semType semtypes.SemType, typeDef *ast.BLangTypeDefinition) (semtypes.SemType, bool) {
+func appendDistinctErrorAtoms(t typeResolver, semType semtypes.SemType, typeDef *ast.BLangTypeDefinition) semtypes.SemType {
 	if !typeDef.IsDistinct() {
-		return semType, true
+		return semType
 	}
-	carrier, ok := t.getSymbol(typeDef.Symbol()).(*model.ErrorTypeSymbol)
-	if !ok {
-		t.internalError("distinct error type symbol is not an ErrorTypeSymbol", typeDef.GetPosition())
-		return semtypes.SemType{}, false
-	}
-	current := semType
-	for _, distinctTypeID := range carrier.DistinctTypeIDs() {
-		current = semtypes.Intersect(current, semtypes.ErrorDistinct(distinctTypeID))
-	}
-	return current, true
+	carrier := t.getSymbol(typeDef.Symbol()).(*model.ErrorTypeSymbol)
+	return intersectDistinctAtoms(semType, carrier.DistinctTypeIDs(), semtypes.ErrorDistinct)
 }
 
 // addInclusionsToTypeSymbol addes all the inclusions (both transitive and direct) to the type symbol
@@ -2181,9 +2157,6 @@ func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
 }
 
 func copyAliasMembersToTypeSymbol(t typeResolver, aliasRef, targetRef model.SymbolRef) {
-	if targetRef.IsEmpty() {
-		return
-	}
 	aliasCarrier, ok := t.getSymbol(aliasRef).(model.MemberCarrier)
 	if !ok {
 		return
@@ -2191,10 +2164,7 @@ func copyAliasMembersToTypeSymbol(t typeResolver, aliasRef, targetRef model.Symb
 	if !t.ensureResolved(targetRef, 0) {
 		return
 	}
-	targetCarrier, ok := t.getSymbol(targetRef).(model.MemberCarrier)
-	if !ok {
-		return
-	}
+	targetCarrier := t.getSymbol(targetRef).(model.MemberCarrier)
 	for _, m := range targetCarrier.Members() {
 		aliasCarrier.AddMember(m)
 	}

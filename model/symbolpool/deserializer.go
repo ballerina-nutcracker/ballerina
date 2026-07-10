@@ -231,7 +231,7 @@ func (sr *symbolReader) readObjectTypeSymbol(space *model.SymbolSpace) {
 	}
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
-	sym.SetType(addObjectDistinctAtoms(ty, ids))
+	sym.SetType(intersectDistinctAtoms(ty, ids, semtypes.ObjectDefinitionDistinct))
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
 	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
@@ -244,7 +244,7 @@ func (sr *symbolReader) readErrorTypeSymbol(space *model.SymbolSpace) {
 	annotations := sr.readAnnotationValues()
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
-	sym.SetType(addErrorDistinctAtoms(ty, ids))
+	sym.SetType(intersectDistinctAtoms(ty, ids, semtypes.ErrorDistinct))
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
 	sr.registerLangLibDistinctTypeSymbol(space, name, ref, ids)
@@ -261,22 +261,12 @@ func (sr *symbolReader) readDistinctTypes(space *model.SymbolSpace) []int {
 	return ids
 }
 
-func addObjectDistinctAtoms(ty semtypes.SemType, ids []int) semtypes.SemType {
+func intersectDistinctAtoms(ty semtypes.SemType, ids []int, atom func(int) semtypes.SemType) semtypes.SemType {
 	if semtypes.IsZero(ty) {
 		return ty
 	}
 	for _, id := range ids {
-		ty = semtypes.Intersect(ty, semtypes.ObjectDefinitionDistinct(id))
-	}
-	return ty
-}
-
-func addErrorDistinctAtoms(ty semtypes.SemType, ids []int) semtypes.SemType {
-	if semtypes.IsZero(ty) {
-		return ty
-	}
-	for _, id := range ids {
-		ty = semtypes.Intersect(ty, semtypes.ErrorDistinct(id))
+		ty = semtypes.Intersect(ty, atom(id))
 	}
 	return ty
 }
@@ -406,7 +396,7 @@ func (sr *symbolReader) readClassSymbol(space *model.SymbolSpace, isNetwork bool
 	}
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
-	sym.SetType(addObjectDistinctAtoms(ty, ids))
+	sym.SetType(intersectDistinctAtoms(ty, ids, semtypes.ObjectDefinitionDistinct))
 	sym.SetMethods(methods)
 	if isNetwork {
 		var rmCount int64
