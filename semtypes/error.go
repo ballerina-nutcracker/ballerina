@@ -27,7 +27,7 @@ func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
 	if IsSameType(ctx, errorType, ERROR) {
 		return errorDetailTop(ctx), true
 	}
-	mappingSd := errorDetailBddWithoutDistinctAtoms(subtypeData(errorType, BTError).(Bdd))
+	mappingSd := stripDistinctAtomsFromBdd(subtypeData(errorType, BTError).(Bdd))
 	if allOrNothing, ok := mappingSd.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return errorDetailTop(ctx), true
@@ -40,10 +40,6 @@ func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
 func errorDetailTop(ctx Context) SemType {
 	md := NewMappingDefinition()
 	return md.DefineMappingTypeWrapped(ctx.Env(), nil, CreateCloneable(ctx))
-}
-
-func errorDetailBddWithoutDistinctAtoms(bdd Bdd) Bdd {
-	return stripDistinctAtomsFromBdd(bdd)
 }
 
 func stripErrorDistinctAtoms(ty SemType) SemType {
