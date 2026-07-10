@@ -14,4 +14,4 @@ In addition to these responsibilities, the Core Maintainers collectively serve a
 These Maintainers are responsible for specific functional areas of the ballerina Go Interpreter codebase. They have merge privileges within their respective domains and participate in cross-project decisions that affect their areas.
 
 - Krishnananthalingam Tharmigan ([@tharmigank](https://github.com/TharmiganK))
-- Azma Jabir ([@azinneera](https://github.com/azinneera))
+- Asma Jabir ([@azinneera](https://github.com/azinneera))
