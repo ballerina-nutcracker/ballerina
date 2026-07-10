@@ -24,6 +24,11 @@ type ParentObject distinct object {
 
 type ChildObject distinct ParentObject;
 
+class ParentClass {
+}
+
+type ChildClass distinct ParentClass;
+
 class ParentObjectImpl {
     *ParentObject;
 
@@ -52,4 +57,10 @@ public function main() {
 
     ParentObject parentObject = new ParentObjectImpl();
     io:println(parentObject is ChildObject); // @output false
+
+    ChildClass childClass = new;
+    io:println(childClass is ParentClass); // @output true
+
+    ParentClass parentClass = new;
+    io:println(parentClass is ChildClass); // @output false
 }

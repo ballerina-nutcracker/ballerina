@@ -658,10 +658,10 @@ func (ms *moduleSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTypeDefinit
 		switch ms.ctx.GetSymbol(symRef).(type) {
 		case *model.RecordSymbol:
 			symbol = new(model.NewRecordSymbol(name, isPublic))
-		case *model.ObjectTypeSymbol:
-			symbol = new(model.NewObjectTypeSymbol(name, isPublic))
 		case *model.ErrorTypeSymbol:
 			symbol = new(model.NewErrorTypeSymbol(name, isPublic))
+		case model.ObjectType:
+			symbol = new(model.NewObjectTypeSymbol(name, isPublic))
 		default:
 			symbol = new(model.NewTypeSymbol(name, isPublic))
 		}

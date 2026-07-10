@@ -11,6 +11,9 @@
         (value-type int)))))
   (type-definition ChildObject
     (user-defined-type ParentObject))
+  (class-definition ParentClass)
+  (type-definition ChildClass
+    (user-defined-type ParentClass))
   (class-definition ParentObjectImpl
     (function id () (
       (value-type int))
@@ -67,4 +70,22 @@
         (invocation io println (
           (type-test-expr is
             (simple-var-ref parentObject)
-            (user-defined-type ChildObject))))))))
+            (user-defined-type ChildObject)))))
+      (var-def
+        (variable childClass (type
+          (user-defined-type ChildClass)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref childClass)
+            (user-defined-type ParentClass)))))
+      (var-def
+        (variable parentClass (type
+          (user-defined-type ParentClass)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parentClass)
+            (user-defined-type ChildClass))))))))
