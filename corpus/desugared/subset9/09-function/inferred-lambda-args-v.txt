@@ -1,0 +1,182 @@
+(package
+  (import-package ballerina io (as io))
+  (variable moduleLambda)
+  (variable moduleLambdaAlias)
+  (type-definition Pair
+    (record-type
+      (field left
+        (value-type int))
+      (field right
+        (value-type int))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref moduleLambda)
+        (lambda
+          (function $anonFunc$_0 (
+            (variable value (type
+              (value-type int)) (expr
+              (literal 5)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))
+      (assignment
+        (simple-var-ref moduleLambdaAlias)
+        (simple-var-ref moduleLambda))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleLambda (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleLambda (
+            (literal 6))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleLambdaAlias (
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleLambdaAlias (
+            (literal 7))))))
+      (var-def
+        (variable lambda (expr
+          (lambda
+            (function $anonFunc$_1 (
+              (variable value (type
+                (value-type int)) (expr
+                (literal 5)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref value))))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$1 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambda (
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambda (
+            (literal 8))))))
+      (var-def
+        (variable lambdaAlias (expr
+          (simple-var-ref lambda))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$1 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambdaAlias (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambdaAlias (
+            (literal 9))))))
+      (var-def
+        (variable typedLambda (type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))) (expr
+          (simple-var-ref lambda))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation $default$2 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation typedLambda (
+            (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation typedLambda (
+            (literal 11))))))
+      (var-def
+        (variable includedRecordLambda (expr
+          (lambda
+            (function $anonFunc$_2 (
+              (variable pair (type
+                (user-defined-type Pair)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (index-based-access
+                      (simple-var-ref pair)
+                      (literal left))
+                    (index-based-access
+                      (simple-var-ref pair)
+                      (literal right))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includedRecordLambda (
+            (mapping-constructor-expr
+              (key-value
+                (literal left)
+                (literal 1))
+              (key-value
+                (literal right)
+                (literal 2))))))))
+      (var-def
+        (variable includedRecordLambdaAlias (expr
+          (simple-var-ref includedRecordLambda))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includedRecordLambdaAlias (
+            (mapping-constructor-expr
+              (key-value
+                (literal left)
+                (literal 3))
+              (key-value
+                (literal right)
+                (literal 4))))))))
+      (var-def
+        (variable groupedLambda (expr
+          (group-expr
+            (lambda
+              (function $anonFunc$_3 (
+                (variable value (type
+                  (value-type int)) (expr
+                  (literal 5)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (simple-var-ref value)))))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$3 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation groupedLambda (
+            (simple-var-ref $desugar$5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation groupedLambda (
+            (literal 10))))))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 10))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 5)))))

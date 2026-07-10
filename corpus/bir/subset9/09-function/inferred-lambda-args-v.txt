@@ -1,0 +1,226 @@
+module $anon.. v 0.0.0;
+moduleLambda  function(int) returns int;
+moduleLambdaAlias  function(int) returns int;
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_2({| left: int, right: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad left
+    %3 = pair[%4];
+    %5 = %3;
+    %7 = ConstantLoad right
+    %6 = pair[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = moduleLambda(%3) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad 6
+    %8 = %7;
+    %9 = moduleLambda(%8) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    %12 = $default$0() -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %12;
+    %14 = $desugar$1;
+    %15 = moduleLambdaAlias(%14) -> bb7;
+  }
+  bb7 {
+    %16 = %15;
+    %17 = println(%16) -> bb8;
+  }
+  bb8 {
+    %18 = ConstantLoad 7
+    %19 = %18;
+    %20 = moduleLambdaAlias(%19) -> bb9;
+  }
+  bb9 {
+    %21 = %20;
+    %22 = println(%21) -> bb10;
+  }
+  bb10 {
+    %23 = fp $anon/.:$anonFunc$_1
+    lambda = %23;
+    %25 = $default$1() -> bb11;
+  }
+  bb11 {
+    $desugar$2 = %25;
+    %27 = $desugar$2;
+    %28 = lambda(%27) -> bb12;
+  }
+  bb12 {
+    %29 = %28;
+    %30 = println(%29) -> bb13;
+  }
+  bb13 {
+    %31 = ConstantLoad 8
+    %32 = %31;
+    %33 = lambda(%32) -> bb14;
+  }
+  bb14 {
+    %34 = %33;
+    %35 = println(%34) -> bb15;
+  }
+  bb15 {
+    lambdaAlias = lambda;
+    %37 = $default$1() -> bb16;
+  }
+  bb16 {
+    $desugar$3 = %37;
+    %39 = $desugar$3;
+    %40 = lambdaAlias(%39) -> bb17;
+  }
+  bb17 {
+    %41 = %40;
+    %42 = println(%41) -> bb18;
+  }
+  bb18 {
+    %43 = ConstantLoad 9
+    %44 = %43;
+    %45 = lambdaAlias(%44) -> bb19;
+  }
+  bb19 {
+    %46 = %45;
+    %47 = println(%46) -> bb20;
+  }
+  bb20 {
+    typedLambda = lambda;
+    %49 = $default$2() -> bb21;
+  }
+  bb21 {
+    $desugar$4 = %49;
+    %51 = $desugar$4;
+    %52 = typedLambda(%51) -> bb22;
+  }
+  bb22 {
+    %53 = %52;
+    %54 = println(%53) -> bb23;
+  }
+  bb23 {
+    %55 = ConstantLoad 11
+    %56 = %55;
+    %57 = typedLambda(%56) -> bb24;
+  }
+  bb24 {
+    %58 = %57;
+    %59 = println(%58) -> bb25;
+  }
+  bb25 {
+    %60 = fp $anon/.:$anonFunc$_2
+    includedRecordLambda = %60;
+    %62 = ConstantLoad left
+    %63 = ConstantLoad 1
+    %64 = ConstantLoad right
+    %65 = ConstantLoad 2
+    %66 = newMap {| left: int, right: int, never... |}{%62=%63, %64=%65}
+    %67 = includedRecordLambda(%66) -> bb26;
+  }
+  bb26 {
+    %68 = %67;
+    %69 = println(%68) -> bb27;
+  }
+  bb27 {
+    includedRecordLambdaAlias = includedRecordLambda;
+    %71 = ConstantLoad left
+    %72 = ConstantLoad 3
+    %73 = ConstantLoad right
+    %74 = ConstantLoad 4
+    %75 = newMap {| left: int, right: int, never... |}{%71=%72, %73=%74}
+    %76 = includedRecordLambdaAlias(%75) -> bb28;
+  }
+  bb28 {
+    %77 = %76;
+    %78 = println(%77) -> bb29;
+  }
+  bb29 {
+    %79 = fp $anon/.:$anonFunc$_3
+    groupedLambda = %79;
+    %81 = $default$3() -> bb30;
+  }
+  bb30 {
+    $desugar$5 = %81;
+    %83 = $desugar$5;
+    %84 = groupedLambda(%83) -> bb31;
+  }
+  bb31 {
+    %85 = %84;
+    %86 = println(%85) -> bb32;
+  }
+  bb32 {
+    %87 = ConstantLoad 10
+    %88 = %87;
+    %89 = groupedLambda(%88) -> bb33;
+  }
+  bb33 {
+    %90 = %89;
+    %91 = println(%90) -> bb34;
+  }
+  bb34 {
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}

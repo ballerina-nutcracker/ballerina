@@ -1558,6 +1558,13 @@ func generateCall(ctx context, bb *BIRBasicBlock, callable callable) expressionE
 			if op, crossedFunction, ok := lookupVar(ctx, unnarrowedRef); ok {
 				call.FpOperand = op
 				ctx.function().isClosure = ctx.function().isClosure || crossedFunction
+			} else {
+				pkgID := packageIDFromIdentifier(ctx.compilerContext(), ctx.symbolPackage(unnarrowedRef))
+				global := &BIRGlobalVariableDcl{}
+				global.Name = model.Name(ctx.symbolName(unnarrowedRef))
+				global.PkgId = pkgID
+				global.GlobalVarLookupKey = buildGlobalVarLookupKey(pkgID, global.Name)
+				call.FpOperand = &BIROperand{VariableDcl: global}
 			}
 		}
 	}

@@ -19,6 +19,7 @@ package desugar
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 
 	"ballerina-lang-go/ast"
@@ -46,6 +47,8 @@ type packageContext struct {
 	importedSymbols      map[string]model.ExportedSymbolSpace
 	importMu             sync.Mutex
 	addedImplicitImports map[string]bool
+	generatedFunctionsMu sync.Mutex
+	generatedFunctions   []*ast.BLangFunction
 	desugarSymbolCounter int
 	typeContext          semtypes.Context
 	xmlIteratorTypes     *semtypes.SemTypeCache
@@ -75,6 +78,26 @@ func (ctx *packageContext) addImplicitImport(pkgName string, imp ast.BLangImport
 		ctx.addedImplicitImports[pkgName] = true
 		ctx.pkg.Imports = append(ctx.pkg.Imports, imp)
 	}
+}
+
+func (ctx *packageContext) addGeneratedFunctions(fns []*ast.BLangFunction) {
+	if len(fns) == 0 {
+		return
+	}
+	ctx.generatedFunctionsMu.Lock()
+	defer ctx.generatedFunctionsMu.Unlock()
+	ctx.generatedFunctions = append(ctx.generatedFunctions, fns...)
+}
+
+func (ctx *packageContext) takeGeneratedFunctions() []*ast.BLangFunction {
+	ctx.generatedFunctionsMu.Lock()
+	defer ctx.generatedFunctionsMu.Unlock()
+	functions := ctx.generatedFunctions
+	ctx.generatedFunctions = nil
+	sort.Slice(functions, func(i, j int) bool {
+		return functions[i].Name.GetValue() < functions[j].Name.GetValue()
+	})
+	return functions
 }
 
 func (ctx *packageContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
@@ -1493,6 +1516,9 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	}
 
 	wg.Wait()
+	for _, fn := range pkgCtx.takeGeneratedFunctions() {
+		pkg.Functions = append(pkg.Functions, *fn)
+	}
 	if panicErr != nil {
 		panic(panicErr)
 	}

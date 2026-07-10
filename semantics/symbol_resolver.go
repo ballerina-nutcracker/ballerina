@@ -951,7 +951,6 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 	}
 	if restParam != nil {
 		// We don't need to support rest given you can't invoke with index access expression.
-		// User must always assign it to a variable and we don't support (not sure if we should) `var f` form for default params
 		rest := restParam.(*ast.BLangSimpleVariable)
 		name := rest.Name.GetValue()
 		if _, exists := scope.GetSymbol(name); exists {

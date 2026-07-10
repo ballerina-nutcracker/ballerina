@@ -3029,6 +3029,9 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangSimpleVa
 		if typeNode == nil {
 			setExpectedType(variable, exprTy)
 			updateSymbolType(t, variable, exprTy)
+			if !associateInferredFunctionSignature(t, variable) {
+				return defaultStmtEffect(chain), false
+			}
 		}
 	}
 
@@ -3286,6 +3289,45 @@ func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemT
 	return listDefn.DefineListTypeWrapped(t.typeEnv(), segmentTypes, len(segmentTypes), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
 }
 
+func associateInferredFunctionSignature(t typeResolver, variable *ast.BLangSimpleVariable) bool {
+	source, lambda, ok := inferredFunctionSignatureSource(variable.Expr)
+	if !ok {
+		return true
+	}
+
+	ref, ok := t.functionSignatureRef(source)
+	if !ok {
+		if lambda != nil {
+			t.internalError("function signature not found", variable.GetPosition())
+			return false
+		}
+		return true
+	}
+	if !t.associateFunctionSignature(variable.Symbol(), ref) {
+		t.internalError("function signature already set", variable.GetPosition())
+		return false
+	}
+	if lambda != nil {
+		lambda.GenerateDefaultClosures = true
+	}
+	return true
+}
+
+func inferredFunctionSignatureSource(expr ast.BLangActionOrExpression) (model.SymbolRef, *ast.BLangLambdaFunction, bool) {
+	switch expr := expr.(type) {
+	case *ast.BLangGroupExpr:
+		return inferredFunctionSignatureSource(expr.Expression)
+	case *ast.BLangLambdaFunction:
+		return expr.Function.Symbol(), expr, true
+	case *ast.BLangSimpleVarRef:
+		return expr.Symbol(), nil, true
+	case *ast.BLangLocalVarRef:
+		return expr.Symbol(), nil, true
+	default:
+		return model.SymbolRef{}, nil, false
+	}
+}
+
 func resolveSimpleVariable(t typeResolver, chain *binding, node *ast.BLangSimpleVariable) bool {
 	return resolveSimpleVariableInner(t, chain, node, 0)
 }
@@ -3301,6 +3343,9 @@ func resolveSimpleVariableInner(t typeResolver, chain *binding, node *ast.BLangS
 			}
 			setExpectedType(node, exprTy)
 			updateSymbolType(t, node, exprTy)
+			if !associateInferredFunctionSignature(t, node) {
+				return false
+			}
 		}
 		return true
 	}
