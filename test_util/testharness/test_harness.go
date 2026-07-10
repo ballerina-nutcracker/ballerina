@@ -405,9 +405,9 @@ func Run(t testing.TB, tc test_util.TestCase, pal TestPal, externs []ExternRegis
 
 	var stderr bytes.Buffer
 	if tc.IsProject {
-		printDiagnostics(fsys, &stderr, result.Diagnostics(), compilation.DiagnosticEnv())
+		PrintDiagnostics(fsys, &stderr, result.Diagnostics(), compilation.DiagnosticEnv())
 	}
-	printDiagnostics(fsys, &stderr, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	PrintDiagnostics(fsys, &stderr, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	pal.WriteStderr(stderr.String())
 	pal.SetDiagnostics(resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv()))
 
@@ -975,7 +975,9 @@ func buildDiagnosticLocation(filePath string, startLine, startCol, endLine, endC
 	}
 }
 
-func printDiagnostics(fsys fs.FS, w io.Writer, diagResult projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
+// PrintDiagnostics renders every diagnostic in diagResult to w, in the same
+// "error[CODE]: message" + source-snippet format used by the compiler CLI.
+func PrintDiagnostics(fsys fs.FS, w io.Writer, diagResult projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
 	for _, d := range diagResult.Diagnostics() {
 		printDiagnostic(fsys, w, d, de)
 	}

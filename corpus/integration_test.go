@@ -121,13 +121,6 @@ type testResult struct {
 	actualStderr   string
 }
 
-// caseRun is the full result of executing one corpus case (single-file or
-// project): captured stdout/stderr streams.
-type caseRun struct {
-	stdout string
-	stderr string
-}
-
 func TestIntegration(t *testing.T) {
 	cases, err := testharness.GetSingleFileTestCases("../corpus/bal", test_util.Integration, test_util.SuffixAny)
 	if err != nil {
@@ -260,18 +253,6 @@ func isProjectTestSkipped(dirName string) bool {
 	return slices.Contains(skipProjectIntegrationTests, dirName)
 }
 
-func runIntegrationCase(balFile string) caseRun {
-	var stdoutBuf, stderrBuf bytes.Buffer
-
-	birPkgs, tyEnv, compileErr := runCompilePhase(balFile, &stdoutBuf, &stderrBuf)
-	if len(birPkgs) == 0 || compileErr != nil {
-		return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String()}
-	}
-
-	runInterpretPhase(birPkgs, tyEnv, &stdoutBuf, &stderrBuf)
-	return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String()}
-}
-
 func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStderr string) testResult {
 	stderrMatch := expectedStderr == normalizeIntegrationStderr(actualStderr)
 	return testResult{
@@ -283,6 +264,9 @@ func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStde
 	}
 }
 
+// runCompilePhase exists separately from testharness.Run because
+// TestBIRSerializationRoundtrip needs the raw BIR packages to
+// serialize/deserialize before interpreting them.
 func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -313,7 +297,7 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs [
 	currentPkg := result.Project().CurrentPackage()
 	compilation := currentPkg.Compilation()
 
-	printDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	testharness.PrintDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if compilation.DiagnosticResult().HasErrors() {
 		return nil, tyEnv, nil
 	}
@@ -322,6 +306,9 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs [
 	return backend.BIRPackages(), tyEnv, nil
 }
 
+// runInterpretPhase takes already-compiled birPkgs (rather than compiling
+// itself) so TestBIRSerializationRoundtrip can interpret packages that went
+// through a serialize/deserialize roundtrip in between.
 func runInterpretPhase(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, stdoutBuf, stderrBuf *bytes.Buffer) {
 	if len(birPkgs) == 0 {
 		return
@@ -388,62 +375,6 @@ func findProjectDirs(dir string) []string {
 		}
 	}
 	return dirs
-}
-
-func runProjectIntegrationCase(projectDir string) caseRun {
-	var stdoutBuf bytes.Buffer
-	var stderrBuf bytes.Buffer
-
-	birPkgs, tyEnv, compileErr := runProjectCompilePhase(projectDir, &stdoutBuf, &stderrBuf)
-	if birPkgs == nil || compileErr != nil {
-		return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String()}
-	}
-
-	runProjectInterpretPhase(birPkgs, tyEnv, &stdoutBuf, &stderrBuf)
-	return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String()}
-}
-
-func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			msg := fmt.Sprintf("%v", r)
-			msg = strings.TrimPrefix(msg, panicPrefix)
-			fmt.Fprintf(stdoutBuf, "%s%s\n", panicPrefix, msg)
-			err = fmt.Errorf("compile panic")
-		}
-	}()
-
-	fsys := os.DirFS(projectDir)
-
-	ballerinaEnvPath, err := getBallerinaEnvPath()
-	if err != nil {
-		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, err
-	}
-	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
-
-	result, err := projects.Load(fsys, ".", projects.ProjectLoadConfig{
-		BallerinaEnvFs: ballerinaEnvFs,
-	})
-	if err != nil {
-		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, err
-	}
-	tyEnv = result.Project().Environment().TypeEnv()
-	currentPkg := result.Project().CurrentPackage()
-	compilation := currentPkg.Compilation()
-
-	// Loader-level diagnostics (workspace manifest errors, package manifest
-	// errors flagged before compilation) are separate from compilation
-	// diagnostics. Surface both so corpus -e cases can assert on either.
-	printDiagnostics(fsys, stderrBuf, result.Diagnostics(), compilation.DiagnosticEnv())
-	printDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	if result.Diagnostics().HasErrors() || compilation.DiagnosticResult().HasErrors() {
-		return nil, tyEnv, nil
-	}
-
-	backend := projects.NewBallerinaBackend(compilation)
-	return backend.BIRPackages(), tyEnv, nil
 }
 
 func runProjectInterpretPhase(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, stdoutBuf, stderrBuf *bytes.Buffer) {
@@ -570,7 +501,7 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	currentPkg := project.CurrentPackage()
 	compilation := currentPkg.Compilation()
 
-	printDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	testharness.PrintDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if compilation.DiagnosticResult().HasErrors() {
 		return stdoutBuf.String(), stderrBuf.String()
 	}
@@ -766,18 +697,15 @@ func BenchmarkIntegration(b *testing.B) {
 				b.Fatalf("failed to load expected from %s: %v", testPair.ExpectedPath, err)
 			}
 
-			var run caseRun
+			var pal testharness.TestPal
 			b.ResetTimer()
 			for b.Loop() {
-				if testPair.IsProject {
-					run = runProjectIntegrationCase(testPair.InputPath)
-				} else {
-					run = runIntegrationCase(testPair.InputPath)
-				}
+				pal = testharness.NewTestPal()
+				testharness.Run(b, testPair, pal, nil)
 			}
 			b.StopTimer()
 
-			result := evaluateTestResult(expectedStdout, expectedStderr, run.stdout, run.stderr)
+			result := evaluateTestResult(expectedStdout, expectedStderr, pal.Stdout(), pal.Stderr())
 			if !result.success {
 				b.Fatalf("output mismatch for %s:\nstdout:\n%s\nstderr:\n%s",
 					testPair.InputPath,
