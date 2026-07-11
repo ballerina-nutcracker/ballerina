@@ -52,3 +52,10 @@ func TestTcpServiceTimeouts(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-timeouts-v"), newTcpPal(), nil)
 }
+
+// TestTcpServiceOnBytesBareForm exercises the bare onBytes(readonly & byte[])
+// signature (no Caller parameter) — see onBytesArgs in native/dispatch.go.
+func TestTcpServiceOnBytesBareForm(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-onbytes-bare-v"), newTcpPal(), nil)
+}

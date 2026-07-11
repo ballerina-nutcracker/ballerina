@@ -28,6 +28,7 @@ import (
 	"sync/atomic"
 
 	"ballerina-lang-go/bir"
+	"ballerina-lang-go/model"
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/semtypes"
@@ -159,16 +160,47 @@ func dispatchOnError(ctx *extern.Context, connSvcObj *values.Object, tcpErr *val
 	_, _ = ctx.InvokeMethod(handle, []values.BalValue{connSvcObj, tcpErr})
 }
 
-// dispatchOnBytes invokes the fixed onBytes(Caller, readonly & byte[]) signature.
-// jBallerina additionally accepts a bare onBytes(readonly & byte[]) form via
-// reflection-driven parameter binding — not supported here, see README.
+// onBytesArgs builds the argument list for a resolved onBytes handle by
+// inspecting each declared parameter's type — mirroring jBallerina's own
+// Dispatcher.getOnBytesSignature(), which reflects over the connection
+// service's MethodType.getParameters() and switches on each parameter's
+// type tag (an object-typed parameter gets the Caller; anything else gets
+// the byte data). This lets onBytes be declared either as
+// onBytes(readonly & byte[] data) or onBytes(Caller caller, readonly &
+// byte[] data), in either parameter order, matching jBallerina exactly.
+func onBytesArgs(ctx *extern.Context, connSvcObj, callerObj *values.Object, dataList *values.List) []values.BalValue {
+	methodTy := semtypes.ObjectMemberType(ctx.TypeCtx, semtypes.StringConst(model.RemoteMethodName("onBytes")), connSvcObj.Type)
+	if semtypes.IsZero(methodTy) || !semtypes.IsSubtype(ctx.TypeCtx, methodTy, semtypes.FUNCTION) {
+		// Shouldn't happen — LookupRemoteMethod already confirmed the
+		// method exists — but fall back to the common two-param form.
+		return []values.BalValue{connSvcObj, callerObj, dataList}
+	}
+	paramListTy := semtypes.FunctionParamListType(ctx.TypeCtx, methodTy)
+	args := []values.BalValue{connSvcObj}
+	for i := 0; ; i++ {
+		paramTy := semtypes.ListMemberTypeInnerVal(ctx.TypeCtx, paramListTy, semtypes.IntConst(int64(i)))
+		if semtypes.IsNever(paramTy) {
+			break
+		}
+		if semtypes.IsSubtype(ctx.TypeCtx, paramTy, semtypes.OBJECT) {
+			args = append(args, callerObj)
+		} else {
+			args = append(args, dataList)
+		}
+	}
+	return args
+}
+
+// dispatchOnBytes invokes onBytes, accepting either the
+// onBytes(readonly & byte[]) or onBytes(Caller, readonly & byte[]) form —
+// see onBytesArgs.
 func dispatchOnBytes(ctx *extern.Context, types tcpTypes, callerObj, connSvcObj *values.Object, cs *connState, data []byte) {
 	handle, ok := ctx.LookupRemoteMethod(connSvcObj, "onBytes")
 	if !ok {
 		return
 	}
 	dataList := bytesToList(types, ctx, data)
-	result, err := ctx.InvokeMethod(handle, []values.BalValue{connSvcObj, callerObj, dataList})
+	result, err := ctx.InvokeMethod(handle, onBytesArgs(ctx, connSvcObj, callerObj, dataList))
 	if err != nil {
 		return
 	}

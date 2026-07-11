@@ -74,7 +74,7 @@ Support Levels:
 | Stopping a listener gracefully | Supported | |
 | Stopping a listener immediately | Supported | |
 | Dispatching a new connection to a service | Supported | |
-| Dispatching received bytes to a connection service | Partially Supported | Only the `onBytes(Caller, readonly & byte[])` two-parameter form is supported. jBallerina additionally accepts a bare `onBytes(readonly & byte[])` form via reflection-driven parameter binding; this port always invokes the two-parameter form. |
+| Dispatching received bytes to a connection service | Supported | Both the `onBytes(readonly & byte[])` and `onBytes(Caller, readonly & byte[])` forms are supported; the resolved method's declared parameter types are inspected at dispatch time, matching jBallerina's own reflection-driven parameter binding. |
 | Automatically returning bytes from a connection service | Supported | |
 | Dispatching connection errors | Supported | |
 | Dispatching connection close | Supported | |
