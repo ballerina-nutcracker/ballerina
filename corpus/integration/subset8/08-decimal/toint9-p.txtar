@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: bad type cast: cannot convert -9.999999999999999999999999999999999E+6144 to int64: value out of range
+error: cannot convert -9.999999999999999999999999999999999E+6144 to int64: value out of range
         at main(toint9-p.bal:21)

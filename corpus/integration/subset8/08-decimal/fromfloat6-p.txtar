@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: bad type cast: not a valid decimal
+error: not a valid decimal
         at main(fromfloat6-p.bal:21)

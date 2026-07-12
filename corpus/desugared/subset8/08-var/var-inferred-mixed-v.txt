@@ -6,9 +6,6 @@
   (function init () ()
     (block-function-body
       (assignment
-        (simple-var-ref K)
-        (literal 10))
-      (assignment
         (simple-var-ref B)
         (literal 1))
       (assignment
