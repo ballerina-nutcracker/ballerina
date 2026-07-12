@@ -1,6 +1,6 @@
 (package
-  (import-package ballerina lang array (as array))
   (import-package ballerina io (as io))
+  (import-package ballerina lang array (as array))
   (import-package ballerina lang array (as lang.array))
   (function main () (
     (value-type null))

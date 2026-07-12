@@ -19,7 +19,6 @@ package values
 
 import (
 	"strconv"
-	"sync"
 
 	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
@@ -113,10 +112,13 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactor
 	restType := f.Atomic.Rest()
 	// Resolve the rest filler factory lazily so that recursive types (e.g.
 	// `type A A[]`) do not blow the stack while building the factory graph.
-	var once sync.Once
 	var restFactory FillerFactory
+	restResolved := false
 	getRestFactory := func() FillerFactory {
-		once.Do(func() { restFactory, _ = FillerFactoryFor(cx, restType) })
+		if !restResolved {
+			restFactory, _ = FillerFactoryFor(cx, restType)
+			restResolved = true
+		}
 		return restFactory
 	}
 	return func() BalValue {

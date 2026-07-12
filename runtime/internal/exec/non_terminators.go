@@ -22,7 +22,6 @@ import (
 	"unsafe"
 
 	"ballerina-lang-go/bir"
-	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/runtime/internal/modules"
 	"ballerina-lang-go/semtypes"
@@ -237,30 +236,6 @@ func castValue(ctx *extern.Context, value values.BalValue, targetType semtypes.S
 
 func badTypeCastError() *values.Error {
 	return values.NewErrorWithMessage("bad type cast")
-}
-
-func toInt(value any) int64 {
-	n, err := values.NumericConvertToInt(value)
-	if err != nil {
-		panic(values.NewErrorWithMessage("bad type cast: " + err.Error()))
-	}
-	return n
-}
-
-func toFloat(value any) float64 {
-	f, err := values.NumericConvertToFloat(value)
-	if err != nil {
-		panic(values.NewErrorWithMessage("bad type cast: " + err.Error()))
-	}
-	return f
-}
-
-func toDecimal(value any) *decimal.Decimal {
-	d, err := values.NumericConvertToDecimal(value)
-	if err != nil {
-		panic(values.NewErrorWithMessage("bad type cast: " + err.Error()))
-	}
-	return d
 }
 
 func execNewXMLText(ctx *extern.Context, instr *bir.NewXMLText, frame *Frame) {
