@@ -289,6 +289,11 @@ type (
 		attachPoints annotationAttachPointSet
 	}
 
+	ErrorTypeSymbol struct {
+		TypeSymbol
+		distinctTypeBase
+	}
+
 	// memberHolderBase carries direct + type-inclusion-inherited members
 	// (fields and optional rest-type for records; fields + methods for classes
 	// and object type aliases).
@@ -517,6 +522,9 @@ var (
 	_ MemberCarrier                  = &NetworkClassSymbol{}
 	_ MemberCarrier                  = &RecordSymbol{}
 	_ MemberCarrier                  = &ObjectTypeSymbol{}
+	_ ObjectType                     = &classSymbol{}
+	_ ObjectType                     = &NetworkClassSymbol{}
+	_ ObjectType                     = &ObjectTypeSymbol{}
 	_ Symbol                         = &VariableSymbol{}
 	_ Symbol                         = &ConstantValueSymbol{}
 	_ ValueSymbol                    = &VariableSymbol{}
@@ -955,6 +963,7 @@ type MemberCarrier interface {
 type ObjectType interface {
 	DistinctTypeIDs() []int
 	SetDistinctTypeIDs(typeIDs []int)
+	isObjectType()
 }
 
 type ClassSymbol interface {
@@ -987,6 +996,9 @@ func (d *distinctTypeBase) DistinctTypeIDs() []int {
 func (d *distinctTypeBase) SetDistinctTypeIDs(typeIDs []int) {
 	d.typeIDs = typeIDs
 }
+
+func (c *classSymbolBase) isObjectType()  {}
+func (o *ObjectTypeSymbol) isObjectType() {}
 
 func (r *RecordSymbol) Fields() iter.Seq2[string, *FieldDescriptor] {
 	return func(yield func(string, *FieldDescriptor) bool) {
@@ -1359,6 +1371,14 @@ func NewRecordSymbol(name string, isPublic bool) RecordSymbol {
 
 func NewObjectTypeSymbol(name string, isPublic bool) ObjectTypeSymbol {
 	return ObjectTypeSymbol{
+		TypeSymbol: TypeSymbol{
+			symbolBase: symbolBase{name: name, isPublic: isPublic},
+		},
+	}
+}
+
+func NewErrorTypeSymbol(name string, isPublic bool) ErrorTypeSymbol {
+	return ErrorTypeSymbol{
 		TypeSymbol: TypeSymbol{
 			symbolBase: symbolBase{name: name, isPublic: isPublic},
 		},
