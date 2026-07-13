@@ -661,18 +661,19 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 		}
 
 		// bal build looks up its runner stub at
-		// <BAL_ENV>/runtime/<version>/balrt (executable.ResolveStub) — an
-		// isolated BAL_ENV under tmpDir keeps this from touching the real
-		// ~/.ballerina. Confirmed empty (no pre-populated stdlib bala cache)
-		// works fine for these fixtures' ballerina/time and ballerina/io
-		// imports, since core stdlib modules resolve from lib/stdlibs
-		// source, not a bala cache lookup.
+		// <BAL_ENV>/runtime/<version>/<GOOS>-<GOARCH>/balrt
+		// (executable.ResolveStub) — an isolated BAL_ENV under tmpDir keeps
+		// this from touching the real ~/.ballerina. Confirmed empty (no
+		// pre-populated stdlib bala cache) works fine for these fixtures'
+		// ballerina/time and ballerina/io imports, since core stdlib modules
+		// resolve from lib/stdlibs source, not a bala cache lookup.
 		cliIntegrationBalEnv = filepath.Join(tmpDir, "bal-env")
 		balrtName := "balrt"
 		if runtime.GOOS == "windows" {
 			balrtName += ".exe"
 		}
-		balrtPath := filepath.Join(cliIntegrationBalEnv, "runtime", cliIntegrationBalrtVersion, balrtName)
+		platformDir := runtime.GOOS + "-" + runtime.GOARCH
+		balrtPath := filepath.Join(cliIntegrationBalEnv, "runtime", cliIntegrationBalrtVersion, platformDir, balrtName)
 		if cliIntegrationBinsErr = os.MkdirAll(filepath.Dir(balrtPath), 0o755); cliIntegrationBinsErr != nil {
 			return
 		}

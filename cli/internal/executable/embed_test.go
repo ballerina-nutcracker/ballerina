@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"ballerina-lang-go/bir"
@@ -313,5 +314,96 @@ func TestOutputPathIsADirectory(t *testing.T) {
 	err := Pack(stubPath, birPkgs, tyEnv, outPath)
 	if err == nil {
 		t.Fatalf("expected an error when the output path is already a directory, got none")
+	}
+}
+
+// TestResolveTargetPlatform covers --target-os/--target-arch's defaulting
+// behavior: either flag alone defaults the other dimension to the host's
+// own value, matching Go's own GOOS/GOARCH convention, rather than being an
+// error or defaulting to some fixed platform.
+func TestResolveTargetPlatform(t *testing.T) {
+	host := HostPlatform()
+
+	tests := []struct {
+		name       string
+		targetOS   string
+		targetArch string
+		want       Platform
+	}{
+		{name: "both empty defaults to host", want: host},
+		{name: "only OS given defaults arch to host", targetOS: "linux", want: Platform{OS: "linux", Arch: host.Arch}},
+		{name: "only arch given defaults OS to host", targetArch: "arm64", want: Platform{OS: host.OS, Arch: "arm64"}},
+		{name: "both given, no defaulting", targetOS: "windows", targetArch: "amd64", want: Platform{OS: "windows", Arch: "amd64"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ResolveTargetPlatform(tt.targetOS, tt.targetArch)
+			if got != tt.want {
+				t.Fatalf("ResolveTargetPlatform(%q, %q) = %+v, want %+v", tt.targetOS, tt.targetArch, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestResolveStubUnsupportedPlatform mirrors a typo or a genuinely
+// unsupported --target-os/--target-arch combination — must fail clearly,
+// naming the supported list, rather than silently looking for a stub that
+// will never exist.
+func TestResolveStubUnsupportedPlatform(t *testing.T) {
+	_, err := ResolveStub(Key{Platform: Platform{OS: "plan9", Arch: "amd64"}}, t.TempDir(), "dev", "")
+	if err == nil {
+		t.Fatalf("expected an error for an unsupported platform, got none")
+	}
+	if !strings.Contains(err.Error(), "unsupported target platform plan9/amd64") {
+		t.Fatalf("expected error to name the unsupported platform, got: %v", err)
+	}
+}
+
+// TestResolveStubPlatformSegmentedPath mirrors cross-compiling: stubs for
+// two different platforms are provisioned side by side, and ResolveStub
+// must pick the one matching the requested platform — not fall back to
+// whichever one happens to exist.
+func TestResolveStubPlatformSegmentedPath(t *testing.T) {
+	envPath := t.TempDir()
+	linuxStub := filepath.Join(envPath, "runtime", "dev", "linux-amd64", "balrt")
+	darwinStub := filepath.Join(envPath, "runtime", "dev", "darwin-arm64", "balrt")
+	for _, p := range []string{linuxStub, darwinStub} {
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatalf("creating stub directory: %v", err)
+		}
+		if err := os.WriteFile(p, []byte("stub-bytes-"+filepath.Base(filepath.Dir(p))), 0o755); err != nil {
+			t.Fatalf("writing stub: %v", err)
+		}
+	}
+
+	got, err := ResolveStub(Key{Platform: Platform{OS: "linux", Arch: "amd64"}}, envPath, "dev", "")
+	if err != nil {
+		t.Fatalf("ResolveStub: %v", err)
+	}
+	if got != linuxStub {
+		t.Fatalf("expected the linux/amd64 stub at %s, got %s", linuxStub, got)
+	}
+}
+
+// TestResolveStubWindowsExeSuffix mirrors a Windows cross-compile target —
+// the resolved stub path must carry a ".exe" suffix, matching the produced
+// artifact's own naming convention (see runBuild's output-path logic).
+func TestResolveStubWindowsExeSuffix(t *testing.T) {
+	envPath := t.TempDir()
+	stubPath := filepath.Join(envPath, "runtime", "dev", "windows-amd64", "balrt.exe")
+	if err := os.MkdirAll(filepath.Dir(stubPath), 0o755); err != nil {
+		t.Fatalf("creating stub directory: %v", err)
+	}
+	if err := os.WriteFile(stubPath, []byte("stub-bytes"), 0o755); err != nil {
+		t.Fatalf("writing stub: %v", err)
+	}
+
+	got, err := ResolveStub(Key{Platform: Platform{OS: "windows", Arch: "amd64"}}, envPath, "dev", "")
+	if err != nil {
+		t.Fatalf("ResolveStub: %v", err)
+	}
+	if !strings.HasSuffix(got, ".exe") {
+		t.Fatalf("expected resolved stub path to end in .exe, got %s", got)
 	}
 }

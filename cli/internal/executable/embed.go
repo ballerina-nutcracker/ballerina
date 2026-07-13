@@ -34,6 +34,7 @@ import (
 	"os"
 	"path/filepath"
 	goruntime "runtime"
+	"strings"
 
 	"ballerina-lang-go/bir"
 	bircodec "ballerina-lang-go/bir/codec"
@@ -65,6 +66,56 @@ func HostPlatform() Platform {
 	return Platform{OS: goruntime.GOOS, Arch: goruntime.GOARCH}
 }
 
+// ResolveTargetPlatform builds a Platform from optional target OS/arch
+// overrides (e.g. bal build's --target-os/--target-arch flags), defaulting
+// whichever is empty to the host's own value — the same convention Go's own
+// GOOS/GOARCH environment variables use, so setting only one dimension does
+// what a user would expect (e.g. --target-arch arm64 alone on a
+// darwin/amd64 host resolves to darwin/arm64, not an error).
+func ResolveTargetPlatform(targetOS, targetArch string) Platform {
+	p := HostPlatform()
+	if targetOS != "" {
+		p.OS = targetOS
+	}
+	if targetArch != "" {
+		p.Arch = targetArch
+	}
+	return p
+}
+
+// supportedPlatforms is the fixed set of cross-compilation targets bal build
+// supports — chosen by cross-referencing Rust's and Node.js's own officially
+// supported platform tiers (see migration-docs/specs), not a technical
+// ceiling: nothing here prevents another platform's stub from working if
+// one were built and placed at the right path. It's a provisioning-cost
+// decision, kept as a fixed list so an unsupported/mistyped target fails
+// clearly instead of silently looking for a stub that will never exist.
+var supportedPlatforms = []Platform{
+	{OS: "linux", Arch: "amd64"},
+	{OS: "linux", Arch: "arm64"},
+	{OS: "windows", Arch: "amd64"},
+	{OS: "windows", Arch: "arm64"},
+	{OS: "darwin", Arch: "amd64"},
+	{OS: "darwin", Arch: "arm64"},
+}
+
+func isSupportedPlatform(p Platform) bool {
+	for _, sp := range supportedPlatforms {
+		if sp == p {
+			return true
+		}
+	}
+	return false
+}
+
+func supportedPlatformsList() string {
+	names := make([]string, len(supportedPlatforms))
+	for i, p := range supportedPlatforms {
+		names[i] = p.OS + "/" + p.Arch
+	}
+	return strings.Join(names, ", ")
+}
+
 // Key identifies which stub ResolveStub should produce for a build.
 //
 // Fingerprint == "" means "no native Go dependencies" — resolved by looking
@@ -85,14 +136,19 @@ type Key struct {
 // For key.Fingerprint == "" (no native Go dependencies), bal build never
 // invokes the Go toolchain: it looks up a slim, runtime-only stub (no
 // compiler, no CLI) at a predefined installation location,
-// <ballerinaEnvPath>/runtime/<version>/balrt (".exe" on Windows) —
-// decoupled from wherever the bal binary itself happens to be, so a machine
-// with only a released bal install and no Go can still build pure-Ballerina
-// packages. That location is populated once by the installer (or, for local
-// development, by building cli/cmd/balrt and copying it there — see that
-// package's doc comment); ResolveStub itself only ever reads it. If it
-// isn't there, this returns a clear, actionable error rather than silently
-// falling back to anything else or compiling one on the spot.
+// <ballerinaEnvPath>/runtime/<version>/<GOOS>-<GOARCH>/balrt (".exe" on a
+// Windows target) — decoupled from wherever the bal binary itself happens
+// to be, so a machine with only a released bal install and no Go can still
+// build pure-Ballerina packages, for the host platform or a cross-compiled
+// target alike. That location is populated once by the installer (or, for
+// local development, by cross-compiling cli/cmd/balrt and copying it there
+// — see that package's doc comment); ResolveStub itself only ever reads it.
+// If it isn't there, this returns a clear, actionable error rather than
+// silently falling back to anything else or compiling one on the spot.
+//
+// key.Platform must be one of the platforms bal build supports (see
+// supportedPlatforms) — an unsupported or mistyped target fails clearly
+// rather than silently looking for a stub that will never exist.
 //
 // overridePath, when non-empty, is used as-is instead of computing the
 // predefined path — an explicit escape hatch so the default installation
@@ -100,35 +156,41 @@ type Key struct {
 // against a specific stub location. It comes from cli/cmd.RuntimeStubPath,
 // a variable set via -ldflags at bal's own build time (the same mechanism
 // as Version) — not a bal build flag, so this stays entirely transparent to
-// whoever just runs bal build. It is still validated to exist before use,
-// with the same clear-error behavior as the default path.
-//
-// key.Platform is accepted for forward compatibility with cross-compilation
-// but not yet used.
+// whoever just runs bal build. It bypasses the key.Platform lookup entirely
+// (a packager taking an explicit path is assumed to already match whatever
+// they intend), but is still validated to exist before use, with the same
+// clear-error behavior as the default path.
 func ResolveStub(key Key, ballerinaEnvPath, version, overridePath string) (string, error) {
 	if key.Fingerprint != "" {
 		return "", fmt.Errorf("native Go dependencies are not yet supported by bal build")
 	}
 
-	stubPath := overridePath
-	if stubPath == "" {
-		name := balrtStubName
-		if goruntime.GOOS == "windows" {
-			name += ".exe"
+	if overridePath != "" {
+		if info, err := os.Stat(overridePath); err == nil && !info.IsDir() {
+			return overridePath, nil
 		}
-		stubPath = filepath.Join(ballerinaEnvPath, runtimeStubDirName, version, name)
+		return "", fmt.Errorf("runner stub not found at %s (overridden via RuntimeStubPath at bal's build time)", overridePath)
 	}
+
+	if !isSupportedPlatform(key.Platform) {
+		return "", fmt.Errorf("unsupported target platform %s/%s; supported: %s",
+			key.Platform.OS, key.Platform.Arch, supportedPlatformsList())
+	}
+
+	name := balrtStubName
+	if key.Platform.OS == "windows" {
+		name += ".exe"
+	}
+	platformDir := key.Platform.OS + "-" + key.Platform.Arch
+	stubPath := filepath.Join(ballerinaEnvPath, runtimeStubDirName, version, platformDir, name)
 
 	if info, err := os.Stat(stubPath); err == nil && !info.IsDir() {
 		return stubPath, nil
 	}
-	if overridePath != "" {
-		return "", fmt.Errorf("runner stub not found at %s (overridden via RuntimeStubPath at bal's build time)", stubPath)
-	}
 	return "", fmt.Errorf(
 		"runner stub not found at %s; build and place it there before running bal build "+
-			"(go build -o %s ./cli/cmd/balrt, from the ballerina-lang-go module root)",
-		stubPath, stubPath)
+			"(GOOS=%s GOARCH=%s go build -o %s ./cli/cmd/balrt, from the ballerina-lang-go module root)",
+		stubPath, key.Platform.OS, key.Platform.Arch, stubPath)
 }
 
 // Pack writes a self-contained Ballerina executable to outPath.

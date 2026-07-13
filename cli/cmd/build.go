@@ -21,7 +21,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	goruntime "runtime"
 
 	"ballerina-lang-go/cli/internal/executable"
 	debugcommon "ballerina-lang-go/common"
@@ -54,6 +53,8 @@ type buildOptions struct {
 	logFile       string
 	format        string
 	output        string // -o: explicit output path
+	targetOS      string // cross-compile target OS; "" defaults to the host OS
+	targetArch    string // cross-compile target architecture; "" defaults to the host arch
 }
 
 var buildCmd = createBuildCmd()
@@ -69,7 +70,10 @@ func createBuildCmd() *cobra.Command {
 	It runs without a bal installation and without the source files present.
 
 	The default output path is <project>/target/bin/<package-name>.
-	Use -o to specify a different path.`,
+	Use -o to specify a different path.
+
+	Use --target-os/--target-arch to cross-compile for a different platform.
+	Either may be given alone; the other defaults to the host's own value.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBuild(cmd, args, opts)
@@ -86,6 +90,8 @@ func createBuildCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.logFile, "log-file", "", "Write debug output to specified file")
 	cmd.Flags().StringVar(&opts.format, "format", "", "Output format for dump operations (dot)")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", "", "Output path (default: target/bin/<package-name>)")
+	cmd.Flags().StringVar(&opts.targetOS, "target-os", "", "Cross-compile target OS (default: host OS)")
+	cmd.Flags().StringVar(&opts.targetArch, "target-arch", "", "Cross-compile target architecture (default: host arch)")
 	return cmd
 }
 
@@ -211,11 +217,18 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 
 	tyEnv := project.Environment().TypeEnv()
 
-	// Determine output path.
+	// --target-os/--target-arch default to the host's own value when unset —
+	// the same convention Go's GOOS/GOARCH env vars use, so setting only one
+	// dimension does what a user would expect.
+	targetPlatform := executable.ResolveTargetPlatform(opts.targetOS, opts.targetArch)
+
+	// Determine output path. The executable suffix follows the target
+	// platform, not the host running bal build — cross-compiling for
+	// Windows from a non-Windows machine must still produce a ".exe".
 	outPath := opts.output
 	if outPath == "" {
 		pkgName := pkg.PackageName().Value()
-		if goruntime.GOOS == "windows" {
+		if targetPlatform.OS == "windows" {
 			pkgName += ".exe"
 		}
 		outPath = filepath.Join(absBaseDir, projects.TargetDir, binSubdir, pkgName)
@@ -224,12 +237,13 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	// Resolve the slim runner stub to embed the payload into. Fingerprint is
 	// empty until native-Go-dependency detection lands (see
 	// migration-docs/specs/build-command-architecture.md) — every build
-	// today looks up the installer-provided stub; no Go toolchain involved.
-	// RuntimeStubPath (set via -ldflags at bal's own build time, not a bal
-	// build flag) overrides the default <ballerina-env>/runtime/<version>
-	// lookup, so the predefined layout can change later without breaking a
-	// packager who already pins an explicit path.
-	stubPath, err := executable.ResolveStub(executable.Key{Platform: executable.HostPlatform()}, ballerinaEnvPath, Version, RuntimeStubPath)
+	// today looks up the installer-provided stub for targetPlatform; no Go
+	// toolchain involved. RuntimeStubPath (set via -ldflags at bal's own
+	// build time, not a bal build flag) overrides the default
+	// <ballerina-env>/runtime/<version>/<os>-<arch> lookup, so the predefined
+	// layout can change later without breaking a packager who already pins
+	// an explicit path.
+	stubPath, err := executable.ResolveStub(executable.Key{Platform: targetPlatform}, ballerinaEnvPath, Version, RuntimeStubPath)
 	if err != nil {
 		return buildError(stderr, "cannot locate runner stub: %w", err)
 	}
