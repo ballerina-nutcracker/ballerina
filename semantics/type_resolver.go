@@ -3711,32 +3711,11 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 		e.ArgsExprs = args
 	}
 	paramListTy := semtypes.FunctionParamListType(cx, initFnTy)
-	var paramTypes []semtypes.SemType
-	argTys := make([]semtypes.SemType, len(e.ArgsExprs))
-	if !hasInitRef {
-		// this can happend when we have a non atomic object type
-		paramTypes = nil
-	} else {
-		fnSym, ok := t.getSymbol(initRef).(model.FunctionSymbol)
-		if !ok {
-			t.internalError("expect a function symbol for init function", e.GetPosition())
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		paramTypes = fnSym.TypedSignature().ParamTypes
-	}
-	for i, arg := range e.ArgsExprs {
-		var paramTy semtypes.SemType
-		if i < len(paramTypes) {
-			paramTy = paramTypes[i]
-		} else {
-			key := semtypes.IntConst(int64(i))
-			paramTy = semtypes.ListMemberTypeInnerVal(cx, paramListTy, key)
-		}
-		if _, _, ok := resolveActionOrExpression(t, chain, arg, paramTy); !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-
-		argTys[i] = arg.GetDeterminedType()
+	argTys, _, ok := resolveArgs(t, e.ArgsExprs, chain, func(i int) semtypes.SemType {
+		return semtypes.ListMemberTypeInnerVal(cx, paramListTy, semtypes.IntConst(int64(i)))
+	})
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
 	objTy, ok := determineObjectType(t, e, argTys, determinedTy)
@@ -6027,19 +6006,11 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 		t.internalError("empty function param list ty", node.GetPosition())
 		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
 	}
-	argTys := make([]semtypes.SemType, len(argExprs))
-	for i, arg := range argExprs {
-		if _, namedParam := arg.(*ast.BLangNamedArgsExpression); namedParam {
-			t.unimplemented("named parameters not supported for non atomic method calls", arg.GetPosition())
-			return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
-		}
-		key := semtypes.IntConst(int64(i))
-		paramTy := semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, key)
-		argTy, _, ok := resolveActionOrExpression(t, chain, arg, paramTy)
-		if !ok {
-			return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
-		}
-		argTys[i] = argTy
+	argTys, _, ok := resolveArgs(t, argExprs, chain, func(i int) semtypes.SemType {
+		return semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, semtypes.IntConst(int64(i)))
+	})
+	if !ok {
+		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
 	}
 	argLd := semtypes.NewListDefinition()
 	argListTy := argLd.DefineListTypeWrapped(t.typeEnv(), argTys, len(argTys), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
@@ -6274,7 +6245,13 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 			return nil, fnSymbol, chain, false
 		}
 		inv.SetCallArgs(args)
-		argTys, chain, ok := resolveArgs(t, sym.ParamTypes(), semtypes.SemType{}, chain, inv)
+		paramTypes := sym.ParamTypes()
+		argTys, chain, ok := resolveArgs(t, inv.CallArgs(), chain, func(i int) semtypes.SemType {
+			if i < len(paramTypes) {
+				return paramTypes[i]
+			}
+			return semtypes.NEVER
+		})
 		if !ok {
 			return nil, fnSymbol, chain, false
 		}
@@ -6320,7 +6297,12 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		fnSym := t.getSymbol(symbolRef).(model.FunctionSymbol)
 		sig := fnSym.TypedSignature()
 		inv.SetResolvedSymbol(symbolRef)
-		argTys, chain, ok := resolveArgs(t, sig.ParamTypes, sig.RestParamType, chain, inv)
+		argTys, chain, ok := resolveArgs(t, inv.CallArgs(), chain, func(i int) semtypes.SemType {
+			if i < len(sig.ParamTypes) {
+				return sig.ParamTypes[i]
+			}
+			return sig.RestParamType
+		})
 		if !ok {
 			return nil, fnSymbol, chain, false
 		}
@@ -6337,7 +6319,12 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 			return nil, fnSymbol, chain, false
 		}
 		inv.SetCallArgs(args)
-		argTys, chain, ok := resolveArgs(t, sig.ParamTypes, sig.RestParamType, chain, inv)
+		argTys, chain, ok := resolveArgs(t, inv.CallArgs(), chain, func(i int) semtypes.SemType {
+			if i < len(sig.ParamTypes) {
+				return sig.ParamTypes[i]
+			}
+			return sig.RestParamType
+		})
 		return argTys, fnSymbol, chain, ok
 	case model.ValueSymbol:
 		narrowedSymbol := lookupSymbol(chain, fnSymbol)
@@ -6366,22 +6353,10 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 			t.internalError("empty function param list ty", inv.GetPosition())
 			return nil, narrowedSymbol, chain, false
 		}
-		var argTys []semtypes.SemType
-		for i, arg := range inv.CallArgs() {
-			key := semtypes.IntConst(int64(i))
-			paramTy := semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, key)
-			if _, namedParam := arg.(*ast.BLangNamedArgsExpression); namedParam {
-				t.unimplemented("named arguments not supported in this context", arg.GetPosition())
-				return nil, narrowedSymbol, chain, false
-			}
-			argTy, argEffect, ok := resolveActionOrExpression(t, chain, arg, paramTy)
-			if !ok {
-				return nil, narrowedSymbol, chain, false
-			}
-			chain = argEffect.ifTrue
-			argTys = append(argTys, argTy)
-		}
-		return argTys, narrowedSymbol, chain, true
+		argTys, chain, ok := resolveArgs(t, inv.CallArgs(), chain, func(i int) semtypes.SemType {
+			return semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, semtypes.IntConst(int64(i)))
+		})
+		return argTys, narrowedSymbol, chain, ok
 	default:
 		t.semanticError("not a function value", inv.GetPosition())
 		return nil, fnSymbol, chain, false
@@ -6592,8 +6567,7 @@ func buildIncludedRecordArg(fields []mappingField, pos diagnostics.Location) *as
 	return mc
 }
 
-func resolveArgs(t typeResolver, paramTypes []semtypes.SemType, restParamTy semtypes.SemType, chain *binding, inv invocable) ([]semtypes.SemType, *binding, bool) {
-	args := inv.CallArgs()
+func resolveArgs(t typeResolver, args []ast.BLangExpression, chain *binding, paramType func(int) semtypes.SemType) ([]semtypes.SemType, *binding, bool) {
 	tys := make([]semtypes.SemType, 0, len(args))
 	for i, arg := range args {
 		if _, namedParam := arg.(*ast.BLangNamedArgsExpression); namedParam {
@@ -6601,13 +6575,7 @@ func resolveArgs(t typeResolver, paramTypes []semtypes.SemType, restParamTy semt
 			t.unimplemented("named arguments not supported in this context", arg.GetPosition())
 			return nil, chain, false
 		}
-		var paramTy semtypes.SemType
-		if i < len(paramTypes) {
-			paramTy = paramTypes[i]
-		} else {
-			paramTy = restParamTy
-		}
-		ty, effect, ok := resolveActionOrExpression(t, chain, arg, paramTy)
+		ty, effect, ok := resolveActionOrExpression(t, chain, arg, paramType(i))
 		if !ok {
 			return nil, chain, false
 		}
