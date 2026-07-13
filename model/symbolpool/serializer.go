@@ -161,9 +161,13 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 		return write(buf, symbolSpaceNilSentinel)
 	}
 
+	snapshots := make([][]model.SymbolRef, len(spaces))
 	totalLen := 0
-	for _, space := range spaces {
-		totalLen += space.Len()
+	for i, space := range spaces {
+		for ref := range space.Symbols() {
+			snapshots[i] = append(snapshots[i], ref)
+		}
+		totalLen += len(snapshots[i])
 	}
 	if err := write(buf, int64(totalLen)); err != nil {
 		return err
@@ -172,18 +176,19 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 		return err
 	}
 
-	sw.refMap = make(map[model.SymbolRef]int)
+	sw.refMap = make(map[model.SymbolRef]int, totalLen)
 	nextIndex := 0
-	for _, space := range spaces {
-		for i := range space.Len() {
-			sw.refMap[space.RefAt(i)] = nextIndex
+	for _, refs := range snapshots {
+		for _, ref := range refs {
+			sw.refMap[ref] = nextIndex
 			nextIndex++
 		}
 	}
 
-	for _, space := range spaces {
-		for i, sym := range space.Symbols() {
-			if err := sw.writeSymbol(buf, space.RefAt(i), sym); err != nil {
+	for _, refs := range snapshots {
+		for _, ref := range refs {
+			sym := sw.compilerEnv.GetSymbol(ref)
+			if err := sw.writeSymbol(buf, ref, sym); err != nil {
 				return err
 			}
 		}

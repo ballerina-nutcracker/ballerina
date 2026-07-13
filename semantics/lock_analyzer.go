@@ -364,16 +364,16 @@ func (sa *SemanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 		}
 	}
 	for _, space := range sa.importedSymbols {
-		for ref, sym := range space.PublicMainSymbols() {
-			vs, ok := sym.(model.ValueSymbol)
-			if !ok || vs.IsParameter() {
+		for ref := range space.PublicMainSymbols() {
+			metadata, ok := sa.compilerCtx.ValueSymbolMetadata(ref)
+			if !ok || metadata.Parameter {
 				continue
 			}
 			out[ref] = varDeclMetadata{
-				Type:         vs.Type(),
-				Final:        vs.IsFinal() || vs.IsConst(),
-				Configurable: vs.IsConfigurable(),
-				Isolated:     vs.IsIsolated(),
+				Type:         sa.compilerCtx.SymbolType(ref),
+				Final:        metadata.Final || metadata.Const,
+				Configurable: metadata.Configurable,
+				Isolated:     metadata.Isolated,
 			}
 		}
 	}
