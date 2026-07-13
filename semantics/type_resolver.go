@@ -535,20 +535,30 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		inferredGlobalVarNodes: make(map[model.SymbolRef]*ast.BLangSimpleVariable),
 		lazyResolutionStatus:   make(map[model.SymbolRef]resolutionStatus),
 		functionNodes:          make(map[model.SymbolRef]*ast.BLangFunction),
-		mappingAtomToBType:     make(map[*semtypes.MappingAtomicType]ast.BType),
 		typeDefnNodes:          make(map[model.SymbolRef]*ast.BLangTypeDefinition),
 		classDefnNodes:         make(map[model.SymbolRef]*ast.BLangClassDefinition),
-		mappingAtomToSymRef:    make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
-		semtypeInterner:        semtypes.NewSemtypeInterner(),
-		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
-		monoCounters:           make(map[string]int),
-		scope:                  moduleScope,
+		// FIXME: these lookup maps needs to be removed #628
+		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
+		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		classAtomSymbols:    make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		classSymbolByType:   make(map[semtypes.InternHandle]model.SymbolRef),
+		semtypeInterner:     semtypes.NewSemtypeInterner(),
+		xmlIteratorTypes:    semtypes.NewSemTypeCache(),
+		monoCounters:        make(map[string]int),
+		scope:               moduleScope,
 	}
 }
 
 func populateClassSymbolByType(t *packageTypeResolver, pkg *ast.BLangPackage) {
+	for i := range pkg.TypeDefinitions {
+		typeDef := &pkg.TypeDefinitions[i]
+		if _, ok := typeDef.GetTypeData().TypeDescriptor.(*ast.BLangObjectType); !ok {
+			continue
+		}
+		if ty := t.symbolType(typeDef.Symbol()); !semtypes.IsZero(ty) {
+			t.classSymbolByType[t.semtypeInterner.Intern(ty)] = typeDef.Symbol()
+		}
+	}
 	for i := range pkg.ClassDefinitions {
 		classDef := &pkg.ClassDefinitions[i]
 		if ty := t.symbolType(classDef.Symbol()); !semtypes.IsZero(ty) {
@@ -634,12 +644,18 @@ func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymb
 	for i := range pkg.TypeDefinitions {
 		defn := &pkg.TypeDefinitions[i]
 		semType := t.symbolType(defn.Symbol())
-		if _, ok := defn.GetTypeData().TypeDescriptor.(*ast.BLangRecordType); ok {
+		switch defn.GetTypeData().TypeDescriptor.(type) {
+		case *ast.BLangRecordType:
 			mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
 			if mat == nil {
 				t.internalError("failed to extract mapping atomic type for record type", defn.GetPosition())
+				continue
 			}
 			t.setMappingAtomSymRef(mat, defn.Symbol())
+		case *ast.BLangObjectType:
+			if mat := semtypes.ToObjectAtomicType(t.typeContext(), semType); mat != nil {
+				t.setMappingAtomSymRef(mat, defn.Symbol())
+			}
 		}
 	}
 	for i := range pkg.ClassDefinitions {
@@ -6016,15 +6032,69 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 	argListTy := argLd.DefineListTypeWrapped(t.typeEnv(), argTys, len(argTys), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
 	retTy := semtypes.FunctionReturnType(t.typeContext(), fnTy, argListTy)
 	sig := model.TypedFunctionSignature{ParamTypes: argTys, ReturnType: retTy}
-	// TODO: clean this up we need to properly support defaults for method calls, we need a way to get the untyped function symbol associated with the reciever type
 	symbolRef := t.createFunctionSymbol(methodSymbol.space, methodName, sig, fnTy)
-	handle := t.allocateFunctionSignature(make([]model.Param, len(argTys)), false)
-	if !t.associateFunctionSignature(symbolRef, handle) {
+	signatureRef := model.FunctionSignatureRef(0)
+	if sourceMethodRef, found := classMethodSymbolForReceiver(t, receiverTy, methodName, fnTy); found {
+		signatureRef, found = t.functionSignatureRef(sourceMethodRef)
+		if !found {
+			t.internalError("method function signature not found", node.GetPosition())
+			return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
+		}
+	} else {
+		signatureRef = t.allocateFunctionSignature(make([]model.Param, len(argTys)), false)
+	}
+	if !t.associateFunctionSignature(symbolRef, signatureRef) {
 		t.internalError("function signature already set", node.GetPosition())
 		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
 	}
 	setExpectedType(node, retTy)
 	return symbolRef, retTy, defaultExpressionEffect(chain), true
+}
+
+func classMethodSymbolForReceiver(t typeResolver, receiverTy semtypes.SemType, methodName string, methodTy semtypes.SemType) (model.SymbolRef, bool) {
+	atomicType := semtypes.ToObjectAtomicType(t.typeContext(), receiverTy)
+	if atomicType == nil {
+		return model.SymbolRef{}, false
+	}
+	classRef, ok := t.getClassAtomSymbol(atomicType)
+	if !ok {
+		classRef, ok = t.getMappingAtomSymRef(atomicType)
+	}
+	if ok {
+		if classSymbol, isClass := t.getSymbol(classRef).(model.ClassSymbol); isClass {
+			if methodRef, found := classSymbol.MethodSymbol(methodName); found {
+				return methodRef, true
+			}
+		}
+	}
+	p := packageResolver(t)
+	if p == nil {
+		return model.SymbolRef{}, false
+	}
+	for _, candidateRef := range p.classSymbolByType {
+		classSymbol, isClass := t.getSymbol(candidateRef).(model.ClassSymbol)
+		if !isClass {
+			continue
+		}
+		methodRef, found := classSymbol.MethodSymbol(methodName)
+		if found && semtypes.IsSameType(t.typeContext(), t.symbolType(methodRef), methodTy) {
+			return methodRef, true
+		}
+	}
+	return model.SymbolRef{}, false
+}
+
+func packageResolver(t typeResolver) *packageTypeResolver {
+	switch resolver := t.(type) {
+	case *packageTypeResolver:
+		return resolver
+	case *functionTypeResolver:
+		return packageResolver(resolver.parentResolver)
+	case *loopTypeResolver:
+		return packageResolver(resolver.parentResolver)
+	default:
+		return nil
+	}
 }
 
 func resolveResourceMethodSignature(t typeResolver, isClient bool, isService bool, method *ast.BLangResourceMethod, depth int) bool {
