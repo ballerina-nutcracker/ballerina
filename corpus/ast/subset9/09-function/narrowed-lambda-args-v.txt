@@ -1,0 +1,125 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Pair
+    (record-type
+      (field left
+        (value-type int))
+      (field right
+        (value-type int))))
+  (type-definition F
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (type-definition FAlias
+    (user-defined-type F))
+  (type-definition ChainedFAlias
+    (user-defined-type FAlias))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable narrowed (type
+          (union-type
+            (function-type (
+              (value-type int)) (
+              (value-type int)))
+            (function-type (
+              (value-type float)) (
+              (value-type float))))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable value (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref value))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref narrowed)
+          (function-type (
+            (value-type float)) (
+            (value-type float))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation narrowed (
+                (named-arg y
+                  (literal 12)))))))) (
+        (if
+          (type-test-expr is
+            (simple-var-ref narrowed)
+            (function-type (
+              (value-type int)) (
+              (value-type int))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation narrowed ()))))
+            (expression-stmt
+              (invocation io println (
+                (invocation narrowed (
+                  (named-arg z
+                    (literal 11)))))))) ())))
+      (var-def
+        (variable narrowedRecord (type
+          (union-type
+            (function-type (
+              (user-defined-type Pair)) (
+              (value-type int)))
+            (value-type int))) (expr
+          (lambda
+            (function $anonFunc$_1 (
+              (variable value (type
+                (user-defined-type Pair)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (field-based-access left
+                      (simple-var-ref value))
+                    (field-based-access right
+                      (simple-var-ref value))))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref narrowedRecord)
+          (function-type (
+            (user-defined-type Pair)) (
+            (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation narrowedRecord (
+                (named-arg left
+                  (literal 6))
+                (named-arg right
+                  (literal 7)))))))) ())
+      (block-stmt
+        (var-def
+          (variable narrowedAlias (type
+            (union-type
+              (user-defined-type ChainedFAlias)
+              (value-type float))) (expr
+            (lambda
+              (function $anonFunc$_2 (
+                (variable value (type
+                  (value-type int)))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (simple-var-ref value))))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref narrowedAlias)
+            (user-defined-type ChainedFAlias))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation narrowedAlias ()))))
+            (expression-stmt
+              (invocation io println (
+                (invocation narrowedAlias (
+                  (named-arg a
+                    (literal 14)))))))) ())
+        (block-stmt)))))

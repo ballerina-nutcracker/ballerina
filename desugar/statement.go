@@ -248,23 +248,8 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef
 			for _, fn := range result.functions {
 				cx.pkgCtx.pkg.Functions = append(cx.pkgCtx.pkg.Functions, *fn)
 			}
-			for _, rf := range result.recordFields {
-				rf.fn = desugarFunction(cx.pkgCtx, rf.fn)
-				fnType := cx.symbolType(rf.symRef)
-				lambda := &ast.BLangLambdaFunction{Function: rf.fn}
-				lambda.SetDeterminedType(fnType)
-				setPositionIfMissing(lambda, rf.fn.GetPosition())
-
-				varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, rf.fn.GetPosition())
-				varIdent := &ast.BLangIdentifier{Value: varName}
-				varIdent.SetDeterminedType(semtypes.NEVER)
-				simpleVar := &ast.BLangSimpleVariable{Name: varIdent}
-				simpleVar.Expr = lambda
-				simpleVar.SetDeterminedType(fnType)
-				simpleVar.SetSymbol(varSymRef)
-				varDef := &ast.BLangSimpleVariableDef{Var: simpleVar}
-				setPositionIfMissing(varDef, rf.fn.GetPosition())
-				initStmts = append(initStmts, varDef)
+			for _, field := range result.recordFields {
+				initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
 			}
 		} else {
 			cx.pkgCtx.addDefaultClosureOwner(stmt.Var.Expr)

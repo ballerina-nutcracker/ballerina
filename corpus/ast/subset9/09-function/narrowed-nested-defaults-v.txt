@@ -1,0 +1,89 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable narrowedWithLambdaArg (type
+          (union-type
+            (function-type (
+              (function-type (
+                (value-type int)) (
+                (value-type int)))
+              (value-type int)) (
+              (value-type int)))
+            (value-type int))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable callback (type
+                (function-type (
+                  (value-type int)) (
+                  (value-type int)))))
+              (variable result (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (assignment
+                  (wildcard-binding-pattern)
+                  (simple-var-ref callback))
+                (return
+                  (simple-var-ref result))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref narrowedWithLambdaArg)
+          (function-type (
+            (function-type (
+              (value-type int)) (
+              (value-type int)))
+            (value-type int)) (
+            (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation narrowedWithLambdaArg (
+                (lambda
+                  (function $anonFunc$_1 (
+                    (variable actual (type
+                      (value-type int)))) (
+                    (value-type int))
+                    (block-function-body
+                      (return
+                        (binary-expr +
+                          (simple-var-ref actual)
+                          (literal 1)))))))))))) ())
+      (block-stmt
+        (var-def
+          (variable narrowedWithInlineRecord (type
+            (union-type
+              (function-type (
+                (record-type
+                  (field value
+                    (value-type int)))) (
+                (value-type int)))
+              (value-type int))) (expr
+            (lambda
+              (function $anonFunc$_2 (
+                (variable input (type
+                  (record-type
+                    (field value
+                      (value-type int)))))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (field-based-access value
+                      (simple-var-ref input)))))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref narrowedWithInlineRecord)
+            (function-type (
+              (record-type
+                (field value
+                  (value-type int)
+                  (literal 12)))) (
+              (value-type int))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation narrowedWithInlineRecord ()))))) ())
+        (block-stmt)))))

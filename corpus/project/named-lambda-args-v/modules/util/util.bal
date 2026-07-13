@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+public type NarrowedFunction function(int imported = 40) returns int;
+public type NarrowedFunctionAlias NarrowedFunction;
+
 public function callWithDefault(function(int p = 30) returns int f) returns int {
     return f();
 }

@@ -1,0 +1,125 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable narrowedWithLambdaArg (type
+          (union-type
+            (function-type (
+              (function-type (
+                (value-type int)) (
+                (value-type int)))
+              (value-type int)) (
+              (value-type int)))
+            (value-type int))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable callback (type
+                (function-type (
+                  (value-type int)) (
+                  (value-type int)))))
+              (variable result (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (assignment
+                  (wildcard-binding-pattern)
+                  (simple-var-ref callback))
+                (return
+                  (simple-var-ref result))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref narrowedWithLambdaArg)
+          (function-type (
+            (function-type (
+              (value-type int)) (
+              (value-type int)))
+            (value-type int)) (
+            (value-type int))))
+        (block-stmt
+          (var-def
+            (variable $desugar$0 (expr
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable actual (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (binary-expr +
+                        (simple-var-ref actual)
+                        (literal 1)))))))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (expression-stmt
+            (invocation io println (
+              (invocation narrowedWithLambdaArg (
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1))))))) ())
+      (block-stmt
+        (var-def
+          (variable narrowedWithInlineRecord (type
+            (union-type
+              (function-type (
+                (record-type
+                  (field value
+                    (value-type int)))) (
+                (value-type int)))
+              (value-type int))) (expr
+            (lambda
+              (function $anonFunc$_2 (
+                (variable input (type
+                  (record-type
+                    (field value
+                      (value-type int)))))) (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (index-based-access
+                      (simple-var-ref input)
+                      (literal value)))))))))
+        (var-def
+          (variable $desugar$2 (expr
+            (lambda
+              (function $desugar$0 () ()
+                (block-function-body
+                  (return
+                    (literal 12))))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref narrowedWithInlineRecord)
+            (function-type (
+              (record-type
+                (field value
+                  (value-type int)
+                  (literal 12)))) (
+              (value-type int))))
+          (block-stmt
+            (var-def
+              (variable $desugar$3 (expr
+                (invocation $default$2 ()))))
+            (expression-stmt
+              (invocation io println (
+                (invocation narrowedWithInlineRecord (
+                  (simple-var-ref $desugar$3))))))) ())
+        (block-stmt))))
+  (function $default$0 (
+    (variable callback)) ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$1 ()))))
+      (return
+        (invocation callback (
+          (simple-var-ref $desugar$0))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 10))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr)))))

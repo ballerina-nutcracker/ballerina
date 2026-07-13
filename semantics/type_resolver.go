@@ -3392,6 +3392,11 @@ func resolveActionOrExpression(t typeResolver, chain *binding, expr ast.BLangAct
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	if singletonEffect, isSingleton := singletonExprEffect(chain, expr); isSingleton {
+		if isSingletonBool(ty, true) {
+			singletonEffect.ifTrue = effect.ifTrue
+		} else {
+			singletonEffect.ifFalse = effect.ifFalse
+		}
 		return ty, singletonEffect, true
 	}
 	return ty, effect, ok
@@ -3858,6 +3863,9 @@ func resolveTypeTestExpr(t typeResolver, chain *binding, e *ast.BLangTypeTestExp
 	testTy := e.Type.Type
 	trueTy := semtypes.Intersect(tx, testTy)
 	trueSym := narrowSymbol(t, ref, trueTy)
+	if !e.IsNegation() && !tryAssociateNarrowedFunctionSignature(t, trueSym, e.Type.TypeDescriptor, e.GetPosition()) {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	trueChain := &binding{ref: ref, narrowedSymbol: trueSym, prev: chain}
 	falseTy := semtypes.Diff(tx, testTy)
 	falseSym := narrowSymbol(t, ref, falseTy)
@@ -3866,6 +3874,34 @@ func resolveTypeTestExpr(t typeResolver, chain *binding, e *ast.BLangTypeTestExp
 		return resultTy, expressionEffect{ifTrue: falseChain, ifFalse: trueChain}, true
 	}
 	return resultTy, expressionEffect{ifTrue: trueChain, ifFalse: falseChain}, true
+}
+
+func tryAssociateNarrowedFunctionSignature(t typeResolver, narrowed model.SymbolRef, typeDescriptor ast.TypeDescriptor, pos diagnostics.Location) bool {
+	var ref model.FunctionSignatureRef
+	switch ty := typeDescriptor.(type) {
+	case *ast.BLangFunctionType:
+		if ty.IsAnyFunction() {
+			return true
+		}
+		ref = ty.SignatureRef()
+		if ref == 0 {
+			t.internalError("function type signature not found", pos)
+			return false
+		}
+	case *ast.BLangUserDefinedType:
+		var ok bool
+		ref, ok = t.functionSignatureRef(ty.Symbol())
+		if !ok {
+			return true
+		}
+	default:
+		return true
+	}
+	if !t.associateFunctionSignature(narrowed, ref) {
+		t.internalError("function signature already set", pos)
+		return false
+	}
+	return true
 }
 
 func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semtypes.SemType, expressionEffect, bool) {

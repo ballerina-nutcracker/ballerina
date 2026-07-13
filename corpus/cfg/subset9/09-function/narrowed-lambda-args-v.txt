@@ -1,0 +1,115 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable narrowed (type
+        (union-type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))
+          (function-type (
+            (value-type float)) (
+            (value-type float))))) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable value (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+    (type-test-expr is
+      (simple-var-ref narrowed)
+      (function-type (
+        (value-type float)) (
+        (value-type float))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowed (
+          (literal 12))))))
+  )
+  (bb2 (bb1 bb5) (bb6 bb7)
+    (var-def
+      (variable narrowedRecord (type
+        (union-type
+          (function-type (
+            (user-defined-type Pair)) (
+            (value-type int)))
+          (value-type int))) (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable value (type
+              (user-defined-type Pair)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (field-based-access left
+                    (simple-var-ref value))
+                  (field-based-access right
+                    (simple-var-ref value))))))))))
+    (type-test-expr is
+      (simple-var-ref narrowedRecord)
+      (function-type (
+        (user-defined-type Pair)) (
+        (value-type int))))
+  )
+  (bb3 (bb0) (bb4)
+    (type-test-expr is
+      (simple-var-ref narrowed)
+      (function-type (
+        (value-type int)) (
+        (value-type int))))
+  )
+  (bb4 (bb3) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowed ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowed (
+          (literal 11))))))
+  )
+  (bb5 (bb4) (bb2))
+  (bb6 (bb2) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowedRecord (
+          (mapping-constructor-expr
+            (key-value
+              (literal left)
+              (literal 6))
+            (key-value
+              (literal right)
+              (literal 7))))))))
+  )
+  (bb7 (bb6 bb2) (bb8 bb9)
+    (var-def
+      (variable narrowedAlias (type
+        (union-type
+          (user-defined-type ChainedFAlias)
+          (value-type float))) (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable value (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+    (type-test-expr is
+      (simple-var-ref narrowedAlias)
+      (user-defined-type ChainedFAlias))
+  )
+  (bb8 (bb7) (bb9)
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowedAlias ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowedAlias (
+          (literal 14))))))
+  )
+  (bb9 (bb8 bb7) ())
+)

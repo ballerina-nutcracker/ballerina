@@ -1,0 +1,164 @@
+module $anon.. v 0.0.0;
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_1({| left: int, right: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad left
+    %3 = value[%4];
+    %5 = %3;
+    %7 = ConstantLoad right
+    %6 = value[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_2(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    narrowed = %1;
+    %3 = narrowed is function(float) returns float
+    %3 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 5
+    %0 = ConstantLoad 12
+    %1 = %0;
+    %2 = narrowed(%1) -> bb2;
+  }
+  bb2 {
+    %3 = %2;
+    %4 = println(%3) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb4 {
+    %4 = narrowed is function(int) returns int
+    %4 ? bb5 : bb11;
+  }
+  bb5 {
+    PushScopeFrame 11
+    %0 = $default$2() -> bb6;
+  }
+  bb6 {
+    $desugar$0 = %0;
+    %2 = $desugar$0;
+    %3 = narrowed(%2) -> bb7;
+  }
+  bb7 {
+    %4 = %3;
+    %5 = println(%4) -> bb8;
+  }
+  bb8 {
+    %6 = ConstantLoad 11
+    %7 = %6;
+    %8 = narrowed(%7) -> bb9;
+  }
+  bb9 {
+    %9 = %8;
+    %10 = println(%9) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    GOTO bb12;
+  }
+  bb12 {
+    %5 = fp $anon/.:$anonFunc$_1
+    narrowedRecord = %5;
+    %7 = narrowedRecord is function({| left: int, right: int, never... |}) returns int
+    %7 ? bb13 : bb16;
+  }
+  bb13 {
+    PushScopeFrame 8
+    %0 = ConstantLoad left
+    %1 = ConstantLoad 6
+    %2 = ConstantLoad right
+    %3 = ConstantLoad 7
+    %4 = newMap {| left: int, right: int, never... |}{%0=%1, %2=%3}
+    %5 = narrowedRecord(%4) -> bb14;
+  }
+  bb14 {
+    %6 = %5;
+    %7 = println(%6) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 3
+    %0 = fp $anon/.:$anonFunc$_2
+    narrowedAlias = %0;
+    %2 = narrowedAlias is function(int) returns int
+    %2 ? bb17 : bb23;
+  }
+  bb17 {
+    PushScopeFrame 11
+    %0 = $default$0() -> bb18;
+  }
+  bb18 {
+    $desugar$1 = %0;
+    %2 = $desugar$1;
+    %3 = narrowedAlias(%2) -> bb19;
+  }
+  bb19 {
+    %4 = %3;
+    %5 = println(%4) -> bb20;
+  }
+  bb20 {
+    %6 = ConstantLoad 14
+    %7 = %6;
+    %8 = narrowedAlias(%7) -> bb21;
+  }
+  bb21 {
+    %9 = %8;
+    %10 = println(%9) -> bb22;
+  }
+  bb22 {
+    PopScopeFrame
+    GOTO bb23;
+  }
+  bb23 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> float{
+  bb0 {
+    %1 = ConstantLoad 30
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 20
+    %0 = %1;
+    return;
+  }
+}

@@ -156,6 +156,16 @@ func (ctx *packageContext) functionSignatureByRef(ref model.FunctionSignatureRef
 	return ctx.compilerCtx.GetFunctionSignatureByRef(ref)
 }
 
+func (ctx *packageContext) associateFunctionSignature(source, target model.SymbolRef) {
+	ref, ok := ctx.compilerCtx.FunctionSignatureRef(source)
+	if !ok {
+		return
+	}
+	if !ctx.compilerCtx.AssociateFunctionSignature(target, ref) {
+		ctx.internalError("function signature already set")
+	}
+}
+
 func (ctx *packageContext) getSymbolType(ref model.SymbolRef) semtypes.SemType {
 	return ctx.compilerCtx.SymbolType(ref)
 }
@@ -228,6 +238,10 @@ func (ctx *functionContext) functionSignature(ref model.SymbolRef) (model.Untype
 
 func (ctx *functionContext) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
 	return ctx.pkgCtx.functionSignatureByRef(ref)
+}
+
+func (ctx *functionContext) associateFunctionSignature(source, target model.SymbolRef) {
+	ctx.pkgCtx.associateFunctionSignature(source, target)
 }
 
 func (ctx *functionContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
@@ -313,6 +327,7 @@ type desugarContext interface {
 	getSymbol(ref model.SymbolRef) model.Symbol
 	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
 	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
+	associateFunctionSignature(source, target model.SymbolRef)
 	typeEnv() semtypes.Env
 	internalError(msg string)
 }
@@ -1175,6 +1190,26 @@ type desugaredTypeDescResult struct {
 	functions    []*ast.BLangFunction
 }
 
+func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldResult) ast.StatementNode {
+	fn := desugarFunction(cx.pkgCtx, field.fn)
+	fnType := cx.symbolType(field.symRef)
+	lambda := &ast.BLangLambdaFunction{Function: fn}
+	lambda.SetDeterminedType(fnType)
+	setPositionIfMissing(lambda, fn.GetPosition())
+
+	varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, fn.GetPosition())
+	varIdent := &ast.BLangIdentifier{Value: varName}
+	varIdent.SetDeterminedType(semtypes.NEVER)
+	simpleVar := &ast.BLangSimpleVariable{Name: varIdent}
+	simpleVar.Expr = lambda
+	simpleVar.SetDeterminedType(fnType)
+	simpleVar.SetSymbol(varSymRef)
+	varDef := &ast.BLangSimpleVariableDef{Var: simpleVar}
+	varDef.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(varDef, fn.GetPosition())
+	return varDef
+}
+
 func (r *desugaredTypeDescResult) append(other desugaredTypeDescResult) {
 	r.recordFields = append(r.recordFields, other.recordFields...)
 	r.functions = append(r.functions, other.functions...)
@@ -1340,6 +1375,7 @@ func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.B
 		ctx.setSymbolType(paramSymRef, paramTy)
 		param.SetSymbol(paramSymRef)
 		defaultClosure.AddParameter(param)
+		ctx.associateFunctionSignature(prevParamSymbol[j], paramSymRef)
 		symbolMapping[prevParamSymbol[j]] = paramSymRef
 	}
 	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping)

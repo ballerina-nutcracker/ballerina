@@ -32,4 +32,20 @@ public function main() {
         return q.left + q.right;
     };
     io:println(recordFn(left = 4, right = 6)); // @output 10
+
+    util:NarrowedFunctionAlias|float narrowed = function(int value) returns int {
+        return value;
+    };
+    if narrowed is util:NarrowedFunctionAlias {
+        io:println(narrowed()); // @output 40
+        io:println(narrowed(imported = 41)); // @output 41
+    }
+
+    (function(record {| int a = 5; |} z) returns int)|int narrowedInlineRecord =
+        function(record {| int a = 5; |} value) returns int {
+            return value.a;
+        };
+    if narrowedInlineRecord is function(record {| int a = 5; |} z = {}) returns int {
+        io:println(narrowedInlineRecord()); // @output 5
+    }
 }
