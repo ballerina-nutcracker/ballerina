@@ -141,14 +141,23 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	if err != nil {
 		return buildError(stderr, "invalid project path %q: %w", path, err)
 	}
+
+	// A single .bal file is loaded the same way bal run loads one: fsys is
+	// rooted at the file's parent directory, and loadPath is just the
+	// filename within it. baseDir (the fsys root) doubles as the "project
+	// root" for default-output-path purposes below, same as a package
+	// directory's own path serves that role.
+	baseDir := path
+	loadPath := "."
 	if !info.IsDir() {
-		if filepath.Ext(path) == ".bal" {
-			return buildError(stderr, "build does not support single-file projects; use a package directory")
+		if filepath.Ext(path) != ".bal" {
+			return buildError(stderr, "build requires a package directory or a .bal file; got %q", path)
 		}
-		return buildError(stderr, "build requires a package directory; got %q", path)
+		baseDir = filepath.Dir(path)
+		loadPath = filepath.Base(path)
 	}
 
-	absPath, err := filepath.Abs(path)
+	absBaseDir, err := filepath.Abs(baseDir)
 	if err != nil {
 		return buildError(stderr, "resolve absolute path: %w", err)
 	}
@@ -158,7 +167,8 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		return buildError(stderr, "resolve ballerina env path: %w", err)
 	}
 
-	result, err := projects.Load(os.DirFS(absPath), ".", projects.ProjectLoadConfig{
+	fsys := os.DirFS(absBaseDir)
+	result, err := projects.Load(fsys, loadPath, projects.ProjectLoadConfig{
 		BallerinaEnvFs: os.DirFS(ballerinaEnvPath),
 		BuildOptions:   &buildOpts,
 	})
@@ -167,7 +177,7 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	}
 
 	if diagResult := result.Diagnostics(); diagResult.HasErrors() || diagResult.HasWarnings() {
-		printDiagnostics(os.DirFS(absPath), stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
+		printDiagnostics(fsys, stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
 		if diagResult.HasErrors() {
 			return buildError(stderr, "package loading reported errors")
 		}
@@ -181,7 +191,7 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	pkg := project.CurrentPackage()
 	compilation := pkg.Compilation()
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() || cd.HasWarnings() {
-		printDiagnostics(os.DirFS(absPath), stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(fsys, stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
 		if cd.HasErrors() {
 			return buildError(stderr, "compilation failed; executable not produced")
 		}
@@ -208,7 +218,7 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		if goruntime.GOOS == "windows" {
 			pkgName += ".exe"
 		}
-		outPath = filepath.Join(absPath, projects.TargetDir, binSubdir, pkgName)
+		outPath = filepath.Join(absBaseDir, projects.TargetDir, binSubdir, pkgName)
 	}
 
 	// Resolve the slim runner stub to embed the payload into. Fingerprint is

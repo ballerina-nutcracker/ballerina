@@ -198,6 +198,13 @@ func TryLoad() ([]*bir.BIRPackage, semtypes.Env, error) {
 	if err != nil {
 		return nil, nil, nil
 	}
+	return tryLoadFrom(exe)
+}
+
+// tryLoadFrom implements TryLoad against an explicit file path, so tests can
+// exercise it against a constructed file without needing to replace the test
+// binary itself (which is what os.Executable() would otherwise resolve to).
+func tryLoadFrom(exe string) ([]*bir.BIRPackage, semtypes.Env, error) {
 	f, err := os.Open(exe)
 	if err != nil {
 		return nil, nil, nil

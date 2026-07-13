@@ -302,7 +302,8 @@ func TestBalBuildCorpus(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		projectDir string // relative to repoRoot
+		projectDir string // relative to repoRoot; a package directory, or (if isFile) a single .bal file
+		isFile     bool   // true for a single-file build — target/ lives beside the file, not "inside" it
 		pkgName    string
 		runTxtar   string // expected stdout/stderr/exitcode of the produced binary
 	}{
@@ -318,28 +319,50 @@ func TestBalBuildCorpus(t *testing.T) {
 			pkgName:    "build_native_sample",
 			runTxtar:   "native-stdlib.txtar",
 		},
+		{
+			// Single .bal files are supported, the same as bal run — the
+			// default output name is derived from the file's base name
+			// (hello.bal -> hello), and target/ lands beside the file.
+			name:       "single-file",
+			projectDir: filepath.Join(testdataRoot, "single-file", "hello.bal"),
+			isFile:     true,
+			pkgName:    "hello",
+			runTxtar:   "single-file.txtar",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			absProjectDir := filepath.Join(repoRoot, tt.projectDir)
-			t.Cleanup(func() { _ = os.RemoveAll(filepath.Join(absProjectDir, "target")) })
+			targetDirBase := absProjectDir
+			if tt.isFile {
+				targetDirBase = filepath.Dir(absProjectDir)
+			}
+			t.Cleanup(func() { _ = os.RemoveAll(filepath.Join(targetDirBase, "target")) })
 
 			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
 				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", tt.projectDir)
 			if exitCode != 0 {
 				t.Fatalf("bal build failed for %s: exit=%d\nstdout:\n%s\nstderr:\n%s", tt.projectDir, exitCode, stdout, stderr)
 			}
-			if !strings.Contains(stdout, "Created ") {
-				t.Fatalf("expected bal build stdout to report the created binary, got:\n%s", stdout)
-			}
 
+			// Assert the exact default output path (<project>/target/bin/<package-name>),
+			// not just that some "Created " message was printed — this is the one
+			// piece of runBuild's own behavior (as opposed to Pack/TryLoad's framing,
+			// covered separately in cli/internal/executable) that this end-to-end
+			// test is relied on to verify, since there's no separate in-process test
+			// for it.
 			binName := tt.pkgName
 			if runtime.GOOS == "windows" {
 				binName += ".exe"
 			}
-			binPath := filepath.Join(absProjectDir, "target", "bin", binName)
+			binPath := filepath.Join(targetDirBase, "target", "bin", binName)
+			wantMessage := "Created " + binPath
+			if !strings.Contains(stdout, wantMessage) {
+				t.Fatalf("expected bal build stdout to report the exact default output path %q, got:\n%s", wantMessage, stdout)
+			}
+
 			builtInfo, err := os.Stat(binPath)
 			if err != nil {
 				t.Fatalf("expected built binary at %s: %v", binPath, err)
@@ -455,6 +478,153 @@ func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, 
 	}
 }
 
+// assertBalCommandMatchesTxtarFragmentsLooseWithEnv is like
+// assertBalCommandMatchesTxtarFragmentsLoose but appends extraEnv on top of
+// the process environment (via runCLICommandWithEnv) — needed for build
+// scenarios that require a specific BAL_ENV (e.g. one with no runner stub
+// installed, to exercise the missing-stub error path).
+func assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t *testing.T, balBin, repoRoot, coverDir string, extraEnv, args []string, txtarPath string) {
+	t.Helper()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv, args...)
+	stdout = test_util.NormalizeNewlines(stdout)
+	stderr = test_util.NormalizeNewlines(stderr)
+
+	expectedStdoutFragments, expectedStderrFragments, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(txtarPath)
+	if err != nil {
+		t.Fatalf("failed to parse txtar file %s: %v", txtarPath, err)
+	}
+
+	if strconv.Itoa(exitCode) != expectedExitCode {
+		t.Fatalf("unexpected exit code for command %q with expected file %s\n%s",
+			strings.Join(args, " "), txtarPath,
+			test_util.FormatExpectedGot(expectedExitCode, strconv.Itoa(exitCode)))
+	}
+
+	combinedOut := stdout + "\n" + stderr
+	for _, fragment := range strings.Split(expectedStdoutFragments, "\n") {
+		if strings.TrimSpace(fragment) == "" {
+			continue
+		}
+		if !strings.Contains(combinedOut, fragment) {
+			t.Fatalf("output missing expected stdout fragment %q for command %q with expected file %s\nstdout:\n%s\nstderr:\n%s",
+				fragment, strings.Join(args, " "), txtarPath, stdout, stderr)
+		}
+	}
+	for _, fragment := range strings.Split(expectedStderrFragments, "\n") {
+		if strings.TrimSpace(fragment) == "" {
+			continue
+		}
+		if !strings.Contains(stderr, fragment) {
+			t.Fatalf("stderr missing expected fragment %q for command %q with expected file %s\nstdout:\n%s\nstderr:\n%s",
+				fragment, strings.Join(args, " "), txtarPath, stdout, stderr)
+		}
+	}
+}
+
+// TestBalBuildScenarios covers bal build's error/edge-case paths — as
+// opposed to TestBalBuildCorpus, which covers the successful build+run
+// paths — mirroring TestBalPackCorpus's scenario-table pattern rather than
+// an in-process cli/cmd/build_test.go (see corpus/cli_integration_test.go's
+// TestBalPackCorpus doc comment for why: keeps subprocess coverage flowing
+// into the cli/cmd profile, consistent with how pack's equivalent in-process
+// suite was replaced).
+func TestBalBuildScenarios(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
+
+	// missingRuntimeEnv points BAL_ENV at an empty directory with no runner
+	// stub installed, to exercise ResolveStub's "not found" error path —
+	// deliberately not cliIntegrationBalEnv, which does have one.
+	missingRuntimeEnv := t.TempDir()
+
+	missingPath := filepath.Join(testdataRoot, "this-path-does-not-exist")
+
+	tests := []struct {
+		name             string
+		args             []string
+		txtar            string
+		balEnv           string
+		projectTargetDir string // cleaned up after the test, if non-empty
+	}{
+		{
+			name:  "nonexistent-path",
+			args:  []string{"build", missingPath},
+			txtar: "nonexistent-path.txtar",
+		},
+		{
+			name:  "not-a-bal-file",
+			args:  []string{"build", filepath.Join(testdataRoot, "not-a-bal-file", "notes.txt")},
+			txtar: "not-a-bal-file.txtar",
+		},
+		{
+			name:             "compile-error",
+			args:             []string{"build", filepath.Join(testdataRoot, "compile-error", "project")},
+			txtar:            "compile-error.txtar",
+			projectTargetDir: filepath.Join(repoRoot, testdataRoot, "compile-error", "project", "target"),
+		},
+		{
+			name:  "rejects-workspace",
+			args:  []string{"build", filepath.Join(testdataRoot, "rejects-workspace", "project")},
+			txtar: "rejects-workspace.txtar",
+		},
+		{
+			name:   "missing-runtime",
+			args:   []string{"build", filepath.Join(testdataRoot, "pure-ballerina", "project")},
+			txtar:  "missing-runtime.txtar",
+			balEnv: missingRuntimeEnv,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.projectTargetDir != "" {
+				t.Cleanup(func() { _ = os.RemoveAll(tt.projectTargetDir) })
+			}
+			balEnv := tt.balEnv
+			if balEnv == "" {
+				balEnv = cliIntegrationBalEnv
+			}
+			assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t, balBin, repoRoot, coverDir,
+				[]string{"BAL_ENV=" + balEnv}, tt.args, filepath.Join(outputsRoot, tt.txtar))
+		})
+	}
+}
+
+// TestBalBuildCustomOutputPath covers the -o flag, including creating
+// parent directories for a path that doesn't exist yet — common in
+// CI/deployment workflows targeting a specific output location rather than
+// the default target/bin/<package-name>.
+func TestBalBuildCustomOutputPath(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+
+	outPath := filepath.Join(t.TempDir(), "nested", "dir", "custom-name")
+
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outPath)
+	if exitCode != 0 {
+		t.Fatalf("bal build -o failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "Created "+outPath) {
+		t.Fatalf("expected bal build stdout to report the custom output path %q, got:\n%s", outPath, stdout)
+	}
+	if _, err := os.Stat(outPath); err != nil {
+		t.Fatalf("expected built binary at custom output path %s: %v", outPath, err)
+	}
+}
+
 func assertBalCommandMatchesTxtarFragments(t *testing.T, args []string, txtarPathParts ...string) {
 	t.Helper()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
@@ -506,7 +676,7 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 		if cliIntegrationBinsErr = os.MkdirAll(filepath.Dir(balrtPath), 0o755); cliIntegrationBinsErr != nil {
 			return
 		}
-		if cliIntegrationBinsErr = buildBalrtBinaryTo(cliIntegrationRepoRoot, balrtPath); cliIntegrationBinsErr != nil {
+		if cliIntegrationBinsErr = buildBalrtBinaryTo(cliIntegrationRepoRoot, cliIntegrationCoverDir, balrtPath); cliIntegrationBinsErr != nil {
 			return
 		}
 		for _, spec := range []struct {
@@ -571,10 +741,22 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 
 // buildBalrtBinaryTo builds the slim runtime-only balrt stub that
 // executable.ResolveStub looks up at a predefined installation location
-// (<BAL_ENV>/runtime/<version>/balrt) — no coverage instrumentation, since
-// it's a fixed artifact bal build reads, not CLI code under test itself.
-func buildBalrtBinaryTo(repoRoot, outputPath string) error {
-	cmd := exec.Command("go", "build", "-o", outputPath, "./cli/cmd/balrt")
+// (<BAL_ENV>/runtime/<version>/balrt). Built with the same -cover/-coverpkg
+// instrumentation as bal/bal-debug when coverDir is set — balrt IS CLI code
+// under test (executable.Run executes inside it, for every program bal
+// build produces), and without this, that coverage is invisible even though
+// TestBalBuildCorpus genuinely exercises it on every run: it only shows up
+// once the produced binary is instrumented and BAL_GOCOVERDIR is set when
+// running it (already threaded through in TestBalBuildCorpus's own
+// runCLICommand call for the produced binary).
+func buildBalrtBinaryTo(repoRoot, coverDir, outputPath string) error {
+	args := []string{"build", "-o", outputPath}
+	if coverDir != "" {
+		args = append(args, "-cover", "-coverpkg=./...")
+	}
+	args = append(args, "./cli/cmd/balrt")
+
+	cmd := exec.Command("go", args...)
 	cmd.Dir = repoRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to build balrt binary: %w\n%s", err, string(out))
