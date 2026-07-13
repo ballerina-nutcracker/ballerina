@@ -1,0 +1,422 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function track (
+    (variable evaluated (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref evaluated) (
+          (simple-var-ref value))))
+      (return
+        (simple-var-ref value))))
+  (function trackCollection (
+    (variable events (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable marker (type
+      (value-type int)))
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref events) (
+          (simple-var-ref marker))))
+      (return
+        (simple-var-ref values))))
+  (function trackKey (
+    (variable events (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref events) (
+          (binary-expr +
+            (simple-var-ref value)
+            (literal 10)))))
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable state (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))
+          (let-clause
+            (var-def
+              (variable observedState (type
+                (value-type int)) (expr
+                (simple-var-ref state)))))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref value)
+                  (literal :)
+                  (simple-var-ref observedState))))
+              (compound-assignment +
+                (simple-var-ref state)
+                (literal 1))))))
+      (var-def
+        (variable whereState (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 0)
+              (literal 1)
+              (literal 2)))
+          (where-clause
+            (binary-expr <=
+              (simple-var-ref value)
+              (simple-var-ref whereState)))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal where:)
+                  (simple-var-ref value))))
+              (compound-assignment +
+                (simple-var-ref whereState)
+                (literal 1))))))
+      (var-def
+        (variable joinState (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable left))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))
+          (join-clause
+            (var-def
+              (variable right))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))
+            (on-clause
+              (simple-var-ref left)
+              (simple-var-ref right)))
+          (let-clause
+            (var-def
+              (variable observedState (type
+                (value-type int)) (expr
+                (simple-var-ref joinState)))))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal join:)
+                  (simple-var-ref left)
+                  (literal :)
+                  (simple-var-ref observedState))))
+              (compound-assignment +
+                (simple-var-ref joinState)
+                (literal 1))))))
+      (var-def
+        (variable beforeOrderState (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 3)
+              (literal 2)
+              (literal 1)))
+          (let-clause
+            (var-def
+              (variable observedState (type
+                (value-type int)) (expr
+                (simple-var-ref beforeOrderState)))))
+          (order-by-clause
+            (order-key ascending
+              (simple-var-ref value)))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal before-order:)
+                  (simple-var-ref value)
+                  (literal :)
+                  (simple-var-ref observedState))))
+              (compound-assignment +
+                (simple-var-ref beforeOrderState)
+                (literal 1))))))
+      (var-def
+        (variable afterOrderState (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 3)
+              (literal 2)
+              (literal 1)))
+          (order-by-clause
+            (order-key ascending
+              (simple-var-ref value)))
+          (let-clause
+            (var-def
+              (variable observedState (type
+                (value-type int)) (expr
+                (simple-var-ref afterOrderState)))))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal after-order:)
+                  (simple-var-ref value)
+                  (literal :)
+                  (simple-var-ref observedState))))
+              (compound-assignment +
+                (simple-var-ref afterOrderState)
+                (literal 1))))))
+      (var-def
+        (variable outerJoinState (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable key))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)))
+          (join-clause outer
+            (var-def
+              (variable candidate))
+            (list-constructor-expr
+              (literal 2))
+            (on-clause
+              (simple-var-ref key)
+              (simple-var-ref candidate)))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal outer:)
+                  (simple-var-ref key)
+                  (literal :)
+                  (type-test-expr is
+                    (simple-var-ref candidate)
+                    (value-type null))
+                  (literal :)
+                  (simple-var-ref outerJoinState))))
+              (compound-assignment +
+                (simple-var-ref outerJoinState)
+                (literal 1))))))
+      (var-def
+        (variable limitEvaluated (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))
+          (let-clause
+            (var-def
+              (variable recorded (type
+                (value-type int)) (expr
+                (invocation track (
+                  (simple-var-ref limitEvaluated)
+                  (simple-var-ref value)))))))
+          (limit-clause
+            (literal 1))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal limit:)
+                  (simple-var-ref recorded))))))))
+      (expression-stmt
+        (invocation io println (
+          (literal limit-evaluated:)
+          (invocation length expr:
+            (simple-var-ref limitEvaluated) ()))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable left))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)))
+          (limit-clause
+            (literal 1))
+          (join-clause
+            (var-def
+              (variable right))
+            (list-constructor-expr
+              (literal 1))
+            (on-clause
+              (simple-var-ref left)
+              (simple-var-ref right)))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal limit-before-join:)
+                  (simple-var-ref left))))))))
+      (var-def
+        (variable joinLimitEvaluated (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable left))
+            (list-constructor-expr
+              (literal 1)))
+          (join-clause
+            (var-def
+              (variable right))
+            (list-constructor-expr
+              (literal 1)
+              (literal 1)
+              (literal 1))
+            (on-clause
+              (simple-var-ref left)
+              (simple-var-ref right)))
+          (let-clause
+            (var-def
+              (variable recorded (type
+                (value-type int)) (expr
+                (invocation track (
+                  (simple-var-ref joinLimitEvaluated)
+                  (simple-var-ref right)))))))
+          (limit-clause
+            (literal 1))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal limit-after-join:)
+                  (simple-var-ref recorded))))))))
+      (expression-stmt
+        (invocation io println (
+          (literal join-limit-evaluated:)
+          (invocation length expr:
+            (simple-var-ref joinLimitEvaluated) ()))))
+      (var-def
+        (variable joinEvents (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable left))
+            (invocation trackCollection (
+              (simple-var-ref joinEvents)
+              (literal 1)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))))
+          (join-clause
+            (var-def
+              (variable right))
+            (invocation trackCollection (
+              (simple-var-ref joinEvents)
+              (literal 2)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))))
+            (on-clause
+              (simple-var-ref left)
+              (invocation trackKey (
+                (simple-var-ref joinEvents)
+                (simple-var-ref right)))))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation push expr:
+                  (simple-var-ref joinEvents) (
+                  (binary-expr +
+                    (simple-var-ref left)
+                    (literal 20)))))))))
+      (expression-stmt
+        (invocation io println (
+          (literal join-events:)
+          (simple-var-ref joinEvents))))
+      (var-def
+        (variable zeroLimitEvaluated (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))
+          (let-clause
+            (var-def
+              (variable recorded (type
+                (value-type int)) (expr
+                (invocation track (
+                  (simple-var-ref zeroLimitEvaluated)
+                  (simple-var-ref value)))))))
+          (limit-clause
+            (literal 0))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal unexpected-zero-limit:)
+                  (simple-var-ref recorded))))))))
+      (expression-stmt
+        (invocation io println (
+          (literal zero-limit-evaluated:)
+          (invocation length expr:
+            (simple-var-ref zeroLimitEvaluated) ())))))))

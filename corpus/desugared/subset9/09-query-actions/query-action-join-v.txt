@@ -102,396 +102,299 @@
         (variable $desugar$0 (expr
           (literal <nil>))))
       (var-def
-        (variable $desugar$1 (expr
-          (list-constructor-expr))))
-      (var-def
         (variable employee))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$1 (expr
           (simple-var-ref employees))))
       (var-def
-        (variable $desugar$3 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$2))))))
-      (var-def
-        (variable $desugar$4 (expr
-          (numeric-literal 0))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$4)
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (assignment
-            (simple-var-ref employee)
-            (index-based-access
-              (simple-var-ref $desugar$2)
-              (simple-var-ref $desugar$4)))
-          (expression-stmt
-            (invocation lang.array push (
-              (simple-var-ref $desugar$1)
-              (list-constructor-expr
-                (simple-var-ref employee)))))
-          (assignment
-            (simple-var-ref $desugar$4)
-            (binary-expr +
-              (simple-var-ref $desugar$4)
-              (numeric-literal 1)))))
-      (var-def
-        (variable department))
-      (var-def
-        (variable $desugar$5 (expr
-          (list-constructor-expr))))
-      (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$2 (expr
           (invocation lang.array length (
             (simple-var-ref $desugar$1))))))
       (var-def
-        (variable $desugar$7 (expr
-          (numeric-literal 0))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$7)
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (var-def
-            (variable $desugar$8 (expr
-              (index-based-access
-                (simple-var-ref $desugar$1)
-                (simple-var-ref $desugar$7)))))
-          (assignment
-            (simple-var-ref employee)
-            (index-based-access
-              (simple-var-ref $desugar$8)
-              (numeric-literal 0)))
-          (var-def
-            (variable $desugar$9 (expr
-              (index-based-access
-                (simple-var-ref employee)
-                (literal dept)))))
-          (var-def
-            (variable $desugar$10 (expr
-              (simple-var-ref departments))))
-          (var-def
-            (variable $desugar$11 (expr
-              (invocation lang.array length (
-                (simple-var-ref $desugar$10))))))
-          (var-def
-            (variable $desugar$12 (expr
-              (numeric-literal 0))))
-          (while
-            (binary-expr <
-              (simple-var-ref $desugar$12)
-              (simple-var-ref $desugar$11))
-            (block-stmt
-              (assignment
-                (simple-var-ref department)
-                (index-based-access
-                  (simple-var-ref $desugar$10)
-                  (simple-var-ref $desugar$12)))
-              (if
-                (binary-expr ==
-                  (simple-var-ref $desugar$9)
-                  (index-based-access
-                    (simple-var-ref department)
-                    (literal code)))
-                (block-stmt
-                  (expression-stmt
-                    (invocation lang.array push (
-                      (simple-var-ref $desugar$5)
-                      (list-constructor-expr
-                        (simple-var-ref employee)
-                        (simple-var-ref department)))))) ())
-              (assignment
-                (simple-var-ref $desugar$12)
-                (binary-expr +
-                  (simple-var-ref $desugar$12)
-                  (numeric-literal 1)))))
-          (assignment
-            (simple-var-ref $desugar$7)
-            (binary-expr +
-              (simple-var-ref $desugar$7)
-              (numeric-literal 1)))))
-      (var-def
-        (variable $desugar$13 (expr
-          (list-constructor-expr))))
-      (var-def
-        (variable $desugar$14 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$5))))))
-      (var-def
-        (variable $desugar$15 (expr
-          (numeric-literal 0))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$15)
-          (simple-var-ref $desugar$14))
-        (block-stmt
-          (var-def
-            (variable $desugar$16 (expr
-              (index-based-access
-                (simple-var-ref $desugar$5)
-                (simple-var-ref $desugar$15)))))
-          (assignment
-            (simple-var-ref employee)
-            (index-based-access
-              (simple-var-ref $desugar$16)
-              (numeric-literal 0)))
-          (assignment
-            (simple-var-ref department)
-            (index-based-access
-              (simple-var-ref $desugar$16)
-              (numeric-literal 1)))
-          (if
-            (binary-expr ==
-              (index-based-access
-                (simple-var-ref department)
-                (literal title))
-              (literal Engineering))
-            (block-stmt
-              (expression-stmt
-                (invocation lang.array push (
-                  (simple-var-ref $desugar$13)
-                  (simple-var-ref $desugar$16))))) ())
-          (assignment
-            (simple-var-ref $desugar$15)
-            (binary-expr +
-              (simple-var-ref $desugar$15)
-              (numeric-literal 1)))))
-      (var-def
-        (variable $desugar$17 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$13))))))
-      (var-def
-        (variable $desugar$18 (expr
-          (numeric-literal 0))))
-      (var-def
-        (variable nextAge))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$18)
-          (simple-var-ref $desugar$17))
-        (block-stmt
-          (var-def
-            (variable $desugar$19 (expr
-              (index-based-access
-                (simple-var-ref $desugar$13)
-                (simple-var-ref $desugar$18)))))
-          (assignment
-            (simple-var-ref employee)
-            (index-based-access
-              (simple-var-ref $desugar$19)
-              (numeric-literal 0)))
-          (assignment
-            (simple-var-ref department)
-            (index-based-access
-              (simple-var-ref $desugar$19)
-              (numeric-literal 1)))
-          (assignment
-            (simple-var-ref nextAge)
-            (binary-expr +
-              (index-based-access
-                (simple-var-ref employee)
-                (literal age))
-              (literal 1)))
-          (expression-stmt
-            (invocation lang.array push (
-              (simple-var-ref $desugar$19)
-              (simple-var-ref nextAge))))
-          (assignment
-            (simple-var-ref $desugar$18)
-            (binary-expr +
-              (simple-var-ref $desugar$18)
-              (numeric-literal 1)))))
-      (var-def
-        (variable $desugar$20 (expr
-          (list-constructor-expr))))
-      (var-def
-        (variable $desugar$21 (expr
-          (list-constructor-expr))))
-      (var-def
-        (variable $desugar$22 (expr
-          (list-constructor-expr))))
-      (expression-stmt
-        (invocation lang.array push (
-          (simple-var-ref $desugar$22)
-          (simple-var-ref $desugar$13))))
-      (var-def
-        (variable $desugar$23 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$13))))))
-      (var-def
-        (variable $desugar$24 (expr
-          (numeric-literal 0))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$24)
-          (simple-var-ref $desugar$23))
-        (block-stmt
-          (var-def
-            (variable $desugar$25 (expr
-              (index-based-access
-                (simple-var-ref $desugar$13)
-                (simple-var-ref $desugar$24)))))
-          (assignment
-            (simple-var-ref employee)
-            (index-based-access
-              (simple-var-ref $desugar$25)
-              (numeric-literal 0)))
-          (assignment
-            (simple-var-ref department)
-            (index-based-access
-              (simple-var-ref $desugar$25)
-              (numeric-literal 1)))
-          (assignment
-            (simple-var-ref nextAge)
-            (index-based-access
-              (simple-var-ref $desugar$25)
-              (numeric-literal 2)))
-          (expression-stmt
-            (invocation lang.array push (
-              (simple-var-ref $desugar$20)
-              (list-constructor-expr
-                (index-based-access
-                  (simple-var-ref employee)
-                  (literal age))))))
-          (expression-stmt
-            (invocation lang.array push (
-              (simple-var-ref $desugar$21)
-              (simple-var-ref $desugar$24))))
-          (assignment
-            (simple-var-ref $desugar$24)
-            (binary-expr +
-              (simple-var-ref $desugar$24)
-              (numeric-literal 1)))))
-      (expression-stmt
-        (invocation lang.__internal querySort (
-          (simple-var-ref $desugar$20)
-          (list-constructor-expr
-            (literal false))
-          (simple-var-ref $desugar$21)
-          (simple-var-ref $desugar$22))))
-      (var-def
-        (variable $desugar$26 (expr
+        (variable $desugar$3 (expr
           (literal 2))))
       (if
         (binary-expr <
-          (simple-var-ref $desugar$26)
+          (simple-var-ref $desugar$3)
           (numeric-literal 0))
         (block-stmt
           (panic
             (error-constructor-expr (
               (literal limit cannot be negative))))) ())
       (var-def
-        (variable $desugar$27 (expr
-          (list-constructor-expr))))
-      (var-def
-        (variable $desugar$28 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$13))))))
-      (var-def
-        (variable $desugar$29 (expr
+        (variable $desugar$4 (expr
           (numeric-literal 0))))
       (var-def
-        (variable $desugar$30 (expr
+        (variable $desugar$5 (expr
+          (literal false))))
+      (if
+        (binary-expr ==
+          (simple-var-ref $desugar$3)
+          (numeric-literal 0))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (literal true))) ())
+      (var-def
+        (variable department))
+      (var-def
+        (variable $desugar$6 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$7 (expr
+          (simple-var-ref departments))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$7))))))
+      (var-def
+        (variable $desugar$9 (expr
           (numeric-literal 0))))
       (while
         (binary-expr <
-          (simple-var-ref $desugar$29)
-          (simple-var-ref $desugar$28))
+          (simple-var-ref $desugar$9)
+          (simple-var-ref $desugar$8))
         (block-stmt
-          (var-def
-            (variable $desugar$31 (expr
-              (index-based-access
-                (simple-var-ref $desugar$13)
-                (simple-var-ref $desugar$29)))))
+          (assignment
+            (simple-var-ref department)
+            (index-based-access
+              (simple-var-ref $desugar$7)
+              (simple-var-ref $desugar$9)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$6)
+              (list-constructor-expr
+                (simple-var-ref department)
+                (index-based-access
+                  (simple-var-ref department)
+                  (literal code))))))
+          (assignment
+            (simple-var-ref $desugar$9)
+            (binary-expr +
+              (simple-var-ref $desugar$9)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$10 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable nextAge))
+      (var-def
+        (variable $desugar$14 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$14)
+          (simple-var-ref $desugar$2))
+        (block-stmt
           (assignment
             (simple-var-ref employee)
             (index-based-access
-              (simple-var-ref $desugar$31)
+              (simple-var-ref $desugar$1)
+              (simple-var-ref $desugar$14)))
+          (var-def
+            (variable $desugar$11 (expr
+              (index-based-access
+                (simple-var-ref employee)
+                (literal dept)))))
+          (var-def
+            (variable $desugar$12 (expr
+              (numeric-literal 0))))
+          (while
+            (binary-expr <
+              (simple-var-ref $desugar$12)
+              (simple-var-ref $desugar$8))
+            (block-stmt
+              (var-def
+                (variable $desugar$13 (expr
+                  (index-based-access
+                    (simple-var-ref $desugar$6)
+                    (simple-var-ref $desugar$12)))))
+              (assignment
+                (simple-var-ref department)
+                (index-based-access
+                  (simple-var-ref $desugar$13)
+                  (numeric-literal 0)))
+              (if
+                (binary-expr ==
+                  (simple-var-ref $desugar$11)
+                  (index-based-access
+                    (simple-var-ref $desugar$13)
+                    (numeric-literal 1)))
+                (block-stmt
+                  (if
+                    (binary-expr ==
+                      (index-based-access
+                        (simple-var-ref department)
+                        (literal title))
+                      (literal Engineering))
+                    (block-stmt
+                      (assignment
+                        (simple-var-ref nextAge)
+                        (binary-expr +
+                          (index-based-access
+                            (simple-var-ref employee)
+                            (literal age))
+                          (literal 1)))
+                      (expression-stmt
+                        (invocation lang.array push (
+                          (simple-var-ref $desugar$10)
+                          (list-constructor-expr
+                            (simple-var-ref employee)
+                            (simple-var-ref department)
+                            (simple-var-ref nextAge)))))) ())) ())
+              (assignment
+                (simple-var-ref $desugar$12)
+                (binary-expr +
+                  (simple-var-ref $desugar$12)
+                  (numeric-literal 1)))))
+          (assignment
+            (simple-var-ref $desugar$14)
+            (binary-expr +
+              (simple-var-ref $desugar$14)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$15 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$16 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$17 (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref $desugar$17)
+          (simple-var-ref $desugar$10))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$10))))))
+      (var-def
+        (variable $desugar$19 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$19)
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (var-def
+            (variable $desugar$20 (expr
+              (index-based-access
+                (simple-var-ref $desugar$10)
+                (simple-var-ref $desugar$19)))))
+          (assignment
+            (simple-var-ref employee)
+            (index-based-access
+              (simple-var-ref $desugar$20)
               (numeric-literal 0)))
           (assignment
             (simple-var-ref department)
             (index-based-access
-              (simple-var-ref $desugar$31)
+              (simple-var-ref $desugar$20)
               (numeric-literal 1)))
           (assignment
             (simple-var-ref nextAge)
             (index-based-access
-              (simple-var-ref $desugar$31)
+              (simple-var-ref $desugar$20)
+              (numeric-literal 2)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$15)
+              (list-constructor-expr
+                (index-based-access
+                  (simple-var-ref employee)
+                  (literal age))))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$16)
+              (simple-var-ref $desugar$19))))
+          (assignment
+            (simple-var-ref $desugar$19)
+            (binary-expr +
+              (simple-var-ref $desugar$19)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation lang.__internal querySort (
+          (simple-var-ref $desugar$15)
+          (list-constructor-expr
+            (literal false))
+          (simple-var-ref $desugar$16)
+          (simple-var-ref $desugar$17))))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$10))))))
+      (var-def
+        (variable $desugar$22 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr &&
+          (binary-expr <
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$21))
+          (unary-expr !
+            (simple-var-ref $desugar$5)))
+        (block-stmt
+          (var-def
+            (variable $desugar$23 (expr
+              (index-based-access
+                (simple-var-ref $desugar$10)
+                (simple-var-ref $desugar$22)))))
+          (assignment
+            (simple-var-ref employee)
+            (index-based-access
+              (simple-var-ref $desugar$23)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref department)
+            (index-based-access
+              (simple-var-ref $desugar$23)
+              (numeric-literal 1)))
+          (assignment
+            (simple-var-ref nextAge)
+            (index-based-access
+              (simple-var-ref $desugar$23)
               (numeric-literal 2)))
           (if
             (binary-expr <
-              (simple-var-ref $desugar$30)
-              (simple-var-ref $desugar$26))
+              (simple-var-ref $desugar$4)
+              (simple-var-ref $desugar$3))
             (block-stmt
-              (expression-stmt
-                (invocation lang.array push (
-                  (simple-var-ref $desugar$27)
-                  (simple-var-ref $desugar$31))))
               (assignment
-                (simple-var-ref $desugar$30)
+                (simple-var-ref $desugar$4)
                 (binary-expr +
-                  (simple-var-ref $desugar$30)
-                  (numeric-literal 1)))) ())
-          (assignment
-            (simple-var-ref $desugar$29)
-            (binary-expr +
-              (simple-var-ref $desugar$29)
-              (numeric-literal 1)))))
-      (var-def
-        (variable $desugar$32 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$27))))))
-      (var-def
-        (variable $desugar$33 (expr
-          (numeric-literal 0))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$33)
-          (simple-var-ref $desugar$32))
-        (block-stmt
-          (var-def
-            (variable $desugar$34 (expr
-              (index-based-access
-                (simple-var-ref $desugar$27)
-                (simple-var-ref $desugar$33)))))
-          (assignment
-            (simple-var-ref employee)
-            (index-based-access
-              (simple-var-ref $desugar$34)
-              (numeric-literal 0)))
-          (assignment
-            (simple-var-ref department)
-            (index-based-access
-              (simple-var-ref $desugar$34)
-              (numeric-literal 1)))
-          (assignment
-            (simple-var-ref nextAge)
-            (index-based-access
-              (simple-var-ref $desugar$34)
-              (numeric-literal 2)))
-          (assignment
-            (simple-var-ref labels)
-            (binary-expr +
-              (binary-expr +
+                  (simple-var-ref $desugar$4)
+                  (numeric-literal 1)))
+              (if
+                (binary-expr >=
+                  (simple-var-ref $desugar$4)
+                  (simple-var-ref $desugar$3))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$5)
+                    (literal true))) ())
+              (assignment
+                (simple-var-ref labels)
                 (binary-expr +
                   (binary-expr +
-                    (simple-var-ref labels)
+                    (binary-expr +
+                      (binary-expr +
+                        (simple-var-ref labels)
+                        (index-based-access
+                          (simple-var-ref employee)
+                          (literal name)))
+                      (literal :))
                     (index-based-access
-                      (simple-var-ref employee)
-                      (literal name)))
-                  (literal :))
-                (index-based-access
-                  (simple-var-ref department)
-                  (literal title)))
-              (literal ;)))
-          (compound-assignment +
-            (simple-var-ref ageTotal)
-            (simple-var-ref nextAge))
+                      (simple-var-ref department)
+                      (literal title)))
+                  (literal ;)))
+              (compound-assignment +
+                (simple-var-ref ageTotal)
+                (simple-var-ref nextAge))) ())
           (assignment
-            (simple-var-ref $desugar$33)
+            (simple-var-ref $desugar$22)
             (binary-expr +
-              (simple-var-ref $desugar$33)
+              (simple-var-ref $desugar$22)
               (numeric-literal 1)))))
       (var-def
         (variable result (type
