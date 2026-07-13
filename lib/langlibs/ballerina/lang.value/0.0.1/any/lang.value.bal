@@ -17,29 +17,6 @@
 // This module currently exposes no symbols; it exists so that the lang.value
 // langlib resolves as a real bundle.
 
-# Converts a value of type json to a user-specified type.
-#
-# This works the same as function `cloneWithType`,
-# except that it also does the inverse of the conversions done by `toJson`.
-#
-# ```ballerina
-# json arr = [1, 2, 3, 4];
-# int[] intArray = check arr.fromJsonWithType();
-# intArray ⇒ [1,2,3,4]
-#
-# type Vowels string:Char[];
-#
-# json vowels = ["a", "e", "i", "o", "u"];
-# vowels.fromJsonWithType(Vowels) ⇒ ["a","e","i","o","u"]
-#
-# vowels.fromJsonWithType(string) ⇒ error
-# ```
-#
-# + v - json value
-# + t - type to convert to
-# + return - value belonging to type parameter `t` or error if this cannot be done
-public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) returns t|error  = external;
-
 # Constructs a value with a specified type by cloning another value.
 #
 # When `v` is a structural value, the inherent type of the constructed value comes from `t`.
@@ -66,3 +43,26 @@ public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) retu
 # + t - the type for the clone to be constructed
 # + return - a new value of type `t`, or an error if this cannot be done
 public isolated function cloneWithType(anydata v, typedesc<anydata> t = <>) returns t|error = external;
+
+# Converts a value of type json to a user-specified type.
+#
+# This works the same as function `cloneWithType`,
+# except that it also does the inverse of the conversions done by `toJson`.
+#
+# ```ballerina
+# json arr = [1, 2, 3, 4];
+# int[] intArray = check arr.fromJsonWithType();
+# intArray ⇒ [1,2,3,4]
+#
+# type Vowels string:Char[];
+#
+# json vowels = ["a", "e", "i", "o", "u"];
+# vowels.fromJsonWithType(Vowels) ⇒ ["a","e","i","o","u"]
+#
+# vowels.fromJsonWithType(string) ⇒ error
+# ```
+#
+# + v - json value
+# + t - type to convert to
+# + return - value belonging to type parameter `t` or error if this cannot be done
+public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) returns t|error  = external;
