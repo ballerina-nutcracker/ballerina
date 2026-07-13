@@ -43,7 +43,6 @@ import (
 	"ballerina-lang-go/test_util"
 	"ballerina-lang-go/test_util/langlib"
 	"ballerina-lang-go/test_util/testharness"
-	"ballerina-lang-go/tools/diagnostics"
 	"ballerina-lang-go/tools/text"
 
 	_ "ballerina-lang-go/lib/rt"
@@ -120,15 +119,6 @@ type testResult struct {
 	actualStdout   string
 	expectedStderr string
 	actualStderr   string
-}
-
-// caseRun is the full result of executing one corpus case (single-file or
-// project): captured streams plus the resolved error diagnostics needed for
-// `-e` annotation checks.
-type caseRun struct {
-	stdout string
-	stderr string
-	diags  []resolvedDiag
 }
 
 func TestIntegration(t *testing.T) {
@@ -218,97 +208,6 @@ func suffixOf(name string) string {
 	return ""
 }
 
-// checkExpectedOutputInvariants fails the test when the expected stdout/stderr do not
-// match the test's suffix convention.
-//
-//	-v tests must have empty stderr and must not panic in stdout.
-//	-e tests must have non-empty stderr.
-//	-p tests must have non-empty stderr containing a runtime panic, not a compile error.
-//	-fv/-fe/-fp (future) tests must have non-empty stderr beginning with a
-//	`fatal[...]` bailout from the compiler/runtime.
-//
-// Violations must be added to the appropriate skip list (the message points to which one).
-func checkExpectedOutputInvariants(t *testing.T, name, stdout, stderr string, projectScope bool) {
-	t.Helper()
-	stderrNonEmpty := strings.TrimSpace(stderr) != ""
-	listName := "test_util.UnsupportedTests (or skipIntegrationTests)"
-	if projectScope {
-		listName = "skipProjectIntegrationTests"
-	}
-	switch suffixOf(name) {
-	case "v":
-		if stderrNonEmpty {
-			t.Fatalf("-v test %q has non-empty expected stderr; add it to %s under the"+
-				" \"expected clean run\" group, or fix the test.\nstderr:\n%s",
-				name, listName, stderr)
-		}
-		// A -v test is a clean run; the interpreter must not have panicked. pi prints
-		// runtime panics to stdout as `panic: ...`.
-		if strings.Contains(stdout, "panic:") {
-			t.Fatalf("-v test %q has a runtime panic in expected stdout; add it to %s under the"+
-				" \"expected clean run\" group, or fix the test.\nstdout:\n%s",
-				name, listName, stdout)
-		}
-	case "e":
-		if !stderrNonEmpty {
-			t.Fatalf("-e test %q has empty expected stderr; add it to %s under the"+
-				" \"expected error\" group, or fix the test.", name, listName)
-		}
-		// An -e test documents a compile-time error and the front-end must catch it.
-		// Compiler diagnostics use the prefix `error[CATEGORY]: ...`; runtime errors are
-		// `error: ...` and compiler internal/unimplemented bailouts are `fatal[...]: ...`.
-		// Anything other than a compile diagnostic means the front-end let the test through.
-		if !strings.HasPrefix(strings.TrimSpace(stderr), "error[") {
-			t.Fatalf("-e test %q expected stderr is not a compile diagnostic"+
-				" (`error[...]: ...`); the front-end should detect this error. Add it to %s"+
-				" under the \"expected frontend error\" group, or fix the test.\nstderr:\n%s",
-				name, listName, stderr)
-		}
-		// Every diagnostic must carry a source location (`  --> file:line:col`). Without
-		// one the user can't see where the error is.
-		numErr := strings.Count(stderr, "\nerror[") + boolToInt(strings.HasPrefix(stderr, "error["))
-		numLoc := strings.Count(stderr, "--> ")
-		if numLoc < numErr {
-			t.Fatalf("-e test %q expected stderr has a diagnostic with no source location"+
-				" (%d errors, %d `-->` lines). Add it to %s under the"+
-				" \"missing error location\" group, or fix the test.\nstderr:\n%s",
-				name, numErr, numLoc, listName, stderr)
-		}
-	case "fv", "fe", "fp":
-		if !stderrNonEmpty {
-			t.Fatalf("-%s test %q has empty expected stderr; future tests must surface"+
-				" a `fatal[...]` bailout. Add it to %s under the \"future\" group, or"+
-				" fix the test.", suffixOf(name), name, listName)
-		}
-		if !strings.HasPrefix(strings.TrimSpace(stderr), "fatal[") {
-			t.Fatalf("future test %q expected stderr is not a `fatal[...]` bailout;"+
-				" future tests document cases the front-end currently cannot handle."+
-				" Promote the test to -v/-e/-p or fix it.\nstderr:\n%s", name, stderr)
-		}
-	case "p":
-		if !stderrNonEmpty {
-			t.Fatalf("-p test %q has empty expected stderr; add it to %s under the"+
-				" \"expected runtime panic\" group, or fix the test.", name, listName)
-		}
-		// A -p test must surface a runtime panic, not a compile error. The compiler emits
-		// diagnostics in the form `error[CATEGORY]: ...` whereas the runtime emits
-		// `error: ...` or `panic: ...`. Reject the former for -p tests.
-		if strings.HasPrefix(strings.TrimSpace(stderr), "error[") {
-			t.Fatalf("-p test %q expected stderr begins with a compile diagnostic"+
-				" (`error[...]: ...`); -p tests must produce a runtime panic. Add it to"+
-				" %s under the \"expected runtime panic\" group, or fix the test.\nstderr:\n%s",
-				name, listName, stderr)
-		}
-	}
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
 func splitStderrDiagnostics(stderr string) []string {
 	var diagnostics []string
 	for part := range strings.SplitSeq(stderr, "\n\n") {
@@ -354,38 +253,6 @@ func isProjectTestSkipped(dirName string) bool {
 	return slices.Contains(skipProjectIntegrationTests, dirName)
 }
 
-func resolveErrorDiagnostics(result projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) []resolvedDiag {
-	errs := result.Errors()
-	if len(errs) == 0 {
-		return nil
-	}
-	out := make([]resolvedDiag, 0, len(errs))
-	for _, d := range errs {
-		loc := d.Location()
-		if !diagnostics.LocationHasSource(loc) {
-			continue
-		}
-		out = append(out, resolvedDiag{
-			file:      de.FileName(loc),
-			startLine: de.StartLine(loc) + 1,
-			endLine:   de.EndLine(loc) + 1,
-		})
-	}
-	return out
-}
-
-func runIntegrationCase(balFile string) caseRun {
-	var stdoutBuf, stderrBuf bytes.Buffer
-
-	birPkgs, tyEnv, diags, compileErr := runCompilePhase(balFile, &stdoutBuf, &stderrBuf)
-	if len(birPkgs) == 0 || compileErr != nil {
-		return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
-	}
-
-	runInterpretPhase(birPkgs, tyEnv, &stdoutBuf, &stderrBuf)
-	return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
-}
-
 func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStderr string) testResult {
 	stderrMatch := expectedStderr == normalizeIntegrationStderr(actualStderr)
 	return testResult{
@@ -397,7 +264,10 @@ func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStde
 	}
 }
 
-func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, diags []resolvedDiag, err error) {
+// runCompilePhase exists separately from testharness.Run because
+// TestBIRSerializationRoundtrip needs the raw BIR packages to
+// serialize/deserialize before interpreting them.
+func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			msg := fmt.Sprintf("%v", r)
@@ -412,7 +282,7 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs [
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
@@ -421,22 +291,24 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs [
 	})
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	tyEnv = result.Project().Environment().TypeEnv()
 	currentPkg := result.Project().CurrentPackage()
 	compilation := currentPkg.Compilation()
 
-	printDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	diags = resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	testharness.PrintDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if compilation.DiagnosticResult().HasErrors() {
-		return nil, tyEnv, diags, nil
+		return nil, tyEnv, nil
 	}
 
 	backend := projects.NewBallerinaBackend(compilation)
-	return backend.BIRPackages(), tyEnv, diags, nil
+	return backend.BIRPackages(), tyEnv, nil
 }
 
+// runInterpretPhase takes already-compiled birPkgs (rather than compiling
+// itself) so TestBIRSerializationRoundtrip can interpret packages that went
+// through a serialize/deserialize roundtrip in between.
 func runInterpretPhase(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, stdoutBuf, stderrBuf *bytes.Buffer) {
 	if len(birPkgs) == 0 {
 		return
@@ -503,124 +375,6 @@ func findProjectDirs(dir string) []string {
 		}
 	}
 	return dirs
-}
-
-func testProjectIntegration(t *testing.T, dirName, projDir, txtarPath string) {
-	if isSkipKey("project/" + dirName) {
-		t.Skipf("Skipping project integration test for %s", dirName)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("panic while running %s: %v", dirName, r)
-		}
-	}()
-
-	run := runProjectIntegrationCase(projDir)
-	if *update {
-		normalizedStderr := normalizeIntegrationStderr(run.stderr)
-		checkExpectedOutputInvariants(t, dirName, run.stdout, normalizedStderr, true)
-		if test_util.UpdateTxtarArchiveIfNeeded(t, txtarPath, test_util.TxtarFilesStdoutStderr(run.stdout, normalizedStderr)) {
-			t.Fatalf("Updated expected file: %s", txtarPath)
-		}
-		return
-	}
-
-	expectedStdout, expectedStderr, err := test_util.LoadTxtarStdoutStderr(txtarPath)
-	if err != nil {
-		t.Fatalf("failed to load expected from %s: %v", txtarPath, err)
-	}
-	checkExpectedOutputInvariants(t, dirName, expectedStdout, expectedStderr, true)
-
-	result := evaluateTestResult(expectedStdout, expectedStderr, run.stdout, run.stderr)
-
-	projectSources, srcErr := collectProjectSources(projDir)
-	if srcErr != nil {
-		t.Errorf("failed to collect project sources: %v", srcErr)
-	} else {
-		assertAnnotations(t, projectSources, dirName, run.stdout, run.stderr, run.diags)
-	}
-	if result.success {
-		return
-	}
-
-	stdoutMismatch := result.expectedStdout != result.actualStdout
-	stderrMismatch := result.expectedStderr != result.actualStderr
-
-	var msg strings.Builder
-	if stdoutMismatch {
-		fmt.Fprintf(&msg, "stdout mismatch\n%s", test_util.FormatExpectedGot(
-			result.expectedStdout,
-			result.actualStdout,
-		))
-	}
-	if stderrMismatch {
-		if msg.Len() > 0 {
-			msg.WriteString("\n\n")
-		}
-		fmt.Fprintf(&msg, "stderr mismatch\n%s", test_util.FormatExpectedGot(
-			result.expectedStderr,
-			normalizeIntegrationStderr(result.actualStderr),
-		))
-	}
-	t.Errorf("%s", msg.String())
-}
-
-func runProjectIntegrationCase(projectDir string) caseRun {
-	var stdoutBuf bytes.Buffer
-	var stderrBuf bytes.Buffer
-
-	birPkgs, tyEnv, diags, compileErr := runProjectCompilePhase(projectDir, &stdoutBuf, &stderrBuf)
-	if birPkgs == nil || compileErr != nil {
-		return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
-	}
-
-	runProjectInterpretPhase(birPkgs, tyEnv, &stdoutBuf, &stderrBuf)
-	return caseRun{stdout: stdoutBuf.String(), stderr: stderrBuf.String(), diags: diags}
-}
-
-func runProjectCompilePhase(projectDir string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs []*bir.BIRPackage, tyEnv semtypes.Env, diags []resolvedDiag, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			msg := fmt.Sprintf("%v", r)
-			msg = strings.TrimPrefix(msg, panicPrefix)
-			fmt.Fprintf(stdoutBuf, "%s%s\n", panicPrefix, msg)
-			err = fmt.Errorf("compile panic")
-		}
-	}()
-
-	fsys := os.DirFS(projectDir)
-
-	ballerinaEnvPath, err := getBallerinaEnvPath()
-	if err != nil {
-		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, nil, err
-	}
-	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
-
-	result, err := projects.Load(fsys, ".", projects.ProjectLoadConfig{
-		BallerinaEnvFs: ballerinaEnvFs,
-	})
-	if err != nil {
-		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
-		return nil, nil, nil, err
-	}
-	tyEnv = result.Project().Environment().TypeEnv()
-	currentPkg := result.Project().CurrentPackage()
-	compilation := currentPkg.Compilation()
-
-	// Loader-level diagnostics (workspace manifest errors, package manifest
-	// errors flagged before compilation) are separate from compilation
-	// diagnostics. Surface both so corpus -e cases can assert on either.
-	printDiagnostics(fsys, stderrBuf, result.Diagnostics(), compilation.DiagnosticEnv())
-	printDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	diags = resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	if result.Diagnostics().HasErrors() || compilation.DiagnosticResult().HasErrors() {
-		return nil, tyEnv, diags, nil
-	}
-
-	backend := projects.NewBallerinaBackend(compilation)
-	return backend.BIRPackages(), tyEnv, diags, nil
 }
 
 func runProjectInterpretPhase(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, stdoutBuf, stderrBuf *bytes.Buffer) {
@@ -747,7 +501,7 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	currentPkg := project.CurrentPackage()
 	compilation := currentPkg.Compilation()
 
-	printDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	testharness.PrintDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if compilation.DiagnosticResult().HasErrors() {
 		return stdoutBuf.String(), stderrBuf.String()
 	}
@@ -943,18 +697,15 @@ func BenchmarkIntegration(b *testing.B) {
 				b.Fatalf("failed to load expected from %s: %v", testPair.ExpectedPath, err)
 			}
 
-			var run caseRun
+			var pal testharness.TestPal
 			b.ResetTimer()
 			for b.Loop() {
-				if testPair.IsProject {
-					run = runProjectIntegrationCase(testPair.InputPath)
-				} else {
-					run = runIntegrationCase(testPair.InputPath)
-				}
+				pal = testharness.NewTestPal()
+				testharness.Run(b, testPair, pal, nil)
 			}
 			b.StopTimer()
 
-			result := evaluateTestResult(expectedStdout, expectedStderr, run.stdout, run.stderr)
+			result := evaluateTestResult(expectedStdout, expectedStderr, pal.Stdout(), pal.Stderr())
 			if !result.success {
 				b.Fatalf("output mismatch for %s:\nstdout:\n%s\nstderr:\n%s",
 					testPair.InputPath,
