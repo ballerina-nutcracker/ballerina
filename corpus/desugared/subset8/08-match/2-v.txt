@@ -1,19 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const ZERO () ())
-  (const ONE () ())
-  (const TWO () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref ZERO)
-        (literal 0))
-      (assignment
-        (simple-var-ref ONE)
-        (literal 1))
-      (assignment
-        (simple-var-ref TWO)
-        (literal 2))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -38,21 +24,21 @@
         (simple-var-ref v)
         (match-clause
           (const-pattern
-            (simple-var-ref ZERO))
+            (numeric-literal 0))
           (block-stmt
             (expression-stmt
               (invocation io println (
                 (literal none))))))
         (match-clause
           (const-pattern
-            (simple-var-ref ONE))
+            (numeric-literal 1))
           (block-stmt
             (expression-stmt
               (invocation io println (
                 (literal one))))))
         (match-clause
           (const-pattern
-            (simple-var-ref TWO))
+            (numeric-literal 2))
           (block-stmt
             (expression-stmt
               (invocation io println (

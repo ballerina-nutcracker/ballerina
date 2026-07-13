@@ -178,6 +178,10 @@ func (m *Map) Len() int {
 	return len(m.data)
 }
 
+func (m *Map) IsReadonly() bool {
+	return m.isReadonly
+}
+
 func (m *Map) Keys() []string {
 	keys := make([]string, 0, len(m.data))
 	for e := m.head; e != nil; e = e.next {

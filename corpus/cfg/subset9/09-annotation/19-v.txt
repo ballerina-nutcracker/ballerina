@@ -1,0 +1,56 @@
+(getIntType
+  (bb0 () ()
+    (return
+      (typedesc-expr
+        (value-type int)))
+  )
+)
+(getPlainType
+  (bb0 () ()
+    (return
+      (simple-var-ref Plain))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable intType (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type int))) (expr
+        (invocation getIntType ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref intType)
+          (value-type typedesc)))))
+    (var-def
+      (variable plainType (type
+        (constrained-type
+          (value-type typedesc)
+          (user-defined-type Plain))) (expr
+        (invocation getPlainType ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref plainType)
+          (value-type typedesc)))))
+    (var-def
+      (variable m (type
+        (union-type
+          (user-defined-type Meta)
+          (value-type null))) (expr
+        (annot-access-expr info
+          (simple-var-ref MyInt)))))
+    (type-test-expr is
+      (simple-var-ref m)
+      (user-defined-type Meta))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access name
+          (simple-var-ref m)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

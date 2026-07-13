@@ -1,18 +1,12 @@
 (package
   (import-package ballerina io (as io))
-  (const val () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref val)
-        (literal 5))))
   (function foo () (
     (value-type null))
     (block-function-body
       (var-def
         (variable a (type
           (value-type int)) (expr
-          (simple-var-ref val))))
+          (numeric-literal 5))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref a))))))

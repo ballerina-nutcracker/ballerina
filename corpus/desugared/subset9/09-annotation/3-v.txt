@@ -1,0 +1,60 @@
+(package
+  (import-package ballerina io (as io))
+  (variable offset (type
+    (value-type int)))
+  (annotation fnInfo
+    (user-defined-type Meta)
+    (attach-point function))
+  (annotation paramInfo
+    (attach-point parameter))
+  (annotation constInfo const
+    (user-defined-type Meta)
+    (attach-point source const))
+  (annotation varInfo const
+    (user-defined-type Meta)
+    (attach-point source var))
+  (type-definition Meta
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field name
+          (value-type string))
+        (field code
+          (value-type int)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref offset)
+        (literal 1))))
+  (function add (
+    (variable left (type
+      (value-type int)))
+    (variable right (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref left)
+          (simple-var-ref right))))
+    (annotation-attachment fnInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal add))
+        (key-value
+          (literal code)
+          (literal 3)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation add (
+            (literal 2)
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (numeric-literal 10)
+            (simple-var-ref offset))))))))

@@ -1,35 +1,18 @@
 (package
   (import-package ballerina io (as io))
-  (const RED (
-    (value-type string)) ())
-  (const GREEN (
-    (value-type string)) ())
-  (const BLUE (
-    (value-type string)) ())
   (type-definition Color
     (union-type
       (union-type
         (user-defined-type RED)
         (user-defined-type GREEN))
       (user-defined-type BLUE)))
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref RED)
-        (literal RED))
-      (assignment
-        (simple-var-ref GREEN)
-        (literal green))
-      (assignment
-        (simple-var-ref BLUE)
-        (literal BLUE))))
   (function main () (
     (value-type null))
     (block-function-body
       (var-def
         (variable c (type
           (user-defined-type Color)) (expr
-          (simple-var-ref GREEN))))
+          (literal green))))
       (var-def
         (variable x (type
           (union-type

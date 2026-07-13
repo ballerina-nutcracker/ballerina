@@ -1,27 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const D1 () ())
-  (const D2 () ())
-  (const D3 (
-    (value-type decimal)) ())
-  (const D4 (
-    (value-type decimal)) ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref D1)
-        (literal 2.1))
-      (assignment
-        (simple-var-ref D2)
-        (unary-expr -
-          (simple-var-ref D1)))
-      (assignment
-        (simple-var-ref D3)
-        (literal 2.1E+2))
-      (assignment
-        (simple-var-ref D4)
-        (unary-expr -
-          (simple-var-ref D3)))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -64,7 +42,7 @@
             (simple-var-ref d)))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D2))))
+          (numeric-literal -2.1))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D4)))))))
+          (numeric-literal -2.1E+2)))))))

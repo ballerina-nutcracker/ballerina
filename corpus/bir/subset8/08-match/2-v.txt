@@ -1,7 +1,4 @@
 module $anon.. v 0.0.0;
-ONE  1;
-TWO  2;
-ZERO  0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
@@ -29,8 +26,9 @@ main() -> nil{
 }
 foo(int) -> nil{
   bb0 {
-    %2 = == v ZERO;
-    %2 ? bb2 : bb3;
+    %2 = ConstantLoad 0
+    %3 = == v %2;
+    %3 ? bb2 : bb3;
   }
   bb1 {
     return;
@@ -41,8 +39,9 @@ foo(int) -> nil{
     %1 = println(%0) -> bb4;
   }
   bb3 {
-    %3 = == v ONE;
-    %3 ? bb5 : bb6;
+    %4 = ConstantLoad 1
+    %5 = == v %4;
+    %5 ? bb5 : bb6;
   }
   bb4 {
     PopScopeFrame
@@ -54,8 +53,9 @@ foo(int) -> nil{
     %1 = println(%0) -> bb7;
   }
   bb6 {
-    %4 = == v TWO;
-    %4 ? bb8 : bb9;
+    %6 = ConstantLoad 2
+    %7 = == v %6;
+    %7 ? bb8 : bb9;
   }
   bb7 {
     PopScopeFrame

@@ -1,0 +1,80 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Meta
+    (record-type
+      (field name optional
+        (value-type string))
+      (field code optional
+        (value-type int))))
+  (annotation meta
+    (user-defined-type Meta)
+    (attach-point type))
+  (annotation tag
+    (array-type
+      (user-defined-type Meta) dimensions: 1 ([]))
+    (attach-point type))
+  (type-definition Target
+    (annotation-attachment meta
+      (literal true))
+    (annotation-attachment tag
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal first))
+        (key-value
+          (literal code)
+          (literal 1))))
+    (annotation-attachment tag
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal second))
+        (key-value
+          (literal code)
+          (literal 2))))
+    (record-type
+      (field id
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable metaValue (type
+          (union-type
+            (user-defined-type Meta)
+            (value-type null))) (expr
+          (annot-access-expr meta
+            (simple-var-ref Target)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref metaValue)
+            (user-defined-type Meta)))))
+      (var-def
+        (variable tags (type
+          (union-type
+            (array-type
+              (user-defined-type Meta) dimensions: 1 ([]))
+            (value-type null))) (expr
+          (annot-access-expr tag
+            (simple-var-ref Target)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref tags)
+          (array-type
+            (user-defined-type Meta) dimensions: 1 ([])))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access name
+                (index-based-access
+                  (simple-var-ref tags)
+                  (literal 0))))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access code
+                (index-based-access
+                  (simple-var-ref tags)
+                  (literal 1))))))) ())
+      (block-stmt))))

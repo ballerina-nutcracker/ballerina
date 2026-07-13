@@ -1,0 +1,125 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable unaryValue (type
+        (union-type
+          (user-defined-type IntInfo)
+          (value-type null))) (expr
+        (annot-access-expr unaryInfo
+          (simple-var-ref UnaryTarget)))))
+    (type-test-expr is
+      (simple-var-ref unaryValue)
+      (user-defined-type IntInfo))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref unaryValue)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable logicalValue (type
+        (union-type
+          (user-defined-type BooleanInfo)
+          (value-type null))) (expr
+        (annot-access-expr logicalInfo
+          (simple-var-ref LogicalTarget)))))
+    (type-test-expr is
+      (simple-var-ref logicalValue)
+      (user-defined-type BooleanInfo))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref logicalValue)))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (var-def
+      (variable conversionValue (type
+        (union-type
+          (user-defined-type IntInfo)
+          (value-type null))) (expr
+        (annot-access-expr conversionInfo
+          (simple-var-ref ConversionTarget)))))
+    (type-test-expr is
+      (simple-var-ref conversionValue)
+      (user-defined-type IntInfo))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref conversionValue)))))
+  )
+  (bb6 (bb5 bb4) (bb7 bb8)
+    (var-def
+      (variable listValue (type
+        (union-type
+          (user-defined-type IntListInfo)
+          (value-type null))) (expr
+        (annot-access-expr listInfo
+          (simple-var-ref ListTarget)))))
+    (type-test-expr is
+      (simple-var-ref listValue)
+      (user-defined-type IntListInfo))
+  )
+  (bb7 (bb6) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access values
+            (simple-var-ref listValue))
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access values
+            (simple-var-ref listValue))
+          (literal 2)))))
+  )
+  (bb8 (bb7 bb6) (bb9 bb10)
+    (var-def
+      (variable templateValue (type
+        (union-type
+          (user-defined-type StringInfo)
+          (value-type null))) (expr
+        (annot-access-expr templateInfo
+          (simple-var-ref TemplateTarget)))))
+    (type-test-expr is
+      (simple-var-ref templateValue)
+      (user-defined-type StringInfo))
+  )
+  (bb9 (bb8) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref templateValue)))))
+  )
+  (bb10 (bb9 bb8) (bb11 bb12)
+    (var-def
+      (variable stringAdditionValue (type
+        (union-type
+          (user-defined-type StringInfo)
+          (value-type null))) (expr
+        (annot-access-expr templateInfo
+          (simple-var-ref StringAdditionTarget)))))
+    (type-test-expr is
+      (simple-var-ref stringAdditionValue)
+      (user-defined-type StringInfo))
+  )
+  (bb11 (bb10) (bb12)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref stringAdditionValue)))))
+  )
+  (bb12 (bb11 bb10) ())
+)
+(runtimeBoolean
+  (bb0 () ()
+    (return
+      (literal true))
+  )
+)
