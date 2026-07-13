@@ -31,6 +31,7 @@ import (
 	"ballerina-lang-go/semantics"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/test_util"
+	"ballerina-lang-go/test_util/testharness"
 )
 
 type serializationFixture struct {
@@ -67,7 +68,7 @@ func compileForSerializationBench(b *testing.B, tc test_util.TestCase) *serializ
 	compilation := result.Project().CurrentPackage().Compilation()
 
 	var stderrBuf bytes.Buffer
-	printDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	testharness.PrintDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	if compilation.DiagnosticResult().HasErrors() {
 		b.Fatalf("compile errors for %s:\n%s", tc.InputPath, stderrBuf.String())
 	}
