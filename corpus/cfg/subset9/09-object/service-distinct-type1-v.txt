@@ -1,0 +1,113 @@
+(ExplicitListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable broad (type
+          (object-type service)) (expr
+          (simple-var-ref svc))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref broad)
+            (user-defined-type ServiceType)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation value expr:
+            (simple-var-ref svc) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref attachPoint))))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(Listener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable broad (type
+          (object-type service)) (expr
+          (simple-var-ref svc))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref broad)
+            (user-defined-type ServiceType)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation value expr:
+            (simple-var-ref svc) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref attachPoint))))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(increment
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (field-based-access base
+          (simple-var-ref self))
+        (literal 1)))
+  )
+)
+(increment
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (field-based-access base
+          (simple-var-ref self))
+        (literal 1)))
+  )
+)
+(main
+  (bb0 () ())
+)
+(value
+  (bb0 () ()
+    (return
+      (invocation increment expr:
+        (simple-var-ref self) ()))
+  )
+)
+(value
+  (bb0 () ()
+    (return
+      (invocation increment expr:
+        (simple-var-ref self) ()))
+  )
+)

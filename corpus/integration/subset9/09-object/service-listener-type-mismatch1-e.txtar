@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: attach point is not supported by listener
+  --> service-listener-type-mismatch1-e.bal:55:25
+   |
+55 | service FirstService on stringAttachPointListener { // @error attach point mismatch
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: service type is not supported by listener
+  --> service-listener-type-mismatch1-e.bal:52:25
+   |
+52 | service FirstService on secondServiceListener { // @error service type mismatch
+   |                         ^^^^^^^^^^^^^^^^^^^^^

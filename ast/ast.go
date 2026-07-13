@@ -153,10 +153,14 @@ type (
 
 	BLangService struct {
 		classDefnBase
-		AttachedExprs []BLangExpression
-		// attach point either AbsoluteResourcePath or AttachPointLiteral
+		AttachedExprs         []BLangExpression
+		AttachedExprsPosition diagnostics.Location
+		// A nil AbsoluteResourcePath means there is no attach point; an empty,
+		// non-nil path represents the root attach point `/`.
 		AbsoluteResourcePath []BLangIdentifier
 		AttachPointLiteral   *BLangLiteral
+		AttachPointType      semtypes.SemType
+		ObjectBodyType       semtypes.SemType
 	}
 
 	BLangCompilationUnit struct {

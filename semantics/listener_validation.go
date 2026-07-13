@@ -18,7 +18,7 @@ package semantics
 
 import "ballerina-lang-go/semtypes"
 
-// validateListenerType structurally checks whether ty is a valid listener
+// listenerTypes structurally checks whether ty is a valid listener
 // object type and, on success, returns its projected service-target type T
 // and attach-point type A.
 //
@@ -31,7 +31,7 @@ import "ballerina-lang-go/semtypes"
 // candidate's own `attach` signature, bounding them against the spec
 // constraints, and finally checking the candidate is a subtype of
 // `ListenerTy(T, A)` to pin down the remaining four methods.
-func validateListenerType(cx semtypes.Context, ty semtypes.SemType, attachPointBound semtypes.SemType) (semtypes.SemType, semtypes.SemType, bool) {
+func listenerTypes(cx semtypes.Context, ty semtypes.SemType, attachPointBound semtypes.SemType) (semtypes.SemType, semtypes.SemType, bool) {
 	attachFnTy := semtypes.ObjectMemberType(cx, semtypes.StringConst("attach"), ty)
 	if semtypes.IsZero(attachFnTy) {
 		return semtypes.SemType{}, semtypes.SemType{}, false

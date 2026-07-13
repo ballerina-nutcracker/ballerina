@@ -1835,6 +1835,9 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 	if node.HasDiagnostics() {
 		return
 	}
+	if paths.Size() > 0 {
+		service.AbsoluteResourcePath = []BLangIdentifier{}
+	}
 	for i := 0; i < paths.Size(); i++ {
 		seg := paths.Get(i)
 		if seg.Kind() == common.STRING_LITERAL {
@@ -1860,6 +1863,9 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 
 func (n *NodeBuilder) populateServiceAttachedExprs(service *BLangService, node *tree.ServiceDeclarationNode) {
 	exprs := node.Expressions()
+	if exprs.Size() > 0 {
+		service.AttachedExprsPosition = n.getPositionRange(exprs.Get(0), exprs.Get(exprs.Size()-1))
+	}
 	for i := 0; i < exprs.Size(); i += 2 {
 		service.AttachedExprs = append(service.AttachedExprs, n.createExpression(exprs.Get(i)))
 	}

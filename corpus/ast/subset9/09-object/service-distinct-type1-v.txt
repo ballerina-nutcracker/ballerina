@@ -1,0 +1,165 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition ServiceType
+    (object-type service
+      (method-decl value public () (
+        (value-type int)))))
+  (class-definition Listener
+    (function attach (
+      (variable svc (type
+        (user-defined-type ServiceType)))
+      (variable attachPoint (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable broad (type
+            (object-type service)) (expr
+            (simple-var-ref svc))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref broad)
+              (user-defined-type ServiceType)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation value expr:
+              (simple-var-ref svc) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation length expr:
+              (simple-var-ref attachPoint) ()))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type ServiceType)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable l (type
+    (user-defined-type Listener)) (expr
+    (new ())))
+  (service
+    (absolute-resource-path /)
+    (on
+    (simple-var-ref l))
+    (variable base (type
+      (value-type int)) (expr
+      (literal 40)))
+    (function increment () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access base
+              (simple-var-ref self))
+            (literal 1)))))
+    (function value () (
+      (value-type int))
+      (block-function-body
+        (return
+          (invocation increment expr:
+            (simple-var-ref self) ())))))
+  (class-definition ExplicitListener
+    (function attach (
+      (variable svc (type
+        (user-defined-type ServiceType)))
+      (variable attachPoint (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable broad (type
+            (object-type service)) (expr
+            (simple-var-ref svc))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref broad)
+              (user-defined-type ServiceType)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation value expr:
+              (simple-var-ref svc) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation length expr:
+              (simple-var-ref attachPoint) ()))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type ServiceType)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable explicitListener (type
+    (user-defined-type ExplicitListener)) (expr
+    (new ())))
+  (service
+    (user-defined-type ServiceType)
+    (absolute-resource-path /)
+    (on
+    (simple-var-ref explicitListener))
+    (variable base (type
+      (value-type int)) (expr
+      (literal 41)))
+    (function increment () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access base
+              (simple-var-ref self))
+            (literal 1)))))
+    (function value () (
+      (value-type int))
+      (block-function-body
+        (return
+          (invocation increment expr:
+            (simple-var-ref self) ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))
