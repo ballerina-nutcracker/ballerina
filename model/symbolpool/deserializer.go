@@ -406,6 +406,11 @@ func (sr *symbolReader) readClassSymbol(space *model.SymbolSpace, isNetwork bool
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
 	sym.SetType(intersectDistinctAtoms(ty, ids, semtypes.ObjectDefinitionDistinct))
+	var hasInit bool
+	read(sr.r, &hasInit)
+	if hasInit {
+		methods["init"] = sr.readSymbolRef(space)
+	}
 	sym.SetMethods(methods)
 	if isNetwork {
 		var rmCount int64

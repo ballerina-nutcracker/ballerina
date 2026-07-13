@@ -1987,9 +1987,11 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 	}
 
 	if initFn != nil {
-		signature := model.TypedFunctionSignature{}
-		symbol := model.NewFunctionSymbol("init", signature, false, symbolLocationForNode(initFn))
-		addSymbolAndSetOnNode(blockRes, "init", symbol, initFn)
+		symbol := ms.allocateFunctionSymbolInner(initFn, "init", initFn.IsPublic())
+		symbolName := methodSymbolName("init")
+		methodTargetScope.AddSymbol(symbolName, symbol)
+		symRef, _ := methodTargetScope.MainSpace().GetSymbol(symbolName)
+		initFn.SetSymbol(symRef)
 	}
 
 	selfSymbol := model.NewVariableSymbol("self", false, false, false, diagnostics.NewBuiltinLocation())

@@ -509,6 +509,15 @@ func (sw *symbolWriter) writeClassSymbol(buf *bytes.Buffer, tag uint8, sym model
 	if err := sw.writeDistinctTypeIDs(buf, sym.DistinctTypeIDs()); err != nil {
 		return err
 	}
+	initRef, hasInit := sym.MethodSymbol("init")
+	if err := write(buf, hasInit); err != nil {
+		return err
+	}
+	if hasInit {
+		if err := sw.writeSymbolRef(buf, initRef); err != nil {
+			return err
+		}
+	}
 	if tag == symTagNetworkClass {
 		refs := sym.(*model.NetworkClassSymbol).ResourceMethods()
 		if err := write(buf, int64(len(refs))); err != nil {
