@@ -584,15 +584,18 @@ func (space *SymbolSpace) Len() int {
 	return len(space.symbols)
 }
 
-// Symbols returns an iterator over the symbols in the space. This is for
-// reading only — callers must not modify the yielded symbols or add new symbols
-// to the space during iteration.
-func (space *SymbolSpace) Symbols() iter.Seq2[int, Symbol] {
-	return func(yield func(int, Symbol) bool) {
+// Symbols returns an iterator over a snapshot of the symbol references in the
+// space. Symbols appended after the snapshot is taken are not included.
+func (space *SymbolSpace) Symbols() iter.Seq[SymbolRef] {
+	return func(yield func(SymbolRef) bool) {
 		space.mu.RLock()
-		defer space.mu.RUnlock()
-		for i, sym := range space.symbols {
-			if !yield(i, sym) {
+		refs := make([]SymbolRef, len(space.symbols))
+		for i := range space.symbols {
+			refs[i] = space.RefAt(i)
+		}
+		space.mu.RUnlock()
+		for _, ref := range refs {
+			if !yield(ref) {
 				return
 			}
 		}
@@ -707,14 +710,14 @@ func NewExportedSymbolSpaces(mainSpaces, annotationSpaces []*SymbolSpace) Export
 	return ExportedSymbolSpace{MainSpaces: mainSpaces, AnnotationSpaces: annotationSpaces}
 }
 
-func (space *ExportedSymbolSpace) PublicMainSymbols() iter.Seq2[SymbolRef, Symbol] {
-	return func(yield func(SymbolRef, Symbol) bool) {
+func (space *ExportedSymbolSpace) PublicMainSymbols() iter.Seq[SymbolRef] {
+	return func(yield func(SymbolRef) bool) {
 		for _, main := range space.MainSpaces {
-			for i, sym := range main.Symbols() {
-				if !sym.IsPublic() {
+			for ref := range main.Symbols() {
+				if !main.SymbolAt(ref.Index).IsPublic() {
 					continue
 				}
-				if !yield(main.RefAt(i), sym) {
+				if !yield(ref) {
 					return
 				}
 			}

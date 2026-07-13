@@ -498,9 +498,9 @@ func populateClassSymbolByType(t *packageTypeResolver, pkg *ast.BLangPackage) {
 	}
 
 	for _, importedSpace := range t.importedSymbols {
-		for ref, sym := range importedSpace.PublicMainSymbols() {
-			if _, ok := sym.(model.ClassSymbol); ok {
-				if ty := sym.Type(); !semtypes.IsZero(ty) {
+		for ref := range importedSpace.PublicMainSymbols() {
+			if t.ctx.SymbolIsClass(ref) {
+				if ty := t.ctx.SymbolType(ref); !semtypes.IsZero(ty) {
 					t.classSymbolByType[t.semtypeInterner.Intern(ty)] = ref
 				}
 			}
@@ -591,8 +591,8 @@ func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymb
 	}
 
 	for _, symbolSpace := range importedSymbols {
-		for ref, sym := range symbolSpace.PublicMainSymbols() {
-			if sym.Kind() != model.SymbolKindType {
+		for ref := range symbolSpace.PublicMainSymbols() {
+			if t.compilerContext().SymbolKind(ref) != model.SymbolKindType {
 				continue
 			}
 			semType := t.symbolType(ref)
@@ -607,7 +607,7 @@ func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymb
 			// type alias whose semtype merely contains an object atom (e.g. a
 			// union like `RequestMessage = json|Request`) would clobber the
 			// genuine class's atom mapping, so restrict this to ClassSymbols.
-			if _, isClass := sym.(model.ClassSymbol); isClass {
+			if t.compilerContext().SymbolIsClass(ref) {
 				if oat := semtypes.ToObjectAtomicType(t.typeContext(), semType); oat != nil {
 					t.setClassAtomSymbol(oat, ref)
 				}
