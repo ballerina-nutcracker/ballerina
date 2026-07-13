@@ -61,7 +61,7 @@ func testBIRSerializationRoundtrip(t *testing.T, testPair test_util.TestCase) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	birPkgs, tyEnv, compileErr := runCompilePhase(testPair.InputPath, &stdoutBuf, &stderrBuf)
 	if len(birPkgs) == 0 || compileErr != nil {
-		t.Fatalf("compilation failed for %s: %v", testPair.InputPath, compileErr)
+		t.Fatalf("compilation failed for %s: %v\n%s", testPair.InputPath, compileErr, stderrBuf.String())
 	}
 
 	// Step 2: Serialize and deserialize every package into a fresh env,
