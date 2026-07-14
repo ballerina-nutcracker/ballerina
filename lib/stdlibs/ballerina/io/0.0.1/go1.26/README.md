@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading. Ballerina Nutcracker currently supports the console print subset.
+This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading. Ballerina Nutcracker currently supports console output and file I/O (string, bytes, JSON, XML, lines); CSV, channels, and stream-based reading are not yet supported.
 
 ## Key Functionalities
 

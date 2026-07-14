@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides structured logging for Ballerina programs. The full jBallerina `log` module covers configurable log levels and formats (LOGFMT and JSON), multiple output destinations (stderr, stdout, rotating files), per-module level overrides, key-value pair annotations, sensitive data masking, a named `Logger` object API with child-logger support, and observability integration. Ballerina Nutcracker supports the core module-level print functions with basic level filtering.
+This module provides structured logging for Ballerina programs. The full jBallerina `log` module covers configurable log levels and formats (LOGFMT and JSON), multiple output destinations (stderr, stdout, rotating files), per-module level overrides, key-value pair annotations, sensitive data masking, a named `Logger` object API with child-logger support, and observability integration. Ballerina Nutcracker supports the core module-level print functions with basic-level filtering.
 
 ## Key Functionalities
 
