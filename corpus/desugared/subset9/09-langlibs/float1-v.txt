@@ -16,11 +16,11 @@
       (expression-stmt
         (invocation io println (
           (invocation floats isInfinite (
-            (simple-var-ref floats Infinity))))))
+            (numeric-literal +Inf))))))
       (expression-stmt
         (invocation io println (
           (invocation floats isNaN (
-            (simple-var-ref floats NaN))))))
+            (numeric-literal NaN))))))
       (expression-stmt
         (invocation io println (
           (invocation floats sum ()))))
@@ -72,7 +72,7 @@
             (simple-var-ref $desugar$1))))))
       (var-def
         (variable $desugar$2 (expr
-          (simple-var-ref floats NaN))))
+          (numeric-literal NaN))))
       (var-def
         (variable $desugar$3 (expr
           (invocation $default$0 (
@@ -85,7 +85,7 @@
               (simple-var-ref $desugar$3))))))))
       (var-def
         (variable $desugar$4 (expr
-          (simple-var-ref floats Infinity))))
+          (numeric-literal +Inf))))
       (var-def
         (variable $desugar$5 (expr
           (invocation $default$0 (
@@ -327,7 +327,7 @@
         (expression-stmt
           (invocation io println (
             (invocation lang.float toHexString (
-              (simple-var-ref floats Infinity))))))
+              (numeric-literal +Inf))))))
         (expression-stmt
           (invocation io println (
             (invocation lang.float toHexString (
@@ -422,7 +422,7 @@
         (expression-stmt
           (invocation io println (
             (invocation lang.float toFixedString (
-              (simple-var-ref floats Infinity)
+              (numeric-literal +Inf)
               (literal 2))))))
         (expression-stmt
           (invocation io println (
@@ -469,7 +469,7 @@
         (expression-stmt
           (invocation io println (
             (invocation lang.float toExpString (
-              (simple-var-ref floats NaN)
+              (numeric-literal NaN)
               (literal 2))))))
         (expression-stmt
           (invocation io println (
