@@ -466,34 +466,30 @@ func chooseNativeExecutor(outBin string) (nativeexec.NativeExecutor, error) {
 }
 
 // findInterpreterRoot returns the absolute path to the ballerina-lang-go source tree.
-// It checks BALLERINA_SRC first, then walks up from os.Executable().
+// It checks BALLERINA_SRC first, then falls back to the source tree embedded
+// in the binary (extracted to a cache directory on first use).
 func findInterpreterRoot() (string, error) {
+	root, err := locateInterpreterRoot()
+	if err != nil {
+		return "", err
+	}
+	// Must be canonical: nativerunner's -overlay matches paths against go
+	// build -C's resolved form, so a symlinked root (e.g. os.TempDir() on
+	// macOS) silently breaks native package injection otherwise.
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("resolving interpreter root %q: %w", root, err)
+	}
+	return resolved, nil
+}
+
+// locateInterpreterRoot finds the ballerina-lang-go source tree without
+// resolving symlinks; see findInterpreterRoot for why that resolution matters.
+func locateInterpreterRoot() (string, error) {
 	if src := os.Getenv("BALLERINA_SRC"); src != "" {
 		return filepath.Abs(src)
 	}
 
-	exe, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("cannot determine executable path: %w", err)
-	}
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		return "", fmt.Errorf("cannot resolve executable symlink: %w", err)
-	}
-	current := filepath.Dir(exe)
-	for {
-		gomod := filepath.Join(current, "go.mod")
-		data, err := os.ReadFile(gomod)
-		if err == nil && strings.Contains(string(data), "module ballerina-lang-go") {
-			return current, nil
-		}
-		parent := filepath.Dir(current)
-		if parent == current {
-			break
-		}
-		current = parent
-	}
-	// Fall back to the source tree embedded in the release binary.
 	cacheRoot, err := getBallerinaEnvPath()
 	if err != nil {
 		return "", fmt.Errorf("interpreter source not found; set BALLERINA_SRC to the ballerina-lang-go directory")

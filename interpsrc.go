@@ -26,6 +26,7 @@
 package interpsrc
 
 import (
+	"crypto/sha256"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -42,10 +43,27 @@ import (
 //go:embed parser/*.go parser/nodes.json parser/common parser/tree
 var src embed.FS
 
-// ExtractTo writes the embedded source tree into <cacheRoot>/interpreter-src/<version>/
-// and returns that path. If the directory already exists (same version), the
-// extraction is skipped and the cached path is returned immediately.
+// devDirName is the fixed cache directory (under the OS temp dir) used for
+// local "dev" builds, where Version is never bumped between builds.
+const devDirName = "ballerina-interpreter-src-dev"
+
+// ExtractTo writes the embedded source tree into a cache directory and
+// returns that path.
+//
+// For a real release version, the tree is extracted once to
+// <cacheRoot>/interpreter-src/<version>/ and reused indefinitely: release
+// content is immutable per version, so presence alone is a safe cache check.
+//
+// For local "dev" builds, version is always "dev", so instead the tree is
+// extracted to a fixed path under the OS temp directory, keyed by a content
+// hash of the embedded tree: unchanged content reuses the existing
+// extraction (avoiding repeated extractions across a dev session), and
+// changed content (a rebuilt bal binary with edited source) replaces it in
+// place rather than accumulating stale copies.
 func ExtractTo(cacheRoot, version string) (string, error) {
+	if version == "dev" {
+		return extractDev()
+	}
 	dir := filepath.Join(cacheRoot, "interpreter-src", version)
 	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 		return dir, nil
@@ -58,6 +76,65 @@ func ExtractTo(cacheRoot, version string) (string, error) {
 		return "", fmt.Errorf("extracting interpreter source: %w", err)
 	}
 	return dir, nil
+}
+
+// extractDev extracts the embedded source tree to a fixed path under the OS
+// temp directory. The extraction is keyed by a content hash stored in a
+// sibling marker file: a matching hash skips re-extraction, while a mismatch
+// (or a missing/removed extraction) replaces the directory in place, so
+// repeated local rebuilds never leave multiple stale copies behind.
+func extractDev() (string, error) {
+	hash, err := contentHash()
+	if err != nil {
+		return "", fmt.Errorf("hashing embedded interpreter source: %w", err)
+	}
+
+	dir := filepath.Join(os.TempDir(), devDirName)
+	hashFile := dir + ".hash"
+	if existing, err := os.ReadFile(hashFile); err == nil && string(existing) == hash {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+	}
+
+	if err := os.RemoveAll(dir); err != nil {
+		return "", fmt.Errorf("clearing stale dev interpreter source cache: %w", err)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", fmt.Errorf("creating dev interpreter source cache: %w", err)
+	}
+	if err := extractAll(dir); err != nil {
+		_ = os.RemoveAll(dir)
+		return "", fmt.Errorf("extracting interpreter source: %w", err)
+	}
+	if err := os.WriteFile(hashFile, []byte(hash), 0o644); err != nil {
+		return "", fmt.Errorf("writing dev interpreter source cache hash marker: %w", err)
+	}
+	return dir, nil
+}
+
+// contentHash returns a deterministic SHA-256 hex digest over every embedded
+// file's path and content. fs.WalkDir visits entries in lexical order, so
+// the result is stable across runs and changes whenever the embedded source
+// tree changes (e.g. a local rebuild with edited source).
+func contentHash() (string, error) {
+	h := sha256.New()
+	err := fs.WalkDir(src, ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := fs.ReadFile(src, p)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(h, "%s\x00", p)
+		h.Write(data)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func extractAll(dst string) error {
