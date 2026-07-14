@@ -46,3 +46,28 @@ func TestUdpServiceInline(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("udp-service/udp-svc-inline-v"), newUdpPal(), nil)
 }
+
+// TestUdpServiceOnBytesBareForm exercises the bare onBytes(readonly & byte[])
+// signature (no Caller parameter) — see remoteMethodArgs in native/dispatch.go.
+func TestUdpServiceOnBytesBareForm(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("udp-service/udp-svc-onbytes-bare-v"), newUdpPal(), nil)
+}
+
+// TestUdpServiceOnDatagramBareForm exercises the bare
+// onDatagram(readonly & udp:Datagram) signature (no Caller parameter) — the
+// exact shape used by this module's own official examples. See
+// remoteMethodArgs in native/dispatch.go.
+func TestUdpServiceOnDatagramBareForm(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("udp-service/udp-svc-ondatagram-bare-v"), newUdpPal(), nil)
+}
+
+// TestUdpServiceIPv6 exercises a dual-stack-bound listener replying to a
+// ConnectClient dialing an IPv6 literal ("::1") — see resolveUDPAddr in
+// native/udp.go.
+func TestUdpServiceIPv6(t *testing.T) {
+	skipIfNoLoopback(t)
+	skipIfNoIPv6Loopback(t)
+	runExtern(t, fileCase("udp-service/udp-svc-ipv6-v"), newUdpPal(), nil)
+}

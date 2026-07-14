@@ -46,6 +46,17 @@ func (p *udpPal) Platform() pal.Platform {
 	return base
 }
 
+// skipIfNoIPv6Loopback skips tests that need a working "::1" loopback —
+// some CI/container environments disable IPv6 entirely at the kernel level.
+func skipIfNoIPv6Loopback(t *testing.T) {
+	t.Helper()
+	pc, err := net.ListenPacket("udp6", "[::1]:0")
+	if err != nil {
+		t.Skip("skipping IPv6-loopback-dependent test: ::1 unavailable")
+	}
+	pc.Close()
+}
+
 // goUDPEchoServer starts a bare Go UDP echo server on 127.0.0.1 (not a
 // udp:Listener), isolating the client half of the port. Returns the bound
 // port and a cleanup func.
