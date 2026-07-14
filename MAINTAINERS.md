@@ -1,5 +1,5 @@
 # Ballerina Nutcracker Maintainers
-This file lists the official maintainers of the  Ballerina Nutcracker project. Maintainers are responsible for the ongoing health of the project, including technical direction, code review, release management, and governance.
+This file lists the official maintainers of the Ballerina Nutcracker project. Maintainers are responsible for the ongoing health of the project, including technical direction, code review, release management, and governance.
 
 All project decisions follow the [Ballerina Nutcracker Governance Policy](./GOVERNANCE.md) and are driven by consensus among maintainers.
 
@@ -10,8 +10,8 @@ In addition to these responsibilities, the Core Maintainers collectively serve a
 - Waruna Lakshitha ([@warunalakshitha](https://github.com/warunalakshitha))
 - Heshan Padmasiri ([@heshanpadmasiri](https://github.com/heshanpadmasiri))
 
-## Module / Plane Maintainers
-These Maintainers are responsible for specific functional areas of the ballerina Nutcracker codebase. They have merge privileges within their respective domains and participate in cross-project decisions that affect their areas.
+## Module Maintainers
+These Maintainers are responsible for specific functional areas of the Ballerina Nutcracker codebase. They have merge privileges within their respective domains and participate in cross-project decisions that affect their areas.
 
 - Krishnananthalingam Tharmigan ([@tharmigank](https://github.com/TharmiganK))
 - Asma Jabir ([@azinneera](https://github.com/azinneera))

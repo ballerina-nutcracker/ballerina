@@ -29,7 +29,7 @@ Ballerina Nutcracker was initially created by contributors from WSO2. Governance
 Maintainers have write access to the Ballerina Nutcracker GitHub repository and are responsible for the overall health, direction, and sustainability of the project. The current list of maintainers is kept in [MAINTAINERS.md](./MAINTAINERS.md), organized into two tiers:
 
 - **Core Maintainers** have merge authority across the entire repository, own the project's long-term roadmap and architectural consistency, and collectively serve as the project's Security Team.
-- **Module / Plane Maintainers** have merge privileges within specific functional areas of the codebase and participate in cross-project decisions that affect those areas.
+- **Module Maintainers** have merge privileges within specific functional areas of the codebase and participate in cross-project decisions that affect those areas.
 
 Maintainer responsibilities include:
 
@@ -70,7 +70,7 @@ Formal votes are used when consensus cannot be reached or when required for spec
 Voting rules:
 
 - One vote per maintainer
-- Votes may be conducted asynchronously via GitHub issues, pull requests, or the project's Discord
+- Votes may be conducted asynchronously via GitHub issues, pull requests, GitHub Discussions, or the project's Discord
 
 A formal vote is required for:
 

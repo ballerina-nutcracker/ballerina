@@ -41,7 +41,11 @@ See the [README](README.md) for more details on building, running corpus tests, 
 
    See [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/) for more.
 
-4. If prompted, accept the Contributor License Agreement (CLA) when submitting your first PR.
+4. Accept the Contributor License Agreement (CLA).
+
+   You need to accept the Ballerina Nutcracker CLA when prompted by a GitHub notification after sending your first Pull Request (PR). Subsequent PRs will not require CLA acceptance.
+
+   If the CLA changes for some (unlikely) reason, you will be presented with the new CLA text after sending your first PR after the change.
 
 ## Propose changes
 

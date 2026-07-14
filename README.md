@@ -23,10 +23,10 @@ Run and share Ballerina snippets in your browser — no installation needed.
 
 - [What is Ballerina?](#what-is-ballerina)
 - [What is Ballerina Nutcracker?](#what-is-ballerina-nutcracker)
+- [Scope & roadmap](#scope--roadmap)
 - [Architecture](#architecture)
 - [Getting started](#getting-started)
 - [Developer guide](#developer-guide)
-- [Scope & roadmap](#scope--roadmap)
 - [Report issues](#report-issues)
 - [Contribute](#contribute-to-ballerina-nutcracker)
 - [Governance](#governance)
@@ -45,6 +45,14 @@ Run and share Ballerina snippets in your browser — no installation needed.
 
 Development is organized by **subsets** of the Ballerina language; each milestone adds support for a defined subset. See [Scope & roadmap](#scope--roadmap) for current coverage.
 
+## Scope & roadmap
+
+Development is organized by **subsets** of the Ballerina language; each milestone adds support for a defined subset.
+
+- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
+- **Subset docs:** [doc/](doc/) (language and standard library features and restrictions per subset)
+- **Language spec:** [ballerina-platform/ballerina-spec](https://github.com/ballerina-platform/ballerina-spec)
+
 ## Architecture
 
 A `.bal` program passes through a compilation pipeline (source → BIR) and is then executed by the BIR interpreter; both stages draw on the language and standard library:
@@ -54,9 +62,17 @@ A `.bal` program passes through a compilation pipeline (source → BIR) and is t
   <img alt="Ballerina Nutcracker architecture: the CLI and project/package management feed the compilation pipeline (parser, ast, semantics, semtypes, desugar, bir), which feeds the runtime (BIR interpreter); both the pipeline and the runtime draw on the Library (language library lang.* and the standard library); the runtime reaches the host only through the Platform Adaptation Layer; diagnostics, profiling, and corpus testing observe the whole system." src="doc/img/architecture-light.png">
 </picture>
 
-Source directories map to these components as: [`parser/`](parser/) (lexing/parsing) → [`ast/`](ast/) → [`semantics/`](semantics/) (symbol/type resolution, semantic analysis, CFG) → [`semtypes/`](semtypes/) (structural type system) → [`desugar/`](desugar/) → [`bir/`](bir/) (BIR model, generation, codec) → [`runtime/`](runtime/) and [`values/`](values/) (the BIR interpreter and its runtime value representations). The **Library** is split into the [`lib/langlibs/`](lib/langlibs/) language library (`lang.array`, `lang.map`, `lang.string`, …, required by every program) and the [`lib/stdlibs/`](lib/stdlibs/) standard library (`http`, `io`, `os`, `crypto`, …, optional capability modules); both are declared in Ballerina and backed by native Go implementations wired together by [`lib/rt`](lib/rt). Cross-cutting packages: [`projects/`](projects/) (manifest/package resolution), [`model/`](model/) (symbols, package/flag metadata), [`context/`](context/) (compiler context/environment shared across stages), and [`platform/pal/`](platform/pal/) (the Platform Adaptation Layer — all I/O, filesystem, and network access is routed through here rather than calling the OS/Go stdlib directly).
+The compilation pipeline maps to source directories in stage order: [`parser/`](parser/) (lexing/parsing) → [`ast/`](ast/) → [`semantics/`](semantics/) (symbol/type resolution, semantic analysis, CFG) → [`desugar/`](desugar/) → [`bir/`](bir/) (BIR model, generation, codec).
 
-Unlike a distributed platform with separate control/data/observability planes, every component in the diagram is a Go package compiled into the single `bal` binary — the arrows are function calls, not network requests. The only real process/network boundaries are the Ballerina Central registry (package downloads) and the host OS (reached exclusively through the Platform Adaptation Layer).
+The runtime takes over once the pipeline produces BIR. [`runtime/`](runtime/) and [`values/`](values/) hold the BIR interpreter and its runtime value representations.
+
+[`semtypes/`](semtypes/), the structural type system, cuts across both of the above rather than sitting at one stage — it's used inside `semantics/` for type resolution, and again by `desugar/`, `bir/`, and `runtime/`+`values/`.
+
+The **Library** is split in two. [`lib/langlibs/`](lib/langlibs/) is the language library (`lang.array`, `lang.map`, `lang.string`, …), required by every program. [`lib/stdlibs/`](lib/stdlibs/) is the standard library (`http`, `io`, `os`, `crypto`, …), made of optional capability modules. Both are declared in Ballerina and backed by native Go implementations, wired together by [`lib/rt`](lib/rt).
+
+A few packages cut across every stage: [`projects/`](projects/) (manifest/package resolution), [`model/`](model/) (symbols, package/flag metadata), [`context/`](context/) (compiler context/environment shared across stages), and [`platform/pal/`](platform/pal/) (the Platform Adaptation Layer). All I/O, filesystem, and network access is routed through the PAL rather than calling the OS/Go stdlib directly.
+
+Every component in the diagram is a Go package compiled into the single `bal` binary. The only real process/network boundaries are the Ballerina Central registry (package downloads) and the host OS, reached exclusively through the Platform Adaptation Layer.
 
 See [AGENTS.md](AGENTS.md) for the exact stage list and the concurrency/error-handling rules between stages.
 
@@ -184,14 +200,6 @@ Most interpreter behavior is validated with **corpus tests** rather than hand-wr
 
 Code coverage is tracked via [Codecov](https://codecov.io/gh/ballerina-nutcracker/ballerina); PRs are expected to keep patch coverage at or above the target configured in [`codecov.yml`](codecov.yml).
 
-## Scope & roadmap
-
-Development is organized by **subsets** of the Ballerina language; each milestone adds support for a defined subset.
-
-- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
-- **Subset docs:** [doc/](doc/) (language and standard library features and restrictions per subset)
-- **Language spec:** [ballerina-platform/ballerina-spec](https://github.com/ballerina-platform/ballerina-spec)
-
 ## Report issues
 
 > **Tip:** If you are unsure whether you have found a bug, search the [existing issues](https://github.com/ballerina-nutcracker/ballerina/issues) in the GitHub repo and open an issue if needed.
@@ -216,7 +224,7 @@ Ballerina Nutcracker follows a lightweight, consensus-driven governance model, i
 
 ## Adopters
 
-Organizations using Ballerina Nutcracker are listed in [ADOPTERS.md](ADOPTERS.md). If your organization uses this project, please open a pull request to add yourself — it helps demonstrate real-world usage and strengthens the project within the CNCF ecosystem.
+Organizations using Ballerina Nutcracker are listed in [ADOPTERS.md](ADOPTERS.md). If your organization uses this project, please open a pull request to add yourself — it helps demonstrate real-world usage and strengthens the project's case as it works toward CNCF alignment.
 
 ## License
 
@@ -229,5 +237,6 @@ This project adheres to the [CNCF Code of Conduct](CODE_OF_CONDUCT.md). By parti
 ## Join the community
 
 - Get help on [Stack Overflow](https://stackoverflow.com/questions/tagged/ballerina)
+- Discuss features, issues, and ideas in [GitHub Discussions](https://github.com/ballerina-nutcracker/ballerina/discussions)
 - Join the conversations in the [Discord community](https://discord.gg/ballerinalang)
 - For more details on how to engage with the community, see [Community](https://ballerina.io/community/)
