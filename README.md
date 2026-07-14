@@ -1,4 +1,4 @@
-## Native Nutcracker
+## Ballerina Nutcracker
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
@@ -113,7 +113,7 @@ go test ./...
 
 ### Open an issue
 
-- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to the native interpreter.
+- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to the Ballerina Nutcracker.
 
 ### Report security issues
 
