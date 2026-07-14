@@ -19,7 +19,6 @@ package array
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
@@ -46,7 +45,7 @@ func arrayToBase64(args []values.BalValue) (values.BalValue, error) {
 func arrayToBase16(args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
 	data, _ := listToByteSlice(list)
-	return fmt.Sprintf("%x", data), nil
+	return hex.EncodeToString(data), nil
 }
 
 func arrayFromBase64(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
