@@ -50,6 +50,14 @@ func TestHttpServicePathParam(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-path-param-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServicePathParamUnion exercises a union-typed (int|float) path
+// parameter, and confirms a path parameter type outside the basic-type set
+// never matches a raw URL segment.
+func TestHttpServicePathParamUnion(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-path-param-union-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceRequest exercises Request injection and JSON body round-trip
 // through a POST resource.
 func TestHttpServiceRequest(t *testing.T) {

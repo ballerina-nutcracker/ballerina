@@ -548,7 +548,7 @@ public type Service service object {
 #
 # Use `service /path on new http:Listener(port)` to attach a service at declaration time,
 # or call `attach` programmatically and then `start`.
-public class Listener {
+public isolated class Listener {
 
     # Initialises the HTTP listener on the specified port.
     #
