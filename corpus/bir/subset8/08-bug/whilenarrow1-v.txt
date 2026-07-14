@@ -8,8 +8,8 @@ main() -> nil{
     %5 = ConstantLoad 20
     %6 = ConstantLoad next
     %7 = ConstantLoad <nil>
-    %8 = newMap {| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%4=%5, %6=%7}
-    %9 = newMap {| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%8}
+    %8 = newMap {| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%4=%5, %6=%7}
+    %9 = newMap {| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%1=%2, %3=%8}
     l = %9;
     %11 = sum(l) -> bb1;
   }
@@ -21,7 +21,7 @@ main() -> nil{
     return;
   }
 }
-sum(nil|{| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}) -> int{
+sum(nil|{| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}) -> int{
   bb0 {
     temp = intList;
     %3 = ConstantLoad 0

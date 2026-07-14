@@ -1,0 +1,112 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/http:Request
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    plainReq = %3;
+    %6 = ConstantLoad just text
+    $desugar$0 = %6;
+    %8 = $default$16($desugar$0) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %8;
+    %10 = setTextPayload(plainReq,$desugar$0,$desugar$1) -> bb6;
+  }
+  bb6 {
+    %11 = getBodyParts(plainReq) -> bb7;
+  }
+  bb7 {
+    plainReqResult = %11;
+    %13 = plainReqResult is error
+    %14 = %13;
+    %15 = println(%14) -> bb8;
+  }
+  bb8 {
+    %16 = plainReqResult is error
+    %16 ? bb9 : bb12;
+  }
+  bb9 {
+    PushScopeFrame 2
+    %0 = message((1, plainReqResult)) -> bb10;
+  }
+  bb10 {
+    %1 = println(%0) -> bb11;
+  }
+  bb11 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 16
+    %0 = newObject ballerina/http:Response
+    %1 = init(%0) -> bb13;
+  }
+  bb13 {
+    %3 = %1 is nil
+    %3 ? bb14 : bb15;
+  }
+  bb14 {
+    %2 = %0;
+    GOTO bb16;
+  }
+  bb15 {
+    %2 = %1;
+    GOTO bb16;
+  }
+  bb16 {
+    plainRes = %2;
+    %5 = ConstantLoad just text
+    $desugar$2 = %5;
+    %7 = $default$11($desugar$2) -> bb17;
+  }
+  bb17 {
+    $desugar$3 = %7;
+    %9 = setTextPayload(plainRes,$desugar$2,$desugar$3) -> bb18;
+  }
+  bb18 {
+    %10 = getBodyParts(plainRes) -> bb19;
+  }
+  bb19 {
+    plainResResult = %10;
+    %12 = plainResResult is error
+    %13 = %12;
+    %14 = println(%13) -> bb20;
+  }
+  bb20 {
+    %15 = plainResResult is error
+    %15 ? bb21 : bb24;
+  }
+  bb21 {
+    PushScopeFrame 2
+    %0 = message((1, plainResResult)) -> bb22;
+  }
+  bb22 {
+    %1 = println(%0) -> bb23;
+  }
+  bb23 {
+    PopScopeFrame
+    GOTO bb24;
+  }
+  bb24 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

@@ -190,6 +190,44 @@ func TestHttpClientBinaryLocal(t *testing.T) {
 	runExtern(t, fileCase("http-client-binary-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
 
+// TestHttpClientMultipartLocal exercises a mime:Entity[] request body (msgToBody's
+// Entity[] branch, mime's EncodeMultipart, auto-generated boundary). The server parses
+// the multipart body with Go's own mime/multipart.Reader and echoes a deterministic,
+// boundary-independent summary so the assertion doesn't depend on the random boundary.
+func TestHttpClientMultipartLocal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/echo-multipart" || r.Method != http.MethodPost {
+			w.WriteHeader(404)
+			return
+		}
+		mr, err := r.MultipartReader()
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+		var sb strings.Builder
+		count := 0
+		for {
+			part, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			}
+			count++
+			data, _ := io.ReadAll(part)
+			fmt.Fprintf(&sb, "%d:%s ", count, data)
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(200)
+		fmt.Fprintf(w, "count=%d %s", count, strings.TrimSpace(sb.String()))
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-multipart-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
 // TestHttpClientCompressionLocal exercises transparent gzip/deflate response
 // decompression (decompressResponseBody + the gzip/deflate ReadClosers). The
 // client factory disables Go's automatic decompression so the compressed body

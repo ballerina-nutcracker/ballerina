@@ -370,15 +370,30 @@ public class Response {
     # + return - An array of all header names present in the response
     public isolated function getHeaderNames(HeaderPosition position = LEADING) returns string[] = external;
 
+    # Sets the response body as a set of multipart body parts.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; if absent, the response's existing `Content-Type` is kept
+    #                 if already set, otherwise `multipart/form-data` is used
+    public isolated function setBodyParts(mime:Entity[] bodyParts, string? contentType = ()) = external;
+
+    # Extracts the response body as multipart body parts.
+    #
+    # + return - The body parts, or an `error` if the response body is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+
     # Sets the response body, dispatching to the specific setter based on the runtime type of `payload`.
     #
-    # + payload - A `string`, `byte[]`, or other JSON-compatible value to set as the response body
+    # + payload - A `string`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the response body
     # + contentType - Optional MIME type overriding the type-inferred default
-    public isolated function setPayload(json|byte[] payload, string? contentType = ()) {
+    public isolated function setPayload(json|byte[]|mime:Entity[] payload, string? contentType = ()) {
         if payload is string {
             self.setTextPayload(payload, contentType);
         } else if payload is byte[] {
             self.setBinaryPayload(payload, contentType);
+        } else if payload is mime:Entity[] {
+            self.setBodyParts(payload, contentType);
         } else {
             self.setJsonPayload(payload, contentType);
         }
@@ -516,15 +531,30 @@ public class Request {
     # + return - A `string[]` of all values, or `()` if the parameter is not present
     public isolated function getQueryParamValues(string key) returns string[]? = external;
 
+    # Sets the request body as a set of multipart body parts.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; if absent, the request's existing `Content-Type` is kept
+    #                 if already set, otherwise `multipart/form-data` is used
+    public isolated function setBodyParts(mime:Entity[] bodyParts, string? contentType = ()) = external;
+
+    # Extracts the request body as multipart body parts.
+    #
+    # + return - The body parts, or an `error` if the request body is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+
     # Sets the request body, dispatching to the specific setter based on the runtime type of `payload`.
     #
-    # + payload - A `string`, `byte[]`, or other JSON-compatible value to set as the request body
+    # + payload - A `string`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the request body
     # + contentType - Optional MIME type overriding the type-inferred default
-    public isolated function setPayload(json|byte[] payload, string? contentType = ()) {
+    public isolated function setPayload(json|byte[]|mime:Entity[] payload, string? contentType = ()) {
         if payload is string {
             self.setTextPayload(payload, contentType);
         } else if payload is byte[] {
             self.setBinaryPayload(payload, contentType);
+        } else if payload is mime:Entity[] {
+            self.setBodyParts(payload, contentType);
         } else {
             self.setJsonPayload(payload, contentType);
         }
@@ -622,10 +652,10 @@ isolated function byteOffsetToCharOffset(byte[] data, int byteOffset) returns in
     return charOffset;
 }
 
-// Represents an HTTP outbound request entity. Accepts any JSON-compatible value or an
-// existing `Request` object. The `mime:Entity[]` and `stream` subtypes of jBallerina's
-// `RequestMessage` are not supported in this implementation.
-public type RequestMessage json|Request;
+// Represents an HTTP outbound request entity. Accepts any JSON-compatible value, an
+// existing `Request` object, or a multipart body (`mime:Entity[]`). The `stream` subtype
+// of jBallerina's `RequestMessage` is not supported in this implementation.
+public type RequestMessage json|Request|mime:Entity[];
 
 // Represents HTTP methods.
 public enum Method {

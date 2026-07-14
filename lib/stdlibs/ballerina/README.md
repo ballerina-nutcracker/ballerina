@@ -14,12 +14,12 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 |---|---|---|---|---|
 | [crypto](crypto/0.0.1/go1.2/README.md) | 26 | 1 | 5 | 81% |
 | [file](file/0.0.1/go1.2/README.md) | 21 | 0 | 0 | 100% |
-| [http](http/0.0.1/go1.2/README.md) | 25 | 4 | 46 | 33% |
+| [http](http/0.0.1/go1.2/README.md) | 25 | 6 | 45 | 33% |
 | [io](io/0.0.1/go1.2/README.md) | 14 | 1 | 12 | 52% |
 | [ldap](ldap/0.0.1/go1.2/README.md) | 15 | 2 | 0 | 83% |
 | [log](log/0.0.1/go1.2/README.md) | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.2/README.md) | 5 | 0 | 0 | 100% |
-| [mime](mime/0.0.1/go1.2/README.md) | 13 | 1 | 2 | 81% |
+| [mime](mime/0.0.1/go1.2/README.md) | 13 | 2 | 1 | 81% |
 | [os](os/0.0.1/go1.2/README.md) | 11 | 1 | 0 | 92% |
 | [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
 | [tcp](tcp/0.0.1/go1.2/README.md) | 18 | 1 | 1 | 82% |
@@ -27,7 +27,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [udp](udp/0.0.1/go1.2/README.md) | 15 | 2 | 2 | 79% |
 | [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
-| **Total** | **226** | **18** | **85** | **68%** |
+| **Total** | **226** | **21** | **83** | **68%** |
 
 ## Notable Behavioural Changes
 

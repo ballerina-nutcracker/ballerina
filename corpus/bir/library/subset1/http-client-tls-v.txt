@@ -37,7 +37,7 @@ main() -> nil|error{
     c1 = $desugar$0;
     %14 = ConstantLoad /path
     $desugar$1 = %14;
-    %16 = $default$23($desugar$1) -> bb7;
+    %16 = $default$25($desugar$1) -> bb7;
   }
   bb7 {
     $desugar$2 = %16;
@@ -110,7 +110,7 @@ main() -> nil|error{
     c2 = $desugar$4;
     %51 = ConstantLoad /path
     $desugar$5 = %51;
-    %53 = $default$23($desugar$5) -> bb18;
+    %53 = $default$25($desugar$5) -> bb18;
   }
   bb18 {
     $desugar$6 = %53;
@@ -180,7 +180,7 @@ main() -> nil|error{
     c3 = $desugar$8;
     %85 = ConstantLoad /path
     $desugar$9 = %85;
-    %87 = $default$23($desugar$9) -> bb29;
+    %87 = $default$25($desugar$9) -> bb29;
   }
   bb29 {
     $desugar$10 = %87;

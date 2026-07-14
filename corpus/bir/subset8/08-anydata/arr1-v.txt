@@ -12,7 +12,7 @@ main() -> nil{
   }
   bb1 {
     %9 = ConstantLoad 2
-    %10 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...][%9]{a, a}
+    %10 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table...][%9]{a, a}
     b = %10;
     val = b;
     %12 = println(val) -> bb2;

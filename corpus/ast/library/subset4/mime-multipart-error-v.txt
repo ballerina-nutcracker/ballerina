@@ -1,0 +1,93 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina mime (as mime))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable plain (type
+          (user-defined-type mime Entity)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setText expr:
+          (simple-var-ref plain) (
+          (literal just text))))
+      (var-def
+        (variable plainResult (type
+          (union-type
+            (array-type
+              (user-defined-type mime Entity) dimensions: 1 ([]))
+            (user-defined-type mime ParserError))) (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref plain) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref plainResult)
+            (user-defined-type mime ParserError)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref plainResult)
+          (user-defined-type mime ParserError))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref plainResult) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable noBoundary (type
+            (user-defined-type mime Entity)) (expr
+            (new ()))))
+        (expression-stmt
+          (invocation setByteArray expr:
+            (simple-var-ref noBoundary) (
+            (invocation toBytes expr:
+              (literal --x
+--x--) ())
+            (literal multipart/form-data))))
+        (var-def
+          (variable noBoundaryResult (type
+            (union-type
+              (array-type
+                (user-defined-type mime Entity) dimensions: 1 ([]))
+              (user-defined-type mime ParserError))) (expr
+            (invocation getBodyParts expr:
+              (simple-var-ref noBoundary) ()))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref noBoundaryResult)
+              (user-defined-type mime ParserError)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref noBoundaryResult)
+            (user-defined-type mime ParserError))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation message expr:
+                  (simple-var-ref noBoundaryResult) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable noHeader (type
+              (user-defined-type mime Entity)) (expr
+              (new ()))))
+          (var-def
+            (variable noHeaderResult (type
+              (union-type
+                (array-type
+                  (user-defined-type mime Entity) dimensions: 1 ([]))
+                (user-defined-type mime ParserError))) (expr
+              (invocation getBodyParts expr:
+                (simple-var-ref noHeader) ()))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref noHeaderResult)
+                (user-defined-type mime ParserError)))))
+          (return
+            (literal <nil>)))))))

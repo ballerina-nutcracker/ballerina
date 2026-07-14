@@ -20,7 +20,7 @@ main() -> nil|error{
     reqText = %3;
     %6 = ConstantLoad plain text
     $desugar$0 = %6;
-    %8 = $default$13($desugar$0) -> bb5;
+    %8 = $default$15($desugar$0) -> bb5;
   }
   bb5 {
     $desugar$1 = %8;
@@ -66,7 +66,7 @@ main() -> nil|error{
   }
   bb15 {
     $desugar$3 = %21;
-    %23 = $default$13($desugar$3) -> bb16;
+    %23 = $default$15($desugar$3) -> bb16;
   }
   bb16 {
     $desugar$4 = %23;
@@ -116,9 +116,9 @@ main() -> nil|error{
     %39 = ConstantLoad Alice
     %40 = ConstantLoad age
     %41 = ConstantLoad 30
-    %42 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%38=%39, %40=%41}
+    %42 = newMap {| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}{%38=%39, %40=%41}
     $desugar$6 = %42;
-    %44 = $default$13($desugar$6) -> bb27;
+    %44 = $default$15($desugar$6) -> bb27;
   }
   bb27 {
     $desugar$7 = %44;
@@ -162,7 +162,7 @@ main() -> nil|error{
     resText = %54;
     %57 = ConstantLoad resp text
     $desugar$9 = %57;
-    %59 = $default$9($desugar$9) -> bb37;
+    %59 = $default$10($desugar$9) -> bb37;
   }
   bb37 {
     $desugar$10 = %59;
@@ -208,7 +208,7 @@ main() -> nil|error{
   }
   bb47 {
     $desugar$12 = %72;
-    %74 = $default$9($desugar$12) -> bb48;
+    %74 = $default$10($desugar$12) -> bb48;
   }
   bb48 {
     $desugar$13 = %74;
@@ -258,10 +258,10 @@ main() -> nil|error{
     %90 = ConstantLoad 2
     %91 = ConstantLoad 3
     %92 = ConstantLoad 3
-    %93 = newArray [nil|boolean|int|float|decimal|string|...|......][%92]{%89, %90, %91}
+    %93 = newArray [nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...][%92]{%89, %90, %91}
     resPayload = %93;
     $desugar$15 = resPayload;
-    %96 = $default$9($desugar$15) -> bb59;
+    %96 = $default$10($desugar$15) -> bb59;
   }
   bb59 {
     $desugar$16 = %96;

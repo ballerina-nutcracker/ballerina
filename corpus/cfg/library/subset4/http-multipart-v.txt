@@ -1,0 +1,205 @@
+(hasPrefix
+  (bb0 () (bb1 bb2)
+    (binary-expr <
+      (invocation lang.string length (
+        (simple-var-ref value)))
+      (invocation lang.string length (
+        (simple-var-ref prefix))))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal false))
+  )
+  (bb2 (bb0) ()
+    (return
+      (binary-expr ==
+        (invocation lang.string substring (
+          (simple-var-ref value)
+          (literal 0)
+          (invocation lang.string length (
+            (simple-var-ref prefix)))))
+        (simple-var-ref prefix)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable part1 (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setText expr:
+        (simple-var-ref part1) (
+        (literal hello world))))
+    (var-def
+      (variable disposition (type
+        (user-defined-type mime ContentDisposition)) (expr
+        (checked-expr
+          (invocation mime getContentDispositionObject (
+            (literal form-data; name="field1")))))))
+    (expression-stmt
+      (invocation setContentDisposition expr:
+        (simple-var-ref part1) (
+        (simple-var-ref disposition))))
+    (var-def
+      (variable part2 (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setJson expr:
+        (simple-var-ref part2) (
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))))))
+    (var-def
+      (variable req (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setBodyParts expr:
+        (simple-var-ref req) (
+        (list-constructor-expr
+          (simple-var-ref part1)
+          (simple-var-ref part2)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasPrefix (
+          (invocation getContentType expr:
+            (simple-var-ref req) ())
+          (literal multipart/form-data))))))
+    (var-def
+      (variable reqParts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref req) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref reqParts))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref reqParts)
+              (literal 0)) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getHeader expr:
+            (index-based-access
+              (simple-var-ref reqParts)
+              (literal 0)) (
+            (literal content-disposition)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getJson expr:
+            (index-based-access
+              (simple-var-ref reqParts)
+              (literal 1)) ())))))
+    (var-def
+      (variable reqPartsAgain (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref req) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref reqPartsAgain))))))
+    (var-def
+      (variable res (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setBodyParts expr:
+        (simple-var-ref res) (
+        (list-constructor-expr
+          (simple-var-ref part1)
+          (simple-var-ref part2)))))
+    (var-def
+      (variable resParts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref res) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref resParts))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref resParts)
+              (literal 0)) ())))))
+    (var-def
+      (variable reqViaSetPayload (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref reqViaSetPayload) (
+        (list-constructor-expr
+          (simple-var-ref part1)
+          (simple-var-ref part2)))))
+    (var-def
+      (variable viaSetPayloadParts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref reqViaSetPayload) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref viaSetPayloadParts))))))
+    (var-def
+      (variable resViaSetPayload (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setPayload expr:
+        (simple-var-ref resViaSetPayload) (
+        (list-constructor-expr
+          (simple-var-ref part1)
+          (simple-var-ref part2)))))
+    (var-def
+      (variable resViaSetPayloadParts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref resViaSetPayload) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref resViaSetPayloadParts))))))
+    (var-def
+      (variable req2 (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setBodyParts expr:
+        (simple-var-ref req2) (
+        (list-constructor-expr
+          (simple-var-ref part1))
+        (literal multipart/mixed))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasPrefix (
+          (invocation getContentType expr:
+            (simple-var-ref req2) ())
+          (literal multipart/mixed))))))
+  )
+)

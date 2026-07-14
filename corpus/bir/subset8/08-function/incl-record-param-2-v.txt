@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-foo(int,{| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}) -> int{
+foo(int,{| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}) -> int{
   bb0 {
     %4 = base;
     %7 = ConstantLoad foo
@@ -25,7 +25,7 @@ main() -> nil{
     %6 = ConstantLoad 1
     %7 = ConstantLoad bar
     %8 = ConstantLoad 5
-    %9 = newMap {| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%5=%6, %7=%8} defaults{foo=$anon/.:$desugar$0, bar=$anon/.:$desugar$1}
+    %9 = newMap {| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%5=%6, %7=%8} defaults{foo=$anon/.:$desugar$0, bar=$anon/.:$desugar$1}
     %10 = f(%4,%9) -> bb1;
   }
   bb1 {

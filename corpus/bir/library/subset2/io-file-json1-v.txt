@@ -7,7 +7,7 @@ main() -> nil|error{
     %4 = ConstantLoad Alice
     %5 = ConstantLoad age
     %6 = ConstantLoad 30
-    %7 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%3=%4, %5=%6}
+    %7 = newMap {| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}{%3=%4, %5=%6}
     data = %7;
     %9 = fileWriteJson(path,data) -> bb1;
   }
@@ -38,7 +38,7 @@ main() -> nil|error{
   }
   bb6 {
     result = $desugar$1;
-    %16 = <{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|{| nil|boolean|int|float|decimal|string|...|...... |}... |}>(result)
+    %16 = <{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}... |}>(result)
     m = %16;
     %19 = ConstantLoad name
     %18 = m[%19];

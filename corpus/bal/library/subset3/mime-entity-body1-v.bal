@@ -1,3 +1,19 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import ballerina/io;
 import ballerina/mime;
 
@@ -23,14 +39,26 @@ public function main() {
         io:println(dispatchResult);
     }
 
-    mime:Entity wrongEntity = new ();
-    wrongEntity.setText("text");
-    byte[]|mime:ParserError wrongResult = wrongEntity.getByteArray();
-    if wrongResult is mime:ParserError {
+    // Every accessor lazily converts from whatever the body was actually set as
+    // (matching jBallerina's data-source model), so getByteArray() on a text-body
+    // entity succeeds rather than erroring.
+    mime:Entity crossKindEntity = new ();
+    crossKindEntity.setText("text");
+    byte[]|mime:ParserError crossKindResult = crossKindEntity.getByteArray();
+    if crossKindResult is byte[] {
+        io:println(crossKindResult.length());
+    }
+
+    // A freshly-constructed entity with no body set at all is the one case that
+    // still produces a ParserError.
+    mime:Entity emptyEntity = new ();
+    byte[]|mime:ParserError emptyResult = emptyEntity.getByteArray();
+    if emptyResult is mime:ParserError {
         io:println("parser error");
     }
 }
 // @output Hello World
 // @output 5
 // @output dispatched text
+// @output 4
 // @output parser error

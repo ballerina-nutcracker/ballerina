@@ -1,0 +1,74 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina http (as http))
+  (import-package ballerina mime (as mime))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable plainReq (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setTextPayload expr:
+          (simple-var-ref plainReq) (
+          (literal just text))))
+      (var-def
+        (variable plainReqResult (type
+          (union-type
+            (array-type
+              (user-defined-type mime Entity) dimensions: 1 ([]))
+            (error-type))) (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref plainReq) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref plainReqResult)
+            (error-type)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref plainReqResult)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref plainReqResult) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable plainRes (type
+            (user-defined-type http Response)) (expr
+            (new ()))))
+        (expression-stmt
+          (invocation setTextPayload expr:
+            (simple-var-ref plainRes) (
+            (literal just text))))
+        (var-def
+          (variable plainResResult (type
+            (union-type
+              (array-type
+                (user-defined-type mime Entity) dimensions: 1 ([]))
+              (error-type))) (expr
+            (invocation getBodyParts expr:
+              (simple-var-ref plainRes) ()))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref plainResResult)
+              (error-type)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref plainResResult)
+            (error-type))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation message expr:
+                  (simple-var-ref plainResResult) ()))))) ())
+        (block-stmt
+          (return
+            (literal <nil>)))))))

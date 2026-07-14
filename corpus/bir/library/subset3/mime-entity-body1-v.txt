@@ -20,7 +20,7 @@ main() -> nil{
     textEntity = %3;
     %6 = ConstantLoad Hello World
     $desugar$0 = %6;
-    %8 = $default$2($desugar$0) -> bb5;
+    %8 = $default$3($desugar$0) -> bb5;
   }
   bb5 {
     $desugar$1 = %8;
@@ -69,7 +69,7 @@ main() -> nil{
     %10 = ConstantLoad 5
     %11 = newArray [int:Unsigned8...][%10]{%5, %6, %7, %8, %9}
     $desugar$2 = %11;
-    %13 = $default$0($desugar$2) -> bb15;
+    %13 = $default$1($desugar$2) -> bb15;
   }
   bb15 {
     $desugar$3 = %13;
@@ -151,34 +151,73 @@ main() -> nil{
     GOTO bb34;
   }
   bb34 {
-    wrongEntity = %2;
+    crossKindEntity = %2;
     %5 = ConstantLoad text
     $desugar$4 = %5;
-    %7 = $default$2($desugar$4) -> bb35;
+    %7 = $default$3($desugar$4) -> bb35;
   }
   bb35 {
     $desugar$5 = %7;
-    %9 = setText(wrongEntity,$desugar$4,$desugar$5) -> bb36;
+    %9 = setText(crossKindEntity,$desugar$4,$desugar$5) -> bb36;
   }
   bb36 {
-    %10 = getByteArray(wrongEntity) -> bb37;
+    %10 = getByteArray(crossKindEntity) -> bb37;
   }
   bb37 {
-    wrongResult = %10;
-    %12 = wrongResult is error
-    %12 ? bb38 : bb40;
+    crossKindResult = %10;
+    %12 = crossKindResult is [int:Unsigned8...]
+    %12 ? bb38 : bb41;
   }
   bb38 {
-    PushScopeFrame 2
-    %0 = ConstantLoad parser error
-    %1 = println(%0) -> bb39;
+    PushScopeFrame 3
+    %0 = length((1, crossKindResult)) -> bb39;
   }
   bb39 {
-    PopScopeFrame
-    GOTO bb40;
+    %1 = %0;
+    %2 = println(%1) -> bb40;
   }
   bb40 {
+    PopScopeFrame
+    GOTO bb41;
+  }
+  bb41 {
+    PushScopeFrame 8
+    %0 = newObject ballerina/mime:Entity
+    %1 = init(%0) -> bb42;
+  }
+  bb42 {
+    %3 = %1 is nil
+    %3 ? bb43 : bb44;
+  }
+  bb43 {
+    %2 = %0;
+    GOTO bb45;
+  }
+  bb44 {
+    %2 = %1;
+    GOTO bb45;
+  }
+  bb45 {
+    emptyEntity = %2;
+    %5 = getByteArray(emptyEntity) -> bb46;
+  }
+  bb46 {
+    emptyResult = %5;
+    %7 = emptyResult is error
+    %7 ? bb47 : bb49;
+  }
+  bb47 {
+    PushScopeFrame 2
+    %0 = ConstantLoad parser error
+    %1 = println(%0) -> bb48;
+  }
+  bb48 {
+    PopScopeFrame
+    GOTO bb49;
+  }
+  bb49 {
     PushScopeFrame 0
+    PopScopeFrame
     PopScopeFrame
     PopScopeFrame
     PopScopeFrame

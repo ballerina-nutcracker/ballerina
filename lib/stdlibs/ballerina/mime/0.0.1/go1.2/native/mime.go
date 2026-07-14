@@ -19,6 +19,7 @@ package native
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"mime"
 	"strconv"
@@ -36,41 +37,90 @@ const (
 	moduleName = "mime"
 )
 
-// bodyKind identifies the type of body content stored on an Entity.
-type bodyKind int
+// EntityBodyKind identifies the type of body content stored on an Entity.
+// Exported so sibling stdlibs (e.g. http) that construct or read mime:Entity
+// values natively can do so without duplicating this representation.
+type EntityBodyKind int
 
 const (
-	bodyNone bodyKind = iota
-	bodyText
-	bodyJSON
-	bodyBytes
+	BodyNone EntityBodyKind = iota
+	BodyText
+	BodyJSON
+	BodyBytes
+	BodyParts
 )
 
-// entityBody holds the body payload attached to a Ballerina Entity object.
-type entityBody struct {
-	kind  bodyKind
-	text  string
-	json  values.BalValue
-	bytes []byte
+// EntityBody holds the body payload attached to a Ballerina Entity object.
+type EntityBody struct {
+	Kind  EntityBodyKind
+	Text  string
+	JSON  values.BalValue
+	Bytes []byte
+	Parts []*values.Object
 }
 
 const entityBodyField = "$mimeBody"
 
-func getBody(obj *values.Object) *entityBody {
+// GetEntityBody returns the native body state attached to a mime:Entity object, or nil if unset.
+func GetEntityBody(obj *values.Object) *EntityBody {
 	v, ok := obj.Get(entityBodyField)
 	if !ok {
 		return nil
 	}
-	b, _ := v.(*entityBody)
+	b, _ := v.(*EntityBody)
 	return b
 }
 
-func setBody(obj *values.Object, body *entityBody) {
+// SetEntityBody attaches native body state to a mime:Entity object.
+func SetEntityBody(obj *values.Object, body *EntityBody) {
 	obj.Put(entityBodyField, body)
 }
 
+
 func mimeError(typeName, msg string) values.BalValue {
 	return values.NewError(semtypes.ERROR, msg, nil, typeName, nil)
+}
+
+// BytesForBody returns the byte representation of an Entity's body regardless of which
+// setter populated it, matching jBallerina's model where every accessor lazily converts
+// from the entity's underlying data source rather than requiring an exact kind match.
+// Exported so sibling stdlibs (e.g. http, serializing multipart parts) can reuse it.
+func BytesForBody(body *EntityBody) ([]byte, error) {
+	if body == nil {
+		return nil, fmt.Errorf("Entity body is not a byte[] value")
+	}
+	switch body.Kind {
+	case BodyBytes:
+		return body.Bytes, nil
+	case BodyText:
+		return []byte(body.Text), nil
+	case BodyJSON:
+		return values.ToJSONByteArray(body.JSON)
+	default:
+		return nil, fmt.Errorf("Entity body is not a byte[] value")
+	}
+}
+
+// stringForBody returns the string representation of an Entity's body regardless of
+// which setter populated it, mirroring BytesForBody for the text accessor.
+func stringForBody(body *EntityBody) (string, error) {
+	if body == nil {
+		return "", fmt.Errorf("Entity body is not a text value")
+	}
+	switch body.Kind {
+	case BodyText:
+		return body.Text, nil
+	case BodyBytes:
+		return string(body.Bytes), nil
+	case BodyJSON:
+		b, err := values.ToJSONByteArray(body.JSON)
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
+	default:
+		return "", fmt.Errorf("Entity body is not a text value")
+	}
 }
 
 // mimeEncode produces MIME-compatible base64 (76-char line length, \r\n separators),
@@ -147,6 +197,9 @@ func formatParam(val string) string {
 }
 
 func initMimeModule(rt *runtime.Runtime) {
+	env := rt.GetTypeEnv()
+	jsonListType, jsonMapType := values.JSONListAndMapTypes(semtypes.ContextFrom(env))
+
 	var (
 		once          sync.Once
 		byteArrayType semtypes.SemType
@@ -164,21 +217,31 @@ func initMimeModule(rt *runtime.Runtime) {
 			if !ok {
 				return nil, fmt.Errorf("first argument must be an Entity object")
 			}
-			setBody(obj, &entityBody{kind: bodyJSON, json: args[1]})
+			SetEntityBody(obj, &EntityBody{Kind: BodyJSON, JSON: args[1]})
 			return nil, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externGetJson",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			obj, ok := args[0].(*values.Object)
 			if !ok {
 				return nil, fmt.Errorf("first argument must be an Entity object")
 			}
-			body := getBody(obj)
-			if body == nil || body.kind != bodyJSON {
+			body := GetEntityBody(obj)
+			if body != nil && body.Kind == BodyJSON {
+				return body.JSON, nil
+			}
+			text, err := stringForBody(body)
+			if err != nil {
 				return mimeError("ParserError", "Entity body is not a JSON value"), nil
 			}
-			return body.json, nil
+			var v interface{}
+			dec := json.NewDecoder(strings.NewReader(text))
+			dec.UseNumber()
+			if err := dec.Decode(&v); err != nil {
+				return mimeError("ParserError", "Error occurred while retrieving the json payload from the entity: "+err.Error()), nil
+			}
+			return values.GoToBalValue(ctx.TypeCtx, v, jsonListType, jsonMapType), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externSetText",
@@ -188,7 +251,7 @@ func initMimeModule(rt *runtime.Runtime) {
 				return nil, fmt.Errorf("first argument must be an Entity object")
 			}
 			text, _ := args[1].(string)
-			setBody(obj, &entityBody{kind: bodyText, text: text})
+			SetEntityBody(obj, &EntityBody{Kind: BodyText, Text: text})
 			return nil, nil
 		})
 
@@ -198,11 +261,12 @@ func initMimeModule(rt *runtime.Runtime) {
 			if !ok {
 				return nil, fmt.Errorf("first argument must be an Entity object")
 			}
-			body := getBody(obj)
-			if body == nil || body.kind != bodyText {
+			body := GetEntityBody(obj)
+			text, err := stringForBody(body)
+			if err != nil {
 				return mimeError("ParserError", "Entity body is not a text value"), nil
 			}
-			return body.text, nil
+			return text, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externSetByteArray",
@@ -215,7 +279,7 @@ func initMimeModule(rt *runtime.Runtime) {
 			if !ok {
 				return nil, fmt.Errorf("second argument must be a byte array")
 			}
-			setBody(obj, &entityBody{kind: bodyBytes, bytes: listToBytes(list)})
+			SetEntityBody(obj, &EntityBody{Kind: BodyBytes, Bytes: listToBytes(list)})
 			return nil, nil
 		})
 
@@ -226,12 +290,13 @@ func initMimeModule(rt *runtime.Runtime) {
 			if !ok {
 				return nil, fmt.Errorf("first argument must be an Entity object")
 			}
-			body := getBody(obj)
-			if body == nil || body.kind != bodyBytes {
-				return mimeError("ParserError", "Entity body is not a byte[] value"), nil
+			body := GetEntityBody(obj)
+			data, err := BytesForBody(body)
+			if err != nil {
+				return mimeError("ParserError", err.Error()), nil
 			}
-			items := make([]values.BalValue, len(body.bytes))
-			for i, b := range body.bytes {
+			items := make([]values.BalValue, len(data))
+			for i, b := range data {
 				items[i] = int64(b)
 			}
 			return values.NewList(byteArrayType, semtypes.ToListAtomicType(ctx.TypeCtx, byteArrayType), false, nil, 0, items), nil

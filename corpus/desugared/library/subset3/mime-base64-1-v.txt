@@ -13,7 +13,7 @@
           (literal Hello))))
       (var-def
         (variable $desugar$1 (expr
-          (invocation $default$3 (
+          (invocation $default$4 (
             (simple-var-ref $desugar$0))))))
       (var-def
         (variable enc (type
@@ -40,7 +40,7 @@
             (literal SGVsbG8=))))
         (var-def
           (variable $desugar$3 (expr
-            (invocation $default$4 (
+            (invocation $default$5 (
               (simple-var-ref $desugar$2))))))
         (var-def
           (variable dec (type
@@ -186,7 +186,7 @@
                   (literal not-valid-base64!!!))))
               (var-def
                 (variable $desugar$7 (expr
-                  (invocation $default$4 (
+                  (invocation $default$5 (
                     (simple-var-ref $desugar$6))))))
               (var-def
                 (variable invalidDec (type

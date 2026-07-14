@@ -1,0 +1,70 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable plainReq (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setTextPayload expr:
+        (simple-var-ref plainReq) (
+        (literal just text))))
+    (var-def
+      (variable plainReqResult (type
+        (union-type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))
+          (error-type))) (expr
+        (invocation getBodyParts expr:
+          (simple-var-ref plainReq) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref plainReqResult)
+          (error-type)))))
+    (type-test-expr is
+      (simple-var-ref plainReqResult)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref plainReqResult))))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable plainRes (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setTextPayload expr:
+        (simple-var-ref plainRes) (
+        (literal just text))))
+    (var-def
+      (variable plainResResult (type
+        (union-type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))
+          (error-type))) (expr
+        (invocation getBodyParts expr:
+          (simple-var-ref plainRes) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref plainResResult)
+          (error-type)))))
+    (type-test-expr is
+      (simple-var-ref plainResResult)
+      (error-type))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref plainResResult))))))
+  )
+  (bb4 (bb3 bb2) ()
+    (return
+      (literal <nil>))
+  )
+)

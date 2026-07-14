@@ -244,11 +244,13 @@ public class Entity {
         return getContentDispositionObject(contentDispositionVal);
     }
 
-    public isolated function setBody(string|json|byte[] entityBody) {
+    public isolated function setBody(string|json|byte[]|Entity[] entityBody) {
         if (entityBody is string) {
             self.setText(entityBody);
         } else if (entityBody is byte[]) {
             self.setByteArray(entityBody);
+        } else if (entityBody is Entity[]) {
+            self.setBodyParts(entityBody);
         } else {
             self.setJson(entityBody);
         }
@@ -279,6 +281,23 @@ public class Entity {
 
     public isolated function getByteArray() returns byte[]|ParserError {
         return externGetByteArray(self);
+    }
+
+    # Sets the body parts of the entity, marking it as a multipart entity.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; defaults to `multipart/form-data`
+    public isolated function setBodyParts(Entity[] bodyParts, string contentType = MULTIPART_FORM_DATA) {
+        externSetBodyParts(self, bodyParts, contentType);
+        self.setHeader(CONTENT_TYPE, contentType);
+    }
+
+    # Extracts body parts from a multipart entity.
+    #
+    # + return - An array of body parts, or a `ParserError` if the entity is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns Entity[]|ParserError {
+        return externGetBodyParts(self);
     }
 
     public isolated function getHeader(string headerName) returns string|HeaderNotFoundError {
@@ -363,6 +382,10 @@ isolated function externGetText(Entity entity) returns string|ParserError = exte
 isolated function externSetByteArray(Entity entity, byte[] byteArray, string contentType) = external;
 
 isolated function externGetByteArray(Entity entity) returns byte[]|ParserError = external;
+
+isolated function externSetBodyParts(Entity entity, Entity[] bodyParts, string contentType) = external;
+
+isolated function externGetBodyParts(Entity entity) returns Entity[]|ParserError = external;
 
 isolated function externParseInt(string s) returns int|error = external;
 

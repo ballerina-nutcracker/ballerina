@@ -3,21 +3,21 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad hours
     %2 = ConstantLoad 0
-    %3 = newMap {| hours: int, minutes: int, nil|boolean|int|float|decimal|string|regexp|readonly&[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|readonly&{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>... |}{%1=%2}
+    %3 = newMap {| hours: int, minutes: int, nil|boolean|int|float|decimal|string|regexp|readonly&[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|readonly&{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>... |}{%1=%2}
     z = %3;
     %5 = println(z) -> bb1;
   }
   bb1 {
     %6 = ConstantLoad y
     %7 = ConstantLoad 1
-    %8 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%6=%7}
+    %8 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%6=%7}
     u1 = %8;
     %10 = println(u1) -> bb2;
   }
   bb2 {
     %11 = ConstantLoad x
     %12 = ConstantLoad 1
-    %13 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%11=%12}
+    %13 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%11=%12}
     u2 = %13;
     %15 = println(u2) -> bb3;
   }

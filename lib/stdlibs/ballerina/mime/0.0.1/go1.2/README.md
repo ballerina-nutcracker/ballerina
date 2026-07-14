@@ -10,7 +10,8 @@ The `ballerina/mime` library provides utilities for working with MIME (Multipurp
 - Parse and construct content disposition headers (`ContentDisposition`) including filename, name, and parameters.
 - Manage MIME entity headers: set, get, add, remove, and check presence.
 - Manage entity content metadata: content type, content ID, content length, and content disposition.
-- Set and retrieve entity body payloads as text, JSON, or byte arrays.
+- Set and retrieve entity body payloads as text, JSON, or byte arrays, with every accessor able to convert from whatever the body was actually set as.
+- Set and extract multipart (`multipart/form-data`, etc.) body parts as an `Entity[]`.
 - Perform Base64 encoding and decoding of strings and byte arrays using MIME-compatible line folding.
 - Predefined constants for common media type strings and header names.
 
@@ -63,13 +64,13 @@ Support Levels:
 | Content disposition parsing | Supported | `getContentDispositionObject(contentDisposition)` |
 | Entity header management | Supported | `setHeader`, `getHeader`, `getHeaders`, `getHeaderNames`, `addHeader`, `removeHeader`, `removeAllHeaders`, `hasHeader` |
 | Entity content metadata | Supported | `setContentType`, `getContentType`, `setContentId`, `getContentId`, `setContentLength`, `getContentLength`, `setContentDisposition`, `getContentDisposition` |
-| Entity text body | Supported | `setText`, `getText` |
-| Entity JSON body | Supported | `setJson`, `getJson` |
-| Entity byte array body | Supported | `setByteArray`, `getByteArray` |
-| Entity generic body dispatch | Supported | `setBody(string\|json\|byte[])` |
+| Entity text body | Supported | `setText`, `getText` — `getText()` also converts from a JSON or byte[] body, matching jBallerina's data-source model |
+| Entity JSON body | Supported | `setJson`, `getJson` — `getJson()` also parses a text or byte[] body as JSON |
+| Entity byte array body | Supported | `setByteArray`, `getByteArray` — `getByteArray()` also encodes a text or JSON body to bytes |
+| Entity generic body dispatch | Supported | `setBody(string\|json\|byte[]\|Entity[])` |
+| Entity multipart body | Partially Supported | `setBodyParts`, `getBodyParts` — flat (single-level) multipart only; a part whose own body is itself multipart is not recursively decoded. Per-part `Content-Type` defaults to `text/plain` when the wire omits it, matching jBallerina. `getBodyPartsAsChannel` is not implemented — it returns `io:ReadableByteChannel`, an unrelated, still-unimplemented io type |
 | Base64 encoding and decoding | Supported | `base64Encode`, `base64Decode`, `base64EncodeBlob`, `base64DecodeBlob` |
 | Entity XML body | Not Yet Supported | `setXml`, `getXml` require XML type support |
-| Entity multipart body | Not Yet Supported | `setBodyParts`, `getBodyParts`, `getBodyPartsAsChannel` require stream and multipart parsing |
 | Module-level error type | Partially Supported | `mime:Error` and all subtypes (`InvalidContentTypeError`, `ParserError`, `HeaderNotFoundError`, `EncodeError`, `DecodeError`, etc.) are plain `error` aliases; `distinct` type descriptor not yet supported |
 
 ### Notable Behavioural Changes

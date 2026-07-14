@@ -1,0 +1,342 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina mime (as mime))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (import-package ballerina lang array (as lang.array))
+  (function hasPrefix (
+    (variable value (type
+      (value-type string)))
+    (variable prefix (type
+      (value-type string)))) (
+    (value-type boolean))
+    (block-function-body
+      (if
+        (binary-expr <
+          (invocation lang.string length (
+            (simple-var-ref value)))
+          (invocation lang.string length (
+            (simple-var-ref prefix))))
+        (block-stmt
+          (return
+            (literal false))) ())
+      (block-stmt
+        (return
+          (binary-expr ==
+            (invocation lang.string substring (
+              (simple-var-ref value)
+              (literal 0)
+              (invocation lang.string length (
+                (simple-var-ref prefix)))))
+            (simple-var-ref prefix))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable part1 (type
+          (user-defined-type mime Entity)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal hello world))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation setText expr:
+          (simple-var-ref part1) (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation mime getContentDispositionObject (
+            (literal form-data; name="field1"))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable disposition (type
+          (user-defined-type mime ContentDisposition)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation setContentDisposition expr:
+          (simple-var-ref part1) (
+          (simple-var-ref disposition))))
+      (var-def
+        (variable part2 (type
+          (user-defined-type mime Entity)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$3 (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation setJson expr:
+          (simple-var-ref part2) (
+          (simple-var-ref $desugar$3)
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable req (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$5 (expr
+          (list-constructor-expr
+            (simple-var-ref part1)
+            (simple-var-ref part2)))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation $default$13 (
+            (simple-var-ref $desugar$5))))))
+      (expression-stmt
+        (invocation setBodyParts expr:
+          (simple-var-ref req) (
+          (simple-var-ref $desugar$5)
+          (simple-var-ref $desugar$6))))
+      (expression-stmt
+        (invocation io println (
+          (invocation hasPrefix (
+            (invocation getContentType expr:
+              (simple-var-ref req) ())
+            (literal multipart/form-data))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref req) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable reqParts (type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$7))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref reqParts))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref reqParts)
+              (literal 0)) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$8))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation getHeader expr:
+            (index-based-access
+              (simple-var-ref reqParts)
+              (literal 0)) (
+            (literal content-disposition))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$9))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation getJson expr:
+            (index-based-access
+              (simple-var-ref reqParts)
+              (literal 1)) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$10))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$10))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$10))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref req) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (var-def
+        (variable reqPartsAgain (type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$11))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref reqPartsAgain))))))
+      (var-def
+        (variable res (type
+          (user-defined-type http Response)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$12 (expr
+          (list-constructor-expr
+            (simple-var-ref part1)
+            (simple-var-ref part2)))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation $default$8 (
+            (simple-var-ref $desugar$12))))))
+      (expression-stmt
+        (invocation setBodyParts expr:
+          (simple-var-ref res) (
+          (simple-var-ref $desugar$12)
+          (simple-var-ref $desugar$13))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref res) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (var-def
+        (variable resParts (type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$14))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref resParts))))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref resParts)
+              (literal 0)) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$15))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$15))))
+      (var-def
+        (variable reqViaSetPayload (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$16 (expr
+          (list-constructor-expr
+            (simple-var-ref part1)
+            (simple-var-ref part2)))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation $default$15 (
+            (simple-var-ref $desugar$16))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref reqViaSetPayload) (
+          (simple-var-ref $desugar$16)
+          (simple-var-ref $desugar$17))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref reqViaSetPayload) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$18))) ())
+      (var-def
+        (variable viaSetPayloadParts (type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$18))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref viaSetPayloadParts))))))
+      (var-def
+        (variable resViaSetPayload (type
+          (user-defined-type http Response)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$19 (expr
+          (list-constructor-expr
+            (simple-var-ref part1)
+            (simple-var-ref part2)))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation $default$10 (
+            (simple-var-ref $desugar$19))))))
+      (expression-stmt
+        (invocation setPayload expr:
+          (simple-var-ref resViaSetPayload) (
+          (simple-var-ref $desugar$19)
+          (simple-var-ref $desugar$20))))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation getBodyParts expr:
+            (simple-var-ref resViaSetPayload) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$21))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$21))) ())
+      (var-def
+        (variable resViaSetPayloadParts (type
+          (array-type
+            (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$21))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref resViaSetPayloadParts))))))
+      (var-def
+        (variable req2 (type
+          (user-defined-type http Request)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setBodyParts expr:
+          (simple-var-ref req2) (
+          (list-constructor-expr
+            (simple-var-ref part1))
+          (literal multipart/mixed))))
+      (expression-stmt
+        (invocation io println (
+          (invocation hasPrefix (
+            (invocation getContentType expr:
+              (simple-var-ref req2) ())
+            (literal multipart/mixed)))))))))

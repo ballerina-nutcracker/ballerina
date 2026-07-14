@@ -32,7 +32,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$23 (
+          (invocation $default$25 (
             (simple-var-ref $desugar$1))))))
       (var-def
         (variable $desugar$3 (expr
@@ -96,7 +96,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$6 (expr
-          (invocation $default$23 (
+          (invocation $default$25 (
             (simple-var-ref $desugar$5))))))
       (var-def
         (variable $desugar$7 (expr
@@ -155,7 +155,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$10 (expr
-          (invocation $default$23 (
+          (invocation $default$25 (
             (simple-var-ref $desugar$9))))))
       (var-def
         (variable $desugar$11 (expr

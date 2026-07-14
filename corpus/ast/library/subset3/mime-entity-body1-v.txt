@@ -86,27 +86,50 @@
                   (simple-var-ref dispatchResult))))) ())
           (block-stmt
             (var-def
-              (variable wrongEntity (type
+              (variable crossKindEntity (type
                 (user-defined-type mime Entity)) (expr
                 (new ()))))
             (expression-stmt
               (invocation setText expr:
-                (simple-var-ref wrongEntity) (
+                (simple-var-ref crossKindEntity) (
                 (literal text))))
             (var-def
-              (variable wrongResult (type
+              (variable crossKindResult (type
                 (union-type
                   (array-type
                     (value-type byte) dimensions: 1 ([]))
                   (user-defined-type mime ParserError))) (expr
                 (invocation getByteArray expr:
-                  (simple-var-ref wrongEntity) ()))))
+                  (simple-var-ref crossKindEntity) ()))))
             (if
               (type-test-expr is
-                (simple-var-ref wrongResult)
-                (user-defined-type mime ParserError))
+                (simple-var-ref crossKindResult)
+                (array-type
+                  (value-type byte) dimensions: 1 ([])))
               (block-stmt
                 (expression-stmt
                   (invocation io println (
-                    (literal parser error))))) ())
-            (block-stmt)))))))
+                    (invocation length expr:
+                      (simple-var-ref crossKindResult) ()))))) ())
+            (block-stmt
+              (var-def
+                (variable emptyEntity (type
+                  (user-defined-type mime Entity)) (expr
+                  (new ()))))
+              (var-def
+                (variable emptyResult (type
+                  (union-type
+                    (array-type
+                      (value-type byte) dimensions: 1 ([]))
+                    (user-defined-type mime ParserError))) (expr
+                  (invocation getByteArray expr:
+                    (simple-var-ref emptyEntity) ()))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref emptyResult)
+                  (user-defined-type mime ParserError))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (literal parser error))))) ())
+              (block-stmt))))))))

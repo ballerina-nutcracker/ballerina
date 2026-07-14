@@ -1,0 +1,204 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable part1 (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setText expr:
+        (simple-var-ref part1) (
+        (literal hello world))))
+    (var-def
+      (variable disposition (type
+        (user-defined-type mime ContentDisposition)) (expr
+        (checked-expr
+          (invocation mime getContentDispositionObject (
+            (literal form-data; name="field1")))))))
+    (expression-stmt
+      (invocation setContentDisposition expr:
+        (simple-var-ref part1) (
+        (simple-var-ref disposition))))
+    (var-def
+      (variable part2 (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setJson expr:
+        (simple-var-ref part2) (
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))))))
+    (var-def
+      (variable whole (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setBodyParts expr:
+        (simple-var-ref whole) (
+        (list-constructor-expr
+          (simple-var-ref part1)
+          (simple-var-ref part2))
+        (literal multipart/form-data; boundary=XYZBOUNDARY))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (simple-var-ref whole) ()))))
+    (var-def
+      (variable parts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref whole) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref parts))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref parts)
+              (literal 0)) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getJson expr:
+            (index-based-access
+              (simple-var-ref parts)
+              (literal 1)) ())))))
+    (var-def
+      (variable partsAgain (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref whole) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref partsAgain))))))
+    (var-def
+      (variable raw (type
+        (value-type string)) (expr
+        (binary-expr +
+          (literal --XYZBOUNDARY
+    Content-Disposition: form-data; name="a"
+    
+    value-a
+    )
+          (literal --XYZBOUNDARY
+    Content-Type: application/json
+    
+    {"k":"v"}
+    --XYZBOUNDARY--
+    )))))
+    (var-def
+      (variable decoded (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setByteArray expr:
+        (simple-var-ref decoded) (
+        (invocation lang.string toBytes (
+          (simple-var-ref raw)))
+        (literal multipart/form-data; boundary=XYZBOUNDARY))))
+    (var-def
+      (variable decodedParts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref decoded) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref decodedParts))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getHeader expr:
+            (index-based-access
+              (simple-var-ref decodedParts)
+              (literal 0)) (
+            (literal content-disposition)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref decodedParts)
+              (literal 0)) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (index-based-access
+            (simple-var-ref decodedParts)
+            (literal 1)) ()))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getJson expr:
+            (index-based-access
+              (simple-var-ref decodedParts)
+              (literal 1)) ())))))
+    (var-def
+      (variable rawNoContentType (type
+        (value-type string)) (expr
+        (literal --B1
+    Content-Disposition: form-data; name="noct"
+    
+    plain value
+    --B1--
+    ))))
+    (var-def
+      (variable noCtEntity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setByteArray expr:
+        (simple-var-ref noCtEntity) (
+        (invocation lang.string toBytes (
+          (simple-var-ref rawNoContentType)))
+        (literal multipart/form-data; boundary=B1))))
+    (var-def
+      (variable noCtParts (type
+        (array-type
+          (user-defined-type mime Entity) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBodyParts expr:
+            (simple-var-ref noCtEntity) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (index-based-access
+            (simple-var-ref noCtParts)
+            (literal 0)) ()))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getText expr:
+            (index-based-access
+              (simple-var-ref noCtParts)
+              (literal 0)) ())))))
+    (var-def
+      (variable viaSetBody (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation setBody expr:
+        (simple-var-ref viaSetBody) (
+        (list-constructor-expr
+          (simple-var-ref part1)
+          (simple-var-ref part2)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (simple-var-ref viaSetBody) ()))))
+  )
+)

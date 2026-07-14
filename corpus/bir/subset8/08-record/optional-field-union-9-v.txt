@@ -5,13 +5,13 @@ main() -> nil{
     %2 = ConstantLoad 10
     %3 = ConstantLoad bar
     %4 = ConstantLoad 10
-    %5 = newMap {| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4}
+    %5 = newMap {| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%1=%2, %3=%4}
     r = %5;
     %7 = ConstantLoad foo
     %8 = ConstantLoad 20
     %9 = ConstantLoad baz
     %10 = ConstantLoad 
-    %11 = newMap {| baz: string, foo: nil|int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%7=%8, %9=%10}
+    %11 = newMap {| baz: string, foo: nil|int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%7=%8, %9=%10}
     r2 = %11;
     %15 = ConstantLoad foo
     %14 = r2[%15];

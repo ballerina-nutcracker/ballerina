@@ -1,0 +1,7 @@
+-- stdout --
+true
+Entity body is not a type of composite media type. Received content-type : text/plain
+true
+Error occurred while extracting body parts from entity: no boundary parameter found in Content-Type
+true
+-- stderr --

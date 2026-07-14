@@ -84,29 +84,53 @@
   )
   (bb6 (bb5 bb4) (bb7 bb8)
     (var-def
-      (variable wrongEntity (type
+      (variable crossKindEntity (type
         (user-defined-type mime Entity)) (expr
         (new ()))))
     (expression-stmt
       (invocation setText expr:
-        (simple-var-ref wrongEntity) (
+        (simple-var-ref crossKindEntity) (
         (literal text))))
     (var-def
-      (variable wrongResult (type
+      (variable crossKindResult (type
         (union-type
           (array-type
             (value-type byte) dimensions: 1 ([]))
           (user-defined-type mime ParserError))) (expr
         (invocation getByteArray expr:
-          (simple-var-ref wrongEntity) ()))))
+          (simple-var-ref crossKindEntity) ()))))
     (type-test-expr is
-      (simple-var-ref wrongResult)
-      (user-defined-type mime ParserError))
+      (simple-var-ref crossKindResult)
+      (array-type
+        (value-type byte) dimensions: 1 ([])))
   )
   (bb7 (bb6) (bb8)
     (expression-stmt
       (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref crossKindResult))))))
+  )
+  (bb8 (bb7 bb6) (bb9 bb10)
+    (var-def
+      (variable emptyEntity (type
+        (user-defined-type mime Entity)) (expr
+        (new ()))))
+    (var-def
+      (variable emptyResult (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type mime ParserError))) (expr
+        (invocation getByteArray expr:
+          (simple-var-ref emptyEntity) ()))))
+    (type-test-expr is
+      (simple-var-ref emptyResult)
+      (user-defined-type mime ParserError))
+  )
+  (bb9 (bb8) (bb10)
+    (expression-stmt
+      (invocation io println (
         (literal parser error))))
   )
-  (bb8 (bb7 bb6) ())
+  (bb10 (bb9 bb8) ())
 )

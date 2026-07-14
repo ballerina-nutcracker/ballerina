@@ -14,7 +14,7 @@
           (literal Hello World))))
       (var-def
         (variable $desugar$1 (expr
-          (invocation $default$2 (
+          (invocation $default$3 (
             (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation setText expr:
@@ -51,7 +51,7 @@
               (literal 111)))))
         (var-def
           (variable $desugar$3 (expr
-            (invocation $default$0 (
+            (invocation $default$1 (
               (simple-var-ref $desugar$2))))))
         (expression-stmt
           (invocation setByteArray expr:
@@ -102,7 +102,7 @@
                   (simple-var-ref dispatchResult))))) ())
           (block-stmt
             (var-def
-              (variable wrongEntity (type
+              (variable crossKindEntity (type
                 (user-defined-type mime Entity)) (expr
                 (new ()))))
             (var-def
@@ -110,27 +110,50 @@
                 (literal text))))
             (var-def
               (variable $desugar$5 (expr
-                (invocation $default$2 (
+                (invocation $default$3 (
                   (simple-var-ref $desugar$4))))))
             (expression-stmt
               (invocation setText expr:
-                (simple-var-ref wrongEntity) (
+                (simple-var-ref crossKindEntity) (
                 (simple-var-ref $desugar$4)
                 (simple-var-ref $desugar$5))))
             (var-def
-              (variable wrongResult (type
+              (variable crossKindResult (type
                 (union-type
                   (array-type
                     (value-type byte) dimensions: 1 ([]))
                   (user-defined-type mime ParserError))) (expr
                 (invocation getByteArray expr:
-                  (simple-var-ref wrongEntity) ()))))
+                  (simple-var-ref crossKindEntity) ()))))
             (if
               (type-test-expr is
-                (simple-var-ref wrongResult)
-                (user-defined-type mime ParserError))
+                (simple-var-ref crossKindResult)
+                (array-type
+                  (value-type byte) dimensions: 1 ([])))
               (block-stmt
                 (expression-stmt
                   (invocation io println (
-                    (literal parser error))))) ())
-            (block-stmt)))))))
+                    (invocation lang.array length (
+                      (simple-var-ref crossKindResult))))))) ())
+            (block-stmt
+              (var-def
+                (variable emptyEntity (type
+                  (user-defined-type mime Entity)) (expr
+                  (new ()))))
+              (var-def
+                (variable emptyResult (type
+                  (union-type
+                    (array-type
+                      (value-type byte) dimensions: 1 ([]))
+                    (user-defined-type mime ParserError))) (expr
+                  (invocation getByteArray expr:
+                    (simple-var-ref emptyEntity) ()))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref emptyResult)
+                  (user-defined-type mime ParserError))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (literal parser error))))) ())
+              (block-stmt))))))))
