@@ -60,7 +60,8 @@ when constructing or forwarding requests:
 
 | Function | Notes |
 |---|---|
-| `hashMd5` / `hashSha1` / `hashSha256` / `hashSha384` / `hashSha512` | Digest of a `byte[]`, with an optional salt prepended before hashing |
+| `hashMd5` / `hashSha1` | Digest of a `byte[]`, with an optional salt prepended before hashing |
+| `hashSha256` / `hashSha384` / `hashSha512` | Digest of a `byte[]`, with an optional salt prepended before hashing |
 | `hashKeccak256` | Legacy (pre-standardisation) Keccak-256 digest, distinct from SHA3-256 |
 | `crc32b` | CRC32B checksum; returns an 8-character uppercase hex string |
 | `hmacMd5` / `hmacSha1` / `hmacSha256` / `hmacSha384` / `hmacSha512` | HMAC of a `byte[]` under a `byte[]` key; returns `byte[]\|crypto:Error` |

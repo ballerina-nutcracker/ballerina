@@ -263,6 +263,15 @@ public function testMain() returns error? {
     http:Response r = check c->get("/secure/hello");
     io:println(r.statusCode); // @output 200
     io:println(r.getTextPayload()); // @output mtls hello
+
+    http:Client cNoCert = check new ("https://localhost:19208", {
+        httpVersion: http:HTTP_1_1,
+        secureSocket: {
+            verifyHostName: false
+        }
+    });
+    http:Response|error r2 = cNoCert->get("/secure/hello");
+    io:println(r2 is error); // @output true
 }
 `, paths["server.crt"], paths["server.key"], paths["ca.crt"], paths["client.crt"], paths["client.key"])
 

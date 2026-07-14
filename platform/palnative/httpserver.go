@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"ballerina-lang-go/platform/pal"
@@ -37,7 +38,7 @@ import (
 // TCP socket (optionally TLS-wrapped) and serves handler on a background
 // goroutine, returning a handle for lifecycle control.
 func Listen(cfg pal.ServerConfig, handler http.Handler) (pal.ServerHandle, error) {
-	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	addr := net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
 
 	protocols := new(http.Protocols)
 	protocols.SetHTTP1(true)

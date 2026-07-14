@@ -48,14 +48,16 @@ public function testMain() returns error? {
     io:println(statusResp.statusCode); // @output 200
 
     http:Response jsonResp = check c->get("/data/jsondata");
-    json|error payload = jsonResp.getJsonPayload();
-    io:println(payload is json); // @output true
+    json payload = check jsonResp.getJsonPayload();
+    map<json> obj = <map<json>>payload;
+    io:println(obj["message"]); // @output hello
+    io:println(obj["count"]); // @output 3
 
     http:Response textResp = check c->get("/data/html");
     string text = textResp.getTextPayload();
-    io:println(text.length() > 0); // @output true
+    io:println(text); // @output <html><body>hello</body></html>
 
     http:Response binaryResp = check c->get("/data/bytes");
     byte[] b = check binaryResp.getBinaryPayload();
-    io:println(b.length() > 0); // @output true
+    io:println(b); // @output [1,2,3,4,5,6,7,8]
 }

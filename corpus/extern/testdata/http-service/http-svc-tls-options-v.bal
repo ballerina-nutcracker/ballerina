@@ -26,7 +26,7 @@ http:ListenerConfiguration secureConfig = {
             certFile: "testdata/certs/server.crt",
             keyFile: "testdata/certs/server.key"
         },
-        protocol: ["TLSv1.2", "TLSv1.3"],
+        protocol: ["TLSv1.2"],
         ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"],
         shareSession: false
     }
