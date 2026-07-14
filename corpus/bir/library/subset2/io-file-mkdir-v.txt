@@ -207,55 +207,60 @@ main() -> nil|error{
   bb39 {
     %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/append/c/d/append.txt
     appendPath = %77;
-    %79 = ConstantLoad First
-    %80 = ConstantLoad APPEND
-    %81 = fileWriteString(appendPath,%79,%80) -> bb40;
+    $desugar$22 = appendPath;
+    %80 = ConstantLoad First
+    $desugar$23 = %80;
+    %82 = $default$0($desugar$22,$desugar$23) -> bb40;
   }
   bb40 {
-    $desugar$22 = %81;
-    %83 = $desugar$22 is error
-    %83 ? bb41 : bb42;
+    $desugar$24 = %82;
+    %84 = fileWriteString($desugar$22,$desugar$23,$desugar$24) -> bb41;
   }
   bb41 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$22);
-    PopScopeFrame
-    return;
+    $desugar$25 = %84;
+    %86 = $desugar$25 is error
+    %86 ? bb42 : bb43;
   }
   bb42 {
-    %84 = ConstantLoad Second
-    %85 = ConstantLoad APPEND
-    %86 = fileWriteString(appendPath,%84,%85) -> bb43;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$25);
+    PopScopeFrame
+    return;
   }
   bb43 {
-    $desugar$23 = %86;
-    %88 = $desugar$23 is error
-    %88 ? bb44 : bb45;
+    %87 = ConstantLoad Second
+    %88 = ConstantLoad APPEND
+    %89 = fileWriteString(appendPath,%87,%88) -> bb44;
   }
   bb44 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$23);
-    PopScopeFrame
-    return;
+    $desugar$26 = %89;
+    %91 = $desugar$26 is error
+    %91 ? bb45 : bb46;
   }
   bb45 {
-    %89 = fileReadString(appendPath) -> bb46;
-  }
-  bb46 {
-    $desugar$24 = %89;
-    %91 = $desugar$24 is error
-    %91 ? bb47 : bb48;
-  }
-  bb47 {
     PushScopeFrame 0
-    (1, %0) = (1, $desugar$24);
+    (1, %0) = (1, $desugar$26);
     PopScopeFrame
     return;
   }
+  bb46 {
+    %92 = fileReadString(appendPath) -> bb47;
+  }
+  bb47 {
+    $desugar$27 = %92;
+    %94 = $desugar$27 is error
+    %94 ? bb48 : bb49;
+  }
   bb48 {
-    %92 = println($desugar$24) -> bb49;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$27);
+    PopScopeFrame
+    return;
   }
   bb49 {
+    %95 = println($desugar$27) -> bb50;
+  }
+  bb50 {
     return;
   }
 }

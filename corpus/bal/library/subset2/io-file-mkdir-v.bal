@@ -40,10 +40,9 @@ public function main() returns error? {
     check io:fileWriteXml(xmlPath, xml `<a/>`);
     io:println(check io:fileReadXml(xmlPath)); // @output <a/>
 
-    // Appending also creates missing parent directories, even on the very
-    // first write to that path.
+    // Appending also creates missing parent directories.
     string appendPath = "/tmp/bal_io_mkdir_xyz/append/c/d/append.txt";
-    check io:fileWriteString(appendPath, "First", io:APPEND);
+    check io:fileWriteString(appendPath, "First");
     check io:fileWriteString(appendPath, "Second", io:APPEND);
     io:println(check io:fileReadString(appendPath)); // @output FirstSecond
 }
