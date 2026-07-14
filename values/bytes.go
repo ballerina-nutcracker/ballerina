@@ -14,32 +14,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package native
+package values
 
-import (
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
-)
+import "ballerina-lang-go/semtypes"
 
-const (
-	orgName    = "ballerina"
-	moduleName = "crypto"
-)
-
-type cryptoTypes struct {
-	byteArrTy semtypes.SemType
-	keyMapTy  semtypes.SemType
-	utcTy     semtypes.SemType
+// ToByteSlice converts a Ballerina byte[] (List of int64 in 0-255) to a Go []byte.
+func (l *List) ToByteSlice() []byte {
+	b := make([]byte, l.Len())
+	for i := 0; i < l.Len(); i++ {
+		b[i] = byte(l.Get(i).(int64))
+	}
+	return b
 }
 
-// cryptoError builds a Ballerina Error value with the given message.
-func cryptoError(msg string) *values.Error {
-	return values.NewErrorWithMessage(msg)
-}
-
-// mapString reads a string field from a Ballerina Map.
-func mapString(m *values.Map, key string) string {
-	v, _ := m.Get(key)
-	s, _ := v.(string)
-	return s
+// ByteSliceToList converts a Go []byte to a Ballerina byte[] (List).
+func ByteSliceToList(byteArrTy semtypes.SemType, tc semtypes.Context, data []byte) *List {
+	items := make([]BalValue, len(data))
+	for i, b := range data {
+		items[i] = int64(b)
+	}
+	return NewList(byteArrTy, semtypes.ToListAtomicType(tc, byteArrTy), false, nil, 0, items)
 }

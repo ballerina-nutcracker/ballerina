@@ -50,18 +50,6 @@ func splitLines(data []byte) []string {
 	return lines
 }
 
-func toByteSlice(list *values.List) ([]byte, bool) {
-	b := make([]byte, list.Len())
-	for i := range list.Len() {
-		n, ok := list.Get(i).(int64)
-		if !ok || n < 0 || n > 255 {
-			return nil, false
-		}
-		b[i] = byte(n)
-	}
-	return b, true
-}
-
 func initFileIOModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	typCtx := semtypes.ContextFrom(env)
@@ -189,10 +177,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 			path, _ := args[0].(string)
 			list, _ := args[1].(*values.List)
 			option, _ := args[2].(string)
-			data, ok := toByteSlice(list)
-			if !ok {
-				return fileIOError("invalid byte value in content array"), nil
-			}
+			data := list.ToByteSlice()
 			var err error
 			if option == "APPEND" {
 				err = rt.Platform().FS.AppendFile(path, data)
