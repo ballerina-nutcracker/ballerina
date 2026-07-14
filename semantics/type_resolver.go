@@ -3875,7 +3875,7 @@ func resolveTypeTestExpr(t typeResolver, chain *binding, e *ast.BLangTypeTestExp
 	testTy := e.Type.Type
 	trueTy := semtypes.Intersect(tx, testTy)
 	trueSym := narrowSymbol(t, ref, trueTy)
-	if !e.IsNegation() && !tryAssociateNarrowedFunctionSignature(t, trueSym, e.Type.TypeDescriptor, e.GetPosition()) {
+	if !tryAssociateNarrowedFunctionSignature(t, trueSym, e.Type.TypeDescriptor, e.GetPosition()) {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	trueChain := &binding{ref: ref, narrowedSymbol: trueSym, prev: chain}

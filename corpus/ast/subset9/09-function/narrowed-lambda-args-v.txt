@@ -122,4 +122,38 @@
                 (invocation narrowedAlias (
                   (named-arg a
                     (literal 14)))))))) ())
-        (block-stmt)))))
+        (block-stmt
+          (var-def
+            (variable negated (type
+              (union-type
+                (function-type (
+                  (value-type int)) (
+                  (value-type int)))
+                (value-type string))) (expr
+              (lambda
+                (function $anonFunc$_3 (
+                  (variable value (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))
+          (if
+            (type-test-expr !is
+              (simple-var-ref negated)
+              (function-type (
+                (value-type int)) (
+                (value-type int))))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal unexpected))))) (
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation negated ()))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation negated (
+                    (named-arg n
+                      (literal 16)))))))))))))))

@@ -38,6 +38,19 @@ $anonFunc$_2(int) -> int{
     return;
   }
 }
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
@@ -155,7 +168,50 @@ main() -> nil{
     GOTO bb23;
   }
   bb23 {
-    PushScopeFrame 0
+    PushScopeFrame 5
+    %0 = fp $anon/.:$anonFunc$_3
+    negated = %0;
+    %2 = fp $anon/.:$default$3
+    $desugar$4 = %2;
+    %4 = negated !is function(int) returns int
+    %4 ? bb24 : bb26;
+  }
+  bb24 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb25;
+  }
+  bb25 {
+    PopScopeFrame
+    GOTO bb32;
+  }
+  bb26 {
+    PushScopeFrame 11
+    %0 = $desugar$4() -> bb27;
+  }
+  bb27 {
+    $desugar$5 = %0;
+    %2 = $desugar$5;
+    %3 = negated(%2) -> bb28;
+  }
+  bb28 {
+    %4 = %3;
+    %5 = println(%4) -> bb29;
+  }
+  bb29 {
+    %6 = ConstantLoad 16
+    %7 = %6;
+    %8 = negated(%7) -> bb30;
+  }
+  bb30 {
+    %9 = %8;
+    %10 = println(%9) -> bb31;
+  }
+  bb31 {
+    PopScopeFrame
+    GOTO bb32;
+  }
+  bb32 {
     PopScopeFrame
     PopScopeFrame
     return;

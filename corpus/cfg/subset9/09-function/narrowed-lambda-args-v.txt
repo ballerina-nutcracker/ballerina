@@ -111,5 +111,41 @@
         (invocation narrowedAlias (
           (literal 14))))))
   )
-  (bb9 (bb8 bb7) ())
+  (bb9 (bb8 bb7) (bb10 bb12)
+    (var-def
+      (variable negated (type
+        (union-type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))
+          (value-type string))) (expr
+        (lambda
+          (function $anonFunc$_3 (
+            (variable value (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+    (type-test-expr !is
+      (simple-var-ref negated)
+      (function-type (
+        (value-type int)) (
+        (value-type int))))
+  )
+  (bb10 (bb9) (bb11)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb11 (bb10 bb12) ())
+  (bb12 (bb9) (bb11)
+    (expression-stmt
+      (invocation io println (
+        (invocation negated ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation negated (
+          (literal 16))))))
+  )
 )

@@ -1084,7 +1084,7 @@ func walkTypeTestExpr(cx *functionContext, expr *ast.BLangTypeTestExpr) desugare
 		initStmts = append(initStmts, result.initStmts...)
 		expr.Expr = result.replacementNode.(ast.BLangExpression)
 	}
-	if fnType, ok := expr.Type.TypeDescriptor.(*ast.BLangFunctionType); ok && !expr.IsNegation() {
+	if fnType, ok := expr.Type.TypeDescriptor.(*ast.BLangFunctionType); ok {
 		result := desugarFunctionTypeDesc(cx, fnType, cx.currentScope())
 		initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
 		for _, field := range result.recordFields {

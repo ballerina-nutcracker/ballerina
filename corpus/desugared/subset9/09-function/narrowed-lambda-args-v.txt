@@ -146,7 +146,51 @@
               (invocation io println (
                 (invocation narrowedAlias (
                   (literal 14))))))) ())
-        (block-stmt))))
+        (block-stmt
+          (var-def
+            (variable negated (type
+              (union-type
+                (function-type (
+                  (value-type int)) (
+                  (value-type int)))
+                (value-type string))) (expr
+              (lambda
+                (function $anonFunc$_3 (
+                  (variable value (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))
+          (var-def
+            (variable $desugar$4 (expr
+              (lambda
+                (function $default$3 () ()
+                  (block-function-body
+                    (return
+                      (literal 7))))))))
+          (if
+            (type-test-expr !is
+              (simple-var-ref negated)
+              (function-type (
+                (value-type int)) (
+                (value-type int))))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal unexpected))))) (
+            (block-stmt
+              (var-def
+                (variable $desugar$5 (expr
+                  (invocation $desugar$4 ()))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation negated (
+                    (simple-var-ref $desugar$5))))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation negated (
+                    (literal 16)))))))))))))
   (function $default$0 () ()
     (block-function-body
       (return

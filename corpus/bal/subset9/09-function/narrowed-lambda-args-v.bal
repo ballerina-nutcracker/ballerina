@@ -50,4 +50,14 @@ public function main() {
         io:println(narrowedAlias()); // @output 5
         io:println(narrowedAlias(a = 14)); // @output 14
     }
+
+    (function(int x) returns int)|string negated = function(int value) returns int {
+        return value;
+    };
+    if negated !is function(int n = 7) returns int {
+        io:println("unexpected");
+    } else {
+        io:println(negated()); // @output 7
+        io:println(negated(n = 16)); // @output 16
+    }
 }
