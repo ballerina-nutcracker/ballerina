@@ -245,9 +245,10 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef
 	if stmt.Var != nil {
 		if typeNode := stmt.Var.TypeNode(); typeNode != nil {
 			result := desugarTypeDesc(cx, typeNode, cx.currentScope())
-			for _, fn := range result.functions {
-				cx.pkgCtx.pkg.Functions = append(cx.pkgCtx.pkg.Functions, *fn)
+			for i := range result.functions {
+				result.functions[i] = desugarFunction(cx.pkgCtx, result.functions[i])
 			}
+			cx.pkgCtx.addLocalTypeDescDefaultFunctions(result.functions)
 			for _, field := range result.recordFields {
 				initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
 			}

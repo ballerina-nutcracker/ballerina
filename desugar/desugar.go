@@ -42,18 +42,19 @@ type desugaredNode[E ast.Node] struct {
 // Worker goroutines (per-function/class/service) must use their own non-shared
 // typeContext via functionContext.typeCtx().
 type packageContext struct {
-	compilerCtx            *context.CompilerContext
-	pkg                    *ast.BLangPackage
-	importedSymbols        map[string]model.ExportedSymbolSpace
-	importMu               sync.Mutex
-	addedImplicitImports   map[string]bool
-	generatedFunctionsMu   sync.Mutex
-	generatedFunctions     []*ast.BLangFunction
-	defaultClosureOwnersMu sync.Mutex
-	defaultClosureOwners   map[model.SymbolRef]struct{}
-	desugarSymbolCounter   int
-	typeContext            semtypes.Context
-	xmlIteratorTypes       *semtypes.SemTypeCache
+	compilerCtx                   *context.CompilerContext
+	pkg                           *ast.BLangPackage
+	importedSymbols               map[string]model.ExportedSymbolSpace
+	importMu                      sync.Mutex
+	addedImplicitImports          map[string]bool
+	generatedFunctionsMu          sync.Mutex
+	generatedFunctions            []*ast.BLangFunction
+	localTypeDescDefaultFunctions []*ast.BLangFunction
+	defaultClosureOwnersMu        sync.Mutex
+	defaultClosureOwners          map[model.SymbolRef]struct{}
+	desugarSymbolCounter          int
+	typeContext                   semtypes.Context
+	xmlIteratorTypes              *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -92,15 +93,37 @@ func (ctx *packageContext) addGeneratedFunctions(fns []*ast.BLangFunction) {
 	ctx.generatedFunctions = append(ctx.generatedFunctions, fns...)
 }
 
+func (ctx *packageContext) addLocalTypeDescDefaultFunctions(fns []*ast.BLangFunction) {
+	if len(fns) == 0 {
+		return
+	}
+	ctx.generatedFunctionsMu.Lock()
+	defer ctx.generatedFunctionsMu.Unlock()
+	ctx.localTypeDescDefaultFunctions = append(ctx.localTypeDescDefaultFunctions, fns...)
+}
+
 func (ctx *packageContext) takeGeneratedFunctions() []*ast.BLangFunction {
 	ctx.generatedFunctionsMu.Lock()
 	defer ctx.generatedFunctionsMu.Unlock()
+	localFunctions := ctx.localTypeDescDefaultFunctions
 	functions := ctx.generatedFunctions
+	ctx.localTypeDescDefaultFunctions = nil
 	ctx.generatedFunctions = nil
-	sort.Slice(functions, func(i, j int) bool {
-		return functions[i].Name.GetValue() < functions[j].Name.GetValue()
+	sortFunctions := func(functions []*ast.BLangFunction) {
+		sort.Slice(functions, func(i, j int) bool {
+			return functions[i].Name.GetValue() < functions[j].Name.GetValue()
+		})
+	}
+	sort.Slice(localFunctions, func(i, j int) bool {
+		left := localFunctions[i].Symbol()
+		right := localFunctions[j].Symbol()
+		if left.SpaceIndex != right.SpaceIndex {
+			return left.SpaceIndex < right.SpaceIndex
+		}
+		return left.Index < right.Index
 	})
-	return functions
+	sortFunctions(functions)
+	return append(localFunctions, functions...)
 }
 
 func (ctx *packageContext) addDefaultClosureOwner(expr ast.BLangActionOrExpression) {
