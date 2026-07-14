@@ -1677,17 +1677,7 @@ func analyzeInvocation[A analyzer](a A, inv invocable, expectedType semtypes.Sem
 	}
 	fnTy := a.ctx().SymbolType(symbol)
 	paramListTy := semtypes.FunctionParamListType(a.tyCtx(), fnTy)
-
-	fnSymbol, isDirectCall := a.ctx().GetSymbol(symbol).(model.FunctionSymbol)
-	// TODO: ideally we need to unify these when we no longer has restrictions on lambdas
-	if !isDirectCall {
-		if invocation, ok := inv.(*ast.BLangInvocation); ok {
-			return analyzeLambdaInvocation(a, invocation, paramListTy, expectedType)
-		}
-		a.internalErr("expected function symbol", inv.GetPosition())
-		return false
-	}
-	return analyzeDirectInvocation(a, inv, fnSymbol, paramListTy, expectedType)
+	return analyzeInvocationArgs(a, inv, paramListTy, expectedType)
 }
 
 // Path computed segments are typed against rmSym.PathType() during type
@@ -1737,7 +1727,7 @@ func analyzeStreamOperation[A analyzer](a A, invocation *ast.BLangInvocation, ex
 	return validateResolvedType(a, invocation, expectedType)
 }
 
-func analyzeDirectInvocation[A analyzer](a A, inv invocable, _ model.FunctionSymbol, paramListTy, expectedType semtypes.SemType) bool {
+func analyzeInvocationArgs[A analyzer](a A, inv invocable, paramListTy, expectedType semtypes.SemType) bool {
 	tyCtx := a.tyCtx()
 	for i, arg := range inv.CallArgs() {
 		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
@@ -1751,23 +1741,6 @@ func analyzeDirectInvocation[A analyzer](a A, inv invocable, _ model.FunctionSym
 	}
 
 	return validateResolvedType(a, inv, expectedType)
-}
-
-func analyzeLambdaInvocation[A analyzer](a A, invocation *ast.BLangInvocation, paramListTy, expectedType semtypes.SemType) bool {
-	tyCtx := a.tyCtx()
-
-	for i, arg := range invocation.ArgExprs {
-		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
-			a.internalError("named argument after call-argument lowering", arg.GetPosition())
-			return false
-		}
-		key := semtypes.IntConst(int64(i))
-		if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
-			return false
-		}
-	}
-
-	return validateResolvedType(a, invocation, expectedType)
 }
 
 func analyzeSimpleVariableDef[A analyzer](a A, simpleVariableDef *ast.BLangSimpleVariableDef) bool {
