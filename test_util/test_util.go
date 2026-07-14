@@ -300,4 +300,3 @@ func computeExpectedPath(inputPath, inputBaseDir, outputBaseDir, outputExt strin
 	relPath = strings.TrimSuffix(relPath, ".bal") + outputExt
 	return filepath.Join(outputBaseDir, relPath)
 }
-
