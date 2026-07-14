@@ -235,13 +235,12 @@ func initMimeModule(rt *runtime.Runtime) {
 			if err != nil {
 				return mimeError("ParserError", "Entity body is not a JSON value"), nil
 			}
-			var v interface{}
 			dec := json.NewDecoder(strings.NewReader(text))
-			dec.UseNumber()
-			if err := dec.Decode(&v); err != nil {
+			v, err := values.DecodeJSON(dec, ctx.TypeCtx, jsonListType, jsonMapType)
+			if err != nil {
 				return mimeError("ParserError", "Error occurred while retrieving the json payload from the entity: "+err.Error()), nil
 			}
-			return values.GoToBalValue(ctx.TypeCtx, v, jsonListType, jsonMapType), nil
+			return v, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externSetText",
