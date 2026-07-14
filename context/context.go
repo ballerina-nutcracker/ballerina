@@ -126,7 +126,15 @@ func (c *CompilerContext) SymbolKind(symbol model.SymbolRef) model.SymbolKind {
 }
 
 func (c *CompilerContext) SymbolIsPublic(symbol model.SymbolRef) bool {
-	return c.GetSymbol(symbol).IsPublic()
+	return c.env.SymbolIsPublic(symbol)
+}
+
+func (c *CompilerContext) SymbolIsClass(symbol model.SymbolRef) bool {
+	return c.env.SymbolIsClass(symbol)
+}
+
+func (c *CompilerContext) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymbolMetadata, bool) {
+	return c.env.ValueSymbolMetadata(symbol)
 }
 
 func (c *CompilerContext) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
