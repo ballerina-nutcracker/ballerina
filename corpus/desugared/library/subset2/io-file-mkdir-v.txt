@@ -217,42 +217,53 @@
           (literal /tmp/bal_io_mkdir_xyz/append/c/d/append.txt))))
       (var-def
         (variable $desugar$22 (expr
-          (invocation io fileWriteString (
-            (simple-var-ref appendPath)
-            (literal First)
-            (literal APPEND))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$22))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$22))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$22))
+          (simple-var-ref appendPath))))
       (var-def
         (variable $desugar$23 (expr
+          (literal First))))
+      (var-def
+        (variable $desugar$24 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23))))))
+      (var-def
+        (variable $desugar$25 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23)
+            (simple-var-ref $desugar$24))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$25))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$25))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$25))
+      (var-def
+        (variable $desugar$26 (expr
           (invocation io fileWriteString (
             (simple-var-ref appendPath)
             (literal Second)
             (literal APPEND))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$23))
+          (simple-var-ref $desugar$26))
         (block-stmt
           (return
-            (simple-var-ref $desugar$23))) ())
+            (simple-var-ref $desugar$26))) ())
       (expression-stmt
-        (simple-var-ref $desugar$23))
+        (simple-var-ref $desugar$26))
       (var-def
-        (variable $desugar$24 (expr
+        (variable $desugar$27 (expr
           (invocation io fileReadString (
             (simple-var-ref appendPath))))))
       (if
         (type-test-expr is
-          (simple-var-ref $desugar$24))
+          (simple-var-ref $desugar$27))
         (block-stmt
           (return
-            (simple-var-ref $desugar$24))) ())
+            (simple-var-ref $desugar$27))) ())
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$24)))))))
+          (simple-var-ref $desugar$27)))))))

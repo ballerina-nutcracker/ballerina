@@ -86,8 +86,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref appendPath)
-          (literal First)
-          (simple-var-ref io APPEND)))))
+          (literal First)))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
