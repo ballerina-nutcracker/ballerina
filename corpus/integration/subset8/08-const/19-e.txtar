@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> 19-e.bal:20:11
+   |
+20 | const N = <int>(1.0 / 0.0); // @error
+   |           ^^^^^^^^^^^^^^^^

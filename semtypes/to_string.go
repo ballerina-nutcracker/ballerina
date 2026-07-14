@@ -146,22 +146,20 @@ func (s *toStringState) subtypeToString(sub basicSubtype) string {
 	}
 }
 
-func (s *toStringState) bddListToString(bdd Bdd) string {
+func bddFormulaToString(cx Context, bdd Bdd, atomToString func(atom) string) string {
 	var formulas []string
-	bddEvery(s.cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
+	bddEvery(cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
 		var posParts []string
 		for c := pos; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			posParts = append(posParts, s.listAtomToString(cx.conjunctionAtom(c)))
+			posParts = append(posParts, atomToString(cx.conjunctionAtom(c)))
 		}
-		// Reverse positive parts since conjunction is built in reverse order
 		for i, j := 0, len(posParts)-1; i < j; i, j = i+1, j-1 {
 			posParts[i], posParts[j] = posParts[j], posParts[i]
 		}
 		var negParts []string
 		for c := neg; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			negParts = append(negParts, "¬"+s.listAtomToString(cx.conjunctionAtom(c)))
+			negParts = append(negParts, "¬"+atomToString(cx.conjunctionAtom(c)))
 		}
-		// Reverse negative parts
 		for i, j := 0, len(negParts)-1; i < j; i, j = i+1, j-1 {
 			negParts[i], negParts[j] = negParts[j], negParts[i]
 		}
@@ -170,6 +168,10 @@ func (s *toStringState) bddListToString(bdd Bdd) string {
 		return true
 	})
 	return strings.Join(formulas, "|")
+}
+
+func (s *toStringState) bddListToString(bdd Bdd) string {
+	return bddFormulaToString(s.cx, bdd, s.listAtomToString)
 }
 
 func (s *toStringState) listAtomToString(atom atom) string {
@@ -198,33 +200,18 @@ func (s *toStringState) listAtomicTypeToString(atom atom) string {
 }
 
 func (s *toStringState) bddErrorToString(bdd Bdd) string {
-	// Error types use mapping atoms for their detail type
-	detail := s.bddMappingToString(bdd)
-	return "error<" + detail + ">"
+	return "error<" + bddFormulaToString(s.cx, bdd, s.errorAtomToString) + ">"
+}
+
+func (s *toStringState) errorAtomToString(atom atom) string {
+	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() < 0 {
+		return "error"
+	}
+	return s.mappingAtomToString(atom)
 }
 
 func (s *toStringState) bddFunctionToString(bdd Bdd) string {
-	var formulas []string
-	bddEvery(s.cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
-		var posParts []string
-		for c := pos; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			posParts = append(posParts, s.functionAtomToString(cx.conjunctionAtom(c)))
-		}
-		for i, j := 0, len(posParts)-1; i < j; i, j = i+1, j-1 {
-			posParts[i], posParts[j] = posParts[j], posParts[i]
-		}
-		var negParts []string
-		for c := neg; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			negParts = append(negParts, "¬"+s.functionAtomToString(cx.conjunctionAtom(c)))
-		}
-		for i, j := 0, len(negParts)-1; i < j; i, j = i+1, j-1 {
-			negParts[i], negParts[j] = negParts[j], negParts[i]
-		}
-		parts := append(posParts, negParts...)
-		formulas = append(formulas, strings.Join(parts, "&"))
-		return true
-	})
-	return strings.Join(formulas, "|")
+	return bddFormulaToString(s.cx, bdd, s.functionAtomToString)
 }
 
 func (s *toStringState) functionAtomToString(atom atom) string {
@@ -287,27 +274,7 @@ func (s *toStringState) bddTypedescToString(bdd Bdd) string {
 }
 
 func (s *toStringState) bddMappingToString(bdd Bdd) string {
-	var formulas []string
-	bddEvery(s.cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
-		var posParts []string
-		for c := pos; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			posParts = append(posParts, s.mappingAtomToString(cx.conjunctionAtom(c)))
-		}
-		for i, j := 0, len(posParts)-1; i < j; i, j = i+1, j-1 {
-			posParts[i], posParts[j] = posParts[j], posParts[i]
-		}
-		var negParts []string
-		for c := neg; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			negParts = append(negParts, "¬"+s.mappingAtomToString(cx.conjunctionAtom(c)))
-		}
-		for i, j := 0, len(negParts)-1; i < j; i, j = i+1, j-1 {
-			negParts[i], negParts[j] = negParts[j], negParts[i]
-		}
-		parts := append(posParts, negParts...)
-		formulas = append(formulas, strings.Join(parts, "&"))
-		return true
-	})
-	return strings.Join(formulas, "|")
+	return bddFormulaToString(s.cx, bdd, s.mappingAtomToString)
 }
 
 func (s *toStringState) mappingAtomToString(atom atom) string {
@@ -335,27 +302,7 @@ func (s *toStringState) mappingAtomicTypeToString(atom atom) string {
 }
 
 func (s *toStringState) bddObjectToString(bdd Bdd) string {
-	var formulas []string
-	bddEvery(s.cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
-		var posParts []string
-		for c := pos; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			posParts = append(posParts, s.objectAtomToString(cx.conjunctionAtom(c)))
-		}
-		for i, j := 0, len(posParts)-1; i < j; i, j = i+1, j-1 {
-			posParts[i], posParts[j] = posParts[j], posParts[i]
-		}
-		var negParts []string
-		for c := neg; c != conjunctionNil; c = cx.conjunctionNext(c) {
-			negParts = append(negParts, "¬"+s.objectAtomToString(cx.conjunctionAtom(c)))
-		}
-		for i, j := 0, len(negParts)-1; i < j; i, j = i+1, j-1 {
-			negParts[i], negParts[j] = negParts[j], negParts[i]
-		}
-		parts := append(posParts, negParts...)
-		formulas = append(formulas, strings.Join(parts, "&"))
-		return true
-	})
-	return strings.Join(formulas, "|")
+	return bddFormulaToString(s.cx, bdd, s.objectAtomToString)
 }
 
 func (s *toStringState) objectAtomToString(atom atom) string {

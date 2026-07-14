@@ -1,13 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const Inf () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref Inf)
-        (binary-expr /
-          (literal 1)
-          (literal 0)))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -16,7 +8,7 @@
           (binary-expr /
             (literal 1)
             (literal 0))
-          (simple-var-ref Inf))
+          (numeric-literal +Inf))
         (block-stmt
           (expression-stmt
             (invocation io println (

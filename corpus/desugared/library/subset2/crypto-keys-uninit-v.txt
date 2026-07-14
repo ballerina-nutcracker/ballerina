@@ -19,14 +19,14 @@
           (mapping-constructor-expr
             (key-value
               (literal algorithm)
-              (simple-var-ref crypto RSA))))))
+              (literal RSA))))))
       (var-def
         (variable pub (type
           (user-defined-type crypto PublicKey)) (expr
           (mapping-constructor-expr
             (key-value
               (literal algorithm)
-              (simple-var-ref crypto RSA))))))
+              (literal RSA))))))
       (var-def
         (variable rsaSig (type
           (union-type

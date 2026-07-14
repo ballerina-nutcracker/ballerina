@@ -1,11 +1,9 @@
 module $anon.. v 0.0.0;
-N  123;
-N1  100;
-N2  20;
-N3  3;
 main() -> nil{
   bb0 {
-    %1 = println(N) -> bb1;
+    %1 = ConstantLoad 123
+    %2 = %1;
+    %3 = println(%2) -> bb1;
   }
   bb1 {
     return;

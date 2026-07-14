@@ -547,11 +547,7 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 		var isWrapped bool
 		br.read(&isWrapped)
 
-		var tagByte int8
-		br.read(&tagByte)
-
-		tag := typeTag(tagByte)
-		value := br.readConstValueByTag(tag)
+		value := br.readConstValue()
 
 		if isWrapped {
 			value = bir.ConstValue{
@@ -1090,6 +1086,57 @@ func (br *birReader) readConstValueByTag(tag typeTag) any {
 		var idx int32
 		br.read(&idx)
 		return nil
+	case typeTagMap:
+		ty := br.readType()
+		var isReadonly bool
+		br.read(&isReadonly)
+		var count int64
+		br.read(&count)
+		entries := make([]values.MapEntry, 0, count)
+		for i := int64(0); i < count; i++ {
+			key := string(br.readStringCPEntry())
+			value := br.readConstValue()
+			entries = append(entries, values.MapEntry{Key: key, Value: value})
+		}
+		tyCtx := semtypes.TypeCheckContext(br.ctx.GetTypeEnv())
+		atomic := semtypes.ToMappingAtomicType(tyCtx, ty)
+		if atomic == nil {
+			panic("map constant type is not atomic")
+		}
+		return values.NewMap(ty, atomic, isReadonly, entries)
+	case typeTagList:
+		ty := br.readType()
+		var isReadonly bool
+		br.read(&isReadonly)
+		var count int64
+		br.read(&count)
+		initial := make([]values.BalValue, count)
+		for i := int64(0); i < count; i++ {
+			initial[i] = br.readConstValue()
+		}
+		tyCtx := semtypes.TypeCheckContext(br.ctx.GetTypeEnv())
+		atomic := semtypes.ToListAtomicType(tyCtx, ty)
+		if atomic == nil {
+			panic("list constant type is not atomic")
+		}
+		restFiller, _ := values.FillerFactoryFor(tyCtx, atomic.Rest())
+		return values.NewList(ty, atomic, isReadonly, restFiller, int(count), initial)
+	case typeTagTypedesc:
+		ty := br.readType()
+		var count int64
+		br.read(&count)
+		annotations := values.NewAnnotationValues()
+		for i := int64(0); i < count; i++ {
+			key := string(br.readStringCPEntry())
+			annotations[key] = br.readConstValue()
+		}
+		return values.NewTypeDesc(ty, annotations)
+	case typeTagRuntimeRef:
+		return &values.RuntimeAnnotationValueRef{
+			Organization: string(br.readStringCPEntry()),
+			Module:       string(br.readStringCPEntry()),
+			GlobalName:   string(br.readStringCPEntry()),
+		}
 	default:
 		var idx int32
 		br.read(&idx)

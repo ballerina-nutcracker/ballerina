@@ -19,6 +19,7 @@ package modules
 import (
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/values"
 )
 
@@ -32,8 +33,14 @@ type ExternFunction struct {
 	Impl extern.NativeFunc
 }
 
-func NewBIRModule(ctx *extern.Context, pkg *bir.BIRPackage) *BIRModule {
+func NewBIRModule(typeCtx semtypes.Context, pkg *bir.BIRPackage) *BIRModule {
 	globals := make(map[string]values.BalValue, len(pkg.GlobalVars))
+	for key, gv := range pkg.GlobalVars {
+		v, ok := values.FillerValue(typeCtx, gv.GetType())
+		if ok {
+			globals[key] = v
+		}
+	}
 	return &BIRModule{
 		Pkg:     pkg,
 		Globals: globals,

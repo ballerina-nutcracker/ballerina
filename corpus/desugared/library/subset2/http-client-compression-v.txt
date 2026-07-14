@@ -55,7 +55,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_AUTO))))))))
+                (literal AUTO))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$4))
@@ -100,7 +100,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_ALWAYS))))))))
+                (literal ALWAYS))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$8))
@@ -145,7 +145,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_NEVER))))))))
+                (literal NEVER))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$12))
@@ -193,10 +193,10 @@
                 (literal 15))
               (key-value
                 (literal httpVersion)
-                (simple-var-ref http HTTP_1_1))
+                (literal 1.1))
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_NEVER))))))))
+                (literal NEVER))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$16))

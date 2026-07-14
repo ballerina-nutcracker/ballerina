@@ -45,7 +45,7 @@
             (list-constructor-expr
               (literal 4)
               (literal 5))
-            (simple-var-ref io APPEND))))))
+            (literal APPEND))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$4))

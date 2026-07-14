@@ -79,6 +79,6 @@
           (invocation hasHeader expr:
             (simple-var-ref r) (
             (literal x-absent)
-            (simple-var-ref http LEADING))))))
+            (literal LEADING))))))
       (return
         (literal <nil>)))))

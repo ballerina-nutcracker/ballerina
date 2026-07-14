@@ -512,7 +512,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
             (simple-var-ref rsaPub)
-            (simple-var-ref crypto OAEPwithMD5andMGF1))))))
+            (literal OAEPwithMD5andMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$41))
@@ -529,7 +529,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto decryptRsaEcb (
             (simple-var-ref oaepMd5)
             (simple-var-ref rsaPk)
-            (simple-var-ref crypto OAEPwithMD5andMGF1))))))
+            (literal OAEPwithMD5andMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$42))
@@ -546,7 +546,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
             (simple-var-ref rsaPub)
-            (simple-var-ref crypto OAEPWithSHA1AndMGF1))))))
+            (literal OAEPWithSHA1AndMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$43))
@@ -563,7 +563,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto decryptRsaEcb (
             (simple-var-ref oaep1)
             (simple-var-ref rsaPk)
-            (simple-var-ref crypto OAEPWithSHA1AndMGF1))))))
+            (literal OAEPWithSHA1AndMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$44))
@@ -580,7 +580,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
             (simple-var-ref rsaPub)
-            (simple-var-ref crypto OAEPWithSHA256AndMGF1))))))
+            (literal OAEPWithSHA256AndMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$45))
@@ -597,7 +597,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto decryptRsaEcb (
             (simple-var-ref oaep256)
             (simple-var-ref rsaPk)
-            (simple-var-ref crypto OAEPWithSHA256AndMGF1))))))
+            (literal OAEPWithSHA256AndMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$46))
@@ -614,7 +614,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
             (simple-var-ref rsaPub)
-            (simple-var-ref crypto OAEPwithSHA384andMGF1))))))
+            (literal OAEPwithSHA384andMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$47))
@@ -631,7 +631,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto decryptRsaEcb (
             (simple-var-ref oaep384)
             (simple-var-ref rsaPk)
-            (simple-var-ref crypto OAEPwithSHA384andMGF1))))))
+            (literal OAEPwithSHA384andMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$48))
@@ -648,7 +648,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
             (simple-var-ref rsaPub)
-            (simple-var-ref crypto OAEPwithSHA512andMGF1))))))
+            (literal OAEPwithSHA512andMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$49))
@@ -665,7 +665,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (invocation crypto decryptRsaEcb (
             (simple-var-ref oaep512)
             (simple-var-ref rsaPk)
-            (simple-var-ref crypto OAEPwithSHA512andMGF1))))))
+            (literal OAEPwithSHA512andMGF1))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$50))
