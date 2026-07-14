@@ -109,19 +109,19 @@ go test ./...
 
 ## Report issues
 
-> **Tip:** If you are unsure whether you have found a bug, search the [existing issues](https://github.com/ballerina-platform/ballerina-lang-go/issues) in the GitHub repo and open an issue if needed.
+> **Tip:** If you are unsure whether you have found a bug, search the [existing issues](https://github.com/ballerina-nutcracker/ballerina/issues) in the GitHub repo and open an issue if needed.
 
 ### Open an issue
 
-- [Open an issue](https://github.com/ballerina-platform/ballerina-lang-go/issues) for bug reports or feature requests related to the native interpreter.
+- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to the native interpreter.
 
 ### Report security issues
 
 - Send an email to [security@ballerina.io](mailto:security@ballerina.io). For details, see the [security policy](SECURITY.md).
 
-## Contribute to Ballerina
+## Contribute to Ballerina Nutcracker
 
-As an open-source project, ballerina-lang-go welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
+As an open-source project, Ballerina Nutcracker welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 
