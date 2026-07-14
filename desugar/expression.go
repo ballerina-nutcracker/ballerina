@@ -1040,13 +1040,13 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 func walkLambdaFunction(cx *functionContext, expr *ast.BLangLambdaFunction) desugaredNode[ast.BLangActionOrExpression] {
 	if expr.Function != nil {
 		if cx.pkgCtx.needsDefaultClosures(expr.Function.Symbol()) {
-			defaults := desugarFunctionParamDefaults(cx.pkgCtx, expr.Function)
+			defaults := desugarFunctionParamDefaults(cx, expr.Function)
 			for i := range defaults {
-				defaults[i] = desugarFunction(cx.pkgCtx, defaults[i])
+				defaults[i] = desugarNestedFunction(cx, defaults[i])
 			}
-			cx.pkgCtx.addGeneratedFunctions(defaults)
+			cx.generatedFunctions.functions = append(cx.generatedFunctions.functions, defaults...)
 		}
-		expr.Function = desugarFunction(cx.pkgCtx, expr.Function)
+		expr.Function = desugarNestedFunction(cx, expr.Function)
 	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{

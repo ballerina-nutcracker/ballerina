@@ -977,6 +977,7 @@ func ensureFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model
 		return 0, false
 	}
 	if ref := fnType.SignatureRef(); ref != 0 {
+		// Already set
 		return ref, true
 	}
 	params := signatureParams(alloc, targetScope, fnType)

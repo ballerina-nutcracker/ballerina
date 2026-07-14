@@ -164,10 +164,6 @@
         (invocation io println (
           (invocation groupedLambda (
             (literal 10))))))))
-  (function $default$2 () ()
-    (block-function-body
-      (return
-        (literal 10))))
   (function $default$0 () ()
     (block-function-body
       (return
@@ -176,6 +172,10 @@
     (block-function-body
       (return
         (literal 5))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 10))))
   (function $default$3 () ()
     (block-function-body
       (return

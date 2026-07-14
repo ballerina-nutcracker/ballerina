@@ -196,13 +196,6 @@ main() -> nil{
     return;
   }
 }
-$default$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 10
-    %0 = %1;
-    return;
-  }
-}
 $default$0() -> int{
   bb0 {
     %1 = ConstantLoad 5
@@ -213,6 +206,13 @@ $default$0() -> int{
 $default$1() -> int{
   bb0 {
     %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
     %0 = %1;
     return;
   }
