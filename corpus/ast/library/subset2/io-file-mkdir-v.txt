@@ -1,0 +1,106 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable stringPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/string/a/b/string.txt))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref stringPath)
+            (literal hello)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation io fileReadString (
+              (simple-var-ref stringPath)))))))
+      (var-def
+        (variable linesPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteLines (
+            (simple-var-ref linesPath)
+            (list-constructor-expr
+              (literal one)
+              (literal two))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref linesPath)))))))
+      (var-def
+        (variable bytesPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref bytesPath)
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation io fileReadBytes (
+              (simple-var-ref bytesPath)))))))
+      (var-def
+        (variable jsonPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/json/a/b/data.json))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteJson (
+            (simple-var-ref jsonPath)
+            (mapping-constructor-expr
+              (key-value
+                (literal k)
+                (literal v)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation io fileReadJson (
+              (simple-var-ref jsonPath)))))))
+      (var-def
+        (variable xmlPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteXml (
+            (simple-var-ref xmlPath)
+            (xml-element-literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation io fileReadXml (
+              (simple-var-ref xmlPath)))))))
+      (var-def
+        (variable appendPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/append/c/d/append.txt))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref appendPath)
+            (literal First)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref appendPath)
+            (literal Second)
+            (simple-var-ref io APPEND)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation io fileReadString (
+              (simple-var-ref appendPath))))))))))
