@@ -1,94 +1,35 @@
 (package
   (import-package ballerina io (as io))
-  (const D1 (
-    (value-type decimal)) ())
-  (const D2 () ())
-  (const D3 () ())
-  (const D4 () ())
-  (const D5 (
-    (value-type decimal)) ())
-  (const D6 () ())
-  (const D7 (
-    (value-type decimal)) ())
-  (const D8 () ())
-  (const D9 () ())
-  (const D10 () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref D1)
-        (literal 1.1E+2))
-      (assignment
-        (simple-var-ref D2)
-        (literal 1.1E+2))
-      (assignment
-        (simple-var-ref D3)
-        (literal 9.9E+23))
-      (assignment
-        (simple-var-ref D4)
-        (binary-expr +
-          (simple-var-ref D2)
-          (simple-var-ref D3)))
-      (assignment
-        (simple-var-ref D5)
-        (binary-expr +
-          (simple-var-ref D2)
-          (simple-var-ref D3)))
-      (assignment
-        (simple-var-ref D6)
-        (binary-expr -
-          (simple-var-ref D2)
-          (simple-var-ref D3)))
-      (assignment
-        (simple-var-ref D7)
-        (binary-expr -
-          (simple-var-ref D2)
-          (simple-var-ref D3)))
-      (assignment
-        (simple-var-ref D8)
-        (binary-expr *
-          (simple-var-ref D2)
-          (simple-var-ref D3)))
-      (assignment
-        (simple-var-ref D9)
-        (binary-expr /
-          (simple-var-ref D3)
-          (simple-var-ref D2)))
-      (assignment
-        (simple-var-ref D10)
-        (binary-expr %
-          (simple-var-ref D3)
-          (simple-var-ref D2)))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D1))))
+          (numeric-literal 1.1E+2))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D2))))
+          (numeric-literal 1.1E+2))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D3))))
+          (numeric-literal 9.9E+23))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D4))))
+          (numeric-literal 9.9000000000000000000011E+23))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D5))))
+          (numeric-literal 9.9000000000000000000011E+23))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D6))))
+          (numeric-literal -9.8999999999999999999989E+23))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D7))))
+          (numeric-literal -9.8999999999999999999989E+23))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D8))))
+          (numeric-literal 1.089E+26))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D9))))
+          (numeric-literal 9E+21))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D10)))))))
+          (numeric-literal 0E+1)))))))

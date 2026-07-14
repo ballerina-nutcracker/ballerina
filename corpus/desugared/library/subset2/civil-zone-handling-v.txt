@@ -325,7 +325,7 @@
                 (key-value
                   (literal timeAbbrev)
                   (literal GMT)))
-              (simple-var-ref time ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT))))))
+              (literal ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT))))))
         (if
           (type-test-expr is
             (simple-var-ref $desugar$6))
@@ -370,7 +370,7 @@
                     (key-value
                       (literal minutes)
                       (literal 0)))))
-              (simple-var-ref time ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT))))))
+              (literal ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT))))))
         (if
           (type-test-expr is
             (simple-var-ref $desugar$7))

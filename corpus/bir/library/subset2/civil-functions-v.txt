@@ -96,53 +96,55 @@ main() -> nil|error{
   bb14 {
     dow = %60;
     %63 = dow;
-    %62 = == %63 SATURDAY;
-    %64 = %62;
-    %65 = println(%64) -> bb15;
+    %64 = ConstantLoad 6
+    %65 = %64;
+    %62 = == %63 %65;
+    %66 = %62;
+    %67 = println(%66) -> bb15;
   }
   bb15 {
-    %66 = utcToCivil(base) -> bb16;
+    %68 = utcToCivil(base) -> bb16;
   }
   bb16 {
-    civil = %66;
-    %69 = ConstantLoad year
-    %68 = civil[%69];
-    %70 = %68;
-    %71 = println(%70) -> bb17;
+    civil = %68;
+    %71 = ConstantLoad year
+    %70 = civil[%71];
+    %72 = %70;
+    %73 = println(%72) -> bb17;
   }
   bb17 {
-    %73 = ConstantLoad month
-    %72 = civil[%73];
-    %74 = %72;
-    %75 = println(%74) -> bb18;
+    %75 = ConstantLoad month
+    %74 = civil[%75];
+    %76 = %74;
+    %77 = println(%76) -> bb18;
   }
   bb18 {
-    %77 = ConstantLoad day
-    %76 = civil[%77];
-    %78 = %76;
-    %79 = println(%78) -> bb19;
+    %79 = ConstantLoad day
+    %78 = civil[%79];
+    %80 = %78;
+    %81 = println(%80) -> bb19;
   }
   bb19 {
-    %80 = newObject ballerina/time:TimeZone
-    %81 = ConstantLoad +05:30
-    %82 = init(%80,%81) -> bb20;
+    %82 = newObject ballerina/time:TimeZone
+    %83 = ConstantLoad +05:30
+    %84 = init(%82,%83) -> bb20;
   }
   bb20 {
-    %84 = %82 is nil
-    %84 ? bb21 : bb22;
+    %86 = %84 is nil
+    %86 ? bb21 : bb22;
   }
   bb21 {
-    %83 = %80;
+    %85 = %82;
     GOTO bb23;
   }
   bb22 {
-    %83 = %82;
+    %85 = %84;
     GOTO bb23;
   }
   bb23 {
-    $desugar$1 = %83;
-    %86 = $desugar$1 is error
-    %86 ? bb24 : bb25;
+    $desugar$1 = %85;
+    %88 = $desugar$1 is error
+    %88 ? bb24 : bb25;
   }
   bb24 {
     PushScopeFrame 0
@@ -152,13 +154,13 @@ main() -> nil|error{
   }
   bb25 {
     tz = $desugar$1;
-    %88 = ConstantLoad 2021-04-12T17:50:50.00Z
-    %89 = utcFromString(%88) -> bb26;
+    %90 = ConstantLoad 2021-04-12T17:50:50.00Z
+    %91 = utcFromString(%90) -> bb26;
   }
   bb26 {
-    $desugar$2 = %89;
-    %91 = $desugar$2 is error
-    %91 ? bb27 : bb28;
+    $desugar$2 = %91;
+    %93 = $desugar$2 is error
+    %93 ? bb27 : bb28;
   }
   bb27 {
     PushScopeFrame 0
@@ -168,16 +170,16 @@ main() -> nil|error{
   }
   bb28 {
     utcBase = $desugar$2;
-    %93 = utcToCivil(tz,utcBase) -> bb29;
+    %95 = utcToCivil(tz,utcBase) -> bb29;
   }
   bb29 {
-    civilOffset = %93;
-    %95 = utcFromCivil(tz,civilOffset) -> bb30;
+    civilOffset = %95;
+    %97 = utcFromCivil(tz,civilOffset) -> bb30;
   }
   bb30 {
-    $desugar$3 = %95;
-    %97 = $desugar$3 is error
-    %97 ? bb31 : bb32;
+    $desugar$3 = %97;
+    %99 = $desugar$3 is error
+    %99 ? bb31 : bb32;
   }
   bb31 {
     PushScopeFrame 0
@@ -187,18 +189,18 @@ main() -> nil|error{
   }
   bb32 {
     roundTripped = $desugar$3;
-    %99 = utcToString(roundTripped) -> bb33;
+    %101 = utcToString(roundTripped) -> bb33;
   }
   bb33 {
-    %100 = println(%99) -> bb34;
+    %102 = println(%101) -> bb34;
   }
   bb34 {
-    %101 = civilToString(civilOffset) -> bb35;
+    %103 = civilToString(civilOffset) -> bb35;
   }
   bb35 {
-    $desugar$4 = %101;
-    %103 = $desugar$4 is error
-    %103 ? bb36 : bb37;
+    $desugar$4 = %103;
+    %105 = $desugar$4 is error
+    %105 ? bb36 : bb37;
   }
   bb36 {
     PushScopeFrame 0
@@ -208,16 +210,16 @@ main() -> nil|error{
   }
   bb37 {
     civilStr = $desugar$4;
-    %105 = println(civilStr) -> bb38;
+    %107 = println(civilStr) -> bb38;
   }
   bb38 {
-    %106 = ConstantLoad 2021-04-12T23:20:50.520+05:30[Asia/Colombo]
-    %107 = civilFromString(%106) -> bb39;
+    %108 = ConstantLoad 2021-04-12T23:20:50.520+05:30[Asia/Colombo]
+    %109 = civilFromString(%108) -> bb39;
   }
   bb39 {
-    $desugar$5 = %107;
-    %109 = $desugar$5 is error
-    %109 ? bb40 : bb41;
+    $desugar$5 = %109;
+    %111 = $desugar$5 is error
+    %111 ? bb40 : bb41;
   }
   bb40 {
     PushScopeFrame 0
@@ -227,22 +229,22 @@ main() -> nil|error{
   }
   bb41 {
     parsed = $desugar$5;
-    %112 = ConstantLoad year
-    %111 = parsed[%112];
-    %113 = %111;
-    %114 = println(%113) -> bb42;
+    %114 = ConstantLoad year
+    %113 = parsed[%114];
+    %115 = %113;
+    %116 = println(%115) -> bb42;
   }
   bb42 {
-    %116 = ConstantLoad month
-    %115 = parsed[%116];
-    %117 = %115;
-    %118 = println(%117) -> bb43;
+    %118 = ConstantLoad month
+    %117 = parsed[%118];
+    %119 = %117;
+    %120 = println(%119) -> bb43;
   }
   bb43 {
-    %120 = ConstantLoad day
-    %119 = parsed[%120];
-    %121 = %119;
-    %122 = println(%121) -> bb44;
+    %122 = ConstantLoad day
+    %121 = parsed[%122];
+    %123 = %121;
+    %124 = println(%123) -> bb44;
   }
   bb44 {
     return;

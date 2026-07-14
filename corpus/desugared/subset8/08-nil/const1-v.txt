@@ -1,42 +1,32 @@
 (package
   (import-package ballerina io (as io))
-  (const a () ())
-  (const b () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref a)
-        (literal <nil>))
-      (assignment
-        (simple-var-ref b)
-        (literal <nil>))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
           (binary-expr ==
-            (simple-var-ref a)
-            (simple-var-ref b)))))
+            (literal <nil>)
+            (literal <nil>)))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
-            (simple-var-ref a)
+            (literal <nil>)
             (value-type null)))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
-            (simple-var-ref b)
+            (literal <nil>)
             (value-type null)))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
-            (simple-var-ref a)
+            (literal <nil>)
             (finite-type
               (literal <nil>))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
-            (simple-var-ref b)
+            (literal <nil>)
             (finite-type
               (literal <nil>)))))))))

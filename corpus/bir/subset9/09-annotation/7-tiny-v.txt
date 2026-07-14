@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:tiny
+    %3 = .@ %1 %2;
+    first = %3;
+    %5 = ConstantLoad typedesc
+    %6 = ConstantLoad $anon/.:0.0.0:tiny
+    %7 = .@ %5 %6;
+    second = %7;
+    %10 = first is {| value: int, never... |}
+    %9 = %10;
+    %10 ? bb1 : bb2;
+  }
+  bb1 {
+    %11 = second is {| value: int, never... |}
+    %9 = %11;
+    GOTO bb2;
+  }
+  bb2 {
+    %9 ? bb3 : bb6;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, first)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb4;
+  }
+  bb4 {
+    %5 = ConstantLoad value
+    %4 = (1, second)[%5];
+    %6 = %4;
+    %7 = println(%6) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
