@@ -4503,8 +4503,50 @@ func (n *NodeBuilder) TransformImplicitAnonymousFunctionParameters(implicitAnony
 	panic("TransformImplicitAnonymousFunctionParameters unimplemented")
 }
 
-func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(implicitAnonymousFunctionBLangExpression *tree.ImplicitAnonymousFunctionExpressionNode) BLangNode {
-	panic("TransformImplicitAnonymousFunctionExpression unimplemented")
+func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *tree.ImplicitAnonymousFunctionExpressionNode) BLangNode {
+	fn := &BLangFunction{}
+	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
+	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
+	fn.Name = &ident
+	fn.pos = n.getPosition(node)
+	fn.SetAnonymous()
+
+	var paramNodes []*tree.SimpleNameReferenceNode
+	switch params := node.Params().(type) {
+	case *tree.SimpleNameReferenceNode:
+		paramNodes = append(paramNodes, params)
+	case *tree.ImplicitAnonymousFunctionParameters:
+		parameters := params.Parameters()
+		for param := range parameters.Iterator() {
+			paramNodes = append(paramNodes, param)
+		}
+	default:
+		n.cx.SyntaxError("invalid parameter list in inferred anonymous function expression", n.getPosition(node.Params()))
+	}
+	fn.RequiredParams = make([]BLangSimpleVariable, len(paramNodes))
+	for i, param := range paramNodes {
+		paramName := param.Name()
+		paramPos := n.getPosition(paramName)
+		ident := createIdentifier(paramPos, nil, nil)
+		if paramName != nil && !paramName.IsMissing() {
+			paramValue := paramName.Text()
+			if paramValue == "_" || paramValue == "'_" {
+				n.cx.SyntaxError("'_' cannot be used as an identifier", paramPos)
+			}
+			ident = createIdentifier(paramPos, &paramValue, &paramValue)
+		}
+		fn.RequiredParams[i].Name = &ident
+		fn.RequiredParams[i].pos = n.getPosition(param)
+		fn.RequiredParams[i].SetRequiredParam()
+	}
+	fn.Body = &BLangExprFunctionBody{
+		Expr: n.createExpression(node.Expression()),
+	}
+	fn.Body.(*BLangExprFunctionBody).pos = n.getPosition(node.Expression())
+
+	lambda := &BLangLambdaFunction{Function: fn, InferredParams: true}
+	lambda.pos = fn.pos
+	return lambda
 }
 
 func (n *NodeBuilder) TransformStartAction(startActionNode *tree.StartActionNode) BLangNode {

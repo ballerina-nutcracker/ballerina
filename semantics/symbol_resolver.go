@@ -876,28 +876,50 @@ func fillinOpaqueSymbol(sym model.Symbol, space *model.SymbolSpace) {
 	fn.Lookup, fn.Store = newMonomorphizationCache()
 }
 
-// TODO: when we have cases where we have more than one type param types we need to properly
-// implement this
 func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, bool), func(model.SymbolRef, ...semtypes.SemType)) {
+	type cacheNode struct {
+		children map[semtypes.InternHandle]*cacheNode
+		ref      model.SymbolRef
+		stored   bool
+	}
+
 	var mu sync.Mutex
 	interner := semtypes.NewSemtypeInterner()
-	cache := make(map[semtypes.InternHandle]model.SymbolRef)
-	keyOf := func(keys []semtypes.SemType) semtypes.InternHandle {
-		if len(keys) != 1 {
-			panic("monomorphization cache supports a single key type")
+	root := cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
+	nodeFor := func(keys []semtypes.SemType, create bool) *cacheNode {
+		if len(keys) == 0 {
+			panic("monomorphization cache requires at least one key type")
 		}
-		return interner.Intern(keys[0])
+		node := &root
+		for _, key := range keys {
+			handle := interner.Intern(key)
+			next := node.children[handle]
+			if next == nil {
+				if !create {
+					return nil
+				}
+				next = &cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
+				node.children[handle] = next
+			}
+			node = next
+		}
+		return node
 	}
 	lookup := func(keys ...semtypes.SemType) (model.SymbolRef, bool) {
 		mu.Lock()
 		defer mu.Unlock()
-		ref, ok := cache[keyOf(keys)]
-		return ref, ok
+		node := nodeFor(keys, false)
+		if node == nil || !node.stored {
+			return model.SymbolRef{}, false
+		}
+		return node.ref, true
 	}
 	store := func(ref model.SymbolRef, keys ...semtypes.SemType) {
 		mu.Lock()
 		defer mu.Unlock()
-		cache[keyOf(keys)] = ref
+		node := nodeFor(keys, true)
+		node.ref = ref
+		node.stored = true
 	}
 	return lookup, store
 }
