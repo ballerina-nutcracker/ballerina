@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil|error{
   bb0 {
-    %1 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/string.txt
+    %1 = ConstantLoad /tmp/bal_io_mkdir_xyz/string/a/b/string.txt
     stringPath = %1;
     $desugar$0 = stringPath;
     %4 = ConstantLoad hello
@@ -41,7 +41,7 @@ main() -> nil|error{
     %14 = println($desugar$4) -> bb8;
   }
   bb8 {
-    %15 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/lines.txt
+    %15 = ConstantLoad /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt
     linesPath = %15;
     $desugar$5 = linesPath;
     %18 = ConstantLoad one
@@ -84,7 +84,7 @@ main() -> nil|error{
     %31 = println($desugar$9) -> bb16;
   }
   bb16 {
-    %32 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/bytes.dat
+    %32 = ConstantLoad /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat
     bytesPath = %32;
     $desugar$10 = bytesPath;
     %35 = ConstantLoad 1
@@ -128,7 +128,7 @@ main() -> nil|error{
     %49 = println($desugar$14) -> bb24;
   }
   bb24 {
-    %50 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/data.json
+    %50 = ConstantLoad /tmp/bal_io_mkdir_xyz/json/a/b/data.json
     jsonPath = %50;
     %52 = ConstantLoad k
     %53 = ConstantLoad v
@@ -164,7 +164,7 @@ main() -> nil|error{
     %61 = println($desugar$16) -> bb31;
   }
   bb31 {
-    %62 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/data.xml
+    %62 = ConstantLoad /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml
     xmlPath = %62;
     $desugar$17 = xmlPath;
     %65 = ConstantLoad a
@@ -205,61 +205,57 @@ main() -> nil|error{
     %76 = println($desugar$21) -> bb39;
   }
   bb39 {
-    %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/c/d/append.txt
+    %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/append/c/d/append.txt
     appendPath = %77;
-    $desugar$22 = appendPath;
-    %80 = ConstantLoad First
-    $desugar$23 = %80;
-    %82 = $default$0($desugar$22,$desugar$23) -> bb40;
+    %79 = ConstantLoad First
+    %80 = ConstantLoad APPEND
+    %81 = fileWriteString(appendPath,%79,%80) -> bb40;
   }
   bb40 {
-    $desugar$24 = %82;
-    %84 = fileWriteString($desugar$22,$desugar$23,$desugar$24) -> bb41;
+    $desugar$22 = %81;
+    %83 = $desugar$22 is error
+    %83 ? bb41 : bb42;
   }
   bb41 {
-    $desugar$25 = %84;
-    %86 = $desugar$25 is error
-    %86 ? bb42 : bb43;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$22);
+    PopScopeFrame
+    return;
   }
   bb42 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$25);
-    PopScopeFrame
-    return;
+    %84 = ConstantLoad Second
+    %85 = ConstantLoad APPEND
+    %86 = fileWriteString(appendPath,%84,%85) -> bb43;
   }
   bb43 {
-    %87 = ConstantLoad Second
-    %88 = fileWriteString(appendPath,%87,APPEND) -> bb44;
+    $desugar$23 = %86;
+    %88 = $desugar$23 is error
+    %88 ? bb44 : bb45;
   }
   bb44 {
-    $desugar$26 = %88;
-    %90 = $desugar$26 is error
-    %90 ? bb45 : bb46;
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$23);
+    PopScopeFrame
+    return;
   }
   bb45 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$26);
-    PopScopeFrame
-    return;
+    %89 = fileReadString(appendPath) -> bb46;
   }
   bb46 {
-    %91 = fileReadString(appendPath) -> bb47;
+    $desugar$24 = %89;
+    %91 = $desugar$24 is error
+    %91 ? bb47 : bb48;
   }
   bb47 {
-    $desugar$27 = %91;
-    %93 = $desugar$27 is error
-    %93 ? bb48 : bb49;
-  }
-  bb48 {
     PushScopeFrame 0
-    (1, %0) = (1, $desugar$27);
+    (1, %0) = (1, $desugar$24);
     PopScopeFrame
     return;
   }
-  bb49 {
-    %94 = println($desugar$27) -> bb50;
+  bb48 {
+    %92 = println($desugar$24) -> bb49;
   }
-  bb50 {
+  bb49 {
     return;
   }
 }

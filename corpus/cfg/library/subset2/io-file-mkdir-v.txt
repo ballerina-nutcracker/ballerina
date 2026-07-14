@@ -3,7 +3,7 @@
     (var-def
       (variable stringPath (type
         (value-type string)) (expr
-        (literal /tmp/bal_io_mkdir_xyz/a/b/string.txt))))
+        (literal /tmp/bal_io_mkdir_xyz/string/a/b/string.txt))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
@@ -17,7 +17,7 @@
     (var-def
       (variable linesPath (type
         (value-type string)) (expr
-        (literal /tmp/bal_io_mkdir_xyz/a/b/lines.txt))))
+        (literal /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteLines (
@@ -33,7 +33,7 @@
     (var-def
       (variable bytesPath (type
         (value-type string)) (expr
-        (literal /tmp/bal_io_mkdir_xyz/a/b/bytes.dat))))
+        (literal /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteBytes (
@@ -50,7 +50,7 @@
     (var-def
       (variable jsonPath (type
         (value-type string)) (expr
-        (literal /tmp/bal_io_mkdir_xyz/a/b/data.json))))
+        (literal /tmp/bal_io_mkdir_xyz/json/a/b/data.json))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteJson (
@@ -67,7 +67,7 @@
     (var-def
       (variable xmlPath (type
         (value-type string)) (expr
-        (literal /tmp/bal_io_mkdir_xyz/a/b/data.xml))))
+        (literal /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteXml (
@@ -81,12 +81,13 @@
     (var-def
       (variable appendPath (type
         (value-type string)) (expr
-        (literal /tmp/bal_io_mkdir_xyz/c/d/append.txt))))
+        (literal /tmp/bal_io_mkdir_xyz/append/c/d/append.txt))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref appendPath)
-          (literal First)))))
+          (literal First)
+          (simple-var-ref io APPEND)))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
