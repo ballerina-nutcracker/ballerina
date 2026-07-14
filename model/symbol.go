@@ -484,14 +484,15 @@ func (sig *UntypedFunctionSignature) SetIncludedRecordMetadata(index int, metada
 }
 
 func (sig UntypedFunctionSignature) Index(name string) (int, ParamIndexResult) {
-	for i, paramName := range sig.ParamNames {
+	fixedParamCount := sig.FixedParamCount()
+	for i, paramName := range sig.ParamNames[:fixedParamCount] {
 		if paramName == name {
 			return i, ParamIndexFound
 		}
 	}
 	var candidates []int
 Outer:
-	for i, inclRecord := range sig.IncludedRecordMetadata {
+	for i, inclRecord := range sig.IncludedRecordMetadata[:fixedParamCount] {
 		if inclRecord == nil {
 			continue
 		}
