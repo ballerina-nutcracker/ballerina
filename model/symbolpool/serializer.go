@@ -45,6 +45,7 @@ const (
 	symTagResourceMethod
 	symTagConstantValue
 	symTagOpaque
+	symTagErrorType
 )
 
 const (
@@ -222,6 +223,8 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 		return sw.writeRecordSymbol(buf, s, sw.symbolAnnotations(ref))
 	case *model.ObjectTypeSymbol:
 		return sw.writeObjectTypeSymbol(buf, s, sw.symbolAnnotations(ref))
+	case *model.ErrorTypeSymbol:
+		return sw.writeErrorTypeSymbol(buf, s, sw.symbolAnnotations(ref))
 	case *model.TypeSymbol:
 		return sw.writeTypeSymbol(buf, s, sw.symbolAnnotations(ref))
 	case *model.ConstantValueSymbol:
@@ -247,6 +250,10 @@ func (sw *symbolWriter) writeSymbolBase(buf *bytes.Buffer, sym model.Symbol) err
 
 func (sw *symbolWriter) writeObjectSymbolBase(buf *bytes.Buffer, sym model.Symbol) error {
 	return sw.writeSymbolBaseWithType(buf, sym, sym.Type(), sw.writeObjectDefinitionType)
+}
+
+func (sw *symbolWriter) writeErrorSymbolBase(buf *bytes.Buffer, sym model.Symbol) error {
+	return sw.writeSymbolBaseWithType(buf, sym, sym.Type(), sw.writeErrorDefinitionType)
 }
 
 func (sw *symbolWriter) writeSymbolBaseWithType(buf *bytes.Buffer, sym model.Symbol, ty semtypes.SemType, writeType func(*bytes.Buffer, semtypes.SemType) error) error {
@@ -296,6 +303,19 @@ func (sw *symbolWriter) writeObjectTypeSymbol(buf *bytes.Buffer, sym *model.Obje
 		return err
 	}
 	if err := sw.writeInclusionMembers(buf, sym.Members()); err != nil {
+		return err
+	}
+	return sw.writeDistinctTypeIDs(buf, sym.DistinctTypeIDs())
+}
+
+func (sw *symbolWriter) writeErrorTypeSymbol(buf *bytes.Buffer, sym *model.ErrorTypeSymbol, annotations values.AnnotationValues) error {
+	if err := write(buf, symTagErrorType); err != nil {
+		return err
+	}
+	if err := sw.writeErrorSymbolBase(buf, sym); err != nil {
+		return err
+	}
+	if err := sw.writeAnnotationValues(buf, annotations); err != nil {
 		return err
 	}
 	return sw.writeDistinctTypeIDs(buf, sym.DistinctTypeIDs())
@@ -739,4 +759,11 @@ func (sw *symbolWriter) writeObjectDefinitionType(buf *bytes.Buffer, ty semtypes
 		return write(buf, int32(-1))
 	}
 	return write(buf, int32(sw.tp.PutObjectDefinition(ty)))
+}
+
+func (sw *symbolWriter) writeErrorDefinitionType(buf *bytes.Buffer, ty semtypes.SemType) error {
+	if semtypes.IsZero(ty) {
+		return write(buf, int32(-1))
+	}
+	return write(buf, int32(sw.tp.PutErrorDefinition(ty)))
 }

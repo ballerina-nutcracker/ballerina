@@ -35,6 +35,11 @@ import (
 	"ballerina-lang-go/values"
 )
 
+type distinctTypeSymbol interface {
+	DistinctTypeIDs() []int
+	SetDistinctTypeIDs([]int)
+}
+
 type typeResolver interface {
 	typeContext() semtypes.Context
 	expectedReturnType() semtypes.SemType
@@ -2043,22 +2048,59 @@ func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefiniti
 }
 
 func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinition, semType semtypes.SemType) (semtypes.SemType, bool) {
-	objectType, ok := typeDef.GetTypeData().TypeDescriptor.(*ast.BLangObjectType)
-	if !ok {
-		if typeDef.IsDistinct() {
-			t.unimplemented("distinct types are only supported for object types", typeDef.GetPosition())
-			return semtypes.SemType{}, false
+	switch typeDesc := typeDef.GetTypeData().TypeDescriptor.(type) {
+	case *ast.BLangObjectType:
+		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions), true
+	case *ast.BLangErrorTypeNode:
+		return appendDistinctErrorAtoms(t, semType, typeDef), true
+	case *ast.BLangUserDefinedType:
+		if !typeDef.IsDistinct() {
+			return semType, true
 		}
+		parent := t.getSymbol(typeDesc.Symbol())
+		switch parent.(type) {
+		case *model.ErrorTypeSymbol:
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct), true
+		case model.ObjectType:
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct), true
+		default:
+			return semType, true
+		}
+	default:
 		return semType, true
 	}
-	return appendDistinctAtoms(t, semType, typeDef.Symbol(), objectType.Inclusions), true
 }
 
-func appendDistinctAtoms(t typeResolver, semType semtypes.SemType, symbol model.SymbolRef, inclusions []model.SymbolRef) semtypes.SemType {
-	carrier, ok := t.getSymbol(symbol).(model.ObjectType)
-	if !ok {
-		return semType
+func appendDistinctAliasAtoms(t typeResolver, semType semtypes.SemType, childRef, parentRef model.SymbolRef, atom func(int) semtypes.SemType) semtypes.SemType {
+	child := t.getSymbol(childRef).(distinctTypeSymbol)
+	parent := t.getSymbol(parentRef).(distinctTypeSymbol)
+
+	idsByID := make(map[int]bool)
+	for _, id := range parent.DistinctTypeIDs() {
+		idsByID[id] = true
 	}
+	for _, id := range child.DistinctTypeIDs() {
+		idsByID[id] = true
+	}
+
+	ids := make([]int, 0, len(idsByID))
+	for id := range idsByID {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	child.SetDistinctTypeIDs(ids)
+	return intersectDistinctAtoms(semType, ids, atom)
+}
+
+func intersectDistinctAtoms(semType semtypes.SemType, ids []int, atom func(int) semtypes.SemType) semtypes.SemType {
+	for _, id := range ids {
+		semType = semtypes.Intersect(semType, atom(id))
+	}
+	return semType
+}
+
+func appendDistinctObjectAtoms(t typeResolver, semType semtypes.SemType, symbol model.SymbolRef, inclusions []model.SymbolRef) semtypes.SemType {
+	carrier := t.getSymbol(symbol).(model.ObjectType)
 
 	seen := make(map[int]bool)
 	var ids []int
@@ -2074,18 +2116,19 @@ func appendDistinctAtoms(t typeResolver, semType semtypes.SemType, symbol model.
 
 	addIDs(carrier)
 	for _, inc := range inclusions {
-		incCarrier, ok := t.getSymbol(inc).(model.ObjectType)
-		if ok {
-			addIDs(incCarrier)
-		}
+		addIDs(t.getSymbol(inc).(model.ObjectType))
 	}
 
 	carrier.SetDistinctTypeIDs(ids)
-	current := semType
-	for _, distinctTypeID := range ids {
-		current = semtypes.Intersect(current, semtypes.ObjectDefinitionDistinct(distinctTypeID))
+	return intersectDistinctAtoms(semType, ids, semtypes.ObjectDefinitionDistinct)
+}
+
+func appendDistinctErrorAtoms(t typeResolver, semType semtypes.SemType, typeDef *ast.BLangTypeDefinition) semtypes.SemType {
+	if !typeDef.IsDistinct() {
+		return semType
 	}
-	return current
+	carrier := t.getSymbol(typeDef.Symbol()).(*model.ErrorTypeSymbol)
+	return intersectDistinctAtoms(semType, carrier.DistinctTypeIDs(), semtypes.ErrorDistinct)
 }
 
 // addInclusionsToTypeSymbol addes all the inclusions (both transitive and direct) to the type symbol
@@ -2098,6 +2141,9 @@ func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
 		members = recordTypeMembers(t, td)
 	case *ast.BLangObjectType:
 		members = objectTypeMembers(t, td)
+	case *ast.BLangUserDefinedType:
+		copyAliasMembersToTypeSymbol(t, defn.Symbol(), td.Symbol())
+		return
 	default:
 		return
 	}
@@ -2107,6 +2153,20 @@ func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
 	}
 	for _, m := range members {
 		carrier.AddMember(m)
+	}
+}
+
+func copyAliasMembersToTypeSymbol(t typeResolver, aliasRef, targetRef model.SymbolRef) {
+	aliasCarrier, ok := t.getSymbol(aliasRef).(model.MemberCarrier)
+	if !ok {
+		return
+	}
+	if !t.ensureResolved(targetRef, 0) {
+		return
+	}
+	targetCarrier := t.getSymbol(targetRef).(model.MemberCarrier)
+	for _, m := range targetCarrier.Members() {
+		aliasCarrier.AddMember(m)
 	}
 }
 
@@ -2314,7 +2374,7 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 		// Recursive self-reference while the surrounding class is still being
 		// resolved. Return the partial type so callers can refer to it.
 		recTy := classDef.Definition.GetSemType(t.typeEnv())
-		semType := appendDistinctAtoms(t, recTy, classDef.Symbol(), classDef.Inclusions)
+		semType := appendDistinctObjectAtoms(t, recTy, classDef.Symbol(), classDef.Inclusions)
 		t.setSymbolType(classDef.Symbol(), semType)
 		return semType, true
 	}
@@ -2562,7 +2622,7 @@ func defineObjectSemType(t typeResolver, od *semtypes.ObjectDefinition, isolated
 	if distinctSymbol.IsEmpty() {
 		return semType
 	}
-	return appendDistinctAtoms(t, semType, distinctSymbol, inclusions)
+	return appendDistinctObjectAtoms(t, semType, distinctSymbol, inclusions)
 }
 
 func resolveLiteral(t typeResolver, n *ast.BLangLiteral, expectedType semtypes.SemType) bool {
@@ -6611,9 +6671,6 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		}
 		return result, true
 	case *ast.BLangErrorTypeNode:
-		if ty.IsDistinct() {
-			panic("distinct error types not supported")
-		}
 		if ty.IsTop() {
 			return semtypes.ERROR, true
 		} else {

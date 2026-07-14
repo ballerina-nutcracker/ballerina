@@ -1,0 +1,72 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition InputErrorDetail
+    (record-type
+      (field value
+        (union-type
+          (value-type int)
+          (value-type string)))))
+  (type-definition NumericErrorDetail
+    (record-type
+      (field value
+        (union-type
+          (value-type int)
+          (value-type float)))))
+  (type-definition InputError
+    (error-type
+      (user-defined-type InputErrorDetail)))
+  (type-definition NumericError
+    (error-type
+      (user-defined-type NumericErrorDetail)))
+  (type-definition NumericInputError
+    (intersection-type
+      (user-defined-type InputError)
+      (user-defined-type NumericError)))
+  (type-definition DistinctInputError
+    (error-type
+      (user-defined-type InputErrorDetail)))
+  (type-definition DistinctNumericError
+    (error-type
+      (user-defined-type NumericErrorDetail)))
+  (type-definition DistinctNumericInputError
+    (intersection-type
+      (user-defined-type DistinctInputError)
+      (user-defined-type DistinctNumericError)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (user-defined-type NumericInputError)) (expr
+          (error-constructor-expr (
+            (literal Numeric input error)) (
+            (named-arg value
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e1)
+            (user-defined-type InputError)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e1)
+            (user-defined-type DistinctInputError)))))
+      (var-def
+        (variable e2 (type
+          (user-defined-type DistinctNumericInputError)) (expr
+          (error-constructor-expr (
+            (literal Distinct numeric input error)) (
+            (named-arg value
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e2)
+            (user-defined-type InputError)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e2)
+            (user-defined-type DistinctInputError))))))))
