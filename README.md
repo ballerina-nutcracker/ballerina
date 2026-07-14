@@ -1,4 +1,4 @@
-## Native Ballerina Interpreter
+## Native Nutcracker
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
@@ -12,7 +12,7 @@
 
 ## Goals
 
-This project implements a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
+Ballerina Nutcracker is a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
 
 - **Progress:** [GitHub Milestones](https://github.com/ballerina-platform/ballerina-lang-go/milestones)
 - **Subset docs:** [doc/](doc/) (language features and restrictions per subset)
