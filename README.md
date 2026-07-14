@@ -11,7 +11,7 @@
 [![golangci-lint](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/golangci-lint.yml)
 [![codecov](https://codecov.io/gh/ballerina-nutcracker/ballerina/graph/badge.svg)](https://codecov.io/gh/ballerina-nutcracker/ballerina)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-CNCF-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![Discord](https://img.shields.io/badge/Discord-Ballerina-52C3C2?logo=discord&logoColor=white)](https://discord.gg/ballerinalang)
 [![Stack Overflow](https://img.shields.io/stackexchange/stackoverflow/t/ballerina?logo=stackoverflow&label=Stack%20Overflow)](https://stackoverflow.com/questions/tagged/ballerina)
 ![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
@@ -29,6 +29,7 @@ Run and share Ballerina snippets in your browser — no installation needed.
 - [Scope & roadmap](#scope--roadmap)
 - [Report issues](#report-issues)
 - [Contribute](#contribute-to-ballerina-nutcracker)
+- [Governance](#governance)
 - [Adopters](#adopters)
 - [License](#license)
 - [Code of conduct](#code-of-conduct)
@@ -208,6 +209,10 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 As an open-source project, this repository welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
 
 This project's maintainers, including the Core Maintainers who serve as the security team, are listed in [MAINTAINERS.md](MAINTAINERS.md).
+
+## Governance
+
+Ballerina Nutcracker follows a lightweight, consensus-driven governance model, including how maintainers are added or removed and how decisions are made. See [GOVERNANCE.md](GOVERNANCE.md) for details.
 
 ## Adopters
 

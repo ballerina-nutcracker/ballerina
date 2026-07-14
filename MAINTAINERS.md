@@ -1,7 +1,7 @@
 # Ballerina Nutcracker Maintainers
 This file lists the official maintainers of the  Ballerina Nutcracker project. Maintainers are responsible for the ongoing health of the project, including technical direction, code review, release management, and governance.
 
-All project decisions follow the  Ballerina Nutcracker Governance Policy and are driven by consensus among maintainers.
+All project decisions follow the [Ballerina Nutcracker Governance Policy](./GOVERNANCE.md) and are driven by consensus among maintainers.
 
 ## Core Maintainers
 Core Maintainers have merge authority across the entire repository and are responsible for stewardship of the project’s long-term roadmap and architectural consistency. Core Maintainers are expected to remain active, participate in design discussions, and provide timely reviews.
