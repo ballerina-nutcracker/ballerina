@@ -19,7 +19,6 @@ package native
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"strconv"
 	"sync"
@@ -77,7 +76,7 @@ func registerListenerFunctions(rt *runtime.Runtime, types udpTypes) {
 			port := int(args[1].(int64))
 			config := args[2].(*values.Map)
 
-			state := &listenerState{host: "0.0.0.0", port: port}
+			state := &listenerState{host: "", port: port}
 			if host := localHostOf(config); host != "" {
 				state.host = host
 			}
@@ -127,7 +126,7 @@ func registerListenerFunctions(rt *runtime.Runtime, types udpTypes) {
 				return udpError("Error initializing the server: no service attached"), nil
 			}
 			svcObj := state.svcObj
-			address := fmt.Sprintf("%s:%d", state.host, state.port)
+			address := net.JoinHostPort(state.host, strconv.Itoa(state.port))
 			state.mu.Unlock()
 
 			pc, err := rt.Platform().Net.ListenPacket("udp", address)

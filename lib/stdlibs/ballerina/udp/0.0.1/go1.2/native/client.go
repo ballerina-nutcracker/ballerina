@@ -20,7 +20,6 @@ package native
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -136,7 +135,7 @@ func registerClientFunctions(rt *runtime.Runtime, types udpTypes) {
 			if pc == nil {
 				return udpError("Socket connection already closed."), nil
 			}
-			addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", host, port))
+			addr, err := resolveUDPAddr(host, port)
 			if err != nil {
 				return udpError("Failed to send data: " + err.Error()), nil
 			}
@@ -204,7 +203,7 @@ func registerConnectClientFunctions(rt *runtime.Runtime, types udpTypes) {
 			if localHost := localHostOf(config); localHost != "" {
 				localAddr = net.JoinHostPort(localHost, "0")
 			}
-			address := fmt.Sprintf("%s:%d", remoteHost, remotePort)
+			address := net.JoinHostPort(remoteHost, strconv.FormatInt(remotePort, 10))
 			dialCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			conn, err := rt.Platform().Net.DialPacket(dialCtx, "udp", address, localAddr)

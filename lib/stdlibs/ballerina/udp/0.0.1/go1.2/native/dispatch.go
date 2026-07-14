@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"ballerina-lang-go/bir"
+	"ballerina-lang-go/model"
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/semtypes"
@@ -65,7 +66,7 @@ func registerCallerClassDef(rt *runtime.Runtime) {
 			pc := callerPacketConnOf(self)
 			remoteHost, _ := self.Get("remoteHost")
 			remotePort, _ := self.Get("remotePort")
-			addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", remoteHost.(string), remotePort.(int64)))
+			addr, err := resolveUDPAddr(remoteHost.(string), remotePort.(int64))
 			if err != nil {
 				return udpError("Failed to send data: " + err.Error()), nil
 			}
@@ -80,7 +81,7 @@ func registerCallerClassDef(rt *runtime.Runtime) {
 			self := args[0].(*values.Object)
 			host, port, data := datagramFields(args[1].(*values.Map))
 			pc := callerPacketConnOf(self)
-			addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", host, port))
+			addr, err := resolveUDPAddr(host, port)
 			if err != nil {
 				return udpError("Failed to send data: " + err.Error()), nil
 			}
@@ -117,7 +118,7 @@ func applyDispatchResult(ctx *extern.Context, svcObj *values.Object, pc net.Pack
 		}
 	case *values.Map:
 		host, port, data := datagramFields(v)
-		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", host, port))
+		addr, err := resolveUDPAddr(host, port)
 		if err != nil || writeFragments(pc, addr, data) != nil {
 			invokeOnError(ctx, svcObj, "Failed to send data.")
 		}
@@ -126,15 +127,45 @@ func applyDispatchResult(ctx *extern.Context, svcObj *values.Object, pc net.Pack
 	}
 }
 
+// remoteMethodArgs builds the argument list for a resolved onBytes/onDatagram
+// handle by inspecting each declared parameter's type — mirroring
+// jBallerina's own Dispatcher.getOnBytesSignature()/getOnDatagramSignature(),
+// which reflect over the service's MethodType.getParameters() and switch on
+// each parameter's type tag (an object-typed parameter gets the Caller;
+// anything else gets dataValue). This lets onBytes/onDatagram be declared
+// either as a bare single-parameter form (e.g. onBytes(readonly & byte[]
+// data)) or with a trailing Caller, in either parameter order, matching
+// jBallerina exactly.
+func remoteMethodArgs(ctx *extern.Context, svcObj *values.Object, methodName string, dataValue values.BalValue, callerObj *values.Object) []values.BalValue {
+	methodTy := semtypes.ObjectMemberType(ctx.TypeCtx, semtypes.StringConst(model.RemoteMethodName(methodName)), svcObj.Type)
+	if semtypes.IsZero(methodTy) || !semtypes.IsSubtype(ctx.TypeCtx, methodTy, semtypes.FUNCTION) {
+		// Shouldn't happen — LookupRemoteMethod already confirmed the
+		// method exists — but fall back to the common two-param form.
+		return []values.BalValue{svcObj, dataValue, callerObj}
+	}
+	paramListTy := semtypes.FunctionParamListType(ctx.TypeCtx, methodTy)
+	args := []values.BalValue{svcObj}
+	for i := 0; ; i++ {
+		paramTy := semtypes.ListMemberTypeInnerVal(ctx.TypeCtx, paramListTy, semtypes.IntConst(int64(i)))
+		if semtypes.IsNever(paramTy) {
+			break
+		}
+		if semtypes.IsSubtype(ctx.TypeCtx, paramTy, semtypes.OBJECT) {
+			args = append(args, callerObj)
+		} else {
+			args = append(args, dataValue)
+		}
+	}
+	return args
+}
+
 // dispatchDatagram invokes whichever of onBytes/onDatagram the attached
 // service declares for a single received datagram — jBallerina dispatches to
-// both if both are present. The fixed two-param signature order (data first,
-// caller second) matches this module's own README example; jBallerina's
-// reflection-driven parameter binding (accepting almost any order/subset) is
-// not replicated here.
+// both if both are present. Each may be declared with or without a trailing
+// Caller parameter, in either order; see remoteMethodArgs.
 func dispatchDatagram(rt *runtime.Runtime, types udpTypes, svcObj *values.Object, pc net.PacketConn, remoteHost string, remotePort int64, data []byte) {
 	ctx := rt.NewExternContext()
-	senderAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", remoteHost, remotePort))
+	senderAddr, err := resolveUDPAddr(remoteHost, remotePort)
 	if err != nil {
 		return
 	}
@@ -142,7 +173,7 @@ func dispatchDatagram(rt *runtime.Runtime, types udpTypes, svcObj *values.Object
 	if handle, ok := ctx.LookupRemoteMethod(svcObj, "onBytes"); ok {
 		callerObj := newCallerObject(pc, remoteHost, remotePort)
 		dataList := bytesToList(types, ctx, data, true)
-		result, invokeErr := ctx.InvokeMethod(handle, []values.BalValue{svcObj, dataList, callerObj})
+		result, invokeErr := ctx.InvokeMethod(handle, remoteMethodArgs(ctx, svcObj, "onBytes", dataList, callerObj))
 		if invokeErr == nil {
 			applyDispatchResult(ctx, svcObj, pc, senderAddr, result)
 		}
@@ -151,7 +182,7 @@ func dispatchDatagram(rt *runtime.Runtime, types udpTypes, svcObj *values.Object
 	if handle, ok := ctx.LookupRemoteMethod(svcObj, "onDatagram"); ok {
 		callerObj := newCallerObject(pc, remoteHost, remotePort)
 		datagram := newDatagram(types, ctx, remoteHost, remotePort, data, true)
-		result, invokeErr := ctx.InvokeMethod(handle, []values.BalValue{svcObj, datagram, callerObj})
+		result, invokeErr := ctx.InvokeMethod(handle, remoteMethodArgs(ctx, svcObj, "onDatagram", datagram, callerObj))
 		if invokeErr == nil {
 			applyDispatchResult(ctx, svcObj, pc, senderAddr, result)
 		}

@@ -18,6 +18,9 @@
 package native
 
 import (
+	"net"
+	"strconv"
+
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/semtypes"
@@ -48,6 +51,16 @@ type udpTypes struct {
 
 func udpError(msg string) *values.Error {
 	return values.NewErrorWithMessage(msg)
+}
+
+// resolveUDPAddr builds a "host:port" address for net.ResolveUDPAddr via
+// net.JoinHostPort, which brackets IPv6 literals (e.g. "::1") correctly —
+// fmt.Sprintf("%s:%d", host, port) does not, and silently produces an
+// unparseable address for any IPv6 sender/target (a dual-stack listener
+// receives IPv6 datagrams routinely, e.g. from a peer that resolved
+// "localhost" to "::1").
+func resolveUDPAddr(host string, port int64) (*net.UDPAddr, error) {
+	return net.ResolveUDPAddr("udp", net.JoinHostPort(host, strconv.FormatInt(port, 10)))
 }
 
 func listToBytes(list *values.List) []byte {
