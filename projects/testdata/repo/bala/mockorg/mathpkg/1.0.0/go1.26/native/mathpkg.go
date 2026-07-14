@@ -17,8 +17,6 @@
 package mathpkg
 
 import (
-	"fmt"
-
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/values"
@@ -26,27 +24,12 @@ import (
 
 func initMathpkgModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, "mockorg", "mathpkg", "add", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		if len(args) < 2 {
-			return nil, fmt.Errorf("add requires 2 arguments, got %d", len(args))
-		}
-		a, ok := args[0].(int64)
-		if !ok {
-			return nil, fmt.Errorf("add arg[0] must be int64, got %T", args[0])
-		}
-		b, ok := args[1].(int64)
-		if !ok {
-			return nil, fmt.Errorf("add arg[1] must be int64, got %T", args[1])
-		}
+		a := args[0].(int64)
+		b := args[1].(int64)
 		return a + b, nil
 	})
 	runtime.RegisterExternFunction(rt, "mockorg", "mathpkg", "double", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		if len(args) < 1 {
-			return nil, fmt.Errorf("double requires 1 argument, got %d", len(args))
-		}
-		n, ok := args[0].(int64)
-		if !ok {
-			return nil, fmt.Errorf("double arg must be int64, got %T", args[0])
-		}
+		n := args[0].(int64)
 		return n * 2, nil
 	})
 }
