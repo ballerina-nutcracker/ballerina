@@ -3306,17 +3306,12 @@ func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemT
 }
 
 func associateInferredFunctionSignature(t typeResolver, variable *ast.BLangSimpleVariable) bool {
-	source, lambda, ok := inferredFunctionSignatureSource(variable.Expr)
+	ref, found, ok := inferredFunctionSignatureRef(t, variable.Expr)
 	if !ok {
-		return true
+		t.internalError("function signature not found", variable.GetPosition())
+		return false
 	}
-
-	ref, ok := t.functionSignatureRef(source)
-	if !ok {
-		if lambda != nil {
-			t.internalError("function signature not found", variable.GetPosition())
-			return false
-		}
+	if !found {
 		return true
 	}
 	if !t.associateFunctionSignature(variable.Symbol(), ref) {
@@ -3326,18 +3321,35 @@ func associateInferredFunctionSignature(t typeResolver, variable *ast.BLangSimpl
 	return true
 }
 
-func inferredFunctionSignatureSource(expr ast.BLangActionOrExpression) (model.SymbolRef, *ast.BLangLambdaFunction, bool) {
+func inferredFunctionSignatureRef(t typeResolver, expr ast.BLangActionOrExpression) (model.FunctionSignatureRef, bool, bool) {
 	switch expr := expr.(type) {
 	case *ast.BLangGroupExpr:
-		return inferredFunctionSignatureSource(expr.Expression)
+		return inferredFunctionSignatureRef(t, expr.Expression)
 	case *ast.BLangLambdaFunction:
-		return expr.Function.Symbol(), expr, true
+		ref, ok := t.functionSignatureRef(expr.Function.Symbol())
+		return ref, true, ok
 	case *ast.BLangSimpleVarRef:
-		return expr.Symbol(), nil, true
+		ref, ok := t.functionSignatureRef(expr.Symbol())
+		return ref, ok, true
 	case *ast.BLangLocalVarRef:
-		return expr.Symbol(), nil, true
+		ref, ok := t.functionSignatureRef(expr.Symbol())
+		return ref, ok, true
+	case *ast.BLangTypeConversionExpr:
+		switch ty := expr.TypeDescriptor.(type) {
+		case *ast.BLangFunctionType:
+			if ty.IsAnyFunction() {
+				return 0, false, true
+			}
+			ref := ty.SignatureRef()
+			return ref, true, ref != 0
+		case *ast.BLangUserDefinedType:
+			ref, ok := t.functionSignatureRef(ty.Symbol())
+			return ref, ok, true
+		default:
+			return 0, false, true
+		}
 	default:
-		return model.SymbolRef{}, nil, false
+		return 0, false, true
 	}
 }
 

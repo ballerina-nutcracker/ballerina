@@ -1062,6 +1062,13 @@ func walkTypeConversionExpr(cx *functionContext, expr *ast.BLangTypeConversionEx
 		initStmts = append(initStmts, result.initStmts...)
 		expr.Expression = result.replacementNode.(ast.BLangExpression)
 	}
+	if fnType, ok := expr.TypeDescriptor.(*ast.BLangFunctionType); ok {
+		result := desugarFunctionTypeDesc(cx, fnType, cx.currentScope())
+		initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
+		for _, field := range result.recordFields {
+			initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
+		}
+	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
