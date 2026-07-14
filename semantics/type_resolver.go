@@ -3358,8 +3358,6 @@ func resolveQueryExpr(
 		t.semanticError("query expression must start with a from clause", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	fromClause.SetDeterminedType(semtypes.NEVER)
-
 	lastClauseIndex := len(expr.QueryClauseList) - 1
 	var onConflictClause *ast.BLangOnConflictClause
 	if clause, isOnConflict := expr.QueryClauseList[lastClauseIndex].(*ast.BLangOnConflictClause); isOnConflict {
@@ -3386,41 +3384,8 @@ func resolveQueryExpr(
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
-	collectionTy, _, ok := resolveActionOrExpression(t, chain, fromClause.Collection, semtypes.SemType{})
-	if !ok {
+	if !resolveQueryFromClause(t, chain, fromClause) {
 		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	elementTy, ok := resolveQueryCollectionElementType(t, collectionTy, fromClause.GetPosition())
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-
-	if fromClause.VariableDefinitionNode != nil {
-		varDef := fromClause.VariableDefinitionNode
-		if varDef.Var == nil {
-			t.unimplemented("only simple variable bindings are supported in from clause", fromClause.GetPosition())
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		varDef.SetDeterminedType(semtypes.NEVER)
-
-		variableTy := elementTy
-		if !fromClause.IsDeclaredWithVarFlag && varDef.Var.TypeNode() != nil {
-			variableTy, ok = resolveBType(t, varDef.Var.TypeNode(), 0)
-			if !ok {
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-			if !semtypes.IsSubtype(t.typeContext(), elementTy, variableTy) {
-				t.semanticError("from clause variable type is incompatible with collection member type",
-					varDef.GetPosition())
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-		}
-
-		if varDef.Var.Name != nil {
-			varDef.Var.Name.SetDeterminedType(semtypes.NEVER)
-		}
-		varDef.Var.SetDeterminedType(semtypes.NEVER)
-		updateSymbolType(t, varDef.Var, variableTy)
 	}
 
 	queryChain, ok := resolveQueryIntermediateClauses(t, chain, expr.QueryClauseList, lastClauseIndex)
@@ -3523,43 +3488,8 @@ func resolveQueryAction(
 		t.semanticError("query action must start with a from clause", action.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	fromClause.SetDeterminedType(semtypes.NEVER)
-
-	collectionTy, _, ok := resolveActionOrExpression(t, chain, fromClause.Collection, semtypes.SemType{})
-	if !ok {
+	if !resolveQueryFromClause(t, chain, fromClause) {
 		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	elementTy, ok := resolveQueryCollectionElementType(t, collectionTy, fromClause.GetPosition())
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-
-	if fromClause.VariableDefinitionNode != nil {
-		varDef := fromClause.VariableDefinitionNode
-		if varDef.Var == nil {
-			t.unimplemented("only simple variable bindings are supported in from clause", fromClause.GetPosition())
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		varDef.SetDeterminedType(semtypes.NEVER)
-
-		variableTy := elementTy
-		if !fromClause.IsDeclaredWithVarFlag && varDef.Var.TypeNode() != nil {
-			variableTy, ok = resolveBType(t, varDef.Var.TypeNode(), 0)
-			if !ok {
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-			if !semtypes.IsSubtype(t.typeContext(), elementTy, variableTy) {
-				t.semanticError("from clause variable type is incompatible with collection member type",
-					varDef.GetPosition())
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-		}
-
-		if varDef.Var.Name != nil {
-			varDef.Var.Name.SetDeterminedType(semtypes.NEVER)
-		}
-		varDef.Var.SetDeterminedType(semtypes.NEVER)
-		updateSymbolType(t, varDef.Var, variableTy)
 	}
 
 	queryChain, ok := resolveQueryIntermediateClauses(t, chain, action.QueryClauseList, len(action.QueryClauseList))
@@ -3604,6 +3534,47 @@ func resolveQueryCollectionElementType(
 		t.unimplemented("query from clause currently supports only list or map collections", pos)
 		return semtypes.SemType{}, false
 	}
+}
+
+func resolveQueryFromClause(t typeResolver, chain *binding, clause *ast.BLangFromClause) bool {
+	clause.SetDeterminedType(semtypes.NEVER)
+	collectionTy, _, ok := resolveActionOrExpression(t, chain, clause.Collection, semtypes.SemType{})
+	if !ok {
+		return false
+	}
+	elementTy, ok := resolveQueryCollectionElementType(t, collectionTy, clause.GetPosition())
+	if !ok {
+		return false
+	}
+
+	varDef := clause.VariableDefinitionNode
+	if varDef == nil {
+		return true
+	}
+	if varDef.Var == nil {
+		t.unimplemented("only simple variable bindings are supported in from clause", clause.GetPosition())
+		return false
+	}
+	varDef.SetDeterminedType(semtypes.NEVER)
+
+	variableTy := elementTy
+	if !clause.IsDeclaredWithVarFlag && varDef.Var.TypeNode() != nil {
+		variableTy, ok = resolveBType(t, varDef.Var.TypeNode(), 0)
+		if !ok {
+			return false
+		}
+		if !semtypes.IsSubtype(t.typeContext(), elementTy, variableTy) {
+			t.semanticError("from clause variable type is incompatible with collection member type", varDef.GetPosition())
+			return false
+		}
+	}
+
+	if varDef.Var.Name != nil {
+		varDef.Var.Name.SetDeterminedType(semtypes.NEVER)
+	}
+	varDef.Var.SetDeterminedType(semtypes.NEVER)
+	updateSymbolType(t, varDef.Var, variableTy)
+	return true
 }
 
 func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpression, collectionTy semtypes.SemType) (semtypes.SemType, bool) {
@@ -3907,6 +3878,10 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryClause
 	currentChain := chain
 	for i := 1; i < endClauseIndex; i++ {
 		switch clause := queryClauses[i].(type) {
+		case *ast.BLangFromClause:
+			if !resolveQueryFromClause(t, currentChain, clause) {
+				return nil, false
+			}
 		case *ast.BLangJoinClause:
 			clause.SetDeterminedType(semtypes.NEVER)
 			collectionTy, _, ok := resolveActionOrExpression(t, currentChain, clause.Collection, semtypes.SemType{})
@@ -4046,7 +4021,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryClause
 				}
 			}
 		default:
-			t.unimplemented("only join + let + where + group by + order by + limit clauses are supported as intermediate query clauses", clause.GetPosition())
+			t.unimplemented("only from + join + let + where + group by + order by + limit clauses are supported as intermediate query clauses", clause.GetPosition())
 			return nil, false
 		}
 	}

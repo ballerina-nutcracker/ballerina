@@ -153,7 +153,7 @@ func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[
 func queryExprNeedsRowPipeline(queryExpr *ast.BLangQueryExpr, startClauseIndex int, endClauseIndex int) bool {
 	for i := startClauseIndex; i < endClauseIndex; i++ {
 		switch queryExpr.QueryClauseList[i].(type) {
-		case *ast.BLangJoinClause, *ast.BLangGroupByClause:
+		case *ast.BLangFromClause, *ast.BLangJoinClause, *ast.BLangGroupByClause:
 			return true
 		}
 	}
@@ -287,6 +287,8 @@ func walkQueryExprWithRows(
 
 	for i := 1; i < finalClauseIndex; i++ {
 		switch clause := expr.QueryClauseList[i].(type) {
+		case *ast.BLangFromClause:
+			bindings, rowsRef, ok = appendQueryFromClauseRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
 		case *ast.BLangJoinClause:
 			bindings, rowsRef, ok = appendQueryJoinClauseRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
 		case *ast.BLangLetClause:
@@ -673,8 +675,8 @@ func queryActionRowTerminal(
 }
 
 // buildQueryActionSegmentStmts recursively nests frame-local clauses around a terminal operation.
-// It generates assignments for let, conditional blocks for where/limit, and inner loops for joins,
-// producing a shape such as: let assignment; if where { if withinLimit { <join>; <terminal> } }.
+// It generates nested loops for from/join, assignments for let, and conditional blocks for where/limit,
+// producing a shape such as: let assignment; if where { for fromValue { <join>; <terminal> } }.
 func buildQueryActionSegmentStmts(
 	cx *functionContext,
 	clauses []ast.BLangNode,
@@ -692,6 +694,38 @@ func buildQueryActionSegmentStmts(
 	}
 
 	switch clause := clauses[clauseIndex].(type) {
+	case *ast.BLangFromClause:
+		fromBinding, ok := queryRowBindingFromVarDef(cx, clause.VariableDefinitionNode, "from")
+		if !ok {
+			return nil, nil, nil, false
+		}
+		*initStmts = append(*initStmts, createQueryBindingDeclaration(fromBinding, clause.GetPosition()))
+		newBindings := append(append([]queryRowBinding{}, bindings...), fromBinding)
+		nextStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
+			cx, clauses, clauseIndex+1, endClauseIndex, newBindings, terminal, pipelineState, initStmts, pos,
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		var fromStmts []ast.StatementNode
+		collRef, keysRef, rowCountRef, _, ok := createQueryCollectionSource(
+			cx, &fromStmts, clause.Collection, clause.GetPosition(),
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		appendQueryActionCollectionSegment(
+			cx,
+			collRef,
+			keysRef,
+			rowCountRef,
+			fromBinding,
+			nextStmts,
+			stopRefs,
+			&fromStmts,
+			clause.GetPosition(),
+		)
+		return fromStmts, outputBindings, stopRefs, true
 	case *ast.BLangLetClause:
 		letStmts := make([]ast.StatementNode, 0, len(clause.LetVarDeclarations))
 		newBindings := append([]queryRowBinding{}, bindings...)
@@ -1097,6 +1131,92 @@ func appendInitialQueryRows(
 	*initStmts = append(*initStmts, whileStmt)
 
 	return []queryRowBinding{loopBinding}, true
+}
+
+// appendQueryFromClauseRows expands every input row with every value produced by an intermediate
+// from clause. The collection setup and inner loop are generated inside the outer row loop because
+// the collection expression can reference bindings restored from the current input row.
+func appendQueryFromClauseRows(
+	cx *functionContext,
+	rowsRef *ast.BLangSimpleVarRef,
+	bindings []queryRowBinding,
+	clause *ast.BLangFromClause,
+	pos diagnostics.Location,
+	initStmts *[]ast.StatementNode,
+) ([]queryRowBinding, *ast.BLangSimpleVarRef, bool) {
+	fromBinding, ok := queryRowBindingFromVarDef(cx, clause.VariableDefinitionNode, "from")
+	if !ok {
+		return nil, nil, false
+	}
+	*initStmts = append(*initStmts, createQueryBindingDeclaration(fromBinding, clause.GetPosition()))
+	newRowsRef := createQueryListStore(cx, initStmts, pos)
+	rowCountRef, ok := createQueryLengthRef(cx, initStmts, rowsRef, pos)
+	if !ok {
+		return nil, nil, false
+	}
+	outerCounterRef := createQueryCounterRef(cx, initStmts, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess.IndexExpr = outerCounterRef
+	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
+
+	outerBody := []ast.StatementNode{rowVarDef}
+	outerBody = appendQueryRowRestoreStmts(outerBody, rowRef, bindings, pos)
+	collRef, keysRef, innerRowCountRef, _, ok := createQueryCollectionSource(
+		cx, &outerBody, clause.Collection, clause.GetPosition(),
+	)
+	if !ok {
+		return nil, nil, false
+	}
+	innerCounterRef := createQueryCounterRef(cx, &outerBody, clause.GetPosition())
+	elementAccess := queryElementAccess(collRef, keysRef, innerCounterRef, fromBinding.valueTy)
+	rowTuple := createQueryRowTupleExpr(
+		bindings,
+		[]ast.BLangExpression{createQueryBindingVarRef(fromBinding)},
+		pos,
+	)
+	pushRow := createArrayPushInvocation(cx.pkgCtx, newRowsRef, rowTuple)
+	if pushRow == nil {
+		return nil, nil, false
+	}
+	pushStmt := &ast.BLangExpressionStmt{Expr: pushRow}
+	setPositionIfMissing(pushStmt, clause.GetPosition())
+	innerBody := []ast.StatementNode{
+		createQueryBindingAssignment(fromBinding, elementAccess, clause.GetPosition()),
+		pushStmt,
+		createIncrementStmt(innerCounterRef),
+	}
+	innerCond := &ast.BLangBinaryExpr{
+		LhsExpr: innerCounterRef,
+		RhsExpr: innerRowCountRef,
+		OpKind:  model.OperatorKind_LESS_THAN,
+	}
+	innerCond.SetDeterminedType(semtypes.BOOLEAN)
+	innerWhile := &ast.BLangWhile{
+		Expr: innerCond,
+		Body: ast.BLangBlockStmt{Stmts: innerBody},
+	}
+	innerWhile.SetScope(cx.currentScope())
+	innerWhile.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(innerWhile, clause.GetPosition())
+	outerBody = append(outerBody, innerWhile, createIncrementStmt(outerCounterRef))
+
+	outerCond := &ast.BLangBinaryExpr{
+		LhsExpr: outerCounterRef,
+		RhsExpr: rowCountRef,
+		OpKind:  model.OperatorKind_LESS_THAN,
+	}
+	outerCond.SetDeterminedType(semtypes.BOOLEAN)
+	outerWhile := &ast.BLangWhile{
+		Expr: outerCond,
+		Body: ast.BLangBlockStmt{Stmts: outerBody},
+	}
+	outerWhile.SetScope(cx.currentScope())
+	outerWhile.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(outerWhile, clause.GetPosition())
+	*initStmts = append(*initStmts, outerWhile)
+
+	newBindings := append(append([]queryRowBinding{}, bindings...), fromBinding)
+	return newBindings, newRowsRef, true
 }
 
 func queryRowBindingFromVarDef(

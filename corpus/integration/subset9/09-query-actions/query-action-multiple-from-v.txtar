@@ -1,0 +1,24 @@
+-- stdout --
+pair:1:10
+pair:1:20
+pair:2:10
+pair:2:20
+events:[1,101,111,2,102,112]
+map-total:6
+triple-total:466
+limited-events:[1,101,111,2,102]
+limit-before:1:10
+limit-before:1:20
+ordered:1:2
+ordered:1:1
+ordered:2:2
+ordered:2:1
+after-order:1:1
+after-order:1:11
+after-order:2:2
+after-order:2:12
+grouped:1:4
+grouped:2:2
+joined:1:1
+joined:2:2
+-- stderr --

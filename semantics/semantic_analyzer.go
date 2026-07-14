@@ -1124,6 +1124,10 @@ func queryExprClausesForAnalysis[A analyzer](
 	}, true
 }
 
+func analyzeQueryFromClause[A analyzer](a A, clause *ast.BLangFromClause) bool {
+	return analyzeActionOrExpression(a, clause.Collection, semtypes.SemType{})
+}
+
 func analyzeQueryIntermediateClauses[A analyzer](
 	a A,
 	queryClauses []ast.BLangNode,
@@ -1133,6 +1137,10 @@ func analyzeQueryIntermediateClauses[A analyzer](
 
 	for i := 1; i < endClauseIndex; i++ {
 		switch clause := queryClauses[i].(type) {
+		case *ast.BLangFromClause:
+			if !analyzeQueryFromClause(a, clause) {
+				return false
+			}
 		case *ast.BLangJoinClause:
 			if !analyzeActionOrExpression(a, clause.Collection, semtypes.SemType{}) {
 				return false
@@ -1213,7 +1221,7 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 	if !ok {
 		return false
 	}
-	if !analyzeActionOrExpression(a, clauses.fromClause.Collection, semtypes.SemType{}) {
+	if !analyzeQueryFromClause(a, clauses.fromClause) {
 		return false
 	}
 	if !analyzeQueryIntermediateClauses(a, queryExpr.QueryClauseList, clauses.lastClauseIndex) {
@@ -1266,7 +1274,7 @@ func analyzeQueryAction[A analyzer](a A, action *ast.BLangQueryAction, expectedT
 		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
 		return false
 	}
-	if !analyzeActionOrExpression(a, fromClause.Collection, semtypes.SemType{}) {
+	if !analyzeQueryFromClause(a, fromClause) {
 		return false
 	}
 	if !analyzeQueryIntermediateClauses(a, action.QueryClauseList, len(action.QueryClauseList)) {

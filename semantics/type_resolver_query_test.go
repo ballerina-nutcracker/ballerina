@@ -294,7 +294,7 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 		{
 			name:    "unsupported intermediate clause",
 			clause:  newCollectClause(),
-			diagSub: "only join + let + where + group by + order by + limit clauses are supported as intermediate query clauses",
+			diagSub: "only from + join + let + where + group by + order by + limit clauses are supported as intermediate query clauses",
 		},
 	}
 
