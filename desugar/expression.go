@@ -551,11 +551,7 @@ func walkClientResourceAccessAction(cx *functionContext, expr *ast.BLangClientRe
 		initStmts = append(initStmts, result.initStmts...)
 		seg.Expr = result.replacementNode.(ast.BLangExpression)
 	}
-	argsInit, args := walkCallArgs(cx, expr.ArgExprs, expr.GetPosition(), func() (model.UntypedFunctionSignature, bool) {
-		return cx.functionSignature(expr.MethodSymbol())
-	})
-	initStmts = append(initStmts, argsInit...)
-	expr.ArgExprs = args
+	initStmts = append(initStmts, walkInvocationArgs(cx, expr)...)
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: expr,
@@ -676,16 +672,20 @@ func walkInvocation(cx *functionContext, expr invocable) desugaredNode[ast.BLang
 		expr.SetReceiver(result.replacementNode.(ast.BLangExpression))
 	}
 
-	argsInit, args := walkCallArgs(cx, expr.CallArgs(), expr.GetPosition(), func() (model.UntypedFunctionSignature, bool) {
-		return cx.functionSignature(expr.ResolvedSymbol())
-	})
-	initStmts = append(initStmts, argsInit...)
-	expr.SetCallArgs(args)
+	initStmts = append(initStmts, walkInvocationArgs(cx, expr)...)
 
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: expr,
 	}
+}
+
+func walkInvocationArgs(cx *functionContext, expr invocable) []ast.StatementNode {
+	initStmts, args := walkCallArgs(cx, expr.CallArgs(), expr.GetPosition(), func() (model.UntypedFunctionSignature, bool) {
+		return cx.functionSignature(expr.ResolvedSymbol())
+	})
+	expr.SetCallArgs(args)
+	return initStmts
 }
 
 func walkCallArgs(cx *functionContext, args []ast.BLangExpression, pos diagnostics.Location, fnSig func() (model.UntypedFunctionSignature, bool)) ([]ast.StatementNode, []ast.BLangExpression) {
