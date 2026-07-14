@@ -81,19 +81,9 @@ func (ctx *packageContext) addImplicitImport(pkgName string, imp ast.BLangImport
 	}
 }
 
-type generatedFunctionResult struct {
-	functions                     []*ast.BLangFunction
-	localTypeDescDefaultFunctions []*ast.BLangFunction
-}
-
-func (r *generatedFunctionResult) append(other generatedFunctionResult) {
-	r.functions = append(r.functions, other.functions...)
-	r.localTypeDescDefaultFunctions = append(r.localTypeDescDefaultFunctions, other.localTypeDescDefaultFunctions...)
-}
-
-func (r *generatedFunctionResult) sorted() []*ast.BLangFunction {
+func sortedGeneratedFunctions(generatedFunctions []*ast.BLangFunction) []*ast.BLangFunction {
 	// Ideally this shouldn't be needed (this is used only to keep desguared functions in generated closures in same order)
-	functions := append(r.localTypeDescDefaultFunctions, r.functions...)
+	functions := append([]*ast.BLangFunction(nil), generatedFunctions...)
 	sort.Slice(functions, func(i, j int) bool {
 		left := functions[i].Symbol()
 		right := functions[j].Symbol()
@@ -210,7 +200,7 @@ type functionContext struct {
 	desugarSymbolCounter int
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
-	generatedFunctions   generatedFunctionResult
+	generatedFunctions   []*ast.BLangFunction
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
@@ -600,12 +590,12 @@ func serviceInitResultType(pkgCtx *packageContext, svc *ast.BLangService, svcTy 
 	return semtypes.Union(errComponent, svcTy)
 }
 
-func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) generatedFunctionResult {
+func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) []*ast.BLangFunction {
 	nodes := collectModuleInitNodes(pkg)
 	order, ok := toplogicallySortInits(compilerCtx, nodes)
 	if !ok {
 		pkgCtx.internalError("module init dependency ordering failed")
-		return generatedFunctionResult{}
+		return nil
 	}
 
 	// we need init if the package has any module level constant/variable with init expressions or services
@@ -619,7 +609,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		}
 	}
 	if !needInit {
-		return generatedFunctionResult{}
+		return nil
 	}
 
 	initFnCreated := pkg.InitFunction == nil
@@ -1196,76 +1186,26 @@ type desugaredTypeDescResult struct {
 	functions    []*ast.BLangFunction
 }
 
-type localCaptureFinder struct {
-	ctx   *functionContext
-	scope model.Scope
-	found bool
-}
-
-func (f *localCaptureFinder) Visit(node ast.BLangNode) ast.Visitor {
-	if f.found {
-		return f
-	}
-	withSymbol, ok := node.(ast.BNodeWithSymbol)
-	if !ok || withSymbol.Symbol().IsEmpty() {
-		return f
-	}
-	ref := withSymbol.Symbol()
-	name := f.ctx.pkgCtx.compilerCtx.SymbolName(ref)
-	for scope := f.scope; scope != nil; {
-		var base *model.BlockScopeBase
-		switch current := scope.(type) {
-		case *model.FunctionScope:
-			base = &current.BlockScopeBase
-		case *model.BlockScope:
-			base = &current.BlockScopeBase
-		default:
-			return f
-		}
-		if localRef, ok := base.Main.GetSymbol(name); ok && localRef == ref {
-			f.found = true
-			return f
-		}
-		scope = base.Parent
-	}
-	return f
-}
-
-func (f *localCaptureFinder) VisitTypeData(_ *ast.TypeData) ast.Visitor {
-	return f
-}
-
-func capturesLocalSymbol(cx *functionContext, fn *ast.BLangFunction) bool {
-	finder := &localCaptureFinder{ctx: cx, scope: fn.Scope().(*model.FunctionScope).Parent}
-	ast.Walk(finder, fn.Body.(ast.BLangNode))
-	return finder.found
-}
-
-func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) ast.StatementNode {
-	fn = desugarNestedFunction(cx, fn)
+func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) []ast.StatementNode {
 	fnType := cx.symbolType(fn.Symbol())
 	lambda := &ast.BLangLambdaFunction{Function: fn}
 	lambda.SetDeterminedType(fnType)
 	setPositionIfMissing(lambda, fn.GetPosition())
-	varDef, varRef := assignToLocal(cx, lambda, fn.GetPosition())
+
+	result := walkExpression(cx, lambda)
+	varDef, varRef := assignToLocal(cx, result.replacementNode.(ast.BLangExpression), fn.GetPosition())
 	if cx.defaultClosureVars == nil {
 		cx.defaultClosureVars = make(map[model.SymbolRef]model.SymbolRef)
 	}
 	cx.defaultClosureVars[fn.Symbol()] = varRef.Symbol()
-	return varDef
+	return append(result.initStmts, varDef)
 }
 
 func desugarLocalTypeDescDefaults(cx *functionContext, functions []*ast.BLangFunction) []ast.StatementNode {
 	var initStmts []ast.StatementNode
-	var standalone []*ast.BLangFunction
 	for _, fn := range functions {
-		if capturesLocalSymbol(cx, fn) {
-			initStmts = append(initStmts, desugarLocalDefaultClosure(cx, fn))
-		} else {
-			standalone = append(standalone, desugarNestedFunction(cx, fn))
-		}
+		initStmts = append(initStmts, desugarLocalDefaultClosure(cx, fn)...)
 	}
-	cx.generatedFunctions.localTypeDescDefaultFunctions = append(cx.generatedFunctions.localTypeDescDefaultFunctions, standalone...)
 	return initStmts
 }
 
@@ -1618,39 +1558,35 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	desugarTopLevelFunctionDefaults(pkgCtx, pkg)
 	desugarClassMethodDefaults(pkgCtx, pkg)
 
-	desugarObjectDefinitionConcurrently := func(class *ast.BLangClassDefinition, result *generatedFunctionResult) {
-		wg.Go(func() {
-			defer recoverPanic()
-			desugarClassDefinition(pkgCtx, class)
-			for name, method := range class.Methods {
-				fn, generated := desugarFunction(pkgCtx, method)
-				class.Methods[name] = fn
-				result.append(generated)
-			}
-			for _, rm := range class.ResourceMethods {
-				result.append(desugarResourceMethod(pkgCtx, rm))
-			}
-			fn, generated := desugarFunction(pkgCtx, class.InitFunction)
-			*class.InitFunction = *fn
-			result.append(generated)
-		})
+	desugarObject := func(class *ast.BLangClassDefinition) []*ast.BLangFunction {
+		desugarClassDefinition(pkgCtx, class)
+		var generatedFunctions []*ast.BLangFunction
+		for name, method := range class.Methods {
+			fn, generated := desugarFunction(pkgCtx, method)
+			class.Methods[name] = fn
+			generatedFunctions = append(generatedFunctions, generated...)
+		}
+		for _, rm := range class.ResourceMethods {
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+		}
+		fn, generated := desugarFunction(pkgCtx, class.InitFunction)
+		*class.InitFunction = *fn
+		return append(generatedFunctions, generated...)
 	}
-	desugarServiceConcurrently := func(svc *ast.BLangService, result *generatedFunctionResult) {
-		wg.Go(func() {
-			defer recoverPanic()
-			desugarServiceDefinition(pkgCtx, svc)
-			for name, method := range svc.Methods {
-				fn, generated := desugarFunction(pkgCtx, method)
-				svc.Methods[name] = fn
-				result.append(generated)
-			}
-			for _, rm := range svc.ResourceMethods {
-				result.append(desugarResourceMethod(pkgCtx, rm))
-			}
-			fn, generated := desugarFunction(pkgCtx, svc.InitFunction)
-			*svc.InitFunction = *fn
-			result.append(generated)
-		})
+	desugarService := func(svc *ast.BLangService) []*ast.BLangFunction {
+		desugarServiceDefinition(pkgCtx, svc)
+		var generatedFunctions []*ast.BLangFunction
+		for name, method := range svc.Methods {
+			fn, generated := desugarFunction(pkgCtx, method)
+			svc.Methods[name] = fn
+			generatedFunctions = append(generatedFunctions, generated...)
+		}
+		for _, rm := range svc.ResourceMethods {
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+		}
+		fn, generated := desugarFunction(pkgCtx, svc.InitFunction)
+		*svc.InitFunction = *fn
+		return append(generatedFunctions, generated...)
 	}
 	for i := range pkg.Services {
 		ensureServiceDefaultInitFunction(pkgCtx, &pkg.Services[i])
@@ -1662,7 +1598,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	// Each worker writes generated functions to its own result slot. The slots
 	// are merged only after all workers finish, so generation never blocks on
 	// package-level result collection.
-	functionResults := make([]generatedFunctionResult, len(pkg.Functions))
+	functionResults := make([][]*ast.BLangFunction, len(pkg.Functions))
 	for i := range pkg.Functions {
 		wg.Go(func() {
 			defer recoverPanic()
@@ -1672,26 +1608,32 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		})
 	}
 
-	objectResults := make([]generatedFunctionResult, len(pkg.ClassDefinitions))
+	objectResults := make([][]*ast.BLangFunction, len(pkg.ClassDefinitions))
 	for i := range pkg.ClassDefinitions {
-		desugarObjectDefinitionConcurrently(&pkg.ClassDefinitions[i], &objectResults[i])
+		wg.Go(func() {
+			defer recoverPanic()
+			objectResults[i] = desugarObject(&pkg.ClassDefinitions[i])
+		})
 	}
-	serviceResults := make([]generatedFunctionResult, len(pkg.Services))
+	serviceResults := make([][]*ast.BLangFunction, len(pkg.Services))
 	for i := range pkg.Services {
-		desugarServiceConcurrently(&pkg.Services[i], &serviceResults[i])
+		wg.Go(func() {
+			defer recoverPanic()
+			serviceResults[i] = desugarService(&pkg.Services[i])
+		})
 	}
 
 	wg.Wait()
 	for _, result := range functionResults {
-		generatedFunctions.append(result)
+		generatedFunctions = append(generatedFunctions, result...)
 	}
 	for _, result := range objectResults {
-		generatedFunctions.append(result)
+		generatedFunctions = append(generatedFunctions, result...)
 	}
 	for _, result := range serviceResults {
-		generatedFunctions.append(result)
+		generatedFunctions = append(generatedFunctions, result...)
 	}
-	for _, fn := range generatedFunctions.sorted() {
+	for _, fn := range sortedGeneratedFunctions(generatedFunctions) {
 		pkg.Functions = append(pkg.Functions, *fn)
 	}
 	if panicErr != nil {
@@ -1786,9 +1728,9 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 	}
 }
 
-func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) generatedFunctionResult {
+func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
 	if rm.Body == nil {
-		return generatedFunctionResult{}
+		return nil
 	}
 	cx := &functionContext{pkgCtx: pkgCtx}
 	cx.pushScope(rm.Scope())
@@ -1809,14 +1751,14 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 
 // desugarFunction returns a desugared function and functions generated while
 // desugaring it.
-func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, generatedFunctionResult) {
+func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
 	cx := &functionContext{pkgCtx: pkgCtx}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
 
 func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
 	fn, generated := desugarFunction(cx.pkgCtx, fn)
-	cx.generatedFunctions.append(generated)
+	cx.generatedFunctions = append(cx.generatedFunctions, generated...)
 	return fn
 }
 

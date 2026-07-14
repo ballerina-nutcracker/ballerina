@@ -1,7 +1,24 @@
 module $anon.. v 0.0.0;
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
 $anonFunc$_0(int) -> int{
   bb0 {
     %0 = x;
+    return;
+  }
+}
+$default$3(int) -> int{
+  bb0 {
+    %3 = first;
+    %4 = ConstantLoad 3
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
     return;
   }
 }
@@ -11,6 +28,13 @@ $anonFunc$_1(int,int) -> int{
     %5 = y;
     %3 = + %4 %5;
     %0 = %3;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
     return;
   }
 }
@@ -61,112 +85,118 @@ $anonFunc$_6(int) -> int{
 }
 main() -> nil{
   bb0 {
-    %1 = fp $anon/.:$anonFunc$_0
-    base = %1;
-    %3 = $default$1() -> bb1;
+    %1 = fp $anon/.:$default$1
+    $desugar$0 = %1;
+    %3 = fp $anon/.:$anonFunc$_0
+    base = %3;
+    %5 = $desugar$0() -> bb1;
   }
   bb1 {
-    $desugar$0 = %3;
-    %5 = $desugar$0;
-    %6 = base(%5) -> bb2;
+    $desugar$1 = %5;
+    %7 = $desugar$1;
+    %8 = base(%7) -> bb2;
   }
   bb2 {
-    %7 = %6;
-    %8 = println(%7) -> bb3;
+    %9 = %8;
+    %10 = println(%9) -> bb3;
   }
   bb3 {
-    %9 = ConstantLoad 6
-    %10 = %9;
-    %11 = base(%10) -> bb4;
+    %11 = ConstantLoad 6
+    %12 = %11;
+    %13 = base(%12) -> bb4;
   }
   bb4 {
-    %12 = %11;
-    %13 = println(%12) -> bb5;
+    %14 = %13;
+    %15 = println(%14) -> bb5;
   }
   bb5 {
-    %14 = fp $anon/.:$anonFunc$_1
-    localFn = %14;
-    %16 = ConstantLoad 4
-    $desugar$1 = %16;
-    %18 = $desugar$1;
-    %19 = $default$3(%18) -> bb6;
+    %16 = fp $anon/.:$default$3
+    $desugar$2 = %16;
+    %18 = fp $anon/.:$anonFunc$_1
+    localFn = %18;
+    %20 = ConstantLoad 4
+    $desugar$3 = %20;
+    %22 = $desugar$3;
+    %23 = $desugar$2(%22) -> bb6;
   }
   bb6 {
-    $desugar$2 = %19;
-    %21 = $desugar$1;
-    %22 = $desugar$2;
-    %23 = localFn(%21,%22) -> bb7;
+    $desugar$4 = %23;
+    %25 = $desugar$3;
+    %26 = $desugar$4;
+    %27 = localFn(%25,%26) -> bb7;
   }
   bb7 {
-    %24 = %23;
-    %25 = println(%24) -> bb8;
+    %28 = %27;
+    %29 = println(%28) -> bb8;
   }
   bb8 {
-    %26 = ConstantLoad 4
-    %27 = %26;
-    %28 = ConstantLoad 5
-    %29 = %28;
-    %30 = localFn(%27,%29) -> bb9;
+    %30 = ConstantLoad 4
+    %31 = %30;
+    %32 = ConstantLoad 5
+    %33 = %32;
+    %34 = localFn(%31,%33) -> bb9;
   }
   bb9 {
-    %31 = %30;
-    %32 = println(%31) -> bb10;
+    %35 = %34;
+    %36 = println(%35) -> bb10;
   }
   bb10 {
+    %37 = fp $anon/.:$default$5
+    $desugar$5 = %37;
     copied = base;
-    %34 = $default$5() -> bb11;
+    %40 = $desugar$5() -> bb11;
   }
   bb11 {
-    $desugar$3 = %34;
-    %36 = $desugar$3;
-    %37 = copied(%36) -> bb12;
+    $desugar$6 = %40;
+    %42 = $desugar$6;
+    %43 = copied(%42) -> bb12;
   }
   bb12 {
-    %38 = %37;
-    %39 = println(%38) -> bb13;
+    %44 = %43;
+    %45 = println(%44) -> bb13;
   }
   bb13 {
-    %40 = takesFn(base) -> bb14;
+    %46 = takesFn(base) -> bb14;
   }
   bb14 {
-    %41 = %40;
-    %42 = println(%41) -> bb15;
+    %47 = %46;
+    %48 = println(%47) -> bb15;
   }
   bb15 {
-    %43 = fp $anon/.:$anonFunc$_2
-    recordFn = %43;
-    %45 = ConstantLoad left
-    %46 = ConstantLoad 8
-    %47 = ConstantLoad right
-    %48 = ConstantLoad 9
-    %49 = newMap {| left: int, right: int, never... |}{%45=%46, %47=%48}
-    %50 = recordFn(%49) -> bb16;
+    %49 = fp $anon/.:$anonFunc$_2
+    recordFn = %49;
+    %51 = ConstantLoad left
+    %52 = ConstantLoad 8
+    %53 = ConstantLoad right
+    %54 = ConstantLoad 9
+    %55 = newMap {| left: int, right: int, never... |}{%51=%52, %53=%54}
+    %56 = recordFn(%55) -> bb16;
   }
   bb16 {
-    %51 = %50;
-    %52 = println(%51) -> bb17;
+    %57 = %56;
+    %58 = println(%57) -> bb17;
   }
   bb17 {
-    %53 = ConstantLoad 10
-    %54 = %53;
-    %55 = fp $anon/.:$anonFunc$_3
-    %56 = fp $anon/.:$anonFunc$_4
-    %57 = applyFns(%54,%55,%56) -> bb18;
+    %59 = ConstantLoad 10
+    %60 = %59;
+    %61 = fp $anon/.:$anonFunc$_3
+    %62 = fp $anon/.:$anonFunc$_4
+    %63 = applyFns(%60,%61,%62) -> bb18;
   }
   bb18 {
-    %58 = %57;
-    %59 = println(%58) -> bb19;
+    %64 = %63;
+    %65 = println(%64) -> bb19;
   }
   bb19 {
-    %60 = ConstantLoad 10
-    %61 = %60;
-    %62 = fp $anon/.:$anonFunc$_5
-    %63 = fp $anon/.:$anonFunc$_6
-    %64 = applyInlineFns(%61,%62,%63) -> bb20;
+    %66 = ConstantLoad 10
+    %67 = %66;
+    %68 = fp $anon/.:$anonFunc$_5
+    %69 = fp $anon/.:$anonFunc$_6
+    %70 = applyInlineFns(%67,%68,%69) -> bb20;
   }
   bb20 {
-    %65 = %64;
-    %66 = println(%65) -> bb21;
+    %71 = %70;
+    %72 = println(%71) -> bb21;
   }
   bb21 {
     return;
@@ -244,6 +274,13 @@ applyFns(int,[function(int) returns int...]...) -> int{
     GOTO bb5;
   }
 }
+$default$12() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
 applyInlineFns(int,[function(int) returns int...]...) -> int{
   bb0 {
     %4 = length(fns) -> bb1;
@@ -280,11 +317,13 @@ applyInlineFns(int,[function(int) returns int...]...) -> int{
     %6 ? bb6 : bb7;
   }
   bb6 {
-    PushScopeFrame 8
-    %0 = (1, $desugar$0)[(1, $desugar$1)];
-    fn = %0;
-    %2 = (1, res);
-    %3 = fn(%2) -> bb8;
+    PushScopeFrame 10
+    %0 = fp $anon/.:$default$12
+    $desugar$3 = %0;
+    %2 = (1, $desugar$0)[(1, $desugar$1)];
+    fn = %2;
+    %4 = (1, res);
+    %5 = fn(%4) -> bb8;
   }
   bb7 {
     (1, %0) = res;
@@ -292,12 +331,12 @@ applyInlineFns(int,[function(int) returns int...]...) -> int{
     return;
   }
   bb8 {
-    (1, res) = %3;
-    %5 = (1, $desugar$1);
-    %6 = ConstantLoad 1
-    %7 = %6;
-    %4 = + %5 %7;
-    (1, $desugar$1) = %4;
+    (1, res) = %5;
+    %7 = (1, $desugar$1);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$1) = %6;
     PopScopeFrame
     GOTO bb5;
   }
@@ -312,37 +351,6 @@ $default$0() -> int{
 $default$10() -> int{
   bb0 {
     %1 = ConstantLoad 20
-    %0 = %1;
-    return;
-  }
-}
-$default$1() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
-$default$3(int) -> int{
-  bb0 {
-    %3 = first;
-    %4 = ConstantLoad 3
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
-    return;
-  }
-}
-$default$5() -> int{
-  bb0 {
-    %1 = ConstantLoad 7
-    %0 = %1;
-    return;
-  }
-}
-$default$12() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
     %0 = %1;
     return;
   }

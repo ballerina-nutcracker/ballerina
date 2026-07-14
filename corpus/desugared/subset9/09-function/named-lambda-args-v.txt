@@ -16,6 +16,13 @@
     (value-type null))
     (block-function-body
       (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $default$1 () ()
+              (block-function-body
+                (return
+                  (literal 5))))))))
+      (var-def
         (variable base (type
           (function-type (
             (value-type int)) (
@@ -30,16 +37,26 @@
                 (return
                   (simple-var-ref x))))))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$1 ()))))
+        (variable $desugar$1 (expr
+          (invocation $desugar$0 ()))))
       (expression-stmt
         (invocation io println (
           (invocation base (
-            (simple-var-ref $desugar$0))))))
+            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (invocation io println (
           (invocation base (
             (literal 6))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $default$3 (
+              (variable first)) ()
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref first)
+                    (literal 3)))))))))
       (var-def
         (variable localFn (type
           (function-type (
@@ -60,22 +77,29 @@
                     (simple-var-ref x)
                     (simple-var-ref y)))))))))
       (var-def
-        (variable $desugar$1 (expr
+        (variable $desugar$3 (expr
           (literal 4))))
       (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$3 (
-            (simple-var-ref $desugar$1))))))
+        (variable $desugar$4 (expr
+          (invocation $desugar$2 (
+            (simple-var-ref $desugar$3))))))
       (expression-stmt
         (invocation io println (
           (invocation localFn (
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2))))))
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4))))))
       (expression-stmt
         (invocation io println (
           (invocation localFn (
             (literal 4)
             (literal 5))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $default$5 () ()
+              (block-function-body
+                (return
+                  (literal 7))))))))
       (var-def
         (variable copied (type
           (function-type (
@@ -83,12 +107,12 @@
             (value-type int)))) (expr
           (simple-var-ref base))))
       (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$5 ()))))
+        (variable $desugar$6 (expr
+          (invocation $desugar$5 ()))))
       (expression-stmt
         (invocation io println (
           (invocation copied (
-            (simple-var-ref $desugar$3))))))
+            (simple-var-ref $desugar$6))))))
       (expression-stmt
         (invocation io println (
           (invocation takesFn (
@@ -267,6 +291,13 @@
             (simple-var-ref $desugar$2))
           (block-stmt
             (var-def
+              (variable $desugar$3 (expr
+                (lambda
+                  (function $default$12 () ()
+                    (block-function-body
+                      (return
+                        (literal 5))))))))
+            (var-def
               (variable fn (type
                 (function-type (
                   (value-type int)) (
@@ -292,23 +323,4 @@
   (function $default$10 () ()
     (block-function-body
       (return
-        (literal 20))))
-  (function $default$1 () ()
-    (block-function-body
-      (return
-        (literal 5))))
-  (function $default$3 (
-    (variable first)) ()
-    (block-function-body
-      (return
-        (binary-expr +
-          (simple-var-ref first)
-          (literal 3)))))
-  (function $default$5 () ()
-    (block-function-body
-      (return
-        (literal 7))))
-  (function $default$12 () ()
-    (block-function-body
-      (return
-        (literal 5)))))
+        (literal 20)))))

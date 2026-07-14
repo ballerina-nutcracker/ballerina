@@ -28,6 +28,25 @@
                   (simple-var-ref callback))
                 (return
                   (simple-var-ref result))))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $default$0 (
+              (variable callback)) ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation $default$1 ()))))
+                (return
+                  (invocation callback (
+                    (simple-var-ref $desugar$0))))))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $default$1 () ()
+              (block-function-body
+                (return
+                  (literal 10))))))))
       (if
         (type-test-expr is
           (simple-var-ref narrowedWithLambdaArg)
@@ -39,7 +58,7 @@
             (value-type int))))
         (block-stmt
           (var-def
-            (variable $desugar$0 (expr
+            (variable $desugar$2 (expr
               (lambda
                 (function $anonFunc$_1 (
                   (variable actual (type
@@ -51,14 +70,14 @@
                         (simple-var-ref actual)
                         (literal 1)))))))))
           (var-def
-            (variable $desugar$1 (expr
-              (invocation $default$0 (
-                (simple-var-ref $desugar$0))))))
+            (variable $desugar$3 (expr
+              (invocation $desugar$0 (
+                (simple-var-ref $desugar$2))))))
           (expression-stmt
             (invocation io println (
               (invocation narrowedWithLambdaArg (
-                (simple-var-ref $desugar$0)
-                (simple-var-ref $desugar$1))))))) ())
+                (simple-var-ref $desugar$2)
+                (simple-var-ref $desugar$3))))))) ())
       (block-stmt
         (var-def
           (variable narrowedWithInlineRecord (type
@@ -82,7 +101,14 @@
                       (simple-var-ref input)
                       (literal value)))))))))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$4 (expr
+            (lambda
+              (function $default$2 () ()
+                (block-function-body
+                  (return
+                    (mapping-constructor-expr))))))))
+        (var-def
+          (variable $desugar$5 (expr
             (lambda
               (function $desugar$0 () ()
                 (block-function-body
@@ -99,27 +125,10 @@
               (value-type int))))
           (block-stmt
             (var-def
-              (variable $desugar$3 (expr
-                (invocation $default$2 ()))))
+              (variable $desugar$6 (expr
+                (invocation $desugar$4 ()))))
             (expression-stmt
               (invocation io println (
                 (invocation narrowedWithInlineRecord (
-                  (simple-var-ref $desugar$3))))))) ())
-        (block-stmt))))
-  (function $default$0 (
-    (variable callback)) ()
-    (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$1 ()))))
-      (return
-        (invocation callback (
-          (simple-var-ref $desugar$0))))))
-  (function $default$1 () ()
-    (block-function-body
-      (return
-        (literal 10))))
-  (function $default$2 () ()
-    (block-function-body
-      (return
-        (mapping-constructor-expr)))))
+                  (simple-var-ref $desugar$6))))))) ())
+        (block-stmt)))))

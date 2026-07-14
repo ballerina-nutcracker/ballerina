@@ -86,18 +86,25 @@
           (invocation lambdaAlias (
             (literal 9))))))
       (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $default$2 () ()
+              (block-function-body
+                (return
+                  (literal 10))))))))
+      (var-def
         (variable typedLambda (type
           (function-type (
             (value-type int)) (
             (value-type int)))) (expr
           (simple-var-ref lambda))))
       (var-def
-        (variable $desugar$4 (expr
-          (invocation $default$2 ()))))
+        (variable $desugar$5 (expr
+          (invocation $desugar$4 ()))))
       (expression-stmt
         (invocation io println (
           (invocation typedLambda (
-            (simple-var-ref $desugar$4))))))
+            (simple-var-ref $desugar$5))))))
       (expression-stmt
         (invocation io println (
           (invocation typedLambda (
@@ -154,12 +161,12 @@
                   (return
                     (simple-var-ref value)))))))))
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$6 (expr
           (invocation $default$3 ()))))
       (expression-stmt
         (invocation io println (
           (invocation groupedLambda (
-            (simple-var-ref $desugar$5))))))
+            (simple-var-ref $desugar$6))))))
       (expression-stmt
         (invocation io println (
           (invocation groupedLambda (
@@ -172,10 +179,6 @@
     (block-function-body
       (return
         (literal 5))))
-  (function $default$2 () ()
-    (block-function-body
-      (return
-        (literal 10))))
   (function $default$3 () ()
     (block-function-body
       (return

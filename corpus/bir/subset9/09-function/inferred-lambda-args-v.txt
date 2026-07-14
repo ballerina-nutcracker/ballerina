@@ -13,6 +13,13 @@ $anonFunc$_1(int) -> int{
     return;
   }
 }
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
 $anonFunc$_2({| left: int, right: int, never... |}) -> int{
   bb0 {
     %4 = ConstantLoad left
@@ -121,76 +128,78 @@ main() -> nil{
     %47 = println(%46) -> bb20;
   }
   bb20 {
+    %48 = fp $anon/.:$default$2
+    $desugar$4 = %48;
     typedLambda = lambda;
-    %49 = $default$2() -> bb21;
+    %51 = $desugar$4() -> bb21;
   }
   bb21 {
-    $desugar$4 = %49;
-    %51 = $desugar$4;
-    %52 = typedLambda(%51) -> bb22;
+    $desugar$5 = %51;
+    %53 = $desugar$5;
+    %54 = typedLambda(%53) -> bb22;
   }
   bb22 {
-    %53 = %52;
-    %54 = println(%53) -> bb23;
+    %55 = %54;
+    %56 = println(%55) -> bb23;
   }
   bb23 {
-    %55 = ConstantLoad 11
-    %56 = %55;
-    %57 = typedLambda(%56) -> bb24;
+    %57 = ConstantLoad 11
+    %58 = %57;
+    %59 = typedLambda(%58) -> bb24;
   }
   bb24 {
-    %58 = %57;
-    %59 = println(%58) -> bb25;
+    %60 = %59;
+    %61 = println(%60) -> bb25;
   }
   bb25 {
-    %60 = fp $anon/.:$anonFunc$_2
-    includedRecordLambda = %60;
-    %62 = ConstantLoad left
-    %63 = ConstantLoad 1
-    %64 = ConstantLoad right
-    %65 = ConstantLoad 2
-    %66 = newMap {| left: int, right: int, never... |}{%62=%63, %64=%65}
-    %67 = includedRecordLambda(%66) -> bb26;
+    %62 = fp $anon/.:$anonFunc$_2
+    includedRecordLambda = %62;
+    %64 = ConstantLoad left
+    %65 = ConstantLoad 1
+    %66 = ConstantLoad right
+    %67 = ConstantLoad 2
+    %68 = newMap {| left: int, right: int, never... |}{%64=%65, %66=%67}
+    %69 = includedRecordLambda(%68) -> bb26;
   }
   bb26 {
-    %68 = %67;
-    %69 = println(%68) -> bb27;
+    %70 = %69;
+    %71 = println(%70) -> bb27;
   }
   bb27 {
     includedRecordLambdaAlias = includedRecordLambda;
-    %71 = ConstantLoad left
-    %72 = ConstantLoad 3
-    %73 = ConstantLoad right
-    %74 = ConstantLoad 4
-    %75 = newMap {| left: int, right: int, never... |}{%71=%72, %73=%74}
-    %76 = includedRecordLambdaAlias(%75) -> bb28;
+    %73 = ConstantLoad left
+    %74 = ConstantLoad 3
+    %75 = ConstantLoad right
+    %76 = ConstantLoad 4
+    %77 = newMap {| left: int, right: int, never... |}{%73=%74, %75=%76}
+    %78 = includedRecordLambdaAlias(%77) -> bb28;
   }
   bb28 {
-    %77 = %76;
-    %78 = println(%77) -> bb29;
+    %79 = %78;
+    %80 = println(%79) -> bb29;
   }
   bb29 {
-    %79 = fp $anon/.:$anonFunc$_3
-    groupedLambda = %79;
-    %81 = $default$3() -> bb30;
+    %81 = fp $anon/.:$anonFunc$_3
+    groupedLambda = %81;
+    %83 = $default$3() -> bb30;
   }
   bb30 {
-    $desugar$5 = %81;
-    %83 = $desugar$5;
-    %84 = groupedLambda(%83) -> bb31;
+    $desugar$6 = %83;
+    %85 = $desugar$6;
+    %86 = groupedLambda(%85) -> bb31;
   }
   bb31 {
-    %85 = %84;
-    %86 = println(%85) -> bb32;
+    %87 = %86;
+    %88 = println(%87) -> bb32;
   }
   bb32 {
-    %87 = ConstantLoad 10
-    %88 = %87;
-    %89 = groupedLambda(%88) -> bb33;
+    %89 = ConstantLoad 10
+    %90 = %89;
+    %91 = groupedLambda(%90) -> bb33;
   }
   bb33 {
-    %90 = %89;
-    %91 = println(%90) -> bb34;
+    %92 = %91;
+    %93 = println(%92) -> bb34;
   }
   bb34 {
     return;
@@ -206,13 +215,6 @@ $default$0() -> int{
 $default$1() -> int{
   bb0 {
     %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
-$default$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 10
     %0 = %1;
     return;
   }

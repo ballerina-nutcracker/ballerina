@@ -1044,7 +1044,7 @@ func walkLambdaFunction(cx *functionContext, expr *ast.BLangLambdaFunction) desu
 			for i := range defaults {
 				defaults[i] = desugarNestedFunction(cx, defaults[i])
 			}
-			cx.generatedFunctions.functions = append(cx.generatedFunctions.functions, defaults...)
+			cx.generatedFunctions = append(cx.generatedFunctions, defaults...)
 		}
 		expr.Function = desugarNestedFunction(cx, expr.Function)
 	}

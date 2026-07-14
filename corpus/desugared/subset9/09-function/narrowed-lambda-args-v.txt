@@ -34,6 +34,13 @@
               (block-function-body
                 (return
                   (simple-var-ref value))))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $default$1 () ()
+              (block-function-body
+                (return
+                  (literal 30))))))))
       (if
         (type-test-expr is
           (simple-var-ref narrowed)
@@ -45,24 +52,32 @@
             (invocation io println (
               (invocation narrowed (
                 (literal 12))))))) (
-        (if
-          (type-test-expr is
-            (simple-var-ref narrowed)
-            (function-type (
-              (value-type int)) (
-              (value-type int))))
-          (block-stmt
-            (var-def
-              (variable $desugar$0 (expr
-                (invocation $default$2 ()))))
-            (expression-stmt
-              (invocation io println (
-                (invocation narrowed (
-                  (simple-var-ref $desugar$0))))))
-            (expression-stmt
-              (invocation io println (
-                (invocation narrowed (
-                  (literal 11))))))) ())))
+        (block-stmt
+          (var-def
+            (variable $desugar$1 (expr
+              (lambda
+                (function $default$2 () ()
+                  (block-function-body
+                    (return
+                      (literal 20))))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref narrowed)
+              (function-type (
+                (value-type int)) (
+                (value-type int))))
+            (block-stmt
+              (var-def
+                (variable $desugar$2 (expr
+                  (invocation $desugar$1 ()))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation narrowed (
+                    (simple-var-ref $desugar$2))))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation narrowed (
+                    (literal 11))))))) ()))))
       (var-def
         (variable narrowedRecord (type
           (union-type
@@ -121,12 +136,12 @@
             (user-defined-type ChainedFAlias))
           (block-stmt
             (var-def
-              (variable $desugar$1 (expr
+              (variable $desugar$3 (expr
                 (invocation $default$0 ()))))
             (expression-stmt
               (invocation io println (
                 (invocation narrowedAlias (
-                  (simple-var-ref $desugar$1))))))
+                  (simple-var-ref $desugar$3))))))
             (expression-stmt
               (invocation io println (
                 (invocation narrowedAlias (
@@ -135,12 +150,4 @@
   (function $default$0 () ()
     (block-function-body
       (return
-        (literal 5))))
-  (function $default$1 () ()
-    (block-function-body
-      (return
-        (literal 30))))
-  (function $default$2 () ()
-    (block-function-body
-      (return
-        (literal 20)))))
+        (literal 5)))))
