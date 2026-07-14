@@ -260,7 +260,7 @@ func TestInterruptedTransfer(t *testing.T) {
 // error rather than mishandling it, since the toolchain-based build path
 // isn't implemented yet.
 func TestNativeDependencyRejected(t *testing.T) {
-	_, err := ResolveStub(Key{Fingerprint: "deadbeef"}, t.TempDir(), "dev", "")
+	_, err := ResolveStub(Key{Fingerprint: "deadbeef"}, t.TempDir(), "")
 	if err == nil {
 		t.Fatalf("expected an error for a non-empty Fingerprint, got none")
 	}
@@ -351,7 +351,7 @@ func TestResolveTargetPlatform(t *testing.T) {
 // naming the supported list, rather than silently looking for a stub that
 // will never exist.
 func TestResolveStubUnsupportedPlatform(t *testing.T) {
-	_, err := ResolveStub(Key{Platform: Platform{OS: "plan9", Arch: "amd64"}}, t.TempDir(), "dev", "")
+	_, err := ResolveStub(Key{Platform: Platform{OS: "plan9", Arch: "amd64"}}, t.TempDir(), "")
 	if err == nil {
 		t.Fatalf("expected an error for an unsupported platform, got none")
 	}
@@ -360,14 +360,14 @@ func TestResolveStubUnsupportedPlatform(t *testing.T) {
 	}
 }
 
-// TestResolveStubPlatformSegmentedPath mirrors cross-compiling: stubs for
-// two different platforms are provisioned side by side, and ResolveStub
-// must pick the one matching the requested platform — not fall back to
+// TestResolveStubPlatformSegmentedPath mirrors cross-compiling: a
+// distribution bundles balrt for every supported platform, and ResolveStub
+// must pick the one matching the requested target — not fall back to
 // whichever one happens to exist.
 func TestResolveStubPlatformSegmentedPath(t *testing.T) {
-	envPath := t.TempDir()
-	linuxStub := filepath.Join(envPath, "runtime", "dev", "linux-amd64", "balrt")
-	darwinStub := filepath.Join(envPath, "runtime", "dev", "darwin-arm64", "balrt")
+	distDir := t.TempDir()
+	linuxStub := filepath.Join(distDir, "rt", "linux-amd64", "balrt")
+	darwinStub := filepath.Join(distDir, "rt", "darwin-arm64", "balrt")
 	for _, p := range []string{linuxStub, darwinStub} {
 		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 			t.Fatalf("creating stub directory: %v", err)
@@ -377,7 +377,7 @@ func TestResolveStubPlatformSegmentedPath(t *testing.T) {
 		}
 	}
 
-	got, err := ResolveStub(Key{Platform: Platform{OS: "linux", Arch: "amd64"}}, envPath, "dev", "")
+	got, err := ResolveStub(Key{Platform: Platform{OS: "linux", Arch: "amd64"}}, distDir, "")
 	if err != nil {
 		t.Fatalf("ResolveStub: %v", err)
 	}
@@ -390,8 +390,8 @@ func TestResolveStubPlatformSegmentedPath(t *testing.T) {
 // the resolved stub path must carry a ".exe" suffix, matching the produced
 // artifact's own naming convention (see runBuild's output-path logic).
 func TestResolveStubWindowsExeSuffix(t *testing.T) {
-	envPath := t.TempDir()
-	stubPath := filepath.Join(envPath, "runtime", "dev", "windows-amd64", "balrt.exe")
+	distDir := t.TempDir()
+	stubPath := filepath.Join(distDir, "rt", "windows-amd64", "balrt.exe")
 	if err := os.MkdirAll(filepath.Dir(stubPath), 0o755); err != nil {
 		t.Fatalf("creating stub directory: %v", err)
 	}
@@ -399,7 +399,7 @@ func TestResolveStubWindowsExeSuffix(t *testing.T) {
 		t.Fatalf("writing stub: %v", err)
 	}
 
-	got, err := ResolveStub(Key{Platform: Platform{OS: "windows", Arch: "amd64"}}, envPath, "dev", "")
+	got, err := ResolveStub(Key{Platform: Platform{OS: "windows", Arch: "amd64"}}, distDir, "")
 	if err != nil {
 		t.Fatalf("ResolveStub: %v", err)
 	}

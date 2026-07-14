@@ -49,10 +49,10 @@ const (
 	trailerSize = 16 // 8-byte payload offset + 8-byte magic
 )
 
-// runtimeStubDirName and balrtStubName locate the slim runner stub under the
-// Ballerina env/home directory (the same root as BallerinaEnvFs):
-// <ballerinaEnvPath>/runtime/<version>/balrt[.exe]. See ResolveStub.
-const runtimeStubDirName = "runtime"
+// runtimeStubDirName and balrtStubName locate the slim runner stub relative
+// to the bal distribution's own directory (see DistributionDir):
+// <distDir>/rt/<GOOS>-<GOARCH>/balrt[.exe]. See ResolveStub.
+const runtimeStubDirName = "rt"
 const balrtStubName = "balrt"
 
 // Platform identifies a build target (GOOS/GOARCH).
@@ -130,21 +130,46 @@ type Key struct {
 	Fingerprint string
 }
 
+// DistributionDir returns the directory containing the currently running bal
+// distribution — the root a release archive was extracted to, which
+// ResolveStub expects to find a sibling rt/<GOOS>-<GOARCH>/balrt[.exe] under
+// for every supported platform.
+//
+// It resolves through any symlink pointing at the real binary (e.g. one
+// placed on PATH via "ln -s /opt/ballerina-1.2.3/bal /usr/local/bin/bal", a
+// common install pattern) — os.Executable() alone does not guarantee this,
+// and returning the symlink's own directory (/usr/local/bin) instead of the
+// real distribution root would make the rt/ lookup fail for anyone who
+// installs bal that way instead of adding the whole distribution directory
+// to PATH.
+func DistributionDir() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("locating bal's own executable: %w", err)
+	}
+	real, err := filepath.EvalSymlinks(exe)
+	if err != nil {
+		return "", fmt.Errorf("resolving bal's real executable path: %w", err)
+	}
+	return filepath.Dir(real), nil
+}
+
 // ResolveStub returns the path to the runner stub that Pack should embed the
 // BIR payload into.
 //
 // For key.Fingerprint == "" (no native Go dependencies), bal build never
 // invokes the Go toolchain: it looks up a slim, runtime-only stub (no
-// compiler, no CLI) at a predefined installation location,
-// <ballerinaEnvPath>/runtime/<version>/<GOOS>-<GOARCH>/balrt (".exe" on a
-// Windows target) — decoupled from wherever the bal binary itself happens
-// to be, so a machine with only a released bal install and no Go can still
-// build pure-Ballerina packages, for the host platform or a cross-compiled
-// target alike. That location is populated once by the installer (or, for
-// local development, by cross-compiling cli/cmd/balrt and copying it there
-// — see that package's doc comment); ResolveStub itself only ever reads it.
-// If it isn't there, this returns a clear, actionable error rather than
-// silently falling back to anything else or compiling one on the spot.
+// compiler, no CLI) at <distDir>/rt/<GOOS>-<GOARCH>/balrt (".exe" on a
+// Windows target), where distDir is typically the result of DistributionDir
+// — so a machine with only a released bal install and no Go can still build
+// pure-Ballerina packages, for the host platform or a cross-compiled target
+// alike. Every release archive bundles rt/<platform>/balrt for all platforms
+// bal build supports (see supportedPlatforms), not just the one it was built
+// for, so cross-compiling works immediately after extracting a single
+// archive — no separate per-target provisioning step. ResolveStub itself
+// only ever reads that location; if the stub isn't there, this returns a
+// clear, actionable error rather than silently falling back to anything else
+// or compiling one on the spot.
 //
 // key.Platform must be one of the platforms bal build supports (see
 // supportedPlatforms) — an unsupported or mistyped target fails clearly
@@ -156,11 +181,11 @@ type Key struct {
 // against a specific stub location. It comes from cli/cmd.RuntimeStubPath,
 // a variable set via -ldflags at bal's own build time (the same mechanism
 // as Version) — not a bal build flag, so this stays entirely transparent to
-// whoever just runs bal build. It bypasses the key.Platform lookup entirely
-// (a packager taking an explicit path is assumed to already match whatever
-// they intend), but is still validated to exist before use, with the same
-// clear-error behavior as the default path.
-func ResolveStub(key Key, ballerinaEnvPath, version, overridePath string) (string, error) {
+// whoever just runs bal build. It bypasses both distDir and the key.Platform
+// lookup entirely (a packager taking an explicit path is assumed to already
+// match whatever they intend), but is still validated to exist before use,
+// with the same clear-error behavior as the default path.
+func ResolveStub(key Key, distDir, overridePath string) (string, error) {
 	if key.Fingerprint != "" {
 		return "", fmt.Errorf("native Go dependencies are not yet supported by bal build")
 	}
@@ -182,7 +207,7 @@ func ResolveStub(key Key, ballerinaEnvPath, version, overridePath string) (strin
 		name += ".exe"
 	}
 	platformDir := key.Platform.OS + "-" + key.Platform.Arch
-	stubPath := filepath.Join(ballerinaEnvPath, runtimeStubDirName, version, platformDir, name)
+	stubPath := filepath.Join(distDir, runtimeStubDirName, platformDir, name)
 
 	if info, err := os.Stat(stubPath); err == nil && !info.IsDir() {
 		return stubPath, nil

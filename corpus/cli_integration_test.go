@@ -45,12 +45,11 @@ var (
 	cliIntegrationBalEnv      string
 	cliIntegrationBinsErr     error
 	cliIntegrationCoverMerge  sync.Mutex
-)
 
-// cliIntegrationBalrtVersion must match cli/cmd/version.go's default
-// Version ("dev") since buildBalBinaryTo never overrides it via ldflags —
-// executable.ResolveStub looks up <BAL_ENV>/runtime/<version>/balrt.
-const cliIntegrationBalrtVersion = "dev"
+	cliIntegrationNoRuntimeBalBinOnce sync.Once
+	cliIntegrationNoRuntimeBalBin     string
+	cliIntegrationNoRuntimeBalBinErr  error
+)
 
 func TestBalHelp(t *testing.T) {
 	t.Parallel()
@@ -347,20 +346,28 @@ func TestBalBuildCorpus(t *testing.T) {
 				t.Fatalf("bal build failed for %s: exit=%d\nstdout:\n%s\nstderr:\n%s", tt.projectDir, exitCode, stdout, stderr)
 			}
 
-			// Assert the exact default output path (<project>/target/bin/<package-name>),
+			// Assert the default output path's shape (<project>/target/bin/<package-name>),
 			// not just that some "Created " message was printed — this is the one
 			// piece of runBuild's own behavior (as opposed to Pack/TryLoad's framing,
 			// covered separately in cli/internal/executable) that this end-to-end
 			// test is relied on to verify, since there's no separate in-process test
-			// for it.
+			// for it. The reported path's prefix isn't predictable up front:
+			// runCLICommandWithEnv transparently rewrites testdata-rooted args into
+			// a per-test sandbox copy (sandboxCLICommandArgs), so parse the actual
+			// path out of stdout instead of assuming repoRoot/targetDirBase.
 			binName := tt.pkgName
 			if runtime.GOOS == "windows" {
 				binName += ".exe"
 			}
-			binPath := filepath.Join(targetDirBase, "target", "bin", binName)
-			wantMessage := "Created " + binPath
-			if !strings.Contains(stdout, wantMessage) {
-				t.Fatalf("expected bal build stdout to report the exact default output path %q, got:\n%s", wantMessage, stdout)
+			wantSuffix := filepath.Join("target", "bin", binName)
+			const createdPrefix = "Created "
+			idx := strings.Index(stdout, createdPrefix)
+			if idx == -1 {
+				t.Fatalf("expected bal build stdout to report a %q line, got:\n%s", createdPrefix, stdout)
+			}
+			binPath := strings.TrimSpace(strings.SplitN(stdout[idx+len(createdPrefix):], "\n", 2)[0])
+			if !strings.HasSuffix(binPath, wantSuffix) {
+				t.Fatalf("expected bal build to report a path ending in %q, got %q", wantSuffix, binPath)
 			}
 
 			builtInfo, err := os.Stat(binPath)
@@ -369,10 +376,11 @@ func TestBalBuildCorpus(t *testing.T) {
 			}
 
 			// The produced binary must be built on the slim balrt stub
-			// looked up via BAL_ENV (executable.ResolveStub), not the full
-			// bal CLI binary — assert it's meaningfully smaller than bal
-			// itself so this fails loudly if that lookup ever silently used
-			// the wrong stub instead of erroring.
+			// looked up alongside the bal binary's own distribution
+			// (executable.ResolveStub, executable.DistributionDir), not the
+			// full bal CLI binary — assert it's meaningfully smaller than
+			// bal itself so this fails loudly if that lookup ever silently
+			// used the wrong stub instead of erroring.
 			balInfo, err := os.Stat(balBin)
 			if err != nil {
 				t.Fatalf("failed to stat bal binary %s: %v", balBin, err)
@@ -540,19 +548,14 @@ func TestBalBuildScenarios(t *testing.T) {
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 
-	// missingRuntimeEnv points BAL_ENV at an empty directory with no runner
-	// stub installed, to exercise ResolveStub's "not found" error path —
-	// deliberately not cliIntegrationBalEnv, which does have one.
-	missingRuntimeEnv := t.TempDir()
-
 	missingPath := filepath.Join(testdataRoot, "this-path-does-not-exist")
 
 	tests := []struct {
-		name             string
-		args             []string
-		txtar            string
-		balEnv           string
-		projectTargetDir string // cleaned up after the test, if non-empty
+		name                 string
+		args                 []string
+		txtar                string
+		useBalWithoutRuntime bool // dispatch through a bal binary with no rt/ sibling
+		projectTargetDir     string
 	}{
 		{
 			name:  "nonexistent-path",
@@ -576,10 +579,10 @@ func TestBalBuildScenarios(t *testing.T) {
 			txtar: "rejects-workspace.txtar",
 		},
 		{
-			name:   "missing-runtime",
-			args:   []string{"build", filepath.Join(testdataRoot, "pure-ballerina", "project")},
-			txtar:  "missing-runtime.txtar",
-			balEnv: missingRuntimeEnv,
+			name:                 "missing-runtime",
+			args:                 []string{"build", filepath.Join(testdataRoot, "pure-ballerina", "project")},
+			txtar:                "missing-runtime.txtar",
+			useBalWithoutRuntime: true,
 		},
 	}
 
@@ -589,12 +592,12 @@ func TestBalBuildScenarios(t *testing.T) {
 			if tt.projectTargetDir != "" {
 				t.Cleanup(func() { _ = os.RemoveAll(tt.projectTargetDir) })
 			}
-			balEnv := tt.balEnv
-			if balEnv == "" {
-				balEnv = cliIntegrationBalEnv
+			binToUse := balBin
+			if tt.useBalWithoutRuntime {
+				binToUse = balBinaryWithoutRuntimeStub(t, repoRoot, coverDir)
 			}
-			assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t, balBin, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + balEnv}, tt.args, filepath.Join(outputsRoot, tt.txtar))
+			assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t, binToUse, repoRoot, coverDir,
+				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, tt.args, filepath.Join(outputsRoot, tt.txtar))
 		})
 	}
 }
@@ -661,19 +664,27 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 		}
 
 		// bal build looks up its runner stub at
-		// <BAL_ENV>/runtime/<version>/<GOOS>-<GOARCH>/balrt
-		// (executable.ResolveStub) — an isolated BAL_ENV under tmpDir keeps
-		// this from touching the real ~/.ballerina. Confirmed empty (no
+		// <dist>/rt/<GOOS>-<GOARCH>/balrt (executable.ResolveStub,
+		// executable.DistributionDir), relative to wherever the running bal
+		// binary itself lives — tmpDir plays that role here, so rt/ is a
+		// sibling of the bal/bal-debug binaries built into it below.
+		//
+		// cliIntegrationBalEnv is a separate, unrelated isolated BAL_ENV used
+		// only for BallerinaEnvFs (stdlib bala cache) resolution, keeping
+		// tests from touching the real ~/.ballerina. Confirmed empty (no
 		// pre-populated stdlib bala cache) works fine for these fixtures'
 		// ballerina/time and ballerina/io imports, since core stdlib modules
 		// resolve from lib/stdlibs source, not a bala cache lookup.
 		cliIntegrationBalEnv = filepath.Join(tmpDir, "bal-env")
+		if cliIntegrationBinsErr = os.MkdirAll(cliIntegrationBalEnv, 0o755); cliIntegrationBinsErr != nil {
+			return
+		}
 		balrtName := "balrt"
 		if runtime.GOOS == "windows" {
 			balrtName += ".exe"
 		}
 		platformDir := runtime.GOOS + "-" + runtime.GOARCH
-		balrtPath := filepath.Join(cliIntegrationBalEnv, "runtime", cliIntegrationBalrtVersion, platformDir, balrtName)
+		balrtPath := filepath.Join(tmpDir, "rt", platformDir, balrtName)
 		if cliIntegrationBinsErr = os.MkdirAll(filepath.Dir(balrtPath), 0o755); cliIntegrationBinsErr != nil {
 			return
 		}
@@ -740,9 +751,31 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 	return nil
 }
 
+// balBinaryWithoutRuntimeStub builds a standalone bal binary into its own
+// temp directory with no rt/ sibling, so executable.ResolveStub can't find a
+// runner stub next to it — exercising the "stub not found" error path now
+// that resolution is relative to the running bal binary's own directory
+// (executable.DistributionDir) rather than $BAL_ENV.
+func balBinaryWithoutRuntimeStub(t *testing.T, repoRoot, coverDir string) string {
+	t.Helper()
+	cliIntegrationNoRuntimeBalBinOnce.Do(func() {
+		dir, err := os.MkdirTemp("", "bal-cli-test-no-runtime")
+		if err != nil {
+			cliIntegrationNoRuntimeBalBinErr = err
+			return
+		}
+		cliIntegrationNoRuntimeBalBin = filepath.Join(dir, cliIntegrationBalExecutableName(false))
+		cliIntegrationNoRuntimeBalBinErr = buildBalBinaryTo(repoRoot, coverDir, cliIntegrationNoRuntimeBalBin, false)
+	})
+	if cliIntegrationNoRuntimeBalBinErr != nil {
+		t.Fatalf("building bal binary without runtime stub: %v", cliIntegrationNoRuntimeBalBinErr)
+	}
+	return cliIntegrationNoRuntimeBalBin
+}
+
 // buildBalrtBinaryTo builds the slim runtime-only balrt stub that
-// executable.ResolveStub looks up at a predefined installation location
-// (<BAL_ENV>/runtime/<version>/balrt). Built with the same -cover/-coverpkg
+// executable.ResolveStub looks up alongside bal's own distribution
+// (<dist>/rt/<GOOS>-<GOARCH>/balrt). Built with the same -cover/-coverpkg
 // instrumentation as bal/bal-debug when coverDir is set — balrt IS CLI code
 // under test (executable.Run executes inside it, for every program bal
 // build produces), and without this, that coverage is invisible even though
@@ -803,6 +836,16 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 
 func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...string) (stdout, stderr string, exitCode int) {
 	t.Helper()
+	return runCLICommandWithEnv(t, balBin, repoRoot, coverDir, nil, args...)
+}
+
+// runCLICommandWithEnv is like runCLICommand but appends extraEnv on top of
+// the process environment — needed for build scenarios that require a
+// specific BAL_ENV (e.g. one with no runner stub installed, to exercise the
+// missing-stub error path). Per os/exec, a later duplicate key wins, so
+// extraEnv entries override any existing variable of the same name.
+func runCLICommandWithEnv(t *testing.T, balBin, repoRoot, coverDir string, extraEnv []string, args ...string) (stdout, stderr string, exitCode int) {
+	t.Helper()
 	args = sandboxCLICommandArgs(t, repoRoot, args)
 
 	cmd := exec.Command(balBin, args...)
@@ -810,7 +853,7 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 	env := os.Environ()
 	if coverDir != "" {
 		commandCoverDir := t.TempDir()
-		cmd.Env = append(os.Environ(), "GOCOVERDIR="+commandCoverDir)
+		env = append(env, "GOCOVERDIR="+commandCoverDir)
 		defer mergeCLICoverageDir(t, commandCoverDir, coverDir)
 	}
 	env = append(env, extraEnv...)

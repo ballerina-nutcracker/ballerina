@@ -32,8 +32,8 @@ import (
 
 const binSubdir = "bin"
 
-// RuntimeStubPath overrides the default <ballerina-env>/runtime/<version>
-// runner-stub lookup (executable.ResolveStub) when non-empty. It is set via
+// RuntimeStubPath overrides the default <dist>/rt/<os>-<arch> runner-stub
+// lookup (executable.ResolveStub) when non-empty. It is set via
 // -ldflags at bal's own build time (e.g. -X main.RuntimeStubPath=/custom/path),
 // the same mechanism as Version (see version.go) — not a bal build flag, so
 // the stub's location stays transparent to whoever just runs bal build. Only
@@ -237,13 +237,17 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	// Resolve the slim runner stub to embed the payload into. Fingerprint is
 	// empty until native-Go-dependency detection lands (see
 	// migration-docs/specs/build-command-architecture.md) — every build
-	// today looks up the installer-provided stub for targetPlatform; no Go
-	// toolchain involved. RuntimeStubPath (set via -ldflags at bal's own
-	// build time, not a bal build flag) overrides the default
-	// <ballerina-env>/runtime/<version>/<os>-<arch> lookup, so the predefined
-	// layout can change later without breaking a packager who already pins
-	// an explicit path.
-	stubPath, err := executable.ResolveStub(executable.Key{Platform: targetPlatform}, ballerinaEnvPath, Version, RuntimeStubPath)
+	// today looks up the stub bundled alongside bal's own distribution for
+	// targetPlatform; no Go toolchain involved. RuntimeStubPath (set via
+	// -ldflags at bal's own build time, not a bal build flag) overrides the
+	// default <dist>/rt/<os>-<arch> lookup, so the predefined layout can
+	// change later without breaking a packager who already pins an explicit
+	// path.
+	distDir, err := executable.DistributionDir()
+	if err != nil {
+		return buildError(stderr, "resolve bal distribution directory: %w", err)
+	}
+	stubPath, err := executable.ResolveStub(executable.Key{Platform: targetPlatform}, distDir, RuntimeStubPath)
 	if err != nil {
 		return buildError(stderr, "cannot locate runner stub: %w", err)
 	}
