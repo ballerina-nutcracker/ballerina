@@ -1,0 +1,74 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    %2 = %1;
+    %3 = createInvalidI32Error(%2) -> bb1;
+  }
+  bb1 {
+    e1 = %3;
+    %5 = e1 is error<readonly&{| value: int, never... |}>
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad 5
+    %9 = %8;
+    %10 = createInvalidIntError(%9) -> bb3;
+  }
+  bb3 {
+    e2 = %10;
+    %12 = e2 is error<error&readonly&{| value: int, never... |}>
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad 5
+    %16 = %15;
+    %17 = createDistinctInvalidIntError(%16) -> bb5;
+  }
+  bb5 {
+    e3 = %17;
+    %19 = e3 is error<readonly&{| value: int, never... |}>
+    %20 = %19;
+    %21 = println(%20) -> bb6;
+  }
+  bb6 {
+    %22 = e3 is error<error&readonly&{| value: int, never... |}>
+    %23 = %22;
+    %24 = println(%23) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+createInvalidIntError(int) -> error<readonly&{| value: int, never... |}>{
+  bb0 {
+    %2 = ConstantLoad Invalid int
+    %3 = ConstantLoad value
+    %4 = newMap mapping{%3=value}
+    %5 = newError error<readonly&{| value: int, never... |}>(%2, %4)
+    %0 = %5;
+    return;
+  }
+}
+createDistinctInvalidIntError(int) -> error<error&readonly&{| value: int, never... |}>{
+  bb0 {
+    %2 = ConstantLoad Invalid int
+    %3 = ConstantLoad value
+    %4 = newMap mapping{%3=value}
+    %5 = newError error<error&readonly&{| value: int, never... |}>(%2, %4)
+    %0 = %5;
+    return;
+  }
+}
+createInvalidI32Error(int:Signed32) -> error<readonly&{| value: int:Signed32, never... |}>{
+  bb0 {
+    %2 = ConstantLoad Invalid i32
+    %3 = ConstantLoad value
+    %4 = newMap mapping{%3=value}
+    %5 = newError error<readonly&{| value: int:Signed32, never... |}>(%2, %4)
+    %0 = %5;
+    return;
+  }
+}

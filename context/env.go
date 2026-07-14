@@ -255,6 +255,33 @@ func (c *CompilerEnvironment) SymbolIsPublic(symbol model.SymbolRef) bool {
 	return c.GetSymbol(symbol).IsPublic()
 }
 
+func (c *CompilerEnvironment) SymbolIsClass(symbol model.SymbolRef) bool {
+	_, ok := c.GetSymbol(symbol).(model.ClassSymbol)
+	return ok
+}
+
+type ValueSymbolMetadata struct {
+	Parameter    bool
+	Final        bool
+	Const        bool
+	Configurable bool
+	Isolated     bool
+}
+
+func (c *CompilerEnvironment) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymbolMetadata, bool) {
+	valueSymbol, ok := c.GetSymbol(symbol).(model.ValueSymbol)
+	if !ok {
+		return ValueSymbolMetadata{}, false
+	}
+	return ValueSymbolMetadata{
+		Parameter:    valueSymbol.IsParameter(),
+		Final:        valueSymbol.IsFinal(),
+		Const:        valueSymbol.IsConst(),
+		Configurable: valueSymbol.IsConfigurable(),
+		Isolated:     valueSymbol.IsIsolated(),
+	}, true
+}
+
 func (c *CompilerEnvironment) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
 	c.GetSymbol(symbol).SetType(ty)
 }
