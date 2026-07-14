@@ -29,7 +29,9 @@ Run and share Ballerina snippets in your browser — no installation needed.
 - [Scope & roadmap](#scope--roadmap)
 - [Report issues](#report-issues)
 - [Contribute](#contribute-to-ballerina-nutcracker)
+- [Adopters](#adopters)
 - [License](#license)
+- [Code of conduct](#code-of-conduct)
 - [Join the community](#join-the-community)
 
 ## What is Ballerina?
@@ -205,9 +207,19 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 
 As an open-source project, this repository welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
 
+This project's maintainers, including the Core Maintainers who serve as the security team, are listed in [MAINTAINERS.md](MAINTAINERS.md).
+
+## Adopters
+
+Organizations using Ballerina Nutcracker are listed in [ADOPTERS.md](ADOPTERS.md). If your organization uses this project, please open a pull request to add yourself — it helps demonstrate real-world usage and strengthens the project within the CNCF ecosystem.
+
 ## License
 
 This project is distributed under [Apache License 2.0](./LICENSE).
+
+## Code of conduct
+
+This project adheres to the [CNCF Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ## Join the community
 
