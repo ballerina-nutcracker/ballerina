@@ -726,10 +726,14 @@ func hoistAndAddDefaultInvocations(cx *functionContext, args []ast.BLangExpressi
 		arg := args[i]
 		if defaultArg, ok := arg.(*ast.BLangDefaultArg); ok {
 			defaultClosureSym := defaultArg.DefaultClosure
+			defaultCallSym := defaultClosureSym
+			if localSym, ok := cx.defaultClosureVars[defaultClosureSym]; ok {
+				defaultCallSym = localSym
+			}
 			defaultCall := &ast.BLangInvocation{}
-			defaultCall.Name = &ast.BLangIdentifier{Value: cx.pkgCtx.compilerCtx.GetSymbol(defaultClosureSym).Name()}
+			defaultCall.Name = &ast.BLangIdentifier{Value: cx.pkgCtx.compilerCtx.SymbolName(defaultCallSym)}
 			defaultCall.ArgExprs = append([]ast.BLangExpression(nil), hoistedArgs[:i]...)
-			defaultCall.SetSymbol(defaultClosureSym)
+			defaultCall.SetSymbol(defaultCallSym)
 			defaultCall.SetDeterminedType(cx.getSymbol(defaultClosureSym).(model.FunctionSymbol).TypedSignature().ReturnType)
 			setPositionIfMissing(defaultCall, pos)
 			result := walkExpression(cx, defaultCall)
@@ -1075,10 +1079,7 @@ func walkTypeTestExpr(cx *functionContext, expr *ast.BLangTypeTestExpr) desugare
 	}
 	if fnType, ok := expr.Type.TypeDescriptor.(*ast.BLangFunctionType); ok && !expr.IsNegation() {
 		result := desugarFunctionTypeDesc(cx, fnType, cx.currentScope())
-		for i := range result.functions {
-			result.functions[i] = desugarFunction(cx.pkgCtx, result.functions[i])
-		}
-		cx.pkgCtx.addGeneratedFunctions(result.functions)
+		initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
 		for _, field := range result.recordFields {
 			initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
 		}
