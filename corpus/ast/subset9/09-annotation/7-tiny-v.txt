@@ -1,0 +1,66 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const BASE (
+    (value-type int)) (
+    (literal 10)))
+  (type-definition TinyInfo
+    (record-type
+      (field value
+        (value-type int))))
+  (annotation tiny
+    (user-defined-type TinyInfo)
+    (attach-point type))
+  (type-definition First
+    (annotation-attachment tiny
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 1)))))
+    (value-type int))
+  (type-definition Second
+    (annotation-attachment tiny
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 2)))))
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (union-type
+            (user-defined-type TinyInfo)
+            (value-type null))) (expr
+          (annot-access-expr tiny
+            (simple-var-ref First)))))
+      (var-def
+        (variable second (type
+          (union-type
+            (user-defined-type TinyInfo)
+            (value-type null))) (expr
+          (annot-access-expr tiny
+            (simple-var-ref Second)))))
+      (if
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref first)
+            (user-defined-type TinyInfo))
+          (type-test-expr is
+            (simple-var-ref second)
+            (user-defined-type TinyInfo)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref first)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref second)))))) ())
+      (block-stmt))))

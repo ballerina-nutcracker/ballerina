@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on objectfield
+  --> 18-e.bal:29:5
+   |
+29 |     @typeOnly // @error
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on recordfield
+  --> 18-e.bal:24:5
+   |
+24 |     @typeOnly // @error
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on return
+  --> 18-e.bal:19:26
+   |
+19 | function value() returns @typeOnly int { // @error
+   |                          ^^^^^^^^^

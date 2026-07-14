@@ -127,7 +127,7 @@ func (rt *Runtime) registry() *modules.Registry {
 // fails), call Listen.
 func (rt *Runtime) Init(pkg bir.BIRPackage) error {
 	rt.transition(StateInitializing)
-	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(nil, &pkg))
+	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), &pkg))
 	if err := rt.recordLifecycleHooks(&pkg); err != nil {
 		return rt.abortInitialization(err)
 	}

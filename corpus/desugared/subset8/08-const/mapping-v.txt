@@ -1,49 +1,14 @@
 (package
   (import-package ballerina io (as io))
-  (const A () ())
-  (const B () ())
-  (const C () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref A)
-        (mapping-constructor-expr
-          (key-value
-            (literal x)
-            (literal 1))
-          (key-value
-            (literal y)
-            (literal 2))))
-      (assignment
-        (simple-var-ref B)
-        (mapping-constructor-expr
-          (key-value
-            (literal name)
-            (literal hello))
-          (key-value
-            (literal value)
-            (literal 42))))
-      (assignment
-        (simple-var-ref C)
-        (mapping-constructor-expr
-          (key-value
-            (literal nested)
-            (mapping-constructor-expr
-              (key-value
-                (literal a)
-                (literal 1))
-              (key-value
-                (literal b)
-                (literal 2))))))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref A))))
+          (literal {"x":1,"y":2}))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref B))))
+          (literal {"name":"hello","value":42}))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref C)))))))
+          (literal {"nested":{"a":1,"b":2}})))))))

@@ -92,18 +92,20 @@ func LookupResourceMethodByPath(ctx *extern.Context, obj *values.Object, accesso
 	var (
 		matchEntry *values.ResourceEntry
 		matchPath  []values.BalValue
-		count      int
 	)
 	for i := range candidates {
 		pathVals, ok := coercePathForEntry(ctx.TypeCtx, &candidates[i], segments)
 		if !ok {
 			continue
 		}
+		if matchEntry != nil {
+			// Ambiguous: more than one candidate matches.
+			return nil, 0, false
+		}
 		matchEntry = &candidates[i]
 		matchPath = pathVals
-		count++
 	}
-	if count != 1 {
+	if matchEntry == nil {
 		return nil, 0, false
 	}
 	return newResourceHandle(obj, matchEntry, matchPath), resourceExtraArgCount(ctx, matchEntry), true
@@ -141,11 +143,10 @@ func resourceExtraArgCount(ctx *extern.Context, entry *values.ResourceEntry) int
 // (nil, false) when the segment count or any segment type does not match.
 func coercePathForEntry(tc semtypes.Context, entry *values.ResourceEntry, segments []string) ([]values.BalValue, bool) {
 	required := len(entry.PathSegments)
-	hasRest := !semtypes.IsNever(entry.RestSegmentTy)
 	if len(segments) < required {
 		return nil, false
 	}
-	if len(segments) > required && !hasRest {
+	if len(segments) > required && semtypes.IsNever(entry.RestSegmentTy) {
 		return nil, false
 	}
 	result := make([]values.BalValue, len(segments))
@@ -182,25 +183,19 @@ func coerceSegment(tc semtypes.Context, segTy semtypes.SemType, s string) (value
 		}
 	}
 	if semtypes.IsSubtype(tc, semtypes.INT, segTy) {
-		n, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return nil, false
+		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+			return n, true
 		}
-		return n, true
 	}
 	if semtypes.IsSubtype(tc, semtypes.FLOAT, segTy) {
-		f, err := strconv.ParseFloat(s, 64)
-		if err != nil {
-			return nil, false
+		if f, err := strconv.ParseFloat(s, 64); err == nil {
+			return f, true
 		}
-		return f, true
 	}
 	if semtypes.IsSubtype(tc, semtypes.DECIMAL, segTy) {
-		d, derr := decimal.FromString(s)
-		if derr != nil {
-			return nil, false
+		if d, err := decimal.FromString(s); err == nil {
+			return d, true
 		}
-		return d, true
 	}
 	if semtypes.IsSubtype(tc, semtypes.BOOLEAN, segTy) {
 		// Matches lang.boolean:fromString's accepted range for consistency
@@ -211,10 +206,11 @@ func coerceSegment(tc semtypes.Context, segTy semtypes.SemType, s string) (value
 		case "false", "0":
 			return false, true
 		}
-		return nil, false
 	}
-	// STRING or any other type: accept as-is.
-	return s, true
+	if semtypes.IsSubtype(tc, semtypes.STRING, segTy) {
+		return s, true
+	}
+	return nil, false
 }
 
 // decodeBalIdentifier converts a Ballerina identifier token text to its

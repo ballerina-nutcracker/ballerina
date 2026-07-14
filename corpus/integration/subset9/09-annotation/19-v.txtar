@@ -1,0 +1,5 @@
+-- stdout --
+true
+true
+myInt
+-- stderr --

@@ -1,0 +1,96 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition ParentError
+    (error-type))
+  (type-definition ChildError
+    (user-defined-type ParentError))
+  (type-definition ParentObject
+    (object-type
+      (method-decl id () (
+        (value-type int)))))
+  (type-definition ChildObject
+    (user-defined-type ParentObject))
+  (type-definition ChildClass
+    (user-defined-type ParentClass))
+  (class-definition ParentClass
+    (function init () ()
+      (block-function-body)))
+  (class-definition ParentObjectImpl
+    (function init () ()
+      (block-function-body))
+    (function id () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 0)))))
+  (class-definition ChildObjectImpl
+    (function init () ()
+      (block-function-body))
+    (function id () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable childError (type
+          (user-defined-type ChildError)) (expr
+          (error-constructor-expr
+            (user-defined-type ChildError) (
+            (literal child))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref childError)
+            (user-defined-type ParentError)))))
+      (var-def
+        (variable parentError (type
+          (user-defined-type ParentError)) (expr
+          (error-constructor-expr
+            (user-defined-type ParentError) (
+            (literal parent))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parentError)
+            (user-defined-type ChildError)))))
+      (var-def
+        (variable childObject (type
+          (user-defined-type ChildObject)) (expr
+          (new
+            (user-defined-type ChildObjectImpl) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref childObject)
+            (user-defined-type ParentObject)))))
+      (var-def
+        (variable parentObject (type
+          (user-defined-type ParentObject)) (expr
+          (new
+            (user-defined-type ParentObjectImpl) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parentObject)
+            (user-defined-type ChildObject)))))
+      (var-def
+        (variable childClass (type
+          (user-defined-type ChildClass)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref childClass)
+            (user-defined-type ParentClass)))))
+      (var-def
+        (variable parentClass (type
+          (user-defined-type ParentClass)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parentClass)
+            (user-defined-type ChildClass))))))))

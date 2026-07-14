@@ -1,107 +1,45 @@
 (package
   (import-package ballerina io (as io))
-  (const A () ())
-  (const B () ())
-  (const C () ())
-  (const D () ())
-  (const E () ())
-  (const F () ())
-  (const G () ())
-  (const H () ())
-  (const I () ())
-  (const J () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref A)
-        (binary-expr /
-          (literal 0)
-          (literal 0)))
-      (assignment
-        (simple-var-ref B)
-        (binary-expr /
-          (unary-expr -
-            (literal 0))
-          (literal 0)))
-      (assignment
-        (simple-var-ref C)
-        (binary-expr /
-          (literal 1)
-          (literal 0)))
-      (assignment
-        (simple-var-ref D)
-        (binary-expr /
-          (unary-expr -
-            (literal 1))
-          (literal 0)))
-      (assignment
-        (simple-var-ref E)
-        (unary-expr -
-          (literal 0)))
-      (assignment
-        (simple-var-ref F)
-        (literal 0))
-      (assignment
-        (simple-var-ref G)
-        (binary-expr *
-          (literal 1.5)
-          (literal 0)))
-      (assignment
-        (simple-var-ref H)
-        (binary-expr <=
-          (literal 1.5)
-          (literal 2.5)))
-      (assignment
-        (simple-var-ref I)
-        (binary-expr >=
-          (literal 1.5)
-          (literal 2.5)))
-      (assignment
-        (simple-var-ref J)
-        (binary-expr +
-          (unary-expr -
-            (literal 0))
-          (literal 0)))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
           (invocation eq (
-            (simple-var-ref A)
-            (simple-var-ref B))))))
+            (numeric-literal NaN)
+            (numeric-literal NaN))))))
       (expression-stmt
         (invocation io println (
           (invocation eq (
-            (simple-var-ref C)
-            (simple-var-ref D))))))
+            (numeric-literal +Inf)
+            (numeric-literal -Inf))))))
       (expression-stmt
         (invocation io println (
           (invocation eq (
-            (simple-var-ref E)
-            (simple-var-ref F))))))
+            (numeric-literal -0)
+            (numeric-literal 0))))))
       (expression-stmt
         (invocation io println (
           (invocation eq (
-            (simple-var-ref A)
-            (simple-var-ref C))))))
+            (numeric-literal NaN)
+            (numeric-literal +Inf))))))
       (expression-stmt
         (invocation io println (
           (invocation eq (
-            (simple-var-ref B)
-            (simple-var-ref D))))))
+            (numeric-literal NaN)
+            (numeric-literal -Inf))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref G))))
+          (numeric-literal 0))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref H))))
+          (literal true))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref I))))
+          (literal false))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref J))))))
+          (numeric-literal 0))))))
   (function eq (
     (variable f1 (type
       (value-type float)))

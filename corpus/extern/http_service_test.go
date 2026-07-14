@@ -50,6 +50,14 @@ func TestHttpServicePathParam(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-path-param-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServicePathParamUnion exercises a union-typed (int|float) path
+// parameter, and confirms a path parameter type outside the basic-type set
+// never matches a raw URL segment.
+func TestHttpServicePathParamUnion(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-path-param-union-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceRequest exercises Request injection and JSON body round-trip
 // through a POST resource.
 func TestHttpServiceRequest(t *testing.T) {
@@ -255,6 +263,15 @@ public function testMain() returns error? {
     http:Response r = check c->get("/secure/hello");
     io:println(r.statusCode); // @output 200
     io:println(r.getTextPayload()); // @output mtls hello
+
+    http:Client cNoCert = check new ("https://localhost:19208", {
+        httpVersion: http:HTTP_1_1,
+        secureSocket: {
+            verifyHostName: false
+        }
+    });
+    http:Response|error r2 = cNoCert->get("/secure/hello");
+    io:println(r2 is error); // @output true
 }
 `, paths["server.crt"], paths["server.key"], paths["ca.crt"], paths["client.crt"], paths["client.key"])
 

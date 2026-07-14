@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Info
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field label
+          (value-type string)))))
+  (annotation runtimeInfo
+    (user-defined-type Info)
+    (attach-point type))
+  (annotation sourceInfo const
+    (user-defined-type Info)
+    (attach-point source type))
+  (type-definition Person
+    (annotation-attachment runtimeInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal label)
+          (literal runtime))))
+    (annotation-attachment sourceInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal label)
+          (literal source))))
+    (record-type
+      (field name
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable runtimeValue (type
+          (union-type
+            (user-defined-type Info)
+            (value-type null))) (expr
+          (annot-access-expr runtimeInfo
+            (simple-var-ref Person)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref runtimeValue)
+          (user-defined-type Info))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access label
+                (simple-var-ref runtimeValue)))))) ())
+      (block-stmt
+        (var-def
+          (variable sourceValue (type
+            (union-type
+              (user-defined-type Info)
+              (value-type null))) (expr
+            (annot-access-expr sourceInfo
+              (simple-var-ref Person)))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref sourceValue)
+              (value-type null)))))))))

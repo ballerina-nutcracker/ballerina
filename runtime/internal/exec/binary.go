@@ -23,6 +23,7 @@ import (
 	"ballerina-lang-go/bir"
 	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/runtime/internal/modules"
 	"ballerina-lang-go/values"
 )
 
@@ -242,6 +243,35 @@ func execBinaryOpRefEqual(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Fr
 func execBinaryOpRefNotEqual(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	setOperandValue(ctx, binaryOp.LhsOp, frame, !refEqual(op1, op2))
+}
+
+func execBinaryOpAnnotAccess(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {
+	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
+	typedesc, ok := op1.(*values.TypeDesc)
+	if !ok {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("annotation access requires typedesc, got %T", op1)))
+	}
+	key, ok := op2.(string)
+	if !ok {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("annotation key must be string, got %T", op2)))
+	}
+	var value values.BalValue
+	if typedesc.Annotations != nil {
+		value = typedesc.Annotations[key]
+	}
+	if ref, ok := value.(*values.RuntimeAnnotationValueRef); ok {
+		registry := ctx.Env.Registry.(*modules.Registry)
+		module := registry.GetModuleByName(ref.Organization, ref.Module)
+		if module == nil {
+			panic(values.NewErrorWithMessage("annotation value module is not loaded"))
+		}
+		var found bool
+		value, found = module.Globals[ref.GlobalLookupKey()]
+		if !found {
+			panic(values.NewErrorWithMessage("annotation value global is not loaded"))
+		}
+	}
+	setOperandValue(ctx, binaryOp.LhsOp, frame, value)
 }
 
 func refEqual(op1, op2 values.BalValue) bool {

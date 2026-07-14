@@ -65,26 +65,9 @@ func (l *limitedReadCloser) Close() error {
 }
 
 func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body io.Reader, contentLength int64, contentType string, reqHeaders map[string][]string) (int, map[string][]string, io.ReadCloser, error) {
-	// When a streamed body has a declared content length, bound it with
-	// io.LimitReader. After writing the declared bytes, net/http's
-	// transferWriter.writeBody does a second drain read (into io.Discard) to verify
-	// there are no extra bytes. For a passthrough that forwards the inbound request's
-	// r.Body, that stream may already be closed by the time the drain read runs —
-	// surfacing as "http: invalid Read on closed Body", which aborts the upstream
-	// connection mid-response and drops the request (~0.05% under load, streamed
-	// bodies only). LimitReader returns EOF after contentLength bytes without
-	// touching the underlying stream, so the drain read always sees a clean EOF.
-	//
-	// In-memory bodies (*bytes.Reader/*bytes.Buffer/*strings.Reader) are left as-is:
-	// they are not the affected case, and net/http recognises them to populate
-	// Request.GetBody so the request stays replayable on a stale pooled connection.
-	//
-	// The wrapper preserves the underlying stream's Close: net/http's transport
-	// closes the request body when it is an io.ReadCloser, so an owned stream is
-	// released rather than leaked. For the current streamed caller (forward,
-	// forwarding the server-owned inbound r.Body) this Close is redundant with
-	// the server's own — http request bodies tolerate a repeat Close — so it is
-	// safe either way.
+	// A bounded streamed body must return a clean EOF after contentLength bytes so
+	// net/http's post-write drain read never touches the (possibly already-closed)
+	// underlying stream; in-memory bodies are left untouched so GetBody still works.
 	if body != nil && contentLength >= 0 {
 		switch body.(type) {
 		case *bytes.Reader, *bytes.Buffer, *strings.Reader:

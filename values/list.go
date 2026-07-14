@@ -60,6 +60,10 @@ func (l *List) Len() int {
 	return len(l.elems)
 }
 
+func (l *List) IsReadonly() bool {
+	return l.isReadonly
+}
+
 func (l *List) Get(idx int) BalValue {
 	return l.elems[idx]
 }

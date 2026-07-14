@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: only object and error types can be distinct
+  --> distinct-type-e.bal:17:10
+   |
+17 | type Bad distinct int; // @error
+   |          ^^^^^^^^^^^^

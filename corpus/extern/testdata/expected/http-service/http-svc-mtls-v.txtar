@@ -1,4 +1,5 @@
 -- stdout --
 200
 mtls hello
+true
 -- stderr --

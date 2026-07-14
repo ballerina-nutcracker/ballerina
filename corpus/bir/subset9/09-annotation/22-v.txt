@@ -1,0 +1,155 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+$annotation$1  any;
+$annotation$2  any;
+$annotation$3  any;
+$annotation$4  any;
+runtimeFloat  float;
+runtimeInt  int;
+runtimeList  [int...];
+runtimeBoolean() -> boolean{
+  bb0 {
+    %1 = ConstantLoad true
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:unaryInfo
+    %3 = .@ %1 %2;
+    unaryValue = %3;
+    %5 = unaryValue is {| value: int, never... |}
+    %5 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, unaryValue)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:logicalInfo
+    %2 = .@ %0 %1;
+    logicalValue = %2;
+    %4 = logicalValue is {| value: boolean, never... |}
+    %4 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, logicalValue)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:conversionInfo
+    %2 = .@ %0 %1;
+    conversionValue = %2;
+    %4 = conversionValue is {| value: int, never... |}
+    %4 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, conversionValue)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:listInfo
+    %2 = .@ %0 %1;
+    listValue = %2;
+    %4 = listValue is {| values: [int...], never... |}
+    %4 ? bb10 : bb13;
+  }
+  bb10 {
+    PushScopeFrame 12
+    %1 = ConstantLoad 0
+    %3 = ConstantLoad values
+    %2 = (1, listValue)[%3];
+    %0 = %2[%1];
+    %4 = %0;
+    %5 = println(%4) -> bb11;
+  }
+  bb11 {
+    %7 = ConstantLoad 2
+    %9 = ConstantLoad values
+    %8 = (1, listValue)[%9];
+    %6 = %8[%7];
+    %10 = %6;
+    %11 = println(%10) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:templateInfo
+    %2 = .@ %0 %1;
+    templateValue = %2;
+    %4 = templateValue is {| value: string, never... |}
+    %4 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, templateValue)[%1];
+    %2 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:templateInfo
+    %2 = .@ %0 %1;
+    stringAdditionValue = %2;
+    %4 = stringAdditionValue is {| value: string, never... |}
+    %4 ? bb17 : bb19;
+  }
+  bb17 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, stringAdditionValue)[%1];
+    %2 = println(%0) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb19 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

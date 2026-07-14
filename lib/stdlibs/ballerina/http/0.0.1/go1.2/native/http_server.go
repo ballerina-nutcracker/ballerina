@@ -193,19 +193,20 @@ func registerListenerExterns(rt *runtime.Runtime) {
 				return values.NewErrorWithMessage("Listener.start: listener not initialised"), nil
 			}
 			state := stateVal.(*listenerState)
+			// Held for the whole operation (not just the check) so a concurrent
+			// start cannot race past this check before the first sets state.server,
+			// and gracefulStop/immediateStop (which take state.mu.RLock) cannot
+			// observe a nil server while a start is still in flight.
 			state.mu.Lock()
-			alreadyStarted := state.server != nil
-			state.mu.Unlock()
-			if alreadyStarted {
+			defer state.mu.Unlock()
+			if state.server != nil {
 				return nil, nil
 			}
 			server, err := startHTTPServer(rt, state)
 			if err != nil {
 				return values.NewErrorWithMessage("Listener.start: " + err.Error()), nil
 			}
-			state.mu.Lock()
 			state.server = server
-			state.mu.Unlock()
 			return nil, nil
 		})
 
@@ -337,15 +338,19 @@ func buildListenerTLSConfig(ssMap *values.Map, fs pal.FS) (*pal.ServerTLSConfig,
 	// mTLS: client certificate verification.
 	if v, ok := ssMap.Get("mutualSsl"); ok {
 		if b, ok := v.(bool); ok && b {
-			if caCertPathVal, ok := ssMap.Get("cert"); ok {
-				if caCertPath, ok := caCertPathVal.(string); ok && caCertPath != "" {
-					caCertPEM, err := fs.ReadFile(caCertPath)
-					if err != nil {
-						return nil, fmt.Errorf("secureSocket.cert (CA): %w", err)
-					}
-					cfg.ClientCACertPEM = caCertPEM
-				}
+			caCertPathVal, ok := ssMap.Get("cert")
+			if !ok {
+				return nil, fmt.Errorf("secureSocket.cert is required when mutualSsl is enabled")
 			}
+			caCertPath, ok := caCertPathVal.(string)
+			if !ok || caCertPath == "" {
+				return nil, fmt.Errorf("secureSocket.cert is required when mutualSsl is enabled")
+			}
+			caCertPEM, err := fs.ReadFile(caCertPath)
+			if err != nil {
+				return nil, fmt.Errorf("secureSocket.cert (CA): %w", err)
+			}
+			cfg.ClientCACertPEM = caCertPEM
 		}
 	}
 
@@ -410,8 +415,8 @@ func validateServiceForHTTP(svcObj *values.Object) string {
 func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandle, error) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if rec := recover(); rec != nil {
-				http.Error(w, fmt.Sprintf("%v", rec), http.StatusInternalServerError)
+			if recover() != nil {
+				writeErrorJSON(rt, w, r, http.StatusInternalServerError, "internal server error")
 			}
 		}()
 		dispatchRequest(rt, state, w, r)
@@ -468,12 +473,24 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			continue
 		}
 		var invocationArgs []values.BalValue
-		if extraArgs > 0 {
-			// The resource declares a parameter beyond its path params; inject the request.
-			invocationArgs = []values.BalValue{buildRequestFromHTTP(ctx.TypeCtx, r)}
-		} else if r.Body != nil {
+		switch {
+		case extraArgs == 1:
+			// The resource declares a single parameter beyond its path params; inject the request.
+			req, err := buildRequestFromHTTP(ctx.TypeCtx, r)
+			if err != nil {
+				writeErrorJSON(rt, w, r, http.StatusBadRequest, "failed to read request body: "+err.Error())
+				return
+			}
+			invocationArgs = []values.BalValue{req}
+		case extraArgs > 1:
+			// More than one non-path parameter is not a supported resource signature.
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError, "resource method has an unsupported parameter signature")
+			return
+		default:
 			// Resource takes no Request parameter; discard the body.
-			_ = r.Body.Close()
+			if r.Body != nil {
+				_ = r.Body.Close()
+			}
 		}
 		result, err := ctx.InvokeMethod(handle, invocationArgs)
 		if err != nil {
@@ -524,7 +541,7 @@ func splitURLPath(p string) []string {
 
 // buildRequestFromHTTP builds an http:Request value from r, buffering small
 // bodies eagerly and streaming large ones lazily for passthrough.
-func buildRequestFromHTTP(tc semtypes.Context, r *http.Request) *values.Object {
+func buildRequestFromHTTP(tc semtypes.Context, r *http.Request) (*values.Object, error) {
 	var bodyBuf []byte
 	var bodyStream io.ReadCloser
 	cl := r.ContentLength
@@ -532,14 +549,17 @@ func buildRequestFromHTTP(tc semtypes.Context, r *http.Request) *values.Object {
 	case r.Body == nil || cl == 0:
 		// no body or explicitly empty
 	case cl >= 0 && cl <= eagerBufferThreshold:
-		data, _ := io.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		_ = r.Body.Close()
+		if err != nil {
+			return nil, err
+		}
 		bodyBuf = data
 		cl = int64(len(data))
 	default:
 		bodyStream = r.Body
 	}
-	return buildRequest(tc, r.Method, r.URL.Path, r.Proto, r.Header, bodyStream, cl, r.URL.RawQuery, bodyBuf)
+	return buildRequest(tc, r.Method, r.URL.Path, r.Proto, r.Header, bodyStream, cl, r.URL.RawQuery, bodyBuf), nil
 }
 
 // buildRequest constructs a Ballerina Request object from HTTP request data.
@@ -622,7 +642,9 @@ func writeResult(rt *runtime.Runtime, _ semtypes.Context, w http.ResponseWriter,
 	case *values.Object:
 		statusCodeVal, _ := v.Get("statusCode")
 		statusCode := http.StatusOK
-		if sc, ok := statusCodeVal.(int64); ok {
+		// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
+		// out-of-range value rather than crashing the handler.
+		if sc, ok := statusCodeVal.(int64); ok && sc >= 100 && sc <= 999 {
 			statusCode = int(sc)
 		}
 		bodyVal, _ := v.Get("body")
