@@ -1,0 +1,42 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (record-type
+            (field booleanField
+              (value-type boolean))
+            (field intField
+              (value-type int))
+            (field floatField
+              (value-type float)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal intField)
+              (literal 17))
+            (key-value
+              (literal floatField)
+              (literal 1.5))
+            (key-value
+              (literal booleanField)
+              (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (field-based-access floatField
+              (simple-var-ref r))
+            (literal 1.0)))))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr !
+            (field-based-access booleanField
+              (simple-var-ref r))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (field-based-access intField
+              (simple-var-ref r))
+            (literal 2))))))))

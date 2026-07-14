@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type any)) (expr
+        (literal 1.5))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref x)
+          (value-type float)))))
+    (var-def
+      (variable f (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal 2.5))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type float)))))
+  )
+)

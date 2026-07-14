@@ -30,6 +30,8 @@ class FailingIterator {
 }
 
 class FailingIterable {
+    *object:Iterable;
+
     public function iterator() returns FailingIterator {
         return new;
     }

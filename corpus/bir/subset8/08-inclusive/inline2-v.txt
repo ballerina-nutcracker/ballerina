@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad anotherVeryLongFieldName
+    %2 = ConstantLoad some string
+    %3 = ConstantLoad aVeryLongFieldName
+    %4 = ConstantLoad 0
+    %5 = ConstantLoad newFieldName
+    %6 = ConstantLoad some other string
+    %7 = newMap {| aVeryLongFieldName: int, anotherVeryLongFieldName: string, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4, %5=%6}
+    r = %7;
+    %10 = ConstantLoad newFieldName
+    %9 = r[%10];
+    %11 = println(%9) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

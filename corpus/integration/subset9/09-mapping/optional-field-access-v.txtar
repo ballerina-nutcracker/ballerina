@@ -1,0 +1,17 @@
+-- stdout --
+1
+1
+11
+single optional nil
+union one required nil
+3
+4
+union required optional nil
+union all optional nil
+6
+7
+9
+9
+9
+boom
+-- stderr --

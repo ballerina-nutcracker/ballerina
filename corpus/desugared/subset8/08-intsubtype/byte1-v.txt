@@ -1,0 +1,14 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Byte
+    (value-type byte))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (user-defined-type Byte)) (expr
+          (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

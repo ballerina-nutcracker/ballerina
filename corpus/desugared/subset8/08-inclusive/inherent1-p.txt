@@ -1,0 +1,41 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Person)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal James))
+            (key-value
+              (literal age)
+              (literal 99))))))
+      (expression-stmt
+        (invocation foo (
+          (simple-var-ref p))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal age)))))))
+  (function foo (
+    (variable m (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type any))))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref m)
+          (literal age))
+        (literal too old)))))

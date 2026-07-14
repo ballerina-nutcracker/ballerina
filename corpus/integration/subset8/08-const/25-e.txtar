@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: Y
+  --> 25-e.bal:20:11
+   |
+20 | const X = Y; // @error
+   |           ^

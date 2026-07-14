@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got -1
+  --> byte3-e.bal:20:14
+   |
+20 |     byte x = -1; // @error
+   |              ^^

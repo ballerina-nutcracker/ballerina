@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable encResult (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (invocation url encode (
+          (literal hello)
+          (literal Shift_JIS))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref encResult)
+          (error-type)))))
+    (var-def
+      (variable decResult (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (invocation url decode (
+          (literal hello)
+          (literal Shift_JIS))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref decResult)
+          (error-type)))))
+  )
+)

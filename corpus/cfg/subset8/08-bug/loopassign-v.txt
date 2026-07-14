@@ -1,0 +1,38 @@
+(main
+  (bb0 () (bb1 bb5)
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type float)
+          (value-type int))) (expr
+        (literal 5))))
+    (type-test-expr is
+      (simple-var-ref a)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (assignment
+      (simple-var-ref a)
+      (literal 8))
+    (var-def
+      (variable c (type
+        (value-type int)) (expr
+        (literal 12))))
+  )
+  (bb2 (bb1 bb3) (bb3 bb4)
+    (binary-expr >
+      (simple-var-ref c)
+      (literal 10))
+  )
+  (bb3 (bb2) (bb2)
+    (compound-assignment -
+      (simple-var-ref c)
+      (literal 1))
+  )
+  (bb4 (bb2) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+  (bb5 (bb4 bb0) ())
+)

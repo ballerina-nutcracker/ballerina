@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> constraint-e.bal:18:5
+   |
+18 |     xml<int> _ = xml `<a/>`; // @error
+   |     ^^^^^^^^

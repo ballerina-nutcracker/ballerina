@@ -15,7 +15,7 @@
 // under the License.
 
 public function main() {
-    map<int> out = map from var x in [1, 2]
+    map<int> _ = map from var x in [1, 2]
         select ["k", x]
         on conflict 1; // @error
 }

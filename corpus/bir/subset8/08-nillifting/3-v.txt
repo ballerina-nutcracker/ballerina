@@ -1,0 +1,285 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 4
+    a = %1;
+    %3 = ConstantLoad 2
+    b = %3;
+    %5 = ConstantLoad 1
+    c = %5;
+    $desugar$0 = a;
+    $desugar$1 = b;
+    %9 = ConstantLoad <nil>
+    $desugar$2 = %9;
+    %12 = $desugar$0 is nil
+    %11 = %12;
+    %12 ? bb2 : bb1;
+  }
+  bb1 {
+    %13 = $desugar$1 is nil
+    %11 = %13;
+    GOTO bb2;
+  }
+  bb2 {
+    %11 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb4 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$0);
+    %2 = (1, $desugar$1);
+    %0 = unknown %1 %2;
+    (1, $desugar$2) = %0;
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    v1 = $desugar$2;
+    %15 = v1;
+    %16 = println(%15) -> bb6;
+  }
+  bb6 {
+    $desugar$3 = a;
+    $desugar$4 = b;
+    %19 = ConstantLoad <nil>
+    $desugar$5 = %19;
+    %22 = $desugar$3 is nil
+    %21 = %22;
+    %22 ? bb8 : bb7;
+  }
+  bb7 {
+    %23 = $desugar$4 is nil
+    %21 = %23;
+    GOTO bb8;
+  }
+  bb8 {
+    %21 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb10 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$3);
+    %2 = (1, $desugar$4);
+    %0 = unknown %1 %2;
+    (1, $desugar$5) = %0;
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    $desugar$6 = $desugar$5;
+    $desugar$7 = c;
+    %26 = ConstantLoad <nil>
+    $desugar$8 = %26;
+    %29 = $desugar$6 is nil
+    %28 = %29;
+    %29 ? bb13 : bb12;
+  }
+  bb12 {
+    %30 = $desugar$7 is nil
+    %28 = %30;
+    GOTO bb13;
+  }
+  bb13 {
+    %28 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb15 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$6);
+    %2 = (1, $desugar$7);
+    %0 = unknown %1 %2;
+    (1, $desugar$8) = %0;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    %31 = $desugar$8;
+    %32 = println(%31) -> bb17;
+  }
+  bb17 {
+    %33 = ConstantLoad <nil>
+    d = %33;
+    $desugar$9 = a;
+    $desugar$10 = d;
+    %37 = ConstantLoad <nil>
+    $desugar$11 = %37;
+    %40 = $desugar$9 is nil
+    %39 = %40;
+    %40 ? bb19 : bb18;
+  }
+  bb18 {
+    %41 = $desugar$10 is nil
+    %39 = %41;
+    GOTO bb19;
+  }
+  bb19 {
+    %39 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb22;
+  }
+  bb21 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$9);
+    %2 = (1, $desugar$10);
+    %0 = unknown %1 %2;
+    (1, $desugar$11) = %0;
+    PopScopeFrame
+    GOTO bb22;
+  }
+  bb22 {
+    v2 = $desugar$11;
+    %43 = v2;
+    %44 = println(%43) -> bb23;
+  }
+  bb23 {
+    $desugar$12 = a;
+    $desugar$13 = b;
+    %47 = ConstantLoad <nil>
+    $desugar$14 = %47;
+    %50 = $desugar$12 is nil
+    %49 = %50;
+    %50 ? bb25 : bb24;
+  }
+  bb24 {
+    %51 = $desugar$13 is nil
+    %49 = %51;
+    GOTO bb25;
+  }
+  bb25 {
+    %49 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb28;
+  }
+  bb27 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$12);
+    %2 = (1, $desugar$13);
+    %0 = unknown %1 %2;
+    (1, $desugar$14) = %0;
+    PopScopeFrame
+    GOTO bb28;
+  }
+  bb28 {
+    $desugar$15 = $desugar$14;
+    $desugar$16 = c;
+    %54 = ConstantLoad <nil>
+    $desugar$17 = %54;
+    %57 = $desugar$15 is nil
+    %56 = %57;
+    %57 ? bb30 : bb29;
+  }
+  bb29 {
+    %58 = $desugar$16 is nil
+    %56 = %58;
+    GOTO bb30;
+  }
+  bb30 {
+    %56 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb32 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$15);
+    %2 = (1, $desugar$16);
+    %0 = unknown %1 %2;
+    (1, $desugar$17) = %0;
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb33 {
+    $desugar$18 = $desugar$17;
+    $desugar$19 = d;
+    %61 = ConstantLoad <nil>
+    $desugar$20 = %61;
+    %64 = $desugar$18 is nil
+    %63 = %64;
+    %64 ? bb35 : bb34;
+  }
+  bb34 {
+    %65 = $desugar$19 is nil
+    %63 = %65;
+    GOTO bb35;
+  }
+  bb35 {
+    %63 ? bb36 : bb37;
+  }
+  bb36 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb38;
+  }
+  bb37 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$18);
+    %2 = (1, $desugar$19);
+    %0 = unknown %1 %2;
+    (1, $desugar$20) = %0;
+    PopScopeFrame
+    GOTO bb38;
+  }
+  bb38 {
+    %66 = $desugar$20;
+    %67 = println(%66) -> bb39;
+  }
+  bb39 {
+    $desugar$21 = c;
+    $desugar$22 = b;
+    %70 = ConstantLoad <nil>
+    $desugar$23 = %70;
+    %73 = $desugar$21 is nil
+    %72 = %73;
+    %73 ? bb41 : bb40;
+  }
+  bb40 {
+    %74 = $desugar$22 is nil
+    %72 = %74;
+    GOTO bb41;
+  }
+  bb41 {
+    %72 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb44;
+  }
+  bb43 {
+    PushScopeFrame 3
+    %1 = (1, $desugar$21);
+    %2 = (1, $desugar$22);
+    %0 = unknown %1 %2;
+    (1, $desugar$23) = %0;
+    PopScopeFrame
+    GOTO bb44;
+  }
+  bb44 {
+    v3 = $desugar$23;
+    %76 = v3;
+    %77 = println(%76) -> bb45;
+  }
+  bb45 {
+    return;
+  }
+}

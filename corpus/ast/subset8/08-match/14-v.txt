@@ -1,0 +1,57 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 4))))))))
+  (function foo (
+    (variable x (type
+      (value-type int)))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref x)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (const-pattern
+            (literal 2))
+          (const-pattern
+            (literal 3))
+          (block-stmt
+            (match
+              (binary-expr +
+                (simple-var-ref x)
+                (simple-var-ref x))
+              (match-clause
+                (const-pattern
+                  (literal 2))
+                (block-stmt
+                  (return
+                    (literal 1 + 1))))
+              (match-clause
+                (const-pattern
+                  (literal 4))
+                (block-stmt
+                  (return
+                    (literal 2 + 2)))))
+            (return
+              (literal 3)))))
+      (return
+        (literal miss)))))

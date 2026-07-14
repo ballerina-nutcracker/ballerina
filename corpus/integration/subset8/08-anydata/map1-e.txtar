@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected anydata, got {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+  --> map1-e.bal:23:17
+   |
+23 |     anydata b = m; // @error
+   |                 ^

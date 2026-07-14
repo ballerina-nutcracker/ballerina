@@ -30,7 +30,7 @@
           (user-defined-type r)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref f)
+              (literal f)
               (literal 5))))))
       (expression-stmt
         (invocation io println (

@@ -1,0 +1,47 @@
+(foo
+  (bb0 () ()
+    (return
+      (field-based-access x
+        (simple-var-ref r)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable r1 (type
+        (user-defined-type R1)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (simple-var-ref r1))))))
+    (var-def
+      (variable r2 (type
+        (user-defined-type R2)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 10))
+          (key-value
+            (literal x)
+            (literal 8))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (simple-var-ref r2))))))
+    (var-def
+      (variable r22 (type
+        (user-defined-type R2)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 10))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (simple-var-ref r22))))))
+  )
+)

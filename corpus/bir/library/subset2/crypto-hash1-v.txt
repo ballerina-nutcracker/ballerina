@@ -1,0 +1,30 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 104
+    %2 = ConstantLoad 101
+    %3 = ConstantLoad 108
+    %4 = ConstantLoad 108
+    %5 = ConstantLoad 111
+    %6 = ConstantLoad 5
+    %7 = newArray [int:Unsigned8...][%6]{%1, %2, %3, %4, %5}
+    input = %7;
+    $desugar$0 = input;
+    %10 = $default$5($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %10;
+    %12 = hashSha256($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    sha256 = %12;
+    %14 = length(sha256) -> bb3;
+  }
+  bb3 {
+    %15 = %14;
+    %16 = println(%15) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

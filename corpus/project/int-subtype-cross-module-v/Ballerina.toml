@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "intsubtypecrossmodule"
+version = "0.1.0"

@@ -56,7 +56,7 @@ func TestEnvInitAtomTable(t *testing.T) {
 	typeAtom8 := env.cellAtom(&cellAtomicUndef)
 
 	listAtomicTwoElement := listAtomicTypeFrom(
-		fixedLengthArrayFrom([]ComplexSemType{*CELL_SEMTYPE_VAL}, 2),
+		fixedLengthArrayFrom([]SemType{CELL_SEMTYPE_VAL}, 2),
 		CELL_SEMTYPE_UNDEF,
 	)
 	typeAtom9 := env.listAtom(&listAtomicTwoElement)
@@ -74,52 +74,52 @@ func TestEnvInitAtomTable(t *testing.T) {
 	ta0, ok := atomTable[&cellAtomicVal]
 	assertTrue(t, ok, "cellAtomicVal should be in atomTable")
 	assertEqual(t, ta0.AtomicType, &cellAtomicVal)
-	assertEqual(t, ta0, typeAtom0)
+	assertEqual(t, ta0, *typeAtom0)
 
 	ta1, ok := atomTable[&cellAtomicNever]
 	assertTrue(t, ok, "cellAtomicNever should be in atomTable")
 	assertEqual(t, ta1.AtomicType, &cellAtomicNever)
-	assertEqual(t, ta1, typeAtom1)
+	assertEqual(t, ta1, *typeAtom1)
 
 	ta2, ok := atomTable[&cellAtomicInner]
 	assertTrue(t, ok, "cellAtomicInner should be in atomTable")
 	assertEqual(t, ta2.AtomicType, &cellAtomicInner)
-	assertEqual(t, ta2, typeAtom2)
+	assertEqual(t, ta2, *typeAtom2)
 
 	ta3, ok := atomTable[&cellAtomicInnerMapping]
 	assertTrue(t, ok, "cellAtomicInnerMapping should be in atomTable")
 	assertEqual(t, ta3.AtomicType, &cellAtomicInnerMapping)
-	assertEqual(t, ta3, typeAtom3)
+	assertEqual(t, ta3, *typeAtom3)
 
 	ta4, ok := atomTable[&listAtomicMapping]
 	assertTrue(t, ok, "listAtomicMapping should be in atomTable")
 	assertEqual(t, ta4.AtomicType, &listAtomicMapping)
-	assertEqual(t, ta4, typeAtom4)
+	assertEqual(t, ta4, *typeAtom4)
 
 	ta5, ok := atomTable[CELL_ATOMIC_INNER_MAPPING_RO]
 	assertTrue(t, ok, "CELL_ATOMIC_INNER_MAPPING_RO should be in atomTable")
 	assertEqual(t, ta5.AtomicType, CELL_ATOMIC_INNER_MAPPING_RO)
-	assertEqual(t, ta5, typeAtom5)
+	assertEqual(t, ta5, *typeAtom5)
 
 	ta6, ok := atomTable[&listAtomicMappingRo]
 	assertTrue(t, ok, "listAtomicMappingRo should be in atomTable")
 	assertEqual(t, ta6.AtomicType, &listAtomicMappingRo)
-	assertEqual(t, ta6, typeAtom6)
+	assertEqual(t, ta6, *typeAtom6)
 
 	ta7, ok := atomTable[&cellAtomicInnerRo]
 	assertTrue(t, ok, "cellAtomicInnerRo should be in atomTable")
 	assertEqual(t, ta7.AtomicType, &cellAtomicInnerRo)
-	assertEqual(t, ta7, typeAtom7)
+	assertEqual(t, ta7, *typeAtom7)
 
 	ta8, ok := atomTable[&cellAtomicUndef]
 	assertTrue(t, ok, "cellAtomicUndef should be in atomTable")
 	assertEqual(t, ta8.AtomicType, &cellAtomicUndef)
-	assertEqual(t, ta8, typeAtom8)
+	assertEqual(t, ta8, *typeAtom8)
 
 	ta9, ok := atomTable[&listAtomicTwoElement]
 	assertTrue(t, ok, "listAtomicTwoElement should be in atomTable")
 	assertEqual(t, ta9.AtomicType, &listAtomicTwoElement)
-	assertEqual(t, ta9, typeAtom9)
+	assertEqual(t, ta9, *typeAtom9)
 }
 
 // TestTypeAtomIndices tests type atom indices uniqueness
@@ -152,10 +152,9 @@ func TestEnvInitRecAtoms(t *testing.T) {
 	env.recListAtomsMutex.Unlock()
 
 	assertEqual(t, len(recListAtoms), 2)
-	listAtomicRo := listAtomicTypeFrom(fixedLengthArrayEmpty(), CELL_SEMTYPE_INNER_RO)
 	if recListAtoms[0] == nil {
 		t.Error("recListAtoms[0] should not be nil")
-	} else if !recListAtoms[0].equals(&listAtomicRo) {
+	} else if recListAtoms[0] != LIST_ATOMIC_RO {
 		t.Errorf("recListAtoms[0] does not match expected ListAtomicType")
 	}
 	if recListAtoms[1] != nil {
@@ -170,12 +169,12 @@ func TestEnvInitRecAtoms(t *testing.T) {
 	assertEqual(t, len(recMappingAtoms), 2)
 	if recMappingAtoms[0] == nil {
 		t.Error("recMappingAtoms[0] should not be nil")
-	} else if !recMappingAtoms[0].equals(MAPPING_ATOMIC_RO) {
+	} else if recMappingAtoms[0] != MAPPING_ATOMIC_RO {
 		t.Errorf("recMappingAtoms[0] does not match MAPPING_ATOMIC_RO")
 	}
 	if recMappingAtoms[1] == nil {
 		t.Error("recMappingAtoms[1] should not be nil")
-	} else if !recMappingAtoms[1].equals(MAPPING_ATOMIC_OBJECT_RO) {
+	} else if recMappingAtoms[1] != MAPPING_ATOMIC_OBJECT_RO {
 		t.Errorf("recMappingAtoms[1] does not match MAPPING_ATOMIC_OBJECT_RO")
 	}
 

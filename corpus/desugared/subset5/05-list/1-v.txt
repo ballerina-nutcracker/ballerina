@@ -16,7 +16,7 @@
             (literal 1.5)
             (literal foo)
             (literal true)
-            (literal 123/100)))))
+            (literal 1.23)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref foo)))))))

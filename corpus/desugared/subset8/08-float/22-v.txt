@@ -1,0 +1,685 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable nan (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0)
+            (literal 0)))))
+      (var-def
+        (variable anotherNan (type
+          (value-type float)) (expr
+          (binary-expr /
+            (unary-expr -
+              (literal 0))
+            (literal 0)))))
+      (var-def
+        (variable pInf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1)
+            (literal 0)))))
+      (var-def
+        (variable nInf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (unary-expr -
+              (literal 1))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (literal 5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (literal 0.7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (literal 0.5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (unary-expr -
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (unary-expr -
+              (literal 0.7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (unary-expr -
+              (literal 0.5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (unary-expr -
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (simple-var-ref anotherNan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 5)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.7)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.5)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 5))
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.7))
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.5))
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0))
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref anotherNan)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (literal 5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (literal 0.7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (literal 0.5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (unary-expr -
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (unary-expr -
+              (literal 0.7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (unary-expr -
+              (literal 0.5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (unary-expr -
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (simple-var-ref anotherNan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (simple-var-ref nan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (literal 5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (literal 0.7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (literal 0.5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (unary-expr -
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (unary-expr -
+              (literal 0.7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (unary-expr -
+              (literal 0.5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (unary-expr -
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (simple-var-ref anotherNan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nan)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref pInf)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 5)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.7)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.5)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 5))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.7))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.5))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref nInf)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref anotherNan)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 5)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.7)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.5)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0)
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 5))
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.7))
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.5))
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0))
+            (simple-var-ref pInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 5)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.7)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.5)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0)
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 5))
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.7))
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.5))
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0))
+            (simple-var-ref nInf)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 5)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.7)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.5)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0)
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 5))
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.7))
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.5))
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0))
+            (literal 7)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (literal 5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (literal 5)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 5)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.7)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0.5)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 0)
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 5))
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.7))
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0.5))
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 0))
+            (unary-expr -
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 7)
+            (unary-expr -
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 7))
+            (unary-expr -
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatRem (
+            (literal 1)
+            (literal 0.1))))))
+      (var-def
+        (variable f (type
+          (value-type float)) (expr
+          (literal 100))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref f)
+            (literal 19)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1999)
+            (simple-var-ref f)))))))
+  (function floatRem (
+    (variable f1 (type
+      (value-type float)))
+    (variable f2 (type
+      (value-type float)))) (
+    (value-type float))
+    (block-function-body
+      (return
+        (binary-expr %
+          (simple-var-ref f1)
+          (simple-var-ref f2))))))

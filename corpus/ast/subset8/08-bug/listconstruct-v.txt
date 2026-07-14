@@ -1,0 +1,98 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t1 (type
+          (union-type
+            (union-type
+              (tuple-type
+                (value-type int))
+              (tuple-type
+                (value-type int)
+                (value-type int)))
+            (tuple-type
+              (value-type int)
+              (value-type int)
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t1)
+            (tuple-type
+              (value-type int)
+              (value-type int)
+              (value-type int))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t1)
+            (tuple-type
+              (value-type byte)
+              (value-type byte)
+              (value-type byte))))))
+      (var-def
+        (variable t2 (type
+          (union-type
+            (union-type
+              (union-type
+                (tuple-type
+                  (value-type int))
+                (tuple-type
+                  (value-type int)
+                  (value-type int)))
+              (value-type int))
+            (value-type byte))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t2)
+            (tuple-type
+              (value-type int)
+              (value-type int))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t2)
+            (tuple-type
+              (value-type byte)
+              (value-type byte))))))
+      (var-def
+        (variable t3 (type
+          (union-type
+            (union-type
+              (tuple-type (rest
+                  (value-type int)))
+              (value-type int))
+            (value-type byte))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t3)
+            (tuple-type (rest
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t3)
+            (tuple-type
+              (value-type int)
+              (value-type int))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref t3)
+            (tuple-type (rest
+                (value-type byte))))))))))

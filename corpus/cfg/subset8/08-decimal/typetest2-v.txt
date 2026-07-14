@@ -1,0 +1,23 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable x (type
+        (value-type decimal)) (expr
+        (literal 2.3))))
+    (type-test-expr !is
+      (simple-var-ref x)
+      (finite-type
+        (literal 2.3)))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal not 2.3))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal is 2.3))))
+  )
+)

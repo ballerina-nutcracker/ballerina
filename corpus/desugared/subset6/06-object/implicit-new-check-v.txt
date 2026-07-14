@@ -1,0 +1,63 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable count (type
+      (value-type int)))
+    (function init (
+      (variable v (type
+        (value-type int)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 0))
+        (if
+          (binary-expr <
+            (simple-var-ref v)
+            (literal 0))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal negative value))))) ())
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref self)
+              (literal count))
+            (simple-var-ref v)))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (new (
+            (literal 5))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref c) ()))))
+      (return
+        (literal <nil>)))))

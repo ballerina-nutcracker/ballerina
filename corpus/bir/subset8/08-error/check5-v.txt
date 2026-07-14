@@ -1,0 +1,48 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad before
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = noOp() -> bb2;
+  }
+  bb2 {
+    $desugar$0 = %3;
+    %5 = $desugar$0 is error
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    $desugar$1 = $desugar$0;
+    %7 = $desugar$1 is error
+    %7 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %8 = ConstantLoad after
+    %9 = println(%8) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+noOp() -> nil{
+  bb0 {
+    %1 = ConstantLoad inside
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

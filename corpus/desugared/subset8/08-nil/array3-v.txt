@@ -1,0 +1,21 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Nothing
+    (finite-type
+      (literal <nil>)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation pairOfNothings ()))))))))
+  (function pairOfNothings () (
+    (array-type
+      (user-defined-type Nothing) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (literal <nil>)
+          (literal <nil>))))))

@@ -1,0 +1,68 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field foo optional
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 7))))))
+      (var-def
+        (variable before (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref r)
+            (literal foo)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref before))))
+      (if
+        (type-test-expr is
+          (simple-var-ref before)
+          (value-type null))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal before missing))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (binary-expr +
+                (simple-var-ref before)
+                (literal 1))))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref r)
+          (literal foo))
+        (literal <nil>))
+      (var-def
+        (variable after (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref r)
+            (literal foo)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref after)
+          (value-type null))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal after missing))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (binary-expr +
+                (simple-var-ref after)
+                (literal 1)))))))))))

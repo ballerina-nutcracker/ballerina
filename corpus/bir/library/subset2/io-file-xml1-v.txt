@@ -1,0 +1,58 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_xml1.xml
+    path = %1;
+    %3 = ConstantLoad book
+    %4 = ConstantLoad title
+    %5 = ConstantLoad Clean Code
+    %6 = newXMLText(%5)
+    %7 = newXMLElement(%4, %6)
+    %8 = ConstantLoad author
+    %9 = ConstantLoad Robert C. Martin
+    %10 = newXMLText(%9)
+    %11 = newXMLElement(%8, %10)
+    %12 = newXMLSequence{%7, %11}
+    %13 = newXMLElement(%3, %12)
+    data = %13;
+    $desugar$0 = path;
+    $desugar$1 = data;
+    %17 = $default$3($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %17;
+    %19 = fileWriteXml($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %19;
+    %21 = $desugar$3 is error
+    %21 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %22 = fileReadXml(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %22;
+    %24 = $desugar$4 is error
+    %24 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    result = $desugar$4;
+    %26 = println(result) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

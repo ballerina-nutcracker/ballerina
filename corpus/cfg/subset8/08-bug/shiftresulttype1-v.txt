@@ -1,0 +1,128 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 250))))
+    (var-def
+      (variable a (type
+        (user-defined-type int Signed8)) (expr
+        (literal 2))))
+    (var-def
+      (variable b (type
+        (user-defined-type int Signed8)) (expr
+        (unary-expr -
+          (literal 120)))))
+    (var-def
+      (variable c (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 1))))
+    (var-def
+      (variable d (type
+        (user-defined-type int Signed16)) (expr
+        (literal 8))))
+    (var-def
+      (variable e (type
+        (user-defined-type int Signed16)) (expr
+        (unary-expr -
+          (literal 32755)))))
+    (var-def
+      (variable f (type
+        (user-defined-type int Unsigned16)) (expr
+        (literal 3))))
+    (var-def
+      (variable g (type
+        (user-defined-type int Signed32)) (expr
+        (literal 6))))
+    (var-def
+      (variable h (type
+        (user-defined-type int Signed32)) (expr
+        (unary-expr -
+          (literal 2147483647)))))
+    (var-def
+      (variable i (type
+        (user-defined-type int Unsigned32)) (expr
+        (literal 5))))
+    (var-def
+      (variable x1 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x1))))
+    (var-def
+      (variable x2 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x2))))
+    (var-def
+      (variable x3 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x3))))
+    (var-def
+      (variable x4 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x4))))
+    (var-def
+      (variable x5 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref e)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x5))))
+    (var-def
+      (variable x6 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x6))))
+    (var-def
+      (variable x7 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref g)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x7))))
+    (var-def
+      (variable x8 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref h)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x8))))
+    (var-def
+      (variable x9 (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (simple-var-ref i)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x9))))
+  )
+)

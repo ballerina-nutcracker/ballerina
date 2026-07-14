@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+foo(int) -> int{
+  bb0 {
+    _ = x;
+    %0 = x;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 17
+    %2 = %1;
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

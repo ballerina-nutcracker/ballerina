@@ -1,0 +1,42 @@
+(main
+  (bb0 () (bb2)
+    (list-constructor-expr
+      (literal 1)
+      (literal 2))
+  )
+  (bb1 (bb2) (bb4 bb3)
+    (index-based-access
+      (list-constructor-expr
+        (literal 1)
+        (literal 2))
+      (literal 1))
+  )
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal working))))
+  )
+  (bb3 (bb4 bb1) (bb6 bb7 bb5)
+    (index-based-access
+      (list-constructor-expr
+        (literal 1)
+        (literal a))
+      (literal 1))
+  )
+  (bb4 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (literal working))))
+  )
+  (bb5 (bb6 bb7 bb3) ())
+  (bb6 (bb3) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb7 (bb3) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal working))))
+  )
+)

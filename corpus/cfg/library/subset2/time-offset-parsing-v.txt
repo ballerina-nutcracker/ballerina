@@ -1,0 +1,255 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable east (type
+        (user-defined-type time TimeZone)) (expr
+        (checked-expr
+          (new
+            (user-defined-type time TimeZone) (
+            (literal +0530)))))))
+    (var-def
+      (variable eastOffset (type
+        (union-type
+          (user-defined-type time ZoneOffset)
+          (value-type null))) (expr
+        (invocation fixedOffset expr:
+          (simple-var-ref east) ()))))
+    (type-test-expr !is
+      (simple-var-ref eastOffset)
+      (value-type null))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access hours
+          (simple-var-ref eastOffset)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access minutes
+          (simple-var-ref eastOffset)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable west (type
+        (user-defined-type time TimeZone)) (expr
+        (checked-expr
+          (new
+            (user-defined-type time TimeZone) (
+            (literal -0800)))))))
+    (var-def
+      (variable westOffset (type
+        (union-type
+          (user-defined-type time ZoneOffset)
+          (value-type null))) (expr
+        (invocation fixedOffset expr:
+          (simple-var-ref west) ()))))
+    (type-test-expr !is
+      (simple-var-ref westOffset)
+      (value-type null))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access hours
+          (simple-var-ref westOffset)))))
+  )
+  (bb4 (bb3 bb2) ()
+    (var-def
+      (variable badMin (type
+        (union-type
+          (user-defined-type time TimeZone)
+          (error-type))) (expr
+        (new
+          (user-defined-type time TimeZone) (
+          (literal +12:99))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref badMin)
+          (error-type)))))
+    (var-def
+      (variable badHour (type
+        (union-type
+          (user-defined-type time TimeZone)
+          (error-type))) (expr
+        (new
+          (user-defined-type time TimeZone) (
+          (literal +2400))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref badHour)
+          (error-type)))))
+    (var-def
+      (variable bad1 (type
+        (union-type
+          (user-defined-type time TimeZone)
+          (error-type))) (expr
+        (new
+          (user-defined-type time TimeZone) (
+          (literal +1a:30))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref bad1)
+          (error-type)))))
+    (var-def
+      (variable bad2 (type
+        (union-type
+          (user-defined-type time TimeZone)
+          (error-type))) (expr
+        (new
+          (user-defined-type time TimeZone) (
+          (literal +12:a0))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref bad2)
+          (error-type)))))
+    (var-def
+      (variable bad3 (type
+        (union-type
+          (user-defined-type time TimeZone)
+          (error-type))) (expr
+        (new
+          (user-defined-type time TimeZone) (
+          (literal +12a0))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref bad3)
+          (error-type)))))
+    (var-def
+      (variable badAbbrev (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (invocation time civilToString (
+          (mapping-constructor-expr
+            (key-value
+              (literal year)
+              (literal 2021))
+            (key-value
+              (literal month)
+              (literal 4))
+            (key-value
+              (literal day)
+              (literal 12))
+            (key-value
+              (literal hour)
+              (literal 23))
+            (key-value
+              (literal minute)
+              (literal 20))
+            (key-value
+              (literal second)
+              (literal 50))
+            (key-value
+              (literal timeAbbrev)
+              (literal +12:99))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref badAbbrev)
+          (error-type)))))
+    (var-def
+      (variable unknownZone (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (invocation time civilToString (
+          (mapping-constructor-expr
+            (key-value
+              (literal year)
+              (literal 2021))
+            (key-value
+              (literal month)
+              (literal 4))
+            (key-value
+              (literal day)
+              (literal 12))
+            (key-value
+              (literal hour)
+              (literal 23))
+            (key-value
+              (literal minute)
+              (literal 20))
+            (key-value
+              (literal second)
+              (literal 50))
+            (key-value
+              (literal timeAbbrev)
+              (literal Bogus/Zone))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref unknownZone)
+          (error-type)))))
+    (var-def
+      (variable badDate (type
+        (union-type
+          (user-defined-type time Utc)
+          (error-type))) (expr
+        (invocation time utcFromCivil (
+          (mapping-constructor-expr
+            (key-value
+              (literal year)
+              (literal 2021))
+            (key-value
+              (literal month)
+              (literal 2))
+            (key-value
+              (literal day)
+              (literal 30))
+            (key-value
+              (literal hour)
+              (literal 10))
+            (key-value
+              (literal minute)
+              (literal 0))
+            (key-value
+              (literal second)
+              (literal 0))
+            (key-value
+              (literal utcOffset)
+              (mapping-constructor-expr
+                (key-value
+                  (literal hours)
+                  (literal 5))
+                (key-value
+                  (literal minutes)
+                  (literal 30))))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref badDate)
+          (error-type)))))
+    (var-def
+      (variable noSec (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation time civilToString (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2021))
+              (key-value
+                (literal month)
+                (literal 4))
+              (key-value
+                (literal day)
+                (literal 12))
+              (key-value
+                (literal hour)
+                (literal 23))
+              (key-value
+                (literal minute)
+                (literal 20))
+              (key-value
+                (literal timeAbbrev)
+                (literal +05:30)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref noSec))))
+  )
+)

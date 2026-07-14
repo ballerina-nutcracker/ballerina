@@ -1,0 +1,39 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 8))))
+    (type-test-expr is
+      (simple-var-ref i)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+  (bb2 (bb1) (bb3)
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
+    (type-test-expr is
+      (simple-var-ref i)
+      (value-type int))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+  (bb4 (bb3) ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+)

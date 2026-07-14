@@ -1,0 +1,57 @@
+(package
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.string length (
+              (invocation os getUsername ())))
+            (literal 0)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation os setEnv (
+            (literal BAL_TEST_LISTENV)
+            (literal present))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$0))
+      (var-def
+        (variable envs (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation os listEnv ()))))
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref envs)
+            (literal BAL_TEST_LISTENV)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation os unsetEnv (
+            (literal BAL_TEST_LISTENV))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$1)))))

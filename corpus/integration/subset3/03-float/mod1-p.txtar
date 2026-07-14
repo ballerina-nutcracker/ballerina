@@ -1,5 +1,0 @@
--- stdout --
--- stderr --
-error: divide by zero
-        at mod(mod1-p.bal:26)
-           main(mod1-p.bal:22)

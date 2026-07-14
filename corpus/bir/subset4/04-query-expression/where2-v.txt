@@ -1,6 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
@@ -28,7 +26,7 @@ main() -> nil{
     %17 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 20
+    PushScopeFrame 16
     %0 = (1, $desugar$0)[(1, $desugar$3)];
     (1, x) = %0;
     %2 = (1, x);
@@ -44,29 +42,31 @@ main() -> nil{
     %22 = length($desugar$4) -> bb8;
   }
   bb5 {
-    %7 = (1, $desugar$3);
-    %8 = ConstantLoad 1
-    %9 = %8;
-    %6 = + %7 %9;
-    (1, $desugar$3) = %6;
+    PushScopeFrame 4
+    %1 = (2, $desugar$3);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, $desugar$3) = %0;
+    PopScopeFrame
     PopScopeFrame
     GOTO bb2;
   }
   bb6 {
-    %11 = (1, x);
-    %12 = ConstantLoad 10
-    %13 = %12;
-    %10 = * %11 %13;
-    (1, y) = %10;
-    %14 = (1, y);
-    %15 = push((1, $desugar$2),%14) -> bb7;
+    %7 = (1, x);
+    %8 = ConstantLoad 10
+    %9 = %8;
+    %6 = * %7 %9;
+    (1, y) = %6;
+    %10 = (1, y);
+    %11 = push((1, $desugar$2),%10) -> bb7;
   }
   bb7 {
-    %17 = (1, $desugar$3);
-    %18 = ConstantLoad 1
-    %19 = %18;
-    %16 = + %17 %19;
-    (1, $desugar$3) = %16;
+    %13 = (1, $desugar$3);
+    %14 = ConstantLoad 1
+    %15 = %14;
+    %12 = + %13 %15;
+    (1, $desugar$3) = %12;
     PopScopeFrame
     GOTO bb2;
   }
@@ -86,7 +86,7 @@ main() -> nil{
     %31 ? bb10 : bb11;
   }
   bb10 {
-    PushScopeFrame 24
+    PushScopeFrame 20
     %0 = (1, $desugar$4)[(1, $desugar$7)];
     (1, x) = %0;
     %2 = (1, x);
@@ -106,28 +106,30 @@ main() -> nil{
     %35 = println(out1) -> bb15;
   }
   bb12 {
-    %11 = (1, $desugar$7);
-    %12 = ConstantLoad 1
-    %13 = %12;
-    %10 = + %11 %13;
-    (1, $desugar$7) = %10;
+    PushScopeFrame 4
+    %1 = (2, $desugar$7);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, $desugar$7) = %0;
+    PopScopeFrame
     PopScopeFrame
     GOTO bb9;
   }
   bb13 {
-    %15 = (1, y);
-    %16 = ConstantLoad 1
-    %17 = %16;
-    %14 = + %15 %17;
-    %18 = %14;
-    %19 = push((1, $desugar$6),%18) -> bb14;
+    %11 = (1, y);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    %14 = %10;
+    %15 = push((1, $desugar$6),%14) -> bb14;
   }
   bb14 {
-    %21 = (1, $desugar$7);
-    %22 = ConstantLoad 1
-    %23 = %22;
-    %20 = + %21 %23;
-    (1, $desugar$7) = %20;
+    %17 = (1, $desugar$7);
+    %18 = ConstantLoad 1
+    %19 = %18;
+    %16 = + %17 %19;
+    (1, $desugar$7) = %16;
     PopScopeFrame
     GOTO bb9;
   }

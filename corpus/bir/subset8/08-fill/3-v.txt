@@ -1,0 +1,24 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [true...][%1]{}
+    a = %2;
+    %4 = ConstantLoad true
+    %5 = ConstantLoad 3
+    a[%5] = %4;
+    %6 = println(a) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 0
+    %8 = newArray [boolean...][%7]{}
+    b = %8;
+    %10 = ConstantLoad true
+    %11 = ConstantLoad 3
+    b[%11] = %10;
+    %12 = println(b) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

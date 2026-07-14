@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+time=<TIME> level=INFO module="" message="server started"
+time=<TIME> level=WARN module="" message="low disk space" diskPct=12
+time=<TIME> level=ERROR module="" message="request failed" error=error("disk full")

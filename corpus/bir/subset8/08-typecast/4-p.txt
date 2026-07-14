@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = g() -> bb1;
+  }
+  bb1 {
+    %2 = <float>(%1)
+    f = %2;
+    %4 = f;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+g() -> boolean|float{
+  bb0 {
+    %1 = ConstantLoad false
+    %0 = %1;
+    return;
+  }
+}

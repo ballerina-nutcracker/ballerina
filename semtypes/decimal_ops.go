@@ -17,7 +17,7 @@
 package semtypes
 
 import (
-	"math/big"
+	"ballerina-lang-go/decimal"
 )
 
 type decimalOps struct {
@@ -32,17 +32,17 @@ func newDecimalOps() decimalOps {
 }
 
 func (d *decimalOps) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	var values []enumerableType[big.Rat]
-	var v1 enumerableSubtype[big.Rat] = new(t1.(decimalSubtype))
-	var v2 enumerableSubtype[big.Rat] = new(t2.(decimalSubtype))
+	var values []enumerableType[decimal.Decimal]
+	var v1 enumerableSubtype[decimal.Decimal] = new(t1.(decimalSubtype))
+	var v2 enumerableSubtype[decimal.Decimal] = new(t2.(decimalSubtype))
 	allowed := enumerableSubtypeUnion(v1, v2, &values)
 	return createDecimalSubtype(allowed, values)
 }
 
 func (d *decimalOps) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	var values []enumerableType[big.Rat]
-	var v1 enumerableSubtype[big.Rat] = new(t1.(decimalSubtype))
-	var v2 enumerableSubtype[big.Rat] = new(t2.(decimalSubtype))
+	var values []enumerableType[decimal.Decimal]
+	var v1 enumerableSubtype[decimal.Decimal] = new(t1.(decimalSubtype))
+	var v2 enumerableSubtype[decimal.Decimal] = new(t2.(decimalSubtype))
 	allowed := enumerableSubtypeIntersect(v1, v2, &values)
 	return createDecimalSubtype(allowed, values)
 }

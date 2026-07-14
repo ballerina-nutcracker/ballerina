@@ -1,0 +1,28 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field m
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal m)
+              (mapping-constructor-expr))))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref r)
+            (literal m))
+          (literal x))
+        (literal 32))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r)))))))

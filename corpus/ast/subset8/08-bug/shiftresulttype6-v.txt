@@ -1,0 +1,28 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition T
+    (finite-type
+      (literal 250)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (user-defined-type int Unsigned8)) (expr
+          (literal 250))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type T))
+        (block-stmt
+          (var-def
+            (variable y (type
+              (user-defined-type int Unsigned8)) (expr
+              (binary-expr >>
+                (simple-var-ref x)
+                (literal 1)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref y))))) ())
+      (block-stmt))))

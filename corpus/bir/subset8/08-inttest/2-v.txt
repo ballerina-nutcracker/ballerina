@@ -1,0 +1,79 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3 is 2|3|4
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 4
+    %8 = %7;
+    %9 = foo(%8) -> bb3;
+  }
+  bb3 {
+    %10 = %9 is 2|3|4
+    %11 = %10;
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad true
+    %14 = %13;
+    %15 = bar(%14) -> bb5;
+  }
+  bb5 {
+    %16 = %15 is 2|3|4
+    %17 = %16;
+    %18 = println(%17) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad false
+    %20 = %19;
+    %21 = bar(%20) -> bb7;
+  }
+  bb7 {
+    %22 = %21 is 2|3|4
+    %23 = %22;
+    %24 = println(%23) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+foo(int) -> int:Signed32{
+  bb0 {
+    %3 = y;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %6 = <int:Signed32>(%2)
+    %0 = %6;
+    return;
+  }
+}
+bar(boolean) -> 1|2{
+  bb0 {
+    z ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 2
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 1
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    return;
+  }
+}

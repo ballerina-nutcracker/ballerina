@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'bar'
+  --> incl-record-param-3-e.bal:29:16
+   |
+29 |     io:println(foo(1)); // @error
+   |                ^^^^^^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'bar'
+  --> incl-record-param-3-e.bal:30:16
+   |
+30 |     io:println(foo(1, foo = 10)); // @error
+   |                ^^^^^^^^^^^^^^^^

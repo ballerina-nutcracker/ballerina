@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible types for ===
+  --> def1-e.bal:20:11
+   |
+20 | const X = 1 === 0; // @error
+   |           ^^^^^^^

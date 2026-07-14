@@ -17,5 +17,5 @@
 import mockorg/mockpkg;
 
 public function main() {
-    string greeting = mockpkg:greet("World");
+    string _ = mockpkg:greet("World");
 }

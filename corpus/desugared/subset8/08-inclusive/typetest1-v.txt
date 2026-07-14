@@ -1,0 +1,143 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R1
+    (record-type
+      (field n
+        (value-type int))
+      (field x
+        (value-type float))))
+  (type-definition R2
+    (record-type
+      (field n
+        (union-type
+          (value-type int)
+          (value-type null)))
+      (field x
+        (union-type
+          (value-type float)
+          (value-type null)))))
+  (type-definition R3
+    (record-type
+      (field n
+        (value-type int))
+      (field x
+        (value-type float))
+      (field y
+        (value-type float))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r1 (type
+          (user-defined-type R1)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal n)
+              (literal 1))
+            (key-value
+              (literal x)
+              (literal 1.5))))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type any)
+              (value-type null)))) (expr
+          (simple-var-ref r1))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R3)))))
+      (var-def
+        (variable r2 (type
+          (user-defined-type R2)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal n)
+              (literal 1))
+            (key-value
+              (literal x)
+              (literal 1.5))))))
+      (assignment
+        (simple-var-ref m)
+        (simple-var-ref r2))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R2)))))
+      (assignment
+        (simple-var-ref m)
+        (mapping-constructor-expr
+          (key-value
+            (literal n)
+            (literal 1))
+          (key-value
+            (literal x)
+            (literal 1.5))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref m)
+            (user-defined-type R2)))))
+      (var-def
+        (variable v (type
+          (value-type any)) (expr
+          (simple-var-ref r1))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type any))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (constrained-type
+              (builtin-ref-type map)
+              (union-type
+                (value-type any)
+                (value-type null)))))))
+      (assignment
+        (simple-var-ref v)
+        (simple-var-ref r2))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type any))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (constrained-type
+              (builtin-ref-type map)
+              (union-type
+                (value-type any)
+                (value-type null))))))))))

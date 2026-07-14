@@ -1,0 +1,68 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_json1.json))))
+      (var-def
+        (variable data (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))
+            (key-value
+              (literal age)
+              (literal 30))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation io fileWriteJson (
+            (simple-var-ref path)
+            (simple-var-ref data))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$0))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation io fileReadJson (
+            (simple-var-ref path))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable result (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (builtin-ref-type json))) (expr
+          (type-conversion-expr
+            (simple-var-ref result)
+            (constrained-type
+              (builtin-ref-type map)
+              (builtin-ref-type json))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref m)
+            (literal name)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref m)
+            (literal age))))))))

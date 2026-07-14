@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable i (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable n (type
+        (user-defined-type MyNil)) (expr
+        (type-conversion-expr
+          (simple-var-ref i)
+          (user-defined-type MyNil)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref n)
+          (finite-type
+            (literal <nil>))))))
+  )
+)

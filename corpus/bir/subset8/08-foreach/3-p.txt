@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 class FailingIterator {
   idx int
 
@@ -23,26 +22,29 @@ class FailingIterator {
       %2 ? bb1 : bb2;
     }
     bb1 {
-      %8 = ConstantLoad iterator failed
-      %9 = newError error(%8)
-      %0 = %9;
+      PushScopeFrame 2
+      %0 = ConstantLoad iterator failed
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
       return;
     }
     bb2 {
-      %11 = ConstantLoad idx
-      %10 = self[%11];
-      val = %10;
-      %15 = ConstantLoad idx
-      %14 = self[%15];
-      %16 = %14;
-      %17 = ConstantLoad 1
-      %18 = %17;
-      %13 = + %16 %18;
-      %19 = ConstantLoad idx
-      self[%19] = %13;
-      %20 = ConstantLoad value
-      %21 = newMap {| value: int, never... |}{%20=val}
-      %0 = %21;
+      PushScopeFrame 11
+      %1 = ConstantLoad idx
+      %0 = (1, self)[%1];
+      val = %0;
+      %3 = ConstantLoad idx
+      %4 = (1, self)[%3];
+      %5 = %4;
+      %6 = ConstantLoad 1
+      %7 = %6;
+      %8 = + %5 %7;
+      (1, self)[%3] = %8;
+      %9 = ConstantLoad value
+      %10 = newMap {| value: int, never... |}{%9=val}
+      (1, %0) = %10;
+      PopScopeFrame
       return;
     }
   }
@@ -55,7 +57,7 @@ class FailingIterable {
     }
   }
 
-  iterator() -> object { int idx; function init() returns nil; function next() returns nil|error|{| value: int, never... |} }{
+  iterator() -> object { private int idx; public function init() returns nil; public function next() returns nil|error|{| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:FailingIterator
       %3 = init(%2) -> bb1;
@@ -121,6 +123,8 @@ main() -> nil{
     %2 ? bb10 : bb11;
   }
   bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
     PopScopeFrame
     GOTO bb8;
   }
@@ -129,7 +133,11 @@ main() -> nil{
     %3 ? bb12 : bb13;
   }
   bb12 {
-    panic $desugar$4;
+    PushScopeFrame 0
+    (2, %10) = (1, $desugar$4);
+    PopScopeFrame
+    PopScopeFrame
+    panic %10;
   }
   bb13 {
     %5 = ConstantLoad value

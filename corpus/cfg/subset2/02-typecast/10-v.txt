@@ -3,7 +3,7 @@
     (var-def
       (variable d (type
         (value-type decimal)) (expr
-        (literal 41/4))))
+        (literal 10.25))))
     (var-def
       (variable e (type
         (value-type decimal)) (expr
@@ -16,7 +16,7 @@
     (var-def
       (variable d2 (type
         (value-type decimal)) (expr
-        (literal 5/4))))
+        (literal 1.25))))
     (var-def
       (variable f (type
         (value-type float)) (expr

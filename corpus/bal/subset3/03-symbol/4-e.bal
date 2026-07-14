@@ -18,5 +18,6 @@ public function main() {
     int i = 5;
     if i > 0 {
         float i = 5; // @error
+        float _ = i;
     }
 }

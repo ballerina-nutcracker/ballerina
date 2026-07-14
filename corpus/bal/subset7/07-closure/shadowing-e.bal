@@ -18,6 +18,7 @@ import ballerina/io;
 type F function(int) returns int;
 
 function foo(boolean flag, int offset) returns F {
+    int _ = offset;
     return function(int x) returns int {
         int offset = 10; // @error
         if (flag) {

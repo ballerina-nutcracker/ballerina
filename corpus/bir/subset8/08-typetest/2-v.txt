@@ -1,0 +1,128 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = p(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad false
+    %5 = %4;
+    %6 = p(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad hello
+    %8 = p(%7) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad this is a long string
+    %10 = p(%9) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad 9223372036854775807
+    %12 = %11;
+    %13 = p(%12) -> bb5;
+  }
+  bb5 {
+    %14 = ConstantLoad 9223372036854775807
+    %15 = unknown %14;
+    %16 = %15;
+    %17 = p(%16) -> bb6;
+  }
+  bb6 {
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad 2
+    %20 = ConstantLoad 2
+    %21 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%20]{%18, %19}
+    list = %21;
+    %23 = p(list) -> bb7;
+  }
+  bb7 {
+    %24 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{}
+    mapping = %24;
+    %26 = p(mapping) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+p(any) -> nil{
+  bb0 {
+    %2 = v is boolean
+    %2 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad boolean
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = (1, v) is int
+    %0 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad int
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = (2, v) is string
+    %0 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad string
+    %1 = println(%0) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = (3, v) is [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]
+    %0 ? bb10 : bb12;
+  }
+  bb10 {
+    PushScopeFrame 2
+    %0 = ConstantLoad array
+    %1 = println(%0) -> bb11;
+  }
+  bb11 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 1
+    %0 = (4, v) is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %0 ? bb13 : bb15;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = ConstantLoad map
+    %1 = println(%0) -> bb14;
+  }
+  bb14 {
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb15 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

@@ -1,0 +1,52 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation test1 ()))
+      (expression-stmt
+        (invocation test2 ()))))
+  (function test1 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation lang.array push (
+          (group-expr
+            (invocation foo (
+              (simple-var-ref x))))
+          (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x))))))
+  (function test2 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation lang.array push (
+          (invocation foo (
+            (simple-var-ref x)))
+          (literal 2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x))))))
+  (function foo (
+    (variable x (type
+      (array-type
+        (value-type any) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type any) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (simple-var-ref x)))))

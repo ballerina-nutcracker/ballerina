@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got 42
+  --> 28-e.bal:20:19
+   |
+20 | const boolean B = 42; // @error
+   |                   ^^

@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v1 (type
+        (union-type
+          (array-type
+            (value-type string) dimensions: 1 ([]))
+          (value-type string))) (expr
+        (literal o))))
+    (var-def
+      (variable v2 (type
+        (union-type
+          (array-type
+            (value-type any) dimensions: 1 ([]))
+          (value-type string))) (expr
+        (simple-var-ref v1))))
+    (var-def
+      (variable v3 (type
+        (value-type string)) (expr
+        (type-conversion-expr
+          (simple-var-ref v2)
+          (value-type string)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v3))))
+  )
+)

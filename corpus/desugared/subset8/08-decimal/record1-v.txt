@@ -1,0 +1,78 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R1
+    (record-type
+      (field d
+        (value-type decimal))))
+  (type-definition R2
+    (record-type
+      (field d
+        (value-type decimal))
+      (rest
+        (value-type decimal))))
+  (type-definition R3
+    (record-type
+      (field d
+        (record-type
+          (field d1
+            (value-type decimal))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r1 (type
+          (user-defined-type R1)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal d)
+              (literal 1.2E+34))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r1))))
+      (var-def
+        (variable r2 (type
+          (user-defined-type R2)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal d)
+              (literal 2))
+            (key-value
+              (literal d1)
+              (literal 34))
+            (key-value
+              (literal d2)
+              (literal 1.2))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r2))))
+      (assignment
+        (index-based-access
+          (simple-var-ref r2)
+          (literal d3))
+        (literal 1.2E+3))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r2))))
+      (var-def
+        (variable r3 (type
+          (user-defined-type R3)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal d)
+              (mapping-constructor-expr
+                (key-value
+                  (literal d1)
+                  (literal 23))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r3))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref r3)
+            (literal d))
+          (literal d1))
+        (literal 23.1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r3)))))))

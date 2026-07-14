@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> ifelse7-e.bal:21:12
+   |
+21 |         if true { // @error
+   |            ^^^^

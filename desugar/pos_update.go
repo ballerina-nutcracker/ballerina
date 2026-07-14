@@ -18,7 +18,6 @@ package desugar
 
 import (
 	"ballerina-lang-go/ast"
-	"ballerina-lang-go/model"
 	"ballerina-lang-go/tools/diagnostics"
 )
 
@@ -36,7 +35,7 @@ func (v *posUpdateVisitor) Visit(node ast.BLangNode) ast.Visitor {
 	return v
 }
 
-func (v *posUpdateVisitor) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (v *posUpdateVisitor) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	return v
 }
 

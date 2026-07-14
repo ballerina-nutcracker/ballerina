@@ -1,0 +1,62 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (tuple-type
+          (value-type int)
+          (value-type int))) (expr
+        (list-constructor-expr
+          (literal 17)
+          (literal 42)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+    (var-def
+      (variable t1 (type
+        (tuple-type
+          (value-type int)
+          (value-type string)
+          (value-type boolean))) (expr
+        (list-constructor-expr
+          (literal 2)
+          (literal x)
+          (literal true)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t1))))
+    (var-def
+      (variable t2 (type
+        (tuple-type
+          (user-defined-type T)
+          (value-type string))) (expr
+        (list-constructor-expr
+          (literal 2)
+          (literal test)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t2))))
+    (var-def
+      (variable t3 (type
+        (tuple-type (rest
+            (value-type int)))) (expr
+        (list-constructor-expr
+          (literal 2)
+          (literal 4)
+          (literal 6)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t3))))
+    (var-def
+      (variable t4 (type
+        (tuple-type
+          (value-type string) (rest
+            (value-type int)))) (expr
+        (list-constructor-expr
+          (literal test)
+          (literal 2)
+          (literal 4)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t4))))
+  )
+)

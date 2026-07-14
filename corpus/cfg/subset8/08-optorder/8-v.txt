@@ -1,0 +1,50 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type string)
+          (value-type null))) (expr
+        (literal abc))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <=
+          (simple-var-ref a)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <
+          (simple-var-ref a)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (simple-var-ref a)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (simple-var-ref a)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <=
+          (literal <nil>)
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <
+          (literal <nil>)
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (literal <nil>)
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (literal <nil>)
+          (simple-var-ref a)))))
+  )
+)

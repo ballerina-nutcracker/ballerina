@@ -1,0 +1,64 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 0)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 1))
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 2147483647)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 2147483646)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 2147483648)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 2147483648))
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 2147483647))
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 2147483649))
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9223372036854775807)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal -9223372036854775808)
+            (value-type decimal))))))))

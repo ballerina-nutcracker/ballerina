@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = ConstantLoad 255
+    %3 = ConstantLoad 17
+    %4 = ConstantLoad 3
+    %5 = newArray [int:Unsigned8...][%4]{%1, %2, %3}
+    bytes = %5;
+    %8 = ConstantLoad 1
+    %7 = bytes[%8];
+    b = %7;
+    %10 = b;
+    %11 = println(%10) -> bb1;
+  }
+  bb1 {
+    %13 = ConstantLoad 2
+    %12 = bytes[%13];
+    b = %12;
+    %14 = b;
+    %15 = println(%14) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad 0
+    %16 = bytes[%17];
+    b = %16;
+    %18 = b;
+    %19 = println(%18) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

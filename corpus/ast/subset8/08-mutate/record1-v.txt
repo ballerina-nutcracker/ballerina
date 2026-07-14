@@ -1,0 +1,70 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition NN
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition SS
+    (record-type
+      (field x
+        (value-type string))
+      (field y
+        (value-type string))))
+  (type-definition NS
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type string))))
+  (type-definition SN
+    (record-type
+      (field x
+        (value-type string))
+      (field y
+        (value-type int))))
+  (type-definition UU
+    (record-type
+      (field x
+        (union-type
+          (value-type int)
+          (value-type string)))
+      (field y
+        (union-type
+          (value-type int)
+          (value-type string)))))
+  (type-definition U
+    (union-type
+      (union-type
+        (union-type
+          (user-defined-type NN)
+          (user-defined-type SS))
+        (user-defined-type NS))
+      (user-defined-type SN)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type UU)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal yyy))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref r)
+          (user-defined-type U))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal yes))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal no))))))))))

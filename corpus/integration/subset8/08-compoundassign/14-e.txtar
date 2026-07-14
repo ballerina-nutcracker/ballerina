@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> 14-e.bal:20:18
+   |
+20 |     int y = x + =1; // @error
+   |                  ^

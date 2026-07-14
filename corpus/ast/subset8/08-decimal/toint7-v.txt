@@ -1,0 +1,189 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (value-type decimal)) (expr
+          (literal 1d))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 0d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 1d)))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 0.5d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1.5d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 2.5d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 0.5d)))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 1.5d)))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 2.5d)))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1e2d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1.5e2d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 1.5e2d)))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1.51e2d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1.513e2d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1.515e2d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 9223372036854775807d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 9223372036854775807.0d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 9223372036854775807.1d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 9223372036854775807.4d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 92233720368547758074e-1d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1E-6143d))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 1E-6143d)))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref d)
+            (value-type int))))))))

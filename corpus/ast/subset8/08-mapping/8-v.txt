@@ -1,0 +1,195 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation foo (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))
+      (expression-stmt
+        (invocation foo (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))
+      (expression-stmt
+        (invocation foo1 (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))
+      (expression-stmt
+        (invocation foo2 (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))
+      (expression-stmt
+        (invocation foo2 (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))
+      (expression-stmt
+        (invocation foo3 (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))
+      (expression-stmt
+        (invocation foo3 (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3))))))))
+  (function foo (
+    (variable a (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (literal any)))))))
+  (function foo1 (
+    (variable c (type
+      (record-type
+        (field a
+          (value-type any)))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref c)
+            (record-type
+              (field a
+                (finite-type
+                  (literal 2)))
+              (field b
+                (finite-type
+                  (literal 3)))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal unexpected))))) ())
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal { any a; }))))))))
+  (function foo2 (
+    (variable c (type
+      (record-type
+        (field a
+          (value-type any))
+        (field b
+          (value-type any)))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref c)
+            (record-type
+              (field a
+                (finite-type
+                  (literal 2)))
+              (field b
+                (finite-type
+                  (literal 3)))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal unexpected))))) ())
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal {| any a; any b; |}))))))))
+  (function foo3 (
+    (variable c (type
+      (record-type
+        (field a
+          (value-type int))
+        (field b
+          (value-type int)))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (record-type
+            (field a
+              (finite-type
+                (literal 2)))
+            (field b
+              (finite-type
+                (literal 3)))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal {| int a; int b; |}))))))))))

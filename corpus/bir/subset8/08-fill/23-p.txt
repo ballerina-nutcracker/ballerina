@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [[int, {| a: int, never... |}, float, string, never...]...][%1]{}
+    a = %2;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad a
+    %6 = ConstantLoad 1
+    %7 = newMap {| a: int, never... |}{%5=%6}
+    %8 = ConstantLoad 3.1
+    %9 = ConstantLoad test
+    %10 = ConstantLoad 4
+    %11 = newArray [int, {| a: int, never... |}, float, string, never...][%10]{%4, %7, %8, %9}
+    %12 = ConstantLoad 1
+    a[%12] = %11;
+    return;
+  }
+}

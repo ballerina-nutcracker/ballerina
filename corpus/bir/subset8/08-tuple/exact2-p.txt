@@ -1,0 +1,15 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    %2 = ConstantLoad 7
+    %3 = ConstantLoad 2
+    %4 = newArray [boolean, int, never...][%3]{%1, %2}
+    t = %4;
+    %6 = ConstantLoad 0
+    i = %6;
+    %8 = ConstantLoad 1
+    t[i] = %8;
+    return;
+  }
+}

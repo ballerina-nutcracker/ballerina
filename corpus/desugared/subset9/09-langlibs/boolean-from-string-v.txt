@@ -1,0 +1,119 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation boolean fromString (
+            (literal true))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation boolean fromString (
+            (literal false))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$1))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation boolean fromString (
+            (literal TRUE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$2))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation boolean fromString (
+            (literal False))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$3))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation boolean fromString (
+            (literal 1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation boolean fromString (
+            (literal 0))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$5))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$5))))
+      (var-def
+        (variable invalidWord (type
+          (union-type
+            (value-type boolean)
+            (error-type))) (expr
+          (invocation boolean fromString (
+            (literal yes))))))
+      (var-def
+        (variable invalidWhitespace (type
+          (union-type
+            (value-type boolean)
+            (error-type))) (expr
+          (invocation boolean fromString (
+            (literal  true ))))))
+      (var-def
+        (variable invalidEmpty (type
+          (union-type
+            (value-type boolean)
+            (error-type))) (expr
+          (invocation boolean fromString (
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref invalidWord)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref invalidWhitespace)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref invalidEmpty)
+            (error-type))))))))

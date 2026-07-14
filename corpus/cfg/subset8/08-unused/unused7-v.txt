@@ -1,0 +1,28 @@
+(bar
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref i)
+        (literal 2)))
+  )
+)
+(foo
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
+    (var-def
+      (variable _ (type
+        (value-type string)) (expr
+        (simple-var-ref s))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (literal 6)
+        (literal str))))
+  )
+)

@@ -1,0 +1,26 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (record-type
+          (field aVeryLongFieldName
+            (value-type int))
+          (field anotherVeryLongFieldName
+            (value-type string)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal anotherVeryLongFieldName)
+            (literal some string))
+          (key-value
+            (literal aVeryLongFieldName)
+            (literal 0))
+          (key-value
+            (literal newFieldName)
+            (literal some other string))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref r)
+          (literal newFieldName)))))
+  )
+)

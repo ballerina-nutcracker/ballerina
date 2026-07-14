@@ -1,0 +1,5 @@
+-- stdout --
+map<any>
+map<int?>
+map<int|string>
+-- stderr --

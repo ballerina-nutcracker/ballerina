@@ -1,0 +1,158 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition T1
+    (union-type
+      (union-type
+        (finite-type
+          (literal 1))
+        (finite-type
+          (literal 2)))
+      (finite-type
+        (literal 3))))
+  (type-definition T2
+    (union-type
+      (value-type string)
+      (finite-type
+        (literal true))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (tuple-type
+            (user-defined-type T1))) (expr
+          (list-constructor-expr
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p))))
+      (var-def
+        (variable t1 (type
+          (tuple-type
+            (value-type int))) (expr
+          (list-constructor-expr
+            (literal 21)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t1))))
+      (var-def
+        (variable t2 (type
+          (tuple-type (rest
+              (user-defined-type T2)))) (expr
+          (list-constructor-expr
+            (literal true)
+            (literal test)
+            (literal true)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t2))))
+      (var-def
+        (variable t3 (type
+          (tuple-type
+            (union-type
+              (value-type int)
+              (value-type float)))) (expr
+          (list-constructor-expr
+            (literal 2.5)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t3))))
+      (var-def
+        (variable t4 (type
+          (tuple-type (rest
+              (union-type
+                (value-type int)
+                (value-type float))))) (expr
+          (list-constructor-expr
+            (literal 4.5)
+            (literal 2)
+            (literal 4)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t4))))
+      (var-def
+        (variable t5 (type
+          (tuple-type
+            (union-type
+              (user-defined-type T1)
+              (value-type float)))) (expr
+          (list-constructor-expr
+            (literal 2.5)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t5))))
+      (var-def
+        (variable t6 (type
+          (tuple-type (rest
+              (union-type
+                (user-defined-type T1)
+                (value-type float))))) (expr
+          (list-constructor-expr
+            (literal 4.5)
+            (literal 2)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t6))))
+      (var-def
+        (variable t7 (type
+          (tuple-type
+            (union-type
+              (user-defined-type T1)
+              (value-type float)))) (expr
+          (list-constructor-expr
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t7))))
+      (var-def
+        (variable t8 (type
+          (tuple-type
+            (union-type
+              (user-defined-type T1)
+              (value-type float))
+            (value-type string))) (expr
+          (list-constructor-expr
+            (literal 2)
+            (literal test)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t8))))
+      (var-def
+        (variable t9 (type
+          (tuple-type
+            (union-type
+              (user-defined-type T1)
+              (value-type float)) (rest
+              (value-type string)))) (expr
+          (list-constructor-expr
+            (literal 2)
+            (literal test1)
+            (literal test2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t9))))
+      (var-def
+        (variable t10 (type
+          (tuple-type
+            (union-type
+              (user-defined-type T1)
+              (user-defined-type T2)))) (expr
+          (list-constructor-expr
+            (literal test)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t10))))
+      (var-def
+        (variable t11 (type
+          (tuple-type (rest
+              (union-type
+                (user-defined-type T1)
+                (user-defined-type T2))))) (expr
+          (list-constructor-expr
+            (literal test)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t11)))))))

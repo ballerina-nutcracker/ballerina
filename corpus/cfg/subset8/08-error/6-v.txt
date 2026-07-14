@@ -1,0 +1,62 @@
+(display
+  (bb0 () (bb1 bb3)
+    (type-test-expr is
+      (simple-var-ref result)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref result)
+          (simple-var-ref result)))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (var-def
+      (variable e (type
+        (error-type)) (expr
+        (simple-var-ref result))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation positive (
+          (unary-expr -
+            (literal 1)))))))
+    (expression-stmt
+      (invocation display (
+        (simple-var-ref result))))
+    (assignment
+      (simple-var-ref result)
+      (invocation positive (
+        (literal 4))))
+    (expression-stmt
+      (invocation display (
+        (simple-var-ref result))))
+  )
+)
+(positive
+  (bb0 () (bb1 bb2)
+    (binary-expr >=
+      (simple-var-ref n)
+      (literal 0))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref n))
+  )
+  (bb2 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal negative))))
+  )
+)

@@ -1,0 +1,44 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type float)
+          (value-type decimal))) (expr
+        (literal 10))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type float))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal float))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (assignment
+      (simple-var-ref x)
+      (literal 10))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type decimal))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal decimal))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (type-test-expr is
+      (simple-var-ref x)
+      (union-type
+        (value-type decimal)
+        (value-type int)))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal decimal))))
+  )
+  (bb6 (bb5 bb4) ())
+)

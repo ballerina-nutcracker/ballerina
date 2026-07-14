@@ -25,8 +25,10 @@ import (
 	"ballerina-lang-go/bir"
 	debugcommon "ballerina-lang-go/common"
 	_ "ballerina-lang-go/lib/rt"
+	"ballerina-lang-go/platform/palnative"
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/runtime"
+	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
 
 	"github.com/spf13/cobra"
@@ -160,7 +162,21 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		path = "."
 	}
 
+	// Detect if path is inside a workspace - if so, load the workspace instead
+	absBaseDir, err := filepath.Abs(baseDir)
+	if err != nil {
+		printRunError(err)
+		return err
+	}
+	workspaceRoot := findWorkspaceRootForRun(absBaseDir)
+
 	fsys := os.DirFS(baseDir)
+	loadPath := path
+	if workspaceRoot != "" {
+		// When inside a workspace, load from the workspace root
+		fsys = os.DirFS(workspaceRoot)
+		loadPath = "."
+	}
 
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
@@ -169,7 +185,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
-	result, err := projects.Load(fsys, path, projects.ProjectLoadConfig{
+	result, err := projects.Load(fsys, loadPath, projects.ProjectLoadConfig{
 		BallerinaEnvFs: ballerinaEnvFs,
 		BuildOptions:   &buildOpts,
 	})
@@ -187,16 +203,45 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	}
 
 	project := result.Project()
+
+	// If it's a workspace project, resolve to the specific sub-package
+	if project.Kind() == projects.ProjectKindWorkspace {
+		workspace, ok := project.(*projects.WorkspaceProject)
+		if !ok {
+			err := fmt.Errorf("internal error: expected WorkspaceProject")
+			printRunError(err)
+			return err
+		}
+
+		// If user specified the workspace root itself, they can't run the workspace directly
+		if workspaceRoot == "" || absBaseDir == workspaceRoot {
+			err := fmt.Errorf("cannot run a workspace project directly. Use 'bal run <package-path>' to run a specific package within the workspace")
+			printRunError(err)
+			return err
+		}
+
+		// Find the BuildProject matching the user's path
+		buildProject := findBuildProjectByPath(workspace, workspaceRoot, absBaseDir)
+		if buildProject == nil {
+			err := fmt.Errorf("no package found at path %s within workspace %s", absBaseDir, workspaceRoot)
+			printRunError(err)
+			return err
+		}
+		project = buildProject
+	}
+
 	pkg := project.CurrentPackage()
 
 	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG analysis)
 	compilation := pkg.Compilation()
 
-	// Check for compilation errors
+	// Print all diagnostics; only errors abort the run.
 	compilationDiags := compilation.DiagnosticResult()
-	if compilationDiags.HasErrors() {
+	if compilationDiags.DiagnosticCount() > 0 {
 		printDiagnostics(fsys, os.Stderr, compilationDiags, !isTerminal(), compilation.DiagnosticEnv())
-		return fmt.Errorf("compilation failed with errors")
+	}
+	if compilationDiags.HasErrors() {
+		return fmt.Errorf("compilation contains errors")
 	}
 
 	// Create backend and generate BIR
@@ -215,23 +260,44 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		fmt.Fprint(os.Stderr, compilation.StatsReport())
 	}
 
-	// Dump BIR if requested
+	// Dump BIR if requested — only include packages belonging to the root package
+	// (same org + package name), so all sub-modules are covered while external
+	// imports are excluded.
+	tyEnv := project.Environment().TypeEnv()
 	if buildOpts.DumpBIR() {
 		prettyPrinter := bir.PrettyPrinter{}
+		tyCtx := semtypes.ContextFrom(tyEnv)
+		rootOrgName := pkg.PackageOrg().Value()
+		rootPkgName := pkg.PackageName().Value()
 		for _, birPkg := range birPkgs {
+			if birPkg.PackageID.OrgName.Value() != rootOrgName || birPkg.PackageID.PkgName.Value() != rootPkgName {
+				continue
+			}
 			fmt.Fprintln(os.Stderr)
 			fmt.Fprintln(os.Stderr, "==================BEGIN BIR==================")
-			fmt.Fprintln(os.Stderr, strings.TrimSpace(prettyPrinter.Print(*birPkg)))
+			fmt.Fprintln(os.Stderr, strings.TrimSpace(prettyPrinter.Print(tyCtx, *birPkg)))
 			fmt.Fprintln(os.Stderr, "===================END BIR===================")
 		}
 	}
 
-	rt := runtime.NewRuntime(nativePal)
+	pal, cleanupSignals := palnative.NewPlatform()
+	defer cleanupSignals()
+	rt := runtime.NewRuntime(pal, tyEnv)
+	var initErr error
 	for _, birPkg := range birPkgs {
-		if err := rt.Interpret(*birPkg); err != nil {
+		if err := rt.Init(*birPkg); err != nil {
 			printRuntimeError(err)
-			return err
+			initErr = err
+			break
 		}
+	}
+	rt.Listen()
+	if initErr != nil {
+		return initErr
+	}
+	exitCode := <-rt.ExitStatus
+	if exitCode != 0 {
+		return fmt.Errorf("exit: %d", exitCode)
 	}
 	return nil
 }
@@ -251,4 +317,39 @@ func getBallerinaEnvPath() (string, error) {
 	}
 
 	return filepath.Join(userHome, projects.UserHomeDirName), nil
+}
+
+// findWorkspaceRootForRun walks up the directory tree from the given absolute path
+// to find a workspace root (a directory with Ballerina.toml containing [workspace]).
+// Returns empty string if not inside a workspace.
+func findWorkspaceRootForRun(startPath string) string {
+	current := startPath
+	for {
+		tomlPath := filepath.Join(current, projects.BallerinaTomlFile)
+		if info, err := os.Stat(tomlPath); err == nil && !info.IsDir() {
+			if isWorkspaceToml(tomlPath) {
+				return current
+			}
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return ""
+		}
+		current = parent
+	}
+}
+
+// findBuildProjectByPath finds the BuildProject in a workspace whose source root
+// matches the given absolute path. The workspaceAbsRoot is the absolute path to
+// the workspace root on the local filesystem.
+func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRoot, absPath string) *projects.BuildProject {
+	for _, bp := range workspace.Projects() {
+		// BuildProject.SourceRoot() is relative to the workspace fs.FS root.
+		// Join with the absolute workspace root to get the absolute path.
+		bpAbs := filepath.Join(workspaceAbsRoot, bp.SourceRoot())
+		if bpAbs == absPath {
+			return bp
+		}
+	}
+	return nil
 }

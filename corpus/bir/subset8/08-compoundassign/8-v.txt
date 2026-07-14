@@ -1,0 +1,32 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hello
+    s = %1;
+    %4 = ConstantLoad  world
+    %3 = + s %4;
+    s = %3;
+    %5 = println(s) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad  nballerina
+    n = %6;
+    %8 = + s n;
+    s = %8;
+    %9 = println(s) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad x
+    x = %10;
+    %12 = ConstantLoad y
+    y = %12;
+    %16 = ConstantLoad z
+    %15 = + y %16;
+    %14 = + x %15;
+    x = %14;
+    %17 = println(x) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: identifier 'b' cannot be used as a key for a rest field; use a string literal instead
+  --> 14-e.bal:20:16
+   |
+20 |     foo({a: 1, b: 2}); // @error
+   |                ^

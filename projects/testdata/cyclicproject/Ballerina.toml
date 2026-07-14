@@ -1,4 +1,0 @@
-[package]
-org = "testorg"
-name = "cyclic"
-version = "0.1.0"

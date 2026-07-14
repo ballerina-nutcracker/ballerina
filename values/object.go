@@ -22,20 +22,53 @@ type Object struct {
 	Type       semtypes.SemType
 	fields     map[string]BalValue
 	methodKeys map[string]string
+	rtable     map[string][]ResourceEntry
 }
 
-func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string) *Object {
+type ResourceEntry struct {
+	PathSegments      []ResourcePathSegmentDef
+	RestSegmentTy     semtypes.SemType
+	FunctionLookupKey string
+}
+
+type ResourcePathSegmentDef struct {
+	// Ty is a singleton string type for literal path segments
+	// and the parameter type for path-parameter segments.
+	Ty semtypes.SemType
+}
+
+// LiteralPathSegment returns the literal string of seg and true if seg is a
+// literal path segment, otherwise it returns false.
+func LiteralPathSegment(seg ResourcePathSegmentDef) (string, bool) {
+	shape := semtypes.SingleShape(seg.Ty)
+	if !shape.IsPresent() {
+		return "", false
+	}
+	s, ok := shape.Get().Value.(string)
+	return s, ok
+}
+
+func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, rtable map[string][]ResourceEntry) *Object {
 	if fieldValues == nil {
 		fieldValues = make(map[string]BalValue)
 	}
 	if methodKeys == nil {
 		methodKeys = make(map[string]string)
 	}
+	if rtable == nil {
+		rtable = make(map[string][]ResourceEntry)
+	}
 	return &Object{
 		Type:       typ,
 		fields:     fieldValues,
 		methodKeys: methodKeys,
+		rtable:     rtable,
 	}
+}
+
+func (o *Object) ResourceEntries(methodName string) ([]ResourceEntry, bool) {
+	entries, ok := o.rtable[methodName]
+	return entries, ok
 }
 
 func (o *Object) Put(field string, value BalValue) {

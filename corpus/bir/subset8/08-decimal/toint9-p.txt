@@ -1,0 +1,14 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 9.999999999999999999999999999999999E+6144
+    %2 = unknown %1;
+    d = %2;
+    %4 = <int>(d)
+    %5 = %4;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

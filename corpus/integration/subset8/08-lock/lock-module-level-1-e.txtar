@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> lock-module-level-1-e.bal:19:6
+   |
+19 | lock { // @error
+   |
+
+error[SYNTAX_ERROR]: invalid token
+  --> lock-module-level-1-e.bal:23:1
+   |
+23 | public function main() { // @error
+   | ^^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> lock-module-level-1-e.bal:20:7
+   |
+20 |     x = 1; // @error
+   |

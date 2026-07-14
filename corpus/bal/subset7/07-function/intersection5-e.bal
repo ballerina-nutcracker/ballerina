@@ -25,5 +25,6 @@ public function main() {
 }
 
 function foo(int... args) returns byte|string {
+        int[] _ = args;
     return 0;
-}
+    }

@@ -1,0 +1,22 @@
+(alwaysErr
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal err))))
+  )
+)
+(doPanic
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (check-panicked-expr
+          (invocation alwaysErr ()))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation doPanic ()))))
+  )
+)

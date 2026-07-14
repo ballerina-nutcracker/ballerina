@@ -1,0 +1,99 @@
+(Counter
+  (close
+    (bb0 () ()
+      (return
+        (literal <nil>))
+    )
+  )
+  (next
+    (bb0 () ()
+      (var-def
+        (variable current (type
+          (value-type int)) (expr
+          (field-based-access n
+            (simple-var-ref self)))))
+      (assignment
+        (field-based-access n
+          (simple-var-ref self))
+        (binary-expr +
+          (simple-var-ref current)
+          (literal 1)))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref current))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable s (type
+        (builtin-ref-type stream)) (expr
+        (new (
+          (new
+            (user-defined-type Counter) ()))))))
+    (var-def
+      (variable r1 (type
+        (union-type
+          (record-type
+            (field value
+              (union-type
+                (value-type any)
+                (error-type))))
+          (union-type
+            (error-type)
+            (value-type null)))) (expr
+        (invocation next expr:
+          (simple-var-ref s) ()))))
+    (type-test-expr is
+      (simple-var-ref r1)
+      (record-type
+        (field value
+          (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref r1)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable c (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation close expr:
+          (simple-var-ref s) ()))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable r2 (type
+        (union-type
+          (record-type
+            (field value
+              (union-type
+                (value-type any)
+                (error-type))))
+          (union-type
+            (error-type)
+            (value-type null)))) (expr
+        (invocation next expr:
+          (simple-var-ref s) ()))))
+    (type-test-expr is
+      (simple-var-ref r2)
+      (record-type
+        (field value
+          (value-type int))))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref r2)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

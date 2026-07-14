@@ -1,0 +1,19 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (array-type
+          (value-type decimal) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref d)
+        (literal 1))
+      (literal 0.1))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref d)
+          (literal 1)))))
+  )
+)

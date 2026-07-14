@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> not2-e.bal:33:13
+   |
+33 |     else if x !is boolean { // @error
+   |             ^^^^^^^^^^^^^

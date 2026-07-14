@@ -1,0 +1,82 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable two48 (type
+        (value-type int)) (expr
+        (binary-expr *
+          (binary-expr *
+            (literal 65536)
+            (literal 65536))
+          (literal 65536)))))
+    (expression-stmt
+      (invocation testAround (
+        (simple-var-ref two48))))
+    (var-def
+      (variable two55 (type
+        (value-type int)) (expr
+        (binary-expr *
+          (simple-var-ref two48)
+          (literal 128)))))
+    (expression-stmt
+      (invocation testAround (
+        (simple-var-ref two55))))
+    (var-def
+      (variable two56 (type
+        (value-type int)) (expr
+        (binary-expr *
+          (simple-var-ref two55)
+          (literal 2)))))
+    (expression-stmt
+      (invocation testAround (
+        (simple-var-ref two56))))
+    (var-def
+      (variable two62 (type
+        (value-type int)) (expr
+        (binary-expr *
+          (simple-var-ref two56)
+          (literal 64)))))
+    (expression-stmt
+      (invocation testAround (
+        (simple-var-ref two62))))
+  )
+)
+(roundTrip
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref n)
+          (type-conversion-expr
+            (invocation toAny (
+              (simple-var-ref n)))
+            (value-type int))))))
+  )
+)
+(testAround
+  (bb0 () ()
+    (expression-stmt
+      (invocation roundTrip (
+        (binary-expr -
+          (simple-var-ref pow2)
+          (literal 1)))))
+    (expression-stmt
+      (invocation roundTrip (
+        (unary-expr -
+          (simple-var-ref pow2)))))
+    (expression-stmt
+      (invocation roundTrip (
+        (simple-var-ref pow2))))
+    (expression-stmt
+      (invocation roundTrip (
+        (binary-expr -
+          (unary-expr -
+            (simple-var-ref pow2))
+          (literal 1)))))
+  )
+)
+(toAny
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)

@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0))
+          (binary-expr /
+            (unary-expr -
+              (literal 0.0))
+            (literal 0.0)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal same))))
+          (return
+            (literal <nil>))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (literal impossible))))))))

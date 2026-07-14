@@ -1,0 +1,13 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable elem (type
+        (value-type xml)) (expr
+        (xml-element-literal a
+          (xml-element-literal b
+            (xml-element-literal p:c))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref elem))))
+  )
+)

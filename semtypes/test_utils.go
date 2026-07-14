@@ -38,6 +38,13 @@ func testRoTuple(env Env, members ...SemType) SemType {
 // assertEqual asserts that two values are equal
 func assertEqual(t *testing.T, actual, expected any, msgAndArgs ...any) {
 	t.Helper()
+	if actualSemType, ok := actual.(SemType); ok {
+		if expectedSemType, ok := expected.(SemType); ok {
+			if sameSemType(actualSemType, expectedSemType) {
+				return
+			}
+		}
+	}
 	if actual != expected {
 		msg := fmt.Sprintf("got %v, want %v", actual, expected)
 		if len(msgAndArgs) > 0 {
@@ -118,6 +125,6 @@ func assertSemTypeRelation(t *testing.T, ctx Context, t1, t2 SemType, expected R
 
 // testCell creates a cell type containing the given type with specified mutability
 // Ported from CellTypeTest.java:cell()
-func testCell(env Env, ty SemType, mut CellMutability) *ComplexSemType {
+func testCell(env Env, ty SemType, mut CellMutability) SemType {
 	return cellContainingWithEnvSemTypeCellMutability(env, ty, mut)
 }

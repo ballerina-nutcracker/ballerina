@@ -1,0 +1,32 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation f (
+          (literal true))))
+      (expression-stmt
+        (invocation f (
+          (literal false))))))
+  (function f (
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type null))
+    (block-function-body
+      (while
+        (literal true)
+        (block-stmt
+          (if
+            (simple-var-ref b)
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal b))))
+              (break)) (
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal r))))
+              (return
+                (literal <nil>))))))))))

@@ -17,9 +17,8 @@
 package semtypes
 
 import (
-	"math/big"
-
 	"ballerina-lang-go/common"
+	"ballerina-lang-go/decimal"
 )
 
 type decimalSubtype struct {
@@ -36,7 +35,7 @@ func newDecimalSubtypeFromBoolEnumerableDecimal(allowed bool, value enumerableDe
 	return this
 }
 
-func newDecimalSubtypeFromBoolEnumerableDecimals(allowed bool, values []enumerableType[big.Rat]) decimalSubtype {
+func newDecimalSubtypeFromBoolEnumerableDecimals(allowed bool, values []enumerableType[decimal.Decimal]) decimalSubtype {
 	this := decimalSubtype{}
 	this.allowed = allowed
 	var decimals []enumerableDecimal
@@ -47,20 +46,20 @@ func newDecimalSubtypeFromBoolEnumerableDecimals(allowed bool, values []enumerab
 	return this
 }
 
-func DecimalConst(value big.Rat) SemType {
+func DecimalConst(value decimal.Decimal) SemType {
 	return getBasicSubtype(BTDecimal, newDecimalSubtypeFromBoolEnumerableDecimal(true, enumerableDecimalFrom(value)))
 }
 
-func decimalSubtypeSingleValue(d SubtypeData) common.Optional[big.Rat] {
+func decimalSubtypeSingleValue(d SubtypeData) common.Optional[decimal.Decimal] {
 	if _, ok := d.(allOrNothingSubtype); ok {
-		return common.OptionalEmpty[big.Rat]()
+		return common.OptionalEmpty[decimal.Decimal]()
 	}
 	v := d.(decimalSubtype)
 	if !v.allowed {
-		return common.OptionalEmpty[big.Rat]()
+		return common.OptionalEmpty[decimal.Decimal]()
 	}
 	if len(v.values) != 1 {
-		return common.OptionalEmpty[big.Rat]()
+		return common.OptionalEmpty[decimal.Decimal]()
 	}
 	return common.OptionalOf(v.values[0].value)
 }
@@ -78,7 +77,7 @@ func decimalSubtypeContains(d SubtypeData, f enumerableDecimal) bool {
 	return (!v.allowed)
 }
 
-func createDecimalSubtype(allowed bool, values []enumerableType[big.Rat]) ProperSubtypeData {
+func createDecimalSubtype(allowed bool, values []enumerableType[decimal.Decimal]) ProperSubtypeData {
 	if len(values) == 0 {
 		if allowed {
 			return createNothing()
@@ -93,8 +92,8 @@ func (d *decimalSubtype) Allowed() bool {
 	return d.allowed
 }
 
-func (d *decimalSubtype) Values() []enumerableType[big.Rat] {
-	var values []enumerableType[big.Rat]
+func (d *decimalSubtype) Values() []enumerableType[decimal.Decimal] {
+	var values []enumerableType[decimal.Decimal]
 	for _, value := range d.values {
 		values = append(values, &value)
 	}

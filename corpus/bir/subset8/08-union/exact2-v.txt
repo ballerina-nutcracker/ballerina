@@ -1,0 +1,14 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad o
+    v1 = %1;
+    v2 = v1;
+    %4 = <string>(v2)
+    v3 = %4;
+    %6 = println(v3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

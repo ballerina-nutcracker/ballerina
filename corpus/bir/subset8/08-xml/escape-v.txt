@@ -1,0 +1,36 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad e
+    %2 = ConstantLoad hello&amp;world
+    %3 = newXMLText(%2)
+    %4 = ConstantLoad a
+    %5 = ConstantLoad x&amp;y&quot;z
+    %6 = newMap {| string... |}{%4=%5}
+    %7 = newXMLElement(%1, %3, %6)
+    e1 = %7;
+    %9 = println(e1) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad pure text &amp; entity
+    %11 = newXMLText(%10)
+    t = %11;
+    %13 = println(t) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad  safe comment 
+    %15 = newXMLComment(%14)
+    comment = %15;
+    %17 = println(comment) -> bb3;
+  }
+  bb3 {
+    %18 = ConstantLoad target
+    %19 = ConstantLoad some data
+    %20 = newXMLPI(%18, %19)
+    pi = %20;
+    %22 = println(pi) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

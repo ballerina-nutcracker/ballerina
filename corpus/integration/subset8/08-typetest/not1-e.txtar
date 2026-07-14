@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> not1-e.bal:25:13
+   |
+25 |     else if s !is string { // @error
+   |             ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> not1-e.bal:26:9
+   |
+26 |         io:println("unreachable"); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^

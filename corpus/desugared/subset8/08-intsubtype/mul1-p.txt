@@ -1,0 +1,34 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type int Unsigned32)) (expr
+          (literal 65535))))
+      (var-def
+        (variable b (type
+          (user-defined-type int Unsigned32)) (expr
+          (literal 65535))))
+      (var-def
+        (variable c (type
+          (user-defined-type int Unsigned32)) (expr
+          (literal 65535))))
+      (var-def
+        (variable d (type
+          (user-defined-type int Unsigned32)) (expr
+          (literal 65535))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (binary-expr *
+            (binary-expr *
+              (binary-expr *
+                (simple-var-ref a)
+                (simple-var-ref b))
+              (simple-var-ref c))
+            (simple-var-ref d)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

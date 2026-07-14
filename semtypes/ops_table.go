@@ -13,11 +13,12 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package semtypes
 
 var PANIC_IMPL = &basicTypeOpsPanicImpl{}
 
-var ops = []BasicTypeOps{
+var ops = [...]BasicTypeOps{
 	PANIC_IMPL,     // nil
 	&booleanOps{},  // boolean
 	&intOps{},      // int

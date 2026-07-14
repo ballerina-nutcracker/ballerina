@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 2d)
+            (literal 1d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1d)
+            (literal 2d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1000d)
+            (literal 1d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1000d)
+            (unary-expr -
+              (literal 1d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1234567890123456789012345678901234d)
+            (literal 1234567890123456789012345678901231d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1234567890123456789012345678901234d)
+            (unary-expr -
+              (literal 1234567890123456789012345678901231d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (unary-expr -
+              (literal 1234567890123456789012345678901234d))
+            (literal 1234567890123456789012345678901231d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 9.999999999999999999999999999999998E6144d)
+            (unary-expr -
+              (literal 0.000000000000000000000000000000001E6144d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (unary-expr -
+              (literal 9.999999999999999999999999999999998E6144d))
+            (literal 0.000000000000000000000000000000001E6144d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 2E-6143d)
+            (literal 1E-6143d))))))))

@@ -1,0 +1,27 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [nil|int...][%1]{}
+    v = %2;
+    %4 = ConstantLoad 17
+    %5 = %4;
+    %6 = push(v,%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = push(v,%8) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 21
+    %11 = %10;
+    %12 = push(v,%11) -> bb3;
+  }
+  bb3 {
+    %13 = println(v) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

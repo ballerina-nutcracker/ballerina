@@ -1,0 +1,6 @@
+-- stdout --
+a is any
+a is any
+a is int[]
+a is [2,3]
+-- stderr --

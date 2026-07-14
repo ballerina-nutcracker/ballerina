@@ -73,7 +73,7 @@ type namedBlockState struct {
 }
 
 // extractAssignedName returns the name being assigned by a CFG node, or "" if not relevant.
-type extractAssignedName func(node model.Node) string
+type extractAssignedName func(node ast.Node) string
 
 // uninitAnalyzer performs dataflow analysis on a function's CFG to check whether
 // a set of named variables are initialized on all code paths.
@@ -175,7 +175,7 @@ func (a *uninitAnalyzer) isInitializedAtAllTerminals(name string) bool {
 }
 
 // extractFieldAssignment returns the field name for self.<field> assignments.
-func extractFieldAssignment(node model.Node) string {
+func extractFieldAssignment(node ast.Node) string {
 	if assignment, ok := node.(*ast.BLangAssignment); ok {
 		if fieldAccess, ok := assignment.VarRef.(*ast.BLangFieldBaseAccess); ok {
 			if isSelfFieldAccess(fieldAccess) {
@@ -216,7 +216,7 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	}
 	// Use a symbol-aware extractor that only matches assignments to the actual
 	// global variables, not to shadowed locals with the same name.
-	extractor := func(node model.Node) string {
+	extractor := func(node ast.Node) string {
 		if assignment, ok := node.(*ast.BLangAssignment); ok {
 			if varRef, ok := assignment.VarRef.(*ast.BLangSimpleVarRef); ok {
 				if globalSymbols[varRef.Symbol()] {

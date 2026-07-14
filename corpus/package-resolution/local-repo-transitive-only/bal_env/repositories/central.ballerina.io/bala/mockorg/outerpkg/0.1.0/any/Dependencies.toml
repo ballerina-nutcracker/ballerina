@@ -1,0 +1,13 @@
+[ballerina]
+dependencies-toml-version = "2"
+
+[[package]]
+org          = "mockorg"
+name         = "outerpkg"
+version      = "0.1.0"
+dependencies = [{org = "mockorg", name = "innerpkg"}]
+
+[[package]]
+org     = "mockorg"
+name    = "innerpkg"
+version = "0.1.0"

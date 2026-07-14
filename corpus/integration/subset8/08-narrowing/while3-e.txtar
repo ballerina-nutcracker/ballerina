@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got boolean|int
+  --> while3-e.bal:23:17
+   |
+23 |         int _ = count; // @error
+   |                 ^^^^^

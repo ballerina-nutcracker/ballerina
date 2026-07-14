@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: print
+error[SEMANTIC_ERROR]: unreachable code
   --> 22-e.bal:20:9
    |
 20 |         io:print("x is never"); // @error
-   |         ^^^^^^^^^^^^^^^^^^^^^^
+   |         ^^^^^^^^^^^^^^^^^^^^^^^

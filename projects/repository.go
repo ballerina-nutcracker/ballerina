@@ -22,7 +22,7 @@ import (
 
 // Repository provides access to Ballerina packages from a specific source.
 // Implementations include FileSystemRepository (local bala cache),
-// RemoteRepository (Central, with a FileSystemRepository as on-disk cache),
+// workspaceRepository (packages within a workspace), RemoteRepository (Central, with a FileSystemRepository as on-disk cache),
 // MavenRepository, etc.
 //
 // Methods receive ResolutionOptions so repositories that compose remote

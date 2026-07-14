@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect integer types for >>
+  --> 9-e.bal:20:5
+   |
+20 |     x >>= false; // @error
+   |     ^^^^^^^^^^^^

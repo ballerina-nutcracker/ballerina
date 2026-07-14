@@ -31,3 +31,4 @@ func DebugFlags() uint16                       { return 0 }
 func DebugWriter() io.Writer                   { return io.Discard }
 func DebugEnabled(_ uint16) bool               { return false }
 func DebugWriteLazy(_ uint16, _ func() string) {}
+func WithSuppressedDebug(fn func())            { fn() }

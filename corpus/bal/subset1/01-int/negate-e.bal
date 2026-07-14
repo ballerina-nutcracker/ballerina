@@ -22,8 +22,9 @@ public function main() {
 }
 
 function ignore(int n) {
+        int _ = n;
     return;
-}
+    }
 
 function foo(boolean b) returns int {
     return -b; // @error

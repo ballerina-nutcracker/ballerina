@@ -1,0 +1,262 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    a = %5;
+    %7 = ConstantLoad 4
+    %8 = ConstantLoad 5
+    %9 = ConstantLoad 6
+    %10 = ConstantLoad 3
+    %11 = newArray [int...][%10]{%7, %8, %9}
+    b = %11;
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad 2
+    %15 = ConstantLoad 4
+    %16 = ConstantLoad 3
+    %17 = newArray [int...][%16]{%13, %14, %15}
+    c = %17;
+    %19 = ConstantLoad 1
+    %20 = ConstantLoad 2
+    %21 = ConstantLoad 3
+    %22 = ConstantLoad 1
+    %23 = unknown %22;
+    %24 = ConstantLoad 4
+    %25 = newArray [int...][%24]{%19, %20, %21, %23}
+    d = %25;
+    %27 = ConstantLoad 1
+    %28 = ConstantLoad 2
+    %29 = ConstantLoad 3
+    %30 = ConstantLoad 5
+    %31 = ConstantLoad 4
+    %32 = newArray [int...][%31]{%27, %28, %29, %30}
+    e = %32;
+    %34 = ConstantLoad 0
+    %35 = newArray [int...][%34]{}
+    f = %35;
+    %37 = < a a;
+    %38 = %37;
+    %39 = println(%38) -> bb1;
+  }
+  bb1 {
+    %40 = <= a a;
+    %41 = %40;
+    %42 = println(%41) -> bb2;
+  }
+  bb2 {
+    %43 = > a a;
+    %44 = %43;
+    %45 = println(%44) -> bb3;
+  }
+  bb3 {
+    %46 = >= a a;
+    %47 = %46;
+    %48 = println(%47) -> bb4;
+  }
+  bb4 {
+    %49 = < a b;
+    %50 = %49;
+    %51 = println(%50) -> bb5;
+  }
+  bb5 {
+    %52 = <= a b;
+    %53 = %52;
+    %54 = println(%53) -> bb6;
+  }
+  bb6 {
+    %55 = > a b;
+    %56 = %55;
+    %57 = println(%56) -> bb7;
+  }
+  bb7 {
+    %58 = >= a b;
+    %59 = %58;
+    %60 = println(%59) -> bb8;
+  }
+  bb8 {
+    %61 = < b a;
+    %62 = %61;
+    %63 = println(%62) -> bb9;
+  }
+  bb9 {
+    %64 = <= b a;
+    %65 = %64;
+    %66 = println(%65) -> bb10;
+  }
+  bb10 {
+    %67 = > b a;
+    %68 = %67;
+    %69 = println(%68) -> bb11;
+  }
+  bb11 {
+    %70 = >= b a;
+    %71 = %70;
+    %72 = println(%71) -> bb12;
+  }
+  bb12 {
+    %73 = < a c;
+    %74 = %73;
+    %75 = println(%74) -> bb13;
+  }
+  bb13 {
+    %76 = <= a c;
+    %77 = %76;
+    %78 = println(%77) -> bb14;
+  }
+  bb14 {
+    %79 = > a c;
+    %80 = %79;
+    %81 = println(%80) -> bb15;
+  }
+  bb15 {
+    %82 = >= a c;
+    %83 = %82;
+    %84 = println(%83) -> bb16;
+  }
+  bb16 {
+    %85 = < c a;
+    %86 = %85;
+    %87 = println(%86) -> bb17;
+  }
+  bb17 {
+    %88 = <= c a;
+    %89 = %88;
+    %90 = println(%89) -> bb18;
+  }
+  bb18 {
+    %91 = > c a;
+    %92 = %91;
+    %93 = println(%92) -> bb19;
+  }
+  bb19 {
+    %94 = >= c a;
+    %95 = %94;
+    %96 = println(%95) -> bb20;
+  }
+  bb20 {
+    %97 = < a d;
+    %98 = %97;
+    %99 = println(%98) -> bb21;
+  }
+  bb21 {
+    %100 = <= a d;
+    %101 = %100;
+    %102 = println(%101) -> bb22;
+  }
+  bb22 {
+    %103 = > a d;
+    %104 = %103;
+    %105 = println(%104) -> bb23;
+  }
+  bb23 {
+    %106 = >= a d;
+    %107 = %106;
+    %108 = println(%107) -> bb24;
+  }
+  bb24 {
+    %109 = < d a;
+    %110 = %109;
+    %111 = println(%110) -> bb25;
+  }
+  bb25 {
+    %112 = <= d a;
+    %113 = %112;
+    %114 = println(%113) -> bb26;
+  }
+  bb26 {
+    %115 = > d a;
+    %116 = %115;
+    %117 = println(%116) -> bb27;
+  }
+  bb27 {
+    %118 = >= d a;
+    %119 = %118;
+    %120 = println(%119) -> bb28;
+  }
+  bb28 {
+    %121 = < a e;
+    %122 = %121;
+    %123 = println(%122) -> bb29;
+  }
+  bb29 {
+    %124 = <= a e;
+    %125 = %124;
+    %126 = println(%125) -> bb30;
+  }
+  bb30 {
+    %127 = > a e;
+    %128 = %127;
+    %129 = println(%128) -> bb31;
+  }
+  bb31 {
+    %130 = >= a e;
+    %131 = %130;
+    %132 = println(%131) -> bb32;
+  }
+  bb32 {
+    %133 = < e a;
+    %134 = %133;
+    %135 = println(%134) -> bb33;
+  }
+  bb33 {
+    %136 = <= e a;
+    %137 = %136;
+    %138 = println(%137) -> bb34;
+  }
+  bb34 {
+    %139 = > e a;
+    %140 = %139;
+    %141 = println(%140) -> bb35;
+  }
+  bb35 {
+    %142 = >= e a;
+    %143 = %142;
+    %144 = println(%143) -> bb36;
+  }
+  bb36 {
+    %145 = < a f;
+    %146 = %145;
+    %147 = println(%146) -> bb37;
+  }
+  bb37 {
+    %148 = <= a f;
+    %149 = %148;
+    %150 = println(%149) -> bb38;
+  }
+  bb38 {
+    %151 = > a f;
+    %152 = %151;
+    %153 = println(%152) -> bb39;
+  }
+  bb39 {
+    %154 = >= a f;
+    %155 = %154;
+    %156 = println(%155) -> bb40;
+  }
+  bb40 {
+    %157 = < f a;
+    %158 = %157;
+    %159 = println(%158) -> bb41;
+  }
+  bb41 {
+    %160 = <= f a;
+    %161 = %160;
+    %162 = println(%161) -> bb42;
+  }
+  bb42 {
+    %163 = > f a;
+    %164 = %163;
+    %165 = println(%164) -> bb43;
+  }
+  bb43 {
+    %166 = >= f a;
+    %167 = %166;
+    %168 = println(%167) -> bb44;
+  }
+  bb44 {
+    return;
+  }
+}

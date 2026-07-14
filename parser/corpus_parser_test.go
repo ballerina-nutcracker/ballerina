@@ -33,6 +33,11 @@ import (
 
 var update = flag.Bool("update", false, "update expected JSON files")
 
+// Tests skipped because the parser stage cannot process them today.
+var corpusParserSkipList = []string{
+	// No skipped tests
+}
+
 // Regex parser ignore list (13 files: regex parser not yet implemented)
 var regexParserIgnoreList = []string{
 	"bala/test_bala/types/regexp_type_test.bal",
@@ -87,6 +92,13 @@ func TestParseCorpusFiles(t *testing.T) {
 	for _, testPair := range testPairs {
 		t.Run(testPair.Name, func(t *testing.T) {
 			t.Parallel() // Run in parallel for faster execution (native only)
+			slashed := filepath.ToSlash(testPair.InputPath)
+			for _, skip := range corpusParserSkipList {
+				if strings.HasSuffix(slashed, skip) {
+					t.Skipf("Skipping parser test for %s", testPair.InputPath)
+					return
+				}
+			}
 			parseFile(t, testPair)
 		})
 	}

@@ -1,5 +1,0 @@
--- stdout --
--- stderr --
-error: divide by zero
-        at div(div1-p.bal:26)
-           main(div1-p.bal:22)

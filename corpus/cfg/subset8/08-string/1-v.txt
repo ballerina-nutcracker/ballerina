@@ -1,0 +1,133 @@
+(isKeyword
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal return))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal true))
+  )
+  (bb2 (bb0) (bb3 bb4)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal boolean))
+  )
+  (bb3 (bb2) ()
+    (return
+      (literal true))
+  )
+  (bb4 (bb2) (bb5 bb6)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal int))
+  )
+  (bb5 (bb4) ()
+    (return
+      (literal true))
+  )
+  (bb6 (bb4) (bb7 bb8)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal string))
+  )
+  (bb7 (bb6) ()
+    (return
+      (literal true))
+  )
+  (bb8 (bb6) (bb9 bb10)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal while))
+  )
+  (bb9 (bb8) ()
+    (return
+      (literal true))
+  )
+  (bb10 (bb8) (bb11 bb12)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal foreach))
+  )
+  (bb11 (bb10) ()
+    (return
+      (literal true))
+  )
+  (bb12 (bb10) (bb13 bb14)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal if))
+  )
+  (bb13 (bb12) ()
+    (return
+      (literal true))
+  )
+  (bb14 (bb12) (bb15 bb16)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal else))
+  )
+  (bb15 (bb14) ()
+    (return
+      (literal true))
+  )
+  (bb16 (bb14) (bb17 bb18)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal map))
+  )
+  (bb17 (bb16) ()
+    (return
+      (literal true))
+  )
+  (bb18 (bb16) (bb19 bb20)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal true))
+  )
+  (bb19 (bb18) ()
+    (return
+      (literal true))
+  )
+  (bb20 (bb18) (bb21 bb22)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal false))
+  )
+  (bb21 (bb20) ()
+    (return
+      (literal true))
+  )
+  (bb22 (bb20) ()
+    (return
+      (literal false))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation isKeyword (
+          (literal string))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isKeyword (
+          (literal hello))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isKeyword (
+          (literal if))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isKeyword (
+          (literal else))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isKeyword (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isKeyword (
+          (literal return))))))
+  )
+)

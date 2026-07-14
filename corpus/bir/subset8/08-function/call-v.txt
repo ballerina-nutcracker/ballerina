@@ -1,0 +1,56 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = test1() -> bb1;
+  }
+  bb1 {
+    %2 = test2() -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+test1() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    x = %2;
+    %4 = foo(x) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %7 = push(%4,%6) -> bb2;
+  }
+  bb2 {
+    %8 = println(x) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+test2() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    x = %2;
+    %4 = foo(x) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %7 = push(%4,%6) -> bb2;
+  }
+  bb2 {
+    %8 = println(x) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+foo([nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]) -> [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]{
+  bb0 {
+    %0 = x;
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: interpolation is not allowed in xml CDATA section
+  --> template-cdata-e.bal:19:33
+   |
+19 |     xml x = xml `<![CDATA[hello ${s}]]>`; // @error interpolation not allowed in xml CDATA section
+   |                                 ^^^^

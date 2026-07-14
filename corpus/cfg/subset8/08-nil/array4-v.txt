@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable moreOfNothings (type
+        (array-type
+          (value-type null) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal <nil>)
+          (literal <nil>)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref moreOfNothings))))))
+  )
+)

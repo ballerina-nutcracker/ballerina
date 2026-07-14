@@ -1,0 +1,57 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int, int, int, never...][%4]{%1, %2, %3}
+    t1 = %5;
+    %7 = t1 is [int, int, int, never...]
+    %8 = %7;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    %10 = t1 is [int:Unsigned8, int:Unsigned8, int:Unsigned8, never...]
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad 2
+    %15 = ConstantLoad 2
+    %16 = newArray [int, int, never...][%15]{%13, %14}
+    t2 = %16;
+    %18 = t2 is [int, int, never...]
+    %19 = %18;
+    %20 = println(%19) -> bb3;
+  }
+  bb3 {
+    %21 = t2 is [int:Unsigned8, int:Unsigned8, never...]
+    %22 = %21;
+    %23 = println(%22) -> bb4;
+  }
+  bb4 {
+    %24 = ConstantLoad 1
+    %25 = ConstantLoad 2
+    %26 = ConstantLoad 2
+    %27 = newArray [int...][%26]{%24, %25}
+    t3 = %27;
+    %29 = t3 is [int...]
+    %30 = %29;
+    %31 = println(%30) -> bb5;
+  }
+  bb5 {
+    %32 = t3 is [int, int, never...]
+    %33 = %32;
+    %34 = println(%33) -> bb6;
+  }
+  bb6 {
+    %35 = t3 is [int:Unsigned8...]
+    %36 = %35;
+    %37 = println(%36) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

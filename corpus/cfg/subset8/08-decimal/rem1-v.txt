@@ -1,0 +1,102 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 1)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (unary-expr -
+            (literal 1))
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (unary-expr -
+            (literal 10))
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 10)
+          (unary-expr -
+            (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (unary-expr -
+            (literal 16.3))
+          (literal 4.1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 17.8)
+          (unary-expr -
+            (literal 4.1))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (unary-expr -
+            (literal 17.8))
+          (unary-expr -
+            (literal 4.1))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 27)
+          (literal 4)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 28)
+          (literal 5)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 10)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 1E-6143)
+          (literal 1E-6143)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 1E-6143)
+          (literal 1E-6142)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 1E-6143)
+          (unary-expr -
+            (literal 1E-6142))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 0.001)
+          (literal 0.01)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 9.05)
+          (literal 0.1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 9.0E+31)
+          (literal 0.01)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 9.00005)
+          (literal 0.0001)))))
+  )
+)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expected type is not an object or stream type
+  --> new-non-object-expected-type-e.bal:18:13
+   |
+18 |     int _ = new (5); // @error expected type is not an object or stream type
+   |             ^^^^^^^

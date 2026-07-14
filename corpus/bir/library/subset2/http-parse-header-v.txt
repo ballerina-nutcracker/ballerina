@@ -1,0 +1,125 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad text/plain;q=0.9, application/json
+    %2 = parseHeader(%1) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = $desugar$0 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    values = $desugar$0;
+    %6 = length(values) -> bb4;
+  }
+  bb4 {
+    %7 = %6;
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    %9 = ConstantLoad multipart/form-data; boundary="----boundary"
+    %10 = parseHeader(%9) -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %10;
+    %12 = $desugar$1 is error
+    %12 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    quoted = $desugar$1;
+    %14 = length(quoted) -> bb9;
+  }
+  bb9 {
+    %15 = %14;
+    %16 = println(%15) -> bb10;
+  }
+  bb10 {
+    %18 = ConstantLoad value
+    %20 = ConstantLoad 0
+    %19 = quoted[%20];
+    %17 = %19[%18];
+    %21 = println(%17) -> bb11;
+  }
+  bb11 {
+    %23 = ConstantLoad boundary
+    %25 = ConstantLoad params
+    %27 = ConstantLoad 0
+    %26 = quoted[%27];
+    %24 = %26[%25];
+    %22 = %24[%23];
+    %28 = println(%22) -> bb12;
+  }
+  bb12 {
+    %29 = ConstantLoad multipart/form-data; boundary
+    %30 = parseHeader(%29) -> bb13;
+  }
+  bb13 {
+    $desugar$2 = %30;
+    %32 = $desugar$2 is error
+    %32 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    noVal = $desugar$2;
+    %34 = length(noVal) -> bb16;
+  }
+  bb16 {
+    %35 = %34;
+    %36 = println(%35) -> bb17;
+  }
+  bb17 {
+    %38 = ConstantLoad boundary
+    %40 = ConstantLoad params
+    %42 = ConstantLoad 0
+    %41 = noVal[%42];
+    %39 = %41[%40];
+    %37 = %39[%38];
+    %43 = println(%37) -> bb18;
+  }
+  bb18 {
+    %44 = ConstantLoad text/html
+    %45 = parseHeader(%44) -> bb19;
+  }
+  bb19 {
+    $desugar$3 = %45;
+    %47 = $desugar$3 is error
+    %47 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    single = $desugar$3;
+    %49 = length(single) -> bb22;
+  }
+  bb22 {
+    %50 = %49;
+    %51 = println(%50) -> bb23;
+  }
+  bb23 {
+    %52 = ConstantLoad <nil>
+    %0 = %52;
+    return;
+  }
+}

@@ -10,11 +10,11 @@
       (var-def
         (variable d (type
           (value-type decimal)) (expr
-          (literal 123/1))))
+          (literal 123))))
       (var-def
         (variable d2 (type
           (value-type decimal)) (expr
-          (literal 3/2))))
+          (literal 1.5))))
       (var-def
         (variable f2 (type
           (value-type float)) (expr
@@ -40,14 +40,14 @@
           (list-constructor-expr
             (literal 1)
             (literal 1)
-            (literal 1/1)))))
+            (literal 1)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref a))))
       (var-def
         (variable dd (type
           (value-type decimal)) (expr
-          (literal 100/1))))
+          (literal 100))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref dd)))))))

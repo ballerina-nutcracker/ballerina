@@ -1,0 +1,10 @@
+(package
+  (import-package ballerina io (as io))
+  (function main (
+    (variable arg (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal 1)))))))

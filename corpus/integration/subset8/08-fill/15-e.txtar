@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing required member at index 1: type '["a", "a"|"b", never...]' has no filler value
+  --> 15-e.bal:22:14
+   |
+22 |     T[2] a = [["a", "b"]]; // @error
+   |              ^^^^^^^^^^^^

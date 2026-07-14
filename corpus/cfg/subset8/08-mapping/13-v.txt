@@ -1,0 +1,39 @@
+(main
+  (bb0 () (bb1)
+    (type-test-expr is
+      (mapping-constructor-expr
+        (key-value
+          (literal a)
+          (literal 1))
+        (key-value
+          (literal b)
+          (literal 2)))
+      (user-defined-type BroadType))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal correct))))
+  )
+  (bb2 (bb1) (bb3)
+    (type-test-expr is
+      (field-based-access x
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 2))
+              (key-value
+                (literal b)
+                (literal 3))))))
+      (user-defined-type BroadType))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal correct))))
+  )
+  (bb4 (bb3) ())
+)

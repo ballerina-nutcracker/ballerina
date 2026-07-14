@@ -1,0 +1,46 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition XY
+    (union-type
+      (union-type
+        (finite-type
+          (literal x))
+        (finite-type
+          (literal y)))
+      (finite-type
+        (literal z))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 44))
+            (key-value
+              (literal y)
+              (literal 88))))))
+      (var-def
+        (variable xy (type
+          (user-defined-type XY)) (expr
+          (literal x))))
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref p)
+            (simple-var-ref xy)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

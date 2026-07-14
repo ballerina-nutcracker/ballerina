@@ -1,0 +1,323 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition UniformTypeBitSet
+    (value-type int))
+  (type-definition SemType
+    (union-type
+      (user-defined-type UniformTypeBitSet)
+      (user-defined-type ComplexSemType)))
+  (type-definition ProperSubtypeData
+    (union-type
+      (union-type
+        (union-type
+          (union-type
+            (union-type
+              (user-defined-type StringSubtype)
+              (user-defined-type FloatSubtype))
+            (user-defined-type IntSubtype))
+          (user-defined-type BooleanSubtype))
+        (user-defined-type XmlSubtype))
+      (user-defined-type BddNode)))
+  (type-definition SubtypeData
+    (union-type
+      (user-defined-type ProperSubtypeData)
+      (value-type boolean)))
+  (type-definition Char
+    (value-type string))
+  (type-definition ComplexSemType
+    (record-type
+      (field all
+        (user-defined-type UniformTypeBitSet))
+      (field some
+        (user-defined-type UniformTypeBitSet))
+      (field subtypeDataList
+        (array-type
+          (user-defined-type ProperSubtypeData) dimensions: 1 ([])))))
+  (type-definition StringSubtype
+    (record-type
+      (field char
+        (user-defined-type CharStringSubtype))
+      (field nonChar
+        (user-defined-type NonCharStringSubtype))))
+  (type-definition CharStringSubtype
+    (record-type
+      (field allowed
+        (value-type boolean))
+      (field values
+        (array-type
+          (user-defined-type Char) dimensions: 1 ([])))))
+  (type-definition NonCharStringSubtype
+    (record-type
+      (field allowed
+        (value-type boolean))
+      (field values
+        (array-type
+          (value-type string) dimensions: 1 ([])))))
+  (type-definition FloatSubtype
+    (record-type
+      (field allowed
+        (value-type boolean))
+      (field values
+        (array-type
+          (value-type float) dimensions: 1 ([])))))
+  (type-definition BooleanSubtype
+    (record-type
+      (field value
+        (value-type boolean))))
+  (type-definition IntSubtype
+    (array-type
+      (user-defined-type Range) dimensions: 1 ([])))
+  (type-definition Range
+    (record-type
+      (field min
+        (value-type int))
+      (field max
+        (value-type int))))
+  (type-definition XmlSubtype
+    (record-type
+      (field primitives
+        (value-type int))
+      (field sequence
+        (user-defined-type Bdd))))
+  (type-definition Bdd
+    (union-type
+      (user-defined-type BddNode)
+      (value-type boolean)))
+  (type-definition BddNode
+    (record-type
+      (field atom
+        (user-defined-type Atom))
+      (field left
+        (user-defined-type Bdd))
+      (field middle
+        (user-defined-type Bdd))
+      (field right
+        (user-defined-type Bdd))))
+  (type-definition Atom
+    (union-type
+      (user-defined-type RecAtom)
+      (user-defined-type TypeAtom)))
+  (type-definition RecAtom
+    (value-type int))
+  (type-definition TypeAtom
+    (record-type
+      (field index
+        (value-type int))
+      (field atomicType
+        (user-defined-type AtomicType))))
+  (type-definition AtomicType
+    (union-type
+      (user-defined-type ListAtomicType)
+      (user-defined-type MappingAtomicType)))
+  (type-definition ListAtomicType
+    (record-type
+      (field members
+        (array-type
+          (user-defined-type SemType) dimensions: 1 ([])))
+      (field rest
+        (user-defined-type SemType))))
+  (type-definition MappingAtomicType
+    (record-type
+      (field names
+        (array-type
+          (value-type string) dimensions: 1 ([])))
+      (field types
+        (array-type
+          (user-defined-type SemType) dimensions: 1 ([])))
+      (field rest
+        (user-defined-type SemType))))
+  (const UT_NIL () (
+    (literal 0)))
+  (const UT_BOOLEAN () (
+    (literal 1)))
+  (const UT_LIST_RO () (
+    (literal 2)))
+  (const UT_MAPPING_RO () (
+    (literal 3)))
+  (const UT_TABLE_RO () (
+    (literal 4)))
+  (const UT_XML_RO () (
+    (literal 5)))
+  (const UT_OBJECT_RO () (
+    (literal 6)))
+  (const UT_INT () (
+    (literal 7)))
+  (const UT_FLOAT () (
+    (literal 8)))
+  (const UT_DECIMAL () (
+    (literal 9)))
+  (const UT_STRING () (
+    (literal 10)))
+  (const UT_ERROR () (
+    (literal 11)))
+  (const UT_FUNCTION () (
+    (literal 12)))
+  (const UT_TYPEDESC () (
+    (literal 13)))
+  (const UT_HANDLE () (
+    (literal 14)))
+  (const UT_FUTURE () (
+    (literal 16)))
+  (const UT_STREAM () (
+    (literal 17)))
+  (const UT_LIST_RW () (
+    (literal 18)))
+  (const UT_MAPPING_RW () (
+    (literal 19)))
+  (const UT_TABLE_RW () (
+    (literal 20)))
+  (const UT_XML_RW () (
+    (literal 21)))
+  (const UT_OBJECT_RW () (
+    (literal 22)))
+  (const NEVER () (
+    (literal 0)))
+  (const NIL () (
+    (binary-expr <<
+      (literal 1)
+      (simple-var-ref UT_NIL))))
+  (const FLOAT () (
+    (binary-expr <<
+      (literal 1)
+      (simple-var-ref UT_FLOAT))))
+  (const INT () (
+    (binary-expr <<
+      (literal 1)
+      (simple-var-ref UT_INT))))
+  (const STRING () (
+    (binary-expr <<
+      (literal 1)
+      (simple-var-ref UT_STRING))))
+  (const LIST_RW () (
+    (binary-expr <<
+      (literal 1)
+      (simple-var-ref UT_LIST_RW))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable mat (type
+          (user-defined-type MappingAtomicType)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal names)
+              (list-constructor-expr
+                (literal x)
+                (literal y)))
+            (key-value
+              (literal types)
+              (list-constructor-expr
+                (simple-var-ref FLOAT)
+                (simple-var-ref FLOAT)))
+            (key-value
+              (literal rest)
+              (simple-var-ref NEVER))))))
+      (var-def
+        (variable bdd (type
+          (user-defined-type BddNode)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal atom)
+              (mapping-constructor-expr
+                (key-value
+                  (literal index)
+                  (literal 42))
+                (key-value
+                  (literal atomicType)
+                  (simple-var-ref mat))))
+            (key-value
+              (literal left)
+              (literal true))
+            (key-value
+              (literal middle)
+              (literal false))
+            (key-value
+              (literal right)
+              (literal false))))))
+      (var-def
+        (variable semType (type
+          (user-defined-type SemType)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal all)
+              (literal 0))
+            (key-value
+              (literal some)
+              (simple-var-ref LIST_RW))
+            (key-value
+              (literal subtypeDataList)
+              (list-constructor-expr
+                (simple-var-ref bdd)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref semType)
+            (user-defined-type Bdd)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref semType)
+          (user-defined-type ComplexSemType))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal complex))))
+          (var-def
+            (variable list (type
+              (array-type
+                (user-defined-type SubtypeData) dimensions: 1 ([]))) (expr
+              (field-based-access subtypeDataList
+                (simple-var-ref semType)))))
+          (var-def
+            (variable st (type
+              (user-defined-type SubtypeData)) (expr
+              (index-based-access
+                (simple-var-ref list)
+                (literal 0)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref st)
+              (user-defined-type BddNode))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal bdd))))
+              (var-def
+                (variable atom (type
+                  (user-defined-type Atom)) (expr
+                  (field-based-access atom
+                    (simple-var-ref st)))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref atom)
+                  (user-defined-type TypeAtom))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (field-based-access index
+                        (simple-var-ref atom)))))
+                  (var-def
+                    (variable t (type
+                      (user-defined-type AtomicType)) (expr
+                      (field-based-access atomicType
+                        (simple-var-ref atom)))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref t)
+                      (user-defined-type MappingAtomicType))
+                    (block-stmt
+                      (var-def
+                        (variable names (type
+                          (array-type
+                            (value-type string) dimensions: 1 ([]))) (expr
+                          (field-based-access names
+                            (simple-var-ref t)))))
+                      (expression-stmt
+                        (invocation io println (
+                          (index-based-access
+                            (simple-var-ref names)
+                            (literal 0)))))) ())
+                  (block-stmt)) ())
+              (block-stmt)) ())
+          (block-stmt)) ())
+      (block-stmt))))

@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "xmlnsmodule"
+version = "0.1.0"

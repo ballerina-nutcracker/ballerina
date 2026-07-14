@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'y'
+  --> construct4-e.bal:24:11
+   |
+24 |     R r = {x: 1, z: 2}; // @error
+   |           ^^^^^^^^^^^^

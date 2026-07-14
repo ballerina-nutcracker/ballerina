@@ -19,7 +19,8 @@ package values
 import (
 	"fmt"
 	"math"
-	"math/big"
+
+	"ballerina-lang-go/decimal"
 )
 
 type CompareResult int8
@@ -78,8 +79,8 @@ func Compare(x, y BalValue) CompareResult {
 			return CmpGT
 		}
 		return CmpEQ
-	case *big.Rat:
-		v2 := y.(*big.Rat)
+	case *decimal.Decimal:
+		v2 := y.(*decimal.Decimal)
 		switch v1.Cmp(v2) {
 		case -1:
 			return CmpLT

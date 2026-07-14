@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> check9-e.bal:19:5
+   |
+19 |     checkpanic newError(); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^

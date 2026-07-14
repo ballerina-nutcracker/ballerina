@@ -1,0 +1,54 @@
+(bin
+  (bb0 () (bb1 bb3)
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal nil))))
+  )
+  (bb2 (bb1 bb3) (bb4 bb5)
+    (type-test-expr is
+      (simple-var-ref x)
+      (union-type
+        (value-type boolean)
+        (union-type
+          (value-type int)
+          (value-type null))))
+  )
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+  (bb4 (bb2) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal boolean|int?))))
+  )
+  (bb5 (bb4 bb2) ())
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation bin (
+        (literal 1))))
+    (expression-stmt
+      (invocation bin (
+        (literal 9223372036854775807))))
+    (expression-stmt
+      (invocation bin (
+        (literal true))))
+    (expression-stmt
+      (invocation bin (
+        (literal hello))))
+    (expression-stmt
+      (invocation bin (
+        (literal <nil>))))
+    (expression-stmt
+      (invocation bin (
+        (literal 1.5))))
+  )
+)

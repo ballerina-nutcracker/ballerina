@@ -1,12 +1,11 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 $anonFunc$_0(int) -> int{
   bb0 {
-    %4 = (1, x);
+    %4 = (2, x);
     %5 = y;
     %3 = + %4 %5;
     %6 = %3;
-    %7 = (1, z);
+    %7 = (2, z);
     %2 = + %6 %7;
     %0 = %2;
     return;
@@ -14,7 +13,7 @@ $anonFunc$_0(int) -> int{
 }
 $anonFunc$_1(int) -> int{
   bb0 {
-    %3 = (1, x);
+    %3 = (2, x);
     %4 = y;
     %2 = + %3 %4;
     %0 = %2;
@@ -26,13 +25,17 @@ foo(int,int,boolean) -> function(int) returns int{
     flag ? bb1 : bb2;
   }
   bb1 {
-    %4 = closure_fp $anon/.:$anonFunc$_0
-    %0 = %4;
+    PushScopeFrame 1
+    %0 = closure_fp $anon/.:$anonFunc$_0
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
-    %5 = closure_fp $anon/.:$anonFunc$_1
-    %0 = %5;
+    PushScopeFrame 1
+    %0 = closure_fp $anon/.:$anonFunc$_1
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
 }

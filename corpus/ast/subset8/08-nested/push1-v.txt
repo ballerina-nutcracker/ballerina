@@ -1,0 +1,104 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition C
+    (record-type
+      (field x
+        (value-type float))
+      (field y
+        (value-type float))))
+  (const N () (
+    (literal 10)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (user-defined-type C) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (foreach
+        (var-def
+          (variable _ (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref N))
+        (block-stmt
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref v) (
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 1))
+                (key-value
+                  (literal y)
+                  (literal 2))))))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref N))
+        (block-stmt
+          (var-def
+            (variable c (type
+              (user-defined-type C)) (expr
+              (index-based-access
+                (simple-var-ref v)
+                (simple-var-ref i)))))
+          (compound-assignment *
+            (field-based-access x
+              (simple-var-ref c))
+            (type-conversion-expr
+              (simple-var-ref i)
+              (value-type float)))
+          (compound-assignment *
+            (field-based-access y
+              (simple-var-ref c))
+            (type-conversion-expr
+              (simple-var-ref i)
+              (value-type float)))))
+      (var-def
+        (variable total1 (type
+          (value-type float)) (expr
+          (literal 0))))
+      (var-def
+        (variable total2 (type
+          (value-type float)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref N))
+        (block-stmt
+          (var-def
+            (variable c (type
+              (user-defined-type C)) (expr
+              (index-based-access
+                (simple-var-ref v)
+                (simple-var-ref i)))))
+          (compound-assignment +
+            (simple-var-ref total1)
+            (binary-expr +
+              (field-based-access x
+                (simple-var-ref c))
+              (field-based-access y
+                (simple-var-ref c))))
+          (compound-assignment +
+            (simple-var-ref total2)
+            (binary-expr *
+              (literal 3.0)
+              (type-conversion-expr
+                (simple-var-ref i)
+                (value-type float))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref total1)
+            (simple-var-ref total2))))))))

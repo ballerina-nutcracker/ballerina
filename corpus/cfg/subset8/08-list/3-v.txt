@@ -1,0 +1,18 @@
+(foo
+  (bb0 () ()
+    (return
+      (list-constructor-expr))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (invocation foo ()))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+)

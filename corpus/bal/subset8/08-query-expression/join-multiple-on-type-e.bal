@@ -40,7 +40,7 @@ public function main() {
         {id: 10, name: "HQ"}
     ];
 
-    string[] joined = from var person in people
+    string[] _ = from var person in people
         join var dept in departments
         on person.deptId equals dept.id
         join var loc in locations

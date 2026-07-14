@@ -1,0 +1,908 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = bddAtom(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %6 = bddAtom(%5) -> bb2;
+  }
+  bb2 {
+    %7 = bddUnion(%3,%6) -> bb3;
+  }
+  bb3 {
+    b1 = %7;
+    %9 = ConstantLoad 2
+    %10 = %9;
+    %11 = bddAtom(%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %14 = bddAtom(%13) -> bb5;
+  }
+  bb5 {
+    %15 = bddUnion(%11,%14) -> bb6;
+  }
+  bb6 {
+    b2 = %15;
+    %17 = == b1 b2;
+    %18 = %17;
+    %19 = println(%18) -> bb7;
+  }
+  bb7 {
+    %20 = ConstantLoad 1
+    %21 = %20;
+    %22 = bddAtom(%21) -> bb8;
+  }
+  bb8 {
+    %23 = ConstantLoad 2
+    %24 = %23;
+    %25 = bddAtom(%24) -> bb9;
+  }
+  bb9 {
+    %26 = bddIntersect(%22,%25) -> bb10;
+  }
+  bb10 {
+    b3 = %26;
+    %28 = == b1 b3;
+    %29 = %28;
+    %30 = println(%29) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
+bddAtom(int) -> {| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
+  bb0 {
+    %2 = ConstantLoad atom
+    %3 = ConstantLoad left
+    %4 = ConstantLoad true
+    %5 = ConstantLoad middle
+    %6 = ConstantLoad false
+    %7 = ConstantLoad right
+    %8 = ConstantLoad false
+    %9 = newMap {| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{%2=atom, %3=%4, %5=%6, %7=%8}
+    %0 = %9;
+    return;
+  }
+}
+bddUnion(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
+  bb0 {
+    %3 = unknown b1 b2;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, %0) = (1, b1);
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    %4 = b1 is boolean
+    %4 ? bb3 : bb6;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad true
+    %2 = %1;
+    %0 = == (1, b1) %2;
+    %0 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (2, %0) = (2, b2);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %5 = b2 is boolean
+    %5 ? bb7 : bb10;
+  }
+  bb7 {
+    PushScopeFrame 3
+    %1 = ConstantLoad true
+    %2 = %1;
+    %0 = == (1, b2) %2;
+    %0 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (2, %0) = (2, b1);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 16
+    %1 = ConstantLoad atom
+    %0 = (1, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad atom
+    %3 = (1, b2)[%4];
+    %5 = %3;
+    %6 = atomCmp(%2,%5) -> bb11;
+  }
+  bb11 {
+    cmp = %6;
+    %9 = cmp;
+    %10 = ConstantLoad 0
+    %11 = %10;
+    %8 = < %9 %11;
+    %8 ? bb12 : bb15;
+  }
+  bb12 {
+    PushScopeFrame 11
+    %1 = ConstantLoad atom
+    %0 = (2, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b1)[%4];
+    %6 = ConstantLoad middle
+    %5 = (2, b1)[%6];
+    %7 = bddUnion(%5,(2, b2)) -> bb13;
+  }
+  bb13 {
+    %9 = ConstantLoad right
+    %8 = (2, b1)[%9];
+    %10 = bddCreate(%2,%3,%7,%8) -> bb14;
+  }
+  bb14 {
+    (2, %0) = %10;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    %13 = cmp;
+    %14 = ConstantLoad 0
+    %15 = %14;
+    %12 = > %13 %15;
+    %12 ? bb16 : bb19;
+  }
+  bb16 {
+    PushScopeFrame 11
+    %1 = ConstantLoad atom
+    %0 = (2, b2)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b2)[%4];
+    %6 = ConstantLoad middle
+    %5 = (2, b2)[%6];
+    %7 = bddUnion((2, b1),%5) -> bb17;
+  }
+  bb17 {
+    %9 = ConstantLoad right
+    %8 = (2, b2)[%9];
+    %10 = bddCreate(%2,%3,%7,%8) -> bb18;
+  }
+  bb18 {
+    (2, %0) = %10;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    PushScopeFrame 19
+    %1 = ConstantLoad atom
+    %0 = (2, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b1)[%4];
+    %6 = ConstantLoad left
+    %5 = (2, b2)[%6];
+    %7 = bddUnion(%3,%5) -> bb20;
+  }
+  bb20 {
+    %9 = ConstantLoad middle
+    %8 = (2, b1)[%9];
+    %11 = ConstantLoad middle
+    %10 = (2, b2)[%11];
+    %12 = bddUnion(%8,%10) -> bb21;
+  }
+  bb21 {
+    %14 = ConstantLoad right
+    %13 = (2, b1)[%14];
+    %16 = ConstantLoad right
+    %15 = (2, b2)[%16];
+    %17 = bddUnion(%13,%15) -> bb22;
+  }
+  bb22 {
+    %18 = bddCreate(%2,%7,%12,%17) -> bb23;
+  }
+  bb23 {
+    (2, %0) = %18;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb24 {
+    GOTO bb25;
+  }
+  bb25 {
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb26 {
+    GOTO bb27;
+  }
+  bb27 {
+    GOTO bb28;
+  }
+  bb28 {
+    return;
+  }
+}
+bddIntersect(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
+  bb0 {
+    %3 = unknown b1 b2;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, %0) = (1, b1);
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    %4 = b1 is boolean
+    %4 ? bb3 : bb6;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad true
+    %2 = %1;
+    %0 = == (1, b1) %2;
+    %0 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 0
+    (2, %0) = (2, b2);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %5 = b2 is boolean
+    %5 ? bb7 : bb10;
+  }
+  bb7 {
+    PushScopeFrame 3
+    %1 = ConstantLoad true
+    %2 = %1;
+    %0 = == (1, b2) %2;
+    %0 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, %0) = (2, b1);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 16
+    %1 = ConstantLoad atom
+    %0 = (1, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad atom
+    %3 = (1, b2)[%4];
+    %5 = %3;
+    %6 = atomCmp(%2,%5) -> bb11;
+  }
+  bb11 {
+    cmp = %6;
+    %9 = cmp;
+    %10 = ConstantLoad 0
+    %11 = %10;
+    %8 = < %9 %11;
+    %8 ? bb12 : bb17;
+  }
+  bb12 {
+    PushScopeFrame 13
+    %1 = ConstantLoad atom
+    %0 = (2, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b1)[%4];
+    %5 = bddIntersect(%3,(2, b2)) -> bb13;
+  }
+  bb13 {
+    %7 = ConstantLoad middle
+    %6 = (2, b1)[%7];
+    %8 = bddIntersect(%6,(2, b2)) -> bb14;
+  }
+  bb14 {
+    %10 = ConstantLoad right
+    %9 = (2, b1)[%10];
+    %11 = bddIntersect(%9,(2, b2)) -> bb15;
+  }
+  bb15 {
+    %12 = bddCreate(%2,%5,%8,%11) -> bb16;
+  }
+  bb16 {
+    (2, %0) = %12;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb17 {
+    %13 = cmp;
+    %14 = ConstantLoad 0
+    %15 = %14;
+    %12 = > %13 %15;
+    %12 ? bb18 : bb23;
+  }
+  bb18 {
+    PushScopeFrame 13
+    %1 = ConstantLoad atom
+    %0 = (2, b2)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b2)[%4];
+    %5 = bddIntersect((2, b1),%3) -> bb19;
+  }
+  bb19 {
+    %7 = ConstantLoad middle
+    %6 = (2, b2)[%7];
+    %8 = bddIntersect((2, b1),%6) -> bb20;
+  }
+  bb20 {
+    %10 = ConstantLoad right
+    %9 = (2, b2)[%10];
+    %11 = bddIntersect((2, b1),%9) -> bb21;
+  }
+  bb21 {
+    %12 = bddCreate(%2,%5,%8,%11) -> bb22;
+  }
+  bb22 {
+    (2, %0) = %12;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    PushScopeFrame 28
+    %1 = ConstantLoad atom
+    %0 = (2, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b1)[%4];
+    %6 = ConstantLoad middle
+    %5 = (2, b1)[%6];
+    %7 = bddUnion(%3,%5) -> bb24;
+  }
+  bb24 {
+    %9 = ConstantLoad left
+    %8 = (2, b2)[%9];
+    %11 = ConstantLoad middle
+    %10 = (2, b2)[%11];
+    %12 = bddUnion(%8,%10) -> bb25;
+  }
+  bb25 {
+    %13 = bddIntersect(%7,%12) -> bb26;
+  }
+  bb26 {
+    %14 = ConstantLoad false
+    %15 = %14;
+    %17 = ConstantLoad right
+    %16 = (2, b1)[%17];
+    %19 = ConstantLoad middle
+    %18 = (2, b1)[%19];
+    %20 = bddUnion(%16,%18) -> bb27;
+  }
+  bb27 {
+    %22 = ConstantLoad right
+    %21 = (2, b2)[%22];
+    %24 = ConstantLoad middle
+    %23 = (2, b2)[%24];
+    %25 = bddUnion(%21,%23) -> bb28;
+  }
+  bb28 {
+    %26 = bddIntersect(%20,%25) -> bb29;
+  }
+  bb29 {
+    %27 = bddCreate(%2,%13,%15,%26) -> bb30;
+  }
+  bb30 {
+    (2, %0) = %27;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb31 {
+    GOTO bb32;
+  }
+  bb32 {
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb33 {
+    GOTO bb34;
+  }
+  bb34 {
+    GOTO bb35;
+  }
+  bb35 {
+    return;
+  }
+}
+bddDiff(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
+  bb0 {
+    %3 = unknown b1 b2;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    %4 = b2 is boolean
+    %4 ? bb3 : bb6;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad true
+    %2 = %1;
+    %0 = == (1, b2) %2;
+    %0 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (2, %0) = (2, b1);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %5 = b1 is boolean
+    %5 ? bb7 : bb11;
+  }
+  bb7 {
+    PushScopeFrame 3
+    %1 = ConstantLoad true
+    %2 = %1;
+    %0 = == (1, b1) %2;
+    %0 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = bddComplement((2, b2)) -> bb9;
+  }
+  bb9 {
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    PushScopeFrame 16
+    %1 = ConstantLoad atom
+    %0 = (1, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad atom
+    %3 = (1, b2)[%4];
+    %5 = %3;
+    %6 = atomCmp(%2,%5) -> bb12;
+  }
+  bb12 {
+    cmp = %6;
+    %9 = cmp;
+    %10 = ConstantLoad 0
+    %11 = %10;
+    %8 = < %9 %11;
+    %8 ? bb13 : bb19;
+  }
+  bb13 {
+    PushScopeFrame 18
+    %1 = ConstantLoad atom
+    %0 = (2, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b1)[%4];
+    %6 = ConstantLoad middle
+    %5 = (2, b1)[%6];
+    %7 = bddUnion(%3,%5) -> bb14;
+  }
+  bb14 {
+    %8 = bddDiff(%7,(2, b2)) -> bb15;
+  }
+  bb15 {
+    %9 = ConstantLoad false
+    %10 = %9;
+    %12 = ConstantLoad right
+    %11 = (2, b1)[%12];
+    %14 = ConstantLoad middle
+    %13 = (2, b1)[%14];
+    %15 = bddUnion(%11,%13) -> bb16;
+  }
+  bb16 {
+    %16 = bddDiff(%15,(2, b2)) -> bb17;
+  }
+  bb17 {
+    %17 = bddCreate(%2,%8,%10,%16) -> bb18;
+  }
+  bb18 {
+    (2, %0) = %17;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    %13 = cmp;
+    %14 = ConstantLoad 0
+    %15 = %14;
+    %12 = > %13 %15;
+    %12 ? bb20 : bb26;
+  }
+  bb20 {
+    PushScopeFrame 18
+    %1 = ConstantLoad atom
+    %0 = (2, b2)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b2)[%4];
+    %6 = ConstantLoad middle
+    %5 = (2, b2)[%6];
+    %7 = bddUnion(%3,%5) -> bb21;
+  }
+  bb21 {
+    %8 = bddDiff((2, b1),%7) -> bb22;
+  }
+  bb22 {
+    %9 = ConstantLoad false
+    %10 = %9;
+    %12 = ConstantLoad right
+    %11 = (2, b2)[%12];
+    %14 = ConstantLoad middle
+    %13 = (2, b2)[%14];
+    %15 = bddUnion(%11,%13) -> bb23;
+  }
+  bb23 {
+    %16 = bddDiff((2, b1),%15) -> bb24;
+  }
+  bb24 {
+    %17 = bddCreate(%2,%8,%10,%16) -> bb25;
+  }
+  bb25 {
+    (2, %0) = %17;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb26 {
+    PushScopeFrame 19
+    %1 = ConstantLoad atom
+    %0 = (2, b1)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b1)[%4];
+    %6 = ConstantLoad left
+    %5 = (2, b2)[%6];
+    %7 = bddDiff(%3,%5) -> bb27;
+  }
+  bb27 {
+    %9 = ConstantLoad middle
+    %8 = (2, b1)[%9];
+    %11 = ConstantLoad middle
+    %10 = (2, b2)[%11];
+    %12 = bddDiff(%8,%10) -> bb28;
+  }
+  bb28 {
+    %14 = ConstantLoad right
+    %13 = (2, b1)[%14];
+    %16 = ConstantLoad right
+    %15 = (2, b2)[%16];
+    %17 = bddDiff(%13,%15) -> bb29;
+  }
+  bb29 {
+    %18 = bddCreate(%2,%7,%12,%17) -> bb30;
+  }
+  bb30 {
+    (2, %0) = %18;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb31 {
+    GOTO bb32;
+  }
+  bb32 {
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb33 {
+    GOTO bb34;
+  }
+  bb34 {
+    GOTO bb35;
+  }
+  bb35 {
+    return;
+  }
+}
+bddComplement(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
+  bb0 {
+    %2 = b is boolean
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ! (1, b);
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 15
+    %2 = ConstantLoad right
+    %1 = (1, b)[%2];
+    %3 = ConstantLoad false
+    %4 = %3;
+    %0 = unknown %1 %4;
+    %0 ? bb3 : bb8;
+  }
+  bb3 {
+    PushScopeFrame 15
+    %1 = ConstantLoad atom
+    %0 = (2, b)[%1];
+    %2 = %0;
+    %3 = ConstantLoad false
+    %4 = %3;
+    %6 = ConstantLoad left
+    %5 = (2, b)[%6];
+    %8 = ConstantLoad middle
+    %7 = (2, b)[%8];
+    %9 = bddUnion(%5,%7) -> bb4;
+  }
+  bb4 {
+    %10 = bddComplement(%9) -> bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad middle
+    %11 = (2, b)[%12];
+    %13 = bddComplement(%11) -> bb6;
+  }
+  bb6 {
+    %14 = bddCreate(%2,%4,%10,%13) -> bb7;
+  }
+  bb7 {
+    (2, %0) = %14;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    %7 = ConstantLoad left
+    %6 = (1, b)[%7];
+    %8 = ConstantLoad false
+    %9 = %8;
+    %5 = unknown %6 %9;
+    %5 ? bb9 : bb14;
+  }
+  bb9 {
+    PushScopeFrame 15
+    %1 = ConstantLoad atom
+    %0 = (2, b)[%1];
+    %2 = %0;
+    %4 = ConstantLoad middle
+    %3 = (2, b)[%4];
+    %5 = bddComplement(%3) -> bb10;
+  }
+  bb10 {
+    %7 = ConstantLoad right
+    %6 = (2, b)[%7];
+    %9 = ConstantLoad middle
+    %8 = (2, b)[%9];
+    %10 = bddUnion(%6,%8) -> bb11;
+  }
+  bb11 {
+    %11 = bddComplement(%10) -> bb12;
+  }
+  bb12 {
+    %12 = ConstantLoad false
+    %13 = %12;
+    %14 = bddCreate(%2,%5,%11,%13) -> bb13;
+  }
+  bb13 {
+    (2, %0) = %14;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    %12 = ConstantLoad middle
+    %11 = (1, b)[%12];
+    %13 = ConstantLoad false
+    %14 = %13;
+    %10 = unknown %11 %14;
+    %10 ? bb15 : bb21;
+  }
+  bb15 {
+    PushScopeFrame 16
+    %1 = ConstantLoad atom
+    %0 = (2, b)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b)[%4];
+    %5 = bddComplement(%3) -> bb16;
+  }
+  bb16 {
+    %7 = ConstantLoad left
+    %6 = (2, b)[%7];
+    %9 = ConstantLoad right
+    %8 = (2, b)[%9];
+    %10 = bddUnion(%6,%8) -> bb17;
+  }
+  bb17 {
+    %11 = bddComplement(%10) -> bb18;
+  }
+  bb18 {
+    %13 = ConstantLoad right
+    %12 = (2, b)[%13];
+    %14 = bddComplement(%12) -> bb19;
+  }
+  bb19 {
+    %15 = bddCreate(%2,%5,%11,%14) -> bb20;
+  }
+  bb20 {
+    (2, %0) = %15;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    PushScopeFrame 18
+    %1 = ConstantLoad atom
+    %0 = (2, b)[%1];
+    %2 = %0;
+    %4 = ConstantLoad left
+    %3 = (2, b)[%4];
+    %6 = ConstantLoad middle
+    %5 = (2, b)[%6];
+    %7 = bddUnion(%3,%5) -> bb22;
+  }
+  bb22 {
+    %8 = bddComplement(%7) -> bb23;
+  }
+  bb23 {
+    %9 = ConstantLoad false
+    %10 = %9;
+    %12 = ConstantLoad right
+    %11 = (2, b)[%12];
+    %14 = ConstantLoad middle
+    %13 = (2, b)[%14];
+    %15 = bddUnion(%11,%13) -> bb24;
+  }
+  bb24 {
+    %16 = bddComplement(%15) -> bb25;
+  }
+  bb25 {
+    %17 = bddCreate(%2,%8,%10,%16) -> bb26;
+  }
+  bb26 {
+    (2, %0) = %17;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    GOTO bb28;
+  }
+  bb28 {
+    GOTO bb29;
+  }
+  bb29 {
+    PopScopeFrame
+    GOTO bb30;
+  }
+  bb30 {
+    return;
+  }
+}
+bddCreate(int,boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
+  bb0 {
+    %6 = ConstantLoad true
+    %7 = %6;
+    %5 = == middle %7;
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = == (1, left) (1, right);
+    %0 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = bddUnion((2, left),(2, middle)) -> bb4;
+  }
+  bb4 {
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 5
+    %0 = ConstantLoad atom
+    %1 = ConstantLoad left
+    %2 = ConstantLoad middle
+    %3 = ConstantLoad right
+    %4 = newMap {| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{%0=(2, atom), %1=(2, left), %2=(2, middle), %3=(2, right)}
+    (2, %0) = %4;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+atomCmp(int,int) -> int{
+  bb0 {
+    %4 = a1;
+    %5 = a2;
+    %3 = - %4 %5;
+    %0 = %3;
+    return;
+  }
+}

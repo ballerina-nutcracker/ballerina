@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: more record fields after rest field
+  --> syntax2-e.bal:18:14
+   |
+18 |     string...; // @error
+   |              ^

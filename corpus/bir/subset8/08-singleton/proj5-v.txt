@@ -1,0 +1,36 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 44
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 88
+    %5 = ConstantLoad z
+    %6 = ConstantLoad point
+    %7 = newMap {| x: int, y: int, z: string, never... |}{%1=%2, %3=%4, %5=%6}
+    sPoint = %7;
+    p = sPoint;
+    %10 = ConstantLoad z
+    xy = %10;
+    %12 = p[xy];
+    x = %12;
+    %14 = println(x) -> bb1;
+  }
+  bb1 {
+    %15 = ConstantLoad x
+    %16 = ConstantLoad 44
+    %17 = ConstantLoad y
+    %18 = ConstantLoad 88
+    %19 = ConstantLoad z
+    %20 = ConstantLoad 2
+    %21 = newMap {| x: int, y: int, float... |}{%15=%16, %17=%18, %19=%20}
+    point = %21;
+    p = point;
+    %23 = p[xy];
+    y = %23;
+    %25 = println(y) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

@@ -1,0 +1,9 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 0)
+          (value-type float)))))
+  )
+)

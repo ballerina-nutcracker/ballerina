@@ -1,0 +1,101 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %3 = ConstantLoad 65536
+    %4 = %3;
+    %5 = ConstantLoad 65536
+    %6 = %5;
+    %2 = * %4 %6;
+    %7 = %2;
+    %8 = ConstantLoad 65536
+    %9 = %8;
+    %1 = * %7 %9;
+    two48 = %1;
+    %11 = two48;
+    %12 = testAround(%11) -> bb1;
+  }
+  bb1 {
+    %14 = two48;
+    %15 = ConstantLoad 128
+    %16 = %15;
+    %13 = * %14 %16;
+    two55 = %13;
+    %18 = two55;
+    %19 = testAround(%18) -> bb2;
+  }
+  bb2 {
+    %21 = two55;
+    %22 = ConstantLoad 2
+    %23 = %22;
+    %20 = * %21 %23;
+    two56 = %20;
+    %25 = two56;
+    %26 = testAround(%25) -> bb3;
+  }
+  bb3 {
+    %28 = two56;
+    %29 = ConstantLoad 64
+    %30 = %29;
+    %27 = * %28 %30;
+    two62 = %27;
+    %32 = two62;
+    %33 = testAround(%32) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+testAround(int) -> nil{
+  bb0 {
+    %3 = pow2;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = - %3 %5;
+    %6 = %2;
+    %7 = roundTrip(%6) -> bb1;
+  }
+  bb1 {
+    %8 = unknown pow2;
+    %9 = %8;
+    %10 = roundTrip(%9) -> bb2;
+  }
+  bb2 {
+    %11 = pow2;
+    %12 = roundTrip(%11) -> bb3;
+  }
+  bb3 {
+    %14 = unknown pow2;
+    %15 = %14;
+    %16 = ConstantLoad 1
+    %17 = %16;
+    %13 = - %15 %17;
+    %18 = %13;
+    %19 = roundTrip(%18) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+roundTrip(int) -> nil{
+  bb0 {
+    %3 = n;
+    %4 = n;
+    %5 = toAny(%4) -> bb1;
+  }
+  bb1 {
+    %6 = <int>(%5)
+    %7 = %6;
+    %2 = == %3 %7;
+    %8 = %2;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+toAny(int) -> any{
+  bb0 {
+    %0 = n;
+    return;
+  }
+}

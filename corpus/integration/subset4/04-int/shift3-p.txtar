@@ -1,5 +1,0 @@
--- stdout --
--- stderr --
-error: invalid shift amount: 64 (must be 0-63)
-        at shift(shift3-p.bal:26)
-           main(shift3-p.bal:22)

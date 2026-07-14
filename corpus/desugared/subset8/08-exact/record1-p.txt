@@ -1,0 +1,42 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (record-type
+            (field x
+              (value-type any)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal <nil>))))))
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref r)
+          (literal x))
+        (simple-var-ref v))
+      (var-def
+        (variable v2 (type
+          (array-type
+            (union-type
+              (value-type any)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (type-conversion-expr
+            (index-based-access
+              (simple-var-ref r)
+              (literal x))
+            (array-type
+              (union-type
+                (value-type any)
+                (error-type)) dimensions: 1 ([]))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref v2)
+          (literal 0))
+        (literal true)))))

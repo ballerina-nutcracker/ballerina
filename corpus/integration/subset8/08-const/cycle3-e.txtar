@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for B
+  --> cycle3-e.bal:18:7
+   |
+18 | const B = C + 2; // @error
+   |       ^

@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Point)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 3))
+          (key-value
+            (literal y)
+            (literal 4))))))
+    (compound-assignment |
+      (field-based-access x
+        (simple-var-ref p))
+      (field-based-access y
+        (simple-var-ref p)))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref p)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access y
+          (simple-var-ref p)))))
+  )
+)

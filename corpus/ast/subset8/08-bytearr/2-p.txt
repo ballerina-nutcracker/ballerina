@@ -1,0 +1,42 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b1 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation f (
+          (simple-var-ref b1))))))
+  (function f (
+    (variable a (type
+      (array-type
+        (value-type any) dimensions: 1 ([]))))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type byte)) (expr
+          (literal 2))))
+      (assignment
+        (index-based-access
+          (simple-var-ref a)
+          (literal 0))
+        (simple-var-ref b))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 4))))
+      (assignment
+        (index-based-access
+          (simple-var-ref a)
+          (literal 1))
+        (simple-var-ref i))
+      (assignment
+        (index-based-access
+          (simple-var-ref a)
+          (literal 2))
+        (literal hello)))))

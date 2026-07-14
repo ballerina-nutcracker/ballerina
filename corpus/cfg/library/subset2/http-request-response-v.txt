@@ -1,0 +1,258 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable req (type
+        (user-defined-type http Request)) (expr
+        (new ()))))
+    (assignment
+      (field-based-access method
+        (simple-var-ref req))
+      (literal POST))
+    (assignment
+      (field-based-access rawPath
+        (simple-var-ref req))
+      (literal /search?q=ballerina&tag=lang&tag=go))
+    (expression-stmt
+      (invocation setTextPayload expr:
+        (simple-var-ref req) (
+        (literal body text))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getTextPayload expr:
+            (simple-var-ref req) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (simple-var-ref req) ()))))
+    (expression-stmt
+      (invocation setHeader expr:
+        (simple-var-ref req) (
+        (literal X-One)
+        (literal v1))))
+    (expression-stmt
+      (invocation addHeader expr:
+        (simple-var-ref req) (
+        (literal X-One)
+        (literal v2))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getHeader expr:
+            (simple-var-ref req) (
+            (literal X-One)))))))
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getHeaders expr:
+            (simple-var-ref req) (
+            (literal X-One)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref xs))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref req) (
+          (literal X-One))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref req) (
+          (literal X-Absent))))))
+    (expression-stmt
+      (checked-expr
+        (invocation setContentType expr:
+          (simple-var-ref req) (
+          (literal application/json)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (simple-var-ref req) ()))))
+    (expression-stmt
+      (invocation removeHeader expr:
+        (simple-var-ref req) (
+        (literal X-One))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref req) (
+          (literal X-One))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation getQueryParams expr:
+        (simple-var-ref req) ()))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation getQueryParamValue expr:
+            (simple-var-ref req) (
+            (literal q)))
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation getQueryParamValues expr:
+            (simple-var-ref req) (
+            (literal tag)))
+          (value-type null)))))
+    (expression-stmt
+      (invocation setJsonPayload expr:
+        (simple-var-ref req) (
+        (mapping-constructor-expr
+          (key-value
+            (literal k)
+            (literal v))))))
+    (var-def
+      (variable jp (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref req) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref jp))))
+    (expression-stmt
+      (invocation setBinaryPayload expr:
+        (simple-var-ref req) (
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (var-def
+      (variable bp (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref req) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref bp))))))
+    (var-def
+      (variable res (type
+        (user-defined-type http Response)) (expr
+        (new ()))))
+    (assignment
+      (field-based-access statusCode
+        (simple-var-ref res))
+      (literal 201))
+    (expression-stmt
+      (invocation setHeader expr:
+        (simple-var-ref res) (
+        (literal X-Resp)
+        (literal r1))))
+    (expression-stmt
+      (invocation addHeader expr:
+        (simple-var-ref res) (
+        (literal X-Resp)
+        (literal r2))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access statusCode
+          (simple-var-ref res)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref res) (
+          (literal X-Resp))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getHeader expr:
+            (simple-var-ref res) (
+            (literal X-Resp)))))))
+    (var-def
+      (variable rs (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getHeaders expr:
+            (simple-var-ref res) (
+            (literal X-Resp)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref rs))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (invocation lang.array length (
+            (invocation getHeaderNames expr:
+              (simple-var-ref res) ())))
+          (literal 1)))))
+    (expression-stmt
+      (checked-expr
+        (invocation setContentType expr:
+          (simple-var-ref res) (
+          (literal text/plain)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getContentType expr:
+          (simple-var-ref res) ()))))
+    (expression-stmt
+      (invocation setTextPayload expr:
+        (simple-var-ref res) (
+        (literal resp body))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation getTextPayload expr:
+            (simple-var-ref res) ())))))
+    (expression-stmt
+      (invocation setJsonPayload expr:
+        (simple-var-ref res) (
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (var-def
+      (variable rj (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation getJsonPayload expr:
+            (simple-var-ref res) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref rj))))
+    (expression-stmt
+      (invocation setBinaryPayload expr:
+        (simple-var-ref res) (
+        (list-constructor-expr
+          (literal 10)
+          (literal 20)
+          (literal 30)))))
+    (var-def
+      (variable rb (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref res) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref rb))))))
+    (expression-stmt
+      (invocation removeHeader expr:
+        (simple-var-ref res) (
+        (literal X-Resp))))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref res) (
+          (literal X-Resp))))))
+    (expression-stmt
+      (invocation removeAllHeaders expr:
+        (simple-var-ref res) ()))
+    (expression-stmt
+      (invocation io println (
+        (invocation hasHeader expr:
+          (simple-var-ref res) (
+          (literal Content-Type))))))
+  )
+)

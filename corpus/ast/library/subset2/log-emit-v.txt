@@ -1,0 +1,20 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina log (as log))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation log printInfo (
+          (literal server started))))
+      (expression-stmt
+        (invocation log printWarn (
+          (literal low disk space)
+          (named-arg diskPct
+            (literal 12)))))
+      (expression-stmt
+        (invocation log printError (
+          (literal request failed)
+          (named-arg error
+            (error-constructor-expr (
+              (literal disk full))))))))))

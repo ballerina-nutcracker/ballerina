@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    %2 = %1;
+    %3 = f(%2) -> bb1;
+  }
+  bb1 {
+    %4 = <int>(%3)
+    i = %4;
+    %6 = i;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad false
+    %9 = %8;
+    %10 = f(%9) -> bb3;
+  }
+  bb3 {
+    %11 = <int>(%10)
+    i = %11;
+    %12 = i;
+    %13 = println(%12) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+f(boolean) -> boolean|int|float{
+  bb0 {
+    isInt ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 2
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 3.5
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    return;
+  }
+}

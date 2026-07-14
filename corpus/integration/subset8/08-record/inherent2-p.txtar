@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at foo(inherent2-p.bal:31)
+           main(inherent2-p.bal:26)

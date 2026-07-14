@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> narrow2-e.bal:26:5
+   |
+26 |     io:println("unreachable"); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^

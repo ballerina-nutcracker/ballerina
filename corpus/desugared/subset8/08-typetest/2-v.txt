@@ -1,0 +1,96 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation p (
+          (literal 1))))
+      (expression-stmt
+        (invocation p (
+          (literal false))))
+      (expression-stmt
+        (invocation p (
+          (literal hello))))
+      (expression-stmt
+        (invocation p (
+          (literal this is a long string))))
+      (expression-stmt
+        (invocation p (
+          (literal 9223372036854775807))))
+      (expression-stmt
+        (invocation p (
+          (unary-expr -
+            (literal 9223372036854775807)))))
+      (var-def
+        (variable list (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation p (
+          (simple-var-ref list))))
+      (var-def
+        (variable mapping (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation p (
+          (simple-var-ref mapping))))))
+  (function p (
+    (variable v (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type boolean))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal boolean))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref v)
+            (value-type int))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal int))))) ())
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref v)
+              (value-type string))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal string))))) ())
+          (block-stmt
+            (if
+              (type-test-expr is
+                (simple-var-ref v)
+                (array-type
+                  (value-type any) dimensions: 1 ([])))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal array))))) ())
+            (block-stmt
+              (if
+                (type-test-expr is
+                  (simple-var-ref v)
+                  (constrained-type
+                    (builtin-ref-type map)
+                    (value-type any)))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (literal map))))) ())
+              (block-stmt))))))))

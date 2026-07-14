@@ -1,0 +1,151 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field a
+        (value-type any))))
+  (function bar (
+    (variable a (type
+      (value-type any)))) (
+    (value-type any))
+    (block-function-body
+      (return
+        (simple-var-ref a))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a1 (type
+          (value-type any)) (expr
+          (literal 1d))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a1))))
+      (var-def
+        (variable a2 (type
+          (value-type any)) (expr
+          (literal 1e6144d))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a2))))
+      (expression-stmt
+        (invocation io println (
+          (invocation bar (
+            (literal 1.2e3d))))))
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2.345e32d))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref r)))))
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 12d)
+            (literal 1.2e2d)
+            (literal 1.21e3d)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref arr)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref arr)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref arr)
+            (literal 2)))))
+      (var-def
+        (variable arr1 (type
+          (array-type
+            (value-type any) dimensions: 2 ([][]))) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 1.1d)
+              (literal 2.1e2d))
+            (list-constructor-expr
+              (literal 4.2e3d)
+              (literal 3e2d))))))
+      (var-def
+        (variable arr2 (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (index-based-access
+            (simple-var-ref arr1)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref arr2)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref arr2)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref arr1)
+            (literal 1)))))
+      (var-def
+        (variable m1 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x1)
+              (literal 1.2d))
+            (key-value
+              (literal x2)
+              (literal 1.2e2d))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref m1)
+            (literal x1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref m1)
+            (literal x2)))))
+      (var-def
+        (variable m2 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type any) dimensions: 1 ([])))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x1)
+              (list-constructor-expr
+                (literal 1d)
+                (literal 2d)))))))
+      (var-def
+        (variable x (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (type-conversion-expr
+            (index-based-access
+              (simple-var-ref m2)
+              (literal x1))
+            (array-type
+              (value-type any) dimensions: 1 ([]))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0))))))))

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate key 'x' in mapping constructor
+  --> duplicate2-e.bal:23:25
+   |
+23 |     R _ = {x: 17, y: 1, "x": 10}; // @error
+   |                         ^^^

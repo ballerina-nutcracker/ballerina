@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| {| i: int, never... |}... |}{}
+    m = %1;
+    %3 = ConstantLoad i
+    %4 = ConstantLoad 4
+    %5 = newMap {| i: int, never... |}{%3=%4}
+    %6 = ConstantLoad x
+    m[%6] = %5;
+    %7 = ConstantLoad 2
+    %9 = ConstantLoad x
+    %8 = m[%9] (fill);
+    %10 = ConstantLoad i
+    %8[%10] = %7;
+    %12 = ConstantLoad x
+    %11 = m[%12];
+    %13 = println(%11) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

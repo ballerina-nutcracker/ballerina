@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [[int...]...][%1]{}
+    v = %2;
+    %4 = ConstantLoad 0
+    %5 = newArray [int...][%4]{}
+    %6 = ConstantLoad 3
+    v[%6] = %5;
+    %9 = ConstantLoad 0
+    %8 = v[%9];
+    %11 = ConstantLoad 1
+    %10 = v[%11];
+    %7 = unknown %8 %10;
+    %12 = %7;
+    %13 = println(%12) -> bb1;
+  }
+  bb1 {
+    %15 = ConstantLoad 0
+    %14 = v[%15];
+    %16 = <[int...]>(%14)
+    iv = %16;
+    %18 = ConstantLoad 42
+    %19 = ConstantLoad 0
+    iv[%19] = %18;
+    %21 = ConstantLoad 1
+    %20 = v[%21];
+    %22 = length(%20) -> bb2;
+  }
+  bb2 {
+    %23 = %22;
+    %24 = println(%23) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

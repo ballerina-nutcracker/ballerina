@@ -1,0 +1,41 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition R
+    (record-type
+      (field x
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (type-definition W
+    (record-type
+      (field x
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type null)) dimensions: 1 ([])))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (list-constructor-expr))))))
+      (var-def
+        (variable w (type
+          (user-defined-type W)) (expr
+          (simple-var-ref r))))
+      (var-def
+        (variable x (type
+          (array-type
+            (union-type
+              (value-type int)
+              (value-type null)) dimensions: 1 ([]))) (expr
+          (field-based-access x
+            (simple-var-ref w)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal <nil>)))))

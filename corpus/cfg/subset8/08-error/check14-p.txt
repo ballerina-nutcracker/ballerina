@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref moduleValue))
+  )
+)
+(mayFail
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal module init failed))))
+  )
+)

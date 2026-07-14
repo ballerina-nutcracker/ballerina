@@ -1,0 +1,32 @@
+(foo
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref base)
+        (group-expr
+          (binary-expr +
+            (field-based-access foo
+              (simple-var-ref values))
+            (field-based-access bar
+              (simple-var-ref values))))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type bar)) (expr
+        (simple-var-ref foo))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal 1)
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 1))
+            (key-value
+              (literal bar)
+              (literal 5))))))))
+  )
+)

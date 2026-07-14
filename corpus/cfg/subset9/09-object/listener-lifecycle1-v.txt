@@ -1,0 +1,57 @@
+(LifecycleListener
+  (init
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal listener init))))
+    )
+  )
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal listener graceful stop))))
+    )
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal listener start))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal main))))
+  )
+)
+(testMain
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal testMain))))
+  )
+)

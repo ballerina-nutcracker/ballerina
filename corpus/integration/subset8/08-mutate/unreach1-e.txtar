@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> unreach1-e.bal:36:9
+   |
+36 |         foo(); // @error
+   |         ^^^^^^

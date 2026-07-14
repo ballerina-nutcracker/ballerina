@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: could not locate the package path 'does-not-exist'
+  --> Ballerina.toml

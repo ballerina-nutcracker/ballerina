@@ -1,0 +1,9 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: service body is not a subtype of the declared service type
+  --> service-declared-type-missing-method1-e.bal:43:1
+   |
+43 | service RequiredService on l { // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | }
+   | ^

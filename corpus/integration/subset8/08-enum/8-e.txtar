@@ -1,37 +1,37 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: redeclared symbol 'BLUE'
-  --> 8-e.bal:22:5
+  --> 8-e.bal:21:5
    |
-22 |     BLUE // @error
+21 |     BLUE // @error
    |     ^^^^
 
 error[SEMANTIC_ERROR]: redeclared symbol 'BLUE'
-  --> 8-e.bal:27:15
+  --> 8-e.bal:26:15
    |
-27 | public string BLUE = "blue"; // @error
+26 | public string BLUE = "blue"; // @error
    |               ^^^^
 
 error[SEMANTIC_ERROR]: redeclared symbol 'GREEN'
-  --> 8-e.bal:21:5
+  --> 8-e.bal:20:5
    |
-21 |     GREEN, // @error
+20 |     GREEN, // @error
    |     ^^^^^
 
 error[SEMANTIC_ERROR]: redeclared symbol 'GREEN'
-  --> 8-e.bal:26:15
+  --> 8-e.bal:25:15
    |
-26 | public string GREEN = "green"; // @error
+25 | public string GREEN = "green"; // @error
    |               ^^^^^
 
 error[SEMANTIC_ERROR]: redeclared symbol 'RED'
-  --> 8-e.bal:20:5
+  --> 8-e.bal:19:5
    |
-20 |     RED, // @error
+19 |     RED, // @error
    |     ^^^
 
 error[SEMANTIC_ERROR]: redeclared symbol 'RED'
-  --> 8-e.bal:25:15
+  --> 8-e.bal:24:15
    |
-25 | public string RED = "red"; // @error
+24 | public string RED = "red"; // @error
    |               ^^^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 3
+  --> inline1-e.bal:20:28
+   |
+20 |     [int, string] t2 = [2, 3]; // @error
+   |                            ^

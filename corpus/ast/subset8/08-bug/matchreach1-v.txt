@@ -1,0 +1,33 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function btoi (
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (match
+        (simple-var-ref b)
+        (match-clause
+          (const-pattern
+            (literal true))
+          (block-stmt
+            (return
+              (literal 1))))
+        (match-clause
+          (const-pattern
+            (literal false))
+          (block-stmt
+            (return
+              (literal 0)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation btoi (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation btoi (
+            (literal false)))))))))

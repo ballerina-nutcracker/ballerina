@@ -1,0 +1,6 @@
+-- stdout --
+listener-> attached
+trigger-> foo
+listener start
+graceful stop
+-- stderr --

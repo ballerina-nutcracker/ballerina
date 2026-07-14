@@ -1,0 +1,209 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (variable $desugar$0)
+  (variable $moduleListeners)
+  (class-definition SimpleListener
+    (function init () ()
+      (block-function-body))
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (literal attached))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (service
+    (on
+    (simple-var-ref $desugar$0))
+    (function init () ()
+      (block-function-body)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref $moduleListeners)
+        (list-constructor-expr))
+      (assignment
+        (simple-var-ref $desugar$0)
+        (invocation makeListener ()))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref $moduleListeners)
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (service-init))))
+      (expression-stmt
+        (invocation attach expr:
+          (simple-var-ref $desugar$0) (
+          (simple-var-ref $desugar$1)
+          (literal <nil>))))))
+  (function makeListener () (
+    (user-defined-type SimpleListener))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal making listener))))
+      (return
+        (new
+          (user-defined-type SimpleListener) ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body))
+  (function $default$0 (
+    (variable svc)) ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $start () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref $moduleListeners))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable $listener (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation start expr:
+                (simple-var-ref $listener) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$3))
+            (block-stmt
+              (return
+                (simple-var-ref $desugar$3))) ())
+          (expression-stmt
+            (simple-var-ref $desugar$3))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))))
+  (function $gracefulStop () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref $moduleListeners))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable $listener (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation gracefulStop expr:
+                (simple-var-ref $listener) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$3))
+            (block-stmt
+              (return
+                (simple-var-ref $desugar$3))) ())
+          (expression-stmt
+            (simple-var-ref $desugar$3))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))))
+  (function $immediateStop () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref $moduleListeners))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable $listener (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation immediateStop expr:
+                (simple-var-ref $listener) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$3))
+            (block-stmt
+              (return
+                (simple-var-ref $desugar$3))) ())
+          (expression-stmt
+            (simple-var-ref $desugar$3))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1))))))))

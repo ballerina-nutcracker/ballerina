@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to parameter
+  --> resource-method3-e.bal:19:9
+   |
+19 |         foo = "aa"; // @error
+   |         ^^^

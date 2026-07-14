@@ -15,6 +15,12 @@
 )
 (foo
   (bb0 () ()
+    (var-def
+      (variable _ (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (simple-var-ref a))))
     (return
       (literal 2))
   )

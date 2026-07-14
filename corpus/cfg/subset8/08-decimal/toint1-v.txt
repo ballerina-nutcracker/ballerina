@@ -1,0 +1,120 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 0)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (unary-expr -
+            (literal 1))
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 0.5)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1.5)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 2.5)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (unary-expr -
+            (literal 0.5))
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (unary-expr -
+            (literal 1.5))
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (unary-expr -
+            (literal 2.5))
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1E+2)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1.5E+2)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (unary-expr -
+            (literal 1.5E+2))
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 151)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 151.3)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 151.5)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 9223372036854775807)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 9223372036854775807.0)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 9223372036854775807.1)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 9223372036854775807.4)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 9223372036854775807.4)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1E-6143)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (unary-expr -
+            (literal 1E-6143))
+          (value-type int)))))
+  )
+)

@@ -1,0 +1,69 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable values (expr
+          (checked-expr
+            (invocation http parseHeader (
+              (literal text/plain;q=0.9, application/json)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref values) ()))))
+      (var-def
+        (variable quoted (expr
+          (checked-expr
+            (invocation http parseHeader (
+              (literal multipart/form-data; boundary="----boundary")))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref quoted) ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access value
+            (index-based-access
+              (simple-var-ref quoted)
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (field-based-access params
+              (index-based-access
+                (simple-var-ref quoted)
+                (literal 0)))
+            (literal boundary)))))
+      (var-def
+        (variable noVal (expr
+          (checked-expr
+            (invocation http parseHeader (
+              (literal multipart/form-data; boundary)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref noVal) ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (field-based-access params
+              (index-based-access
+                (simple-var-ref noVal)
+                (literal 0)))
+            (literal boundary)))))
+      (var-def
+        (variable single (expr
+          (checked-expr
+            (invocation http parseHeader (
+              (literal text/html)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref single) ()))))
+      (return
+        (literal <nil>)))))

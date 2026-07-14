@@ -1,0 +1,203 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable nan0 (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0)))))
+      (var-def
+        (variable nan1 (type
+          (value-type float)) (expr
+          (binary-expr /
+            (unary-expr -
+              (literal 0.0))
+            (literal 0.0)))))
+      (var-def
+        (variable pInf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1.0)
+            (literal 0.0)))))
+      (var-def
+        (variable nInf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (unary-expr -
+              (literal 1.0))
+            (literal 0.0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (literal 42.0)
+            (literal 42.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (literal 1.0)
+            (literal 2.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (literal 0.0)
+            (literal 0.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (literal 0.0)
+            (unary-expr -
+              (literal 0.0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref nan0)
+            (simple-var-ref nan1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref nan0)
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref nan0)
+            (simple-var-ref nInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref pInf)
+            (simple-var-ref nInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref nInf)
+            (simple-var-ref pInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref pInf)
+            (simple-var-ref pInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref nInf)
+            (simple-var-ref nInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eqAF (
+            (literal not-float)
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eqAF (
+            (literal 1)
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eqFA (
+            (literal 0.0)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eqFA (
+            (literal 8.0)
+            (literal 8.0))))))))
+  (function eq (
+    (variable f1 (type
+      (value-type float)))
+    (variable f2 (type
+      (value-type float)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable b1 (type
+          (value-type string)) (expr
+          (invocation eqAF (
+            (simple-var-ref f1)
+            (simple-var-ref f2))))))
+      (var-def
+        (variable b2 (type
+          (value-type string)) (expr
+          (invocation eqFA (
+            (simple-var-ref f1)
+            (simple-var-ref f2))))))
+      (if
+        (binary-expr !=
+          (simple-var-ref b1)
+          (simple-var-ref b2))
+        (block-stmt
+          (return
+            (literal a))) ())
+      (block-stmt
+        (return
+          (simple-var-ref b1)))))
+  (function eqAF (
+    (variable f1 (type
+      (value-type any)))
+    (variable f2 (type
+      (value-type float)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable eq (type
+          (value-type boolean)) (expr
+          (binary-expr ==
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (var-def
+        (variable neEq (type
+          (value-type boolean)) (expr
+          (binary-expr !=
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (if
+        (binary-expr ==
+          (simple-var-ref eq)
+          (simple-var-ref neEq))
+        (block-stmt
+          (return
+            (literal b))) (
+        (if
+          (simple-var-ref eq)
+          (block-stmt
+            (return
+              (literal true))) ())))
+      (return
+        (literal false))))
+  (function eqFA (
+    (variable f1 (type
+      (value-type float)))
+    (variable f2 (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable eq (type
+          (value-type boolean)) (expr
+          (binary-expr ==
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (var-def
+        (variable neEq (type
+          (value-type boolean)) (expr
+          (binary-expr !=
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (if
+        (binary-expr ==
+          (simple-var-ref eq)
+          (simple-var-ref neEq))
+        (block-stmt
+          (return
+            (literal c))) (
+        (if
+          (simple-var-ref eq)
+          (block-stmt
+            (return
+              (literal true))) ())))
+      (return
+        (literal false)))))

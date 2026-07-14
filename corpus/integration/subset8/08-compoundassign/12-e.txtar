@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid expression statement
+  --> 12-e.bal:20:5
+   |
+20 |     x >= 3; // @error
+   |     ^^^^^^^

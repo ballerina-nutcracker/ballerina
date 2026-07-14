@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m1 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m1)
+        (literal x))
+      (literal 17))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref m1)
+          (literal x)))))
+  )
+)

@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    %2 = %1;
+    %3 = ConstantLoad 100000
+    %4 = %3;
+    %5 = getFloat(%2,%4) -> bb1;
+  }
+  bb1 {
+    a = %5;
+    %7 = ConstantLoad 89
+    %8 = %7;
+    %9 = ConstantLoad 20000
+    %10 = %9;
+    %11 = getFloat(%8,%10) -> bb2;
+  }
+  bb2 {
+    b = %11;
+    %14 = a;
+    %15 = b;
+    %13 = % %14 %15;
+    %16 = %13;
+    %17 = println(%16) -> bb3;
+  }
+  bb3 {
+    %19 = b;
+    %20 = a;
+    %18 = % %19 %20;
+    %21 = %18;
+    %22 = println(%21) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+getFloat(int,int) -> float{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 5.5
+    %5 = ConstantLoad 3.3
+    %6 = ConstantLoad 7.5
+    %7 = ConstantLoad 9.5
+    %8 = ConstantLoad 10.54
+    %9 = ConstantLoad 6
+    %10 = newArray [float...][%9]{%3, %4, %5, %6, %7, %8}
+    buffer = %10;
+    %12 = ConstantLoad 0
+    currentVal = %12;
+    %14 = length(buffer) -> bb1;
+  }
+  bb1 {
+    bufferSize = %14;
+    %18 = seed;
+    %19 = seed;
+    %17 = + %18 %19;
+    %20 = %17;
+    %21 = bufferSize;
+    %16 = % %20 %21;
+    currentIndex = %16;
+    %23 = ConstantLoad 0
+    _ = %23;
+    $desugar$0 = iterations;
+    GOTO bb2;
+  }
+  bb2 {
+    %27 = _;
+    %28 = $desugar$0;
+    %26 = < %27 %28;
+    %26 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 14
+    %1 = (1, currentVal);
+    %2 = (1, buffer)[(1, currentIndex)];
+    %3 = %2;
+    %0 = + %1 %3;
+    (1, currentVal) = %0;
+    %6 = (1, currentIndex);
+    %7 = (1, seed);
+    %5 = + %6 %7;
+    %8 = %5;
+    %9 = (1, bufferSize);
+    %4 = % %8 %9;
+    (1, currentIndex) = %4;
+    %11 = (1, _);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, _) = %10;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb4 {
+    %0 = currentVal;
+    return;
+  }
+}

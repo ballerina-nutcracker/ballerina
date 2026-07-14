@@ -1,0 +1,168 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (group-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (group-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (group-expr
+              (list-constructor-expr
+                (list-constructor-expr
+                  (literal 1)
+                  (literal 2))
+                (literal 3)))
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (literal a)
+              (literal 2))
+            (list-constructor-expr
+              (literal a)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (list-constructor-expr
+              (literal a)
+              (literal 2))
+            (list-constructor-expr
+              (literal a)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (literal ab)
+              (literal 3))
+            (list-constructor-expr
+              (literal ab)
+              (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (literal ab)
+              (literal 3))
+            (list-constructor-expr
+              (literal ac)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal ab)
+                (literal 3))
+              (literal 5))
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal ab)
+                (literal 4))
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal ab)
+                (literal 3))
+              (literal 5))
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal ac)
+                (literal 3))
+              (literal 5)))))))))

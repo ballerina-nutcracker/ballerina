@@ -1,0 +1,87 @@
+(addAll
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (invocation lang.array length (
+        (simple-var-ref args))))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref sum)
+      (index-based-access
+        (simple-var-ref args)
+        (simple-var-ref i)))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref sum))
+  )
+)
+(addAllTo
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (simple-var-ref base))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (invocation lang.array length (
+        (simple-var-ref args))))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref sum)
+      (index-based-access
+        (simple-var-ref args)
+        (simple-var-ref i)))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref sum))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation addAll ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation addAll (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation addAll (
+          (literal 1)
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation addAllTo (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation addAllTo (
+          (literal 1)
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation addAllTo (
+          (literal 1)
+          (literal 2)
+          (literal 3))))))
+  )
+)

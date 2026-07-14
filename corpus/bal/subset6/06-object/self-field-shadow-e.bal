@@ -18,15 +18,18 @@ class Foo {
     int bar = 5;
 
     function init(int x) {
+        int _ = x;
         self.x = 10; // @error
     }
 
     function foo(int y) returns int {
+        int _ = y;
         return self.y; // @error
     }
 
     function baz() returns int {
         int z = 10;
+        int _ = z;
         return self.z; // @error
     }
 }

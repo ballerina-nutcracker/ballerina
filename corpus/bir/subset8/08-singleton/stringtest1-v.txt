@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad red
+    c = %1;
+    s = c;
+    %4 = s is "blue"|"green"|"red"
+    %5 = %4;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad yummy
+    s = %7;
+    %8 = s is "blue"|"green"|"red"
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

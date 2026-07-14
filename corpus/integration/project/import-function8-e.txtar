@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> main.bal:20:5
+   |
+20 |     bar:hello(17); // @error
+   |     ^^^^^^^^^^^^^

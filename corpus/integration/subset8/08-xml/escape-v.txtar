@@ -1,0 +1,6 @@
+-- stdout --
+<e a="x&amp;amp;y&amp;quot;z">hello&amp;amp;world</e>
+pure text &amp;amp; entity
+<!-- safe comment -->
+<?target some data?>
+-- stderr --

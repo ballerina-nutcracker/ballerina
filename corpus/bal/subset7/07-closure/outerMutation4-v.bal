@@ -29,6 +29,7 @@ public function main() {
                 v1 += a;
                 return 5;
             }, 2.0) + v1 + v2 + runner(function(float b) returns float {
+                float _ = b;
                 v2 += v1;
                 return 0;
             }, 2.0);

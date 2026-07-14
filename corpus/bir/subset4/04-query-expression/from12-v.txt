@@ -1,7 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 keyFor(int) -> string{
   bb0 {
     %3 = x;
@@ -11,13 +8,17 @@ keyFor(int) -> string{
     %2 ? bb1 : bb2;
   }
   bb1 {
-    %6 = ConstantLoad a
-    %0 = %6;
+    PushScopeFrame 1
+    %0 = ConstantLoad a
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
   bb2 {
-    %7 = ConstantLoad b
-    %0 = %7;
+    PushScopeFrame 1
+    %0 = ConstantLoad b
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
 }

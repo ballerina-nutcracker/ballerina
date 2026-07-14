@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> 12-e.bal:20:16
+   |
+20 |     io:println({a: {x: 5, y: 10}, b: 2} == {a: 1, b: 4}); // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

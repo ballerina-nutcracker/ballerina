@@ -1,0 +1,227 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable words (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal a)
+            (literal b)
+            (literal a)))))
+      (var-def
+        (variable groupedByString (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable word))
+              (simple-var-ref words))
+            (let-clause
+              (var-def
+                (variable original (type
+                  (value-type string)) (expr
+                  (simple-var-ref word)))))
+            (group-by-clause
+              (grouping-key
+                (simple-var-ref word)))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref word)
+                (simple-var-ref original)))))))
+      (var-def
+        (variable nan (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0)))))
+      (var-def
+        (variable floats (type
+          (array-type
+            (value-type float) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1.0)
+            (unary-expr -
+              (literal 0.0))
+            (literal 0.0)
+            (simple-var-ref nan)
+            (binary-expr /
+              (literal 0.0)
+              (literal 0.0))
+            (literal 1.0)))))
+      (var-def
+        (variable groupedByFloat (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (simple-var-ref floats))
+            (let-clause
+              (var-def
+                (variable original (type
+                  (value-type float)) (expr
+                  (simple-var-ref value)))))
+            (group-by-clause
+              (grouping-key
+                (simple-var-ref value)))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref value)
+                (simple-var-ref original)))))))
+      (var-def
+        (variable optionalNumbers (type
+          (array-type
+            (union-type
+              (value-type int)
+              (value-type null)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal <nil>)
+            (literal <nil>)
+            (literal 2)))))
+      (var-def
+        (variable groupedByNil (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (simple-var-ref optionalNumbers))
+            (let-clause
+              (var-def
+                (variable original (type
+                  (union-type
+                    (value-type int)
+                    (value-type null))) (expr
+                  (simple-var-ref value)))))
+            (group-by-clause
+              (grouping-key
+                (simple-var-ref value)))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref value)
+                (simple-var-ref original)))))))
+      (var-def
+        (variable decimals (type
+          (array-type
+            (value-type decimal) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1.0)
+            (literal 1.00)
+            (literal 2.0)))))
+      (var-def
+        (variable groupedByDecimal (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (simple-var-ref decimals))
+            (let-clause
+              (var-def
+                (variable original (type
+                  (value-type decimal)) (expr
+                  (simple-var-ref value)))))
+            (group-by-clause
+              (grouping-key
+                (simple-var-ref value)))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref value)
+                (simple-var-ref original)))))))
+      (var-def
+        (variable numbers (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 1)))))
+      (var-def
+        (variable groupedByMultipleKeys (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (simple-var-ref numbers))
+            (group-by-clause
+              (grouping-key
+                (var-def
+                  (variable listKey (expr
+                    (list-constructor-expr
+                      (simple-var-ref value))))))
+              (grouping-key
+                (var-def
+                  (variable even (expr
+                    (binary-expr ==
+                      (binary-expr %
+                        (simple-var-ref value)
+                        (literal 2))
+                      (literal 0)))))))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref listKey)
+                (simple-var-ref even)
+                (simple-var-ref value)))))))
+      (var-def
+        (variable mappings (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 1))
+              (key-value
+                (literal b)
+                (literal 2)))
+            (mapping-constructor-expr
+              (key-value
+                (literal b)
+                (literal 2))
+              (key-value
+                (literal a)
+                (literal 1)))
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 1))
+              (key-value
+                (literal b)
+                (literal 3)))))))
+      (var-def
+        (variable groupedByMap (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable mapping))
+              (simple-var-ref mappings))
+            (group-by-clause
+              (grouping-key
+                (var-def
+                  (variable key (expr
+                    (simple-var-ref mapping))))))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref key)
+                (simple-var-ref mapping)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedByString))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedByFloat))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedByNil))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedByDecimal))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedByMultipleKeys))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedByMap)))))))

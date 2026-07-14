@@ -1,0 +1,33 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable s (type
+        (user-defined-type S)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal str))))))
+    (var-def
+      (variable nOrS (type
+        (user-defined-type NorS)) (expr
+        (simple-var-ref s))))
+    (type-test-expr is
+      (simple-var-ref nOrS)
+      (user-defined-type N))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal N))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (var-def
+      (variable _ (type
+        (user-defined-type S)) (expr
+        (simple-var-ref nOrS))))
+    (expression-stmt
+      (invocation io println (
+        (literal S))))
+  )
+)

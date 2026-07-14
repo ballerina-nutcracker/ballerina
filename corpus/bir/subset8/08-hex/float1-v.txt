@@ -1,0 +1,24 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 43
+    f = %1;
+    %3 = f;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad 2
+    f2 = %5;
+    %7 = f2;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %9 = ConstantLoad 12
+    f3 = %9;
+    %11 = f3;
+    %12 = println(%11) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

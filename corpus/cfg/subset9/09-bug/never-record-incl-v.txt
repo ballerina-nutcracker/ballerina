@@ -1,0 +1,28 @@
+(foo
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref name))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref config))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (literal Alice)
+        (named-arg config
+          (mapping-constructor-expr
+            (key-value
+              (literal age)
+              (literal 30))
+            (key-value
+              (literal city)
+              (literal New York))
+            (key-value
+              (literal country)
+              (literal USA)))))))
+  )
+)

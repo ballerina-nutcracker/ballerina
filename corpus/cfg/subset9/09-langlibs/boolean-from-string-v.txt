@@ -1,0 +1,70 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (check-panicked-expr
+          (invocation boolean fromString (
+            (literal true)))))))
+    (expression-stmt
+      (invocation io println (
+        (check-panicked-expr
+          (invocation boolean fromString (
+            (literal false)))))))
+    (expression-stmt
+      (invocation io println (
+        (check-panicked-expr
+          (invocation boolean fromString (
+            (literal TRUE)))))))
+    (expression-stmt
+      (invocation io println (
+        (check-panicked-expr
+          (invocation boolean fromString (
+            (literal False)))))))
+    (expression-stmt
+      (invocation io println (
+        (check-panicked-expr
+          (invocation boolean fromString (
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (check-panicked-expr
+          (invocation boolean fromString (
+            (literal 0)))))))
+    (var-def
+      (variable invalidWord (type
+        (union-type
+          (value-type boolean)
+          (error-type))) (expr
+        (invocation boolean fromString (
+          (literal yes))))))
+    (var-def
+      (variable invalidWhitespace (type
+        (union-type
+          (value-type boolean)
+          (error-type))) (expr
+        (invocation boolean fromString (
+          (literal  true ))))))
+    (var-def
+      (variable invalidEmpty (type
+        (union-type
+          (value-type boolean)
+          (error-type))) (expr
+        (invocation boolean fromString (
+          (literal ))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref invalidWord)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref invalidWhitespace)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref invalidEmpty)
+          (error-type)))))
+  )
+)

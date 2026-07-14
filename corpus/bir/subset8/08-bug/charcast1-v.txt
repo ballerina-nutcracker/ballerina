@@ -1,0 +1,12 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad !
+    s = %1;
+    %3 = <string:Char>(s)
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

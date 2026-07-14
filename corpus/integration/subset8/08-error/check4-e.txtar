@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> check4-e.bal:24:5
+   |
+24 |     check errorOrInt(); // @error
+   |     ^^^^^^^^^^^^^^^^^^

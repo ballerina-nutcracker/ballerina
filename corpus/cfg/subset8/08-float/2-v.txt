@@ -1,0 +1,46 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (literal 0.1))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (assignment
+      (simple-var-ref f)
+      (binary-expr /
+        (literal 1)
+        (literal 3)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (expression-stmt
+      (invocation io println (
+        (literal 0))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (literal 2.225073858507202e-308)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 0)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (unary-expr -
+            (literal 1))
+          (literal 0)))))
+  )
+)

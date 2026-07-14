@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got true
+  --> int7-e.bal:20:12
+   |
+20 |     v[0] = true; // @error
+   |            ^^^^

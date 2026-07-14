@@ -1,0 +1,10 @@
+-- stdout --
+hello
+hello%20world
+caf%E9
+r%E9sum%E9
+café
+résumé
+hello world
+true
+-- stderr --

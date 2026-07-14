@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (type-conversion-expr
+          (invocation toAny (
+            (literal hello)))
+          (value-type string)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+  )
+)
+(toAny
+  (bb0 () ()
+    (return
+      (simple-var-ref s))
+  )
+)

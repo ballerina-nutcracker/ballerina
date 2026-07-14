@@ -1,0 +1,17 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expected panic
+  --> never-1-e.bal:17:1
+   |
+17 | function foo(int a) returns never {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |     if a < 5 {
+   |     ^^^^^^^^^^
+19 |         panic error("less that five");
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     }
+   |     ^
+21 |     // @error
+   |     ^^^^^^^^^
+22 | }
+   | ^

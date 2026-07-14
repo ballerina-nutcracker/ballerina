@@ -1,0 +1,33 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable value (type
+        (union-type
+          (user-defined-type Operations)
+          (value-type null))) (expr
+        (annot-access-expr operations
+          (simple-var-ref Target)))))
+    (type-test-expr is
+      (simple-var-ref value)
+      (user-defined-type Operations))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access addInt
+          (simple-var-ref value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access mulDecimal
+          (simple-var-ref value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access unsignedRightShift
+          (simple-var-ref value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access floatToDecimal
+          (simple-var-ref value)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

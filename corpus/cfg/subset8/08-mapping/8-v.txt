@@ -1,0 +1,186 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref a)
+      (record-type
+        (field a
+          (value-type int))
+        (field b
+          (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal any))))
+  )
+)
+(foo1
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref c)
+      (record-type
+        (field a
+          (value-type int))
+        (field b
+          (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref c)
+      (record-type
+        (field a
+          (finite-type
+            (literal 2)))
+        (field b
+          (finite-type
+            (literal 3)))))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb4 (bb3 bb2) ()
+    (expression-stmt
+      (invocation io println (
+        (literal { any a; }))))
+  )
+)
+(foo2
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref c)
+      (record-type
+        (field a
+          (value-type int))
+        (field b
+          (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref c)
+      (record-type
+        (field a
+          (finite-type
+            (literal 2)))
+        (field b
+          (finite-type
+            (literal 3)))))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb4 (bb3 bb2) ()
+    (expression-stmt
+      (invocation io println (
+        (literal {| any a; any b; |}))))
+  )
+)
+(foo3
+  (bb0 () (bb1 bb3)
+    (type-test-expr is
+      (simple-var-ref c)
+      (record-type
+        (field a
+          (finite-type
+            (literal 2)))
+        (field b
+          (finite-type
+            (literal 3)))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal {| int a; int b; |}))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+    (expression-stmt
+      (invocation foo (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+    (expression-stmt
+      (invocation foo1 (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+    (expression-stmt
+      (invocation foo2 (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+    (expression-stmt
+      (invocation foo2 (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+    (expression-stmt
+      (invocation foo3 (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+    (expression-stmt
+      (invocation foo3 (
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))
+          (key-value
+            (literal b)
+            (literal 3))))))
+  )
+)

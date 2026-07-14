@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> intersect2-e.bal:17:10
+   |
+17 | type T1 [T1 & T2]; // @error
+   |          ^^^^^^^
+
+error[SEMANTIC_ERROR]: type definition T1 is empty
+  --> intersect2-e.bal:17:1
+   |
+17 | type T1 [T1 & T2]; // @error
+   | ^^^^^^^^^^^^^^^^^^

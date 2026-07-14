@@ -1,0 +1,77 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable vv (type
+          (array-type
+            (value-type float) dimensions: 2 ([][]))) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 3)
+              (literal 4)
+              (literal 5)
+              (literal 0))
+            (list-constructor-expr
+              (literal 0.5))
+            (list-constructor-expr)))))
+      (var-def
+        (variable total (type
+          (value-type float)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.array length (
+            (simple-var-ref vv))))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (var-def
+            (variable v (type
+              (array-type
+                (value-type float) dimensions: 1 ([]))) (expr
+              (index-based-access
+                (simple-var-ref vv)
+                (simple-var-ref i)))))
+          (var-def
+            (variable j (type
+              (value-type int)) (expr
+              (literal 0))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation lang.array length (
+                (simple-var-ref v))))))
+          (while
+            (binary-expr <
+              (simple-var-ref j)
+              (simple-var-ref $desugar$1))
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref total)
+                (index-based-access
+                  (simple-var-ref v)
+                  (simple-var-ref j)))
+              (assignment
+                (simple-var-ref j)
+                (binary-expr +
+                  (simple-var-ref j)
+                  (numeric-literal 1)))))
+          (assignment
+            (simple-var-ref i)
+            (binary-expr +
+              (simple-var-ref i)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total)))))))

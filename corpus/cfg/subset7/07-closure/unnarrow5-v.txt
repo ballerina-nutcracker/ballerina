@@ -23,6 +23,10 @@
                   (value-type int)))) (
                 (value-type int))
                 (block-function-body
+                  (var-def
+                    (variable _ (type
+                      (value-type int)) (expr
+                      (simple-var-ref a))))
                   (assignment
                     (simple-var-ref v1)
                     (literal true))

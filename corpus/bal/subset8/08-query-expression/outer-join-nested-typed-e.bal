@@ -33,7 +33,7 @@ public function main() {
     Department[] departments = [{ownerId: 1, locationId: 10}];
     Location[] locations = [{id: 10, name: "HQ"}];
 
-    string[][] result = from var person in people
+    string[][] _ = from var person in people
         select from var dept in departments
             outer join Location loc in locations // @error
             on dept.locationId equals loc.id

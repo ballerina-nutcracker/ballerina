@@ -1,0 +1,79 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/time:TimeZone
+    %2 = ConstantLoad Invalid/Zone
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    tz = %4;
+    %7 = tz is error
+    %8 = %7;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %10 = newObject ballerina/time:TimeZone
+    %11 = ConstantLoad UTC
+    %12 = init(%10,%11) -> bb6;
+  }
+  bb6 {
+    %14 = %12 is nil
+    %14 ? bb7 : bb8;
+  }
+  bb7 {
+    %13 = %10;
+    GOTO bb9;
+  }
+  bb8 {
+    %13 = %12;
+    GOTO bb9;
+  }
+  bb9 {
+    $desugar$0 = %13;
+    %16 = $desugar$0 is error
+    %16 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    utcZone = $desugar$0;
+    %18 = ConstantLoad year
+    %19 = ConstantLoad 2021
+    %20 = ConstantLoad month
+    %21 = ConstantLoad 4
+    %22 = ConstantLoad day
+    %23 = ConstantLoad 12
+    %24 = ConstantLoad hour
+    %25 = ConstantLoad 10
+    %26 = ConstantLoad minute
+    %27 = ConstantLoad 0
+    %28 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%18=%19, %20=%21, %22=%23, %24=%25, %26=%27}
+    civil = %28;
+    %30 = utcFromCivil(utcZone,civil) -> bb12;
+  }
+  bb12 {
+    result = %30;
+    %32 = result is error
+    %33 = %32;
+    %34 = println(%33) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}

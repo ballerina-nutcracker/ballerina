@@ -1,0 +1,53 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 4
+    %5 = ConstantLoad 5
+    %6 = ConstantLoad 5
+    %7 = newArray [int, float, decimal, int...][%6]{%1, %2, %3, %4, %5}
+    nums = %7;
+    %12 = ConstantLoad 0
+    %11 = nums[%12];
+    %13 = %11;
+    %15 = ConstantLoad 3
+    %14 = nums[%15];
+    %16 = %14;
+    %10 = + %13 %16;
+    %17 = %10;
+    %19 = ConstantLoad 4
+    %18 = nums[%19];
+    %20 = %18;
+    %9 = + %17 %20;
+    n = %9;
+    %22 = n;
+    %23 = println(%22) -> bb1;
+  }
+  bb1 {
+    %26 = ConstantLoad 1
+    %25 = nums[%26];
+    %27 = %25;
+    %28 = ConstantLoad 0.5
+    %29 = %28;
+    %24 = + %27 %29;
+    f = %24;
+    %31 = f;
+    %32 = println(%31) -> bb2;
+  }
+  bb2 {
+    %35 = ConstantLoad 2
+    %34 = nums[%35];
+    %36 = %34;
+    %37 = ConstantLoad 0.5
+    %38 = %37;
+    %33 = + %36 %38;
+    d = %33;
+    %40 = d;
+    %41 = println(%40) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

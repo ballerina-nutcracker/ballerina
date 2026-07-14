@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected [int, boolean...]|[string, boolean...], got [int|string, boolean...]
+  --> listassign3-e.bal:25:13
+   |
+25 |     N|S _ = ns; // @error
+   |             ^^

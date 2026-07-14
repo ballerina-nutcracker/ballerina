@@ -1,0 +1,152 @@
+module $anon.. v 0.0.0;
+class Person {
+  name string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = name;
+      return;
+    }
+  }
+}
+class DistinctPerson {
+  name string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = name;
+      return;
+    }
+  }
+}
+class SomeWhatDistinctPerson {
+  name string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = name;
+      return;
+    }
+  }
+}
+class EvenMoreDistinctPerson {
+  name string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = name;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Person
+    %2 = ConstantLoad John Smith
+    %3 = init(%1,%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    person = %4;
+    %7 = person is object&object { public function init(string) returns nil; public string name }
+    %8 = %7;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %10 = newObject $anon/.:DistinctPerson
+    %11 = ConstantLoad Alice Johnson
+    %12 = init(%10,%11) -> bb6;
+  }
+  bb6 {
+    %14 = %12 is nil
+    %14 ? bb7 : bb8;
+  }
+  bb7 {
+    %13 = %10;
+    GOTO bb9;
+  }
+  bb8 {
+    %13 = %12;
+    GOTO bb9;
+  }
+  bb9 {
+    distinctPerson = %13;
+    %16 = distinctPerson is object { public function init(string) returns nil; public string name }
+    %17 = %16;
+    %18 = println(%17) -> bb10;
+  }
+  bb10 {
+    %19 = newObject $anon/.:SomeWhatDistinctPerson
+    %20 = ConstantLoad Michael Brown
+    %21 = init(%19,%20) -> bb11;
+  }
+  bb11 {
+    %23 = %21 is nil
+    %23 ? bb12 : bb13;
+  }
+  bb12 {
+    %22 = %19;
+    GOTO bb14;
+  }
+  bb13 {
+    %22 = %21;
+    GOTO bb14;
+  }
+  bb14 {
+    someWhatDistinctPerson = %22;
+    %25 = someWhatDistinctPerson is object&object { public function init(string) returns nil; public string name }
+    %26 = %25;
+    %27 = println(%26) -> bb15;
+  }
+  bb15 {
+    %28 = distinctPerson is object&object { public function init(string) returns nil; public string name }
+    %29 = %28;
+    %30 = println(%29) -> bb16;
+  }
+  bb16 {
+    %31 = newObject $anon/.:EvenMoreDistinctPerson
+    %32 = ConstantLoad Sarah Wilson
+    %33 = init(%31,%32) -> bb17;
+  }
+  bb17 {
+    %35 = %33 is nil
+    %35 ? bb18 : bb19;
+  }
+  bb18 {
+    %34 = %31;
+    GOTO bb20;
+  }
+  bb19 {
+    %34 = %33;
+    GOTO bb20;
+  }
+  bb20 {
+    evenMoreDistinctPerson = %34;
+    %37 = evenMoreDistinctPerson is object&object { public function init(string) returns nil; public string name }
+    %38 = %37;
+    %39 = println(%38) -> bb21;
+  }
+  bb21 {
+    %40 = distinctPerson is object&object&object { public function init(string) returns nil; public string name }
+    %41 = %40;
+    %42 = println(%41) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}

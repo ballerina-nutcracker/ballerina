@@ -1,0 +1,14 @@
+(package
+  (import-package ballerina io (as io))
+  (function foo () (
+    (value-type never))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal never returns))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal hello)))))))

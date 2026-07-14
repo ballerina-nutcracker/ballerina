@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil|int, got 1
+  --> int4-e.bal:20:14
+   |
+20 |     m["x"] = 1.0; // @error
+   |              ^^^

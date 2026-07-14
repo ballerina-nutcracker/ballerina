@@ -1,0 +1,77 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition F
+    (function-type (
+      (value-type float)) (
+      (value-type float))))
+  (function runner (
+    (variable f (type
+      (user-defined-type F)))
+    (variable val (type
+      (value-type float)))) (
+    (value-type float))
+    (block-function-body
+      (return
+        (invocation f (
+          (simple-var-ref val))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v1 (type
+          (value-type float)) (expr
+          (literal 10.0))))
+      (var-def
+        (variable v2 (type
+          (value-type float)) (expr
+          (literal 20.0))))
+      (var-def
+        (variable res (type
+          (value-type float)) (expr
+          (binary-expr +
+            (binary-expr +
+              (binary-expr +
+                (binary-expr +
+                  (simple-var-ref v1)
+                  (invocation runner (
+                    (lambda
+                      (function $anonFunc$_0 (
+                        (variable a (type
+                          (value-type float)))) (
+                        (value-type float))
+                        (block-function-body
+                          (compound-assignment +
+                            (simple-var-ref v1)
+                            (simple-var-ref a))
+                          (return
+                            (literal 5)))))
+                    (literal 2))))
+                (simple-var-ref v1))
+              (simple-var-ref v2))
+            (invocation runner (
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable b (type
+                    (value-type float)))) (
+                  (value-type float))
+                  (block-function-body
+                    (var-def
+                      (variable _ (type
+                        (value-type float)) (expr
+                        (simple-var-ref b))))
+                    (compound-assignment +
+                      (simple-var-ref v2)
+                      (simple-var-ref v1))
+                    (return
+                      (literal 0)))))
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref res))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v2)))))))

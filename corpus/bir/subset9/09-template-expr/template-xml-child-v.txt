@@ -1,0 +1,14 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad c
+    %2 = newXMLElement(%1, ())
+    child = %2;
+    %4 = evalTemplate[xml]("<p>", child, "</p>")
+    parent = %4;
+    %6 = println(parent) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

@@ -1,0 +1,30 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition foo
+    (resource-function get name:test
+      (param id
+        (value-type int))
+      (variable vals (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (value-type null)
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref id))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref vals)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (user-defined-type foo)) (expr
+          (new ()))))
+      (expression-stmt
+        (client-resource-access get expr:
+          (simple-var-ref f) name:test computed:
+          (literal 4)
+          (list-constructor-expr))))))

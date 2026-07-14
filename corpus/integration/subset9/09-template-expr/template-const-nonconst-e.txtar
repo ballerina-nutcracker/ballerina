@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> template-const-nonconst-e.bal:19:26
+   |
+19 | const BAD = xml `<root>${f()}</root>`; // @error insertion is not a constant expression
+   |                          ^^^

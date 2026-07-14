@@ -1,0 +1,12 @@
+[bala]
+schema_version = "4"
+
+[build]
+ballerina_version      = ""
+implementation_vendor  = "WSO2"
+language_spec_version  = "2024R1"
+platform               = "go1.2"
+
+[[modules]]
+name   = "http"
+export = true

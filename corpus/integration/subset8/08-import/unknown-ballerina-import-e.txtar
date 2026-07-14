@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown import: ballerina/lang.unknown
+  --> unknown-ballerina-import-e.bal:18:1
+   |
+18 | import ballerina/lang.unknown; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused import prefix 'unknown'
+  --> unknown-ballerina-import-e.bal:18:1
+   |
+18 | import ballerina/lang.unknown; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

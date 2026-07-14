@@ -1,0 +1,98 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition J
+    (union-type
+      (union-type
+        (union-type
+          (union-type
+            (union-type
+              (union-type
+                (value-type null)
+                (value-type boolean))
+              (value-type int))
+            (value-type float))
+          (value-type string))
+        (array-type
+          (user-defined-type J) dimensions: 1 ([])))
+      (constrained-type
+        (builtin-ref-type map)
+        (user-defined-type J))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable j1 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type J))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal loop)
+              (literal <nil>))))))
+      (var-def
+        (variable j2 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type J))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal loop)
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref j1)
+            (simple-var-ref j2)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref j1)
+          (literal loop))
+        (simple-var-ref j1))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref j1)
+            (simple-var-ref j2)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref j2)
+          (literal loop))
+        (simple-var-ref j2))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref j1)
+            (simple-var-ref j2)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref j2)
+          (literal loop))
+        (simple-var-ref j1))
+      (var-def
+        (variable j3 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type J))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal loop)
+              (literal <nil>))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref j3)
+          (literal loop))
+        (mapping-constructor-expr
+          (key-value
+            (literal loop)
+            (mapping-constructor-expr
+              (key-value
+                (literal loop)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal loop)
+                    (simple-var-ref j3))))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref j1)
+            (simple-var-ref j3))))))))

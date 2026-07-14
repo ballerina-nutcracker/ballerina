@@ -1,0 +1,20 @@
+(foo
+  (foo.$resource$get$0
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal root))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type foo)) (expr
+        (new ()))))
+    (expression-stmt
+      (client-resource-access get expr:
+        (simple-var-ref f)))
+  )
+)

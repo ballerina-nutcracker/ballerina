@@ -1,0 +1,19 @@
+(g
+  (bb0 () ()
+    (return
+      (literal 4.86))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (type-conversion-expr
+          (invocation g ())
+          (value-type float)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+  )
+)

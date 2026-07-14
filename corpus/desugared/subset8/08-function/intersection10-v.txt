@@ -1,0 +1,190 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition ColouredPoint
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))
+      (field colour
+        (value-type string))))
+  (type-definition MovePointFn
+    (function-type (
+      (user-defined-type Point)
+      (value-type int)
+      (value-type int)) (
+      (user-defined-type Point))))
+  (type-definition MoveColouredPointFn
+    (function-type (
+      (user-defined-type ColouredPoint)
+      (value-type int)
+      (value-type int)) (
+      (user-defined-type ColouredPoint))))
+  (type-definition MoveFn
+    (intersection-type
+      (user-defined-type MovePointFn)
+      (user-defined-type MoveColouredPointFn)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fn (type
+          (user-defined-type MoveFn)) (expr
+          (simple-var-ref moveFn))))
+      (var-def
+        (variable cp (type
+          (user-defined-type ColouredPoint)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 10))
+            (key-value
+              (literal y)
+              (literal 20))
+            (key-value
+              (literal colour)
+              (literal red))))))
+      (var-def
+        (variable cp2 (type
+          (user-defined-type Point)) (expr
+          (invocation fn (
+            (simple-var-ref cp)
+            (literal 10)
+            (literal 20))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref cp2))))
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 10))
+            (key-value
+              (literal y)
+              (literal 20))))))
+      (var-def
+        (variable p2 (type
+          (user-defined-type Point)) (expr
+          (invocation fn (
+            (simple-var-ref p)
+            (literal 10)
+            (literal 20))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p2))))))
+  (function moveFn (
+    (variable p (type
+      (user-defined-type Point)))
+    (variable dx (type
+      (value-type int)))
+    (variable dy (type
+      (value-type int)))) (
+    (user-defined-type ColouredPoint))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref p)
+          (user-defined-type ColouredPoint))
+        (block-stmt
+          (return
+            (invocation moveColoredPoint (
+              (simple-var-ref p)
+              (simple-var-ref dx)
+              (simple-var-ref dy))))) ())
+      (block-stmt
+        (var-def
+          (variable movedPoint (type
+            (user-defined-type Point)) (expr
+            (invocation movePoint (
+              (simple-var-ref p)
+              (simple-var-ref dx)
+              (simple-var-ref dy))))))
+        (return
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (index-based-access
+                (simple-var-ref movedPoint)
+                (literal x)))
+            (key-value
+              (literal y)
+              (index-based-access
+                (simple-var-ref movedPoint)
+                (literal y)))
+            (key-value
+              (literal colour)
+              (literal white)))))))
+  (function movePoint (
+    (variable p (type
+      (user-defined-type Point)))
+    (variable dx (type
+      (value-type int)))
+    (variable dy (type
+      (value-type int)))) (
+    (user-defined-type Point))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref p)
+          (literal x))
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref p)
+            (literal x))
+          (simple-var-ref dx)))
+      (assignment
+        (index-based-access
+          (simple-var-ref p)
+          (literal y))
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref p)
+            (literal y))
+          (simple-var-ref dy)))
+      (return
+        (simple-var-ref p))))
+  (function moveColoredPoint (
+    (variable p (type
+      (user-defined-type ColouredPoint)))
+    (variable dx (type
+      (value-type int)))
+    (variable dy (type
+      (value-type int)))) (
+    (user-defined-type ColouredPoint))
+    (block-function-body
+      (if
+        (binary-expr !=
+          (index-based-access
+            (simple-var-ref p)
+            (literal colour))
+          (literal white))
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref p)
+              (literal x))
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref p)
+                (literal x))
+              (simple-var-ref dx)))
+          (assignment
+            (index-based-access
+              (simple-var-ref p)
+              (literal y))
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref p)
+                (literal y))
+              (simple-var-ref dy)))) ())
+      (block-stmt
+        (return
+          (simple-var-ref p))))))

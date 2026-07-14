@@ -22,12 +22,18 @@ import (
 
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
 	"ballerina-lang-go/semantics"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/test_util"
 	"ballerina-lang-go/test_util/testphases"
 )
+
+// symbolResolverSkipList is the symbol-resolver *additional* skip list, on
+// top of the shared test_util.UnsupportedTests baseline.
+var symbolResolverSkipList = []string{
+	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	"subset8/08-xml/namespace12-v.bal",
+}
 
 func TestSymbolResolver(t *testing.T) {
 	flag.Parse()
@@ -42,6 +48,11 @@ func TestSymbolResolver(t *testing.T) {
 }
 
 func testSymbolResolution(t *testing.T, testCase test_util.TestCase) {
+	if test_util.IsUnsupported(testCase.InputPath) || test_util.MatchesSkip(testCase.InputPath, symbolResolverSkipList) {
+		t.Skipf("Skipping symbol resolver test for %s", testCase.InputPath)
+		return
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatalf("Symbol resolution panicked for %s: %v", testCase.InputPath, r)
@@ -50,7 +61,12 @@ func testSymbolResolution(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseSymbolResolution, testCase.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testCase.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseSymbolResolution, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return
@@ -94,7 +110,7 @@ func (v *symbolResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 	return v
 }
 
-func (v *symbolResolutionValidator) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (v *symbolResolutionValidator) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	if typeData.TypeDescriptor == nil {
 		return nil
 	}

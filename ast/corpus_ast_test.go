@@ -23,7 +23,6 @@ import (
 
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/test_util"
 	"ballerina-lang-go/test_util/testphases"
@@ -31,6 +30,10 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
+
+// astGenerationSkipList is the AST-stage *additional* skip list, on top of the
+// shared test_util.UnsupportedTests baseline.
+var astGenerationSkipList = []string{}
 
 func TestASTGeneration(t *testing.T) {
 	flag.Parse()
@@ -46,6 +49,11 @@ func TestASTGeneration(t *testing.T) {
 }
 
 func testASTGeneration(t *testing.T, testCase test_util.TestCase) {
+	if test_util.IsUnsupported(testCase.InputPath) || test_util.MatchesSkip(testCase.InputPath, astGenerationSkipList) {
+		t.Skipf("Skipping AST generation test for %s", testCase.InputPath)
+		return
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Errorf("panic while testing AST generation for %s: %v", testCase.InputPath, r)
@@ -54,7 +62,7 @@ func testASTGeneration(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseAST, testCase.InputPath)
+	result, err := testphases.RunPipeline(env, cx, nil, testphases.PhaseAST, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return
@@ -112,9 +120,14 @@ func (v *walkTestVisitor) Visit(node ast.BLangNode) ast.Visitor {
 	return v
 }
 
-func (v *walkTestVisitor) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (v *walkTestVisitor) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	return v
 }
+
+// walkTraversalSkipList is the walk-traversal *additional* skip list, on top
+// of the shared test_util.UnsupportedTests baseline. Currently empty -- every
+// known failure is already covered by the shared baseline.
+var walkTraversalSkipList = []string{}
 
 func TestWalkTraversal(t *testing.T) {
 	flag.Parse()
@@ -130,6 +143,11 @@ func TestWalkTraversal(t *testing.T) {
 }
 
 func testWalkTraversal(t *testing.T, testCase test_util.TestCase) {
+	if test_util.IsUnsupported(testCase.InputPath) || test_util.MatchesSkip(testCase.InputPath, walkTraversalSkipList) {
+		t.Skipf("Skipping walk traversal test for %s", testCase.InputPath)
+		return
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Errorf("Walk panicked for %s: %v", testCase.InputPath, r)
@@ -138,7 +156,7 @@ func testWalkTraversal(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseAST, testCase.InputPath)
+	result, err := testphases.RunPipeline(env, cx, nil, testphases.PhaseAST, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return

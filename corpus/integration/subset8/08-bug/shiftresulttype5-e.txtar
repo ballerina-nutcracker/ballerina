@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int:Unsigned16
+  --> shiftresulttype5-e.bal:22:24
+   |
+22 |     int:Unsigned8 x2 = y >> 1; // @error
+   |                        ^^^^^^

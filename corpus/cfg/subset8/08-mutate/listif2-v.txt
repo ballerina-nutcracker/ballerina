@@ -1,0 +1,54 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable ns (type
+        (user-defined-type SN)) (expr
+        (list-constructor-expr
+          (literal str)
+          (literal 3)))))
+    (var-def
+      (variable u (type
+        (user-defined-type U)) (expr
+        (simple-var-ref ns))))
+    (type-test-expr is
+      (simple-var-ref u)
+      (user-defined-type NN))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal NN))))
+  )
+  (bb2 (bb1 bb5) ())
+  (bb3 (bb0) (bb4 bb6)
+    (type-test-expr is
+      (simple-var-ref u)
+      (user-defined-type SS))
+  )
+  (bb4 (bb3) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal SS))))
+  )
+  (bb5 (bb4 bb8) (bb2))
+  (bb6 (bb3) (bb7 bb9)
+    (type-test-expr is
+      (simple-var-ref u)
+      (user-defined-type NS))
+  )
+  (bb7 (bb6) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal NS))))
+  )
+  (bb8 (bb7 bb9) (bb5))
+  (bb9 (bb6) (bb8)
+    (var-def
+      (variable _ (type
+        (user-defined-type SN)) (expr
+        (simple-var-ref u))))
+    (expression-stmt
+      (invocation io println (
+        (literal SN))))
+  )
+)

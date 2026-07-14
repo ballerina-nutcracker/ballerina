@@ -1,0 +1,18 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition String
+    (value-type string))
+  (type-definition Int
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type Int)
+            (user-defined-type String))) (expr
+          (literal 17))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

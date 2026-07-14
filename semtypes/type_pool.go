@@ -20,17 +20,20 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math/big"
+
+	"ballerina-lang-go/decimal"
 )
 
 type TypePool struct {
-	tys  []SemType
-	memo map[SemType]TypePoolIndex
+	tys      []SemType
+	memo     map[InternHandle]TypePoolIndex
+	interner *SemtypeInterner
 }
 
 func NewTypePool() *TypePool {
 	return &TypePool{
-		memo: make(map[SemType]TypePoolIndex),
+		memo:     make(map[InternHandle]TypePoolIndex),
+		interner: NewSemtypeInterner(),
 	}
 }
 
@@ -44,25 +47,31 @@ const indexMask = (1 << 31) - 1
 func (pool *TypePool) Get(i TypePoolIndex) SemType {
 	if i <= 0 {
 		bits := i & indexMask
-		return basicTypeBitSetFrom(int(bits))
+		return basicTypeBitSet(bits).semType()
 	}
 	return pool.tys[i-1]
 }
 
 func (pool *TypePool) Put(ty SemType) TypePoolIndex {
-	switch ty := ty.(type) {
-	case BasicTypeBitSet:
+	if ty.some() == 0 {
 		return TypePoolIndex(ty.all() | 1<<31)
-	case *ComplexSemType:
-		if cached, ok := pool.memo[ty]; ok {
-			return cached
-		}
-		id := len(pool.tys) + 1
-		pool.tys = append(pool.tys, ty)
-		pool.memo[ty] = TypePoolIndex(id)
-		return TypePoolIndex(id)
 	}
-	panic("unreachable")
+	handle := pool.interner.Intern(ty)
+	if cached, ok := pool.memo[handle]; ok {
+		return cached
+	}
+	id := len(pool.tys) + 1
+	pool.tys = append(pool.tys, ty)
+	pool.memo[handle] = TypePoolIndex(id)
+	return TypePoolIndex(id)
+}
+
+func (pool *TypePool) PutObjectDefinition(ty SemType) TypePoolIndex {
+	return pool.Put(stripObjectDistinctAtoms(ty))
+}
+
+func (pool *TypePool) PutErrorDefinition(ty SemType) TypePoolIndex {
+	return pool.Put(stripErrorDistinctAtoms(ty))
 }
 
 func fromTypePool(pool *TypePool, env Env) binaryPool {
@@ -71,8 +80,7 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 	sc := newBddSerializationContext(pool, cx, &bp)
 	for i := 0; i < len(pool.tys); i++ {
 		ty := pool.tys[i]
-		cst := ty.(*ComplexSemType)
-		subtypes := unpack(cst)
+		subtypes := unpack(ty)
 		start := uint32(len(bp.subtypeData))
 		for _, bs := range subtypes {
 			var entry subtypeDataEntry
@@ -92,7 +100,7 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 			case stringSubtype:
 				entry = subtypeDataEntry{kind: stringSubtypeData, index: uint32(len(bp.stringSubtype))}
 				bp.stringSubtype = append(bp.stringSubtype, fromStringSubtype(&data))
-			case xmlSubtype:
+			case *xmlSubtype:
 				entry = subtypeDataEntry{kind: xmlSubtypeData, index: uint32(len(bp.xmlSubtypes))}
 				bp.xmlSubtypes = append(bp.xmlSubtypes, sc.serializeXmlSubtype(data))
 			case Bdd:
@@ -106,6 +114,9 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 				case BTFunction:
 					entry = subtypeDataEntry{kind: functionBddSubtypeData, index: uint32(len(bp.functionBdds))}
 					bp.functionBdds = append(bp.functionBdds, sc.serializeFunctionBdd(data))
+				case BTTypeDesc:
+					entry = subtypeDataEntry{kind: typedescBddSubtypeData, index: uint32(len(bp.typedescBdds))}
+					bp.typedescBdds = append(bp.typedescBdds, sc.serializeMappingBdd(data))
 				case BTError:
 					entry = subtypeDataEntry{kind: errorBddSubtypeData, index: uint32(len(bp.errorBdds))}
 					bp.errorBdds = append(bp.errorBdds, sc.serializeMappingBdd(data))
@@ -115,6 +126,9 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 				case BTObject:
 					entry = subtypeDataEntry{kind: objectBddSubtypeData, index: uint32(len(bp.objectBdds))}
 					bp.objectBdds = append(bp.objectBdds, sc.serializeMappingBdd(data))
+				case BTStream:
+					entry = subtypeDataEntry{kind: streamBddSubtypeData, index: uint32(len(bp.streamBdds))}
+					bp.streamBdds = append(bp.streamBdds, sc.serializeListBdd(data))
 				default:
 					panic(fmt.Sprintf("unsupported BDD basic type code: %v", bs.BasicTypeCode))
 				}
@@ -125,8 +139,8 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 		}
 		end := uint32(len(bp.subtypeData))
 		bp.types = append(bp.types, typeEntry{
-			all:              uint32(cst.all()),
-			some:             uint32(cst.some()),
+			all:              uint32(ty.all()),
+			some:             uint32(ty.some()),
 			subtypeDataStart: start,
 			subtypeDataEnd:   end,
 		})
@@ -139,9 +153,11 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 	bp.nListBdds = uint32(len(bp.listBdds))
 	bp.nMappingBdds = uint32(len(bp.mappingBdds))
 	bp.nFunctionBdds = uint32(len(bp.functionBdds))
+	bp.nTypedescBdds = uint32(len(bp.typedescBdds))
 	bp.nErrorBdds = uint32(len(bp.errorBdds))
 	bp.nTableBdds = uint32(len(bp.tableBdds))
 	bp.nObjectBdds = uint32(len(bp.objectBdds))
+	bp.nStreamBdds = uint32(len(bp.streamBdds))
 	bp.nXmlAtomicTypes = uint32(len(bp.xmlAtomicTypes))
 	bp.nXmlSubtypes = uint32(len(bp.xmlSubtypes))
 	bp.nListAtomicTypes = uint32(len(bp.listAtomicTypes))
@@ -152,8 +168,9 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 
 func toTypePool(bp binaryPool, env Env) *TypePool {
 	pool := &TypePool{
-		memo: make(map[SemType]TypePoolIndex),
-		tys:  make([]SemType, len(bp.types)),
+		memo:     make(map[InternHandle]TypePoolIndex),
+		interner: NewSemtypeInterner(),
+		tys:      make([]SemType, len(bp.types)),
 	}
 	dc := newBddDeserializationContext(pool, env, &bp)
 	for i := range bp.types {
@@ -191,9 +208,11 @@ func MarshalTypePool(pool *TypePool, env Env) []byte {
 	write(buf, bp.nListBdds)
 	write(buf, bp.nMappingBdds)
 	write(buf, bp.nFunctionBdds)
+	write(buf, bp.nTypedescBdds)
 	write(buf, bp.nErrorBdds)
 	write(buf, bp.nTableBdds)
 	write(buf, bp.nObjectBdds)
+	write(buf, bp.nStreamBdds)
 	for _, entry := range bp.listBdds {
 		marshalBddDnf(buf, entry)
 	}
@@ -203,6 +222,9 @@ func MarshalTypePool(pool *TypePool, env Env) []byte {
 	for _, entry := range bp.functionBdds {
 		marshalBddDnf(buf, entry)
 	}
+	for _, entry := range bp.typedescBdds {
+		marshalBddDnf(buf, entry)
+	}
 	for _, entry := range bp.errorBdds {
 		marshalBddDnf(buf, entry)
 	}
@@ -210,6 +232,9 @@ func MarshalTypePool(pool *TypePool, env Env) []byte {
 		marshalBddDnf(buf, entry)
 	}
 	for _, entry := range bp.objectBdds {
+		marshalBddDnf(buf, entry)
+	}
+	for _, entry := range bp.streamBdds {
 		marshalBddDnf(buf, entry)
 	}
 
@@ -276,9 +301,11 @@ func UnmarshalTypePool(data []byte, env Env) *TypePool {
 	read(r, &bp.nListBdds)
 	read(r, &bp.nMappingBdds)
 	read(r, &bp.nFunctionBdds)
+	read(r, &bp.nTypedescBdds)
 	read(r, &bp.nErrorBdds)
 	read(r, &bp.nTableBdds)
 	read(r, &bp.nObjectBdds)
+	read(r, &bp.nStreamBdds)
 	bp.listBdds = make([]unionOfIntersections, bp.nListBdds)
 	for i := range bp.listBdds {
 		bp.listBdds[i] = unmarshalBddDnf(r)
@@ -291,6 +318,10 @@ func UnmarshalTypePool(data []byte, env Env) *TypePool {
 	for i := range bp.functionBdds {
 		bp.functionBdds[i] = unmarshalBddDnf(r)
 	}
+	bp.typedescBdds = make([]unionOfIntersections, bp.nTypedescBdds)
+	for i := range bp.typedescBdds {
+		bp.typedescBdds[i] = unmarshalBddDnf(r)
+	}
 	bp.errorBdds = make([]unionOfIntersections, bp.nErrorBdds)
 	for i := range bp.errorBdds {
 		bp.errorBdds[i] = unmarshalBddDnf(r)
@@ -302,6 +333,10 @@ func UnmarshalTypePool(data []byte, env Env) *TypePool {
 	bp.objectBdds = make([]unionOfIntersections, bp.nObjectBdds)
 	for i := range bp.objectBdds {
 		bp.objectBdds[i] = unmarshalBddDnf(r)
+	}
+	bp.streamBdds = make([]unionOfIntersections, bp.nStreamBdds)
+	for i := range bp.streamBdds {
+		bp.streamBdds[i] = unmarshalBddDnf(r)
 	}
 
 	read(r, &bp.nListAtomicTypes)
@@ -354,15 +389,19 @@ type binaryPool struct {
 	nListBdds     uint32
 	nMappingBdds  uint32
 	nFunctionBdds uint32
+	nTypedescBdds uint32
 	nErrorBdds    uint32
 	nTableBdds    uint32
 	nObjectBdds   uint32
+	nStreamBdds   uint32
 	listBdds      []unionOfIntersections
 	mappingBdds   []unionOfIntersections
 	functionBdds  []unionOfIntersections
+	typedescBdds  []unionOfIntersections
 	errorBdds     []unionOfIntersections
 	tableBdds     []unionOfIntersections
 	objectBdds    []unionOfIntersections
+	streamBdds    []unionOfIntersections
 
 	nListAtomicTypes     uint32
 	nMappingAtomicTypes  uint32
@@ -429,6 +468,8 @@ const (
 	tableBddSubtypeData
 	xmlSubtypeData
 	objectBddSubtypeData
+	streamBddSubtypeData
+	typedescBddSubtypeData
 )
 
 func marshalSubtypeData(buf *bytes.Buffer, entries []subtypeDataEntry) {
@@ -522,7 +563,7 @@ func unmarshalBooleanSubtype(r *bytes.Reader) booleanSubtypeEntry {
 type sized interface {
 	int8 | int16 | int32 | int64 |
 		uint8 | uint16 | uint32 | uint64 |
-		float32 | float64 | decimal
+		float32 | float64 | decimalEntry
 }
 type enumerableSubtypeEntry[T sized] struct {
 	allowed bool
@@ -571,27 +612,31 @@ func unmarshalFloatSubtype(r *bytes.Reader) floatSubtypeEntry {
 
 // decimal subtype
 
-type decimalSubtypeEntry enumerableSubtypeEntry[decimal]
+type decimalSubtypeEntry enumerableSubtypeEntry[decimalEntry]
 
-// big.Rat is not fixed size
-type decimal struct {
-	num   int64
-	denom int64
+// Decimal singletons can hold arbitrary-precision values, so we round-trip them
+// through their canonical decimal128 string form rather than packing into fixed
+// width integers.
+type decimalEntry struct {
+	value string
 }
 
 func fromDecimalSubtype(st *decimalSubtype) decimalSubtypeEntry {
-	values := make([]decimal, len(st.Values()))
+	values := make([]decimalEntry, len(st.Values()))
 	for i, v := range st.Values() {
 		r := v.Value()
-		values[i] = decimal{num: r.Num().Int64(), denom: r.Denom().Int64()}
+		values[i] = decimalEntry{value: r.String()}
 	}
 	return decimalSubtypeEntry{allowed: st.Allowed(), nValues: int32(len(values)), values: values}
 }
 
 func toDecimalSubtype(entry decimalSubtypeEntry) ProperSubtypeData {
-	values := make([]enumerableType[big.Rat], len(entry.values))
+	values := make([]enumerableType[decimal.Decimal], len(entry.values))
 	for i, v := range entry.values {
-		r := new(big.Rat).SetFrac64(v.num, v.denom)
+		r, err := decimal.FromString(v.value)
+		if err != nil {
+			panic(fmt.Sprintf("invalid serialized decimal value %q: %v", v.value, err))
+		}
 		d := enumerableDecimalFrom(*r)
 		values[i] = &d
 	}
@@ -602,8 +647,11 @@ func marshalDecimalSubtype(buf *bytes.Buffer, entry decimalSubtypeEntry) {
 	write(buf, entry.allowed)
 	write(buf, entry.nValues)
 	for _, v := range entry.values {
-		write(buf, v.num)
-		write(buf, v.denom)
+		b := []byte(v.value)
+		write(buf, int32(len(b)))
+		if _, err := buf.Write(b); err != nil {
+			panic(fmt.Sprintf("writing decimal value bytes: %v", err))
+		}
 	}
 }
 
@@ -611,10 +659,15 @@ func unmarshalDecimalSubtype(r *bytes.Reader) decimalSubtypeEntry {
 	var entry decimalSubtypeEntry
 	read(r, &entry.allowed)
 	read(r, &entry.nValues)
-	entry.values = make([]decimal, entry.nValues)
+	entry.values = make([]decimalEntry, entry.nValues)
 	for j := range entry.values {
-		read(r, &entry.values[j].num)
-		read(r, &entry.values[j].denom)
+		var n int32
+		read(r, &n)
+		b := make([]byte, n)
+		if _, err := r.Read(b); err != nil {
+			panic(fmt.Sprintf("reading decimal value bytes: %v", err))
+		}
+		entry.values[j].value = string(b)
 	}
 	return entry
 }

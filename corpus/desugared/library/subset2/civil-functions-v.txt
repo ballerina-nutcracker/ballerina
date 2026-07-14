@@ -1,0 +1,232 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable utcWithPrecision (type
+          (user-defined-type time Utc)) (expr
+          (invocation time utcNow (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation lang.array length (
+              (simple-var-ref utcWithPrecision)))
+            (literal 2)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.00Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable base (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable later (type
+          (user-defined-type time Utc)) (expr
+          (invocation time utcAddSeconds (
+            (simple-var-ref base)
+            (literal 3600.0))))))
+      (var-def
+        (variable diff (type
+          (user-defined-type time Seconds)) (expr
+          (invocation time utcDiffSeconds (
+            (simple-var-ref later)
+            (simple-var-ref base))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref diff)
+            (literal 3600.0)))))
+      (var-def
+        (variable valid (type
+          (union-type
+            (user-defined-type time Error)
+            (value-type null))) (expr
+          (invocation time dateValidate (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 6))
+              (key-value
+                (literal day)
+                (literal 15))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref valid)
+            (value-type null)))))
+      (var-def
+        (variable invalid (type
+          (union-type
+            (user-defined-type time Error)
+            (value-type null))) (expr
+          (invocation time dateValidate (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 13))
+              (key-value
+                (literal day)
+                (literal 1))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref invalid)
+            (user-defined-type time Error)))))
+      (var-def
+        (variable dow (type
+          (user-defined-type time DayOfWeek)) (expr
+          (invocation time dayOfWeek (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 6))
+              (key-value
+                (literal day)
+                (literal 15))))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref dow)
+            (numeric-literal 6)))))
+      (var-def
+        (variable civil (type
+          (user-defined-type time Civil)) (expr
+          (invocation time utcToCivil (
+            (simple-var-ref base))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal year)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal month)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref civil)
+            (literal day)))))
+      (var-def
+        (variable $desugar$1 (expr
+          (new
+            (user-defined-type time TimeZone) (
+            (literal +05:30))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable tz (type
+          (user-defined-type time TimeZone)) (expr
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation time utcFromString (
+            (literal 2021-04-12T17:50:50.00Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable utcBase (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable civilOffset (type
+          (user-defined-type time Civil)) (expr
+          (invocation utcToCivil expr:
+            (simple-var-ref tz) (
+            (simple-var-ref utcBase))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation utcFromCivil expr:
+            (simple-var-ref tz) (
+            (simple-var-ref civilOffset))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable roundTripped (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref roundTripped))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation time civilToString (
+            (simple-var-ref civilOffset))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable civilStr (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref civilStr))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation time civilFromString (
+            (literal 2021-04-12T23:20:50.520+05:30[Asia/Colombo]))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable parsed (type
+          (user-defined-type time Civil)) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref parsed)
+            (literal year)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref parsed)
+            (literal month)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref parsed)
+            (literal day))))))))

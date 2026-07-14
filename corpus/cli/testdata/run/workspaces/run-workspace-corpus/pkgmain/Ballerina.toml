@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "cli_ws_pkgmain"
+version = "0.1.0"

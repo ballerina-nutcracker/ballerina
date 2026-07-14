@@ -1,0 +1,166 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    d = %1;
+    %3 = <int>(d)
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 0
+    d = %6;
+    %7 = <int>(d)
+    %8 = %7;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 1
+    %11 = unknown %10;
+    d = %11;
+    %12 = <int>(d)
+    %13 = %12;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    %15 = ConstantLoad 0.5
+    d = %15;
+    %16 = <int>(d)
+    %17 = %16;
+    %18 = println(%17) -> bb4;
+  }
+  bb4 {
+    %19 = ConstantLoad 1.5
+    d = %19;
+    %20 = <int>(d)
+    %21 = %20;
+    %22 = println(%21) -> bb5;
+  }
+  bb5 {
+    %23 = ConstantLoad 2.5
+    d = %23;
+    %24 = <int>(d)
+    %25 = %24;
+    %26 = println(%25) -> bb6;
+  }
+  bb6 {
+    %27 = ConstantLoad 0.5
+    %28 = unknown %27;
+    d = %28;
+    %29 = <int>(d)
+    %30 = %29;
+    %31 = println(%30) -> bb7;
+  }
+  bb7 {
+    %32 = ConstantLoad 1.5
+    %33 = unknown %32;
+    d = %33;
+    %34 = <int>(d)
+    %35 = %34;
+    %36 = println(%35) -> bb8;
+  }
+  bb8 {
+    %37 = ConstantLoad 2.5
+    %38 = unknown %37;
+    d = %38;
+    %39 = <int>(d)
+    %40 = %39;
+    %41 = println(%40) -> bb9;
+  }
+  bb9 {
+    %42 = ConstantLoad 1E+2
+    d = %42;
+    %43 = <int>(d)
+    %44 = %43;
+    %45 = println(%44) -> bb10;
+  }
+  bb10 {
+    %46 = ConstantLoad 1.5E+2
+    d = %46;
+    %47 = <int>(d)
+    %48 = %47;
+    %49 = println(%48) -> bb11;
+  }
+  bb11 {
+    %50 = ConstantLoad 1.5E+2
+    %51 = unknown %50;
+    d = %51;
+    %52 = <int>(d)
+    %53 = %52;
+    %54 = println(%53) -> bb12;
+  }
+  bb12 {
+    %55 = ConstantLoad 151
+    d = %55;
+    %56 = <int>(d)
+    %57 = %56;
+    %58 = println(%57) -> bb13;
+  }
+  bb13 {
+    %59 = ConstantLoad 151.3
+    d = %59;
+    %60 = <int>(d)
+    %61 = %60;
+    %62 = println(%61) -> bb14;
+  }
+  bb14 {
+    %63 = ConstantLoad 151.5
+    d = %63;
+    %64 = <int>(d)
+    %65 = %64;
+    %66 = println(%65) -> bb15;
+  }
+  bb15 {
+    %67 = ConstantLoad 9223372036854775807
+    d = %67;
+    %68 = <int>(d)
+    %69 = %68;
+    %70 = println(%69) -> bb16;
+  }
+  bb16 {
+    %71 = ConstantLoad 9223372036854775807.0
+    d = %71;
+    %72 = <int>(d)
+    %73 = %72;
+    %74 = println(%73) -> bb17;
+  }
+  bb17 {
+    %75 = ConstantLoad 9223372036854775807.1
+    d = %75;
+    %76 = <int>(d)
+    %77 = %76;
+    %78 = println(%77) -> bb18;
+  }
+  bb18 {
+    %79 = ConstantLoad 9223372036854775807.4
+    d = %79;
+    %80 = <int>(d)
+    %81 = %80;
+    %82 = println(%81) -> bb19;
+  }
+  bb19 {
+    %83 = ConstantLoad 9223372036854775807.4
+    d = %83;
+    %84 = <int>(d)
+    %85 = %84;
+    %86 = println(%85) -> bb20;
+  }
+  bb20 {
+    %87 = ConstantLoad 1E-6143
+    d = %87;
+    %88 = <int>(d)
+    %89 = %88;
+    %90 = println(%89) -> bb21;
+  }
+  bb21 {
+    %91 = ConstantLoad 1E-6143
+    %92 = unknown %91;
+    d = %92;
+    %93 = <int>(d)
+    %94 = %93;
+    %95 = println(%94) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}

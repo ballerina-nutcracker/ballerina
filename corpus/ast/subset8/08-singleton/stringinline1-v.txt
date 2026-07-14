@@ -1,0 +1,34 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable xy (type
+          (union-type
+            (finite-type
+              (literal X))
+            (finite-type
+              (literal Y)))) (expr
+          (literal X))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref xy))))
+      (var-def
+        (variable xyz (type
+          (union-type
+            (union-type
+              (finite-type
+                (literal Z))
+              (finite-type
+                (literal X)))
+            (finite-type
+              (literal Y)))) (expr
+          (simple-var-ref xy))))
+      (assignment
+        (simple-var-ref xyz)
+        (literal Z))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref xyz)))))))

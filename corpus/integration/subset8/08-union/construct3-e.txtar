@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> construct3-e.bal:27:9
+   |
+27 |         {x: 1}; // @error
+   |         ^^^^^^

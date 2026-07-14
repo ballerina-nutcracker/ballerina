@@ -1,0 +1,24 @@
+(main
+  (bb0 () (bb1 bb3)
+    (binary-expr ==
+      (group-expr
+        (binary-expr >
+          (literal 0)
+          (literal 1)))
+      (group-expr
+        (binary-expr ===
+          (literal 1)
+          (literal 1))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal true))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal false))))
+  )
+)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for A
+  --> var-inferred-self-cycle-e.bal:17:5
+   |
+17 | var A = A + 1; // @error
+   |     ^

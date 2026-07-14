@@ -1,0 +1,112 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A () (
+    (binary-expr /
+      (literal 0.0)
+      (literal 0.0))))
+  (const B () (
+    (binary-expr /
+      (unary-expr -
+        (literal 0.0))
+      (literal 0.0))))
+  (const C () (
+    (binary-expr /
+      (literal 1.0)
+      (literal 0.0))))
+  (const D () (
+    (binary-expr /
+      (unary-expr -
+        (literal 1.0))
+      (literal 0.0))))
+  (const E () (
+    (unary-expr -
+      (literal 0.0))))
+  (const F () (
+    (literal 0.0)))
+  (const G () (
+    (binary-expr *
+      (literal 1.5)
+      (literal 0f))))
+  (const H () (
+    (binary-expr <=
+      (literal 1.5)
+      (literal 2.5))))
+  (const I () (
+    (binary-expr >=
+      (literal 1.5)
+      (literal 2.5))))
+  (const J () (
+    (binary-expr +
+      (unary-expr -
+        (literal 0.0))
+      (literal 0f))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref A)
+            (simple-var-ref B))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref C)
+            (simple-var-ref D))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref E)
+            (simple-var-ref F))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref A)
+            (simple-var-ref C))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation eq (
+            (simple-var-ref B)
+            (simple-var-ref D))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref G))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref H))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref I))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref J))))))
+  (function eq (
+    (variable f1 (type
+      (value-type float)))
+    (variable f2 (type
+      (value-type float)))) (
+    (value-type any))
+    (block-function-body
+      (var-def
+        (variable eq (type
+          (value-type boolean)) (expr
+          (binary-expr ==
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (var-def
+        (variable neEq (type
+          (value-type boolean)) (expr
+          (binary-expr !=
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (if
+        (binary-expr ==
+          (simple-var-ref eq)
+          (simple-var-ref neEq))
+        (block-stmt
+          (return
+            (literal <nil>))) ())
+      (block-stmt
+        (return
+          (simple-var-ref eq))))))

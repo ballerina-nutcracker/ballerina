@@ -1,0 +1,28 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable r (type
+        (user-defined-type UU)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal yyy))))))
+    (type-test-expr is
+      (simple-var-ref r)
+      (user-defined-type U))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal yes))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal no))))
+  )
+)

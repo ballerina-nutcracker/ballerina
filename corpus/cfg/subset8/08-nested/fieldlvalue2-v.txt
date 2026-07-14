@@ -1,0 +1,29 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type A)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal b)
+            (mapping-constructor-expr
+              (key-value
+                (literal i)
+                (literal 0))))))))
+    (compound-assignment +
+      (field-based-access i
+        (field-based-access b
+          (simple-var-ref a)))
+      (literal 4))
+    (compound-assignment -
+      (field-based-access i
+        (field-based-access b
+          (simple-var-ref a)))
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access i
+          (field-based-access b
+            (simple-var-ref a))))))
+  )
+)

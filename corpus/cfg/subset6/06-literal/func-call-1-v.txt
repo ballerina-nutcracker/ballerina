@@ -11,7 +11,7 @@
     (expression-stmt
       (invocation io println (
         (invocation takeDecimal (
-          (literal 42/1))))))
+          (literal 42))))))
     (expression-stmt
       (invocation io println (
         (invocation takeFloat (
@@ -19,7 +19,7 @@
     (expression-stmt
       (invocation io println (
         (invocation takeDecimal (
-          (literal 3/2))))))
+          (literal 1.5))))))
     (expression-stmt
       (invocation io println (
         (invocation takeFloat (
@@ -27,7 +27,7 @@
     (expression-stmt
       (invocation io println (
         (invocation takeDecimal (
-          (literal 100/1))))))
+          (literal 100))))))
   )
 )
 (takeDecimal

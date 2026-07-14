@@ -1,0 +1,425 @@
+(package
+  (import-package ballerina crypto (as crypto))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable certPem (type
+          (value-type string)) (expr
+          (literal 
+-----BEGIN CERTIFICATE-----
+MIIC/zCCAeegAwIBAgIUBXoOP/FQ9aBoHTSUMU7hq5YHkTowDQYJKoZIhvcNAQEL
+BQAwDzENMAsGA1UEAwwEdGVzdDAeFw0yNjA2MjQwOTQxNDFaFw0zNjA2MjEwOTQx
+NDFaMA8xDTALBgNVBAMMBHRlc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+AoIBAQC1PPPztnW/FG3c7bpGpp7SFhjSfMFUef4mBtEWSc1ZRUkfhNb/fHIsoQMP
+7PRv7kGE/ZxmKQ9KopDxoEvZ+yIndHsAmFoIz1d4qHFo9s/ZbGJjlPHI0rPbmkde
+3/gSevQgs0p8zqS4HtFWdZR5yIYkY0ldI7bD7bTaYyMkxeBhg06nTbZ3UqqwKwv+
+c38zDW+e1MqNdlN+XLWRHe9xVz05WoWypZWFCdfk4YeVoo7ccAfqNv6AiKWsk8VP
+icoMz53kHoitlGRM6EGjLaVuiWn4V18N0HNYGM7zc743VxRd5d7VID2CO7mN2fiD
+HGj65+bwQLkh5188V0abjiwbzhNlAgMBAAGjUzBRMB0GA1UdDgQWBBTccyUbTLdq
+ZINgfGuVW/Olk4SfsjAfBgNVHSMEGDAWgBTccyUbTLdqZINgfGuVW/Olk4SfsjAP
+BgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCfjarBf3GgaL3TpKg3
+tBirLaYtl2wTuTyKgf7ZYYSpWxxyP0cs255s8Im/GcoLfb86WikeZ0lnbWvb7C4F
+SobLlJ+ajRYr7TxVsmz6BNr+Dd04LSF9Mf2toZ4jy08/AdmbbmF7a+CZPIlsNSXI
+uVasyeTYd0v52SJ9i+7cs1j+R5WBTxrptjv39KfXJe4/hbdIf8wQMtsZLAokFl7G
+VVljwBVzGfmmzowf60HpSnfpEwAle7utOAmARLyf+hp3FNPRwqylDMcXEFD+/OJJ
+M3vuL+Gkbuifdee3xayNRQOcT7wegwhqX18AgeJRP8JnksSCOqswYqQXI10chsgv
+4uEG
+-----END CERTIFICATE-----
+))))
+      (var-def
+        (variable keyPem (type
+          (value-type string)) (expr
+          (literal 
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC1PPPztnW/FG3c
+7bpGpp7SFhjSfMFUef4mBtEWSc1ZRUkfhNb/fHIsoQMP7PRv7kGE/ZxmKQ9KopDx
+oEvZ+yIndHsAmFoIz1d4qHFo9s/ZbGJjlPHI0rPbmkde3/gSevQgs0p8zqS4HtFW
+dZR5yIYkY0ldI7bD7bTaYyMkxeBhg06nTbZ3UqqwKwv+c38zDW+e1MqNdlN+XLWR
+He9xVz05WoWypZWFCdfk4YeVoo7ccAfqNv6AiKWsk8VPicoMz53kHoitlGRM6EGj
+LaVuiWn4V18N0HNYGM7zc743VxRd5d7VID2CO7mN2fiDHGj65+bwQLkh5188V0ab
+jiwbzhNlAgMBAAECggEAPWz/MaaxmaWO5sYb0D5AreuXVh+6VqtSHAlLbEZvNsZo
+1inrxIOlHsMjio5A+n7B7hUWoPlhmWYnwf0WODcJiF3OIpGAUmQTvW05ot2j7Ijz
+f9THbc0b8F4Fun4mUf0iKMMbh9lxsoWfZbJMNEpmTIbqIossMpOqLCpViu0V83Y+
+jics/bavFPAV2XpEW/uj+iN1OUXmZgHtlxoekl5qeL2DEjfrqLYOzF+gfeJGf0cK
+RQSpehhuxZo7RR8Twp3hr7sKWnEkzVg6LignEw1vsDU0KQ7lgkVjWlFInWHorohH
+U2BgJgCbzl28qYC5yBg+eRmne1MKH+EmfVxBLvIvgQKBgQDxFlCryrjryTb598Ee
+PMsuqd4lVhJ5AafwHvAKIhgml1uAwZT0hxOaZ9h8LaglbMy2I756RA1zGHIMqBYv
+yCRRA5YNuobx9Zc2F817mcobdHoSg3RDaozIbIf7xRJwvd4vW8z+a4ucP9/ynURb
+1VxEJvzN3FvU1mO5c8ZCTW29/QKBgQDAcukW+RYSTbj7jo5CpcQfDU+4YtPWSwFZ
+mnme6EqDBsYKVq8Cz7+pebv0D8EyJJFGqgnkGFDd3gU4gA3Y2qneH5dY0UQhoqJT
+tiFzmiWS3T6Re1eMKbjFY7E5LB59WyTMzFtdoFZhdDkN+WvEkuuWyM2GQKzmtI/y
+CsBqZEIziQKBgQC6aknYfDk+wGiNImCmM9Xb8CdAcWx5OqmThyiOfUx1UqXDSmwW
+I/gpdVC0vEz/G0CzObJIMiTAMU/Gr5XwPm6uYfp+BRPhNchFYGRXxVO8pPTbKeAV
+XOcc9qazK/AVUwrhTbeVpqzeFZnhrG82HyVn4UmrGE+9pESaGoZbsClCNQKBgQCF
+3ymf7nPZFbHpY9g4KoHMLAFZvX2o4xI0V43k6afzj4Gx7Wze4s9rwB/r/g2hqOha
+JKyuu+989xXgoMuBH1LtDkLE6QWg9DZBTz/j38XlbPw6TXewK9G5lcjRgYxQHVfz
+EvE3pvKP5j5OJ0Q9QQqbIGI/0ruz3MUJVUtWdxnKKQKBgD+XDq4K2S3Lu4TTDKlq
+n2tibFB+z1Bf+UNeqXSH6l5hBetLFO1sxBCgEXJqdqZQzGcbwKiyxvR0Xq27avk6
+XqWeJHCOAoR8Xuwe+xA8tfvr/cSGsrOK3xKUYnppx6wx2Goxsegyc8Uq9pxU6ub+
+sMbVENrDBjGHSNDcwP4bsjzU
+-----END PRIVATE KEY-----
+))))
+      (var-def
+        (variable encKeyPem (type
+          (value-type string)) (expr
+          (literal 
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIba1oPEjXWZkCAggA
+MAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBCpntLqaIEuOa6HfQoVEmtTBIIE
+0Jz8FuHIArJ93w0mcqt3wgSvRGyTfOmCIiR3r5xSZLJwyGgMsJf3e8kD2A8mBdls
+FPjRaaTCEUqGjZx6N2zFJSqzbzKnWqOn3LCYK1MfYsnFEfxTv+LClsv777gmUusa
+BLmEoL46uQ2iw13Ow9a2AglS1wlG85gAUeVoAPK60UGk824hCQEzMJyOQZ/C8w8d
+Iu6hR/aSbbyCvW9y2FNYFJ9EOqtROCeufx9Jkd8SZnvZnQDoPwDcjApwytGNRZbh
+tjgpZ2VTRP/hLJuUT/FD8rurPL5UacWD1I5f0OMb8VPHmjP08RUTJJPb+Ey4zc3O
+GaBUsf/TaW5ooVRBuqFWp9+/bHOiZFWUC3Arqzg5l8OF1vwD/56gaXy2mb42mbyG
+JsmYNtPABk029IfFspiScFSggaDfMkN57NcQdVSvgT32sdRUuNNnX+4Z82PylJqu
+5fjXiK+0wytipWIJNNMZygXrC5Z3BpLfVhp7YANNWhOuEPeBUyOhl3ueqGDom9+z
+xILmHaetzvAR652kSoTDGdbVReFRfbVJlZRhneB60iNgObUlBQqqQVtBAa60Msjh
+DqRn6ZNlDFfuvPlDrSS+lc6c8/dd+f507NBh22nNANNx02VOqNRb5/o2tPg0cXt5
+MNsqtxw/NhYIJ0Ypc4K9da8nUndvgPfjiQZk3ghOwvN7apkwHDCEMcytqeJ30WNK
+bTxP9ZJy0pEW6YsAzekuVozV5anm7R+MfvvoA9MEyp9KKwKfzu9/sf0nbMPfBHOQ
+41L3ldzQJed40T/SJIqs18QeAM5Tz9VImGeq7RqWMayqFkVQl9zFWIWVVv09aTB0
+CB3450jAktXOlE6bgu8wQML3PkNxT+3oLYwUWjqejIpM0/3uegGFSKYAgVNYsSCt
+nRpAN+ISiIY8fFZ/zZYJuWr6tzKiFkyQg/8WWj2LELNsFNxmKDw6vXYXCT/VW9FD
+ZseKHBvfxlvJ1tOeWiM6PtDonqVVjzbWq8WYs02C0CAovNe35BSfsTHxmzVwmwSr
+lBphLE9pGDKARmGtXec5Lq6UX2nWti4+Y34gQ60mSR3A+db2PbITFxeqrFPb02h8
+A51H4ZzqVORWSRp1GCCCLmUl7m1YIkKHDD3P6UI7QywiB2I9ALo/Ow3Hzd8gU2Gs
+wiNT35vGUOkABaya7EQGkLvbFxb/M3t7U5yC+CCMz4ummFt4oLG/FuYFWE2MG2c1
+Y4unteJrWPQVvLsWVPflw1LTSS0Ae6YUvBbK6b9KhPVw+i7xvD1xe31gVoBOK6ht
+MaZ4HYhrGstGd4K8LwFmspFZ25CeZYdETxt/b3mL60WgQiayPka6lOA9N4pSgBLZ
+YMcbgppoER9dZwaXI0ZK/50hVMozuOgWkcVe9eldKJ/eVVa8AKyd0wLPMeODKSUF
+hmUofn1BvlFbG9+gK8sJJZcfbQ4qHPtkU2zDjQ+xDFOpqtImLg1ot224pPaFW+IZ
+IUWtAnhDqLqtXHTQj6PbxzmbhiygtL4ID0qimS/IFb+Y9pT/IN8rdiiGYUicQbwu
+Eubczj1asLiR3WmG1u2v/ntgx3FESVPFlpEMX66jA4DTWUF8aSNSNZIhKoIorIVZ
+7zHOeuPbInRBgp4S7e5u4P6yRVVcCQiiETIIa78EvdjF
+-----END ENCRYPTED PRIVATE KEY-----
+))))
+      (var-def
+        (variable data (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal /tmp/bal_crypto_content.pem))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref certPem))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_crypto_content.pem))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable certBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation crypto decodeRsaPublicKeyFromContent (
+            (simple-var-ref certBytes))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable pub (type
+          (user-defined-type crypto PublicKey)) (expr
+          (simple-var-ref $desugar$5))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref data))))
+      (var-def
+        (variable $desugar$7 (expr
+          (simple-var-ref pub))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation $default$17 (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation crypto encryptRsaEcb (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)
+            (simple-var-ref $desugar$8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.array length (
+              (group-expr
+                (simple-var-ref $desugar$9))))
+            (literal 0)))))
+      (var-def
+        (variable $desugar$10 (expr
+          (literal /tmp/bal_crypto_content.pem))))
+      (var-def
+        (variable $desugar$11 (expr
+          (simple-var-ref keyPem))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$13))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_crypto_content.pem))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (var-def
+        (variable keyBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$14))))
+      (var-def
+        (variable $desugar$15 (expr
+          (simple-var-ref keyBytes))))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$15))))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation crypto decodeRsaPrivateKeyFromContent (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$17))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$17))) ())
+      (var-def
+        (variable pk (type
+          (user-defined-type crypto PrivateKey)) (expr
+          (simple-var-ref $desugar$17))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation crypto signRsaSha256 (
+            (simple-var-ref data)
+            (simple-var-ref pk))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$18))) ())
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.array length (
+              (group-expr
+                (simple-var-ref $desugar$18))))
+            (literal 0)))))
+      (var-def
+        (variable $desugar$19 (expr
+          (literal /tmp/bal_crypto_content.pem))))
+      (var-def
+        (variable $desugar$20 (expr
+          (simple-var-ref encKeyPem))))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20))))))
+      (var-def
+        (variable $desugar$22 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20)
+            (simple-var-ref $desugar$21))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$22))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$22))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$22))
+      (var-def
+        (variable $desugar$23 (expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_crypto_content.pem))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$23))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$23))) ())
+      (var-def
+        (variable encBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$23))))
+      (var-def
+        (variable $desugar$24 (expr
+          (invocation crypto decodeRsaPrivateKeyFromContent (
+            (simple-var-ref encBytes)
+            (literal secret))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$24))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$24))) ())
+      (var-def
+        (variable encPk (type
+          (user-defined-type crypto PrivateKey)) (expr
+          (simple-var-ref $desugar$24))))
+      (var-def
+        (variable $desugar$25 (expr
+          (invocation crypto signRsaSha256 (
+            (simple-var-ref data)
+            (simple-var-ref encPk))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$25))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$25))) ())
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.array length (
+              (group-expr
+                (simple-var-ref $desugar$25))))
+            (literal 0)))))
+      (var-def
+        (variable junk (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable bad (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto decodeRsaPublicKeyFromContent (
+            (simple-var-ref junk))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bad)
+            (user-defined-type crypto Error)))))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation crypto buildRsaPublicKey (
+            (literal B53CF3F3B675BF146DDCEDBA46A69ED21618D27CC15479FE2606D11649CD5945491F84D6FF7C722CA1030FECF46FEE4184FD9C66290F4AA290F1A04BD9FB2227747B00985A08CF5778A87168F6CFD96C626394F1C8D2B3DB9A475EDFF8127AF420B34A7CCEA4B81ED156759479C8862463495D23B6C3EDB4DA632324C5E061834EA74DB67752AAB02B0BFE737F330D6F9ED4CA8D76537E5CB5911DEF71573D395A85B2A5958509D7E4E18795A28EDC7007EA36FE8088A5AC93C54F89CA0CCF9DE41E88AD94644CE841A32DA56E8969F8575F0DD0735818CEF373BE3757145DE5DED5203D823BB98DD9F8831C68FAE7E6F040B921E75F3C57469B8E2C1BCE1365)
+            (literal 10001))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$26))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$26))) ())
+      (var-def
+        (variable built (type
+          (user-defined-type crypto PublicKey)) (expr
+          (simple-var-ref $desugar$26))))
+      (var-def
+        (variable $desugar$27 (expr
+          (simple-var-ref data))))
+      (var-def
+        (variable $desugar$28 (expr
+          (simple-var-ref built))))
+      (var-def
+        (variable $desugar$29 (expr
+          (invocation $default$17 (
+            (simple-var-ref $desugar$27)
+            (simple-var-ref $desugar$28))))))
+      (var-def
+        (variable $desugar$30 (expr
+          (invocation crypto encryptRsaEcb (
+            (simple-var-ref $desugar$27)
+            (simple-var-ref $desugar$28)
+            (simple-var-ref $desugar$29))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$30))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$30))) ())
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation lang.array length (
+              (group-expr
+                (simple-var-ref $desugar$30))))
+            (literal 0)))))
+      (var-def
+        (variable badBuilt (type
+          (union-type
+            (user-defined-type crypto PublicKey)
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto buildRsaPublicKey (
+            (literal nothex)
+            (literal 10001))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badBuilt)
+            (user-defined-type crypto Error))))))))

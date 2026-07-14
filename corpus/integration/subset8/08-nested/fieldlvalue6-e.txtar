@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 8
+  --> fieldlvalue6-e.bal:33:16
+   |
+33 |     a.b.c[m] = 8; // @error
+   |                ^

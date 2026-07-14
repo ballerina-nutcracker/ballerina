@@ -1,0 +1,25 @@
+(btoi
+  (bb0 () (bb1 bb2)
+    (simple-var-ref b)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 1))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation btoi (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation btoi (
+          (literal false))))))
+  )
+)

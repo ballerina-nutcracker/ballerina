@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable mi (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable ma (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (simple-var-ref mi))))
+      (assignment
+        (index-based-access
+          (simple-var-ref ma)
+          (literal x))
+        (literal <nil>))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref ma)))))

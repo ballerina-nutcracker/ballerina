@@ -1,0 +1,27 @@
+(package
+  (import-package ballerina io (as io))
+  (function foo (
+    (variable v (type
+      (union-type
+        (value-type any)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal should not match)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation foo (
+          (error-constructor-expr (
+            (literal hi))))))
+      (expression-stmt
+        (invocation io println (
+          (literal done)))))))

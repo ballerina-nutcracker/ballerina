@@ -1,0 +1,22 @@
+-- stdout --
+s8s16s32u8u16u32
+s8s16s32u8u16u32
+s8s16s32u8u16u32
+s16s32u8u16u32
+s8s16s32
+s8s16s32
+s8s16s32
+s16s32
+s16s32u8u16u32
+s16s32u16u32
+s32u16u32
+s32u32
+s32u32
+u32
+u32
+int
+s16s32
+s32
+s32
+int
+-- stderr --

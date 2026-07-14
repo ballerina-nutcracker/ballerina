@@ -5,10 +5,10 @@
         (user-defined-type FloatRecord)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 1))
           (key-value
-            (simple-var-ref y)
+            (literal y)
             (literal 2))))))
     (expression-stmt
       (invocation io println (
@@ -18,11 +18,11 @@
         (user-defined-type DecimalRecord)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref amount)
-            (literal 100/1))
+            (literal amount)
+            (literal 100))
           (key-value
-            (simple-var-ref tax)
-            (literal 15/1))))))
+            (literal tax)
+            (literal 15))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref dr))))
@@ -31,14 +31,14 @@
         (user-defined-type MixedRecord)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref count)
+            (literal count)
             (literal 10))
           (key-value
-            (simple-var-ref ratio)
+            (literal ratio)
             (literal 2))
           (key-value
-            (simple-var-ref price)
-            (literal 50/1))))))
+            (literal price)
+            (literal 50))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref mr))))
@@ -47,11 +47,11 @@
         (user-defined-type DecimalRecord)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref amount)
-            (literal 3/2))
+            (literal amount)
+            (literal 1.5))
           (key-value
-            (simple-var-ref tax)
-            (literal 1/2))))))
+            (literal tax)
+            (literal 0.5))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref dr2))))
@@ -62,10 +62,10 @@
           (value-type float))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref a)
+            (literal a)
             (literal 1))
           (key-value
-            (simple-var-ref b)
+            (literal b)
             (literal 2))))))
     (expression-stmt
       (invocation io println (
@@ -77,11 +77,11 @@
           (value-type decimal))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref a)
-            (literal 1/1))
+            (literal a)
+            (literal 1))
           (key-value
-            (simple-var-ref b)
-            (literal 2/1))))))
+            (literal b)
+            (literal 2))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref md))))

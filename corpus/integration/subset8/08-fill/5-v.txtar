@@ -1,0 +1,4 @@
+-- stdout --
+["xyz","xyz","xyz","xyz"]
+["","","","abc"]
+-- stderr --

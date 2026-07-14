@@ -1,0 +1,79 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field x
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (field y
+        (array-type
+          (value-type float) dimensions: 1 ([])))
+      (field z
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (type-definition V
+    (intersection-type
+      (union-type
+        (union-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (array-type
+            (value-type float) dimensions: 1 ([])))
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (list-constructor-expr
+                (literal 255)))
+            (key-value
+              (literal y)
+              (list-constructor-expr))
+            (key-value
+              (literal z)
+              (list-constructor-expr))))))
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type any)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref r)
+            (literal x)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type V))
+        (block-stmt
+          (var-def
+            (variable n (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref x)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref n))))
+          (var-def
+            (variable ix (type
+              (array-type
+                (value-type int) dimensions: 1 ([]))) (expr
+              (simple-var-ref x))))
+          (var-def
+            (variable n2 (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref ix)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref n2))))) ())
+      (block-stmt))))

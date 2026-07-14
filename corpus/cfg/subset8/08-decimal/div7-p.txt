@@ -1,0 +1,17 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d1 (type
+        (value-type decimal)) (expr
+        (literal 9.999999999999999999999999999999999E+6144))))
+    (var-def
+      (variable d2 (type
+        (value-type decimal)) (expr
+        (literal 0))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (simple-var-ref d1)
+          (simple-var-ref d2)))))
+  )
+)

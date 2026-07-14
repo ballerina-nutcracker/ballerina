@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> function4-e.bal:19:5
+   |
+19 |     x.push(
+   |     ^^^^^^^
+20 |         "d" // @error
+   |         ^^^^^^^^^^^^^
+21 |     );
+   |     ^

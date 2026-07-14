@@ -1,0 +1,26 @@
+(bar
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref err))))
+  )
+)
+(foo
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (simple-var-ref s))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal help))))))
+    (expression-stmt
+      (invocation bar (
+        (error-constructor-expr (
+          (literal bad))))))
+  )
+)

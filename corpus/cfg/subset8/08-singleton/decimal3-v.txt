@@ -1,0 +1,24 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref d)
+      (literal 1))
+  )
+  (bb1 (bb0) ()
+    (return
+      (unary-expr -
+        (simple-var-ref d)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (simple-var-ref d))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1.00))))))
+  )
+)

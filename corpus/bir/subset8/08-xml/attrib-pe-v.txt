@@ -1,0 +1,17 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad xml-stylesheet
+    %2 = ConstantLoad type="text/xsl" href="style.xsl"
+    %3 = newXMLPI(%1, %2)
+    pe = %3;
+    %5 = ConstantLoad  attr="value" 
+    %6 = newXMLComment(%5)
+    comment = %6;
+    %8 = + pe comment;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

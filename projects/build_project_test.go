@@ -20,6 +20,7 @@
 package projects_test
 
 import (
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -27,6 +28,7 @@ import (
 
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/test_util"
+	"ballerina-lang-go/tools/diagnostics"
 )
 
 // TestBuildProjectAPI tests loading a valid build project.
@@ -577,13 +579,101 @@ func TestMultiModuleDependencyOrder(t *testing.T) {
 	result, err := loadProject(absPath)
 	require.NoError(err, "Failed to load multi-module-project")
 
-	// Get package resolution which performs topological sorting
+	// Get package resolution which performs topological sorting. Implicit lang
+	// library modules (e.g. ballerina/lang.int) are compiled ahead of the
+	// project's modules; filter them out so we assert only the project's order.
 	resolution := result.Project().CurrentPackage().Resolution()
-	sortedModuleNames := resolution.TopologicallySortedModuleNames()
+	var sortedModuleNames []string
+	for _, name := range resolution.TopologicallySortedModuleNames() {
+		if strings.HasPrefix(name, "multimoduleproject") {
+			sortedModuleNames = append(sortedModuleNames, name)
+		}
+	}
 	require.Len(sortedModuleNames, 3)
 
-	// Verify the order
+	// Verify the intra-package order: storage → services → root.
 	assert.Equal("multimoduleproject.storage", sortedModuleNames[0])
 	assert.Equal("multimoduleproject.services", sortedModuleNames[1])
 	assert.Equal("multimoduleproject", sortedModuleNames[2])
+}
+
+// TestBuildProject_CompilationDiagnosticUnresolvedImport verifies that a build
+// project importing an unknown module reports compilation diagnostics via
+// PackageCompilation.DiagnosticResult().
+func TestBuildProject_CompilationDiagnosticUnresolvedImport(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	dir := t.TempDir()
+	writeFile(t, dir, "Ballerina.toml", `[package]
+org = "testorg"
+name = "myproj"
+version = "0.1.0"
+`)
+	writeFile(t, dir, "main.bal", `import nonexistentorg/nonexistent;
+public function main() { _ = nonexistent:something(); }
+`)
+
+	result, err := loadProject(dir)
+	require.NoError(err)
+
+	pkg := result.Project().CurrentPackage()
+	require.NotNil(pkg)
+
+	diags := pkg.Compilation().DiagnosticResult()
+	assert.True(diags.HasErrors(),
+		"expected compilation errors for unresolved import, got: %v",
+		diagnosticMessages(diags))
+}
+
+// TestBalaDependency_CompilationErrorPropagates verifies that an
+// error-severity diagnostic produced while compiling a bala *dependency* of a
+// user package is surfaced through the user package's
+// PackageCompilation.DiagnosticResult(). The errorpkg bala (in the local
+// repo) imports a non-existent module; consumer/main.bal imports errorpkg.
+func TestBalaDependency_CompilationErrorPropagates(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	testRepoPath, err := filepath.Abs(filepath.Join("testdata", "repo", "bala"))
+	require.NoError(err)
+
+	projectPath, err := filepath.Abs(filepath.Join("testdata", "project-with-bad-bala-dep"))
+	require.NoError(err)
+
+	result, err := loadProject(projectPath, projects.ProjectLoadConfig{
+		Repositories: []projects.Repository{
+			projects.NewFileSystemRepository(os.DirFS(testRepoPath), "."),
+		},
+	})
+	require.NoError(err)
+
+	pkg := result.Project().CurrentPackage()
+	require.NotNil(pkg)
+
+	compilation := pkg.Compilation()
+	diags := compilation.DiagnosticResult()
+	assert.True(diags.HasErrors(),
+		"expected error-severity diagnostic from bala dependency to surface in consumer compilation, got: %v",
+		diagnosticMessages(diags))
+
+	// Assert that the bala-prefix format is applied: the diagnostic from errorpkg/lib.bal
+	// must be registered under "mockorg/errorpkg/1.0.0::lib.bal" (not bare "lib.bal").
+	// This verifies the bala branch of buildDiagKeyPrefix is exercised correctly.
+	const wantFileName = "mockorg/errorpkg/1.0.0::lib.bal"
+	de := compilation.DiagnosticEnv()
+	found := false
+	for _, d := range diags.Errors() {
+		loc := d.Location()
+		if !diagnostics.LocationHasSource(loc) {
+			continue
+		}
+		if de.FileName(loc) == wantFileName {
+			found = true
+			break
+		}
+	}
+	assert.True(found,
+		"expected an error diagnostic with file %q (bala prefix applied); errors: %v",
+		wantFileName, diagnosticMessages(diags))
 }

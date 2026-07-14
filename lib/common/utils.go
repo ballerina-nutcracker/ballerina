@@ -23,7 +23,7 @@ import (
 
 func FunctionSignatureToSemType(env semtypes.Env, fs *model.FunctionSignature) semtypes.SemType {
 	var restTy semtypes.SemType
-	if fs.RestParamType != nil {
+	if !semtypes.IsZero(fs.RestParamType) {
 		restTy = fs.RestParamType
 	} else {
 		restTy = semtypes.NEVER

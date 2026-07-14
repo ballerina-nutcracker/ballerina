@@ -1,0 +1,123 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation foo (
+          (list-constructor-expr
+            (literal 2)
+            (literal 2)))))
+      (expression-stmt
+        (invocation foo (
+          (list-constructor-expr
+            (literal 2)
+            (literal 3)))))
+      (expression-stmt
+        (invocation foo1 (
+          (list-constructor-expr
+            (literal 2)
+            (literal 3)))))
+      (expression-stmt
+        (invocation foo2 (
+          (list-constructor-expr
+            (literal 2)
+            (literal 3)))))))
+  (function foo (
+    (variable a (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (tuple-type
+            (finite-type
+              (literal 2))
+            (finite-type
+              (literal 3))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref a)
+            (tuple-type
+              (value-type int)
+              (value-type int)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal unexpected))))) ())
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref a)
+              (array-type
+                (value-type int) dimensions: 1 ([])))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal unexpected))))) (
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal a is any)))))))))))
+  (function foo1 (
+    (variable a (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (tuple-type
+            (finite-type
+              (literal 2))
+            (finite-type
+              (literal 3))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal unexpected))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref a)
+            (tuple-type
+              (value-type int)
+              (value-type int)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal unexpected))))) (
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal a is int[]))))))))))
+  (function foo2 (
+    (variable a (type
+      (tuple-type
+        (finite-type
+          (literal 2))
+        (finite-type
+          (literal 3)))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (tuple-type
+            (finite-type
+              (literal 2))
+            (finite-type
+              (literal 3))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal a is [2,3]))))) ())
+      (block-stmt))))

@@ -1,0 +1,3 @@
+-- stdout --
+[[0,false,"x"],[1,true,"x"]]
+-- stderr --

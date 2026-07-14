@@ -1,0 +1,20 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (invocation foo ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))))
+  (function foo () (
+    (array-type
+      (value-type any) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (list-constructor-expr)))))

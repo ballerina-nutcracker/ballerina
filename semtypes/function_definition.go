@@ -29,7 +29,7 @@ func NewFunctionDefinition() FunctionDefinition {
 }
 
 func (f *FunctionDefinition) GetSemType(env Env) SemType {
-	if f.semType != nil {
+	if !IsZero(f.semType) {
 		return f.semType
 	}
 	rec := env.recFunctionAtom()
@@ -61,7 +61,7 @@ func (f *FunctionDefinition) defineInternal(env Env, atomicType functionAtomicTy
 		a = rec
 		env.setRecFunctionAtomType(*rec, &atomicType)
 	} else {
-		a = new(env.functionAtom(&atomicType))
+		a = env.functionAtom(&atomicType)
 	}
 	return f.createSemType(a)
 }

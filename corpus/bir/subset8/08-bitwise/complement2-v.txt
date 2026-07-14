@@ -1,0 +1,113 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    i = %1;
+    %3 = ~ i;
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %8 = twiddle(%7) -> bb2;
+  }
+  bb2 {
+    %9 = %8;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    %11 = ConstantLoad 100
+    %12 = %11;
+    %13 = twiddle(%12) -> bb4;
+  }
+  bb4 {
+    %14 = ~ %13;
+    %15 = %14;
+    %16 = println(%15) -> bb5;
+  }
+  bb5 {
+    %17 = ConstantLoad 9223372036854775807
+    %18 = ~ %17;
+    %19 = %18;
+    %20 = toHexString(%19) -> bb6;
+  }
+  bb6 {
+    %21 = println(%20) -> bb7;
+  }
+  bb7 {
+    %22 = ConstantLoad 1
+    %23 = unknown %22;
+    %24 = ~ %23;
+    %25 = %24;
+    %26 = println(%25) -> bb8;
+  }
+  bb8 {
+    %27 = ConstantLoad 42
+    %28 = %27;
+    %29 = minusTwo(%28) -> bb9;
+  }
+  bb9 {
+    %30 = %29;
+    %31 = println(%30) -> bb10;
+  }
+  bb10 {
+    %32 = ConstantLoad 98
+    %33 = unknown %32;
+    %34 = %33;
+    %35 = minusTwo(%34) -> bb11;
+  }
+  bb11 {
+    %36 = %35;
+    %37 = println(%36) -> bb12;
+  }
+  bb12 {
+    %38 = ConstantLoad 42
+    %39 = %38;
+    %40 = addTwo(%39) -> bb13;
+  }
+  bb13 {
+    %41 = %40;
+    %42 = println(%41) -> bb14;
+  }
+  bb14 {
+    %43 = ConstantLoad 98
+    %44 = unknown %43;
+    %45 = %44;
+    %46 = addTwo(%45) -> bb15;
+  }
+  bb15 {
+    %47 = %46;
+    %48 = println(%47) -> bb16;
+  }
+  bb16 {
+    return;
+  }
+}
+twiddle(int) -> int{
+  bb0 {
+    %2 = ~ i;
+    %0 = %2;
+    return;
+  }
+}
+minusTwo(int) -> int{
+  bb0 {
+    %2 = unknown i;
+    %3 = ~ %2;
+    %4 = unknown %3;
+    %5 = ~ %4;
+    %0 = %5;
+    return;
+  }
+}
+addTwo(int) -> int{
+  bb0 {
+    %2 = ~ i;
+    %3 = unknown %2;
+    %4 = ~ %3;
+    %5 = unknown %4;
+    %0 = %5;
+    return;
+  }
+}

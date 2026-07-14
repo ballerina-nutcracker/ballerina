@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R3)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal x)
+                    (list-constructor-expr))))))))))
+    (expression-stmt
+      (invocation lang.array push (
+        (field-based-access x
+          (field-based-access x
+            (field-based-access x
+              (simple-var-ref r))))
+        (literal 11))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access x
+            (field-based-access x
+              (field-based-access x
+                (simple-var-ref r))))
+          (literal 0)))))
+  )
+)

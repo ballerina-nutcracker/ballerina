@@ -1,0 +1,49 @@
+(foo
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation test1 ()))
+    (expression-stmt
+      (invocation test2 ()))
+  )
+)
+(test1
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation lang.array push (
+        (group-expr
+          (invocation foo (
+            (simple-var-ref x))))
+        (literal 1))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)
+(test2
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation lang.array push (
+        (invocation foo (
+          (simple-var-ref x)))
+        (literal 2))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    v = %2;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 0
+    v[%5] = %4;
+    %6 = ConstantLoad 0
+    %7 = newArray list[%6]{}
+    %8 = ConstantLoad 1
+    v[%8] = %7;
+    %9 = ConstantLoad whoops
+    %10 = newError error(%9)
+    %11 = ConstantLoad 2
+    v[%11] = %10;
+    %12 = println(v) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unreachable code
+  --> 17-e.bal:33:5
+   |
+33 |     return "unreached"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^

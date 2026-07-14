@@ -1,12 +1,11 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
     %2 = ConstantLoad 1.5
     %3 = ConstantLoad foo
     %4 = ConstantLoad true
-    %5 = ConstantLoad 123/100
+    %5 = ConstantLoad 1.23
     %6 = ConstantLoad 5
     %7 = newArray [int, float, string, boolean, decimal, never...][%6]{%1, %2, %3, %4, %5}
     foo = %7;

@@ -18,6 +18,6 @@ import ballerina/io;
 
 public function main() {
     int[] xs = [1, 2, 3];
-    int[][] out = from var x in xs select from var s in [3, 4, 5] select s;
+    int[][] out = from var _ in xs select from var s in [3, 4, 5] select s;
     io:println(out); // @output [[3,4,5],[3,4,5],[3,4,5]]
 }

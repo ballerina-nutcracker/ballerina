@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (user-defined-type xml Element)) (expr
+          (xml-element-literal e
+            (xml-text-literal tt)))))
+      (var-def
+        (variable e2 (type
+          (user-defined-type xml Element)) (expr
+          (xml-element-literal e2
+            (xml-sequence-literal
+              (xml-element-literal ee
+                (xml-text-literal tt))
+              (xml-element-literal xx
+                (xml-text-literal xx)))))))
+      (var-def
+        (variable e3 (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (binary-expr +
+            (simple-var-ref e1)
+            (simple-var-ref e2)))))
+      (var-def
+        (variable pe (type
+          (user-defined-type xml ProcessingInstruction)) (expr
+          (xml-pi-literal pe ))))
+      (var-def
+        (variable e4 (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml ProcessingInstruction)))) (expr
+          (binary-expr +
+            (simple-var-ref e3)
+            (simple-var-ref pe)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e4)))))))

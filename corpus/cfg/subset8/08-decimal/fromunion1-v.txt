@@ -1,0 +1,26 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x1 (type
+        (union-type
+          (value-type int)
+          (value-type float))) (expr
+        (literal 1.2))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref x1)
+          (value-type decimal)))))
+    (var-def
+      (variable x2 (type
+        (union-type
+          (value-type decimal)
+          (value-type float))) (expr
+        (literal 1.3))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref x2)
+          (value-type decimal)))))
+  )
+)

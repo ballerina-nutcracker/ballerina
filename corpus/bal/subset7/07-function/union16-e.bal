@@ -26,5 +26,6 @@ public function main() {
 }
 
 function fooBar(any x) returns int|string {
+        any _ = x;
     return 10;
-}
+    }

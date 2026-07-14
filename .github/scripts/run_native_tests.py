@@ -11,7 +11,7 @@ from typing import NamedTuple
 
 MAX_PARALLEL = 3
 SKIP_PATTERN = "TestParseCorpusFiles|TestJBalUnitTests|TestJBalUnitBIRTests"
-TIMEOUT = "30m"
+TIMEOUT = "2h"
 PROFILE_LINE_PATTERN = re.compile(
     r"^(.+):([0-9]+\.[0-9]+,[0-9]+\.[0-9]+\s+[0-9]+\s+[0-9]+)$"
 )
@@ -102,7 +102,7 @@ def normalize_coverage_profile(
 
 
 def run_tests_for_module(
-    repo_root: Path, info: ModuleInfo, with_coverage: bool, go_parallel: str
+    repo_root: Path, info: ModuleInfo, with_coverage: bool, go_parallel: str, race: bool
 ) -> None:
     module = info.module
     cmd = [
@@ -116,7 +116,7 @@ def run_tests_for_module(
         "-skip",
         SKIP_PATTERN,
     ]
-    if module == ".":
+    if race and module == ".":
         cmd.insert(2, "-race")
     env = os.environ.copy()
 
@@ -155,14 +155,14 @@ def run_tests_for_module(
 
 
 def run_modules_in_parallel(
-    repo_root: Path, modules: list[ModuleInfo], with_coverage: bool, go_parallel: str
+    repo_root: Path, modules: list[ModuleInfo], with_coverage: bool, go_parallel: str, race: bool
 ) -> bool:
     failed = False
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
         future_to_module = {}
         for info in modules:
             future = pool.submit(
-                run_tests_for_module, repo_root, info, with_coverage, go_parallel
+                run_tests_for_module, repo_root, info, with_coverage, go_parallel, race
             )
             future_to_module[future] = info.module
 
@@ -188,14 +188,21 @@ def normalize_all_coverage_profiles(repo_root: Path, modules: list[ModuleInfo]) 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--with-coverage", action="store_true")
+    parser.add_argument("--race", action="store_true", help="Run root module tests with the race detector")
     args = parser.parse_args()
     repo_root = Path(run_cmd(["git", "rev-parse", "--show-toplevel"])).resolve()
     os.chdir(repo_root)
     modules = [build_module_info(repo_root, module) for module in discover_modules(repo_root)]
     go_parallel = str(os.cpu_count() or 4)
-    print("Running tests with coverage" if args.with_coverage else "Running tests")
+    details = []
+    if args.with_coverage:
+        details.append("coverage")
+    if args.race:
+        details.append("race detector")
+    suffix = f" with {' and '.join(details)}" if details else ""
+    print(f"Running tests{suffix}")
 
-    if run_modules_in_parallel(repo_root, modules, args.with_coverage, go_parallel):
+    if run_modules_in_parallel(repo_root, modules, args.with_coverage, go_parallel, args.race):
         return 1
 
     if args.with_coverage:

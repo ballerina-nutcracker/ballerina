@@ -1,0 +1,49 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable days (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal Monday)
+            (literal Tuesday)
+            (literal Wednesday)
+            (literal Thursday)
+            (literal Friday)
+            (literal Saturday)
+            (literal Sunday)))))
+      (var-def
+        (variable dayNumber (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (invocation length expr:
+            (simple-var-ref days) ()))
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref dayNumber)
+              (type-conversion-expr
+                (index-based-access
+                  (simple-var-ref days)
+                  (simple-var-ref i))
+                (value-type string)))
+            (binary-expr +
+              (simple-var-ref i)
+              (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref dayNumber)
+            (literal Sunday))))))))

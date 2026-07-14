@@ -17,31 +17,25 @@
 package semtypes
 
 import (
-	"math/big"
+	"ballerina-lang-go/decimal"
 )
 
 type enumerableDecimal struct {
-	value big.Rat
+	value decimal.Decimal
 }
 
-var _ enumerableType[big.Rat] = &enumerableDecimal{}
+var _ enumerableType[decimal.Decimal] = &enumerableDecimal{}
 
-func (e *enumerableDecimal) Value() big.Rat {
+func (e *enumerableDecimal) Value() decimal.Decimal {
 	return e.value
 }
 
-func (t1 *enumerableDecimal) Compare(t2 enumerableType[big.Rat]) int {
+func (t1 *enumerableDecimal) Compare(t2 enumerableType[decimal.Decimal]) int {
 	f1 := t1.Value()
 	f2 := t2.Value()
 	return f1.Cmp(&f2)
 }
 
-func newEnumerableDecimalFromBigDecimal(value big.Rat) enumerableDecimal {
-	this := enumerableDecimal{}
-	this.value = value
-	return this
-}
-
-func enumerableDecimalFrom(d big.Rat) enumerableDecimal {
-	return newEnumerableDecimalFromBigDecimal(d)
+func enumerableDecimalFrom(d decimal.Decimal) enumerableDecimal {
+	return enumerableDecimal{value: d}
 }

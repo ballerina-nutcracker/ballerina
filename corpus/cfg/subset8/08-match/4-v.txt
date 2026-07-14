@@ -1,0 +1,62 @@
+(foo
+  (bb0 () (bb1 bb2 bb3 bb4 bb5)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal zero))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal odd))
+  )
+  (bb3 (bb0) ()
+    (return
+      (literal boolean))
+  )
+  (bb4 (bb0) ()
+    (return
+      (literal greeting))
+  )
+  (bb5 (bb0) ()
+    (return
+      (literal other))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal hello))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 9))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal hi))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (list-constructor-expr
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal false))))))
+  )
+)

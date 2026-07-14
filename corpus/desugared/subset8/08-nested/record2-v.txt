@@ -1,0 +1,25 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition T
+    (record-type
+      (field x
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (user-defined-type T)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (list-constructor-expr
+                (literal 42)))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref v)
+              (literal x))
+            (literal 0))))))))

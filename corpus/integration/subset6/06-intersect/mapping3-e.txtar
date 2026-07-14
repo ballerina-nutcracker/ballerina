@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected never, got "a"
-  --> mapping3-e.bal:29:29
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> mapping3-e.bal:28:14
    |
-29 |     R1R2 r = { l1: 1, "l2": "a" }; // @error
-   |                             ^^^
+28 |     R1R2 _ = { l1: 1, "l2": "a" }; // @error
+   |              ^^^^^^^^^^^^^^^^^^^^

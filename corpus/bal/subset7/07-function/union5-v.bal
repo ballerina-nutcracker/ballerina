@@ -27,5 +27,6 @@ public function main() {
 }
 
 function foo(1|2 a) returns 4 {
+    1|2 _ = a;
     return 4;
 }

@@ -1,0 +1,164 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina time (as time))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.123Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable ms (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref ms))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.123456Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable us (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref us))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.123456789Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable ns (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref ns))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation time utcFromString (
+            (literal 2024-06-15T10:30:45.5Z))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable half (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref half))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation time civilToString (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 6))
+              (key-value
+                (literal day)
+                (literal 15))
+              (key-value
+                (literal hour)
+                (literal 10))
+              (key-value
+                (literal minute)
+                (literal 30))
+              (key-value
+                (literal second)
+                (literal 45.5))
+              (key-value
+                (literal timeAbbrev)
+                (literal -08:00))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable neg (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref neg))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation time utcFromCivil (
+            (mapping-constructor-expr
+              (key-value
+                (literal year)
+                (literal 2024))
+              (key-value
+                (literal month)
+                (literal 6))
+              (key-value
+                (literal day)
+                (literal 15))
+              (key-value
+                (literal hour)
+                (literal 2))
+              (key-value
+                (literal minute)
+                (literal 30))
+              (key-value
+                (literal second)
+                (literal 45))
+              (key-value
+                (literal utcOffset)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal hours)
+                    (unary-expr -
+                      (literal 8)))
+                  (key-value
+                    (literal minutes)
+                    (literal 0))))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable fromNeg (type
+          (user-defined-type time Utc)) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (invocation time utcToString (
+            (simple-var-ref fromNeg)))))))))

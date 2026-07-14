@@ -1,13 +1,13 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: redeclared symbol 'Color'
-  --> 7-e.bal:19:8
+  --> 7-e.bal:18:8
    |
-19 | string Color = "RED"; // @error
+18 | string Color = "RED"; // @error
    |        ^^^^^
 
 error[SEMANTIC_ERROR]: redeclared symbol 'Color'
-  --> 7-e.bal:21:13
+  --> 7-e.bal:20:13
    |
-21 | public enum Color { // @error
+20 | public enum Color { // @error
    |             ^^^^^

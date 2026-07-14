@@ -1,0 +1,34 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Base
+    (record-type
+      (field foo optional
+        (value-type int))))
+  (type-definition Derived
+    (record-type
+      (field bar
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (user-defined-type Derived)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 10))
+            (key-value
+              (literal bar)
+              (literal 20))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (assignment
+        (index-based-access
+          (simple-var-ref d)
+          (literal foo))
+        (literal <nil>))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d)))))))

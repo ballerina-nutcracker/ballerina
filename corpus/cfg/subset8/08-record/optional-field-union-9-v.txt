@@ -1,0 +1,42 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type R)
+          (user-defined-type R1))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal foo)
+            (literal 10))
+          (key-value
+            (literal bar)
+            (literal 10))))))
+    (var-def
+      (variable r2 (type
+        (user-defined-type R2)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal foo)
+            (literal 20))
+          (key-value
+            (literal baz)
+            (literal ))))))
+    (assignment
+      (field-based-access foo
+        (simple-var-ref r2))
+      (binary-expr +
+        (type-conversion-expr
+          (field-based-access foo
+            (simple-var-ref r2))
+          (value-type int))
+        (type-conversion-expr
+          (field-based-access foo
+            (simple-var-ref r))
+          (value-type int))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access foo
+          (simple-var-ref r2)))))
+  )
+)

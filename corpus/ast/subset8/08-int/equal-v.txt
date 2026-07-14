@@ -1,0 +1,93 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type boolean)) (expr
+          (invocation intEq (
+            (literal 17)
+            (literal 17))))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 17))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 0)))))))
+      (assignment
+        (simple-var-ref b)
+        (invocation intNotEq (
+          (literal 21)
+          (literal 21))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 0))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 21)))))))
+      (assignment
+        (simple-var-ref b)
+        (invocation intEq (
+          (unary-expr -
+            (literal 17))
+          (unary-expr -
+            (literal 17)))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (unary-expr -
+                (literal 17)))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 0)))))))
+      (assignment
+        (simple-var-ref b)
+        (invocation intNotEq (
+          (literal 9223372036854775807)
+          (unary-expr -
+            (literal 9223372036854775807)))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 9223372036854775807))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 0)))))))))
+  (function intEq (
+    (variable i (type
+      (value-type int)))
+    (variable j (type
+      (value-type int)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr ==
+          (simple-var-ref i)
+          (simple-var-ref j)))))
+  (function intNotEq (
+    (variable i (type
+      (value-type int)))
+    (variable j (type
+      (value-type int)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr !=
+          (simple-var-ref i)
+          (simple-var-ref j))))))

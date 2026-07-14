@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal 0))))
+    (expression-stmt
+      (invocation makeNil ()))
+    (expression-stmt
+      (invocation io println (
+        (literal 1))))
+  )
+)
+(makeNil
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)

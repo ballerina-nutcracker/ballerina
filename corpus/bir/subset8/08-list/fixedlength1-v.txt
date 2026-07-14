@@ -1,0 +1,81 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 4
+    %5 = ConstantLoad 4
+    %6 = newArray [int, int, int, int, never...][%5]{%1, %2, %3, %4}
+    i5 = %6;
+    %8 = println(i5) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad 1
+    %9 = i5[%10];
+    %11 = %9;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad 17
+    %14 = ConstantLoad 2
+    i5[%14] = %13;
+    %15 = println(i5) -> bb3;
+  }
+  bb3 {
+    %16 = ConstantLoad 4
+    %17 = ConstantLoad 5
+    %18 = ConstantLoad 6
+    %19 = ConstantLoad 7
+    %20 = ConstantLoad 4
+    %21 = newArray [int, int, int, int, never...][%20]{%16, %17, %18, %19}
+    i5 = %21;
+    %22 = println(i5) -> bb4;
+  }
+  bb4 {
+    %23 = ConstantLoad true
+    %24 = ConstantLoad false
+    %25 = ConstantLoad true
+    %26 = ConstantLoad 3
+    %27 = newArray [boolean, boolean, boolean, never...][%26]{%23, %24, %25}
+    b3 = %27;
+    %29 = println(b3) -> bb5;
+  }
+  bb5 {
+    %31 = ConstantLoad 1
+    %30 = b3[%31];
+    %32 = %30;
+    %33 = println(%32) -> bb6;
+  }
+  bb6 {
+    %34 = ConstantLoad true
+    %35 = ConstantLoad 1
+    b3[%35] = %34;
+    %36 = println(b3) -> bb7;
+  }
+  bb7 {
+    %37 = ConstantLoad 0
+    %38 = newArray [never...][%37]{}
+    i0 = %38;
+    %40 = println(i0) -> bb8;
+  }
+  bb8 {
+    %41 = ConstantLoad 1.5
+    %42 = ConstantLoad 2.5
+    %43 = ConstantLoad 3.5
+    %44 = ConstantLoad 3
+    %45 = newArray [float, float, float, never...][%44]{%41, %42, %43}
+    f3 = %45;
+    %47 = ConstantLoad 1
+    %48 = f3[%47];
+    %49 = %48;
+    %50 = ConstantLoad 1
+    %51 = %50;
+    %52 = + %49 %51;
+    f3[%47] = %52;
+    %53 = println(f3) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

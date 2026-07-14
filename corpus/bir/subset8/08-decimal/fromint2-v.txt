@@ -1,0 +1,92 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    i = %1;
+    %3 = <decimal>(i)
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 0
+    i = %6;
+    %7 = <decimal>(i)
+    %8 = %7;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 1
+    %11 = unknown %10;
+    i = %11;
+    %12 = <decimal>(i)
+    %13 = %12;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    %15 = ConstantLoad 2147483647
+    i = %15;
+    %16 = <decimal>(i)
+    %17 = %16;
+    %18 = println(%17) -> bb4;
+  }
+  bb4 {
+    %19 = ConstantLoad 2147483646
+    i = %19;
+    %20 = <decimal>(i)
+    %21 = %20;
+    %22 = println(%21) -> bb5;
+  }
+  bb5 {
+    %23 = ConstantLoad 2147483648
+    i = %23;
+    %24 = <decimal>(i)
+    %25 = %24;
+    %26 = println(%25) -> bb6;
+  }
+  bb6 {
+    %27 = ConstantLoad 2147483648
+    %28 = unknown %27;
+    i = %28;
+    %29 = <decimal>(i)
+    %30 = %29;
+    %31 = println(%30) -> bb7;
+  }
+  bb7 {
+    %32 = ConstantLoad 2147483647
+    %33 = unknown %32;
+    i = %33;
+    %34 = <decimal>(i)
+    %35 = %34;
+    %36 = println(%35) -> bb8;
+  }
+  bb8 {
+    %37 = ConstantLoad 2147483649
+    %38 = unknown %37;
+    i = %38;
+    %39 = <decimal>(i)
+    %40 = %39;
+    %41 = println(%40) -> bb9;
+  }
+  bb9 {
+    %42 = ConstantLoad 9223372036854775807
+    i = %42;
+    %43 = <decimal>(i)
+    %44 = %43;
+    %45 = println(%44) -> bb10;
+  }
+  bb10 {
+    %47 = ConstantLoad 9223372036854775807
+    %48 = unknown %47;
+    %49 = %48;
+    %50 = ConstantLoad 1
+    %51 = %50;
+    %46 = - %49 %51;
+    i = %46;
+    %52 = <decimal>(i)
+    %53 = %52;
+    %54 = println(%53) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}

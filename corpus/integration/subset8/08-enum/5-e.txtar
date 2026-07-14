@@ -1,13 +1,13 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected "BLUE"|"GREEN"|"RED", got "BLUE"|"RED"|"green"
-  --> 5-e.bal:28:30
+  --> 5-e.bal:27:30
    |
-28 |     "RED"|"GREEN"|"BLUE" x = c; // @error
+27 |     "RED"|"GREEN"|"BLUE" _ = c; // @error
    |                              ^
 
 error[SEMANTIC_ERROR]: incompatible type: expected int, got "BLUE"|"RED"|"green"
-  --> 5-e.bal:29:13
+  --> 5-e.bal:28:13
    |
-29 |     int y = c; // @error
+28 |     int _ = c; // @error
    |             ^

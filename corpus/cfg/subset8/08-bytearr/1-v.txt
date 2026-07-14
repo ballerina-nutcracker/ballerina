@@ -1,0 +1,67 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable b1 (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref b1)
+        (literal 0))
+      (literal 42))
+    (assignment
+      (index-based-access
+        (simple-var-ref b1)
+        (literal 1))
+      (literal 43))
+    (assignment
+      (index-based-access
+        (simple-var-ref b1)
+        (literal 3))
+      (literal 44))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b1)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b1)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b1)
+          (literal 3)))))
+    (var-def
+      (variable b2 (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 88)
+          (literal 89)
+          (literal 90)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b2)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b2)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref b2)
+          (literal 2)))))
+  )
+)

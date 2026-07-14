@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal i)
+            (literal 0))
+          (key-value
+            (literal j)
+            (literal <nil>))))))
+    (var-def
+      (variable m (type
+        (value-type string)) (expr
+        (literal i))))
+    (assignment
+      (index-based-access
+        (simple-var-ref c)
+        (simple-var-ref m))
+      (literal <nil>))
+  )
+)

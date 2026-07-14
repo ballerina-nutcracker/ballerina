@@ -1,0 +1,13 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable elem (type
+          (value-type xml)) (expr
+          (xml-element-literal f
+            (xml-element-literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elem)))))))

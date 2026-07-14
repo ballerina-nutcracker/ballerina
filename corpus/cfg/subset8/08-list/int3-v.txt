@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 3)
+          (literal 7)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref v)
+            (literal 0))
+          (index-based-access
+            (simple-var-ref v)
+            (literal 1))))))
+  )
+)

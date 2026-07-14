@@ -1,0 +1,27 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 0
+    %5 = ConstantLoad 0
+    %6 = ConstantLoad 5
+    %7 = newArray [int, int, int, int, int, never...][%6]{%1, %2, %3, %4, %5}
+    a1 = %7;
+    %9 = println(a1) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad 1
+    %11 = ConstantLoad foo
+    %12 = ConstantLoad 0
+    %13 = ConstantLoad false
+    %14 = ConstantLoad 4
+    %15 = newArray [int, string, int, boolean, never...][%14]{%10, %11, %12, %13}
+    t1 = %15;
+    %17 = println(t1) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

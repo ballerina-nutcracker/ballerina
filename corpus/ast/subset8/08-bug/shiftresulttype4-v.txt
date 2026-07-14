@@ -1,0 +1,72 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (user-defined-type int Unsigned8)) (expr
+          (literal 250))))
+      (var-def
+        (variable y (type
+          (user-defined-type int Unsigned16)) (expr
+          (literal 500))))
+      (var-def
+        (variable z (type
+          (user-defined-type int Unsigned32)) (expr
+          (literal 1000000000))))
+      (var-def
+        (variable x1 (type
+          (user-defined-type int Unsigned8)) (expr
+          (binary-expr >>
+            (simple-var-ref x)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x1))))
+      (var-def
+        (variable y2 (type
+          (user-defined-type int Unsigned16)) (expr
+          (binary-expr >>
+            (simple-var-ref y)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref y2))))
+      (var-def
+        (variable z3 (type
+          (user-defined-type int Unsigned32)) (expr
+          (binary-expr >>
+            (simple-var-ref z)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref z3))))
+      (var-def
+        (variable x11 (type
+          (value-type int)) (expr
+          (binary-expr <<
+            (simple-var-ref x)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x11))))
+      (var-def
+        (variable y22 (type
+          (value-type int)) (expr
+          (binary-expr <<
+            (simple-var-ref y)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref y22))))
+      (var-def
+        (variable z33 (type
+          (value-type int)) (expr
+          (binary-expr <<
+            (simple-var-ref z)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref z33)))))))

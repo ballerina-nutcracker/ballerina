@@ -1,0 +1,29 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable a (type
+        (array-type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int)) dimensions: 1 ([
+          (literal 2)]))) (expr
+        (list-constructor-expr))))
+    (type-test-expr is
+      (index-based-access
+        (simple-var-ref a)
+        (literal 0))
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int)))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal working))))
+  )
+  (bb2 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+  )
+)

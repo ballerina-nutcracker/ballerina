@@ -1,0 +1,68 @@
+(eq
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable eq (type
+        (value-type boolean)) (expr
+        (binary-expr ==
+          (simple-var-ref f1)
+          (simple-var-ref f2)))))
+    (var-def
+      (variable neEq (type
+        (value-type boolean)) (expr
+        (binary-expr !=
+          (simple-var-ref f1)
+          (simple-var-ref f2)))))
+    (binary-expr ==
+      (simple-var-ref eq)
+      (simple-var-ref neEq))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal <nil>))
+  )
+  (bb2 (bb0) ()
+    (return
+      (simple-var-ref eq))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref A)
+          (simple-var-ref B))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref C)
+          (simple-var-ref D))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref E)
+          (simple-var-ref F))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref A)
+          (simple-var-ref C))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref B)
+          (simple-var-ref D))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref G))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref H))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref I))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref J))))
+  )
+)

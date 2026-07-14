@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %3 = b(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = b(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 254
+    %8 = %7;
+    %9 = b(%8) -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad 255
+    %11 = %10;
+    %12 = b(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad 128
+    %14 = %13;
+    %15 = b(%14) -> bb5;
+  }
+  bb5 {
+    %16 = ConstantLoad 127
+    %17 = %16;
+    %18 = b(%17) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad 1
+    %20 = unknown %19;
+    %21 = %20;
+    %22 = b(%21) -> bb7;
+  }
+  bb7 {
+    %23 = ConstantLoad 256
+    %24 = %23;
+    %25 = b(%24) -> bb8;
+  }
+  bb8 {
+    %26 = ConstantLoad 257
+    %27 = %26;
+    %28 = b(%27) -> bb9;
+  }
+  bb9 {
+    %29 = ConstantLoad 2
+    %30 = unknown %29;
+    %31 = %30;
+    %32 = b(%31) -> bb10;
+  }
+  bb10 {
+    %33 = ConstantLoad 65536
+    %34 = %33;
+    %35 = b(%34) -> bb11;
+  }
+  bb11 {
+    %36 = ConstantLoad 4294967296
+    %37 = %36;
+    %38 = b(%37) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}
+b(int) -> nil{
+  bb0 {
+    %2 = n is int:Unsigned8
+    %3 = %2;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

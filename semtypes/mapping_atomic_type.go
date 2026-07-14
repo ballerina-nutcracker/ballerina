@@ -22,23 +22,13 @@ import (
 
 type MappingAtomicType struct {
 	Names []string
-	Types []ComplexSemType
-	Rest  *ComplexSemType
+	Types []SemType
+	Rest  SemType
 }
 
 var _ atomicType = &MappingAtomicType{}
 
-func (m *MappingAtomicType) equals(other atomicType) bool {
-	if other, ok := other.(*MappingAtomicType); ok {
-		if !m.Rest.equals(other.Rest) {
-			return false
-		}
-		return slices.Equal(other.Names, m.Names) && slices.EqualFunc(other.Types, m.Types, func(a, b ComplexSemType) bool { return a.equals(&b) })
-	}
-	return false
-}
-
-func mappingAtomicTypeFrom(names []string, types []ComplexSemType, rest *ComplexSemType) MappingAtomicType {
+func mappingAtomicTypeFrom(names []string, types []SemType, rest SemType) MappingAtomicType {
 	return MappingAtomicType{
 		Names: names,
 		Types: types,
@@ -53,7 +43,7 @@ func (m *MappingAtomicType) atomKind() kind {
 func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
 	for i, n := range m.Names {
 		if n == name {
-			return cellInnerVal(&m.Types[i])
+			return cellInnerVal(m.Types[i])
 		}
 	}
 	return cellInnerVal(m.Rest)
@@ -62,8 +52,91 @@ func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
 	for i, n := range m.Names {
 		if n == name {
-			return IsSubtype(cx, UNDEF, cellInnerVal(&m.Types[i]))
+			return IsSubtype(cx, UNDEF, cellInner(m.Types[i]))
 		}
 	}
 	return true
+}
+
+type matchQuantifier int
+
+const (
+	matchAny matchQuantifier = iota
+	matchAll
+)
+
+func AnyMappingAtomHasFieldByName(cx Context, ty SemType, key string) bool {
+	return mappingAtomsMatch(cx, ty, matchAny, func(_ Context, atom *MappingAtomicType) bool {
+		return mappingAtomHasFieldByName(atom, key)
+	})
+}
+
+func AllMappingAtomHasFieldByName(cx Context, ty SemType, key string) bool {
+	// I think this is fine, but may have problems with narrowing. Spec describes unions only assuming positive atoms
+	return mappingAtomsMatch(cx, ty, matchAll, func(_ Context, atom *MappingAtomicType) bool {
+		return mappingAtomHasFieldByName(atom, key)
+	})
+}
+
+func AllMappingAtomsHaveOptionalFieldByName(cx Context, ty SemType, key string) bool {
+	return mappingAtomsMatch(cx, ty, matchAll, func(cx Context, atom *MappingAtomicType) bool {
+		return mappingAtomHasOptionalFieldByName(cx, atom, key)
+	})
+}
+
+func mappingAtomsMatch(cx Context, ty SemType, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
+	if !IsSubtypeSimple(ty, MAPPING) {
+		return false
+	}
+	if ty.some() == 0 {
+		return false
+	}
+	bdd := getComplexSubtypeData(ty, BTMapping).(Bdd)
+	if simple, ok := bdd.(*bddNodeSimple); ok {
+		return predicate(cx, cx.MappingAtomType(simple.atom()))
+	}
+
+	return bddMappingAtomsMatch(cx, bdd, quantifier, predicate)
+}
+
+func bddMappingAtomsMatch(cx Context, bdd Bdd, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
+	switch quantifier {
+	case matchAny:
+		found := false
+		bddEvery(cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
+			_ = neg
+			for h := pos; h != conjunctionNil; h = cx.conjunctionNext(h) {
+				if predicate(cx, cx.MappingAtomType(cx.conjunctionAtom(h))) {
+					found = true
+					return false
+				}
+			}
+			return true
+		})
+		return found
+	case matchAll:
+		return bddEvery(cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
+			_ = neg
+			for h := pos; h != conjunctionNil; h = cx.conjunctionNext(h) {
+				if !predicate(cx, cx.MappingAtomType(cx.conjunctionAtom(h))) {
+					return false
+				}
+			}
+			return true
+		})
+	}
+	panic("unreachable")
+}
+
+func mappingAtomHasFieldByName(atom *MappingAtomicType, key string) bool {
+	return slices.Contains(atom.Names, key)
+}
+
+func mappingAtomHasOptionalFieldByName(_ Context, atom *MappingAtomicType, key string) bool {
+	for i, n := range atom.Names {
+		if n == key {
+			return ContainsUndef(cellInner(atom.Types[i]))
+		}
+	}
+	return false
 }

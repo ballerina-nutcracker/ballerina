@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation readAndBump ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation readAndBump ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation readAndBump ()))))
+  )
+)
+(readAndBump
+  (bb0 () ()
+    (assignment
+      (simple-var-ref counter)
+      (binary-expr +
+        (simple-var-ref counter)
+        (literal 1)))
+    (return
+      (simple-var-ref counter))
+  )
+)

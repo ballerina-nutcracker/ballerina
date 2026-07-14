@@ -1,0 +1,650 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Bdd
+    (union-type
+      (user-defined-type BddNode)
+      (value-type boolean)))
+  (type-definition Atom
+    (value-type int))
+  (type-definition BddNode
+    (record-type
+      (field atom
+        (user-defined-type Atom))
+      (field left
+        (user-defined-type Bdd))
+      (field middle
+        (user-defined-type Bdd))
+      (field right
+        (user-defined-type Bdd))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b1 (type
+          (user-defined-type Bdd)) (expr
+          (invocation bddUnion (
+            (invocation bddAtom (
+              (literal 1)))
+            (invocation bddAtom (
+              (literal 2))))))))
+      (var-def
+        (variable b2 (type
+          (user-defined-type Bdd)) (expr
+          (invocation bddUnion (
+            (invocation bddAtom (
+              (literal 2)))
+            (invocation bddAtom (
+              (literal 1))))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref b1)
+            (simple-var-ref b2)))))
+      (var-def
+        (variable b3 (type
+          (user-defined-type Bdd)) (expr
+          (invocation bddIntersect (
+            (invocation bddAtom (
+              (literal 1)))
+            (invocation bddAtom (
+              (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref b1)
+            (simple-var-ref b3)))))))
+  (function bddAtom (
+    (variable atom (type
+      (user-defined-type Atom)))) (
+    (user-defined-type BddNode))
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal atom)
+            (simple-var-ref atom))
+          (key-value
+            (literal left)
+            (literal true))
+          (key-value
+            (literal middle)
+            (literal false))
+          (key-value
+            (literal right)
+            (literal false))))))
+  (function bddUnion (
+    (variable b1 (type
+      (user-defined-type Bdd)))
+    (variable b2 (type
+      (user-defined-type Bdd)))) (
+    (user-defined-type Bdd))
+    (block-function-body
+      (if
+        (binary-expr ===
+          (simple-var-ref b1)
+          (simple-var-ref b2))
+        (block-stmt
+          (return
+            (simple-var-ref b1))) (
+        (if
+          (type-test-expr is
+            (simple-var-ref b1)
+            (value-type boolean))
+          (block-stmt
+            (if
+              (binary-expr ==
+                (simple-var-ref b1)
+                (literal true))
+              (block-stmt
+                (return
+                  (literal true))) ())
+            (block-stmt
+              (return
+                (simple-var-ref b2)))) (
+          (if
+            (type-test-expr is
+              (simple-var-ref b2)
+              (value-type boolean))
+            (block-stmt
+              (if
+                (binary-expr ==
+                  (simple-var-ref b2)
+                  (literal true))
+                (block-stmt
+                  (return
+                    (literal true))) ())
+              (block-stmt
+                (return
+                  (simple-var-ref b1)))) (
+            (block-stmt
+              (var-def
+                (variable cmp (type
+                  (value-type int)) (expr
+                  (invocation atomCmp (
+                    (index-based-access
+                      (simple-var-ref b1)
+                      (literal atom))
+                    (index-based-access
+                      (simple-var-ref b2)
+                      (literal atom)))))))
+              (if
+                (binary-expr <
+                  (simple-var-ref cmp)
+                  (literal 0))
+                (block-stmt
+                  (return
+                    (invocation bddCreate (
+                      (index-based-access
+                        (simple-var-ref b1)
+                        (literal atom))
+                      (index-based-access
+                        (simple-var-ref b1)
+                        (literal left))
+                      (invocation bddUnion (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal middle))
+                        (simple-var-ref b2)))
+                      (index-based-access
+                        (simple-var-ref b1)
+                        (literal right)))))) (
+                (if
+                  (binary-expr >
+                    (simple-var-ref cmp)
+                    (literal 0))
+                  (block-stmt
+                    (return
+                      (invocation bddCreate (
+                        (index-based-access
+                          (simple-var-ref b2)
+                          (literal atom))
+                        (index-based-access
+                          (simple-var-ref b2)
+                          (literal left))
+                        (invocation bddUnion (
+                          (simple-var-ref b1)
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal middle))))
+                        (index-based-access
+                          (simple-var-ref b2)
+                          (literal right)))))) (
+                  (block-stmt
+                    (return
+                      (invocation bddCreate (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal atom))
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal left))
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal left))))
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal middle))
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal middle))))
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal right))
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal right)))))))))))))))))))))
+  (function bddIntersect (
+    (variable b1 (type
+      (user-defined-type Bdd)))
+    (variable b2 (type
+      (user-defined-type Bdd)))) (
+    (user-defined-type Bdd))
+    (block-function-body
+      (if
+        (binary-expr ===
+          (simple-var-ref b1)
+          (simple-var-ref b2))
+        (block-stmt
+          (return
+            (simple-var-ref b1))) (
+        (if
+          (type-test-expr is
+            (simple-var-ref b1)
+            (value-type boolean))
+          (block-stmt
+            (if
+              (binary-expr ==
+                (simple-var-ref b1)
+                (literal true))
+              (block-stmt
+                (return
+                  (simple-var-ref b2))) ())
+            (block-stmt
+              (return
+                (literal false)))) (
+          (if
+            (type-test-expr is
+              (simple-var-ref b2)
+              (value-type boolean))
+            (block-stmt
+              (if
+                (binary-expr ==
+                  (simple-var-ref b2)
+                  (literal true))
+                (block-stmt
+                  (return
+                    (simple-var-ref b1))) ())
+              (block-stmt
+                (return
+                  (literal false)))) (
+            (block-stmt
+              (var-def
+                (variable cmp (type
+                  (value-type int)) (expr
+                  (invocation atomCmp (
+                    (index-based-access
+                      (simple-var-ref b1)
+                      (literal atom))
+                    (index-based-access
+                      (simple-var-ref b2)
+                      (literal atom)))))))
+              (if
+                (binary-expr <
+                  (simple-var-ref cmp)
+                  (literal 0))
+                (block-stmt
+                  (return
+                    (invocation bddCreate (
+                      (index-based-access
+                        (simple-var-ref b1)
+                        (literal atom))
+                      (invocation bddIntersect (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal left))
+                        (simple-var-ref b2)))
+                      (invocation bddIntersect (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal middle))
+                        (simple-var-ref b2)))
+                      (invocation bddIntersect (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal right))
+                        (simple-var-ref b2))))))) (
+                (if
+                  (binary-expr >
+                    (simple-var-ref cmp)
+                    (literal 0))
+                  (block-stmt
+                    (return
+                      (invocation bddCreate (
+                        (index-based-access
+                          (simple-var-ref b2)
+                          (literal atom))
+                        (invocation bddIntersect (
+                          (simple-var-ref b1)
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal left))))
+                        (invocation bddIntersect (
+                          (simple-var-ref b1)
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal middle))))
+                        (invocation bddIntersect (
+                          (simple-var-ref b1)
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal right)))))))) (
+                  (block-stmt
+                    (return
+                      (invocation bddCreate (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal atom))
+                        (invocation bddIntersect (
+                          (invocation bddUnion (
+                            (index-based-access
+                              (simple-var-ref b1)
+                              (literal left))
+                            (index-based-access
+                              (simple-var-ref b1)
+                              (literal middle))))
+                          (invocation bddUnion (
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal left))
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal middle))))))
+                        (literal false)
+                        (invocation bddIntersect (
+                          (invocation bddUnion (
+                            (index-based-access
+                              (simple-var-ref b1)
+                              (literal right))
+                            (index-based-access
+                              (simple-var-ref b1)
+                              (literal middle))))
+                          (invocation bddUnion (
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal right))
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal middle)))))))))))))))))))))))
+  (function bddDiff (
+    (variable b1 (type
+      (user-defined-type Bdd)))
+    (variable b2 (type
+      (user-defined-type Bdd)))) (
+    (user-defined-type Bdd))
+    (block-function-body
+      (if
+        (binary-expr ===
+          (simple-var-ref b1)
+          (simple-var-ref b2))
+        (block-stmt
+          (return
+            (literal false))) (
+        (if
+          (type-test-expr is
+            (simple-var-ref b2)
+            (value-type boolean))
+          (block-stmt
+            (if
+              (binary-expr ==
+                (simple-var-ref b2)
+                (literal true))
+              (block-stmt
+                (return
+                  (literal false))) ())
+            (block-stmt
+              (return
+                (simple-var-ref b1)))) (
+          (if
+            (type-test-expr is
+              (simple-var-ref b1)
+              (value-type boolean))
+            (block-stmt
+              (if
+                (binary-expr ==
+                  (simple-var-ref b1)
+                  (literal true))
+                (block-stmt
+                  (return
+                    (invocation bddComplement (
+                      (simple-var-ref b2))))) ())
+              (block-stmt
+                (return
+                  (literal false)))) (
+            (block-stmt
+              (var-def
+                (variable cmp (type
+                  (value-type int)) (expr
+                  (invocation atomCmp (
+                    (index-based-access
+                      (simple-var-ref b1)
+                      (literal atom))
+                    (index-based-access
+                      (simple-var-ref b2)
+                      (literal atom)))))))
+              (if
+                (binary-expr <
+                  (simple-var-ref cmp)
+                  (literal 0))
+                (block-stmt
+                  (return
+                    (invocation bddCreate (
+                      (index-based-access
+                        (simple-var-ref b1)
+                        (literal atom))
+                      (invocation bddDiff (
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal left))
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal middle))))
+                        (simple-var-ref b2)))
+                      (literal false)
+                      (invocation bddDiff (
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal right))
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal middle))))
+                        (simple-var-ref b2))))))) (
+                (if
+                  (binary-expr >
+                    (simple-var-ref cmp)
+                    (literal 0))
+                  (block-stmt
+                    (return
+                      (invocation bddCreate (
+                        (index-based-access
+                          (simple-var-ref b2)
+                          (literal atom))
+                        (invocation bddDiff (
+                          (simple-var-ref b1)
+                          (invocation bddUnion (
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal left))
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal middle))))))
+                        (literal false)
+                        (invocation bddDiff (
+                          (simple-var-ref b1)
+                          (invocation bddUnion (
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal right))
+                            (index-based-access
+                              (simple-var-ref b2)
+                              (literal middle)))))))))) (
+                  (block-stmt
+                    (return
+                      (invocation bddCreate (
+                        (index-based-access
+                          (simple-var-ref b1)
+                          (literal atom))
+                        (invocation bddDiff (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal left))
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal left))))
+                        (invocation bddDiff (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal middle))
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal middle))))
+                        (invocation bddDiff (
+                          (index-based-access
+                            (simple-var-ref b1)
+                            (literal right))
+                          (index-based-access
+                            (simple-var-ref b2)
+                            (literal right)))))))))))))))))))))
+  (function bddComplement (
+    (variable b (type
+      (user-defined-type Bdd)))) (
+    (user-defined-type Bdd))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref b)
+          (value-type boolean))
+        (block-stmt
+          (return
+            (unary-expr !
+              (simple-var-ref b)))) (
+        (block-stmt
+          (if
+            (binary-expr ===
+              (index-based-access
+                (simple-var-ref b)
+                (literal right))
+              (literal false))
+            (block-stmt
+              (return
+                (invocation bddCreate (
+                  (index-based-access
+                    (simple-var-ref b)
+                    (literal atom))
+                  (literal false)
+                  (invocation bddComplement (
+                    (invocation bddUnion (
+                      (index-based-access
+                        (simple-var-ref b)
+                        (literal left))
+                      (index-based-access
+                        (simple-var-ref b)
+                        (literal middle))))))
+                  (invocation bddComplement (
+                    (index-based-access
+                      (simple-var-ref b)
+                      (literal middle)))))))) (
+            (if
+              (binary-expr ===
+                (index-based-access
+                  (simple-var-ref b)
+                  (literal left))
+                (literal false))
+              (block-stmt
+                (return
+                  (invocation bddCreate (
+                    (index-based-access
+                      (simple-var-ref b)
+                      (literal atom))
+                    (invocation bddComplement (
+                      (index-based-access
+                        (simple-var-ref b)
+                        (literal middle))))
+                    (invocation bddComplement (
+                      (invocation bddUnion (
+                        (index-based-access
+                          (simple-var-ref b)
+                          (literal right))
+                        (index-based-access
+                          (simple-var-ref b)
+                          (literal middle))))))
+                    (literal false))))) (
+              (if
+                (binary-expr ===
+                  (index-based-access
+                    (simple-var-ref b)
+                    (literal middle))
+                  (literal false))
+                (block-stmt
+                  (return
+                    (invocation bddCreate (
+                      (index-based-access
+                        (simple-var-ref b)
+                        (literal atom))
+                      (invocation bddComplement (
+                        (index-based-access
+                          (simple-var-ref b)
+                          (literal left))))
+                      (invocation bddComplement (
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b)
+                            (literal left))
+                          (index-based-access
+                            (simple-var-ref b)
+                            (literal right))))))
+                      (invocation bddComplement (
+                        (index-based-access
+                          (simple-var-ref b)
+                          (literal right)))))))) (
+                (block-stmt
+                  (return
+                    (invocation bddCreate (
+                      (index-based-access
+                        (simple-var-ref b)
+                        (literal atom))
+                      (invocation bddComplement (
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b)
+                            (literal left))
+                          (index-based-access
+                            (simple-var-ref b)
+                            (literal middle))))))
+                      (literal false)
+                      (invocation bddComplement (
+                        (invocation bddUnion (
+                          (index-based-access
+                            (simple-var-ref b)
+                            (literal right))
+                          (index-based-access
+                            (simple-var-ref b)
+                            (literal middle)))))))))))))))))))))
+  (function bddCreate (
+    (variable atom (type
+      (user-defined-type Atom)))
+    (variable left (type
+      (user-defined-type Bdd)))
+    (variable middle (type
+      (user-defined-type Bdd)))
+    (variable right (type
+      (user-defined-type Bdd)))) (
+    (user-defined-type Bdd))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (simple-var-ref middle)
+          (literal true))
+        (block-stmt
+          (return
+            (literal true))) ())
+      (block-stmt
+        (if
+          (binary-expr ==
+            (simple-var-ref left)
+            (simple-var-ref right))
+          (block-stmt
+            (return
+              (invocation bddUnion (
+                (simple-var-ref left)
+                (simple-var-ref middle))))) ())
+        (block-stmt
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal atom)
+                (simple-var-ref atom))
+              (key-value
+                (literal left)
+                (simple-var-ref left))
+              (key-value
+                (literal middle)
+                (simple-var-ref middle))
+              (key-value
+                (literal right)
+                (simple-var-ref right))))))))
+  (function atomCmp (
+    (variable a1 (type
+      (user-defined-type Atom)))
+    (variable a2 (type
+      (user-defined-type Atom)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr -
+          (simple-var-ref a1)
+          (simple-var-ref a2))))))

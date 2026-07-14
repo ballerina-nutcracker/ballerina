@@ -1,0 +1,47 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 255
+    %3 = ConstantLoad 1
+    %4 = newArray [int...][%3]{%2}
+    %5 = ConstantLoad y
+    %6 = ConstantLoad 0
+    %7 = newArray [float...][%6]{}
+    %8 = ConstantLoad z
+    %9 = ConstantLoad 0
+    %10 = newArray [int...][%9]{}
+    %11 = newMap {| x: [int...], y: [float...], z: [int...], never... |}{%1=%4, %5=%7, %8=%10}
+    r = %11;
+    %14 = ConstantLoad x
+    %13 = r[%14];
+    x = %13;
+    %16 = x is [int...]&[int...]|[float...]&[int...]|[int...]&[int...]
+    %16 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 11
+    %1 = ConstantLoad 0
+    %0 = (1, x)[%1];
+    n = %0;
+    %3 = n;
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    ix = (1, x);
+    %7 = ConstantLoad 0
+    %6 = ix[%7];
+    n2 = %6;
+    %9 = n2;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

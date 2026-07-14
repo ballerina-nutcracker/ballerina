@@ -1,0 +1,63 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type float)) (expr
+        (literal 1))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+    (assignment
+      (simple-var-ref x)
+      (simple-var-ref Inf))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+    (assignment
+      (simple-var-ref x)
+      (simple-var-ref NegInf))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+    (assignment
+      (simple-var-ref x)
+      (simple-var-ref NaN))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+    (assignment
+      (simple-var-ref x)
+      (literal 0))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+    (assignment
+      (simple-var-ref x)
+      (unary-expr -
+        (literal 0)))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+    (assignment
+      (simple-var-ref x)
+      (unary-expr -
+        (literal 1)))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Special)))))
+  )
+)

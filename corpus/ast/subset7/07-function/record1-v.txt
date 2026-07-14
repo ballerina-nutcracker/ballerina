@@ -22,13 +22,13 @@
           (user-defined-type BinaryOperation)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref op)
+              (literal op)
               (simple-var-ref add))
             (key-value
-              (simple-var-ref left)
+              (literal left)
               (literal 1))
             (key-value
-              (simple-var-ref right)
+              (literal right)
               (literal 2))))))
       (expression-stmt
         (invocation io println (
@@ -39,13 +39,13 @@
           (user-defined-type BinaryOperation)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref op)
+              (literal op)
               (simple-var-ref mul))
             (key-value
-              (simple-var-ref left)
+              (literal left)
               (literal 1))
             (key-value
-              (simple-var-ref right)
+              (literal right)
               (literal 2))))))
       (expression-stmt
         (invocation io println (
@@ -56,13 +56,13 @@
           (user-defined-type BinaryOperation)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref op)
+              (literal op)
               (simple-var-ref addAny))
             (key-value
-              (simple-var-ref left)
+              (literal left)
               (literal 2))
             (key-value
-              (simple-var-ref right)
+              (literal right)
               (literal 2))))))
       (expression-stmt
         (invocation io println (

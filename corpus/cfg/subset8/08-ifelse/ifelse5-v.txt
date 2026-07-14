@@ -1,0 +1,15 @@
+(main
+  (bb0 () (bb2)
+    (literal false)
+  )
+  (bb1 (bb4) ())
+  (bb2 (bb0) (bb3)
+    (literal true)
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal unconditionally reach))))
+  )
+  (bb4 (bb3) (bb1))
+)

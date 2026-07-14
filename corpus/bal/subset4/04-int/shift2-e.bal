@@ -16,5 +16,5 @@
 
 public function main() {
     int:Unsigned8 x = 100;
-    int:Unsigned8 y = x << 2; // @error
+    int:Unsigned8 _ = x << 2; // @error
 }

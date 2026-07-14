@@ -31,10 +31,10 @@ func cellFormulaIsEmptyInner(cx Context, posList conjunctionHandle, negList conj
 	if posList == conjunctionNil {
 		combined = cellAtomicTypeFrom(VAL, CellMutability_CELL_MUT_UNLIMITED)
 	} else {
-		combined = cellAtomType(cx.conjunctionAtom(posList))
+		combined = *cellAtomType(cx.conjunctionAtom(posList))
 		p := cx.conjunctionNext(posList)
 		for p != conjunctionNil {
-			combined = intersectCellAtomicType(&combined, new(cellAtomType(cx.conjunctionAtom(p))))
+			combined = intersectCellAtomicType(&combined, cellAtomType(cx.conjunctionAtom(p)))
 			p = cx.conjunctionNext(p)
 		}
 	}

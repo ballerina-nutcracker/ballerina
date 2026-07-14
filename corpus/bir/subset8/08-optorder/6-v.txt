@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad false
+    a = %1;
+    %4 = a;
+    %5 = ConstantLoad <nil>
+    %6 = %5;
+    %3 = <= %4 %6;
+    %7 = %3;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %10 = a;
+    %11 = ConstantLoad <nil>
+    %12 = %11;
+    %9 = < %10 %12;
+    %13 = %9;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    %16 = a;
+    %17 = ConstantLoad <nil>
+    %18 = %17;
+    %15 = >= %16 %18;
+    %19 = %15;
+    %20 = println(%19) -> bb3;
+  }
+  bb3 {
+    %22 = a;
+    %23 = ConstantLoad <nil>
+    %24 = %23;
+    %21 = > %22 %24;
+    %25 = %21;
+    %26 = println(%25) -> bb4;
+  }
+  bb4 {
+    %28 = ConstantLoad <nil>
+    %29 = %28;
+    %30 = a;
+    %27 = <= %29 %30;
+    %31 = %27;
+    %32 = println(%31) -> bb5;
+  }
+  bb5 {
+    %34 = ConstantLoad <nil>
+    %35 = %34;
+    %36 = a;
+    %33 = < %35 %36;
+    %37 = %33;
+    %38 = println(%37) -> bb6;
+  }
+  bb6 {
+    %40 = ConstantLoad <nil>
+    %41 = %40;
+    %42 = a;
+    %39 = >= %41 %42;
+    %43 = %39;
+    %44 = println(%43) -> bb7;
+  }
+  bb7 {
+    %46 = ConstantLoad <nil>
+    %47 = %46;
+    %48 = a;
+    %45 = > %47 %48;
+    %49 = %45;
+    %50 = println(%49) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type Arr)) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+  )
+)

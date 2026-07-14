@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unmatchable match clause
+  --> 5-e.bal:29:9
+   |
+29 |         true => { // @error
+   |         ^^^^^^^^^^^^^^^^^^^
+30 |             io:println("true");
+   |             ^^^^^^^^^^^^^^^^^^^
+31 | 
+   | 
+32 |         }
+   |         ^

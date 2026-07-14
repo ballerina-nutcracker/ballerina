@@ -1,0 +1,6 @@
+-- stdout --
+get test/a
+get other
+42
+post test/b
+-- stderr --

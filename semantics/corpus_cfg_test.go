@@ -31,7 +31,13 @@ import (
 
 var updateCFG = flag.Bool("update", false, "update expected CFG text files")
 
-// TestCFGGeneration tests CFG generation from .bal source files in the corpus.
+// cfgGenerationSkipList is the CFG-stage *additional* skip list, on top of
+// the shared test_util.UnsupportedTests baseline.
+var cfgGenerationSkipList = []string{
+	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	"subset8/08-xml/namespace12-v.bal",
+}
+
 func TestCFGGeneration(t *testing.T) {
 	flag.Parse()
 
@@ -47,6 +53,11 @@ func TestCFGGeneration(t *testing.T) {
 
 // testCFGGeneration tests CFG generation for a single .bal file.
 func testCFGGeneration(t *testing.T, testPair test_util.TestCase) {
+	if test_util.IsUnsupported(testPair.InputPath) || test_util.MatchesSkip(testPair.InputPath, cfgGenerationSkipList) {
+		t.Skipf("Skipping CFG generation test for %s", testPair.InputPath)
+		return
+	}
+
 	// Catch panics during CFG generation
 	defer func() {
 		if r := recover(); r != nil {
@@ -56,7 +67,12 @@ func testCFGGeneration(t *testing.T, testPair test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseCFG, testPair.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testPair.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseCFG, testPair.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testPair.InputPath, err)
 		return

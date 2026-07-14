@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 0)
+          (value-type decimal)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1)
+          (value-type decimal)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1)
+          (value-type decimal)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (literal 1.234567891e+09)
+          (value-type decimal)))))
+  )
+)

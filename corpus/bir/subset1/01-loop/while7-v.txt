@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
@@ -38,7 +37,7 @@ printClosestSquareNum(int) -> nil{
     %3 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 9
+    PushScopeFrame 2
     %0 = (1, i);
     %1 = isSquareNumber(%0) -> bb4;
   }
@@ -49,20 +48,25 @@ printClosestSquareNum(int) -> nil{
     %1 ? bb5 : bb7;
   }
   bb5 {
-    %2 = (1, i);
-    %3 = println(%2) -> bb6;
+    PushScopeFrame 3
+    %0 = (2, i);
+    %1 = println(%0) -> bb6;
   }
   bb6 {
-    %4 = ConstantLoad <nil>
-    (1, %0) = %4;
+    %2 = ConstantLoad <nil>
+    (2, %0) = %2;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb7 {
-    %6 = (1, i);
-    %7 = ConstantLoad 1
-    %8 = %7;
-    %5 = - %6 %8;
-    (1, i) = %5;
+    PushScopeFrame 4
+    %1 = (2, i);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = - %1 %3;
+    (2, i) = %0;
+    PopScopeFrame
     PopScopeFrame
     GOTO bb1;
   }
@@ -80,7 +84,7 @@ isSquareNumber(int) -> boolean{
     %4 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 18
+    PushScopeFrame 16
     %2 = (1, i);
     %3 = (1, i);
     %1 = * %2 %3;
@@ -95,33 +99,39 @@ isSquareNumber(int) -> boolean{
     return;
   }
   bb4 {
-    %6 = ConstantLoad true
-    (1, %0) = %6;
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb5 {
+    %8 = (1, i);
     %9 = (1, i);
-    %10 = (1, i);
-    %8 = * %9 %10;
-    %11 = %8;
-    %12 = (1, x);
-    %7 = > %11 %12;
-    %7 ? bb6 : bb7;
+    %7 = * %8 %9;
+    %10 = %7;
+    %11 = (1, x);
+    %6 = > %10 %11;
+    %6 ? bb6 : bb7;
   }
   bb6 {
-    %13 = ConstantLoad false
-    (1, %0) = %13;
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb7 {
     GOTO bb8;
   }
   bb8 {
-    %15 = (1, i);
-    %16 = ConstantLoad 1
-    %17 = %16;
-    %14 = + %15 %17;
-    (1, i) = %14;
+    %13 = (1, i);
+    %14 = ConstantLoad 1
+    %15 = %14;
+    %12 = + %13 %15;
+    (1, i) = %12;
     PopScopeFrame
     GOTO bb1;
   }

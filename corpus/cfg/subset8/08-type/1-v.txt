@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (user-defined-type List)) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref v)
+        (literal 0))
+      (literal 1))
+    (assignment
+      (index-based-access
+        (simple-var-ref v)
+        (literal 1))
+      (list-constructor-expr))
+    (assignment
+      (index-based-access
+        (simple-var-ref v)
+        (literal 2))
+      (error-constructor-expr (
+        (literal whoops))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+)

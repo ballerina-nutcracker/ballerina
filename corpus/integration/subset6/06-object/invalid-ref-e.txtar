@@ -1,9 +1,9 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: redeclared symbol 'baz'
-  --> invalid-ref-e.bal:29:14
+  --> invalid-ref-e.bal:31:14
    |
-29 |     function baz() { // @error
+31 |     function baz() { // @error
    |              ^^^
 
 error[SEMANTIC_ERROR]: undefined member 'f'
@@ -13,7 +13,7 @@ error[SEMANTIC_ERROR]: undefined member 'f'
    |              ^
 
 error[SEMANTIC_ERROR]: undefined member 'gg'
-  --> invalid-ref-e.bal:26:21
+  --> invalid-ref-e.bal:28:21
    |
-26 |         return self.gg; // @error
+28 |         return self.gg; // @error
    |                     ^^

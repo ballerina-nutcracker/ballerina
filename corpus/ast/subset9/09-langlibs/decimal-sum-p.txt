@@ -1,0 +1,11 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina lang decimal (as decimals))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation decimals sum (
+          (literal 9.999999999999999999999999999999999E6144d)
+          (literal 9.999999999999999999999999999999999E6144d)))))))

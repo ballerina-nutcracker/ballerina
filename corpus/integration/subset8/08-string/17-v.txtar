@@ -1,0 +1,15 @@
+-- stdout --
+65556
+true
+false
+true
+false
+65560
+true
+true
+false
+false
+true
+false
+42
+-- stderr --

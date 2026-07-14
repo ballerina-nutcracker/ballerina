@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable res (type
+        (union-type
+          (error-type)
+          (value-type int))) (expr
+        (trap-expr
+          (binary-expr /
+            (literal 1)
+            (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref res))))
+  )
+)

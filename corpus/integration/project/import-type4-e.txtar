@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: PRIVATE_INT
+  --> main.bal:19:8
+   |
+19 | type T hidden:PRIVATE_INT; // @error
+   |        ^^^^^^^^^^^^^^^^^^

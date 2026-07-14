@@ -1,0 +1,51 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d1 (type
+        (union-type
+          (value-type decimal)
+          (value-type int))) (expr
+        (literal 1))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d1))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref d1)
+          (value-type int)))))
+    (assignment
+      (simple-var-ref d1)
+      (literal 1.2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d1))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref d1)
+          (value-type decimal)))))
+    (var-def
+      (variable d3 (type
+        (union-type
+          (value-type decimal)
+          (value-type float))) (expr
+        (literal 1.22))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d3))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref d3)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref d3)
+      (literal 1.2))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref d3)
+          (value-type float)))))
+  )
+)

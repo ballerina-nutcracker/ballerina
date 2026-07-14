@@ -1,0 +1,153 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable nan0 (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0)
+            (literal 0)))))
+      (var-def
+        (variable nan1 (type
+          (value-type float)) (expr
+          (binary-expr /
+            (unary-expr -
+              (literal 0))
+            (literal 0)))))
+      (var-def
+        (variable pInf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1)
+            (literal 0)))))
+      (var-def
+        (variable nInf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (unary-expr -
+              (literal 1))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (literal 42)
+            (literal 42))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (literal 1)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (literal 0)
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (literal 0)
+            (unary-expr -
+              (literal 0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref nan0)
+            (simple-var-ref nan1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref nan0)
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref nan0)
+            (simple-var-ref nInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref pInf)
+            (simple-var-ref nInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref nInf)
+            (simple-var-ref pInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref pInf)
+            (simple-var-ref pInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exactEq (
+            (simple-var-ref nInf)
+            (simple-var-ref nInf))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (literal 100)
+            (literal 100)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (literal 0)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (literal 0)
+            (unary-expr -
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (literal 0)
+            (unary-expr -
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref nan0)
+            (simple-var-ref nan1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref nan0)
+            (simple-var-ref nan1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref pInf)
+            (simple-var-ref nInf)))))))
+  (function exactEq (
+    (variable f1 (type
+      (value-type float)))
+    (variable f2 (type
+      (value-type float)))) (
+    (value-type any))
+    (block-function-body
+      (var-def
+        (variable eq (type
+          (value-type boolean)) (expr
+          (binary-expr ===
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (var-def
+        (variable neEq (type
+          (value-type boolean)) (expr
+          (binary-expr !==
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (if
+        (binary-expr ==
+          (simple-var-ref eq)
+          (simple-var-ref neEq))
+        (block-stmt
+          (return
+            (literal <nil>))) ())
+      (block-stmt
+        (return
+          (simple-var-ref eq))))))

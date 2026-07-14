@@ -1,0 +1,33 @@
+-- stdout --
+1.0
+1.0
+1.1
+9.1
+10.0
+10.0
+10.0
+10.0
+10.0
+10.0
+100.0
+100.0
+190.0
+1e101
+1e134
+1e308
+1.7976931348623157e308
+0.0
+1e-322
+1e-323
+0.0
+-0.0
+0.0
+-0.0
+Infinity
+Infinity
+Infinity
+-Infinity
+-Infinity
+-Infinity
+-Infinity
+-- stderr --

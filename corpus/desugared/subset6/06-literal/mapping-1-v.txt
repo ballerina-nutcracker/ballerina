@@ -42,10 +42,10 @@
           (mapping-constructor-expr
             (key-value
               (literal amount)
-              (literal 100/1))
+              (literal 100))
             (key-value
               (literal tax)
-              (literal 15/1))))))
+              (literal 15))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref dr))))
@@ -61,7 +61,7 @@
               (literal 2))
             (key-value
               (literal price)
-              (literal 50/1))))))
+              (literal 50))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref mr))))
@@ -71,10 +71,10 @@
           (mapping-constructor-expr
             (key-value
               (literal amount)
-              (literal 3/2))
+              (literal 1.5))
             (key-value
               (literal tax)
-              (literal 1/2))))))
+              (literal 0.5))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref dr2))))
@@ -101,10 +101,10 @@
           (mapping-constructor-expr
             (key-value
               (literal a)
-              (literal 1/1))
+              (literal 1))
             (key-value
               (literal b)
-              (literal 2/1))))))
+              (literal 2))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref md)))))))

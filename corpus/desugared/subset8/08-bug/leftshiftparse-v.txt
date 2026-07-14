@@ -1,0 +1,28 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type int)) (expr
+          (literal 4))))
+      (var-def
+        (variable b (type
+          (value-type int)) (expr
+          (literal 1))))
+      (var-def
+        (variable c (type
+          (value-type int)) (expr
+          (binary-expr <<
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (compound-assignment <<
+        (simple-var-ref c)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c)))))))

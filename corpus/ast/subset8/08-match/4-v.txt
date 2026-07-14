@@ -1,0 +1,83 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal hello))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 9))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal hi))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (list-constructor-expr
+              (literal 0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal false))))))))
+  (function foo (
+    (variable v (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 0))
+          (block-stmt
+            (return
+              (literal zero))))
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (const-pattern
+            (literal 3))
+          (const-pattern
+            (literal 5))
+          (const-pattern
+            (literal 7))
+          (const-pattern
+            (literal 9))
+          (block-stmt
+            (return
+              (literal odd))))
+        (match-clause
+          (const-pattern
+            (literal true))
+          (block-stmt
+            (return
+              (literal boolean))))
+        (match-clause
+          (const-pattern
+            (literal hello))
+          (block-stmt
+            (return
+              (literal greeting))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal other))))))))

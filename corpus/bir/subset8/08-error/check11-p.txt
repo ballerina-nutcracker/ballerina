@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = doPanic() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+doPanic() -> nil{
+  bb0 {
+    %1 = alwaysErr() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0 is error
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %4) = (1, $desugar$0);
+    PopScopeFrame
+    panic %4;
+  }
+  bb3 {
+    $desugar$1 = $desugar$0;
+    %6 = $desugar$1 is error
+    %6 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    return;
+  }
+}
+alwaysErr() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad err
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}

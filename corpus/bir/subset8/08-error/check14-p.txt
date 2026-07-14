@@ -1,0 +1,16 @@
+module $anon.. v 0.0.0;
+moduleValue  int;
+mayFail() -> int|error{
+  bb0 {
+    %1 = ConstantLoad module init failed
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = moduleValue;
+    return;
+  }
+}

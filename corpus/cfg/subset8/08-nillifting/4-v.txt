@@ -1,0 +1,70 @@
+(c
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal c))))
+    (return
+      (literal 5))
+  )
+)
+(g
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal g))))
+    (return
+      (literal 6.5))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 5))))
+    (var-def
+      (variable b (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable d (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b))
+          (invocation c ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+    (var-def
+      (variable e (type
+        (value-type float)) (expr
+        (literal 5.5))))
+    (var-def
+      (variable f (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable h (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref e)
+            (simple-var-ref f))
+          (invocation g ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref h))))
+  )
+)

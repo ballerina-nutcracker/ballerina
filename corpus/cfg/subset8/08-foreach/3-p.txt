@@ -32,7 +32,7 @@
       (return
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref value)
+            (literal value)
             (simple-var-ref val))))
     )
   )

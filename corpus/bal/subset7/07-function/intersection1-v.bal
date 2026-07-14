@@ -39,6 +39,7 @@ function foo(int a) returns int {
 }
 
 function bar(int a) returns byte {
+    int _ = a;
     return 5;
 }
 

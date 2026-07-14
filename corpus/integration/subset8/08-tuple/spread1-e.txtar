@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "foo"
+  --> spread1-e.bal:19:44
+   |
+19 |     [int, string, int...] _ = [5, ...nums, "foo"]; // @error
+   |                                            ^^^^^

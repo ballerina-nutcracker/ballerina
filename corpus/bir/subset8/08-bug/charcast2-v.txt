@@ -1,0 +1,34 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad !
+    s1 = %1;
+    %3 = ConstantLoad ก
+    t1 = %3;
+    %5 = ConstantLoad xy
+    s2 = %5;
+    %7 = ConstantLoad non-immediate string
+    t2 = %7;
+    %9 = s1 is string:Char
+    %10 = %9;
+    %11 = println(%10) -> bb1;
+  }
+  bb1 {
+    %12 = s2 is string:Char
+    %13 = %12;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    %15 = t1 is string:Char
+    %16 = %15;
+    %17 = println(%16) -> bb3;
+  }
+  bb3 {
+    %18 = t2 is string:Char
+    %19 = %18;
+    %20 = println(%19) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

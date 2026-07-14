@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "cu_prefix_scope"
+version = "0.1.0"

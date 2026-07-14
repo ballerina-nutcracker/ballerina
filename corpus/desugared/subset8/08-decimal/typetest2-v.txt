@@ -1,0 +1,22 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type decimal)) (expr
+          (literal 2.3))))
+      (if
+        (type-test-expr !is
+          (simple-var-ref x)
+          (finite-type
+            (literal 2.3)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal not 2.3))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal is 2.3))))))))))

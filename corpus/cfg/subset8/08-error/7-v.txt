@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (error-constructor-expr (
+          (literal hello))))))
+    (var-def
+      (variable e (type
+        (error-type)) (expr
+        (type-conversion-expr
+          (simple-var-ref x)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)

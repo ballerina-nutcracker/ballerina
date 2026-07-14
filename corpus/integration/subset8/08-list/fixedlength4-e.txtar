@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> fixedlength4-e.bal:19:5
+   |
+19 |     v[2] -= 1.5; // @error
+   |     ^^^^^^^^^^^^

@@ -80,25 +80,9 @@ After the constant pool, the package data follows:
 +------------------+
 | Package CP Index | int32 (index to package entry in CP)
 +------------------+
-| Import Modules   | See Import Modules
-+------------------+
 | Global Variables | See Global Variables
 +------------------+
 | Functions        | See Functions
-+------------------+
-```
-
-### Import Modules
-
-```
-+------------------+
-| Count            | int64 (number of imports)
-+------------------+
-| For each import: |
-|   Org Name CP    | int32
-|   Pkg Name CP    | int32
-|   Module Name CP | int32
-|   Version CP     | int32
 +------------------+
 ```
 

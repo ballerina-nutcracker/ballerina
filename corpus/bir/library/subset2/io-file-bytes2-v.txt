@@ -1,0 +1,74 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_bytes2.bin
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 3
+    %8 = newArray [int:Unsigned8...][%7]{%4, %5, %6}
+    $desugar$1 = %8;
+    %10 = $default$2($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %10;
+    %12 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %12;
+    %14 = $desugar$3 is error
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %15 = ConstantLoad 4
+    %16 = ConstantLoad 5
+    %17 = ConstantLoad 2
+    %18 = newArray [int:Unsigned8...][%17]{%15, %16}
+    %19 = ConstantLoad APPEND
+    %20 = fileWriteBytes(path,%18,%19) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %20;
+    %22 = $desugar$4 is error
+    %22 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %23 = fileReadBytes(path) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %23;
+    %25 = $desugar$5 is error
+    %25 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    readBack = $desugar$5;
+    %27 = length(readBack) -> bb11;
+  }
+  bb11 {
+    %28 = %27;
+    %29 = println(%28) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

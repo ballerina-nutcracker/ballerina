@@ -1,0 +1,145 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition CounterService
+    (object-type isolated service
+      (method-decl get () (
+        (value-type int)))
+      (method-decl inc () (
+        (value-type null)))))
+  (class-definition SimpleListener
+    (variable s (type
+      (union-type
+        (user-defined-type CounterService)
+        (value-type null))) (expr
+      (literal <nil>)))
+    (function attach (
+      (variable svc (type
+        (user-defined-type CounterService)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (assignment
+          (field-based-access s
+            (simple-var-ref self))
+          (simple-var-ref svc))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type CounterService)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (assignment
+          (field-based-access s
+            (simple-var-ref self))
+          (literal <nil>))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable svc (expr
+            (field-based-access s
+              (simple-var-ref self)))))
+        (if
+          (binary-expr ==
+            (simple-var-ref svc)
+            (literal <nil>))
+          (block-stmt
+            (panic
+              (error-constructor-expr (
+                (literal no service))))) ())
+        (block-stmt
+          (return
+            (invocation get expr:
+              (simple-var-ref svc) ())))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function inc () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable svc (expr
+            (field-based-access s
+              (simple-var-ref self)))))
+        (if
+          (binary-expr ==
+            (simple-var-ref svc)
+            (literal <nil>))
+          (block-stmt
+            (panic
+              (error-constructor-expr (
+                (literal no service))))) ())
+        (block-stmt
+          (expression-stmt
+            (invocation inc expr:
+              (simple-var-ref svc) ())))))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable l (type
+    (user-defined-type SimpleListener)) (expr
+    (new ())))
+  (service isolated
+    (on
+    (simple-var-ref l))
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (field-based-access count
+                (simple-var-ref self)))))))
+    (function inc () (
+      (value-type null))
+      (block-function-body
+        (lock
+          (block-stmt
+            (assignment
+              (field-based-access count
+                (simple-var-ref self))
+              (binary-expr +
+                (field-based-access count
+                  (simple-var-ref self))
+                (literal 1))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation inc expr:
+          (simple-var-ref l) ()))
+      (expression-stmt
+        (invocation inc expr:
+          (simple-var-ref l) ()))
+      (expression-stmt
+        (invocation inc expr:
+          (simple-var-ref l) ()))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref l) ())))))))

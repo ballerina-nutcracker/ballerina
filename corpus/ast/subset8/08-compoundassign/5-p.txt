@@ -1,0 +1,12 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable INT_MAX (type
+          (value-type int)) (expr
+          (literal 9223372036854775807))))
+      (compound-assignment +
+        (simple-var-ref INT_MAX)
+        (literal 1)))))

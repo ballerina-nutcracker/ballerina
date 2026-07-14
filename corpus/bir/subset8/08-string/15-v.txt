@@ -1,0 +1,58 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 
+    %2 = ConstantLoad 
+    %3 = ConstantLoad 
+    %4 = concatTest(%1,%2,%3) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad a
+    %6 = ConstantLoad b
+    %7 = ConstantLoad ab
+    %8 = concatTest(%5,%6,%7) -> bb2;
+  }
+  bb2 {
+    %9 = ConstantLoad smile
+    %10 = ConstantLoad 🙂
+    %11 = ConstantLoad smile🙂
+    %12 = concatTest(%9,%10,%11) -> bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad 🙂
+    %14 = ConstantLoad frown
+    %15 = ConstantLoad 🙂frown
+    %16 = concatTest(%13,%14,%15) -> bb4;
+  }
+  bb4 {
+    %17 = ConstantLoad 🙁
+    %18 = ConstantLoad 🙂
+    %19 = ConstantLoad 🙁🙂
+    %20 = concatTest(%17,%18,%19) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+concatTest(string,string,string) -> nil{
+  bb0 {
+    %4 = + s1 s2;
+    s = %4;
+    %6 = println(s) -> bb1;
+  }
+  bb1 {
+    %7 = length(s) -> bb2;
+  }
+  bb2 {
+    %8 = %7;
+    %9 = println(%8) -> bb3;
+  }
+  bb3 {
+    %10 = == s expected;
+    %11 = %10;
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected decimal, got 1.2
+  --> vardecl2-e.bal:20:18
+   |
+20 |     decimal d1 = 1.2f; // @error
+   |                  ^^^^

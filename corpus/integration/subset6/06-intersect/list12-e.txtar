@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: no applicable inherent type for list constructor
-  --> list12-e.bal:22:15
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got 300
+  --> list12-e.bal:22:19
    |
 22 |     A1&A2 a = [5, 300, 7]; // @error
-   |               ^^^^^^^^^^^
+   |                   ^^^

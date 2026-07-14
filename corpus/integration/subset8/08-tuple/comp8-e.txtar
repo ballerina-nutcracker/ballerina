@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: values are not comparable
+  --> comp8-e.bal:27:16
+   |
+27 |     io:println(a < b); // @error
+   |                ^^^^^

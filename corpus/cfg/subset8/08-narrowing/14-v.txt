@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation str (
+          (literal x))))))
+  )
+)
+(str
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref v)
+      (literal x))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref v))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal ))
+  )
+)

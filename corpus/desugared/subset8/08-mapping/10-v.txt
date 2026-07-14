@@ -1,0 +1,36 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (match
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (key-value
+            (literal b)
+            (literal 2)))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal working)))))))
+      (match
+        (index-based-access
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2)))
+          (literal b))
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal working))))))))))

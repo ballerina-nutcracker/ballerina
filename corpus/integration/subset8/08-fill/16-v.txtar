@@ -1,0 +1,3 @@
+-- stdout --
+[{},{},{"int":1,"string":"str"}]
+-- stderr --

@@ -1,0 +1,208 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang map (as lang.map))
+  (class-definition NumberIterator
+    (variable items (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable idx (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal items))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal idx))
+          (literal 0))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (index-based-access
+              (simple-var-ref self)
+              (literal idx))
+            (literal 3))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (var-def
+            (variable val (type
+              (value-type int)) (expr
+              (index-based-access
+                (index-based-access
+                  (simple-var-ref self)
+                  (literal items))
+                (index-based-access
+                  (simple-var-ref self)
+                  (literal idx))))))
+          (compound-assignment +
+            (index-based-access
+              (simple-var-ref self)
+              (literal idx))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (simple-var-ref val))))))))
+  (class-definition NumberGenerator
+    (function init () ()
+      (block-function-body))
+    (function iterator () (
+      (user-defined-type NumberIterator))
+      (block-function-body
+        (return
+          (new ())))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable names (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal John)
+            (literal Jane)
+            (literal Doe)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref names))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable name (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (expression-stmt
+            (invocation io println (
+              (literal Hello, )
+              (simple-var-ref name))))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))
+      (var-def
+        (variable scores (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal alice)
+              (literal 10))
+            (key-value
+              (literal bob)
+              (literal 20))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (simple-var-ref scores))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation lang.map keys (
+            (simple-var-ref $desugar$3))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$4))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$5)
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (var-def
+            (variable score (expr
+              (index-based-access
+                (simple-var-ref $desugar$3)
+                (index-based-access
+                  (simple-var-ref $desugar$4)
+                  (simple-var-ref $desugar$5))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref score))))
+          (assignment
+            (simple-var-ref $desugar$5)
+            (binary-expr +
+              (simple-var-ref $desugar$5)
+              (numeric-literal 1)))))
+      (var-def
+        (variable gen (type
+          (user-defined-type NumberGenerator)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$7 (expr
+          (simple-var-ref gen))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$7) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$11 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$9) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$11))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable value (expr
+              (index-based-access
+                (simple-var-ref $desugar$11)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value))))))
+      (var-def
+        (variable i (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$12 (expr
+          (literal 3))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))
+          (assignment
+            (simple-var-ref i)
+            (binary-expr +
+              (simple-var-ref i)
+              (numeric-literal 1))))))))

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: divide by zero
+        at main(panic-p.bal:22)

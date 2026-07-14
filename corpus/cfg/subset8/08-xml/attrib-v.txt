@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable e1 (type
+        (user-defined-type xml Element)) (expr
+        (xml-element-literal e
+          (xml-attribute attr1
+            (literal foo))
+          (xml-text-literal tt)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e1))))
+    (var-def
+      (variable e2 (type
+        (value-type xml)) (expr
+        (xml-element-literal e2
+          (xml-attribute attr2
+            (literal bar))
+          (xml-attribute attr3
+            (literal 1))
+          (xml-text-literal xx)))))
+    (var-def
+      (variable e3 (type
+        (value-type xml)) (expr
+        (binary-expr +
+          (simple-var-ref e1)
+          (simple-var-ref e2)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e3))))
+  )
+)

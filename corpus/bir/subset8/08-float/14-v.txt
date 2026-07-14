@@ -1,0 +1,278 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %1 = / %3 %5;
+    nan0 = %1;
+    %8 = ConstantLoad 0
+    %9 = unknown %8;
+    %10 = %9;
+    %11 = ConstantLoad 0
+    %12 = %11;
+    %7 = / %10 %12;
+    nan1 = %7;
+    %15 = ConstantLoad 1
+    %16 = %15;
+    %17 = ConstantLoad 0
+    %18 = %17;
+    %14 = / %16 %18;
+    pInf = %14;
+    %21 = ConstantLoad 1
+    %22 = unknown %21;
+    %23 = %22;
+    %24 = ConstantLoad 0
+    %25 = %24;
+    %20 = / %23 %25;
+    nInf = %20;
+    %27 = ConstantLoad 42
+    %28 = %27;
+    %29 = ConstantLoad 42
+    %30 = %29;
+    %31 = eq(%28,%30) -> bb1;
+  }
+  bb1 {
+    %32 = println(%31) -> bb2;
+  }
+  bb2 {
+    %33 = ConstantLoad 1
+    %34 = %33;
+    %35 = ConstantLoad 2
+    %36 = %35;
+    %37 = eq(%34,%36) -> bb3;
+  }
+  bb3 {
+    %38 = println(%37) -> bb4;
+  }
+  bb4 {
+    %39 = ConstantLoad 0
+    %40 = %39;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %43 = eq(%40,%42) -> bb5;
+  }
+  bb5 {
+    %44 = println(%43) -> bb6;
+  }
+  bb6 {
+    %45 = ConstantLoad 0
+    %46 = %45;
+    %47 = ConstantLoad 0
+    %48 = unknown %47;
+    %49 = %48;
+    %50 = eq(%46,%49) -> bb7;
+  }
+  bb7 {
+    %51 = println(%50) -> bb8;
+  }
+  bb8 {
+    %52 = nan0;
+    %53 = nan1;
+    %54 = eq(%52,%53) -> bb9;
+  }
+  bb9 {
+    %55 = println(%54) -> bb10;
+  }
+  bb10 {
+    %56 = nan0;
+    %57 = ConstantLoad 1
+    %58 = %57;
+    %59 = eq(%56,%58) -> bb11;
+  }
+  bb11 {
+    %60 = println(%59) -> bb12;
+  }
+  bb12 {
+    %61 = nan0;
+    %62 = nInf;
+    %63 = eq(%61,%62) -> bb13;
+  }
+  bb13 {
+    %64 = println(%63) -> bb14;
+  }
+  bb14 {
+    %65 = pInf;
+    %66 = nInf;
+    %67 = eq(%65,%66) -> bb15;
+  }
+  bb15 {
+    %68 = println(%67) -> bb16;
+  }
+  bb16 {
+    %69 = nInf;
+    %70 = pInf;
+    %71 = eq(%69,%70) -> bb17;
+  }
+  bb17 {
+    %72 = println(%71) -> bb18;
+  }
+  bb18 {
+    %73 = pInf;
+    %74 = pInf;
+    %75 = eq(%73,%74) -> bb19;
+  }
+  bb19 {
+    %76 = println(%75) -> bb20;
+  }
+  bb20 {
+    %77 = nInf;
+    %78 = nInf;
+    %79 = eq(%77,%78) -> bb21;
+  }
+  bb21 {
+    %80 = println(%79) -> bb22;
+  }
+  bb22 {
+    %81 = ConstantLoad not-float
+    %82 = ConstantLoad 1
+    %83 = %82;
+    %84 = eqAF(%81,%83) -> bb23;
+  }
+  bb23 {
+    %85 = println(%84) -> bb24;
+  }
+  bb24 {
+    %86 = ConstantLoad 1
+    %87 = %86;
+    %88 = ConstantLoad 1
+    %89 = %88;
+    %90 = eqAF(%87,%89) -> bb25;
+  }
+  bb25 {
+    %91 = println(%90) -> bb26;
+  }
+  bb26 {
+    %92 = ConstantLoad 0
+    %93 = %92;
+    %94 = ConstantLoad false
+    %95 = %94;
+    %96 = eqFA(%93,%95) -> bb27;
+  }
+  bb27 {
+    %97 = println(%96) -> bb28;
+  }
+  bb28 {
+    %98 = ConstantLoad 8
+    %99 = %98;
+    %100 = ConstantLoad 8
+    %101 = %100;
+    %102 = eqFA(%99,%101) -> bb29;
+  }
+  bb29 {
+    %103 = println(%102) -> bb30;
+  }
+  bb30 {
+    return;
+  }
+}
+eq(float,float) -> string{
+  bb0 {
+    %3 = f1;
+    %4 = f2;
+    %5 = eqAF(%3,%4) -> bb1;
+  }
+  bb1 {
+    b1 = %5;
+    %7 = f1;
+    %8 = f2;
+    %9 = eqFA(%7,%8) -> bb2;
+  }
+  bb2 {
+    b2 = %9;
+    %11 = != b1 b2;
+    %11 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad a
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 0
+    (1, %0) = (1, b1);
+    PopScopeFrame
+    return;
+  }
+}
+eqAF(any,float) -> string{
+  bb0 {
+    %4 = f2;
+    %3 = == f1 %4;
+    eq = %3;
+    %7 = f2;
+    %6 = != f1 %7;
+    neEq = %6;
+    %10 = eq;
+    %11 = neEq;
+    %9 = == %10 %11;
+    %9 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad b
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    eq ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    GOTO bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad false
+    %0 = %12;
+    return;
+  }
+}
+eqFA(float,any) -> string{
+  bb0 {
+    %4 = f1;
+    %3 = == %4 f2;
+    eq = %3;
+    %7 = f1;
+    %6 = != %7 f2;
+    neEq = %6;
+    %10 = eq;
+    %11 = neEq;
+    %9 = == %10 %11;
+    %9 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad c
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    eq ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    GOTO bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad false
+    %0 = %12;
+    return;
+  }
+}

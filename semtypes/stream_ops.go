@@ -16,9 +16,7 @@
 
 package semtypes
 
-type streamOps struct {
-	CommonOps
-}
+type streamOps struct{}
 
 var _ BasicTypeOps = &streamOps{}
 
@@ -45,4 +43,16 @@ func (s *streamOps) complement(t SubtypeData) SubtypeData {
 
 func (s *streamOps) IsEmpty(cx Context, t SubtypeData) bool {
 	return streamSubtypeIsEmpty(cx, t)
+}
+
+func (s *streamOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+	return bddSubtypeUnion(d1, d2)
+}
+
+func (s *streamOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+	return bddSubtypeIntersect(d1, d2)
+}
+
+func (s *streamOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+	return bddSubtypeDiff(d1, d2)
 }

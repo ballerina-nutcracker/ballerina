@@ -1,0 +1,87 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [float...][%3]{%1, %2}
+    %5 = ConstantLoad 3
+    %6 = ConstantLoad 4
+    %7 = ConstantLoad 5
+    %8 = ConstantLoad 0
+    %9 = ConstantLoad 4
+    %10 = newArray [float...][%9]{%5, %6, %7, %8}
+    %11 = ConstantLoad 0.5
+    %12 = ConstantLoad 1
+    %13 = newArray [float...][%12]{%11}
+    %14 = ConstantLoad 0
+    %15 = newArray [float...][%14]{}
+    %16 = ConstantLoad 4
+    %17 = newArray [[float...]...][%16]{%4, %10, %13, %15}
+    vv = %17;
+    %19 = ConstantLoad 0
+    total = %19;
+    %21 = ConstantLoad 0
+    i = %21;
+    %23 = length(vv) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %23;
+    GOTO bb2;
+  }
+  bb2 {
+    %26 = i;
+    %27 = $desugar$0;
+    %25 = < %26 %27;
+    %25 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 13
+    %0 = (1, vv)[(1, i)];
+    v = %0;
+    %2 = ConstantLoad 0
+    j = %2;
+    %4 = length(v) -> bb5;
+  }
+  bb4 {
+    %28 = total;
+    %29 = println(%28) -> bb9;
+  }
+  bb5 {
+    $desugar$1 = %4;
+    GOTO bb6;
+  }
+  bb6 {
+    %7 = j;
+    %8 = $desugar$1;
+    %6 = < %7 %8;
+    %6 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 8
+    %1 = (2, total);
+    %2 = (1, v)[(1, j)];
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, total) = %0;
+    %5 = (1, j);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, j) = %4;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb8 {
+    %10 = (1, i);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, i) = %9;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb9 {
+    return;
+  }
+}

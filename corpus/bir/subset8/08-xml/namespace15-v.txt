@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad b
+    %3 = ConstantLoad p:c
+    %4 = newXMLElement(%3, ())
+    %5 = ConstantLoad xmlns:p
+    %6 = ConstantLoad https:foo/u2
+    %7 = newMap {| string... |}{%5=%6}
+    %8 = newXMLElement(%2, %4, (), %7)
+    %9 = newXMLElement(%1, %8)
+    elem = %9;
+    %11 = println(elem) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

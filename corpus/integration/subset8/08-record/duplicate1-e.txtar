@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate field name 'x'
+  --> duplicate1-e.bal:20:5
+   |
+20 |     int x; // @error
+   |     ^^^^^^

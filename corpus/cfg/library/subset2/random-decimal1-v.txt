@@ -1,0 +1,17 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (invocation random createDecimal ()))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr &&
+          (binary-expr >=
+            (simple-var-ref f)
+            (literal 0))
+          (binary-expr <
+            (simple-var-ref f)
+            (literal 1))))))
+  )
+)

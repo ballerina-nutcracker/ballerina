@@ -1,0 +1,238 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable c1 (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal /path))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$19 (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (remote-method-call get expr:
+            (simple-var-ref c1) (
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable r1 (expr
+          (simple-var-ref $desugar$3))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r1)
+            (literal statusCode)))))
+      (var-def
+        (variable $desugar$4 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal compression)
+                (literal AUTO))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable c2 (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal /path))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation $default$19 (
+            (simple-var-ref $desugar$5))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (remote-method-call get expr:
+            (simple-var-ref c2) (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable r2 (expr
+          (simple-var-ref $desugar$7))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r2)
+            (literal statusCode)))))
+      (var-def
+        (variable $desugar$8 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal compression)
+                (literal ALWAYS))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (var-def
+        (variable c3 (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$8))))
+      (var-def
+        (variable $desugar$9 (expr
+          (literal /path))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation $default$19 (
+            (simple-var-ref $desugar$9))))))
+      (var-def
+        (variable $desugar$11 (expr
+          (remote-method-call get expr:
+            (simple-var-ref c3) (
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (var-def
+        (variable r3 (expr
+          (simple-var-ref $desugar$11))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r3)
+            (literal statusCode)))))
+      (var-def
+        (variable $desugar$12 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal compression)
+                (literal NEVER))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$12))) ())
+      (var-def
+        (variable c4 (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$12))))
+      (var-def
+        (variable $desugar$13 (expr
+          (literal /path))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation $default$19 (
+            (simple-var-ref $desugar$13))))))
+      (var-def
+        (variable $desugar$15 (expr
+          (remote-method-call get expr:
+            (simple-var-ref c4) (
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$14))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$15))) ())
+      (var-def
+        (variable r4 (expr
+          (simple-var-ref $desugar$15))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r4)
+            (literal statusCode)))))
+      (var-def
+        (variable $desugar$16 (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal timeout)
+                (literal 15))
+              (key-value
+                (literal httpVersion)
+                (literal 1.1))
+              (key-value
+                (literal compression)
+                (literal NEVER))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$16))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$16))) ())
+      (var-def
+        (variable c5 (type
+          (user-defined-type http Client)) (expr
+          (simple-var-ref $desugar$16))))
+      (var-def
+        (variable $desugar$17 (expr
+          (literal /path))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation $default$19 (
+            (simple-var-ref $desugar$17))))))
+      (var-def
+        (variable $desugar$19 (expr
+          (remote-method-call get expr:
+            (simple-var-ref c5) (
+            (simple-var-ref $desugar$17)
+            (simple-var-ref $desugar$18))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$19))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$19))) ())
+      (var-def
+        (variable r5 (expr
+          (simple-var-ref $desugar$19))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r5)
+            (literal statusCode)))))
+      (return
+        (literal <nil>)))))

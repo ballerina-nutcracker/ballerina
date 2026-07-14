@@ -1,0 +1,67 @@
+(main
+  (bb0 () (bb1 bb6)
+    (var-def
+      (variable x (type
+        (union-type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type boolean))
+            (value-type float))
+          (value-type string))) (expr
+        (literal two))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (union-type
+        (union-type
+          (value-type int)
+          (value-type boolean))
+        (value-type string)))
+  )
+  (bb1 (bb0) (bb2 bb5)
+    (assignment
+      (simple-var-ref x)
+      (literal 2))
+    (type-test-expr is
+      (simple-var-ref x)
+      (union-type
+        (value-type int)
+        (value-type boolean)))
+  )
+  (bb2 (bb1) (bb3 bb4)
+    (var-def
+      (variable _ (type
+        (union-type
+          (value-type int)
+          (value-type boolean))) (expr
+        (simple-var-ref x))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type boolean))
+  )
+  (bb3 (bb2) ()
+    (return
+      (literal <nil>))
+  )
+  (bb4 (bb2) (bb5)
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref x))))
+  )
+  (bb5 (bb4 bb1) (bb6)
+    (var-def
+      (variable _ (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type float))
+          (value-type string))) (expr
+        (simple-var-ref x))))
+  )
+  (bb6 (bb5 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

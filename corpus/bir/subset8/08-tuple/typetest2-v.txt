@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 17
+    %3 = ConstantLoad 21
+    %4 = ConstantLoad 3
+    %5 = newArray [string, int...][%4]{%1, %2, %3}
+    si = %5;
+    v = si;
+    %8 = v is [string, int...]
+    %9 = %8;
+    %10 = println(%9) -> bb1;
+  }
+  bb1 {
+    %11 = v is [int|string...]
+    %12 = %11;
+    %13 = println(%12) -> bb2;
+  }
+  bb2 {
+    %14 = v is [nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]
+    %15 = %14;
+    %16 = println(%15) -> bb3;
+  }
+  bb3 {
+    %17 = v is anydata
+    %18 = %17;
+    %19 = println(%18) -> bb4;
+  }
+  bb4 {
+    %20 = v is [int...]
+    %21 = %20;
+    %22 = println(%21) -> bb5;
+  }
+  bb5 {
+    %23 = v is [string...]
+    %24 = %23;
+    %25 = println(%24) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

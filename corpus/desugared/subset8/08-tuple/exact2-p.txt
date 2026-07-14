@@ -1,0 +1,21 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (tuple-type
+            (value-type boolean)
+            (value-type int))) (expr
+          (list-constructor-expr
+            (literal true)
+            (literal 7)))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (assignment
+        (index-based-access
+          (simple-var-ref t)
+          (simple-var-ref i))
+        (literal 1)))))

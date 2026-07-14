@@ -1,0 +1,67 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type byte)) (expr
+          (literal 5))))
+      (var-def
+        (variable y (type
+          (value-type byte)) (expr
+          (literal 3))))
+      (var-def
+        (variable z (type
+          (value-type byte)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (binary-expr *
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+      (var-def
+        (variable j (type
+          (value-type int)) (expr
+          (binary-expr *
+            (simple-var-ref x)
+            (simple-var-ref z)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref i))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref j))))
+      (var-def
+        (variable a (type
+          (user-defined-type int Signed32)) (expr
+          (literal 2147483647))))
+      (var-def
+        (variable b (type
+          (user-defined-type int Signed32)) (expr
+          (literal 2147483647))))
+      (var-def
+        (variable c (type
+          (value-type int)) (expr
+          (binary-expr *
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable d (type
+          (user-defined-type int Signed32)) (expr
+          (unary-expr -
+            (literal 2147483647)))))
+      (var-def
+        (variable e (type
+          (value-type int)) (expr
+          (binary-expr *
+            (simple-var-ref d)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e)))))))

@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type byte)) (expr
+        (literal 255))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

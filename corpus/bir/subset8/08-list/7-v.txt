@@ -1,0 +1,153 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 2
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray list[%3]{%1, %2}
+    %5 = foo(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 2
+    %7 = ConstantLoad 3
+    %8 = ConstantLoad 2
+    %9 = newArray list[%8]{%6, %7}
+    %10 = foo(%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad 2
+    %12 = ConstantLoad 3
+    %13 = ConstantLoad 2
+    %14 = newArray [int...][%13]{%11, %12}
+    %15 = foo1(%14) -> bb3;
+  }
+  bb3 {
+    %16 = ConstantLoad 2
+    %17 = ConstantLoad 3
+    %18 = ConstantLoad 2
+    %19 = newArray [2, 3, never...][%18]{%16, %17}
+    %20 = foo2(%19) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+foo(any) -> nil{
+  bb0 {
+    %2 = a is [2, 3, never...]
+    %2 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = (1, a) is [int, int, never...]
+    %0 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = (2, a) is [int...]
+    %0 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb9 {
+    PushScopeFrame 2
+    %0 = ConstantLoad a is any
+    %1 = println(%0) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+foo1([int...]) -> nil{
+  bb0 {
+    %2 = a is [2, 3, never...]
+    %2 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = (1, a) is [int, int, never...]
+    %0 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = ConstantLoad a is int[]
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    return;
+  }
+}
+foo2([2, 3, never...]) -> nil{
+  bb0 {
+    %2 = a is [2, 3, never...]
+    %2 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad a is [2,3]
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

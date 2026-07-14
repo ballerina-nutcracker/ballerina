@@ -1,0 +1,212 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))
+              (user-defined-type xml Comment)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal hello)
+            (xml-comment-literal c)))))
+      (var-def
+        (variable methodNext (type
+          (union-type
+            (record-type
+              (field value
+                (union-type
+                  (union-type
+                    (user-defined-type xml Element)
+                    (user-defined-type xml Text))
+                  (user-defined-type xml Comment))))
+            (value-type null))) (expr
+          (invocation next expr:
+            (invocation iterator expr:
+              (simple-var-ref x) ()) ()))))
+      (if
+        (binary-expr !=
+          (simple-var-ref methodNext)
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref methodNext)))))) ())
+      (block-stmt
+        (var-def
+          (variable functionNext (type
+            (union-type
+              (record-type
+                (field value
+                  (union-type
+                    (union-type
+                      (user-defined-type xml Element)
+                      (user-defined-type xml Text))
+                    (user-defined-type xml Comment))))
+              (value-type null))) (expr
+            (invocation next expr:
+              (invocation xml iterator (
+                (simple-var-ref x))) ()))))
+        (if
+          (binary-expr !=
+            (simple-var-ref functionNext)
+            (literal <nil>))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (field-based-access value
+                  (simple-var-ref functionNext)))))) ())
+        (block-stmt
+          (foreach
+            (var-def
+              (variable item (type
+                (union-type
+                  (union-type
+                    (user-defined-type xml Element)
+                    (user-defined-type xml Text))
+                  (user-defined-type xml Comment)))))
+            (simple-var-ref x)
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref item))))))
+          (var-def
+            (variable element (type
+              (user-defined-type xml Element)) (expr
+              (xml-element-literal e))))
+          (var-def
+            (variable elementNext (type
+              (union-type
+                (record-type
+                  (field value
+                    (user-defined-type xml Element)))
+                (value-type null))) (expr
+              (invocation next expr:
+                (invocation iterator expr:
+                  (simple-var-ref element) ()) ()))))
+          (if
+            (binary-expr !=
+              (simple-var-ref elementNext)
+              (literal <nil>))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (field-based-access value
+                    (simple-var-ref elementNext)))))) ())
+          (block-stmt
+            (foreach
+              (var-def
+                (variable item (type
+                  (user-defined-type xml Element))))
+              (simple-var-ref element)
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref item))))))
+            (var-def
+              (variable comment (type
+                (user-defined-type xml Comment)) (expr
+                (xml-comment-literal comment))))
+            (var-def
+              (variable commentNext (type
+                (union-type
+                  (record-type
+                    (field value
+                      (user-defined-type xml Comment)))
+                  (value-type null))) (expr
+                (invocation next expr:
+                  (invocation iterator expr:
+                    (simple-var-ref comment) ()) ()))))
+            (if
+              (binary-expr !=
+                (simple-var-ref commentNext)
+                (literal <nil>))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (field-based-access value
+                      (simple-var-ref commentNext)))))) ())
+            (block-stmt
+              (foreach
+                (var-def
+                  (variable item (type
+                    (user-defined-type xml Comment))))
+                (simple-var-ref comment)
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (simple-var-ref item))))))
+              (var-def
+                (variable pi (type
+                  (user-defined-type xml ProcessingInstruction)) (expr
+                  (xml-pi-literal p data))))
+              (var-def
+                (variable piNext (type
+                  (union-type
+                    (record-type
+                      (field value
+                        (user-defined-type xml ProcessingInstruction)))
+                    (value-type null))) (expr
+                  (invocation next expr:
+                    (invocation iterator expr:
+                      (simple-var-ref pi) ()) ()))))
+              (if
+                (binary-expr !=
+                  (simple-var-ref piNext)
+                  (literal <nil>))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (field-based-access value
+                        (simple-var-ref piNext)))))) ())
+              (block-stmt
+                (foreach
+                  (var-def
+                    (variable item (type
+                      (user-defined-type xml ProcessingInstruction))))
+                  (simple-var-ref pi)
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (simple-var-ref item))))))
+                (var-def
+                  (variable text (type
+                    (user-defined-type xml Text)) (expr
+                    (xml-text-literal text))))
+                (var-def
+                  (variable textNext (type
+                    (union-type
+                      (record-type
+                        (field value
+                          (user-defined-type xml Text)))
+                      (value-type null))) (expr
+                    (invocation next expr:
+                      (invocation iterator expr:
+                        (simple-var-ref text) ()) ()))))
+                (if
+                  (binary-expr !=
+                    (simple-var-ref textNext)
+                    (literal <nil>))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (field-based-access value
+                          (simple-var-ref textNext)))))) ())
+                (block-stmt
+                  (foreach
+                    (var-def
+                      (variable item (type
+                        (user-defined-type xml Text))))
+                    (simple-var-ref text)
+                    (block-stmt
+                      (expression-stmt
+                        (invocation io println (
+                          (simple-var-ref item)))))))))))))))

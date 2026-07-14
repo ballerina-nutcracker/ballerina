@@ -1,0 +1,71 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad alice
+    %2 = ConstantLoad 10
+    %3 = ConstantLoad bob
+    %4 = ConstantLoad 20
+    %5 = newMap {| int... |}{%1=%2, %3=%4}
+    scores = %5;
+    %7 = ConstantLoad alice
+    %8 = remove(scores,%7) -> bb1;
+  }
+  bb1 {
+    alice = %8;
+    %10 = alice;
+    %11 = println(%10) -> bb2;
+  }
+  bb2 {
+    %12 = length(scores) -> bb3;
+  }
+  bb3 {
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad one
+    %16 = ConstantLoad 1
+    %17 = ConstantLoad two
+    %18 = ConstantLoad 2
+    %19 = newMap {| int... |}{%15=%16, %17=%18}
+    counts = %19;
+    %21 = ConstantLoad two
+    %22 = remove(counts,%21) -> bb5;
+  }
+  bb5 {
+    two = %22;
+    %24 = two;
+    %25 = println(%24) -> bb6;
+  }
+  bb6 {
+    %26 = length(counts) -> bb7;
+  }
+  bb7 {
+    %27 = %26;
+    %28 = println(%27) -> bb8;
+  }
+  bb8 {
+    %29 = ConstantLoad id
+    %30 = ConstantLoad A
+    %31 = ConstantLoad name
+    %32 = ConstantLoad Ann
+    %33 = newMap {| string... |}{%29=%30, %31=%32}
+    labels = %33;
+    %35 = ConstantLoad id
+    %36 = remove(labels,%35) -> bb9;
+  }
+  bb9 {
+    id = %36;
+    %38 = println(id) -> bb10;
+  }
+  bb10 {
+    %39 = length(labels) -> bb11;
+  }
+  bb11 {
+    %40 = %39;
+    %41 = println(%40) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

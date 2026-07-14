@@ -17,8 +17,9 @@
 package semtypes
 
 import (
-	"math/big"
 	"strings"
+
+	"ballerina-lang-go/decimal"
 )
 
 var SINT8 = intWidthSigned(8)
@@ -33,10 +34,9 @@ func decimalConstFromStringValue(value string) SemType {
 	if strings.Contains(value, "d") || strings.Contains(value, "D") {
 		value = value[:len(value)-1]
 	}
-	d := new(big.Rat)
-	d, ok := d.SetString(value)
-	if !ok {
-		panic("failed to set string to big.Rat")
+	d, err := decimal.FromString(value)
+	if err != nil {
+		panic("failed to parse decimal literal: " + err.Error())
 	}
 	return DecimalConst(*d)
 }
@@ -57,12 +57,12 @@ func intersectWithSemTypeSemTypesSemType(first SemType, second SemType, rest ...
 	return i
 }
 
-func isSubtypeSimpleNotNever(t1 SemType, t2 BasicTypeBitSet) bool {
+func isSubtypeSimpleNotNever(t1 SemType, t2 SemType) bool {
 	return ((!IsNever(t1)) && IsSubtypeSimple(t1, t2))
 }
 
-func ContainsBasicType(t1 SemType, t2 BasicTypeBitSet) bool {
-	return ((WidenToBasicTypes(t1).all() & t2.all()) != 0)
+func ContainsBasicType(t1 SemType, t2 SemType) bool {
+	return ((widenToBasicTypeBits(t1) & t2.all()) != 0)
 }
 
 func containsType(context Context, ty SemType, typeToBeContained SemType) bool {

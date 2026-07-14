@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+foo() -> nil{
+  bb0 {
+    %1 = ConstantLoad foo called
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+callFoo() -> int{
+  bb0 {
+    lock-start "" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = foo() -> bb2;
+  }
+  bb2 {
+    %1 = ConstantLoad 1
+    (1, %0) = %1;
+    PopScopeFrame
+    lock-end "" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+  bb4 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = callFoo() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

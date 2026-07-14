@@ -1,0 +1,22 @@
+(alwaysErr
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal err))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation passAlong ()))))
+  )
+)
+(passAlong
+  (bb0 () ()
+    (expression-stmt
+      (check-panicked-expr
+        (checked-expr
+          (invocation alwaysErr ()))))
+  )
+)

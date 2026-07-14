@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 
+	common "ballerina-lang-go/common"
 	"ballerina-lang-go/parser"
 	"ballerina-lang-go/parser/tree"
 	"ballerina-lang-go/tools/text"
@@ -30,6 +31,7 @@ import (
 type documentContext struct {
 	documentConfig    DocumentConfig
 	name              string
+	diagKeyPrefix     string // composes with name to produce a unique DiagnosticEnv key
 	disableSyntaxTree bool
 
 	// Lazy-loaded with sync.Once
@@ -40,10 +42,13 @@ type documentContext struct {
 }
 
 // newDocumentContext creates a documentContext from DocumentConfig.
-func newDocumentContext(documentConfig DocumentConfig, disableSyntaxTree bool) *documentContext {
+// diagKeyPrefix is prepended to the bare name to form a globally-unique key used
+// by DiagnosticEnv and SyntaxTree.FilePath. Pass "" for current-package files.
+func newDocumentContext(documentConfig DocumentConfig, disableSyntaxTree bool, diagKeyPrefix string) *documentContext {
 	return &documentContext{
 		documentConfig:    documentConfig,
 		name:              documentConfig.Name(),
+		diagKeyPrefix:     diagKeyPrefix,
 		disableSyntaxTree: disableSyntaxTree,
 	}
 }
@@ -53,9 +58,20 @@ func (d *documentContext) documentID() DocumentID {
 	return d.documentConfig.DocumentID()
 }
 
-// getName returns the document filename.
+// getName returns the bare document filename (Document.Name()).
 func (d *documentContext) getName() string {
 	return d.name
+}
+
+// registrationKey returns the unique key used by DiagnosticEnv and stored in
+// SyntaxTree.FilePath. For current-package files this is just the bare name;
+// for external dependencies it is "<org>/<moduleName>/<version>::<name>";
+// for workspace members it is "<member>/<name>".
+func (d *documentContext) registrationKey() string {
+	if d.diagKeyPrefix == "" {
+		return d.name
+	}
+	return d.diagKeyPrefix + d.name
 }
 
 // parseContent parses the content string and returns a SyntaxTree.
@@ -73,13 +89,20 @@ func (d *documentContext) parseContent(content string, textDoc text.TextDocument
 	// Create Parser from TokenReader
 	ballerinaParser := parser.NewBallerinaParserFromTokenReader(tokenReader)
 
-	// Parse the content
-	rootNode := ballerinaParser.Parse().(*tree.STModulePart)
+	// Dependency files are not the user's own source — suppress debug dump output
+	// (DUMP_TOKENS, DUMP_ST) so they don't pollute --dump-tokens / --dump-st output.
+	var rawAST tree.STNode
+	if d.diagKeyPrefix != "" {
+		common.WithSuppressedDebug(func() { rawAST = ballerinaParser.Parse() })
+	} else {
+		rawAST = ballerinaParser.Parse()
+	}
+	rootNode := rawAST.(*tree.STModulePart)
 
 	// Create the ModulePart node
 	moduleNode := tree.CreateUnlinkedFacade[*tree.STModulePart, *tree.ModulePart](rootNode)
 
-	syntaxTree := tree.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDoc, d.name, false)
+	syntaxTree := tree.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDoc, d.registrationKey(), false)
 	return &syntaxTree
 }
 
@@ -139,6 +162,7 @@ func (d *documentContext) duplicate() *documentContext {
 	return &documentContext{
 		documentConfig:    d.documentConfig,
 		name:              d.name,
+		diagKeyPrefix:     d.diagKeyPrefix,
 		disableSyntaxTree: d.disableSyntaxTree,
 	}
 }

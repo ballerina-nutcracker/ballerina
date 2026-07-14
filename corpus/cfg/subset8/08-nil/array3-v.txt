@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation pairOfNothings ()))))))
+  )
+)
+(pairOfNothings
+  (bb0 () ()
+    (return
+      (list-constructor-expr
+        (literal <nil>)
+        (literal <nil>)))
+  )
+)

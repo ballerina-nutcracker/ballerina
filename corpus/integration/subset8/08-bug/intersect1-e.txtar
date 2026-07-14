@@ -1,0 +1,17 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> intersect1-e.bal:18:5
+   |
+18 |     T2 & T1? next; // @error
+   |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: type definition T1 is empty
+  --> intersect1-e.bal:17:1
+   |
+17 | type T1 record {|
+   | ^^^^^^^^^^^^^^^^^
+18 |     T2 & T1? next; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+19 | |};
+   | ^^^

@@ -485,6 +485,553 @@ func TestNewCommandWithConflictingFiles(t *testing.T) {
 }
 
 // =============================================================================
+// Workspace Tests
+// =============================================================================
+
+// TestNewWorkspace_EmptyDir tests creating a workspace in an empty directory.
+func TestNewWorkspace_EmptyDir(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-workspace")
+
+	stdout, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+	}
+
+	// Verify success messages
+	if !strings.Contains(stdout, "Created new workspace") {
+		t.Errorf("expected 'Created new workspace' message, got stdout: %s", stdout)
+	}
+	if !strings.Contains(stdout, "Created new package 'hello-app'") {
+		t.Errorf("expected 'Created new package hello-app' message, got stdout: %s", stdout)
+	}
+	if !strings.Contains(stdout, "Workspace created successfully") {
+		t.Errorf("expected 'Workspace created successfully' message, got stdout: %s", stdout)
+	}
+
+	// Verify workspace Ballerina.toml
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	content, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+	}
+	if !strings.Contains(string(content), "[workspace]") {
+		t.Errorf("workspace Ballerina.toml missing [workspace] section:\n%s", content)
+	}
+	if !strings.Contains(string(content), `"hello-app"`) {
+		t.Errorf("workspace Ballerina.toml missing hello-app package:\n%s", content)
+	}
+
+	// Verify sample package was created
+	pkgPath := filepath.Join(workspacePath, "hello-app")
+	assertPackageStructure(t, pkgPath)
+}
+
+// TestNewWorkspace_WithTemplate tests creating workspace with different templates.
+func TestNewWorkspace_WithTemplate(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		template       string
+		packageName    string
+		sourceFile     string
+		sourceContains string
+	}{
+		{"default", "hello-app", "main.bal", "public function main()"},
+		{"main", "hello-app", "main.bal", "public function main()"},
+		{"service", "hello-service", "service.bal", "service / on new http:Listener"},
+		{"lib", "hello-lib", "lib.bal", "public function hello(string? name) returns string"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.template, func(t *testing.T) {
+			t.Parallel()
+			tmpDir := t.TempDir()
+			workspacePath := filepath.Join(tmpDir, "my-workspace")
+
+			stdout, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace", "-t", tc.template)
+			if err != nil {
+				t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+			}
+
+			// Verify success message includes expected package name
+			expectedMsg := "Created new package '" + tc.packageName + "'"
+			if !strings.Contains(stdout, expectedMsg) {
+				t.Errorf("expected '%s' message, got stdout: %s", expectedMsg, stdout)
+			}
+
+			// Verify package directory exists
+			pkgPath := filepath.Join(workspacePath, tc.packageName)
+			if _, err := os.Stat(pkgPath); os.IsNotExist(err) {
+				t.Errorf("expected package directory %s to exist", pkgPath)
+			}
+
+			// Verify correct source file exists
+			sourcePath := filepath.Join(pkgPath, tc.sourceFile)
+			sourceContent, err := os.ReadFile(sourcePath)
+			if err != nil {
+				t.Fatalf("expected source file %s to exist: %v", sourcePath, err)
+			}
+			if !strings.Contains(string(sourceContent), tc.sourceContains) {
+				t.Errorf("source file %s missing expected content '%s':\n%s",
+					tc.sourceFile, tc.sourceContains, sourceContent)
+			}
+
+			// Verify other template source files do NOT exist
+			otherSources := []string{"main.bal", "lib.bal", "service.bal"}
+			for _, other := range otherSources {
+				if other == tc.sourceFile {
+					continue
+				}
+				if _, err := os.Stat(filepath.Join(pkgPath, other)); err == nil {
+					t.Errorf("unexpected source file %s exists for template %s", other, tc.template)
+				}
+			}
+
+			// Verify workspace toml includes the package
+			tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+			content, err := os.ReadFile(tomlPath)
+			if err != nil {
+				t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+			}
+			if !strings.Contains(string(content), `"`+tc.packageName+`"`) {
+				t.Errorf("workspace Ballerina.toml missing %s package:\n%s", tc.packageName, content)
+			}
+		})
+	}
+}
+
+// TestNewPackage_WithTemplate tests creating a standalone package with different templates.
+func TestNewPackage_WithTemplate(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		template       string
+		sourceFile     string
+		sourceContains string
+	}{
+		{"default", "main.bal", "public function main()"},
+		{"main", "main.bal", "public function main()"},
+		{"service", "service.bal", "service / on new http:Listener"},
+		{"lib", "lib.bal", "public function hello(string? name) returns string"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.template, func(t *testing.T) {
+			t.Parallel()
+			tmpDir := t.TempDir()
+			pkgPath := filepath.Join(tmpDir, "mypackage")
+
+			_, stderr, err := executeNewCommandWithArgs(t, pkgPath, "-t", tc.template)
+			if err != nil {
+				t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+			}
+
+			// Verify correct source file exists
+			sourcePath := filepath.Join(pkgPath, tc.sourceFile)
+			sourceContent, err := os.ReadFile(sourcePath)
+			if err != nil {
+				t.Fatalf("expected source file %s to exist: %v", sourcePath, err)
+			}
+			if !strings.Contains(string(sourceContent), tc.sourceContains) {
+				t.Errorf("source file %s missing expected content '%s':\n%s",
+					tc.sourceFile, tc.sourceContains, sourceContent)
+			}
+
+			// Verify other template source files do NOT exist
+			otherSources := []string{"main.bal", "lib.bal", "service.bal"}
+			for _, other := range otherSources {
+				if other == tc.sourceFile {
+					continue
+				}
+				if _, err := os.Stat(filepath.Join(pkgPath, other)); err == nil {
+					t.Errorf("unexpected source file %s exists for template %s", other, tc.template)
+				}
+			}
+		})
+	}
+}
+
+// TestNewPackage_InsideWorkspace_WithTemplate tests creating a package with template inside workspace.
+func TestNewPackage_InsideWorkspace_WithTemplate(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-workspace")
+
+	// Create a workspace first
+	_, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("failed to create workspace: %v\nstderr: %s", err, stderr)
+	}
+
+	// Create a lib package inside the workspace
+	libPkgPath := filepath.Join(workspacePath, "mylib")
+	stdout, stderr, err := executeNewCommandWithArgs(t, libPkgPath, "-t", "lib")
+	if err != nil {
+		t.Fatalf("failed to create lib package: %v\nstderr: %s", err, stderr)
+	}
+
+	// Verify lib.bal was created (not main.bal)
+	libBalPath := filepath.Join(libPkgPath, "lib.bal")
+	if _, err := os.Stat(libBalPath); os.IsNotExist(err) {
+		t.Errorf("expected lib.bal to be created, but not found")
+	}
+	mainBalPath := filepath.Join(libPkgPath, "main.bal")
+	if _, err := os.Stat(mainBalPath); err == nil {
+		t.Errorf("main.bal should NOT be created for lib template")
+	}
+
+	// Verify workspace toml was updated
+	if !strings.Contains(stdout, "Added package to workspace") {
+		t.Errorf("expected 'Added package to workspace' message, got stdout: %s", stdout)
+	}
+
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	content, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+	}
+	if !strings.Contains(string(content), `"mylib"`) {
+		t.Errorf("workspace Ballerina.toml missing mylib package:\n%s", content)
+	}
+}
+
+// TestNewWorkspace_ConvertExisting tests converting a directory with existing packages to workspace.
+func TestNewWorkspace_ConvertExisting(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-project")
+
+	// Create existing packages
+	pkgAPath := filepath.Join(workspacePath, "pkg-a")
+	pkgBPath := filepath.Join(workspacePath, "pkg-b")
+
+	if err := os.MkdirAll(pkgAPath, 0755); err != nil {
+		t.Fatalf("failed to create pkg-a: %v", err)
+	}
+	if err := os.MkdirAll(pkgBPath, 0755); err != nil {
+		t.Fatalf("failed to create pkg-b: %v", err)
+	}
+
+	// Create Ballerina.toml in each package
+	pkgAToml := filepath.Join(pkgAPath, projects.BallerinaTomlFile)
+	pkgBToml := filepath.Join(pkgBPath, projects.BallerinaTomlFile)
+	if err := os.WriteFile(pkgAToml, []byte("[package]\norg = \"testorg\"\nname = \"pkga\"\nversion = \"1.0.0\"\n"), 0644); err != nil {
+		t.Fatalf("failed to create pkg-a/Ballerina.toml: %v", err)
+	}
+	if err := os.WriteFile(pkgBToml, []byte("[package]\norg = \"testorg\"\nname = \"pkgb\"\nversion = \"1.0.0\"\n"), 0644); err != nil {
+		t.Fatalf("failed to create pkg-b/Ballerina.toml: %v", err)
+	}
+
+	stdout, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+	}
+
+	// Verify conversion message
+	if !strings.Contains(stdout, "Converting directory to workspace") {
+		t.Errorf("expected 'Converting directory to workspace' message, got stdout: %s", stdout)
+	}
+	if !strings.Contains(stdout, "Discovered 2 package(s)") {
+		t.Errorf("expected 'Discovered 2 package(s)' message, got stdout: %s", stdout)
+	}
+	if !strings.Contains(stdout, "pkg-a") || !strings.Contains(stdout, "pkg-b") {
+		t.Errorf("expected discovered packages to be listed, got stdout: %s", stdout)
+	}
+
+	// Verify NO hello-app was created
+	helloAppPath := filepath.Join(workspacePath, "hello-app")
+	if _, err := os.Stat(helloAppPath); err == nil {
+		t.Errorf("hello-app should NOT be created when existing packages are found")
+	}
+
+	// Verify workspace Ballerina.toml
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	content, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+	}
+	if !strings.Contains(string(content), "[workspace]") {
+		t.Errorf("workspace Ballerina.toml missing [workspace] section:\n%s", content)
+	}
+	if !strings.Contains(string(content), `"pkg-a"`) {
+		t.Errorf("workspace Ballerina.toml missing pkg-a:\n%s", content)
+	}
+	if !strings.Contains(string(content), `"pkg-b"`) {
+		t.Errorf("workspace Ballerina.toml missing pkg-b:\n%s", content)
+	}
+}
+
+// TestNewWorkspace_AlreadyWorkspace tests error when directory is already a workspace.
+func TestNewWorkspace_AlreadyWorkspace(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "existing-workspace")
+
+	// Create directory with workspace Ballerina.toml
+	if err := os.MkdirAll(workspacePath, 0755); err != nil {
+		t.Fatalf("failed to create directory: %v", err)
+	}
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	if err := os.WriteFile(tomlPath, []byte("[workspace]\npackages = [\"pkg1\"]\n"), 0644); err != nil {
+		t.Fatalf("failed to create Ballerina.toml: %v", err)
+	}
+
+	_, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err == nil {
+		t.Fatal("expected error, got success")
+	}
+
+	if !strings.Contains(stderr, "directory is already a workspace") {
+		t.Errorf("expected 'already a workspace' error, got: %s", stderr)
+	}
+}
+
+// TestNewWorkspace_AlreadyPackage tests error when directory is already a single package.
+func TestNewWorkspace_AlreadyPackage(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	pkgPath := filepath.Join(tmpDir, "existing-package")
+
+	// Create directory with package Ballerina.toml (no [workspace] section)
+	if err := os.MkdirAll(pkgPath, 0755); err != nil {
+		t.Fatalf("failed to create directory: %v", err)
+	}
+	tomlPath := filepath.Join(pkgPath, projects.BallerinaTomlFile)
+	if err := os.WriteFile(tomlPath, []byte("[package]\norg = \"testorg\"\nname = \"test\"\nversion = \"1.0.0\"\n"), 0644); err != nil {
+		t.Fatalf("failed to create Ballerina.toml: %v", err)
+	}
+
+	_, stderr, err := executeNewCommandWithArgs(t, pkgPath, "--workspace")
+	if err == nil {
+		t.Fatal("expected error, got success")
+	}
+
+	if !strings.Contains(stderr, "directory is already a Ballerina package") {
+		t.Errorf("expected 'already a Ballerina package' error, got: %s", stderr)
+	}
+}
+
+// TestNewWorkspace_LoadsCorrectly tests that a created workspace can be loaded with projects.Load().
+func TestNewWorkspace_LoadsCorrectly(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-workspace")
+
+	// Create workspace
+	_, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+	}
+
+	// Load the workspace with projects.Load()
+	// Use DirFS rooted at workspace path with relative path "."
+	fsys := os.DirFS(workspacePath)
+	userHome, _ := os.UserHomeDir()
+	ballerinaEnv := filepath.Join(userHome, projects.UserHomeDirName)
+	ballerinaEnvFs := os.DirFS(ballerinaEnv)
+
+	result, err := projects.Load(fsys, ".", projects.ProjectLoadConfig{
+		BallerinaEnvFs: ballerinaEnvFs,
+	})
+	if err != nil {
+		t.Fatalf("failed to load workspace: %v", err)
+	}
+
+	// Verify it's a workspace project
+	project := result.Project()
+	if project.Kind() != projects.ProjectKindWorkspace {
+		t.Errorf("expected ProjectKindWorkspace, got: %v", project.Kind())
+	}
+
+	// Cast to WorkspaceProject and verify it has packages
+	workspace, ok := project.(*projects.WorkspaceProject)
+	if !ok {
+		t.Fatalf("expected *projects.WorkspaceProject, got: %T", project)
+	}
+
+	// Verify workspace has 1 package (hello-app)
+	if len(workspace.Manifest().Packages()) != 1 {
+		t.Errorf("expected 1 package in workspace, got: %d", len(workspace.Manifest().Packages()))
+	}
+	if len(workspace.Projects()) != 1 {
+		t.Errorf("expected 1 project in workspace, got: %d", len(workspace.Projects()))
+	}
+}
+
+// TestNewPackage_InsideWorkspace tests creating a package inside an existing workspace.
+// The package should be automatically added to the workspace's packages list.
+func TestNewPackage_InsideWorkspace(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-workspace")
+
+	// First, create a workspace
+	_, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("failed to create workspace: %v\nstderr: %s", err, stderr)
+	}
+
+	// Now create a new package inside the workspace
+	newPkgPath := filepath.Join(workspacePath, "new-pkg")
+	stdout, stderr, err := executeNewCommandWithArgs(t, newPkgPath)
+	if err != nil {
+		t.Fatalf("failed to create package inside workspace: %v\nstderr: %s", err, stderr)
+	}
+
+	// Verify success message
+	if !strings.Contains(stdout, "Created new package") {
+		t.Errorf("expected 'Created new package' message, got stdout: %s", stdout)
+	}
+	if !strings.Contains(stdout, "Added package to workspace") {
+		t.Errorf("expected 'Added package to workspace' message, got stdout: %s", stdout)
+	}
+
+	// Verify the package was created
+	assertPackageStructure(t, newPkgPath)
+
+	// Verify the workspace Ballerina.toml now includes the new package
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	content, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+	}
+
+	contentStr := string(content)
+	if !strings.Contains(contentStr, `"hello-app"`) {
+		t.Errorf("workspace Ballerina.toml should still contain hello-app:\n%s", contentStr)
+	}
+	if !strings.Contains(contentStr, `"new-pkg"`) {
+		t.Errorf("workspace Ballerina.toml should contain new-pkg:\n%s", contentStr)
+	}
+
+	// Verify the new package uses the same org as the workspace
+	newPkgTomlPath := filepath.Join(newPkgPath, projects.BallerinaTomlFile)
+	newPkgContent, err := os.ReadFile(newPkgTomlPath)
+	if err != nil {
+		t.Fatalf("failed to read new package Ballerina.toml: %v", err)
+	}
+
+	// Check that org name is consistent (both should have the same org)
+	helloAppTomlPath := filepath.Join(workspacePath, "hello-app", projects.BallerinaTomlFile)
+	helloAppContent, err := os.ReadFile(helloAppTomlPath)
+	if err != nil {
+		t.Fatalf("failed to read hello-app Ballerina.toml: %v", err)
+	}
+
+	// Extract org from both
+	getOrg := func(content string) string {
+		for _, line := range strings.Split(content, "\n") {
+			if strings.HasPrefix(strings.TrimSpace(line), "org") {
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					return strings.Trim(strings.TrimSpace(parts[1]), "\"")
+				}
+			}
+		}
+		return ""
+	}
+
+	helloAppOrg := getOrg(string(helloAppContent))
+	newPkgOrg := getOrg(string(newPkgContent))
+
+	if helloAppOrg != newPkgOrg {
+		t.Errorf("org names should match: hello-app has '%s', new-pkg has '%s'", helloAppOrg, newPkgOrg)
+	}
+}
+
+// TestNewPackage_InsideWorkspace_NestedDir tests creating a package in a nested directory inside a workspace.
+func TestNewPackage_InsideWorkspace_NestedDir(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-workspace")
+
+	// First, create a workspace
+	_, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("failed to create workspace: %v\nstderr: %s", err, stderr)
+	}
+
+	// Create a nested directory structure for the new package
+	nestedPkgPath := filepath.Join(workspacePath, "packages", "nested-pkg")
+	stdout, stderr, err := executeNewCommandWithArgs(t, nestedPkgPath)
+	if err != nil {
+		t.Fatalf("failed to create nested package inside workspace: %v\nstderr: %s", err, stderr)
+	}
+
+	// Verify success message
+	if !strings.Contains(stdout, "Created new package") {
+		t.Errorf("expected 'Created new package' message, got stdout: %s", stdout)
+	}
+	if !strings.Contains(stdout, "Added package to workspace") {
+		t.Errorf("expected 'Added package to workspace' message, got stdout: %s", stdout)
+	}
+
+	// Verify the workspace Ballerina.toml includes the nested package path
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	content, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+	}
+
+	contentStr := string(content)
+	// Workspace TOML always stores forward-slash paths regardless of platform.
+	expectedPath := "packages/nested-pkg"
+	if !strings.Contains(contentStr, expectedPath) {
+		t.Errorf("workspace Ballerina.toml should contain '%s':\n%s", expectedPath, contentStr)
+	}
+}
+
+// TestNewWorkspace_SkipsHiddenDirs tests that hidden directories are not discovered as packages.
+func TestNewWorkspace_SkipsHiddenDirs(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	workspacePath := filepath.Join(tmpDir, "my-project")
+
+	// Create a normal package
+	pkgPath := filepath.Join(workspacePath, "pkg-a")
+	if err := os.MkdirAll(pkgPath, 0755); err != nil {
+		t.Fatalf("failed to create pkg-a: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(pkgPath, projects.BallerinaTomlFile),
+		[]byte("[package]\norg = \"testorg\"\nname = \"pkga\"\nversion = \"1.0.0\"\n"), 0644); err != nil {
+		t.Fatalf("failed to create Ballerina.toml: %v", err)
+	}
+
+	// Create a hidden directory with Ballerina.toml (should be ignored)
+	hiddenPath := filepath.Join(workspacePath, ".hidden-pkg")
+	if err := os.MkdirAll(hiddenPath, 0755); err != nil {
+		t.Fatalf("failed to create .hidden-pkg: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(hiddenPath, projects.BallerinaTomlFile),
+		[]byte("[package]\norg = \"testorg\"\nname = \"hidden\"\nversion = \"1.0.0\"\n"), 0644); err != nil {
+		t.Fatalf("failed to create Ballerina.toml: %v", err)
+	}
+
+	stdout, stderr, err := executeNewCommandWithArgs(t, workspacePath, "--workspace")
+	if err != nil {
+		t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+	}
+
+	// Verify only pkg-a was discovered
+	if !strings.Contains(stdout, "Discovered 1 package(s)") {
+		t.Errorf("expected 'Discovered 1 package(s)' message, got stdout: %s", stdout)
+	}
+	if strings.Contains(stdout, ".hidden-pkg") {
+		t.Errorf("hidden directory should not be discovered, got stdout: %s", stdout)
+	}
+
+	// Verify workspace toml only has pkg-a
+	tomlPath := filepath.Join(workspacePath, projects.BallerinaTomlFile)
+	content, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatalf("failed to read workspace Ballerina.toml: %v", err)
+	}
+	if strings.Contains(string(content), ".hidden-pkg") {
+		t.Errorf("workspace Ballerina.toml should not contain hidden directory:\n%s", content)
+	}
+}
+
+// =============================================================================
 // Help
 // =============================================================================
 
@@ -514,6 +1061,7 @@ func executeNewCommandWithArgs(t *testing.T, args ...string) (stdout, stderr str
 	t.Helper()
 
 	// Create fresh command instance for parallel safety
+	// Each command instance has its own local options
 	cmd := createNewCmd()
 
 	// Capture stdout and stderr using cobra's built-in support

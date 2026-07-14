@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable t (type
+        (union-type
+          (tuple-type
+            (value-type int)
+            (value-type int))
+          (tuple-type
+            (value-type float)
+            (value-type float)
+            (value-type float)))) (expr
+        (list-constructor-expr
+          (literal 6)
+          (literal 7)
+          (literal 8)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref t)
+          (literal 1)))))
+  )
+)

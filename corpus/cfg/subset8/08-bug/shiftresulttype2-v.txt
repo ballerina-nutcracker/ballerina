@@ -1,0 +1,50 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 255))))
+    (var-def
+      (variable b (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 63))))
+    (var-def
+      (variable c (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 64))))
+    (var-def
+      (variable d (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 122))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref a)
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref a)
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref b)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref b)
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref a)
+          (simple-var-ref a)))))
+  )
+)

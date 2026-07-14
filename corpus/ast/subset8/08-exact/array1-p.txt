@@ -1,0 +1,38 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition Array
+    (array-type
+      (union-type
+        (value-type any)
+        (error-type)) dimensions: 1 ([])))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v1 (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable v2 (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref v2)
+          (literal 0))
+        (simple-var-ref v1))
+      (var-def
+        (variable v3 (type
+          (user-defined-type Array)) (expr
+          (type-conversion-expr
+            (index-based-access
+              (simple-var-ref v2)
+              (literal 0))
+            (user-defined-type Array)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref v3)
+          (literal 0))
+        (literal true)))))

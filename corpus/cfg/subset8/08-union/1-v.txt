@@ -1,0 +1,21 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (union-type
+          (union-type
+            (value-type boolean)
+            (value-type int))
+          (value-type string))) (expr
+        (literal 17))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (assignment
+      (simple-var-ref x)
+      (literal hello))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

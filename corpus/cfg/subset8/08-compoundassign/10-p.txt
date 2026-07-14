@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable INT_MAX (type
+        (value-type int)) (expr
+        (literal 9223372036854775807))))
+    (compound-assignment *
+      (simple-var-ref INT_MAX)
+      (literal 2))
+  )
+)

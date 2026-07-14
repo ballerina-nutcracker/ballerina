@@ -1,0 +1,20 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int:Unsigned8...][%1]{}
+    b1 = %2;
+    %4 = f(b1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+f([int...]) -> nil{
+  bb0 {
+    %2 = ConstantLoad 256
+    %3 = ConstantLoad 0
+    a[%3] = %2;
+    return;
+  }
+}

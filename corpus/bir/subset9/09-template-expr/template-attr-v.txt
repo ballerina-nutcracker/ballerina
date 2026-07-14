@@ -1,0 +1,27 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 7
+    id = %1;
+    %3 = id;
+    %4 = escapeXMLAttribute(%3) -> bb1;
+  }
+  bb1 {
+    %5 = evalTemplate[xml]("<row id=\"", %4, "\"/>")
+    x = %5;
+    %7 = println(x) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad a&b"c<d
+    value = %8;
+    %10 = escapeXMLAttribute(value) -> bb3;
+  }
+  bb3 {
+    %11 = evalTemplate[xml]("<root value=\"", %10, "\"/>")
+    escaped = %11;
+    %13 = println(escaped) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

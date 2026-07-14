@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: values are not comparable
+  --> order1-e.bal:22:16
+   |
+22 |     io:println(j < k); // @error
+   |                ^^^^^

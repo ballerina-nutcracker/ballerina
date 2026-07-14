@@ -1,0 +1,43 @@
+(Counter
+  (init
+    (bb0 () (bb1 bb2)
+      (binary-expr <
+        (simple-var-ref v)
+        (literal 0))
+    )
+    (bb1 (bb0) ()
+      (return
+        (error-constructor-expr (
+          (literal negative value))))
+    )
+    (bb2 (bb0) ()
+      (assignment
+        (field-based-access count
+          (simple-var-ref self))
+        (simple-var-ref v))
+    )
+  )
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access count
+          (simple-var-ref self)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (checked-expr
+          (new (
+            (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref c) ()))))
+    (return
+      (literal <nil>))
+  )
+)

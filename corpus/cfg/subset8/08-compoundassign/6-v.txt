@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (literal 100))))
+    (compound-assignment >>
+      (simple-var-ref x)
+      (binary-expr >>
+        (simple-var-ref x)
+        (literal 4)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment +
+      (simple-var-ref x)
+      (binary-expr *
+        (literal 33)
+        (literal 3)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment -
+      (simple-var-ref x)
+      (binary-expr *
+        (simple-var-ref x)
+        (simple-var-ref x)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

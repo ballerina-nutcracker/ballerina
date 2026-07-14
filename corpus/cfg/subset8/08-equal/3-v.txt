@@ -1,0 +1,72 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type any)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1))))))
+    (var-def
+      (variable y (type
+        (value-type any)) (expr
+        (simple-var-ref x))))
+    (expression-stmt
+      (invocation printEq (
+        (simple-var-ref x)
+        (simple-var-ref y))))
+    (expression-stmt
+      (invocation printEq (
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1)))
+        (literal 1))))
+    (expression-stmt
+      (invocation printEq (
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1)))
+        (list-constructor-expr
+          (literal 1)))))
+    (expression-stmt
+      (invocation printEq (
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1)))
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1))))))
+    (expression-stmt
+      (invocation printEq (
+        (mapping-constructor-expr)
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation printEq (
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1)))
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 2))))))
+  )
+)
+(printEq
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr !==
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+  )
+)

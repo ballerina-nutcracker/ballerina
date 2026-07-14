@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 1
+  --> local4-e.bal:19:12
+   |
+19 |     () _ = 1; // @error
+   |            ^

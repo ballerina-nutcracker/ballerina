@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: failed successfully
+        at main(check6-p.bal:20)

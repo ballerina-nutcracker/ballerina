@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: arithmetic underflow
+        at main(rem8-p.bal:20)

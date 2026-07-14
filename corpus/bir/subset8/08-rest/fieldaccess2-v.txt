@@ -1,0 +1,49 @@
+module $anon.. v 0.0.0;
+foo({| x: int, int... |}|{| y: int, int... |}) -> nil|int{
+  bb0 {
+    %3 = ConstantLoad x
+    %2 = r[%3];
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 5
+    %3 = newMap {| x: int, int... |}{%1=%2}
+    r1 = %3;
+    %5 = foo(r1) -> bb1;
+  }
+  bb1 {
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad y
+    %9 = ConstantLoad 10
+    %10 = ConstantLoad x
+    %11 = ConstantLoad 8
+    %12 = newMap {| y: int, int... |}{%8=%9, %10=%11}
+    r2 = %12;
+    %14 = foo(r2) -> bb3;
+  }
+  bb3 {
+    %15 = %14;
+    %16 = println(%15) -> bb4;
+  }
+  bb4 {
+    %17 = ConstantLoad y
+    %18 = ConstantLoad 10
+    %19 = newMap {| y: int, int... |}{%17=%18}
+    r22 = %19;
+    %21 = foo(r22) -> bb5;
+  }
+  bb5 {
+    %22 = %21;
+    %23 = println(%22) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

@@ -1,0 +1,167 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.000000000000000000000000000000000d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.1d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9.1d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9.999999999999999999999999999999999d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9.99999999999999999999999999999999d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9.9999999999999999999999999999999d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 10.00000000000000000000000000d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 10.00000000000000000000000001d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 10.00000000000000000000000001d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 99.99999999999999999999999999999999d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e2d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.9e2d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9.999999999999999999999999999999999e100d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9999999999999999999999999999999999e100d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e308d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.79769313486231571e+308d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 0d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e-322d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e-323d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e-324d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 1e-324d))
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e-6143d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 1e-6143d))
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1e309d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.7976931348623156e+309d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 9.999999999999999999999999999999999E6144d)
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 1e309d))
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 2e309d))
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 9.999999999999999999999999999999999E6144d))
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (unary-expr -
+              (literal 1.7976931348623156e+309d))
+            (value-type float))))))))

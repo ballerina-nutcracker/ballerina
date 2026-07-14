@@ -111,6 +111,40 @@ func TestBalaProject_LoadMultiModule(t *testing.T) {
 	assert.Equal("sub", subModule.ModuleName().ModuleNamePart())
 }
 
+// TestBalaProject_DocNameIsBare verifies that Document.Name() returns the
+// bare filename for files loaded from a bala package. The package-qualified
+// key is an internal DiagnosticEnv concern and does not leak into the public
+// document name.
+func TestBalaProject_DocNameIsBare(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	balaPath := filepath.Join("testdata", "repo", "bala", "mockorg", "multimod", "2.0.0", "any")
+	absPath, err := filepath.Abs(balaPath)
+	require.NoError(err)
+
+	result, err := loadProject(absPath)
+	require.NoError(err)
+
+	pkg := result.Project().CurrentPackage()
+	require.NotNil(pkg)
+
+	for _, mod := range pkg.Modules() {
+		docIDs := mod.DocumentIDs()
+		require.Len(docIDs, 1)
+		doc := mod.Document(docIDs[0])
+		require.NotNil(doc)
+
+		var expected string
+		if mod.IsDefaultModule() {
+			expected = "main.bal"
+		} else {
+			expected = "sub.bal"
+		}
+		assert.Equal(expected, doc.Name())
+	}
+}
+
 func TestBalaProject_Platform(t *testing.T) {
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)

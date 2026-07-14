@@ -1,0 +1,21 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition MyNil
+    (value-type null))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (value-type null)) (expr
+          (literal <nil>))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref n)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal <nil>)
+            (user-defined-type MyNil))))))))

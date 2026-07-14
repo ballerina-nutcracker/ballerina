@@ -26,6 +26,8 @@ const (
 	ProjectKindSingleFile
 	// ProjectKindBala represents a compiled BALA package project.
 	ProjectKindBala
+	// ProjectKindWorkspace represents a multi-package workspace project.
+	ProjectKindWorkspace
 )
 
 // String returns the string representation of ProjectKind.
@@ -37,6 +39,8 @@ func (k ProjectKind) String() string {
 		return "SINGLE_FILE_PROJECT"
 	case ProjectKindBala:
 		return "BALA_PROJECT"
+	case ProjectKindWorkspace:
+		return "WORKSPACE_PROJECT"
 	default:
 		return "UNKNOWN"
 	}

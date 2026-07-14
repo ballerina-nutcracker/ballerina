@@ -1,0 +1,68 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field b
+        (value-type boolean))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal b)
+              (literal true))))))
+      (expression-stmt
+        (invocation func (
+          (simple-var-ref r))))))
+  (function func (
+    (variable r (type
+      (user-defined-type R)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type boolean))
+            (value-type float))) (expr
+          (literal 0.1))))
+      (if
+        (binary-expr ==
+          (index-based-access
+            (simple-var-ref r)
+            (literal b))
+          (literal true))
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref x)
+              (value-type int))
+            (block-stmt
+              (return
+                (literal <nil>))) ())
+          (block-stmt
+            (var-def
+              (variable bf1 (type
+                (union-type
+                  (value-type boolean)
+                  (value-type float))) (expr
+                (simple-var-ref x))))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref bf1)))))) ())
+      (block-stmt
+        (var-def
+          (variable bf2 (type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type boolean))
+              (value-type float))) (expr
+            (simple-var-ref x))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref bf2))))))))

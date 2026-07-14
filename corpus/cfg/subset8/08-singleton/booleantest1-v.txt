@@ -1,0 +1,44 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type any)) (expr
+        (literal true))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type T)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type F)))))
+    (assignment
+      (simple-var-ref v)
+      (literal false))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type T)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type F)))))
+    (assignment
+      (simple-var-ref v)
+      (literal 0))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type T)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type F)))))
+  )
+)

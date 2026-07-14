@@ -34,7 +34,6 @@ func fieldName(f CellField) string {
 func NewMappingDefinition() MappingDefinition {
 	this := MappingDefinition{}
 	this.rec = nil
-	this.semType = nil
 	// Default field initializations
 
 	return this
@@ -42,7 +41,7 @@ func NewMappingDefinition() MappingDefinition {
 
 func (m *MappingDefinition) GetSemType(env Env) SemType {
 	s := m.semType
-	if s == nil {
+	if IsZero(s) {
 		rec := env.recMappingAtom()
 		m.rec = &rec
 		return m.createSemType(env, &rec)
@@ -55,7 +54,7 @@ func (m *MappingDefinition) SetSemTypeToNever() {
 	m.semType = NEVER
 }
 
-func (m *MappingDefinition) Define(env Env, fields []CellField, rest *ComplexSemType) SemType {
+func (m *MappingDefinition) Define(env Env, fields []CellField, rest SemType) SemType {
 	sfh := m.splitFields(fields)
 	atomicType := mappingAtomicTypeFrom(sfh.Names, sfh.Types, rest)
 	var a atom
@@ -64,7 +63,7 @@ func (m *MappingDefinition) Define(env Env, fields []CellField, rest *ComplexSem
 		a = rec
 		env.setRecMappingAtomType(*rec, &atomicType)
 	} else {
-		a = new(env.mappingAtom(&atomicType))
+		a = env.mappingAtom(&atomicType)
 	}
 	return m.createSemType(env, a)
 }
@@ -89,7 +88,7 @@ func (m *MappingDefinition) DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMuta
 		} else {
 			ro = mut
 		}
-		cellFields = append(cellFields, cellFieldFrom(field.Name, *cellContainingWithEnvSemTypeCellMutability(env, optTy, ro)))
+		cellFields = append(cellFields, cellFieldFrom(field.Name, cellContainingWithEnvSemTypeCellMutability(env, optTy, ro)))
 	}
 	var restMut CellMutability
 	if IsNever(rest) {
@@ -115,11 +114,11 @@ func (m *MappingDefinition) splitFields(fields []CellField) splitField {
 	sort.Slice(sortedFields, func(i, j int) bool {
 		return fieldName(sortedFields[i]) < fieldName(sortedFields[j])
 	})
-	var names []string
-	var types []ComplexSemType
-	for _, field := range sortedFields {
-		names = append(names, field.Name)
-		types = append(types, field.Type)
+	names := make([]string, len(sortedFields))
+	types := make([]SemType, len(sortedFields))
+	for i, field := range sortedFields {
+		names[i] = field.Name
+		types[i] = field.Type
 	}
 	return splitFieldFrom(names, types)
 }

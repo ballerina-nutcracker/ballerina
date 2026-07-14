@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: foreach collection must be subtype of object:Iterable
+  --> iterable-missing-inclusion-e.bal:31:26
+   |
+31 |     foreach int value in gen { // @error must include object:Iterable
+   |                          ^^^

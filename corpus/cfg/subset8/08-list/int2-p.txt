@@ -1,0 +1,26 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable vi (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable va (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (simple-var-ref vi))))
+    (assignment
+      (index-based-access
+        (simple-var-ref va)
+        (literal 0))
+      (literal true))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref vi)
+            (literal 0))
+          (literal 1)))))
+  )
+)

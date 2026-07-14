@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad b
+    %4 = ConstantLoad 2
+    %5 = newMap {| a: int, b: float, never... |}{%1=%2, %3=%4}
+    %6 = %5 is {| a: int, b: float, never... |}
+    %6 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad correct
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 10
+    %1 = ConstantLoad x
+    %2 = ConstantLoad x
+    %3 = ConstantLoad a
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad b
+    %6 = ConstantLoad 3
+    %7 = newMap {| a: int, b: float, never... |}{%3=%4, %5=%6}
+    %8 = newMap {| x: {| a: int, b: float, never... |}, never... |}{%2=%7}
+    %0 = %8[%1];
+    %9 = %0 is {| a: int, b: float, never... |}
+    %9 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad correct
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

@@ -47,7 +47,7 @@ func mappingFormulaIsEmpty(cx Context, posList conjunctionHandle, negList conjun
 			}
 		}
 		for i := range combined.Types {
-			if IsEmpty(cx, &combined.Types[i]) {
+			if IsEmpty(cx, combined.Types[i]) {
 				return true
 			}
 		}
@@ -97,14 +97,14 @@ func mappingInhabited(cx Context, pos *MappingAtomicType, negList conjunctionHan
 			if IsEmpty(cx, intersect) {
 				return mappingInhabited(cx, pos, negNext)
 			}
-			d := Diff(fieldPair.Type1, fieldPair.Type2).(*ComplexSemType)
+			d := Diff(fieldPair.Type1, fieldPair.Type2)
 			if !IsEmpty(cx, d) {
 				var mt MappingAtomicType
 				if fieldPair.Index1 < 0 {
 					mt = insertField(*pos, fieldPair.Name, d)
 				} else {
-					posTypes := pos.Types
-					posTypes[fieldPair.Index1] = *d
+					posTypes := append([]SemType(nil), pos.Types...)
+					posTypes[fieldPair.Index1] = d
 					mt = mappingAtomicTypeFrom(pos.Names, posTypes, pos.Rest)
 				}
 				if mappingInhabited(cx, &mt, negNext) {
@@ -116,16 +116,16 @@ func mappingInhabited(cx Context, pos *MappingAtomicType, negList conjunctionHan
 	}
 }
 
-func insertField(m MappingAtomicType, name string, t *ComplexSemType) MappingAtomicType {
+func insertField(m MappingAtomicType, name string, t SemType) MappingAtomicType {
 	names := append([]string(nil), m.Names...)
 	names = append(names, "")
-	types := append([]ComplexSemType(nil), m.Types...)
-	types = append(types, ComplexSemType{})
+	types := append([]SemType(nil), m.Types...)
+	types = append(types, SemType{})
 	i := len(names) - 1
 	for {
 		if (i == 0) || codePointCompare(names[i-1], name) {
 			names[i] = name
-			types[i] = *t
+			types[i] = t
 			break
 		}
 		names[i] = names[i-1]
@@ -137,7 +137,7 @@ func insertField(m MappingAtomicType, name string, t *ComplexSemType) MappingAto
 
 func intersectMapping(env Env, m1 *MappingAtomicType, m2 *MappingAtomicType) *MappingAtomicType {
 	var names []string
-	var types []ComplexSemType
+	var types []SemType
 	pairing := newFieldPairs(m1, m2)
 	for fieldPair := range pairing {
 		names = append(names, fieldPair.Name)
@@ -145,7 +145,7 @@ func intersectMapping(env Env, m1 *MappingAtomicType, m2 *MappingAtomicType) *Ma
 		if IsNever(cellInner(fieldPair.Type1)) {
 			return nil
 		}
-		types = append(types, *t)
+		types = append(types, t)
 	}
 	rest := intersectMemberSemTypes(env, m1.Rest, m2.Rest)
 	return new(mappingAtomicTypeFrom(names, types, rest))
@@ -165,15 +165,14 @@ func bddMappingMemberTypeInnerCore(cx Context, b Bdd, key SubtypeData, accum Sem
 
 func mappingAtomicMemberTypeInner(atomic MappingAtomicType, key SubtypeData) SemType {
 	var memberType SemType
-	memberType = nil
 	for _, ty := range mappingAtomicApplicableMemberTypesInner(atomic, key) {
-		if memberType == nil {
+		if IsZero(memberType) {
 			memberType = ty
 		} else {
 			memberType = Union(memberType, ty)
 		}
 	}
-	if memberType == nil {
+	if IsZero(memberType) {
 		return UNDEF
 	}
 	return memberType
@@ -182,7 +181,7 @@ func mappingAtomicMemberTypeInner(atomic MappingAtomicType, key SubtypeData) Sem
 func mappingAtomicApplicableMemberTypesInner(atomic MappingAtomicType, key SubtypeData) []SemType {
 	var types []SemType
 	for i := range atomic.Types {
-		types = append(types, cellInner(&atomic.Types[i]))
+		types = append(types, cellInner(atomic.Types[i]))
 	}
 	var memberTypes []SemType
 	rest := cellInner(atomic.Rest)

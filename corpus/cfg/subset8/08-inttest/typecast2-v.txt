@@ -1,0 +1,19 @@
+(foo
+  (bb0 () ()
+    (return
+      (literal 2.7))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable i (type
+        (user-defined-type I)) (expr
+        (type-conversion-expr
+          (invocation foo ())
+          (user-defined-type I)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+)

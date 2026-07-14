@@ -1,0 +1,252 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 3
+    %2 = %1;
+    %3 = utcNow(%2) -> bb1;
+  }
+  bb1 {
+    utcWithPrecision = %3;
+    %6 = length(utcWithPrecision) -> bb2;
+  }
+  bb2 {
+    %7 = %6;
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %5 = == %7 %9;
+    %10 = %5;
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    %12 = ConstantLoad 2024-06-15T10:30:45.00Z
+    %13 = utcFromString(%12) -> bb4;
+  }
+  bb4 {
+    $desugar$0 = %13;
+    %15 = $desugar$0 is error
+    %15 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    base = $desugar$0;
+    %17 = ConstantLoad 3600.0
+    %18 = %17;
+    %19 = utcAddSeconds(base,%18) -> bb7;
+  }
+  bb7 {
+    later = %19;
+    %21 = utcDiffSeconds(later,base) -> bb8;
+  }
+  bb8 {
+    diff = %21;
+    %24 = diff;
+    %25 = ConstantLoad 3600.0
+    %26 = %25;
+    %23 = == %24 %26;
+    %27 = %23;
+    %28 = println(%27) -> bb9;
+  }
+  bb9 {
+    %29 = ConstantLoad year
+    %30 = ConstantLoad 2024
+    %31 = ConstantLoad month
+    %32 = ConstantLoad 6
+    %33 = ConstantLoad day
+    %34 = ConstantLoad 15
+    %35 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%29=%30, %31=%32, %33=%34}
+    %36 = dateValidate(%35) -> bb10;
+  }
+  bb10 {
+    valid = %36;
+    %38 = valid is nil
+    %39 = %38;
+    %40 = println(%39) -> bb11;
+  }
+  bb11 {
+    %41 = ConstantLoad year
+    %42 = ConstantLoad 2024
+    %43 = ConstantLoad month
+    %44 = ConstantLoad 13
+    %45 = ConstantLoad day
+    %46 = ConstantLoad 1
+    %47 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%41=%42, %43=%44, %45=%46}
+    %48 = dateValidate(%47) -> bb12;
+  }
+  bb12 {
+    invalid = %48;
+    %50 = invalid is error
+    %51 = %50;
+    %52 = println(%51) -> bb13;
+  }
+  bb13 {
+    %53 = ConstantLoad year
+    %54 = ConstantLoad 2024
+    %55 = ConstantLoad month
+    %56 = ConstantLoad 6
+    %57 = ConstantLoad day
+    %58 = ConstantLoad 15
+    %59 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%53=%54, %55=%56, %57=%58}
+    %60 = dayOfWeek(%59) -> bb14;
+  }
+  bb14 {
+    dow = %60;
+    %63 = dow;
+    %64 = ConstantLoad 6
+    %65 = %64;
+    %62 = == %63 %65;
+    %66 = %62;
+    %67 = println(%66) -> bb15;
+  }
+  bb15 {
+    %68 = utcToCivil(base) -> bb16;
+  }
+  bb16 {
+    civil = %68;
+    %71 = ConstantLoad year
+    %70 = civil[%71];
+    %72 = %70;
+    %73 = println(%72) -> bb17;
+  }
+  bb17 {
+    %75 = ConstantLoad month
+    %74 = civil[%75];
+    %76 = %74;
+    %77 = println(%76) -> bb18;
+  }
+  bb18 {
+    %79 = ConstantLoad day
+    %78 = civil[%79];
+    %80 = %78;
+    %81 = println(%80) -> bb19;
+  }
+  bb19 {
+    %82 = newObject ballerina/time:TimeZone
+    %83 = ConstantLoad +05:30
+    %84 = init(%82,%83) -> bb20;
+  }
+  bb20 {
+    %86 = %84 is nil
+    %86 ? bb21 : bb22;
+  }
+  bb21 {
+    %85 = %82;
+    GOTO bb23;
+  }
+  bb22 {
+    %85 = %84;
+    GOTO bb23;
+  }
+  bb23 {
+    $desugar$1 = %85;
+    %88 = $desugar$1 is error
+    %88 ? bb24 : bb25;
+  }
+  bb24 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    tz = $desugar$1;
+    %90 = ConstantLoad 2021-04-12T17:50:50.00Z
+    %91 = utcFromString(%90) -> bb26;
+  }
+  bb26 {
+    $desugar$2 = %91;
+    %93 = $desugar$2 is error
+    %93 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    utcBase = $desugar$2;
+    %95 = utcToCivil(tz,utcBase) -> bb29;
+  }
+  bb29 {
+    civilOffset = %95;
+    %97 = utcFromCivil(tz,civilOffset) -> bb30;
+  }
+  bb30 {
+    $desugar$3 = %97;
+    %99 = $desugar$3 is error
+    %99 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    roundTripped = $desugar$3;
+    %101 = utcToString(roundTripped) -> bb33;
+  }
+  bb33 {
+    %102 = println(%101) -> bb34;
+  }
+  bb34 {
+    %103 = civilToString(civilOffset) -> bb35;
+  }
+  bb35 {
+    $desugar$4 = %103;
+    %105 = $desugar$4 is error
+    %105 ? bb36 : bb37;
+  }
+  bb36 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb37 {
+    civilStr = $desugar$4;
+    %107 = println(civilStr) -> bb38;
+  }
+  bb38 {
+    %108 = ConstantLoad 2021-04-12T23:20:50.520+05:30[Asia/Colombo]
+    %109 = civilFromString(%108) -> bb39;
+  }
+  bb39 {
+    $desugar$5 = %109;
+    %111 = $desugar$5 is error
+    %111 ? bb40 : bb41;
+  }
+  bb40 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb41 {
+    parsed = $desugar$5;
+    %114 = ConstantLoad year
+    %113 = parsed[%114];
+    %115 = %113;
+    %116 = println(%115) -> bb42;
+  }
+  bb42 {
+    %118 = ConstantLoad month
+    %117 = parsed[%118];
+    %119 = %117;
+    %120 = println(%119) -> bb43;
+  }
+  bb43 {
+    %122 = ConstantLoad day
+    %121 = parsed[%122];
+    %123 = %121;
+    %124 = println(%123) -> bb44;
+  }
+  bb44 {
+    return;
+  }
+}

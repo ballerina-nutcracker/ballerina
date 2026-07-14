@@ -1,0 +1,21 @@
+(f
+  (bb0 () ()
+    (assignment
+      (index-based-access
+        (simple-var-ref a)
+        (literal 0))
+      (literal 256))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable b1 (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation f (
+        (simple-var-ref b1))))
+  )
+)

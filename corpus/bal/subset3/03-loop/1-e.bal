@@ -22,6 +22,7 @@ public function main() {
 }
 public function loop(int to) {
     int i = 8;
+    int _ = i;
     foreach int i in 1 ..< to { // @error
         io:println(i);
     }

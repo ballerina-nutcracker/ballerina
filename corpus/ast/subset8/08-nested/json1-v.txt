@@ -1,0 +1,77 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition J
+    (union-type
+      (union-type
+        (union-type
+          (union-type
+            (union-type
+              (union-type
+                (value-type null)
+                (value-type boolean))
+              (value-type int))
+            (value-type float))
+          (value-type string))
+        (array-type
+          (user-defined-type J) dimensions: 1 ([])))
+      (constrained-type
+        (builtin-ref-type map)
+        (user-defined-type J))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable j (type
+          (user-defined-type J)) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal James))
+              (key-value
+                (literal age)
+                (literal 100))
+              (key-value
+                (literal children)
+                (list-constructor-expr
+                  (literal Jack)
+                  (literal Jane)))
+              (key-value
+                (literal married)
+                (literal true)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref j))))
+      (if
+        (type-test-expr is
+          (simple-var-ref j)
+          (array-type
+            (user-defined-type J) dimensions: 1 ([])))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal array))))
+          (var-def
+            (variable j0 (type
+              (user-defined-type J)) (expr
+              (index-based-access
+                (simple-var-ref j)
+                (literal 0)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref j0)
+              (constrained-type
+                (builtin-ref-type map)
+                (user-defined-type J)))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal map))))
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref j0)
+                    (literal age)))))) ())
+          (block-stmt)) ())
+      (block-stmt))))

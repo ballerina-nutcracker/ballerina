@@ -17,11 +17,12 @@
 package semantics
 
 import (
+	"maps"
+	"sync"
+
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
-	"maps"
-	"sync"
 )
 
 // varInitState tracks which variables are definitely initialized
@@ -113,14 +114,14 @@ type blockState struct {
 // uninitVarAnalyzer performs data flow analysis for uninitialized variables
 type uninitVarAnalyzer struct {
 	ctx               *context.CompilerContext
-	fn                *ast.BLangFunction
+	fn                ast.BLangNode
 	fcfg              *functionCFG
 	states            map[int]*blockState
 	implicitInitState *varInitState // vars initialized by language constructs, used as entry state baseline
 }
 
 // newUninitVarAnalyzer creates a new analyzer for a function
-func newUninitVarAnalyzer(ctx *context.CompilerContext, fn *ast.BLangFunction, fcfg *functionCFG) *uninitVarAnalyzer {
+func newUninitVarAnalyzer(ctx *context.CompilerContext, fn ast.BLangNode, fcfg *functionCFG) *uninitVarAnalyzer {
 	analyzer := &uninitVarAnalyzer{
 		ctx:               ctx,
 		fn:                fn,
@@ -140,7 +141,7 @@ func newUninitVarAnalyzer(ctx *context.CompilerContext, fn *ast.BLangFunction, f
 	return analyzer
 }
 
-func buildImplicitInitState(fn *ast.BLangFunction) *varInitState {
+func buildImplicitInitState(fn ast.BLangNode) *varInitState {
 	state := newVarInitState()
 	ast.Walk(&implicitVarMarker{state: state}, fn)
 	return state
@@ -160,7 +161,7 @@ func (m *implicitVarMarker) Visit(node ast.BLangNode) ast.Visitor {
 	return m
 }
 
-func (m *implicitVarMarker) VisitTypeData(*model.TypeData) ast.Visitor { return m }
+func (m *implicitVarMarker) VisitTypeData(*ast.TypeData) ast.Visitor { return m }
 
 func (a *uninitVarAnalyzer) analyze() {
 	if len(a.fcfg.bbs) == 0 {
@@ -210,7 +211,7 @@ func (a *uninitVarAnalyzer) analyzeBlock(bb *basicBlock, state *varInitState) *v
 }
 
 // analyzeNode processes a single node in the CFG
-func (a *uninitVarAnalyzer) analyzeNode(node model.Node, state *varInitState) {
+func (a *uninitVarAnalyzer) analyzeNode(node ast.Node, state *varInitState) {
 	switch n := node.(type) {
 	case *ast.BLangSimpleVariableDef:
 		symRef := n.Var.Symbol()
@@ -224,8 +225,9 @@ func (a *uninitVarAnalyzer) analyzeNode(node model.Node, state *varInitState) {
 		a.checkExpression(n.Expr, state)
 		a.markAssignmentTarget(n.VarRef, state)
 	case *ast.BLangCompoundAssignment:
+		a.checkExpression(n.VarRef, state)
 		a.checkExpression(n.Expr, state)
-		a.markAssignmentTarget(n.VarRef.(ast.BLangExpression), state)
+		a.markAssignmentTarget(n.VarRef, state)
 	case ast.BLangExpression:
 		// Expression nodes (like conditions in while loops) need to be checked
 		a.checkExpression(n, state)
@@ -245,7 +247,7 @@ func (a *uninitVarAnalyzer) markAssignmentTarget(expr ast.BLangExpression, state
 	}
 
 	// For simple variable references, mark as initialized
-	if nodeWithSymbol, ok := expr.(model.NodeWithSymbol); ok {
+	if nodeWithSymbol, ok := expr.(ast.NodeWithSymbol); ok {
 		symRef := nodeWithSymbol.Symbol()
 		if state.isTracked(symRef) {
 			state.markInitialized(symRef)
@@ -265,7 +267,7 @@ func (a *uninitVarAnalyzer) checkExpression(expr ast.BLangActionOrExpression, st
 }
 
 // checkVariableReference checks if a variable is initialized before use
-func (a *uninitVarAnalyzer) checkVariableReference(symRef model.SymbolRef, node model.Node, state *varInitState) {
+func (a *uninitVarAnalyzer) checkVariableReference(symRef model.SymbolRef, node ast.Node, state *varInitState) {
 	if !state.isTracked(symRef) {
 		return
 	}
@@ -290,14 +292,17 @@ func (v *varRefChecker) Visit(node ast.BLangNode) ast.Visitor {
 	}
 
 	// Check if this node is a variable reference
-	if nodeWithSymbol, ok := node.(model.NodeWithSymbol); ok {
+	if inv, ok := node.(*ast.BLangInvocation); ok && ast.IsStreamOperation(inv) {
+		return nil
+	}
+	if nodeWithSymbol, ok := node.(ast.NodeWithSymbol); ok {
 		v.analyzer.checkVariableReference(nodeWithSymbol.Symbol(), node, v.state)
 	}
 
 	return v
 }
 
-func (v *varRefChecker) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (v *varRefChecker) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	// TypeDesc could have default values
 	return v
 }
@@ -305,38 +310,18 @@ func (v *varRefChecker) VisitTypeData(typeData *model.TypeData) ast.Visitor {
 // analyzeUninitializedVars is the public entry point for uninitialized variable analysis
 func analyzeUninitializedVars(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
-
-	for i := range pkg.Functions {
-		fn := &pkg.Functions[i]
+	for _, fn := range packageFunctionDecls(pkg) {
 		wg.Add(1)
-		go func(f *ast.BLangFunction) {
+		go func(fn functionDecl) {
 			defer wg.Done()
-			analyzeFunctionUninitializedVars(ctx, f, cfg)
+			analyzeFunctionUninitializedVars(ctx, fn, cfg)
 		}(fn)
 	}
-	for i := range pkg.ClassDefinitions {
-		classDef := &pkg.ClassDefinitions[i]
-		if classDef.InitFunction != nil {
-			wg.Add(1)
-			go func(f *ast.BLangFunction) {
-				defer wg.Done()
-				analyzeFunctionUninitializedVars(ctx, f, cfg)
-			}(classDef.InitFunction)
-		}
-		for _, method := range classDef.Methods {
-			wg.Add(1)
-			go func(f *ast.BLangFunction) {
-				defer wg.Done()
-				analyzeFunctionUninitializedVars(ctx, f, cfg)
-			}(method)
-		}
-	}
-
 	wg.Wait()
 }
 
 // analyzeFunctionUninitializedVars analyzes a single function for uninitialized variables
-func analyzeFunctionUninitializedVars(ctx *context.CompilerContext, fn *ast.BLangFunction, cfg *PackageCFG) {
+func analyzeFunctionUninitializedVars(ctx *context.CompilerContext, fn functionDecl, cfg *PackageCFG) {
 	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 	if !ok {
 		return

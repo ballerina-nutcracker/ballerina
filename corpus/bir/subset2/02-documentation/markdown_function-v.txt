@@ -13,14 +13,18 @@ class File {
 
   open(string) -> boolean{
     bb0 {
-      %3 = ConstantLoad true
-      %0 = %3;
+      _ = accessMode;
+      %4 = ConstantLoad true
+      %0 = %4;
       return;
     }
   }
 }
 insert(int|float|string,int,[string...]...) -> nil{
   bb0 {
+    _ = anUnion;
+    _ = anInt;
+    _ = rest;
     return;
   }
 }
@@ -33,6 +37,8 @@ getX() -> string|error{
 }
 updatePeople([string, int, float, never...],int) -> nil{
   bb0 {
+    _ = aTuple;
+    _ = anInt;
     return;
   }
 }
@@ -58,11 +64,33 @@ add(int,int) -> int{
 }
 foo(error) -> nil{
   bb0 {
+    %2 = example is error
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb2 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }
 foo_unicode(error) -> nil{
   bb0 {
+    %2 = foo_\u{2345}\u{0376} is error
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb2 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

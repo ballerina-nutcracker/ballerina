@@ -1,0 +1,69 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad v
+    %2 = ConstantLoad 1
+    %3 = newMap mapping{%1=%2}
+    x = %3;
+    y = x;
+    %6 = printEq(x,y) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad v
+    %8 = ConstantLoad 1
+    %9 = newMap mapping{%7=%8}
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %12 = printEq(%9,%11) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad v
+    %14 = ConstantLoad 1
+    %15 = newMap mapping{%13=%14}
+    %16 = ConstantLoad 1
+    %17 = ConstantLoad 1
+    %18 = newArray list[%17]{%16}
+    %19 = printEq(%15,%18) -> bb3;
+  }
+  bb3 {
+    %20 = ConstantLoad v
+    %21 = ConstantLoad 1
+    %22 = newMap mapping{%20=%21}
+    %23 = ConstantLoad v
+    %24 = ConstantLoad 1
+    %25 = newMap mapping{%23=%24}
+    %26 = printEq(%22,%25) -> bb4;
+  }
+  bb4 {
+    %27 = newMap mapping{}
+    %28 = newMap mapping{}
+    %29 = printEq(%27,%28) -> bb5;
+  }
+  bb5 {
+    %30 = ConstantLoad v
+    %31 = ConstantLoad 1
+    %32 = newMap mapping{%30=%31}
+    %33 = ConstantLoad v
+    %34 = ConstantLoad 2
+    %35 = newMap mapping{%33=%34}
+    %36 = printEq(%32,%35) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+printEq(any,any) -> nil{
+  bb0 {
+    %3 = unknown x y;
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = unknown x y;
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

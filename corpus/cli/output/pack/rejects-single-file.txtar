@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+pack does not support single-file projects
+-- exitcode --
+1

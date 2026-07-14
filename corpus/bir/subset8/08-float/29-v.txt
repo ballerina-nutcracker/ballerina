@@ -1,0 +1,111 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 2.5
+    %2 = %1;
+    %3 = round(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad 3.5
+    %7 = %6;
+    %8 = round(%7) -> bb3;
+  }
+  bb3 {
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad 2.5
+    %12 = unknown %11;
+    %13 = %12;
+    %14 = round(%13) -> bb5;
+  }
+  bb5 {
+    %15 = %14;
+    %16 = println(%15) -> bb6;
+  }
+  bb6 {
+    %17 = ConstantLoad 2.4
+    %18 = %17;
+    %19 = round(%18) -> bb7;
+  }
+  bb7 {
+    %20 = %19;
+    %21 = println(%20) -> bb8;
+  }
+  bb8 {
+    %22 = ConstantLoad 2.6
+    %23 = %22;
+    %24 = round(%23) -> bb9;
+  }
+  bb9 {
+    %25 = %24;
+    %26 = println(%25) -> bb10;
+  }
+  bb10 {
+    %27 = ConstantLoad 0
+    %28 = %27;
+    %29 = round(%28) -> bb11;
+  }
+  bb11 {
+    %30 = %29;
+    %31 = println(%30) -> bb12;
+  }
+  bb12 {
+    %32 = ConstantLoad 0
+    %33 = unknown %32;
+    %34 = %33;
+    %35 = round(%34) -> bb13;
+  }
+  bb13 {
+    %36 = %35;
+    %37 = println(%36) -> bb14;
+  }
+  bb14 {
+    %39 = ConstantLoad 1
+    %40 = %39;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %38 = / %40 %42;
+    %43 = %38;
+    %44 = round(%43) -> bb15;
+  }
+  bb15 {
+    %45 = %44;
+    %46 = println(%45) -> bb16;
+  }
+  bb16 {
+    %48 = ConstantLoad 1
+    %49 = unknown %48;
+    %50 = %49;
+    %51 = ConstantLoad 0
+    %52 = %51;
+    %47 = / %50 %52;
+    %53 = %47;
+    %54 = round(%53) -> bb17;
+  }
+  bb17 {
+    %55 = %54;
+    %56 = println(%55) -> bb18;
+  }
+  bb18 {
+    %58 = ConstantLoad 0
+    %59 = %58;
+    %60 = ConstantLoad 0
+    %61 = %60;
+    %57 = / %59 %61;
+    %62 = %57;
+    %63 = round(%62) -> bb19;
+  }
+  bb19 {
+    %64 = %63;
+    %65 = println(%64) -> bb20;
+  }
+  bb20 {
+    return;
+  }
+}

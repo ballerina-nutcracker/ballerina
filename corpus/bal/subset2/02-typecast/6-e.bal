@@ -25,5 +25,6 @@ function makeNil() {
 }
 
 function ignore(int n) {
+        int _ = n;
     
-}
+    }

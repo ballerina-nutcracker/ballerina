@@ -1,0 +1,18 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable moreOfNothings (type
+          (array-type
+            (value-type null) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal <nil>)
+            (literal <nil>)
+            (literal <nil>)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref moreOfNothings) ())))))))

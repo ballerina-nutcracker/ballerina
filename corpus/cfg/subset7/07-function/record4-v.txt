@@ -77,13 +77,13 @@
         (user-defined-type Op)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref lhs)
+            (literal lhs)
             (literal 1))
           (key-value
-            (simple-var-ref rhs)
+            (literal rhs)
             (literal 2))
           (key-value
-            (simple-var-ref fn)
+            (literal fn)
             (simple-var-ref add))))))
     (expression-stmt
       (invocation io println (

@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "optional_field_cross_module_e"
+version = "0.1.0"

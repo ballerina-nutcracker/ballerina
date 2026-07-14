@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: 'init' function cannot have parameters
+  --> init4-e.bal:21:1
+   |
+21 | function init(string[] args) { // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     string[] _ = args;
+   |     ^^^^^^^^^^^^^^^^^^
+23 | }
+   | ^

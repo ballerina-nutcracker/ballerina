@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition AE
+    (array-type
+      (union-type
+        (value-type any)
+        (error-type)) dimensions: 1 ([])))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type any)) (expr
+          (list-constructor-expr))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (array-type
+            (value-type any) dimensions: 1 ([])))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal any[]))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type AE))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal AE))))) ())
+        (block-stmt)))))
