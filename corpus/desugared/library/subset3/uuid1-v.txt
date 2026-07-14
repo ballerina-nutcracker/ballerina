@@ -69,7 +69,7 @@
         (invocation io println (
           (binary-expr ==
             (simple-var-ref ver)
-            (simple-var-ref uuid V4)))))
+            (literal V4)))))
       (var-def
         (variable $desugar$1 (expr
           (invocation uuid createType4AsRecord ()))))

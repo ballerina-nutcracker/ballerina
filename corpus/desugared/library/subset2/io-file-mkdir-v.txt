@@ -245,7 +245,7 @@
           (invocation io fileWriteString (
             (simple-var-ref appendPath)
             (literal Second)
-            (simple-var-ref io APPEND))))))
+            (literal APPEND))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$26))

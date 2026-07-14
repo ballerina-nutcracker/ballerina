@@ -1,8 +1,8 @@
 (package
   (import-package ballerina file (as file))
   (import-package ballerina io (as io))
-  (import-package ballerina lang string (as lang.string))
   (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang string (as lang.string))
   (function main () (
     (union-type
       (error-type)
@@ -143,7 +143,7 @@
         (variable $desugar$6 (expr
           (invocation file normalizePath (
             (literal /foo/../bar/./baz)
-            (simple-var-ref file CLEAN))))))
+            (literal CLEAN))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$6))
@@ -219,7 +219,7 @@
         (variable $desugar$12 (expr
           (invocation file test (
             (literal /tmp/bal-file-test-dir)
-            (simple-var-ref file IS_DIR))))))
+            (literal IS_DIR))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$12))
@@ -257,7 +257,7 @@
         (variable $desugar$16 (expr
           (invocation file test (
             (literal /tmp/bal-file-test-dir)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$16))
@@ -358,7 +358,7 @@
         (invocation io println (
           (invocation file test (
             (simple-var-ref tmp)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (var-def
         (variable $desugar$26 (expr
           (simple-var-ref tmp))))
@@ -410,7 +410,7 @@
         (invocation io println (
           (invocation file test (
             (simple-var-ref tmpDir)
-            (simple-var-ref file IS_DIR))))))
+            (literal IS_DIR))))))
       (var-def
         (variable $desugar$33 (expr
           (simple-var-ref tmpDir))))

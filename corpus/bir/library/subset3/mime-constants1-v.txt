@@ -1,28 +1,36 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = println(APPLICATION_JSON) -> bb1;
+    %1 = ConstantLoad application/json
+    %2 = println(%1) -> bb1;
   }
   bb1 {
-    %2 = println(TEXT_PLAIN) -> bb2;
+    %3 = ConstantLoad text/plain
+    %4 = println(%3) -> bb2;
   }
   bb2 {
-    %3 = println(APPLICATION_OCTET_STREAM) -> bb3;
+    %5 = ConstantLoad application/octet-stream
+    %6 = println(%5) -> bb3;
   }
   bb3 {
-    %4 = println(CONTENT_TYPE) -> bb4;
+    %7 = ConstantLoad content-type
+    %8 = println(%7) -> bb4;
   }
   bb4 {
-    %5 = println(CONTENT_LENGTH) -> bb5;
+    %9 = ConstantLoad content-length
+    %10 = println(%9) -> bb5;
   }
   bb5 {
-    %6 = println(DEFAULT_CHARSET) -> bb6;
+    %11 = ConstantLoad UTF-8
+    %12 = println(%11) -> bb6;
   }
   bb6 {
-    %7 = println(MULTIPART_FORM_DATA) -> bb7;
+    %13 = ConstantLoad multipart/form-data
+    %14 = println(%13) -> bb7;
   }
   bb7 {
-    %8 = println(IMAGE_JPEG) -> bb8;
+    %15 = ConstantLoad image/jpeg
+    %16 = println(%15) -> bb8;
   }
   bb8 {
     return;

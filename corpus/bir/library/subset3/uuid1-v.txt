@@ -67,17 +67,18 @@ main() -> nil|error{
   }
   bb15 {
     ver = $desugar$0;
-    %32 = == ver V4;
-    %33 = %32;
-    %34 = println(%33) -> bb16;
+    %33 = ConstantLoad V4
+    %32 = == ver %33;
+    %34 = %32;
+    %35 = println(%34) -> bb16;
   }
   bb16 {
-    %35 = createType4AsRecord() -> bb17;
+    %36 = createType4AsRecord() -> bb17;
   }
   bb17 {
-    $desugar$1 = %35;
-    %37 = $desugar$1 is error
-    %37 ? bb18 : bb19;
+    $desugar$1 = %36;
+    %38 = $desugar$1 is error
+    %38 ? bb18 : bb19;
   }
   bb18 {
     PushScopeFrame 0
@@ -87,25 +88,25 @@ main() -> nil|error{
   }
   bb19 {
     v4rec = $desugar$1;
-    %41 = ConstantLoad timeLow
-    %40 = v4rec[%41];
-    %42 = %40;
-    %43 = ConstantLoad 0
-    %44 = %43;
-    %39 = >= %42 %44;
-    %45 = %39;
-    %46 = println(%45) -> bb20;
+    %42 = ConstantLoad timeLow
+    %41 = v4rec[%42];
+    %43 = %41;
+    %44 = ConstantLoad 0
+    %45 = %44;
+    %40 = >= %43 %45;
+    %46 = %40;
+    %47 = println(%46) -> bb20;
   }
   bb20 {
-    %47 = createRandomUuid() -> bb21;
+    %48 = createRandomUuid() -> bb21;
   }
   bb21 {
-    rand = %47;
-    %49 = validate(rand) -> bb22;
+    rand = %48;
+    %50 = validate(rand) -> bb22;
   }
   bb22 {
-    %50 = %49;
-    %51 = println(%50) -> bb23;
+    %51 = %50;
+    %52 = println(%51) -> bb23;
   }
   bb23 {
     return;

@@ -6,25 +6,25 @@
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime APPLICATION_JSON))))
+          (literal application/json))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime TEXT_PLAIN))))
+          (literal text/plain))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime APPLICATION_OCTET_STREAM))))
+          (literal application/octet-stream))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime CONTENT_TYPE))))
+          (literal content-type))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime CONTENT_LENGTH))))
+          (literal content-length))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime DEFAULT_CHARSET))))
+          (literal UTF-8))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime MULTIPART_FORM_DATA))))
+          (literal multipart/form-data))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref mime IMAGE_JPEG)))))))
+          (literal image/jpeg)))))))

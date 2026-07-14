@@ -103,4 +103,4 @@
           (invocation io println (
             (binary-expr ==
               (simple-var-ref ver)
-              (simple-var-ref uuid V4)))))))))
+              (literal V4)))))))))

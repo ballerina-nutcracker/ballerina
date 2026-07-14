@@ -154,12 +154,13 @@ main() -> nil|error{
   }
   bb31 {
     %61 = ConstantLoad /foo/../bar/./baz
-    %62 = normalizePath(%61,CLEAN) -> bb32;
+    %62 = ConstantLoad CLEAN
+    %63 = normalizePath(%61,%62) -> bb32;
   }
   bb32 {
-    $desugar$6 = %62;
-    %64 = $desugar$6 is error
-    %64 ? bb33 : bb34;
+    $desugar$6 = %63;
+    %65 = $desugar$6 is error
+    %65 ? bb33 : bb34;
   }
   bb33 {
     PushScopeFrame 0
@@ -169,17 +170,17 @@ main() -> nil|error{
   }
   bb34 {
     cleaned = $desugar$6;
-    %66 = println(cleaned) -> bb35;
+    %67 = println(cleaned) -> bb35;
   }
   bb35 {
-    %67 = ConstantLoad /foo/bar
-    %68 = ConstantLoad /foo/bar/baz
-    %69 = relativePath(%67,%68) -> bb36;
+    %68 = ConstantLoad /foo/bar
+    %69 = ConstantLoad /foo/bar/baz
+    %70 = relativePath(%68,%69) -> bb36;
   }
   bb36 {
-    $desugar$7 = %69;
-    %71 = $desugar$7 is error
-    %71 ? bb37 : bb38;
+    $desugar$7 = %70;
+    %72 = $desugar$7 is error
+    %72 ? bb37 : bb38;
   }
   bb37 {
     PushScopeFrame 0
@@ -189,16 +190,16 @@ main() -> nil|error{
   }
   bb38 {
     rel = $desugar$7;
-    %73 = println(rel) -> bb39;
+    %74 = println(rel) -> bb39;
   }
   bb39 {
-    %74 = ConstantLoad .
-    %75 = getAbsolutePath(%74) -> bb40;
+    %75 = ConstantLoad .
+    %76 = getAbsolutePath(%75) -> bb40;
   }
   bb40 {
-    $desugar$8 = %75;
-    %77 = $desugar$8 is error
-    %77 ? bb41 : bb42;
+    $desugar$8 = %76;
+    %78 = $desugar$8 is error
+    %78 ? bb41 : bb42;
   }
   bb41 {
     PushScopeFrame 0
@@ -208,29 +209,29 @@ main() -> nil|error{
   }
   bb42 {
     absPath = $desugar$8;
-    %80 = length(absPath) -> bb43;
+    %81 = length(absPath) -> bb43;
   }
   bb43 {
-    %81 = %80;
-    %82 = ConstantLoad 0
-    %83 = %82;
-    %79 = > %81 %83;
-    %84 = %79;
-    %85 = println(%84) -> bb44;
+    %82 = %81;
+    %83 = ConstantLoad 0
+    %84 = %83;
+    %80 = > %82 %84;
+    %85 = %80;
+    %86 = println(%85) -> bb44;
   }
   bb44 {
-    %86 = ConstantLoad /tmp/bal-file-test-dir
-    $desugar$9 = %86;
-    %88 = $default$1($desugar$9) -> bb45;
+    %87 = ConstantLoad /tmp/bal-file-test-dir
+    $desugar$9 = %87;
+    %89 = $default$1($desugar$9) -> bb45;
   }
   bb45 {
-    $desugar$10 = %88;
-    %90 = createDir($desugar$9,$desugar$10) -> bb46;
+    $desugar$10 = %89;
+    %91 = createDir($desugar$9,$desugar$10) -> bb46;
   }
   bb46 {
-    $desugar$11 = %90;
-    %92 = $desugar$11 is error
-    %92 ? bb47 : bb48;
+    $desugar$11 = %91;
+    %93 = $desugar$11 is error
+    %93 ? bb47 : bb48;
   }
   bb47 {
     PushScopeFrame 0
@@ -239,13 +240,14 @@ main() -> nil|error{
     return;
   }
   bb48 {
-    %93 = ConstantLoad /tmp/bal-file-test-dir
-    %94 = test(%93,IS_DIR) -> bb49;
+    %94 = ConstantLoad /tmp/bal-file-test-dir
+    %95 = ConstantLoad IS_DIR
+    %96 = test(%94,%95) -> bb49;
   }
   bb49 {
-    $desugar$12 = %94;
-    %96 = $desugar$12 is error
-    %96 ? bb50 : bb51;
+    $desugar$12 = %96;
+    %98 = $desugar$12 is error
+    %98 ? bb50 : bb51;
   }
   bb50 {
     PushScopeFrame 0
@@ -255,22 +257,22 @@ main() -> nil|error{
   }
   bb51 {
     isDir = $desugar$12;
-    %98 = isDir;
-    %99 = println(%98) -> bb52;
+    %100 = isDir;
+    %101 = println(%100) -> bb52;
   }
   bb52 {
-    %100 = ConstantLoad /tmp/bal-file-test-dir
-    $desugar$13 = %100;
-    %102 = $default$2($desugar$13) -> bb53;
+    %102 = ConstantLoad /tmp/bal-file-test-dir
+    $desugar$13 = %102;
+    %104 = $default$2($desugar$13) -> bb53;
   }
   bb53 {
-    $desugar$14 = %102;
-    %104 = remove($desugar$13,$desugar$14) -> bb54;
+    $desugar$14 = %104;
+    %106 = remove($desugar$13,$desugar$14) -> bb54;
   }
   bb54 {
-    $desugar$15 = %104;
-    %106 = $desugar$15 is error
-    %106 ? bb55 : bb56;
+    $desugar$15 = %106;
+    %108 = $desugar$15 is error
+    %108 ? bb55 : bb56;
   }
   bb55 {
     PushScopeFrame 0
@@ -279,13 +281,14 @@ main() -> nil|error{
     return;
   }
   bb56 {
-    %107 = ConstantLoad /tmp/bal-file-test-dir
-    %108 = test(%107,EXISTS) -> bb57;
+    %109 = ConstantLoad /tmp/bal-file-test-dir
+    %110 = ConstantLoad EXISTS
+    %111 = test(%109,%110) -> bb57;
   }
   bb57 {
-    $desugar$16 = %108;
-    %110 = $desugar$16 is error
-    %110 ? bb58 : bb59;
+    $desugar$16 = %111;
+    %113 = $desugar$16 is error
+    %113 ? bb58 : bb59;
   }
   bb58 {
     PushScopeFrame 0
@@ -295,17 +298,17 @@ main() -> nil|error{
   }
   bb59 {
     gone = $desugar$16;
-    %112 = gone;
-    %113 = println(%112) -> bb60;
+    %115 = gone;
+    %116 = println(%115) -> bb60;
   }
   bb60 {
-    %114 = ConstantLoad /tmp/bal-file-test.txt
-    %115 = create(%114) -> bb61;
+    %117 = ConstantLoad /tmp/bal-file-test.txt
+    %118 = create(%117) -> bb61;
   }
   bb61 {
-    $desugar$17 = %115;
-    %117 = $desugar$17 is error
-    %117 ? bb62 : bb63;
+    $desugar$17 = %118;
+    %120 = $desugar$17 is error
+    %120 ? bb62 : bb63;
   }
   bb62 {
     PushScopeFrame 0
@@ -314,13 +317,13 @@ main() -> nil|error{
     return;
   }
   bb63 {
-    %118 = ConstantLoad /tmp/bal-file-test.txt
-    %119 = getMetaData(%118) -> bb64;
+    %121 = ConstantLoad /tmp/bal-file-test.txt
+    %122 = getMetaData(%121) -> bb64;
   }
   bb64 {
-    $desugar$18 = %119;
-    %121 = $desugar$18 is error
-    %121 ? bb65 : bb66;
+    $desugar$18 = %122;
+    %124 = $desugar$18 is error
+    %124 ? bb65 : bb66;
   }
   bb65 {
     PushScopeFrame 0
@@ -330,30 +333,30 @@ main() -> nil|error{
   }
   bb66 {
     meta = $desugar$18;
-    %124 = ConstantLoad dir
-    %123 = meta[%124];
-    %125 = %123;
-    %126 = println(%125) -> bb67;
+    %127 = ConstantLoad dir
+    %126 = meta[%127];
+    %128 = %126;
+    %129 = println(%128) -> bb67;
   }
   bb67 {
-    %128 = ConstantLoad readable
-    %127 = meta[%128];
-    %129 = %127;
-    %130 = println(%129) -> bb68;
+    %131 = ConstantLoad readable
+    %130 = meta[%131];
+    %132 = %130;
+    %133 = println(%132) -> bb68;
   }
   bb68 {
-    %131 = ConstantLoad /tmp/bal-file-test.txt
-    $desugar$19 = %131;
-    %133 = $default$2($desugar$19) -> bb69;
+    %134 = ConstantLoad /tmp/bal-file-test.txt
+    $desugar$19 = %134;
+    %136 = $default$2($desugar$19) -> bb69;
   }
   bb69 {
-    $desugar$20 = %133;
-    %135 = remove($desugar$19,$desugar$20) -> bb70;
+    $desugar$20 = %136;
+    %138 = remove($desugar$19,$desugar$20) -> bb70;
   }
   bb70 {
-    $desugar$21 = %135;
-    %137 = $desugar$21 is error
-    %137 ? bb71 : bb72;
+    $desugar$21 = %138;
+    %140 = $desugar$21 is error
+    %140 ? bb71 : bb72;
   }
   bb71 {
     PushScopeFrame 0
@@ -362,20 +365,20 @@ main() -> nil|error{
     return;
   }
   bb72 {
-    %138 = ConstantLoad .txt
-    $desugar$22 = %138;
-    %140 = ConstantLoad bal-
-    $desugar$23 = %140;
-    %142 = $default$5($desugar$22,$desugar$23) -> bb73;
+    %141 = ConstantLoad .txt
+    $desugar$22 = %141;
+    %143 = ConstantLoad bal-
+    $desugar$23 = %143;
+    %145 = $default$5($desugar$22,$desugar$23) -> bb73;
   }
   bb73 {
-    $desugar$24 = %142;
-    %144 = createTemp($desugar$22,$desugar$23,$desugar$24) -> bb74;
+    $desugar$24 = %145;
+    %147 = createTemp($desugar$22,$desugar$23,$desugar$24) -> bb74;
   }
   bb74 {
-    $desugar$25 = %144;
-    %146 = $desugar$25 is error
-    %146 ? bb75 : bb76;
+    $desugar$25 = %147;
+    %149 = $desugar$25 is error
+    %149 ? bb75 : bb76;
   }
   bb75 {
     PushScopeFrame 0
@@ -385,23 +388,24 @@ main() -> nil|error{
   }
   bb76 {
     tmp = $desugar$25;
-    %148 = test(tmp,EXISTS) -> bb77;
+    %151 = ConstantLoad EXISTS
+    %152 = test(tmp,%151) -> bb77;
   }
   bb77 {
-    %149 = println(%148) -> bb78;
+    %153 = println(%152) -> bb78;
   }
   bb78 {
     $desugar$26 = tmp;
-    %151 = $default$2($desugar$26) -> bb79;
+    %155 = $default$2($desugar$26) -> bb79;
   }
   bb79 {
-    $desugar$27 = %151;
-    %153 = remove($desugar$26,$desugar$27) -> bb80;
+    $desugar$27 = %155;
+    %157 = remove($desugar$26,$desugar$27) -> bb80;
   }
   bb80 {
-    $desugar$28 = %153;
-    %155 = $desugar$28 is error
-    %155 ? bb81 : bb82;
+    $desugar$28 = %157;
+    %159 = $desugar$28 is error
+    %159 ? bb81 : bb82;
   }
   bb81 {
     PushScopeFrame 0
@@ -410,22 +414,22 @@ main() -> nil|error{
     return;
   }
   bb82 {
-    %156 = $default$6() -> bb83;
+    %160 = $default$6() -> bb83;
   }
   bb83 {
-    $desugar$29 = %156;
-    %158 = ConstantLoad bal-
-    $desugar$30 = %158;
-    %160 = $default$8($desugar$29,$desugar$30) -> bb84;
+    $desugar$29 = %160;
+    %162 = ConstantLoad bal-
+    $desugar$30 = %162;
+    %164 = $default$8($desugar$29,$desugar$30) -> bb84;
   }
   bb84 {
-    $desugar$31 = %160;
-    %162 = createTempDir($desugar$29,$desugar$30,$desugar$31) -> bb85;
+    $desugar$31 = %164;
+    %166 = createTempDir($desugar$29,$desugar$30,$desugar$31) -> bb85;
   }
   bb85 {
-    $desugar$32 = %162;
-    %164 = $desugar$32 is error
-    %164 ? bb86 : bb87;
+    $desugar$32 = %166;
+    %168 = $desugar$32 is error
+    %168 ? bb86 : bb87;
   }
   bb86 {
     PushScopeFrame 0
@@ -435,23 +439,24 @@ main() -> nil|error{
   }
   bb87 {
     tmpDir = $desugar$32;
-    %166 = test(tmpDir,IS_DIR) -> bb88;
+    %170 = ConstantLoad IS_DIR
+    %171 = test(tmpDir,%170) -> bb88;
   }
   bb88 {
-    %167 = println(%166) -> bb89;
+    %172 = println(%171) -> bb89;
   }
   bb89 {
     $desugar$33 = tmpDir;
-    %169 = $default$2($desugar$33) -> bb90;
+    %174 = $default$2($desugar$33) -> bb90;
   }
   bb90 {
-    $desugar$34 = %169;
-    %171 = remove($desugar$33,$desugar$34) -> bb91;
+    $desugar$34 = %174;
+    %176 = remove($desugar$33,$desugar$34) -> bb91;
   }
   bb91 {
-    $desugar$35 = %171;
-    %173 = $desugar$35 is error
-    %173 ? bb92 : bb93;
+    $desugar$35 = %176;
+    %178 = $desugar$35 is error
+    %178 ? bb92 : bb93;
   }
   bb92 {
     PushScopeFrame 0

@@ -79,7 +79,7 @@ main() -> nil|error{
     GOTO bb17;
   }
   bb17 {
-    PushScopeFrame 7
+    PushScopeFrame 8
     %0 = getVersion((1, known)) -> bb18;
   }
   bb18 {
@@ -96,9 +96,10 @@ main() -> nil|error{
   }
   bb20 {
     ver = $desugar$2;
-    %4 = == ver V4;
-    %5 = %4;
-    %6 = println(%5) -> bb21;
+    %5 = ConstantLoad V4
+    %4 = == ver %5;
+    %6 = %4;
+    %7 = println(%6) -> bb21;
   }
   bb21 {
     PopScopeFrame

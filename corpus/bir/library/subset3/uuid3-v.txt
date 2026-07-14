@@ -1,37 +1,39 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = ConstantLoad ballerina.io
-    %2 = createType3AsString(NAME_SPACE_DNS,%1) -> bb1;
+    %1 = ConstantLoad 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+    %2 = ConstantLoad ballerina.io
+    %3 = createType3AsString(%1,%2) -> bb1;
   }
   bb1 {
-    v3a = %2;
-    %4 = ConstantLoad ballerina.io
-    %5 = createType3AsString(NAME_SPACE_DNS,%4) -> bb2;
+    v3a = %3;
+    %5 = ConstantLoad 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+    %6 = ConstantLoad ballerina.io
+    %7 = createType3AsString(%5,%6) -> bb2;
   }
   bb2 {
-    v3b = %5;
-    %7 = v3a is string
-    %8 = %7;
-    %9 = println(%8) -> bb3;
+    v3b = %7;
+    %9 = v3a is string
+    %10 = %9;
+    %11 = println(%10) -> bb3;
   }
   bb3 {
-    %10 = v3b is string
-    %11 = %10;
-    %12 = println(%11) -> bb4;
+    %12 = v3b is string
+    %13 = %12;
+    %14 = println(%13) -> bb4;
   }
   bb4 {
-    %14 = v3a is string
-    %13 = %14;
-    %14 ? bb5 : bb6;
+    %16 = v3a is string
+    %15 = %16;
+    %16 ? bb5 : bb6;
   }
   bb5 {
-    %15 = v3b is string
-    %13 = %15;
+    %17 = v3b is string
+    %15 = %17;
     GOTO bb6;
   }
   bb6 {
-    %13 ? bb7 : bb15;
+    %15 ? bb7 : bb15;
   }
   bb7 {
     PushScopeFrame 9
@@ -55,10 +57,11 @@ main() -> nil{
     %8 ? bb12 : bb14;
   }
   bb12 {
-    PushScopeFrame 3
-    %0 = == (1, ver) V3;
-    %1 = %0;
-    %2 = println(%1) -> bb13;
+    PushScopeFrame 4
+    %1 = ConstantLoad V3
+    %0 = == (1, ver) %1;
+    %2 = %0;
+    %3 = println(%2) -> bb13;
   }
   bb13 {
     PopScopeFrame
@@ -71,33 +74,35 @@ main() -> nil{
     GOTO bb15;
   }
   bb15 {
-    PushScopeFrame 12
-    %0 = ConstantLoad ballerina.io
-    %1 = createType5AsString(NAME_SPACE_DNS,%0) -> bb16;
+    PushScopeFrame 14
+    %0 = ConstantLoad 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+    %1 = ConstantLoad ballerina.io
+    %2 = createType5AsString(%0,%1) -> bb16;
   }
   bb16 {
-    v5a = %1;
-    %3 = ConstantLoad ballerina.io
-    %4 = createType5AsString(NAME_SPACE_DNS,%3) -> bb17;
+    v5a = %2;
+    %4 = ConstantLoad 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+    %5 = ConstantLoad ballerina.io
+    %6 = createType5AsString(%4,%5) -> bb17;
   }
   bb17 {
-    v5b = %4;
-    %6 = v5a is string
-    %7 = %6;
-    %8 = println(%7) -> bb18;
+    v5b = %6;
+    %8 = v5a is string
+    %9 = %8;
+    %10 = println(%9) -> bb18;
   }
   bb18 {
-    %10 = v5a is string
-    %9 = %10;
-    %10 ? bb19 : bb20;
+    %12 = v5a is string
+    %11 = %12;
+    %12 ? bb19 : bb20;
   }
   bb19 {
-    %11 = v5b is string
-    %9 = %11;
+    %13 = v5b is string
+    %11 = %13;
     GOTO bb20;
   }
   bb20 {
-    %9 ? bb21 : bb29;
+    %11 ? bb21 : bb29;
   }
   bb21 {
     PushScopeFrame 9
@@ -121,10 +126,11 @@ main() -> nil{
     %8 ? bb26 : bb28;
   }
   bb26 {
-    PushScopeFrame 3
-    %0 = == (1, ver2) V5;
-    %1 = %0;
-    %2 = println(%1) -> bb27;
+    PushScopeFrame 4
+    %1 = ConstantLoad V5
+    %0 = == (1, ver2) %1;
+    %2 = %0;
+    %3 = println(%2) -> bb27;
   }
   bb27 {
     PopScopeFrame
@@ -137,40 +143,42 @@ main() -> nil{
     GOTO bb29;
   }
   bb29 {
-    PushScopeFrame 14
-    %0 = ConstantLoad 
-    %1 = createType3AsString(NAME_SPACE_DNS,%0) -> bb30;
+    PushScopeFrame 15
+    %0 = ConstantLoad 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+    %1 = ConstantLoad 
+    %2 = createType3AsString(%0,%1) -> bb30;
   }
   bb30 {
-    emptyErr = %1;
-    %3 = emptyErr is error
-    %4 = %3;
-    %5 = println(%4) -> bb31;
+    emptyErr = %2;
+    %4 = emptyErr is error
+    %5 = %4;
+    %6 = println(%5) -> bb31;
   }
   bb31 {
-    %6 = createType1AsString() -> bb32;
+    %7 = createType1AsString() -> bb32;
   }
   bb32 {
-    v1 = %6;
-    %8 = validate(v1) -> bb33;
+    v1 = %7;
+    %9 = validate(v1) -> bb33;
   }
   bb33 {
-    %9 = %8;
-    %10 = println(%9) -> bb34;
+    %10 = %9;
+    %11 = println(%10) -> bb34;
   }
   bb34 {
-    %11 = getVersion(v1) -> bb35;
+    %12 = getVersion(v1) -> bb35;
   }
   bb35 {
-    ver1 = %11;
-    %13 = ver1 is "V1"|"V3"|"V4"|"V5"
-    %13 ? bb36 : bb38;
+    ver1 = %12;
+    %14 = ver1 is "V1"|"V3"|"V4"|"V5"
+    %14 ? bb36 : bb38;
   }
   bb36 {
-    PushScopeFrame 3
-    %0 = == (1, ver1) V1;
-    %1 = %0;
-    %2 = println(%1) -> bb37;
+    PushScopeFrame 4
+    %1 = ConstantLoad V1
+    %0 = == (1, ver1) %1;
+    %2 = %0;
+    %3 = println(%2) -> bb37;
   }
   bb37 {
     PopScopeFrame

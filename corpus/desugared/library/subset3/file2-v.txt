@@ -112,7 +112,7 @@
         (variable $desugar$8 (expr
           (invocation file test (
             (simple-var-ref copyDest)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$8))
@@ -144,7 +144,7 @@
           (invocation file copy (
             (simple-var-ref f2)
             (simple-var-ref copyDest)
-            (simple-var-ref file REPLACE_EXISTING))))))
+            (literal REPLACE_EXISTING))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$9))
@@ -157,7 +157,7 @@
         (variable $desugar$10 (expr
           (invocation file test (
             (simple-var-ref copyDest)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$10))
@@ -207,7 +207,7 @@
         (variable $desugar$12 (expr
           (invocation file test (
             (simple-var-ref renamed)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$12))
@@ -221,7 +221,7 @@
         (variable $desugar$13 (expr
           (invocation file test (
             (simple-var-ref f1)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$13))
@@ -250,7 +250,7 @@
         (variable $desugar$14 (expr
           (invocation file test (
             (simple-var-ref f2)
-            (simple-var-ref file READABLE))))))
+            (literal READABLE))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$14))
@@ -264,7 +264,7 @@
         (variable $desugar$15 (expr
           (invocation file test (
             (simple-var-ref f2)
-            (simple-var-ref file WRITABLE))))))
+            (literal WRITABLE))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$15))
@@ -278,7 +278,7 @@
         (variable $desugar$16 (expr
           (invocation file test (
             (simple-var-ref f2)
-            (simple-var-ref file IS_SYMLINK))))))
+            (literal IS_SYMLINK))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$16))
@@ -318,7 +318,7 @@
         (variable $desugar$19 (expr
           (invocation file createDir (
             (simple-var-ref nested)
-            (simple-var-ref file RECURSIVE))))))
+            (literal RECURSIVE))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$19))
@@ -331,7 +331,7 @@
         (variable $desugar$20 (expr
           (invocation file test (
             (simple-var-ref nested)
-            (simple-var-ref file IS_DIR))))))
+            (literal IS_DIR))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$20))
@@ -513,7 +513,7 @@
         (variable $desugar$31 (expr
           (invocation file remove (
             (simple-var-ref baseDir)
-            (simple-var-ref file RECURSIVE))))))
+            (literal RECURSIVE))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$31))
@@ -526,7 +526,7 @@
         (variable $desugar$32 (expr
           (invocation file test (
             (simple-var-ref baseDir)
-            (simple-var-ref file EXISTS))))))
+            (literal EXISTS))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$32))

@@ -10,7 +10,7 @@
             (value-type string)
             (user-defined-type uuid Error))) (expr
           (invocation uuid createType3AsString (
-            (simple-var-ref uuid NAME_SPACE_DNS)
+            (literal 6ba7b810-9dad-11d1-80b4-00c04fd430c8)
             (literal ballerina.io))))))
       (var-def
         (variable v3b (type
@@ -18,7 +18,7 @@
             (value-type string)
             (user-defined-type uuid Error))) (expr
           (invocation uuid createType3AsString (
-            (simple-var-ref uuid NAME_SPACE_DNS)
+            (literal 6ba7b810-9dad-11d1-80b4-00c04fd430c8)
             (literal ballerina.io))))))
       (expression-stmt
         (invocation io println (
@@ -64,7 +64,7 @@
                 (invocation io println (
                   (binary-expr ==
                     (simple-var-ref ver)
-                    (simple-var-ref uuid V3)))))) ())
+                    (literal V3)))))) ())
           (block-stmt)) ())
       (block-stmt
         (var-def
@@ -73,7 +73,7 @@
               (value-type string)
               (user-defined-type uuid Error))) (expr
             (invocation uuid createType5AsString (
-              (simple-var-ref uuid NAME_SPACE_DNS)
+              (literal 6ba7b810-9dad-11d1-80b4-00c04fd430c8)
               (literal ballerina.io))))))
         (var-def
           (variable v5b (type
@@ -81,7 +81,7 @@
               (value-type string)
               (user-defined-type uuid Error))) (expr
             (invocation uuid createType5AsString (
-              (simple-var-ref uuid NAME_SPACE_DNS)
+              (literal 6ba7b810-9dad-11d1-80b4-00c04fd430c8)
               (literal ballerina.io))))))
         (expression-stmt
           (invocation io println (
@@ -122,7 +122,7 @@
                   (invocation io println (
                     (binary-expr ==
                       (simple-var-ref ver2)
-                      (simple-var-ref uuid V5)))))) ())
+                      (literal V5)))))) ())
             (block-stmt)) ())
         (block-stmt
           (var-def
@@ -131,7 +131,7 @@
                 (value-type string)
                 (user-defined-type uuid Error))) (expr
               (invocation uuid createType3AsString (
-                (simple-var-ref uuid NAME_SPACE_DNS)
+                (literal 6ba7b810-9dad-11d1-80b4-00c04fd430c8)
                 (literal ))))))
           (expression-stmt
             (invocation io println (
@@ -162,5 +162,5 @@
                 (invocation io println (
                   (binary-expr ==
                     (simple-var-ref ver1)
-                    (simple-var-ref uuid V1)))))) ())
+                    (literal V1)))))) ())
           (block-stmt))))))
