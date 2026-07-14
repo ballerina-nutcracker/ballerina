@@ -1,0 +1,266 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_mkdir_xyz/string/a/b/string.txt
+    stringPath = %1;
+    $desugar$0 = stringPath;
+    %4 = ConstantLoad hello
+    $desugar$1 = %4;
+    %6 = $default$0($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %6;
+    %8 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %8;
+    %10 = $desugar$3 is error
+    %10 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %11 = fileReadString(stringPath) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %11;
+    %13 = $desugar$4 is error
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %14 = println($desugar$4) -> bb8;
+  }
+  bb8 {
+    %15 = ConstantLoad /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt
+    linesPath = %15;
+    $desugar$5 = linesPath;
+    %18 = ConstantLoad one
+    %19 = ConstantLoad two
+    %20 = ConstantLoad 2
+    %21 = newArray [string...][%20]{%18, %19}
+    $desugar$6 = %21;
+    %23 = $default$1($desugar$5,$desugar$6) -> bb9;
+  }
+  bb9 {
+    $desugar$7 = %23;
+    %25 = fileWriteLines($desugar$5,$desugar$6,$desugar$7) -> bb10;
+  }
+  bb10 {
+    $desugar$8 = %25;
+    %27 = $desugar$8 is error
+    %27 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    %28 = fileReadLines(linesPath) -> bb13;
+  }
+  bb13 {
+    $desugar$9 = %28;
+    %30 = $desugar$9 is error
+    %30 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    %31 = println($desugar$9) -> bb16;
+  }
+  bb16 {
+    %32 = ConstantLoad /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat
+    bytesPath = %32;
+    $desugar$10 = bytesPath;
+    %35 = ConstantLoad 1
+    %36 = ConstantLoad 2
+    %37 = ConstantLoad 3
+    %38 = ConstantLoad 3
+    %39 = newArray [int:Unsigned8...][%38]{%35, %36, %37}
+    $desugar$11 = %39;
+    %41 = $default$2($desugar$10,$desugar$11) -> bb17;
+  }
+  bb17 {
+    $desugar$12 = %41;
+    %43 = fileWriteBytes($desugar$10,$desugar$11,$desugar$12) -> bb18;
+  }
+  bb18 {
+    $desugar$13 = %43;
+    %45 = $desugar$13 is error
+    %45 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    %46 = fileReadBytes(bytesPath) -> bb21;
+  }
+  bb21 {
+    $desugar$14 = %46;
+    %48 = $desugar$14 is error
+    %48 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$14);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    %49 = println($desugar$14) -> bb24;
+  }
+  bb24 {
+    %50 = ConstantLoad /tmp/bal_io_mkdir_xyz/json/a/b/data.json
+    jsonPath = %50;
+    %52 = ConstantLoad k
+    %53 = ConstantLoad v
+    %54 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%52=%53}
+    %55 = fileWriteJson(jsonPath,%54) -> bb25;
+  }
+  bb25 {
+    $desugar$15 = %55;
+    %57 = $desugar$15 is error
+    %57 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$15);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    %58 = fileReadJson(jsonPath) -> bb28;
+  }
+  bb28 {
+    $desugar$16 = %58;
+    %60 = $desugar$16 is error
+    %60 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$16);
+    PopScopeFrame
+    return;
+  }
+  bb30 {
+    %61 = println($desugar$16) -> bb31;
+  }
+  bb31 {
+    %62 = ConstantLoad /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml
+    xmlPath = %62;
+    $desugar$17 = xmlPath;
+    %65 = ConstantLoad a
+    %66 = newXMLElement(%65, ())
+    $desugar$18 = %66;
+    %68 = $default$3($desugar$17,$desugar$18) -> bb32;
+  }
+  bb32 {
+    $desugar$19 = %68;
+    %70 = fileWriteXml($desugar$17,$desugar$18,$desugar$19) -> bb33;
+  }
+  bb33 {
+    $desugar$20 = %70;
+    %72 = $desugar$20 is error
+    %72 ? bb34 : bb35;
+  }
+  bb34 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$20);
+    PopScopeFrame
+    return;
+  }
+  bb35 {
+    %73 = fileReadXml(xmlPath) -> bb36;
+  }
+  bb36 {
+    $desugar$21 = %73;
+    %75 = $desugar$21 is error
+    %75 ? bb37 : bb38;
+  }
+  bb37 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$21);
+    PopScopeFrame
+    return;
+  }
+  bb38 {
+    %76 = println($desugar$21) -> bb39;
+  }
+  bb39 {
+    %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/append/c/d/append.txt
+    appendPath = %77;
+    $desugar$22 = appendPath;
+    %80 = ConstantLoad First
+    $desugar$23 = %80;
+    %82 = $default$0($desugar$22,$desugar$23) -> bb40;
+  }
+  bb40 {
+    $desugar$24 = %82;
+    %84 = fileWriteString($desugar$22,$desugar$23,$desugar$24) -> bb41;
+  }
+  bb41 {
+    $desugar$25 = %84;
+    %86 = $desugar$25 is error
+    %86 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$25);
+    PopScopeFrame
+    return;
+  }
+  bb43 {
+    %87 = ConstantLoad Second
+    %88 = ConstantLoad APPEND
+    %89 = fileWriteString(appendPath,%87,%88) -> bb44;
+  }
+  bb44 {
+    $desugar$26 = %89;
+    %91 = $desugar$26 is error
+    %91 ? bb45 : bb46;
+  }
+  bb45 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$26);
+    PopScopeFrame
+    return;
+  }
+  bb46 {
+    %92 = fileReadString(appendPath) -> bb47;
+  }
+  bb47 {
+    $desugar$27 = %92;
+    %94 = $desugar$27 is error
+    %94 ? bb48 : bb49;
+  }
+  bb48 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$27);
+    PopScopeFrame
+    return;
+  }
+  bb49 {
+    %95 = println($desugar$27) -> bb50;
+  }
+  bb50 {
+    return;
+  }
+}
