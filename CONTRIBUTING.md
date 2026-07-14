@@ -45,4 +45,4 @@ See the [README](README.md) for more details on building, running corpus tests, 
 
 ## Propose changes
 
-Start the discussion on the [Ballerina Discord](https://discord.com/invite/wAJYFbMrG2). For substantial changes, you may be asked to open a GitHub issue (e.g., labeled as a proposal) to continue the discussion.
+Start the discussion on the [Ballerina Discord](https://discord.gg/ballerinalang). For substantial changes, you may be asked to open a GitHub issue (e.g., labeled as a proposal) to continue the discussion.
