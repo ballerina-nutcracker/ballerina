@@ -1,11 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const c () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref c)
-        (literal 10))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -15,7 +9,7 @@
             (function $desugar$0 () ()
               (block-function-body
                 (return
-                  (simple-var-ref c))))))))
+                  (numeric-literal 10))))))))
       (var-def
         (variable f (type
           (record-type

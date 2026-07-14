@@ -26,11 +26,12 @@ import (
 	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
+	"ballerina-lang-go/values"
 )
 
 const (
 	BIR_MAGIC   = "\xba\x10\xc0\xde"
-	BIR_VERSION = 77
+	BIR_VERSION = 82
 )
 
 type birWriter struct {
@@ -268,14 +269,8 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 			tagValue = cv.Value
 		}
 
-		tag, err := bw.inferTag(tagValue)
-		if err != nil {
-			panic(fmt.Sprintf("inferring constant load tag: %v", err))
-		}
-
 		write(buf, isWrapped)
-		write(buf, int8(tag))
-		bw.writeConstValueByTag(buf, tag, tagValue)
+		bw.writeConstValue(buf, tagValue)
 	case *bir.FieldAccess:
 		// TODO: MAP_LOAD and ARRAY_LOAD
 		bw.writeOperand(buf, instr.LhsOp)
@@ -498,6 +493,15 @@ func (bw *birWriter) writeOperand(buf *bytes.Buffer, op *bir.BIROperand) {
 	}
 }
 
+func (bw *birWriter) writeConstValue(buf *bytes.Buffer, value any) {
+	tag, err := bw.inferTag(value)
+	if err != nil {
+		panic(fmt.Sprintf("inferring constant load tag: %v", err))
+	}
+	write(buf, int8(tag))
+	bw.writeConstValueByTag(buf, tag, value)
+}
+
 func (bw *birWriter) writeConstValueByTag(buf *bytes.Buffer, tag typeTag, value any) {
 	if cv, isConstValue := value.(bir.ConstValue); isConstValue {
 		bw.writeConstValueByTag(buf, tag, cv.Value)
@@ -581,6 +585,55 @@ func (bw *birWriter) writeConstValueByTag(buf *bytes.Buffer, tag typeTag, value 
 		write(buf, val)
 	case typeTagNil:
 		write(buf, int32(-1))
+	case typeTagMap:
+		m, ok := value.(*values.Map)
+		if !ok {
+			panic(fmt.Sprintf("expected map for tag %v, got %T", tag, value))
+		}
+		bw.writeType(buf, m.Type)
+		write(buf, m.IsReadonly())
+		keys := m.Keys()
+		write(buf, int64(len(keys)))
+		for _, key := range keys {
+			bw.writeStringCPEntry(buf, key)
+			value, _ := m.Get(key)
+			bw.writeConstValue(buf, value)
+		}
+	case typeTagList:
+		list, ok := value.(*values.List)
+		if !ok {
+			panic(fmt.Sprintf("expected list for tag %v, got %T", tag, value))
+		}
+		bw.writeType(buf, list.Type)
+		write(buf, list.IsReadonly())
+		write(buf, int64(list.Len()))
+		for i := 0; i < list.Len(); i++ {
+			bw.writeConstValue(buf, list.Get(i))
+		}
+	case typeTagTypedesc:
+		td, ok := value.(*values.TypeDesc)
+		if !ok {
+			panic(fmt.Sprintf("expected typedesc for tag %v, got %T", tag, value))
+		}
+		bw.writeType(buf, td.Type)
+		keys := make([]string, 0, len(td.Annotations))
+		for key := range td.Annotations {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		write(buf, int64(len(keys)))
+		for _, key := range keys {
+			bw.writeStringCPEntry(buf, key)
+			bw.writeConstValue(buf, td.Annotations[key])
+		}
+	case typeTagRuntimeRef:
+		ref, ok := value.(*values.RuntimeAnnotationValueRef)
+		if !ok {
+			panic(fmt.Sprintf("expected runtime annotation reference for tag %v, got %T", tag, value))
+		}
+		bw.writeStringCPEntry(buf, ref.Organization)
+		bw.writeStringCPEntry(buf, ref.Module)
+		bw.writeStringCPEntry(buf, ref.GlobalName)
 	default:
 		panic(fmt.Sprintf("unsupported tag for constant value: %v", tag))
 	}
@@ -603,6 +656,14 @@ func (bw *birWriter) inferTag(value any) (typeTag, error) {
 		return typeTagByte, nil
 	case *decimal.Decimal:
 		return typeTagDecimal, nil
+	case *values.Map:
+		return typeTagMap, nil
+	case *values.List:
+		return typeTagList, nil
+	case *values.TypeDesc:
+		return typeTagTypedesc, nil
+	case *values.RuntimeAnnotationValueRef:
+		return typeTagRuntimeRef, nil
 	case nil:
 		return typeTagNil, nil
 	default:

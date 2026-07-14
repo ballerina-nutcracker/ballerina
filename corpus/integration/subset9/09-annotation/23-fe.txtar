@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[INTERNAL_ERROR]: annotation attachment type is not supported
+  --> 23-fe.bal:19:1
+   |
+19 | @impossible // @error uninhabited repeated annotation value
+   | ^^^^^^^^^^^

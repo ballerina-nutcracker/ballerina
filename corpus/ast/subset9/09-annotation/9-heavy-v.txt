@@ -1,0 +1,180 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const BASE (
+    (value-type int)) (
+    (literal 100)))
+  (type-definition HeavyInfo
+    (record-type
+      (field id
+        (value-type int))
+      (field values
+        (array-type
+          (value-type int) dimensions: 1 ([
+          (literal 1024)])))
+      (field label optional
+        (value-type string))
+      (field prefix optional
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (annotation heavy
+    (user-defined-type HeavyInfo)
+    (attach-point type))
+  (type-definition T1
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (type-conversion-expr
+            (group-expr
+              (unary-expr +
+                (group-expr
+                  (binary-expr +
+                    (simple-var-ref BASE)
+                    (literal 1)))))
+            (value-type int)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))
+        (key-value
+          (literal label)
+          (string-template-literal
+            (template-string "heavy-")
+            (binary-expr +
+              (simple-var-ref BASE)
+              (literal 1))
+            (template-string "")))
+        (key-value
+          (literal prefix)
+          (list-constructor-expr
+            (simple-var-ref BASE)
+            (list-constructor-expr
+              (binary-expr +
+                (simple-var-ref BASE)
+                (literal 1)))))))
+    (value-type int))
+  (type-definition T2
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 2)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T3
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 3)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T4
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 4)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T5
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 5)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T6
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 6)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T7
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 7)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T8
+    (annotation-attachment heavy
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (binary-expr +
+            (simple-var-ref BASE)
+            (literal 8)))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (union-type
+            (user-defined-type HeavyInfo)
+            (value-type null))) (expr
+          (annot-access-expr heavy
+            (simple-var-ref T1)))))
+      (var-def
+        (variable last (type
+          (union-type
+            (user-defined-type HeavyInfo)
+            (value-type null))) (expr
+          (annot-access-expr heavy
+            (simple-var-ref T8)))))
+      (if
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref first)
+            (user-defined-type HeavyInfo))
+          (type-test-expr is
+            (simple-var-ref last)
+            (user-defined-type HeavyInfo)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access id
+                (simple-var-ref first)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access id
+                (simple-var-ref last)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (field-based-access values
+                  (simple-var-ref last))
+                (literal 1023)))))) ())
+      (block-stmt))))

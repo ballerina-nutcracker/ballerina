@@ -80,6 +80,10 @@ func (r *Registry) GetModule(pkgId *model.PackageID) *BIRModule {
 	return r.modules[moduleKey(pkgId)]
 }
 
+func (r *Registry) GetModuleByName(orgName, moduleName string) *BIRModule {
+	return r.modules[orgName+"/"+moduleName]
+}
+
 func (r *Registry) RegisterExternFunction(orgName string, moduleName string, funcName string, impl extern.NativeFunc) {
 	externFn := &ExternFunction{
 		Name: funcName,

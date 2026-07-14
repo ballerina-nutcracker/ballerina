@@ -24,6 +24,7 @@ import (
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
+	"ballerina-lang-go/values"
 )
 
 type CompilationStage string
@@ -125,11 +126,27 @@ func (c *CompilerContext) SymbolKind(symbol model.SymbolRef) model.SymbolKind {
 }
 
 func (c *CompilerContext) SymbolIsPublic(symbol model.SymbolRef) bool {
-	return c.GetSymbol(symbol).IsPublic()
+	return c.env.SymbolIsPublic(symbol)
+}
+
+func (c *CompilerContext) SymbolIsClass(symbol model.SymbolRef) bool {
+	return c.env.SymbolIsClass(symbol)
+}
+
+func (c *CompilerContext) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymbolMetadata, bool) {
+	return c.env.ValueSymbolMetadata(symbol)
 }
 
 func (c *CompilerContext) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
 	c.GetSymbol(symbol).SetType(ty)
+}
+
+func (c *CompilerContext) SetSymbolAnnotationValue(symbol model.SymbolRef, key string, value values.AnnotationValue) {
+	c.env.SetSymbolAnnotationValue(symbol, key, value)
+}
+
+func (c *CompilerContext) SymbolAnnotationValues(symbol model.SymbolRef) values.AnnotationValues {
+	return c.env.SymbolAnnotationValues(symbol)
 }
 
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {

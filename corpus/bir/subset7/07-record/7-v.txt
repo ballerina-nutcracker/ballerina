@@ -1,8 +1,8 @@
 module $anon.. v 0.0.0;
-c  10;
 $desugar$0() -> int{
   bb0 {
-    %0 = c;
+    %1 = ConstantLoad 10
+    %0 = %1;
     return;
   }
 }

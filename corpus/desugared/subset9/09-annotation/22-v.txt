@@ -1,0 +1,312 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (variable $annotation$0)
+  (variable $annotation$1)
+  (variable $annotation$2)
+  (variable $annotation$3)
+  (variable $annotation$4)
+  (variable runtimeInt (type
+    (value-type int)))
+  (variable runtimeFloat (type
+    (value-type float)))
+  (variable runtimeList (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))))
+  (annotation unaryInfo
+    (user-defined-type IntInfo)
+    (attach-point type))
+  (annotation logicalInfo
+    (user-defined-type BooleanInfo)
+    (attach-point type))
+  (annotation conversionInfo
+    (user-defined-type IntInfo)
+    (attach-point type))
+  (annotation listInfo
+    (user-defined-type IntListInfo)
+    (attach-point type))
+  (annotation templateInfo
+    (user-defined-type StringInfo)
+    (attach-point type))
+  (type-definition IntInfo
+    (record-type
+      (field value
+        (value-type int))))
+  (type-definition BooleanInfo
+    (record-type
+      (field value
+        (value-type boolean))))
+  (type-definition IntListInfo
+    (record-type
+      (field values
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (type-definition StringInfo
+    (record-type
+      (field value
+        (value-type string))))
+  (type-definition UnaryTarget
+    (annotation-attachment unaryInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (unary-expr -
+            (simple-var-ref runtimeInt)))))
+    (value-type int))
+  (type-definition LogicalTarget
+    (annotation-attachment logicalInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (binary-expr &&
+            (literal true)
+            (invocation runtimeBoolean ())))))
+    (value-type int))
+  (type-definition ConversionTarget
+    (annotation-attachment conversionInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (type-conversion-expr
+            (simple-var-ref runtimeFloat)
+            (value-type int)))))
+    (value-type int))
+  (type-definition ListTarget
+    (annotation-attachment listInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal values)
+          (simple-var-ref $desugar$0))))
+    (value-type int))
+  (type-definition TemplateTarget
+    (annotation-attachment templateInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (string-template-literal
+            (template-string "runtime-")
+            (simple-var-ref runtimeInt)
+            (template-string "")))))
+    (value-type int))
+  (type-definition StringAdditionTarget
+    (annotation-attachment templateInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (binary-expr +
+            (type-conversion-expr
+              (literal coverage-)
+              (value-type string))
+            (type-conversion-expr
+              (literal margin)
+              (value-type string))))))
+    (value-type int))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref runtimeInt)
+        (literal 5))
+      (assignment
+        (simple-var-ref $annotation$0)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (unary-expr -
+              (simple-var-ref runtimeInt)))))
+      (assignment
+        (simple-var-ref $annotation$1)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (binary-expr &&
+              (literal true)
+              (invocation runtimeBoolean ())))))
+      (assignment
+        (simple-var-ref runtimeFloat)
+        (literal 6))
+      (assignment
+        (simple-var-ref $annotation$2)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (type-conversion-expr
+              (simple-var-ref runtimeFloat)
+              (value-type int)))))
+      (assignment
+        (simple-var-ref runtimeList)
+        (list-constructor-expr
+          (literal 7)
+          (literal 8)))
+      (var-def
+        (variable $desugar$0 (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref $desugar$0)
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref runtimeList))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$3)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$0)
+              (index-based-access
+                (simple-var-ref $desugar$1)
+                (simple-var-ref $desugar$3)))))
+          (assignment
+            (simple-var-ref $desugar$3)
+            (binary-expr +
+              (simple-var-ref $desugar$3)
+              (numeric-literal 1)))))
+      (assignment
+        (simple-var-ref $annotation$3)
+        (mapping-constructor-expr
+          (key-value
+            (literal values)
+            (simple-var-ref $desugar$0))))
+      (assignment
+        (simple-var-ref $annotation$4)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (string-template-literal
+              (template-string "runtime-")
+              (simple-var-ref runtimeInt)
+              (template-string "")))))))
+  (function runtimeBoolean () (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (literal true))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable unaryValue (type
+          (union-type
+            (user-defined-type IntInfo)
+            (value-type null))) (expr
+          (annot-access-expr unaryInfo
+            (simple-var-ref UnaryTarget)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref unaryValue)
+          (user-defined-type IntInfo))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref unaryValue)
+                (literal value)))))) ())
+      (block-stmt
+        (var-def
+          (variable logicalValue (type
+            (union-type
+              (user-defined-type BooleanInfo)
+              (value-type null))) (expr
+            (annot-access-expr logicalInfo
+              (simple-var-ref LogicalTarget)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref logicalValue)
+            (user-defined-type BooleanInfo))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref logicalValue)
+                  (literal value)))))) ())
+        (block-stmt
+          (var-def
+            (variable conversionValue (type
+              (union-type
+                (user-defined-type IntInfo)
+                (value-type null))) (expr
+              (annot-access-expr conversionInfo
+                (simple-var-ref ConversionTarget)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref conversionValue)
+              (user-defined-type IntInfo))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref conversionValue)
+                    (literal value)))))) ())
+          (block-stmt
+            (var-def
+              (variable listValue (type
+                (union-type
+                  (user-defined-type IntListInfo)
+                  (value-type null))) (expr
+                (annot-access-expr listInfo
+                  (simple-var-ref ListTarget)))))
+            (if
+              (type-test-expr is
+                (simple-var-ref listValue)
+                (user-defined-type IntListInfo))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (index-based-access
+                        (simple-var-ref listValue)
+                        (literal values))
+                      (literal 0)))))
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (index-based-access
+                        (simple-var-ref listValue)
+                        (literal values))
+                      (literal 2)))))) ())
+            (block-stmt
+              (var-def
+                (variable templateValue (type
+                  (union-type
+                    (user-defined-type StringInfo)
+                    (value-type null))) (expr
+                  (annot-access-expr templateInfo
+                    (simple-var-ref TemplateTarget)))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref templateValue)
+                  (user-defined-type StringInfo))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (index-based-access
+                        (simple-var-ref templateValue)
+                        (literal value)))))) ())
+              (block-stmt
+                (var-def
+                  (variable stringAdditionValue (type
+                    (union-type
+                      (user-defined-type StringInfo)
+                      (value-type null))) (expr
+                    (annot-access-expr templateInfo
+                      (simple-var-ref StringAdditionTarget)))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref stringAdditionValue)
+                    (user-defined-type StringInfo))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (index-based-access
+                          (simple-var-ref stringAdditionValue)
+                          (literal value)))))) ())
+                (block-stmt)))))))))

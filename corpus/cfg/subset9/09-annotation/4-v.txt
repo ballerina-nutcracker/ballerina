@@ -1,0 +1,25 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable value (type
+        (union-type
+          (user-defined-type meta)
+          (value-type null))) (expr
+        (annot-access-expr meta
+          (simple-var-ref Target)))))
+    (type-test-expr is
+      (simple-var-ref value)
+      (user-defined-type meta))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access label
+          (simple-var-ref value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access code
+          (simple-var-ref value)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

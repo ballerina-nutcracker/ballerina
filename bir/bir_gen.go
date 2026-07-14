@@ -386,9 +386,10 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *BIRPackage
 	for _, globalVar := range ast.GlobalVars {
 		addGlobalVar(birPkg, TransformGlobalVariableDcl(genCtx, &globalVar))
 	}
-	for _, constant := range ast.Constants {
-		addGlobalVar(birPkg, transformConstantAsGlobal(genCtx, &constant))
-	}
+	// Constants are never added to the BIR package: a const-expr is evaluated at
+	// compile time, so a foldable constant is inlined at its use sites during
+	// desugar, and a constant that cannot be folded is a compile-time error
+	// (see resolveConstant). Either way no constant survives to BIR generation.
 	for i := range ast.ClassDefinitions {
 		transformClassDefinition(genCtx, &ast.ClassDefinitions[i], birPkg)
 	}
@@ -430,18 +431,6 @@ func TransformGlobalVariableDcl(ctx *Context, ast *ast.BLangSimpleVariable) BIRG
 	dcl.PkgId = ctx.packageID
 	dcl.Type = ctx.CompilerContext.SymbolType(ast.Symbol())
 	dcl.Flags = ast.Flags()
-	dcl.GlobalVarLookupKey = buildGlobalVarLookupKey(ctx.packageID, name)
-	return dcl
-}
-
-func transformConstantAsGlobal(ctx *Context, c *ast.BLangConstant) BIRGlobalVariableDcl {
-	name := model.Name(c.GetName().GetValue())
-	dcl := BIRGlobalVariableDcl{}
-	dcl.Pos = birLoc(ctx.CompilerContext.DiagnosticEnv(), c.GetPosition())
-	dcl.Name = name
-	dcl.PkgId = ctx.packageID
-	dcl.Type = ctx.CompilerContext.SymbolType(c.Symbol())
-	dcl.Flags = c.Flags()
 	dcl.GlobalVarLookupKey = buildGlobalVarLookupKey(ctx.packageID, name)
 	return dcl
 }
@@ -994,6 +983,8 @@ func handleActionOrExpression(ctx context, curBB *BIRBasicBlock, expr ast.BLangA
 		return typeTestExpression(ctx, curBB, expr)
 	case *ast.BLangMappingConstructorExpr:
 		return mappingConstructorExpression(ctx, curBB, expr)
+	case *ast.BLangAnnotAccessExpr:
+		return annotAccessExpression(ctx, curBB, expr)
 	case *ast.BLangErrorConstructorExpr:
 		return errorConstructorExpression(ctx, curBB, expr)
 	case *ast.BLangTrapExpr:
@@ -1029,8 +1020,24 @@ func handleActionOrExpression(ctx context, curBB *BIRBasicBlock, expr ast.BLangA
 
 func typedescExpression(ctx context, curBB *BIRBasicBlock, expr *ast.BLangTypedescExpr) expressionEffect {
 	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-	td := &values.TypeDesc{Type: expr.Constraint}
+	td := values.NewTypeDesc(expr.Constraint, expr.AnnotationValues)
 	curBB.Instructions = append(curBB.Instructions, NewConstantLoad(resultOperand, td, ctx.function().loc(expr.GetPosition())))
+	return expressionEffect{
+		result: resultOperand,
+		block:  curBB,
+	}
+}
+
+func annotAccessExpression(ctx context, curBB *BIRBasicBlock, expr *ast.BLangAnnotAccessExpr) expressionEffect {
+	pos := ctx.function().loc(expr.GetPosition())
+	receiver := handleActionOrExpression(ctx, curBB, expr.Expr)
+	curBB = receiver.block
+	symRef := expr.Symbol()
+	sym := ctx.getSymbol(symRef)
+	keyOp := ctx.addTempVar(semtypes.STRING)
+	curBB.Instructions = append(curBB.Instructions, NewConstantLoad(keyOp, model.AnnotationKey(ctx.symbolPackage(symRef), sym.Name()), pos))
+	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
+	curBB.Instructions = append(curBB.Instructions, NewBinaryOp(INSTRUCTION_KIND_ANNOT_ACCESS, resultOperand, receiver.result, keyOp, pos))
 	return expressionEffect{
 		result: resultOperand,
 		block:  curBB,
@@ -1713,6 +1720,15 @@ func simpleVariableReference(ctx context, curBB *BIRBasicBlock, expr *ast.BLangS
 
 	// Try function lookup
 	sym := ctx.getSymbol(symRef)
+	if sym.Kind() == model.SymbolKindType {
+		resultOperand := ctx.addTempVar(expr.GetDeterminedType())
+		td := values.NewTypeDesc(ctx.symbolType(symRef), ctx.compilerContext().SymbolAnnotationValues(symRef))
+		curBB.Instructions = append(curBB.Instructions, NewConstantLoad(resultOperand, td, ctx.function().loc(expr.GetPosition())))
+		return expressionEffect{
+			result: resultOperand,
+			block:  curBB,
+		}
+	}
 	if sym.Kind() == model.SymbolKindFunction {
 		funcType := ctx.symbolType(symRef)
 		lookupKey := buildFunctionLookupKeyFromSymbol(ctx.function().birCx, symRef)
@@ -1723,6 +1739,9 @@ func simpleVariableReference(ctx context, curBB *BIRBasicBlock, expr *ast.BLangS
 			result: resultOperand,
 			block:  curBB,
 		}
+	}
+	if sym.Kind() == model.SymbolKindConstant {
+		ctx.internalError("constant reference was not inlined during desugar", expr.GetPosition())
 	}
 
 	// Global variable reference

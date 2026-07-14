@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:details
+    %3 = .@ %1 %2;
+    value = %3;
+    %5 = value is {| arithmetic: int, bitwise: int, converted: float, fraction: decimal, label: string, logic: boolean, numbers: [int...], never... |}
+    %5 ? bb1 : bb9;
+  }
+  bb1 {
+    PushScopeFrame 29
+    %1 = ConstantLoad arithmetic
+    %0 = (1, value)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad bitwise
+    %4 = (1, value)[%5];
+    %6 = %4;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad logic
+    %8 = (1, value)[%9];
+    %10 = %8;
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad label
+    %12 = (1, value)[%13];
+    %14 = println(%12) -> bb5;
+  }
+  bb5 {
+    %16 = ConstantLoad 1
+    %18 = ConstantLoad numbers
+    %17 = (1, value)[%18];
+    %15 = %17[%16];
+    %19 = %15;
+    %20 = println(%19) -> bb6;
+  }
+  bb6 {
+    %22 = ConstantLoad converted
+    %21 = (1, value)[%22];
+    %23 = %21;
+    %24 = println(%23) -> bb7;
+  }
+  bb7 {
+    %26 = ConstantLoad fraction
+    %25 = (1, value)[%26];
+    %27 = %25;
+    %28 = println(%27) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

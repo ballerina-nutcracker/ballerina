@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation type must be a subtype of true|map<Cloneable>|map<Cloneable>[]
+  --> 10-e.bal:17:12
+   |
+17 | annotation int[] invalid on type; // @error
+   |            ^^^^^

@@ -111,15 +111,19 @@ type (
 		TypeInclusions []BType
 	}
 
+	bFieldAnnotationBase struct {
+		AnnAttachments []BLangAnnotationAttachment
+	}
+
 	// TODO: think how to align this with BLangMemberTypeDesc. Ideally this should be an inclusion on that
 	BField struct {
 		bLangNodeBase
-		Name           model.Name
-		Type           BType
-		flags          model.Flag
-		DefaultExpr    BLangExpression
-		DefaultFnRef   model.SymbolRef
-		AnnAttachments []BLangAnnotationAttachment
+		bFieldAnnotationBase
+		Name         model.Name
+		Type         BType
+		flags        model.Flag
+		DefaultExpr  BLangExpression
+		DefaultFnRef model.SymbolRef
 	}
 
 	bObjectFieldBase struct {
@@ -130,8 +134,8 @@ type (
 
 	BObjectField struct {
 		bObjectFieldBase
+		bFieldAnnotationBase
 		Ty BType
-		// TODO: add metadata
 	}
 
 	BMethodDecl struct {
@@ -327,7 +331,7 @@ func (b *BField) SetPublic()       { b.flags |= model.FlagPublic }
 func (b *BField) SetReadonly()     { b.flags |= model.FlagReadonly }
 func (b *BField) SetOptional()     { b.flags |= model.FlagOptional }
 
-func (b *BField) GetAnnotationAttachments() []AnnotationAttachmentNode {
+func (b *bFieldAnnotationBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
 	result := make([]AnnotationAttachmentNode, len(b.AnnAttachments))
 	for i := range b.AnnAttachments {
 		result[i] = &b.AnnAttachments[i]
@@ -335,7 +339,7 @@ func (b *BField) GetAnnotationAttachments() []AnnotationAttachmentNode {
 	return result
 }
 
-func (b *BField) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
+func (b *bFieldAnnotationBase) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
 	b.AnnAttachments = append(b.AnnAttachments, *annAttachment.(*BLangAnnotationAttachment))
 }
 

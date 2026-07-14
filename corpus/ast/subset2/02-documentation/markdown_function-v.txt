@@ -4,7 +4,21 @@
     (variable path (type
       (value-type string)) (expr
       (literal )))
-    (function open (
+    (function open
+      (md-doc
+        (doc-lines
+          (md-doc-line "Gets a access parameter value (`true` or `false`) for a given key. Please note that #foo will always be bigger than #bar.")
+          (md-doc-line "Example:")
+          (md-doc-line "`SymbolEnv pkgEnv = symbolEnter.packageEnvs.get(pkgNode.symbol);`"))
+        (params
+          (md-param-doc (param-name accessMode)
+            (doc-lines
+              "read or write mode")))
+        (return-param
+          (md-return-param-doc
+            (doc-lines
+              "success or not"))
+        )) (
       (variable accessMode (type
         (value-type string)))) (
       (value-type boolean))

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-fatal[UNIMPLEMENTED_ERROR]: inline distinct object type definitions are not supported
+fatal[UNIMPLEMENTED_ERROR]: anonymous distinct types not supported
   --> inline-distinct-object-fe.bal:18:5
    |
 18 |     distinct object { // @error
