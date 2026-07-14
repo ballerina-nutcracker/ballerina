@@ -35,36 +35,16 @@ func stringLength(args []values.BalValue) (values.BalValue, error) {
 }
 
 func stringToBytes(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	return byteSliceToList(byteArrTy, ctx, []byte(args[0].(string))), nil
+	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, []byte(args[0].(string))), nil
 }
 
 func stringFromBytes(args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
-	data, _ := listToByteSlice(list)
+	data := list.ToByteSlice()
 	if !utf8.Valid(data) {
 		return values.NewErrorWithMessage("invalid UTF-8 byte array"), nil
 	}
 	return string(data), nil
-}
-
-func listToByteSlice(list *values.List) ([]byte, bool) {
-	b := make([]byte, list.Len())
-	for i := 0; i < list.Len(); i++ {
-		n, ok := list.Get(i).(int64)
-		if !ok || n < 0 || n > 255 {
-			return nil, false
-		}
-		b[i] = byte(n)
-	}
-	return b, true
-}
-
-func byteSliceToList(byteArrTy semtypes.SemType, ctx *extern.Context, data []byte) *values.List {
-	items := make([]values.BalValue, len(data))
-	for i, b := range data {
-		items[i] = int64(b)
-	}
-	return values.NewList(byteArrTy, semtypes.ToListAtomicType(ctx.TypeCtx, byteArrTy), false, nil, 0, items)
 }
 
 func initStringModule(rt *runtime.Runtime) {

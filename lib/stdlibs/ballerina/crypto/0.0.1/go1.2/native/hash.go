@@ -52,7 +52,7 @@ func registerHashFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "crc32b",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
 			sum := crc32.ChecksumIEEE(input)
 			return fmt.Sprintf("%08X", sum), nil
 		})
@@ -62,13 +62,13 @@ func registerHashFunctions(rt *runtime.Runtime, types cryptoTypes) {
 // Salt (args[1]) is written first, then input (args[0]) — matching jBallerina.
 func hashFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		input := listToBytes(args[0].(*values.List))
+		input := args[0].(*values.List).ToByteSlice()
 		h := newHash()
 		if args[1] != nil {
-			salt := listToBytes(args[1].(*values.List))
+			salt := args[1].(*values.List).ToByteSlice()
 			h.Write(salt)
 		}
 		h.Write(input)
-		return bytesToList(types.byteArrTy, ctx, h.Sum(nil)), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, h.Sum(nil)), nil
 	}
 }

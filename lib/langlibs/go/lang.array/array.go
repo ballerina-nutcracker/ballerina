@@ -38,13 +38,13 @@ func arrayLength(args []values.BalValue) (values.BalValue, error) {
 
 func arrayToBase64(args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
-	data, _ := listToByteSlice(list)
+	data := list.ToByteSlice()
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
 func arrayToBase16(args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
-	data, _ := listToByteSlice(list)
+	data := list.ToByteSlice()
 	return hex.EncodeToString(data), nil
 }
 
@@ -54,7 +54,7 @@ func arrayFromBase64(byteArrTy semtypes.SemType, ctx *extern.Context, args []val
 	if err != nil {
 		return values.NewErrorWithMessage("failed to decode base64 string"), nil
 	}
-	return byteSliceToList(byteArrTy, ctx, data), nil
+	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, data), nil
 }
 
 func arrayFromBase16(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -63,33 +63,13 @@ func arrayFromBase16(byteArrTy semtypes.SemType, ctx *extern.Context, args []val
 	if err != nil {
 		return values.NewErrorWithMessage("failed to decode base16 string"), nil
 	}
-	return byteSliceToList(byteArrTy, ctx, data), nil
+	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, data), nil
 }
 
 func arrayPush(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
 	list.Append(ctx.TypeCtx, args[1:]...)
 	return nil, nil
-}
-
-func byteSliceToList(byteArrTy semtypes.SemType, ctx *extern.Context, data []byte) *values.List {
-	items := make([]values.BalValue, len(data))
-	for i, b := range data {
-		items[i] = int64(b)
-	}
-	return values.NewList(byteArrTy, semtypes.ToListAtomicType(ctx.TypeCtx, byteArrTy), false, nil, 0, items)
-}
-
-func listToByteSlice(list *values.List) ([]byte, bool) {
-	b := make([]byte, list.Len())
-	for i := 0; i < list.Len(); i++ {
-		n, ok := list.Get(i).(int64)
-		if !ok || n < 0 || n > 255 {
-			return nil, false
-		}
-		b[i] = byte(n)
-	}
-	return b, true
 }
 
 func initArrayModule(rt *runtime.Runtime) {

@@ -36,7 +36,7 @@ import (
 func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "encryptRsaEcb",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
 			keyMap, _ := args[1].(*values.Map)
 			padding, _ := args[2].(string)
 			oaepHash := oaepHashForPadding(padding)
@@ -52,7 +52,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				if err != nil {
 					return cryptoError(fmt.Sprintf("Error occurred while RSA encrypt: %s", err.Error())), nil
 				}
-				return bytesToList(types.byteArrTy, ctx, out), nil
+				return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 			case *rsa.PrivateKey:
 				pub := &k.PublicKey
 				var out []byte
@@ -65,7 +65,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				if err != nil {
 					return cryptoError(fmt.Sprintf("Error occurred while RSA encrypt: %s", err.Error())), nil
 				}
-				return bytesToList(types.byteArrTy, ctx, out), nil
+				return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 			default:
 				return cryptoError("Uninitialized public key"), nil
 			}
@@ -73,7 +73,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decryptRsaEcb",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
 			keyMap, _ := args[1].(*values.Map)
 			padding, _ := args[2].(string)
 			oaepHash := oaepHashForPadding(padding)
@@ -89,7 +89,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				if err != nil {
 					return cryptoError(fmt.Sprintf("Error occurred while RSA decrypt: %s", err.Error())), nil
 				}
-				return bytesToList(types.byteArrTy, ctx, out), nil
+				return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 			default:
 				return cryptoError("Uninitialized private key"), nil
 			}
@@ -112,7 +112,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "signRsaSsaPss256",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
 			keyMap, _ := args[1].(*values.Map)
 			privKey, ok := keyDataOf(keyMap).(*rsa.PrivateKey)
 			if !ok {
@@ -125,7 +125,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while calculating signature: %s", err.Error())), nil
 			}
-			return bytesToList(types.byteArrTy, ctx, sig), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, sig), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "signSha256withEcdsa",
@@ -151,8 +151,8 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "verifyRsaSsaPss256Signature",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			data := listToBytes(args[0].(*values.List))
-			sig := listToBytes(args[1].(*values.List))
+			data := args[0].(*values.List).ToByteSlice()
+			sig := args[1].(*values.List).ToByteSlice()
 			keyMap, _ := args[2].(*values.Map)
 			pubKey, ok := keyDataOf(keyMap).(*rsa.PublicKey)
 			if !ok {
@@ -177,7 +177,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 func rsaSignFunc(hashID crypto.Hash, newHash func() hash.Hash, types cryptoTypes) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		input := listToBytes(args[0].(*values.List))
+		input := args[0].(*values.List).ToByteSlice()
 		keyMap, _ := args[1].(*values.Map)
 		privKey, ok := keyDataOf(keyMap).(*rsa.PrivateKey)
 		if !ok {
@@ -189,14 +189,14 @@ func rsaSignFunc(hashID crypto.Hash, newHash func() hash.Hash, types cryptoTypes
 		if err != nil {
 			return cryptoError(fmt.Sprintf("Error occurred while calculating signature: %s", err.Error())), nil
 		}
-		return bytesToList(types.byteArrTy, ctx, sig), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, sig), nil
 	}
 }
 
 func rsaVerifyFunc(hashID crypto.Hash, newHash func() hash.Hash) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		data := listToBytes(args[0].(*values.List))
-		sig := listToBytes(args[1].(*values.List))
+		data := args[0].(*values.List).ToByteSlice()
+		sig := args[1].(*values.List).ToByteSlice()
 		keyMap, _ := args[2].(*values.Map)
 		pubKey, ok := keyDataOf(keyMap).(*rsa.PublicKey)
 		if !ok {
@@ -214,7 +214,7 @@ func rsaVerifyFunc(hashID crypto.Hash, newHash func() hash.Hash) extern.NativeFu
 
 func ecdsaSignFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		input := listToBytes(args[0].(*values.List))
+		input := args[0].(*values.List).ToByteSlice()
 		keyMap, _ := args[1].(*values.Map)
 		privKey, ok := keyDataOf(keyMap).(*ecdsa.PrivateKey)
 		if !ok {
@@ -226,14 +226,14 @@ func ecdsaSignFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFun
 		if err != nil {
 			return cryptoError(fmt.Sprintf("Error occurred while calculating signature: %s", err.Error())), nil
 		}
-		return bytesToList(types.byteArrTy, ctx, sig), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, sig), nil
 	}
 }
 
 func ecdsaVerifyFunc(newHash func() hash.Hash) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		data := listToBytes(args[0].(*values.List))
-		sig := listToBytes(args[1].(*values.List))
+		data := args[0].(*values.List).ToByteSlice()
+		sig := args[1].(*values.List).ToByteSlice()
 		keyMap, _ := args[2].(*values.Map)
 		pubKey, ok := keyDataOf(keyMap).(*ecdsa.PublicKey)
 		if !ok {
