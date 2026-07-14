@@ -1,0 +1,30 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable n (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 17))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+    (assignment
+      (simple-var-ref n)
+      (literal <nil>))
+    (binary-expr ==
+      (simple-var-ref n)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal null))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal not null))))
+  )
+)

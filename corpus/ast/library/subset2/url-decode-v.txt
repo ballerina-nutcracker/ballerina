@@ -1,0 +1,43 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina url (as url))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable decoded (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation url decode (
+              (literal param1%3Dhttp%3A%2F%2Fxyz.com%2F%3Fa%3D12%26b%3D55)
+              (literal UTF-8)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref decoded))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url decode (
+              (literal hello%20world)
+              (literal UTF-8)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url decode (
+              (literal hello+world)
+              (literal UTF-8)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url decode (
+              (literal a%2Ab)
+              (literal UTF-8)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url decode (
+              (literal a%7Eb)
+              (literal UTF-8))))))))))

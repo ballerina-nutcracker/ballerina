@@ -1,0 +1,54 @@
+module $anon.. v 0.0.0;
+foo(int) -> never{
+  bb0 {
+    %3 = a;
+    %4 = ConstantLoad 5
+    %5 = %4;
+    %2 = < %3 %5;
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad less that five
+    %1 = newError error(%0)
+    (1, %6) = %1;
+    PopScopeFrame
+    panic %6;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad greater than five
+    %1 = newError error(%0)
+    (1, %7) = %1;
+    PopScopeFrame
+    panic %7;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 10
+    %3 = %2;
+    %4 = foo(%3) -> bb2;
+  }
+  bb2 {
+    %1 = %4;
+    GOTO bb3;
+  }
+  bb3 {
+    e = %1;
+    %6 = println(e) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got false
+  --> int4-e.bal:19:19
+   |
+19 |     int[] v = [1, false, 3]; // @error
+   |                   ^^^^^

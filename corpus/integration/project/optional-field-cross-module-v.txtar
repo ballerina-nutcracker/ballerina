@@ -1,0 +1,12 @@
+-- stdout --
+{"foo":10,"bar":10}
+{"bar":null}
+7
+after missing
+{"bar":10}
+{"bar":null}
+{"foo":10,"bar":20}
+{"bar":20}
+{"bar":10}
+
+-- stderr --

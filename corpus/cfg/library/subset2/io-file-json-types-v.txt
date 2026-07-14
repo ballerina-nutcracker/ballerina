@@ -1,0 +1,85 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable floatPath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_json_float.json))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteJson (
+          (simple-var-ref floatPath)
+          (literal 3.14)))))
+    (var-def
+      (variable floatBack (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation io fileReadJson (
+            (simple-var-ref floatPath)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref floatBack))))
+    (var-def
+      (variable decimalPath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_json_decimal.json))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteJson (
+          (simple-var-ref decimalPath)
+          (literal 2.5)))))
+    (var-def
+      (variable decimalBack (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation io fileReadJson (
+            (simple-var-ref decimalPath)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decimalBack))))
+    (var-def
+      (variable intPath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_json_int.json))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteJson (
+          (simple-var-ref intPath)
+          (literal 42)))))
+    (var-def
+      (variable intBack (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation io fileReadJson (
+            (simple-var-ref intPath)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref intBack))))
+    (var-def
+      (variable arrPath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_json_arr.json))))
+    (var-def
+      (variable arr (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2.5)
+          (literal true)
+          (literal <nil>)
+          (literal x)))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteJson (
+          (simple-var-ref arrPath)
+          (simple-var-ref arr)))))
+    (var-def
+      (variable arrBack (type
+        (builtin-ref-type json)) (expr
+        (checked-expr
+          (invocation io fileReadJson (
+            (simple-var-ref arrPath)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref arrBack))))
+  )
+)

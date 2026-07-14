@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 9223372036854775807
+    %3 = unknown %2;
+    %4 = %3;
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %1 = - %4 %6;
+    INT_MIN = %1;
+    %9 = INT_MIN;
+    %10 = ConstantLoad 1
+    %11 = unknown %10;
+    %12 = %11;
+    %8 = / %9 %12;
+    INT_MIN = %8;
+    return;
+  }
+}

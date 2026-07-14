@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3
+    count = %1;
+    GOTO bb1;
+  }
+  bb1 {
+    %3 = count is int
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 7
+    i = (1, count);
+    %1 = i;
+    %2 = println(%1) -> bb4;
+  }
+  bb3 {
+    %4 = count is int
+    %4 ? bb8 : bb10;
+  }
+  bb4 {
+    %4 = (1, count);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = > %4 %6;
+    %3 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 4
+    %1 = (2, count);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = - %1 %3;
+    (2, count) = %0;
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (2, count) = %0;
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb8 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unreached
+    %1 = println(%0) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

@@ -1,0 +1,59 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r1 (type
+        (user-defined-type R1)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal d)
+            (literal 1.2E+34))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r1))))
+    (var-def
+      (variable r2 (type
+        (user-defined-type R2)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal d)
+            (literal 2))
+          (key-value
+            (literal d1)
+            (literal 34))
+          (key-value
+            (literal d2)
+            (literal 1.2))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r2))))
+    (assignment
+      (index-based-access
+        (simple-var-ref r2)
+        (literal d3))
+      (literal 1.2E+3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r2))))
+    (var-def
+      (variable r3 (type
+        (user-defined-type R3)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal d)
+            (mapping-constructor-expr
+              (key-value
+                (literal d1)
+                (literal 23))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r3))))
+    (assignment
+      (field-based-access d1
+        (field-based-access d
+          (simple-var-ref r3)))
+      (literal 23.1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r3))))
+  )
+)

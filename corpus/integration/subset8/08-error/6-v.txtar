@@ -1,0 +1,4 @@
+-- stdout --
+error("negative")
+8
+-- stderr --

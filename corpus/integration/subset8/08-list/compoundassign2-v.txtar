@@ -1,0 +1,12 @@
+-- stdout --
+1
+100
+-9900
+hello world
+func1
+5
+3
+func1
+func2
+5
+-- stderr --

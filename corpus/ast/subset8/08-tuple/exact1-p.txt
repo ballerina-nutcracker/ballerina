@@ -1,0 +1,37 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (tuple-type
+            (tuple-type
+              (value-type int))
+            (tuple-type
+              (union-type
+                (value-type int)
+                (value-type null))))) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 17))
+            (list-constructor-expr
+              (literal 21))))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable v (type
+          (tuple-type
+            (union-type
+              (value-type int)
+              (value-type null)))) (expr
+          (index-based-access
+            (simple-var-ref t)
+            (simple-var-ref i)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref v)
+          (literal 0))
+        (literal <nil>)))))

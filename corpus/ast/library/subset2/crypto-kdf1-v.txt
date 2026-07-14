@@ -1,0 +1,120 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina crypto (as crypto))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable input (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 104)
+            (literal 101)
+            (literal 108)
+            (literal 108)
+            (literal 111)))))
+      (var-def
+        (variable salt (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 115)
+            (literal 97)
+            (literal 108)
+            (literal 116)))))
+      (var-def
+        (variable info (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 105)
+            (literal 110)
+            (literal 102)
+            (literal 111)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (group-expr
+              (checked-expr
+                (invocation crypto hkdfSha256 (
+                  (simple-var-ref input)
+                  (literal 32))))) ()))))
+      (var-def
+        (variable d1 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation crypto hkdfSha256 (
+              (simple-var-ref input)
+              (literal 64)
+              (simple-var-ref salt)
+              (simple-var-ref info)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref d1) ()))))
+      (var-def
+        (variable d2 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation crypto hkdfSha256 (
+              (simple-var-ref input)
+              (literal 64)
+              (simple-var-ref salt)
+              (simple-var-ref info)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (simple-var-ref d1)
+            (simple-var-ref d2))))))
+      (var-def
+        (variable other (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation crypto hkdfSha256 (
+              (simple-var-ref input)
+              (literal 64)
+              (simple-var-ref info)
+              (simple-var-ref salt)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (simple-var-ref d1)
+            (simple-var-ref other))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (literal abc123)
+            (literal abc123))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto equalConstantTime (
+            (literal abc123)
+            (literal def456))))))
+      (var-def
+        (variable badLen (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type crypto Error))) (expr
+          (invocation crypto hkdfSha256 (
+            (simple-var-ref input)
+            (literal 0)
+            (simple-var-ref salt)
+            (simple-var-ref info))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badLen)
+            (user-defined-type crypto Error))))))))

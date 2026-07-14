@@ -201,6 +201,57 @@
               (value-type int))
             (error-type))) (expr
           (simple-var-ref $desugar$9))))
+      (var-def
+        (variable $desugar$14 (expr
+          (list-constructor-expr
+            (literal 1)))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$14))))))
+      (var-def
+        (variable $desugar$16 (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable _))
+      (var-def
+        (variable $desugar$17 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$17)
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (assignment
+            (simple-var-ref _)
+            (index-based-access
+              (simple-var-ref $desugar$14)
+              (simple-var-ref $desugar$17)))
+          (var-def
+            (variable $desugar$18 (expr
+              (list-constructor-expr
+                (literal k)
+                (literal 1)))))
+          (assignment
+            (index-based-access
+              (simple-var-ref $desugar$16)
+              (index-based-access
+                (simple-var-ref $desugar$18)
+                (numeric-literal 0)))
+            (index-based-access
+              (simple-var-ref $desugar$18)
+              (numeric-literal 1)))
+          (assignment
+            (simple-var-ref $desugar$17)
+            (binary-expr +
+              (simple-var-ref $desugar$17)
+              (numeric-literal 1)))))
+      (var-def
+        (variable contextualMap (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type decimal))) (expr
+          (simple-var-ref $desugar$16))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref out1))))
@@ -211,4 +262,11 @@
         (invocation io println (
           (type-test-expr is
             (simple-var-ref out2)
-            (error-type))))))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref contextualMap)
+              (literal k))
+            (value-type decimal))))))))

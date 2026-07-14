@@ -16,8 +16,6 @@
 package parser
 
 import (
-	"fmt"
-	"os"
 	"slices"
 	"strings"
 
@@ -8804,8 +8802,6 @@ func (b *BallerinaParser) parseTupleTypeDesc() tree.STNode {
 	memberTypeDesc := b.parseTupleMemberTypeDescList()
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
-	openBracket = b.cloneWithDiagnosticIfListEmpty(memberTypeDesc, openBracket,
-		&common.ERROR_MISSING_TYPE_DESC)
 	return tree.CreateTupleTypeDescriptorNode(openBracket, memberTypeDesc, closeBracket)
 }
 
@@ -12583,6 +12579,11 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrEx
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 		return b.parseTypedBindingPatternTypeRhs(typeDesc, context)
 	case common.PIPE_TOKEN, common.BITWISE_AND_TOKEN:
+		if (!isTypedBindingPattern) && allowAssignment && (b.peekN(2).Kind() == common.EQUAL_TOKEN) && b.isValidLVExpr(typeDescOrExpr) {
+			keyExpr := b.getKeyExpr(member)
+			typeDescOrExpr = b.getExpression(typeDescOrExpr)
+			return tree.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
+		}
 		return b.parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr, openBracket, member, closeBracket,
 			isTypedBindingPattern)
 	case common.IN_KEYWORD:
@@ -14673,28 +14674,14 @@ func (b *BallerinaParser) isSpecialMethodName(token tree.STToken) bool {
 	return (((token.Kind() == common.MAP_KEYWORD) || (token.Kind() == common.START_KEYWORD)) || (token.Kind() == common.JOIN_KEYWORD))
 }
 
-// TODO: clean this interface we should only need compiler context.
-func GetSyntaxTree(ctx *context.CompilerContext, fileName string) (*tree.SyntaxTree, error) {
-	content, err := os.ReadFile(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file %s: %v", fileName, err)
-	}
-
-	// Create CharReader from file content
-	reader := text.CharReaderFromText(string(content))
-
-	// Create Lexer
+// GetSyntaxTree parses content into a syntax tree, attributing it to fileName
+// (used for diagnostics and the syntax tree's text document).
+func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*tree.SyntaxTree, error) {
+	reader := text.CharReaderFromText(content)
 	lexer := NewLexer(reader)
-
-	// Create TokenReader from Lexer
 	tokenReader := CreateTokenReader(lexer)
-
-	// Create Parser from TokenReader
 	ballerinaParser := NewBallerinaParserFromTokenReader(tokenReader)
-
-	// Parse the entire file (parser will internally call tokenizer)
 	rootNode := ballerinaParser.Parse().(*tree.STModulePart)
-
 	moduleNode := tree.CreateUnlinkedFacade[*tree.STModulePart, *tree.ModulePart](rootNode)
 	syntaxTree := tree.NewSyntaxTreeFromNodeTextDocument(moduleNode, nil, fileName, false)
 	if syntaxTree.HasDiagnostics() {

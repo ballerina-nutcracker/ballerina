@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    s = %1;
+    v = s;
+    %4 = v is -1|1
+    %5 = %4;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 0
+    v = %7;
+    %8 = v is -1|1
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad hello
+    v = %11;
+    %12 = v is -1|1
+    %13 = %12;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

@@ -1,0 +1,31 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type float))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref v))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 2.5))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1.5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 0.5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 17))))))
+  )
+)

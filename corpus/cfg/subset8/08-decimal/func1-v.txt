@@ -1,0 +1,18 @@
+(foo
+  (bb0 () ()
+    (return
+      (simple-var-ref d))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (value-type decimal)) (expr
+        (invocation foo (
+          (literal 23.3))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+  )
+)

@@ -1,0 +1,17 @@
+(foo
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+  )
+)

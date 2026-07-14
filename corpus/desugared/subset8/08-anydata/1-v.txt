@@ -1,0 +1,30 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable val (type
+          (value-type anydata)) (expr
+          (literal <nil>))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref val))))
+      (assignment
+        (simple-var-ref val)
+        (literal 5))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref val))))
+      (assignment
+        (simple-var-ref val)
+        (literal 7.5))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref val))))
+      (assignment
+        (simple-var-ref val)
+        (literal test))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref val)))))))

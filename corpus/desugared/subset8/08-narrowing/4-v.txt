@@ -1,0 +1,32 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation foo (
+          (literal 1))))
+      (expression-stmt
+        (invocation foo (
+          (literal true))))))
+  (function foo (
+    (variable x (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (value-type any)) (expr
+          (simple-var-ref x))))
+      (if
+        (type-test-expr is
+          (simple-var-ref n)
+          (value-type int))
+        (block-stmt
+          (assignment
+            (simple-var-ref n)
+            (literal int))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref n))))))))

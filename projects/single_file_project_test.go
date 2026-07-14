@@ -321,3 +321,25 @@ func TestProjectDuplicate(t *testing.T) {
 	// Verify compilations are different instances
 	assert.NotSame(originalCompilation, duplicatedCompilation)
 }
+
+// TestSingleFile_CompilationDiagnosticUnresolvedImport verifies the
+// main-with-error.bal fixture (which imports an unknown module) reports
+// compilation diagnostics.
+func TestSingleFile_CompilationDiagnosticUnresolvedImport(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	absPath, err := filepath.Abs(filepath.Join("testdata", "single-file", "main-with-error.bal"))
+	require.NoError(err)
+
+	result, err := loadProject(absPath)
+	require.NoError(err)
+
+	pkg := result.Project().CurrentPackage()
+	require.NotNil(pkg)
+
+	diags := pkg.Compilation().DiagnosticResult()
+	assert.True(diags.HasErrors(),
+		"expected compilation errors for unresolved import, got: %v",
+		diagnosticMessages(diags))
+}

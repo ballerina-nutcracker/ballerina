@@ -1,0 +1,21 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type string)) (expr
+          (literal hi))))
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<p:tag xmlns:p=\"https://example.com/a&amp;b&quot;c\">")
+            (invocation lang.__internal escapeXMLContent (
+              (simple-var-ref v)))
+            (template-string "</p:tag>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

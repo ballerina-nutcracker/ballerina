@@ -16,10 +16,10 @@
               (value-type int)))) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref a)
+              (literal a)
               (literal a))
             (key-value
-              (simple-var-ref b)
+              (literal b)
               (literal b))))))
       (expression-stmt
         (invocation io println (

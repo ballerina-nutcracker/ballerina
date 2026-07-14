@@ -1,0 +1,104 @@
+(func
+  (bb0 () (bb1 bb7)
+    (var-def
+      (variable x (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type boolean))
+          (value-type float))) (expr
+        (literal 0.1))))
+    (var-def
+      (variable y (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type boolean))
+          (value-type float))) (expr
+        (literal true))))
+    (binary-expr ==
+      (field-based-access b
+        (simple-var-ref r))
+      (literal true))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (type-test-expr is
+      (simple-var-ref x)
+      (union-type
+        (value-type int)
+        (value-type boolean)))
+  )
+  (bb2 (bb1) ()
+    (return
+      (literal <nil>))
+  )
+  (bb3 (bb1) (bb4 bb5)
+    (type-test-expr is
+      (simple-var-ref y)
+      (union-type
+        (value-type float)
+        (value-type int)))
+  )
+  (bb4 (bb3) ()
+    (return
+      (literal <nil>))
+  )
+  (bb5 (bb3) (bb6))
+  (bb6 (bb5 bb11) ()
+    (var-def
+      (variable fi (type
+        (union-type
+          (value-type float)
+          (value-type int))) (expr
+        (simple-var-ref x))))
+    (var-def
+      (variable bi (type
+        (union-type
+          (value-type boolean)
+          (value-type float))) (expr
+        (simple-var-ref y))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fi))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bi))))
+  )
+  (bb7 (bb0) (bb8 bb9)
+    (type-test-expr is
+      (simple-var-ref x)
+      (union-type
+        (value-type boolean)
+        (value-type float)))
+  )
+  (bb8 (bb7) ()
+    (return
+      (literal <nil>))
+  )
+  (bb9 (bb7) (bb10 bb11)
+    (type-test-expr is
+      (simple-var-ref y)
+      (union-type
+        (value-type boolean)
+        (value-type int)))
+  )
+  (bb10 (bb9) ()
+    (return
+      (literal <nil>))
+  )
+  (bb11 (bb9) (bb6))
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal b)
+            (literal true))))))
+    (expression-stmt
+      (invocation func (
+        (simple-var-ref r))))
+  )
+)

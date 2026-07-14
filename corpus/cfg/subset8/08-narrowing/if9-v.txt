@@ -1,0 +1,63 @@
+(func
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable x (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type boolean))
+          (value-type float))) (expr
+        (literal 0.1))))
+    (binary-expr ==
+      (field-based-access b
+        (simple-var-ref r))
+      (literal true))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb2 (bb1) ()
+    (return
+      (literal <nil>))
+  )
+  (bb3 (bb1) (bb4)
+    (var-def
+      (variable bf1 (type
+        (union-type
+          (value-type boolean)
+          (value-type float))) (expr
+        (simple-var-ref x))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bf1))))
+  )
+  (bb4 (bb3 bb0) ()
+    (var-def
+      (variable bf2 (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type boolean))
+          (value-type float))) (expr
+        (simple-var-ref x))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bf2))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal b)
+            (literal true))))))
+    (expression-stmt
+      (invocation func (
+        (simple-var-ref r))))
+  )
+)

@@ -1,0 +1,19 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal <!DOCTYPE x>))))
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-template-literal
+          (template-string "")
+          (xml-template-content-insertion
+            (simple-var-ref s))
+          (template-string "<a/>")))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

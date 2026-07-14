@@ -1,0 +1,36 @@
+(foo
+  (bb0 () (bb1 bb3)
+    (type-test-expr !is
+      (simple-var-ref x)
+      (value-type string))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal not string))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal string))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type any)) (expr
+        (literal hello))))
+    (var-def
+      (variable i (type
+        (value-type any)) (expr
+        (literal 3))))
+    (expression-stmt
+      (invocation foo (
+        (simple-var-ref s))))
+    (expression-stmt
+      (invocation foo (
+        (simple-var-ref i))))
+  )
+)

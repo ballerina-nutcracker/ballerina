@@ -17,12 +17,13 @@
 package semantics
 
 import (
+	"sync"
+
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
-	"sync"
 )
 
 func AnalyzeCFG(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
@@ -60,38 +61,53 @@ func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
 // This is now a private function called by AnalyzeCFG.
 func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
+	spawn := func(n invokableNode) {
+		wg.Go(func() { analyzeInvokableExplicitReturn(ctx, n, cfg) })
+	}
 	for i := range pkg.Functions {
-		fn := &pkg.Functions[i]
-		wg.Add(1)
-		go func(f *ast.BLangFunction) {
-			defer wg.Done()
-			analyzeFunctionExplicitReturn(ctx, f, cfg)
-		}(fn)
+		spawn(&pkg.Functions[i])
+	}
+	spawnObjectMembers := func(methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
+		for _, method := range methods {
+			spawn(method)
+		}
+		for _, rm := range resourceMethods {
+			spawn(rm)
+		}
 	}
 	for i := range pkg.ClassDefinitions {
-		for _, method := range pkg.ClassDefinitions[i].Methods {
-			wg.Add(1)
-			go func(f *ast.BLangFunction) {
-				defer wg.Done()
-				analyzeFunctionExplicitReturn(ctx, f, cfg)
-			}(method)
-		}
+		c := &pkg.ClassDefinitions[i]
+		spawnObjectMembers(c.Methods, c.ResourceMethods)
+	}
+	for i := range pkg.Services {
+		s := &pkg.Services[i]
+		spawnObjectMembers(s.Methods, s.ResourceMethods)
 	}
 	wg.Wait()
 }
 
-func analyzeFunctionExplicitReturn(ctx *context.CompilerContext, fn *ast.BLangFunction, cfg *PackageCFG) {
+type invokableNode interface {
+	ast.BLangNode
+	IsNative() bool
+	Symbol() model.SymbolRef
+}
+
+func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG) {
 	if fn.IsNative() {
 		return
 	}
 	sym := ctx.GetSymbol(fn.Symbol()).(model.FunctionSymbol)
 	retType := sym.Signature().ReturnType
-	if semtypes.IsSubtypeSimple(retType, semtypes.NIL) {
+	if semtypes.ContainsBasicType(retType, semtypes.NIL) {
 		return
 	}
 
 	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 	if !ok {
+		return
+	}
+	if semtypes.IsNever(retType) {
+		analyzeFunctionNeverReturn(ctx, fn, fnCfg)
 		return
 	}
 
@@ -107,16 +123,46 @@ func analyzeFunctionExplicitReturn(ctx *context.CompilerContext, fn *ast.BLangFu
 	}
 }
 
+func analyzeFunctionNeverReturn(ctx *context.CompilerContext, fn invokableNode, fnCfg functionCFG) {
+	for _, bb := range fnCfg.bbs {
+		if !bb.isTerminal() || !bb.isReachable() {
+			continue
+		}
+		if terminalBlockHasPanic(bb) {
+			continue
+		}
+		ctx.SemanticError("expected panic", positionForMissingReturn(bb, fn))
+	}
+}
+
 func terminalBlockHasReturnOrPanic(bb basicBlock) bool {
 	if len(bb.nodes) == 0 {
 		return false
 	}
 	last := bb.nodes[len(bb.nodes)-1]
-	k := last.GetKind()
-	return k == model.NodeKind_RETURN || k == model.NodeKind_PANIC
+	switch last.(type) {
+	case *ast.BLangReturn, *ast.BLangPanic:
+		return true
+	case *ast.BLangExpressionStmt:
+		// The only other way a reachable block becomes terminal is via a
+		// `check`/`checkpanic` expression statement whose operand is
+		// statically a subtype of error (see analyzeStatement in
+		// control_flow_analyzer.go).
+		return true
+	default:
+		return false
+	}
 }
 
-func positionForMissingReturn(bb basicBlock, fn *ast.BLangFunction) diagnostics.Location {
+func terminalBlockHasPanic(bb basicBlock) bool {
+	if len(bb.nodes) == 0 {
+		return false
+	}
+	_, ok := bb.nodes[len(bb.nodes)-1].(*ast.BLangPanic)
+	return ok
+}
+
+func positionForMissingReturn(bb basicBlock, fn ast.BLangNode) diagnostics.Location {
 	if len(bb.nodes) > 0 {
 		return bb.nodes[len(bb.nodes)-1].GetPosition()
 	}

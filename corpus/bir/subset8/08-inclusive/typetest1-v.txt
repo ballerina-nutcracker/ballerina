@@ -1,0 +1,83 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad n
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad x
+    %4 = ConstantLoad 1.5
+    %5 = newMap {| n: int, x: float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4}
+    r1 = %5;
+    m = r1;
+    %8 = m is {| n: int, x: float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %9 = %8;
+    %10 = println(%9) -> bb1;
+  }
+  bb1 {
+    %11 = m is {| n: nil|int, x: nil|float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %12 = %11;
+    %13 = println(%12) -> bb2;
+  }
+  bb2 {
+    %14 = m is {| n: int, x: float, y: float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %15 = %14;
+    %16 = println(%15) -> bb3;
+  }
+  bb3 {
+    %17 = ConstantLoad n
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad x
+    %20 = ConstantLoad 1.5
+    %21 = newMap {| n: nil|int, x: nil|float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%17=%18, %19=%20}
+    r2 = %21;
+    m = r2;
+    %23 = m is {| n: int, x: float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %24 = %23;
+    %25 = println(%24) -> bb4;
+  }
+  bb4 {
+    %26 = m is {| n: nil|int, x: nil|float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %27 = %26;
+    %28 = println(%27) -> bb5;
+  }
+  bb5 {
+    %29 = ConstantLoad n
+    %30 = ConstantLoad 1
+    %31 = ConstantLoad x
+    %32 = ConstantLoad 1.5
+    %33 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{%29=%30, %31=%32}
+    m = %33;
+    %34 = m is {| n: int, x: float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %35 = %34;
+    %36 = println(%35) -> bb6;
+  }
+  bb6 {
+    %37 = m is {| n: nil|int, x: nil|float, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}
+    %38 = %37;
+    %39 = println(%38) -> bb7;
+  }
+  bb7 {
+    v = r1;
+    %41 = v is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %42 = %41;
+    %43 = println(%42) -> bb8;
+  }
+  bb8 {
+    %44 = v is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %45 = %44;
+    %46 = println(%45) -> bb9;
+  }
+  bb9 {
+    v = r2;
+    %47 = v is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %48 = %47;
+    %49 = println(%48) -> bb10;
+  }
+  bb10 {
+    %50 = v is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %51 = %50;
+    %52 = println(%51) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}

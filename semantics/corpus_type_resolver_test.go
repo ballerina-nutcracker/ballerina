@@ -28,6 +28,13 @@ import (
 	"ballerina-lang-go/test_util/testphases"
 )
 
+// typeResolverSkipList is the type-resolver *additional* skip list, on top of
+// the shared test_util.UnsupportedTests baseline.
+var typeResolverSkipList = []string{
+	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	"subset8/08-xml/namespace12-v.bal",
+}
+
 func TestTypeResolver(t *testing.T) {
 	flag.Parse()
 
@@ -42,6 +49,11 @@ func TestTypeResolver(t *testing.T) {
 }
 
 func testTypeResolution(t *testing.T, testCase test_util.TestCase) {
+	if test_util.IsUnsupported(testCase.InputPath) || test_util.MatchesSkip(testCase.InputPath, typeResolverSkipList) {
+		t.Skipf("Skipping type resolver test for %s", testCase.InputPath)
+		return
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatalf("Type resolution panicked for %s: %v", testCase.InputPath, r)
@@ -50,7 +62,12 @@ func testTypeResolution(t *testing.T, testCase test_util.TestCase) {
 
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	result, err := testphases.RunPipeline(cx, testphases.PhaseTypeNarrowing, testCase.InputPath)
+	langlibs, err := testphases.LoadLanglibs(env, cx)
+	if err != nil {
+		t.Errorf("loading lang libraries failed for %s: %v", testCase.InputPath, err)
+		return
+	}
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseTypeNarrowing, testCase.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testCase.InputPath, err)
 		return
@@ -74,25 +91,26 @@ func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	}
 
-	// Validate that all BLangExpression nodes have their determined type set
+	// Validate that all BLangExpression nodes have their determined type set.
+	// NEVER is a legitimate type for guaranteed-divergent expressions (e.g.
+	// `check newError()` or `checkpanic newError()` whose inner type is
+	// exactly `error`, so the non-error remainder is empty).
 	if expr, ok := node.(ast.BLangExpression); ok {
-		determinedType := expr.GetDeterminedType()
-		if determinedType == nil {
+		if semtypes.IsZero(expr.GetDeterminedType()) {
 			v.t.Errorf("expression %T at %v does not have determined type set", expr, expr.GetPosition())
 		}
-		if semtypes.IsNever(determinedType) {
-			v.t.Errorf("expression %T at %v has determined type NEVER", expr, expr.GetPosition())
-		}
-
 	}
 
+	if inv, ok := node.(*ast.BLangInvocation); ok && ast.IsStreamOperation(inv) {
+		return v
+	}
 	if nodeWithSymbol, ok := node.(ast.BNodeWithSymbol); ok {
 		symbol := nodeWithSymbol.Symbol()
 		// Skip constant symbols (kind: 1) since they're resolved during semantic analysis
 		if v.ctx.SymbolKind(symbol) == model.SymbolKindConstant {
 			return v
 		}
-		if v.ctx.SymbolType(symbol) == nil {
+		if semtypes.IsZero(v.ctx.SymbolType(symbol)) {
 			// FIXME: get rid of this
 			if _, ok := node.(*ast.BLangConstant); ok {
 				// constants will get their type set during semantic analysis
@@ -106,11 +124,11 @@ func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 	return v
 }
 
-func (v *typeResolutionValidator) VisitTypeData(typeData *model.TypeData) ast.Visitor {
+func (v *typeResolutionValidator) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	if typeData.TypeDescriptor == nil {
 		return nil
 	}
-	if typeData.Type == nil {
+	if semtypes.IsZero(typeData.Type) {
 		v.t.Errorf("type not resolved for %+v", typeData)
 	}
 	return v

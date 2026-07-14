@@ -1,0 +1,34 @@
+(asAny
+  (bb0 () ()
+    (return
+      (simple-var-ref a))
+  )
+)
+(f
+  (bb0 () ()
+    (assignment
+      (index-based-access
+        (simple-var-ref a)
+        (literal 100))
+      (invocation asAny (
+        (literal 1))))
+    (assignment
+      (index-based-access
+        (simple-var-ref a)
+        (literal 1))
+      (invocation asAny (
+        (literal 256))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable b1 (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation f (
+        (simple-var-ref b1))))
+  )
+)

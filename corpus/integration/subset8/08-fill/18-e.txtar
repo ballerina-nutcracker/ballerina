@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing required member at index 0: type '{| a: int, never... |}' has no filler value
+  --> 18-e.bal:24:23
+   |
+24 |     [R, int, int] a = []; // @error
+   |                       ^^

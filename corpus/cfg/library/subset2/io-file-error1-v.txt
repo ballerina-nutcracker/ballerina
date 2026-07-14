@@ -1,0 +1,25 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type string)
+          (user-defined-type io Error))) (expr
+        (invocation io fileReadString (
+          (literal /tmp/bal_io_nonexistent_file_xyz.txt))))))
+    (type-test-expr is
+      (simple-var-ref result)
+      (user-defined-type io Error))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal got error))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal unexpected success))))
+  )
+)

@@ -1,0 +1,52 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad loop
+    %2 = ConstantLoad <nil>
+    %3 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%1=%2}
+    j1 = %3;
+    %5 = ConstantLoad loop
+    %6 = ConstantLoad <nil>
+    %7 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%5=%6}
+    j2 = %7;
+    %9 = == j1 j2;
+    %10 = %9;
+    %11 = println(%10) -> bb1;
+  }
+  bb1 {
+    %12 = ConstantLoad loop
+    j1[%12] = j1;
+    %13 = == j1 j2;
+    %14 = %13;
+    %15 = println(%14) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad loop
+    j2[%16] = j2;
+    %17 = == j1 j2;
+    %18 = %17;
+    %19 = println(%18) -> bb3;
+  }
+  bb3 {
+    %20 = ConstantLoad loop
+    j2[%20] = j1;
+    %21 = ConstantLoad loop
+    %22 = ConstantLoad <nil>
+    %23 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%21=%22}
+    j3 = %23;
+    %25 = ConstantLoad loop
+    %26 = ConstantLoad loop
+    %27 = ConstantLoad loop
+    %28 = newMap {| nil|boolean|int|float|string|...|...... |}{%27=j3}
+    %29 = newMap {| nil|boolean|int|float|string|...|...... |}{%26=%28}
+    %30 = newMap {| nil|boolean|int|float|string|...|...... |}{%25=%29}
+    %31 = ConstantLoad loop
+    j3[%31] = %30;
+    %32 = == j1 j3;
+    %33 = %32;
+    %34 = println(%33) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: failed successfully
+        at main(check7-p.bal:18)

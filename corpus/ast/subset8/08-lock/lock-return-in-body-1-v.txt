@@ -1,0 +1,30 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function readAndBump () (
+    (value-type int))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (simple-var-ref counter)
+            (binary-expr +
+              (simple-var-ref counter)
+              (literal 1)))
+          (return
+            (simple-var-ref counter))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation readAndBump ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readAndBump ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readAndBump ())))))))

@@ -1,0 +1,13 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Pair)) (expr
+        (list-constructor-expr
+          (literal 17)
+          (literal true)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+  )
+)

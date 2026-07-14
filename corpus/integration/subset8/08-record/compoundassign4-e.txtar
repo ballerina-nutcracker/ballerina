@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: compound assignment operands cannot be nilable
+  --> compoundassign4-e.bal:27:5
+   |
+27 |     r[k] += 1; // @error
+   |     ^^^^^^^^^^

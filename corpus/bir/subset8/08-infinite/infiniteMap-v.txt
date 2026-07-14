@@ -1,0 +1,11 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| ...... |}{}
+    m = %1;
+    %3 = println(m) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

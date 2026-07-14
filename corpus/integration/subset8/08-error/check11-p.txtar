@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: err
+        at doPanic(check11-p.bal:24)
+           main(check11-p.bal:20)

@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    x = %1;
+    %3 = ConstantLoad 3
+    y = %3;
+    %5 = ConstantLoad 0
+    z = %5;
+    %8 = x;
+    %9 = y;
+    %7 = * %8 %9;
+    i = %7;
+    %12 = x;
+    %13 = z;
+    %11 = * %12 %13;
+    j = %11;
+    %15 = i;
+    %16 = println(%15) -> bb1;
+  }
+  bb1 {
+    %17 = j;
+    %18 = println(%17) -> bb2;
+  }
+  bb2 {
+    %19 = ConstantLoad 2147483647
+    a = %19;
+    %21 = ConstantLoad 2147483647
+    b = %21;
+    %24 = a;
+    %25 = b;
+    %23 = * %24 %25;
+    c = %23;
+    %27 = c;
+    %28 = println(%27) -> bb3;
+  }
+  bb3 {
+    %29 = ConstantLoad 2147483647
+    %30 = unknown %29;
+    d = %30;
+    %33 = d;
+    %34 = a;
+    %32 = * %33 %34;
+    e = %32;
+    %36 = e;
+    %37 = println(%36) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

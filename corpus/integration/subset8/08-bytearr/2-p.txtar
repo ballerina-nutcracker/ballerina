@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at f(2-p.bal:29)
+           main(2-p.bal:19)

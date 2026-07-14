@@ -1,0 +1,6 @@
+-- stdout --
+200
+body: hello post, ct: text/plain
+200
+body: {"msg":"hello"}, ct: application/json
+-- stderr --

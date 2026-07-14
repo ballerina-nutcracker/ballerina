@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unsupported container type for field access
+  --> fieldlvalue7-e.bal:24:5
+   |
+24 |     arr.one = 72; // @error
+   |     ^^^^^^^

@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hello
+    %2 = toAny(%1) -> bb1;
+  }
+  bb1 {
+    %3 = <string>(%2)
+    s = %3;
+    %5 = println(s) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+toAny(string) -> any{
+  bb0 {
+    %0 = s;
+    return;
+  }
+}

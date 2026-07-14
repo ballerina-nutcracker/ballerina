@@ -1,0 +1,56 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina url (as url))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url encode (
+              (literal AB)
+              (literal UTF-16BE)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url encode (
+              (literal hi)
+              (literal UTF-16BE)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url decode (
+              (literal %00A%00B)
+              (literal UTF-16BE)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation url decode (
+              (literal %00h%00i)
+              (literal UTF-16BE)))))))
+      (var-def
+        (variable original (type
+          (value-type string)) (expr
+          (literal Go))))
+      (var-def
+        (variable encoded (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation url encode (
+              (simple-var-ref original)
+              (literal UTF-16BE)))))))
+      (var-def
+        (variable decoded (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation url decode (
+              (simple-var-ref encoded)
+              (literal UTF-16BE)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref decoded)
+            (simple-var-ref original))))))))

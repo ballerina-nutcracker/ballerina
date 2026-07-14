@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, got never
+  --> fixedlength1-e.bal:21:16
+   |
+21 |     io:println(v[4]); // @error
+   |                ^^^^

@@ -1,0 +1,16 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable INT_MIN (type
+          (value-type int)) (expr
+          (binary-expr -
+            (unary-expr -
+              (literal 9223372036854775807))
+            (literal 1)))))
+      (compound-assignment /
+        (simple-var-ref INT_MIN)
+        (unary-expr -
+          (literal 1))))))

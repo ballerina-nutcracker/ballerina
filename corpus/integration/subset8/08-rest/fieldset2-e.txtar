@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field base access is only possible for declared fields
+  --> fieldset2-e.bal:28:5
+   |
+28 |     r.x = 1; // @error
+   |     ^^^

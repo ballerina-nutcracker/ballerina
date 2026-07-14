@@ -16,21 +16,43 @@
 
 package exec
 
+import "ballerina-lang-go/bir"
+
+type callStackEntry struct {
+	frame    *Frame
+	location bir.Location
+}
+
 type callStack struct {
-	elements []*Frame
+	elements []callStackEntry
 }
 
 func (cs *callStack) Push(frame *Frame) {
-	cs.elements = append(cs.elements, frame)
+	cs.elements = append(cs.elements, callStackEntry{frame: frame})
 }
 
 func (cs *callStack) Pop() {
 	cs.elements = cs.elements[:len(cs.elements)-1]
 }
 
-// Frames returns the current frames in the call stack from bottom to top.
-func (cs *callStack) Frames() []*Frame {
-	frames := make([]*Frame, len(cs.elements))
-	copy(frames, cs.elements)
-	return frames
+func (cs *callStack) top() *Frame {
+	return cs.elements[len(cs.elements)-1].frame
+}
+
+func (cs *callStack) len() int {
+	return len(cs.elements)
+}
+
+func (cs *callStack) SetCurrentLocation(location bir.Location) {
+	if len(cs.elements) == 0 {
+		return
+	}
+	cs.elements[len(cs.elements)-1].location = location
+}
+
+// Entries returns the current entries in the call stack from bottom to top.
+func (cs *callStack) Entries() []callStackEntry {
+	entries := make([]callStackEntry, len(cs.elements))
+	copy(entries, cs.elements)
+	return entries
 }

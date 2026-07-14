@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = bin(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 9223372036854775807
+    %5 = %4;
+    %6 = bin(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad true
+    %8 = %7;
+    %9 = bin(%8) -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad hello
+    %11 = bin(%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad <nil>
+    %13 = %12;
+    %14 = bin(%13) -> bb5;
+  }
+  bb5 {
+    %15 = ConstantLoad 1.5
+    %16 = %15;
+    %17 = bin(%16) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+bin(any) -> nil{
+  bb0 {
+    %3 = ConstantLoad <nil>
+    %4 = %3;
+    %2 = == x %4;
+    %2 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad nil
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = println((1, x)) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    %5 = x is nil|boolean|int
+    %5 ? bb6 : bb8;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = ConstantLoad boolean|int?
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

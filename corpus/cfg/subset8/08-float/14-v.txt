@@ -1,0 +1,203 @@
+(eq
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable b1 (type
+        (value-type string)) (expr
+        (invocation eqAF (
+          (simple-var-ref f1)
+          (simple-var-ref f2))))))
+    (var-def
+      (variable b2 (type
+        (value-type string)) (expr
+        (invocation eqFA (
+          (simple-var-ref f1)
+          (simple-var-ref f2))))))
+    (binary-expr !=
+      (simple-var-ref b1)
+      (simple-var-ref b2))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal a))
+  )
+  (bb2 (bb0) ()
+    (return
+      (simple-var-ref b1))
+  )
+)
+(eqAF
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable eq (type
+        (value-type boolean)) (expr
+        (binary-expr ==
+          (simple-var-ref f1)
+          (simple-var-ref f2)))))
+    (var-def
+      (variable neEq (type
+        (value-type boolean)) (expr
+        (binary-expr !=
+          (simple-var-ref f1)
+          (simple-var-ref f2)))))
+    (binary-expr ==
+      (simple-var-ref eq)
+      (simple-var-ref neEq))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal b))
+  )
+  (bb2 (bb5) ()
+    (return
+      (literal false))
+  )
+  (bb3 (bb0) (bb4 bb5)
+    (simple-var-ref eq)
+  )
+  (bb4 (bb3) ()
+    (return
+      (literal true))
+  )
+  (bb5 (bb3) (bb2))
+)
+(eqFA
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable eq (type
+        (value-type boolean)) (expr
+        (binary-expr ==
+          (simple-var-ref f1)
+          (simple-var-ref f2)))))
+    (var-def
+      (variable neEq (type
+        (value-type boolean)) (expr
+        (binary-expr !=
+          (simple-var-ref f1)
+          (simple-var-ref f2)))))
+    (binary-expr ==
+      (simple-var-ref eq)
+      (simple-var-ref neEq))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal c))
+  )
+  (bb2 (bb5) ()
+    (return
+      (literal false))
+  )
+  (bb3 (bb0) (bb4 bb5)
+    (simple-var-ref eq)
+  )
+  (bb4 (bb3) ()
+    (return
+      (literal true))
+  )
+  (bb5 (bb3) (bb2))
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable nan0 (type
+        (value-type float)) (expr
+        (binary-expr /
+          (literal 0)
+          (literal 0)))))
+    (var-def
+      (variable nan1 (type
+        (value-type float)) (expr
+        (binary-expr /
+          (unary-expr -
+            (literal 0))
+          (literal 0)))))
+    (var-def
+      (variable pInf (type
+        (value-type float)) (expr
+        (binary-expr /
+          (literal 1)
+          (literal 0)))))
+    (var-def
+      (variable nInf (type
+        (value-type float)) (expr
+        (binary-expr /
+          (unary-expr -
+            (literal 1))
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (literal 42)
+          (literal 42))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (literal 1)
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (literal 0)
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (literal 0)
+          (unary-expr -
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref nan0)
+          (simple-var-ref nan1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref nan0)
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref nan0)
+          (simple-var-ref nInf))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref pInf)
+          (simple-var-ref nInf))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref nInf)
+          (simple-var-ref pInf))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref pInf)
+          (simple-var-ref pInf))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eq (
+          (simple-var-ref nInf)
+          (simple-var-ref nInf))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eqAF (
+          (literal not-float)
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eqAF (
+          (literal 1)
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eqFA (
+          (literal 0)
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation eqFA (
+          (literal 8)
+          (literal 8))))))
+  )
+)

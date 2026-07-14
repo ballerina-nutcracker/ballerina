@@ -1,0 +1,41 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad false
+    %5 = newMap {| x: int, y: boolean, string... |}{%1=%2, %3=%4}
+    r = %5;
+    %7 = ConstantLoad xyzzy
+    %8 = ConstantLoad stuff
+    r[%8] = %7;
+    %9 = ConstantLoad abc
+    %10 = ConstantLoad stuff
+    r[%10] = %9;
+    %11 = ConstantLoad 2
+    %12 = ConstantLoad x
+    r[%12] = %11;
+    %13 = ConstantLoad true
+    %14 = ConstantLoad y
+    r[%14] = %13;
+    %16 = ConstantLoad x
+    %15 = r[%16];
+    %17 = %15;
+    %18 = println(%17) -> bb1;
+  }
+  bb1 {
+    %20 = ConstantLoad y
+    %19 = r[%20];
+    %21 = %19;
+    %22 = println(%21) -> bb2;
+  }
+  bb2 {
+    %24 = ConstantLoad stuff
+    %23 = r[%24];
+    %25 = println(%23) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

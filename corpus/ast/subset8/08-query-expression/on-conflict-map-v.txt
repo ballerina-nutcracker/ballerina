@@ -69,6 +69,21 @@
                 (simple-var-ref x)))
             (on-conflict-clause
               (invocation onConflictError ()))))))
+      (var-def
+        (variable contextualMap (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type decimal))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable _))
+              (list-constructor-expr
+                (literal 1)))
+            (select-clause
+              (list-constructor-expr
+                (literal k)
+                (literal 1)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref out1))))
@@ -79,4 +94,11 @@
         (invocation io println (
           (type-test-expr is
             (simple-var-ref out2)
-            (error-type))))))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref contextualMap)
+              (literal k))
+            (value-type decimal))))))))

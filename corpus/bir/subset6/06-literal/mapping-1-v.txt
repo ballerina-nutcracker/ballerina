@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad x
@@ -12,9 +11,9 @@ main() -> nil{
   }
   bb1 {
     %8 = ConstantLoad amount
-    %9 = ConstantLoad 100/1
+    %9 = ConstantLoad 100
     %10 = ConstantLoad tax
-    %11 = ConstantLoad 15/1
+    %11 = ConstantLoad 15
     %12 = newMap {| amount: decimal, tax: decimal, never... |}{%8=%9, %10=%11}
     dr = %12;
     %14 = println(dr) -> bb2;
@@ -25,16 +24,16 @@ main() -> nil{
     %17 = ConstantLoad ratio
     %18 = ConstantLoad 2
     %19 = ConstantLoad price
-    %20 = ConstantLoad 50/1
+    %20 = ConstantLoad 50
     %21 = newMap {| count: int, price: decimal, ratio: float, never... |}{%15=%16, %17=%18, %19=%20}
     mr = %21;
     %23 = println(mr) -> bb3;
   }
   bb3 {
     %24 = ConstantLoad amount
-    %25 = ConstantLoad 3/2
+    %25 = ConstantLoad 1.5
     %26 = ConstantLoad tax
-    %27 = ConstantLoad 1/2
+    %27 = ConstantLoad 0.5
     %28 = newMap {| amount: decimal, tax: decimal, never... |}{%24=%25, %26=%27}
     dr2 = %28;
     %30 = println(dr2) -> bb4;
@@ -50,9 +49,9 @@ main() -> nil{
   }
   bb5 {
     %38 = ConstantLoad a
-    %39 = ConstantLoad 1/1
+    %39 = ConstantLoad 1
     %40 = ConstantLoad b
-    %41 = ConstantLoad 2/1
+    %41 = ConstantLoad 2
     %42 = newMap {| decimal... |}{%38=%39, %40=%41}
     md = %42;
     %44 = println(md) -> bb6;

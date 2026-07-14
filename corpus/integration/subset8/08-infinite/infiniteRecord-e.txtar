@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: type definition R is empty
+  --> infiniteRecord-e.bal:17:1
+   |
+17 | type R record {|
+   | ^^^^^^^^^^^^^^^^
+18 |     R r;
+   |     ^^^^
+19 | |}; // @error
+   | ^^^

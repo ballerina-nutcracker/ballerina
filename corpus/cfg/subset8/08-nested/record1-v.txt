@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Person)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (mapping-constructor-expr
+              (key-value
+                (literal first)
+                (literal John))
+              (key-value
+                (literal last)
+                (literal Smith))))
+          (key-value
+            (literal age)
+            (literal 30))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref p)
+          (literal name)))))
+  )
+)

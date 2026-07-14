@@ -1,0 +1,3 @@
+-- stdout --
+<outer xmlns="https://example.com/d"><inner>leaf</inner></outer>
+-- stderr --

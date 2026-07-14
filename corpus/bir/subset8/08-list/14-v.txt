@@ -1,0 +1,55 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    a = %4;
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad 2
+    %9 = ConstantLoad 2
+    %10 = newArray [int, int, never...][%9]{%7, %8}
+    %6 = == a %10;
+    b = %6;
+    %12 = println(b) -> bb1;
+  }
+  bb1 {
+    %14 = ConstantLoad 3
+    %15 = ConstantLoad 1
+    %16 = ConstantLoad 2
+    %17 = newArray [int, int, never...][%16]{%14, %15}
+    %13 = == a %17;
+    c = %13;
+    %19 = println(c) -> bb2;
+  }
+  bb2 {
+    %21 = ConstantLoad 1
+    %22 = ConstantLoad 2
+    %23 = ConstantLoad 2
+    %24 = newArray [int, int, never...][%23]{%21, %22}
+    %25 = ConstantLoad 3
+    %26 = ConstantLoad 1
+    %27 = ConstantLoad 2
+    %28 = newArray [int, int, never...][%27]{%25, %26}
+    %20 = == %24 %28;
+    d = %20;
+    %30 = println(d) -> bb3;
+  }
+  bb3 {
+    %32 = ConstantLoad 1
+    %33 = ConstantLoad 2
+    %34 = ConstantLoad 2
+    %35 = newArray [int, int, never...][%34]{%32, %33}
+    %36 = ConstantLoad 1
+    %37 = ConstantLoad 2
+    %38 = ConstantLoad 2
+    %39 = newArray [int, int, never...][%38]{%36, %37}
+    %31 = == %35 %39;
+    e = %31;
+    %41 = println(e) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

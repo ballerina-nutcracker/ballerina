@@ -1,0 +1,13 @@
+{
+  "packages": [
+    {
+      "org": "mockorg",
+      "name": "errorpkg",
+      "version": "1.0.0",
+      "transitive": false,
+      "dependencies": [],
+      "modules": []
+    }
+  ],
+  "modules": []
+}

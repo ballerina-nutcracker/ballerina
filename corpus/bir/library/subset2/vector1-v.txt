@@ -1,0 +1,70 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2.5
+    %3 = unknown %2;
+    %4 = ConstantLoad 3.2
+    %5 = ConstantLoad 6.8
+    %6 = unknown %5;
+    %7 = ConstantLoad 4.9
+    %8 = ConstantLoad 5
+    %9 = newArray [float...][%8]{%1, %3, %4, %6, %7}
+    v = %9;
+    %11 = ConstantLoad 4.3
+    %12 = ConstantLoad 0.8
+    %13 = ConstantLoad 1.5
+    %14 = unknown %13;
+    %15 = ConstantLoad 9.6
+    %16 = unknown %15;
+    %17 = ConstantLoad 2
+    %18 = ConstantLoad 5
+    %19 = newArray [float...][%18]{%11, %12, %14, %16, %17}
+    v2 = %19;
+    %21 = ConstantLoad L1
+    %22 = vectorNorm(v,%21) -> bb1;
+  }
+  bb1 {
+    %23 = %22;
+    %24 = println(%23) -> bb2;
+  }
+  bb2 {
+    %25 = ConstantLoad L2
+    %26 = vectorNorm(v,%25) -> bb3;
+  }
+  bb3 {
+    %27 = %26;
+    %28 = println(%27) -> bb4;
+  }
+  bb4 {
+    %29 = dotProduct(v,v2) -> bb5;
+  }
+  bb5 {
+    %30 = %29;
+    %31 = println(%30) -> bb6;
+  }
+  bb6 {
+    %32 = cosineSimilarity(v,v2) -> bb7;
+  }
+  bb7 {
+    %33 = %32;
+    %34 = println(%33) -> bb8;
+  }
+  bb8 {
+    %35 = euclideanDistance(v,v2) -> bb9;
+  }
+  bb9 {
+    %36 = %35;
+    %37 = println(%36) -> bb10;
+  }
+  bb10 {
+    %38 = manhattanDistance(v,v2) -> bb11;
+  }
+  bb11 {
+    %39 = %38;
+    %40 = println(%39) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

@@ -1,0 +1,46 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition R
+    (record-type
+      (field x
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (field y
+        (array-type
+          (value-type float) dimensions: 1 ([])))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (list-constructor-expr))
+            (key-value
+              (literal y)
+              (list-constructor-expr))))))
+      (var-def
+        (variable x (type
+          (union-type
+            (union-type
+              (array-type
+                (value-type int) dimensions: 1 ([]))
+              (array-type
+                (value-type float) dimensions: 1 ([])))
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref r)
+            (literal x)))))
+      (if
+        (binary-expr !=
+          (simple-var-ref x)
+          (literal <nil>))
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref x)
+              (literal 0))
+            (literal 1.0))) ())
+      (block-stmt))))

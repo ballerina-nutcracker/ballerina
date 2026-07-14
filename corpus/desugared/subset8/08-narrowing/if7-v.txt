@@ -1,0 +1,106 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field b
+        (value-type boolean))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal b)
+              (literal true))))))
+      (expression-stmt
+        (invocation func (
+          (simple-var-ref r))))))
+  (function func (
+    (variable r (type
+      (user-defined-type R)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type boolean))
+            (value-type float))) (expr
+          (literal 0.1))))
+      (var-def
+        (variable y (type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type boolean))
+            (value-type float))) (expr
+          (literal true))))
+      (if
+        (binary-expr ==
+          (index-based-access
+            (simple-var-ref r)
+            (literal b))
+          (literal true))
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref x)
+              (union-type
+                (value-type int)
+                (value-type boolean)))
+            (block-stmt
+              (return
+                (literal <nil>))) ())
+          (block-stmt
+            (if
+              (type-test-expr is
+                (simple-var-ref y)
+                (union-type
+                  (value-type float)
+                  (value-type int)))
+              (block-stmt
+                (return
+                  (literal <nil>))) ())
+            (block-stmt))) (
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref x)
+              (union-type
+                (value-type boolean)
+                (value-type float)))
+            (block-stmt
+              (return
+                (literal <nil>))) ())
+          (block-stmt
+            (if
+              (type-test-expr is
+                (simple-var-ref y)
+                (union-type
+                  (value-type boolean)
+                  (value-type int)))
+              (block-stmt
+                (return
+                  (literal <nil>))) ())
+            (block-stmt)))))
+      (var-def
+        (variable fi (type
+          (union-type
+            (value-type float)
+            (value-type int))) (expr
+          (simple-var-ref x))))
+      (var-def
+        (variable bi (type
+          (union-type
+            (value-type boolean)
+            (value-type float))) (expr
+          (simple-var-ref y))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fi))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bi)))))))

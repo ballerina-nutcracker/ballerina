@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [......][%1]{}
+    yin = %2;
+    %4 = ConstantLoad 0
+    %5 = newArray [......][%4]{}
+    yang = %5;
+    %7 = ConstantLoad 0
+    yin[%7] = yang;
+    %8 = ConstantLoad 0
+    yang[%8] = yin;
+    %9 = == yin yang;
+    %10 = %9;
+    %11 = println(%10) -> bb1;
+  }
+  bb1 {
+    %12 = ConstantLoad 0
+    %13 = newArray [......][%12]{}
+    father = %13;
+    %15 = ConstantLoad 0
+    %16 = newArray [......][%15]{}
+    son = %16;
+    %18 = ConstantLoad 0
+    %19 = newArray [......][%18]{}
+    sprit = %19;
+    %21 = ConstantLoad 0
+    father[%21] = son;
+    %22 = ConstantLoad 0
+    son[%22] = sprit;
+    %23 = ConstantLoad 0
+    sprit[%23] = father;
+    %24 = == father son;
+    %25 = %24;
+    %26 = println(%25) -> bb2;
+  }
+  bb2 {
+    %27 = == father yin;
+    %28 = %27;
+    %29 = println(%28) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

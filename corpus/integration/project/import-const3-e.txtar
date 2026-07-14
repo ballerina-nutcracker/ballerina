@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown import: testorg/import_const3_e.selfref
+  --> modules/selfref/selfref.bal:17:1
+   |
+17 | import testorg/import_const3_e.selfref; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: A
+  --> modules/selfref/selfref.bal:20:11
+   |
+20 | const B = selfref:A; // @error
+   |           ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'B'
+  --> modules/selfref/selfref.bal:20:1
+   |
+20 | const B = selfref:A; // @error
+   | ^^^^^^^^^^^^^^^^^^^^

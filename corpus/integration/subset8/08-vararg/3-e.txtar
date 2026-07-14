@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: parameter after the rest parameter
+  --> 3-e.bal:24:26
+   |
+24 | function addAllTo(int... args, string... other) returns int { // @error
+   |                          ^^^^

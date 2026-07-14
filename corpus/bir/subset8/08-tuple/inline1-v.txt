@@ -1,0 +1,49 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 17
+    %2 = ConstantLoad 42
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    p = %4;
+    %6 = println(p) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 2
+    %8 = ConstantLoad x
+    %9 = ConstantLoad true
+    %10 = ConstantLoad 3
+    %11 = newArray [int, string, boolean, never...][%10]{%7, %8, %9}
+    t1 = %11;
+    %13 = println(t1) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad 2
+    %15 = ConstantLoad test
+    %16 = ConstantLoad 2
+    %17 = newArray [1|2|3, string, never...][%16]{%14, %15}
+    t2 = %17;
+    %19 = println(t2) -> bb3;
+  }
+  bb3 {
+    %20 = ConstantLoad 2
+    %21 = ConstantLoad 4
+    %22 = ConstantLoad 6
+    %23 = ConstantLoad 3
+    %24 = newArray [int...][%23]{%20, %21, %22}
+    t3 = %24;
+    %26 = println(t3) -> bb4;
+  }
+  bb4 {
+    %27 = ConstantLoad test
+    %28 = ConstantLoad 2
+    %29 = ConstantLoad 4
+    %30 = ConstantLoad 3
+    %31 = newArray [string, int...][%30]{%27, %28, %29}
+    t4 = %31;
+    %33 = println(t4) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

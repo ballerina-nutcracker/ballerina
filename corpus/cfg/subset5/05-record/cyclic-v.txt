@@ -5,13 +5,13 @@
         (user-defined-type R)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 1))
           (key-value
             (literal y)
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref x)
+                (literal x)
                 (literal 2))))))))
     (expression-stmt
       (invocation io println (

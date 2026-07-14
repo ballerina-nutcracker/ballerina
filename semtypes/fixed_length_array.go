@@ -19,21 +19,21 @@ package semtypes
 import "ballerina-lang-go/common"
 
 type fixedLengthArray struct {
-	initial     []ComplexSemType
+	initial     []SemType
 	FixedLength int
 }
 
-func newFixedLengthArrayFromInitialFixedLength(initial []ComplexSemType, fixedLength int) fixedLengthArray {
+func newFixedLengthArrayFromInitialFixedLength(initial []SemType, fixedLength int) fixedLengthArray {
 	this := fixedLengthArray{}
-	copiedInitial := make([]ComplexSemType, len(initial))
+	copiedInitial := make([]SemType, len(initial))
 	copy(copiedInitial, initial)
-	common.Assert(fixedLength >= 0)
+	common.Assert(func() bool { return fixedLength >= 0 })
 	this.initial = copiedInitial
 	this.FixedLength = fixedLength
 	return this
 }
 
-func fixedLengthArrayFrom(initial []ComplexSemType, fixedLength int) fixedLengthArray {
+func fixedLengthArrayFrom(initial []SemType, fixedLength int) fixedLengthArray {
 	return newFixedLengthArrayFromInitialFixedLength(initial, fixedLength)
 }
 

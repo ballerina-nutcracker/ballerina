@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: too many members in list constructor
+  --> fixedlength9-e.bal:20:16
+   |
+20 |     int[3] v = [1, 2, 3, 4]; // @error
+   |                ^^^^^^^^^^^^

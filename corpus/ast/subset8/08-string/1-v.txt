@@ -1,0 +1,125 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation isKeyword (
+            (literal string))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isKeyword (
+            (literal hello))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isKeyword (
+            (literal if))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isKeyword (
+            (literal else))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isKeyword (
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isKeyword (
+            (literal return))))))))
+  (function isKeyword (
+    (variable s (type
+      (value-type string)))) (
+    (value-type boolean))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (simple-var-ref s)
+          (literal return))
+        (block-stmt
+          (return
+            (literal true))) ())
+      (block-stmt
+        (if
+          (binary-expr ==
+            (simple-var-ref s)
+            (literal boolean))
+          (block-stmt
+            (return
+              (literal true))) ())
+        (block-stmt
+          (if
+            (binary-expr ==
+              (simple-var-ref s)
+              (literal int))
+            (block-stmt
+              (return
+                (literal true))) ())
+          (block-stmt
+            (if
+              (binary-expr ==
+                (simple-var-ref s)
+                (literal string))
+              (block-stmt
+                (return
+                  (literal true))) ())
+            (block-stmt
+              (if
+                (binary-expr ==
+                  (simple-var-ref s)
+                  (literal while))
+                (block-stmt
+                  (return
+                    (literal true))) ())
+              (block-stmt
+                (if
+                  (binary-expr ==
+                    (simple-var-ref s)
+                    (literal foreach))
+                  (block-stmt
+                    (return
+                      (literal true))) ())
+                (block-stmt
+                  (if
+                    (binary-expr ==
+                      (simple-var-ref s)
+                      (literal if))
+                    (block-stmt
+                      (return
+                        (literal true))) ())
+                  (block-stmt
+                    (if
+                      (binary-expr ==
+                        (simple-var-ref s)
+                        (literal else))
+                      (block-stmt
+                        (return
+                          (literal true))) ())
+                    (block-stmt
+                      (if
+                        (binary-expr ==
+                          (simple-var-ref s)
+                          (literal map))
+                        (block-stmt
+                          (return
+                            (literal true))) ())
+                      (block-stmt
+                        (if
+                          (binary-expr ==
+                            (simple-var-ref s)
+                            (literal true))
+                          (block-stmt
+                            (return
+                              (literal true))) ())
+                        (block-stmt
+                          (if
+                            (binary-expr ==
+                              (simple-var-ref s)
+                              (literal false))
+                            (block-stmt
+                              (return
+                                (literal true))) ())
+                          (block-stmt
+                            (return
+                              (literal false))))))))))))))))

@@ -1,7 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad deptId
@@ -141,7 +138,7 @@ main() -> nil{
     %14 ? bb13 : bb14;
   }
   bb13 {
-    PushScopeFrame 14
+    PushScopeFrame 11
     %1 = (1, $desugar$11)[(1, $desugar$13)];
     %0 = (1, $desugar$10)[%1];
     (2, dept) = %0;
@@ -162,19 +159,21 @@ main() -> nil{
     GOTO bb7;
   }
   bb15 {
-    %7 = ConstantLoad 2
-    %8 = newArray list[%7]{(2, person), (2, dept)}
-    %9 = push((2, $desugar$5),%8) -> bb16;
+    PushScopeFrame 3
+    %0 = ConstantLoad 2
+    %1 = newArray list[%0]{(3, person), (3, dept)}
+    %2 = push((3, $desugar$5),%1) -> bb16;
   }
   bb16 {
+    PopScopeFrame
     GOTO bb17;
   }
   bb17 {
-    %11 = (1, $desugar$13);
-    %12 = ConstantLoad 1
-    %13 = %12;
-    %10 = + %11 %13;
-    (1, $desugar$13) = %10;
+    %8 = (1, $desugar$13);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$13) = %7;
     PopScopeFrame
     GOTO bb12;
   }
@@ -222,7 +221,7 @@ main() -> nil{
     %14 ? bb24 : bb25;
   }
   bb24 {
-    PushScopeFrame 13
+    PushScopeFrame 10
     %0 = (1, $desugar$19)[(1, $desugar$21)];
     (2, loc) = %0;
     %2 = (1, $desugar$18);
@@ -242,19 +241,21 @@ main() -> nil{
     GOTO bb19;
   }
   bb26 {
-    %6 = ConstantLoad 3
-    %7 = newArray list[%6]{(2, person), (2, dept), (2, loc)}
-    %8 = push((2, $desugar$14),%7) -> bb27;
+    PushScopeFrame 3
+    %0 = ConstantLoad 3
+    %1 = newArray list[%0]{(3, person), (3, dept), (3, loc)}
+    %2 = push((3, $desugar$14),%1) -> bb27;
   }
   bb27 {
+    PopScopeFrame
     GOTO bb28;
   }
   bb28 {
-    %10 = (1, $desugar$21);
-    %11 = ConstantLoad 1
-    %12 = %11;
-    %9 = + %10 %12;
-    (1, $desugar$21) = %9;
+    %7 = (1, $desugar$21);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$21) = %6;
     PopScopeFrame
     GOTO bb23;
   }

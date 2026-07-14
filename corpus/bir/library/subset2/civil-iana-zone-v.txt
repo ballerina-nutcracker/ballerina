@@ -1,0 +1,57 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 2021-04-12T23:20:50.520+05:30[Asia/Colombo]
+    %2 = civilFromString(%1) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = $desugar$0 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    c = $desugar$0;
+    %7 = ConstantLoad year
+    %6 = c[%7];
+    %8 = %6;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad month
+    %10 = c[%11];
+    %12 = %10;
+    %13 = println(%12) -> bb5;
+  }
+  bb5 {
+    %15 = ConstantLoad day
+    %14 = c[%15];
+    %16 = %14;
+    %17 = println(%16) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad hour
+    %18 = c[%19];
+    %20 = %18;
+    %21 = println(%20) -> bb7;
+  }
+  bb7 {
+    %23 = ConstantLoad minute
+    %22 = c[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb8;
+  }
+  bb8 {
+    %27 = ConstantLoad timeAbbrev
+    %26 = c[%27];
+    %28 = println(%26) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

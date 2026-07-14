@@ -83,6 +83,12 @@
     (finite-type
       (literal 2)))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref a))))
       (return
         (literal 2))))
   (function bar (

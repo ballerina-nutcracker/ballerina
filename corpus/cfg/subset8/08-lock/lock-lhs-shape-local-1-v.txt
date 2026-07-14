@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation snapshot ()))))
+  )
+)
+(snapshot
+  (bb0 () ()
+    (var-def
+      (variable local (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 0)
+          (literal 0)))))
+    (assignment
+      (index-based-access
+        (simple-var-ref local)
+        (literal 0))
+      (simple-var-ref counter))
+    (return
+      (index-based-access
+        (simple-var-ref local)
+        (literal 0)))
+  )
+)

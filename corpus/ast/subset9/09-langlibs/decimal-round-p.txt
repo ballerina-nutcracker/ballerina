@@ -1,0 +1,12 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation round expr:
+          (group-expr
+            (literal 9.999999999999999999999999999999999E6144d)) (
+          (unary-expr -
+            (literal 6112))))))))

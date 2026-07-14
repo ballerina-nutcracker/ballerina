@@ -19,7 +19,6 @@ package semantics
 import (
 	"ballerina-lang-go/ast"
 	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
 	"fmt"
 	"sort"
 	"strings"
@@ -171,7 +170,7 @@ func (p *CFGPrettyPrinter) printBasicBlock(bb *basicBlock, indent int) {
 	p.buffer.WriteString(")\n")
 }
 
-func (p *CFGPrettyPrinter) printNodes(nodes []model.Node, prefix string) {
+func (p *CFGPrettyPrinter) printNodes(nodes []ast.Node, prefix string) {
 	for _, node := range nodes {
 		if blangNode, ok := node.(ast.BLangNode); ok {
 			printer := &ast.PrettyPrinter{}

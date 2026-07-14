@@ -1,0 +1,11 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function init () (
+    (value-type null))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal init panic))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

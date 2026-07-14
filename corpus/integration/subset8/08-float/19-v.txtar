@@ -1,0 +1,25 @@
+-- stdout --
+-1.0
+0.0
+0.0
+-0.0
+0.0
+NaN
+NaN
+Infinity
+-Infinity
+-Infinity
+-1.0
+0.0
+0.0
+-0.0
+0.0
+NaN
+NaN
+Infinity
+-Infinity
+-Infinity
+42.0
+-42.42
+-Infinity
+-- stderr --

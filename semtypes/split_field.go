@@ -18,10 +18,10 @@ package semtypes
 
 type splitField struct {
 	Names []string
-	Types []ComplexSemType
+	Types []SemType
 }
 
-func splitFieldFrom(strings []string, semTypes []ComplexSemType) splitField {
+func splitFieldFrom(strings []string, semTypes []SemType) splitField {
 	return splitField{
 		Names: strings,
 		Types: semTypes,

@@ -1,0 +1,54 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (array-type
+          (user-defined-type T) dimensions: 2 ([][]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref a)
+        (literal 1))
+      (list-constructor-expr
+        (list-constructor-expr
+          (literal 5)
+          (literal true))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (var-def
+      (variable b (type
+        (array-type
+          (user-defined-type T) dimensions: 2 ([][
+          (literal 2)]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref b)
+        (literal 1))
+      (list-constructor-expr
+        (list-constructor-expr
+          (literal 5)
+          (literal true))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable c (type
+        (array-type
+          (user-defined-type T) dimensions: 2 ([][]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (simple-var-ref c)
+          (literal 1))
+        (literal 1))
+      (list-constructor-expr
+        (literal 5)
+        (literal true)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+)

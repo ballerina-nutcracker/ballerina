@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: bar
+  --> main.bal:20:19
+   |
+20 |     string test = foo:bar(5); // @error
+   |                   ^^^^^^^^^^

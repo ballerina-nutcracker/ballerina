@@ -22,5 +22,6 @@ public function main() {
 }
 
 function foo(boolean b) {
+        boolean _ = b;
     return;
-}
+    }

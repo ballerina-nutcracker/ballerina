@@ -1,0 +1,21 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable nan1 (type
+        (value-type float)) (expr
+        (binary-expr /
+          (literal 0)
+          (literal 0)))))
+    (var-def
+      (variable x (type
+        (value-type float)) (expr
+        (binary-expr *
+          (literal 100)
+          (simple-var-ref nan1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref x)
+          (simple-var-ref nan1)))))
+  )
+)

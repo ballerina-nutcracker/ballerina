@@ -1,0 +1,8 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (literal 😀))))))
+  )
+)

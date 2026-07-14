@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: not a valid decimal
+        at main(rem7-p.bal:28)

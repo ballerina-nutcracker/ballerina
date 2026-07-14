@@ -1,0 +1,94 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition NN
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition SS
+    (record-type
+      (field x
+        (value-type string))
+      (field y
+        (value-type string))))
+  (type-definition NS
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type string))))
+  (type-definition SN
+    (record-type
+      (field x
+        (value-type string))
+      (field y
+        (value-type int))))
+  (type-definition UU
+    (record-type
+      (field x
+        (union-type
+          (value-type int)
+          (value-type string)))
+      (field y
+        (union-type
+          (value-type int)
+          (value-type string)))))
+  (type-definition U
+    (union-type
+      (union-type
+        (union-type
+          (user-defined-type NN)
+          (user-defined-type SS))
+        (user-defined-type NS))
+      (user-defined-type SN)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable ns (type
+          (user-defined-type SN)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal str))
+            (key-value
+              (literal y)
+              (literal 3))))))
+      (var-def
+        (variable u (type
+          (user-defined-type U)) (expr
+          (simple-var-ref ns))))
+      (if
+        (type-test-expr is
+          (simple-var-ref u)
+          (user-defined-type NN))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal NN))))) (
+        (if
+          (type-test-expr is
+            (simple-var-ref u)
+            (user-defined-type SS))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal SS))))) (
+          (if
+            (type-test-expr is
+              (simple-var-ref u)
+              (user-defined-type NS))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal NS))))) (
+            (block-stmt
+              (var-def
+                (variable _ (type
+                  (user-defined-type SN)) (expr
+                  (simple-var-ref u))))
+              (expression-stmt
+                (invocation io println (
+                  (literal SN))))))))))))))

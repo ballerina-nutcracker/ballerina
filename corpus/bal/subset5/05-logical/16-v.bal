@@ -17,13 +17,13 @@ public function main() {
     boolean b = true;
     int|string|float x = 1;
     if b && !(x is int) {
-        float|string unused1 = x;
+        float|string _ = x;
     }
 
     if b || !(x is int) {
-        int|string|float unused2 = x;
+        int|string|float _ = x;
     }
     else {
-        int unused3 = x;
+        int _ = x;
     }
 }

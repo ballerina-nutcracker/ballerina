@@ -1,0 +1,40 @@
+module $anon.. v 0.0.0;
+foo() -> float{
+  bb0 {
+    %1 = ConstantLoad 1
+    x = %1;
+    %4 = x;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %3 = == %4 %6;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 0
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, x);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = foo() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

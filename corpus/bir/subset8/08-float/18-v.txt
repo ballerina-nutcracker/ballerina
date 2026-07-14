@@ -1,0 +1,297 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %5 = floatAdd(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad 1
+    %9 = unknown %8;
+    %10 = %9;
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %13 = floatAdd(%10,%12) -> bb3;
+  }
+  bb3 {
+    %14 = %13;
+    %15 = println(%14) -> bb4;
+  }
+  bb4 {
+    %16 = ConstantLoad 0
+    %17 = unknown %16;
+    %18 = %17;
+    %19 = ConstantLoad 0
+    %20 = unknown %19;
+    %21 = %20;
+    %22 = floatAdd(%18,%21) -> bb5;
+  }
+  bb5 {
+    %23 = %22;
+    %24 = println(%23) -> bb6;
+  }
+  bb6 {
+    %25 = ConstantLoad 0
+    %26 = unknown %25;
+    %27 = %26;
+    %28 = ConstantLoad 0
+    %29 = %28;
+    %30 = floatAdd(%27,%29) -> bb7;
+  }
+  bb7 {
+    %31 = %30;
+    %32 = println(%31) -> bb8;
+  }
+  bb8 {
+    %34 = ConstantLoad 0
+    %35 = %34;
+    %36 = ConstantLoad 0
+    %37 = %36;
+    %33 = / %35 %37;
+    %38 = %33;
+    %39 = ConstantLoad 1
+    %40 = %39;
+    %41 = floatAdd(%38,%40) -> bb9;
+  }
+  bb9 {
+    %42 = %41;
+    %43 = println(%42) -> bb10;
+  }
+  bb10 {
+    %45 = ConstantLoad 0
+    %46 = %45;
+    %47 = ConstantLoad 0
+    %48 = %47;
+    %44 = / %46 %48;
+    %49 = %44;
+    %51 = ConstantLoad 0
+    %52 = %51;
+    %53 = ConstantLoad 0
+    %54 = %53;
+    %50 = / %52 %54;
+    %55 = %50;
+    %56 = floatAdd(%49,%55) -> bb11;
+  }
+  bb11 {
+    %57 = %56;
+    %58 = println(%57) -> bb12;
+  }
+  bb12 {
+    %60 = ConstantLoad 1
+    %61 = %60;
+    %62 = ConstantLoad 0
+    %63 = %62;
+    %59 = / %61 %63;
+    %64 = %59;
+    %65 = ConstantLoad 20
+    %66 = %65;
+    %67 = floatAdd(%64,%66) -> bb13;
+  }
+  bb13 {
+    %68 = %67;
+    %69 = println(%68) -> bb14;
+  }
+  bb14 {
+    %71 = ConstantLoad 1
+    %72 = unknown %71;
+    %73 = %72;
+    %74 = ConstantLoad 0
+    %75 = %74;
+    %70 = / %73 %75;
+    %76 = %70;
+    %78 = ConstantLoad 1
+    %79 = %78;
+    %80 = ConstantLoad 0
+    %81 = %80;
+    %77 = / %79 %81;
+    %82 = %77;
+    %83 = floatAdd(%76,%82) -> bb15;
+  }
+  bb15 {
+    %84 = %83;
+    %85 = println(%84) -> bb16;
+  }
+  bb16 {
+    %87 = ConstantLoad 1
+    %88 = unknown %87;
+    %89 = %88;
+    %90 = ConstantLoad 0
+    %91 = %90;
+    %86 = / %89 %91;
+    %92 = %86;
+    %93 = ConstantLoad 100
+    %94 = %93;
+    %95 = floatAdd(%92,%94) -> bb17;
+  }
+  bb17 {
+    %96 = %95;
+    %97 = println(%96) -> bb18;
+  }
+  bb18 {
+    %99 = ConstantLoad 1
+    %100 = %99;
+    %101 = ConstantLoad 2
+    %102 = %101;
+    %98 = + %100 %102;
+    %103 = %98;
+    %104 = println(%103) -> bb19;
+  }
+  bb19 {
+    %106 = ConstantLoad 1
+    %107 = unknown %106;
+    %108 = %107;
+    %109 = ConstantLoad 1
+    %110 = %109;
+    %105 = + %108 %110;
+    %111 = %105;
+    %112 = println(%111) -> bb20;
+  }
+  bb20 {
+    %114 = ConstantLoad 0
+    %115 = unknown %114;
+    %116 = %115;
+    %117 = ConstantLoad 0
+    %118 = unknown %117;
+    %119 = %118;
+    %113 = + %116 %119;
+    %120 = %113;
+    %121 = println(%120) -> bb21;
+  }
+  bb21 {
+    %123 = ConstantLoad 0
+    %124 = unknown %123;
+    %125 = %124;
+    %126 = ConstantLoad 0
+    %127 = %126;
+    %122 = + %125 %127;
+    %128 = %122;
+    %129 = println(%128) -> bb22;
+  }
+  bb22 {
+    %132 = ConstantLoad 0
+    %133 = %132;
+    %134 = ConstantLoad 0
+    %135 = %134;
+    %131 = / %133 %135;
+    %136 = %131;
+    %137 = ConstantLoad 1
+    %138 = %137;
+    %130 = + %136 %138;
+    %139 = %130;
+    %140 = println(%139) -> bb23;
+  }
+  bb23 {
+    %143 = ConstantLoad 0
+    %144 = %143;
+    %145 = ConstantLoad 0
+    %146 = %145;
+    %142 = / %144 %146;
+    %147 = %142;
+    %149 = ConstantLoad 0
+    %150 = %149;
+    %151 = ConstantLoad 0
+    %152 = %151;
+    %148 = / %150 %152;
+    %153 = %148;
+    %141 = + %147 %153;
+    %154 = %141;
+    %155 = println(%154) -> bb24;
+  }
+  bb24 {
+    %158 = ConstantLoad 1
+    %159 = %158;
+    %160 = ConstantLoad 0
+    %161 = %160;
+    %157 = / %159 %161;
+    %162 = %157;
+    %163 = ConstantLoad 20
+    %164 = %163;
+    %156 = + %162 %164;
+    %165 = %156;
+    %166 = println(%165) -> bb25;
+  }
+  bb25 {
+    %169 = ConstantLoad 1
+    %170 = unknown %169;
+    %171 = %170;
+    %172 = ConstantLoad 0
+    %173 = %172;
+    %168 = / %171 %173;
+    %174 = %168;
+    %176 = ConstantLoad 1
+    %177 = %176;
+    %178 = ConstantLoad 0
+    %179 = %178;
+    %175 = / %177 %179;
+    %180 = %175;
+    %167 = + %174 %180;
+    %181 = %167;
+    %182 = println(%181) -> bb26;
+  }
+  bb26 {
+    %185 = ConstantLoad 1
+    %186 = unknown %185;
+    %187 = %186;
+    %188 = ConstantLoad 0
+    %189 = %188;
+    %184 = / %187 %189;
+    %190 = %184;
+    %191 = ConstantLoad 100
+    %192 = %191;
+    %183 = + %190 %192;
+    %193 = %183;
+    %194 = println(%193) -> bb27;
+  }
+  bb27 {
+    %195 = ConstantLoad 4
+    f1 = %195;
+    %198 = ConstantLoad 38
+    %199 = %198;
+    %200 = f1;
+    %197 = + %199 %200;
+    %201 = %197;
+    %202 = println(%201) -> bb28;
+  }
+  bb28 {
+    %203 = ConstantLoad 38.42
+    f2 = %203;
+    %206 = f1;
+    %207 = f2;
+    %205 = + %206 %207;
+    %208 = %205;
+    %209 = println(%208) -> bb29;
+  }
+  bb29 {
+    %211 = ConstantLoad 1
+    %212 = unknown %211;
+    %213 = %212;
+    %214 = ConstantLoad 0
+    %215 = %214;
+    %210 = / %213 %215;
+    f2 = %210;
+    %217 = f2;
+    %218 = ConstantLoad 2
+    %219 = %218;
+    %216 = + %217 %219;
+    %220 = %216;
+    %221 = println(%220) -> bb30;
+  }
+  bb30 {
+    return;
+  }
+}
+floatAdd(float,float) -> float{
+  bb0 {
+    %4 = f1;
+    %5 = f2;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}

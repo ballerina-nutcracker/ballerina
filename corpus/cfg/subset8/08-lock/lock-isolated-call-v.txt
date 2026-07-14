@@ -1,0 +1,22 @@
+(callFoo
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo ()))
+    (return
+      (literal 1))
+  )
+)
+(foo
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal foo called))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation callFoo ()))))
+  )
+)

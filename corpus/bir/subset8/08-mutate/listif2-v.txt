@@ -1,0 +1,67 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad str
+    %2 = ConstantLoad 3
+    %3 = ConstantLoad 2
+    %4 = newArray [string, int, never...][%3]{%1, %2}
+    ns = %4;
+    u = ns;
+    %7 = u is [int, int, never...]
+    %7 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad NN
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb3 {
+    %8 = u is [string, string, never...]
+    %8 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad SS
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb6 {
+    %9 = u is [int, string, never...]
+    %9 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad NS
+    %1 = println(%0) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb9 {
+    PushScopeFrame 3
+    _ = (1, u);
+    %1 = ConstantLoad SN
+    %2 = println(%1) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    return;
+  }
+}

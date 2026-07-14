@@ -1,0 +1,65 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d1 (type
+          (value-type decimal)) (expr
+          (literal 1d))))
+      (var-def
+        (variable d2 (type
+          (value-type decimal)) (expr
+          (literal 1d))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (unary-expr -
+          (literal 1d)))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 0d))
+      (assignment
+        (simple-var-ref d2)
+        (unary-expr -
+          (literal 1d)))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.999999999999999999999999999999999E6144d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 9.999999999999999999999999999999999E6144d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.999999999999999999999999999999999E-6001d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 0.5E143d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref d1)
+            (simple-var-ref d2))))))))

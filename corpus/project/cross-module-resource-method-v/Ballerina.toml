@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmoduleresourcemethod"
+version = "0.1.0"

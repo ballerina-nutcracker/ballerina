@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (value-type byte)) (expr
+        (literal 1))))
+    (var-def
+      (variable b1 (type
+        (user-defined-type Byte)) (expr
+        (simple-var-ref b))))
+    (assignment
+      (simple-var-ref b)
+      (simple-var-ref b1))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref b1)
+          (simple-var-ref b)))))
+  )
+)

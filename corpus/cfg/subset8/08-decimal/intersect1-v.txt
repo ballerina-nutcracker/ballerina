@@ -1,0 +1,35 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable t1 (type
+        (intersection-type
+          (union-type
+            (value-type decimal)
+            (value-type int))
+          (union-type
+            (value-type decimal)
+            (value-type float)))) (expr
+        (literal 2.3E+23))))
+    (var-def
+      (variable t2 (type
+        (intersection-type
+          (union-type
+            (value-type decimal)
+            (value-type null))
+          (value-type decimal))) (expr
+        (simple-var-ref t1))))
+    (var-def
+      (variable t3 (type
+        (intersection-type
+          (union-type
+            (value-type decimal)
+            (value-type int))
+          (union-type
+            (value-type decimal)
+            (value-type null)))) (expr
+        (simple-var-ref t2))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t3))))
+  )
+)

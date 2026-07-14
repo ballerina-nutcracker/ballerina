@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'bar'
+  --> main.bal:22:16
+   |
+22 |     io:println(types:compute(1)); // @error
+   |                ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'bar'
+  --> main.bal:23:16
+   |
+23 |     io:println(types:compute(1, foo = 10)); // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^

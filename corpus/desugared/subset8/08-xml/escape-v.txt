@@ -1,0 +1,36 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (value-type xml)) (expr
+          (xml-element-literal e
+            (xml-attribute a
+              (literal x&amp;y&quot;z))
+            (xml-text-literal hello&amp;world)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e1))))
+      (var-def
+        (variable t (type
+          (value-type xml)) (expr
+          (xml-text-literal pure text &amp; entity))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t))))
+      (var-def
+        (variable comment (type
+          (value-type xml)) (expr
+          (xml-comment-literal  safe comment ))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref comment))))
+      (var-def
+        (variable pi (type
+          (value-type xml)) (expr
+          (xml-pi-literal target some data))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref pi)))))))

@@ -1,0 +1,47 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_xml2.xml))))
+    (var-def
+      (variable data (type
+        (value-type xml)) (expr
+        (xml-element-literal root
+          (xml-attribute attr
+            (literal val))
+          (xml-element-literal child)))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteXml (
+          (simple-var-ref path)
+          (simple-var-ref data)))))
+    (var-def
+      (variable result (type
+        (value-type xml)) (expr
+        (checked-expr
+          (invocation io fileReadXml (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+    (var-def
+      (variable data2 (type
+        (value-type xml)) (expr
+        (xml-element-literal updated))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteXml (
+          (simple-var-ref path)
+          (simple-var-ref data2)))))
+    (var-def
+      (variable result2 (type
+        (value-type xml)) (expr
+        (checked-expr
+          (invocation io fileReadXml (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result2))))
+  )
+)

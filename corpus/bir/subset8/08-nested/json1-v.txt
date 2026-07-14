@@ -1,0 +1,62 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad James
+    %3 = ConstantLoad age
+    %4 = ConstantLoad 100
+    %5 = ConstantLoad children
+    %6 = ConstantLoad Jack
+    %7 = ConstantLoad Jane
+    %8 = ConstantLoad 2
+    %9 = newArray [nil|boolean|int|float|string|...|......][%8]{%6, %7}
+    %10 = ConstantLoad married
+    %11 = ConstantLoad true
+    %12 = newMap {| nil|boolean|int|float|string|...|...... |}{%1=%2, %3=%4, %5=%9, %10=%11}
+    %13 = ConstantLoad 1
+    %14 = newArray [nil|boolean|int|float|string|...|......][%13]{%12}
+    j = %14;
+    %16 = println(j) -> bb1;
+  }
+  bb1 {
+    %17 = j is [nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}...]
+    %17 ? bb2 : bb8;
+  }
+  bb2 {
+    PushScopeFrame 6
+    %0 = ConstantLoad array
+    %1 = println(%0) -> bb3;
+  }
+  bb3 {
+    %3 = ConstantLoad 0
+    %2 = (1, j)[%3];
+    j0 = %2;
+    %5 = j0 is {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}
+    %5 ? bb4 : bb7;
+  }
+  bb4 {
+    PushScopeFrame 5
+    %0 = ConstantLoad map
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    %3 = ConstantLoad age
+    %2 = (1, j0)[%3];
+    %4 = println(%2) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

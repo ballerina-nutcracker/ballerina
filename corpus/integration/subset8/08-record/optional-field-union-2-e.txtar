@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got nil
+  --> optional-field-union-2-e.bal:29:13
+   |
+29 |     r.foo = (); // @error
+   |             ^^

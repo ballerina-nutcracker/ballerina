@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: bad type cast: cannot cast decimal string to float
+        at main(tofloat4-p.bal:21)

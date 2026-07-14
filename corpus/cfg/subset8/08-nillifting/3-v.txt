@@ -1,0 +1,77 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 4))))
+    (var-def
+      (variable b (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 2))))
+    (var-def
+      (variable c (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 1))))
+    (var-def
+      (variable v1 (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (binary-expr |
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v1))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr |
+          (binary-expr |
+            (simple-var-ref a)
+            (simple-var-ref b))
+          (simple-var-ref c)))))
+    (var-def
+      (variable d (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable v2 (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (binary-expr |
+          (simple-var-ref a)
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v2))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr |
+          (binary-expr |
+            (binary-expr |
+              (simple-var-ref a)
+              (simple-var-ref b))
+            (simple-var-ref c))
+          (simple-var-ref d)))))
+    (var-def
+      (variable v3 (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (binary-expr <<
+          (simple-var-ref c)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v3))))
+  )
+)

@@ -1,0 +1,35 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type int) dimensions: 3 ([][][]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref v)
+            (literal 0))
+          (literal 0))
+        (list-constructor-expr))
+      (expression-stmt
+        (invocation lang.array push (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref v)
+              (literal 0))
+            (literal 0))
+          (literal 17))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (index-based-access
+                (simple-var-ref v)
+                (literal 0))
+              (literal 0))
+            (literal 0))))))))

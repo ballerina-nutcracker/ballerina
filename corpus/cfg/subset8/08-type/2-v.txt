@@ -1,0 +1,32 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type any)) (expr
+        (literal 17))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (user-defined-type Int))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref x)
+          (literal 1)))))
+  )
+  (bb2 (bb1 bb0) ()
+    (assignment
+      (simple-var-ref x)
+      (literal 21))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (type-conversion-expr
+          (simple-var-ref x)
+          (user-defined-type Int)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)

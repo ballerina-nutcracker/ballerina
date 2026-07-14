@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation doPanic ()))))))
+  (function doPanic () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation alwaysErr ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref $desugar$0))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$1))))
+  (function alwaysErr () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal err)))))))

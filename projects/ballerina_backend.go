@@ -26,7 +26,6 @@ import (
 const BallerinaBackendTarget TargetPlatform = "native"
 
 // BallerinaBackend generates BIR from compiled modules.
-// Java source: io.ballerina.projects.JBallerinaBackend
 type BallerinaBackend struct {
 	packageCompilation *PackageCompilation
 	packageContext     *packageContext
@@ -80,4 +79,24 @@ func (b *BallerinaBackend) BIRPackages() []*bir.BIRPackage {
 		}
 	}
 	return pkgs
+}
+
+// EmitBala writes the package's `.bala` archive into outputDir and returns
+// the archive's path. The output filename follows the
+// <org>-<name>-<platform>-<version>.bala convention.
+//
+// The archive layout mirrors a build project on disk plus a Bala.toml:
+//
+//	Bala.toml                  // bala schema version + build metadata + modules list
+//	Ballerina.toml
+//	Dependencies.toml
+//	<file>.bal                 // default-module sources at the root
+//	modules/<sub>/<file>.bal   // sub-module sources, one folder per sub-module
+//
+// docs/ and resources/ are deferred until a consumer needs them. outputDir
+// is created if it does not exist; an existing archive at the computed path
+// is overwritten.
+func (b *BallerinaBackend) EmitBala(outputDir string) (string, error) {
+	pkg := b.packageContext.getProject().CurrentPackage()
+	return writeBala(pkg, b.packageCompilation.Resolution(), outputDir)
 }

@@ -1,6 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:bar
@@ -37,7 +35,10 @@ bar([int...]...) -> int{
     %10 ? bb2 : bb3;
   }
   bb2 {
-    panic $desugar$0;
+    PushScopeFrame 0
+    (1, %11) = (1, $desugar$0);
+    PopScopeFrame
+    panic %11;
   }
   bb3 {
     %0 = $desugar$0;
@@ -63,7 +64,7 @@ foo([int...]...) -> int|error{
     %8 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 15
+    PushScopeFrame 10
     %0 = (1, vals)[(1, i)];
     val = %0;
     %3 = val;
@@ -77,21 +78,26 @@ foo([int...]...) -> int|error{
     return;
   }
   bb5 {
-    %6 = ConstantLoad negative value
-    %7 = newError error(%6)
-    (1, %0) = %7;
+    PushScopeFrame 2
+    %0 = ConstantLoad negative value
+    %1 = newError error(%0)
+    (2, %0) = %1;
+    PopScopeFrame
+    PopScopeFrame
     return;
   }
   bb6 {
-    %9 = (1, sum);
-    %10 = val;
-    %8 = + %9 %10;
-    (1, sum) = %8;
-    %12 = (1, i);
-    %13 = ConstantLoad 1
-    %14 = %13;
-    %11 = + %12 %14;
-    (1, i) = %11;
+    PushScopeFrame 3
+    %1 = (2, sum);
+    %2 = (1, val);
+    %0 = + %1 %2;
+    (2, sum) = %0;
+    PopScopeFrame
+    %7 = (1, i);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, i) = %6;
     PopScopeFrame
     GOTO bb2;
   }

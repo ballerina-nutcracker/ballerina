@@ -1,0 +1,85 @@
+name: PR Benchmark Memory Prepare
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-memory-prepare-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Benchmark memory main vs PR head
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Install benchmark dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y hyperfine time
+
+      - name: Build benchmark tool
+        working-directory: compiler-tools/benchmark
+        run: go build -o ../../bin/benchmark .
+
+      - name: Run memory benchmark
+        run: |
+          mkdir -p benchmark-output
+          set +e
+          ./bin/benchmark \
+            --mode memory \
+            --runs 3 \
+            --warmup 1 \
+            --export-html benchmark-output/memory-output.html \
+            origin/main \
+            HEAD \
+            corpus/bench > benchmark-output/memory.log 2>&1
+          memory_status=$?
+          if [ "$memory_status" -ne 0 ]; then
+            mv benchmark-output/memory.log benchmark-output/memory-error.txt
+          else
+            rm benchmark-output/memory.log
+          fi
+          set -e
+
+      - name: Write benchmark metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          jq -n \
+            --argjson pr_number "$PR_NUMBER" \
+            --arg head_sha "$HEAD_SHA" \
+            --arg base_ref "$BASE_REF" \
+            --arg head_ref "$HEAD_REF" \
+            --arg head_repo_full_name "$HEAD_REPO" \
+            '$ARGS.named' > benchmark-output/benchmark-meta.json
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-memory-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            benchmark-output/memory-output.html
+            benchmark-output/memory-error.txt
+            benchmark-output/benchmark-meta.json
+          if-no-files-found: error

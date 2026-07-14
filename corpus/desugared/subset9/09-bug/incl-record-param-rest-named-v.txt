@@ -1,0 +1,49 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Config
+    (record-type
+      (rest
+        (value-type string))))
+  (function foo (
+    (variable config (type
+      (user-defined-type Config)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref config)
+            (literal name)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref config)
+            (literal age)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref config)
+            (literal city)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref config)
+            (literal country)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation foo (
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))
+            (key-value
+              (literal age)
+              (literal 30))
+            (key-value
+              (literal city)
+              (literal New York))
+            (key-value
+              (literal country)
+              (literal USA)))))))))

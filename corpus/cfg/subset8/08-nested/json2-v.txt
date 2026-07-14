@@ -1,0 +1,30 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable iv (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 17)))))
+    (var-def
+      (variable ij (type
+        (user-defined-type IntJ)) (expr
+        (simple-var-ref iv))))
+    (var-def
+      (variable j (type
+        (user-defined-type J)) (expr
+        (simple-var-ref ij))))
+    (type-test-expr is
+      (simple-var-ref j)
+      (array-type
+        (user-defined-type IntJ) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref j)
+          (literal 0)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

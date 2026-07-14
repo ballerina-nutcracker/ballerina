@@ -1,0 +1,55 @@
+(add
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable n (type
+        (value-type any)) (expr
+        (simple-var-ref x))))
+    (type-test-expr is
+      (simple-var-ref n)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (type-test-expr is
+      (simple-var-ref y)
+      (value-type int))
+  )
+  (bb2 (bb1) ()
+    (assignment
+      (simple-var-ref n)
+      (binary-expr +
+        (simple-var-ref n)
+        (simple-var-ref y)))
+    (return
+      (type-conversion-expr
+        (simple-var-ref n)
+        (value-type int)))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref n))
+  )
+  (bb4 (bb0) ()
+    (return
+      (unary-expr -
+        (literal 1)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal 1)
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal 2)
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal hello)
+          (literal false))))))
+  )
+)

@@ -1,0 +1,26 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (checked-expr
+          (invocation os setEnv (
+            (literal BAL_TEST_VAR)
+            (literal hello)))))
+      (var-def
+        (variable v (type
+          (value-type string)) (expr
+          (invocation os getEnv (
+            (literal BAL_TEST_VAR))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))
+      (expression-stmt
+        (checked-expr
+          (invocation os unsetEnv (
+            (literal BAL_TEST_VAR))))))))

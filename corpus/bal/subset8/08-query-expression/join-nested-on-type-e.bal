@@ -32,7 +32,7 @@ public function main() {
         {ownerId: 1, name: "HR"}
     ];
 
-    string[][] result = from var person in people
+    string[][] _ = from var _ in people
         select from var dept in departments
             join var owner in people
             on dept.ownerId equals owner.name // @error

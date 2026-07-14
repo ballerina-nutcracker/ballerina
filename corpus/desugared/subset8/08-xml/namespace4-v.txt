@@ -1,0 +1,35 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation foo ()))
+      (expression-stmt
+        (invocation baz ()))))
+  (function foo () (
+    (value-type null))
+    (block-function-body
+      (xmlns
+        (literal https:foo/bar) as bar)
+      (var-def
+        (variable elem (type
+          (value-type xml)) (expr
+          (xml-element-literal bar:f
+            (xml-element-literal bar:x)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elem))))))
+  (function baz () (
+    (value-type null))
+    (block-function-body
+      (xmlns
+        (literal https:foo/baz) as bar)
+      (var-def
+        (variable elem (type
+          (value-type xml)) (expr
+          (xml-element-literal bar:f
+            (xml-element-literal bar:x)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elem)))))))

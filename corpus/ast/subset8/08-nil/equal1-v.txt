@@ -1,0 +1,69 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (invocation makeNil ())
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 1))))) ())
+      (block-stmt
+        (if
+          (binary-expr ==
+            (literal <nil>)
+            (invocation makeNil ()))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal 2))))) ())
+        (block-stmt
+          (if
+            (binary-expr ==
+              (literal <nil>)
+              (literal <nil>))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal 3))))) ())
+          (block-stmt
+            (if
+              (binary-expr !=
+                (invocation makeNil ())
+                (literal <nil>))
+              (block-stmt) (
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal 4)))))))
+            (if
+              (binary-expr !=
+                (literal <nil>)
+                (invocation makeNil ()))
+              (block-stmt) (
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal 5)))))))
+            (var-def
+              (variable b (type
+                (value-type boolean)) (expr
+                (binary-expr !=
+                  (literal <nil>)
+                  (literal <nil>)))))
+            (if
+              (simple-var-ref b)
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal 6))))) ())
+            (block-stmt))))))
+  (function makeNil () (
+    (value-type null))
+    (block-function-body
+      (return
+        (literal <nil>)))))

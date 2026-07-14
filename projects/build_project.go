@@ -18,6 +18,7 @@ package projects
 
 import (
 	"io/fs"
+	"path"
 	"path/filepath"
 )
 
@@ -60,31 +61,32 @@ func (b *BuildProject) TargetDir() string {
 
 // DocumentID returns the DocumentID for the given file path, if it exists in this project.
 // It searches through all modules in the current package.
+//
+// The filePath argument may use either forward-slash or OS-native separators —
+// it is normalized to the canonical forward-slash form before comparison so the
+// lookup behaves consistently on Windows.
 func (b *BuildProject) DocumentID(filePath string) (DocumentID, bool) {
 	if b.CurrentPackage() == nil {
 		return DocumentID{}, false
 	}
 
-	// Search through all modules
+	target := filepath.ToSlash(filePath)
+	targetBase := path.Base(target)
+
 	for _, module := range b.CurrentPackage().Modules() {
-		// Check source documents
 		for _, docID := range module.DocumentIDs() {
 			doc := module.Document(docID)
-			if doc != nil && doc.Name() == filepath.Base(filePath) {
-				// Check if the document path matches
-				docPath := b.documentPathForModule(docID, module)
-				if docPath == filePath {
+			if doc != nil && path.Base(filepath.ToSlash(doc.Name())) == targetBase {
+				if b.documentPathForModule(docID, module) == target {
 					return docID, true
 				}
 			}
 		}
 
-		// Check test documents
 		for _, docID := range module.TestDocumentIDs() {
 			doc := module.Document(docID)
-			if doc != nil && doc.Name() == filepath.Base(filePath) {
-				docPath := b.documentPathForModule(docID, module)
-				if docPath == filePath {
+			if doc != nil && path.Base(filepath.ToSlash(doc.Name())) == targetBase {
+				if b.documentPathForModule(docID, module) == target {
 					return docID, true
 				}
 			}
@@ -95,36 +97,40 @@ func (b *BuildProject) DocumentID(filePath string) (DocumentID, bool) {
 }
 
 // documentPathForModule computes the file path for a document in a module.
+// Paths are returned in forward-slash form to match Document.Name() and the
+// fs.FS convention, so callers see consistent paths across operating systems.
 func (b *BuildProject) documentPathForModule(docID DocumentID, module *Module) string {
 	doc := module.Document(docID)
 	if doc == nil {
 		return ""
 	}
 
-	docName := doc.Name()
+	// Document.Name() may be path-joined relative to the project root
+	// (e.g., "modules/util/foo.bal" or "pkg-a/main.bal" for workspace
+	// members). Extract the bare basename for path construction.
+	docName := path.Base(filepath.ToSlash(doc.Name()))
+	root := filepath.ToSlash(b.sourceRoot)
 
 	if module.IsDefaultModule() {
 		// Default module: files are in sourceRoot or sourceRoot/tests
-		// Check if it's a test document
 		for _, testID := range module.TestDocumentIDs() {
 			if testID.Equals(docID) {
-				return filepath.Join(b.sourceRoot, TestsDir, docName)
+				return path.Join(root, TestsDir, docName)
 			}
 		}
-		return filepath.Join(b.sourceRoot, docName)
+		return path.Join(root, docName)
 	}
 
 	// Named module: files are in sourceRoot/modules/<moduleName>
 	moduleName := module.ModuleName().ModuleNamePart()
-	modulePath := filepath.Join(b.sourceRoot, ModulesDir, moduleName)
+	modulePath := path.Join(root, ModulesDir, moduleName)
 
-	// Check if it's a test document
 	for _, testID := range module.TestDocumentIDs() {
 		if testID.Equals(docID) {
-			return filepath.Join(modulePath, TestsDir, docName)
+			return path.Join(modulePath, TestsDir, docName)
 		}
 	}
-	return filepath.Join(modulePath, docName)
+	return path.Join(modulePath, docName)
 }
 
 // DocumentPath returns the file path for the given DocumentID.

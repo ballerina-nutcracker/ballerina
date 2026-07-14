@@ -1,0 +1,58 @@
+(main
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable j (type
+        (user-defined-type J)) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal James))
+            (key-value
+              (literal age)
+              (literal 100))
+            (key-value
+              (literal children)
+              (list-constructor-expr
+                (literal Jack)
+                (literal Jane)))
+            (key-value
+              (literal married)
+              (literal true)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref j))))
+    (type-test-expr is
+      (simple-var-ref j)
+      (array-type
+        (user-defined-type J) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (expression-stmt
+      (invocation io println (
+        (literal array))))
+    (var-def
+      (variable j0 (type
+        (user-defined-type J)) (expr
+        (index-based-access
+          (simple-var-ref j)
+          (literal 0)))))
+    (type-test-expr is
+      (simple-var-ref j0)
+      (constrained-type
+        (builtin-ref-type map)
+        (user-defined-type J)))
+  )
+  (bb2 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (literal map))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref j0)
+          (literal age)))))
+  )
+  (bb3 (bb2 bb1) (bb4))
+  (bb4 (bb3 bb0) ())
+)

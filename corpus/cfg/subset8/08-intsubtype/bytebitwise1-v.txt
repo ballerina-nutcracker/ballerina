@@ -1,0 +1,50 @@
+(and
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type byte)) (expr
+        (literal 255))))
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (literal 4612))))
+    (var-def
+      (variable n (type
+        (value-type byte)) (expr
+        (binary-expr &
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation and ()))
+    (expression-stmt
+      (invocation or ()))
+  )
+)
+(or
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type byte)) (expr
+        (literal 240))))
+    (var-def
+      (variable y (type
+        (value-type byte)) (expr
+        (literal 15))))
+    (var-def
+      (variable b (type
+        (value-type byte)) (expr
+        (binary-expr |
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+  )
+)

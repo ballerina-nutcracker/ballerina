@@ -22,16 +22,16 @@ public function main() {
 
 public function f(int|string x) {
     if x is string && isEmpty(x) {
-        string unused1 = x;
+        string _ = x;
         io:println("empty str");
         return;
     }
     else if x is int {
-        int unused2 = x;
+        int _ = x;
         io:println("int");
         return;
     }
-    string unused3 = x;
+    string _ = x;
     io:println("non-empty str");
 }
 

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> service-lock-isolated-field-init-1-e.bal:42:17
+   |
+42 |     int value = seed; // @error
+   |                 ^^^^

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: cannot convert 9223372036854775807.5 to int64: value out of range
+        at main(toint8-p.bal:21)

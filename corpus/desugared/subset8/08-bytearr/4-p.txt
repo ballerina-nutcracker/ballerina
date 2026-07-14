@@ -1,0 +1,23 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b1 (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation f (
+          (simple-var-ref b1))))))
+  (function f (
+    (variable a (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref a)
+          (literal 0))
+        (literal 256)))))

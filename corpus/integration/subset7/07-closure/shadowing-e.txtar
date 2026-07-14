@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: Variable already defined: offset
-  --> shadowing-e.bal:22:9
+  --> shadowing-e.bal:23:9
    |
-22 |         int offset = 10; // @error
+23 |         int offset = 10; // @error
    |         ^^^^^^^^^^^^^^^^

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> unused5-e.bal:18:1
+   |
+18 | const int x = 2; // @error
+   | ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> unused5-e.bal:21:5
+   |
+21 |     string x = "str"; // @error
+   |     ^^^^^^^^^^^^^^^^^

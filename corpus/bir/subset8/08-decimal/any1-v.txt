@@ -1,0 +1,121 @@
+module $anon.. v 0.0.0;
+bar(any) -> any{
+  bb0 {
+    %0 = a;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    a1 = %1;
+    %3 = println(a1) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 1E+6144
+    a2 = %4;
+    %6 = println(a2) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 1.2E+3
+    %8 = %7;
+    %9 = bar(%8) -> bb3;
+  }
+  bb3 {
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad a
+    %12 = ConstantLoad 2.345E+32
+    %13 = newMap {| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |}{%11=%12}
+    r = %13;
+    %16 = ConstantLoad a
+    %15 = r[%16];
+    %17 = println(%15) -> bb5;
+  }
+  bb5 {
+    %18 = ConstantLoad 12
+    %19 = ConstantLoad 1.2E+2
+    %20 = ConstantLoad 1.21E+3
+    %21 = ConstantLoad 3
+    %22 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%21]{%18, %19, %20}
+    arr = %22;
+    %25 = ConstantLoad 0
+    %24 = arr[%25];
+    %26 = println(%24) -> bb6;
+  }
+  bb6 {
+    %28 = ConstantLoad 1
+    %27 = arr[%28];
+    %29 = println(%27) -> bb7;
+  }
+  bb7 {
+    %31 = ConstantLoad 2
+    %30 = arr[%31];
+    %32 = println(%30) -> bb8;
+  }
+  bb8 {
+    %33 = ConstantLoad 1.1
+    %34 = ConstantLoad 2.1E+2
+    %35 = ConstantLoad 2
+    %36 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%35]{%33, %34}
+    %37 = ConstantLoad 4.2E+3
+    %38 = ConstantLoad 3E+2
+    %39 = ConstantLoad 2
+    %40 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%39]{%37, %38}
+    %41 = ConstantLoad 2
+    %42 = newArray [[nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]...][%41]{%36, %40}
+    arr1 = %42;
+    %45 = ConstantLoad 0
+    %44 = arr1[%45];
+    arr2 = %44;
+    %48 = ConstantLoad 0
+    %47 = arr2[%48];
+    %49 = println(%47) -> bb9;
+  }
+  bb9 {
+    %51 = ConstantLoad 1
+    %50 = arr2[%51];
+    %52 = println(%50) -> bb10;
+  }
+  bb10 {
+    %54 = ConstantLoad 1
+    %53 = arr1[%54];
+    %55 = println(%53) -> bb11;
+  }
+  bb11 {
+    %56 = ConstantLoad x1
+    %57 = ConstantLoad 1.2
+    %58 = ConstantLoad x2
+    %59 = ConstantLoad 1.2E+2
+    %60 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{%56=%57, %58=%59}
+    m1 = %60;
+    %63 = ConstantLoad x1
+    %62 = m1[%63];
+    %64 = println(%62) -> bb12;
+  }
+  bb12 {
+    %66 = ConstantLoad x2
+    %65 = m1[%66];
+    %67 = println(%65) -> bb13;
+  }
+  bb13 {
+    %68 = ConstantLoad x1
+    %69 = ConstantLoad 1
+    %70 = ConstantLoad 2
+    %71 = ConstantLoad 2
+    %72 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%71]{%69, %70}
+    %73 = newMap {| [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]... |}{%68=%72}
+    m2 = %73;
+    %76 = ConstantLoad x1
+    %75 = m2[%76];
+    %77 = <[nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]>(%75)
+    x = %77;
+    %80 = ConstantLoad 0
+    %79 = x[%80];
+    %81 = println(%79) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}

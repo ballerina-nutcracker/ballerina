@@ -1,0 +1,18 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad world
+    %2 = evalTemplate[string]("hello ", %1, "")
+    g = %2;
+    %4 = println(g) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad hello world
+    g = %5;
+    %6 = ConstantLoad hello world
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

@@ -1,0 +1,27 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = newXMLElement(%1, ())
+    %3 = ConstantLoad b
+    %4 = newXMLElement(%3, ())
+    %5 = ConstantLoad text
+    %6 = newXMLText(%5)
+    %7 = newXMLSequence{%2, %4, %6}
+    seq = %7;
+    %9 = println(seq) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad hello 
+    %11 = newXMLText(%10)
+    t1 = %11;
+    %13 = ConstantLoad world
+    %14 = newXMLText(%13)
+    t2 = %14;
+    %16 = + t1 t2;
+    %17 = println(%16) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

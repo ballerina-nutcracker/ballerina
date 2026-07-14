@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 21
+  --> construct4-e.bal:26:39
+   |
+26 |     R r = {x: 28, y: true, "x-stuff": 21}; // @error
+   |                                       ^^

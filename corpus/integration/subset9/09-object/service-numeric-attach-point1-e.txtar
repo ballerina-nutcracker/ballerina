@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: attach point is not assignable to listener's attach-point type
+  --> service-numeric-attach-point1-e.bal:42:1
+   |
+42 | service 1 on l { // @error attach point is not assignable to listener's attach-point type
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 |     public function onAttach(string message) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 |     }
+   |     ^
+45 | 
+   | 
+46 |     public function onDetach(string message) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+47 |     }
+   |     ^
+48 | }
+   | ^

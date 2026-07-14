@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type byte)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (assignment
+      (simple-var-ref x)
+      (literal 255))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

@@ -1,0 +1,25 @@
+(foo
+  (foo.$resource$get$0
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref id))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref vals))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type foo)) (expr
+        (new ()))))
+    (expression-stmt
+      (client-resource-access get expr:
+        (simple-var-ref f) name:test computed:
+        (literal 4)
+        (list-constructor-expr)))
+  )
+)

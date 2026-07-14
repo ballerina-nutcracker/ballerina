@@ -1,0 +1,11 @@
+-- stdout --
+200
+body: put body, ct: text/plain
+200
+body: {"k":"v"}, ct: application/json
+200
+200
+200
+200
+body: exec body, ct: text/plain
+-- stderr --

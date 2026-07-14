@@ -1,0 +1,4 @@
+-- stdout --
+hello ok
+error("bad input")
+-- stderr --

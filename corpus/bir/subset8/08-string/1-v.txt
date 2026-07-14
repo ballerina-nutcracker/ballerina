@@ -1,0 +1,270 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad string
+    %2 = isKeyword(%1) -> bb1;
+  }
+  bb1 {
+    %3 = %2;
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad hello
+    %6 = isKeyword(%5) -> bb3;
+  }
+  bb3 {
+    %7 = %6;
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad if
+    %10 = isKeyword(%9) -> bb5;
+  }
+  bb5 {
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad else
+    %14 = isKeyword(%13) -> bb7;
+  }
+  bb7 {
+    %15 = %14;
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    %17 = ConstantLoad false
+    %18 = isKeyword(%17) -> bb9;
+  }
+  bb9 {
+    %19 = %18;
+    %20 = println(%19) -> bb10;
+  }
+  bb10 {
+    %21 = ConstantLoad return
+    %22 = isKeyword(%21) -> bb11;
+  }
+  bb11 {
+    %23 = %22;
+    %24 = println(%23) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}
+isKeyword(string) -> boolean{
+  bb0 {
+    %3 = ConstantLoad return
+    %2 = == s %3;
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %1 = ConstantLoad boolean
+    %0 = == (1, s) %1;
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %1 = ConstantLoad int
+    %0 = == (2, s) %1;
+    %0 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %1 = ConstantLoad string
+    %0 = == (3, s) %1;
+    %0 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    PushScopeFrame 2
+    %1 = ConstantLoad while
+    %0 = == (4, s) %1;
+    %0 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (5, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 2
+    %1 = ConstantLoad foreach
+    %0 = == (5, s) %1;
+    %0 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (6, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    PushScopeFrame 2
+    %1 = ConstantLoad if
+    %0 = == (6, s) %1;
+    %0 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (7, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    PushScopeFrame 2
+    %1 = ConstantLoad else
+    %0 = == (7, s) %1;
+    %0 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (8, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb16 {
+    PushScopeFrame 2
+    %1 = ConstantLoad map
+    %0 = == (8, s) %1;
+    %0 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (9, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb18 {
+    PushScopeFrame 2
+    %1 = ConstantLoad true
+    %0 = == (9, s) %1;
+    %0 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (10, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    PushScopeFrame 2
+    %1 = ConstantLoad false
+    %0 = == (10, s) %1;
+    %0 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (11, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    PushScopeFrame 1
+    %0 = ConstantLoad false
+    (11, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

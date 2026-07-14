@@ -1,0 +1,74 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function checkEquality (
+    (variable b1 (type
+      (value-type boolean)))
+    (variable b2 (type
+      (value-type boolean)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr ==
+          (simple-var-ref b1)
+          (simple-var-ref b2)))))
+  (function checkInEquality (
+    (variable b1 (type
+      (value-type boolean)))
+    (variable b2 (type
+      (value-type boolean)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr !=
+          (simple-var-ref b1)
+          (simple-var-ref b2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (value-type boolean)) (expr
+          (invocation checkEquality (
+            (literal true)
+            (literal true))))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 4))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 5)))))))
+      (assignment
+        (simple-var-ref b)
+        (invocation checkEquality (
+          (literal false)
+          (literal false))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 6))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 7)))))))
+      (assignment
+        (simple-var-ref b)
+        (invocation checkInEquality (
+          (literal true)
+          (literal true))))
+      (if
+        (simple-var-ref b)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 8))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal 9))))))))))

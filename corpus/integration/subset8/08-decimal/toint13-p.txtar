@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: bad type cast: cannot cast 1.2f to int
+        at main(toint13-p.bal:21)

@@ -1,0 +1,49 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable name (type
+        (value-type string)) (expr
+        (literal เจมส์))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref name))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (simple-var-ref name))))))
+    (var-def
+      (variable name2 (type
+        (value-type string)) (expr
+        (literal เจมส์))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref name2))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref name)
+          (simple-var-ref name2)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr !=
+          (simple-var-ref name)
+          (simple-var-ref name2)))))
+    (var-def
+      (variable name3 (type
+        (value-type string)) (expr
+        (literal James))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref name3))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref name)
+          (literal James)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr !=
+          (simple-var-ref name)
+          (literal James)))))
+  )
+)

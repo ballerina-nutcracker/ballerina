@@ -1,0 +1,26 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable d1 (type
+        (union-type
+          (value-type decimal)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (type-test-expr is
+      (simple-var-ref d1)
+      (value-type null))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal nil))))
+  )
+  (bb2 (bb1 bb0) ()
+    (assignment
+      (simple-var-ref d1)
+      (literal 2.3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d1))))
+  )
+)

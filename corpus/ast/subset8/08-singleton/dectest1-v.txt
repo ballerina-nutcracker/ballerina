@@ -1,0 +1,64 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Integer
+    (union-type
+      (union-type
+        (finite-type
+          (literal 1d))
+        (finite-type
+          (literal 2d)))
+      (finite-type
+        (literal 3d))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type any)) (expr
+          (literal 1d))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Integer)))))
+      (assignment
+        (simple-var-ref v)
+        (literal 2d))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Integer)))))
+      (assignment
+        (simple-var-ref v)
+        (literal 2.000d))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Integer)))))
+      (assignment
+        (simple-var-ref v)
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Integer)))))
+      (assignment
+        (simple-var-ref v)
+        (literal 3d))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Integer)))))
+      (assignment
+        (simple-var-ref v)
+        (literal 4d))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Integer))))))))

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: parameter 'bar' conflicts with field of included record parameter 'values'
+  --> incl-record-param-4-e.bal:22:23
+   |
+22 | function foo(int bar, *Values values) returns int { // @error
+   |                       ^^^^^^^^^^^^^^

@@ -14,4 +14,4 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const int B = "hello" + "world"; // @error 
+public const int B = "hello" + "world"; // @error 

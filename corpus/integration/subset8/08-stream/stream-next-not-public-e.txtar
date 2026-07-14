@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected object { public function next() returns nil|{| value: int, never... |} }|object { public function close() returns nil; public function next() returns nil|{| value: int, never... |} }, got object { public function init() returns nil; private function next() returns nil|{| value: int, never... |} }
+  --> stream-next-not-public-e.bal:24:30
+   |
+24 |     stream<int, ()> _ = new (new Emit()); // @error
+   |                              ^^^^^^^^^^

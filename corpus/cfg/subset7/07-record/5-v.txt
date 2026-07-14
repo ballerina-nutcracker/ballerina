@@ -48,7 +48,7 @@
             (simple-var-ref s)))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref value)
+            (literal value)
             (literal 20))))))
     (expression-stmt
       (invocation io println (
@@ -68,7 +68,7 @@
             (simple-var-ref c)))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 1))))))
     (expression-stmt
       (invocation io println (
@@ -91,7 +91,7 @@
             (simple-var-ref s)))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 5))))))
     (expression-stmt
       (invocation io println (
@@ -118,13 +118,13 @@
             (simple-var-ref s)))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 5))
           (key-value
-            (simple-var-ref y)
+            (literal y)
             (literal 20))
           (key-value
-            (simple-var-ref name)
+            (literal name)
             (literal world))))))
     (expression-stmt
       (invocation io println (

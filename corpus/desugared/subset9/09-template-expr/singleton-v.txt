@@ -1,0 +1,24 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Greeting
+    (finite-type
+      (literal hello world)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable g (type
+          (user-defined-type Greeting)) (expr
+          (string-template-literal
+            (template-string "hello ")
+            (literal world)
+            (template-string "")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref g))))
+      (assignment
+        (simple-var-ref g)
+        (literal hello world))
+      (expression-stmt
+        (invocation io println (
+          (literal hello world)))))))

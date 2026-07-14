@@ -1,0 +1,17 @@
+-- stdout --
+
+0
+true
+ab
+2
+true
+smile🙂
+6
+true
+🙂frown
+6
+true
+🙁🙂
+2
+true
+-- stderr --

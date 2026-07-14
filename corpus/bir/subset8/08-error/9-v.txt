@@ -1,0 +1,92 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hi
+    %2 = newError error(%1)
+    e1 = %2;
+    %4 = ConstantLoad hi
+    %5 = newError error(%4)
+    e2 = %5;
+    %7 = unknown e1 e1;
+    %8 = %7;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    %10 = unknown e1 e1;
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = unknown e1 e2;
+    %14 = %13;
+    %15 = println(%14) -> bb3;
+  }
+  bb3 {
+    %16 = unknown e1 e2;
+    %17 = %16;
+    %18 = println(%17) -> bb4;
+  }
+  bb4 {
+    a1 = e1;
+    a2 = e2;
+    %21 = unknown a1 a1;
+    %22 = %21;
+    %23 = println(%22) -> bb5;
+  }
+  bb5 {
+    %24 = unknown a1 a1;
+    %25 = %24;
+    %26 = println(%25) -> bb6;
+  }
+  bb6 {
+    %27 = unknown a1 a2;
+    %28 = %27;
+    %29 = println(%28) -> bb7;
+  }
+  bb7 {
+    %30 = unknown a1 a2;
+    %31 = %30;
+    %32 = println(%31) -> bb8;
+  }
+  bb8 {
+    v1 = e1;
+    v2 = e2;
+    %35 = unknown v1 v1;
+    %36 = %35;
+    %37 = println(%36) -> bb9;
+  }
+  bb9 {
+    %38 = unknown v1 v1;
+    %39 = %38;
+    %40 = println(%39) -> bb10;
+  }
+  bb10 {
+    %41 = unknown v1 v2;
+    %42 = %41;
+    %43 = println(%42) -> bb11;
+  }
+  bb11 {
+    %44 = unknown v1 v2;
+    %45 = %44;
+    %46 = println(%45) -> bb12;
+  }
+  bb12 {
+    %47 = ConstantLoad <nil>
+    v2 = %47;
+    %48 = unknown v1 v2;
+    %49 = %48;
+    %50 = println(%49) -> bb13;
+  }
+  bb13 {
+    %52 = ConstantLoad hi
+    %53 = newError error(%52)
+    %54 = ConstantLoad hi
+    %55 = newError error(%54)
+    %51 = unknown %53 %55;
+    %56 = %51;
+    %57 = println(%56) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}

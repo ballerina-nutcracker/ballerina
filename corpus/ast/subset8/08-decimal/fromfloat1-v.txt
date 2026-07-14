@@ -1,0 +1,26 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 0.0f)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.0f)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1.00000f)
+            (value-type decimal)))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (literal 1234567891.0f)
+            (value-type decimal))))))))

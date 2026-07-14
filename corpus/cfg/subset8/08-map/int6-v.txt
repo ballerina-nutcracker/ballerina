@@ -1,0 +1,61 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable im (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr))))
+    (type-test-expr is
+      (simple-var-ref im)
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type any)))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal map<any>))))
+  )
+  (bb2 (bb1) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref im)
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type string)))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal map<string>))))
+  )
+  (bb4 (bb3 bb2) (bb5)
+    (type-test-expr is
+      (simple-var-ref im)
+      (constrained-type
+        (builtin-ref-type map)
+        (union-type
+          (value-type int)
+          (value-type null))))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal map<int?>))))
+  )
+  (bb6 (bb5) (bb7)
+    (type-test-expr is
+      (simple-var-ref im)
+      (constrained-type
+        (builtin-ref-type map)
+        (union-type
+          (value-type int)
+          (value-type string))))
+  )
+  (bb7 (bb6) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal map<int|string>))))
+  )
+  (bb8 (bb7) ())
+)

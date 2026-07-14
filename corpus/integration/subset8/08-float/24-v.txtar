@@ -1,0 +1,13 @@
+-- stdout --
+eq
+lt
+gt
+lt
+gt
+lt
+gt
+eq
+one nan
+one nan
+both nan
+-- stderr --

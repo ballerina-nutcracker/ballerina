@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 takeInt(int) -> int{
   bb0 {
     %0 = x;
@@ -38,7 +37,7 @@ main() -> nil{
     %10 = println(%9) -> bb4;
   }
   bb4 {
-    %11 = ConstantLoad 42/1
+    %11 = ConstantLoad 42
     %12 = %11;
     %13 = takeDecimal(%12) -> bb5;
   }
@@ -56,7 +55,7 @@ main() -> nil{
     %20 = println(%19) -> bb8;
   }
   bb8 {
-    %21 = ConstantLoad 3/2
+    %21 = ConstantLoad 1.5
     %22 = %21;
     %23 = takeDecimal(%22) -> bb9;
   }
@@ -74,7 +73,7 @@ main() -> nil{
     %30 = println(%29) -> bb12;
   }
   bb12 {
-    %31 = ConstantLoad 100/1
+    %31 = ConstantLoad 100
     %32 = %31;
     %33 = takeDecimal(%32) -> bb13;
   }

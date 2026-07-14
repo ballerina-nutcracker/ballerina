@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (check-panicked-expr
+        (invocation newError ())))
+  )
+)
+(newError
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal failed successfully))))
+  )
+)

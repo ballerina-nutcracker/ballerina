@@ -1,0 +1,147 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 5))))
+      (var-def
+        (variable b (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref a))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref b))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal <nil>))))
+      (if
+        (binary-expr ||
+          (type-test-expr is
+            (simple-var-ref $desugar$0))
+          (type-test-expr is
+            (simple-var-ref $desugar$1)))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$2)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation c ()))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal <nil>))))
+      (if
+        (binary-expr ||
+          (type-test-expr is
+            (simple-var-ref $desugar$3))
+          (type-test-expr is
+            (simple-var-ref $desugar$4)))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (binary-expr +
+              (simple-var-ref $desugar$3)
+              (simple-var-ref $desugar$4))))))
+      (var-def
+        (variable d (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (simple-var-ref $desugar$5))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (var-def
+        (variable e (type
+          (value-type float)) (expr
+          (literal 5.5))))
+      (var-def
+        (variable f (type
+          (union-type
+            (value-type float)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref f))))
+      (var-def
+        (variable $desugar$7 (expr
+          (literal <nil>))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$7)
+            (binary-expr +
+              (simple-var-ref e)
+              (simple-var-ref $desugar$6))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (simple-var-ref $desugar$7))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation g ()))))
+      (var-def
+        (variable $desugar$10 (expr
+          (literal <nil>))))
+      (if
+        (binary-expr ||
+          (type-test-expr is
+            (simple-var-ref $desugar$8))
+          (type-test-expr is
+            (simple-var-ref $desugar$9)))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$10)
+            (binary-expr +
+              (simple-var-ref $desugar$8)
+              (simple-var-ref $desugar$9))))))
+      (var-def
+        (variable h (type
+          (union-type
+            (value-type float)
+            (value-type null))) (expr
+          (simple-var-ref $desugar$10))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref h))))))
+  (function c () (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal c))))
+      (return
+        (literal 5))))
+  (function g () (
+    (union-type
+      (value-type float)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal g))))
+      (return
+        (literal 6.5)))))

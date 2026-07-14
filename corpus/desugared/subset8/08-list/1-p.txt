@@ -1,0 +1,22 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (invocation foo ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref v)
+          (literal 1))
+        (literal 1))))
+  (function foo () (
+    (array-type
+      (union-type
+        (value-type int)
+        (value-type string)) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (list-constructor-expr)))))

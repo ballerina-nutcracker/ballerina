@@ -1,0 +1,34 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Int
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type any)) (expr
+          (literal 17))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type Int))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (binary-expr +
+                (simple-var-ref x)
+                (literal 1)))))) ())
+      (block-stmt
+        (assignment
+          (simple-var-ref x)
+          (literal 21))
+        (var-def
+          (variable n (type
+            (value-type int)) (expr
+            (type-conversion-expr
+              (simple-var-ref x)
+              (user-defined-type Int)))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref n))))))))

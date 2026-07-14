@@ -1,0 +1,4 @@
+-- stdout --
+string
+not string
+-- stderr --

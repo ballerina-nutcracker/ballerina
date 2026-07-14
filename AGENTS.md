@@ -52,6 +52,14 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 
 ## Tests
 
+- IMPORTANT: prefer adding corpus tests over adding unit tests for modules. If you can't write a corpus test to validate a scenario then that means that scenario can't happen in real world
+
+### Corpus layout
+
+- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, etc.) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
+- `corpus/*_test.go` (`package corpus`) — end-to-end integration drivers (CLI, extern, package resolution, BIR roundtrip, etc.)
+- `corpus/<area>/testdata/` — fixtures for integration drivers (`extern/`, `cli/`, `package-resolution/`, etc.); no Go files in fixture dirs except embedded native modules under test balas
+
 ### Corpus tests
 
 - We have 3 kinds of tests indicated by file name in `./corpus/bal`
@@ -61,6 +69,8 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
      These have errors that should be detected before interpreter (error lines are marked with `@error` comments)
   3. panic tests (`*-p.bal`)
      These would trigger runtime panics in the interpreter
+  4. future tests (*-f{v|e|p}.bal)
+     These are valid tests within the current scope but we have decided not to support. These will trigger unimplemented error at places marked with error markers.
 
 - Name corpus `.bal` files without leading zeros in numeric parts (e.g. `1-e.bal`, `call2-v.bal`, `div1-p.bal`; not `01-e.bal` or `call02-v.bal`). When you add or rename a test, update the matching expected files under `./corpus/$stage` and any `corpus/integration` `.txtar` lines that cite the file name.
 
@@ -70,6 +80,11 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 - IMPORTANT: This is the preferred way of testing for any interpreter stage.
 
 - Project test cases ends up in `./corpus/project/` and project names fallow the same convention.
+
+#### Test markers
+- `@output`: test cases can write to standard out using `io:println` and use output marker to indicate expected output.
+- `@error`: -e test cases should use error markers to indicate lines where an error is expect. Text after marker is purely for commenting, not validated against actual error.
+- `@panic`: -p test cases should use panic markers to indicate first line which triggers a panic. We validate it is the first line the stack trace. Similar to error markers text after marker is ignored.
 
 ## Commands
 

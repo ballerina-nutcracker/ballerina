@@ -3,7 +3,7 @@
     (var-def
       (variable d (type
         (value-type decimal)) (expr
-        (literal 10000000000000000000/1))))
+        (literal 1E+19))))
     (var-def
       (variable i (type
         (value-type int)) (expr

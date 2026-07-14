@@ -1,0 +1,109 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: arithmetic overflow
+  --> 14-e.bal:54:14
+   |
+54 | @decimalInfo {value: 9.999999999999999999999999999999999E6144d * 2d} // @error
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: arithmetic overflow
+  --> 14-e.bal:75:14
+   |
+75 | @decimalInfo {value: <decimal>(1.0 / 0.0)} // @error
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: bool cannot be converted to decimal
+  --> 14-e.bal:84:14
+   |
+84 | @decimalInfo {value: <decimal>true} // @error
+   |              ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: bool cannot be converted to float
+  --> 14-e.bal:81:12
+   |
+81 | @floatInfo {value: <float>true} // @error
+   |            ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: bool cannot be converted to int
+  --> 14-e.bal:78:10
+   |
+78 | @intInfo {value: <int>true} // @error
+   |          ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
+  --> 14-e.bal:63:10
+   |
+63 | @intInfo {value: <byte>300} // @error
+   |          ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
+  --> 14-e.bal:66:10
+   |
+66 | @intInfo {value: <1>2} // @error
+   |          ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
+  --> 14-e.bal:69:12
+   |
+69 | @floatInfo {value: <1.0f>2.0f} // @error
+   |            ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
+  --> 14-e.bal:72:14
+   |
+72 | @decimalInfo {value: <1.0d>2.0d} // @error
+   |              ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: decimal value cannot be converted to int
+  --> 14-e.bal:60:10
+   |
+60 | @intInfo {value: <int>1E100d} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: division by zero
+  --> 14-e.bal:45:10
+   |
+45 | @intInfo {value: 10 / 0} // @error
+   |          ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: division by zero
+  --> 14-e.bal:51:10
+   |
+51 | @intInfo {value: 10 % 0} // @error
+   |          ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: float value cannot be converted to int
+  --> 14-e.bal:57:10
+   |
+57 | @intInfo {value: <int>(1.0 / 0.0)} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
+  --> 14-e.bal:33:10
+   |
+33 | @intInfo {value: -(-9223372036854775807 - 1)} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
+  --> 14-e.bal:36:10
+   |
+36 | @intInfo {value: 9223372036854775807 + 1} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
+  --> 14-e.bal:39:10
+   |
+39 | @intInfo {value: -9223372036854775807 - 2} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
+  --> 14-e.bal:42:10
+   |
+42 | @intInfo {value: 9223372036854775807 * 2} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
+  --> 14-e.bal:48:10
+   |
+48 | @intInfo {value: (-9223372036854775807 - 1) / -1} // @error
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

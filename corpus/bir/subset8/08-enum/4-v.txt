@@ -1,17 +1,14 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-BLUE  "BLUE";
-GREEN  "green";
-RED  "RED";
 main() -> nil{
   bb0 {
-    c = GREEN;
+    %1 = ConstantLoad green
+    c = %1;
     x = c;
     y = c;
-    %4 = println(x) -> bb1;
+    %5 = println(x) -> bb1;
   }
   bb1 {
-    %5 = println(y) -> bb2;
+    %6 = println(y) -> bb2;
   }
   bb2 {
     return;

@@ -1,0 +1,9 @@
+-- stdout --
+any
+any
+{ any a; }
+{| any a; any b; |}
+{| any a; any b; |}
+{| int a; int b; |}
+{| int a; int b; |}
+-- stderr --

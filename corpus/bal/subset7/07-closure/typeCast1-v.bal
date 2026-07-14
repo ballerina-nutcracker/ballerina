@@ -24,6 +24,7 @@ type Fx F1&F2;
 public function main() {
     final "b" returnVal = "b";
     Fx fx = function(1|2|3 a) returns "b" {
+        1|2|3 _ = a;
         return returnVal;
     };
     F1 f1 = <F1>fx;
@@ -33,6 +34,7 @@ public function main() {
     io:println(f2(3)); // @output b
 
     F1 f11 = function(1|2|3 a) returns "b" {
+        1|2|3 _ = a;
         return returnVal;
     };
     Fx fxx = <Fx>f11;

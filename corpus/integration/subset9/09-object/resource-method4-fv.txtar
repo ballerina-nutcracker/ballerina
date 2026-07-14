@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: ambiguous resource method dispatch
+  --> resource-method4-fv.bal:34:5
+   |
+34 |     f->/test/["foo"]/[4]([]); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^

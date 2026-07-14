@@ -1,0 +1,133 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition C
+    (record-type
+      (field x
+        (value-type float))
+      (field y
+        (value-type float))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (user-defined-type C) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (numeric-literal 10))))
+      (while
+        (binary-expr <
+          (simple-var-ref _)
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref v)
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 1))
+                (key-value
+                  (literal y)
+                  (literal 2))))))
+          (assignment
+            (simple-var-ref _)
+            (binary-expr +
+              (simple-var-ref _)
+              (numeric-literal 1)))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 10))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable c (type
+              (user-defined-type C)) (expr
+              (index-based-access
+                (simple-var-ref v)
+                (simple-var-ref i)))))
+          (compound-assignment *
+            (index-based-access
+              (simple-var-ref c)
+              (literal x))
+            (type-conversion-expr
+              (simple-var-ref i)
+              (value-type float)))
+          (compound-assignment *
+            (index-based-access
+              (simple-var-ref c)
+              (literal y))
+            (type-conversion-expr
+              (simple-var-ref i)
+              (value-type float)))
+          (assignment
+            (simple-var-ref i)
+            (binary-expr +
+              (simple-var-ref i)
+              (numeric-literal 1)))))
+      (var-def
+        (variable total1 (type
+          (value-type float)) (expr
+          (literal 0))))
+      (var-def
+        (variable total2 (type
+          (value-type float)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (numeric-literal 10))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable c (type
+              (user-defined-type C)) (expr
+              (index-based-access
+                (simple-var-ref v)
+                (simple-var-ref i)))))
+          (compound-assignment +
+            (simple-var-ref total1)
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref c)
+                (literal x))
+              (index-based-access
+                (simple-var-ref c)
+                (literal y))))
+          (compound-assignment +
+            (simple-var-ref total2)
+            (binary-expr *
+              (literal 3)
+              (type-conversion-expr
+                (simple-var-ref i)
+                (value-type float))))
+          (assignment
+            (simple-var-ref i)
+            (binary-expr +
+              (simple-var-ref i)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref total1)
+            (simple-var-ref total2))))))))

@@ -1,0 +1,153 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 2
+    %2 = ConstantLoad 100
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    x = %4;
+    %6 = ConstantLoad 1
+    %7 = x[%6];
+    %8 = %7;
+    %11 = ConstantLoad 1
+    %10 = x[%11];
+    %12 = %10;
+    %13 = ConstantLoad 4
+    %14 = %13;
+    %9 = unknown %12 %14;
+    %15 = %9;
+    %16 = unknown %8 %15;
+    x[%6] = %16;
+    %18 = ConstantLoad 1
+    %17 = x[%18];
+    %19 = %17;
+    %20 = println(%19) -> bb1;
+  }
+  bb1 {
+    %21 = ConstantLoad 1
+    %22 = x[%21];
+    %23 = %22;
+    %25 = ConstantLoad 33
+    %26 = %25;
+    %27 = ConstantLoad 3
+    %28 = %27;
+    %24 = * %26 %28;
+    %29 = %24;
+    %30 = + %23 %29;
+    x[%21] = %30;
+    %32 = ConstantLoad 1
+    %31 = x[%32];
+    %33 = %31;
+    %34 = println(%33) -> bb2;
+  }
+  bb2 {
+    %35 = ConstantLoad 1
+    %36 = x[%35];
+    %37 = %36;
+    %40 = ConstantLoad 1
+    %39 = x[%40];
+    %41 = %39;
+    %43 = ConstantLoad 1
+    %42 = x[%43];
+    %44 = %42;
+    %38 = * %41 %44;
+    %45 = %38;
+    %46 = - %37 %45;
+    x[%35] = %46;
+    %48 = ConstantLoad 1
+    %47 = x[%48];
+    %49 = %47;
+    %50 = println(%49) -> bb3;
+  }
+  bb3 {
+    %51 = ConstantLoad hello
+    %52 = ConstantLoad 1
+    %53 = newArray [string...][%52]{%51}
+    s = %53;
+    %55 = ConstantLoad 0
+    %56 = s[%55];
+    %57 = ConstantLoad  world
+    %58 = + %56 %57;
+    s[%55] = %58;
+    %60 = ConstantLoad 0
+    %59 = s[%60];
+    %61 = println(%59) -> bb4;
+  }
+  bb4 {
+    %62 = ConstantLoad 2
+    %63 = ConstantLoad 1
+    x[%63] = %62;
+    %64 = func1() -> bb5;
+  }
+  bb5 {
+    %65 = x[%64];
+    %66 = %65;
+    %67 = ConstantLoad 3
+    %68 = %67;
+    %69 = + %66 %68;
+    x[%64] = %69;
+    %71 = ConstantLoad 1
+    %70 = x[%71];
+    %72 = %70;
+    %73 = println(%72) -> bb6;
+  }
+  bb6 {
+    %75 = ConstantLoad 4
+    %76 = %75;
+    %77 = ConstantLoad 3
+    %78 = %77;
+    %74 = - %76 %78;
+    %79 = x[%74];
+    %80 = %79;
+    %81 = ConstantLoad 2
+    %82 = %81;
+    %83 = - %80 %82;
+    x[%74] = %83;
+    %85 = ConstantLoad 1
+    %84 = x[%85];
+    %86 = %84;
+    %87 = println(%86) -> bb7;
+  }
+  bb7 {
+    %88 = func1() -> bb8;
+  }
+  bb8 {
+    %89 = x[%88];
+    %90 = %89;
+    %91 = func2() -> bb9;
+  }
+  bb9 {
+    %92 = %91;
+    %93 = + %90 %92;
+    x[%88] = %93;
+    %95 = ConstantLoad 1
+    %94 = x[%95];
+    %96 = %94;
+    %97 = println(%96) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+func1() -> int{
+  bb0 {
+    %1 = ConstantLoad func1
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 1
+    %0 = %3;
+    return;
+  }
+}
+func2() -> int{
+  bb0 {
+    %1 = ConstantLoad func2
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 2
+    %0 = %3;
+    return;
+  }
+}

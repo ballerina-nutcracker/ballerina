@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    n = %1;
+    %3 = n is nil
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad <nil>
+    %7 = %6 is nil
+    %8 = %7;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

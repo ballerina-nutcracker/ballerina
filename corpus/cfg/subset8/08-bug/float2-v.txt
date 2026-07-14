@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (value-type float))) (expr
+        (literal 2))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (type-conversion-expr
+          (simple-var-ref x)
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+    (assignment
+      (simple-var-ref x)
+      (literal 4))
+    (assignment
+      (simple-var-ref i)
+      (type-conversion-expr
+        (simple-var-ref x)
+        (value-type int)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+)

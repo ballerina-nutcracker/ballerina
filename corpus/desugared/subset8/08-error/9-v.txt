@@ -1,0 +1,114 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal hi))))))
+      (var-def
+        (variable e2 (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal hi))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref e1)
+            (simple-var-ref e1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref e1)
+            (simple-var-ref e1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref e1)
+            (simple-var-ref e2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref e1)
+            (simple-var-ref e2)))))
+      (var-def
+        (variable a1 (type
+          (union-type
+            (value-type any)
+            (error-type))) (expr
+          (simple-var-ref e1))))
+      (var-def
+        (variable a2 (type
+          (union-type
+            (value-type any)
+            (error-type))) (expr
+          (simple-var-ref e2))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref a1)
+            (simple-var-ref a1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref a1)
+            (simple-var-ref a1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref a1)
+            (simple-var-ref a2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref a1)
+            (simple-var-ref a2)))))
+      (var-def
+        (variable v1 (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (simple-var-ref e1))))
+      (var-def
+        (variable v2 (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (simple-var-ref e2))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref v1)
+            (simple-var-ref v1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref v1)
+            (simple-var-ref v1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref v1)
+            (simple-var-ref v2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr !==
+            (simple-var-ref v1)
+            (simple-var-ref v2)))))
+      (assignment
+        (simple-var-ref v2)
+        (literal <nil>))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref v1)
+            (simple-var-ref v2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (error-constructor-expr (
+              (literal hi)))
+            (error-constructor-expr (
+              (literal hi))))))))))

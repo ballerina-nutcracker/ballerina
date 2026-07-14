@@ -1,0 +1,258 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %3 = d(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = d(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 127
+    %8 = %7;
+    %9 = d(%8) -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad 128
+    %11 = %10;
+    %12 = d(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad 1
+    %14 = unknown %13;
+    %15 = %14;
+    %16 = d(%15) -> bb5;
+  }
+  bb5 {
+    %17 = ConstantLoad 127
+    %18 = unknown %17;
+    %19 = %18;
+    %20 = d(%19) -> bb6;
+  }
+  bb6 {
+    %21 = ConstantLoad 128
+    %22 = unknown %21;
+    %23 = %22;
+    %24 = d(%23) -> bb7;
+  }
+  bb7 {
+    %25 = ConstantLoad 129
+    %26 = unknown %25;
+    %27 = %26;
+    %28 = d(%27) -> bb8;
+  }
+  bb8 {
+    %29 = ConstantLoad 255
+    %30 = %29;
+    %31 = d(%30) -> bb9;
+  }
+  bb9 {
+    %32 = ConstantLoad 32767
+    %33 = %32;
+    %34 = d(%33) -> bb10;
+  }
+  bb10 {
+    %35 = ConstantLoad 65535
+    %36 = %35;
+    %37 = d(%36) -> bb11;
+  }
+  bb11 {
+    %38 = ConstantLoad 65536
+    %39 = %38;
+    %40 = d(%39) -> bb12;
+  }
+  bb12 {
+    %41 = ConstantLoad 2147483647
+    %42 = %41;
+    %43 = d(%42) -> bb13;
+  }
+  bb13 {
+    %44 = ConstantLoad 2147483648
+    %45 = %44;
+    %46 = d(%45) -> bb14;
+  }
+  bb14 {
+    %47 = ConstantLoad 4294967295
+    %48 = %47;
+    %49 = d(%48) -> bb15;
+  }
+  bb15 {
+    %50 = ConstantLoad 4294967296
+    %51 = %50;
+    %52 = d(%51) -> bb16;
+  }
+  bb16 {
+    %53 = ConstantLoad 32768
+    %54 = unknown %53;
+    %55 = %54;
+    %56 = d(%55) -> bb17;
+  }
+  bb17 {
+    %57 = ConstantLoad 32769
+    %58 = unknown %57;
+    %59 = %58;
+    %60 = d(%59) -> bb18;
+  }
+  bb18 {
+    %61 = ConstantLoad 2147483648
+    %62 = unknown %61;
+    %63 = %62;
+    %64 = d(%63) -> bb19;
+  }
+  bb19 {
+    %65 = ConstantLoad 2147483649
+    %66 = unknown %65;
+    %67 = %66;
+    %68 = d(%67) -> bb20;
+  }
+  bb20 {
+    %69 = ConstantLoad <nil>
+    %70 = %69;
+    %71 = d(%70) -> bb21;
+  }
+  bb21 {
+    %72 = ConstantLoad 0
+    %73 = %72;
+    %74 = d(%73) -> bb22;
+  }
+  bb22 {
+    %75 = ConstantLoad 0
+    %76 = %75;
+    %77 = d(%76) -> bb23;
+  }
+  bb23 {
+    %78 = ConstantLoad true
+    %79 = %78;
+    %80 = d(%79) -> bb24;
+  }
+  bb24 {
+    return;
+  }
+}
+d(any) -> nil{
+  bb0 {
+    %2 = ConstantLoad 
+    s = %2;
+    %4 = n is int:Signed8
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %1 = ConstantLoad s8
+    %0 = + (1, s) %1;
+    (1, s) = %0;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = (1, n) is int:Signed16
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %1 = ConstantLoad s16
+    %0 = + (2, s) %1;
+    (2, s) = %0;
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = (2, n) is int:Signed32
+    %0 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %1 = ConstantLoad s32
+    %0 = + (3, s) %1;
+    (3, s) = %0;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = (3, n) is int:Unsigned8
+    %0 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %1 = ConstantLoad u8
+    %0 = + (4, s) %1;
+    (4, s) = %0;
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = (4, n) is int:Unsigned16
+    %0 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 2
+    %1 = ConstantLoad u16
+    %0 = + (5, s) %1;
+    (5, s) = %0;
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 1
+    %0 = (5, n) is int:Unsigned32
+    %0 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %1 = ConstantLoad u32
+    %0 = + (6, s) %1;
+    (6, s) = %0;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 2
+    %1 = ConstantLoad 
+    %0 = == (6, s) %1;
+    %0 ? bb13 : bb17;
+  }
+  bb13 {
+    PushScopeFrame 1
+    %0 = (7, n) is int
+    %0 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 1
+    %0 = ConstantLoad int
+    (8, s) = %0;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb15 {
+    PushScopeFrame 1
+    %0 = ConstantLoad any
+    (8, s) = %0;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    PushScopeFrame 1
+    %0 = println((7, s)) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad first
+    %3 = ConstantLoad John
+    %4 = ConstantLoad last
+    %5 = ConstantLoad Smith
+    %6 = newMap {| first: string, last: string, never... |}{%2=%3, %4=%5}
+    %7 = ConstantLoad age
+    %8 = ConstantLoad 30
+    %9 = newMap {| age: int, name: {| first: string, last: string, never... |}, never... |}{%1=%6, %7=%8}
+    p = %9;
+    %12 = ConstantLoad name
+    %11 = p[%12];
+    %13 = println(%11) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

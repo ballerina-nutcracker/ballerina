@@ -1,0 +1,84 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition SPoint
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))
+      (field z
+        (value-type string))))
+  (type-definition XY
+    (union-type
+      (union-type
+        (finite-type
+          (literal x))
+        (finite-type
+          (literal y)))
+      (finite-type
+        (literal z))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (union-type
+            (user-defined-type SPoint)
+            (user-defined-type Point))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 44))
+            (key-value
+              (literal y)
+              (literal 88))
+            (key-value
+              (literal z)
+              (literal point))))))
+      (var-def
+        (variable xy (type
+          (user-defined-type XY)) (expr
+          (literal z))))
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (union-type
+              (value-type string)
+              (value-type null)))) (expr
+          (index-based-access
+            (simple-var-ref p)
+            (simple-var-ref xy)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x))))
+      (assignment
+        (simple-var-ref p)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 44))
+          (key-value
+            (literal y)
+            (literal 88))))
+      (var-def
+        (variable y (type
+          (union-type
+            (value-type int)
+            (union-type
+              (value-type string)
+              (value-type null)))) (expr
+          (index-based-access
+            (simple-var-ref p)
+            (simple-var-ref xy)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref y)
+            (literal <nil>))))))))

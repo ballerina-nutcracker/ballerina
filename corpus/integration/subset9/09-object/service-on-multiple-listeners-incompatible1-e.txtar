@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: service body is not a subtype of the listener's expected service type
+  --> service-on-multiple-listeners-incompatible1-e.bal:68:1
+   |
+68 | service on fooListener, barListener { // @error service must satisfy both listener target service types
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+69 |     function foo() returns int {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+70 |         return 1;
+   |         ^^^^^^^^^
+71 |     }
+   |     ^
+72 | }
+   | ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected [int, never...]|[string, never...], got [int|string, never...]
+  --> listassign1-e.bal:25:13
+   |
+25 |     N|S _ = ns; // @error
+   |             ^^

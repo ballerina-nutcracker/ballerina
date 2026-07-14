@@ -1,0 +1,229 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    d = %1;
+    %3 = <float>(d)
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 1.000000000000000000000000000000000
+    d = %6;
+    %7 = <float>(d)
+    %8 = %7;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 1.1
+    d = %10;
+    %11 = <float>(d)
+    %12 = %11;
+    %13 = println(%12) -> bb3;
+  }
+  bb3 {
+    %14 = ConstantLoad 9.1
+    d = %14;
+    %15 = <float>(d)
+    %16 = %15;
+    %17 = println(%16) -> bb4;
+  }
+  bb4 {
+    %18 = ConstantLoad 9.999999999999999999999999999999999
+    d = %18;
+    %19 = <float>(d)
+    %20 = %19;
+    %21 = println(%20) -> bb5;
+  }
+  bb5 {
+    %22 = ConstantLoad 9.99999999999999999999999999999999
+    d = %22;
+    %23 = <float>(d)
+    %24 = %23;
+    %25 = println(%24) -> bb6;
+  }
+  bb6 {
+    %26 = ConstantLoad 9.9999999999999999999999999999999
+    d = %26;
+    %27 = <float>(d)
+    %28 = %27;
+    %29 = println(%28) -> bb7;
+  }
+  bb7 {
+    %30 = ConstantLoad 10.00000000000000000000000000
+    d = %30;
+    %31 = <float>(d)
+    %32 = %31;
+    %33 = println(%32) -> bb8;
+  }
+  bb8 {
+    %34 = ConstantLoad 10.00000000000000000000000001
+    d = %34;
+    %35 = <float>(d)
+    %36 = %35;
+    %37 = println(%36) -> bb9;
+  }
+  bb9 {
+    %38 = ConstantLoad 10.00000000000000000000000001
+    d = %38;
+    %39 = <float>(d)
+    %40 = %39;
+    %41 = println(%40) -> bb10;
+  }
+  bb10 {
+    %42 = ConstantLoad 99.99999999999999999999999999999999
+    d = %42;
+    %43 = <float>(d)
+    %44 = %43;
+    %45 = println(%44) -> bb11;
+  }
+  bb11 {
+    %46 = ConstantLoad 1E+2
+    d = %46;
+    %47 = <float>(d)
+    %48 = %47;
+    %49 = println(%48) -> bb12;
+  }
+  bb12 {
+    %50 = ConstantLoad 1.9E+2
+    d = %50;
+    %51 = <float>(d)
+    %52 = %51;
+    %53 = println(%52) -> bb13;
+  }
+  bb13 {
+    %54 = ConstantLoad 9.999999999999999999999999999999999E+100
+    d = %54;
+    %55 = <float>(d)
+    %56 = %55;
+    %57 = println(%56) -> bb14;
+  }
+  bb14 {
+    %58 = ConstantLoad 9.999999999999999999999999999999999E+133
+    d = %58;
+    %59 = <float>(d)
+    %60 = %59;
+    %61 = println(%60) -> bb15;
+  }
+  bb15 {
+    %62 = ConstantLoad 1E+308
+    d = %62;
+    %63 = <float>(d)
+    %64 = %63;
+    %65 = println(%64) -> bb16;
+  }
+  bb16 {
+    %66 = ConstantLoad 1.79769313486231571E+308
+    d = %66;
+    %67 = <float>(d)
+    %68 = %67;
+    %69 = println(%68) -> bb17;
+  }
+  bb17 {
+    %70 = ConstantLoad 0
+    d = %70;
+    %71 = <float>(d)
+    %72 = %71;
+    %73 = println(%72) -> bb18;
+  }
+  bb18 {
+    %74 = ConstantLoad 1E-322
+    d = %74;
+    %75 = <float>(d)
+    %76 = %75;
+    %77 = println(%76) -> bb19;
+  }
+  bb19 {
+    %78 = ConstantLoad 1E-323
+    d = %78;
+    %79 = <float>(d)
+    %80 = %79;
+    %81 = println(%80) -> bb20;
+  }
+  bb20 {
+    %82 = ConstantLoad 1E-324
+    d = %82;
+    %83 = <float>(d)
+    %84 = %83;
+    %85 = println(%84) -> bb21;
+  }
+  bb21 {
+    %86 = ConstantLoad 1E-324
+    %87 = unknown %86;
+    d = %87;
+    %88 = <float>(d)
+    %89 = %88;
+    %90 = println(%89) -> bb22;
+  }
+  bb22 {
+    %91 = ConstantLoad 1E-6143
+    d = %91;
+    %92 = <float>(d)
+    %93 = %92;
+    %94 = println(%93) -> bb23;
+  }
+  bb23 {
+    %95 = ConstantLoad 1E-6143
+    %96 = unknown %95;
+    d = %96;
+    %97 = <float>(d)
+    %98 = %97;
+    %99 = println(%98) -> bb24;
+  }
+  bb24 {
+    %100 = ConstantLoad 1E+309
+    d = %100;
+    %101 = <float>(d)
+    %102 = %101;
+    %103 = println(%102) -> bb25;
+  }
+  bb25 {
+    %104 = ConstantLoad 1.7976931348623156E+309
+    d = %104;
+    %105 = <float>(d)
+    %106 = %105;
+    %107 = println(%106) -> bb26;
+  }
+  bb26 {
+    %108 = ConstantLoad 9.999999999999999999999999999999999E+6144
+    d = %108;
+    %109 = <float>(d)
+    %110 = %109;
+    %111 = println(%110) -> bb27;
+  }
+  bb27 {
+    %112 = ConstantLoad 1E+309
+    %113 = unknown %112;
+    d = %113;
+    %114 = <float>(d)
+    %115 = %114;
+    %116 = println(%115) -> bb28;
+  }
+  bb28 {
+    %117 = ConstantLoad 2E+309
+    %118 = unknown %117;
+    d = %118;
+    %119 = <float>(d)
+    %120 = %119;
+    %121 = println(%120) -> bb29;
+  }
+  bb29 {
+    %122 = ConstantLoad 9.999999999999999999999999999999999E+6144
+    %123 = unknown %122;
+    d = %123;
+    %124 = <float>(d)
+    %125 = %124;
+    %126 = println(%125) -> bb30;
+  }
+  bb30 {
+    %127 = ConstantLoad 1.7976931348623156E+309
+    %128 = unknown %127;
+    d = %128;
+    %129 = <float>(d)
+    %130 = %129;
+    %131 = println(%130) -> bb31;
+  }
+  bb31 {
+    return;
+  }
+}

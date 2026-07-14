@@ -1,0 +1,10 @@
+[package]
+org = "testorg"
+name = "transitiveonlyconsumer"
+version = "0.1.0"
+
+[[dependency]]
+org = "mockorg"
+name = "innerpkg"
+version = "0.1.0"
+repository = "local"

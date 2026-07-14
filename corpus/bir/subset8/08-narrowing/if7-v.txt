@@ -1,0 +1,109 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad true
+    %3 = newMap {| b: boolean, never... |}{%1=%2}
+    r = %3;
+    %5 = func(r) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+func({| b: boolean, never... |}) -> nil{
+  bb0 {
+    %2 = ConstantLoad 0.1
+    x = %2;
+    %4 = ConstantLoad true
+    y = %4;
+    %8 = ConstantLoad b
+    %7 = r[%8];
+    %9 = %7;
+    %10 = ConstantLoad true
+    %11 = %10;
+    %6 = == %9 %11;
+    %6 ? bb1 : bb6;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = (1, x) is boolean|int
+    %0 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = (2, y) is int|float
+    %0 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = (1, x) is boolean|float
+    %0 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = (2, y) is boolean|int
+    %0 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    fi = x;
+    bi = y;
+    %14 = fi;
+    %15 = println(%14) -> bb12;
+  }
+  bb12 {
+    %16 = bi;
+    %17 = println(%16) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}

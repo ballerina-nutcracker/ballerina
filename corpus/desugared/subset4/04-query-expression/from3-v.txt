@@ -23,7 +23,7 @@
         (variable $desugar$2 (expr
           (list-constructor-expr))))
       (var-def
-        (variable x))
+        (variable _))
       (var-def
         (variable $desugar$3 (expr
           (numeric-literal 0))))
@@ -33,7 +33,7 @@
           (simple-var-ref $desugar$1))
         (block-stmt
           (assignment
-            (simple-var-ref x)
+            (simple-var-ref _)
             (index-based-access
               (simple-var-ref $desugar$0)
               (simple-var-ref $desugar$3)))

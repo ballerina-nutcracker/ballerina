@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: anonymous distinct types not supported
+  --> inline-distinct-object-fe.bal:18:5
+   |
+18 |     distinct object { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         public string name;
+   |         ^^^^^^^^^^^^^^^^^^^
+20 |     } person;
+   |     ^

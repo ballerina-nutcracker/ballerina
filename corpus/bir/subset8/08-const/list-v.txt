@@ -1,23 +1,26 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
-A  [int, int, int, never...];
-B  [string, string, never...];
-C  [int, string, int, never...];
-D  [[int, int, never...], [int, int, never...], never...];
 main() -> nil{
   bb0 {
-    %1 = println(A) -> bb1;
+    %1 = ConstantLoad [1,2,3]
+    %2 = println(%1) -> bb1;
   }
   bb1 {
-    %2 = println(B) -> bb2;
+    %3 = ConstantLoad ["hello","world"]
+    %4 = println(%3) -> bb2;
   }
   bb2 {
-    %3 = println(C) -> bb3;
+    %5 = ConstantLoad [1,"two",3]
+    %6 = println(%5) -> bb3;
   }
   bb3 {
-    %4 = println(D) -> bb4;
+    %7 = ConstantLoad [[1,2],[3,4]]
+    %8 = println(%7) -> bb4;
   }
   bb4 {
+    %9 = ConstantLoad [10,11,-3]
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
     return;
   }
 }

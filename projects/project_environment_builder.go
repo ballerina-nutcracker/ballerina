@@ -20,6 +20,7 @@ import (
 	"io/fs"
 
 	"ballerina-lang-go/context"
+	"ballerina-lang-go/lib/langlibs"
 	"ballerina-lang-go/semtypes"
 )
 
@@ -57,8 +58,10 @@ func (b *ProjectEnvironmentBuilder) Build() *Environment {
 		WithOffline(b.buildOptions.Offline()).
 		WithSticky(b.buildOptions.Sticky())
 
-	// Bind and add repositories
-	for _, repo := range b.repositories {
+	// Bind and add repositories. Bundled migrated lang libraries must always be
+	// available because they are resolved implicitly by the compiler.
+	repositories := append([]Repository{NewFileSystemRepository(langlibs.FS, ".")}, b.repositories...)
+	for _, repo := range repositories {
 		if repo != nil {
 			// Bind the repository to the environment if it supports late binding
 			if bindable, ok := repo.(bindableRepository); ok {

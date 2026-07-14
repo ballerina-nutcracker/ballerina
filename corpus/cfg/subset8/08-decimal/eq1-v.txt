@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (literal 1)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr !=
+          (literal 1)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (literal 0)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (literal 9.99999999999999999999999999999999E+6143)
+          (literal 9.999999999999999999999999999999990E+6143)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (literal 1E-6143)
+          (literal 1E-6143)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (literal 1E-6143)
+          (literal 1E-6143)))))
+  )
+)

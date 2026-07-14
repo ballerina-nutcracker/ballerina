@@ -1,0 +1,218 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %1 = / %3 %5;
+    nan0 = %1;
+    %8 = ConstantLoad 0
+    %9 = unknown %8;
+    %10 = %9;
+    %11 = ConstantLoad 0
+    %12 = %11;
+    %7 = / %10 %12;
+    nan1 = %7;
+    %15 = ConstantLoad 1
+    %16 = %15;
+    %17 = ConstantLoad 0
+    %18 = %17;
+    %14 = / %16 %18;
+    pInf = %14;
+    %21 = ConstantLoad 1
+    %22 = unknown %21;
+    %23 = %22;
+    %24 = ConstantLoad 0
+    %25 = %24;
+    %20 = / %23 %25;
+    nInf = %20;
+    %27 = ConstantLoad 42
+    %28 = %27;
+    %29 = ConstantLoad 42
+    %30 = %29;
+    %31 = exactEq(%28,%30) -> bb1;
+  }
+  bb1 {
+    %32 = println(%31) -> bb2;
+  }
+  bb2 {
+    %33 = ConstantLoad 1
+    %34 = %33;
+    %35 = ConstantLoad 2
+    %36 = %35;
+    %37 = exactEq(%34,%36) -> bb3;
+  }
+  bb3 {
+    %38 = println(%37) -> bb4;
+  }
+  bb4 {
+    %39 = ConstantLoad 0
+    %40 = %39;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %43 = exactEq(%40,%42) -> bb5;
+  }
+  bb5 {
+    %44 = println(%43) -> bb6;
+  }
+  bb6 {
+    %45 = ConstantLoad 0
+    %46 = %45;
+    %47 = ConstantLoad 0
+    %48 = unknown %47;
+    %49 = %48;
+    %50 = exactEq(%46,%49) -> bb7;
+  }
+  bb7 {
+    %51 = println(%50) -> bb8;
+  }
+  bb8 {
+    %52 = nan0;
+    %53 = nan1;
+    %54 = exactEq(%52,%53) -> bb9;
+  }
+  bb9 {
+    %55 = println(%54) -> bb10;
+  }
+  bb10 {
+    %56 = nan0;
+    %57 = ConstantLoad 1
+    %58 = %57;
+    %59 = exactEq(%56,%58) -> bb11;
+  }
+  bb11 {
+    %60 = println(%59) -> bb12;
+  }
+  bb12 {
+    %61 = nan0;
+    %62 = nInf;
+    %63 = exactEq(%61,%62) -> bb13;
+  }
+  bb13 {
+    %64 = println(%63) -> bb14;
+  }
+  bb14 {
+    %65 = pInf;
+    %66 = nInf;
+    %67 = exactEq(%65,%66) -> bb15;
+  }
+  bb15 {
+    %68 = println(%67) -> bb16;
+  }
+  bb16 {
+    %69 = nInf;
+    %70 = pInf;
+    %71 = exactEq(%69,%70) -> bb17;
+  }
+  bb17 {
+    %72 = println(%71) -> bb18;
+  }
+  bb18 {
+    %73 = pInf;
+    %74 = pInf;
+    %75 = exactEq(%73,%74) -> bb19;
+  }
+  bb19 {
+    %76 = println(%75) -> bb20;
+  }
+  bb20 {
+    %77 = nInf;
+    %78 = nInf;
+    %79 = exactEq(%77,%78) -> bb21;
+  }
+  bb21 {
+    %80 = println(%79) -> bb22;
+  }
+  bb22 {
+    %82 = ConstantLoad 100
+    %83 = %82;
+    %84 = ConstantLoad 100
+    %85 = %84;
+    %81 = unknown %83 %85;
+    %86 = %81;
+    %87 = println(%86) -> bb23;
+  }
+  bb23 {
+    %89 = ConstantLoad 0
+    %90 = %89;
+    %91 = ConstantLoad 0
+    %92 = %91;
+    %88 = unknown %90 %92;
+    %93 = %88;
+    %94 = println(%93) -> bb24;
+  }
+  bb24 {
+    %96 = ConstantLoad 0
+    %97 = %96;
+    %98 = ConstantLoad 0
+    %99 = unknown %98;
+    %100 = %99;
+    %95 = unknown %97 %100;
+    %101 = %95;
+    %102 = println(%101) -> bb25;
+  }
+  bb25 {
+    %104 = ConstantLoad 0
+    %105 = %104;
+    %106 = ConstantLoad 0
+    %107 = unknown %106;
+    %108 = %107;
+    %103 = unknown %105 %108;
+    %109 = %103;
+    %110 = println(%109) -> bb26;
+  }
+  bb26 {
+    %112 = nan0;
+    %113 = nan1;
+    %111 = unknown %112 %113;
+    %114 = %111;
+    %115 = println(%114) -> bb27;
+  }
+  bb27 {
+    %117 = nan0;
+    %118 = nan1;
+    %116 = unknown %117 %118;
+    %119 = %116;
+    %120 = println(%119) -> bb28;
+  }
+  bb28 {
+    %122 = pInf;
+    %123 = nInf;
+    %121 = unknown %122 %123;
+    %124 = %121;
+    %125 = println(%124) -> bb29;
+  }
+  bb29 {
+    return;
+  }
+}
+exactEq(float,float) -> any{
+  bb0 {
+    %4 = f1;
+    %5 = f2;
+    %3 = unknown %4 %5;
+    eq = %3;
+    %8 = f1;
+    %9 = f2;
+    %7 = unknown %8 %9;
+    neEq = %7;
+    %12 = eq;
+    %13 = neEq;
+    %11 = == %12 %13;
+    %11 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, eq);
+    PopScopeFrame
+    return;
+  }
+}

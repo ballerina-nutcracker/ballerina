@@ -1,0 +1,20 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    x = %5;
+    %7 = <[int...]>(x)
+    y = %7;
+    %10 = ConstantLoad 1
+    %9 = y[%10];
+    %11 = %9;
+    %12 = println(%11) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

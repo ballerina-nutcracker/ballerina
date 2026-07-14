@@ -1,0 +1,58 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable si (type
+          (tuple-type
+            (value-type string) (rest
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (literal x)
+            (literal 17)
+            (literal 21)))))
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (simple-var-ref si))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (tuple-type
+              (value-type string) (rest
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (array-type
+              (union-type
+                (value-type int)
+                (value-type string)) dimensions: 1 ([]))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (array-type
+              (value-type anydata) dimensions: 1 ([]))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (value-type anydata)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (array-type
+              (value-type int) dimensions: 1 ([]))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (array-type
+              (value-type string) dimensions: 1 ([])))))))))

@@ -28,6 +28,6 @@ public function main() {
     io:println(GREEN); // @output green
     io:println(BLUE); // @output BLUE
 
-    "RED"|"green"|"BLUE" x = c;
-    string y = c;
+    "RED"|"green"|"BLUE" _ = c;
+    string _ = c;
 }

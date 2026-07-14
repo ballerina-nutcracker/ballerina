@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> function3-e.bal:18:13
+   |
+18 |     int _ = foo(2,
+   |             ^^^^^^
+19 |             1,
+   |             ^^
+20 |             "d" // @error
+   |             ^^^^^^^^^^^^^
+21 |     );
+   |     ^

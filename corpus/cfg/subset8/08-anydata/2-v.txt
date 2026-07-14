@@ -1,0 +1,45 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (value-type null)) (expr
+        (literal <nil>))))
+    (var-def
+      (variable val (type
+        (value-type anydata)) (expr
+        (simple-var-ref a))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref val))))
+    (var-def
+      (variable b (type
+        (value-type int)) (expr
+        (literal 5))))
+    (assignment
+      (simple-var-ref val)
+      (simple-var-ref b))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref val))))
+    (var-def
+      (variable c (type
+        (value-type float)) (expr
+        (literal 7.5))))
+    (assignment
+      (simple-var-ref val)
+      (simple-var-ref c))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref val))))
+    (var-def
+      (variable d (type
+        (value-type string)) (expr
+        (literal test))))
+    (assignment
+      (simple-var-ref val)
+      (simple-var-ref d))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref val))))
+  )
+)

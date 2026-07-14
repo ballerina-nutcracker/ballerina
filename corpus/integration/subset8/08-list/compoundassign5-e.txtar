@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect integer types for <<
+  --> compoundassign5-e.bal:19:5
+   |
+19 |     v[0] <<= 1.0; // @error
+   |     ^^^^^^^^^^^^^

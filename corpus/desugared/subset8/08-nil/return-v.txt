@@ -1,0 +1,18 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal 0))))
+      (expression-stmt
+        (invocation makeNil ()))
+      (expression-stmt
+        (invocation io println (
+          (literal 1))))))
+  (function makeNil () (
+    (value-type null))
+    (block-function-body
+      (return
+        (literal <nil>)))))

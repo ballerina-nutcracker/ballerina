@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected xml:Comment, got xml:Element
+  --> 4-e.bal:20:26
+   |
+20 |     xml:Comment _ = xml `<foo></foo>`; // @error
+   |                          ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml:Element, got xml:ProcessingInstruction
+  --> 4-e.bal:19:26
+   |
+19 |     xml:Element _ = xml `<?pi?>`; // @error
+   |                          ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml:ProcessingInstruction, got xml:Comment
+  --> 4-e.bal:22:40
+   |
+22 |     xml:ProcessingInstruction _ = xml `<!--c-->`; // @error
+   |                                        ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml:ProcessingInstruction, got xml:Element
+  --> 4-e.bal:18:40
+   |
+18 |     xml:ProcessingInstruction _ = xml `<foo></foo>`; // @error
+   |                                        ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml:Text, got xml:Comment
+  --> 4-e.bal:21:23
+   |
+21 |     xml:Text _ = xml `<!--c-->`; // @error
+   |                       ^^^^^^^^

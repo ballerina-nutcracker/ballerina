@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: XML namespace prefix 'bar' already declared in this scope
+  --> namespace9-e.bal:20:5
+   |
+20 |     xmlns "https:foo/baz" as bar; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

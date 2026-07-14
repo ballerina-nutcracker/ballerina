@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field base access is only possible for required fields
+  --> fieldaccess2-e.bal:28:12
+   |
+28 |     return r.x; // @error
+   |            ^^^

@@ -1,0 +1,12 @@
+-- stdout --
+1
+boolean|int?
+9223372036854775807
+boolean|int?
+true
+boolean|int?
+hello
+nil
+boolean|int?
+1.5
+-- stderr --

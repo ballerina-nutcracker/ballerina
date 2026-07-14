@@ -1,0 +1,273 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal abc)
+            (literal abd)
+            (literal add)))))
+      (var-def
+        (variable b (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal aef)
+            (literal afff)
+            (literal xyz)))))
+      (var-def
+        (variable c (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal abc)
+            (literal abd)
+            (literal aef)))))
+      (var-def
+        (variable d (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal abc)
+            (literal abd)
+            (literal add)
+            (literal a)))))
+      (var-def
+        (variable e (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal abc)
+            (literal abd)
+            (literal add)
+            (literal afff)))))
+      (var-def
+        (variable f (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref a)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref a)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref a)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref a)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref b)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref b)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref b)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref b)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref a)
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref a)
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref a)
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref a)
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref c)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref c)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref c)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref c)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref a)
+            (simple-var-ref d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref a)
+            (simple-var-ref d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref a)
+            (simple-var-ref d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref a)
+            (simple-var-ref d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref d)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref d)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref d)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref d)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref a)
+            (simple-var-ref e)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref a)
+            (simple-var-ref e)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref a)
+            (simple-var-ref e)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref a)
+            (simple-var-ref e)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref e)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref e)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref e)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref e)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref a)
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref a)
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref a)
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref a)
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref f)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref f)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref f)
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref f)
+            (simple-var-ref a))))))))

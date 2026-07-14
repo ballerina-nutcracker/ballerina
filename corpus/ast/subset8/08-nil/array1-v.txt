@@ -1,0 +1,20 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Nothing
+    (value-type null))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (invocation pairOfNothings ()) ()))))))
+  (function pairOfNothings () (
+    (array-type
+      (user-defined-type Nothing) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (literal <nil>)
+          (literal <nil>))))))

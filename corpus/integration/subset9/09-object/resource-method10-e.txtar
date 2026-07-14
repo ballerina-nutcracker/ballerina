@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no matching resource method 'get'
+  --> resource-method10-e.bal:27:5
+   |
+27 |     f->/test/[42]; // @error path segment must be string
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no matching resource method 'get'
+  --> resource-method10-e.bal:28:5
+   |
+28 |     f->/other/["a"]/["b"]; // @error second path segment must be int
+   |     ^^^^^^^^^^^^^^^^^^^^^

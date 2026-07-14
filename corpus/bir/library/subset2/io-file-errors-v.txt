@@ -1,0 +1,189 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_missing_xyz.dat
+    missing = %1;
+    %3 = fileReadString(missing) -> bb1;
+  }
+  bb1 {
+    %4 = %3 is error
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = fileReadLines(missing) -> bb3;
+  }
+  bb3 {
+    %8 = %7 is error
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = fileReadBytes(missing) -> bb5;
+  }
+  bb5 {
+    %12 = %11 is error
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %15 = fileReadJson(missing) -> bb7;
+  }
+  bb7 {
+    %16 = %15 is error
+    %17 = %16;
+    %18 = println(%17) -> bb8;
+  }
+  bb8 {
+    %19 = fileReadXml(missing) -> bb9;
+  }
+  bb9 {
+    %20 = %19 is error
+    %21 = %20;
+    %22 = println(%21) -> bb10;
+  }
+  bb10 {
+    %23 = ConstantLoad /bal_io_no_such_dir_xyz/file.txt
+    noParent = %23;
+    $desugar$0 = noParent;
+    %26 = ConstantLoad x
+    $desugar$1 = %26;
+    %28 = $default$0($desugar$0,$desugar$1) -> bb11;
+  }
+  bb11 {
+    $desugar$2 = %28;
+    %30 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb12;
+  }
+  bb12 {
+    %31 = %30 is error
+    %32 = %31;
+    %33 = println(%32) -> bb13;
+  }
+  bb13 {
+    $desugar$3 = noParent;
+    %35 = ConstantLoad x
+    %36 = ConstantLoad 1
+    %37 = newArray [string...][%36]{%35}
+    $desugar$4 = %37;
+    %39 = $default$1($desugar$3,$desugar$4) -> bb14;
+  }
+  bb14 {
+    $desugar$5 = %39;
+    %41 = fileWriteLines($desugar$3,$desugar$4,$desugar$5) -> bb15;
+  }
+  bb15 {
+    %42 = %41 is error
+    %43 = %42;
+    %44 = println(%43) -> bb16;
+  }
+  bb16 {
+    $desugar$6 = noParent;
+    %46 = ConstantLoad 1
+    %47 = ConstantLoad 2
+    %48 = ConstantLoad 2
+    %49 = newArray [int:Unsigned8...][%48]{%46, %47}
+    $desugar$7 = %49;
+    %51 = $default$2($desugar$6,$desugar$7) -> bb17;
+  }
+  bb17 {
+    $desugar$8 = %51;
+    %53 = fileWriteBytes($desugar$6,$desugar$7,$desugar$8) -> bb18;
+  }
+  bb18 {
+    %54 = %53 is error
+    %55 = %54;
+    %56 = println(%55) -> bb19;
+  }
+  bb19 {
+    %57 = ConstantLoad k
+    %58 = ConstantLoad v
+    %59 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%57=%58}
+    %60 = fileWriteJson(noParent,%59) -> bb20;
+  }
+  bb20 {
+    %61 = %60 is error
+    %62 = %61;
+    %63 = println(%62) -> bb21;
+  }
+  bb21 {
+    $desugar$9 = noParent;
+    %65 = ConstantLoad a
+    %66 = newXMLElement(%65, ())
+    $desugar$10 = %66;
+    %68 = $default$3($desugar$9,$desugar$10) -> bb22;
+  }
+  bb22 {
+    $desugar$11 = %68;
+    %70 = fileWriteXml($desugar$9,$desugar$10,$desugar$11) -> bb23;
+  }
+  bb23 {
+    %71 = %70 is error
+    %72 = %71;
+    %73 = println(%72) -> bb24;
+  }
+  bb24 {
+    %74 = ConstantLoad /tmp/bal_io_bad_json.json
+    badJson = %74;
+    $desugar$12 = badJson;
+    %77 = ConstantLoad {not valid json}
+    $desugar$13 = %77;
+    %79 = $default$0($desugar$12,$desugar$13) -> bb25;
+  }
+  bb25 {
+    $desugar$14 = %79;
+    %81 = fileWriteString($desugar$12,$desugar$13,$desugar$14) -> bb26;
+  }
+  bb26 {
+    $desugar$15 = %81;
+    %83 = $desugar$15 is error
+    %83 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$15);
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    %84 = fileReadJson(badJson) -> bb29;
+  }
+  bb29 {
+    %85 = %84 is error
+    %86 = %85;
+    %87 = println(%86) -> bb30;
+  }
+  bb30 {
+    %88 = ConstantLoad /tmp/bal_io_trailing_json.json
+    trailingJson = %88;
+    $desugar$16 = trailingJson;
+    %91 = ConstantLoad {"k": 1} extra
+    $desugar$17 = %91;
+    %93 = $default$0($desugar$16,$desugar$17) -> bb31;
+  }
+  bb31 {
+    $desugar$18 = %93;
+    %95 = fileWriteString($desugar$16,$desugar$17,$desugar$18) -> bb32;
+  }
+  bb32 {
+    $desugar$19 = %95;
+    %97 = $desugar$19 is error
+    %97 ? bb33 : bb34;
+  }
+  bb33 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$19);
+    PopScopeFrame
+    return;
+  }
+  bb34 {
+    %98 = fileReadJson(trailingJson) -> bb35;
+  }
+  bb35 {
+    %99 = %98 is error
+    %100 = %99;
+    %101 = println(%100) -> bb36;
+  }
+  bb36 {
+    return;
+  }
+}

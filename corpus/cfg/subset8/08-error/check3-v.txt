@@ -1,0 +1,21 @@
+(errorViaCheck
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation newError ())))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation errorViaCheck ()))))
+  )
+)
+(newError
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal always err))))
+  )
+)

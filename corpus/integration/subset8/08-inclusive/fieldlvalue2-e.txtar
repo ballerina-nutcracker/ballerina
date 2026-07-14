@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field base access is only possible for declared fields
+  --> fieldlvalue2-e.bal:24:5
+   |
+24 |     p.z = 22; // @error
+   |     ^^^

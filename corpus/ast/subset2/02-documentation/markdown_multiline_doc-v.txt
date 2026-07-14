@@ -30,5 +30,13 @@
       (value-type string)))) (
     (value-type string))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type string)) (expr
+          (simple-var-ref param1))))
+      (var-def
+        (variable _ (type
+          (value-type string)) (expr
+          (simple-var-ref param2))))
       (return
         (literal )))))

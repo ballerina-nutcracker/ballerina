@@ -1,0 +1,47 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad d
+    %2 = ConstantLoad 1.2E+34
+    %3 = newMap {| d: decimal, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2}
+    r1 = %3;
+    %5 = println(r1) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad d
+    %7 = ConstantLoad 2
+    %8 = ConstantLoad d1
+    %9 = ConstantLoad 34
+    %10 = ConstantLoad d2
+    %11 = ConstantLoad 1.2
+    %12 = newMap {| d: decimal, decimal... |}{%6=%7, %8=%9, %10=%11}
+    r2 = %12;
+    %14 = println(r2) -> bb2;
+  }
+  bb2 {
+    %15 = ConstantLoad 1.2E+3
+    %16 = ConstantLoad d3
+    r2[%16] = %15;
+    %17 = println(r2) -> bb3;
+  }
+  bb3 {
+    %18 = ConstantLoad d
+    %19 = ConstantLoad d1
+    %20 = ConstantLoad 23
+    %21 = newMap {| d1: decimal, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%19=%20}
+    %22 = newMap {| d: {| d1: decimal, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%18=%21}
+    r3 = %22;
+    %24 = println(r3) -> bb4;
+  }
+  bb4 {
+    %25 = ConstantLoad 23.1
+    %27 = ConstantLoad d
+    %26 = r3[%27] (fill);
+    %28 = ConstantLoad d1
+    %26[%28] = %25;
+    %29 = println(r3) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

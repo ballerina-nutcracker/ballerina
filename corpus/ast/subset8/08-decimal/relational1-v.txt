@@ -1,0 +1,48 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type decimal)) (expr
+          (literal 1.5d))))
+      (var-def
+        (variable y (type
+          (value-type decimal)) (expr
+          (literal 3d))))
+      (var-def
+        (variable z (type
+          (value-type decimal)) (expr
+          (literal 3d))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <
+            (simple-var-ref y)
+            (simple-var-ref x)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (simple-var-ref y)
+            (simple-var-ref x)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref y)
+            (simple-var-ref z)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr <=
+            (simple-var-ref y)
+            (simple-var-ref z))))))))

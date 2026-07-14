@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect integer types for bitwise operators
+  --> fieldlvalue5-e.bal:24:5
+   |
+24 |     p.n |= 3; // @error
+   |     ^^^^^^^^^

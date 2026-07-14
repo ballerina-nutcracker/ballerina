@@ -1,0 +1,359 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %5 = floatCmp(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %9 = ConstantLoad 2
+    %10 = %9;
+    %11 = floatCmp(%8,%10) -> bb3;
+  }
+  bb3 {
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad 2
+    %14 = %13;
+    %15 = ConstantLoad 1
+    %16 = %15;
+    %17 = floatCmp(%14,%16) -> bb5;
+  }
+  bb5 {
+    %18 = println(%17) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad 1
+    %20 = unknown %19;
+    %21 = %20;
+    %22 = ConstantLoad 1
+    %23 = %22;
+    %24 = floatCmp(%21,%23) -> bb7;
+  }
+  bb7 {
+    %25 = println(%24) -> bb8;
+  }
+  bb8 {
+    %26 = ConstantLoad 0.5
+    %27 = unknown %26;
+    %28 = %27;
+    %29 = ConstantLoad 1
+    %30 = unknown %29;
+    %31 = %30;
+    %32 = floatCmp(%28,%31) -> bb9;
+  }
+  bb9 {
+    %33 = println(%32) -> bb10;
+  }
+  bb10 {
+    %34 = ConstantLoad 0.5
+    %35 = unknown %34;
+    %36 = %35;
+    %38 = ConstantLoad 1
+    %39 = %38;
+    %40 = ConstantLoad 0
+    %41 = %40;
+    %37 = / %39 %41;
+    %42 = %37;
+    %43 = floatCmp(%36,%42) -> bb11;
+  }
+  bb11 {
+    %44 = println(%43) -> bb12;
+  }
+  bb12 {
+    %45 = ConstantLoad 0.5
+    %46 = unknown %45;
+    %47 = %46;
+    %49 = ConstantLoad 1
+    %50 = unknown %49;
+    %51 = %50;
+    %52 = ConstantLoad 0
+    %53 = %52;
+    %48 = / %51 %53;
+    %54 = %48;
+    %55 = floatCmp(%47,%54) -> bb13;
+  }
+  bb13 {
+    %56 = println(%55) -> bb14;
+  }
+  bb14 {
+    %57 = ConstantLoad 0
+    %58 = unknown %57;
+    %59 = %58;
+    %60 = ConstantLoad 0
+    %61 = %60;
+    %62 = floatCmp(%59,%61) -> bb15;
+  }
+  bb15 {
+    %63 = println(%62) -> bb16;
+  }
+  bb16 {
+    %64 = ConstantLoad 0
+    %65 = %64;
+    %67 = ConstantLoad 0
+    %68 = %67;
+    %69 = ConstantLoad 0
+    %70 = %69;
+    %66 = / %68 %70;
+    %71 = %66;
+    %72 = floatCmp(%65,%71) -> bb17;
+  }
+  bb17 {
+    %73 = println(%72) -> bb18;
+  }
+  bb18 {
+    %75 = ConstantLoad 0
+    %76 = %75;
+    %77 = ConstantLoad 0
+    %78 = %77;
+    %74 = / %76 %78;
+    %79 = %74;
+    %80 = ConstantLoad 0
+    %81 = %80;
+    %82 = floatCmp(%79,%81) -> bb19;
+  }
+  bb19 {
+    %83 = println(%82) -> bb20;
+  }
+  bb20 {
+    %85 = ConstantLoad 0
+    %86 = %85;
+    %87 = ConstantLoad 0
+    %88 = %87;
+    %84 = / %86 %88;
+    %89 = %84;
+    %91 = ConstantLoad 0
+    %92 = %91;
+    %93 = ConstantLoad 0
+    %94 = %93;
+    %90 = / %92 %94;
+    %95 = %90;
+    %96 = floatCmp(%89,%95) -> bb21;
+  }
+  bb21 {
+    %97 = println(%96) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}
+floatCmp(float,float) -> string{
+  bb0 {
+    %4 = f1;
+    %5 = f2;
+    %3 = < %4 %5;
+    %3 ? bb1 : bb8;
+  }
+  bb1 {
+    PushScopeFrame 4
+    %1 = (1, f1);
+    %2 = (1, f2);
+    %0 = > %1 %2;
+    %3 = ! %0;
+    %3 ? bb2 : bb6;
+  }
+  bb2 {
+    PushScopeFrame 3
+    %1 = (2, f1);
+    %2 = (2, f1);
+    %0 = <= %1 %2;
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad lt
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad lt error 1
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = ConstantLoad lt error 2
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %1 = (1, f1);
+    %2 = (1, f2);
+    %0 = > %1 %2;
+    %0 ? bb9 : bb16;
+  }
+  bb9 {
+    PushScopeFrame 4
+    %1 = (2, f1);
+    %2 = (2, f2);
+    %0 = < %1 %2;
+    %3 = ! %0;
+    %3 ? bb10 : bb14;
+  }
+  bb10 {
+    PushScopeFrame 3
+    %1 = (3, f1);
+    %2 = (3, f1);
+    %0 = >= %1 %2;
+    %0 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 1
+    %0 = ConstantLoad gt
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    PushScopeFrame 1
+    %0 = ConstantLoad gt error 1
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb14 {
+    PushScopeFrame 1
+    %0 = ConstantLoad gt error 2
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 3
+    %1 = (2, f1);
+    %2 = (2, f2);
+    %0 = == %1 %2;
+    %0 ? bb17 : bb26;
+  }
+  bb17 {
+    PushScopeFrame 8
+    %1 = (3, f1);
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %2 = / %4 %6;
+    %7 = %2;
+    %0 = == %1 %7;
+    %0 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 1
+    %0 = ConstantLoad both nan
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    PushScopeFrame 3
+    %1 = (4, f1);
+    %2 = (4, f1);
+    %0 = <= %1 %2;
+    %0 ? bb20 : bb24;
+  }
+  bb20 {
+    PushScopeFrame 3
+    %1 = (5, f1);
+    %2 = (5, f1);
+    %0 = >= %1 %2;
+    %0 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 1
+    %0 = ConstantLoad eq
+    (6, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    PushScopeFrame 1
+    %0 = ConstantLoad eq error 1
+    (6, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    PopScopeFrame
+    GOTO bb25;
+  }
+  bb24 {
+    PushScopeFrame 1
+    %0 = ConstantLoad eq error 2
+    (5, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb26 {
+    PushScopeFrame 1
+    %0 = ConstantLoad one nan
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

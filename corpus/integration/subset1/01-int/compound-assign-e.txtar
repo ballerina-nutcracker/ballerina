@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected int, got "abc"
-  --> compound-assign-e.bal:21:10
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> compound-assign-e.bal:20:5
    |
-21 |     a += "abc"; // @error
-   |          ^^^^^
+20 |     a += "abc"; // @error
+   |     ^^^^^^^^^^^

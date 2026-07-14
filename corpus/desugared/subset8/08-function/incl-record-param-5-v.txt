@@ -1,0 +1,91 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition V1
+    (record-type
+      (field foo
+        (value-type int)
+        (literal 5))))
+  (type-definition V2
+    (record-type
+      (field bar
+        (value-type int)
+        (literal 10))))
+  (function foo (
+    (variable base (type
+      (value-type int)))
+    (variable v1 (type
+      (user-defined-type V1)))
+    (variable v2 (type
+      (user-defined-type V2)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr *
+          (simple-var-ref base)
+          (group-expr
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref v1)
+                (literal foo))
+              (index-based-access
+                (simple-var-ref v2)
+                (literal bar))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1)
+            (mapping-constructor-expr)
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1)
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 10)))
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1)
+            (mapping-constructor-expr)
+            (mapping-constructor-expr
+              (key-value
+                (literal bar)
+                (literal 5))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1)
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 1)))
+            (mapping-constructor-expr
+              (key-value
+                (literal bar)
+                (literal 5))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (literal 1)
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 1)))
+            (mapping-constructor-expr
+              (key-value
+                (literal bar)
+                (literal 5))))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal 10)))))

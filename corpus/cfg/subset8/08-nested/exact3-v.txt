@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (list-constructor-expr))))))
+    (var-def
+      (variable v (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 255)))))
+    (assignment
+      (field-based-access x
+        (simple-var-ref r))
+      (simple-var-ref v))
+    (var-def
+      (variable x (type
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type null)) dimensions: 1 ([]))) (expr
+        (field-based-access x
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0)))))
+  )
+)

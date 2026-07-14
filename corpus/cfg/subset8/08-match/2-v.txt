@@ -1,0 +1,42 @@
+(foo
+  (bb0 () (bb2 bb3 bb4 bb5)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3 bb4 bb5) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal none))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal one))))
+  )
+  (bb4 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal two))))
+  )
+  (bb5 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal many))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (literal 1))))
+    (expression-stmt
+      (invocation foo (
+        (literal 0))))
+    (expression-stmt
+      (invocation foo (
+        (literal 2))))
+    (expression-stmt
+      (invocation foo (
+        (literal 17))))
+  )
+)

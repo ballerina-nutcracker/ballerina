@@ -1,0 +1,13 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    s = %1;
+    %4 = ConstantLoad b
+    %3 = + s %4;
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

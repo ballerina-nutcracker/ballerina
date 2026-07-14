@@ -1,0 +1,11 @@
+-- stdout --
+hello%20world
+hello world
+a%3Db
+true
+true
+a%20b
+caf%E9
+true
+true
+-- stderr --

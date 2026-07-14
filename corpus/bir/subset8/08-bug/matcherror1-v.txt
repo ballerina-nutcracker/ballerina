@@ -1,0 +1,32 @@
+module $anon.. v 0.0.0;
+foo(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object) -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad should not match
+    %1 = println(%0) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hi
+    %2 = newError error(%1)
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad done
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: divide by zero
+        at main(div9-p.bal:23)

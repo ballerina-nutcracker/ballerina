@@ -1,0 +1,95 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (value-type float)) (expr
+          (literal 0.0f))))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1.0f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1.00000f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1234567891.0f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1234567890123456.0f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1234567890123456.1f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1234567890123456.9f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 1.7976931348623157e+308f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 0.0000000000000009e+308f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 0.0000000000000000000000000000000001f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal)))))
+      (assignment
+        (simple-var-ref f)
+        (literal 4.9406564584124654E-324f))
+      (expression-stmt
+        (invocation io println (
+          (type-conversion-expr
+            (simple-var-ref f)
+            (value-type decimal))))))))

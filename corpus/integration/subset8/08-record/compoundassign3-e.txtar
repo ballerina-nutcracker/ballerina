@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: union types not supported for +
+  --> compoundassign3-e.bal:26:5
+   |
+26 |     r["z"] += 1; // @error
+   |     ^^^^^^^^^^^^

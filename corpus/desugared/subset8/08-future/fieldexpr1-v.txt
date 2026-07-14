@@ -1,0 +1,48 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition A
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field a
+          (union-type
+            (value-type int)
+            (value-type string))))))
+  (type-definition B
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field a
+          (union-type
+            (value-type int)
+            (value-type boolean))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (user-defined-type B)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal true))))))
+      (var-def
+        (variable y (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (simple-var-ref x))))
+      (if
+        (type-test-expr is
+          (simple-var-ref y)
+          (user-defined-type A))
+        (block-stmt) (
+        (block-stmt
+          (var-def
+            (variable b (type
+              (value-type boolean)) (expr
+              (field-based-access a
+                (simple-var-ref y)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref b))))))))))

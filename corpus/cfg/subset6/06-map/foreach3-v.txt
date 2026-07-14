@@ -11,10 +11,10 @@
             (value-type string)))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref a)
+            (literal a)
             (literal 1))
           (key-value
-            (simple-var-ref b)
+            (literal b)
             (literal 2))))))
   )
   (bb1 (bb0 bb2) (bb2 bb3)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected any, got error
+  --> 1-e.bal:21:13
+   |
+21 |     any x = error("whoops"); // @error
+   |             ^^^^^^^^^^^^^^^

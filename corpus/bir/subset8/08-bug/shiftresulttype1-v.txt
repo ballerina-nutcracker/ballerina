@@ -1,0 +1,101 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 250
+    x = %1;
+    %3 = ConstantLoad 2
+    a = %3;
+    %5 = ConstantLoad 120
+    %6 = unknown %5;
+    b = %6;
+    %8 = ConstantLoad 1
+    c = %8;
+    %10 = ConstantLoad 8
+    d = %10;
+    %12 = ConstantLoad 32755
+    %13 = unknown %12;
+    e = %13;
+    %15 = ConstantLoad 3
+    f = %15;
+    %17 = ConstantLoad 6
+    g = %17;
+    %19 = ConstantLoad 2147483647
+    %20 = unknown %19;
+    h = %20;
+    %22 = ConstantLoad 5
+    i = %22;
+    %25 = x;
+    %26 = a;
+    %24 = unknown %25 %26;
+    x1 = %24;
+    %28 = x1;
+    %29 = println(%28) -> bb1;
+  }
+  bb1 {
+    %31 = x;
+    %32 = b;
+    %30 = unknown %31 %32;
+    x2 = %30;
+    %34 = x2;
+    %35 = println(%34) -> bb2;
+  }
+  bb2 {
+    %37 = x;
+    %38 = c;
+    %36 = unknown %37 %38;
+    x3 = %36;
+    %40 = x3;
+    %41 = println(%40) -> bb3;
+  }
+  bb3 {
+    %43 = x;
+    %44 = d;
+    %42 = unknown %43 %44;
+    x4 = %42;
+    %46 = x4;
+    %47 = println(%46) -> bb4;
+  }
+  bb4 {
+    %49 = x;
+    %50 = e;
+    %48 = unknown %49 %50;
+    x5 = %48;
+    %52 = x5;
+    %53 = println(%52) -> bb5;
+  }
+  bb5 {
+    %55 = x;
+    %56 = f;
+    %54 = unknown %55 %56;
+    x6 = %54;
+    %58 = x6;
+    %59 = println(%58) -> bb6;
+  }
+  bb6 {
+    %61 = x;
+    %62 = g;
+    %60 = unknown %61 %62;
+    x7 = %60;
+    %64 = x7;
+    %65 = println(%64) -> bb7;
+  }
+  bb7 {
+    %67 = x;
+    %68 = h;
+    %66 = unknown %67 %68;
+    x8 = %66;
+    %70 = x8;
+    %71 = println(%70) -> bb8;
+  }
+  bb8 {
+    %73 = x;
+    %74 = i;
+    %72 = unknown %73 %74;
+    x9 = %72;
+    %76 = x9;
+    %77 = println(%76) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

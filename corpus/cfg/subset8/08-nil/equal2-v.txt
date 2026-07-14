@@ -1,0 +1,102 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (finite-type
+          (literal <nil>))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable b (type
+        (finite-type
+          (literal <nil>))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable c (type
+        (value-type null)) (expr
+        (literal <nil>))))
+    (var-def
+      (variable d (type
+        (value-type null)) (expr
+        (literal <nil>))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref b)
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref b)
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (invocation retNul1 ())))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (invocation retNul2 ())))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (invocation retNul3 ())))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (invocation retNul4 ())))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (invocation retNul5 ())))))
+  )
+)
+(retNul1
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)
+(retNul2
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)
+(retNul3
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)
+(retNul4
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)
+(retNul5
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)

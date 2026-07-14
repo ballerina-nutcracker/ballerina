@@ -1,0 +1,36 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_lines1.txt))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteLines (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal Alpha)
+              (literal Beta)
+              (literal Gamma))))))
+      (var-def
+        (variable lines (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref path)))))))
+      (foreach
+        (var-def
+          (variable line (type
+            (value-type string))))
+        (simple-var-ref lines)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref line)))))))))

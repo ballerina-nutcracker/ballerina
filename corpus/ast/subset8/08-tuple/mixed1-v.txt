@@ -1,0 +1,19 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Pair
+    (tuple-type
+      (value-type int)
+      (value-type boolean)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Pair)) (expr
+          (list-constructor-expr
+            (literal 17)
+            (literal true)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p)))))))

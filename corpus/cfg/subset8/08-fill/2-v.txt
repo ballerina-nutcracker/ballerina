@@ -1,0 +1,31 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (array-type
+          (finite-type
+            (literal 1.3)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref a)
+        (literal 3))
+      (literal 1.3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (var-def
+      (variable b (type
+        (array-type
+          (value-type float) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref b)
+        (literal 3))
+      (literal 1.4))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+  )
+)

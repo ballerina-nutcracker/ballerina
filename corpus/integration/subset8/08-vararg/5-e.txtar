@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing identifier
+  --> 5-e.bal:23:24
+   |
+23 | function addAll(int... ) returns int { // @error
+   |

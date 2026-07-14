@@ -1,0 +1,51 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable days (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal Monday)
+          (literal Tuesday)
+          (literal Wednesday)
+          (literal Thursday)
+          (literal Friday)
+          (literal Saturday)
+          (literal Sunday)))))
+    (var-def
+      (variable dayNumber (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type any))) (expr
+        (mapping-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (invocation lang.array length (
+        (simple-var-ref days))))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (assignment
+      (index-based-access
+        (simple-var-ref dayNumber)
+        (type-conversion-expr
+          (index-based-access
+            (simple-var-ref days)
+            (simple-var-ref i))
+          (value-type string)))
+      (binary-expr +
+        (simple-var-ref i)
+        (literal 1)))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref dayNumber)
+          (literal Sunday)))))
+  )
+)

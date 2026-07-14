@@ -1,0 +1,82 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina url (as url))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation url encode (
+            (literal param1=http://xyz.com/?a=12&b=55)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable encoded (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref encoded))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation url encode (
+            (literal hello world)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation url encode (
+            (literal a*b)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation url encode (
+            (literal a~b)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$3))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation url encode (
+            (literal a.b-c_d)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$4)))))))

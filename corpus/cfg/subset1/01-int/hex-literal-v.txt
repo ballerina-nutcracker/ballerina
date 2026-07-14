@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal -9223372036854775808))))
+    (expression-stmt
+      (invocation io println (
+        (literal -9223372036854775808))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (literal 9223372036854775807)))))
+  )
+)

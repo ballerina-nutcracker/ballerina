@@ -1,0 +1,24 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (value-type string)) (expr
+          (literal v))))
+      (var-def
+        (variable v (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "before ")
+            (xml-template-content-insertion
+              (simple-var-ref n))
+            (template-string " <m/> after ")
+            (xml-template-content-insertion
+              (simple-var-ref n))
+            (template-string "")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v)))))))

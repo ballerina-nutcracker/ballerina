@@ -1,0 +1,21 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unmatchable match clause
+  --> 15-e.bal:30:13
+   |
+30 |             2 => { // @error
+   |             ^^^^^^^^^^^^^^^^
+31 |                 io:println("two");
+   |                 ^^^^^^^^^^^^^^^^^^
+32 |             }
+   |             ^
+
+error[SEMANTIC_ERROR]: unreachable match clause
+  --> 15-e.bal:30:13
+   |
+30 |             2 => { // @error
+   |             ^^^^^^^^^^^^^^^^
+31 |                 io:println("two");
+   |                 ^^^^^^^^^^^^^^^^^^
+32 |             }
+   |             ^

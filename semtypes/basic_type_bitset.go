@@ -16,20 +16,13 @@
 
 package semtypes
 
-type BasicTypeBitSet int
+type basicTypeBitSet uint32
 
-func (bitset BasicTypeBitSet) all() BasicTypeBitSet {
-	return bitset
-}
+const (
+	semTypeMarker basicTypeBitSet = 1 << 31
+	basicTypeMask basicTypeBitSet = (1 << 24) - 1
+)
 
-func (bitset BasicTypeBitSet) some() BasicTypeBitSet {
-	return 0
-}
-
-func (bitset BasicTypeBitSet) subtypeDataList() []ProperSubtypeData {
-	return nil
-}
-
-func basicTypeBitSetFrom(bitset int) BasicTypeBitSet {
-	return BasicTypeBitSet(bitset)
+func (bitset basicTypeBitSet) semType() SemType {
+	return SemType{allBits: semTypeMarker | (bitset & basicTypeMask)}
 }

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected "ALWAYS"|"AUTO"|"NEVER", got "INVALID"
+  --> http-client-compression-e.bal:20:69
+   |
+20 |     http:Client _ = check new ("https://example.com", {compression: "INVALID"});  // @error incompatible type
+   |                                                                     ^^^^^^^^^

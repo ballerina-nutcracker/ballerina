@@ -1,0 +1,4 @@
+-- stdout --
+<bar:main xmlns:bar="https:foo/main"><bar:item/></bar:main>
+<bar:util xmlns:bar="https:foo/util"><bar:item/></bar:util>
+-- stderr --

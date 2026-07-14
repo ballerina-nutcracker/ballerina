@@ -1,0 +1,29 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 42))))))
+      (var-def
+        (variable y (type
+          (value-type any)) (expr
+          (simple-var-ref x))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (group-expr
+              (type-conversion-expr
+                (simple-var-ref y)
+                (constrained-type
+                  (builtin-ref-type map)
+                  (value-type any))))
+            (literal value))))))))

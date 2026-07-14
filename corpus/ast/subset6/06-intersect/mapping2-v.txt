@@ -25,7 +25,7 @@
             (user-defined-type R2))) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref l1)
+              (literal l1)
               (literal 1))))))
       (if
         (type-test-expr is

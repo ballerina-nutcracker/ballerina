@@ -1,0 +1,102 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v1 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))
+          (key-value
+            (literal z)
+            (literal 3))))))
+    (var-def
+      (variable v2 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal z)
+            (literal 3))
+          (key-value
+            (literal y)
+            (literal 2))
+          (key-value
+            (literal x)
+            (literal 1))))))
+    (var-def
+      (variable v3 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))
+          (key-value
+            (literal z)
+            (literal 4))))))
+    (var-def
+      (variable v4 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))
+          (key-value
+            (literal z)
+            (literal 3))
+          (key-value
+            (literal w)
+            (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v1)
+          (simple-var-ref v1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v1)
+          (simple-var-ref v2)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v1)
+          (simple-var-ref v3)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v1)
+          (simple-var-ref v4)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v4)
+          (simple-var-ref v1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (simple-var-ref v1)
+          (simple-var-ref v1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (simple-var-ref v1)
+          (simple-var-ref v2)))))
+  )
+)

@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))
+      (field z
+        (union-type
+          (value-type int)
+          (value-type null)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 44))
+            (key-value
+              (literal y)
+              (literal 88))
+            (key-value
+              (literal z)
+              (literal 48))))))
+      (var-def
+        (variable z (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref p)
+            (literal z)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref z)))))))

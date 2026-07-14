@@ -1,0 +1,22 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (array-type
+            (value-type float) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref v)
+          (literal 0))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref v)
+              (literal 0))
+            (literal 0.5))))))))

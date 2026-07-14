@@ -1,0 +1,75 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 1)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (unary-expr -
+              (literal 1))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (unary-expr -
+              (literal 1))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 1E-6000)
+            (literal 1E-143)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 1E+6000)
+            (literal 1E+144)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 9.999999999999999999999999999999999E+6000)
+            (literal 1E+144)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 9.999999999999999999999999999999999E+6000)
+            (unary-expr -
+              (literal 1E+144))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 9.999999999999999999999999999999999E+6000)
+            (unary-expr -
+              (literal 2E+143))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (unary-expr -
+              (literal 1E-6143))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 1E-6143)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 0)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 9.999999999999999999999999999999999E-6001)
+            (literal 2E-143)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr *
+            (literal 1E-6143)
+            (literal 1E+6143))))))))

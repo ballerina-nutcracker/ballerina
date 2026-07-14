@@ -86,13 +86,13 @@
         (user-defined-type BinaryOp)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref lhs)
+            (literal lhs)
             (literal 1))
           (key-value
-            (simple-var-ref rhs)
+            (literal rhs)
             (literal 2))
           (key-value
-            (simple-var-ref op)
+            (literal op)
             (simple-var-ref foo))))))
     (expression-stmt
       (invocation io println (
@@ -102,13 +102,13 @@
       (simple-var-ref op)
       (mapping-constructor-expr
         (key-value
-          (simple-var-ref lhs)
+          (literal lhs)
           (literal 1))
         (key-value
-          (simple-var-ref rhs)
+          (literal rhs)
           (literal 2))
         (key-value
-          (simple-var-ref op)
+          (literal op)
           (simple-var-ref bar))))
     (expression-stmt
       (invocation io println (
@@ -119,39 +119,39 @@
         (invocation exec (
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref lhs)
+              (literal lhs)
               (literal 1))
             (key-value
-              (simple-var-ref rhs)
+              (literal rhs)
               (literal 2))
             (key-value
-              (simple-var-ref op)
+              (literal op)
               (simple-var-ref foo))))))))
     (expression-stmt
       (invocation io println (
         (invocation exec (
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref lhs)
+              (literal lhs)
               (literal a))
             (key-value
-              (simple-var-ref rhs)
+              (literal rhs)
               (literal b))
             (key-value
-              (simple-var-ref op)
+              (literal op)
               (simple-var-ref baz))))))))
     (expression-stmt
       (invocation io println (
         (invocation exec (
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref lhs)
+              (literal lhs)
               (literal a))
             (key-value
-              (simple-var-ref rhs)
+              (literal rhs)
               (literal 1))
             (key-value
-              (simple-var-ref op)
+              (literal op)
               (simple-var-ref baz))))))))
   )
 )

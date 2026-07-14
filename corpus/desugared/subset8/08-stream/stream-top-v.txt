@@ -1,0 +1,113 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 0))))
+    (function close () (
+      (value-type null))
+      (block-function-body
+        (return
+          (literal <nil>))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable current (type
+            (value-type int)) (expr
+            (index-based-access
+              (simple-var-ref self)
+              (literal n)))))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (binary-expr +
+            (simple-var-ref current)
+            (literal 1)))
+        (return
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (simple-var-ref current)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (builtin-ref-type stream)) (expr
+          (new (
+            (new
+              (user-defined-type Counter) ()))))))
+      (var-def
+        (variable r1 (type
+          (union-type
+            (record-type
+              (field value
+                (union-type
+                  (value-type any)
+                  (error-type))))
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (invocation next expr:
+            (simple-var-ref s) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref r1)
+          (record-type
+            (field value
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref r1)
+                (literal value)))))) ())
+      (block-stmt
+        (var-def
+          (variable c (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (invocation close expr:
+              (simple-var-ref s) ()))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref c))))
+        (var-def
+          (variable r2 (type
+            (union-type
+              (record-type
+                (field value
+                  (union-type
+                    (value-type any)
+                    (error-type))))
+              (union-type
+                (error-type)
+                (value-type null)))) (expr
+            (invocation next expr:
+              (simple-var-ref s) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref r2)
+            (record-type
+              (field value
+                (value-type int))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref r2)
+                  (literal value)))))) ())
+        (block-stmt)))))

@@ -21,10 +21,10 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/common"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
+	"ballerina-lang-go/values"
 )
 
 type BLangActionOrExpression interface {
@@ -48,17 +48,14 @@ type Channel struct {
 }
 
 func (c *Channel) WorkerPairId() string {
-	// migrated from BLangWorkerSendReceiveExpr.java:48:9
 	return WorkerPairId(c.Sender, c.Receiver)
 }
 
 func (c *Channel) ChannelId() string {
-	// migrated from BLangWorkerSendReceiveExpr.java:56:9
 	return c.Sender + "->" + c.Receiver + ":" + strconv.Itoa(c.EventIndex)
 }
 
 func WorkerPairId(sender, receiver string) string {
-	// migrated from BLangWorkerSendReceiveExpr.java:52:9
 	return sender + "->" + receiver
 }
 
@@ -75,7 +72,7 @@ type (
 	BLangMarkdownReturnParameterDocumentation struct {
 		bLangExpressionBase
 		ReturnParameterDocumentationLines []string
-		ReturnType                        BType
+		ReturnType                        *BLangValueType
 	}
 	BLangMarkDownDeprecationDocumentation struct {
 		bLangExpressionBase
@@ -89,15 +86,85 @@ type (
 	}
 	bLangExpressionBase struct {
 		bLangNodeBase
-		ExpectedType BType
 	}
 )
+
+// AbstractExpression expression is there to allow other packages (such as Desugar) to define their
+// own ast nodes. All stages after that will need to be aware on how to handle them.
+type AbstractExpression = bLangExpressionBase
 
 func (*bLangExpressionBase) actionOrExpression() {}
 func (*bLangExpressionBase) expressionNode()     {}
 
+func (b *BLangValueExpressionBase) IsCompoundAssignmentLValue() bool {
+	return b.flags.Has(valueExpressionFlagCompoundAssignmentLValue)
+}
+
+func (b *BLangValueExpressionBase) SetCompoundAssignmentLValue() {
+	b.flags |= valueExpressionFlagCompoundAssignmentLValue
+}
+
+func (b *BLangValueExpressionBase) IsLexpr() bool {
+	return b.flags.Has(valueExpressionFlagLexpr)
+}
+
+func (b *BLangValueExpressionBase) SetLexpr() {
+	b.flags |= valueExpressionFlagLexpr
+}
+
+func (b *BLangValueExpressionBase) IsOptionalAccess() bool {
+	return b.flags.Has(valueExpressionFlagOptionalAccess)
+}
+
+func (b *BLangValueExpressionBase) SetOptionalAccess() {
+	b.flags |= valueExpressionFlagOptionalAccess
+}
+
+func (f BLangValueExpressionFlags) Has(flag BLangValueExpressionFlags) bool {
+	return f&flag == flag
+}
+
 func (*BLangRemoteMethodCallAction) actionNode()         {}
 func (*BLangRemoteMethodCallAction) actionOrExpression() {}
+
+func (*BLangClientResourceAccessAction) actionNode()         {}
+func (*BLangClientResourceAccessAction) actionOrExpression() {}
+
+type ResourceAccessSegmentKind uint8
+
+const (
+	ResourceAccessSegmentName ResourceAccessSegmentKind = iota
+	ResourceAccessSegmentComputed
+)
+
+type MappingKeyKind uint8
+
+const (
+	MappingKeyStringLiteral MappingKeyKind = iota
+	MappingKeyIdentifier
+	MappingKeyComputed
+)
+
+const (
+	valueExpressionFlagCompoundAssignmentLValue BLangValueExpressionFlags = 1 << iota
+	valueExpressionFlagLexpr
+	valueExpressionFlagOptionalAccess
+)
+
+type TemplateExprKind uint8
+
+type XMLTemplateInsertionKind uint8
+
+const (
+	TemplateExprKindString TemplateExprKind = iota
+	TemplateExprKindXML
+	TemplateExprKindRaw
+)
+
+const (
+	XMLTemplateInsertionKindContent XMLTemplateInsertionKind = iota
+	XMLTemplateInsertionKindAttribute
+)
 
 type (
 	NarrowedTypes struct {
@@ -108,23 +175,20 @@ type (
 	BLangTypeConversionExpr struct {
 		bLangExpressionBase
 		Expression     BLangExpression
-		TypeDescriptor model.TypeDescriptor
+		TypeDescriptor BType
 	}
+
+	BLangValueExpressionFlags byte
 
 	BLangValueExpressionBase struct {
 		bLangExpressionBase
-		IsLValue                   bool
-		IsCompoundAssignmentLValue bool
+		flags BLangValueExpressionFlags
 	}
 
 	bLangAccessExpressionBase struct {
 		BLangValueExpressionBase
-		Expr                BLangExpression
-		OriginalType        BType
-		OptionalFieldAccess bool
-		ErrorSafeNavigation bool
-		NilSafeNavigation   bool
-		LeafNode            bool
+		Expr         BLangExpression
+		OriginalType BType
 	}
 
 	BLangFieldBaseAccess struct {
@@ -144,15 +208,15 @@ type (
 		Expr           BLangExpression
 		PkgAlias       *BLangIdentifier
 		AnnotationName *BLangIdentifier
+		symbol         model.SymbolRef
 	}
 
 	BLangArrowFunction struct {
 		bLangExpressionBase
-		Params            []BLangSimpleVariable
-		FunctionName      *model.IdentifierNode
-		Body              *BLangExprFunctionBody
-		FuncType          BType
-		ClosureVarSymbols common.OrderedSet[ClosureVarSymbol]
+		Params       []BLangSimpleVariable
+		FunctionName *BLangIdentifier
+		Body         *BLangExprFunctionBody
+		FuncType     BType
 	}
 
 	BLangLambdaFunction struct {
@@ -169,13 +233,12 @@ type (
 	BLangQueryExpr struct {
 		bLangExpressionBase
 		QueryClauseList    []BLangNode
-		QueryConstructType model.TypeKind
+		QueryConstructType TypeKind
 	}
 
 	BLangCheckedExpr struct {
 		bLangExpressionBase
-		Expr                BLangActionOrExpression
-		IsRedundantChecking bool
+		Expr BLangActionOrExpression
 	}
 
 	BLangCheckPanickedExpr struct {
@@ -185,11 +248,6 @@ type (
 	BLangTrapExpr struct {
 		bLangExpressionBase
 		Expr BLangExpression
-	}
-
-	BLangCollectContextInvocation struct {
-		bLangExpressionBase
-		Invocation BLangInvocation
 	}
 
 	BLangCommitExpr struct {
@@ -208,7 +266,6 @@ type (
 
 	BLangLocalVarRef struct {
 		BLangSimpleVarRef
-		ClosureDesugared bool
 	}
 
 	BLangConstRef struct {
@@ -218,21 +275,15 @@ type (
 	}
 	BLangLiteral struct {
 		bLangExpressionBase
-		valueType       BType
-		Value           any
-		OriginalValue   string
-		IsConstant      bool
-		IsFiniteContext bool
+		valueType     BType
+		Value         any
+		OriginalValue string
+		IsConstant    bool
 	}
 
 	BLangNumericLiteral struct {
 		BLangLiteral
-		Kind model.NodeKind
-	}
-	BLangDynamicArgExpr struct {
-		bLangExpressionBase
-		Condition           BLangExpression
-		ConditionalArgument BLangExpression
+		Kind NodeKind
 	}
 	BLangElvisExpr struct {
 		bLangExpressionBase
@@ -249,7 +300,7 @@ type (
 
 	BLangWorkerReceive struct {
 		BLangWorkerSendReceiveExprBase
-		Send               model.WorkerSendExpressionNode
+		Send               WorkerSendExpressionNode
 		MatchingSendsError BType
 	}
 
@@ -285,6 +336,20 @@ type (
 		bLangInvocationBase
 	}
 
+	BLangResourceAccessSegment struct {
+		bLangNodeBase
+		Kind ResourceAccessSegmentKind
+		Name string
+		Expr BLangExpression
+	}
+
+	BLangClientResourceAccessAction struct {
+		bLangNodeBase
+		bLangInvocationBase
+		Path       []BLangResourceAccessSegment
+		MethodName string
+	}
+
 	BLangGroupExpr struct {
 		bLangExpressionBase
 		Expression BLangExpression
@@ -292,11 +357,12 @@ type (
 
 	BLangTypedescExpr struct {
 		bLangExpressionBase
-		typeDescriptor model.TypeDescriptor
+		typeDescriptor TypeDescriptor
 		// Constraint is the semtype of the type this typedesc denotes — the T in
 		// typedesc<T>. BIR lowers the expression to a TypeDesc{Type: Constraint}
 		// constant.
-		Constraint semtypes.SemType
+		Constraint       semtypes.SemType
+		AnnotationValues values.AnnotationValues
 	}
 
 	BLangInferredTypedescDefault struct {
@@ -311,35 +377,34 @@ type (
 
 	BLangIndexBasedAccess struct {
 		bLangAccessExpressionBase
-		IndexExpr         BLangExpression
-		IsStoreOnCreation bool
+		IndexExpr BLangExpression
 	}
 
 	BLangListConstructorExpr struct {
 		bLangExpressionBase
-		Exprs          []BLangExpression
-		IsTypedescExpr bool
-		AtomicType     semtypes.ListAtomicType
+		Exprs         []BLangExpression
+		AtomicType    semtypes.ListAtomicType
+		SpreadMembers []bool
 	}
 
 	BLangErrorConstructorExpr struct {
 		bLangExpressionBase
 		ErrorTypeRef   *BLangUserDefinedType
 		PositionalArgs []BLangExpression
-		NamedArgs      []*BLangNamedArgsExpression
+		NamedArgs      []BLangNamedArgsExpression
 	}
 
 	BLangTypeTestExpr struct {
 		bLangExpressionBase
 		Expr       BLangExpression
-		Type       model.TypeData
+		Type       TypeData
 		isNegation bool
 	}
 
 	BLangMappingKey struct {
 		bLangNodeBase
-		Expr        BLangExpression
-		ComputedKey bool
+		Expr BLangExpression
+		Kind MappingKeyKind
 	}
 
 	BLangMappingKeyValueField struct {
@@ -351,7 +416,7 @@ type (
 
 	BLangMappingConstructorExpr struct {
 		bLangExpressionBase
-		Fields        []model.MappingField
+		Fields        []MappingField
 		AtomicType    semtypes.MappingAtomicType
 		FieldDefaults []model.FieldDefault
 	}
@@ -365,62 +430,113 @@ type (
 
 	BLangNewExpression struct {
 		bLangExpressionBase
-		AtomicType      *semtypes.MappingAtomicType
-		ClassSymbol     model.SymbolRef
-		UserDefinedType *BLangUserDefinedType
-		ArgsExprs       []BLangExpression
+		AtomicType     *semtypes.MappingAtomicType
+		ClassSymbol    model.SymbolRef
+		TypeDescriptor BType
+		ArgsExprs      []BLangExpression
+	}
+
+	BLangXMLSequenceLiteral struct {
+		bLangExpressionBase
+		// PR-TODO: this should by a slice of XML stuff
+		Children []BLangExpression
+	}
+
+	BLangTemplateExpr struct {
+		bLangExpressionBase
+		Kind       TemplateExprKind
+		Strings    []string
+		Insertions []BLangExpression
+	}
+
+	XMLTemplateNamespaceInsertion struct {
+		Offset         int // this is the offest in the string where we need to insert the namespace declarations when we desugar to BLangTemplateExpr
+		UsedPrefixes   map[string]struct{}
+		NeedsDefaultNS bool
+		Namespaces     []model.SymbolRef // Namespaces referred from this node
+	}
+
+	BLangXMLTemplateExpr struct {
+		BLangTemplateExpr
+		InsertionKinds      []XMLTemplateInsertionKind        // This tracks where do we do the insertion for each expression
+		NamespaceInsertions [][]XMLTemplateNamespaceInsertion // namespace insertion points for each template string
+	}
+
+	BLangXMLElementLiteral struct {
+		bLangExpressionBase
+		Name       string
+		Attrs      []BLangXMLAttribute
+		Content    BLangExpression
+		Namespaces []model.SymbolRef // Namespaces referred from this node
+	}
+
+	BLangXMLAttribute struct {
+		bLangExpressionBase
+		Name  string
+		Value BLangExpression
+	}
+
+	BLangXMLPILiteral struct {
+		bLangExpressionBase
+		Target string
+		Data   string
+	}
+
+	BLangXMLCommentLiteral struct {
+		bLangExpressionBase
+		Body string
+	}
+
+	BLangXMLTextLiteral struct {
+		bLangExpressionBase
+		Body string
 	}
 )
 
 var (
-	_ model.BinaryExpressionNode                                   = &BLangBinaryExpr{}
-	_ model.QueryExpressionNode                                    = &BLangQueryExpr{}
-	_ model.CheckedExpressionNode                                  = &BLangCheckedExpr{}
-	_ model.CheckPanickedExpressionNode                            = &BLangCheckPanickedExpr{}
-	_ model.CollectContextInvocationNode                           = &BLangCollectContextInvocation{}
-	_ model.SimpleVariableReferenceNode                            = &BLangSimpleVarRef{}
-	_ model.SimpleVariableReferenceNode                            = &BLangLocalVarRef{}
-	_ model.LiteralNode                                            = &BLangConstRef{}
-	_ model.LiteralNode                                            = &BLangLiteral{}
-	_ BLangExpression                                              = &BLangLiteral{}
-	_ model.MappingVarNameFieldNode                                = &BLangConstRef{}
-	_ model.DynamicArgNode                                         = &BLangDynamicArgExpr{}
-	_ model.ElvisExpressionNode                                    = &BLangElvisExpr{}
-	_ model.MarkdownDocumentationTextAttributeNode                 = &BLangMarkdownDocumentationLine{}
-	_ model.MarkdownDocumentationParameterAttributeNode            = &BLangMarkdownParameterDocumentation{}
-	_ model.MarkdownDocumentationReturnParameterAttributeNode      = &BLangMarkdownReturnParameterDocumentation{}
-	_ model.MarkDownDocumentationDeprecationAttributeNode          = &BLangMarkDownDeprecationDocumentation{}
-	_ model.MarkDownDocumentationDeprecatedParametersAttributeNode = &BLangMarkDownDeprecatedParametersDocumentation{}
-	_ model.WorkerReceiveNode                                      = &BLangWorkerReceive{}
-	_ model.LambdaFunctionNode                                     = &BLangLambdaFunction{}
-	_ model.InvocationNode                                         = &BLangInvocation{}
-	_ BLangExpression                                              = &BLangInvocation{}
-	_ BLangAction                                                  = &BLangRemoteMethodCallAction{}
-	_ BLangExpression                                              = &BLangQueryExpr{}
-	_ model.GroupExpressionNode                                    = &BLangGroupExpr{}
-	_ model.TypedescExpressionNode                                 = &BLangTypedescExpr{}
-	_ model.LiteralNode                                            = &BLangNumericLiteral{}
-	_ model.UnaryExpressionNode                                    = &BLangUnaryExpr{}
-	_ model.IndexBasedAccessNode                                   = &BLangIndexBasedAccess{}
-	_ model.ListConstructorExprNode                                = &BLangListConstructorExpr{}
-	_ model.ErrorConstructorExpressionNode                         = &BLangErrorConstructorExpr{}
-	_ model.TypeConversionNode                                     = &BLangTypeConversionExpr{}
-	_ BLangExpression                                              = &BLangTypeConversionExpr{}
-	_ BLangExpression                                              = &BLangErrorConstructorExpr{}
-	_ BLangNode                                                    = &BLangErrorConstructorExpr{}
-	_ BLangExpression                                              = &BLangTypeTestExpr{}
-	_ model.TypeTestExpressionNode                                 = &BLangTypeTestExpr{}
-	_ model.MappingConstructor                                     = &BLangMappingConstructorExpr{}
-	_ model.MappingKeyValueFieldNode                               = &BLangMappingKeyValueField{}
-	_ BLangExpression                                              = &BLangMappingConstructorExpr{}
-	_ BLangNode                                                    = &BLangMappingConstructorExpr{}
-	_ model.Node                                                   = &BLangMappingKey{}
-	_ BLangNode                                                    = &BLangMappingKey{}
-	_ BLangExpression                                              = &BLangNamedArgsExpression{}
-	_ model.NamedArgNode                                           = &BLangNamedArgsExpression{}
-	_ model.TrapNode                                               = &BLangTrapExpr{}
-	_ BLangExpression                                              = &BLangTrapExpr{}
-	_ BLangExpression                                              = &BLangNewExpression{}
+	_ BinaryExpressionNode                                   = &BLangBinaryExpr{}
+	_ QueryExpressionNode                                    = &BLangQueryExpr{}
+	_ SimpleVariableReferenceNode                            = &BLangSimpleVarRef{}
+	_ SimpleVariableReferenceNode                            = &BLangLocalVarRef{}
+	_ LiteralNode                                            = &BLangConstRef{}
+	_ LiteralNode                                            = &BLangLiteral{}
+	_ BLangExpression                                        = &BLangLiteral{}
+	_ MappingVarNameFieldNode                                = &BLangConstRef{}
+	_ ElvisExpressionNode                                    = &BLangElvisExpr{}
+	_ MarkdownDocumentationTextAttributeNode                 = &BLangMarkdownDocumentationLine{}
+	_ MarkdownDocumentationParameterAttributeNode            = &BLangMarkdownParameterDocumentation{}
+	_ MarkdownDocumentationReturnParameterAttributeNode      = &BLangMarkdownReturnParameterDocumentation{}
+	_ MarkDownDocumentationDeprecationAttributeNode          = &BLangMarkDownDeprecationDocumentation{}
+	_ MarkDownDocumentationDeprecatedParametersAttributeNode = &BLangMarkDownDeprecatedParametersDocumentation{}
+	_ WorkerReceiveNode                                      = &BLangWorkerReceive{}
+	_ LambdaFunctionNode                                     = &BLangLambdaFunction{}
+	_ InvocationNode                                         = &BLangInvocation{}
+	_ BLangExpression                                        = &BLangInvocation{}
+	_ BLangAction                                            = &BLangRemoteMethodCallAction{}
+	_ BLangAction                                            = &BLangClientResourceAccessAction{}
+	_ BLangExpression                                        = &BLangQueryExpr{}
+	_ GroupExpressionNode                                    = &BLangGroupExpr{}
+	_ TypedescExpressionNode                                 = &BLangTypedescExpr{}
+	_ LiteralNode                                            = &BLangNumericLiteral{}
+	_ UnaryExpressionNode                                    = &BLangUnaryExpr{}
+	_ IndexBasedAccessNode                                   = &BLangIndexBasedAccess{}
+	_ ListConstructorExprNode                                = &BLangListConstructorExpr{}
+	_ ErrorConstructorExpressionNode                         = &BLangErrorConstructorExpr{}
+	_ TypeConversionNode                                     = &BLangTypeConversionExpr{}
+	_ BLangExpression                                        = &BLangTypeConversionExpr{}
+	_ BLangExpression                                        = &BLangErrorConstructorExpr{}
+	_ BLangNode                                              = &BLangErrorConstructorExpr{}
+	_ BLangExpression                                        = &BLangTypeTestExpr{}
+	_ TypeTestExpressionNode                                 = &BLangTypeTestExpr{}
+	_ MappingConstructor                                     = &BLangMappingConstructorExpr{}
+	_ MappingKeyValueFieldNode                               = &BLangMappingKeyValueField{}
+	_ BLangExpression                                        = &BLangMappingConstructorExpr{}
+	_ BLangNode                                              = &BLangMappingConstructorExpr{}
+	_ BLangExpression                                        = &BLangNamedArgsExpression{}
+	_ NamedArgNode                                           = &BLangNamedArgsExpression{}
+	_ TrapNode                                               = &BLangTrapExpr{}
+	_ BLangExpression                                        = &BLangTrapExpr{}
+	_ BLangExpression                                        = &BLangNewExpression{}
 )
 
 var (
@@ -434,14 +550,12 @@ var (
 	_ BLangNode       = &BLangQueryExpr{}
 	_ BLangNode       = &BLangCheckedExpr{}
 	_ BLangNode       = &BLangCheckPanickedExpr{}
-	_ BLangNode       = &BLangCollectContextInvocation{}
 	_ BLangNode       = &BLangCommitExpr{}
 	_ BLangNode       = &BLangSimpleVarRef{}
 	_ BLangNode       = &BLangLocalVarRef{}
 	_ BLangNode       = &BLangConstRef{}
 	_ BLangNode       = &BLangLiteral{}
 	_ BLangNode       = &BLangNumericLiteral{}
-	_ BLangNode       = &BLangDynamicArgExpr{}
 	_ BLangNode       = &BLangElvisExpr{}
 	_ BLangNode       = &BLangWorkerReceive{}
 	_ BLangNode       = &BLangInvocation{}
@@ -459,7 +573,6 @@ var (
 	_ BLangNode       = &BLangTypeConversionExpr{}
 	_ BLangNode       = &BLangMappingConstructorExpr{}
 	_ BLangNode       = &BLangMappingKeyValueField{}
-	_ BLangNode       = &BLangMappingKey{}
 	_ BLangNode       = &BLangTrapExpr{}
 	_ BLangNode       = &BLangNewExpression{}
 )
@@ -469,10 +582,19 @@ var (
 	_ BNodeWithSymbol = &BLangSimpleVarRef{}
 	_ BNodeWithSymbol = &BLangLocalVarRef{}
 	_ BNodeWithSymbol = &BLangConstRef{}
+	_ BNodeWithSymbol = &BLangAnnotAccessExpr{}
 	_ BNodeWithSymbol = &BLangInvocation{}
 )
 
 // Symbol methods for BNodeWithSymbol interface
+
+func (*BLangVariableReferenceBase) isVariableReference() {}
+
+func (*BLangSimpleVarRef) isLExpr()         {}
+func (*bLangAccessExpressionBase) isLExpr() {}
+
+func (*BLangCommitExpr) isAction()    {}
+func (*BLangWorkerReceive) isAction() {}
 
 func (n *BLangVariableReferenceBase) Symbol() model.SymbolRef {
 	return n.symbol
@@ -485,12 +607,20 @@ func (n *BLangVariableReferenceBase) SetSymbol(symbolRef model.SymbolRef) {
 // Symbol returns the resolved SymbolRef for this invocation.
 // Panics if the symbol has not been resolved yet (i.e. is a deferred method symbol).
 // Only call this after type resolution.
-func (b *BLangInvocation) Symbol() model.SymbolRef {
-	return *b.RawSymbol.(*model.SymbolRef)
+func (n *BLangInvocation) Symbol() model.SymbolRef {
+	return *n.RawSymbol.(*model.SymbolRef)
 }
 
-func (b *BLangInvocation) SetSymbol(symbolRef model.SymbolRef) {
-	b.RawSymbol = &symbolRef
+func (n *BLangInvocation) SetSymbol(symbolRef model.SymbolRef) {
+	n.RawSymbol = &symbolRef
+}
+
+func (n *BLangAnnotAccessExpr) Symbol() model.SymbolRef {
+	return n.symbol
+}
+
+func (n *BLangAnnotAccessExpr) SetSymbol(symbolRef model.SymbolRef) {
+	n.symbol = symbolRef
 }
 
 func (n *BLangRemoteMethodCallAction) MethodSymbol() model.SymbolRef {
@@ -501,31 +631,28 @@ func (n *BLangRemoteMethodCallAction) SetMethodSymbol(symbolRef model.SymbolRef)
 	n.RawSymbol = &symbolRef
 }
 
-func (b *BLangGroupExpr) GetKind() model.NodeKind {
-	// migrated from BLangGroupExpr.java:57:5
-	return model.NodeKind_GROUP_EXPR
+func (n *BLangClientResourceAccessAction) MethodSymbol() model.SymbolRef {
+	return *n.RawSymbol.(*model.SymbolRef)
 }
 
-func (b *BLangGroupExpr) GetExpression() model.ExpressionNode {
-	// migrated from BLangGroupExpr.java:62:5
+func (n *BLangClientResourceAccessAction) SetMethodSymbol(symbolRef model.SymbolRef) {
+	n.RawSymbol = &symbolRef
+}
+
+func (b *BLangGroupExpr) GetExpression() BLangExpression {
 	return b.Expression
 }
 
-func (b *BLangTypedescExpr) GetKind() model.NodeKind {
-	// migrated from BLangTypedescExpr.java:52:5
-	return model.NodeKind_TYPEDESC_EXPRESSION
-}
-
-func (b *BLangInferredTypedescDefault) GetKind() model.NodeKind {
-	return model.NodeKind_INFERRED_TYPEDESC_DEFAULT
-}
-
-func (b *BLangTypedescExpr) GetTypeDescriptor() model.TypeDescriptor {
+func (b *BLangTypedescExpr) GetTypeDescriptor() TypeDescriptor {
 	return b.typeDescriptor
 }
 
-func (b *BLangTypedescExpr) SetTypeDescriptor(typeDescriptor model.TypeDescriptor) {
-	b.typeDescriptor = typeDescriptor
+func (b *BLangTypedescExpr) SetTypeDescriptor(typeDescriptor TypeDescriptor) {
+	if typeDescriptor == nil {
+		b.typeDescriptor = nil
+		return
+	}
+	b.typeDescriptor = typeDescriptor.(BType)
 }
 
 func (b *BLangLiteral) GetValueType() BType {
@@ -536,28 +663,11 @@ func (b *BLangLiteral) SetValueType(bt BType) {
 	b.valueType = bt
 }
 
-func (b *BLangAlternateWorkerReceive) GetKind() model.NodeKind {
-	// migrated from BLangAlternateWorkerReceive.java:37:5
-	return model.NodeKind_ALTERNATE_WORKER_RECEIVE
-}
-
-func (b *BLangAnnotAccessExpr) GetKind() model.NodeKind {
-	// migrated from BLangAnnotAccessExpr.java:48:5
-	return model.NodeKind_ANNOT_ACCESS_EXPRESSION
-}
-
-func (b *BLangArrowFunction) GetKind() model.NodeKind {
-	// migrated from BLangArrowFunction.java:67:5
-	return model.NodeKind_ARROW_EXPR
-}
-
-func (b *BLangLambdaFunction) GetFunctionNode() model.FunctionNode {
-	// migrated from BLangLambdaFunction.java:48:5
+func (b *BLangLambdaFunction) GetFunctionNode() FunctionNode {
 	return b.Function
 }
 
-func (b *BLangLambdaFunction) SetFunctionNode(functionNode model.FunctionNode) {
-	// migrated from BLangLambdaFunction.java:53:5
+func (b *BLangLambdaFunction) SetFunctionNode(functionNode FunctionNode) {
 	if fn, ok := functionNode.(*BLangFunction); ok {
 		b.Function = fn
 	} else {
@@ -565,76 +675,46 @@ func (b *BLangLambdaFunction) SetFunctionNode(functionNode model.FunctionNode) {
 	}
 }
 
-func (b *BLangLambdaFunction) GetKind() model.NodeKind {
-	// migrated from BLangLambdaFunction.java:58:5
-	return model.NodeKind_LAMBDA
-}
-
 func (b *BLangAlternateWorkerReceive) ToActionString() string {
-	// migrated from BLangAlternateWorkerReceive.java:70:5
 	panic("Not implemented")
 }
 
-func (b *BLangWorkerReceive) GetWorkerName() model.IdentifierNode {
-	// migrated from BLangWorkerReceive.java:40:5
+func (b *BLangWorkerReceive) GetWorkerName() *BLangIdentifier {
 	return b.WorkerIdentifier
 }
 
-func (b *BLangWorkerReceive) SetWorkerName(identifierNode model.IdentifierNode) {
-	// migrated from BLangWorkerReceive.java:45:5
-	if id, ok := identifierNode.(*BLangIdentifier); ok {
-		b.WorkerIdentifier = id
-	} else {
-		panic("identifierNode is not a BLangIdentifier")
-	}
-}
-
-func (b *BLangWorkerReceive) GetKind() model.NodeKind {
-	// migrated from BLangWorkerReceive.java:50:5
-	return model.NodeKind_WORKER_RECEIVE
+func (b *BLangWorkerReceive) SetWorkerName(identifierNode *BLangIdentifier) {
+	b.WorkerIdentifier = identifierNode
 }
 
 func (b *BLangWorkerReceive) ToActionString() string {
-	// migrated from BLangWorkerReceive.java:70:5
 	if b.WorkerIdentifier != nil {
 		return fmt.Sprintf(" <- %s", b.WorkerIdentifier.Value)
 	}
 	return " <- "
 }
 
-func (b *BLangBinaryExpr) GetLeftExpression() model.ExpressionNode {
-	// migrated from BLangBinaryExpr.java:45:5
+func (b *BLangBinaryExpr) GetLeftExpression() BLangExpression {
 	return b.LhsExpr
 }
 
-func (b *BLangBinaryExpr) GetRightExpression() model.ExpressionNode {
-	// migrated from BLangBinaryExpr.java:50:5
+func (b *BLangBinaryExpr) GetRightExpression() BLangExpression {
 	return b.RhsExpr
 }
 
 func (b *BLangBinaryExpr) GetOperatorKind() model.OperatorKind {
-	// migrated from BLangBinaryExpr.java:55:5
 	return b.OpKind
 }
 
-func (b *BLangBinaryExpr) GetKind() model.NodeKind {
-	// migrated from BLangBinaryExpr.java:60:5
-	return model.NodeKind_BINARY_EXPR
-}
-
-func (b *BLangQueryExpr) GetKind() model.NodeKind {
-	return model.NodeKind_QUERY_EXPR
-}
-
-func (b *BLangQueryExpr) GetQueryClauses() []model.Node {
-	result := make([]model.Node, len(b.QueryClauseList))
+func (b *BLangQueryExpr) GetQueryClauses() []Node {
+	result := make([]Node, len(b.QueryClauseList))
 	for i := range b.QueryClauseList {
 		result[i] = b.QueryClauseList[i]
 	}
 	return result
 }
 
-func (b *BLangQueryExpr) AddQueryClause(queryClause model.Node) {
+func (b *BLangQueryExpr) AddQueryClause(queryClause Node) {
 	if node, ok := queryClause.(BLangNode); ok {
 		b.QueryClauseList = append(b.QueryClauseList, node)
 		return
@@ -642,63 +722,31 @@ func (b *BLangQueryExpr) AddQueryClause(queryClause model.Node) {
 	panic("query clause is not a BLangNode")
 }
 
-func (b *BLangCheckedExpr) GetExpression() model.ExpressionNode {
-	// migrated from BLangCheckedExpr.java:53:5
+func (b *BLangCheckedExpr) GetExpression() BLangActionOrExpression {
 	return b.Expr
 }
 
 func (b *BLangCheckedExpr) GetOperatorKind() model.OperatorKind {
-	// migrated from BLangCheckedExpr.java:58:5
 	return model.OperatorKind_CHECK
 }
 
-func (b *BLangCheckedExpr) GetKind() model.NodeKind {
-	// migrated from BLangCheckedExpr.java:78:5
-	return model.NodeKind_CHECK_EXPR
-}
-
 func (b *BLangCheckPanickedExpr) GetOperatorKind() model.OperatorKind {
-	// migrated from BLangCheckPanickedExpr.java:39:5
 	return model.OperatorKind_CHECK_PANIC
 }
 
-func (b *BLangCheckPanickedExpr) GetKind() model.NodeKind {
-	// migrated from BLangCheckPanickedExpr.java:59:5
-	return model.NodeKind_CHECK_PANIC_EXPR
-}
-
-func (b *BLangCollectContextInvocation) GetKind() model.NodeKind {
-	// migrated from BLangCollectContextInvocation.java:36:5
-	return model.NodeKind_COLLECT_CONTEXT_INVOCATION
-}
-
-func (b *BLangCommitExpr) GetKind() model.NodeKind {
-	// migrated from BLangCommitExpr.java:33:5
-	return model.NodeKind_COMMIT
-}
-
-func (b *BLangSimpleVarRef) GetPackageAlias() model.IdentifierNode {
-	// migrated from BLangSimpleVarRef.java:43:5
+func (b *BLangSimpleVarRef) GetPackageAlias() *BLangIdentifier {
 	return b.PkgAlias
 }
 
-func (b *BLangSimpleVarRef) GetVariableName() model.IdentifierNode {
-	// migrated from BLangSimpleVarRef.java:48:5
+func (b *BLangSimpleVarRef) GetVariableName() *BLangIdentifier {
 	return b.VariableName
 }
 
-func (b *BLangSimpleVarRef) GetKind() model.NodeKind {
-	// migrated from BLangSimpleVarRef.java:78:5
-	return model.NodeKind_SIMPLE_VARIABLE_REF
-}
-
 func (b *BLangConstRef) GetValue() any {
-	// migrated from BLangConstRef.java:38:5
 	return b.Value
 }
 
 func (b *BLangConstRef) SetValue(value any) {
-	// migrated from BLangConstRef.java:43:5
 	b.Value = value
 }
 
@@ -713,27 +761,18 @@ func (b *BLangConstRef) SetIsConstant(isConstant bool) {
 }
 
 func (b *BLangConstRef) GetOriginalValue() string {
-	// migrated from BLangConstRef.java:48:5
 	return b.OriginalValue
 }
 
 func (b *BLangConstRef) SetOriginalValue(originalValue string) {
-	// migrated from BLangConstRef.java:53:5
 	b.OriginalValue = originalValue
 }
 
-func (b *BLangConstRef) GetKind() model.NodeKind {
-	// migrated from BLangConstRef.java:73:5
-	return model.NodeKind_CONSTANT_REF
-}
-
 func (b *BLangConstRef) IsKeyValueField() bool {
-	// migrated from BLangConstRef.java:78:5
 	return false
 }
 
 func (b *BLangLiteral) GetValue() any {
-	// migrated from BLangLiteral.java:48:5
 	return b.Value
 }
 
@@ -746,43 +785,23 @@ func (b *BLangLiteral) SetIsConstant(isConstant bool) {
 }
 
 func (b *BLangLiteral) SetValue(value any) {
-	// migrated from BLangLiteral.java:68:5
 	b.Value = value
 }
 
 func (b *BLangLiteral) GetOriginalValue() string {
-	// migrated from BLangLiteral.java:73:5
 	return b.OriginalValue
 }
 
 func (b *BLangLiteral) SetOriginalValue(originalValue string) {
-	// migrated from BLangLiteral.java:78:5
 	b.OriginalValue = originalValue
 }
 
-func (b *BLangLiteral) GetKind() model.NodeKind {
-	// migrated from BLangLiteral.java:83:5
-	return model.NodeKind_LITERAL
-}
-
-func (b *BLangDynamicArgExpr) GetKind() model.NodeKind {
-	// migrated from BLangDynamicArgExpr.java:55:5
-	return model.NodeKind_DYNAMIC_PARAM_EXPR
-}
-
-func (b *BLangElvisExpr) GetLeftExpression() model.ExpressionNode {
-	// migrated from BLangElvisExpr.java:38:5
+func (b *BLangElvisExpr) GetLeftExpression() BLangExpression {
 	return b.LhsExpr
 }
 
-func (b *BLangElvisExpr) GetRightExpression() model.ExpressionNode {
-	// migrated from BLangElvisExpr.java:43:5
+func (b *BLangElvisExpr) GetRightExpression() BLangExpression {
 	return b.RhsExpr
-}
-
-func (b *BLangElvisExpr) GetKind() model.NodeKind {
-	// migrated from BLangElvisExpr.java:48:5
-	return model.NodeKind_ELVIS_EXPR
 }
 
 func (b *BLangMarkdownDocumentationLine) GetText() string {
@@ -793,20 +812,12 @@ func (b *BLangMarkdownDocumentationLine) SetText(text string) {
 	b.Text = text
 }
 
-func (b *BLangMarkdownDocumentationLine) GetKind() model.NodeKind {
-	return model.NodeKind_DOCUMENTATION_DESCRIPTION
-}
-
-func (b *BLangMarkdownParameterDocumentation) GetParameterName() model.IdentifierNode {
+func (b *BLangMarkdownParameterDocumentation) GetParameterName() *BLangIdentifier {
 	return b.ParameterName
 }
 
-func (b *BLangMarkdownParameterDocumentation) SetParameterName(parameterName model.IdentifierNode) {
-	if identifier, ok := parameterName.(*BLangIdentifier); ok {
-		b.ParameterName = identifier
-	} else {
-		panic("parameterName is not a BLangIdentifier")
-	}
+func (b *BLangMarkdownParameterDocumentation) SetParameterName(parameterName *BLangIdentifier) {
+	b.ParameterName = parameterName
 }
 
 func (b *BLangMarkdownParameterDocumentation) GetParameterDocumentationLines() []string {
@@ -821,10 +832,6 @@ func (b *BLangMarkdownParameterDocumentation) GetParameterDocumentation() string
 	return strings.ReplaceAll(strings.Join(b.ParameterDocumentationLines, "\n"), "\r", "")
 }
 
-func (b *BLangMarkdownParameterDocumentation) GetKind() model.NodeKind {
-	return model.NodeKind_DOCUMENTATION_PARAMETER
-}
-
 func (b *BLangMarkdownReturnParameterDocumentation) GetReturnParameterDocumentationLines() []string {
 	return b.ReturnParameterDocumentationLines
 }
@@ -837,20 +844,12 @@ func (b *BLangMarkdownReturnParameterDocumentation) GetReturnParameterDocumentat
 	return strings.ReplaceAll(strings.Join(b.ReturnParameterDocumentationLines, "\n"), "\r", "")
 }
 
-func (b *BLangMarkdownReturnParameterDocumentation) GetReturnType() model.ValueType {
+func (b *BLangMarkdownReturnParameterDocumentation) GetReturnType() *BLangValueType {
 	return b.ReturnType
 }
 
-func (b *BLangMarkdownReturnParameterDocumentation) SetReturnType(ty model.ValueType) {
-	if bt, ok := ty.(BType); ok {
-		b.ReturnType = bt
-	} else {
-		panic("ty is not a *BType")
-	}
-}
-
-func (b *BLangMarkdownReturnParameterDocumentation) GetKind() model.NodeKind {
-	return model.NodeKind_DOCUMENTATION_PARAMETER
+func (b *BLangMarkdownReturnParameterDocumentation) SetReturnType(ty *BLangValueType) {
+	b.ReturnType = ty
 }
 
 func (b *BLangMarkDownDeprecationDocumentation) AddDeprecationDocumentationLine(text string) {
@@ -865,11 +864,7 @@ func (b *BLangMarkDownDeprecationDocumentation) GetDocumentation() string {
 	return strings.ReplaceAll(strings.Join(b.DeprecationDocumentationLines, "\n"), "\r", "")
 }
 
-func (b *BLangMarkDownDeprecationDocumentation) GetKind() model.NodeKind {
-	return model.NodeKind_DOCUMENTATION_DEPRECATION
-}
-
-func (b *BLangMarkDownDeprecatedParametersDocumentation) AddParameter(parameter model.MarkdownDocumentationParameterAttributeNode) {
+func (b *BLangMarkDownDeprecatedParametersDocumentation) AddParameter(parameter MarkdownDocumentationParameterAttributeNode) {
 	if param, ok := parameter.(*BLangMarkdownParameterDocumentation); ok {
 		b.Parameters = append(b.Parameters, *param)
 	} else {
@@ -877,68 +872,48 @@ func (b *BLangMarkDownDeprecatedParametersDocumentation) AddParameter(parameter 
 	}
 }
 
-func (b *BLangMarkDownDeprecatedParametersDocumentation) GetParameters() []model.MarkdownDocumentationParameterAttributeNode {
-	result := make([]model.MarkdownDocumentationParameterAttributeNode, len(b.Parameters))
+func (b *BLangMarkDownDeprecatedParametersDocumentation) GetParameters() []MarkdownDocumentationParameterAttributeNode {
+	result := make([]MarkdownDocumentationParameterAttributeNode, len(b.Parameters))
 	for i := range b.Parameters {
 		result[i] = &b.Parameters[i]
 	}
 	return result
 }
 
-func (b *BLangMarkDownDeprecatedParametersDocumentation) GetKind() model.NodeKind {
-	return model.NodeKind_DOCUMENTATION_DEPRECATED_PARAMETERS
-}
-
-func (b *BLangWorkerSendExprBase) GetExpr() model.ExpressionNode {
+func (b *BLangWorkerSendExprBase) GetExpr() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangWorkerSendExprBase) GetWorkerName() model.IdentifierNode {
+func (b *BLangWorkerSendExprBase) GetWorkerName() *BLangIdentifier {
 	return b.WorkerIdentifier
 }
 
-func (b *BLangWorkerSendExprBase) SetWorkerName(identifierNode model.IdentifierNode) {
-	if id, ok := identifierNode.(*BLangIdentifier); ok {
-		b.WorkerIdentifier = id
-	} else {
-		panic("identifierNode is not a BLangIdentifier")
-	}
+func (b *BLangWorkerSendExprBase) SetWorkerName(identifierNode *BLangIdentifier) {
+	b.WorkerIdentifier = identifierNode
 }
 
-func (b *BLangInvocation) GetPackageAlias() model.IdentifierNode {
-	return b.PkgAlias
+func (b *bLangInvocationBase) SetRawSymbol(symbol model.Symbol) {
+	b.RawSymbol = symbol
 }
 
-func (n *bLangInvocationBase) SetRawSymbol(symbol model.Symbol) {
-	n.RawSymbol = symbol
+func (b *bLangInvocationBase) GetName() IdentifierNode {
+	return b.Name
 }
 
-func (n *bLangInvocationBase) GetName() model.IdentifierNode {
-	return n.Name
-}
-
-func (n *bLangInvocationBase) GetArgumentExpressions() []model.ExpressionNode {
-	result := make([]model.ExpressionNode, len(n.ArgExprs))
-	for i := range n.ArgExprs {
-		result[i] = n.ArgExprs[i]
-	}
+func (b *bLangInvocationBase) GetArgumentExpressions() []BLangExpression {
+	result := make([]BLangExpression, len(b.ArgExprs))
+	copy(result, b.ArgExprs)
 	return result
 }
 
-func (n *bLangInvocationBase) GetRequiredArgs() []model.ExpressionNode {
-	result := make([]model.ExpressionNode, len(n.RequiredArgs))
-	for i := range n.RequiredArgs {
-		result[i] = n.RequiredArgs[i]
-	}
+func (b *bLangInvocationBase) GetRequiredArgs() []BLangExpression {
+	result := make([]BLangExpression, len(b.RequiredArgs))
+	copy(result, b.RequiredArgs)
 	return result
 }
 
-func (n *bLangInvocationBase) GetExpression() model.ExpressionNode {
-	return n.Expr
-}
-
-func (n *bLangInvocationBase) GetKind() model.NodeKind {
-	return model.NodeKind_INVOCATION
+func (b *bLangInvocationBase) GetExpression() BLangExpression {
+	return b.Expr
 }
 
 func (n *bLangInvocationBase) ResolvedSymbol() model.SymbolRef {
@@ -950,47 +925,46 @@ func (n *bLangInvocationBase) SetReceiver(expr BLangExpression)      { n.Expr = 
 func (n *bLangInvocationBase) CallArgs() []BLangExpression           { return n.ArgExprs }
 func (n *bLangInvocationBase) SetCallArgs(args []BLangExpression)    { n.ArgExprs = args }
 
-func (b *BLangTypeConversionExpr) GetKind() model.NodeKind {
-	return model.NodeKind_TYPE_CONVERSION_EXPR
+func (b *BLangInvocation) GetPackageAlias() IdentifierNode {
+	return b.PkgAlias
 }
 
-func (b *BLangTypeConversionExpr) GetExpression() model.ExpressionNode {
+func (b *BLangTypeConversionExpr) GetExpression() BLangExpression {
 	return b.Expression
 }
 
-func (b *BLangTypeConversionExpr) SetExpression(expression model.ExpressionNode) {
-	if expr, ok := expression.(BLangExpression); ok {
-		b.Expression = expr
-	} else {
-		panic("expression is not a BLangExpression")
-	}
+func (b *BLangTypeConversionExpr) SetExpression(expression BLangExpression) {
+	b.Expression = expression
 }
 
-func (b *BLangTypeConversionExpr) GetTypeDescriptor() model.TypeDescriptor {
+func (b *BLangTypeConversionExpr) GetTypeDescriptor() TypeDescriptor {
+	if b.TypeDescriptor == nil {
+		return nil
+	}
 	return b.TypeDescriptor
 }
 
-func (b *BLangTypeConversionExpr) SetTypeDescriptor(typeDescriptor model.TypeDescriptor) {
-	b.TypeDescriptor = typeDescriptor
+func (b *BLangTypeConversionExpr) SetTypeDescriptor(typeDescriptor TypeDescriptor) {
+	if typeDescriptor == nil {
+		b.TypeDescriptor = nil
+		return
+	}
+	b.TypeDescriptor = typeDescriptor.(BType)
 }
 
 func (b *BLangTypeConversionExpr) IsPublic() bool {
 	return false
 }
 
-func (b *BLangTypeConversionExpr) GetAnnotationAttachments() []model.AnnotationAttachmentNode {
+func (b *BLangTypeConversionExpr) GetAnnotationAttachments() []AnnotationAttachmentNode {
 	panic("not implemented")
 }
 
-func (b *BLangTypeConversionExpr) AddAnnotationAttachment(annAttachment model.AnnotationAttachmentNode) {
+func (b *BLangTypeConversionExpr) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
 	panic("not implemented")
 }
 
-func (b *BLangNumericLiteral) GetKind() model.NodeKind {
-	return model.NodeKind_NUMERIC_LITERAL
-}
-
-func (b *BLangUnaryExpr) GetExpression() model.ExpressionNode {
+func (b *BLangUnaryExpr) GetExpression() BLangExpression {
 	return b.Expr
 }
 
@@ -998,102 +972,82 @@ func (b *BLangUnaryExpr) GetOperatorKind() model.OperatorKind {
 	return b.Operator
 }
 
-func (b *BLangUnaryExpr) GetKind() model.NodeKind {
-	return model.NodeKind_UNARY_EXPR
-}
-
-func (b *BLangIndexBasedAccess) GetKind() model.NodeKind {
-	return model.NodeKind_INDEX_BASED_ACCESS_EXPR
-}
-
-func (b *BLangIndexBasedAccess) GetExpression() model.ExpressionNode {
+func (b *BLangIndexBasedAccess) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangIndexBasedAccess) GetIndex() model.ExpressionNode {
+func (b *BLangIndexBasedAccess) GetIndex() BLangExpression {
 	return b.IndexExpr
 }
 
-func (b *BLangFieldBaseAccess) GetKind() model.NodeKind {
-	return model.NodeKind_FIELD_BASED_ACCESS_EXPR
-}
-
-func (b *BLangFieldBaseAccess) GetExpression() model.ExpressionNode {
+func (b *BLangFieldBaseAccess) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangFieldBaseAccess) GetFieldName() model.IdentifierNode {
+func (b *BLangFieldBaseAccess) GetFieldName() *BLangIdentifier {
 	return &b.Field
 }
 
-func (b *BLangFieldBaseAccess) IsOptionalFieldAccess() bool {
-	return b.OptionalFieldAccess
-}
-
-func (b *BLangListConstructorExpr) GetKind() model.NodeKind {
-	return model.NodeKind_LIST_CONSTRUCTOR_EXPR
-}
-
-func (b *BLangListConstructorExpr) GetExpressions() []model.ExpressionNode {
-	result := make([]model.ExpressionNode, len(b.Exprs))
-	for i := range b.Exprs {
-		result[i] = b.Exprs[i]
-	}
+func (b *BLangListConstructorExpr) GetExpressions() []BLangExpression {
+	result := make([]BLangExpression, len(b.Exprs))
+	copy(result, b.Exprs)
 	return result
 }
 
-func (b *BLangErrorConstructorExpr) GetKind() model.NodeKind {
-	return model.NodeKind_ERROR_CONSTRUCTOR_EXPRESSION
+func (b *BLangListConstructorExpr) SetSpreadMember(index int) {
+	if len(b.SpreadMembers) != len(b.Exprs) {
+		b.SpreadMembers = make([]bool, len(b.Exprs))
+	}
+	b.SpreadMembers[index] = true
 }
 
-func (b *BLangErrorConstructorExpr) GetPositionalArgs() []model.ExpressionNode {
-	result := make([]model.ExpressionNode, len(b.PositionalArgs))
-	for i, arg := range b.PositionalArgs {
-		result[i] = arg
+func (b *BLangListConstructorExpr) IsSpreadMember(index int) bool {
+	return index >= 0 && index < len(b.SpreadMembers) && b.SpreadMembers[index]
+}
+
+func (b *BLangListConstructorExpr) HasSpreadMembers() bool {
+	for _, isSpread := range b.SpreadMembers {
+		if isSpread {
+			return true
+		}
 	}
+	return false
+}
+
+func (b *BLangErrorConstructorExpr) GetPositionalArgs() []BLangExpression {
+	result := make([]BLangExpression, len(b.PositionalArgs))
+	copy(result, b.PositionalArgs)
 	return result
 }
 
-func (b *BLangErrorConstructorExpr) GetNamedArgs() []model.NamedArgNode {
-	result := make([]model.NamedArgNode, len(b.NamedArgs))
-	for i, arg := range b.NamedArgs {
-		result[i] = arg
+func (b *BLangErrorConstructorExpr) GetNamedArgs() []NamedArgNode {
+	result := make([]NamedArgNode, len(b.NamedArgs))
+	for i := range b.NamedArgs {
+		result[i] = &b.NamedArgs[i]
 	}
 	return result
-}
-
-func (b *BLangTypeTestExpr) GetKind() model.NodeKind {
-	return model.NodeKind_TYPE_TEST_EXPR
 }
 
 func (b *BLangTypeTestExpr) IsNegation() bool {
 	return b.isNegation
 }
 
-func (b *BLangTypeTestExpr) GetExpression() model.ExpressionNode {
+func (b *BLangTypeTestExpr) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangTypeTestExpr) GetType() model.TypeData {
+func (b *BLangTypeTestExpr) GetType() TypeData {
 	return b.Type
 }
 
-func (b *BLangMappingKey) GetKind() model.NodeKind {
-	panic("BLangMappingKey has no NodeKind")
-}
-
-func (b *BLangMappingKeyValueField) GetKind() model.NodeKind {
-	return model.NodeKind_RECORD_LITERAL_KEY_VALUE
-}
-
-func (b *BLangMappingKeyValueField) GetKey() model.ExpressionNode {
+func (b *BLangMappingKeyValueField) GetKey() BLangExpression {
 	if b.Key == nil {
 		return nil
 	}
 	return b.Key.Expr
 }
 
-func (b *BLangMappingKeyValueField) GetValue() model.ExpressionNode {
+func (b *BLangMappingKeyValueField) GetValue() BLangExpression {
 	return b.ValueExpr
 }
 
@@ -1101,52 +1055,39 @@ func (b *BLangMappingKeyValueField) IsKeyValueField() bool {
 	return true
 }
 
-func (b *BLangMappingConstructorExpr) GetKind() model.NodeKind {
-	return model.NodeKind_RECORD_LITERAL_EXPR
-}
-
-func (b *BLangMappingConstructorExpr) GetFields() []model.MappingField {
+func (b *BLangMappingConstructorExpr) GetFields() []MappingField {
 	return b.Fields
 }
 
-func (b *BLangNamedArgsExpression) GetKind() model.NodeKind {
-	return model.NodeKind_NAMED_ARGS_EXPR
+func (b *BLangNamedArgsExpression) SetName(name *BLangIdentifier) {
+	b.Name = *name
 }
 
-func (b *BLangNamedArgsExpression) SetName(name model.IdentifierNode) {
-	if id, ok := name.(*BLangIdentifier); ok {
-		b.Name = *id
-	} else {
-		panic("name is not a BLangIdentifier")
-	}
-}
-
-func (b *BLangNamedArgsExpression) GetName() model.IdentifierNode {
+func (b *BLangNamedArgsExpression) GetName() *BLangIdentifier {
 	return &b.Name
 }
 
-func (b *BLangNamedArgsExpression) GetExpression() model.ExpressionNode {
+func (b *BLangNamedArgsExpression) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangNamedArgsExpression) SetExpression(expr model.ExpressionNode) {
-	if e, ok := expr.(BLangExpression); ok {
-		b.Expr = e
-	} else {
-		panic("expr is not a BLangExpression")
-	}
+func (b *BLangNamedArgsExpression) SetExpression(expr BLangExpression) {
+	b.Expr = expr
 }
 
-func (b *BLangTrapExpr) GetKind() model.NodeKind {
-	return model.NodeKind_TRAP_EXPR
-}
-
-func (b *BLangTrapExpr) GetExpression() model.ExpressionNode {
+func (b *BLangTrapExpr) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangNewExpression) GetKind() model.NodeKind {
-	return model.NodeKind_TYPE_INIT_EXPR
+// IsStreamOperation use to distinguish stream operations from method calls.
+func IsStreamOperation(inv interface{ Receiver() BLangExpression }) bool {
+	recv := inv.Receiver()
+	return recv != nil && semtypes.IsSubtypeSimple(recv.GetDeterminedType(), semtypes.STREAM)
+}
+
+// IsStreamNewExpression returns true when the new expression constructs a stream value.
+func IsStreamNewExpression(expr *BLangNewExpression) bool {
+	return semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.STREAM)
 }
 
 func createBLangUnaryExpr(location diagnostics.Location, operator model.OperatorKind, expr BLangExpression) *BLangUnaryExpr {
@@ -1156,3 +1097,22 @@ func createBLangUnaryExpr(location diagnostics.Location, operator model.Operator
 	exprNode.Operator = operator
 	return exprNode
 }
+
+var (
+	_ BLangExpression = &BLangXMLSequenceLiteral{}
+	_ BLangExpression = &BLangTemplateExpr{}
+	_ BLangExpression = &BLangXMLTemplateExpr{}
+	_ BLangExpression = &BLangXMLElementLiteral{}
+	_ BLangExpression = &BLangXMLAttribute{}
+	_ BLangExpression = &BLangXMLPILiteral{}
+	_ BLangExpression = &BLangXMLCommentLiteral{}
+	_ BLangExpression = &BLangXMLTextLiteral{}
+	_ BLangNode       = &BLangXMLSequenceLiteral{}
+	_ BLangNode       = &BLangTemplateExpr{}
+	_ BLangNode       = &BLangXMLTemplateExpr{}
+	_ BLangNode       = &BLangXMLElementLiteral{}
+	_ BLangNode       = &BLangXMLAttribute{}
+	_ BLangNode       = &BLangXMLPILiteral{}
+	_ BLangNode       = &BLangXMLCommentLiteral{}
+	_ BLangNode       = &BLangXMLTextLiteral{}
+)

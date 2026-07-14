@@ -1,0 +1,54 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 8
+    x = %1;
+    %3 = ConstantLoad 0.1
+    y = %3;
+    %5 = x is boolean
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = (1, y) is int
+    %0 ? bb3 : bb6;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = (2, x) is float
+    %0 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 1
+    _ = (3, x);
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = (2, x);
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

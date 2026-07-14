@@ -1,0 +1,41 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina os (as os))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >
+            (invocation length expr:
+              (invocation os getUsername ()) ())
+            (literal 0)))))
+      (expression-stmt
+        (checked-expr
+          (invocation os setEnv (
+            (literal BAL_TEST_LISTENV)
+            (literal present)))))
+      (var-def
+        (variable envs (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation os listEnv ()))))
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref envs)
+            (literal BAL_TEST_LISTENV)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))
+      (expression-stmt
+        (checked-expr
+          (invocation os unsetEnv (
+            (literal BAL_TEST_LISTENV))))))))

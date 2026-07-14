@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: arithmetic overflow
+        at main(fromfloat5-p.bal:21)

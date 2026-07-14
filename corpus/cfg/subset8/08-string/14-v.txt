@@ -1,0 +1,8 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (list-constructor-expr
+          (literal x"y\z)))))
+  )
+)

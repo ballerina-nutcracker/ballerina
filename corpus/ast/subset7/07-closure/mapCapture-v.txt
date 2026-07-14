@@ -21,7 +21,7 @@
           (user-defined-type R)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref val)
+              (literal val)
               (literal 5))))))
       (var-def
         (variable f1 (type

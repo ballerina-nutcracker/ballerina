@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (invocation origin ())
+          (literal z)))))
+  )
+)
+(origin
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Point)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 0))
+          (key-value
+            (literal y)
+            (literal 0))))))
+    (return
+      (simple-var-ref p))
+  )
+)

@@ -1,0 +1,6 @@
+-- stdout --
+[{"name":"James","age":100,"children":["Jack","Jane"],"married":true}]
+array
+map
+100
+-- stderr --

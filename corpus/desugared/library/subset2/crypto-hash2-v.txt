@@ -1,0 +1,107 @@
+(package
+  (import-package ballerina crypto (as crypto))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable input (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 104)
+            (literal 101)
+            (literal 108)
+            (literal 108)
+            (literal 111)))))
+      (var-def
+        (variable salt (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 115)
+            (literal 97)
+            (literal 108)
+            (literal 116)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref input))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashMd5 (
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1))))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (simple-var-ref input))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$4 (
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashSha1 (
+              (simple-var-ref $desugar$2)
+              (simple-var-ref $desugar$3))))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (simple-var-ref input))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$6 (
+            (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashSha384 (
+              (simple-var-ref $desugar$4)
+              (simple-var-ref $desugar$5))))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref input))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashSha512 (
+              (simple-var-ref $desugar$6)
+              (simple-var-ref $desugar$7))))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (simple-var-ref input))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation $default$8 (
+            (simple-var-ref $desugar$8))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashKeccak256 (
+              (simple-var-ref $desugar$8)
+              (simple-var-ref $desugar$9))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashMd5 (
+              (simple-var-ref input)
+              (simple-var-ref salt))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation crypto hashSha256 (
+              (simple-var-ref input)
+              (simple-var-ref salt))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation crypto crc32b (
+            (simple-var-ref input)))))))))

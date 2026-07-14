@@ -1,0 +1,179 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (literal 3.0)
+            (literal 2.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (unary-expr -
+              (literal 1.0))
+            (literal 2.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (literal 0.0)
+            (unary-expr -
+              (literal 0.0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (literal 0.0)
+            (literal 0.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (binary-expr /
+              (literal 0.0)
+              (literal 0.0))
+            (literal 1.0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (binary-expr /
+              (literal 0.0)
+              (literal 0.0))
+            (binary-expr /
+              (literal 0.0)
+              (literal 0.0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (binary-expr /
+              (literal 1.0)
+              (literal 0.0))
+            (literal 20f))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (binary-expr /
+              (unary-expr -
+                (literal 1.0))
+              (literal 0.0))
+            (binary-expr /
+              (literal 1.0)
+              (literal 0.0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation floatMul (
+            (binary-expr /
+              (unary-expr -
+                (literal 1.0))
+              (literal 0.0))
+            (literal 0f))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (literal 3.0)
+            (literal 2.0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (unary-expr -
+              (literal 1.0))
+            (literal 2.0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (literal 0.0)
+            (unary-expr -
+              (literal 0.0))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (group-expr
+              (binary-expr /
+                (literal 0.0)
+                (literal 0.0)))
+            (literal 1.0)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (group-expr
+              (binary-expr /
+                (literal 0.0)
+                (literal 0.0)))
+            (group-expr
+              (binary-expr /
+                (literal 0.0)
+                (literal 0.0)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (group-expr
+              (binary-expr /
+                (literal 1.0)
+                (literal 0.0)))
+            (literal 20f)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (group-expr
+              (binary-expr /
+                (unary-expr -
+                  (literal 1.0))
+                (literal 0.0)))
+            (group-expr
+              (binary-expr /
+                (literal 1.0)
+                (literal 0.0)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (group-expr
+              (binary-expr /
+                (unary-expr -
+                  (literal 1.0))
+                (literal 0.0)))
+            (literal 0f)))))
+      (var-def
+        (variable f1 (type
+          (value-type float)) (expr
+          (literal 2.0))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (literal 84.0)
+            (simple-var-ref f1)))))
+      (var-def
+        (variable f2 (type
+          (value-type float)) (expr
+          (literal 0.04714757190004715))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref f1)
+            (simple-var-ref f2)))))
+      (assignment
+        (simple-var-ref f2)
+        (binary-expr /
+          (unary-expr -
+            (literal 1.0))
+          (literal 0.0)))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref f2)
+            (literal 2f)))))))
+  (function floatMul (
+    (variable f1 (type
+      (value-type float)))
+    (variable f2 (type
+      (value-type float)))) (
+    (value-type float))
+    (block-function-body
+      (return
+        (binary-expr /
+          (simple-var-ref f1)
+          (simple-var-ref f2))))))

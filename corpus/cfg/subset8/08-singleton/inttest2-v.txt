@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (user-defined-type Sign)) (expr
+        (literal 1))))
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (simple-var-ref s))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type Sign)))))
+    (assignment
+      (simple-var-ref v)
+      (literal 0))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type Sign)))))
+    (assignment
+      (simple-var-ref v)
+      (unary-expr -
+        (literal 1)))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type Sign)))))
+  )
+)

@@ -1,0 +1,192 @@
+(ignore
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref b))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable mul (type
+        (value-type int)) (expr
+        (binary-expr *
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref mul))
+    (var-def
+      (variable div (type
+        (value-type int)) (expr
+        (binary-expr /
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref div))
+    (var-def
+      (variable rmd (type
+        (value-type int)) (expr
+        (binary-expr %
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref rmd))
+    (var-def
+      (variable add (type
+        (value-type int)) (expr
+        (binary-expr +
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref add))
+    (var-def
+      (variable sub (type
+        (value-type int)) (expr
+        (binary-expr -
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref sub))
+    (var-def
+      (variable lt (type
+        (value-type boolean)) (expr
+        (binary-expr <
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref lt))
+    (var-def
+      (variable lteq (type
+        (value-type boolean)) (expr
+        (binary-expr <=
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref lteq))
+    (var-def
+      (variable gt (type
+        (value-type boolean)) (expr
+        (binary-expr >
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref gt))
+    (var-def
+      (variable gteq (type
+        (value-type boolean)) (expr
+        (binary-expr >=
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref gteq))
+    (var-def
+      (variable eq (type
+        (value-type boolean)) (expr
+        (binary-expr ==
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref eq))
+    (var-def
+      (variable neq (type
+        (value-type boolean)) (expr
+        (binary-expr !=
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref neq))
+    (var-def
+      (variable eeq (type
+        (value-type boolean)) (expr
+        (binary-expr ===
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref eeq))
+    (var-def
+      (variable neeq (type
+        (value-type boolean)) (expr
+        (binary-expr !==
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref neeq))
+    (var-def
+      (variable and (type
+        (value-type int)) (expr
+        (binary-expr &
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref and))
+    (var-def
+      (variable xor (type
+        (value-type int)) (expr
+        (binary-expr ^
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref xor))
+    (var-def
+      (variable or (type
+        (value-type int)) (expr
+        (binary-expr |
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref or))
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (invocation one ())
+          (invocation two ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref arr))
+    (expression-stmt
+      (invocation ignore (
+        (invocation one ())
+        (invocation two ()))))
+  )
+)
+(one
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal 1))))
+    (return
+      (literal 1))
+  )
+)
+(two
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal 2))))
+    (return
+      (literal 2))
+  )
+)

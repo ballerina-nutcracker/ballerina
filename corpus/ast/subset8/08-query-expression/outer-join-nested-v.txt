@@ -68,17 +68,17 @@
           (list-constructor-expr
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref id)
+                (literal id)
                 (literal 1))
               (key-value
-                (simple-var-ref name)
+                (literal name)
                 (literal Alex)))
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref id)
+                (literal id)
                 (literal 2))
               (key-value
-                (simple-var-ref name)
+                (literal name)
                 (literal Ranjan)))))))
       (var-def
         (variable departments (type
@@ -87,24 +87,24 @@
           (list-constructor-expr
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref ownerId)
+                (literal ownerId)
                 (literal 1))
               (key-value
-                (simple-var-ref locationId)
+                (literal locationId)
                 (literal 10)))
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref ownerId)
+                (literal ownerId)
                 (literal 1))
               (key-value
-                (simple-var-ref locationId)
+                (literal locationId)
                 (literal 30)))
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref ownerId)
+                (literal ownerId)
                 (literal 2))
               (key-value
-                (simple-var-ref locationId)
+                (literal locationId)
                 (literal 20)))))))
       (var-def
         (variable locations (type
@@ -113,17 +113,17 @@
           (list-constructor-expr
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref id)
+                (literal id)
                 (literal 10))
               (key-value
-                (simple-var-ref name)
+                (literal name)
                 (literal HQ)))
             (mapping-constructor-expr
               (key-value
-                (simple-var-ref id)
+                (literal id)
                 (literal 20))
               (key-value
-                (simple-var-ref name)
+                (literal name)
                 (literal Remote)))))))
       (var-def
         (variable result (type

@@ -11,19 +11,19 @@
             (value-type any))) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref list)
+              (literal list)
               (list-constructor-expr
                 (literal 1)
                 (literal 2)
                 (literal 3)))
             (key-value
-              (simple-var-ref mapping)
+              (literal mapping)
               (mapping-constructor-expr
                 (key-value
-                  (simple-var-ref x)
+                  (literal x)
                   (literal 1))
                 (key-value
-                  (simple-var-ref y)
+                  (literal y)
                   (literal 2))))))))
       (expression-stmt
         (invocation io println (

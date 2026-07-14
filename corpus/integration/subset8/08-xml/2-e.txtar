@@ -1,0 +1,79 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid xml name
+  --> 2-e.bal:19:45
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |                                             ^
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> 2-e.bal:19:46
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> 2-e.bal:19:46
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> 2-e.bal:19:46
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing gt token
+  --> 2-e.bal:18:25
+   |
+18 |     xml e2 = xml `<test>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing gt token
+  --> 2-e.bal:19:47
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> 2-e.bal:18:25
+   |
+18 |     xml e2 = xml `<test>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> 2-e.bal:19:47
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing lt token
+  --> 2-e.bal:18:25
+   |
+18 |     xml e2 = xml `<test>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing lt token
+  --> 2-e.bal:19:47
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing slash token
+  --> 2-e.bal:18:25
+   |
+18 |     xml e2 = xml `<test>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing slash token
+  --> 2-e.bal:19:47
+   |
+19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing xml pi end token
+  --> 2-e.bal:20:48
+   |
+20 |     xml:ProcessingInstruction pe2 = xml `<?pe >`; // @error
+   |

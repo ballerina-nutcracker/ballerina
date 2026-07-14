@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref E))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref F))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref G))))
+  )
+)

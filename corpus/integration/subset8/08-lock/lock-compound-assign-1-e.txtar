@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: assignment in a lock statement to a target defined outside the lock must use a plain variable name on the left-hand side
+  --> lock-compound-assign-1-e.bal:21:9
+   |
+21 |         arr[0] += counter; // @error LHS is index access on an outside-lock array
+   |         ^^^^^^^^^^^^^^^^^^

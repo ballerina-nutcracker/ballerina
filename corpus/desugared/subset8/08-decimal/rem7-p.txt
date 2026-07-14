@@ -1,0 +1,18 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d1 (type
+          (value-type decimal)) (expr
+          (literal 9.0E+32))))
+      (var-def
+        (variable d2 (type
+          (value-type decimal)) (expr
+          (literal 0.01))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2))))))))

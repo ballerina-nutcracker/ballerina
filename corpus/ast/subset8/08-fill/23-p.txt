@@ -1,0 +1,32 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition R
+    (record-type
+      (field a
+        (value-type int))))
+  (type-definition T
+    (tuple-type
+      (value-type int)
+      (user-defined-type R)
+      (value-type float)
+      (value-type string)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (user-defined-type T) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref a)
+          (literal 1))
+        (list-constructor-expr
+          (literal 1)
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1)))
+          (literal 3.1)
+          (literal test))))))

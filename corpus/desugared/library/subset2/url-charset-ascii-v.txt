@@ -1,0 +1,170 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina url (as url))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation url encode (
+            (literal hello world)
+            (literal US-ASCII))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation url decode (
+            (literal hello%20world)
+            (literal US-ASCII))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation url encode (
+            (literal a=b)
+            (literal ASCII))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable enc (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (invocation url encode (
+            (literal café)
+            (literal US-ASCII))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref enc)
+            (error-type)))))
+      (var-def
+        (variable dec (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (invocation url decode (
+            (literal %FF)
+            (literal US-ASCII))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref dec)
+            (error-type)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation url encode (
+            (literal a b)
+            (literal UTF8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$3))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation url encode (
+            (literal café)
+            (literal LATIN-1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable original (type
+          (value-type string)) (expr
+          (literal Hi))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation url encode (
+            (simple-var-ref original)
+            (literal UTF-16))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (var-def
+        (variable utf16 (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$5))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation url decode (
+            (simple-var-ref utf16)
+            (literal UTF-16))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref $desugar$6)
+            (simple-var-ref original)))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation url encode (
+            (simple-var-ref original)
+            (literal UTF-16LE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable utf16le (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$7))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation url decode (
+            (simple-var-ref utf16le)
+            (literal UTF-16LE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref $desugar$8)
+            (simple-var-ref original))))))))

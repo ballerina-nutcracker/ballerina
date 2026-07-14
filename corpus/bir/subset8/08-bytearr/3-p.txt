@@ -1,0 +1,37 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int:Unsigned8...][%1]{}
+    b1 = %2;
+    %4 = f(b1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+f([nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]) -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = asAny(%3) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad 100
+    a[%5] = %4;
+    %6 = ConstantLoad 256
+    %7 = %6;
+    %8 = asAny(%7) -> bb2;
+  }
+  bb2 {
+    %9 = ConstantLoad 1
+    a[%9] = %8;
+    return;
+  }
+}
+asAny(any) -> any{
+  bb0 {
+    %0 = a;
+    return;
+  }
+}

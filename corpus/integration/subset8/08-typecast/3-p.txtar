@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: bad type cast: cannot cast true to int
+        at main(3-p.bal:21)

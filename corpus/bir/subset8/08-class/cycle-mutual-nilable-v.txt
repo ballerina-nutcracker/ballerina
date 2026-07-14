@@ -1,10 +1,9 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 class A {
   va int
-  b nil|object { nil|object { nil|... b; function init(int, nil|...) returns nil; int va } a; function init(int, nil|object { nil|... b; function init(int, nil|...) returns nil; int va }) returns nil; int vb }
+  b nil|object { private nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va } a; public function init(int, nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va }) returns nil; private int vb }
 
-  init(int,nil|object { nil|object { nil|... b; function init(int, nil|...) returns nil; int va } a; function init(int, nil|object { nil|... b; function init(int, nil|...) returns nil; int va }) returns nil; int vb }) -> nil{
+  init(int,nil|object { private nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va } a; public function init(int, nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va }) returns nil; private int vb }) -> nil{
     bb0 {
       %4 = ConstantLoad va
       self[%4] = va;
@@ -16,9 +15,9 @@ class A {
 }
 class B {
   vb int
-  a nil|object { nil|object { nil|... a; function init(int, nil|...) returns nil; int vb } b; function init(int, nil|object { nil|... a; function init(int, nil|...) returns nil; int vb }) returns nil; int va }
+  a nil|object { private nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb } b; public function init(int, nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb }) returns nil; private int va }
 
-  init(int,nil|object { nil|object { nil|... a; function init(int, nil|...) returns nil; int vb } b; function init(int, nil|object { nil|... a; function init(int, nil|...) returns nil; int vb }) returns nil; int va }) -> nil{
+  init(int,nil|object { private nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb } b; public function init(int, nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb }) returns nil; private int va }) -> nil{
     bb0 {
       %4 = ConstantLoad vb
       self[%4] = vb;
@@ -91,23 +90,27 @@ main() -> nil{
     %24 = ConstantLoad b
     %23 = a2[%24];
     bRef = %23;
-    %26 = bRef is object { nil|object { nil|... b; function init(int, nil|...) returns nil; int va } a; function init(int, nil|object { nil|... b; function init(int, nil|...) returns nil; int va }) returns nil; int vb }
+    %26 = bRef is object { private nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va } a; public function init(int, nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va }) returns nil; private int vb }
     %26 ? bb13 : bb14;
   }
   bb13 {
-    %28 = total;
-    %30 = ConstantLoad vb
-    %29 = bRef[%30];
-    %31 = %29;
-    %27 = + %28 %31;
-    total = %27;
+    PushScopeFrame 5
+    %1 = (1, total);
+    %3 = ConstantLoad vb
+    %2 = (1, bRef)[%3];
+    %4 = %2;
+    %0 = + %1 %4;
+    (1, total) = %0;
+    PopScopeFrame
     GOTO bb14;
   }
   bb14 {
-    %32 = total;
-    %33 = println(%32) -> bb15;
+    PushScopeFrame 2
+    %0 = (1, total);
+    %1 = println(%0) -> bb15;
   }
   bb15 {
+    PopScopeFrame
     return;
   }
 }

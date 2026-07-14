@@ -1,0 +1,21 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal before))))
+    (expression-stmt
+      (checked-expr
+        (checked-expr
+          (invocation noOp ()))))
+    (expression-stmt
+      (invocation io println (
+        (literal after))))
+  )
+)
+(noOp
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal inside))))
+  )
+)

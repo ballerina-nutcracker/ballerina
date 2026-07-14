@@ -14,8 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 // @productions boolean-literal local-var-decl-stmt
 public function main() {
-    int x = true; // @error
+    int _ = true; // @error
 }

@@ -1,0 +1,19 @@
+(f
+  (bb0 () ()
+    (return
+      (literal true))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (type-conversion-expr
+          (invocation f ())
+          (value-type int)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+)

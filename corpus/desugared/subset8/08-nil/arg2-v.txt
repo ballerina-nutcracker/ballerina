@@ -1,0 +1,35 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Nothing
+    (finite-type
+      (literal <nil>)))
+  (type-definition Everything
+    (union-type
+      (value-type any)
+      (error-type)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (user-defined-type Nothing)) (expr
+          (literal <nil>))))
+      (var-def
+        (variable e (type
+          (user-defined-type Everything)) (expr
+          (invocation explode (
+            (simple-var-ref n))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e))))))
+  (function explode (
+    (variable n (type
+      (user-defined-type Nothing)))) (
+    (user-defined-type Everything))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (user-defined-type Nothing)) (expr
+          (simple-var-ref n))))
+      (return
+        (literal 42)))))

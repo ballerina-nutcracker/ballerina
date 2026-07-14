@@ -1,37 +1,37 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
+  --> binary-bitwise-2-e.bal:22:13
+   |
+22 |     int _ = x & y; // @error
+   |             ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
   --> binary-bitwise-2-e.bal:23:13
    |
-23 |     int a = x & y; // @error
+23 |     int _ = x ^ y; // @error
    |             ^^^^^
 
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
   --> binary-bitwise-2-e.bal:24:13
    |
-24 |     int b = x ^ y; // @error
+24 |     int _ = x | y; // @error
    |             ^^^^^
 
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
-  --> binary-bitwise-2-e.bal:25:13
+  --> binary-bitwise-2-e.bal:29:13
    |
-25 |     int c = x | y; // @error
+29 |     int _ = i & j; // @error
    |             ^^^^^
 
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
-  --> binary-bitwise-2-e.bal:30:14
+  --> binary-bitwise-2-e.bal:30:13
    |
-30 |     int a1 = i & j; // @error
-   |              ^^^^^
+30 |     int _ = i ^ y; // @error
+   |             ^^^^^
 
 error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
-  --> binary-bitwise-2-e.bal:31:14
+  --> binary-bitwise-2-e.bal:31:13
    |
-31 |     int b1 = i ^ y; // @error
-   |              ^^^^^
-
-error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
-  --> binary-bitwise-2-e.bal:32:14
-   |
-32 |     int c1 = i | y; // @error
-   |              ^^^^^
+31 |     int _ = i | y; // @error
+   |             ^^^^^

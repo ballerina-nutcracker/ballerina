@@ -1,0 +1,10 @@
+(package
+  (function init () (
+    (value-type null))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal init panic))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

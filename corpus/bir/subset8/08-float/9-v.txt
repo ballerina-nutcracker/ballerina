@@ -1,0 +1,40 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %2 = / %4 %6;
+    %7 = %2;
+    %9 = ConstantLoad 0
+    %10 = unknown %9;
+    %11 = %10;
+    %12 = ConstantLoad 0
+    %13 = %12;
+    %8 = / %11 %13;
+    %14 = %8;
+    %1 = == %7 %14;
+    %1 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 3
+    %0 = ConstantLoad same
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    %2 = ConstantLoad <nil>
+    (1, %0) = %2;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad impossible
+    %1 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    return;
+  }
+}

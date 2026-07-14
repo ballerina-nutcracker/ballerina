@@ -1,14 +1,4 @@
 (package
-  (const c1 () ())
-  (const c2 () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref c1)
-        (literal 43))
-      (assignment
-        (simple-var-ref c2)
-        (literal 44))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -22,9 +12,9 @@
           (literal 11)))
       (assignment
         (wildcard-binding-pattern)
-        (simple-var-ref c1))
+        (numeric-literal 43))
       (assignment
         (wildcard-binding-pattern)
         (binary-expr +
-          (simple-var-ref c1)
-          (simple-var-ref c2))))))
+          (numeric-literal 43)
+          (numeric-literal 44))))))

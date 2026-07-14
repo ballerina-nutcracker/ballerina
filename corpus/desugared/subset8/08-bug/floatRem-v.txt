@@ -1,0 +1,96 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type float)) (expr
+          (invocation getFloat (
+            (literal 5)
+            (literal 100000))))))
+      (var-def
+        (variable b (type
+          (value-type float)) (expr
+          (invocation getFloat (
+            (literal 89)
+            (literal 20000))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref b)
+            (simple-var-ref a)))))))
+  (function getFloat (
+    (variable seed (type
+      (value-type int)))
+    (variable iterations (type
+      (value-type int)))) (
+    (value-type float))
+    (block-function-body
+      (var-def
+        (variable buffer (type
+          (array-type
+            (value-type float) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 5.5)
+            (literal 3.3)
+            (literal 7.5)
+            (literal 9.5)
+            (literal 10.54)))))
+      (var-def
+        (variable currentVal (type
+          (value-type float)) (expr
+          (literal 0))))
+      (var-def
+        (variable bufferSize (type
+          (value-type int)) (expr
+          (invocation lang.array length (
+            (simple-var-ref buffer))))))
+      (var-def
+        (variable currentIndex (type
+          (value-type int)) (expr
+          (binary-expr %
+            (group-expr
+              (binary-expr +
+                (simple-var-ref seed)
+                (simple-var-ref seed)))
+            (simple-var-ref bufferSize)))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref iterations))))
+      (while
+        (binary-expr <
+          (simple-var-ref _)
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref currentVal)
+            (index-based-access
+              (simple-var-ref buffer)
+              (simple-var-ref currentIndex)))
+          (assignment
+            (simple-var-ref currentIndex)
+            (binary-expr %
+              (group-expr
+                (binary-expr +
+                  (simple-var-ref currentIndex)
+                  (simple-var-ref seed)))
+              (simple-var-ref bufferSize)))
+          (assignment
+            (simple-var-ref _)
+            (binary-expr +
+              (simple-var-ref _)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref currentVal)))))

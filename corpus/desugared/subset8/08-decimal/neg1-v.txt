@@ -1,0 +1,48 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (value-type decimal)) (expr
+          (literal 0))))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr -
+            (simple-var-ref d)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr -
+            (simple-var-ref d)))))
+      (assignment
+        (simple-var-ref d)
+        (unary-expr -
+          (literal 1)))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr -
+            (simple-var-ref d)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 1E-6143))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr -
+            (simple-var-ref d)))))
+      (assignment
+        (simple-var-ref d)
+        (literal 9.999999999999999999999999999999998E+6144))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr -
+            (simple-var-ref d)))))
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal -2.1))))
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal -2.1E+2)))))))

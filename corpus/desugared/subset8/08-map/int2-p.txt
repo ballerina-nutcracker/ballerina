@@ -1,0 +1,41 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable mi (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable ma (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (simple-var-ref mi))))
+      (assignment
+        (index-based-access
+          (simple-var-ref ma)
+          (literal x))
+        (literal true))
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref mi)
+            (literal x)))))
+      (if
+        (binary-expr !=
+          (simple-var-ref x)
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (binary-expr +
+                (simple-var-ref x)
+                (literal 1)))))) ())
+      (block-stmt))))

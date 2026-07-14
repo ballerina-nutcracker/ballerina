@@ -1,0 +1,30 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (binary-expr <
+      (simple-var-ref a)
+      (literal 5))
+  )
+  (bb1 (bb0) ()
+    (panic
+      (error-constructor-expr (
+        (literal less that five))))
+  )
+  (bb2 (bb0) ()
+    (panic
+      (error-constructor-expr (
+        (literal greater than five))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable e (type
+        (error-type)) (expr
+        (trap-expr
+          (invocation foo (
+            (literal 10)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)

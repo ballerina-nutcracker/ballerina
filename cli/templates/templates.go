@@ -24,6 +24,12 @@ const (
 	// MainBal is the default main.bal template file name.
 	MainBal = "main.bal"
 
+	// LibBal is the lib.bal template file name for library packages.
+	LibBal = "lib.bal"
+
+	// ServiceBal is the service.bal template file name for service packages.
+	ServiceBal = "service.bal"
+
 	// ManifestApp is the Ballerina.toml template for application packages.
 	ManifestApp = "manifest-app.toml"
 
@@ -40,7 +46,7 @@ const (
 	PkgNamePlaceholder = "PKG_NAME"
 )
 
-//go:embed main.bal manifest-app.toml gitignore
+//go:embed main.bal lib.bal service.bal manifest-app.toml gitignore
 var FS embed.FS
 
 // ReadTemplate reads a template file and returns its content as a string.

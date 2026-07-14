@@ -1,0 +1,109 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (var-def
+      (variable doubled (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (let-clause
+            (var-def
+              (variable y (type
+                (value-type int)) (expr
+                (binary-expr *
+                  (simple-var-ref x)
+                  (literal 2))))))
+          (collect-clause
+            (simple-var-ref y))))))
+    (var-def
+      (variable afterGroup (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 1)
+              (literal 3)))
+          (group-by-clause
+            (grouping-key
+              (simple-var-ref x)))
+          (collect-clause
+            (simple-var-ref x))))))
+    (var-def
+      (variable afterGroupNonKey (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 1)
+              (literal 3)))
+          (let-clause
+            (var-def
+              (variable y (type
+                (value-type int)) (expr
+                (binary-expr +
+                  (simple-var-ref x)
+                  (literal 10))))))
+          (group-by-clause
+            (grouping-key
+              (simple-var-ref x)))
+          (collect-clause
+            (simple-var-ref y))))))
+    (var-def
+      (variable contextualSelect (type
+        (array-type
+          (value-type decimal) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable _))
+            (simple-var-ref xs))
+          (select-clause
+            (literal 1))))))
+    (var-def
+      (variable contextualCollect (type
+        (value-type decimal)) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable _))
+            (simple-var-ref xs))
+          (collect-clause
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref doubled))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref afterGroup))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref afterGroupNonKey))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref contextualSelect)
+            (literal 0))
+          (value-type decimal)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref contextualCollect)
+          (value-type decimal)))))
+  )
+)

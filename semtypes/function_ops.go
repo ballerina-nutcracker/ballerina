@@ -122,17 +122,13 @@ func (f *functionOps) functionTheta(cx Context, t0 SemType, t1 SemType, pos conj
 // Corresponds to dom^? in AMK tutorial.
 func FunctionParamListType(cx Context, fnTy SemType) SemType {
 	if !IsSubtypeSimple(fnTy, FUNCTION) {
-		return nil
+		return SemType{}
 	}
-	switch ty := fnTy.(type) {
-	case BasicTypeBitSet:
+	if fnTy.some() == 0 {
 		return NEVER
-	case *ComplexSemType:
-		bdd := getComplexSubtypeData(ty, BTFunction).(Bdd)
-		return functionParamListTypeInner(cx, NEVER, bdd)
-	default:
-		panic("impossible")
 	}
+	bdd := getComplexSubtypeData(fnTy, BTFunction).(Bdd)
+	return functionParamListTypeInner(cx, NEVER, bdd)
 }
 
 func functionParamListTypeInner(cx Context, accumTy SemType, bdd Bdd) SemType {
@@ -152,18 +148,14 @@ func functionParamListTypeInner(cx Context, accumTy SemType, bdd Bdd) SemType {
 // Corresponds to apply^? in AMK tutorial.
 func FunctionReturnType(cx Context, fnTy SemType, argList SemType) SemType {
 	domain := FunctionParamListType(cx, fnTy)
-	if domain == nil || !IsSubtype(cx, argList, domain) {
-		return nil
+	if IsZero(domain) || !IsSubtype(cx, argList, domain) {
+		return SemType{}
 	}
-	switch ty := fnTy.(type) {
-	case BasicTypeBitSet:
+	if fnTy.some() == 0 {
 		return VAL
-	case *ComplexSemType:
-		bdd := getComplexSubtypeData(ty, BTFunction).(Bdd)
-		return functionReturnTypeInner(cx, argList, VAL, bdd)
-	default:
-		panic("impossible")
 	}
+	bdd := getComplexSubtypeData(fnTy, BTFunction).(Bdd)
+	return functionReturnTypeInner(cx, argList, VAL, bdd)
 }
 
 func functionReturnTypeInner(cx Context, accumArgList SemType, accumReturn SemType, bdd Bdd) SemType {
@@ -190,12 +182,14 @@ func functionReturnTypeInner(cx Context, accumArgList SemType, accumReturn SemTy
 	}
 }
 
-func CreateIsolatedTop(cx Context) SemType {
-	if cx._isolatedTopMemo == nil {
+// CreateIsolatedFn returns the top type of isolated functions:
+// the type of every `isolated function` value.
+func CreateIsolatedFn(cx Context) SemType {
+	if IsZero(cx._isolatedFnMemo) {
 		fd := NewFunctionDefinition()
 		env := cx.Env()
-		cx._isolatedTopMemo = fd.Define(env, NEVER, VAL, FunctionQualifiersFrom(env, true, false))
+		cx._isolatedFnMemo = fd.Define(env, NEVER, VAL, FunctionQualifiersFrom(env, true, false))
 	}
 
-	return cx._isolatedTopMemo
+	return cx._isolatedFnMemo
 }

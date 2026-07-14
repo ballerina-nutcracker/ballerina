@@ -14,12 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const int? x = 5;
-const int? y = ();
+public const int? x = 5;
+public const int? y = ();
 
 // Type of constants is not determined by the type-descriptor but by value so y is ().
 // There is no underlying form that works with () (only works with NUMBER; so nillifted form is NUMBER|())
 
-const int? a = x * y; // @error
-const int? b = x / y;
-const int? c = x % y;
+public const int? a = x * y; // @error
+public const int? b = x / y;
+public const int? c = x % y;

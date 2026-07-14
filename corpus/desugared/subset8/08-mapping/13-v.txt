@@ -1,0 +1,46 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition BroadType
+    (record-type
+      (field a
+        (value-type int))
+      (field b
+        (value-type float))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2)))
+          (user-defined-type BroadType))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal correct))))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (index-based-access
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal a)
+                      (literal 2))
+                    (key-value
+                      (literal b)
+                      (literal 3)))))
+              (literal x))
+            (user-defined-type BroadType))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal correct))))) ())
+        (block-stmt)))))

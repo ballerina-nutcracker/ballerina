@@ -1,0 +1,17 @@
+module $anon.. v 0.0.0;
+foo() -> never{
+  bb0 {
+    %1 = ConstantLoad never returns
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hello
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

@@ -1,0 +1,36 @@
+(double
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref s)
+        (simple-var-ref s)))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable str (type
+        (value-type string)) (expr
+        (literal x))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 9))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (assignment
+      (simple-var-ref str)
+      (invocation double (
+        (simple-var-ref str))))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (simple-var-ref str))))))
+  )
+)

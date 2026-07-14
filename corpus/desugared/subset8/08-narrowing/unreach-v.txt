@@ -1,0 +1,23 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (group-expr
+            (binary-expr >
+              (literal 0)
+              (literal 1)))
+          (group-expr
+            (binary-expr ===
+              (literal 1)
+              (literal 1))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal true))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal false))))))))))

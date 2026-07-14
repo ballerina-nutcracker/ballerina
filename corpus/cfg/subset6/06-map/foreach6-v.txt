@@ -8,12 +8,12 @@
             (value-type int) dimensions: 1 ([])))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref a)
+            (literal a)
             (list-constructor-expr
               (literal 1)
               (literal 2)))
           (key-value
-            (simple-var-ref b)
+            (literal b)
             (list-constructor-expr
               (literal 3)
               (literal 4)))))))

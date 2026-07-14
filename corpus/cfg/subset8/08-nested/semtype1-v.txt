@@ -1,0 +1,129 @@
+(main
+  (bb0 () (bb1 bb8)
+    (var-def
+      (variable mat (type
+        (user-defined-type MappingAtomicType)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal names)
+            (list-constructor-expr
+              (literal x)
+              (literal y)))
+          (key-value
+            (literal types)
+            (list-constructor-expr
+              (simple-var-ref FLOAT)
+              (simple-var-ref FLOAT)))
+          (key-value
+            (literal rest)
+            (simple-var-ref NEVER))))))
+    (var-def
+      (variable bdd (type
+        (user-defined-type BddNode)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal atom)
+            (mapping-constructor-expr
+              (key-value
+                (literal index)
+                (literal 42))
+              (key-value
+                (literal atomicType)
+                (simple-var-ref mat))))
+          (key-value
+            (literal left)
+            (literal true))
+          (key-value
+            (literal middle)
+            (literal false))
+          (key-value
+            (literal right)
+            (literal false))))))
+    (var-def
+      (variable semType (type
+        (user-defined-type SemType)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal all)
+            (literal 0))
+          (key-value
+            (literal some)
+            (simple-var-ref LIST_RW))
+          (key-value
+            (literal subtypeDataList)
+            (list-constructor-expr
+              (simple-var-ref bdd)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref semType)
+          (user-defined-type Bdd)))))
+    (type-test-expr is
+      (simple-var-ref semType)
+      (user-defined-type ComplexSemType))
+  )
+  (bb1 (bb0) (bb2 bb7)
+    (expression-stmt
+      (invocation io println (
+        (literal complex))))
+    (var-def
+      (variable list (type
+        (array-type
+          (user-defined-type SubtypeData) dimensions: 1 ([]))) (expr
+        (field-based-access subtypeDataList
+          (simple-var-ref semType)))))
+    (var-def
+      (variable st (type
+        (user-defined-type SubtypeData)) (expr
+        (index-based-access
+          (simple-var-ref list)
+          (literal 0)))))
+    (type-test-expr is
+      (simple-var-ref st)
+      (user-defined-type BddNode))
+  )
+  (bb2 (bb1) (bb3 bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal bdd))))
+    (var-def
+      (variable atom (type
+        (user-defined-type Atom)) (expr
+        (field-based-access atom
+          (simple-var-ref st)))))
+    (type-test-expr is
+      (simple-var-ref atom)
+      (user-defined-type TypeAtom))
+  )
+  (bb3 (bb2) (bb4 bb5)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access index
+          (simple-var-ref atom)))))
+    (var-def
+      (variable t (type
+        (user-defined-type AtomicType)) (expr
+        (field-based-access atomicType
+          (simple-var-ref atom)))))
+    (type-test-expr is
+      (simple-var-ref t)
+      (user-defined-type MappingAtomicType))
+  )
+  (bb4 (bb3) (bb5)
+    (var-def
+      (variable names (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (field-based-access names
+          (simple-var-ref t)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref names)
+          (literal 0)))))
+  )
+  (bb5 (bb4 bb3) (bb6))
+  (bb6 (bb5 bb2) (bb7))
+  (bb7 (bb6 bb1) (bb8))
+  (bb8 (bb7 bb0) ())
+)

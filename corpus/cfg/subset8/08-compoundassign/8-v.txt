@@ -1,0 +1,40 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal hello))))
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal  world))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+    (var-def
+      (variable n (type
+        (value-type string)) (expr
+        (literal  nballerina))))
+    (compound-assignment +
+      (simple-var-ref s)
+      (simple-var-ref n))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+    (var-def
+      (variable x (type
+        (value-type string)) (expr
+        (literal x))))
+    (var-def
+      (variable y (type
+        (value-type string)) (expr
+        (literal y))))
+    (compound-assignment +
+      (simple-var-ref x)
+      (binary-expr +
+        (simple-var-ref y)
+        (literal z)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

@@ -1,0 +1,9 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: query from clause currently supports only list or map collections
+  --> join-nested-collection-type-fe.bal:37:13
+   |
+37 |             join var owner in person.id
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |             on dept.ownerId equals owner.id
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

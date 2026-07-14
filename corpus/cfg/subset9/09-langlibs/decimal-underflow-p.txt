@@ -1,0 +1,9 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (binary-expr *
+        (literal 1E-6143)
+        (literal 0.1)))
+  )
+)

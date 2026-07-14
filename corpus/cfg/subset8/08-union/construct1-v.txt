@@ -1,0 +1,21 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (user-defined-type XY)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 17))))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (user-defined-type X))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref x)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

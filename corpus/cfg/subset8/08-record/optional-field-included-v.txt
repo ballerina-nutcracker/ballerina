@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (user-defined-type Derived)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal foo)
+            (literal 10))
+          (key-value
+            (literal bar)
+            (literal 20))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+    (assignment
+      (field-based-access foo
+        (simple-var-ref d))
+      (literal <nil>))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+  )
+)

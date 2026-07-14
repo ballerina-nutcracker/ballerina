@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for A
+  --> main.bal:19:5
+   |
+19 | int A = dep:K + B; // @error
+   |     ^

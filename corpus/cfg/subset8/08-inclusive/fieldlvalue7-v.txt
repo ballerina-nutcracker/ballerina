@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Point)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 44))
+          (key-value
+            (literal y)
+            (literal 88))
+          (key-value
+            (literal z)
+            (literal 10))))))
+    (assignment
+      (index-based-access
+        (simple-var-ref p)
+        (literal z))
+      (literal 22))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref p)
+          (literal z)))))
+  )
+)

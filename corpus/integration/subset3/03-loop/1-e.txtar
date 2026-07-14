@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: Variable already defined: i
-  --> 1-e.bal:25:13
+  --> 1-e.bal:26:13
    |
-25 |     foreach int i in 1 ..< to { // @error
+26 |     foreach int i in 1 ..< to { // @error
    |             ^^^^^

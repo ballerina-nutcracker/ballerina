@@ -1,0 +1,5 @@
+-- stdout --
+<greeting>Hello, world!</greeting>
+<root>&lt;child/&gt;|a&amp;b</root>
+<root>x</root>
+-- stderr --

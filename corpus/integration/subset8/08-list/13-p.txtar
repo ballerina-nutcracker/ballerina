@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid array index: -1
+        at main(13-p.bal:23)

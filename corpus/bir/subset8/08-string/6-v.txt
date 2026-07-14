@@ -1,0 +1,31 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hello
+    %2 = greet(%1) -> bb1;
+  }
+  bb1 {
+    %3 = greeting() -> bb2;
+  }
+  bb2 {
+    %4 = println(%3) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+greet(string) -> nil{
+  bb0 {
+    %2 = println(s) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+greeting() -> string{
+  bb0 {
+    %1 = ConstantLoad hi
+    %0 = %1;
+    return;
+  }
+}

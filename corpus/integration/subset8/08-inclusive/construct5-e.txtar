@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: identifier 'w' cannot be used as a key for a rest field; use a string literal instead
+  --> construct5-e.bal:23:24
+   |
+23 |     R r = {x: 1, y: 2, w: 3}; // @error
+   |                        ^

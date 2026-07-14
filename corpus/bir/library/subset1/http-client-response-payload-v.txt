@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad https://example.com
+    $desugar$0 = %1;
+    %3 = $default$13($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = newObject ballerina/http:Client
+    %6 = init(%5,$desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %8 = %6 is nil
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    %7 = %5;
+    GOTO bb5;
+  }
+  bb4 {
+    %7 = %6;
+    GOTO bb5;
+  }
+  bb5 {
+    $desugar$2 = %7;
+    %10 = $desugar$2 is error
+    %10 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    c = $desugar$2;
+    %12 = ConstantLoad /path
+    $desugar$3 = %12;
+    %14 = $default$19($desugar$3) -> bb8;
+  }
+  bb8 {
+    $desugar$4 = %14;
+    %16 = $remote$get(c,$desugar$3,$desugar$4) -> bb9;
+  }
+  bb9 {
+    $desugar$5 = %16;
+    %18 = $desugar$5 is error
+    %18 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    r = $desugar$5;
+    %20 = getBinaryPayload(r) -> bb12;
+  }
+  bb12 {
+    $desugar$6 = %20;
+    %22 = $desugar$6 is error
+    %22 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    b = $desugar$6;
+    %24 = length(b) -> bb15;
+  }
+  bb15 {
+    %25 = %24;
+    %26 = println(%25) -> bb16;
+  }
+  bb16 {
+    %27 = getJsonPayload(r) -> bb17;
+  }
+  bb17 {
+    payload = %27;
+    %29 = payload is error
+    %30 = %29;
+    %31 = println(%30) -> bb18;
+  }
+  bb18 {
+    %32 = ConstantLoad <nil>
+    %0 = %32;
+    return;
+  }
+}

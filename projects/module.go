@@ -164,7 +164,7 @@ func newModuleModifier(oldModule *Module) *ModuleModifier {
 func (mm *ModuleModifier) AddDocument(documentConfig DocumentConfig) *ModuleModifier {
 	docID := documentConfig.DocumentID()
 	disableSyntaxTree := mm.project.BuildOptions().CompilationOptions().DisableSyntaxTree()
-	docContext := newDocumentContext(documentConfig, disableSyntaxTree)
+	docContext := newDocumentContext(documentConfig, disableSyntaxTree, buildDiagKeyPrefix(mm.project, mm.moduleDescriptor))
 	mm.srcDocContextMap[docID] = docContext
 	mm.srcDocIDs = append(mm.srcDocIDs, docID)
 	return mm
@@ -175,7 +175,7 @@ func (mm *ModuleModifier) AddDocument(documentConfig DocumentConfig) *ModuleModi
 func (mm *ModuleModifier) AddTestDocument(documentConfig DocumentConfig) *ModuleModifier {
 	docID := documentConfig.DocumentID()
 	disableSyntaxTree := mm.project.BuildOptions().CompilationOptions().DisableSyntaxTree()
-	docContext := newDocumentContext(documentConfig, disableSyntaxTree)
+	docContext := newDocumentContext(documentConfig, disableSyntaxTree, buildDiagKeyPrefix(mm.project, mm.moduleDescriptor))
 	mm.testDocContextMap[docID] = docContext
 	mm.testSrcDocIDs = append(mm.testSrcDocIDs, docID)
 	return mm
@@ -207,7 +207,7 @@ func removeDocumentID(ids []DocumentID, toRemove DocumentID) []DocumentID {
 // Returns the modifier for method chaining.
 func (mm *ModuleModifier) UpdateDocument(documentConfig DocumentConfig) *ModuleModifier {
 	disableSyntaxTree := mm.project.BuildOptions().CompilationOptions().DisableSyntaxTree()
-	docContext := newDocumentContext(documentConfig, disableSyntaxTree)
+	docContext := newDocumentContext(documentConfig, disableSyntaxTree, buildDiagKeyPrefix(mm.project, mm.moduleDescriptor))
 	return mm.updateDocument(docContext)
 }
 

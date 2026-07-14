@@ -1,0 +1,19 @@
+(main
+  (bb0 () (bb2)
+    (literal 1)
+  )
+  (bb1 (bb2) (bb4)
+    (literal 2)
+  )
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal one))))
+  )
+  (bb3 (bb4) ())
+  (bb4 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (literal any))))
+  )
+)

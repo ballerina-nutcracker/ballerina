@@ -1,0 +1,574 @@
+(atomCmp
+  (bb0 () ()
+    (return
+      (binary-expr -
+        (simple-var-ref a1)
+        (simple-var-ref a2)))
+  )
+)
+(bddAtom
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal atom)
+          (simple-var-ref atom))
+        (key-value
+          (literal left)
+          (literal true))
+        (key-value
+          (literal middle)
+          (literal false))
+        (key-value
+          (literal right)
+          (literal false))))
+  )
+)
+(bddComplement
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref b)
+      (value-type boolean))
+  )
+  (bb1 (bb0) ()
+    (return
+      (unary-expr !
+        (simple-var-ref b)))
+  )
+  (bb2 (bb0) (bb3 bb4)
+    (binary-expr ===
+      (field-based-access right
+        (simple-var-ref b))
+      (literal false))
+  )
+  (bb3 (bb2) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b))
+        (literal false)
+        (invocation bddComplement (
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b))
+            (field-based-access middle
+              (simple-var-ref b))))))
+        (invocation bddComplement (
+          (field-based-access middle
+            (simple-var-ref b)))))))
+  )
+  (bb4 (bb2) (bb5 bb6)
+    (binary-expr ===
+      (field-based-access left
+        (simple-var-ref b))
+      (literal false))
+  )
+  (bb5 (bb4) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b))
+        (invocation bddComplement (
+          (field-based-access middle
+            (simple-var-ref b))))
+        (invocation bddComplement (
+          (invocation bddUnion (
+            (field-based-access right
+              (simple-var-ref b))
+            (field-based-access middle
+              (simple-var-ref b))))))
+        (literal false))))
+  )
+  (bb6 (bb4) (bb7 bb8)
+    (binary-expr ===
+      (field-based-access middle
+        (simple-var-ref b))
+      (literal false))
+  )
+  (bb7 (bb6) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b))
+        (invocation bddComplement (
+          (field-based-access left
+            (simple-var-ref b))))
+        (invocation bddComplement (
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b))
+            (field-based-access right
+              (simple-var-ref b))))))
+        (invocation bddComplement (
+          (field-based-access right
+            (simple-var-ref b)))))))
+  )
+  (bb8 (bb6) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b))
+        (invocation bddComplement (
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b))
+            (field-based-access middle
+              (simple-var-ref b))))))
+        (literal false)
+        (invocation bddComplement (
+          (invocation bddUnion (
+            (field-based-access right
+              (simple-var-ref b))
+            (field-based-access middle
+              (simple-var-ref b)))))))))
+  )
+)
+(bddCreate
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref middle)
+      (literal true))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal true))
+  )
+  (bb2 (bb0) (bb3 bb4)
+    (binary-expr ==
+      (simple-var-ref left)
+      (simple-var-ref right))
+  )
+  (bb3 (bb2) ()
+    (return
+      (invocation bddUnion (
+        (simple-var-ref left)
+        (simple-var-ref middle))))
+  )
+  (bb4 (bb2) ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal atom)
+          (simple-var-ref atom))
+        (key-value
+          (literal left)
+          (simple-var-ref left))
+        (key-value
+          (literal middle)
+          (simple-var-ref middle))
+        (key-value
+          (literal right)
+          (simple-var-ref right))))
+  )
+)
+(bddDiff
+  (bb0 () (bb1 bb2)
+    (binary-expr ===
+      (simple-var-ref b1)
+      (simple-var-ref b2))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal false))
+  )
+  (bb2 (bb0) (bb3 bb6)
+    (type-test-expr is
+      (simple-var-ref b2)
+      (value-type boolean))
+  )
+  (bb3 (bb2) (bb4 bb5)
+    (binary-expr ==
+      (simple-var-ref b2)
+      (literal true))
+  )
+  (bb4 (bb3) ()
+    (return
+      (literal false))
+  )
+  (bb5 (bb3) ()
+    (return
+      (simple-var-ref b1))
+  )
+  (bb6 (bb2) (bb7 bb10)
+    (type-test-expr is
+      (simple-var-ref b1)
+      (value-type boolean))
+  )
+  (bb7 (bb6) (bb8 bb9)
+    (binary-expr ==
+      (simple-var-ref b1)
+      (literal true))
+  )
+  (bb8 (bb7) ()
+    (return
+      (invocation bddComplement (
+        (simple-var-ref b2))))
+  )
+  (bb9 (bb7) ()
+    (return
+      (literal false))
+  )
+  (bb10 (bb6) (bb11 bb12)
+    (var-def
+      (variable cmp (type
+        (value-type int)) (expr
+        (invocation atomCmp (
+          (field-based-access atom
+            (simple-var-ref b1))
+          (field-based-access atom
+            (simple-var-ref b2)))))))
+    (binary-expr <
+      (simple-var-ref cmp)
+      (literal 0))
+  )
+  (bb11 (bb10) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b1))
+        (invocation bddDiff (
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b1))
+            (field-based-access middle
+              (simple-var-ref b1))))
+          (simple-var-ref b2)))
+        (literal false)
+        (invocation bddDiff (
+          (invocation bddUnion (
+            (field-based-access right
+              (simple-var-ref b1))
+            (field-based-access middle
+              (simple-var-ref b1))))
+          (simple-var-ref b2))))))
+  )
+  (bb12 (bb10) (bb13 bb14)
+    (binary-expr >
+      (simple-var-ref cmp)
+      (literal 0))
+  )
+  (bb13 (bb12) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b2))
+        (invocation bddDiff (
+          (simple-var-ref b1)
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b2))
+            (field-based-access middle
+              (simple-var-ref b2))))))
+        (literal false)
+        (invocation bddDiff (
+          (simple-var-ref b1)
+          (invocation bddUnion (
+            (field-based-access right
+              (simple-var-ref b2))
+            (field-based-access middle
+              (simple-var-ref b2)))))))))
+  )
+  (bb14 (bb12) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b1))
+        (invocation bddDiff (
+          (field-based-access left
+            (simple-var-ref b1))
+          (field-based-access left
+            (simple-var-ref b2))))
+        (invocation bddDiff (
+          (field-based-access middle
+            (simple-var-ref b1))
+          (field-based-access middle
+            (simple-var-ref b2))))
+        (invocation bddDiff (
+          (field-based-access right
+            (simple-var-ref b1))
+          (field-based-access right
+            (simple-var-ref b2)))))))
+  )
+)
+(bddIntersect
+  (bb0 () (bb1 bb2)
+    (binary-expr ===
+      (simple-var-ref b1)
+      (simple-var-ref b2))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref b1))
+  )
+  (bb2 (bb0) (bb3 bb6)
+    (type-test-expr is
+      (simple-var-ref b1)
+      (value-type boolean))
+  )
+  (bb3 (bb2) (bb4 bb5)
+    (binary-expr ==
+      (simple-var-ref b1)
+      (literal true))
+  )
+  (bb4 (bb3) ()
+    (return
+      (simple-var-ref b2))
+  )
+  (bb5 (bb3) ()
+    (return
+      (literal false))
+  )
+  (bb6 (bb2) (bb7 bb10)
+    (type-test-expr is
+      (simple-var-ref b2)
+      (value-type boolean))
+  )
+  (bb7 (bb6) (bb8 bb9)
+    (binary-expr ==
+      (simple-var-ref b2)
+      (literal true))
+  )
+  (bb8 (bb7) ()
+    (return
+      (simple-var-ref b1))
+  )
+  (bb9 (bb7) ()
+    (return
+      (literal false))
+  )
+  (bb10 (bb6) (bb11 bb12)
+    (var-def
+      (variable cmp (type
+        (value-type int)) (expr
+        (invocation atomCmp (
+          (field-based-access atom
+            (simple-var-ref b1))
+          (field-based-access atom
+            (simple-var-ref b2)))))))
+    (binary-expr <
+      (simple-var-ref cmp)
+      (literal 0))
+  )
+  (bb11 (bb10) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b1))
+        (invocation bddIntersect (
+          (field-based-access left
+            (simple-var-ref b1))
+          (simple-var-ref b2)))
+        (invocation bddIntersect (
+          (field-based-access middle
+            (simple-var-ref b1))
+          (simple-var-ref b2)))
+        (invocation bddIntersect (
+          (field-based-access right
+            (simple-var-ref b1))
+          (simple-var-ref b2))))))
+  )
+  (bb12 (bb10) (bb13 bb14)
+    (binary-expr >
+      (simple-var-ref cmp)
+      (literal 0))
+  )
+  (bb13 (bb12) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b2))
+        (invocation bddIntersect (
+          (simple-var-ref b1)
+          (field-based-access left
+            (simple-var-ref b2))))
+        (invocation bddIntersect (
+          (simple-var-ref b1)
+          (field-based-access middle
+            (simple-var-ref b2))))
+        (invocation bddIntersect (
+          (simple-var-ref b1)
+          (field-based-access right
+            (simple-var-ref b2)))))))
+  )
+  (bb14 (bb12) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b1))
+        (invocation bddIntersect (
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b1))
+            (field-based-access middle
+              (simple-var-ref b1))))
+          (invocation bddUnion (
+            (field-based-access left
+              (simple-var-ref b2))
+            (field-based-access middle
+              (simple-var-ref b2))))))
+        (literal false)
+        (invocation bddIntersect (
+          (invocation bddUnion (
+            (field-based-access right
+              (simple-var-ref b1))
+            (field-based-access middle
+              (simple-var-ref b1))))
+          (invocation bddUnion (
+            (field-based-access right
+              (simple-var-ref b2))
+            (field-based-access middle
+              (simple-var-ref b2)))))))))
+  )
+)
+(bddUnion
+  (bb0 () (bb1 bb2)
+    (binary-expr ===
+      (simple-var-ref b1)
+      (simple-var-ref b2))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref b1))
+  )
+  (bb2 (bb0) (bb3 bb6)
+    (type-test-expr is
+      (simple-var-ref b1)
+      (value-type boolean))
+  )
+  (bb3 (bb2) (bb4 bb5)
+    (binary-expr ==
+      (simple-var-ref b1)
+      (literal true))
+  )
+  (bb4 (bb3) ()
+    (return
+      (literal true))
+  )
+  (bb5 (bb3) ()
+    (return
+      (simple-var-ref b2))
+  )
+  (bb6 (bb2) (bb7 bb10)
+    (type-test-expr is
+      (simple-var-ref b2)
+      (value-type boolean))
+  )
+  (bb7 (bb6) (bb8 bb9)
+    (binary-expr ==
+      (simple-var-ref b2)
+      (literal true))
+  )
+  (bb8 (bb7) ()
+    (return
+      (literal true))
+  )
+  (bb9 (bb7) ()
+    (return
+      (simple-var-ref b1))
+  )
+  (bb10 (bb6) (bb11 bb12)
+    (var-def
+      (variable cmp (type
+        (value-type int)) (expr
+        (invocation atomCmp (
+          (field-based-access atom
+            (simple-var-ref b1))
+          (field-based-access atom
+            (simple-var-ref b2)))))))
+    (binary-expr <
+      (simple-var-ref cmp)
+      (literal 0))
+  )
+  (bb11 (bb10) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b1))
+        (field-based-access left
+          (simple-var-ref b1))
+        (invocation bddUnion (
+          (field-based-access middle
+            (simple-var-ref b1))
+          (simple-var-ref b2)))
+        (field-based-access right
+          (simple-var-ref b1)))))
+  )
+  (bb12 (bb10) (bb13 bb14)
+    (binary-expr >
+      (simple-var-ref cmp)
+      (literal 0))
+  )
+  (bb13 (bb12) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b2))
+        (field-based-access left
+          (simple-var-ref b2))
+        (invocation bddUnion (
+          (simple-var-ref b1)
+          (field-based-access middle
+            (simple-var-ref b2))))
+        (field-based-access right
+          (simple-var-ref b2)))))
+  )
+  (bb14 (bb12) ()
+    (return
+      (invocation bddCreate (
+        (field-based-access atom
+          (simple-var-ref b1))
+        (invocation bddUnion (
+          (field-based-access left
+            (simple-var-ref b1))
+          (field-based-access left
+            (simple-var-ref b2))))
+        (invocation bddUnion (
+          (field-based-access middle
+            (simple-var-ref b1))
+          (field-based-access middle
+            (simple-var-ref b2))))
+        (invocation bddUnion (
+          (field-based-access right
+            (simple-var-ref b1))
+          (field-based-access right
+            (simple-var-ref b2)))))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable b1 (type
+        (user-defined-type Bdd)) (expr
+        (invocation bddUnion (
+          (invocation bddAtom (
+            (literal 1)))
+          (invocation bddAtom (
+            (literal 2))))))))
+    (var-def
+      (variable b2 (type
+        (user-defined-type Bdd)) (expr
+        (invocation bddUnion (
+          (invocation bddAtom (
+            (literal 2)))
+          (invocation bddAtom (
+            (literal 1))))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref b1)
+          (simple-var-ref b2)))))
+    (var-def
+      (variable b3 (type
+        (user-defined-type Bdd)) (expr
+        (invocation bddIntersect (
+          (invocation bddAtom (
+            (literal 1)))
+          (invocation bddAtom (
+            (literal 2))))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref b1)
+          (simple-var-ref b3)))))
+  )
+)

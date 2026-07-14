@@ -1,0 +1,28 @@
+(foo
+  (bb0 () (bb2 bb3 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal zero))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal nil))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal <nil>))))))
+  )
+)

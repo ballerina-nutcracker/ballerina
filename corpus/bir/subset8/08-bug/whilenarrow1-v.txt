@@ -1,0 +1,68 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad i
+    %2 = ConstantLoad 42
+    %3 = ConstantLoad next
+    %4 = ConstantLoad i
+    %5 = ConstantLoad 20
+    %6 = ConstantLoad next
+    %7 = ConstantLoad <nil>
+    %8 = newMap {| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%4=%5, %6=%7}
+    %9 = newMap {| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%8}
+    l = %9;
+    %11 = sum(l) -> bb1;
+  }
+  bb1 {
+    %12 = %11;
+    %13 = println(%12) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+sum(nil|{| i: int, next: nil|..., nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}) -> int{
+  bb0 {
+    temp = intList;
+    %3 = ConstantLoad 0
+    total = %3;
+    GOTO bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad true
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = (1, temp) is nil
+    %0 ? bb4 : bb5;
+  }
+  bb3 {
+    %0 = total;
+    return;
+  }
+  bb4 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %1 = (2, total);
+    %3 = ConstantLoad i
+    %2 = (2, temp)[%3];
+    %4 = %2;
+    %0 = + %1 %4;
+    (2, total) = %0;
+    %6 = ConstantLoad next
+    %5 = (2, temp)[%6];
+    (2, temp) = %5;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}

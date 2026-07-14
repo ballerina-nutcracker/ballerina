@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 17)
+          (literal 42)
+          (unary-expr -
+            (literal 11))))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (unary-expr -
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref v)
+          (simple-var-ref i)))))
+  )
+)

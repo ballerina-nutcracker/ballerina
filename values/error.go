@@ -33,7 +33,7 @@ type Error struct {
 
 func NewError(t semtypes.SemType, message string, cause BalValue, typeName string, detail *Map) *Error {
 	if detail == nil {
-		detail = NewMap(semtypes.MAPPING)
+		detail = NewMap(semtypes.MAPPING, &semtypes.MAPPING_ATOMIC_INNER, true, nil)
 	}
 	return &Error{
 		Type:     t,

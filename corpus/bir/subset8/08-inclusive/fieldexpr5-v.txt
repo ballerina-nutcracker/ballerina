@@ -1,0 +1,41 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad intField
+    %2 = ConstantLoad 17
+    %3 = ConstantLoad floatField
+    %4 = ConstantLoad 1.5
+    %5 = ConstantLoad booleanField
+    %6 = ConstantLoad false
+    %7 = newMap {| booleanField: boolean, floatField: float, intField: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4, %5=%6}
+    r = %7;
+    %11 = ConstantLoad floatField
+    %10 = r[%11];
+    %12 = %10;
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %9 = + %12 %14;
+    %15 = %9;
+    %16 = println(%15) -> bb1;
+  }
+  bb1 {
+    %18 = ConstantLoad booleanField
+    %17 = r[%18];
+    %19 = ! %17;
+    %20 = %19;
+    %21 = println(%20) -> bb2;
+  }
+  bb2 {
+    %24 = ConstantLoad intField
+    %23 = r[%24];
+    %25 = %23;
+    %26 = ConstantLoad 2
+    %27 = %26;
+    %22 = + %25 %27;
+    %28 = %22;
+    %29 = println(%28) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

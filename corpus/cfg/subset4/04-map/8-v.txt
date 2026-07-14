@@ -7,10 +7,10 @@
           (value-type any))) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref foo)
+            (literal foo)
             (literal 17))
           (key-value
-            (simple-var-ref bar)
+            (literal bar)
             (literal 42))))))
     (var-def
       (variable v (type

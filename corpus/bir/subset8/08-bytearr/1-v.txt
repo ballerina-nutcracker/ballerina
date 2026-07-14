@@ -1,0 +1,66 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int:Unsigned8...][%1]{}
+    b1 = %2;
+    %4 = ConstantLoad 42
+    %5 = ConstantLoad 0
+    b1[%5] = %4;
+    %6 = ConstantLoad 43
+    %7 = ConstantLoad 1
+    b1[%7] = %6;
+    %8 = ConstantLoad 44
+    %9 = ConstantLoad 3
+    b1[%9] = %8;
+    %11 = ConstantLoad 0
+    %10 = b1[%11];
+    %12 = %10;
+    %13 = println(%12) -> bb1;
+  }
+  bb1 {
+    %15 = ConstantLoad 1
+    %14 = b1[%15];
+    %16 = %14;
+    %17 = println(%16) -> bb2;
+  }
+  bb2 {
+    %19 = ConstantLoad 2
+    %18 = b1[%19];
+    %20 = %18;
+    %21 = println(%20) -> bb3;
+  }
+  bb3 {
+    %23 = ConstantLoad 3
+    %22 = b1[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb4;
+  }
+  bb4 {
+    %26 = ConstantLoad 88
+    %27 = ConstantLoad 89
+    %28 = ConstantLoad 90
+    %29 = ConstantLoad 3
+    %30 = newArray [int:Unsigned8...][%29]{%26, %27, %28}
+    b2 = %30;
+    %33 = ConstantLoad 0
+    %32 = b2[%33];
+    %34 = %32;
+    %35 = println(%34) -> bb5;
+  }
+  bb5 {
+    %37 = ConstantLoad 1
+    %36 = b2[%37];
+    %38 = %36;
+    %39 = println(%38) -> bb6;
+  }
+  bb6 {
+    %41 = ConstantLoad 2
+    %40 = b2[%41];
+    %42 = %40;
+    %43 = println(%42) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

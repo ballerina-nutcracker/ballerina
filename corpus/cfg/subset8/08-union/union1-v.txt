@@ -1,0 +1,29 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (user-defined-type B)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal true))))))
+    (var-def
+      (variable y (type
+        (user-defined-type AB)) (expr
+        (simple-var-ref x))))
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type B))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable b (type
+        (value-type boolean)) (expr
+        (field-based-access a
+          (simple-var-ref y)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+  )
+  (bb2 (bb1 bb0) ())
+)

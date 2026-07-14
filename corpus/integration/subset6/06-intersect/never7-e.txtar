@@ -5,3 +5,13 @@ error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
    |
 18 |     int & T? next; // @error
    |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: type definition T is empty
+  --> never7-e.bal:17:1
+   |
+17 | type T record {|
+   | ^^^^^^^^^^^^^^^^
+18 |     int & T? next; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+19 | |};
+   | ^^^

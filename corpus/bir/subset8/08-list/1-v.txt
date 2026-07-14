@@ -1,0 +1,237 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad 2
+    %5 = newArray [int, int, never...][%4]{%2, %3}
+    %6 = ConstantLoad 1
+    %7 = ConstantLoad 2
+    %8 = ConstantLoad 2
+    %9 = newArray [int, int, never...][%8]{%6, %7}
+    %1 = == %5 %9;
+    %10 = %1;
+    %11 = println(%10) -> bb1;
+  }
+  bb1 {
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad 2
+    %15 = ConstantLoad 2
+    %16 = newArray [int, int, never...][%15]{%13, %14}
+    %17 = ConstantLoad 1
+    %18 = ConstantLoad 2
+    %19 = ConstantLoad 2
+    %20 = newArray [int, int, never...][%19]{%17, %18}
+    %12 = unknown %16 %20;
+    %21 = %12;
+    %22 = println(%21) -> bb2;
+  }
+  bb2 {
+    %24 = ConstantLoad 1
+    %25 = ConstantLoad 2
+    %26 = ConstantLoad 2
+    %27 = newArray [int, int, never...][%26]{%24, %25}
+    %28 = ConstantLoad 3
+    %29 = ConstantLoad 2
+    %30 = newArray [[int, int, never...], int, never...][%29]{%27, %28}
+    %31 = ConstantLoad 1
+    %32 = ConstantLoad 2
+    %33 = ConstantLoad 2
+    %34 = newArray [int, int, never...][%33]{%31, %32}
+    %35 = ConstantLoad 3
+    %36 = ConstantLoad 2
+    %37 = newArray [[int, int, never...], int, never...][%36]{%34, %35}
+    %23 = == %30 %37;
+    %38 = %23;
+    %39 = println(%38) -> bb3;
+  }
+  bb3 {
+    %41 = ConstantLoad 1
+    %42 = ConstantLoad 2
+    %43 = ConstantLoad 2
+    %44 = newArray [int, int, never...][%43]{%41, %42}
+    %45 = ConstantLoad 1
+    %46 = ConstantLoad 2
+    %47 = ConstantLoad 2
+    %48 = newArray [int, int, never...][%47]{%45, %46}
+    %40 = unknown %44 %48;
+    %49 = %40;
+    %50 = println(%49) -> bb4;
+  }
+  bb4 {
+    %52 = ConstantLoad 1
+    %53 = ConstantLoad 2
+    %54 = ConstantLoad 2
+    %55 = newArray [int, int, never...][%54]{%52, %53}
+    %56 = ConstantLoad 3
+    %57 = ConstantLoad 2
+    %58 = newArray [[int, int, never...], int, never...][%57]{%55, %56}
+    %59 = ConstantLoad 1
+    %60 = ConstantLoad 2
+    %61 = ConstantLoad 2
+    %62 = newArray [int, int, never...][%61]{%59, %60}
+    %63 = ConstantLoad 3
+    %64 = ConstantLoad 2
+    %65 = newArray [[int, int, never...], int, never...][%64]{%62, %63}
+    %51 = unknown %58 %65;
+    %66 = %51;
+    %67 = println(%66) -> bb5;
+  }
+  bb5 {
+    %69 = ConstantLoad 1
+    %70 = ConstantLoad 2
+    %71 = ConstantLoad 2
+    %72 = newArray [int, int, never...][%71]{%69, %70}
+    %73 = ConstantLoad 1
+    %74 = ConstantLoad 2
+    %75 = ConstantLoad 2
+    %76 = newArray [int, int, never...][%75]{%73, %74}
+    %68 = == %72 %76;
+    %77 = %68;
+    %78 = println(%77) -> bb6;
+  }
+  bb6 {
+    %80 = ConstantLoad 1
+    %81 = ConstantLoad 2
+    %82 = ConstantLoad 2
+    %83 = newArray [int, int, never...][%82]{%80, %81}
+    %84 = ConstantLoad 1
+    %85 = ConstantLoad 2
+    %86 = ConstantLoad 2
+    %87 = newArray [int, int, never...][%86]{%84, %85}
+    %79 = unknown %83 %87;
+    %88 = %79;
+    %89 = println(%88) -> bb7;
+  }
+  bb7 {
+    %91 = ConstantLoad 1
+    %92 = ConstantLoad 2
+    %93 = ConstantLoad 2
+    %94 = newArray [int, int, never...][%93]{%91, %92}
+    %95 = ConstantLoad 3
+    %96 = ConstantLoad 2
+    %97 = newArray [[int, int, never...], int, never...][%96]{%94, %95}
+    %98 = ConstantLoad 1
+    %99 = ConstantLoad 2
+    %100 = ConstantLoad 2
+    %101 = newArray [int, int, never...][%100]{%98, %99}
+    %102 = ConstantLoad 3
+    %103 = ConstantLoad 2
+    %104 = newArray [[int, int, never...], int, never...][%103]{%101, %102}
+    %90 = == %97 %104;
+    %105 = %90;
+    %106 = println(%105) -> bb8;
+  }
+  bb8 {
+    %108 = ConstantLoad a
+    %109 = ConstantLoad 2
+    %110 = ConstantLoad 2
+    %111 = newArray [string, int, never...][%110]{%108, %109}
+    %112 = ConstantLoad a
+    %113 = ConstantLoad 2
+    %114 = ConstantLoad 2
+    %115 = newArray [string, int, never...][%114]{%112, %113}
+    %107 = == %111 %115;
+    %116 = %107;
+    %117 = println(%116) -> bb9;
+  }
+  bb9 {
+    %119 = ConstantLoad a
+    %120 = ConstantLoad 2
+    %121 = ConstantLoad 2
+    %122 = newArray [string, int, never...][%121]{%119, %120}
+    %123 = ConstantLoad a
+    %124 = ConstantLoad 2
+    %125 = ConstantLoad 2
+    %126 = newArray [string, int, never...][%125]{%123, %124}
+    %118 = unknown %122 %126;
+    %127 = %118;
+    %128 = println(%127) -> bb10;
+  }
+  bb10 {
+    %130 = ConstantLoad 1
+    %131 = ConstantLoad 2
+    %132 = ConstantLoad 2
+    %133 = newArray [int, int, never...][%132]{%130, %131}
+    %134 = ConstantLoad 3
+    %135 = ConstantLoad 2
+    %136 = newArray [[int, int, never...], int, never...][%135]{%133, %134}
+    %137 = ConstantLoad 1
+    %138 = ConstantLoad 2
+    %139 = ConstantLoad 2
+    %140 = newArray [int, int, never...][%139]{%137, %138}
+    %141 = ConstantLoad 4
+    %142 = ConstantLoad 2
+    %143 = newArray [[int, int, never...], int, never...][%142]{%140, %141}
+    %129 = == %136 %143;
+    %144 = %129;
+    %145 = println(%144) -> bb11;
+  }
+  bb11 {
+    %147 = ConstantLoad ab
+    %148 = ConstantLoad 3
+    %149 = ConstantLoad 2
+    %150 = newArray [string, int, never...][%149]{%147, %148}
+    %151 = ConstantLoad ab
+    %152 = ConstantLoad 4
+    %153 = ConstantLoad 2
+    %154 = newArray [string, int, never...][%153]{%151, %152}
+    %146 = == %150 %154;
+    %155 = %146;
+    %156 = println(%155) -> bb12;
+  }
+  bb12 {
+    %158 = ConstantLoad ab
+    %159 = ConstantLoad 3
+    %160 = ConstantLoad 2
+    %161 = newArray [string, int, never...][%160]{%158, %159}
+    %162 = ConstantLoad ac
+    %163 = ConstantLoad 3
+    %164 = ConstantLoad 2
+    %165 = newArray [string, int, never...][%164]{%162, %163}
+    %157 = == %161 %165;
+    %166 = %157;
+    %167 = println(%166) -> bb13;
+  }
+  bb13 {
+    %169 = ConstantLoad ab
+    %170 = ConstantLoad 3
+    %171 = ConstantLoad 2
+    %172 = newArray [string, int, never...][%171]{%169, %170}
+    %173 = ConstantLoad 5
+    %174 = ConstantLoad 2
+    %175 = newArray [[string, int, never...], int, never...][%174]{%172, %173}
+    %176 = ConstantLoad ab
+    %177 = ConstantLoad 4
+    %178 = ConstantLoad 2
+    %179 = newArray [string, int, never...][%178]{%176, %177}
+    %180 = ConstantLoad 5
+    %181 = ConstantLoad 2
+    %182 = newArray [[string, int, never...], int, never...][%181]{%179, %180}
+    %168 = == %175 %182;
+    %183 = %168;
+    %184 = println(%183) -> bb14;
+  }
+  bb14 {
+    %186 = ConstantLoad ab
+    %187 = ConstantLoad 3
+    %188 = ConstantLoad 2
+    %189 = newArray [string, int, never...][%188]{%186, %187}
+    %190 = ConstantLoad 5
+    %191 = ConstantLoad 2
+    %192 = newArray [[string, int, never...], int, never...][%191]{%189, %190}
+    %193 = ConstantLoad ac
+    %194 = ConstantLoad 3
+    %195 = ConstantLoad 2
+    %196 = newArray [string, int, never...][%195]{%193, %194}
+    %197 = ConstantLoad 5
+    %198 = ConstantLoad 2
+    %199 = newArray [[string, int, never...], int, never...][%198]{%196, %197}
+    %185 = == %192 %199;
+    %200 = %185;
+    %201 = println(%200) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

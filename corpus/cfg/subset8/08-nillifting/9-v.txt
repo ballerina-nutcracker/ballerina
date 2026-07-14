@@ -1,0 +1,183 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type float))) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal a))
+      (literal 5))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal b))
+      (literal 6))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal c))
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))
+          (index-based-access
+            (simple-var-ref m)
+            (literal b))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref m)
+              (literal a))
+            (index-based-access
+              (simple-var-ref m)
+              (literal b)))
+          (index-based-access
+            (simple-var-ref m)
+            (literal c))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr -
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))
+          (index-based-access
+            (simple-var-ref m)
+            (literal b))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr -
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref m)
+              (literal a))
+            (index-based-access
+              (simple-var-ref m)
+              (literal b)))
+          (index-based-access
+            (simple-var-ref m)
+            (literal c))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (index-based-access
+            (simple-var-ref m)
+            (literal b))
+          (index-based-access
+            (simple-var-ref m)
+            (literal c))))))
+    (var-def
+      (variable v5 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr /
+          (index-based-access
+            (simple-var-ref m)
+            (literal b))
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v5))))
+    (var-def
+      (variable v6 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (unary-expr -
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v6))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (index-based-access
+            (simple-var-ref m)
+            (literal c))))))
+    (var-def
+      (variable d (type
+        (value-type float)) (expr
+        (literal 13))))
+    (var-def
+      (variable v7 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v7))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref m)
+                (literal a))
+              (index-based-access
+                (simple-var-ref m)
+                (literal b)))
+            (index-based-access
+              (simple-var-ref m)
+              (literal c)))
+          (simple-var-ref d)))))
+    (var-def
+      (variable e (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable v8 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))
+          (simple-var-ref e)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v8))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (binary-expr +
+                (index-based-access
+                  (simple-var-ref m)
+                  (literal a))
+                (index-based-access
+                  (simple-var-ref m)
+                  (literal b)))
+              (index-based-access
+                (simple-var-ref m)
+                (literal c)))
+            (simple-var-ref d))
+          (simple-var-ref e)))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))))))
+  )
+)

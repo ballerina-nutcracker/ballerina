@@ -1,0 +1,75 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %5 = add(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %10 = ConstantLoad false
+    %11 = %10;
+    %12 = add(%9,%11) -> bb3;
+  }
+  bb3 {
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad hello
+    %16 = ConstantLoad false
+    %17 = %16;
+    %18 = add(%15,%17) -> bb5;
+  }
+  bb5 {
+    %19 = %18;
+    %20 = println(%19) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+add(any,any) -> int{
+  bb0 {
+    n = x;
+    %4 = n is int
+    %4 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = (1, y) is int
+    %0 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = + (2, n) (2, y);
+    (2, n) = %0;
+    %1 = <int>((2, n))
+    (2, %0) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (2, %0) = (2, n);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = unknown %0;
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+}

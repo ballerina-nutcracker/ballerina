@@ -1,0 +1,3 @@
+-- stdout --
+<bar:f foo="ff" xmlns:bar="https:foo/bar"><bar:x/></bar:f>
+-- stderr --

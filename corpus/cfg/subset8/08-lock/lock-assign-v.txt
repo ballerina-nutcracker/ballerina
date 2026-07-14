@@ -1,0 +1,36 @@
+(bumpBy
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref f)
+        (literal foo))
+      (simple-var-ref amount))
+    (assignment
+      (index-based-access
+        (simple-var-ref f)
+        (literal bar))
+      (simple-var-ref counter))
+    (compound-assignment +
+      (simple-var-ref counter)
+      (simple-var-ref amount))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 3))))
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 4))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)

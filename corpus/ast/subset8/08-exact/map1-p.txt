@@ -1,0 +1,43 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m1 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable m2 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref m2)
+          (literal x))
+        (simple-var-ref m1))
+      (var-def
+        (variable m3 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type any)
+              (error-type)))) (expr
+          (type-conversion-expr
+            (index-based-access
+              (simple-var-ref m2)
+              (literal x))
+            (constrained-type
+              (builtin-ref-type map)
+              (union-type
+                (value-type any)
+                (error-type)))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref m3)
+          (literal y))
+        (literal true)))))

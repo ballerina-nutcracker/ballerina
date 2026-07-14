@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected float, got 1.2E+23
+  --> const3-e.bal:20:15
+   |
+20 |     float f = 1.2e23d; // @error
+   |               ^^^^^^^

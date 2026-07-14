@@ -1,0 +1,86 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const Inf () (
+    (binary-expr /
+      (literal 1.0)
+      (literal 0.0))))
+  (const NaN () (
+    (binary-expr /
+      (literal 0.0)
+      (literal 0.0))))
+  (const NegInf () (
+    (binary-expr /
+      (unary-expr -
+        (literal 1.0))
+      (literal 0.0))))
+  (type-definition Special
+    (union-type
+      (union-type
+        (union-type
+          (finite-type
+            (literal 0f))
+          (user-defined-type NaN))
+        (user-defined-type Inf))
+      (user-defined-type NegInf)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type any)) (expr
+          (literal 1.0))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special)))))
+      (assignment
+        (simple-var-ref x)
+        (simple-var-ref Inf))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special)))))
+      (assignment
+        (simple-var-ref x)
+        (simple-var-ref NegInf))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special)))))
+      (assignment
+        (simple-var-ref x)
+        (simple-var-ref NaN))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special)))))
+      (assignment
+        (simple-var-ref x)
+        (literal 0.0f))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special)))))
+      (assignment
+        (simple-var-ref x)
+        (unary-expr -
+          (literal 0.0f)))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special)))))
+      (assignment
+        (simple-var-ref x)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type Special))))))))

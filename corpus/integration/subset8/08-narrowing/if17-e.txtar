@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean|int, got boolean|int|float
+  --> if17-e.bal:36:21
+   |
+36 |     int|boolean _ = x; // @error
+   |                     ^

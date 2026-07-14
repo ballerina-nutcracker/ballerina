@@ -1,0 +1,82 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as map))
+  (import-package ballerina lang map (as lang.map))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable scores (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal alice)
+              (literal 10))
+            (key-value
+              (literal bob)
+              (literal 20))))))
+      (var-def
+        (variable alice (type
+          (value-type int)) (expr
+          (invocation map remove (
+            (simple-var-ref scores)
+            (literal alice))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref alice))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref scores))))))
+      (var-def
+        (variable counts (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal one)
+              (literal 1))
+            (key-value
+              (literal two)
+              (literal 2))))))
+      (var-def
+        (variable two (type
+          (value-type int)) (expr
+          (invocation map remove (
+            (simple-var-ref counts)
+            (literal two))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref two))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref counts))))))
+      (var-def
+        (variable labels (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal A))
+            (key-value
+              (literal name)
+              (literal Ann))))))
+      (var-def
+        (variable id (type
+          (value-type string)) (expr
+          (invocation map remove (
+            (simple-var-ref labels)
+            (literal id))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref id))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref labels)))))))))

@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad text/html,,application/json
+    %2 = parseHeader(%1) -> bb1;
+  }
+  bb1 {
+    r1 = %2;
+    %4 = r1 is error
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad ; charset=utf-8
+    %8 = parseHeader(%7) -> bb3;
+  }
+  bb3 {
+    r2 = %8;
+    %10 = r2 is error
+    %11 = %10;
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad <nil>
+    %0 = %13;
+    return;
+  }
+}

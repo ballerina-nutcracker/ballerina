@@ -1,0 +1,26 @@
+(explode
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (user-defined-type Nothing)) (expr
+        (simple-var-ref n))))
+    (return
+      (literal 42))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (user-defined-type Nothing)) (expr
+        (literal <nil>))))
+    (var-def
+      (variable e (type
+        (user-defined-type Everything)) (expr
+        (invocation explode (
+          (simple-var-ref n))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)

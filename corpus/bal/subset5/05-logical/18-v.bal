@@ -19,6 +19,6 @@ public function main() {
     if x is int || y is float {
         return;
     }
-    string unused1 =  x;
-    boolean unused2 =  y;
+    string _ =  x;
+    boolean _ =  y;
 }

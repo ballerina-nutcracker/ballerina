@@ -1,0 +1,73 @@
+(foo
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref base)
+        (group-expr
+          (binary-expr +
+            (field-based-access foo
+              (simple-var-ref v1))
+            (field-based-access bar
+              (simple-var-ref v2))))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1)
+          (named-arg v1
+            (mapping-constructor-expr))
+          (named-arg v2
+            (mapping-constructor-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1)
+          (named-arg v1
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 10))))
+          (named-arg v2
+            (mapping-constructor-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1)
+          (named-arg v1
+            (mapping-constructor-expr))
+          (named-arg v2
+            (mapping-constructor-expr
+              (key-value
+                (literal bar)
+                (literal 5)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1)
+          (named-arg v1
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 1))))
+          (named-arg v2
+            (mapping-constructor-expr
+              (key-value
+                (literal bar)
+                (literal 5)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1)
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 1)))
+          (mapping-constructor-expr
+            (key-value
+              (literal bar)
+              (literal 5))))))))
+  )
+)

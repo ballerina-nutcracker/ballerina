@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate key 'a' in mapping constructor
+  --> 4-e.bal:20:29
+   |
+20 |     io:println({a: 1, b: 2, a: 3}); // @error
+   |                             ^

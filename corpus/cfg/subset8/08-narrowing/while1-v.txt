@@ -1,0 +1,57 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable l (type
+        (user-defined-type IntList)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal i)
+            (literal 42))
+          (key-value
+            (literal next)
+            (mapping-constructor-expr
+              (key-value
+                (literal i)
+                (literal 40))
+              (key-value
+                (literal next)
+                (literal <nil>))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (simple-var-ref l))))))
+  )
+)
+(sum
+  (bb0 () (bb1)
+    (var-def
+      (variable temp (type
+        (union-type
+          (user-defined-type IntList)
+          (value-type null))) (expr
+        (simple-var-ref intList))))
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr !=
+      (simple-var-ref temp)
+      (literal <nil>))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (field-based-access i
+        (simple-var-ref temp)))
+    (assignment
+      (simple-var-ref temp)
+      (field-based-access next
+        (simple-var-ref temp)))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref total))
+  )
+)

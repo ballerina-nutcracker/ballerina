@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable str (type
+          (value-type string)) (expr
+          (literal x))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 9))))
+      (while
+        (binary-expr <
+          (simple-var-ref _)
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (assignment
+            (simple-var-ref str)
+            (invocation double (
+              (simple-var-ref str))))
+          (assignment
+            (simple-var-ref _)
+            (binary-expr +
+              (simple-var-ref _)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (simple-var-ref str))))))))
+  (function double (
+    (variable s (type
+      (value-type string)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref s)
+          (simple-var-ref s))))))

@@ -1,0 +1,9 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = println() -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

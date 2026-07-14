@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: arithmetic overflow
+        at main(sub6-p.bal:22)

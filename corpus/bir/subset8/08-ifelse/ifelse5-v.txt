@@ -1,0 +1,36 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad false
+    %1 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb2 {
+    %2 = ConstantLoad true
+    %2 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unconditionally reach
+    %1 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    GOTO bb7;
+  }
+  bb7 {
+    return;
+  }
+}

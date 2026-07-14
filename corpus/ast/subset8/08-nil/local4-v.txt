@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition MyNil
+    (finite-type
+      (literal <nil>)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (finite-type
+            (literal <nil>))) (expr
+          (literal <nil>))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref n)
+            (finite-type
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal <nil>)
+            (user-defined-type MyNil))))))))

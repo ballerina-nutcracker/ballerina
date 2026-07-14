@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation catch ()))))))
+  (function catch () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation neverErr ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$0))
+      (return
+        (literal 22))))
+  (function neverErr () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (return
+        (literal <nil>)))))

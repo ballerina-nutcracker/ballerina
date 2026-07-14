@@ -1,0 +1,3 @@
+-- stdout --
+<f xmlns="https:foo/bar"><x ff="fff"/></f>
+-- stderr --

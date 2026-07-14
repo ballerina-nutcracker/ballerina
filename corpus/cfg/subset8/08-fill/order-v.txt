@@ -1,0 +1,50 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable e1 (type
+        (user-defined-type EmptyTuple)) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable i (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (simple-var-ref i)
+          (simple-var-ref e1)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (simple-var-ref e1)
+          (simple-var-ref i)))))
+    (var-def
+      (variable e2 (type
+        (user-defined-type EmptyTuple)) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <
+          (simple-var-ref e1)
+          (simple-var-ref e2)))))
+    (var-def
+      (variable b0 (type
+        (array-type
+          (value-type boolean) dimensions: 1 ([
+          (literal 0)]))) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable f0 (type
+        (array-type
+          (value-type float) dimensions: 1 ([
+          (literal 0)]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <
+          (simple-var-ref b0)
+          (simple-var-ref f0)))))
+  )
+)

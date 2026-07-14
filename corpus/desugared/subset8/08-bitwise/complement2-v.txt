@@ -1,0 +1,82 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang int (as lang.int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr ~
+            (simple-var-ref i)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation twiddle (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr ~
+            (invocation twiddle (
+              (literal 100)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.int toHexString (
+            (group-expr
+              (unary-expr ~
+                (literal 9223372036854775807))))))))
+      (expression-stmt
+        (invocation io println (
+          (unary-expr ~
+            (unary-expr -
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation minusTwo (
+            (literal 42))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation minusTwo (
+            (unary-expr -
+              (literal 98)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation addTwo (
+            (literal 42))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation addTwo (
+            (unary-expr -
+              (literal 98)))))))))
+  (function twiddle (
+    (variable i (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (unary-expr ~
+          (simple-var-ref i)))))
+  (function minusTwo (
+    (variable i (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (unary-expr ~
+          (unary-expr -
+            (unary-expr ~
+              (unary-expr -
+                (simple-var-ref i))))))))
+  (function addTwo (
+    (variable i (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (unary-expr -
+          (unary-expr ~
+            (unary-expr -
+              (unary-expr ~
+                (simple-var-ref i)))))))))

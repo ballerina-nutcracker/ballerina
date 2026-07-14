@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 4
+    %5 = ConstantLoad 5
+    %6 = ConstantLoad 6
+    %7 = ConstantLoad 7
+    %8 = ConstantLoad 8
+    %9 = ConstantLoad 9
+    %10 = ConstantLoad 10
+    %11 = ConstantLoad 10
+    %12 = newArray [int...][%11]{%1, %2, %3, %4, %5, %6, %7, %8, %9, %10}
+    a = %12;
+    %16 = ConstantLoad 0
+    %17 = ConstantLoad 0
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad 2
+    %20 = newArray [int, int, never...][%19]{%17, %18}
+    %15 = %20[%16];
+    %14 = a[%15];
+    %21 = %14;
+    %22 = println(%21) -> bb1;
+  }
+  bb1 {
+    %25 = ConstantLoad x
+    %26 = ConstantLoad x
+    %27 = ConstantLoad 1
+    %28 = ConstantLoad y
+    %29 = ConstantLoad 2
+    %30 = newMap {| x: int, y: int, never... |}{%26=%27, %28=%29}
+    %24 = %30[%25];
+    %23 = a[%24];
+    %31 = %23;
+    %32 = println(%31) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

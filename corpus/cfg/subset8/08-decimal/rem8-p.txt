@@ -1,0 +1,9 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (literal 9.05E-6142)
+          (literal 1E-6143)))))
+  )
+)

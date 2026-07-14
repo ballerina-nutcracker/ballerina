@@ -53,5 +53,9 @@
       (value-type int)))) (
     (value-type string))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref x))))
       (return
         (literal bar)))))

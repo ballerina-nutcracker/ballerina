@@ -1,0 +1,481 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation operations
+    (user-defined-type Operations)
+    (attach-point type))
+  (type-definition Operations
+    (record-type
+      (field unaryPlus
+        (value-type int))
+      (field negFloat
+        (value-type float))
+      (field negDecimal
+        (value-type decimal))
+      (field notFalse
+        (value-type boolean))
+      (field shortAnd
+        (value-type boolean))
+      (field shortOr
+        (value-type boolean))
+      (field addInt
+        (value-type int))
+      (field addFloat
+        (value-type float))
+      (field addDecimal
+        (value-type decimal))
+      (field subInt
+        (value-type int))
+      (field subFloat
+        (value-type float))
+      (field subDecimal
+        (value-type decimal))
+      (field mulInt
+        (value-type int))
+      (field mulFloat
+        (value-type float))
+      (field mulDecimal
+        (value-type decimal))
+      (field mulFloatInt
+        (value-type float))
+      (field mulIntFloat
+        (value-type float))
+      (field mulDecimalInt
+        (value-type decimal))
+      (field mulIntDecimal
+        (value-type decimal))
+      (field divInt
+        (value-type int))
+      (field divFloat
+        (value-type float))
+      (field divDecimal
+        (value-type decimal))
+      (field divFloatInt
+        (value-type float))
+      (field divDecimalInt
+        (value-type decimal))
+      (field modInt
+        (value-type int))
+      (field modFloat
+        (value-type float))
+      (field modDecimal
+        (value-type decimal))
+      (field equal
+        (value-type boolean))
+      (field notEqual
+        (value-type boolean))
+      (field refEqual
+        (value-type boolean))
+      (field refNotEqual
+        (value-type boolean))
+      (field nilRefEqual
+        (value-type boolean))
+      (field floatRefEqual
+        (value-type boolean))
+      (field stringRefEqual
+        (value-type boolean))
+      (field booleanRefEqual
+        (value-type boolean))
+      (field decimalRefEqual
+        (value-type boolean))
+      (field listRefEqual
+        (value-type boolean))
+      (field mapRefEqual
+        (value-type boolean))
+      (field greater
+        (value-type boolean))
+      (field greaterEqual
+        (value-type boolean))
+      (field less
+        (value-type boolean))
+      (field lessEqual
+        (value-type boolean))
+      (field bitAnd
+        (value-type int))
+      (field bitOr
+        (value-type int))
+      (field bitXor
+        (value-type int))
+      (field leftShift
+        (value-type int))
+      (field rightShift
+        (value-type int))
+      (field unsignedRightShift
+        (value-type int))
+      (field floatToInt
+        (value-type int))
+      (field decimalToInt
+        (value-type int))
+      (field intToFloat
+        (value-type float))
+      (field decimalToFloat
+        (value-type float))
+      (field intToDecimal
+        (value-type decimal))
+      (field floatToDecimal
+        (value-type decimal))
+      (field identityConversion
+        (value-type int))
+      (field nilUnary
+        (union-type
+          (value-type int)
+          (value-type null)))
+      (field nilMultiply
+        (union-type
+          (value-type int)
+          (value-type null)))
+      (field nilLess
+        (union-type
+          (value-type boolean)
+          (value-type null)))))
+  (type-definition Target
+    (annotation-attachment operations
+      (mapping-constructor-expr
+        (key-value
+          (literal unaryPlus)
+          (unary-expr +
+            (literal 5)))
+        (key-value
+          (literal negFloat)
+          (unary-expr -
+            (literal 2.5)))
+        (key-value
+          (literal negDecimal)
+          (unary-expr -
+            (literal 2.5)))
+        (key-value
+          (literal notFalse)
+          (unary-expr !
+            (literal false)))
+        (key-value
+          (literal shortAnd)
+          (binary-expr &&
+            (literal false)
+            (literal true)))
+        (key-value
+          (literal shortOr)
+          (binary-expr ||
+            (literal true)
+            (literal false)))
+        (key-value
+          (literal addInt)
+          (binary-expr +
+            (literal 20)
+            (literal 2)))
+        (key-value
+          (literal addFloat)
+          (binary-expr +
+            (literal 1.5)
+            (literal 2.5)))
+        (key-value
+          (literal addDecimal)
+          (binary-expr +
+            (literal 1.5)
+            (literal 2.5)))
+        (key-value
+          (literal subInt)
+          (binary-expr -
+            (literal 20)
+            (literal 2)))
+        (key-value
+          (literal subFloat)
+          (binary-expr -
+            (literal 5.5)
+            (literal 2.5)))
+        (key-value
+          (literal subDecimal)
+          (binary-expr -
+            (literal 5.5)
+            (literal 2.5)))
+        (key-value
+          (literal mulInt)
+          (binary-expr *
+            (literal 6)
+            (literal 7)))
+        (key-value
+          (literal mulFloat)
+          (binary-expr *
+            (literal 2.5)
+            (literal 2)))
+        (key-value
+          (literal mulDecimal)
+          (binary-expr *
+            (literal 2.5)
+            (literal 2)))
+        (key-value
+          (literal mulFloatInt)
+          (binary-expr *
+            (literal 2.5)
+            (literal 2)))
+        (key-value
+          (literal mulIntFloat)
+          (binary-expr *
+            (literal 2)
+            (literal 2.5)))
+        (key-value
+          (literal mulDecimalInt)
+          (binary-expr *
+            (literal 2.5)
+            (literal 2)))
+        (key-value
+          (literal mulIntDecimal)
+          (binary-expr *
+            (literal 2)
+            (literal 2.5)))
+        (key-value
+          (literal divInt)
+          (binary-expr /
+            (literal 21)
+            (literal 3)))
+        (key-value
+          (literal divFloat)
+          (binary-expr /
+            (literal 7.5)
+            (literal 2.5)))
+        (key-value
+          (literal divDecimal)
+          (binary-expr /
+            (literal 7.5)
+            (literal 2.5)))
+        (key-value
+          (literal divFloatInt)
+          (binary-expr /
+            (literal 7.5)
+            (literal 3)))
+        (key-value
+          (literal divDecimalInt)
+          (binary-expr /
+            (literal 7.5)
+            (literal 3)))
+        (key-value
+          (literal modInt)
+          (binary-expr %
+            (literal 22)
+            (literal 5)))
+        (key-value
+          (literal modFloat)
+          (binary-expr %
+            (literal 7.5)
+            (literal 2)))
+        (key-value
+          (literal modDecimal)
+          (binary-expr %
+            (literal 7.5)
+            (literal 2)))
+        (key-value
+          (literal equal)
+          (binary-expr ==
+            (literal 2)
+            (literal 2)))
+        (key-value
+          (literal notEqual)
+          (binary-expr !=
+            (literal 2)
+            (literal 2)))
+        (key-value
+          (literal refEqual)
+          (binary-expr ===
+            (literal 2)
+            (literal 2)))
+        (key-value
+          (literal refNotEqual)
+          (binary-expr !==
+            (literal 2)
+            (literal 2)))
+        (key-value
+          (literal nilRefEqual)
+          (binary-expr ===
+            (literal <nil>)
+            (literal <nil>)))
+        (key-value
+          (literal floatRefEqual)
+          (binary-expr ===
+            (literal 2.5)
+            (literal 2.5)))
+        (key-value
+          (literal stringRefEqual)
+          (binary-expr ===
+            (literal value)
+            (literal value)))
+        (key-value
+          (literal booleanRefEqual)
+          (binary-expr ===
+            (literal true)
+            (literal true)))
+        (key-value
+          (literal decimalRefEqual)
+          (binary-expr ===
+            (literal 2.5)
+            (literal 2.5)))
+        (key-value
+          (literal listRefEqual)
+          (binary-expr ===
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))
+        (key-value
+          (literal mapRefEqual)
+          (binary-expr ===
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 1)))
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 1)))))
+        (key-value
+          (literal greater)
+          (binary-expr >
+            (literal 3)
+            (literal 2)))
+        (key-value
+          (literal greaterEqual)
+          (binary-expr >=
+            (literal 3)
+            (literal 3)))
+        (key-value
+          (literal less)
+          (binary-expr <
+            (literal 2)
+            (literal 3)))
+        (key-value
+          (literal lessEqual)
+          (binary-expr <=
+            (literal 3)
+            (literal 3)))
+        (key-value
+          (literal bitAnd)
+          (binary-expr &
+            (literal 7)
+            (literal 3)))
+        (key-value
+          (literal bitOr)
+          (binary-expr |
+            (literal 4)
+            (literal 3)))
+        (key-value
+          (literal bitXor)
+          (binary-expr ^
+            (literal 7)
+            (literal 3)))
+        (key-value
+          (literal leftShift)
+          (binary-expr <<
+            (literal 3)
+            (literal 2)))
+        (key-value
+          (literal rightShift)
+          (binary-expr >>
+            (unary-expr -
+              (literal 8))
+            (literal 2)))
+        (key-value
+          (literal unsignedRightShift)
+          (binary-expr >>>
+            (unary-expr -
+              (literal 1))
+            (literal 63)))
+        (key-value
+          (literal floatToInt)
+          (type-conversion-expr
+            (literal 2.5)
+            (value-type int)))
+        (key-value
+          (literal decimalToInt)
+          (type-conversion-expr
+            (literal 2.5)
+            (value-type int)))
+        (key-value
+          (literal intToFloat)
+          (type-conversion-expr
+            (literal 2)
+            (value-type float)))
+        (key-value
+          (literal decimalToFloat)
+          (type-conversion-expr
+            (literal 2.5)
+            (value-type float)))
+        (key-value
+          (literal intToDecimal)
+          (type-conversion-expr
+            (literal 2)
+            (value-type decimal)))
+        (key-value
+          (literal floatToDecimal)
+          (type-conversion-expr
+            (literal 2.5)
+            (value-type decimal)))
+        (key-value
+          (literal identityConversion)
+          (type-conversion-expr
+            (literal 2)
+            (value-type int)))
+        (key-value
+          (literal nilUnary)
+          (unary-expr -
+            (group-expr
+              (type-conversion-expr
+                (literal <nil>)
+                (union-type
+                  (value-type int)
+                  (value-type null))))))
+        (key-value
+          (literal nilMultiply)
+          (binary-expr *
+            (group-expr
+              (type-conversion-expr
+                (literal <nil>)
+                (union-type
+                  (value-type int)
+                  (value-type null))))
+            (literal 2)))
+        (key-value
+          (literal nilLess)
+          (binary-expr <
+            (group-expr
+              (type-conversion-expr
+                (literal <nil>)
+                (union-type
+                  (value-type int)
+                  (value-type null))))
+            (literal 2)))))
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (union-type
+            (user-defined-type Operations)
+            (value-type null))) (expr
+          (annot-access-expr operations
+            (simple-var-ref Target)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (user-defined-type Operations))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref value)
+                (literal addInt)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref value)
+                (literal mulDecimal)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref value)
+                (literal unsignedRightShift)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref value)
+                (literal floatToDecimal)))))) ())
+      (block-stmt))))

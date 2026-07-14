@@ -1,0 +1,144 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %7 = foo(%6) -> bb3;
+  }
+  bb3 {
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad hello
+    %10 = foo(%9) -> bb5;
+  }
+  bb5 {
+    %11 = println(%10) -> bb6;
+  }
+  bb6 {
+    %12 = ConstantLoad true
+    %13 = %12;
+    %14 = foo(%13) -> bb7;
+  }
+  bb7 {
+    %15 = println(%14) -> bb8;
+  }
+  bb8 {
+    %16 = ConstantLoad 9
+    %17 = %16;
+    %18 = foo(%17) -> bb9;
+  }
+  bb9 {
+    %19 = println(%18) -> bb10;
+  }
+  bb10 {
+    %20 = ConstantLoad hi
+    %21 = foo(%20) -> bb11;
+  }
+  bb11 {
+    %22 = println(%21) -> bb12;
+  }
+  bb12 {
+    %23 = ConstantLoad 0
+    %24 = ConstantLoad 1
+    %25 = newArray list[%24]{%23}
+    %26 = foo(%25) -> bb13;
+  }
+  bb13 {
+    %27 = println(%26) -> bb14;
+  }
+  bb14 {
+    %28 = ConstantLoad false
+    %29 = %28;
+    %30 = foo(%29) -> bb15;
+  }
+  bb15 {
+    %31 = println(%30) -> bb16;
+  }
+  bb16 {
+    return;
+  }
+}
+foo(any) -> string{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = == v %2;
+    %3 ? bb2 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad zero
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %4 = ConstantLoad 1
+    %5 = == v %4;
+    %6 = ConstantLoad 3
+    %7 = == v %6;
+    %8 = || %5 %7;
+    %9 = ConstantLoad 5
+    %10 = == v %9;
+    %11 = || %8 %10;
+    %12 = ConstantLoad 7
+    %13 = == v %12;
+    %14 = || %11 %13;
+    %15 = ConstantLoad 9
+    %16 = == v %15;
+    %17 = || %14 %16;
+    %17 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad odd
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    %18 = ConstantLoad true
+    %19 = == v %18;
+    %19 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = ConstantLoad boolean
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %20 = ConstantLoad hello
+    %21 = == v %20;
+    %21 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = ConstantLoad greeting
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb9 {
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 1
+    %0 = ConstantLoad other
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}

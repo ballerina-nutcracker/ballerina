@@ -1,0 +1,74 @@
+(checkEquality
+  (bb0 () ()
+    (return
+      (binary-expr ==
+        (simple-var-ref b1)
+        (simple-var-ref b2)))
+  )
+)
+(checkInEquality
+  (bb0 () ()
+    (return
+      (binary-expr !=
+        (simple-var-ref b1)
+        (simple-var-ref b2)))
+  )
+)
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable b (type
+        (value-type boolean)) (expr
+        (invocation checkEquality (
+          (literal true)
+          (literal true))))))
+    (simple-var-ref b)
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal 4))))
+  )
+  (bb2 (bb1 bb3) (bb4 bb6)
+    (assignment
+      (simple-var-ref b)
+      (invocation checkEquality (
+        (literal false)
+        (literal false))))
+    (simple-var-ref b)
+  )
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal 5))))
+  )
+  (bb4 (bb2) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal 6))))
+  )
+  (bb5 (bb4 bb6) (bb7 bb9)
+    (assignment
+      (simple-var-ref b)
+      (invocation checkInEquality (
+        (literal true)
+        (literal true))))
+    (simple-var-ref b)
+  )
+  (bb6 (bb2) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal 7))))
+  )
+  (bb7 (bb5) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal 8))))
+  )
+  (bb8 (bb7 bb9) ())
+  (bb9 (bb5) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal 9))))
+  )
+)

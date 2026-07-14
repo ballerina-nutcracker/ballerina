@@ -1,0 +1,73 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad 2
+    %7 = %6;
+    %8 = foo(%7) -> bb3;
+  }
+  bb3 {
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad 3
+    %12 = %11;
+    %13 = foo(%12) -> bb5;
+  }
+  bb5 {
+    %14 = %13;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %16 = ConstantLoad 4
+    %17 = %16;
+    %18 = foo(%17) -> bb7;
+  }
+  bb7 {
+    %19 = %18;
+    %20 = println(%19) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+foo(any) -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == x %2;
+    %4 = ConstantLoad 2
+    %5 = == x %4;
+    %6 = || %3 %5;
+    %7 = ConstantLoad 3
+    %8 = == x %7;
+    %9 = || %6 %8;
+    %9 ? bb2 : bb3;
+  }
+  bb1 {
+    %10 = ConstantLoad 1
+    %11 = unknown %10;
+    %0 = %11;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 3
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = - (1, x) %2;
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+}

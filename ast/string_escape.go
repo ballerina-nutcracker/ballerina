@@ -90,7 +90,6 @@ func unescapeBackslashEscapes(s string) string {
 }
 
 // validateUnicodePoints validates unicode escape sequences
-// migrated from BLangNodeBuilder.java:6233:5
 func validateUnicodePoints(text string, pos diagnostics.Location) {
 	matches := unicodeCodepointPattern.FindAllStringSubmatch(text, -1)
 	for _, match := range matches {

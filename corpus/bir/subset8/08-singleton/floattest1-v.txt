@@ -1,0 +1,56 @@
+module $anon.. v 0.0.0;
+Inf  float;
+NaN  float;
+NegInf  float;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    x = %1;
+    %3 = x is float
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    x = Inf;
+    %6 = x is float
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    x = NegInf;
+    %9 = x is float
+    %10 = %9;
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    x = NaN;
+    %12 = x is float
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad 0
+    x = %15;
+    %16 = x is float
+    %17 = %16;
+    %18 = println(%17) -> bb5;
+  }
+  bb5 {
+    %19 = ConstantLoad 0
+    %20 = unknown %19;
+    x = %20;
+    %21 = x is float
+    %22 = %21;
+    %23 = println(%22) -> bb6;
+  }
+  bb6 {
+    %24 = ConstantLoad 1
+    x = %24;
+    %25 = x is float
+    %26 = %25;
+    %27 = println(%26) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

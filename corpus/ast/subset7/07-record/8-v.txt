@@ -21,7 +21,7 @@
           (user-defined-type R)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref id)
+              (literal id)
               (literal 1))))))
       (expression-stmt
         (invocation io println (
@@ -40,10 +40,10 @@
           (user-defined-type R)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref id)
+              (literal id)
               (literal 2))
             (key-value
-              (simple-var-ref value)
+              (literal value)
               (literal 20))))))
       (expression-stmt
         (invocation io println (
@@ -62,10 +62,10 @@
           (user-defined-type R)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref id)
+              (literal id)
               (literal 3))
             (key-value
-              (simple-var-ref name)
+              (literal name)
               (literal custom))))))
       (expression-stmt
         (invocation io println (
@@ -84,13 +84,13 @@
           (user-defined-type R)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref id)
+              (literal id)
               (literal 4))
             (key-value
-              (simple-var-ref value)
+              (literal value)
               (literal 30))
             (key-value
-              (simple-var-ref name)
+              (literal name)
               (literal both))))))
       (expression-stmt
         (invocation io println (

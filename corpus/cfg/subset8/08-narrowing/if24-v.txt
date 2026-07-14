@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation next (
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation next (
+          (literal false))))))
+  )
+)
+(next
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb1 (bb0) ()
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (literal 1)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (unary-expr !
+        (simple-var-ref x)))
+  )
+)

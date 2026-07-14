@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 class WordIterator {
   data [string...]
   idx int
@@ -30,28 +29,31 @@ class WordIterator {
       %2 ? bb1 : bb2;
     }
     bb1 {
-      %9 = ConstantLoad <nil>
-      %0 = %9;
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
       return;
     }
     bb2 {
-      %12 = ConstantLoad idx
-      %11 = self[%12];
-      %14 = ConstantLoad data
-      %13 = self[%14];
-      %10 = %13[%11];
-      val = %10;
-      %18 = ConstantLoad idx
-      %17 = self[%18];
-      %19 = %17;
-      %20 = ConstantLoad 1
-      %21 = %20;
-      %16 = + %19 %21;
-      %22 = ConstantLoad idx
-      self[%22] = %16;
-      %23 = ConstantLoad value
-      %24 = newMap {| value: string, never... |}{%23=val}
-      %0 = %24;
+      PushScopeFrame 14
+      %2 = ConstantLoad idx
+      %1 = (1, self)[%2];
+      %4 = ConstantLoad data
+      %3 = (1, self)[%4];
+      %0 = %3[%1];
+      val = %0;
+      %6 = ConstantLoad idx
+      %7 = (1, self)[%6];
+      %8 = %7;
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %11 = + %8 %10;
+      (1, self)[%6] = %11;
+      %12 = ConstantLoad value
+      %13 = newMap {| value: string, never... |}{%12=val}
+      (1, %0) = %13;
+      PopScopeFrame
       return;
     }
   }
@@ -64,14 +66,14 @@ class Words {
       %2 = ConstantLoad hello
       %3 = ConstantLoad world
       %4 = ConstantLoad 2
-      %5 = newArray [string, string, never...][%4]{%2, %3}
+      %5 = newArray [string...][%4]{%2, %3}
       %6 = ConstantLoad data
       self[%6] = %5;
       return;
     }
   }
 
-  iterator() -> object { [string...] data; int idx; function init([string...], int) returns nil; int len; function next() returns nil|{| value: string, never... |} }{
+  iterator() -> object { private [string...] data; private int idx; public function init([string...], int) returns nil; private int len; public function next() returns nil|{| value: string, never... |} }{
     bb0 {
       %2 = newObject $anon/.:WordIterator
       %4 = ConstantLoad data
@@ -140,6 +142,8 @@ main() -> nil{
     %2 ? bb10 : bb11;
   }
   bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
     PopScopeFrame
     GOTO bb8;
   }

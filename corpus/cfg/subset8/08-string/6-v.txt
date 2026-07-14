@@ -1,0 +1,23 @@
+(greet
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+  )
+)
+(greeting
+  (bb0 () ()
+    (return
+      (literal hi))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation greet (
+        (literal hello))))
+    (expression-stmt
+      (invocation io println (
+        (invocation greeting ()))))
+  )
+)

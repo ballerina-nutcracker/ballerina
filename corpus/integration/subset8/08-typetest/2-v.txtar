@@ -1,0 +1,10 @@
+-- stdout --
+int
+boolean
+string
+string
+int
+int
+array
+map
+-- stderr --

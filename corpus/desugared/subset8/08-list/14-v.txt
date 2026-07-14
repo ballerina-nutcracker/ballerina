@@ -1,0 +1,60 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable b (type
+          (value-type any)) (expr
+          (binary-expr ==
+            (simple-var-ref a)
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable c (type
+          (value-type any)) (expr
+          (binary-expr ==
+            (simple-var-ref a)
+            (list-constructor-expr
+              (literal 3)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable d (type
+          (value-type any)) (expr
+          (binary-expr ==
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 3)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (var-def
+        (variable e (type
+          (value-type any)) (expr
+          (binary-expr ==
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e)))))))

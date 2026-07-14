@@ -1,0 +1,40 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 17
+    x = %1;
+    %3 = x;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad 42
+    %6 = %5;
+    %7 = foo(%6) -> bb2;
+  }
+  bb2 {
+    %8 = bar() -> bb3;
+  }
+  bb3 {
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+foo(float) -> nil{
+  bb0 {
+    %2 = x;
+    %3 = println(%2) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+bar() -> float{
+  bb0 {
+    %1 = ConstantLoad 21
+    %0 = %1;
+    return;
+  }
+}

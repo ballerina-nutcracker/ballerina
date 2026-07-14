@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unmatchable match clause
+  --> matcherror2-e.bal:19:9
+   |
+19 |         _  // @error
+   |         ^^^^^^^^^^^^
+20 |         => {
+   |         ^^^^
+21 |             return;
+   |             ^^^^^^^
+22 |         }
+   |         ^

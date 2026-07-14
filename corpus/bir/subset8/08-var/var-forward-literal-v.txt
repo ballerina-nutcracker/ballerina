@@ -1,0 +1,11 @@
+module $anon.. v 0.0.0;
+X  int;
+Y  int;
+main() -> nil{
+  bb0 {
+    %1 = println(X) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

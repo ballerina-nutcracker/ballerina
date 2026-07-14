@@ -1,0 +1,65 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal foo)
+            (literal 7))))))
+    (var-def
+      (variable before (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (field-based-access foo
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref before))))
+    (type-test-expr is
+      (simple-var-ref before)
+      (value-type null))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal before missing))))
+  )
+  (bb2 (bb1 bb3) (bb4 bb6)
+    (assignment
+      (field-based-access foo
+        (simple-var-ref r))
+      (literal <nil>))
+    (var-def
+      (variable after (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (field-based-access foo
+          (simple-var-ref r)))))
+    (type-test-expr is
+      (simple-var-ref after)
+      (value-type null))
+  )
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref before)
+          (literal 1)))))
+  )
+  (bb4 (bb2) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (literal after missing))))
+  )
+  (bb5 (bb4 bb6) ())
+  (bb6 (bb2) (bb5)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref after)
+          (literal 1)))))
+  )
+)

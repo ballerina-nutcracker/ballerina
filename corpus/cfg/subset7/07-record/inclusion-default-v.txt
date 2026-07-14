@@ -5,7 +5,7 @@
         (user-defined-type Inherited)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref z)
+            (literal z)
             (literal world))))))
     (expression-stmt
       (invocation io println (
@@ -24,10 +24,10 @@
         (user-defined-type Inherited)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 5))
           (key-value
-            (simple-var-ref z)
+            (literal z)
             (literal world))))))
     (expression-stmt
       (invocation io println (
@@ -46,7 +46,7 @@
         (user-defined-type OverriddenWithNewDefault)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref z)
+            (literal z)
             (literal test))))))
     (expression-stmt
       (invocation io println (
@@ -65,10 +65,10 @@
         (user-defined-type OverriddenWithNewDefault)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref x)
+            (literal x)
             (literal 99))
           (key-value
-            (simple-var-ref z)
+            (literal z)
             (literal test))))))
     (expression-stmt
       (invocation io println (

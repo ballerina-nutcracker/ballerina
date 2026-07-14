@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 // @productions module-enum-decl
-import ballerina/io;
 
 string Color = "RED"; // @error
 

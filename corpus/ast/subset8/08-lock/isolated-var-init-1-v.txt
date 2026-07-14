@@ -1,0 +1,26 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (variable xs (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))) (expr
+    (list-constructor-expr
+      (literal 1)
+      (literal 2)
+      (literal 3))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref counter))))))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref xs)))))))))

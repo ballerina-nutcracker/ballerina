@@ -52,3 +52,10 @@ func DebugWriteLazy(flag uint16, msgFn func() string) {
 		fmt.Fprintf(debugWriter, "%s\n", msgFn())
 	}
 }
+
+func WithSuppressedDebug(fn func()) {
+	saved := debugFlags
+	debugFlags = 0
+	defer func() { debugFlags = saved }()
+	fn()
+}

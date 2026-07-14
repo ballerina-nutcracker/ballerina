@@ -5,7 +5,7 @@
         (user-defined-type OpenRecord)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref name)
+            (literal name)
             (literal John))
           (key-value
             (literal age)

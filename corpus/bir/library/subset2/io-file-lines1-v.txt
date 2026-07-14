@@ -1,0 +1,79 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_lines1.txt
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad Alpha
+    %5 = ConstantLoad Beta
+    %6 = ConstantLoad Gamma
+    %7 = ConstantLoad 3
+    %8 = newArray [string...][%7]{%4, %5, %6}
+    $desugar$1 = %8;
+    %10 = $default$1($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %10;
+    %12 = fileWriteLines($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %12;
+    %14 = $desugar$3 is error
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %15 = fileReadLines(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %15;
+    %17 = $desugar$4 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    lines = $desugar$4;
+    $desugar$5 = lines;
+    %20 = ConstantLoad 0
+    $desugar$6 = %20;
+    %22 = length($desugar$5) -> bb8;
+  }
+  bb8 {
+    $desugar$7 = %22;
+    GOTO bb9;
+  }
+  bb9 {
+    %25 = $desugar$6;
+    %26 = $desugar$7;
+    %24 = < %25 %26;
+    %24 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$5)[(1, $desugar$6)];
+    line = %0;
+    %2 = println(line) -> bb12;
+  }
+  bb11 {
+    return;
+  }
+  bb12 {
+    %4 = (1, $desugar$6);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$6) = %3;
+    PopScopeFrame
+    GOTO bb9;
+  }
+}

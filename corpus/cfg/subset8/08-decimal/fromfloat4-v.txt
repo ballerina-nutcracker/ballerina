@@ -1,0 +1,93 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (literal 0))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1.234567891e+09))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1.234567890123456e+15))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1.234567890123456e+15))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1.234567890123457e+15))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1.7976931348623157e+308))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 9e+292))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 1e-34))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+    (assignment
+      (simple-var-ref f)
+      (literal 5e-324))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref f)
+          (value-type decimal)))))
+  )
+)

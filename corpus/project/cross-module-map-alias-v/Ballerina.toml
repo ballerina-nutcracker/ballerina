@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmodulemapalias"
+version = "0.1.0"

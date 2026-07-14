@@ -43,41 +43,70 @@ const (
 
 var _ ProperSubtypeData = &xmlSubtype{}
 
-func newXmlSubtypeFromIntBdd(primitives int, sequence Bdd) xmlSubtype {
-	this := xmlSubtype{}
-	this.Primitives = primitives
-	this.Sequence = sequence
-	return this
+func newXmlSubtypeFromIntBdd(primitives int, sequence Bdd) *xmlSubtype {
+	return &xmlSubtype{
+		Primitives: primitives,
+		Sequence:   sequence,
+	}
 }
 
-func xmlSubtypeFrom(primitives int, sequence Bdd) xmlSubtype {
+func xmlSubtypeFrom(primitives int, sequence Bdd) *xmlSubtype {
 	return newXmlSubtypeFromIntBdd(primitives, sequence)
 }
 
-func xmlSingleton(primitives int) SemType {
+func XMLSingleton(primitives int) SemType {
 	return createXmlSemtype(createXmlSubtype(primitives, bddNothing()))
 }
 
-func xmlSequence(constituentType SemType) SemType {
-	common.Assert(IsSubtypeSimple(constituentType, XML))
+func XMLSequence(constituentType SemType) SemType {
+	common.Assert(func() bool { return IsSubtypeSimple(constituentType, XML) })
 	if IsNever(constituentType) {
-		return xmlSequence(xmlSingleton(XML_PRIMITIVE_NEVER))
+		return XMLSequence(XMLSingleton(XML_PRIMITIVE_NEVER))
 	}
-	if _, ok := constituentType.(BasicTypeBitSet); ok {
+	if constituentType.some() == 0 {
 		return constituentType
-	} else {
-		cct := constituentType.(*ComplexSemType)
-		xmlSt := getComplexSubtypeData(cct, BTXML)
-		if _, ok := xmlSt.(allOrNothingSubtype); ok {
-			// xmlSt stays as is
-		} else {
-			xmlSt = makeXmlSequence(xmlSt.(xmlSubtype))
-		}
-		return createXmlSemtype(xmlSt)
 	}
+	xmlSt := getComplexSubtypeData(constituentType, BTXML)
+	if _, ok := xmlSt.(allOrNothingSubtype); ok {
+		// xmlSt stays as is
+	} else {
+		xmlSt = makeXmlSequence(xmlSt.(*xmlSubtype))
+	}
+	return createXmlSemtype(xmlSt)
 }
 
-func makeXmlSequence(d xmlSubtype) SubtypeData {
+func XMLItemType(t SemType) SemType {
+	if !IsSubtypeSimple(t, XML) {
+		return NEVER
+	}
+	if t.some() == 0 {
+		return t
+	}
+	xmlSt := getComplexSubtypeData(t, BTXML)
+	if allOrNothing, ok := xmlSt.(allOrNothingSubtype); ok {
+		if allOrNothing.IsAllSubtype() {
+			return XML
+		}
+		return NEVER
+	}
+	bits := xmlSt.(*xmlSubtype).Primitives &^ XML_PRIMITIVE_NEVER
+	var itemTy = NEVER
+	if bits&(XML_PRIMITIVE_ELEMENT_RO|XML_PRIMITIVE_ELEMENT_RW) != 0 {
+		itemTy = Union(itemTy, XML_ELEMENT)
+	}
+	if bits&(XML_PRIMITIVE_COMMENT_RO|XML_PRIMITIVE_COMMENT_RW) != 0 {
+		itemTy = Union(itemTy, XML_COMMENT)
+	}
+	if bits&(XML_PRIMITIVE_PI_RO|XML_PRIMITIVE_PI_RW) != 0 {
+		itemTy = Union(itemTy, XML_PI)
+	}
+	if bits&XML_PRIMITIVE_TEXT != 0 {
+		itemTy = Union(itemTy, XML_TEXT)
+	}
+	return itemTy
+}
+
+func makeXmlSequence(d *xmlSubtype) SubtypeData {
 	primitives := (XML_PRIMITIVE_NEVER | d.Primitives)
 	atom := (d.Primitives & XML_PRIMITIVE_SINGLETON)
 	sequence := bddUnion(bddAtom(new(createXMLRecAtom(atom))), d.Sequence)

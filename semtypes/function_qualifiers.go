@@ -16,16 +16,12 @@
 
 package semtypes
 
-import "ballerina-lang-go/common"
-
 type FunctionQualifiers struct {
 	semType SemType
 }
 
 func newFunctionQualifiersFromSemType(semType SemType) FunctionQualifiers {
 	this := FunctionQualifiers{}
-	common.Assert(semType != nil)
-	common.Assert(IsSubtypeSimple(semType, LIST))
 	this.semType = semType
 	return this
 }
@@ -35,7 +31,6 @@ func FunctionQualifiersFrom(env Env, isolated bool, transactional bool) Function
 }
 
 func createSemType(env Env, isolated bool, transactional bool) SemType {
-
 	ld := NewListDefinition()
 	var isolatedType SemType
 	if isolated {

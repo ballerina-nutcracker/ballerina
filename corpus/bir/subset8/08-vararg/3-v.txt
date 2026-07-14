@@ -1,0 +1,141 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = addAll() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = addAll(%5) -> bb3;
+  }
+  bb3 {
+    %7 = %6;
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %11 = ConstantLoad 2
+    %12 = %11;
+    %13 = addAll(%10,%12) -> bb5;
+  }
+  bb5 {
+    %14 = %13;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %16 = ConstantLoad 1
+    %17 = %16;
+    %18 = addAllTo(%17) -> bb7;
+  }
+  bb7 {
+    %19 = %18;
+    %20 = println(%19) -> bb8;
+  }
+  bb8 {
+    %21 = ConstantLoad 1
+    %22 = %21;
+    %23 = ConstantLoad 2
+    %24 = %23;
+    %25 = addAllTo(%22,%24) -> bb9;
+  }
+  bb9 {
+    %26 = %25;
+    %27 = println(%26) -> bb10;
+  }
+  bb10 {
+    %28 = ConstantLoad 1
+    %29 = %28;
+    %30 = ConstantLoad 2
+    %31 = %30;
+    %32 = ConstantLoad 3
+    %33 = %32;
+    %34 = addAllTo(%29,%31,%33) -> bb11;
+  }
+  bb11 {
+    %35 = %34;
+    %36 = println(%35) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}
+addAll([int...]...) -> int{
+  bb0 {
+    %2 = ConstantLoad 0
+    sum = %2;
+    %4 = ConstantLoad 0
+    i = %4;
+    %6 = length(args) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    GOTO bb2;
+  }
+  bb2 {
+    %9 = i;
+    %10 = $desugar$0;
+    %8 = < %9 %10;
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %1 = (1, sum);
+    %2 = (1, args)[(1, i)];
+    %3 = %2;
+    %0 = + %1 %3;
+    (1, sum) = %0;
+    %5 = (1, i);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, i) = %4;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb4 {
+    %0 = sum;
+    return;
+  }
+}
+addAllTo(int,[int...]...) -> int{
+  bb0 {
+    sum = base;
+    %4 = ConstantLoad 0
+    i = %4;
+    %6 = length(args) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    GOTO bb2;
+  }
+  bb2 {
+    %9 = i;
+    %10 = $desugar$0;
+    %8 = < %9 %10;
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %1 = (1, sum);
+    %2 = (1, args)[(1, i)];
+    %3 = %2;
+    %0 = + %1 %3;
+    (1, sum) = %0;
+    %5 = (1, i);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, i) = %4;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb4 {
+    %0 = sum;
+    return;
+  }
+}

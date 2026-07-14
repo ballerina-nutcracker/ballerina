@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> http-parse-header-e.bal:20:15
+   |
+20 |     _ = check http:parseHeader(42); // @error argument type mismatch
+   |               ^^^^^^^^^^^^^^^^^^^^

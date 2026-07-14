@@ -1,0 +1,26 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray ["+"|"-"|""...][%1]{}
+    signs = %2;
+    %4 = ConstantLoad -
+    %5 = ConstantLoad 2
+    signs[%5] = %4;
+    %6 = ConstantLoad +
+    %7 = ConstantLoad 0
+    signs[%7] = %6;
+    %11 = ConstantLoad 0
+    %10 = signs[%11];
+    %13 = ConstantLoad 1
+    %12 = signs[%13];
+    %9 = + %10 %12;
+    %15 = ConstantLoad 2
+    %14 = signs[%15];
+    %8 = + %9 %14;
+    %16 = println(%8) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

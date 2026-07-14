@@ -19,10 +19,10 @@
           (user-defined-type Derived)) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref x)
+              (literal x)
               (literal 1))
             (key-value
-              (simple-var-ref y)
+              (literal y)
               (literal hello))))))
       (expression-stmt
         (invocation io println (

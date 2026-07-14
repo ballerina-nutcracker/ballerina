@@ -1,0 +1,138 @@
+module $anon.. v 0.0.0;
+class C {
+  b int
+
+  foo(int,{| foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |},{| bar: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}) -> int{
+    bb0 {
+      %7 = base;
+      %10 = ConstantLoad foo
+      %9 = v1[%10];
+      %11 = %9;
+      %13 = ConstantLoad bar
+      %12 = v2[%13];
+      %14 = %12;
+      %8 = + %11 %14;
+      %15 = %8;
+      %6 = * %7 %15;
+      %16 = %6;
+      %18 = ConstantLoad b
+      %17 = self[%18];
+      %19 = %17;
+      %5 = + %16 %19;
+      %0 = %5;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 20
+      %3 = ConstantLoad b
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:C
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %8 = newMap {| foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{} defaults{foo=$anon/.:$desugar$0}
+    %9 = newMap {| bar: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{} defaults{bar=$anon/.:$desugar$1}
+    %10 = foo(c,%7,%8,%9) -> bb5;
+  }
+  bb5 {
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %15 = ConstantLoad foo
+    %16 = ConstantLoad 10
+    %17 = newMap {| foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%15=%16} defaults{foo=$anon/.:$desugar$0}
+    %18 = newMap {| bar: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{} defaults{bar=$anon/.:$desugar$1}
+    %19 = foo(c,%14,%17,%18) -> bb7;
+  }
+  bb7 {
+    %20 = %19;
+    %21 = println(%20) -> bb8;
+  }
+  bb8 {
+    %22 = ConstantLoad 1
+    %23 = %22;
+    %24 = newMap {| foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{} defaults{foo=$anon/.:$desugar$0}
+    %25 = ConstantLoad bar
+    %26 = ConstantLoad 5
+    %27 = newMap {| bar: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%25=%26} defaults{bar=$anon/.:$desugar$1}
+    %28 = foo(c,%23,%24,%27) -> bb9;
+  }
+  bb9 {
+    %29 = %28;
+    %30 = println(%29) -> bb10;
+  }
+  bb10 {
+    %31 = ConstantLoad 1
+    %32 = %31;
+    %33 = ConstantLoad foo
+    %34 = ConstantLoad 1
+    %35 = newMap {| foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%33=%34} defaults{foo=$anon/.:$desugar$0}
+    %36 = ConstantLoad bar
+    %37 = ConstantLoad 5
+    %38 = newMap {| bar: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%36=%37} defaults{bar=$anon/.:$desugar$1}
+    %39 = foo(c,%32,%35,%38) -> bb11;
+  }
+  bb11 {
+    %40 = %39;
+    %41 = println(%40) -> bb12;
+  }
+  bb12 {
+    %42 = ConstantLoad 1
+    %43 = %42;
+    %44 = ConstantLoad foo
+    %45 = ConstantLoad 1
+    %46 = newMap {| foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%44=%45} defaults{foo=$anon/.:$desugar$0}
+    %47 = ConstantLoad bar
+    %48 = ConstantLoad 5
+    %49 = newMap {| bar: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%47=%48} defaults{bar=$anon/.:$desugar$1}
+    %50 = foo(c,%43,%46,%49) -> bb13;
+  }
+  bb13 {
+    %51 = %50;
+    %52 = println(%51) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}

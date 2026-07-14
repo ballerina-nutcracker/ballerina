@@ -1,0 +1,19 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable signs (type
+        (array-type
+          (user-defined-type Sign) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref signs)
+        (literal 1))
+      (literal +))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref signs)
+          (literal 0)))))
+  )
+)

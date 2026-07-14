@@ -13,7 +13,7 @@
         (user-defined-type Foo)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref value)
+            (literal value)
             (literal 10))))))
     (expression-stmt
       (invocation io println (

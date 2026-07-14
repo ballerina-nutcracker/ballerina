@@ -1,0 +1,52 @@
+(bar
+  (bb0 () (bb1 bb2)
+    (simple-var-ref z)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 2))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 1))
+  )
+)
+(foo
+  (bb0 () ()
+    (return
+      (type-conversion-expr
+        (group-expr
+          (binary-expr +
+            (simple-var-ref y)
+            (literal 1)))
+        (user-defined-type int Signed32)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation foo (
+            (literal 1)))
+          (user-defined-type I)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation foo (
+            (literal 4)))
+          (user-defined-type I)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation bar (
+            (literal true)))
+          (user-defined-type I)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation bar (
+            (literal false)))
+          (user-defined-type I)))))
+  )
+)

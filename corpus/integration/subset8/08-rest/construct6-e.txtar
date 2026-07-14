@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: identifier 'y' cannot be used as a key for a rest field; use a string literal instead
+  --> construct6-e.bal:27:9
+   |
+27 |         y: 2 // @error
+   |         ^

@@ -1,0 +1,36 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Base
+    (variable tag (type
+      (value-type int)) (expr
+      (literal 1)))
+    (resource-function get name:items
+      (param id
+        (value-type string))
+      (value-type null)
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (binary-expr +
+              (literal Base get )
+              (simple-var-ref id))))))))
+  (class-definition Derived
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access tag
+            (simple-var-ref self))
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (user-defined-type Derived)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access tag
+            (simple-var-ref d))))))))

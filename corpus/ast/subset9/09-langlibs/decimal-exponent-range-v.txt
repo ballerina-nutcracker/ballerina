@@ -1,0 +1,12 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal 1.000000000000000000000000000000000E-6143d))))
+      (expression-stmt
+        (invocation io println (
+          (literal 9.999999999999999999999999999999999E6111d)))))))

@@ -1,0 +1,69 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Part
+    (array-type
+      (user-defined-type Part) dimensions: 1 ([])))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable yin (type
+          (user-defined-type Part)) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable yang (type
+          (user-defined-type Part)) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref yin)
+          (literal 0))
+        (simple-var-ref yang))
+      (assignment
+        (index-based-access
+          (simple-var-ref yang)
+          (literal 0))
+        (simple-var-ref yin))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref yin)
+            (simple-var-ref yang)))))
+      (var-def
+        (variable father (type
+          (user-defined-type Part)) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable son (type
+          (user-defined-type Part)) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable sprit (type
+          (user-defined-type Part)) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref father)
+          (literal 0))
+        (simple-var-ref son))
+      (assignment
+        (index-based-access
+          (simple-var-ref son)
+          (literal 0))
+        (simple-var-ref sprit))
+      (assignment
+        (index-based-access
+          (simple-var-ref sprit)
+          (literal 0))
+        (simple-var-ref father))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref father)
+            (simple-var-ref son)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref father)
+            (simple-var-ref yin))))))))

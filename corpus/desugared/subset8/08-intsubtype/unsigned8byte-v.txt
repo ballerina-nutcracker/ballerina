@@ -1,0 +1,19 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (user-defined-type int Unsigned8)) (expr
+          (literal 27))))
+      (var-def
+        (variable b (type
+          (value-type byte)) (expr
+          (simple-var-ref n))))
+      (assignment
+        (simple-var-ref n)
+        (simple-var-ref b))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n)))))))

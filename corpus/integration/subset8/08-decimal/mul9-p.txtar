@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: arithmetic overflow
+        at main(mul9-p.bal:22)

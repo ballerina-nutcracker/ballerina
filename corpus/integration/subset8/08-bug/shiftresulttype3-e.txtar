@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int:Signed8, got int
+  --> shiftresulttype3-e.bal:22:21
+   |
+22 |     int:Signed8 x = a >> 1; // @error
+   |                     ^^^^^^

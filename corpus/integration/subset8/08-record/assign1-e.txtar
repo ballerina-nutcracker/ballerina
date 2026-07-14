@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 2
+  --> assign1-e.bal:23:19
+   |
+23 |         m1["x"] = 2; // @error
+   |                   ^

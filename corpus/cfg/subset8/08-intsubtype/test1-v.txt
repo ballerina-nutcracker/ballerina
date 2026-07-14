@@ -1,0 +1,153 @@
+(d
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal ))))
+    (type-test-expr is
+      (simple-var-ref n)
+      (user-defined-type int Signed8))
+  )
+  (bb1 (bb0) (bb2)
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal s8))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref n)
+      (user-defined-type int Signed16))
+  )
+  (bb3 (bb2) (bb4)
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal s16))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (type-test-expr is
+      (simple-var-ref n)
+      (user-defined-type int Signed32))
+  )
+  (bb5 (bb4) (bb6)
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal s32))
+  )
+  (bb6 (bb5 bb4) (bb7 bb8)
+    (type-test-expr is
+      (simple-var-ref n)
+      (user-defined-type int Unsigned8))
+  )
+  (bb7 (bb6) (bb8)
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal u8))
+  )
+  (bb8 (bb7 bb6) (bb9 bb10)
+    (type-test-expr is
+      (simple-var-ref n)
+      (user-defined-type int Unsigned16))
+  )
+  (bb9 (bb8) (bb10)
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal u16))
+  )
+  (bb10 (bb9 bb8) (bb11 bb12)
+    (type-test-expr is
+      (simple-var-ref n)
+      (user-defined-type int Unsigned32))
+  )
+  (bb11 (bb10) (bb12)
+    (compound-assignment +
+      (simple-var-ref s)
+      (literal u32))
+  )
+  (bb12 (bb11 bb10) (bb13 bb14)
+    (binary-expr ==
+      (simple-var-ref s)
+      (literal ))
+  )
+  (bb13 (bb12) (bb14)
+    (assignment
+      (simple-var-ref s)
+      (literal int))
+  )
+  (bb14 (bb13 bb12) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation d (
+        (literal 0))))
+    (expression-stmt
+      (invocation d (
+        (literal 1))))
+    (expression-stmt
+      (invocation d (
+        (literal 127))))
+    (expression-stmt
+      (invocation d (
+        (literal 128))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 1)))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 127)))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 128)))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 129)))))
+    (expression-stmt
+      (invocation d (
+        (literal 255))))
+    (expression-stmt
+      (invocation d (
+        (literal 32767))))
+    (expression-stmt
+      (invocation d (
+        (literal 65535))))
+    (expression-stmt
+      (invocation d (
+        (literal 65536))))
+    (expression-stmt
+      (invocation d (
+        (literal 2147483647))))
+    (expression-stmt
+      (invocation d (
+        (literal 2147483648))))
+    (expression-stmt
+      (invocation d (
+        (literal 4294967295))))
+    (expression-stmt
+      (invocation d (
+        (literal 4294967296))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 32768)))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 32769)))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 2147483648)))))
+    (expression-stmt
+      (invocation d (
+        (unary-expr -
+          (literal 2147483649)))))
+  )
+)

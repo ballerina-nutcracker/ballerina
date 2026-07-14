@@ -1,0 +1,62 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad v
+    %2 = ConstantLoad true
+    %3 = newMap mapping{%1=%2}
+    x = %3;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %5 = == x %7;
+    %8 = %5;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    %11 = ConstantLoad true
+    %12 = %11;
+    %10 = == x %12;
+    %13 = %10;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad <nil>
+    %17 = %16;
+    %15 = == x %17;
+    %18 = %15;
+    %19 = println(%18) -> bb3;
+  }
+  bb3 {
+    %20 = newMap mapping{}
+    x = %20;
+    %22 = ConstantLoad 1
+    %23 = %22;
+    %21 = != x %23;
+    %24 = %21;
+    %25 = println(%24) -> bb4;
+  }
+  bb4 {
+    %26 = ConstantLoad x
+    %27 = ConstantLoad 1
+    %28 = ConstantLoad y
+    %29 = ConstantLoad 2
+    %30 = ConstantLoad z
+    %31 = ConstantLoad 3
+    %32 = newMap mapping{%26=%27, %28=%29, %30=%31}
+    x = %32;
+    %34 = ConstantLoad true
+    %35 = %34;
+    %33 = != x %35;
+    %36 = %33;
+    %37 = println(%36) -> bb5;
+  }
+  bb5 {
+    %39 = ConstantLoad <nil>
+    %40 = %39;
+    %38 = != x %40;
+    %41 = %38;
+    %42 = println(%41) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int|string
+  --> 5-e.bal:21:20
+   |
+21 |         string _ = x; // @error
+   |                    ^

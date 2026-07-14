@@ -1,0 +1,40 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type http Client)) (expr
+        (checked-expr
+          (new (
+            (literal https://example.com)))))))
+    (var-def
+      (variable r (type
+        (user-defined-type http Response)) (expr
+        (checked-expr
+          (remote-method-call get expr:
+            (simple-var-ref c) (
+            (literal /path)))))))
+    (var-def
+      (variable b (expr
+        (checked-expr
+          (invocation getBinaryPayload expr:
+            (simple-var-ref r) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref b))))))
+    (var-def
+      (variable payload (type
+        (union-type
+          (builtin-ref-type json)
+          (error-type))) (expr
+        (invocation getJsonPayload expr:
+          (simple-var-ref r) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref payload)
+          (error-type)))))
+    (return
+      (literal <nil>))
+  )
+)

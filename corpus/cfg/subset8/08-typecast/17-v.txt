@@ -1,0 +1,29 @@
+(g
+  (bb0 () (bb1 bb2)
+    (simple-var-ref isInt)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 8))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 5.5))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (invocation g (
+            (literal true)))
+          (value-type float)))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (invocation g (
+            (literal false)))
+          (value-type float)))))
+  )
+)

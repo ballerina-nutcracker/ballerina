@@ -1,0 +1,32 @@
+(classify
+  (bb0 () (bb2 bb3)
+    (simple-var-ref x)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal small-allowed))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation classify (
+        (literal 1)
+        (literal true))))
+    (expression-stmt
+      (invocation classify (
+        (literal 1)
+        (literal false))))
+    (expression-stmt
+      (invocation classify (
+        (literal 5)
+        (literal true))))
+  )
+)

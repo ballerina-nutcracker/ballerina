@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = foo(%2) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %7 = foo(%6) -> bb3;
+  }
+  bb3 {
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 3
+    %10 = %9;
+    %11 = foo(%10) -> bb5;
+  }
+  bb5 {
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad 4
+    %14 = %13;
+    %15 = foo(%14) -> bb7;
+  }
+  bb7 {
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+foo(int) -> string{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == x %2;
+    %4 = ConstantLoad 2
+    %5 = == x %4;
+    %6 = || %3 %5;
+    %7 = ConstantLoad 3
+    %8 = == x %7;
+    %9 = || %6 %8;
+    %9 ? bb2 : bb3;
+  }
+  bb1 {
+    %10 = ConstantLoad miss
+    %0 = %10;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 8
+    %1 = (1, x);
+    %2 = (1, x);
+    %0 = + %1 %2;
+    %3 = ConstantLoad 2
+    %4 = == %0 %3;
+    %4 ? bb5 : bb6;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    %7 = ConstantLoad 3
+    (1, %0) = %7;
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 1 + 1
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %5 = ConstantLoad 4
+    %6 = == %0 %5;
+    %6 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 2 + 2
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    GOTO bb4;
+  }
+}

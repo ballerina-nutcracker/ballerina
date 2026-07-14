@@ -1,0 +1,67 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition IntList
+    (record-type
+      (field i
+        (value-type int))
+      (field next
+        (union-type
+          (user-defined-type IntList)
+          (value-type null)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable l (type
+          (user-defined-type IntList)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal i)
+              (literal 42))
+            (key-value
+              (literal next)
+              (mapping-constructor-expr
+                (key-value
+                  (literal i)
+                  (literal 40))
+                (key-value
+                  (literal next)
+                  (literal <nil>))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (simple-var-ref l))))))))
+  (function sum (
+    (variable intList (type
+      (union-type
+        (user-defined-type IntList)
+        (value-type null))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable temp (type
+          (union-type
+            (user-defined-type IntList)
+            (value-type null))) (expr
+          (simple-var-ref intList))))
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr !=
+          (simple-var-ref temp)
+          (literal <nil>))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (index-based-access
+              (simple-var-ref temp)
+              (literal i)))
+          (assignment
+            (simple-var-ref temp)
+            (index-based-access
+              (simple-var-ref temp)
+              (literal next)))))
+      (return
+        (simple-var-ref total)))))

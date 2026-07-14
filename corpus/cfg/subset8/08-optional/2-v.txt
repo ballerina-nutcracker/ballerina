@@ -1,0 +1,47 @@
+(double
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal <nil>))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal <nil>))
+  )
+  (bb2 (bb0) ()
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref x)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation print (
+        (invocation double (
+          (literal 2))))))
+    (expression-stmt
+      (invocation print (
+        (invocation double (
+          (literal <nil>))))))
+  )
+)
+(print
+  (bb0 () (bb1 bb3)
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal null))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

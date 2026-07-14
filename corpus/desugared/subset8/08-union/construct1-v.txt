@@ -1,0 +1,35 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition X
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition Y
+    (record-type
+      (field y
+        (value-type int))))
+  (type-definition XY
+    (union-type
+      (user-defined-type X)
+      (user-defined-type Y)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (user-defined-type XY)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 17))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type X))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref x)
+                (literal x)))))) ())
+      (block-stmt))))

@@ -1,0 +1,8 @@
+{
+  "organization": "mockorg",
+  "name": "aaaleafpkg",
+  "version": "1.0.0",
+  "ballerina_version": "2201.10.0",
+  "platform": "any",
+  "export": ["aaaleafpkg"]
+}

@@ -1,0 +1,79 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (literal a))))
+      (var-def
+        (variable b (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (literal b))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref a))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref b))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal <nil>))))
+      (if
+        (binary-expr ||
+          (type-test-expr is
+            (simple-var-ref $desugar$0))
+          (type-test-expr is
+            (simple-var-ref $desugar$1)))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$2)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable c (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable d (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable $desugar$3 (expr
+          (simple-var-ref c))))
+      (var-def
+        (variable $desugar$4 (expr
+          (simple-var-ref d))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal <nil>))))
+      (if
+        (binary-expr ||
+          (type-test-expr is
+            (simple-var-ref $desugar$3))
+          (type-test-expr is
+            (simple-var-ref $desugar$4)))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (binary-expr +
+              (simple-var-ref $desugar$3)
+              (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$5)))))))

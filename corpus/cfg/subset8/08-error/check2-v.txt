@@ -1,0 +1,22 @@
+(catch
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation neverErr ())))
+    (return
+      (literal 22))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation catch ()))))
+  )
+)
+(neverErr
+  (bb0 () ()
+    (return
+      (literal <nil>))
+  )
+)

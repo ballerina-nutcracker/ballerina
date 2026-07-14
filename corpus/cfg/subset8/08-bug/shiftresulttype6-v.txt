@@ -1,0 +1,23 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (user-defined-type int Unsigned8)) (expr
+        (literal 250))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (user-defined-type T))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable y (type
+        (user-defined-type int Unsigned8)) (expr
+        (binary-expr >>
+          (simple-var-ref x)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref y))))
+  )
+  (bb2 (bb1 bb0) ())
+)

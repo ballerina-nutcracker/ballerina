@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <=
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <
+          (simple-var-ref y)
+          (simple-var-ref x)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >
+          (simple-var-ref y)
+          (simple-var-ref x)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (simple-var-ref y)
+          (simple-var-ref z)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <=
+          (simple-var-ref y)
+          (simple-var-ref z)))))
+  )
+)

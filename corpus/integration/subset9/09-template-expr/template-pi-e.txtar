@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: interpolation is not allowed in xml processing instruction
+  --> template-pi-e.bal:19:32
+   |
+19 |     xml x = xml `<?target body ${s}?>`; // @error interpolation not allowed in xml processing instruction
+   |                                ^^^^

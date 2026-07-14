@@ -1,0 +1,79 @@
+(C
+  (foo
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (group-expr
+            (binary-expr *
+              (simple-var-ref base)
+              (group-expr
+                (binary-expr +
+                  (field-based-access foo
+                    (simple-var-ref values))
+                  (field-based-access bar
+                    (simple-var-ref values))))))
+          (field-based-access b
+            (simple-var-ref self))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo expr:
+          (simple-var-ref c) (
+          (literal 1)
+          (named-arg values
+            (mapping-constructor-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo expr:
+          (simple-var-ref c) (
+          (literal 1)
+          (named-arg values
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 10)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo expr:
+          (simple-var-ref c) (
+          (literal 1)
+          (named-arg values
+            (mapping-constructor-expr
+              (key-value
+                (literal bar)
+                (literal 5)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo expr:
+          (simple-var-ref c) (
+          (literal 1)
+          (named-arg values
+            (mapping-constructor-expr
+              (key-value
+                (literal foo)
+                (literal 1))
+              (key-value
+                (literal bar)
+                (literal 5)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo expr:
+          (simple-var-ref c) (
+          (literal 1)
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 1))
+            (key-value
+              (literal bar)
+              (literal 5))))))))
+  )
+)

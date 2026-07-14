@@ -1,0 +1,65 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type any)
+            (error-type))) (expr
+          (invocation err (
+            (literal true))))))
+      (expression-stmt
+        (invocation display (
+          (simple-var-ref result))))
+      (assignment
+        (simple-var-ref result)
+        (invocation err (
+          (literal false))))
+      (expression-stmt
+        (invocation display (
+          (simple-var-ref result))))))
+  (function display (
+    (variable result (type
+      (union-type
+        (value-type any)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref result)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation p (
+              (literal bad))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation p (
+              (simple-var-ref result)))))))))
+  (function p (
+    (variable v (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))))
+  (function err (
+    (variable ok (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type any)
+      (error-type)))
+    (block-function-body
+      (if
+        (simple-var-ref ok)
+        (block-stmt
+          (return
+            (literal ok))) (
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal not ok))))))))))

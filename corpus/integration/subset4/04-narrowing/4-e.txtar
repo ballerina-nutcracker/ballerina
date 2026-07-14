@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
-  --> 4-e.bal:22:19
+  --> 4-e.bal:22:17
    |
-22 |         int bar = foo; // @error
-   |                   ^^^
+22 |         int _ = foo; // @error
+   |                 ^^^

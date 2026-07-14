@@ -1,0 +1,104 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1d)
+            (literal 1d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1d)
+            (literal 2d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 1d))
+            (literal 2d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 10d))
+            (literal 3d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 10d)
+            (unary-expr -
+              (literal 3d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 16.3d))
+            (literal 4.1d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 17.8d)
+            (unary-expr -
+              (literal 4.1d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (unary-expr -
+              (literal 17.8d))
+            (unary-expr -
+              (literal 4.1d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 27d)
+            (literal 4d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 28d)
+            (literal 5d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 10d)
+            (literal 3d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1E-6143d)
+            (literal 1E-6143d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1E-6143d)
+            (literal 1E-6142d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1E-6143d)
+            (unary-expr -
+              (literal 1E-6142d))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1E-3d)
+            (literal 1E-2d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 9.05d)
+            (literal 0.1d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 9.0E31d)
+            (literal 1E-2d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 9.00005d)
+            (literal 0.0001d))))))))

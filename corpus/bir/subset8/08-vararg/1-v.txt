@@ -1,0 +1,88 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = addAll(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %10 = addAll(%7,%9) -> bb3;
+  }
+  bb3 {
+    %11 = %10;
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %15 = ConstantLoad 2
+    %16 = %15;
+    %17 = addAll(%14,%16) -> bb5;
+  }
+  bb5 {
+    %18 = %17;
+    %19 = println(%18) -> bb6;
+  }
+  bb6 {
+    %20 = ConstantLoad 1
+    %21 = %20;
+    %22 = ConstantLoad 2
+    %23 = %22;
+    %24 = ConstantLoad 3
+    %25 = %24;
+    %26 = addAll(%21,%23,%25) -> bb7;
+  }
+  bb7 {
+    %27 = %26;
+    %28 = println(%27) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+addAll([int...]...) -> int{
+  bb0 {
+    %2 = ConstantLoad 0
+    sum = %2;
+    %4 = ConstantLoad 0
+    i = %4;
+    %6 = length(args) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    GOTO bb2;
+  }
+  bb2 {
+    %9 = i;
+    %10 = $desugar$0;
+    %8 = < %9 %10;
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %1 = (1, sum);
+    %2 = (1, args)[(1, i)];
+    %3 = %2;
+    %0 = + %1 %3;
+    (1, sum) = %0;
+    %5 = (1, i);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, i) = %4;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb4 {
+    %0 = sum;
+    return;
+  }
+}

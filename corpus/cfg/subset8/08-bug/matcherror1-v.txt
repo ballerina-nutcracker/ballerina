@@ -1,0 +1,22 @@
+(foo
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal should not match))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (error-constructor-expr (
+          (literal hi))))))
+    (expression-stmt
+      (invocation io println (
+        (literal done))))
+  )
+)

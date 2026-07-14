@@ -1,0 +1,26 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println ()))
+    (expression-stmt
+      (invocation io println (
+        (literal 1))))
+    (expression-stmt
+      (invocation io println (
+        (literal 1)
+        (literal 2))))
+    (expression-stmt
+      (invocation io println (
+        (list-constructor-expr
+          (literal 10)
+          (literal 20)))))
+    (expression-stmt
+      (invocation io println (
+        (list-constructor-expr
+          (literal 10)
+          (literal 20))
+        (list-constructor-expr
+          (literal a)
+          (literal b)))))
+  )
+)

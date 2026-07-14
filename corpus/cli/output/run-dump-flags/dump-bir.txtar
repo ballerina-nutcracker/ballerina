@@ -13,7 +13,6 @@ F(9) = 34
 
 ==================BEGIN BIR==================
 module $anon.run-and-print v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 10
@@ -62,23 +61,26 @@ fibonacci(int) -> int{
     %2 ? bb1 : bb2;
   }
   bb1 {
-    %0 = n;
+    PushScopeFrame 0
+    (1, %0) = (1, n);
+    PopScopeFrame
     return;
   }
   bb2 {
-    %6 = ConstantLoad 0
-    prev = %6;
-    %8 = ConstantLoad 1
-    curr = %8;
-    %10 = ConstantLoad 2
-    i = %10;
+    PushScopeFrame 9
+    %0 = ConstantLoad 0
+    prev = %0;
+    %2 = ConstantLoad 1
+    curr = %2;
+    %4 = ConstantLoad 2
+    i = %4;
     GOTO bb3;
   }
   bb3 {
-    %13 = i;
-    %14 = n;
-    %12 = <= %13 %14;
-    %12 ? bb4 : bb5;
+    %7 = i;
+    %8 = (1, n);
+    %6 = <= %7 %8;
+    %6 ? bb4 : bb5;
   }
   bb4 {
     PushScopeFrame 8
@@ -97,7 +99,8 @@ fibonacci(int) -> int{
     GOTO bb3;
   }
   bb5 {
-    %0 = curr;
+    (1, %0) = curr;
+    PopScopeFrame
     return;
   }
 }

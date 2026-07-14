@@ -1,0 +1,27 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type any)) (expr
+        (literal 1))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal int))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type string))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal string))))
+  )
+  (bb4 (bb3 bb2) ())
+)

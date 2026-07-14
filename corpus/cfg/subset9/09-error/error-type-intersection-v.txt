@@ -1,0 +1,38 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable e1 (type
+        (user-defined-type NumericInputError)) (expr
+        (error-constructor-expr (
+          (literal Numeric input error)) (
+          (named-arg value
+            (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref e1)
+          (user-defined-type InputError)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref e1)
+          (user-defined-type DistinctInputError)))))
+    (var-def
+      (variable e2 (type
+        (user-defined-type DistinctNumericInputError)) (expr
+        (error-constructor-expr (
+          (literal Distinct numeric input error)) (
+          (named-arg value
+            (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref e2)
+          (user-defined-type InputError)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref e2)
+          (user-defined-type DistinctInputError)))))
+  )
+)

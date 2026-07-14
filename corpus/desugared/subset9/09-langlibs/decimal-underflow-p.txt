@@ -1,0 +1,9 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (binary-expr *
+          (literal 1E-6143)
+          (literal 0.1))))))

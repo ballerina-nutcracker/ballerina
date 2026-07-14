@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to a variable narrowed outside the enclosing loop
+  --> 5-e.bal:27:13
+   |
+27 |             x = x - 1; // @error
+   |             ^

@@ -1,0 +1,5 @@
+-- stdout --
+[[],[[5,true]]]
+[[[0,false],[0,false]],[[5,true],[0,false]]]
+[[],[[0,false],[5,true]]]
+-- stderr --

@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 10
+    x = %1;
+    %4 = x;
+    %5 = ConstantLoad 3
+    %6 = %5;
+    %3 = + %4 %6;
+    x = %3;
+    %7 = x;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %10 = x;
+    %11 = ConstantLoad 2
+    %12 = %11;
+    %9 = - %10 %12;
+    x = %9;
+    %13 = x;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    %16 = x;
+    %17 = ConstantLoad 4
+    %18 = %17;
+    %15 = * %16 %18;
+    x = %15;
+    %19 = x;
+    %20 = println(%19) -> bb3;
+  }
+  bb3 {
+    %22 = x;
+    %23 = ConstantLoad 2
+    %24 = %23;
+    %21 = / %22 %24;
+    x = %21;
+    %25 = x;
+    %26 = println(%25) -> bb4;
+  }
+  bb4 {
+    %28 = x;
+    %29 = ConstantLoad 5
+    %30 = %29;
+    %27 = unknown %28 %30;
+    x = %27;
+    %31 = x;
+    %32 = println(%31) -> bb5;
+  }
+  bb5 {
+    %34 = x;
+    %35 = ConstantLoad 9
+    %36 = %35;
+    %33 = unknown %34 %36;
+    x = %33;
+    %37 = x;
+    %38 = println(%37) -> bb6;
+  }
+  bb6 {
+    %40 = x;
+    %41 = ConstantLoad 2
+    %42 = %41;
+    %39 = unknown %40 %42;
+    x = %39;
+    %43 = x;
+    %44 = println(%43) -> bb7;
+  }
+  bb7 {
+    %46 = x;
+    %47 = ConstantLoad 7
+    %48 = %47;
+    %45 = unknown %46 %48;
+    x = %45;
+    %49 = x;
+    %50 = println(%49) -> bb8;
+  }
+  bb8 {
+    %52 = x;
+    %53 = ConstantLoad 6
+    %54 = %53;
+    %51 = unknown %52 %54;
+    x = %51;
+    %55 = x;
+    %56 = println(%55) -> bb9;
+  }
+  bb9 {
+    %58 = x;
+    %59 = ConstantLoad 2
+    %60 = %59;
+    %57 = unknown %58 %60;
+    x = %57;
+    %61 = x;
+    %62 = println(%61) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

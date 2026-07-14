@@ -1,0 +1,43 @@
+(Counter
+  ($remote$next
+    (bb0 () ()
+      (return
+        (literal 5))
+    )
+  )
+)
+(increment
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref count)
+      (simple-var-ref amount))
+  )
+)
+(main
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref count)
+      (literal 1))
+    (expression-stmt
+      (invocation increment (
+        (literal 2))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref count))))
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (literal 10))))
+    (compound-assignment +
+      (simple-var-ref value)
+      (remote-method-call next expr:
+        (simple-var-ref c) ()))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+)

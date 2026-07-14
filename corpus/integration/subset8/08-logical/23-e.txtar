@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> 23-e.bal:21:16
+   |
+21 |     if true || x == 0.1 && a && b { // @error
+   |                ^^^^^^^^

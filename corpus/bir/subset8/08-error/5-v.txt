@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad help
+    %2 = foo(%1) -> bb1;
+  }
+  bb1 {
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = ConstantLoad bad
+    %5 = newError error(%4)
+    %6 = bar(%5) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+foo(string) -> error{
+  bb0 {
+    %2 = newError error(s)
+    %0 = %2;
+    return;
+  }
+}
+bar(error) -> nil{
+  bb0 {
+    %2 = println(err) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

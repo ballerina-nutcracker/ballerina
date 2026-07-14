@@ -1,0 +1,44 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Person
+    (record-type
+      (field name
+        (user-defined-type Name))
+      (field age
+        (value-type int))))
+  (type-definition Name
+    (record-type
+      (field first
+        (value-type string))
+      (field last
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Person)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (mapping-constructor-expr
+                (key-value
+                  (literal first)
+                  (literal John))
+                (key-value
+                  (literal last)
+                  (literal Smith))))
+            (key-value
+              (literal age)
+              (literal 30))))))
+      (assignment
+        (field-based-access first
+          (field-based-access name
+            (simple-var-ref p)))
+        (literal Jane))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal name))))))))

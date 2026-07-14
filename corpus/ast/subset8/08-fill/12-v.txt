@@ -1,0 +1,69 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition T
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (user-defined-type T) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref a)
+          (literal 1))
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (var-def
+        (variable b (type
+          (array-type
+            (user-defined-type T) dimensions: 1 ([
+            (literal 3)]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal b)
+                (literal 0)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable c (type
+          (array-type
+            (user-defined-type T) dimensions: 2 ([][]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref c)
+            (literal 1))
+          (literal 1))
+        (mapping-constructor-expr
+          (key-value
+            (literal c)
+            (literal 10))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref c)
+              (literal 1))
+            (literal 0))
+          (literal tmp))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c)))))))

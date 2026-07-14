@@ -1,0 +1,53 @@
+(package
+  (type-definition R
+    (record-type
+      (field x
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (field y
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type null)) dimensions: 1 ([])))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (list-constructor-expr))
+            (key-value
+              (literal y)
+              (list-constructor-expr))))))
+      (var-def
+        (variable k (type
+          (value-type string)) (expr
+          (literal x))))
+      (var-def
+        (variable xy (type
+          (union-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (union-type
+              (array-type
+                (union-type
+                  (value-type int)
+                  (value-type null)) dimensions: 1 ([]))
+              (value-type null)))) (expr
+          (index-based-access
+            (simple-var-ref r)
+            (simple-var-ref k)))))
+      (if
+        (binary-expr !=
+          (simple-var-ref xy)
+          (literal <nil>))
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref xy)
+              (literal 0))
+            (literal <nil>))) ())
+      (block-stmt))))

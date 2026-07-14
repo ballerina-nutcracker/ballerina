@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad str
+    x = %1;
+    %3 = x is string
+    %3 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    s = (1, x);
+    %1 = println(s) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

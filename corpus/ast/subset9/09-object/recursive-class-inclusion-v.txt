@@ -1,0 +1,23 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Node
+    (variable id (type
+      (value-type int)) (expr
+      (literal 1)))
+    (variable next (type
+      (union-type
+        (user-defined-type Node)
+        (value-type null))) (expr
+      (literal <nil>))))
+  (class-definition Child)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (user-defined-type Child)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))

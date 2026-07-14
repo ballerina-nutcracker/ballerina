@@ -5,7 +5,7 @@
         (user-defined-type T)) (expr
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref l1)
+            (literal l1)
             (literal c))
           (key-value
             (literal other)

@@ -1,0 +1,34 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad x2
+    %4 = ConstantLoad 2.3
+    %5 = ConstantLoad x3
+    %6 = ConstantLoad 2.3E+34
+    %7 = newMap {| decimal... |}{%1=%2, %3=%4, %5=%6}
+    m1 = %7;
+    %9 = println(m1) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad x1
+    %11 = ConstantLoad 1.2
+    %12 = newMap {| int|decimal... |}{%10=%11}
+    m2 = %12;
+    %15 = ConstantLoad x1
+    %14 = m2[%15];
+    %16 = %14 is decimal
+    %17 = %16;
+    %18 = println(%17) -> bb2;
+  }
+  bb2 {
+    %19 = ConstantLoad 2.3E+35
+    %20 = ConstantLoad x2
+    m2[%20] = %19;
+    %21 = println(m2) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

@@ -1,0 +1,43 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (list-constructor-expr))
+          (key-value
+            (literal y)
+            (list-constructor-expr))))))
+    (var-def
+      (variable k (type
+        (value-type string)) (expr
+        (literal x))))
+    (var-def
+      (variable xy (type
+        (union-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (union-type
+            (array-type
+              (union-type
+                (value-type int)
+                (value-type null)) dimensions: 1 ([]))
+            (value-type null)))) (expr
+        (index-based-access
+          (simple-var-ref r)
+          (simple-var-ref k)))))
+    (binary-expr !=
+      (simple-var-ref xy)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (assignment
+      (index-based-access
+        (simple-var-ref xy)
+        (literal 0))
+      (literal <nil>))
+  )
+  (bb2 (bb1 bb0) ())
+)

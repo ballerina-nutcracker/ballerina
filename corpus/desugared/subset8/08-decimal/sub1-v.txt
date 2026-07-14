@@ -1,0 +1,60 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 2)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1000)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1000)
+            (unary-expr -
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1234567890123456789012345678901234)
+            (literal 1234567890123456789012345678901231)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 1234567890123456789012345678901234)
+            (unary-expr -
+              (literal 1234567890123456789012345678901231))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (unary-expr -
+              (literal 1234567890123456789012345678901234))
+            (literal 1234567890123456789012345678901231)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 9.999999999999999999999999999999998E+6144)
+            (unary-expr -
+              (literal 1E+6111))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (unary-expr -
+              (literal 9.999999999999999999999999999999998E+6144))
+            (literal 1E+6111)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr -
+            (literal 2E-6143)
+            (literal 1E-6143))))))))

@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [{| [int...]... |}...][%1]{}
+    v = %2;
+    %4 = newMap {| [int...]... |}{}
+    %5 = ConstantLoad 1
+    v[%5] = %4;
+    %7 = ConstantLoad 0
+    %6 = v[%7];
+    v0 = %6;
+    %9 = ConstantLoad 17
+    %10 = ConstantLoad 73
+    %11 = ConstantLoad 2
+    %12 = newArray [int...][%11]{%9, %10}
+    %13 = ConstantLoad x
+    v0[%13] = %12;
+    %15 = ConstantLoad x
+    %14 = v0[%15];
+    iv = %14;
+    %18 = ConstantLoad <nil>
+    %19 = %18;
+    %17 = != iv %19;
+    %17 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 5
+    %1 = ConstantLoad 1
+    %0 = (1, iv)[%1];
+    n = %0;
+    %3 = n;
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

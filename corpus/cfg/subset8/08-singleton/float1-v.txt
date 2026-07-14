@@ -1,0 +1,20 @@
+(main
+  (bb0 () (bb1 bb3)
+    (binary-expr !=
+      (binary-expr /
+        (literal 1)
+        (literal 0))
+      (simple-var-ref Inf))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal no))))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal yes))))
+  )
+)

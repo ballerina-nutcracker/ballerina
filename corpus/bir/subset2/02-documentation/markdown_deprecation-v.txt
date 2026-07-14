@@ -10,6 +10,8 @@ add(int,int) -> int{
 }
 process(int,int) -> nil{
   bb0 {
+    _ = x;
+    _ = y;
     return;
   }
 }

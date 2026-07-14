@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r1 (expr
+        (invocation http parseHeader (
+          (literal text/html,,application/json))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r1)
+          (error-type)))))
+    (var-def
+      (variable r2 (expr
+        (invocation http parseHeader (
+          (literal ; charset=utf-8))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r2)
+          (error-type)))))
+    (return
+      (literal <nil>))
+  )
+)

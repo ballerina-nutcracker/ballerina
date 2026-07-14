@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid return type for init function
+  --> class-init-invalid-return-new1-e.bal:18:5
+   |
+18 |     function init() returns int { // @error init return type must be error?
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         return 1;
+   |         ^^^^^^^^^
+20 |     }
+   |     ^

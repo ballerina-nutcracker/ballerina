@@ -23,24 +23,12 @@ import (
 	"os"
 	"strings"
 
-	"ballerina-lang-go/pal"
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
-
-var nativePal = pal.Platform{
-	IO: pal.IO{
-		Stdout: func(p []byte) (n int, err error) {
-			return os.Stdout.Write(p)
-		},
-		Stderr: func(p []byte) (n int, err error) {
-			return os.Stderr.Write(p)
-		},
-	},
-}
 
 // printError prints an error message in the standard Ballerina CLI format to stderr.
 func printError(err error, usage string, showHelp bool) {

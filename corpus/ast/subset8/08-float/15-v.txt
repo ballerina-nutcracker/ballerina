@@ -1,0 +1,19 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (value-type float)) (expr
+          (literal 10f))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 2))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr /
+            (simple-var-ref f)
+            (simple-var-ref i))))))))

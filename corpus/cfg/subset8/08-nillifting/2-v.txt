@@ -1,0 +1,168 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal 5))))
+    (var-def
+      (variable b (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal 6))))
+    (var-def
+      (variable c (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal 1))))
+    (var-def
+      (variable v1 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v1))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+    (var-def
+      (variable v2 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b))
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v2))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b))
+          (simple-var-ref c)))))
+    (var-def
+      (variable v3 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr -
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v3))))
+    (var-def
+      (variable v4 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr -
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b))
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v4))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (simple-var-ref b)
+          (simple-var-ref c)))))
+    (var-def
+      (variable v5 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr /
+          (simple-var-ref b)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v5))))
+    (var-def
+      (variable v6 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (unary-expr -
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v6))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (simple-var-ref c)))))
+    (var-def
+      (variable d (type
+        (value-type float)) (expr
+        (literal 13))))
+    (var-def
+      (variable v7 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref d)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v7))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref a)
+              (simple-var-ref b))
+            (simple-var-ref c))
+          (simple-var-ref d)))))
+    (var-def
+      (variable e (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable v8 (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref e)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v8))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (binary-expr +
+                (simple-var-ref a)
+                (simple-var-ref b))
+              (simple-var-ref c))
+            (simple-var-ref d))
+          (simple-var-ref e)))))
+    (expression-stmt
+      (invocation io println (
+        (unary-expr -
+          (simple-var-ref a)))))
+  )
+)

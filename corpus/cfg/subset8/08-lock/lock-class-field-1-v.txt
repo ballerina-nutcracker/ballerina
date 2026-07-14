@@ -1,0 +1,50 @@
+(Counter
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access count
+          (simple-var-ref self))
+        (simple-var-ref initial))
+    )
+  )
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access count
+          (simple-var-ref self)))
+    )
+  )
+  (inc
+    (bb0 () ()
+      (assignment
+        (field-based-access count
+          (simple-var-ref self))
+        (binary-expr +
+          (field-based-access count
+            (simple-var-ref self))
+          (literal 1)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new (
+          (literal 0))))))
+    (expression-stmt
+      (invocation inc expr:
+        (simple-var-ref c) ()))
+    (expression-stmt
+      (invocation inc expr:
+        (simple-var-ref c) ()))
+    (expression-stmt
+      (invocation inc expr:
+        (simple-var-ref c) ()))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref c) ()))))
+  )
+)

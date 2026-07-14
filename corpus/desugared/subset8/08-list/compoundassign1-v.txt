@@ -1,0 +1,111 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)))))
+      (compound-assignment +
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment -
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment *
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 4))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment /
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment &
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 5))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment |
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 9))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment ^
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment <<
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 7))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment >>
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 6))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0)))))
+      (compound-assignment >>>
+        (index-based-access
+          (simple-var-ref x)
+          (literal 0))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref x)
+            (literal 0))))))))

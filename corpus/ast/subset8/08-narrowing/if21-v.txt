@@ -1,0 +1,66 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type boolean))
+              (value-type float))
+            (value-type string))) (expr
+          (literal two))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type boolean))
+            (value-type string)))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (literal 2))
+          (if
+            (type-test-expr is
+              (simple-var-ref x)
+              (union-type
+                (value-type int)
+                (value-type boolean)))
+            (block-stmt
+              (var-def
+                (variable _ (type
+                  (union-type
+                    (value-type int)
+                    (value-type boolean))) (expr
+                  (simple-var-ref x))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref x)
+                  (value-type boolean))
+                (block-stmt
+                  (return
+                    (literal <nil>))) ())
+              (block-stmt
+                (var-def
+                  (variable _ (type
+                    (value-type int)) (expr
+                    (simple-var-ref x)))))) ())
+          (block-stmt
+            (var-def
+              (variable _ (type
+                (union-type
+                  (union-type
+                    (value-type int)
+                    (value-type float))
+                  (value-type string))) (expr
+                (simple-var-ref x)))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref x))))))))

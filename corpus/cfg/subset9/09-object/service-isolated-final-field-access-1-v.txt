@@ -1,0 +1,72 @@
+(SimpleListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (simple-var-ref svc))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (literal <nil>))
+    )
+  )
+  (getX
+    (bb0 () (bb1 bb2)
+      (var-def
+        (variable svc (expr
+          (field-based-access s
+            (simple-var-ref self)))))
+      (binary-expr ==
+        (simple-var-ref svc)
+        (literal <nil>))
+    )
+    (bb1 (bb0) ()
+      (panic
+        (error-constructor-expr (
+          (literal no service))))
+    )
+    (bb2 (bb0) ()
+      (return
+        (invocation getX expr:
+          (simple-var-ref svc) ()))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(getX
+  (bb0 () ()
+    (return
+      (field-based-access x
+        (simple-var-ref self)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation getX expr:
+          (simple-var-ref l) ()))))
+  )
+)

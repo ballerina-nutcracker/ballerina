@@ -1,0 +1,98 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation p (
+        (literal 1))))
+    (expression-stmt
+      (invocation p (
+        (literal false))))
+    (expression-stmt
+      (invocation p (
+        (literal hello))))
+    (expression-stmt
+      (invocation p (
+        (literal this is a long string))))
+    (expression-stmt
+      (invocation p (
+        (literal 9223372036854775807))))
+    (expression-stmt
+      (invocation p (
+        (unary-expr -
+          (literal 9223372036854775807)))))
+    (var-def
+      (variable list (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation p (
+        (simple-var-ref list))))
+    (var-def
+      (variable mapping (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type any))) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation p (
+        (simple-var-ref mapping))))
+  )
+)
+(p
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type boolean))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal boolean))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type int))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal int))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type string))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal string))))
+  )
+  (bb6 (bb5 bb4) (bb7 bb8)
+    (type-test-expr is
+      (simple-var-ref v)
+      (array-type
+        (value-type any) dimensions: 1 ([])))
+  )
+  (bb7 (bb6) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal array))))
+  )
+  (bb8 (bb7 bb6) (bb9 bb10)
+    (type-test-expr is
+      (simple-var-ref v)
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type any)))
+  )
+  (bb9 (bb8) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (literal map))))
+  )
+  (bb10 (bb9 bb8) ())
+)

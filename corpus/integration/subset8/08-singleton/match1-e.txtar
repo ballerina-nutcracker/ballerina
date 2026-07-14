@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: match pattern variable reference must refer to a constant
+  --> match1-e.bal:20:13
+   |
+20 |             x => { // @error
+   |             ^

@@ -20,6 +20,6 @@ class Foo {
     function init() {
         self.bar = 1;
         return;
-        int x = 2; // @error
+        int _ = 2; // @error
     }
 }

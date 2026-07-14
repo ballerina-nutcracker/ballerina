@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: too many members in list constructor
+  --> construct3-e.bal:20:23
+   |
+20 |     [int, string] x = [
+   |                       ^
+21 |         1,
+   |         ^^
+22 |         "hi",
+   |         ^^^^^
+23 |         3 // @error
+   |         ^^^^^^^^^^^
+24 |     ];
+   |     ^

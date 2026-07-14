@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: not a valid decimal
+        at main(decimal-round-integral-p.bal:22)

@@ -1,0 +1,14 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hello
+    %2 = newError error(%1)
+    x = %2;
+    %4 = <error>(x)
+    e = %4;
+    %6 = println(e) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

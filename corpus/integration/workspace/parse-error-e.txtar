@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: failed to load package 'bad': TOML parse error: expected '=' after key
+  --> Ballerina.toml

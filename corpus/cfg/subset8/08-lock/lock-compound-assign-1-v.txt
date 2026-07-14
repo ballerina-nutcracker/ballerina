@@ -1,0 +1,20 @@
+(bumpBy
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref counter)
+      (simple-var-ref amount))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 3))))
+    (expression-stmt
+      (invocation bumpBy (
+        (literal 4))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)

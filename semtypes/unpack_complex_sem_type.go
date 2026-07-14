@@ -25,7 +25,7 @@ func newUnpackComplexSemType() unpackComplexSemType {
 	return this
 }
 
-func unpack(t *ComplexSemType) []basicSubtype {
+func unpack(t SemType) []basicSubtype {
 	some := t.some()
 	var subtypeList []basicSubtype
 	for _, data := range t.subtypeDataList() {

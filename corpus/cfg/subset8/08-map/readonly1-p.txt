@@ -1,0 +1,19 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable mr (type
+        (user-defined-type RoMap)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (simple-var-ref mr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal x))
+      (literal 1))
+  )
+)

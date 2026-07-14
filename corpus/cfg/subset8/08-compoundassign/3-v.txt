@@ -1,0 +1,68 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (literal 10))))
+    (compound-assignment +
+      (simple-var-ref x)
+      (literal 3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment -
+      (simple-var-ref x)
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment *
+      (simple-var-ref x)
+      (literal 4))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment /
+      (simple-var-ref x)
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment &
+      (simple-var-ref x)
+      (literal 5))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment |
+      (simple-var-ref x)
+      (literal 9))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment ^
+      (simple-var-ref x)
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment <<
+      (simple-var-ref x)
+      (literal 7))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment >>
+      (simple-var-ref x)
+      (literal 6))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (compound-assignment >>>
+      (simple-var-ref x)
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)

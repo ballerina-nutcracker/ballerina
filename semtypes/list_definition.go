@@ -16,8 +16,6 @@
 
 package semtypes
 
-import "ballerina-lang-go/common"
-
 type ListDefinition struct {
 	rec     *recAtom
 	semType SemType
@@ -28,7 +26,7 @@ var _ Definition = &ListDefinition{}
 func NewListDefinition() ListDefinition {
 	this := ListDefinition{}
 	this.rec = nil
-	this.semType = nil
+	this.semType = SemType{}
 	// Default field initializations
 
 	return this
@@ -36,7 +34,7 @@ func NewListDefinition() ListDefinition {
 
 func (l *ListDefinition) GetSemType(env Env) SemType {
 	s := l.semType
-	if s == nil {
+	if IsZero(s) {
 		rec := env.recListAtom()
 		l.rec = &rec
 		return l.createSemType(env, &rec)
@@ -54,10 +52,9 @@ func (l *ListDefinition) TupleTypeWrappedRo(env Env, members ...SemType) SemType
 }
 
 func (l *ListDefinition) DefineListTypeWrapped(env Env, initial []SemType, fixedLength int, rest SemType, mut CellMutability) SemType {
-	common.Assert(rest != nil)
-	var initialCells []ComplexSemType
+	var initialCells []SemType
 	for _, member := range initial {
-		initialCells = append(initialCells, *cellContainingWithEnvSemTypeCellMutability(env, member, mut))
+		initialCells = append(initialCells, cellContainingWithEnvSemTypeCellMutability(env, member, mut))
 	}
 	var restMut CellMutability
 	if IsNever(rest) {
@@ -89,7 +86,7 @@ func (l *ListDefinition) DefineListTypeWrappedWithEnvSemTypesSemType(env Env, in
 	return l.DefineListTypeWrapped(env, initial, len(initial), rest, CellMutability_CELL_MUT_LIMITED)
 }
 
-func (l *ListDefinition) define(env Env, initial []ComplexSemType, fixedLength int, rest *ComplexSemType) *ComplexSemType {
+func (l *ListDefinition) define(env Env, initial []SemType, fixedLength int, rest SemType) SemType {
 	members := l.fixedLengthNormalize(fixedLengthArrayFrom(initial, fixedLength))
 	atomicType := listAtomicTypeFrom(members, rest)
 	var atom atom
@@ -98,7 +95,7 @@ func (l *ListDefinition) define(env Env, initial []ComplexSemType, fixedLength i
 		atom = rec
 		env.setRecListAtomType(*rec, &atomicType)
 	} else {
-		atom = new(env.listAtom(&atomicType))
+		atom = env.listAtom(&atomicType)
 	}
 	return l.createSemType(env, atom)
 }
@@ -112,7 +109,7 @@ func (l *ListDefinition) fixedLengthNormalize(array fixedLengthArray) fixedLengt
 	last := initial[i]
 	i = (i - 1)
 	for i >= 0 {
-		if !last.equals(&initial[i]) {
+		if !sameComplexSemType(last, initial[i]) {
 			break
 		}
 		i = (i - 1)
@@ -120,9 +117,9 @@ func (l *ListDefinition) fixedLengthNormalize(array fixedLengthArray) fixedLengt
 	return fixedLengthArrayFrom(initial[:i+2], array.FixedLength)
 }
 
-func (l *ListDefinition) createSemType(env Env, atom atom) *ComplexSemType {
+func (l *ListDefinition) createSemType(env Env, atom atom) SemType {
 	bdd := bddAtom(atom)
-	complexSemType := getBasicSubtype(BTList, bdd)
-	l.semType = complexSemType
-	return complexSemType
+	SemType := getBasicSubtype(BTList, bdd)
+	l.semType = SemType
+	return SemType
 }

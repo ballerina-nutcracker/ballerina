@@ -1,0 +1,38 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 7))))
+    (var-def
+      (variable j (type
+        (value-type int)) (expr
+        (literal 2))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref i)
+          (simple-var-ref j)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref i)
+          (group-expr
+            (binary-expr +
+              (simple-var-ref j)
+              (literal 1)))))))
+    (assignment
+      (simple-var-ref j)
+      (literal 67))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (simple-var-ref i)
+          (simple-var-ref j)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr <<
+          (literal 1)
+          (literal 3)))))
+  )
+)

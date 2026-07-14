@@ -1,0 +1,31 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (array-type
+          (value-type int) dimensions: 2 ([][]))) (expr
+        (list-constructor-expr
+          (list-constructor-expr)))))
+    (var-def
+      (variable w (type
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type null)) dimensions: 2 ([][]))) (expr
+        (simple-var-ref r))))
+    (var-def
+      (variable w0 (type
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type null)) dimensions: 1 ([]))) (expr
+        (index-based-access
+          (simple-var-ref w)
+          (literal 0)))))
+    (assignment
+      (index-based-access
+        (simple-var-ref w0)
+        (literal 0))
+      (literal <nil>))
+  )
+)

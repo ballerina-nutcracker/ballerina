@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "3"
+  --> fixedlength6-e.bal:18:23
+   |
+18 |     int[3] _ = [1, 2, "3"]; // @error
+   |                       ^^^

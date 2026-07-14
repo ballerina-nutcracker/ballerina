@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3))
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (index-based-access
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))
+              (literal 3))
+            (literal 0))
+          (literal 1)))))
+  )
+)

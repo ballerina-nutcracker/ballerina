@@ -1,0 +1,10 @@
+(main
+  (bb0 () (bb1)
+    (literal false)
+  )
+  (bb1 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal hello))))
+  )
+)

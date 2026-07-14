@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: not a valid decimal
+        at main(fromfloat6-p.bal:21)

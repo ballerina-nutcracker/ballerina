@@ -1,0 +1,51 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable count (type
+        (union-type
+          (value-type int)
+          (value-type boolean))) (expr
+        (literal 3))))
+  )
+  (bb1 (bb0 bb5) (bb2 bb3)
+    (type-test-expr is
+      (simple-var-ref count)
+      (value-type int))
+  )
+  (bb2 (bb1) (bb4 bb6)
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (simple-var-ref count))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+    (binary-expr >
+      (simple-var-ref count)
+      (literal 1))
+  )
+  (bb3 (bb1) (bb7 bb8)
+    (type-test-expr is
+      (simple-var-ref count)
+      (value-type int))
+  )
+  (bb4 (bb2) (bb5)
+    (assignment
+      (simple-var-ref count)
+      (binary-expr -
+        (simple-var-ref count)
+        (literal 1)))
+  )
+  (bb5 (bb4 bb6) (bb1))
+  (bb6 (bb2) (bb5)
+    (assignment
+      (simple-var-ref count)
+      (literal false))
+  )
+  (bb7 (bb3) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (literal unreached))))
+  )
+  (bb8 (bb7 bb3) ())
+)

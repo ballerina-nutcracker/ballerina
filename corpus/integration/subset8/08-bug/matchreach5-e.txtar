@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unreachable code
+  --> matchreach5-e.bal:29:5
+   |
+29 |     io:println("unreached"); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -6,19 +6,19 @@
       (var-def
         (variable d1 (type
           (value-type decimal)) (expr
-          (literal 1/1))))
+          (literal 1))))
       (var-def
         (variable d2 (type
           (value-type decimal)) (expr
-          (literal 2/1))))
+          (literal 2))))
       (var-def
         (variable d3 (type
           (value-type decimal)) (expr
-          (literal 3/1))))
+          (literal 3))))
       (var-def
         (variable d15 (type
           (value-type decimal)) (expr
-          (literal 3/2))))
+          (literal 1.5))))
       (var-def
         (variable x (type
           (array-type
@@ -36,7 +36,7 @@
           (array-type
             (value-type decimal) dimensions: 1 ([]))) (expr
           (list-constructor-expr
-            (literal 3/1)))))
+            (literal 3)))))
       (var-def
         (variable a1 (type
           (array-type

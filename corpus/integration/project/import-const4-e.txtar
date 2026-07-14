@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown import: testorg/import_const4_e.cycle1
+  --> modules/cycle3/cycle3.bal:17:1
+   |
+17 | import testorg/import_const4_e.cycle1; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: A
+  --> modules/cycle3/cycle3.bal:19:18
+   |
+19 | public const C = cycle1:A;
+   |                  ^^^^^^^^

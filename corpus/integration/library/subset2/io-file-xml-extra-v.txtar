@@ -1,0 +1,7 @@
+-- stdout --
+<root xmlns="http://default" xmlns:a="http://a.com"><a:item a:key="v">text</a:item><child/></root>
+<!-- a comment --><?target data?><a/><b/>
+true
+true
+true
+-- stderr --

@@ -1,0 +1,239 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable max (type
+          (value-type int)) (expr
+          (literal 16))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation populate (
+          (simple-var-ref m)
+          (simple-var-ref max))))
+      (expression-stmt
+        (invocation io println (
+          (invocation retrieve (
+            (simple-var-ref m)
+            (simple-var-ref max))))))))
+  (function populate (
+    (variable m (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type any))))
+    (variable max (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type string)) (expr
+          (literal x))))
+      (var-def
+        (variable xLen (type
+          (value-type int)) (expr
+          (literal 1))))
+      (foreach
+        (var-def
+          (variable _ (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref max))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (binary-expr +
+              (simple-var-ref x)
+              (simple-var-ref x)))
+          (assignment
+            (simple-var-ref xLen)
+            (binary-expr *
+              (simple-var-ref xLen)
+              (literal 2)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal )))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 0)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal a)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 1)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal ab)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 2)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal abc)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 3)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal abcd)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 4)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal abcde)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 5)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal abcdef)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 6)))
+          (assignment
+            (index-based-access
+              (simple-var-ref m)
+              (binary-expr +
+                (simple-var-ref x)
+                (literal abcdefg)))
+            (binary-expr +
+              (simple-var-ref xLen)
+              (literal 7)))))))
+  (function retrieve (
+    (variable m (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type any))))
+    (variable max (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type string)) (expr
+          (literal x))))
+      (var-def
+        (variable res (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable _ (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref max))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (binary-expr +
+              (simple-var-ref x)
+              (simple-var-ref x)))
+          (assignment
+            (simple-var-ref res)
+            (binary-expr +
+              (binary-expr +
+                (binary-expr +
+                  (binary-expr +
+                    (binary-expr +
+                      (binary-expr +
+                        (binary-expr +
+                          (binary-expr +
+                            (simple-var-ref res)
+                            (group-expr
+                              (type-conversion-expr
+                                (index-based-access
+                                  (simple-var-ref m)
+                                  (binary-expr +
+                                    (simple-var-ref x)
+                                    (literal )))
+                                (value-type int))))
+                          (group-expr
+                            (type-conversion-expr
+                              (index-based-access
+                                (simple-var-ref m)
+                                (binary-expr +
+                                  (simple-var-ref x)
+                                  (literal a)))
+                              (value-type int))))
+                        (group-expr
+                          (type-conversion-expr
+                            (index-based-access
+                              (simple-var-ref m)
+                              (binary-expr +
+                                (simple-var-ref x)
+                                (literal ab)))
+                            (value-type int))))
+                      (group-expr
+                        (type-conversion-expr
+                          (index-based-access
+                            (simple-var-ref m)
+                            (binary-expr +
+                              (simple-var-ref x)
+                              (literal abc)))
+                          (value-type int))))
+                    (group-expr
+                      (type-conversion-expr
+                        (index-based-access
+                          (simple-var-ref m)
+                          (binary-expr +
+                            (simple-var-ref x)
+                            (literal abcd)))
+                        (value-type int))))
+                  (group-expr
+                    (type-conversion-expr
+                      (index-based-access
+                        (simple-var-ref m)
+                        (binary-expr +
+                          (simple-var-ref x)
+                          (literal abcde)))
+                      (value-type int))))
+                (group-expr
+                  (type-conversion-expr
+                    (index-based-access
+                      (simple-var-ref m)
+                      (binary-expr +
+                        (simple-var-ref x)
+                        (literal abcdef)))
+                    (value-type int))))
+              (group-expr
+                (type-conversion-expr
+                  (index-based-access
+                    (simple-var-ref m)
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal abcdefg)))
+                  (value-type int)))))))
+      (return
+        (simple-var-ref res)))))

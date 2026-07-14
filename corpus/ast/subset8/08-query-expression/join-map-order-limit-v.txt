@@ -23,22 +23,22 @@
             (user-defined-type Person))) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref first)
+              (literal first)
               (mapping-constructor-expr
                 (key-value
-                  (simple-var-ref id)
+                  (literal id)
                   (literal 2))
                 (key-value
-                  (simple-var-ref name)
+                  (literal name)
                   (literal Ranjan))))
             (key-value
-              (simple-var-ref second)
+              (literal second)
               (mapping-constructor-expr
                 (key-value
-                  (simple-var-ref id)
+                  (literal id)
                   (literal 1))
                 (key-value
-                  (simple-var-ref name)
+                  (literal name)
                   (literal Alex))))))))
       (var-def
         (variable departments (type
@@ -47,22 +47,22 @@
             (user-defined-type Department))) (expr
           (mapping-constructor-expr
             (key-value
-              (simple-var-ref hr)
+              (literal hr)
               (mapping-constructor-expr
                 (key-value
-                  (simple-var-ref id)
+                  (literal id)
                   (literal 1))
                 (key-value
-                  (simple-var-ref name)
+                  (literal name)
                   (literal HR))))
             (key-value
-              (simple-var-ref ops)
+              (literal ops)
               (mapping-constructor-expr
                 (key-value
-                  (simple-var-ref id)
+                  (literal id)
                   (literal 2))
                 (key-value
-                  (simple-var-ref name)
+                  (literal name)
                   (literal Ops))))))))
       (var-def
         (variable joined (type

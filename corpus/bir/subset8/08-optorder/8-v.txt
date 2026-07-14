@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad abc
+    a = %1;
+    %4 = ConstantLoad <nil>
+    %5 = %4;
+    %3 = <= a %5;
+    %6 = %3;
+    %7 = println(%6) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad <nil>
+    %10 = %9;
+    %8 = < a %10;
+    %11 = %8;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad <nil>
+    %15 = %14;
+    %13 = >= a %15;
+    %16 = %13;
+    %17 = println(%16) -> bb3;
+  }
+  bb3 {
+    %19 = ConstantLoad <nil>
+    %20 = %19;
+    %18 = > a %20;
+    %21 = %18;
+    %22 = println(%21) -> bb4;
+  }
+  bb4 {
+    %24 = ConstantLoad <nil>
+    %25 = %24;
+    %23 = <= %25 a;
+    %26 = %23;
+    %27 = println(%26) -> bb5;
+  }
+  bb5 {
+    %29 = ConstantLoad <nil>
+    %30 = %29;
+    %28 = < %30 a;
+    %31 = %28;
+    %32 = println(%31) -> bb6;
+  }
+  bb6 {
+    %34 = ConstantLoad <nil>
+    %35 = %34;
+    %33 = >= %35 a;
+    %36 = %33;
+    %37 = println(%36) -> bb7;
+  }
+  bb7 {
+    %39 = ConstantLoad <nil>
+    %40 = %39;
+    %38 = > %40 a;
+    %41 = %38;
+    %42 = println(%41) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

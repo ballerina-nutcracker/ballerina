@@ -1,14 +1,13 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = ConstantLoad 1/1
+    %1 = ConstantLoad 1
     d1 = %1;
-    %3 = ConstantLoad 2/1
+    %3 = ConstantLoad 2
     d2 = %3;
-    %5 = ConstantLoad 3/1
+    %5 = ConstantLoad 3
     d3 = %5;
-    %7 = ConstantLoad 3/2
+    %7 = ConstantLoad 1.5
     d15 = %7;
     %9 = ConstantLoad 1
     %10 = newArray [decimal...][%9]{d15}
@@ -16,7 +15,7 @@ main() -> nil{
     %12 = ConstantLoad 1
     %13 = newArray [decimal...][%12]{d3}
     y = %13;
-    %15 = ConstantLoad 3/1
+    %15 = ConstantLoad 3
     %16 = ConstantLoad 1
     %17 = newArray [decimal...][%16]{%15}
     z = %17;

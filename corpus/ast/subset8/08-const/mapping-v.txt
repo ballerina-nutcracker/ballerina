@@ -4,29 +4,29 @@
   (const A () (
     (mapping-constructor-expr
       (key-value
-        (simple-var-ref x)
+        (literal x)
         (literal 1))
       (key-value
-        (simple-var-ref y)
+        (literal y)
         (literal 2)))))
   (const B () (
     (mapping-constructor-expr
       (key-value
-        (simple-var-ref name)
+        (literal name)
         (literal hello))
       (key-value
-        (simple-var-ref value)
+        (literal value)
         (literal 42)))))
   (const C () (
     (mapping-constructor-expr
       (key-value
-        (simple-var-ref nested)
+        (literal nested)
         (mapping-constructor-expr
           (key-value
-            (simple-var-ref a)
+            (literal a)
             (literal 1))
           (key-value
-            (simple-var-ref b)
+            (literal b)
             (literal 2)))))))
   (function main () (
     (value-type null))

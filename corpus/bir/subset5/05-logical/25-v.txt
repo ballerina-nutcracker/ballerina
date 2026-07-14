@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-import ballerina.io v 0.0.0;
 doesADragonExplodeInTheWoods() -> true{
   bb0 {
     %1 = ConstantLoad boom
@@ -33,13 +32,17 @@ main() -> nil{
     GOTO bb2;
   }
   bb4 {
-    %9 = ConstantLoad unconditional
-    %10 = println(%9) -> bb5;
+    PushScopeFrame 2
+    %0 = ConstantLoad unconditional
+    %1 = println(%0) -> bb5;
   }
   bb5 {
+    PopScopeFrame
     GOTO bb6;
   }
   bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
     return;
   }
 }

@@ -1,0 +1,26 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = pairOfNothings() -> bb1;
+  }
+  bb1 {
+    %2 = length(%1) -> bb2;
+  }
+  bb2 {
+    %3 = %2;
+    %4 = println(%3) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+pairOfNothings() -> [nil...]{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %2 = ConstantLoad <nil>
+    %3 = ConstantLoad 2
+    %4 = newArray [nil...][%3]{%1, %2}
+    %0 = %4;
+    return;
+  }
+}

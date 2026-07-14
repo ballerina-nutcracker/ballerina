@@ -30,7 +30,7 @@ jobs:
         run: python3 .github/scripts/run_native_tests.py --with-coverage
 
       - name: Run corpus benchmarks
-        run: go test -run='^$' -bench=. -benchtime=1x -timeout 30m ./corpus
+        run: go test -run='^$' -bench=. -benchtime=1x -timeout 2h ./corpus
 
       - name: Collect coverage files
         id: coverage

@@ -17,7 +17,6 @@
 package projects
 
 import (
-	"io/fs"
 	"path/filepath"
 )
 
@@ -25,28 +24,20 @@ import (
 // This is used for loading dependency packages.
 type BalaProject struct {
 	BaseProject
-	platform string // e.g., "any"
+	platform      string // e.g., "any"
+	schemaVersion int    // bala schema version; < 4 means legacy (v3) module layout
 }
 
 // Compile-time check to verify BalaProject implements Project interface
 var _ Project = (*BalaProject)(nil)
 
-// newBalaProject creates a new BalaProject with the given bala path and build options.
-// The sourceRoot should be the platform directory (e.g., ~/.ballerina/.../1.0.0/any/).
-func newBalaProject(fsys fs.FS, sourceRoot string, buildOptions BuildOptions, platform string) *BalaProject {
-	project := &BalaProject{
-		platform: platform,
-	}
-	project.initBase(fsys, sourceRoot, buildOptions)
-	return project
-}
-
 // newBalaProjectWithEnv creates a new BalaProject with a shared Environment.
 // Use this when loading dependency packages that need to share the same
 // PackageCache as the root project.
-func newBalaProjectWithEnv(sourceRoot string, buildOptions BuildOptions, platform string, env *Environment) *BalaProject {
+func newBalaProjectWithEnv(sourceRoot string, buildOptions BuildOptions, platform string, schemaVersion int, env *Environment) *BalaProject {
 	project := &BalaProject{
-		platform: platform,
+		platform:      platform,
+		schemaVersion: schemaVersion,
 	}
 	project.initBaseWithEnv(sourceRoot, buildOptions, env)
 	return project
@@ -91,13 +82,26 @@ func (b *BalaProject) DocumentID(filePath string) (DocumentID, bool) {
 }
 
 // documentPathForModule returns the file path for a document within a module.
+//
+// v4+ layout: default-module files sit at the bala root; non-default modules
+// are under modules/<moduleNamePart>/.
+//
+// Legacy (schema < 4) layout: every module lives under modules/<moduleName>/,
+// where moduleName is the full module name string (e.g. "mypkg" for the default
+// module, "mypkg.sub" for a sub-module), matching what scanBalaModules scanned.
 func (b *BalaProject) documentPathForModule(docID DocumentID, module *Module) string {
 	doc := module.Document(docID)
 	if doc == nil {
 		return ""
 	}
-	moduleName := module.ModuleName().String()
-	return filepath.Join(b.sourceRoot, ModulesDir, moduleName, doc.Name())
+	docName := filepath.Base(doc.Name())
+	if b.schemaVersion < 4 {
+		return filepath.Join(b.sourceRoot, ModulesDir, module.ModuleName().String(), docName)
+	}
+	if module.IsDefaultModule() {
+		return filepath.Join(b.sourceRoot, docName)
+	}
+	return filepath.Join(b.sourceRoot, ModulesDir, module.ModuleName().ModuleNamePart(), docName)
 }
 
 // DocumentPath returns the file path for the given DocumentID.
@@ -112,14 +116,7 @@ func (b *BalaProject) DocumentPath(documentID DocumentID) string {
 		return ""
 	}
 
-	doc := module.Document(documentID)
-	if doc == nil {
-		return ""
-	}
-
-	// Bala modules are in: modules/{moduleName}/{fileName}
-	moduleName := module.ModuleName().String()
-	return filepath.Join(b.sourceRoot, ModulesDir, moduleName, doc.Name())
+	return b.documentPathForModule(documentID, module)
 }
 
 // Save is a no-op for bala projects (read-only).
@@ -130,7 +127,7 @@ func (b *BalaProject) Save() {
 // Duplicate creates a deep copy of the bala project.
 func (b *BalaProject) Duplicate() Project {
 	duplicateBuildOptions := NewBuildOptions().AcceptTheirs(b.buildOptions)
-	newProject := newBalaProjectWithEnv(b.sourceRoot, duplicateBuildOptions, b.platform, b.Environment().Duplicate())
+	newProject := newBalaProjectWithEnv(b.sourceRoot, duplicateBuildOptions, b.platform, b.schemaVersion, b.Environment().Duplicate())
 	ResetPackage(b, newProject)
 	return newProject
 }

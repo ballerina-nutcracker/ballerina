@@ -1,0 +1,48 @@
+(foo
+  (bb0 () (bb1 bb4)
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb2 (bb1) ()
+    (return
+      (simple-var-ref v))
+  )
+  (bb3 (bb1) ()
+    (return
+      (unary-expr -
+        (simple-var-ref v)))
+  )
+  (bb4 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal hello))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (unary-expr -
+            (literal 4)))))))
+  )
+)

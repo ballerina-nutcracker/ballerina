@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
+  --> 3-e.bal:23:5
+   |
+23 |     int|error _ = foo(); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^

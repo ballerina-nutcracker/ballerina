@@ -1,0 +1,22 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition XE
+    (user-defined-type xml Element))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type XE)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (if
+        (binary-expr ==
+          (simple-var-ref x)
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal nil))))) ())
+      (block-stmt))))

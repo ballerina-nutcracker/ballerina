@@ -1,12 +1,13 @@
 # Benchmark
 
-A tool that compares interpreter performance between two Git revisions. It checks out each revision in a temporary worktree, builds `./cli/cmd`, runs [hyperfine](https://github.com/sharkdp/hyperfine) on the same Ballerina target with both binaries, and writes an HTML report.
+A tool that compares interpreter performance or memory usage between two Git revisions. It checks out each revision in a temporary worktree, builds `./cli/cmd`, runs the same Ballerina target with both binaries, and writes an HTML report.
 
 ## Prerequisites
 
 - **Git** — worktrees are created from the current repository
 - **Go** — used to build the interpreter in each worktree
-- **hyperfine** — must be on `PATH`
+- **hyperfine** — must be on `PATH` for time mode
+- **time** — memory mode uses `/usr/bin/time -v` on Linux and `/usr/bin/time -l` on macOS
 
 Run this command from the **root of this repository** (where `.git` lives), so `git worktree` and paths resolve correctly.
 
@@ -30,8 +31,9 @@ bal-bench [options] <base-ref> <head-ref> <target>
 
 **Flags**
 
-- `-warmup` — warmup iterations for hyperfine (default: `4`)
-- `-runs` — timed runs per command (default: `10`)
+- `-mode` — benchmark mode: `time` or `memory` (default: `time`)
+- `-warmup` — warmup iterations per command (default: `4`)
+- `-runs` — measured runs per command (default: `10`)
 - `-export-html` — path for the generated HTML report (optional)
 
 **Target modes**
@@ -52,4 +54,17 @@ bal-bench [options] <base-ref> <head-ref> <target>
   compiler-tools/benchmark/testdata/single-file/1-v.bal
 ```
 
-After a successful run, open `bench-report.html` in a browser to view means, standard deviations, and relative deltas between the two revisions.
+After a successful time-mode run, open `bench-report.html` in a browser to view means, standard deviations, and relative deltas between the two revisions.
+
+For memory usage, run:
+
+```bash
+./bal-bench \
+  --mode memory \
+  --export-html memory-report.html \
+  main \
+  my-branch \
+  compiler-tools/benchmark/testdata/single-file/1-v.bal
+```
+
+Memory mode runs each command with `/usr/bin/time` and reports peak RSS in MiB. It uses `-v` on Linux and `-l` on macOS. Warmup runs are discarded, and measured runs are summarized with mean, standard deviation, and median.

@@ -77,6 +77,10 @@
       (value-type int)))) (
     (value-type byte))
     (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref a))))
       (return
         (literal 5))))
   (function baz (
