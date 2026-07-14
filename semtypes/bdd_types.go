@@ -387,7 +387,7 @@ func (dc *bddDeserializationContext) deserializeBddFromDnf(
 
 func (dc *bddDeserializationContext) deserializeListAtom(atomIndex int32) atom {
 	if atomIndex == 0 {
-		ro := createRecAtom(BDD_REC_ATOM_READONLY)
+		ro := createRecAtom(BDD_REC_ATOM_READONLY, recAtomKindList)
 		return &ro
 	}
 	if dc.listAtoms[atomIndex] != nil {
@@ -423,7 +423,7 @@ func (dc *bddDeserializationContext) deserializeMappingAtom(atomIndex int32) ato
 		return &atom
 	}
 	if atomIndex == 0 {
-		ro := createRecAtom(BDD_REC_ATOM_READONLY)
+		ro := createRecAtom(BDD_REC_ATOM_READONLY, recAtomKindMapping)
 		return &ro
 	}
 	if dc.mappingAtoms[atomIndex] != nil {

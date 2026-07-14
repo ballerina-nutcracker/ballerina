@@ -221,7 +221,7 @@ main() -> nil|error{
   bb44 {
     %86 = ConstantLoad /tmp/bal-file-test-dir
     $desugar$9 = %86;
-    %88 = $default$0($desugar$9) -> bb45;
+    %88 = $default$1($desugar$9) -> bb45;
   }
   bb45 {
     $desugar$10 = %88;
@@ -261,7 +261,7 @@ main() -> nil|error{
   bb52 {
     %100 = ConstantLoad /tmp/bal-file-test-dir
     $desugar$13 = %100;
-    %102 = $default$1($desugar$13) -> bb53;
+    %102 = $default$2($desugar$13) -> bb53;
   }
   bb53 {
     $desugar$14 = %102;
@@ -344,7 +344,7 @@ main() -> nil|error{
   bb68 {
     %131 = ConstantLoad /tmp/bal-file-test.txt
     $desugar$19 = %131;
-    %133 = $default$1($desugar$19) -> bb69;
+    %133 = $default$2($desugar$19) -> bb69;
   }
   bb69 {
     $desugar$20 = %133;
@@ -366,7 +366,7 @@ main() -> nil|error{
     $desugar$22 = %138;
     %140 = ConstantLoad bal-
     $desugar$23 = %140;
-    %142 = $default$4($desugar$22,$desugar$23) -> bb73;
+    %142 = $default$5($desugar$22,$desugar$23) -> bb73;
   }
   bb73 {
     $desugar$24 = %142;
@@ -392,7 +392,7 @@ main() -> nil|error{
   }
   bb78 {
     $desugar$26 = tmp;
-    %151 = $default$1($desugar$26) -> bb79;
+    %151 = $default$2($desugar$26) -> bb79;
   }
   bb79 {
     $desugar$27 = %151;
@@ -410,13 +410,13 @@ main() -> nil|error{
     return;
   }
   bb82 {
-    %156 = $default$5() -> bb83;
+    %156 = $default$6() -> bb83;
   }
   bb83 {
     $desugar$29 = %156;
     %158 = ConstantLoad bal-
     $desugar$30 = %158;
-    %160 = $default$7($desugar$29,$desugar$30) -> bb84;
+    %160 = $default$8($desugar$29,$desugar$30) -> bb84;
   }
   bb84 {
     $desugar$31 = %160;
@@ -442,7 +442,7 @@ main() -> nil|error{
   }
   bb89 {
     $desugar$33 = tmpDir;
-    %169 = $default$1($desugar$33) -> bb90;
+    %169 = $default$2($desugar$33) -> bb90;
   }
   bb90 {
     $desugar$34 = %169;

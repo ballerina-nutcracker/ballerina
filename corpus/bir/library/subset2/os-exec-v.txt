@@ -8,7 +8,7 @@ main() -> nil|error{
     %5 = ConstantLoad 1
     %6 = newArray [string...][%5]{%4}
     %7 = newMap {| arguments: [string...], value: string, never... |}{%1=%2, %3=%6} defaults{arguments=ballerina/os:$desugar$0}
-    %8 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %8 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %9 = exec(%7,%8) -> bb1;
   }
   bb1 {
@@ -81,7 +81,7 @@ main() -> nil|error{
     %37 = ConstantLoad 1
     %38 = newArray [string...][%37]{%36}
     %39 = newMap {| arguments: [string...], value: string, never... |}{%33=%34, %35=%38} defaults{arguments=ballerina/os:$desugar$0}
-    %40 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %40 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %41 = exec(%39,%40) -> bb14;
   }
   bb14 {
@@ -145,7 +145,7 @@ main() -> nil|error{
     %64 = ConstantLoad 2
     %65 = newArray [string...][%64]{%63, dirWithSpace}
     %66 = newMap {| arguments: [string...], value: string, never... |}{%60=%61, %62=%65} defaults{arguments=ballerina/os:$desugar$0}
-    %67 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %67 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %68 = exec(%66,%67) -> bb25;
   }
   bb25 {
@@ -184,7 +184,7 @@ main() -> nil|error{
     %79 = ConstantLoad 1
     %80 = newArray [string...][%79]{dirWithSpace}
     %81 = newMap {| arguments: [string...], value: string, never... |}{%76=%77, %78=%80} defaults{arguments=ballerina/os:$desugar$0}
-    %82 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %82 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %83 = exec(%81,%82) -> bb32;
   }
   bb32 {
@@ -225,7 +225,7 @@ main() -> nil|error{
     %96 = ConstantLoad 2
     %97 = newArray [string...][%96]{%94, %95}
     %98 = newMap {| arguments: [string...], value: string, never... |}{%91=%92, %93=%97} defaults{arguments=ballerina/os:$desugar$0}
-    %99 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %99 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %100 = exec(%98,%99) -> bb39;
   }
   bb39 {
@@ -259,7 +259,7 @@ main() -> nil|error{
     %108 = ConstantLoad value
     %109 = ConstantLoad no_such_command_xyz_123
     %110 = newMap {| arguments: [string...], value: string, never... |}{%108=%109} defaults{arguments=ballerina/os:$desugar$0}
-    %111 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %111 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %112 = exec(%110,%111) -> bb45;
   }
   bb45 {
@@ -276,7 +276,7 @@ main() -> nil|error{
     %121 = ConstantLoad 1
     %122 = newArray [string...][%121]{%120}
     %123 = newMap {| arguments: [string...], value: string, never... |}{%117=%118, %119=%122} defaults{arguments=ballerina/os:$desugar$0}
-    %124 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %124 = newMap {| command: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{}
     %125 = exec(%123,%124) -> bb47;
   }
   bb47 {

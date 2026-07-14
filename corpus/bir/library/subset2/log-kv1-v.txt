@@ -11,7 +11,7 @@ main() -> nil{
     %6 = ConstantLoad 845315
     %7 = ConstantLoad path
     %8 = ConstantLoad /api/v1
-    %9 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%5=%6, %7=%8}
+    %9 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%5=%6, %7=%8}
     %10 = printDebug($desugar$0,$desugar$1,%9) -> bb2;
   }
   bb2 {
@@ -27,7 +27,7 @@ main() -> nil{
     %18 = ConstantLoad true
     %19 = ConstantLoad score
     %20 = ConstantLoad 9.8
-    %21 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%15=%16, %17=%18, %19=%20}
+    %21 = newMap {| 'error: never, msg: never, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%15=%16, %17=%18, %19=%20}
     %22 = printDebug($desugar$2,$desugar$3,%21) -> bb4;
   }
   bb4 {

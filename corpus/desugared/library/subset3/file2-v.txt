@@ -9,13 +9,13 @@
     (block-function-body
       (var-def
         (variable $desugar$0 (expr
-          (invocation $default$5 ()))))
+          (invocation $default$6 ()))))
       (var-def
         (variable $desugar$1 (expr
           (literal bal-file2-))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$7 (
+          (invocation $default$8 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def
@@ -293,7 +293,7 @@
           (simple-var-ref baseDir))))
       (var-def
         (variable $desugar$18 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$17))))))
       (var-def
         (variable dirExistsErr (type
@@ -360,7 +360,7 @@
             (literal /does-not-exist.txt)))))
       (var-def
         (variable $desugar$22 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$21))))))
       (var-def
         (variable removeMissingErr (type
@@ -384,7 +384,7 @@
           (simple-var-ref cwd))))
       (var-def
         (variable $desugar$24 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$23))))))
       (var-def
         (variable removeCwdErr (type
@@ -448,7 +448,7 @@
             (literal /no/such/parent)))))
       (var-def
         (variable $desugar$26 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$25))))))
       (var-def
         (variable dirNoParentErr (type
@@ -465,10 +465,10 @@
             (user-defined-type file Error)))))
       (var-def
         (variable $desugar$27 (expr
-          (invocation $default$2 ()))))
+          (invocation $default$3 ()))))
       (var-def
         (variable $desugar$28 (expr
-          (invocation $default$3 (
+          (invocation $default$4 (
             (simple-var-ref $desugar$27))))))
       (var-def
         (variable tempMissingDir (type
@@ -488,10 +488,10 @@
             (user-defined-type file Error)))))
       (var-def
         (variable $desugar$29 (expr
-          (invocation $default$5 ()))))
+          (invocation $default$6 ()))))
       (var-def
         (variable $desugar$30 (expr
-          (invocation $default$6 (
+          (invocation $default$7 (
             (simple-var-ref $desugar$29))))))
       (var-def
         (variable tempDirMissingDir (type

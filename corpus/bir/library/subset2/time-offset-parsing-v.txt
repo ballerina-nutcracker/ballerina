@@ -235,7 +235,7 @@ main() -> nil|error{
     %56 = ConstantLoad 50
     %57 = ConstantLoad timeAbbrev
     %58 = ConstantLoad +12:99
-    %59 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%45=%46, %47=%48, %49=%50, %51=%52, %53=%54, %55=%56, %57=%58}
+    %59 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%45=%46, %47=%48, %49=%50, %51=%52, %53=%54, %55=%56, %57=%58}
     %60 = civilToString(%59) -> bb47;
   }
   bb47 {
@@ -259,7 +259,7 @@ main() -> nil|error{
     %76 = ConstantLoad 50
     %77 = ConstantLoad timeAbbrev
     %78 = ConstantLoad Bogus/Zone
-    %79 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%65=%66, %67=%68, %69=%70, %71=%72, %73=%74, %75=%76, %77=%78}
+    %79 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%65=%66, %67=%68, %69=%70, %71=%72, %73=%74, %75=%76, %77=%78}
     %80 = civilToString(%79) -> bb49;
   }
   bb49 {
@@ -287,7 +287,7 @@ main() -> nil|error{
     %100 = ConstantLoad minutes
     %101 = ConstantLoad 30
     %102 = newMap {| hours: int, minutes: int, seconds: decimal, never... |}{%98=%99, %100=%101} defaults{minutes=ballerina/time:$desugar$0}
-    %103 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%85=%86, %87=%88, %89=%90, %91=%92, %93=%94, %95=%96, %97=%102}
+    %103 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%85=%86, %87=%88, %89=%90, %91=%92, %93=%94, %95=%96, %97=%102}
     %104 = utcFromCivil(%103) -> bb51;
   }
   bb51 {
@@ -309,7 +309,7 @@ main() -> nil|error{
     %118 = ConstantLoad 20
     %119 = ConstantLoad timeAbbrev
     %120 = ConstantLoad +05:30
-    %121 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%109=%110, %111=%112, %113=%114, %115=%116, %117=%118, %119=%120}
+    %121 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%109=%110, %111=%112, %113=%114, %115=%116, %117=%118, %119=%120}
     %122 = civilToString(%121) -> bb53;
   }
   bb53 {

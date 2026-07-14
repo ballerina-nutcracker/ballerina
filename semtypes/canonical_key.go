@@ -18,10 +18,25 @@ package semtypes
 
 import "sync"
 
+// recAtomKind discriminates which independent, 0-based index space a
+// recursive atom's index was drawn from (list/mapping/function/xml/distinct
+// each keep their own counter on env, so the same numeric index can be
+// assigned to atoms of different kinds).
+type recAtomKind uint8
+
+const (
+	recAtomKindList recAtomKind = iota
+	recAtomKindMapping
+	recAtomKindFunction
+	recAtomKindXML
+	recAtomKindDistinct
+)
+
 type atomKey struct {
 	index int
 	gen   uint64
 	rec   bool
+	kind  recAtomKind
 }
 
 type bddKey int
@@ -56,8 +71,8 @@ func typeAtomKey(index int, gen uint64) atomKey {
 	return atomKey{index: index, gen: gen}
 }
 
-func recAtomKey(index int) atomKey {
-	return atomKey{index: index, rec: true}
+func recAtomKey(index int, kind recAtomKind) atomKey {
+	return atomKey{index: index, rec: true, kind: kind}
 }
 
 func internBddNodeKey(key bddNodeKey) bddKey {

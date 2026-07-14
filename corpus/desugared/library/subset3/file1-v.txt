@@ -1,8 +1,8 @@
 (package
   (import-package ballerina file (as file))
   (import-package ballerina io (as io))
-  (import-package ballerina lang array (as lang.array))
   (import-package ballerina lang string (as lang.string))
+  (import-package ballerina lang array (as lang.array))
   (function main () (
     (union-type
       (error-type)
@@ -200,7 +200,7 @@
           (literal /tmp/bal-file-test-dir))))
       (var-def
         (variable $desugar$10 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$9))))))
       (var-def
         (variable $desugar$11 (expr
@@ -238,7 +238,7 @@
           (literal /tmp/bal-file-test-dir))))
       (var-def
         (variable $desugar$14 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$13))))))
       (var-def
         (variable $desugar$15 (expr
@@ -312,7 +312,7 @@
           (literal /tmp/bal-file-test.txt))))
       (var-def
         (variable $desugar$20 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$19))))))
       (var-def
         (variable $desugar$21 (expr
@@ -335,7 +335,7 @@
           (literal bal-))))
       (var-def
         (variable $desugar$24 (expr
-          (invocation $default$4 (
+          (invocation $default$5 (
             (simple-var-ref $desugar$22)
             (simple-var-ref $desugar$23))))))
       (var-def
@@ -364,7 +364,7 @@
           (simple-var-ref tmp))))
       (var-def
         (variable $desugar$27 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$26))))))
       (var-def
         (variable $desugar$28 (expr
@@ -381,13 +381,13 @@
         (simple-var-ref $desugar$28))
       (var-def
         (variable $desugar$29 (expr
-          (invocation $default$5 ()))))
+          (invocation $default$6 ()))))
       (var-def
         (variable $desugar$30 (expr
           (literal bal-))))
       (var-def
         (variable $desugar$31 (expr
-          (invocation $default$7 (
+          (invocation $default$8 (
             (simple-var-ref $desugar$29)
             (simple-var-ref $desugar$30))))))
       (var-def
@@ -416,7 +416,7 @@
           (simple-var-ref tmpDir))))
       (var-def
         (variable $desugar$34 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$33))))))
       (var-def
         (variable $desugar$35 (expr
