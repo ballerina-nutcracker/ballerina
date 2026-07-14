@@ -1,4 +1,4 @@
-# Contributing to ballerina-lang-go
+# Contributing to Ballerina Nutcracker
 
 ballerina-lang-go is a native Ballerina compiler frontend written in Go. It is licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0) and is part of the Ballerina ecosystem.
 
