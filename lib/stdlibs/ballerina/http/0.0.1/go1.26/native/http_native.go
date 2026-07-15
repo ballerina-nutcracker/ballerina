@@ -282,9 +282,8 @@ func initHttpModule(rt *runtime.Runtime) {
 			return bytes.NewReader([]byte{}), 0, ct
 		case *values.List:
 			if !semtypes.IsZero(v.Type) && semtypes.IsSubtype(tc, v.Type, types.byteArrTy) {
-				if b, ok := listToBytes(v); ok {
-					return bytes.NewReader(b), int64(len(b)), "application/octet-stream"
-				}
+				b := v.ToByteSlice()
+				return bytes.NewReader(b), int64(len(b)), "application/octet-stream"
 			}
 			b, err := toJSONBytes(v)
 			if err != nil {
@@ -925,10 +924,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if !ok {
 				return values.NewErrorWithMessage("setBinaryPayload: expected byte[]"), nil
 			}
-			b, ok := listToBytes(list)
-			if !ok {
-				return values.NewErrorWithMessage("setBinaryPayload: invalid byte value"), nil
-			}
+			b := list.ToByteSlice()
 			self.Put("body", &responseBodyHolder{buf: b})
 			ct := "application/octet-stream"
 			if len(args) > 2 {
@@ -1719,19 +1715,6 @@ func buildResponse(tc semtypes.Context, statusCode int, respHeaders map[string][
 func responseHeaders(self *values.Object) *values.Map {
 	h, _ := self.Get("$headers")
 	return h.(*values.Map)
-}
-
-// listToBytes converts a Ballerina byte[] (List of int64 in 0–255) to []byte.
-func listToBytes(list *values.List) ([]byte, bool) {
-	b := make([]byte, list.Len())
-	for i := range list.Len() {
-		n, ok := list.Get(i).(int64)
-		if !ok || n < 0 || n > 255 {
-			return nil, false
-		}
-		b[i] = byte(n)
-	}
-	return b, true
 }
 
 // toJSONBytes serializes a Ballerina value to JSON bytes.

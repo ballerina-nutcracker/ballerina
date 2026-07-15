@@ -33,9 +33,9 @@ var validGcmTagSizes = map[int64]bool{32: true, 64: true, 96: true, 104: true, 1
 func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "encryptAesCbc",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
-			key := listToBytes(args[1].(*values.List))
-			iv := listToBytes(args[2].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
+			key := args[1].(*values.List).ToByteSlice()
+			iv := args[2].(*values.List).ToByteSlice()
 			padding, _ := args[3].(string)
 			block, err := aes.NewCipher(key)
 			if err != nil {
@@ -45,14 +45,14 @@ func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			_ = padding
 			out := make([]byte, len(padded))
 			cipher.NewCBCEncrypter(block, iv).CryptBlocks(out, padded)
-			return bytesToList(types.byteArrTy, ctx, out), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decryptAesCbc",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
-			key := listToBytes(args[1].(*values.List))
-			iv := listToBytes(args[2].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
+			key := args[1].(*values.List).ToByteSlice()
+			iv := args[2].(*values.List).ToByteSlice()
 			block, err := aes.NewCipher(key)
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-CBC decrypt: %s", err.Error())), nil
@@ -66,13 +66,13 @@ func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-CBC decrypt: %s", err.Error())), nil
 			}
-			return bytesToList(types.byteArrTy, ctx, unpadded), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, unpadded), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "encryptAesEcb",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
-			key := listToBytes(args[1].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
+			key := args[1].(*values.List).ToByteSlice()
 			block, err := aes.NewCipher(key)
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-ECB encrypt: %s", err.Error())), nil
@@ -82,13 +82,13 @@ func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			for i := 0; i < len(padded); i += aes.BlockSize {
 				block.Encrypt(out[i:i+aes.BlockSize], padded[i:i+aes.BlockSize])
 			}
-			return bytesToList(types.byteArrTy, ctx, out), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decryptAesEcb",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
-			key := listToBytes(args[1].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
+			key := args[1].(*values.List).ToByteSlice()
 			block, err := aes.NewCipher(key)
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-ECB decrypt: %s", err.Error())), nil
@@ -104,14 +104,14 @@ func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-ECB decrypt: %s", err.Error())), nil
 			}
-			return bytesToList(types.byteArrTy, ctx, unpadded), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, unpadded), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "encryptAesGcm",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
-			key := listToBytes(args[1].(*values.List))
-			iv := listToBytes(args[2].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
+			key := args[1].(*values.List).ToByteSlice()
+			iv := args[2].(*values.List).ToByteSlice()
 			tagSize := args[4].(int64)
 			if !validGcmTagSizes[tagSize] {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-GCM encrypt: invalid tag size %d bits", tagSize)), nil
@@ -125,14 +125,14 @@ func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-GCM encrypt: %s", err.Error())), nil
 			}
 			out := gcm.Seal(nil, iv, input, nil)
-			return bytesToList(types.byteArrTy, ctx, out), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decryptAesGcm",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
-			key := listToBytes(args[1].(*values.List))
-			iv := listToBytes(args[2].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
+			key := args[1].(*values.List).ToByteSlice()
+			iv := args[2].(*values.List).ToByteSlice()
 			tagSize := args[4].(int64)
 			if !validGcmTagSizes[tagSize] {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-GCM decrypt: invalid tag size %d bits", tagSize)), nil
@@ -149,7 +149,7 @@ func registerAesFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while AES-GCM decrypt: %s", err.Error())), nil
 			}
-			return bytesToList(types.byteArrTy, ctx, out), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
 		})
 }
 
