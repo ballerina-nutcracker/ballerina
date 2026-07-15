@@ -1,4 +1,0 @@
-[package]
-org     = "mockorg"
-name    = "mathpkg"
-version = "1.0.0"
