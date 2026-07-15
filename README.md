@@ -6,6 +6,7 @@
 
 </div>
 
+[![Website](https://img.shields.io/badge/Website-ballerina.io-52C3C2)](https://ballerina.io/)
 [![Release](https://img.shields.io/github/v/release/ballerina-nutcracker/ballerina)](https://github.com/ballerina-nutcracker/ballerina/releases)
 [![Native CI](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/native-ci.yml/badge.svg)](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/native-ci.yml)
 [![golangci-lint](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/golangci-lint.yml)
@@ -224,7 +225,7 @@ Ballerina Nutcracker follows a lightweight, consensus-driven governance model, i
 
 ## Adopters
 
-Organizations using Ballerina Nutcracker are listed in [ADOPTERS.md](ADOPTERS.md). If your organization uses this project, please open a pull request to add yourself — it helps demonstrate real-world usage and strengthens the project's case as it works toward CNCF alignment.
+Organizations using Ballerina Nutcracker are listed in [ADOPTERS.md](ADOPTERS.md). If your organization uses this project, please open a pull request to add yourself — it helps demonstrate real-world usage and strengthens the project's alignment with CNCF community norms.
 
 ## License
 

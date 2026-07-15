@@ -1,6 +1,6 @@
 # Adopters
 If your organization is using Ballerina Nutcracker, we kindly encourage you to add your name to this list.
-This helps demonstrate real-world usage, builds community confidence, and strengthens the project's case as it works toward CNCF alignment.
+This helps demonstrate real-world usage, builds community confidence, and strengthens the project's alignment with CNCF community norms.
 
 Adding your organization is a small contribution that has a big impact. You can do this by opening a pull request to update this file after reviewing our [contribution guidelines](https://github.com/ballerina-nutcracker/ballerina/blob/main/CONTRIBUTING.md).
 

@@ -57,7 +57,7 @@ No formal approval is required to become a contributor.
 
 ## Decision Making
 
-Ballerina Nutcracker follows a consensus-driven decision-making model common to CNCF projects.
+Ballerina Nutcracker follows a consensus-driven decision-making model inspired by other CNCF projects.
 
 ### Lazy Consensus
 
@@ -77,6 +77,35 @@ A formal vote is required for:
 - Adding new maintainers
 - Removing maintainers
 - Major architectural or governance changes
+
+## Working Groups
+
+Working Groups (WGs) are time-bounded groups formed to address a specific architectural or cross-cutting concern that benefits from focused community effort — for example, designing a new language subset, evolving the BIR format, or scoping a new standard library module. A working group produces concrete deliverables, typically architecture specifications, design documents, or implementation guidelines, and dissolves once those deliverables are accepted.
+
+### Forming a Working Group
+
+Any maintainer may propose a working group by opening a pull request that adds a `CHARTER.md` to `working-groups/<wg-name>/`. The charter must define the WG's objective, scope, deliverables, timeline, and proposed lead. At least one maintainer approval is required to merge.
+
+### Working Group Lead, Co-Lead(s), Core Members and Community Contributors
+
+Each WG must have a lead who is a current maintainer or active contributor with demonstrated familiarity with the problem domain. The lead chairs meetings, drives the agenda, owns deliverables, and reports progress to the maintainer group. Co-Lead(s) support the WG Lead and cover in their absence, appointed by the WG Lead with agreement from core members. Core Members are maintainers and active contributors who commit to attending meetings and contributing to at least one deliverable. Community Contributors can be anyone from the wider Ballerina Nutcracker community who participates in discussions or provides feedback. No formal commitment required.
+
+### Decision Making
+
+Working groups use lazy consensus (3 business days) for day-to-day decisions. Decisions that modify a public API contract or cross-stage interface — for example, the BIR format, a `lib/langlibs`/`lib/stdlibs` module contract, or the Platform Adaptation Layer (`platform/pal`) — also require approval from at least one maintainer outside the WG. That member cannot be part of the WG, such as the WG lead, co-lead(s), or core members.
+
+### Outputs
+
+WG outputs (architecture docs, design specs, RFCs) are merged to the repository via standard pull requests requiring two approvals from WG members and one maintainer approval. Outputs do not constitute implementation authority — implementation work follows the standard contribution process.
+
+### Dissolving a Working Group
+
+A WG closes when all charter deliverables are accepted or when the WG lead declares the effort complete. The lead notifies the maintainer group via a PR that archives the WG directory and updates its `CHARTER.md` status to `Completed`.
+
+### Active Working Groups
+
+| Working Group | Lead | Status | Charter |
+|---|---|---|---|
 
 ## Becoming a Maintainer
 
@@ -107,7 +136,7 @@ Removal requires approval by a **supermajority** of the remaining maintainers.
 
 ## Meetings
 
-Where established, maintainers are encouraged to participate in public community meetings, office hours, or maintainer syncs.
+Where feasible, maintainers are encouraged to participate in public community meetings, office hours, or maintainer syncs.
 
 Closed meetings may be held to address security issues or Code of Conduct matters. All maintainers, except those directly involved in a reported Code of Conduct issue, must be invited to such meetings.
 
@@ -128,4 +157,4 @@ Changes to this governance document require:
 
 ## Acknowledgements
 
-This governance model is inspired by governance documents from CNCF Sandbox and Incubating projects and is intentionally lightweight to match the project's current size, with room to add more structure (for example, formal working groups) as the community grows.
+This governance model is inspired by governance documents from CNCF Sandbox and Incubating projects and is intentionally lightweight to match the project's current size, with room to add more structure as the community grows.
