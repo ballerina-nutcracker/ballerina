@@ -528,7 +528,10 @@ public type ListenerSecureSocket record {|
 // Provides a set of configurations for the HTTP listener.
 //
 //   host         - Bind address (default "0.0.0.0").
-//   timeout      - Read/write timeout in seconds (default 60).
+//   timeout      - Response write timeout in seconds (default 60). Request headers
+//                  are bounded by a fixed internal timeout; request body reads are
+//                  not time-limited, so slow uploads and proxied streams are not
+//                  aborted mid-transfer.
 //   httpVersion  - Highest HTTP version supported (default HTTP_2_0). HTTP_2_0 enables
 //                  both HTTP/1.1 and HTTP/2; HTTP_1_1 restricts to HTTP/1.1 only.
 //   secureSocket - TLS settings; () disables TLS (plain HTTP).

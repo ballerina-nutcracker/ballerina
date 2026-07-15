@@ -54,6 +54,7 @@ type listenerState struct {
 	servingStrands map[uint64]struct{}
 	shutdownOnce   sync.Once
 	shutdownDone   chan struct{}
+	shutdownErr    error // set once before shutdownDone is closed; safe to read after
 }
 
 type serviceEntry struct {
@@ -113,6 +114,11 @@ func registerListenerExterns(rt *runtime.Runtime) {
 						if s, ok := v.(string); ok && s != "" {
 							state.httpVersion = s
 						}
+					}
+					if state.httpVersion == "1.0" {
+						msg := "warning [ballerina/http]: HTTP/1.0 is not supported by the Go HTTP runtime; falling back to HTTP/1.1\n"
+						_, _ = rt.Platform().IO.Stderr([]byte(msg))
+						state.httpVersion = "1.1"
 					}
 					if v, ok := cfg.Get("secureSocket"); ok {
 						if ssMap, ok := v.(*values.Map); ok {
@@ -247,15 +253,25 @@ func registerListenerExterns(rt *runtime.Runtime) {
 				go func() {
 					shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
 					defer cancel()
-					_ = server.Shutdown(shutdownCtx)
+					state.shutdownErr = server.Shutdown(shutdownCtx)
 					close(state.shutdownDone)
 				}()
 			})
 
 			if isServingStrand {
+				select {
+				case <-state.shutdownDone:
+					if state.shutdownErr != nil {
+						return values.NewErrorWithMessage("Listener.gracefulStop: " + state.shutdownErr.Error()), nil
+					}
+				default:
+				}
 				return nil, nil
 			}
 			<-state.shutdownDone
+			if state.shutdownErr != nil {
+				return values.NewErrorWithMessage("Listener.gracefulStop: " + state.shutdownErr.Error()), nil
+			}
 			return nil, nil
 		})
 
@@ -290,7 +306,10 @@ func extractAttachPath(v values.BalValue) string {
 			return "/"
 		}
 		if !strings.HasPrefix(val, "/") {
-			return "/" + val
+			val = "/" + val
+		}
+		if val != "/" {
+			val = strings.TrimSuffix(val, "/")
 		}
 		return val
 	case *values.List:
@@ -559,7 +578,7 @@ func buildRequestFromHTTP(tc semtypes.Context, r *http.Request) (*values.Object,
 	default:
 		bodyStream = r.Body
 	}
-	return buildRequest(tc, r.Method, r.URL.Path, r.Proto, r.Header, bodyStream, cl, r.URL.RawQuery, bodyBuf), nil
+	return buildRequest(tc, r.Method, r.RequestURI, r.Proto, r.Header, bodyStream, cl, r.URL.RawQuery, bodyBuf), nil
 }
 
 // buildRequest constructs a Ballerina Request object from HTTP request data.
@@ -595,14 +614,17 @@ func buildRequest(tc semtypes.Context, method, rawPath, httpVersion string, head
 			"$queryStr":   rawQuery,
 		},
 		map[string]string{
-			"getTextPayload":     "ballerina/http:Request.getTextPayload",
-			"getJsonPayload":     "ballerina/http:Request.getJsonPayload",
-			"getBinaryPayload":   "ballerina/http:Request.getBinaryPayload",
-			"getHeader":          "ballerina/http:Request.getHeader",
-			"getHeaders":         "ballerina/http:Request.getHeaders",
-			"hasHeader":          "ballerina/http:Request.hasHeader",
-			"getQueryParams":     "ballerina/http:Request.getQueryParams",
-			"getQueryParamValue": "ballerina/http:Request.getQueryParamValue",
+			"getTextPayload":      "ballerina/http:Request.getTextPayload",
+			"getJsonPayload":      "ballerina/http:Request.getJsonPayload",
+			"getBinaryPayload":    "ballerina/http:Request.getBinaryPayload",
+			"getHeader":           "ballerina/http:Request.getHeader",
+			"getHeaders":          "ballerina/http:Request.getHeaders",
+			"hasHeader":           "ballerina/http:Request.hasHeader",
+			"getHeaderNames":      "ballerina/http:Request.getHeaderNames",
+			"getContentType":      "ballerina/http:Request.getContentType",
+			"getQueryParams":      "ballerina/http:Request.getQueryParams",
+			"getQueryParamValue":  "ballerina/http:Request.getQueryParamValue",
+			"getQueryParamValues": "ballerina/http:Request.getQueryParamValues",
 		},
 		nil,
 	)
@@ -680,7 +702,11 @@ func writeResult(rt *runtime.Runtime, _ semtypes.Context, w http.ResponseWriter,
 		// start flowing via writeStream, headers are already committed.
 		w.WriteHeader(statusCode)
 		if holder != nil {
-			_ = holder.writeStream(w)
+			// Headers are already committed; a write error here can't be recovered
+			// with a JSON error body, so just stop.
+			if err := holder.writeStream(w); err != nil {
+				return
+			}
 		}
 	default:
 		writeErrorJSON(rt, w, r, http.StatusInternalServerError, "unexpected return type from resource method")

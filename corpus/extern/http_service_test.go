@@ -87,6 +87,31 @@ func TestHttpServiceMultiService(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-multi-service-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceAttachTrailingSlash verifies that a base path supplied to
+// Listener.attach with a trailing slash (e.g. "/foo/") still matches
+// sub-paths at a segment boundary, the same as "/foo" would.
+func TestHttpServiceAttachTrailingSlash(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-attach-trailing-slash-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceRequestAccessors exercises inbound Request.rawPath (which
+// must retain the raw request-target, including the query string) and the
+// getContentType/getHeaderNames/getQueryParamValues accessors.
+func TestHttpServiceRequestAccessors(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-request-accessors-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceHTTP10Fallback verifies that a listener configured with
+// HTTP_1_0 (accepted by the enum but unsupported by the Go HTTP runtime)
+// falls back to HTTP/1.1 with a warning instead of forwarding "1.0" to the
+// platform layer.
+func TestHttpServiceHTTP10Fallback(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-http10-fallback-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceTypedParams exercises the runtime path dispatcher's coercion of
 // boolean, decimal, and string path parameters.
 func TestHttpServiceTypedParams(t *testing.T) {

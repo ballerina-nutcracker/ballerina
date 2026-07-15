@@ -1,0 +1,8 @@
+-- stdout --
+200
+/acc/info?tag=a&tag=b
+text/plain
+true
+a
+b
+-- stderr --
