@@ -18,7 +18,7 @@
 
 """Mechanical validator for the stdlib-readme-format skill.
 
-Checks every lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md against the
+Checks every lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md against the
 format contract, and the top-level aggregator README against the recounted
 per-package tables. Judgment-only rules (prose quality, caveat usefulness,
 content accuracy) are NOT checked here — see the skill's checklist.
@@ -213,7 +213,7 @@ def check_aggregator(per_pkg):
 
 
 def main():
-    readmes = sorted(glob.glob(f"{ROOT}/*/0.0.1/go1.2/README.md"))
+    readmes = sorted(glob.glob(f"{ROOT}/*/0.0.1/go1.26/README.md"))
     if not readmes:
         print("error: no per-package READMEs found — run from the repo root", file=sys.stderr)
         sys.exit(2)
