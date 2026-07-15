@@ -2165,63 +2165,6 @@ func validateObjInclusions[A analyzer](a A, inclusions []model.SymbolRef, positi
 	}
 }
 
-func isIsolatedFnSymbol[A analyzer](a A, tyCtx semtypes.Context, symbol model.SymbolRef) bool {
-	isolatedTop := semtypes.CreateIsolatedFn(tyCtx)
-	fnTy := a.ctx().SymbolType(symbol)
-	return semtypes.IsSubtype(tyCtx, fnTy, isolatedTop)
-}
-
-// isIsolatedFuncInner validates an isolated function body: every variable reference
-// must resolve to a constant or to a variable declared within the body itself.
-func isIsolatedFuncInner[A analyzer](a A, node ast.BLangNode) {
-	locals := make(map[model.SymbolRef]struct{})
-	tyCtx := a.tyCtx()
-	ctx := a.ctx()
-	everyNode(a, node, func(analyzer A, inner ast.BLangNode) bool {
-		switch inner := inner.(type) {
-		case *ast.BLangVariableDef:
-			locals[ctx.UnnarrowedSymbol(inner.Var.Symbol())] = struct{}{}
-		case *ast.BLangInvocation:
-			if ast.IsStreamOperation(inner) {
-				return true
-			}
-			if !isIsolatedFnSymbol(a, tyCtx, inner.Symbol()) {
-				a.semanticErr("invocation of a non-isolated function", inner.GetPosition())
-			}
-		case *ast.BLangRemoteMethodCallAction:
-			if !isIsolatedFnSymbol(a, tyCtx, inner.MethodSymbol()) {
-				a.semanticErr("invocation of a non-isolated function", inner.GetPosition())
-			}
-		case *ast.BLangNewExpression:
-			if ast.IsStreamNewExpression(inner) {
-				return true
-			}
-			classTy := a.ctx().SymbolType(inner.ClassSymbol)
-			initTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("init"), classTy)
-			if !semtypes.IsZero(initTy) && !semtypes.IsSubtype(tyCtx, initTy, semtypes.CreateIsolatedFn(tyCtx)) {
-				a.semanticErr("non isolated initialization", inner.GetPosition())
-			}
-		case *ast.BLangVarRef:
-			sym := a.ctx().GetSymbol(inner.Symbol())
-			varSym, ok := sym.(model.ValueSymbol)
-			if !ok {
-				analyzer.unimplementedErr("unsupported reference in isolated function body", inner.GetPosition())
-				return true
-			}
-			if varSym.Name() == "self" {
-				return true
-			}
-			if varSym.IsConst() {
-				return true
-			}
-			if _, isLocal := locals[ctx.UnnarrowedSymbol(inner.Symbol())]; !isLocal {
-				a.semanticErr("access of mutable variable", inner.GetPosition())
-			}
-		}
-		return true
-	})
-}
-
 type everyNodeVisitor[A analyzer] struct {
 	analyzer  A
 	predicate func(A, ast.BLangNode) bool
