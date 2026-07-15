@@ -1,0 +1,6 @@
+-- stdout --
+[72,101,108,108,111]
+[72,101,108,108,111]
+error("failed to decode base64 string")
+error("failed to decode base16 string")
+-- stderr --

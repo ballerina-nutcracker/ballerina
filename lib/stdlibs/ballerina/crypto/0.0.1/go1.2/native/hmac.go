@@ -48,10 +48,10 @@ func registerHmacFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 func hmacFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		input := listToBytes(args[0].(*values.List))
-		key := listToBytes(args[1].(*values.List))
+		input := args[0].(*values.List).ToByteSlice()
+		key := args[1].(*values.List).ToByteSlice()
 		h := hmac.New(newHash, key)
 		h.Write(input)
-		return bytesToList(types.byteArrTy, ctx, h.Sum(nil)), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, h.Sum(nil)), nil
 	}
 }
