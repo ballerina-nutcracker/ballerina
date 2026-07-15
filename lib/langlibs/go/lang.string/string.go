@@ -17,11 +17,11 @@
 package stringruntime
 
 import (
-	"fmt"
 	"unicode/utf8"
 
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/values"
 )
 
@@ -30,13 +30,38 @@ const (
 	moduleName = "lang.string"
 )
 
+func stringLength(args []values.BalValue) (values.BalValue, error) {
+	return int64(utf8.RuneCountInString(args[0].(string))), nil
+}
+
+func stringToBytes(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, []byte(args[0].(string))), nil
+}
+
+func stringFromBytes(args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	data := list.ToByteSlice()
+	if !utf8.Valid(data) {
+		return values.NewErrorWithMessage("invalid UTF-8 byte array"), nil
+	}
+	return string(data), nil
+}
+
 func initStringModule(rt *runtime.Runtime) {
+	env := rt.GetTypeEnv()
+	ld := semtypes.NewListDefinition()
+	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE)
+
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		s, ok := args[0].(string)
-		if !ok {
-			return nil, fmt.Errorf("first argument must be a string")
-		}
-		return int64(utf8.RuneCountInString(s)), nil
+		return stringLength(args)
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBytes", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return stringToBytes(byteArrTy, ctx, args)
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBytes", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return stringFromBytes(args)
 	})
 }
 

@@ -69,6 +69,10 @@ const (
 	// targets are not migrated to the Go port.
 	BalaPlatformAny = "any"
 
+	// balaGoNativeDir is the directory inside a go1.x bala that holds the Go
+	// source files implementing native (extern) Ballerina functions.
+	balaGoNativeDir = "native"
+
 	// TomlFileExtension is the extension for TOML files.
 	TomlFileExtension = ".toml"
 

@@ -15,7 +15,7 @@ Coding rules and the PAL constraint live in `AGENTS.md` at the repo root — rea
 
 ## 1. Identify the gap
 
-Open the target stdlib's README, e.g. `lib/stdlibs/ballerina/io/0.0.1/go1.2/README.md`, and confirm the row to be promoted.
+Open the target stdlib's README, e.g. `lib/stdlibs/ballerina/io/0.0.1/go1.26/README.md`, and confirm the row to be promoted.
 
 - If the row exists and is **Not Yet Supported** / **Partially Supported** — proceed.
 - If the row exists and is already **Supported** — clarify with the user whether they want to fix a divergence (different scope; use behavioural-change analysis only) or whether the row is stale.
@@ -81,8 +81,8 @@ You are editing existing files, **not** creating new ones. In particular:
 
 What you *do* edit:
 
-- **`lib/stdlibs/ballerina/<name>/0.0.1/go1.2/<name>.bal`** (or sibling `.bal` files like `file.bal`, `types.bal`) — add the public function, type declaration, or extern signature. Preserve the existing license header and doc-comment style. Function names match jBallerina exactly.
-- **`lib/stdlibs/ballerina/<name>/0.0.1/go1.2/native/<name>.go`** (or sibling `.go` files like `file_io.go`) — add the Go implementation. Register it in the existing `init<Name>Module` function:
+- **`lib/stdlibs/ballerina/<name>/0.0.1/go1.26/<name>.bal`** (or sibling `.bal` files like `file.bal`, `types.bal`) — add the public function, type declaration, or extern signature. Preserve the existing license header and doc-comment style. Function names match jBallerina exactly.
+- **`lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native/<name>.go`** (or sibling `.go` files like `file_io.go`) — add the Go implementation. Register it in the existing `init<Name>Module` function:
   ```go
   func init<Name>Module(rt *runtime.Runtime) {
       // existing registrations...
