@@ -109,7 +109,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPrivateKeyFromContent",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			content := listToBytes(args[0].(*values.List))
+			content := args[0].(*values.List).ToByteSlice()
 			var keyPwd string
 			if args[1] != nil {
 				keyPwd, _ = args[1].(string)
@@ -209,7 +209,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPublicKeyFromContent",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			content := listToBytes(args[0].(*values.List))
+			content := args[0].(*values.List).ToByteSlice()
 			cert, err := parseCertificatePEM(content)
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Failed to parse private key information from the given input: %s", err.Error())), nil
@@ -322,7 +322,7 @@ func buildPublicKeyMap(types cryptoTypes, ctx *extern.Context, key any, algorith
 
 // buildCertMap converts an x509.Certificate to a Ballerina Certificate record.
 func buildCertMap(types cryptoTypes, ctx *extern.Context, cert *x509.Certificate) *values.Map {
-	sigBytes := bytesToList(types.byteArrTy, ctx, cert.Signature)
+	sigBytes := values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, cert.Signature)
 	return values.NewMap(types.keyMapTy, semtypes.ToMappingAtomicType(ctx.TypeCtx, types.keyMapTy), false, []values.MapEntry{
 		{Key: "version", Value: int64(cert.Version)},
 		{Key: "serial", Value: cert.SerialNumber.Int64()},

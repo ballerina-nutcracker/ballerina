@@ -19,3 +19,15 @@
 # + str - the string
 # + return - the number of characters (code points) in `str`
 public isolated function length(string str) returns int = external;
+
+# Returns a byte array for a string using UTF-8 encoding.
+#
+# + str - the string value
+# + return - a byte array representation of `str`
+public isolated function toBytes(string str) returns byte[] = external;
+
+# Returns a string from a byte array using UTF-8 decoding.
+#
+# + bytes - the byte array to decode
+# + return - the decoded string, or an error if the bytes are not valid UTF-8
+public isolated function fromBytes(byte[] bytes) returns string|error = external;
