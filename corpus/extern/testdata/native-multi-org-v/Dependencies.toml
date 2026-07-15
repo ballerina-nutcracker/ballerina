@@ -1,0 +1,37 @@
+[ballerina]
+dependencies-toml-version = "2"
+
+[[package]]
+org     = "acmeorg"
+name    = "calcpkg"
+version = "1.0.0"
+
+[[package]]
+org     = "ballerina"
+name    = "io"
+version = "1.6.0"
+
+[[package]]
+org     = "mockorg"
+name    = "aaaleafpkg"
+version = "1.0.0"
+
+[[package]]
+org     = "mockorg"
+name    = "greetpkg"
+version = "1.0.0"
+
+[[package]]
+org     = "mockorg"
+name    = "leafpkg"
+version = "1.0.0"
+
+[[package]]
+org     = "mockorg"
+name    = "middlepkg"
+version = "1.0.0"
+
+[[package]]
+org     = "mockorg"
+name    = "nativepkg"
+version = "1.0.0"

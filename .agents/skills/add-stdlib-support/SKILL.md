@@ -47,7 +47,7 @@ Then:
 Scan the jBallerina source for `import ballerina/<X>` statements.
 
 - For each `<X>` **not** already present under `lib/stdlibs/ballerina/<X>/`: tell the user that dependency must be implemented first. If they ask to continue anyway, narrow the plan to only features that don't depend on `<X>`.
-- For each `<X>` already present: read `lib/stdlibs/ballerina/<X>/0.0.1/go1.2/README.md` and note every row whose status is **Not Yet Supported**, **Partially Supported**, or **Cannot Support**, plus anything under **Notable Behavioural Changes**. If our in-scope features depend on any of those gaps or divergences, surface them in the plan (Step 4) under a **Dependency Limitations** section.
+- For each `<X>` already present: read `lib/stdlibs/ballerina/<X>/0.0.1/go1.26/README.md` and note every row whose status is **Not Yet Supported**, **Partially Supported**, or **Cannot Support**, plus anything under **Notable Behavioural Changes**. If our in-scope features depend on any of those gaps or divergences, surface them in the plan (Step 4) under a **Dependency Limitations** section.
 - **Exception**: `ballerina/jballerina.java.arrays` will not get a Go equivalent. Plan to replace its uses with Go-native equivalents inside the `native/` layer.
 - **Cross-stdlib imports must be declared in `Dependencies.toml`** — see `templates/manifests.md` for the format and why missing entries cause `Unknown import: ballerina/<dep>` at runtime.
 - **Langlib imports need compiler wiring**: if the `.bal` source imports a langlib (`import ballerina/lang.<x>;`), that import only resolves through the `isLangImport` switch in `semantics/symbol_resolver.go` — check the langlib in question is wired there before assuming it works.
@@ -124,7 +124,7 @@ Present as a small table with a recommendation. **Wait for user approval** befor
 ### File layout
 
 ```
-lib/stdlibs/ballerina/<name>/0.0.1/go1.2/
+lib/stdlibs/ballerina/<name>/0.0.1/go1.26/
 ├── Ballerina.toml          # package manifest
 ├── Bala.toml               # build/platform manifest
 ├── Dependencies.toml       # package dependencies
@@ -151,7 +151,7 @@ Shared patterns — read the relevant file only when the situation applies:
 
 1. **`lib/rt/libs.go`** — add a blank import so the `init()` in the native package runs at binary start:
    ```go
-   _ "ballerina-lang-go/lib/stdlibs/ballerina/<name>/0.0.1/go1.2/native"
+   _ "ballerina-lang-go/lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native"
    ```
    Without this, all `= external` functions produce "function not found" at runtime even though the binary compiles cleanly. Skip this line if your stdlib has no `native/` directory.
 
@@ -173,11 +173,11 @@ Follow `AGENTS.md` (root) — Coding style, Symbols, and PAL sections. Do not re
 
 | Exemplar | Use when |
 |---|---|
-| `lib/stdlibs/ballerina/url/0.0.1/go1.2/` | Smallest viable stdlib — 2 extern functions, 1 native file. |
-| `lib/stdlibs/ballerina/io/0.0.1/go1.2/` | Multi-file `.bal` (constants/types/print/file) + multi-file `native/` (`io.go` + `file_io.go`). |
-| `lib/stdlibs/ballerina/time/0.0.1/go1.2/` | Heavy native implementation with PAL usage and documented behavioural divergences. |
-| `lib/stdlibs/ballerina/http/0.0.1/go1.2/` | Class-based stdlib (Client init wrapper). |
-| `lib/stdlibs/ballerina/math.vector/0.0.1/go1.2/` | Pure Ballerina — no `native/` directory at all. |
+| `lib/stdlibs/ballerina/url/0.0.1/go1.26/` | Smallest viable stdlib — 2 extern functions, 1 native file. |
+| `lib/stdlibs/ballerina/io/0.0.1/go1.26/` | Multi-file `.bal` (constants/types/print/file) + multi-file `native/` (`io.go` + `file_io.go`). |
+| `lib/stdlibs/ballerina/time/0.0.1/go1.26/` | Heavy native implementation with PAL usage and documented behavioural divergences. |
+| `lib/stdlibs/ballerina/http/0.0.1/go1.26/` | Class-based stdlib (Client init wrapper). |
+| `lib/stdlibs/ballerina/math.vector/0.0.1/go1.26/` | Pure Ballerina — no `native/` directory at all. |
 
 ## 8. Tests
 
@@ -225,7 +225,7 @@ If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-c
 
 ## 9. README
 
-Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
+Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
 
 Then update the top-level aggregator `lib/stdlibs/ballerina/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any).
 
@@ -253,7 +253,7 @@ Before declaring done, check every box:
 - [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every in-scope behavioural claim it makes matches the shipped Go implementation exactly. Any mismatch found during implementation (not just at Step 5's planning stage) has been resolved — implementation fixed, or the divergence explicitly documented — not left unreconciled.
 
 ### Documentation
-- [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
+- [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
 - [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (new row, recomputed Total footer, behavioural changes mirrored).
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] `doc/library/subset<N>.md` (the subset agreed with the developer in Step 8) documents this module's newly-supported surface — created fresh if it's a new subset, extended if existing.
