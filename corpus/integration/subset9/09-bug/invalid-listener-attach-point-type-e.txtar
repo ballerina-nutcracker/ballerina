@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression in 'on' clause is not a listener
+  --> invalid-listener-attach-point-type-e.bal:51:12
+   |
+51 | service on new IntAttachPointListener() { // @error listener attach-point type cannot be int
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression in 'on' clause is not a listener
+  --> invalid-listener-attach-point-type-e.bal:54:17
+   |
+54 | service /foo on new IntArrayAttachPointListener() { // @error listener attach-point type cannot be int[]
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

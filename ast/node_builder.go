@@ -1723,23 +1723,16 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 	}
 	for i := 0; i < paths.Size(); i++ {
 		seg := paths.Get(i)
+		if seg.Kind() == common.STRING_LITERAL {
+			service.AttachPointLiteral = n.createSimpleLiteral(seg).(*BLangLiteral) //nolint:forcetypeassert // string literals always create BLangLiteral nodes
+			continue
+		}
 		tok, ok := seg.(tree.Token)
 		if !ok {
 			n.cx.InternalError("unexpected node in service attach point", getPosition(n.de(), seg))
 			continue
 		}
 		switch tok.Kind() {
-		case common.STRING_LITERAL:
-			lit, ok := n.createExpression(tok).(*BLangLiteral)
-			if !ok {
-				n.cx.InternalError("invalid service attach point literal", getPosition(n.de(), tok))
-				continue
-			}
-			if _, isString := lit.GetValue().(string); !isString {
-				n.cx.InternalError("service attach point literal must be a string", getPosition(n.de(), tok))
-				continue
-			}
-			service.AttachPointLiteral = lit
 		case common.IDENTIFIER_TOKEN:
 			ident := createIdentifierFromToken(getPosition(n.de(), tok), tok)
 			service.AbsoluteResourcePath = append(service.AbsoluteResourcePath, ident)
