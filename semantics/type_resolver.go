@@ -3130,11 +3130,10 @@ func validateListenerOnExpression(t typeResolver, expr ast.BLangExpression, atta
 
 func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemType {
 	if svc.AttachPointLiteral != nil {
-		if value, ok := svc.AttachPointLiteral.GetValue().(string); ok {
-			return semtypes.StringConst(value)
+		if !resolveLiteral(t, svc.AttachPointLiteral, semtypes.STRING) {
+			return semtypes.NEVER
 		}
-		t.internalError("non-string service attach point literal reached type resolver", svc.AttachPointLiteral.GetPosition())
-		return semtypes.NEVER
+		return svc.AttachPointLiteral.GetDeterminedType()
 	}
 	if len(svc.AbsoluteResourcePath) == 0 {
 		return semtypes.NIL
