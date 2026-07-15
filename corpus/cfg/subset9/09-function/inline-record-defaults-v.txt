@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref moduleValue)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation parameterValue ( <default>)))))
+  )
+)
+(parameterValue
+  (bb0 () ()
+    (return
+      (field-based-access value
+        (simple-var-ref input)))
+  )
+)
