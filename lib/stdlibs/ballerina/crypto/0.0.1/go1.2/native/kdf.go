@@ -31,10 +31,10 @@ import (
 func registerKdfFunctions(rt *runtime.Runtime, types cryptoTypes) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "hkdfSha256",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			input := listToBytes(args[0].(*values.List))
+			input := args[0].(*values.List).ToByteSlice()
 			length := int(args[1].(int64))
-			salt := listToBytes(args[2].(*values.List))
-			info := listToBytes(args[3].(*values.List))
+			salt := args[2].(*values.List).ToByteSlice()
+			info := args[3].(*values.List).ToByteSlice()
 			if length <= 0 {
 				return cryptoError("Error occurred while HKDF: length must be positive"), nil
 			}
@@ -47,7 +47,7 @@ func registerKdfFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if _, err := io.ReadFull(r, key); err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while HKDF: %s", err.Error())), nil
 			}
-			return bytesToList(types.byteArrTy, ctx, key), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, key), nil
 		})
 }
 
@@ -64,7 +64,7 @@ func registerUtilFunctions(rt *runtime.Runtime, _ cryptoTypes) {
 func hashValueToBytes(v values.BalValue) []byte {
 	switch t := v.(type) {
 	case *values.List:
-		return listToBytes(t)
+		return t.ToByteSlice()
 	case string:
 		return []byte(t)
 	default:

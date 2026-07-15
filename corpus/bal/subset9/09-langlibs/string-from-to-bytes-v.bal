@@ -14,32 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package native
+import ballerina/io;
 
-import (
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
-)
+public function main() returns error? {
+    byte[] bytes = [72, 101, 108, 108, 111];
 
-const (
-	orgName    = "ballerina"
-	moduleName = "crypto"
-)
+    io:println(check string:fromBytes(bytes)); // @output Hello
+    io:println(string:toBytes("Hello")); // @output [72,101,108,108,111]
 
-type cryptoTypes struct {
-	byteArrTy semtypes.SemType
-	keyMapTy  semtypes.SemType
-	utcTy     semtypes.SemType
-}
-
-// cryptoError builds a Ballerina Error value with the given message.
-func cryptoError(msg string) *values.Error {
-	return values.NewErrorWithMessage(msg)
-}
-
-// mapString reads a string field from a Ballerina Map.
-func mapString(m *values.Map, key string) string {
-	v, _ := m.Get(key)
-	s, _ := v.(string)
-	return s
+    // error case
+    byte[] bad = [255];
+    io:println(string:fromBytes(bad)); // @output error("invalid UTF-8 byte array")
 }
