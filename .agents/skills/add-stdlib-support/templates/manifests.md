@@ -1,6 +1,6 @@
 # Manifest templates for a `ballerina/<name>` stdlib package
 
-All three manifests live at `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/`.
+All three manifests live at `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/`.
 
 ## `Ballerina.toml`
 
@@ -21,7 +21,7 @@ schema_version = "4"
 ballerina_version      = ""
 implementation_vendor  = "WSO2"
 language_spec_version  = "2024R1"
-platform               = "go1.2"
+platform               = "go1.26"
 
 [[modules]]
 name   = "<name>"

@@ -34,8 +34,8 @@ Ask the user for the path to the corresponding jBallerina **library implementati
 Then locate:
 
 - **jBallerina public API** — `.bal` files under `<root>/ballerina/` (exclude `tests/` and `build/`).
-- **Go implementation** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/*.bal`.
-- **Support matrix** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md`, the "Go Native Interpreter Support Status" table.
+- **Go implementation** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/*.bal`.
+- **Support matrix** — `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md`, the "Go Native Interpreter Support Status" table.
 
 Stop and ask if any of these is missing. If the Go module does not exist at all, this is a porting task — redirect to `add-stdlib-support`.
 
@@ -45,7 +45,7 @@ Do **not** enumerate public symbols by reading `.bal` files by eye — that is s
 
 ```shell
 go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface <jball-root>/ballerina > /tmp/<name>-jball.surface
-go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface lib/stdlibs/ballerina/<name>/0.0.1/go1.2 > /tmp/<name>-go.surface
+go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface lib/stdlibs/ballerina/<name>/0.0.1/go1.26 > /tmp/<name>-go.surface
 ```
 
 (Run from this repo's root. The tool skips `tests/` and `build/` subdirectories automatically and reports files it failed to parse on stderr — a parse failure means that file must be reviewed by hand; do not silently drop it.)
@@ -103,7 +103,7 @@ So 🔵 covers both interpreter-limitation divergences and `Cannot Support` runt
 
 ## 6. Write the report
 
-Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/CONTRACT_VALIDATION.md`, summary-first, problems up top, not technically deep.
+Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/CONTRACT_VALIDATION.md`, summary-first, problems up top, not technically deep.
 
 **Lifecycle:** this report is an ephemeral review artifact — regenerated in full on every run, never committed (`CONTRACT_VALIDATION.md` is gitignored). Overwrite any existing copy without preserving its content; the git-tracked contract of record remains the README support matrix.
 
@@ -115,7 +115,7 @@ Write `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/CONTRACT_VALIDATION.md`, summary
 
 ## Scope
 - jBallerina reference: <path> (commit/version if known)
-- Go implementation: lib/stdlibs/ballerina/<name>/0.0.1/go1.2/
+- Go implementation: lib/stdlibs/ballerina/<name>/0.0.1/go1.26/
 - Compared: public functions, types, constants, enums, classes, annotations, listeners
 - Enforcement scope: Supported / Partially Supported / Cannot Support rows (presence + signature). Not Yet Supported is out of scope.
 
