@@ -127,7 +127,8 @@ func contentHash() (string, error) {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(h, "%s\x00", p)
+		h.Write([]byte(p))
+		h.Write([]byte{0})
 		h.Write(data)
 		return nil
 	})

@@ -17,7 +17,6 @@
 package corpus
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,6 +25,7 @@ import (
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/test_util"
+	"ballerina-lang-go/test_util/testharness"
 
 	// Blank-import native package implementations so their init() functions
 	// register extern functions with the runtime before the tests run.
@@ -86,8 +86,8 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 	backend := projects.NewBallerinaBackend(compilation)
 	birPkgs := backend.BIRPackages()
 
-	var stdout, stderr bytes.Buffer
-	rt := runtime.NewRuntime(test_util.TestPal(&stdout, &stderr), result.Project().Environment().TypeEnv())
+	pal := testharness.NewTestPal()
+	rt := runtime.NewRuntime(pal.Platform(), result.Project().Environment().TypeEnv())
 
 	for _, birPkg := range birPkgs {
 		if err := rt.Init(*birPkg); err != nil {
@@ -96,8 +96,8 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 	}
 
 	const txtarPath = "extern/output/native-multi-org-v.txtar"
-	actualStdout := test_util.NormalizeNewlines(stdout.String())
-	actualStderr := test_util.NormalizeNewlines(stderr.String())
+	actualStdout := test_util.NormalizeNewlines(pal.Stdout())
+	actualStderr := test_util.NormalizeNewlines(pal.Stderr())
 
 	if *update {
 		if test_util.UpdateTxtarArchiveIfNeeded(t, txtarPath, test_util.TxtarFilesStdoutStderr(actualStdout, actualStderr)) {
