@@ -16,13 +16,53 @@
 
 package semtypes
 
-func futureContaining(env Env, constraint SemType) SemType {
-	if sameSemType(Val, constraint) {
-		return Future
-	}
+type FutureDefinition struct {
+	mappingDefinition MappingDefinition
+}
 
-	mappingDef := NewMappingDefinition()
-	mappingType := mappingDef.Define(env, nil, constraint)
+var _ Definition = &FutureDefinition{}
+
+func NewFutureDefinition() FutureDefinition {
+	return FutureDefinition{mappingDefinition: NewMappingDefinition()}
+}
+
+func (f *FutureDefinition) GetSemType(env Env) SemType {
+	return futureContaining(f.mappingDefinition.GetSemType(env))
+}
+
+func (f *FutureDefinition) Define(env Env, constraint SemType) SemType {
+	mappingType := f.mappingDefinition.Define(env, nil, constraint)
+	return futureContaining(mappingType)
+}
+
+func FutureContaining(env Env, constraint SemType) SemType {
+	definition := NewFutureDefinition()
+	return definition.Define(env, constraint)
+}
+
+func futureContaining(mappingType SemType) SemType {
 	bdd := subtypeDataAt(mappingType, btMapping).(bdd)
 	return createBasicSemType(btFuture, bdd)
+}
+
+// FutureEventualType extracts T from future<T>.
+// It returns Val for bare future and nil when futureTy is not a subtype of Future.
+func FutureEventualType(ctx Context, futureTy SemType) SemType {
+	if !IsSubtypeSimple(futureTy, Future) {
+		return SemType{}
+	}
+	if futureTy.some() == 0 {
+		return Val
+	}
+	mappingTy := convertFutureToMapping(ctx, futureTy)
+	return MappingMemberTypeInnerVal(ctx, mappingTy, String)
+}
+
+func convertFutureToMapping(ctx Context, ty SemType) SemType {
+	futureTy := Intersect(ty, Future)
+	if IsEmpty(ctx, futureTy) {
+		return SemType{}
+	}
+	bdd := subtypeDataAt(futureTy, btFuture)
+	return createBasicSemType(btMapping, bdd)
 }

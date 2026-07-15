@@ -5279,10 +5279,32 @@ func (n *nodeBuilder) transformParameterizedTypeDescriptor(parameterizedTypeDesc
 		return n.transformErrorTypeDescriptor(parameterizedTypeDescriptorNode)
 	case st.TYPEDESC_TYPE_DESC:
 		return n.transformTypedescTypeDescriptor(parameterizedTypeDescriptorNode)
+	case st.FUTURE_TYPE_DESC:
+		return n.transformFutureTypeDescriptor(parameterizedTypeDescriptorNode)
 	case st.XML_TYPE_DESC:
 		return n.transformXMLTypeDescriptor(parameterizedTypeDescriptorNode)
 	}
-	panic("transformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors")
+	panic("transformParameterizedTypeDescriptor supported only for error, typedesc, future and xml type descriptors")
+}
+
+func (n *nodeBuilder) transformFutureTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
+	pos := n.getPosition(node)
+	base := &ast.BLangBuiltInRefTypeNode{TypeKind: ast.TypeKindFuture}
+	base.SetPosition(pos)
+	typeParamNode := node.TypeParamNode()
+	if typeParamNode == nil {
+		return base
+	}
+	constraint := typeParamNode.TypeNode()
+	if constraint == nil {
+		constraint = typeParamNode
+	}
+	constrainedType := &ast.BLangConstrainedType{
+		Type:       ast.TypeData{TypeDescriptor: base},
+		Constraint: ast.TypeData{TypeDescriptor: n.createTypeNode(constraint)},
+	}
+	constrainedType.SetPosition(pos)
+	return constrainedType
 }
 
 func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) ast.BLangNode {

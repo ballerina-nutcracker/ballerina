@@ -17,7 +17,7 @@
 package semtypes
 
 type futureOps struct {
-	commonOps
+	commonOpsBase
 }
 
 var _ basicTypeOps = &futureOps{}

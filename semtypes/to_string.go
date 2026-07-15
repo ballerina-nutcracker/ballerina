@@ -135,6 +135,8 @@ func (s *toStringState) subtypeToString(sub basicSubtype) string {
 			return s.bddObjectToString(st)
 		case btTypeDesc:
 			return s.bddTypedescToString(st)
+		case btFuture:
+			return s.bddFutureToString(st)
 		default:
 			name := strings.TrimPrefix(sub.basicTypeCode.String(), "BT_")
 			return strings.ToLower(name)
@@ -271,6 +273,15 @@ func (s *toStringState) bddTypedescToString(bdd bdd) string {
 		return "typedesc"
 	}
 	return "typedesc<" + s.semTypeToString(constraint) + ">"
+}
+
+func (s *toStringState) bddFutureToString(bdd bdd) string {
+	mappingTy := createBasicSemType(btMapping, bdd)
+	eventualType := MappingMemberTypeInnerVal(s.cx, mappingTy, String)
+	if IsSameType(s.cx, eventualType, Val) {
+		return "future"
+	}
+	return "future<" + s.semTypeToString(eventualType) + ">"
 }
 
 func (s *toStringState) bddMappingToString(bdd bdd) string {
