@@ -288,6 +288,10 @@ Terminators end basic blocks:
 - `GOTO`: Unconditional branch
 - `BRANCH`: Conditional branch
 - `CALL`: Function call
+- `ASYNC_CALL`: Start action
+- `WAIT`: Single wait action
+- `ALTERNATE_WAIT`: Alternate wait action
+- `WAIT_ALL`: Multiple wait action
 - `RETURN`: Return from function
 
 ## Position Format

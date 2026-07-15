@@ -3725,6 +3725,10 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return returnedFunction(result, ok, e.RawSymbol)
 	case *ast.BLangClientResourceAccessAction:
 		return resolved(resolveClientResourceAccessAction(t, chain, e, expectedType))
+	case *ast.BLangStartAction:
+		return resolved(resolveStartAction(t, chain, e, expectedType))
+	case *ast.BLangSingleWaitAction:
+		return resolved(resolveSingleWaitAction(t, chain, e))
 	case *ast.BLangInferredTypedescDefault:
 		return resolved(resolveInferredTypedescDefault(t, chain, e, expectedType))
 	case *ast.BLangDefaultArg:
@@ -4167,6 +4171,40 @@ func associateTypeTestFunctionSignature(t typeResolver, narrowed model.SymbolRef
 		return false
 	}
 	return true
+}
+
+func resolveStartAction(t typeResolver, chain *binding, e *ast.BLangStartAction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	var callExpectedType semtypes.SemType
+	if !semtypes.IsZero(expectedType) {
+		futureExpectedType := semtypes.Intersect(expectedType, semtypes.Future)
+		if semtypes.IsEmpty(t.typeContext(), futureExpectedType) {
+			t.semanticError("start action requires a future expected type", e.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		callExpectedType = semtypes.FutureEventualType(t.typeContext(), futureExpectedType)
+	}
+	callResult, ok := resolveActionOrExpression(t, chain, e.Call, callExpectedType)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	resultTy := semtypes.FutureContaining(t.typeEnv(), callResult.ty)
+	setExpectedType(e, resultTy)
+	return resultTy, callResult.effect, true
+}
+
+func resolveSingleWaitAction(t typeResolver, chain *binding, e *ast.BLangSingleWaitAction) (semtypes.SemType, expressionEffect, bool) {
+	futureResult, ok := resolveActionOrExpression(t, chain, e.FutureExpr, semtypes.Future)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	futureTy := futureResult.ty
+	if !semtypes.IsSubtype(t.typeContext(), futureTy, semtypes.Future) {
+		t.semanticError("wait action requires a future expression", e.FutureExpr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	resultTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+	setExpectedType(e, resultTy)
+	return resultTy, futureResult.effect, true
 }
 
 func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semtypes.SemType, expressionEffect, bool) {

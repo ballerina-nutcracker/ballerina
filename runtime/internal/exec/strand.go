@@ -18,6 +18,7 @@ package exec
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -55,13 +56,50 @@ func snapshotSpawnFrames(cs *callStack) []callStackEntry {
 	return out
 }
 
-func runStrand(env *extern.Env, seed []callStackEntry, h *InvokableHandle,
-	args []values.BalValue, ch chan<- values.BalValue,
-) {
+func startFuture(parent *extern.Context, fn *values.Function, isolated bool, ty semtypes.SemType) *values.Future {
+	handle, err := NewFunctionValueHandle(parent.Env, fn)
+	if err != nil {
+		panic(err)
+	}
+	future := values.NewFuture(ty)
+	seed := snapshotSpawnFrames(parent.CallStack.(*callStack))
+	run := func() {
+		ctx := contextForStartedStrand(parent.Env, seed)
+		var result values.BalValue
+		defer func() {
+			panicValue := recover()
+			if panicValue != nil {
+				panicValue = capturePanicStack(panicValue, formatCallStack(ctx.CallStack.(*callStack)))
+				ctx.ReleaseAllHeldLocks()
+			}
+			future.Complete(result, panicValue)
+		}()
+		invokedResult, invokeErr := handle.invoke(ctx, nil)
+		if invokeErr != nil {
+			panic(invokeErr)
+		}
+		result = invokedResult
+	}
+	if isolated {
+		go run()
+	} else {
+		run()
+	}
+	return future
+}
+
+func contextForStartedStrand(env *extern.Env, seed []callStackEntry) *extern.Context {
 	ctx := CreateContext(env)
 	elems := make([]callStackEntry, len(seed), len(seed)+32)
 	copy(elems, seed)
 	ctx.CallStack = &callStack{elements: elems}
+	return ctx
+}
+
+func runStrand(env *extern.Env, seed []callStackEntry, h *InvokableHandle,
+	args []values.BalValue, ch chan<- values.BalValue,
+) {
+	ctx := contextForStartedStrand(env, seed)
 
 	defer close(ch)
 	v, err := h.invoke(ctx, args)

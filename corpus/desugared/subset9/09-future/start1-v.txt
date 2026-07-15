@@ -1,0 +1,221 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (variable count (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref count)
+        (literal 0))))
+  (function argument () (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref count)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref count))))
+      (return
+        (simple-var-ref count))))
+  (function combine (
+    (variable first (type
+      (value-type int)))
+    (variable second (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal 1000))))
+      (return
+        (binary-expr +
+          (binary-expr *
+            (simple-var-ref first)
+            (literal 10))
+          (simple-var-ref second)))))
+  (function add (
+    (variable first (type
+      (value-type int)))
+    (variable second (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref first)
+          (simple-var-ref second)))))
+  (function failure () (
+    (error-type))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal bad))))))
+  (function unionFailure () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal union bad))))))
+  (function crash () (
+    (value-type null))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal started))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation combine (
+                    (invocation argument ())
+                    (invocation argument ()))))))))))
+      (var-def
+        (variable ordered (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$1)))))
+      (expression-stmt
+        (invocation io println (
+          (literal 99))))
+      (var-def
+        (variable orderedResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref ordered)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref orderedResult))))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (invocation add (
+                    (literal 20)
+                    (literal 22))))))))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (simple-var-ref $desugar$3)))))
+      (var-def
+        (variable first (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f)))))
+      (var-def
+        (variable second (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref second))))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $desugar$4 () ()
+              (block-function-body
+                (return
+                  (invocation failure ()))))))))
+      (var-def
+        (variable errorFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action isolated
+            (simple-var-ref $desugar$5)))))
+      (var-def
+        (variable errorResult (type
+          (error-type)) (expr
+          (single-wait-action
+            (simple-var-ref errorFuture)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.error message (
+            (simple-var-ref errorResult))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $desugar$6 () ()
+              (block-function-body
+                (return
+                  (invocation unionFailure ()))))))))
+      (var-def
+        (variable unionFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (value-type int)
+              (error-type)))) (expr
+          (start-action isolated
+            (simple-var-ref $desugar$7)))))
+      (var-def
+        (variable unionResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref unionFuture)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref unionResult)
+            (error-type)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (lambda
+            (function $desugar$8 () ()
+              (block-function-body
+                (return
+                  (invocation crash ()))))))))
+      (var-def
+        (variable panicFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type null))) (expr
+          (start-action isolated
+            (simple-var-ref $desugar$9)))))
+      (var-def
+        (variable trappedFirst (expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref panicFuture))))))
+      (var-def
+        (variable trappedSecond (expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref panicFuture))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trappedFirst)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trappedSecond)
+            (error-type))))))))

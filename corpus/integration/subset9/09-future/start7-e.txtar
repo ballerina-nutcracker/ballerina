@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> start7-e.bal:23:16
+   |
+23 |         return trap wait result; // @error action is not an isolated expression
+   |                ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: not an isolated expression
+  --> start7-e.bal:23:16
+   |
+23 |         return trap wait result; // @error action is not an isolated expression
+   |                ^^^^^^^^^^^^^^^^

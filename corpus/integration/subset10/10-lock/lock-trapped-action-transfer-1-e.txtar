@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-trapped-action-transfer-1-e.bal:31:16
+   |
+31 |         return trap c->value(values); // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-trapped-action-transfer-1-e.bal:39:16
+   |
+39 |         return trap c->constant(); // @error
+   |                ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: not an isolated expression
+  --> lock-trapped-action-transfer-1-e.bal:31:16
+   |
+31 |         return trap c->value(values); // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: not an isolated expression
+  --> lock-trapped-action-transfer-1-e.bal:39:16
+   |
+39 |         return trap c->constant(); // @error
+   |                ^^^^^^^^^^^^^^^^^^

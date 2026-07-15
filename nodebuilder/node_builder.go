@@ -1019,23 +1019,9 @@ func (n *nodeBuilder) createBLangNameReference(node st.Node) [2]ast.IdentifierNo
 	return [...]ast.IdentifierNode{&pkgAlias, name}
 }
 
-// isFunctionCallAsync checks if a function call expression is async
-func (n *nodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.FunctionCallExpressionNode) bool {
-	parent := functionCallBLangExpression.Parent()
-	if parent == nil {
-		panic("isFunctionCallAsync: parent is nil")
-	}
-	return parent.Kind() == st.START_ACTION
-}
-
 // createBLangInvocation creates a BLangInvocation from a name node and arguments
-func (n *nodeBuilder) createBLangInvocation(nameNode st.Node, arguments st.NodeList[st.FunctionArgumentNode], position diagnostics.Location, isAsync bool) *ast.BLangInvocation {
-	var bLInvocation ast.BLangInvocation
-	if isAsync {
-		panic("unimplemented")
-	} else {
-		bLInvocation = ast.BLangInvocation{}
-	}
+func (n *nodeBuilder) createBLangInvocation(nameNode st.Node, arguments st.NodeList[st.FunctionArgumentNode], position diagnostics.Location) *ast.BLangInvocation {
+	bLInvocation := ast.BLangInvocation{}
 
 	nameReference := n.createBLangNameReference(nameNode)
 	bLInvocation.PkgAlias = nameReference[0]
@@ -2244,14 +2230,13 @@ func (n *nodeBuilder) transformFunctionCallExpression(functionCallBLangExpressio
 	return n.createBLangInvocation(
 		functionCallBLangExpression.FunctionName(),
 		functionCallBLangExpression.Arguments(),
-		n.getPosition(functionCallBLangExpression),
-		n.isFunctionCallAsync(functionCallBLangExpression))
+		n.getPosition(functionCallBLangExpression))
 }
 
 func (n *nodeBuilder) transformMethodCallExpression(methodCallBLangExpression *st.MethodCallExpressionNode) ast.BLangNode {
 	bLInvocation := n.createBLangInvocation(methodCallBLangExpression.MethodName(),
 		methodCallBLangExpression.Arguments(),
-		n.getPosition(methodCallBLangExpression), false)
+		n.getPosition(methodCallBLangExpression))
 	bLInvocation.Expr = n.createExpression(methodCallBLangExpression.Expression())
 	return bLInvocation
 }
@@ -2846,7 +2831,7 @@ func (n *nodeBuilder) transformTypeTestExpression(typeTestBLangExpression *st.Ty
 func (n *nodeBuilder) transformRemoteMethodCallAction(remoteMethodCallActionNode *st.RemoteMethodCallActionNode) ast.BLangNode {
 	inv := n.createBLangInvocation(remoteMethodCallActionNode.MethodName(),
 		remoteMethodCallActionNode.Arguments(),
-		n.getPosition(remoteMethodCallActionNode), false)
+		n.getPosition(remoteMethodCallActionNode))
 	action := ast.NewBLangRemoteMethodCallAction(
 		inv,
 		n.createExpression(remoteMethodCallActionNode.Expression()),
@@ -3054,7 +3039,7 @@ func (n *nodeBuilder) transformBuiltinSimpleNameReference(builtinSimpleNameRefer
 
 func (n *nodeBuilder) transformTrapExpression(trapBLangExpression *st.TrapExpressionNode) ast.BLangNode {
 	pos := n.getPosition(trapBLangExpression)
-	expr := n.createExpression(trapBLangExpression.Expression())
+	expr := n.createActionOrExpression(trapBLangExpression.Expression())
 	trapExpr := &ast.BLangTrapExpr{}
 	trapExpr.SetPosition(pos)
 	trapExpr.Expr = expr
@@ -4330,7 +4315,18 @@ func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.Impl
 }
 
 func (n *nodeBuilder) transformStartAction(startActionNode *st.StartActionNode) ast.BLangNode {
-	panic("transformStartAction unimplemented")
+	annotations := startActionNode.Annotations()
+	for annotation := range annotations.Iterator() {
+		n.cx.Unimplemented("annotations on start actions are not yet supported", n.getPosition(annotation))
+	}
+	call, ok := n.createActionOrExpression(startActionNode.Expression()).(ast.Invocable)
+	if !ok {
+		n.cx.InternalError("start action operand is not invocable", n.getPosition(startActionNode.Expression()))
+		return nil
+	}
+	action := &ast.BLangStartAction{Call: call}
+	action.SetPosition(n.getPosition(startActionNode))
+	return action
 }
 
 func (n *nodeBuilder) transformFlushAction(flushActionNode *st.FlushActionNode) ast.BLangNode {
@@ -4423,7 +4419,19 @@ func (n *nodeBuilder) transformTrippleGTToken(trippleGTTokenNode *st.TrippleGTTo
 }
 
 func (n *nodeBuilder) transformWaitAction(waitActionNode *st.WaitActionNode) ast.BLangNode {
-	panic("transformWaitAction unimplemented")
+	futureExpr, ok := waitActionNode.WaitFutureExpr().(st.ExpressionNode)
+	if !ok {
+		n.cx.Unimplemented("alternate and multiple wait actions are not yet supported", n.getPosition(waitActionNode.WaitFutureExpr()))
+		return nil
+	}
+	expr, ok := n.createActionOrExpression(futureExpr).(ast.BLangExpression)
+	if !ok {
+		n.cx.InternalError("single wait operand is not an expression", n.getPosition(futureExpr))
+		return nil
+	}
+	action := &ast.BLangSingleWaitAction{FutureExpr: expr}
+	action.SetPosition(n.getPosition(waitActionNode))
+	return action
 }
 
 func (n *nodeBuilder) transformWaitFieldsList(waitFieldsListNode *st.WaitFieldsListNode) ast.BLangNode {

@@ -15,4 +15,5 @@ bar
 7
 error
 immutable
+foo
 -- stderr --

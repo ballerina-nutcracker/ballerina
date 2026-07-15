@@ -241,6 +241,8 @@ const (
 	InstructionKindCall
 	InstructionKindBranch
 	InstructionKindReturn
+	InstructionKindAsyncCall
+	InstructionKindWait
 	InstructionKindFPCall
 	InstructionKindLock
 	InstructionKindUnlock

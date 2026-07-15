@@ -1,0 +1,49 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Client
+    (function init () ()
+      (block-function-body))
+    (function $remote$value () (
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int)))
+      (block-function-body
+        (return
+          (mapping-constructor-expr
+            (key-value
+              (literal answer)
+              (literal 42)))))))
+  (function valueFromLock () (
+    (union-type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int))
+      (error-type)))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (lock
+        (block-stmt
+          (return
+            (trap-expr
+              (remote-method-call value expr:
+                (simple-var-ref c) ())))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (checked-expr
+            (invocation valueFromLock ())))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref result)
+            (literal answer))))))))

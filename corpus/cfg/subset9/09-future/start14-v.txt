@@ -1,0 +1,39 @@
+(Client
+  ($remote$value
+    (bb0 () ()
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal answer)
+            (literal 42))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable result (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (checked-expr
+          (invocation valueFromLock ())))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref result)
+          (literal answer)))))
+  )
+)
+(valueFromLock
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (return
+      (trap-expr
+        (remote-method-call value expr:
+          (simple-var-ref c) ())))
+  )
+)

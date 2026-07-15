@@ -175,6 +175,10 @@ func validateLockInvocations(a analyzer, body ast.BLangNode) bool {
 		switch n := inner.(type) {
 		case *ast.BLangLambdaFunction, *ast.BLangFunction:
 			return false
+		case *ast.BLangStartAction:
+			a.semanticErr("cannot start strand inside a lock statement", n.GetPosition())
+			ok = false
+			return false
 		case *ast.BLangInvocation:
 			if loc, invalid := isolatedInvocationViolation(a, n); invalid {
 				a.semanticErr("invocation of a non-isolated function inside lock statement", loc)
@@ -298,6 +302,30 @@ func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtyp
 	return diagnostics.Location{}, false
 }
 
+func isIsolatedInvocationTarget(a analyzer, call ast.Invocable) bool {
+	tyCtx := a.tyCtx()
+	return semtypes.IsSubtype(tyCtx, a.ctx().SymbolType(call.ResolvedSymbol()), semtypes.CreateIsolatedFn(tyCtx))
+}
+
+func isIsolatedInvocation(a analyzer, call ast.Invocable) bool {
+	if receiver := call.Receiver(); receiver != nil && !isIsolatedExpression(a, receiver) {
+		return false
+	}
+	if resource, ok := call.(*ast.BLangClientResourceAccessAction); ok {
+		for i := range resource.Path {
+			if expr := resource.Path[i].Expr; expr != nil && !isIsolatedExpression(a, expr) {
+				return false
+			}
+		}
+	}
+	for _, arg := range call.CallArgs() {
+		if !isIsolatedExpression(a, arg) {
+			return false
+		}
+	}
+	return true
+}
+
 // validateLockBody validates transfer in and out conditions.
 // transfer in:
 //   - expression fallowing return must be isolated expression
@@ -339,13 +367,13 @@ func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		v.checkAssignment(node.VarRef.(ast.BLangExpression), node.Expr, node.GetPosition())
 		return v
 	case *ast.BLangReturn:
-		if node.Expr != nil && !isIsolatedExpression(v.a, node.Expr.(ast.BLangExpression)) {
-			v.a.semanticErr("access of mutable variable", node.Expr.(ast.BLangNode).GetPosition())
+		if node.Expr != nil && !v.isIsolatedActionOrExpression(node.Expr) {
+			v.a.semanticErr("not an isolated expression", node.Expr.(ast.BLangNode).GetPosition())
 			v.ok = false
 		}
 	case ast.BLangExpression:
 		if v.containsTransferInRef(node) {
-			if !isIsolatedExpression(v.a, node) {
+			if !v.isIsolatedExpression(node) {
 				v.a.semanticErr("access of mutable variable", node.GetPosition())
 				v.ok = false
 			}
@@ -353,6 +381,20 @@ func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		}
 	}
 	return v
+}
+
+func (v *lockBodyVisitor) isIsolatedActionOrExpression(expr ast.BLangActionOrExpression) bool {
+	if v.lock.RestrictedSymbol.IsEmpty() {
+		return isIsolatedActionOrExpression(v.a, expr)
+	}
+	return isIsolatedTransferredActionOrExpression(v.a, expr)
+}
+
+func (v *lockBodyVisitor) isIsolatedExpression(expr ast.BLangExpression) bool {
+	if v.lock.RestrictedSymbol.IsEmpty() {
+		return isIsolatedExpression(v.a, expr)
+	}
+	return isIsolatedTransferredExpression(v.a, expr)
 }
 
 // checkAssignment validates transfer in for assignment.
@@ -384,7 +426,7 @@ func (v *lockBodyVisitor) checkAssignment(lhs ast.BLangExpression, rhs ast.BLang
 	if !ok {
 		return
 	}
-	if !isIsolatedExpression(v.a, expr) {
+	if !v.isIsolatedExpression(expr) {
 		v.a.semanticErr("access of mutable variable", rhs.GetPosition())
 		v.ok = false
 	}
@@ -485,7 +527,40 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 //     expressions are isolated iff every immediate value child is itself an
 //     isolated expression.
 //  3. All other expressions are not isolated.
+func isIsolatedActionOrExpression(a analyzer, expr ast.BLangActionOrExpression) bool {
+	return isIsolatedActionOrExpressionInner(a, expr, false)
+}
+
+func isIsolatedTransferredActionOrExpression(a analyzer, expr ast.BLangActionOrExpression) bool {
+	return isIsolatedActionOrExpressionInner(a, expr, true)
+}
+
+func isIsolatedActionOrExpressionInner(a analyzer, expr ast.BLangActionOrExpression, checkInvocableOperands bool) bool {
+	switch expr := expr.(type) {
+	case ast.BLangExpression:
+		return isIsolatedExpressionInner(a, expr, checkInvocableOperands)
+	case ast.Invocable:
+		if !isIsolatedInvocationTarget(a, expr) {
+			return false
+		}
+		return !checkInvocableOperands || isIsolatedInvocation(a, expr)
+	case *ast.BLangStartAction:
+		call, ok := expr.Call.(ast.Invocable)
+		return ok && isIsolatedInvocationTarget(a, call) && isIsolatedInvocation(a, call)
+	default:
+		return false
+	}
+}
+
 func isIsolatedExpression(a analyzer, expr ast.BLangExpression) bool {
+	return isIsolatedExpressionInner(a, expr, false)
+}
+
+func isIsolatedTransferredExpression(a analyzer, expr ast.BLangExpression) bool {
+	return isIsolatedExpressionInner(a, expr, true)
+}
+
+func isIsolatedExpressionInner(a analyzer, expr ast.BLangExpression, checkInvocableOperands bool) bool {
 	if expr == nil {
 		a.ctx().InternalError("nil expression in isolation check", diagnostics.Location{})
 		return false
@@ -497,10 +572,10 @@ func isIsolatedExpression(a analyzer, expr ast.BLangExpression) bool {
 	}
 	switch e := expr.(type) {
 	case *ast.BLangGroupExpr:
-		return isIsolatedExpression(a, e.Expression)
+		return isIsolatedExpressionInner(a, e.Expression, checkInvocableOperands)
 	case *ast.BLangListConstructorExpr:
 		for _, m := range e.Exprs {
-			if !isIsolatedExpression(a, m) {
+			if !isIsolatedExpressionInner(a, m, checkInvocableOperands) {
 				return false
 			}
 		}
@@ -512,19 +587,19 @@ func isIsolatedExpression(a analyzer, expr ast.BLangExpression) bool {
 				a.ctx().InternalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
 				return false
 			}
-			if !isIsolatedExpression(a, kv.ValueExpr) {
+			if !isIsolatedExpressionInner(a, kv.ValueExpr, checkInvocableOperands) {
 				return false
 			}
 		}
 		return true
 	case *ast.BLangTypeConversionExpr:
-		return isIsolatedExpression(a, e.Expression)
+		return isIsolatedExpressionInner(a, e.Expression, checkInvocableOperands)
 	case *ast.BLangCheckedExpr:
-		return isIsolatedExpression(a, e.Expr.(ast.BLangExpression))
+		return isIsolatedExpressionInner(a, e.Expr.(ast.BLangExpression), checkInvocableOperands)
 	case *ast.BLangCheckPanickedExpr:
-		return isIsolatedExpression(a, e.Expr.(ast.BLangExpression))
+		return isIsolatedExpressionInner(a, e.Expr.(ast.BLangExpression), checkInvocableOperands)
 	case *ast.BLangTrapExpr:
-		return isIsolatedExpression(a, e.Expr)
+		return isIsolatedActionOrExpressionInner(a, e.Expr, checkInvocableOperands)
 	}
 	return false
 }
@@ -719,6 +794,16 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 			Final: v.IsFinal(),
 		})
 		return visitor
+	case *ast.BLangStartAction:
+		call, ok := node.Call.(ast.Invocable)
+		if !ok {
+			a.internalErr("start action operand is not invocable", node.GetPosition())
+			return nil
+		}
+		if !isIsolatedInvocationTarget(a, call) || !isIsolatedInvocation(a, call) {
+			a.semanticErr("start action is not isolated", node.GetPosition())
+		}
+		return nil
 	case *ast.BLangInvocation:
 		if loc, invalid := isolatedInvocationViolation(a, node); invalid {
 			a.semanticErr("invocation of a non-isolated function", loc)

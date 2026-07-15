@@ -66,6 +66,10 @@ public function main() {
     Getter g = new;
     string & readonly s = g->get();
     io:println(s); // @output immutable
+
+    future<string> contextual = start inferred(2);
+    string|error contextualResult = wait contextual;
+    io:println(contextualResult); // @output foo
 }
 
 function inferred(int val, typedesc retTy = <>) returns retTy = external;

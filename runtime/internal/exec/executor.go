@@ -309,6 +309,10 @@ func execTerminator(ctx *extern.Context, term bir.BIRTerminator, frame *Frame) *
 		return execBranch(ctx, v, frame)
 	case *bir.Panic:
 		return execPanic(ctx, v, frame)
+	case *bir.StartAction:
+		return execStartAction(ctx, v, frame)
+	case *bir.SingleWaitAction:
+		return execSingleWaitAction(ctx, v, frame)
 	case *bir.Call:
 		switch v.GetKind() {
 		case bir.InstructionKindCall:
@@ -335,6 +339,7 @@ func execTerminator(ctx *extern.Context, term bir.BIRTerminator, frame *Frame) *
 }
 
 func panicValueToErrorValue(r any) values.BalValue {
+	r = originalPanicValue(r)
 	// `trap` expects runtime failures to be raised as `*values.Error`.
 	// If this isn't the case, treat it as an unrecoverable interpreter issue.
 	if err, ok := r.(*values.Error); ok {

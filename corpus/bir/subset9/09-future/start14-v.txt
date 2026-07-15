@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+class Client {
+
+  $remote$value() -> {| int... |}{
+    bb0 {
+      %2 = ConstantLoad answer
+      %3 = ConstantLoad 42
+      %4 = newMap {| int... |}{%2=%3}
+      %0 = %4;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+valueFromLock() -> error|{| int... |}{
+  bb0 {
+    %1 = newObject $anon/.:Client
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    lock-start "" GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 2
+    GOTO bb6;
+  }
+  bb6 {
+    %1 = $remote$value((1, c)) -> bb7;
+  }
+  bb7 {
+    %0 = %1;
+    GOTO bb8;
+  }
+  bb8 {
+    (1, %0) = %0;
+    PopScopeFrame
+    lock-end "" GOTO bb9;
+  }
+  bb9 {
+    return;
+  }
+  bb10 {
+    return;
+  }
+  
+  error-table {
+    [bb6, bb7] -> bb8, %0
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %2 = valueFromLock() -> bb1;
+  }
+  bb1 {
+    %3 = %2 is error
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    result = %1;
+    %6 = ConstantLoad answer
+    %5 = result[%6];
+    %7 = %5;
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

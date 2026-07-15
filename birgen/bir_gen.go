@@ -1041,6 +1041,10 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 		return generateCall(ctx, curBB, expr)
 	case *ast.BLangClientResourceAccessAction:
 		return generateResourceAccessCall(ctx, curBB, expr)
+	case *ast.BLangStartAction:
+		return generateStartAction(ctx, curBB, expr)
+	case *ast.BLangSingleWaitAction:
+		return generateSingleWaitAction(ctx, curBB, expr)
 	case *ast.BLangTypedescExpr:
 		return typedescExpression(ctx, curBB, expr)
 	case *ast.BLangXMLSequenceLiteral:
@@ -1058,6 +1062,24 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 	default:
 		panic(fmt.Sprintf("unexpected expression type: %T", expr))
 	}
+}
+
+func generateStartAction(ctx context, curBB *bir.BIRBasicBlock, action *ast.BLangStartAction) expressionEffect {
+	pos := ctx.function().loc(action.GetPosition())
+	fnEffect := handleActionOrExpression(ctx, curBB, action.Call)
+	thenBB := ctx.function().addBB()
+	result := ctx.addTempVar(action.GetDeterminedType())
+	fnEffect.block.Terminator = bir.NewStartAction(*fnEffect.result, action.IsIsolated, thenBB, result, pos)
+	return expressionEffect{result: result, block: thenBB}
+}
+
+func generateSingleWaitAction(ctx context, curBB *bir.BIRBasicBlock, action *ast.BLangSingleWaitAction) expressionEffect {
+	pos := ctx.function().loc(action.GetPosition())
+	futureEffect := handleActionOrExpression(ctx, curBB, action.FutureExpr)
+	thenBB := ctx.function().addBB()
+	result := ctx.addTempVar(action.GetDeterminedType())
+	futureEffect.block.Terminator = bir.NewSingleWaitAction(*futureEffect.result, thenBB, result, pos)
+	return expressionEffect{result: result, block: thenBB}
 }
 
 func typedescExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTypedescExpr) expressionEffect {

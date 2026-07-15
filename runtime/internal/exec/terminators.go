@@ -24,6 +24,22 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+func execStartAction(ctx *extern.Context, action *bir.StartAction, frame *Frame) *bir.BIRBasicBlock {
+	if ctx.HoldsLock() {
+		panic(values.NewErrorWithMessage("attempted strand start while holding a lock"))
+	}
+	fn := getOperandValue(ctx, &action.Fn, frame).(*values.Function)
+	future := startFuture(ctx, fn, action.IsIsolated, action.LhsOp.VariableDcl.GetType())
+	setOperandValue(ctx, action.LhsOp, frame, future)
+	return action.ThenBB
+}
+
+func execSingleWaitAction(ctx *extern.Context, action *bir.SingleWaitAction, frame *Frame) *bir.BIRBasicBlock {
+	future := getOperandValue(ctx, &action.Future, frame).(*values.Future)
+	setOperandValue(ctx, action.LhsOp, frame, future.Wait())
+	return action.ThenBB
+}
+
 func execBranch(ctx *extern.Context, branchTerm *bir.Branch, frame *Frame) *bir.BIRBasicBlock {
 	if getOperandValue(ctx, branchTerm.Op, frame).(bool) {
 		return branchTerm.TrueBB

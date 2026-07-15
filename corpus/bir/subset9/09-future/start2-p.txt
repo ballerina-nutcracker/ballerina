@@ -1,0 +1,32 @@
+module $anon.. v 0.0.0;
+crash() -> nil{
+  bb0 {
+    %1 = ConstantLoad started
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+$desugar$0() -> nil{
+  bb0 {
+    %1 = crash() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = fp $anon/.:$desugar$0
+    $desugar$1 = %1;
+    %3 = start $desugar$1 isolated=true -> bb1;
+  }
+  bb1 {
+    f = %3;
+    %5 = wait f -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

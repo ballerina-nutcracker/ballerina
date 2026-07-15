@@ -84,6 +84,17 @@ type (
 		PathSegments []BIROperand
 		Args         []BIROperand
 	}
+
+	StartAction struct {
+		BIRTerminatorBase
+		Fn         BIROperand
+		IsIsolated bool
+	}
+
+	SingleWaitAction struct {
+		BIRTerminatorBase
+		Future BIROperand
+	}
 )
 
 var (
@@ -95,6 +106,8 @@ var (
 	_ BIRTerminator        = &LockStart{}
 	_ BIRTerminator        = &LockEnd{}
 	_ BIRAssignInstruction = &ResourceFunctionCall{}
+	_ BIRAssignInstruction = &StartAction{}
+	_ BIRAssignInstruction = &SingleWaitAction{}
 )
 
 func (g *Goto) GetKind() InstructionKind {
@@ -229,6 +242,33 @@ func NewResourceFunctionCall(receiver BIROperand, methodName string, pathSegment
 		MethodName:   methodName,
 		PathSegments: pathSegments,
 		Args:         args,
+	}
+}
+
+func (s *StartAction) GetKind() InstructionKind   { return InstructionKindAsyncCall }
+func (s *StartAction) GetLhsOperand() *BIROperand { return s.LhsOp }
+
+func NewStartAction(fn BIROperand, isolated bool, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *StartAction {
+	return &StartAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Fn:         fn,
+		IsIsolated: isolated,
+	}
+}
+
+func (s *SingleWaitAction) GetKind() InstructionKind   { return InstructionKindWait }
+func (s *SingleWaitAction) GetLhsOperand() *BIROperand { return s.LhsOp }
+
+func NewSingleWaitAction(future BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *SingleWaitAction {
+	return &SingleWaitAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Future: future,
 	}
 }
 

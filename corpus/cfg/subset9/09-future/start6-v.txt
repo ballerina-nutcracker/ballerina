@@ -1,0 +1,67 @@
+(Client
+  (Client.$resource$get$0
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (binary-expr +
+            (binary-expr *
+              (simple-var-ref first)
+              (literal 100))
+            (binary-expr *
+              (simple-var-ref second)
+              (literal 10)))
+          (simple-var-ref third)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable endpoint (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (var-def
+      (variable result (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (client-resource-access get expr:
+            (invocation receiver (
+              (simple-var-ref endpoint))) computed:
+            (invocation next ()) computed:
+            (invocation next ())
+            (invocation next ()))))))
+    (var-def
+      (variable value (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+)
+(next
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref count)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref count))))
+    (return
+      (simple-var-ref count))
+  )
+)
+(receiver
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal 0))))
+    (return
+      (simple-var-ref value))
+  )
+)

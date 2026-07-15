@@ -1,0 +1,173 @@
+(add
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref first)
+        (simple-var-ref second)))
+  )
+)
+(argument
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref count)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref count))))
+    (return
+      (simple-var-ref count))
+  )
+)
+(combine
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal 1000))))
+    (return
+      (binary-expr +
+        (binary-expr *
+          (simple-var-ref first)
+          (literal 10))
+        (simple-var-ref second)))
+  )
+)
+(crash
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal started))))
+  )
+)
+(failure
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal bad))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable ordered (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation combine (
+            (invocation argument ())
+            (invocation argument ())))))))
+    (expression-stmt
+      (invocation io println (
+        (literal 99))))
+    (var-def
+      (variable orderedResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref ordered)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref orderedResult))))
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (invocation add (
+            (literal 20)
+            (literal 22)))))))
+    (var-def
+      (variable first (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (var-def
+      (variable second (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref first))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref second))))
+    (var-def
+      (variable errorFuture (type
+        (constrained-type
+          (builtin-ref-type future)
+          (error-type))) (expr
+        (start-action isolated
+          (invocation failure ())))))
+    (var-def
+      (variable errorResult (type
+        (error-type)) (expr
+        (single-wait-action
+          (simple-var-ref errorFuture)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref errorResult))))))
+    (var-def
+      (variable unionFuture (type
+        (constrained-type
+          (builtin-ref-type future)
+          (union-type
+            (value-type int)
+            (error-type)))) (expr
+        (start-action isolated
+          (invocation unionFailure ())))))
+    (var-def
+      (variable unionResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref unionFuture)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref unionResult)
+          (error-type)))))
+    (var-def
+      (variable panicFuture (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type null))) (expr
+        (start-action isolated
+          (invocation crash ())))))
+    (var-def
+      (variable trappedFirst (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref panicFuture))))))
+    (var-def
+      (variable trappedSecond (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref panicFuture))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trappedFirst)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trappedSecond)
+          (error-type)))))
+  )
+)
+(unionFailure
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal union bad))))
+  )
+)

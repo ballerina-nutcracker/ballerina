@@ -131,6 +131,11 @@ func (ctx *Context) AcquireLock(key string) {
 	ctx.heldLocks = append(ctx.heldLocks, m)
 }
 
+// HoldsLock reports whether the current strand owns at least one lock.
+func (ctx *Context) HoldsLock() bool {
+	return len(ctx.heldLocks) > 0
+}
+
 // ReleaseLock pops the top entry of the held-lock stack and releases it.
 func (ctx *Context) ReleaseLock() {
 	n := len(ctx.heldLocks)

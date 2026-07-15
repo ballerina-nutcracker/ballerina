@@ -110,6 +110,10 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printRemoteMethodCallAction(t)
 	case *BLangClientResourceAccessAction:
 		p.printClientResourceAccessAction(t)
+	case *BLangStartAction:
+		p.printStartAction(t)
+	case *BLangSingleWaitAction:
+		p.printSingleWaitAction(t)
 	case *BLangNamedArgsExpression:
 		p.printNamedArgsExpression(t)
 	case *BLangDefaultArg:
@@ -826,6 +830,29 @@ func (p *PrettyPrinter) printClientResourceAccessAction(node *BLangClientResourc
 	for _, arg := range node.ArgExprs {
 		p.PrintInner(arg)
 	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printStartAction(node *BLangStartAction) {
+	p.StartNode()
+	p.PrintString("start-action")
+	p.indentLevel++
+	if node.IsIsolated {
+		p.PrintString("isolated")
+	}
+	if node.Call != nil {
+		p.PrintInner(node.Call)
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printSingleWaitAction(node *BLangSingleWaitAction) {
+	p.StartNode()
+	p.PrintString("single-wait-action")
+	p.indentLevel++
+	p.PrintInner(node.FutureExpr)
 	p.indentLevel--
 	p.EndNode()
 }

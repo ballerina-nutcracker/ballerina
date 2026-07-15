@@ -25,9 +25,37 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+// panicWithStack is used by futures to hold a panic so until it is safe to rethrow it.
+// Currently futures only propagate panics from futures strand only at wait. I think we can
+// do this at any yeild point. We can't panic arbiterary because of alternate wait. Alternate wait only
+// completes abruptly if one future completes abtruptly while waiting; so after one completes successful
+// subsequent panics must be silently dropped.
+type panicWithStack struct {
+	value any
+	stack []string
+}
+
+func capturePanicStack(value any, stack []string) any {
+	if _, ok := value.(*panicWithStack); ok {
+		return value
+	}
+	return &panicWithStack{value: value, stack: append([]string(nil), stack...)}
+}
+
+func originalPanicValue(value any) any {
+	if captured, ok := value.(*panicWithStack); ok {
+		return captured.value
+	}
+	return value
+}
+
 func getFormattedError(cs *callStack, r any) error {
-	message := panicMessage(r)
 	stack := formatCallStack(cs)
+	if captured, ok := r.(*panicWithStack); ok {
+		r = captured.value
+		stack = captured.stack
+	}
+	message := panicMessage(r)
 	return fmt.Errorf("%s", formatRuntimePanic(message, stack))
 }
 

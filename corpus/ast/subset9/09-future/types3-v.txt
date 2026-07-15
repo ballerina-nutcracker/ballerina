@@ -1,0 +1,61 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (type-definition IntFuture
+    (constrained-type
+      (builtin-ref-type future)
+      (value-type int)))
+  (type-definition FutureUnion
+    (union-type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type string))))
+  (type-definition F
+    (union-type
+      (constrained-type
+        (builtin-ref-type future)
+        (user-defined-type F))
+      (value-type null)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable recursiveFuture (type
+          (user-defined-type F)) (expr
+          (literal <nil>))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref recursiveFuture))
+      (var-def
+        (variable intFuture (type
+          (union-type
+            (user-defined-type IntFuture)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable unionFuture (type
+          (union-type
+            (user-defined-type FutureUnion)
+            (value-type null))) (expr
+          (simple-var-ref intFuture))))
+      (var-def
+        (variable broadFuture (type
+          (union-type
+            (builtin-ref-type future)
+            (value-type null))) (expr
+          (simple-var-ref unionFuture))))
+      (expression-stmt
+        (invocation useFuture (
+          (simple-var-ref broadFuture))))))
+  (function useFuture (
+    (variable value (type
+      (union-type
+        (builtin-ref-type future)
+        (value-type null))))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref value)))))

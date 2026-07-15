@@ -217,6 +217,10 @@ func (p *PrettyPrinter) PrintInstruction(instruction BIRInstruction) string {
 		return p.PrintLockEnd(instruction)
 	case *ResourceFunctionCall:
 		return p.PrintResourceFunctionCall(instruction)
+	case *StartAction:
+		return p.PrintStartAction(instruction)
+	case *SingleWaitAction:
+		return p.PrintSingleWaitAction(instruction)
 	case *NewObject:
 		return p.PrintNewObject(instruction)
 	case *NewStream:
@@ -459,6 +463,14 @@ func (p *PrettyPrinter) PrintResourceFunctionCall(call *ResourceFunctionCall) st
 		args.WriteString(p.PrintOperand(arg))
 	}
 	return fmt.Sprintf("%s = %s->[%s].%s(%s) -> %s;", p.PrintOperand(*call.LhsOp), p.PrintOperand(call.Receiver), segs.String(), call.MethodName, args.String(), call.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintStartAction(action *StartAction) string {
+	return fmt.Sprintf("%s = start %s isolated=%t -> %s;", p.PrintOperand(*action.LhsOp), p.PrintOperand(action.Fn), action.IsIsolated, action.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintSingleWaitAction(action *SingleWaitAction) string {
+	return fmt.Sprintf("%s = wait %s -> %s;", p.PrintOperand(*action.LhsOp), p.PrintOperand(action.Future), action.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintCall(call *Call) string {

@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+error: attempted strand start while holding a lock
+        at startIndirectly(start9-p.bal:20)
+           caller(start9-p.bal:25)
+           main(start9-p.bal:30)

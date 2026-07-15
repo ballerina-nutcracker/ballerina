@@ -1,0 +1,29 @@
+(package
+  (function crash () (
+    (value-type null))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal started))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation crash ()))))))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type null))) (expr
+          (start-action isolated
+            (simple-var-ref $desugar$1)))))
+      (return
+        (single-wait-action
+          (simple-var-ref f))))))

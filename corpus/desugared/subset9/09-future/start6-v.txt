@@ -1,0 +1,88 @@
+(package
+  (import-package ballerina io (as io))
+  (variable count (type
+    (value-type int)))
+  (class-definition Client
+    (function init () ()
+      (block-function-body))
+    (resource-function get
+      (param first
+        (value-type int))
+      (param second
+        (value-type int))
+      (variable third (type
+        (value-type int)))
+      (value-type int)
+      (block-function-body
+        (return
+          (binary-expr +
+            (binary-expr +
+              (binary-expr *
+                (simple-var-ref first)
+                (literal 100))
+              (binary-expr *
+                (simple-var-ref second)
+                (literal 10)))
+            (simple-var-ref third))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref count)
+        (literal 0))))
+  (function receiver (
+    (variable value (type
+      (user-defined-type Client)))) (
+    (user-defined-type Client))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal 0))))
+      (return
+        (simple-var-ref value))))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref count)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref count))))
+      (return
+        (simple-var-ref count))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable endpoint (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (client-resource-access get expr:
+                    (invocation receiver (
+                      (simple-var-ref endpoint))) computed:
+                    (invocation next ()) computed:
+                    (invocation next ())
+                    (invocation next ())))))))))
+      (var-def
+        (variable result (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$1)))))
+      (var-def
+        (variable value (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref result)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value)))))))

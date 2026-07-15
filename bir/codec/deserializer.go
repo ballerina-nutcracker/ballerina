@@ -411,6 +411,14 @@ func (br *birReader) readFunction() *bir.BIRFunction {
 				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
 					t.ThenBB = target
 				}
+			case *bir.StartAction:
+				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
+					t.ThenBB = target
+				}
+			case *bir.SingleWaitAction:
+				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
+					t.ThenBB = target
+				}
 			case *bir.Panic:
 				// Panic has no ThenBB
 			case *bir.LockStart:
@@ -927,6 +935,18 @@ func (br *birReader) readTerminator(varMap map[int32]*bir.BIRLocalVariableDcl) b
 				},
 			},
 		}
+	case bir.InstructionKindAsyncCall:
+		fn := br.readOperand(varMap)
+		var isolated bool
+		br.read(&isolated)
+		lhsOp := br.readOperand(varMap)
+		thenBBId := br.readStringCPEntry()
+		return bir.NewStartAction(*fn, isolated, &bir.BIRBasicBlock{ID: thenBBId}, lhsOp, pos)
+	case bir.InstructionKindWait:
+		future := br.readOperand(varMap)
+		lhsOp := br.readOperand(varMap)
+		thenBBId := br.readStringCPEntry()
+		return bir.NewSingleWaitAction(*future, &bir.BIRBasicBlock{ID: thenBBId}, lhsOp, pos)
 	case bir.InstructionKindPanic:
 		errorOp := br.readOperand(varMap)
 		return &bir.Panic{

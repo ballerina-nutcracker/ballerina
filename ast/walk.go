@@ -900,6 +900,16 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, arg.(BLangNode))
 		}
 
+	case *BLangStartAction:
+		if node.Call != nil {
+			Walk(v, node.Call)
+		}
+
+	case *BLangSingleWaitAction:
+		if node.FutureExpr != nil {
+			Walk(v, node.FutureExpr)
+		}
+
 	case *BLangRemoteMethodCallAction:
 		if node.Name != nil {
 			Walk(v, node.Name)

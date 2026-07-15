@@ -109,6 +109,12 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 		return walkInvocation(cx, expr)
 	case *ast.BLangClientResourceAccessAction:
 		return walkClientResourceAccessAction(cx, expr)
+	case *ast.BLangStartAction:
+		return walkStartAction(cx, expr)
+	case *ast.BLangSingleWaitAction:
+		result := walkExpression(cx, expr.FutureExpr)
+		expr.FutureExpr = result.replacementNode.(ast.BLangExpression)
+		return desugaredNode[ast.BLangActionOrExpression]{initStmts: result.initStmts, replacementNode: expr}
 	case *ast.BLangWildCardBindingPattern:
 		// Wildcard binding pattern can appear in variable references (e.g., _ = expr)
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
@@ -720,6 +726,55 @@ func walkTemplateExpr(cx *functionContext, expr *ast.BLangTemplateExpr) desugare
 	return desugaredNode[ast.BLangActionOrExpression]{initStmts: initStmts, replacementNode: expr}
 }
 
+func walkStartAction(cx *functionContext, action *ast.BLangStartAction) desugaredNode[ast.BLangActionOrExpression] {
+	callResult := walkExpression(cx, action.Call)
+	call := callResult.replacementNode
+	var lambda *ast.BLangLambdaFunction
+	{
+		pos := action.GetPosition()
+		returnTy := call.GetDeterminedType()
+		name := cx.nextDesugarSymbolName()
+		fnSymbol := model.NewFunctionSymbol(name, model.TypedFunctionSignature{ReturnType: returnTy}, false, pos)
+		cx.currentScope().AddSymbol(name, fnSymbol)
+		fnRef, _ := cx.currentScope().GetSymbol(name)
+		nameNode := &ast.BLangIdentifier{Value: name}
+		nameNode.SetDeterminedType(semtypes.Never)
+		nameNode.SetPosition(pos)
+		flags := model.FlagLambda | model.FlagAnonymous
+		if action.IsIsolated {
+			flags |= model.FlagIsolated
+		}
+		fn := ast.NewBLangFunction(ast.InvokableData{
+			Position: pos,
+			Name:     nameNode,
+			Flags:    flags,
+		})
+		fn.SetSymbol(fnRef)
+		fn.SetScope(cx.newFunctionScope(cx.currentScope()))
+		fn.SetDeterminedType(semtypes.Never)
+		returnStmt := &ast.BLangReturn{Expr: call}
+		returnStmt.SetDeterminedType(semtypes.Never)
+		returnStmt.SetPosition(pos)
+		body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{returnStmt}}
+		body.SetDeterminedType(semtypes.Never)
+		body.SetPosition(pos)
+		fn.Body = body
+		params := semtypes.NewListDefinition()
+		fnDef := semtypes.NewFunctionDefinition()
+		fnTy := fnDef.Define(cx.typeEnv(), params.Define(cx.typeEnv(), nil), returnTy, semtypes.FunctionQualifiersFrom(cx.typeEnv(), action.IsIsolated, false))
+		cx.setSymbolType(fnRef, fnTy)
+		lambda = &ast.BLangLambdaFunction{Function: fn}
+		lambda.SetDeterminedType(fnTy)
+		lambda.SetPosition(pos)
+	}
+	lambdaDef, lambdaRef := assignToLocal(cx, lambda, action.GetPosition())
+	action.Call = lambdaRef
+	return desugaredNode[ast.BLangActionOrExpression]{
+		initStmts:       append(callResult.initStmts, lambdaDef),
+		replacementNode: action,
+	}
+}
+
 func walkClientResourceAccessAction(cx *functionContext, expr *ast.BLangClientResourceAccessAction) desugaredNode[ast.BLangActionOrExpression] {
 	var initStmts []ast.StatementNode
 	if expr.Expr != nil {
@@ -1150,7 +1205,7 @@ func walkTrapExpr(cx *functionContext, expr *ast.BLangTrapExpr) desugaredNode[as
 		// trap region in BIR gen
 		cx.internalError("Init statements will be hoisted outside of trap region")
 	}
-	expr.Expr = result.replacementNode.(ast.BLangExpression)
+	expr.Expr = result.replacementNode
 	return desugaredNode[ast.BLangActionOrExpression]{initStmts: nil, replacementNode: expr}
 }
 

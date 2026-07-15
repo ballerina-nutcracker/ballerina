@@ -156,6 +156,8 @@ func SemTypeForValue(v BalValue) semtypes.SemType {
 		return v.Type
 	case *Stream:
 		return v.Type
+	case *Future:
+		return v.Type
 	case XMLValue:
 		return v.Type()
 	case *TypeDesc:
@@ -201,6 +203,8 @@ func toString(v BalValue, visited map[uintptr]bool, isDirect bool) string {
 		return "object"
 	case *Stream:
 		return "stream"
+	case *Future:
+		return "future"
 	case *TypeDesc:
 		return "typedesc"
 	case XMLValue:

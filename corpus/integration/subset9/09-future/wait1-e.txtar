@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string|error, got int|error
+  --> wait1-e.bal:22:33
+   |
+22 |     string|error incompatible = wait numberFuture; // @error
+   |                                 ^^^^^^^^^^^^^^^^^

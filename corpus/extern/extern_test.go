@@ -75,6 +75,16 @@ func TestInvokeNilFunctionValue(t *testing.T) {
 	runExtern(t, fileCase("invoke-nil-function-v"), testharness.NewTestPal(), externs)
 }
 
+func TestStartWaitUsesFreshStrand(t *testing.T) {
+	externs := []testharness.ExternRegistration{
+		{Org: "$anon", Module: "start-wait-v", FuncName: "strandId",
+			Impl: func(ctx *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+				return int64(ctx.StrandID), nil
+			}},
+	}
+	runExtern(t, fileCase("start-wait-v"), testharness.NewTestPal(), externs)
+}
+
 func TestExternTypeMismatchArg(t *testing.T) {
 	runExtern(t, fileCase("2-e"), testharness.NewTestPal(), nil)
 }

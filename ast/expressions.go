@@ -101,6 +101,9 @@ type (
 	bLangExpressionBase struct {
 		bLangNodeBase
 	}
+	bLangActionBase struct {
+		bLangNodeBase
+	}
 )
 
 // AbstractExpression expression is there to allow other packages (such as Desugar) to define their
@@ -192,6 +195,9 @@ func (*BLangRemoteMethodCallAction) actionOrExpression() {}
 
 func (*BLangClientResourceAccessAction) actionNode()         {}
 func (*BLangClientResourceAccessAction) actionOrExpression() {}
+
+func (*bLangActionBase) actionNode()         {}
+func (*bLangActionBase) actionOrExpression() {}
 
 type ResourceAccessSegmentKind uint8
 
@@ -320,7 +326,10 @@ type (
 
 	BLangTrapExpr struct {
 		bLangExpressionBase
-		Expr BLangExpression
+		// jBallerina accepts action operands such as `trap wait f`, despite the
+		// language spec defining the operand as an expression; check expressions
+		// receive the same compatibility treatment.
+		Expr BLangActionOrExpression
 	}
 
 	BLangCommitExpr struct {
@@ -396,7 +405,6 @@ type (
 		bLangExpressionBase
 		bLangInvocationBase
 		PkgAlias IdentifierNode
-		Async    bool
 	}
 
 	BLangRemoteMethodCallAction struct {
@@ -416,6 +424,17 @@ type (
 		bLangInvocationBase
 		Path       []BLangResourceAccessSegment
 		MethodName string
+	}
+
+	BLangStartAction struct {
+		bLangActionBase
+		Call       BLangActionOrExpression
+		IsIsolated bool
+	}
+
+	BLangSingleWaitAction struct {
+		bLangActionBase
+		FutureExpr BLangExpression
 	}
 
 	BLangGroupExpr struct {
@@ -577,6 +596,8 @@ var (
 	_ BLangExpression             = &BLangInvocation{}
 	_ BLangAction                 = &BLangRemoteMethodCallAction{}
 	_ BLangAction                 = &BLangClientResourceAccessAction{}
+	_ BLangAction                 = &BLangStartAction{}
+	_ BLangAction                 = &BLangSingleWaitAction{}
 	_ BLangExpression             = &BLangQueryExpr{}
 	_ GroupExpressionNode         = &BLangGroupExpr{}
 	_ TypedescExpressionNode      = &BLangTypedescExpr{}
@@ -1138,7 +1159,7 @@ func (b *BLangNamedArgsExpression) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangTrapExpr) GetExpression() BLangExpression {
+func (b *BLangTrapExpr) GetExpression() BLangActionOrExpression {
 	return b.Expr
 }
 

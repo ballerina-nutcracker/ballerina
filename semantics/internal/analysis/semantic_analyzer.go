@@ -944,6 +944,10 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeInvocation(a, expr, expectedType)
 	case *ast.BLangClientResourceAccessAction:
 		return analyzeClientResourceAccessAction(a, expr, expectedType)
+	case *ast.BLangStartAction:
+		return analyzeStartAction(a, expr, expectedType)
+	case *ast.BLangSingleWaitAction:
+		return analyzeSingleWaitAction(a, expr, expectedType)
 	case *ast.BLangInferredTypedescDefault:
 		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangDefaultArg:
@@ -1043,6 +1047,35 @@ func analyzeXMLTemplateExpr[A analyzer](a A, expr *ast.BLangXMLTemplateExpr, exp
 		if !analyzeActionOrExpression(a, ins, allowed) {
 			return false
 		}
+	}
+	return validateResolvedType(a, expr, expectedType)
+}
+
+func analyzeStartAction[A analyzer](a A, expr *ast.BLangStartAction, expectedType semtypes.SemType) bool {
+	call, ok := expr.Call.(ast.Invocable)
+	if !ok {
+		a.internalErr("start action operand is not invocable", expr.GetPosition())
+		return false
+	}
+	var callExpectedType semtypes.SemType
+	if !semtypes.IsZero(expectedType) {
+		futureExpectedType := semtypes.Intersect(expectedType, semtypes.Future)
+		if semtypes.IsEmpty(a.tyCtx(), futureExpectedType) {
+			a.semanticErr("start action requires a future expected type", expr.GetPosition())
+			return false
+		}
+		callExpectedType = semtypes.FutureEventualType(a.tyCtx(), futureExpectedType)
+	}
+	if !analyzeActionOrExpression(a, call, callExpectedType) {
+		return false
+	}
+	expr.IsIsolated = isIsolatedInvocationTarget(a, call) && isIsolatedInvocation(a, call)
+	return validateResolvedType(a, expr, expectedType)
+}
+
+func analyzeSingleWaitAction[A analyzer](a A, expr *ast.BLangSingleWaitAction, expectedType semtypes.SemType) bool {
+	if !analyzeActionOrExpression(a, expr.FutureExpr, semtypes.Future) {
+		return false
 	}
 	return validateResolvedType(a, expr, expectedType)
 }

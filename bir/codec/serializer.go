@@ -459,6 +459,15 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 	case *bir.LockEnd:
 		bw.writeStringCPEntry(buf, term.LockKey)
 		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
+	case *bir.StartAction:
+		bw.writeOperand(buf, &term.Fn)
+		write(buf, term.IsIsolated)
+		bw.writeOperand(buf, term.LhsOp)
+		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
+	case *bir.SingleWaitAction:
+		bw.writeOperand(buf, &term.Future)
+		bw.writeOperand(buf, term.LhsOp)
+		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
 	case *bir.ResourceFunctionCall:
 		bw.writeOperand(buf, &term.Receiver)
 		bw.writeStringCPEntry(buf, term.MethodName)

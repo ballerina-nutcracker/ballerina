@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+error: started
+        at crash(start2-p.bal:17)
+           $desugar$0(start2-p.bal:21)
+           main(start2-p.bal:21)

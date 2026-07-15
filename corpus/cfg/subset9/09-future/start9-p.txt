@@ -1,0 +1,23 @@
+(caller
+  (bb0 () ()
+    (expression-stmt
+      (invocation startIndirectly ()))
+  )
+)
+(isolatedWorker
+  (bb0 () ())
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation caller ()))
+  )
+)
+(startIndirectly
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (start-action isolated
+        (invocation isolatedWorker ())))
+  )
+)

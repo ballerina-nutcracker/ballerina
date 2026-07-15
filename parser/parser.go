@@ -9567,7 +9567,8 @@ func (b *ballerinaParser) parseStartAction(annots st.STNode) st.STNode {
 	switch expr.Kind() {
 	case st.FUNCTION_CALL,
 		st.METHOD_CALL,
-		st.REMOTE_METHOD_CALL_ACTION:
+		st.REMOTE_METHOD_CALL_ACTION,
+		st.CLIENT_RESOURCE_ACCESS_ACTION:
 		break
 	case st.SIMPLE_NAME_REFERENCE,
 		st.QUALIFIED_NAME_REFERENCE,
