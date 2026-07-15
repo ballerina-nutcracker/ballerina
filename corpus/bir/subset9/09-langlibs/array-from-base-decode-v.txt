@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad SGVsbG8=
+    b64 = %1;
+    %3 = fromBase64(b64) -> bb1;
+  }
+  bb1 {
+    decoded = %3;
+    %5 = println(decoded) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad 48656c6c6f
+    hex = %6;
+    %8 = fromBase16(hex) -> bb3;
+  }
+  bb3 {
+    decodedHex = %8;
+    %10 = println(decodedHex) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad SGVsbG8--
+    badB64 = %11;
+    %13 = fromBase64(badB64) -> bb5;
+  }
+  bb5 {
+    decodedBad = %13;
+    %15 = println(decodedBad) -> bb6;
+  }
+  bb6 {
+    %16 = ConstantLoad 48656c6c6f==
+    badHex = %16;
+    %18 = fromBase16(badHex) -> bb7;
+  }
+  bb7 {
+    decodedBadHex = %18;
+    %20 = println(decodedBadHex) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
