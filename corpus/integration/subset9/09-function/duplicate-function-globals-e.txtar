@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared symbol 'callback'
+  --> duplicate-function-globals-e.bal:17:33
+   |
+17 | function(int value) returns int callback = function(int value) returns int { // @error
+   |                                 ^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'callback'
+  --> duplicate-function-globals-e.bal:21:39
+   |
+21 | function(string value) returns string callback = function(string value) returns string { // @error
+   |                                       ^^^^^^^^

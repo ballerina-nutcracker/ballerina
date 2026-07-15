@@ -800,8 +800,9 @@ func (ms *moduleSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.BLangSimp
 			return
 		}
 	}
+	symRef, _, _ := ms.GetSymbolFromCurrentScope(name)
+	globalVar.SetSymbol(symRef)
 	if !isPublic {
-		symRef, _, _ := ms.GetSymbol(name)
 		markInit(ms, name, symRef, globalVar.GetPosition())
 	}
 }
@@ -987,6 +988,9 @@ func ensureFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model
 }
 
 func associateFunctionSignatureFromTypeDescriptor[T symbolResolver](resolver T, owner model.SymbolRef, typeNode any, pos diagnostics.Location) {
+	if owner.IsEmpty() {
+		return
+	}
 	ref, ok := functionSignatureRefFromTypeDescriptor(resolver, typeNode, pos)
 	if !ok {
 		return
@@ -1206,9 +1210,6 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	case *ast.BLangSimpleVariableDef:
 		defineVariable(bs, n.GetVariable(), n.GetVariable().(*ast.BLangSimpleVariable).IsFinal())
 	case *ast.BLangSimpleVariable:
-		if !ast.SymbolIsSet(n) {
-			referVariable(bs, n)
-		}
 		walkSimpleVariableChildren(bs, n, n.Symbol())
 		return nil
 	case *ast.BLangLambdaFunction:
@@ -1638,13 +1639,7 @@ func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		// TODO: create a local scope and resolve the body?
 		return ms
 	case *ast.BLangSimpleVariable:
-		name := n.Name.GetValue()
-		symRef, _, ok := ms.GetSymbol(name)
-		if !ok {
-			internalError(ms, "Module level variable symbol not found: "+name, n.Name.GetPosition())
-		}
-		n.SetSymbol(symRef)
-		walkSimpleVariableChildren(ms, n, symRef)
+		walkSimpleVariableChildren(ms, n, n.Symbol())
 		return nil
 	case *ast.BLangTypeDefinition:
 		name := n.Name.GetValue()
@@ -1963,6 +1958,8 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 		isPublic := field.IsPublic()
 		symbol := model.NewVariableSymbol(name, isPublic, false, false, symbolLocationForNode(field))
 		blockRes.AddSymbol(name, &symbol)
+		symRef, _ := blockRes.scope.MainSpace().GetSymbol(name)
+		field.(*ast.BLangSimpleVariable).SetSymbol(symRef)
 	}
 
 	orderedMethods := methodsInResolutionOrder(methods)
