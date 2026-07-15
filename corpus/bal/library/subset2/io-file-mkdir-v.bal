@@ -20,28 +20,28 @@ import ballerina/io;
 public function main() returns error? {
     // Writing to a path whose parent directories don't exist yet creates them,
     // matching jBallerina's io module, for every writer.
-    string stringPath = "/tmp/bal_io_mkdir_xyz/a/b/string.txt";
+    string stringPath = "/tmp/bal_io_mkdir_xyz/string/a/b/string.txt";
     check io:fileWriteString(stringPath, "hello");
     io:println(check io:fileReadString(stringPath)); // @output hello
 
-    string linesPath = "/tmp/bal_io_mkdir_xyz/a/b/lines.txt";
+    string linesPath = "/tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt";
     check io:fileWriteLines(linesPath, ["one", "two"]);
     io:println(check io:fileReadLines(linesPath)); // @output ["one","two"]
 
-    string bytesPath = "/tmp/bal_io_mkdir_xyz/a/b/bytes.dat";
+    string bytesPath = "/tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat";
     check io:fileWriteBytes(bytesPath, [1, 2, 3]);
     io:println(check io:fileReadBytes(bytesPath)); // @output [1,2,3]
 
-    string jsonPath = "/tmp/bal_io_mkdir_xyz/a/b/data.json";
+    string jsonPath = "/tmp/bal_io_mkdir_xyz/json/a/b/data.json";
     check io:fileWriteJson(jsonPath, {"k": "v"});
     io:println(check io:fileReadJson(jsonPath)); // @output {"k":"v"}
 
-    string xmlPath = "/tmp/bal_io_mkdir_xyz/a/b/data.xml";
+    string xmlPath = "/tmp/bal_io_mkdir_xyz/xml/a/b/data.xml";
     check io:fileWriteXml(xmlPath, xml `<a/>`);
     io:println(check io:fileReadXml(xmlPath)); // @output <a/>
 
     // Appending also creates missing parent directories.
-    string appendPath = "/tmp/bal_io_mkdir_xyz/c/d/append.txt";
+    string appendPath = "/tmp/bal_io_mkdir_xyz/append/c/d/append.txt";
     check io:fileWriteString(appendPath, "First");
     check io:fileWriteString(appendPath, "Second", io:APPEND);
     io:println(check io:fileReadString(appendPath)); // @output FirstSecond

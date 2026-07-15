@@ -8,7 +8,7 @@
       (var-def
         (variable stringPath (type
           (value-type string)) (expr
-          (literal /tmp/bal_io_mkdir_xyz/a/b/string.txt))))
+          (literal /tmp/bal_io_mkdir_xyz/string/a/b/string.txt))))
       (var-def
         (variable $desugar$0 (expr
           (simple-var-ref stringPath))))
@@ -50,7 +50,7 @@
       (var-def
         (variable linesPath (type
           (value-type string)) (expr
-          (literal /tmp/bal_io_mkdir_xyz/a/b/lines.txt))))
+          (literal /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt))))
       (var-def
         (variable $desugar$5 (expr
           (simple-var-ref linesPath))))
@@ -94,7 +94,7 @@
       (var-def
         (variable bytesPath (type
           (value-type string)) (expr
-          (literal /tmp/bal_io_mkdir_xyz/a/b/bytes.dat))))
+          (literal /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat))))
       (var-def
         (variable $desugar$10 (expr
           (simple-var-ref bytesPath))))
@@ -139,7 +139,7 @@
       (var-def
         (variable jsonPath (type
           (value-type string)) (expr
-          (literal /tmp/bal_io_mkdir_xyz/a/b/data.json))))
+          (literal /tmp/bal_io_mkdir_xyz/json/a/b/data.json))))
       (var-def
         (variable $desugar$15 (expr
           (invocation io fileWriteJson (
@@ -172,7 +172,7 @@
       (var-def
         (variable xmlPath (type
           (value-type string)) (expr
-          (literal /tmp/bal_io_mkdir_xyz/a/b/data.xml))))
+          (literal /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml))))
       (var-def
         (variable $desugar$17 (expr
           (simple-var-ref xmlPath))))
@@ -214,7 +214,7 @@
       (var-def
         (variable appendPath (type
           (value-type string)) (expr
-          (literal /tmp/bal_io_mkdir_xyz/c/d/append.txt))))
+          (literal /tmp/bal_io_mkdir_xyz/append/c/d/append.txt))))
       (var-def
         (variable $desugar$22 (expr
           (simple-var-ref appendPath))))

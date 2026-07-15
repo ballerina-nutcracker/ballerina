@@ -1,6 +1,6 @@
-# Contributing to ballerina-lang-go
+# Contributing to Ballerina Nutcracker
 
-ballerina-lang-go is a native Ballerina compiler frontend written in Go. It is licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0) and is part of the Ballerina ecosystem.
+Ballerina Nutcracker is a native Ballerina compiler frontend written in Go. It is licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0) and is part of the Ballerina ecosystem.
 
 We appreciate your help!
 
@@ -11,9 +11,9 @@ We appreciate your help!
 
 ## Get started
 
-- Read the [Ballerina Code of Conduct](CODE_OF_CONDUCT.md).
+- Read the [Code of Conduct](CODE_OF_CONDUCT.md).
 - Join the [Ballerina community](https://ballerina.io/community/).
-- Submitting a bug is just as important as contributing code. [Report an issue](https://github.com/ballerina-platform/ballerina-lang-go/issues) in this repo.
+- Submitting a bug is just as important as contributing code. [Report an issue](https://github.com/ballerina-nutcracker/ballerina/issues) in this repo.
 - Start with GitHub issues labeled `good first issue`. Use comments on the issue to indicate that you will be working on it and get guidance.
 
 ## Build the source code

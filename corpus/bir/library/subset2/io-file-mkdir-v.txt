@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil|error{
   bb0 {
-    %1 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/string.txt
+    %1 = ConstantLoad /tmp/bal_io_mkdir_xyz/string/a/b/string.txt
     stringPath = %1;
     $desugar$0 = stringPath;
     %4 = ConstantLoad hello
@@ -41,7 +41,7 @@ main() -> nil|error{
     %14 = println($desugar$4) -> bb8;
   }
   bb8 {
-    %15 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/lines.txt
+    %15 = ConstantLoad /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt
     linesPath = %15;
     $desugar$5 = linesPath;
     %18 = ConstantLoad one
@@ -84,7 +84,7 @@ main() -> nil|error{
     %31 = println($desugar$9) -> bb16;
   }
   bb16 {
-    %32 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/bytes.dat
+    %32 = ConstantLoad /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat
     bytesPath = %32;
     $desugar$10 = bytesPath;
     %35 = ConstantLoad 1
@@ -128,7 +128,7 @@ main() -> nil|error{
     %49 = println($desugar$14) -> bb24;
   }
   bb24 {
-    %50 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/data.json
+    %50 = ConstantLoad /tmp/bal_io_mkdir_xyz/json/a/b/data.json
     jsonPath = %50;
     %52 = ConstantLoad k
     %53 = ConstantLoad v
@@ -164,7 +164,7 @@ main() -> nil|error{
     %61 = println($desugar$16) -> bb31;
   }
   bb31 {
-    %62 = ConstantLoad /tmp/bal_io_mkdir_xyz/a/b/data.xml
+    %62 = ConstantLoad /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml
     xmlPath = %62;
     $desugar$17 = xmlPath;
     %65 = ConstantLoad a
@@ -205,7 +205,7 @@ main() -> nil|error{
     %76 = println($desugar$21) -> bb39;
   }
   bb39 {
-    %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/c/d/append.txt
+    %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/append/c/d/append.txt
     appendPath = %77;
     $desugar$22 = appendPath;
     %80 = ConstantLoad First
