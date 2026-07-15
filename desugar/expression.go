@@ -30,11 +30,8 @@ import (
 )
 
 type invocable interface {
-	ast.BLangActionOrExpression
-	ResolvedSymbol() model.SymbolRef
-	Receiver() ast.BLangExpression
+	ast.Invocable
 	SetReceiver(ast.BLangExpression)
-	CallArgs() []ast.BLangExpression
 	SetCallArgs([]ast.BLangExpression)
 }
 

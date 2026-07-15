@@ -571,6 +571,9 @@ var (
 	_ LiteralNode                 = &BLangConstRef{}
 	_ LiteralNode                 = &BLangLiteral{}
 	_ BLangExpression             = &BLangLiteral{}
+	_ Invocable                   = &BLangInvocation{}
+	_ Invocable                   = &BLangRemoteMethodCallAction{}
+	_ Invocable                   = &BLangClientResourceAccessAction{}
 	_ BLangExpression             = &BLangInvocation{}
 	_ BLangAction                 = &BLangRemoteMethodCallAction{}
 	_ BLangAction                 = &BLangClientResourceAccessAction{}

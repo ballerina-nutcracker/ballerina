@@ -1512,10 +1512,7 @@ func unaryExpression(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLangUnaryExp
 }
 
 type callable interface {
-	ast.BLangActionOrExpression
-	ResolvedSymbol() model.SymbolRef
-	Receiver() ast.BLangExpression
-	CallArgs() []ast.BLangExpression
+	ast.Invocable
 	GetName() ast.IdentifierNode
 }
 

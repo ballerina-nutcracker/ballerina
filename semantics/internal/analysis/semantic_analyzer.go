@@ -1636,11 +1636,8 @@ func analyzeShiftExpr[A analyzer](a A, lhsTy, rhsTy semtypes.SemType) bool {
 }
 
 type invocable interface {
-	ast.BLangActionOrExpression
-	ResolvedSymbol() model.SymbolRef
+	ast.Invocable
 	SetResolvedSymbol(model.SymbolRef)
-	Receiver() ast.BLangExpression
-	CallArgs() []ast.BLangExpression
 	SetCallArgs([]ast.BLangExpression)
 	GetName() ast.IdentifierNode
 	SetRawSymbol(model.Symbol)
