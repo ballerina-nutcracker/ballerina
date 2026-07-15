@@ -585,10 +585,10 @@ func (p *PrettyPrinter) printAnnotAccessExpr(node *BLangAnnotAccessExpr) {
 	p.StartNode()
 	p.PrintString("annot-access-expr")
 	if node.AnnotationName != nil {
-		if node.PkgAlias != nil && node.PkgAlias.Value != "" {
-			p.PrintString(node.PkgAlias.Value + " " + node.AnnotationName.Value)
+		if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" {
+			p.PrintString(node.PkgAlias.GetValue() + " " + node.AnnotationName.GetValue())
 		} else {
-			p.PrintString(node.AnnotationName.Value)
+			p.PrintString(node.AnnotationName.GetValue())
 		}
 	}
 	p.indentLevel++
@@ -1343,10 +1343,10 @@ func (p *PrettyPrinter) printAnnotationAttachment(node *BLangAnnotationAttachmen
 	p.StartNode()
 	p.PrintString("annotation-attachment")
 	if node.AnnotationName != nil {
-		if node.PkgAlias != nil && node.PkgAlias.Value != "" {
-			p.PrintString(node.PkgAlias.Value + " " + node.AnnotationName.Value)
+		if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" {
+			p.PrintString(node.PkgAlias.GetValue() + " " + node.AnnotationName.GetValue())
 		} else {
-			p.PrintString(node.AnnotationName.Value)
+			p.PrintString(node.AnnotationName.GetValue())
 		}
 	}
 	p.indentLevel++

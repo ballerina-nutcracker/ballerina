@@ -816,10 +816,10 @@ type IdentifierNode interface {
 }
 
 type AnnotationAttachmentNode interface {
-	GetPackageAlias() *BLangIdentifier
-	SetPackageAlias(pkgAlias *BLangIdentifier)
-	GetAnnotationName() *BLangIdentifier
-	SetAnnotationName(name *BLangIdentifier)
+	GetPackageAlias() IdentifierNode
+	SetPackageAlias(pkgAlias IdentifierNode)
+	GetAnnotationName() IdentifierNode
+	SetAnnotationName(name IdentifierNode)
 	GetExpressionNode() BLangExpression
 	SetExpressionNode(expr BLangExpression)
 }

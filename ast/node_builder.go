@@ -3007,8 +3007,8 @@ func (n *NodeBuilder) TransformAnnotation(annotationNode *tree.AnnotationNode) B
 	annotation := &BLangAnnotationAttachment{}
 	annotation.SetPosition(n.getPosition(annotationNode))
 	nameReference := n.createBLangNameReference(annotationNode.AnnotReference())
-	annotation.PkgAlias, _ = nameReference[0].(*BLangIdentifier)
-	annotation.AnnotationName, _ = nameReference[1].(*BLangIdentifier)
+	annotation.PkgAlias = nameReference[0]
+	annotation.AnnotationName = nameReference[1]
 	if value := annotationNode.AnnotValue(); value != nil && !value.IsMissing() {
 		annotation.Expr = n.createExpression(value)
 		annotation.HasValue = true
@@ -4685,8 +4685,8 @@ func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression 
 	expr := &BLangAnnotAccessExpr{}
 	expr.Expr = n.createExpression(annotAccessBLangExpression.Expression())
 	nameReference := n.createBLangNameReference(annotAccessBLangExpression.AnnotTagReference())
-	expr.PkgAlias, _ = nameReference[0].(*BLangIdentifier)
-	expr.AnnotationName, _ = nameReference[1].(*BLangIdentifier)
+	expr.PkgAlias = nameReference[0]
+	expr.AnnotationName = nameReference[1]
 	expr.SetPosition(n.getPosition(annotAccessBLangExpression))
 	return expr
 }
@@ -5950,7 +5950,7 @@ func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 func (n *NodeBuilder) badIdentifier(token tree.Token) *BLangBadIdentifier {
 	bad := &BLangBadIdentifier{}
 	if token != nil {
-		bad.Value, _ = normalizedIdentifierValue(token.Text())
+		bad.Value, bad.isLiteral = normalizedIdentifierValue(token.Text())
 		bad.OriginalValue = token.Text()
 		bad.SetPosition(n.getRecoveryPosition(token))
 	} else {

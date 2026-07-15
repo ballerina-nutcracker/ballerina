@@ -206,8 +206,8 @@ type (
 	BLangAnnotAccessExpr struct {
 		bLangExpressionBase
 		Expr           BLangExpression
-		PkgAlias       *BLangIdentifier
-		AnnotationName *BLangIdentifier
+		PkgAlias       IdentifierNode
+		AnnotationName IdentifierNode
 		symbol         model.SymbolRef
 	}
 

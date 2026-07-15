@@ -47,6 +47,7 @@ type BLangBadIdentifier struct {
 	bLangBadNodeBase
 	Value         string
 	OriginalValue string
+	isLiteral     bool
 }
 
 func (*BLangBadTopLevelNode) isTopLevel() {}
@@ -61,4 +62,4 @@ func (*BLangBadExprOrAction) isLExpr()            {}
 func (*BLangBadTypeNode) badNode() {}
 
 func (b *BLangBadIdentifier) GetValue() string { return b.Value }
-func (*BLangBadIdentifier) IsLiteral() bool    { return false }
+func (b *BLangBadIdentifier) IsLiteral() bool  { return b.isLiteral }

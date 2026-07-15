@@ -1303,7 +1303,7 @@ func resolveSymbolRef[T symbolResolver](
 	}
 }
 
-func resolveAnnotationReference[T symbolResolver](resolver T, pkgAlias, name *ast.BLangIdentifier, pos diagnostics.Location, target symbolRefNode) {
+func resolveAnnotationReference[T symbolResolver](resolver T, pkgAlias, name ast.IdentifierNode, pos diagnostics.Location, target symbolRefNode) {
 	if name == nil {
 		return
 	}

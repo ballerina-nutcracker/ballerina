@@ -53,6 +53,7 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 		aliasValue  string
 		nameValue   string
 		badOriginal string
+		isLiteral   bool
 		missingName bool
 	}{
 		{
@@ -75,6 +76,15 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 			badOriginal: "_",
 			missingName: true,
 		},
+		{
+			name:        "quoted unsupported identifier",
+			source:      "function foo() { x = mod:'_; }",
+			aliasValue:  "mod",
+			nameValue:   "_",
+			badOriginal: "'_",
+			isLiteral:   true,
+			missingName: true,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -93,11 +103,37 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 				if bad.Value != testCase.nameValue || bad.OriginalValue != testCase.badOriginal {
 					t.Fatalf("bad identifier values = %q, %q, want %q, %q", bad.Value, bad.OriginalValue, testCase.nameValue, testCase.badOriginal)
 				}
+				if bad.IsLiteral() != testCase.isLiteral {
+					t.Fatalf("bad identifier IsLiteral() = %t, want %t", bad.IsLiteral(), testCase.isLiteral)
+				}
 				return
 			}
 			assertIdentifierValue(t, reference.VariableName, testCase.nameValue)
 		})
 	}
+}
+
+func TestRecoveringNodeBuilderPreservesBadAnnotationAttachmentIdentifier(t *testing.T) {
+	source := "@mod:_{} function foo() {}"
+	compilationUnit, _ := buildNodeBuilderCompilationUnit(t, source, true)
+	function := compilationUnit.TopLevelNodes[0].(*BLangFunction)
+	attachments := function.GetAnnotationAttachments()
+	if len(attachments) != 1 {
+		t.Fatalf("annotation attachment count = %d, want 1", len(attachments))
+	}
+	attachment := attachments[0]
+	assertIdentifierValue(t, attachment.GetPackageAlias(), "mod")
+	assertBadIdentifier(t, attachment.GetAnnotationName(), "_", "_", strings.Index(source, "_"), strings.Index(source, "_")+1)
+}
+
+func TestRecoveringNodeBuilderPreservesBadAnnotationAccessIdentifier(t *testing.T) {
+	source := "function foo() { x = Target.@mod:_; }"
+	compilationUnit, _ := buildNodeBuilderCompilationUnit(t, source, true)
+	function := compilationUnit.TopLevelNodes[0].(*BLangFunction)
+	assignment := function.Body.(*BLangBlockFunctionBody).Stmts[0].(*BLangAssignment)
+	access := assignment.GetExpression().(*BLangAnnotAccessExpr)
+	assertIdentifierValue(t, access.PkgAlias, "mod")
+	assertBadIdentifier(t, access.AnnotationName, "_", "_", strings.Index(source, "_"), strings.Index(source, "_")+1)
 }
 
 func TestRecoveringNodeBuilderHandlesMissingIdentifiers(t *testing.T) {
@@ -162,6 +198,18 @@ func assertIdentifierValue(t *testing.T, identifier IdentifierNode, value string
 	if got := identifier.GetValue(); got != value {
 		t.Fatalf("identifier value = %q, want %q", got, value)
 	}
+}
+
+func assertBadIdentifier(t *testing.T, identifier IdentifierNode, value, originalValue string, start, end int) {
+	t.Helper()
+	bad, ok := identifier.(*BLangBadIdentifier)
+	if !ok {
+		t.Fatalf("identifier = %T, want *BLangBadIdentifier", identifier)
+	}
+	if bad.Value != value || bad.OriginalValue != originalValue {
+		t.Fatalf("bad identifier values = %q, %q, want %q, %q", bad.Value, bad.OriginalValue, value, originalValue)
+	}
+	assertLocationOffsets(t, bad.GetPosition(), start, end)
 }
 
 func assertLocationOffsets(t *testing.T, location diagnostics.Location, start, end int) {
