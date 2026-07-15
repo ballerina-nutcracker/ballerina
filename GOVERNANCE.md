@@ -90,13 +90,15 @@ Any maintainer may propose a working group by opening a pull request that adds a
 
 Each WG must have a lead who is a current maintainer or active contributor with demonstrated familiarity with the problem domain. The lead chairs meetings, drives the agenda, owns deliverables, and reports progress to the maintainer group. Co-Lead(s) support the WG Lead and cover in their absence, appointed by the WG Lead with agreement from core members. Core Members are maintainers and active contributors who commit to attending meetings and contributing to at least one deliverable. Community Contributors can be anyone from the wider Ballerina Nutcracker community who participates in discussions or provides feedback. No formal commitment required.
 
-### Decision Making
+A WG should have at least three members (the lead plus two Co-Leads/Core Members) so it can always produce the distinct WG-member approvals required to merge its outputs (see Outputs below). Smaller WGs fall back to the rule described there.
+
+### Working Group Decision Making
 
 Working groups use lazy consensus (3 business days) for day-to-day decisions. Decisions that modify a public API contract or cross-stage interface — for example, the BIR format, a `lib/langlibs`/`lib/stdlibs` module contract, or the Platform Adaptation Layer (`platform/pal`) — also require approval from at least one maintainer outside the WG. That member cannot be part of the WG, such as the WG lead, co-lead(s), or core members.
 
 ### Outputs
 
-WG outputs (architecture docs, design specs, RFCs) are merged to the repository via standard pull requests requiring two approvals from WG members and one maintainer approval. Outputs do not constitute implementation authority — implementation work follows the standard contribution process.
+WG outputs (architecture docs, design specs, RFCs) are merged to the repository via standard pull requests requiring two approvals from WG members and one maintainer approval, all three from distinct individuals other than the PR author. If the WG doesn't have two other eligible members to provide those approvals, an outside maintainer's approval substitutes for each missing WG-member approval. Outputs do not constitute implementation authority — implementation work follows the standard contribution process.
 
 ### Dissolving a Working Group
 
