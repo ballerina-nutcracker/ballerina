@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"iter"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -91,12 +90,7 @@ type syntaxDiagnosticKey struct {
 type NodeBuilder struct {
 	PackageID                 *model.PackageID
 	anonTypeNameSuffixes      []string // Stack for anonymous type name suffixes
-	additionalStatements      []StatementNode
 	currentCompUnit           *BLangCompilationUnit
-	CurrentCompUnitName       string
-	isInLocalContext          bool
-	isInFiniteContext         bool
-	constantSet               map[string]string // Track declared constants to detect redeclarations
 	cx                        *context.CompilerContext
 	types                     typeTable
 	mode                      NodeBuilderMode
@@ -118,7 +112,6 @@ func NewRecoveringNodeBuilder(cx *context.CompilerContext) *NodeBuilder {
 
 func newNodeBuilder(cx *context.CompilerContext, mode NodeBuilderMode) *NodeBuilder {
 	nodeBuilder := &NodeBuilder{
-		constantSet:               make(map[string]string),
 		cx:                        cx,
 		PackageID:                 cx.GetDefaultPackage(),
 		types:                     newTypeTable(),
@@ -1186,7 +1179,7 @@ func isType(nodeKind common.SyntaxKind) bool {
 
 // createSimpleLiteral creates a simple literal from a node
 func (n *NodeBuilder) createSimpleLiteral(literal tree.Node) LiteralNode {
-	return n.createSimpleLiteralInner(literal, n.isInFiniteContext)
+	return n.createSimpleLiteralInner(literal)
 }
 
 // getIntegerLiteral parses integer literals (decimal/hex)
@@ -1287,7 +1280,7 @@ func isNumericLiteral(kind common.SyntaxKind) bool {
 }
 
 // createSimpleLiteralInner creates a simple literal from a node
-func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node, isFiniteType bool) LiteralNode {
+func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 	var bLiteral LiteralNode
 	kind := literal.Kind()
 	var typeTag TypeTags = -1
@@ -1323,14 +1316,8 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node, isFiniteType b
 			} else {
 				typeTag = TypeTags_FLOAT
 			}
-			if isFiniteType {
-				// Remove f, d, and + suffixes
-				value = regexp.MustCompile("[fd+]").ReplaceAllString(textValue, "")
-				originalValue = new(strings.ReplaceAll(textValue, "+", ""))
-			} else {
-				value = textValue
-				originalValue = &textValue
-			}
+			value = textValue
+			originalValue = &textValue
 		default:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
 			typeTag = TypeTags_FLOAT
@@ -1423,7 +1410,6 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 	compilationUnit := BLangCompilationUnit{}
 	n.currentCompUnit = &compilationUnit
 	defer func() { n.currentCompUnit = nil }()
-	compilationUnit.Name = n.CurrentCompUnitName
 	compilationUnit.packageID = n.PackageID
 	pos := n.getPosition(modulePartNode)
 
@@ -2072,9 +2058,7 @@ func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 
 func (n *NodeBuilder) TransformBlockStatement(blockStatementNode *tree.BlockStatementNode) BLangNode {
 	bLBlockStmt := BLangBlockStmt{}
-	n.isInLocalContext = true
 	bLBlockStmt.Stmts = n.generateBLangStatements(blockStatementNode.Statements(), blockStatementNode)
-	n.isInLocalContext = false
 	bLBlockStmt.pos = n.getPosition(blockStatementNode)
 	return &bLBlockStmt
 }
@@ -2140,9 +2124,7 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 			}
 			bLBlockStmt := &BLangBlockStmt{}
 			nextStmtIndex := j + 1
-			n.isInLocalContext = true
 			n.generateAndAddBLangStatements(statementNodes, &bLBlockStmt.Stmts, nextStmtIndex, endNode)
-			n.isInLocalContext = false
 			if nextStmtIndex <= lastStmtIndex {
 				bLBlockStmt.pos = n.getPositionRange(statementNodes.Get(nextStmtIndex), endNode)
 			}
@@ -2620,24 +2602,6 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *tree
 	visibilityQualifier := constantDeclarationNode.VisibilityQualifier()
 	if visibilityQualifier != nil && visibilityQualifier.Kind() == common.PUBLIC_KEYWORD {
 		constantNode.SetPublic()
-	}
-
-	constantName := constantNode.Name.GetValue()
-
-	if initializedValue, exists := n.constantSet[constantName]; exists {
-		if initializedValue != "" {
-			n.cx.SemanticError(
-				fmt.Sprintf("symbol '%s' is already initialized with '%s'", constantName, initializedValue),
-				constantNode.Name.GetPosition(),
-			)
-		} else {
-			n.cx.SemanticError(
-				fmt.Sprintf("symbol '%s' is already initialized", constantName),
-				constantNode.Name.GetPosition(),
-			)
-		}
-	} else {
-		n.constantSet[constantName] = getConstantInitValue(constantNode.Expr)
 	}
 
 	return constantNode
@@ -3248,7 +3212,6 @@ func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location
 
 func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *tree.FunctionBodyBlockNode) BLangNode {
 	bLFuncBody := &BLangBlockFunctionBody{}
-	n.isInLocalContext = true
 	statements := []StatementNode{}
 	stmtList := statements
 	namedWorkerDeclarator := functionBodyBlockNode.NamedWorkerDeclarator()
@@ -3260,7 +3223,6 @@ func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *tree.Fun
 
 	bLFuncBody.Stmts = stmtList
 	bLFuncBody.pos = n.getPosition(functionBodyBlockNode)
-	n.isInLocalContext = false
 	return bLFuncBody
 }
 
@@ -4736,10 +4698,7 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 			n.cx.InternalError("missing enum member identifier", n.getPosition(enumMember))
 			continue
 		}
-		constantNode, redeclared := n.transformEnumMember(enumMember, publicQualifier)
-		if redeclared {
-			continue
-		}
+		constantNode := n.transformEnumMember(enumMember, publicQualifier)
 		if n.currentCompUnit == nil {
 			n.cx.InternalError("enum constants can only be added at module level", n.getPosition(enumMember))
 			continue
@@ -4786,11 +4745,10 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 }
 
 func (n *NodeBuilder) TransformEnumMember(enumMemberNode *tree.EnumMemberNode) BLangNode {
-	constantNode, _ := n.transformEnumMember(enumMemberNode, false)
-	return constantNode
+	return n.transformEnumMember(enumMemberNode, false)
 }
 
-func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, publicQualifier bool) (*BLangConstant, bool) {
+func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, publicQualifier bool) *BLangConstant {
 	constantNode := createConstantNode()
 	constantNode.pos = n.getPositionWithoutMetadata(enumMemberNode)
 	if publicQualifier {
@@ -4817,15 +4775,7 @@ func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, p
 		constantNode.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(docString)
 	}
 
-	constantName := constantNode.Name.GetValue()
-	if _, exists := n.constantSet[constantName]; exists {
-		n.cx.SemanticError("redeclared symbol '"+constantName+"'", constantNode.Name.GetPosition())
-		return nil, true
-	} else {
-		n.constantSet[constantName] = getConstantInitValue(constantNode.Expr)
-	}
-
-	return constantNode, false
+	return constantNode
 }
 
 func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *tree.ArrayTypeDescriptorNode) BLangNode {
@@ -5808,20 +5758,6 @@ func (n *NodeBuilder) TransformToken(token tree.Token) BLangNode {
 
 func (n *NodeBuilder) TransformIdentifierToken(identifier *tree.IdentifierToken) BLangNode {
 	panic("TransformIdentifierToken unimplemented")
-}
-
-func getConstantInitValue(expr BLangActionOrExpression) string {
-	type constantValue interface {
-		GetValue() any
-		GetOriginalValue() string
-	}
-	if cv, ok := expr.(constantValue); ok {
-		if v := cv.GetValue(); v != nil {
-			return fmt.Sprintf("%v", v)
-		}
-		return cv.GetOriginalValue()
-	}
-	return ""
 }
 
 func stringToTypeKind(typeText string) TypeKind {
