@@ -284,7 +284,7 @@ func (s *desugaredSymbol) Copy() model.Symbol {
 	return &cp
 }
 
-func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, isPublic bool) (string, model.SymbolRef) {
+func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, isPublic bool, pos diagnostics.Location) (string, model.SymbolRef) {
 	if len(ctx.scopeStack) == 0 {
 		ctx.internalError("cannot add desugared symbol when scope stack is empty")
 	}
@@ -293,7 +293,7 @@ func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.Sy
 		name:     name,
 		ty:       ty,
 		kind:     kind,
-		location: diagnostics.NewBuiltinLocation(),
+		location: pos,
 		isPublic: isPublic,
 	}
 	ctx.currentScope().AddSymbol(name, symbol)
@@ -666,7 +666,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		fn.SetPosition(initPos)
 
 		signature := model.FunctionSignature{ReturnType: errorOrNil}
-		fnSymbol := model.NewFunctionSymbol(fnName, signature, false, diagnostics.NewBuiltinLocation())
+		fnSymbol := model.NewFunctionSymbol(fnName, signature, false, initPos)
 		symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 		symbolSpace.AddSymbol(fnName, fnSymbol)
 		symRef, _ := symbolSpace.GetSymbol(fnName)
@@ -762,6 +762,9 @@ func pickInitFunctionPosition(nodes []moduleInitNode, pkg *ast.BLangPackage) dia
 	if len(pkg.Services) > 0 {
 		return pkg.Services[0].GetPosition()
 	}
+	if pkg.InitFunction != nil {
+		return pkg.InitFunction.GetPosition()
+	}
 	return diagnostics.Location{}
 }
 
@@ -791,7 +794,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 	pkg.InitFunction.SetPosition(initPos)
 	pkgID := pkg.PackageID
 	signature := model.FunctionSignature{ReturnType: semtypes.NIL}
-	initSymbol := model.NewFunctionSymbol("init", signature, false, diagnostics.NewBuiltinLocation())
+	initSymbol := model.NewFunctionSymbol("init", signature, false, initPos)
 	symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 	symbolSpace.AddSymbol("init", initSymbol)
 	symRef, _ := symbolSpace.GetSymbol("init")
@@ -821,7 +824,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 		arrTy = listDefn.DefineListTypeWrapped(env, nil, 0, listnerTop, semtypes.CellMutability_CELL_MUT_LIMITED)
 	}
 
-	sym := model.NewVariableSymbol(moduleListenersGlobalName, false, false, false, diagnostics.NewBuiltinLocation())
+	sym := model.NewVariableSymbol(moduleListenersGlobalName, false, false, false, pos)
 	symRef := pkgCtx.addModuleSymbol(moduleListenersGlobalName, &sym)
 	pkgCtx.setSymbolType(symRef, arrTy)
 
@@ -903,7 +906,7 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 			}
 			ty := semtypes.Diff(exprTy, semtypes.ERROR)
 			name := pkgCtx.nextDesugarSymbolName()
-			sym := model.NewVariableSymbol(name, false, false, false, diagnostics.NewBuiltinLocation())
+			sym := model.NewVariableSymbol(name, false, false, false, pos)
 			sym.SetListener()
 			symRef := pkgCtx.addModuleSymbol(name, &sym)
 			pkgCtx.setSymbolType(symRef, ty)
@@ -1171,7 +1174,7 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*
 			paramTy := ctx.symbolType(precedingParam.Symbol())
 			newParam := newSimpleVariable(paramName, paramTy)
 			newParam.SetRequiredParam()
-			fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, diagnostics.NewBuiltinLocation())))
+			fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, precedingParam.Name.GetPosition())))
 			paramSymRef, _ := fnScope.GetSymbol(paramName)
 			ctx.setSymbolType(paramSymRef, paramTy)
 			newParam.SetSymbol(paramSymRef)
@@ -1355,7 +1358,7 @@ func synthesizeDefaultInitFunction(pkgCtx *packageContext, classScope model.Scop
 	fn.SetDeterminedType(semtypes.NEVER)
 	fn.SetScope(pkgCtx.newFunctionScope(classScope))
 	fn.SetPosition(pos)
-	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false, diagnostics.NewBuiltinLocation())
+	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false, pos)
 	classScope.AddSymbol("init", initSymbol)
 	symRef, _ := classScope.GetSymbol("init")
 	fn.SetSymbol(symRef)

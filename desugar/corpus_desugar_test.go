@@ -55,7 +55,8 @@ func TestDesugar(t *testing.T) {
 }
 
 type walkTestVisitor struct {
-	t *testing.T
+	t  *testing.T
+	cx *context.CompilerContext
 }
 
 func (v *walkTestVisitor) Visit(node ast.BLangNode) ast.Visitor {
@@ -67,11 +68,28 @@ func (v *walkTestVisitor) Visit(node ast.BLangNode) ast.Visitor {
 		v.t.Errorf("node with missing position: %T", node)
 	}
 
+	switch n := node.(type) {
+	case *ast.BLangSimpleVariable:
+		v.checkSymbolLocation(n)
+	case *ast.BLangFunction:
+		name := n.Name.GetValue()
+		if name == "init" || name == desugar.StartFunctionName || name == desugar.GracefulStopFunctionName || name == desugar.ImmediateStopFunctionName {
+			v.checkSymbolLocation(n)
+		}
+	}
+
 	return v
 }
 
 func (v *walkTestVisitor) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	return v
+}
+
+func (v *walkTestVisitor) checkSymbolLocation(node ast.NodeWithSymbol) {
+	symbol := v.cx.GetSymbol(node.Symbol())
+	if !diagnostics.LocationHasSource(symbol.Location()) {
+		v.t.Errorf("symbol with missing source location: %s", symbol.Name())
+	}
 }
 
 func testDesugar(t *testing.T, testCase test_util.TestCase) {
@@ -126,7 +144,7 @@ func testDesugar(t *testing.T, testCase test_util.TestCase) {
 		return
 	}
 
-	visitor := &walkTestVisitor{t: t}
+	visitor := &walkTestVisitor{t: t, cx: cx}
 	ast.Walk(visitor, result.CompilationUnit)
 
 	t.Logf("Desugar completed successfully for %s", testCase.InputPath)

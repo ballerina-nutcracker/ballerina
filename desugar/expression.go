@@ -812,7 +812,7 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 
 func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangSimpleVarRef) {
 	ty := initExpr.GetDeterminedType()
-	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false)
+	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
 	tempVar := &ast.BLangSimpleVariable{Name: &ast.BLangIdentifier{Value: tempName}}
 	tempVar.SetDeterminedType(ty)
 	tempVar.SetInitialExpression(initExpr)
@@ -996,7 +996,7 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 
 	// TODO: extract util to add definition and get reference
 	// Create temp var: $desugar$N = <inner expr>
-	tempName, tempSymbol := cx.addDesugardSymbol(innerTy, model.SymbolKindVariable, false)
+	tempName, tempSymbol := cx.addDesugardSymbol(innerTy, model.SymbolKindVariable, false, basePos)
 	tempVarName := &ast.BLangIdentifier{Value: tempName}
 	tempVarName.SetPosition(basePos)
 	tempVar := &ast.BLangSimpleVariable{Name: tempVarName}
@@ -1268,7 +1268,7 @@ func isNilLiftableUnaryOp(op model.OperatorKind) bool {
 }
 
 func createOperandTempVar(cx *functionContext, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location, initStmts []ast.StatementNode) (*ast.BLangIdentifier, model.SymbolRef, []ast.StatementNode) {
-	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false)
+	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
 	varName := &ast.BLangIdentifier{Value: name}
 	tempVar := &ast.BLangSimpleVariable{Name: varName}
 	tempVar.SetDeterminedType(ty)
@@ -1285,7 +1285,7 @@ func createNilResultVar(cx *functionContext, ty semtypes.SemType, pos diagnostic
 	nilLit.SetDeterminedType(semtypes.NIL)
 	setPositionIfMissing(nilLit, pos)
 
-	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false)
+	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
 	varName := &ast.BLangIdentifier{Value: name}
 	tempVar := &ast.BLangSimpleVariable{Name: varName}
 	tempVar.SetDeterminedType(ty)
