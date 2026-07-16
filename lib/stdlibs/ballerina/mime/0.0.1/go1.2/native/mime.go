@@ -76,7 +76,6 @@ func SetEntityBody(obj *values.Object, body *EntityBody) {
 	obj.Put(entityBodyField, body)
 }
 
-
 func mimeError(typeName, msg string) values.BalValue {
 	return values.NewError(semtypes.ERROR, msg, nil, typeName, nil)
 }
