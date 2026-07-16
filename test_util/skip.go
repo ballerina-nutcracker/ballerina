@@ -29,6 +29,13 @@ import (
 var WindowsUnsupportedTests = []string{
 	// os:exec runs a real `echo` subprocess, which is not an executable on Windows.
 	"library/subset2/os-exec-v.bal",
+	// file path functions (joinPath, parentPath, normalizePath, relativePath,
+	// isAbsolutePath) follow the host OS's path conventions by design, and this
+	// test's expected output hardcodes POSIX semantics (forward-slash separators;
+	// a leading "/" counts as absolute). Both diverge on Windows: path functions
+	// render with backslashes, and "/foo/bar" is not absolute without a drive
+	// letter/volume — this is a fixture limitation, not a bug in the port.
+	"library/subset3/file1-v.bal",
 }
 
 // WASMUnsupportedTests lists corpus tests that cannot run under GOOS=js (the
