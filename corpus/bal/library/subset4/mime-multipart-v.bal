@@ -34,7 +34,9 @@ public function main() returns error? {
     mime:Entity[] parts = check whole.getBodyParts();
     io:println(parts.length());          // @output 2
     io:println(check parts[0].getText()); // @output hello world
-    io:println(check parts[1].getJson()); // @output {"x":1,"y":2}
+    map<json> partJson = <map<json>>check parts[1].getJson();
+    io:println(partJson["x"]); // @output 1
+    io:println(partJson["y"]); // @output 2
 
     // memoized second call returns the same parts without re-decoding
     mime:Entity[] partsAgain = check whole.getBodyParts();

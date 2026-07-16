@@ -31,7 +31,9 @@ public function main() returns error? {
     http:Request reqJson = new;
     reqJson.setPayload({name: "Alice", age: 30});
     json reqJsonResult = check reqJson.getJsonPayload();
-    io:println(reqJsonResult); // @output {"name":"Alice","age":30}
+    map<json> reqJsonMap = <map<json>>reqJsonResult;
+    io:println(reqJsonMap["name"]); // @output Alice
+    io:println(reqJsonMap["age"]);  // @output 30
 
     // ---- Response.setPayload ----
     http:Response resText = new;

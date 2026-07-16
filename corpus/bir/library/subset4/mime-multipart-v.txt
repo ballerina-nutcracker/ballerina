@@ -162,257 +162,266 @@ main() -> nil|error{
     return;
   }
   bb35 {
-    %60 = println($desugar$7) -> bb36;
+    %60 = <{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}... |}>($desugar$7)
+    partJson = %60;
+    %63 = ConstantLoad x
+    %62 = partJson[%63];
+    %64 = println(%62) -> bb36;
   }
   bb36 {
-    %61 = getBodyParts(whole) -> bb37;
+    %66 = ConstantLoad y
+    %65 = partJson[%66];
+    %67 = println(%65) -> bb37;
   }
   bb37 {
-    $desugar$8 = %61;
-    %63 = $desugar$8 is error
-    %63 ? bb38 : bb39;
+    %68 = getBodyParts(whole) -> bb38;
   }
   bb38 {
+    $desugar$8 = %68;
+    %70 = $desugar$8 is error
+    %70 ? bb39 : bb40;
+  }
+  bb39 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$8);
     PopScopeFrame
     return;
   }
-  bb39 {
-    partsAgain = $desugar$8;
-    %65 = length(partsAgain) -> bb40;
-  }
   bb40 {
-    %66 = %65;
-    %67 = println(%66) -> bb41;
+    partsAgain = $desugar$8;
+    %72 = length(partsAgain) -> bb41;
   }
   bb41 {
-    %69 = ConstantLoad --XYZBOUNDARY
+    %73 = %72;
+    %74 = println(%73) -> bb42;
+  }
+  bb42 {
+    %76 = ConstantLoad --XYZBOUNDARY
 Content-Disposition: form-data; name="a"
 
 value-a
 
-    %70 = ConstantLoad --XYZBOUNDARY
+    %77 = ConstantLoad --XYZBOUNDARY
 Content-Type: application/json
 
 {"k":"v"}
 --XYZBOUNDARY--
 
-    %68 = + %69 %70;
-    raw = %68;
-    %72 = newObject ballerina/mime:Entity
-    %73 = init(%72) -> bb42;
-  }
-  bb42 {
-    %75 = %73 is nil
-    %75 ? bb43 : bb44;
+    %75 = + %76 %77;
+    raw = %75;
+    %79 = newObject ballerina/mime:Entity
+    %80 = init(%79) -> bb43;
   }
   bb43 {
-    %74 = %72;
-    GOTO bb45;
+    %82 = %80 is nil
+    %82 ? bb44 : bb45;
   }
   bb44 {
-    %74 = %73;
-    GOTO bb45;
+    %81 = %79;
+    GOTO bb46;
   }
   bb45 {
-    decoded = %74;
-    %77 = toBytes(raw) -> bb46;
+    %81 = %80;
+    GOTO bb46;
   }
   bb46 {
-    %78 = ConstantLoad multipart/form-data; boundary=XYZBOUNDARY
-    %79 = setByteArray(decoded,%77,%78) -> bb47;
+    decoded = %81;
+    %84 = toBytes(raw) -> bb47;
   }
   bb47 {
-    %80 = getBodyParts(decoded) -> bb48;
+    %85 = ConstantLoad multipart/form-data; boundary=XYZBOUNDARY
+    %86 = setByteArray(decoded,%84,%85) -> bb48;
   }
   bb48 {
-    $desugar$9 = %80;
-    %82 = $desugar$9 is error
-    %82 ? bb49 : bb50;
+    %87 = getBodyParts(decoded) -> bb49;
   }
   bb49 {
+    $desugar$9 = %87;
+    %89 = $desugar$9 is error
+    %89 ? bb50 : bb51;
+  }
+  bb50 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$9);
     PopScopeFrame
     return;
   }
-  bb50 {
-    decodedParts = $desugar$9;
-    %84 = length(decodedParts) -> bb51;
-  }
   bb51 {
-    %85 = %84;
-    %86 = println(%85) -> bb52;
+    decodedParts = $desugar$9;
+    %91 = length(decodedParts) -> bb52;
   }
   bb52 {
-    %88 = ConstantLoad 0
-    %87 = decodedParts[%88];
-    %89 = ConstantLoad content-disposition
-    %90 = getHeader(%87,%89) -> bb53;
+    %92 = %91;
+    %93 = println(%92) -> bb53;
   }
   bb53 {
-    $desugar$10 = %90;
-    %92 = $desugar$10 is error
-    %92 ? bb54 : bb55;
+    %95 = ConstantLoad 0
+    %94 = decodedParts[%95];
+    %96 = ConstantLoad content-disposition
+    %97 = getHeader(%94,%96) -> bb54;
   }
   bb54 {
+    $desugar$10 = %97;
+    %99 = $desugar$10 is error
+    %99 ? bb55 : bb56;
+  }
+  bb55 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$10);
     PopScopeFrame
     return;
   }
-  bb55 {
-    %93 = println($desugar$10) -> bb56;
-  }
   bb56 {
-    %95 = ConstantLoad 0
-    %94 = decodedParts[%95];
-    %96 = getText(%94) -> bb57;
+    %100 = println($desugar$10) -> bb57;
   }
   bb57 {
-    $desugar$11 = %96;
-    %98 = $desugar$11 is error
-    %98 ? bb58 : bb59;
+    %102 = ConstantLoad 0
+    %101 = decodedParts[%102];
+    %103 = getText(%101) -> bb58;
   }
   bb58 {
+    $desugar$11 = %103;
+    %105 = $desugar$11 is error
+    %105 ? bb59 : bb60;
+  }
+  bb59 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$11);
     PopScopeFrame
     return;
   }
-  bb59 {
-    %99 = println($desugar$11) -> bb60;
-  }
   bb60 {
-    %101 = ConstantLoad 1
-    %100 = decodedParts[%101];
-    %102 = getContentType(%100) -> bb61;
+    %106 = println($desugar$11) -> bb61;
   }
   bb61 {
-    %103 = println(%102) -> bb62;
+    %108 = ConstantLoad 1
+    %107 = decodedParts[%108];
+    %109 = getContentType(%107) -> bb62;
   }
   bb62 {
-    %105 = ConstantLoad 1
-    %104 = decodedParts[%105];
-    %106 = getJson(%104) -> bb63;
+    %110 = println(%109) -> bb63;
   }
   bb63 {
-    $desugar$12 = %106;
-    %108 = $desugar$12 is error
-    %108 ? bb64 : bb65;
+    %112 = ConstantLoad 1
+    %111 = decodedParts[%112];
+    %113 = getJson(%111) -> bb64;
   }
   bb64 {
+    $desugar$12 = %113;
+    %115 = $desugar$12 is error
+    %115 ? bb65 : bb66;
+  }
+  bb65 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$12);
     PopScopeFrame
     return;
   }
-  bb65 {
-    %109 = println($desugar$12) -> bb66;
-  }
   bb66 {
-    %110 = ConstantLoad --B1
+    %116 = println($desugar$12) -> bb67;
+  }
+  bb67 {
+    %117 = ConstantLoad --B1
 Content-Disposition: form-data; name="noct"
 
 plain value
 --B1--
 
-    rawNoContentType = %110;
-    %112 = newObject ballerina/mime:Entity
-    %113 = init(%112) -> bb67;
-  }
-  bb67 {
-    %115 = %113 is nil
-    %115 ? bb68 : bb69;
+    rawNoContentType = %117;
+    %119 = newObject ballerina/mime:Entity
+    %120 = init(%119) -> bb68;
   }
   bb68 {
-    %114 = %112;
-    GOTO bb70;
+    %122 = %120 is nil
+    %122 ? bb69 : bb70;
   }
   bb69 {
-    %114 = %113;
-    GOTO bb70;
+    %121 = %119;
+    GOTO bb71;
   }
   bb70 {
-    noCtEntity = %114;
-    %117 = toBytes(rawNoContentType) -> bb71;
+    %121 = %120;
+    GOTO bb71;
   }
   bb71 {
-    %118 = ConstantLoad multipart/form-data; boundary=B1
-    %119 = setByteArray(noCtEntity,%117,%118) -> bb72;
+    noCtEntity = %121;
+    %124 = toBytes(rawNoContentType) -> bb72;
   }
   bb72 {
-    %120 = getBodyParts(noCtEntity) -> bb73;
+    %125 = ConstantLoad multipart/form-data; boundary=B1
+    %126 = setByteArray(noCtEntity,%124,%125) -> bb73;
   }
   bb73 {
-    $desugar$13 = %120;
-    %122 = $desugar$13 is error
-    %122 ? bb74 : bb75;
+    %127 = getBodyParts(noCtEntity) -> bb74;
   }
   bb74 {
+    $desugar$13 = %127;
+    %129 = $desugar$13 is error
+    %129 ? bb75 : bb76;
+  }
+  bb75 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$13);
     PopScopeFrame
     return;
   }
-  bb75 {
-    noCtParts = $desugar$13;
-    %125 = ConstantLoad 0
-    %124 = noCtParts[%125];
-    %126 = getContentType(%124) -> bb76;
-  }
   bb76 {
-    %127 = println(%126) -> bb77;
+    noCtParts = $desugar$13;
+    %132 = ConstantLoad 0
+    %131 = noCtParts[%132];
+    %133 = getContentType(%131) -> bb77;
   }
   bb77 {
-    %129 = ConstantLoad 0
-    %128 = noCtParts[%129];
-    %130 = getText(%128) -> bb78;
+    %134 = println(%133) -> bb78;
   }
   bb78 {
-    $desugar$14 = %130;
-    %132 = $desugar$14 is error
-    %132 ? bb79 : bb80;
+    %136 = ConstantLoad 0
+    %135 = noCtParts[%136];
+    %137 = getText(%135) -> bb79;
   }
   bb79 {
+    $desugar$14 = %137;
+    %139 = $desugar$14 is error
+    %139 ? bb80 : bb81;
+  }
+  bb80 {
     PushScopeFrame 0
     (1, %0) = (1, $desugar$14);
     PopScopeFrame
     return;
   }
-  bb80 {
-    %133 = println($desugar$14) -> bb81;
-  }
   bb81 {
-    %134 = newObject ballerina/mime:Entity
-    %135 = init(%134) -> bb82;
+    %140 = println($desugar$14) -> bb82;
   }
   bb82 {
-    %137 = %135 is nil
-    %137 ? bb83 : bb84;
+    %141 = newObject ballerina/mime:Entity
+    %142 = init(%141) -> bb83;
   }
   bb83 {
-    %136 = %134;
-    GOTO bb85;
+    %144 = %142 is nil
+    %144 ? bb84 : bb85;
   }
   bb84 {
-    %136 = %135;
-    GOTO bb85;
+    %143 = %141;
+    GOTO bb86;
   }
   bb85 {
-    viaSetBody = %136;
-    %139 = ConstantLoad 2
-    %140 = newArray [object { public function addHeader(string, string) returns nil; private nil|object { public string disposition; public string fileName; public function init() returns nil; public string name; public {| string... |} parameters; public function toString() returns string } cDisposition; private string cId; private int cLength; private nil|object { public function getBaseType() returns string; public function init() returns nil; public {| string... |} parameters; public string primaryType; public string subType; public string suffix; public function toString() returns string } cType; public function getBodyParts() returns error|[......]; public function getByteArray() returns error|[int:Unsigned8...]; public function getContentDisposition() returns object { public string disposition; public string fileName; public function init() returns nil; public string name; public {| string... |} parameters; public function toString() returns string }; public function getContentId() returns string; public function getContentLength() returns int|error; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJson() returns nil|boolean|int|float|decimal|string|error|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}; public function getText() returns string|error; public function hasHeader(string) returns boolean; private {| [string...]... |} headerMap; private [string...] headerNames; public function init() returns nil; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBody(nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|[int:Unsigned8...]|...|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}) returns nil; public function setBodyParts([......], string) returns nil; public function setByteArray([int:Unsigned8...], string) returns nil; public function setContentDisposition(object { public string disposition; public string fileName; public function init() returns nil; public string name; public {| string... |} parameters; public function toString() returns string }) returns nil; public function setContentId(string) returns nil; public function setContentLength(int) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJson(nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}, string) returns nil; public function setText(string, string) returns nil }...][%139]{part1, part2}
-    %141 = setBody(viaSetBody,%140) -> bb86;
+    %143 = %142;
+    GOTO bb86;
   }
   bb86 {
-    %142 = getContentType(viaSetBody) -> bb87;
+    viaSetBody = %143;
+    %146 = ConstantLoad 2
+    %147 = newArray [object { public function addHeader(string, string) returns nil; private nil|object { public string disposition; public string fileName; public function init() returns nil; public string name; public {| string... |} parameters; public function toString() returns string } cDisposition; private string cId; private int cLength; private nil|object { public function getBaseType() returns string; public function init() returns nil; public {| string... |} parameters; public string primaryType; public string subType; public string suffix; public function toString() returns string } cType; public function getBodyParts() returns error|[......]; public function getByteArray() returns error|[int:Unsigned8...]; public function getContentDisposition() returns object { public string disposition; public string fileName; public function init() returns nil; public string name; public {| string... |} parameters; public function toString() returns string }; public function getContentId() returns string; public function getContentLength() returns int|error; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJson() returns nil|boolean|int|float|decimal|string|error|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}; public function getText() returns string|error; public function hasHeader(string) returns boolean; private {| [string...]... |} headerMap; private [string...] headerNames; public function init() returns nil; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBody(nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|[int:Unsigned8...]|...|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}) returns nil; public function setBodyParts([......], string) returns nil; public function setByteArray([int:Unsigned8...], string) returns nil; public function setContentDisposition(object { public string disposition; public string fileName; public function init() returns nil; public string name; public {| string... |} parameters; public function toString() returns string }) returns nil; public function setContentId(string) returns nil; public function setContentLength(int) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJson(nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}, string) returns nil; public function setText(string, string) returns nil }...][%146]{part1, part2}
+    %148 = setBody(viaSetBody,%147) -> bb87;
   }
   bb87 {
-    %143 = println(%142) -> bb88;
+    %149 = getContentType(viaSetBody) -> bb88;
   }
   bb88 {
+    %150 = println(%149) -> bb89;
+  }
+  bb89 {
     return;
   }
 }

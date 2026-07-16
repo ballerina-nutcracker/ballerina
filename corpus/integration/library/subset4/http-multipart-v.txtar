@@ -3,7 +3,8 @@ true
 2
 hello world
 form-data; name=field1
-{"x":1,"y":2}
+1
+2
 2
 2
 hello world

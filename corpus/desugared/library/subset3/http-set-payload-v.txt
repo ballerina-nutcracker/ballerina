@@ -1,8 +1,8 @@
 (package
   (import-package ballerina http (as http))
   (import-package ballerina io (as io))
-  (import-package ballerina lang string (as lang.string))
   (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang string (as lang.string))
   (function main () (
     (union-type
       (error-type)
@@ -109,9 +109,26 @@
         (variable reqJsonResult (type
           (builtin-ref-type json)) (expr
           (simple-var-ref $desugar$8))))
+      (var-def
+        (variable reqJsonMap (type
+          (constrained-type
+            (builtin-ref-type map)
+            (builtin-ref-type json))) (expr
+          (type-conversion-expr
+            (simple-var-ref reqJsonResult)
+            (constrained-type
+              (builtin-ref-type map)
+              (builtin-ref-type json))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref reqJsonResult))))
+          (index-based-access
+            (simple-var-ref reqJsonMap)
+            (literal name)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref reqJsonMap)
+            (literal age)))))
       (var-def
         (variable resText (type
           (user-defined-type http Response)) (expr

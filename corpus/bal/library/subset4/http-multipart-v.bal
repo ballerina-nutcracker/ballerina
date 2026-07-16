@@ -43,7 +43,9 @@ public function main() returns error? {
     io:println(reqParts.length());                                        // @output 2
     io:println(check reqParts[0].getText());                              // @output hello world
     io:println(check reqParts[0].getHeader("content-disposition"));       // @output form-data; name=field1
-    io:println(check reqParts[1].getJson());                              // @output {"x":1,"y":2}
+    map<json> reqPartJson = <map<json>>check reqParts[1].getJson();
+    io:println(reqPartJson["x"]); // @output 1
+    io:println(reqPartJson["y"]); // @output 2
 
     // memoized second call
     mime:Entity[] reqPartsAgain = check req.getBodyParts();

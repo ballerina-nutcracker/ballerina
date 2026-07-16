@@ -125,9 +125,26 @@
         (block-stmt
           (return
             (simple-var-ref $desugar$7))) ())
+      (var-def
+        (variable partJson (type
+          (constrained-type
+            (builtin-ref-type map)
+            (builtin-ref-type json))) (expr
+          (type-conversion-expr
+            (simple-var-ref $desugar$7)
+            (constrained-type
+              (builtin-ref-type map)
+              (builtin-ref-type json))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$7))))
+          (index-based-access
+            (simple-var-ref partJson)
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref partJson)
+            (literal y)))))
       (var-def
         (variable $desugar$8 (expr
           (invocation getBodyParts expr:

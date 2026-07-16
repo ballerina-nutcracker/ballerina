@@ -115,8 +115,9 @@ func initFileIOModule(rt *runtime.Runtime) {
 				return fileIOError(fmt.Sprintf("error while reading file '%s': %s", path, err.Error())), nil
 			}
 			dec := json.NewDecoder(strings.NewReader(string(data)))
-			raw, err := values.DecodeJSON(dec, ctx.TypeCtx, types.jsonListTy, types.jsonMapTy)
-			if err != nil {
+			dec.UseNumber()
+			var raw any
+			if err := dec.Decode(&raw); err != nil {
 				return fileIOError(fmt.Sprintf("error while parsing JSON from file '%s': %s", path, err.Error())), nil
 			}
 			var extra any
@@ -126,7 +127,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 				}
 				return fileIOError(fmt.Sprintf("error reading trailing content in file '%s': %s", path, err.Error())), nil
 			}
-			return raw, nil
+			return values.GoToBalValue(ctx.TypeCtx, raw, types.jsonListTy, types.jsonMapTy), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileWriteString",

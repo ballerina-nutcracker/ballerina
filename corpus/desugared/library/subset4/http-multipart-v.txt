@@ -2,8 +2,8 @@
   (import-package ballerina http (as http))
   (import-package ballerina mime (as mime))
   (import-package ballerina io (as io))
-  (import-package ballerina lang string (as lang.string))
   (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang string (as lang.string))
   (function hasPrefix (
     (variable value (type
       (value-type string)))
@@ -176,9 +176,26 @@
         (block-stmt
           (return
             (simple-var-ref $desugar$10))) ())
+      (var-def
+        (variable reqPartJson (type
+          (constrained-type
+            (builtin-ref-type map)
+            (builtin-ref-type json))) (expr
+          (type-conversion-expr
+            (simple-var-ref $desugar$10)
+            (constrained-type
+              (builtin-ref-type map)
+              (builtin-ref-type json))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$10))))
+          (index-based-access
+            (simple-var-ref reqPartJson)
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref reqPartJson)
+            (literal y)))))
       (var-def
         (variable $desugar$11 (expr
           (invocation getBodyParts expr:

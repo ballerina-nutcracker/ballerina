@@ -72,13 +72,30 @@
               (index-based-access
                 (simple-var-ref parts)
                 (literal 0)) ())))))
+      (var-def
+        (variable partJson (type
+          (constrained-type
+            (builtin-ref-type map)
+            (builtin-ref-type json))) (expr
+          (type-conversion-expr
+            (checked-expr
+              (invocation getJson expr:
+                (index-based-access
+                  (simple-var-ref parts)
+                  (literal 1)) ()))
+            (constrained-type
+              (builtin-ref-type map)
+              (builtin-ref-type json))))))
       (expression-stmt
         (invocation io println (
-          (checked-expr
-            (invocation getJson expr:
-              (index-based-access
-                (simple-var-ref parts)
-                (literal 1)) ())))))
+          (index-based-access
+            (simple-var-ref partJson)
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref partJson)
+            (literal y)))))
       (var-def
         (variable partsAgain (type
           (array-type

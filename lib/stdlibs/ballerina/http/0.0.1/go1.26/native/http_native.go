@@ -1103,11 +1103,12 @@ func initHttpModule(rt *runtime.Runtime) {
 				body = []byte(s)
 			}
 			dec := json.NewDecoder(bytes.NewReader(body))
-			v, err := values.DecodeJSON(dec, ctx.TypeCtx, types.jsonListTy, types.jsonMapTy)
-			if err != nil {
+			dec.UseNumber()
+			var v interface{}
+			if err := dec.Decode(&v); err != nil {
 				return values.NewErrorWithMessage("failed to parse JSON payload: " + err.Error()), nil
 			}
-			return v, nil
+			return values.GoToBalValue(ctx.TypeCtx, v, types.jsonListTy, types.jsonMapTy), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.getBinaryPayload",
@@ -1477,11 +1478,12 @@ func initHttpModule(rt *runtime.Runtime) {
 				}
 			}
 			dec := json.NewDecoder(bytes.NewReader(body))
-			v, err := values.DecodeJSON(dec, ctx.TypeCtx, types.jsonListTy, types.jsonMapTy)
-			if err != nil {
+			dec.UseNumber()
+			var v interface{}
+			if err := dec.Decode(&v); err != nil {
 				return values.NewErrorWithMessage("getJsonPayload: " + err.Error()), nil
 			}
-			return v, nil
+			return values.GoToBalValue(ctx.TypeCtx, v, types.jsonListTy, types.jsonMapTy), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Request.getBinaryPayload",

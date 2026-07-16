@@ -97,13 +97,30 @@
               (simple-var-ref reqParts)
               (literal 0)) (
             (literal content-disposition)))))))
+    (var-def
+      (variable reqPartJson (type
+        (constrained-type
+          (builtin-ref-type map)
+          (builtin-ref-type json))) (expr
+        (type-conversion-expr
+          (checked-expr
+            (invocation getJson expr:
+              (index-based-access
+                (simple-var-ref reqParts)
+                (literal 1)) ()))
+          (constrained-type
+            (builtin-ref-type map)
+            (builtin-ref-type json))))))
     (expression-stmt
       (invocation io println (
-        (checked-expr
-          (invocation getJson expr:
-            (index-based-access
-              (simple-var-ref reqParts)
-              (literal 1)) ())))))
+        (index-based-access
+          (simple-var-ref reqPartJson)
+          (literal x)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref reqPartJson)
+          (literal y)))))
     (var-def
       (variable reqPartsAgain (type
         (array-type
