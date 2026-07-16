@@ -41,9 +41,6 @@ type documentContext struct {
 	textDocument   text.TextDocument
 	syntaxTreeOnce sync.Once
 	textDocOnce    sync.Once
-
-	parseDuration           time.Duration
-	parseDurationRecordOnce sync.Once
 }
 
 // newDocumentContext creates a documentContext from DocumentConfig.
@@ -111,13 +108,9 @@ func (d *documentContext) parseContent(content string, textDoc text.TextDocument
 	return &syntaxTree
 }
 
-// parse parses the document and returns the syntax tree.
+// parseWithStats parses the document and returns the syntax tree.
 // Uses lazy loading with sync.Once for memoization when disableSyntaxTree is false.
 // When disableSyntaxTree is true, parsing happens on every call (no caching).
-func (d *documentContext) parse() *tree.SyntaxTree {
-	return d.parseWithStats(nil)
-}
-
 func (d *documentContext) parseWithStats(cx *compilercontext.CompilerContext) *tree.SyntaxTree {
 	if d.disableSyntaxTree {
 		// Parse every time without caching
@@ -132,30 +125,15 @@ func (d *documentContext) parseWithStats(cx *compilercontext.CompilerContext) *t
 		start := time.Now()
 		textDoc := d.getTextDocument()
 		d.syntaxTree = d.parseContent(d.content(), textDoc)
-		d.parseDuration = time.Since(start)
+		recordParseDuration(cx, time.Since(start))
 	})
-	d.recordCachedParseDuration(cx)
 	return d.syntaxTree
 }
 
-func (d *documentContext) recordCachedParseDuration(cx *compilercontext.CompilerContext) {
-	if !cx.CanRecordStageDuration() {
-		return
-	}
-	d.parseDurationRecordOnce.Do(func() {
-		cx.RecordStageDuration(compilercontext.StageParse, d.parseDuration)
-	})
-}
-
 func recordParseDuration(cx *compilercontext.CompilerContext, duration time.Duration) {
-	if cx.CanRecordStageDuration() {
+	if cx != nil {
 		cx.RecordStageDuration(compilercontext.StageParse, duration)
 	}
-}
-
-// getSyntaxTree returns the cached or parsed syntax tree.
-func (d *documentContext) getSyntaxTree() *tree.SyntaxTree {
-	return d.parse()
 }
 
 // getTextDocument returns the text document (lazy loaded).

@@ -24,18 +24,19 @@ import (
 	"ballerina-lang-go/semtypes"
 )
 
-func TestParseWithStatsRecordsCachedParseDuration(t *testing.T) {
-	docID := newDocumentIDFromString("doc", "main.bal", ModuleID{})
-	docConfig := NewDocumentConfig(docID, "main.bal", "public function main() {}")
-	docContext := newDocumentContext(docConfig, false, "")
-
-	if syntaxTree := docContext.getSyntaxTree(); syntaxTree == nil {
-		t.Fatal("expected syntax tree")
-	}
-
+func TestSyntaxTreeRecordsCachedParseDurationOnce(t *testing.T) {
 	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
 	cx := compilercontext.NewCompilerContext(env)
 	cx.InitModuleStats("test/module")
+
+	docID := newDocumentIDFromString("doc", "main.bal", ModuleID{})
+	docConfig := NewDocumentConfig(docID, "main.bal", "public function main() {}")
+	docContext := newDocumentContext(docConfig, false, "")
+	document := newDocument(docContext, &Module{moduleCtx: &moduleContext{compilerCtx: cx}})
+
+	if syntaxTree := document.SyntaxTree(); syntaxTree == nil {
+		t.Fatal("expected syntax tree")
+	}
 
 	var wg sync.WaitGroup
 	for range 16 {
