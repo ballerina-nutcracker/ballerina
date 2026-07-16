@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad 10
     %3 = ConstantLoad bar
     %4 = ConstantLoad 20
-    %5 = newMap {| bar: int, foo: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4}
+    %5 = newMap {| bar: int, foo: int, anydata... |}{%1=%2, %3=%4}
     d = %5;
     %7 = println(d) -> bb1;
   }
