@@ -426,15 +426,24 @@ func parseDocumentsParallel(
 }
 
 func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*tree.SyntaxTree, compilationOptions CompilationOptions) []*ast.BLangCompilationUnit {
-	dumpAST := compilationOptions.DumpAST()
+	dumpRecoveredAST := compilationOptions.DumpRecoveredAST()
+	dumpAST := compilationOptions.DumpAST() || dumpRecoveredAST
 	var prettyPrinter ast.PrettyPrinter
 	if dumpAST {
-		prettyPrinter = ast.PrettyPrinter{}
+		prettyPrinter = ast.PrettyPrinter{
+			ShowNodeLocations: dumpRecoveredAST,
+			DiagnosticEnv:     cx.DiagnosticEnv(),
+		}
 	}
 
 	compilationUnits := make([]*ast.BLangCompilationUnit, 0, len(syntaxTrees))
 	for _, st := range syntaxTrees {
-		cu := ast.GetCompilationUnit(cx, st)
+		var cu *ast.BLangCompilationUnit
+		if dumpRecoveredAST {
+			cu = ast.GetRecoveredCompilationUnit(cx, st)
+		} else {
+			cu = ast.GetCompilationUnit(cx, st)
+		}
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
 		}

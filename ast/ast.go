@@ -1544,6 +1544,13 @@ func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *tree.SyntaxTree
 	return compilationUnit.(*BLangCompilationUnit)
 }
 
+// GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
+func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *tree.SyntaxTree) *BLangCompilationUnit {
+	nodeBuilder := NewRecoveringNodeBuilder(cx)
+	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
+	return compilationUnit.(*BLangCompilationUnit)
+}
+
 func ToPackageFromCompilationUnits(compilationUnits []*BLangCompilationUnit) *BLangPackage {
 	p := BLangPackage{}
 	for _, compilationUnit := range compilationUnits {
