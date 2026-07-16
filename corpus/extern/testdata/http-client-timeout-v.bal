@@ -18,10 +18,10 @@ import ballerina/http;
 import ballerina/io;
 
 public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com", {
+    http:Client c = check new ("http://testserver", {
         timeout: 1
     });
-    http:Response|error result = c->get("/delay/5");
+    http:Response|error result = c->get("/delay");
     io:println(result is error); // @output true
     return;
 }

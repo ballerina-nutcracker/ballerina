@@ -316,14 +316,18 @@ func TestHttpClientTLSInsecure(t *testing.T) {
 	runExtern(t, fileCase("http-client-tls-v"), newHTTPPal(clientFactory), nil)
 }
 
-// TestHttpClientTimeout verifies that a 1-second timeout fires before
-// httpbun /delay/5 responds, and that the resulting error propagates to
-// Ballerina as an error value. Stays network-gated: a Ballerina service can't
-// stall a response (no sleep/delay primitive), so a slow remote endpoint is
-// still required.
+// TestHttpClientTimeout verifies that a 1-second client timeout fires before
+// a deliberately slow local server responds, and that the resulting error
+// propagates to Ballerina as an error value. Uses a local server (rather than
+// a real remote delay endpoint) so the test is hermetic and doesn't depend on
+// a third party's network behavior.
 func TestHttpClientTimeout(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-timeout-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(1500 * time.Millisecond)
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-timeout-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
 
 // TestHttpClientConnectionError verifies that a DNS resolution failure for an
