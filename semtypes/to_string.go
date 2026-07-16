@@ -31,9 +31,6 @@ func newToStringState(cx Context) *toStringState {
 }
 
 func ToString(cx Context, ty SemType) string {
-	if res, ok := builtinUnion(cx, ty); ok {
-		return res
-	}
 	s := newToStringState(cx)
 	return s.semTypeToString(ty)
 }
@@ -52,6 +49,9 @@ func builtinUnion(cx Context, ty SemType) (string, bool) {
 }
 
 func (s *toStringState) semTypeToString(ty SemType) string {
+	if res, ok := builtinUnion(s.cx, ty); ok {
+		return res
+	}
 	if ty.some() == 0 {
 		return basicTypeToString(ty.all())
 	}

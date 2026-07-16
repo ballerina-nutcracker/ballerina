@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns int|function(int) returns string, got function(nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object) returns int|string
+error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns int|function(int) returns string, got function(any) returns int|string
   --> union16-e.bal:24:12
    |
 24 |     FG f = fooBar; // @error

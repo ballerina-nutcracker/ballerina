@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad d
     %2 = ConstantLoad 1.2E+34
-    %3 = newMap {| d: decimal, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2}
+    %3 = newMap {| d: decimal, anydata... |}{%1=%2}
     r1 = %3;
     %5 = println(r1) -> bb1;
   }
@@ -28,8 +28,8 @@ main() -> nil{
     %18 = ConstantLoad d
     %19 = ConstantLoad d1
     %20 = ConstantLoad 23
-    %21 = newMap {| d1: decimal, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%19=%20}
-    %22 = newMap {| d: {| d1: decimal, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%18=%21}
+    %21 = newMap {| d1: decimal, anydata... |}{%19=%20}
+    %22 = newMap {| d: {| d1: decimal, anydata... |}, anydata... |}{%18=%21}
     r3 = %22;
     %24 = println(r3) -> bb4;
   }
