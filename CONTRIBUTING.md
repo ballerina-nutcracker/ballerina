@@ -22,7 +22,7 @@ We appreciate your help!
 - Production build: `go build -o bal ./cli/cmd`
 - Debug build (enables profiling): `go build -tags debug -o bal-debug ./cli/cmd`
 
-See the [README](README.md) for more details on building, running corpus tests, and profiling.
+See the [README](README.md) for more details on building, and [doc/guides/DEVELOPING.md](doc/guides/DEVELOPING.md) for running corpus tests and profiling.
 
 ## Submit your contribution
 
