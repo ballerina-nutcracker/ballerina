@@ -13,7 +13,7 @@ main() -> nil{
 test1() -> nil{
   bb0 {
     %1 = ConstantLoad 0
-    %2 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    %2 = newArray [any...][%1]{}
     x = %2;
     %4 = foo(x) -> bb1;
   }
@@ -32,7 +32,7 @@ test1() -> nil{
 test2() -> nil{
   bb0 {
     %1 = ConstantLoad 0
-    %2 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    %2 = newArray [any...][%1]{}
     x = %2;
     %4 = foo(x) -> bb1;
   }
@@ -48,7 +48,7 @@ test2() -> nil{
     return;
   }
 }
-foo([nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]) -> [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]{
+foo([any...]) -> [any...]{
   bb0 {
     %0 = x;
     return;

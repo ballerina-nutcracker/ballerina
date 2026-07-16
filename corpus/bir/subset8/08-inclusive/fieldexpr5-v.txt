@@ -7,7 +7,7 @@ main() -> nil{
     %4 = ConstantLoad 1.5
     %5 = ConstantLoad booleanField
     %6 = ConstantLoad false
-    %7 = newMap {| booleanField: boolean, floatField: float, intField: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%1=%2, %3=%4, %5=%6}
+    %7 = newMap {| booleanField: boolean, floatField: float, intField: int, anydata... |}{%1=%2, %3=%4, %5=%6}
     r = %7;
     %11 = ConstantLoad floatField
     %10 = r[%11];

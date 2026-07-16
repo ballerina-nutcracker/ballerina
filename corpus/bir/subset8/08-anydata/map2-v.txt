@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad a
     %2 = ConstantLoad 5
-    %3 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%1=%2}
+    %3 = newMap {| anydata... |}{%1=%2}
     m = %3;
     b = m;
     %6 = ConstantLoad a

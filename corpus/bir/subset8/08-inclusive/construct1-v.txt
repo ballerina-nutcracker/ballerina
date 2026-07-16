@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad 17
     %3 = ConstantLoad y
     %4 = ConstantLoad 42
-    %5 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%1=%2, %3=%4}
+    %5 = newMap {| x: int, y: int, anydata... |}{%1=%2, %3=%4}
     r = %5;
     %7 = ConstantLoad x
     s = %7;

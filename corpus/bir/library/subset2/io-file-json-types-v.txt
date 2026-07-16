@@ -117,7 +117,7 @@ main() -> nil|error{
     %42 = ConstantLoad <nil>
     %43 = ConstantLoad x
     %44 = ConstantLoad 5
-    %45 = newArray [nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...][%44]{%39, %40, %41, %42, %43}
+    %45 = newArray [json...][%44]{%39, %40, %41, %42, %43}
     arr = %45;
     %47 = fileWriteJson(arrPath,arr) -> bb22;
   }

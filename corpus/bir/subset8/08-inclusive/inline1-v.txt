@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad some string
     %3 = ConstantLoad aVeryLongFieldName
     %4 = ConstantLoad 0
-    %5 = newMap {| aVeryLongFieldName: int, anotherVeryLongFieldName: string, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%1=%2, %3=%4}
+    %5 = newMap {| aVeryLongFieldName: int, anotherVeryLongFieldName: string, anydata... |}{%1=%2, %3=%4}
     r = %5;
     %8 = ConstantLoad anotherVeryLongFieldName
     %7 = r[%8];

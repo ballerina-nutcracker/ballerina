@@ -9,7 +9,7 @@ main() -> nil{
     %6 = ConstantLoad 20
     %7 = ConstantLoad colour
     %8 = ConstantLoad red
-    %9 = newMap {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%3=%4, %5=%6, %7=%8}
+    %9 = newMap {| colour: string, x: int, y: int, anydata... |}{%3=%4, %5=%6, %7=%8}
     cp = %9;
     %11 = ConstantLoad 10
     %12 = %11;
@@ -26,7 +26,7 @@ main() -> nil{
     %19 = ConstantLoad 10
     %20 = ConstantLoad y
     %21 = ConstantLoad 20
-    %22 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%18=%19, %20=%21}
+    %22 = newMap {| x: int, y: int, anydata... |}{%18=%19, %20=%21}
     p = %22;
     %24 = ConstantLoad 10
     %25 = %24;
@@ -42,9 +42,9 @@ main() -> nil{
     return;
   }
 }
-moveFn({| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |},int,int) -> {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{
+moveFn({| x: int, y: int, anydata... |},int,int) -> {| colour: string, x: int, y: int, anydata... |}{
   bb0 {
-    %4 = p is {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}
+    %4 = p is {| colour: string, x: int, y: int, anydata... |}
     %4 ? bb1 : bb3;
   }
   bb1 {
@@ -74,13 +74,13 @@ moveFn({| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|b
     %8 = movedPoint[%9];
     %10 = ConstantLoad colour
     %11 = ConstantLoad white
-    %12 = newMap {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%4=%5, %7=%8, %10=%11}
+    %12 = newMap {| colour: string, x: int, y: int, anydata... |}{%4=%5, %7=%8, %10=%11}
     (1, %0) = %12;
     PopScopeFrame
     return;
   }
 }
-movePoint({| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |},int,int) -> {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{
+movePoint({| x: int, y: int, anydata... |},int,int) -> {| x: int, y: int, anydata... |}{
   bb0 {
     %6 = ConstantLoad x
     %5 = p[%6];
@@ -100,7 +100,7 @@ movePoint({| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[ni
     return;
   }
 }
-moveColoredPoint({| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |},int,int) -> {| colour: string, x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{
+moveColoredPoint({| colour: string, x: int, y: int, anydata... |},int,int) -> {| colour: string, x: int, y: int, anydata... |}{
   bb0 {
     %6 = ConstantLoad colour
     %5 = p[%6];

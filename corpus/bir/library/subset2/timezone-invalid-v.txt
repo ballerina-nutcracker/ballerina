@@ -63,7 +63,7 @@ main() -> nil|error{
     %25 = ConstantLoad 10
     %26 = ConstantLoad minute
     %27 = ConstantLoad 0
-    %28 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|...|table... |}|table... |}{%18=%19, %20=%21, %22=%23, %24=%25, %26=%27}
+    %28 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%18=%19, %20=%21, %22=%23, %24=%25, %26=%27}
     civil = %28;
     %30 = utcFromCivil(utcZone,civil) -> bb12;
   }

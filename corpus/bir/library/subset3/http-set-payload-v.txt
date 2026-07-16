@@ -116,7 +116,7 @@ main() -> nil|error{
     %39 = ConstantLoad Alice
     %40 = ConstantLoad age
     %41 = ConstantLoad 30
-    %42 = newMap {| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}{%38=%39, %40=%41}
+    %42 = newMap {| json... |}{%38=%39, %40=%41}
     $desugar$6 = %42;
     %44 = $default$15($desugar$6) -> bb27;
   }
@@ -140,7 +140,7 @@ main() -> nil|error{
   }
   bb31 {
     reqJsonResult = $desugar$8;
-    %51 = <{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...]|{| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}... |}>(reqJsonResult)
+    %51 = <{| json... |}>(reqJsonResult)
     reqJsonMap = %51;
     %54 = ConstantLoad name
     %53 = reqJsonMap[%54];
@@ -267,7 +267,7 @@ main() -> nil|error{
     %97 = ConstantLoad 2
     %98 = ConstantLoad 3
     %99 = ConstantLoad 3
-    %100 = newArray [nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...][%99]{%96, %97, %98}
+    %100 = newArray [json...][%99]{%96, %97, %98}
     resPayload = %100;
     $desugar$15 = resPayload;
     %103 = $default$10($desugar$15) -> bb60;

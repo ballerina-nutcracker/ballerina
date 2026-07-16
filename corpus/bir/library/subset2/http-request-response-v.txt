@@ -180,7 +180,7 @@ main() -> nil|error{
   bb40 {
     %72 = ConstantLoad k
     %73 = ConstantLoad v
-    %74 = newMap {| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}{%72=%73}
+    %74 = newMap {| json... |}{%72=%73}
     $desugar$6 = %74;
     %76 = $default$14($desugar$6) -> bb41;
   }
@@ -417,7 +417,7 @@ main() -> nil|error{
     %173 = ConstantLoad 2
     %174 = ConstantLoad 3
     %175 = ConstantLoad 3
-    %176 = newArray [nil|boolean|int|float|decimal|string|...|{| nil|boolean|int|float|decimal|string|...|...... |}...][%175]{%172, %173, %174}
+    %176 = newArray [json...][%175]{%172, %173, %174}
     $desugar$28 = %176;
     %178 = $default$9($desugar$28) -> bb91;
   }

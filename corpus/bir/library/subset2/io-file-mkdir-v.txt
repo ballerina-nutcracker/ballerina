@@ -132,7 +132,7 @@ main() -> nil|error{
     jsonPath = %50;
     %52 = ConstantLoad k
     %53 = ConstantLoad v
-    %54 = newMap {| nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|...... |}{%52=%53}
+    %54 = newMap {| json... |}{%52=%53}
     %55 = fileWriteJson(jsonPath,%54) -> bb25;
   }
   bb25 {

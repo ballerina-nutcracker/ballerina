@@ -33,12 +33,12 @@ main() -> nil{
     %18 = ConstantLoad 1
     %19 = ConstantLoad 2
     %20 = ConstantLoad 2
-    %21 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%20]{%18, %19}
+    %21 = newArray [any...][%20]{%18, %19}
     list = %21;
     %23 = p(list) -> bb7;
   }
   bb7 {
-    %24 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{}
+    %24 = newMap {| any... |}{}
     mapping = %24;
     %26 = p(mapping) -> bb8;
   }
@@ -90,7 +90,7 @@ p(any) -> nil{
   }
   bb9 {
     PushScopeFrame 1
-    %0 = (3, v) is [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]
+    %0 = (3, v) is [any...]
     %0 ? bb10 : bb12;
   }
   bb10 {
@@ -104,7 +104,7 @@ p(any) -> nil{
   }
   bb12 {
     PushScopeFrame 1
-    %0 = (4, v) is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %0 = (4, v) is {| any... |}
     %0 ? bb13 : bb15;
   }
   bb13 {
