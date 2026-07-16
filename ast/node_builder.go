@@ -82,19 +82,13 @@ const (
 	NodeBuilderModeRecover
 )
 
-type syntaxDiagnosticKey struct {
-	node       tree.STNode
-	messageKey string
-}
-
 type NodeBuilder struct {
-	PackageID                 *model.PackageID
-	anonTypeNameSuffixes      []string // Stack for anonymous type name suffixes
-	currentCompUnit           *BLangCompilationUnit
-	cx                        *context.CompilerContext
-	types                     typeTable
-	mode                      NodeBuilderMode
-	reportedSyntaxDiagnostics map[syntaxDiagnosticKey]struct{}
+	PackageID            *model.PackageID
+	anonTypeNameSuffixes []string // Stack for anonymous type name suffixes
+	currentCompUnit      *BLangCompilationUnit
+	cx                   *context.CompilerContext
+	types                typeTable
+	mode                 NodeBuilderMode
 }
 
 func (n *NodeBuilder) de() *diagnostics.DiagnosticEnv {
@@ -112,18 +106,12 @@ func NewRecoveringNodeBuilder(cx *context.CompilerContext) *NodeBuilder {
 
 func newNodeBuilder(cx *context.CompilerContext, mode NodeBuilderMode) *NodeBuilder {
 	nodeBuilder := &NodeBuilder{
-		cx:                        cx,
-		PackageID:                 cx.GetDefaultPackage(),
-		types:                     newTypeTable(),
-		mode:                      mode,
-		reportedSyntaxDiagnostics: make(map[syntaxDiagnosticKey]struct{}),
+		cx:        cx,
+		PackageID: cx.GetDefaultPackage(),
+		types:     newTypeTable(),
+		mode:      mode,
 	}
 	return nodeBuilder
-}
-
-// @cleanup: inline thse calls
-func (n *NodeBuilder) recovering() bool {
-	return n.mode == NodeBuilderModeRecover
 }
 
 var _ tree.NodeTransformer[BLangNode] = &NodeBuilder{}
@@ -897,7 +885,7 @@ func (n *NodeBuilder) createTypeNode(typeNode tree.Node) TypeDescriptor {
 	if err == nil {
 		return result
 	}
-	if n.recovering() {
+	if n.mode == NodeBuilderModeRecover {
 		return n.badTypeNode(typeNode)
 	}
 	panic(err)
@@ -1044,13 +1032,13 @@ func setIdentifierValue(identifier IdentifierNode, value string) {
 
 func (n *NodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token tree.Token) IdentifierNode {
 	if token == nil {
-		if n.recovering() {
+		if n.mode == NodeBuilderModeRecover {
 			return n.badIdentifier(token)
 		}
 		panic("missing identifier token")
 	}
 	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
-		if n.recovering() {
+		if n.mode == NodeBuilderModeRecover {
 			return n.badIdentifier(token)
 		}
 		panic("invalid identifier")
@@ -1421,15 +1409,14 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 	imports := modulePartNode.Imports()
 	for importDecl := range imports.Iterator() {
 		if importDecl.HasDiagnostics() {
-			n.syntaxError(importDecl)
-			if n.recovering() {
+			if n.mode == NodeBuilderModeRecover {
 				compilationUnit.AddTopLevelNode(n.badTopLevel(importDecl))
 			}
 			continue
 		}
 		node, err := n.transformImportTopLevel(importDecl)
 		if err != nil {
-			if n.recovering() {
+			if n.mode == NodeBuilderModeRecover {
 				node = n.badTopLevel(importDecl)
 			} else {
 				panic(err)
@@ -1444,11 +1431,10 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 		// Dispatch to TransformSyntaxNode which handles all node types
 		var memberNode tree.Node = member
 		if memberNode.HasDiagnostics() {
-			n.syntaxError(memberNode)
-			if !n.recovering() {
+			if n.mode != NodeBuilderModeRecover {
 				continue
 			}
-			if !n.shouldDescendDiagnosticTopLevel(memberNode) {
+			if memberNode.Kind() != common.FUNCTION_DEFINITION {
 				compilationUnit.AddTopLevelNode(n.badTopLevel(memberNode))
 				continue
 			}
@@ -1617,17 +1603,12 @@ func (n *NodeBuilder) transformImportTopLevel(importDecl *tree.ImportDeclaration
 	return bLangImport, nil
 }
 
-// @cleanup inline
-func (n *NodeBuilder) shouldDescendDiagnosticTopLevel(node tree.Node) bool {
-	return node.Kind() == common.FUNCTION_DEFINITION
-}
-
 func (n *NodeBuilder) transformTopLevel(node tree.Node) (TopLevelNode, error) {
 	result, err := n.transformTopLevelInner(node)
 	if err == nil {
 		return result, nil
 	}
-	if n.recovering() {
+	if n.mode == NodeBuilderModeRecover {
 		return n.badTopLevel(node), nil
 	}
 	return nil, err
@@ -1852,7 +1833,6 @@ func (n *NodeBuilder) populateServiceQualifiers(service *BLangService, node *tre
 func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tree.ServiceDeclarationNode) {
 	paths := node.AbsoluteResourcePath()
 	if node.HasDiagnostics() {
-		n.syntaxError(node)
 		return
 	}
 	for i := 0; i < paths.Size(); i++ {
@@ -2073,7 +2053,7 @@ func (n *NodeBuilder) transformStatement(statement tree.StatementNode) Statement
 	if err == nil {
 		return result
 	}
-	if n.recovering() {
+	if n.mode == NodeBuilderModeRecover {
 		return n.badStmt(statement)
 	}
 	panic(err)
@@ -2100,11 +2080,8 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 		if currentStatement == nil {
 			continue
 		}
-		if currentStatement.HasDiagnostics() {
-			n.syntaxError(currentStatement)
-			if !n.recovering() {
-				continue
-			}
+		if currentStatement.HasDiagnostics() && n.mode != NodeBuilderModeRecover {
+			continue
 		}
 		if currentStatement.Kind() == common.FORK_STATEMENT {
 			forkStmt := currentStatement.(*tree.ForkStatementNode)
@@ -2176,14 +2153,11 @@ func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName tree.Node) BLangE
 }
 
 func (n *NodeBuilder) createExpression(expressionNode tree.Node) BLangExpression {
-	if expressionNode != nil && expressionNode.HasDiagnostics() {
-		n.syntaxError(expressionNode)
-	}
 	result, err := n.createExpressionInner(expressionNode)
 	if err == nil {
 		return result
 	}
-	if n.recovering() {
+	if n.mode == NodeBuilderModeRecover {
 		return n.badExprOrAction(expressionNode)
 	}
 	panic(err)
@@ -2203,14 +2177,11 @@ func (n *NodeBuilder) createExpressionInner(expressionNode tree.Node) (BLangExpr
 
 // createActionOrExpression creates an action or expression node from a syntax tree node
 func (n *NodeBuilder) createActionOrExpression(actionOrExpression tree.Node) BLangActionOrExpression {
-	if actionOrExpression != nil && actionOrExpression.HasDiagnostics() {
-		n.syntaxError(actionOrExpression)
-	}
 	result, err := n.createActionOrExpressionInner(actionOrExpression)
 	if err == nil {
 		return result
 	}
-	if n.recovering() {
+	if n.mode == NodeBuilderModeRecover {
 		return n.badExprOrAction(actionOrExpression)
 	}
 	panic(err)
@@ -5904,11 +5875,6 @@ func (n *NodeBuilder) syntaxError(node tree.Node) {
 			continue
 		}
 		for _, diagnostic := range deep.Diagnostics() {
-			key := syntaxDiagnosticKey{node: deep, messageKey: diagnostic.DiagnosticCode().MessageKey()}
-			if _, exists := n.reportedSyntaxDiagnostics[key]; exists {
-				continue
-			}
-			n.reportedSyntaxDiagnostics[key] = struct{}{}
 			n.cx.SyntaxError(diagnosticMessage(diagnostic), n.getPosition(diagnosticNode))
 		}
 	}

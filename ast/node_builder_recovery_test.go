@@ -136,6 +136,24 @@ func TestRecoveringNodeBuilderPreservesBadAnnotationAccessIdentifier(t *testing.
 	assertBadIdentifier(t, access.AnnotationName, "_", "_", strings.Index(source, "_"), strings.Index(source, "_")+1)
 }
 
+func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
+	source := "function foo() { int x = ; }"
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	cx := context.NewCompilerContext(env)
+	cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
+	syntaxTree, err := parser.GetSyntaxTree(cx, "test.bal", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	diagnosticsBeforeBuild := len(cx.Diagnostics())
+	builder := NewRecoveringNodeBuilder(cx)
+	builder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
+	if got := len(cx.Diagnostics()) - diagnosticsBeforeBuild; got != 1 {
+		t.Fatalf("node builder reported %d syntax diagnostics, want 1", got)
+	}
+}
+
 func TestRecoveringNodeBuilderHandlesMissingIdentifiers(t *testing.T) {
 	testCases := []struct {
 		name   string
