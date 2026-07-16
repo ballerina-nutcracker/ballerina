@@ -194,10 +194,7 @@ func registerListenerExterns(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.start",
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			stateVal, ok := self.Get("$state")
-			if !ok {
-				return values.NewErrorWithMessage("Listener.start: listener not initialised"), nil
-			}
+			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
 			// Held for the whole operation (not just the check) so a concurrent
 			// start cannot race past this check before the first sets state.server,
@@ -235,10 +232,7 @@ func registerListenerExterns(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.gracefulStop",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			stateVal, ok := self.Get("$state")
-			if !ok {
-				return nil, nil
-			}
+			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
 			state.mu.RLock()
 			server := state.server
@@ -279,10 +273,7 @@ func registerListenerExterns(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.immediateStop",
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			stateVal, ok := self.Get("$state")
-			if !ok {
-				return nil, nil
-			}
+			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
 			state.mu.RLock()
 			server := state.server
