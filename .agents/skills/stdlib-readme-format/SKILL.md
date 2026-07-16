@@ -1,11 +1,11 @@
 ---
 name: stdlib-readme-format
-description: Authoritative format contract for `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md` files. Use when creating or updating any stdlib README, or when auditing an existing one for consistency.
+description: Authoritative format contract for `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md` files. Use when creating or updating any stdlib README, or when auditing an existing one for consistency.
 ---
 
 # stdlib README Format
 
-This skill defines the exact structure and rules for every `lib/stdlibs/ballerina/<name>/0.0.1/go1.2/README.md`. It can be invoked standalone to audit or fix an existing README, or embedded in another workflow (e.g. `add-stdlib-support`, `fill-stdlib-gap`) when writing a new one.
+This skill defines the exact structure and rules for every `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md`. It can be invoked standalone to audit or fix an existing README, or embedded in another workflow (e.g. `add-stdlib-support`, `fill-stdlib-gap`) when writing a new one.
 
 ## Template
 
@@ -112,9 +112,9 @@ The script cannot check these; confirm each is YES:
 
 These existing READMEs already conform — useful for cross-reference when in doubt:
 
-- `lib/stdlibs/ballerina/io/0.0.1/go1.2/README.md` — multi-section coverage (print, file I/O, channels), one **Notable Behavioural Change** (`fileWriteJson` key ordering).
-- `lib/stdlibs/ballerina/time/0.0.1/go1.2/README.md` — parity-heavy library with multiple documented divergences.
-- `lib/stdlibs/ballerina/url/0.0.1/go1.2/README.md` — minimal stdlib README (good template for small surface).
+- `lib/stdlibs/ballerina/io/0.0.1/go1.26/README.md` — multi-section coverage (print, file I/O, channels), one **Notable Behavioural Change** (`fileWriteJson` key ordering).
+- `lib/stdlibs/ballerina/time/0.0.1/go1.26/README.md` — parity-heavy library with multiple documented divergences.
+- `lib/stdlibs/ballerina/url/0.0.1/go1.26/README.md` — minimal stdlib README (good template for small surface).
 
 ## Top-level summary aggregator
 
@@ -124,7 +124,7 @@ Maintenance rules — after every per-package README change:
 
 - Recount `Supported`, `Partially Supported`, and `Not Yet Supported` rows from the updated per-package `README.md`, and update that package's row in the aggregator table.
 - Recompute support %: `round(Supported / Total * 100)` where `Total = Supported + Partially Supported + Not Yet Supported + Cannot Support`. **Note the asymmetry:** the aggregator table has no `Cannot Support` column, but `Cannot Support` rows still count in the % denominator — that's why a package with zero visible gaps can show less than 100% (e.g. file at 95%). Don't "fix" such a percentage without recounting the per-package table.
-- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](<name>/0.0.1/go1.2/README.md) | S | P | N | X% |`.
+- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](<name>/0.0.1/go1.26/README.md) | S | P | N | X% |`.
 - Recompute the **Total** footer row (sum of each column; the % cell is `round(TotalSupported / TotalTotal * 100)`, where `TotalTotal` again includes the invisible `Cannot Support` rows).
 - Mirror the package's **Notable Behavioural Changes** bullets verbatim into the matching `### <package>` subsection of the aggregator — copy the exact bullet text, don't paraphrase; the checker compares them word for word. Add a `### <package>` subsection when a package gains its first behavioural change; remove it (and add the package to the closing "no notable behavioural changes" sentence) when it has none.
 

@@ -2,7 +2,7 @@
 
 This directory contains the Go-native implementations of the `ballerina/*` standard library
 packages baked into the interpreter binary. Each package is compiled into embedded `.sym`/`.bir`
-artefacts and laid out as `<name>/0.0.1/go1.2/`. See each package's own README (linked below)
+artefacts and laid out as `<name>/0.0.1/go1.26/`. See each package's own README (linked below)
 for the full feature-by-feature support table and behavioural notes.
 
 ## Packages
@@ -12,20 +12,20 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 
 | Package | Supported | Partially Supported | Not Yet Supported | Support % |
 |---|---|---|---|---|
-| [crypto](crypto/0.0.1/go1.2/README.md) | 26 | 1 | 5 | 81% |
+| [crypto](crypto/0.0.1/go1.26/README.md) | 26 | 1 | 5 | 81% |
 | [file](file/0.0.1/go1.2/README.md) | 21 | 0 | 0 | 100% |
-| [http](http/0.0.1/go1.2/README.md) | 25 | 6 | 45 | 33% |
-| [io](io/0.0.1/go1.2/README.md) | 14 | 1 | 12 | 52% |
+| [http](http/0.0.1/go1.26/README.md) | 25 | 6 | 45 | 33% |
+| [io](io/0.0.1/go1.26/README.md) | 14 | 1 | 12 | 52% |
 | [ldap](ldap/0.0.1/go1.2/README.md) | 15 | 2 | 0 | 83% |
-| [log](log/0.0.1/go1.2/README.md) | 7 | 2 | 15 | 29% |
-| [math.vector](math.vector/0.0.1/go1.2/README.md) | 5 | 0 | 0 | 100% |
+| [log](log/0.0.1/go1.26/README.md) | 7 | 2 | 15 | 29% |
+| [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
 | [mime](mime/0.0.1/go1.2/README.md) | 13 | 2 | 1 | 81% |
-| [os](os/0.0.1/go1.2/README.md) | 11 | 1 | 0 | 92% |
-| [random](random/0.0.1/go1.2/README.md) | 3 | 1 | 1 | 60% |
+| [os](os/0.0.1/go1.26/README.md) | 11 | 1 | 0 | 92% |
+| [random](random/0.0.1/go1.26/README.md) | 3 | 1 | 1 | 60% |
 | [tcp](tcp/0.0.1/go1.2/README.md) | 18 | 1 | 1 | 82% |
-| [time](time/0.0.1/go1.2/README.md) | 31 | 1 | 0 | 97% |
+| [time](time/0.0.1/go1.26/README.md) | 31 | 1 | 0 | 97% |
 | [udp](udp/0.0.1/go1.2/README.md) | 15 | 2 | 2 | 79% |
-| [url](url/0.0.1/go1.2/README.md) | 3 | 0 | 1 | 75% |
+| [url](url/0.0.1/go1.26/README.md) | 3 | 0 | 1 | 75% |
 | [uuid](uuid/0.0.1/go1.2/README.md) | 19 | 1 | 0 | 95% |
 | **Total** | **226** | **21** | **83** | **68%** |
 

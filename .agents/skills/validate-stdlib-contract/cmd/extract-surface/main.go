@@ -19,7 +19,7 @@
 // tree as a sorted, stable text listing of caller-observable signatures.
 // It is a helper for the validate-stdlib-contract skill: run it on a
 // jBallerina package's ballerina/ directory and on the matching
-// lib/stdlibs/ballerina/<name>/0.0.1/go1.2/ directory, then diff the dumps.
+// lib/stdlibs/ballerina/<name>/0.0.1/go1.26/ directory, then diff the dumps.
 //
 // Usage: go run ./.agents/skills/validate-stdlib-contract/cmd/extract-surface <dir>
 package main

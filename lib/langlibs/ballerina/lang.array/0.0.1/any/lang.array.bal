@@ -36,3 +36,15 @@ public isolated function toBase16(byte[] arr) returns string = external;
 # + arr - the array to be encoded
 # + return - the base64-encoded string
 public isolated function toBase64(byte[] arr) returns string = external;
+
+# Returns a byte array decoded from a base64 string.
+#
+# + str - the base64 encoded string
+# + return - the decoded byte array or an error
+public isolated function fromBase64(string str) returns byte[]|error = external;
+
+# Returns a byte array decoded from a base16 (hex) string.
+#
+# + str - the hexadecimal encoded string
+# + return - the decoded byte array or an error
+public isolated function fromBase16(string str) returns byte[]|error = external;

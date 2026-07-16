@@ -23,6 +23,7 @@ import (
 
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/values"
 )
 
@@ -31,19 +32,69 @@ const (
 	moduleName = "lang.array"
 )
 
+func arrayLength(args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	return int64(list.Len()), nil
+}
+
+func arrayToBase64(args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	data := list.ToByteSlice()
+	return base64.StdEncoding.EncodeToString(data), nil
+}
+
+func arrayToBase16(args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	data := list.ToByteSlice()
+	return hex.EncodeToString(data), nil
+}
+
+func arrayFromBase64(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	data, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return values.NewErrorWithMessage("failed to decode base64 string"), nil
+	}
+	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, data), nil
+}
+
+func arrayFromBase16(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	data, err := hex.DecodeString(s)
+	if err != nil {
+		return values.NewErrorWithMessage("failed to decode base16 string"), nil
+	}
+	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, data), nil
+}
+
+func arrayPush(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	list.Append(ctx.TypeCtx, args[1:]...)
+	return nil, nil
+}
+
 func initArrayModule(rt *runtime.Runtime) {
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "push", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		if list, ok := args[0].(*values.List); ok {
-			list.Append(ctx.TypeCtx, args[1:]...)
-			return nil, nil
-		}
-		return nil, fmt.Errorf("first argument must be an array")
-	})
+	env := rt.GetTypeEnv()
+	ld := semtypes.NewListDefinition()
+	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE)
+
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		if list, ok := args[0].(*values.List); ok {
-			return int64(list.Len()), nil
-		}
-		return nil, fmt.Errorf("first argument must be an array")
+		return arrayLength(args)
+	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase64", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return arrayToBase64(args)
+	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase16", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return arrayToBase16(args)
+	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBase64", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return arrayFromBase64(byteArrTy, ctx, args)
+	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBase16", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return arrayFromBase16(byteArrTy, ctx, args)
+	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "push", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return arrayPush(ctx, args)
 	})
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "indexOf", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		list, ok := args[0].(*values.List)
@@ -83,28 +134,6 @@ func initArrayModule(rt *runtime.Runtime) {
 		list.Clear()
 		return nil, nil
 	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase16", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		list, ok := args[0].(*values.List)
-		if !ok {
-			return nil, fmt.Errorf("first argument must be a byte array")
-		}
-		return hex.EncodeToString(listToBytes(list)), nil
-	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase64", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		list, ok := args[0].(*values.List)
-		if !ok {
-			return nil, fmt.Errorf("first argument must be a byte array")
-		}
-		return base64.StdEncoding.EncodeToString(listToBytes(list)), nil
-	})
-}
-
-func listToBytes(list *values.List) []byte {
-	b := make([]byte, list.Len())
-	for i := range list.Len() {
-		b[i] = byte(list.Get(i).(int64))
-	}
-	return b
 }
 
 func init() {

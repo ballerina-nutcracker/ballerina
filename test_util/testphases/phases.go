@@ -71,9 +71,10 @@ type PipelineResult struct {
 
 // stdlibEntry describes one embedded standard-library package to pre-compile.
 type stdlibEntry struct {
-	org     string
-	name    string
-	version string
+	org      string
+	name     string
+	version  string
+	platform string
 }
 
 // builtinStdlibs is the ordered list of standard-library packages baked into the
@@ -81,21 +82,21 @@ type stdlibEntry struct {
 // Order matters: a package must appear after all packages it imports
 // (e.g. io before os, time before crypto).
 var builtinStdlibs = []stdlibEntry{
-	{"ballerina", "io", "0.0.1"},
-	{"ballerina", "log", "0.0.1"},
-	{"ballerina", "math.vector", "0.0.1"},
-	{"ballerina", "os", "0.0.1"},
-	{"ballerina", "random", "0.0.1"},
-	{"ballerina", "time", "0.0.1"},
-	{"ballerina", "url", "0.0.1"},
-	{"ballerina", "crypto", "0.0.1"},
-	{"ballerina", "uuid", "0.0.1"},
-	{"ballerina", "mime", "0.0.1"},
-	{"ballerina", "http", "0.0.1"},
-	{"ballerina", "file", "0.0.1"},
-	{"ballerina", "ldap", "0.0.1"},
-	{"ballerina", "tcp", "0.0.1"},
-	{"ballerina", "udp", "0.0.1"},
+	{"ballerina", "io", "0.0.1", "go1.26"},
+	{"ballerina", "log", "0.0.1", "go1.26"},
+	{"ballerina", "math.vector", "0.0.1", "go1.26"},
+	{"ballerina", "os", "0.0.1", "go1.26"},
+	{"ballerina", "random", "0.0.1", "go1.26"},
+	{"ballerina", "time", "0.0.1", "go1.26"},
+	{"ballerina", "url", "0.0.1", "go1.26"},
+	{"ballerina", "crypto", "0.0.1", "go1.26"},
+	{"ballerina", "uuid", "0.0.1", "go1.2"},
+	{"ballerina", "mime", "0.0.1", "go1.2"},
+	{"ballerina", "http", "0.0.1", "go1.26"},
+	{"ballerina", "file", "0.0.1", "go1.2"},
+	{"ballerina", "ldap", "0.0.1", "go1.2"},
+	{"ballerina", "tcp", "0.0.1", "go1.2"},
+	{"ballerina", "udp", "0.0.1", "go1.2"},
 }
 
 // loadBuiltinPublicSymbols compiles the embedded standard-library packages into
@@ -106,7 +107,7 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 
 	for _, entry := range builtinStdlibs {
-		balPath := fmt.Sprintf("ballerina/%s/%s/go1.2/%s.bal", entry.name, entry.version, entry.name)
+		balPath := fmt.Sprintf("ballerina/%s/%s/%s/%s.bal", entry.name, entry.version, entry.platform, entry.name)
 		contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
 		if err != nil {
 			continue
