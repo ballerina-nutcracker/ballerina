@@ -355,3 +355,10 @@ $default$10() -> int{
     return;
   }
 }
+$default$11() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}

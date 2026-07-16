@@ -323,4 +323,8 @@
   (function $default$10 () ()
     (block-function-body
       (return
-        (literal 20)))))
+        (literal 20))))
+  (function $default$11 () ()
+    (block-function-body
+      (return
+        (literal 5)))))

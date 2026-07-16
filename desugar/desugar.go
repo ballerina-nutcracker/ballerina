@@ -1401,40 +1401,55 @@ func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.B
 	return defaultClosure
 }
 
-func desugarInvokableParamDefaults(ctx desugarContext, symbol model.SymbolRef, params []ast.BLangSimpleVariable, scope model.Scope) []*ast.BLangFunction {
+func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, symbol model.SymbolRef,
+	scope model.Scope,
+) []*ast.BLangFunction {
+	params := fn.Parameters()
 	sig, ok := ctx.functionSignature(symbol)
 	if !ok {
 		ctx.internalError("function signature not found")
 		return nil
 	}
-	return createDefaultClosures(ctx, sig,
+	// Desugar closures for this function
+	functions := createDefaultClosures(ctx, sig,
 		func(i int) semtypes.SemType {
 			return ctx.symbolType(params[i].Symbol())
 		},
 		func(i int) ast.BLangExpression {
-			if params[i].Expr == nil {
-				return nil
-			}
-			return params[i].Expr.(ast.BLangExpression)
+			return params[i].DefaultExpr()
 		},
 		func(i int) model.SymbolRef {
 			return params[i].Symbol()
 		},
 		scope,
 	)
-}
-
-func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*ast.BLangFunction {
-	results := desugarInvokableParamDefaults(ctx, fn.Symbol(), fn.RequiredParams, fn.Scope())
-	for i := range fn.RequiredParams {
-		param := &fn.RequiredParams[i]
-		result := desugarTypeDesc(ctx, param.TypeNode(), fn.Scope())
-		results = append(results, result.functions...)
+	appendTypeDefaults := func(typeDesc ast.BType) {
+		if typeDesc == nil {
+			return
+		}
+		result := desugarTypeDesc(ctx, typeDesc, scope)
+		functions = append(functions, result.functions...)
 		for _, field := range result.recordFields {
-			results = append(results, field.fn)
+			functions = append(functions, field.fn)
 		}
 	}
-	return results
+	// Desugar closures for types used in the function signature
+	for _, param := range params {
+		appendTypeDefaults(param.Type())
+	}
+	if restParam := fn.RestParameter(); restParam != nil {
+		appendTypeDefaults(restParam.Type())
+	}
+	if returnType := fn.ReturnType(); returnType != nil {
+		if returnTypeNode, ok := returnType.(*ast.BLangReturnTypeDescriptor); ok {
+			if returnTypeNode != nil {
+				appendTypeDefaults(returnTypeNode.TypeDescriptor)
+			}
+		} else if typeDesc, ok := returnType.(ast.BType); ok {
+			appendTypeDefaults(typeDesc)
+		}
+	}
+	return functions
 }
 
 func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
@@ -1476,7 +1491,8 @@ func desugarGlobalVars(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 func desugarTopLevelFunctionDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	fnCount := len(pkg.Functions)
 	for i := range fnCount {
-		for _, fn := range desugarFunctionParamDefaults(pkgCtx, &pkg.Functions[i]) {
+		function := &pkg.Functions[i]
+		for _, fn := range desugarFunctionParamDefaults(pkgCtx, function, function.Symbol(), function.Scope()) {
 			pkg.Functions = append(pkg.Functions, *fn)
 		}
 	}
@@ -1485,17 +1501,17 @@ func desugarTopLevelFunctionDefaults(pkgCtx *packageContext, pkg *ast.BLangPacka
 func desugarClassMethodDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	desugarObjectMethodDefaults := func(initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		if initFn != nil {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, initFn) {
+			for _, fn := range desugarFunctionParamDefaults(pkgCtx, initFn, initFn.Symbol(), initFn.Scope()) {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
 		}
 		for _, method := range methods {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method) {
+			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope()) {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
 		}
 		for _, method := range resourceMethods {
-			for _, fn := range desugarInvokableParamDefaults(pkgCtx, method.Symbol(), method.RequiredParams, method.Scope()) {
+			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope()) {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
 		}
