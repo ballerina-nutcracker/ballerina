@@ -74,7 +74,7 @@ main() -> nil{
     %45 = println(%44) -> bb14;
   }
   bb14 {
-    %46 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{}
+    %46 = newMap {| any... |}{}
     m = %46;
     %48 = ConstantLoad 42
     m[s1] = %48;

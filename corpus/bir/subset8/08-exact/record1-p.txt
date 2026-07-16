@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad x
     %2 = ConstantLoad <nil>
-    %3 = newMap {| x: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |}{%1=%2}
+    %3 = newMap {| x: any, never... |}{%1=%2}
     r = %3;
     %5 = ConstantLoad 0
     %6 = newArray [int...][%5]{}

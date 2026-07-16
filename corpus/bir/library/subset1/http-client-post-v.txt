@@ -100,7 +100,7 @@ main() -> nil|error{
     %44 = ConstantLoad test
     %45 = ConstantLoad count
     %46 = ConstantLoad 1
-    %47 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%43=%44, %45=%46}
+    %47 = newMap {| json... |}{%43=%44, %45=%46}
     $desugar$10 = %47;
     %49 = $default$26($desugar$9,$desugar$10) -> bb18;
   }
