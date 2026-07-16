@@ -58,7 +58,7 @@ main() -> nil|error{
     %32 = ConstantLoad 6
     %33 = ConstantLoad day
     %34 = ConstantLoad 15
-    %35 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%29=%30, %31=%32, %33=%34}
+    %35 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, anydata... |}{%29=%30, %31=%32, %33=%34}
     %36 = dateValidate(%35) -> bb10;
   }
   bb10 {
@@ -74,7 +74,7 @@ main() -> nil|error{
     %44 = ConstantLoad 13
     %45 = ConstantLoad day
     %46 = ConstantLoad 1
-    %47 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%41=%42, %43=%44, %45=%46}
+    %47 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, anydata... |}{%41=%42, %43=%44, %45=%46}
     %48 = dateValidate(%47) -> bb12;
   }
   bb12 {
@@ -90,7 +90,7 @@ main() -> nil|error{
     %56 = ConstantLoad 6
     %57 = ConstantLoad day
     %58 = ConstantLoad 15
-    %59 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%53=%54, %55=%56, %57=%58}
+    %59 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, anydata... |}{%53=%54, %55=%56, %57=%58}
     %60 = dayOfWeek(%59) -> bb14;
   }
   bb14 {
