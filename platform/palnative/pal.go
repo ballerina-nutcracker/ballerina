@@ -279,7 +279,7 @@ func IsReadable(path string, _ os.FileInfo) bool {
 	if err != nil {
 		return false
 	}
-	f.Close()
+	_ = f.Close()
 	return true
 }
 
@@ -291,7 +291,7 @@ func IsWritable(path string, fi os.FileInfo) bool {
 	if err != nil {
 		return false
 	}
-	f.Close()
+	_ = f.Close()
 	return true
 }
 
@@ -304,7 +304,7 @@ func CreateTemp(prefix, suffix, dir string) (string, error) {
 		return "", err
 	}
 	name := f.Name()
-	f.Close()
+	_ = f.Close()
 	abs, _ := filepath.Abs(name)
 	return abs, nil
 }
@@ -385,12 +385,12 @@ func copyFile(src, dst string, opts pal.CopyOptions) error {
 	if err != nil {
 		return err
 	}
-	defer srcF.Close()
+	defer func() { _ = srcF.Close() }()
 	dstF, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer dstF.Close()
+	defer func() { _ = dstF.Close() }()
 	if _, err := io.Copy(dstF, srcF); err != nil {
 		return err
 	}

@@ -83,7 +83,7 @@ func (s *fakeLdapServer) acceptLoop() {
 }
 
 func (s *fakeLdapServer) handleConn(conn net.Conn) {
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	for {
 		msg, err := ber.ReadPacket(conn)
 		if err != nil {

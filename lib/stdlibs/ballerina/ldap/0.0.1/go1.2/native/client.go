@@ -117,7 +117,7 @@ func dialAndBind(rt *runtime.Runtime, hostName string, port int64, domainName, p
 	conn.Start()
 
 	if _, err := conn.SimpleBind(goldap.NewSimpleBindRequest(domainName, password, nil)); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, ldapErrorFromErr(err)
 	}
 	return conn, nil
@@ -155,7 +155,7 @@ func registerClientFunctions(rt *runtime.Runtime) {
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			if conn := connOf(self); conn != nil {
-				conn.Close()
+				_ = conn.Close()
 			}
 			return nil, nil
 		})

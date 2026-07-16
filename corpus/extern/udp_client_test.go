@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"ballerina-lang-go/platform/pal"
@@ -54,7 +55,7 @@ func skipIfNoIPv6Loopback(t *testing.T) {
 	if err != nil {
 		t.Skip("skipping IPv6-loopback-dependent test: ::1 unavailable")
 	}
-	pc.Close()
+	_ = pc.Close()
 }
 
 // goUDPEchoServer starts a bare Go UDP echo server on 127.0.0.1 (not a
@@ -66,7 +67,7 @@ func goUDPEchoServer(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	t.Cleanup(func() { pc.Close() })
+	t.Cleanup(func() { _ = pc.Close() })
 	go func() {
 		buf := make([]byte, 65507)
 		for {
@@ -83,8 +84,10 @@ func goUDPEchoServer(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("splitting listener addr: %v", err)
 	}
-	var port int
-	fmt.Sscanf(portStr, "%d", &port)
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		t.Fatalf("parsing listener port: %v", err)
+	}
 	return port
 }
 

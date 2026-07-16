@@ -1895,11 +1895,13 @@ func encodeMultipartBody(parts []*values.Object, contentType string) (data []byt
 func getMultipartBodyParts(ctx *extern.Context, raw []byte, contentType, kind string) (*values.List, error) {
 	baseType, boundary, isComposite := mimenative.MultipartBoundary(contentType)
 	if !isComposite {
+		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
 		return nil, fmt.Errorf("Error occurred while retrieving body parts from the %s: "+
 			"Entity body is not a type of composite media type. Received content-type : %s", kind, baseType)
 	}
 	parts, err := mimenative.DecodeMultipart(ctx, raw, boundary)
 	if err != nil {
+		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
 		return nil, fmt.Errorf("Error occurred while retrieving body parts from the %s: "+
 			"Error occurred while extracting body parts from entity: %s", kind, err.Error())
 	}

@@ -222,7 +222,7 @@ func TestHttpClientMultipartLocal(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(200)
-		fmt.Fprintf(w, "count=%d %s", count, strings.TrimSpace(sb.String()))
+		_, _ = fmt.Fprintf(w, "count=%d %s", count, strings.TrimSpace(sb.String()))
 	}))
 	defer server.Close()
 	runExtern(t, fileCase("http-client-multipart-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)

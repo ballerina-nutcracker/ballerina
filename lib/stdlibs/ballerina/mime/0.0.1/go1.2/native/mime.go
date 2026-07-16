@@ -87,6 +87,7 @@ func mimeError(typeName, msg string) values.BalValue {
 // Exported so sibling stdlibs (e.g. http, serializing multipart parts) can reuse it.
 func BytesForBody(body *EntityBody) ([]byte, error) {
 	if body == nil {
+		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
 		return nil, fmt.Errorf("Entity body is not a byte[] value")
 	}
 	switch body.Kind {
@@ -97,6 +98,7 @@ func BytesForBody(body *EntityBody) ([]byte, error) {
 	case BodyJSON:
 		return values.ToJSONByteArray(body.JSON)
 	default:
+		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
 		return nil, fmt.Errorf("Entity body is not a byte[] value")
 	}
 }
@@ -105,6 +107,7 @@ func BytesForBody(body *EntityBody) ([]byte, error) {
 // which setter populated it, mirroring BytesForBody for the text accessor.
 func stringForBody(body *EntityBody) (string, error) {
 	if body == nil {
+		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
 		return "", fmt.Errorf("Entity body is not a text value")
 	}
 	switch body.Kind {
@@ -119,6 +122,7 @@ func stringForBody(body *EntityBody) (string, error) {
 		}
 		return string(b), nil
 	default:
+		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
 		return "", fmt.Errorf("Entity body is not a text value")
 	}
 }
