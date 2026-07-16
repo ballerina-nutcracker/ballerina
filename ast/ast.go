@@ -124,7 +124,6 @@ type (
 		OrgName      *BLangIdentifier
 		PkgNameComps []BLangIdentifier
 		Alias        *BLangIdentifier
-		CompUnit     *BLangIdentifier
 		Version      *BLangIdentifier
 	}
 

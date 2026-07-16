@@ -118,9 +118,6 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Alias != nil {
 			Walk(v, node.Alias)
 		}
-		if node.CompUnit != nil {
-			Walk(v, node.CompUnit)
-		}
 		if node.Version != nil {
 			Walk(v, node.Version)
 		}

@@ -1426,7 +1426,6 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 	compilationUnit.Name = n.CurrentCompUnitName
 	compilationUnit.packageID = n.PackageID
 	pos := n.getPosition(modulePartNode)
-	compUnit := createIdentifier(pos, &n.CurrentCompUnitName, &n.CurrentCompUnitName)
 
 	if modulePartNode.HasDiagnostics() {
 		n.syntaxError(modulePartNode)
@@ -1442,7 +1441,7 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 			}
 			continue
 		}
-		node, err := n.transformImportTopLevel(importDecl, &compUnit)
+		node, err := n.transformImportTopLevel(importDecl)
 		if err != nil {
 			if n.recovering() {
 				node = n.badTopLevel(importDecl)
@@ -1623,13 +1622,12 @@ func (n *NodeBuilder) populateFunctionNode(name IdentifierNode, qualifierList tr
 	}
 }
 
-func (n *NodeBuilder) transformImportTopLevel(importDecl *tree.ImportDeclarationNode, compUnit *BLangIdentifier) (TopLevelNode, error) {
+func (n *NodeBuilder) transformImportTopLevel(importDecl *tree.ImportDeclarationNode) (TopLevelNode, error) {
 	transformedNode := n.TransformImportDeclaration(importDecl)
 	bLangImport, ok := transformedNode.(*BLangImportPackage)
 	if !ok {
 		return nil, fmt.Errorf("syntax node %T transformed to non-import node %T", importDecl, transformedNode)
 	}
-	bLangImport.CompUnit = compUnit
 	return bLangImport, nil
 }
 
