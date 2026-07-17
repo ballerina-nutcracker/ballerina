@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...], got any
+error[SEMANTIC_ERROR]: incompatible type: expected [any...], got any
   --> 15-e.bal:19:12
    |
 19 |     return x; // @error

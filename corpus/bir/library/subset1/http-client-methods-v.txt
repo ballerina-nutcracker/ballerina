@@ -72,7 +72,7 @@ main() -> nil|error{
     $desugar$8 = %28;
     %30 = ConstantLoad key
     %31 = ConstantLoad val
-    %32 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%30=%31}
+    %32 = newMap {| json... |}{%30=%31}
     $desugar$9 = %32;
     %34 = $default$22($desugar$8,$desugar$9) -> bb14;
   }
