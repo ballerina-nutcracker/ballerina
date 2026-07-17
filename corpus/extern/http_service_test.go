@@ -103,6 +103,15 @@ func TestHttpServiceRequestAccessors(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-request-accessors-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceRequestMutators exercises every Request mutator method
+// (setHeader/addHeader/removeHeader/removeAllHeaders/setContentType/
+// setTextPayload/setJsonPayload/setBinaryPayload) on the inbound Request
+// injected into a service resource.
+func TestHttpServiceRequestMutators(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-request-mutators-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceHTTP10Fallback verifies that a listener configured with
 // HTTP_1_0 (accepted by the enum but unsupported by the Go HTTP runtime)
 // falls back to HTTP/1.1 with a warning instead of forwarding "1.0" to the
