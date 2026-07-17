@@ -243,6 +243,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	// Skipped when already running as a native interpreter (BAL_NATIVE=1).
 	if !nativeexec.InNativeMode() {
 		if err := execWithNativeRunner(pkg, project, absBaseDir); err != nil {
+			printRunError(err)
 			return err
 		}
 	}

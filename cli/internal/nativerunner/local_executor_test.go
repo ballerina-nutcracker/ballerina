@@ -18,6 +18,7 @@ package nativerunner
 
 import (
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -460,4 +461,49 @@ func mustReadFile(t *testing.T, path string) string {
 		t.Fatalf("reading %s: %v", path, err)
 	}
 	return string(data)
+}
+
+// TestBuild_CompileErrorInNativeSource covers a native Go dependency whose
+// source fails to compile. Unlike this file's other tests, it uses the real
+// repo as interpreterRoot (not newFakeInterpreterRoot) — a fake minimal
+// go.mod can't compile cli/cmd/balrt at all, so exercising a genuine build
+// failure needs a genuine buildable module. The failure must surface as a
+// clear "building native interpreter" error, not a panic or a hang,
+// regardless of whether it's triggered via bal run or bal build (both
+// funnel through this same Build method).
+func TestBuild_CompileErrorInNativeSource(t *testing.T) {
+	t.Parallel()
+	repoRoot, err := filepath.Abs("../../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	payloads := []nativeexec.NativePayload{
+		&nativeexec.GoSourcePayload{
+			GoFiles: fstest.MapFS{
+				"broken.go": {Data: []byte("package brokennative\n\nfunc broken( {\n")}, // syntax error
+			},
+			Module: "example.com/broken-native",
+		},
+	}
+
+	outBin := filepath.Join(t.TempDir(), "balrt-native")
+	executor := NewForTarget(repoRoot, outBin, "cli/cmd/balrt")
+	if !executor.Available() {
+		t.Skip("Go toolchain or interpreter source unavailable in this environment")
+	}
+
+	_, buildErr := executor.Build(context.Background(), nativeexec.NativeRunnerRequest{
+		Payloads: payloads,
+		Stderr:   io.Discard,
+	})
+	if buildErr == nil {
+		t.Fatal("expected an error building a native package with invalid Go source, got none")
+	}
+	if !strings.Contains(buildErr.Error(), "building native interpreter") {
+		t.Errorf("expected the error to mention 'building native interpreter', got: %v", buildErr)
+	}
+	if _, statErr := os.Stat(outBin); statErr == nil {
+		t.Errorf("expected no output binary for a failed native build, found one at %s", outBin)
+	}
 }
