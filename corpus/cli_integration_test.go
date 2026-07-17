@@ -18,6 +18,9 @@ package corpus
 
 import (
 	"bytes"
+	"debug/elf"
+	"debug/macho"
+	"debug/pe"
 	"errors"
 	"fmt"
 	"io"
@@ -637,6 +640,485 @@ func TestBalBuildCustomOutputPath(t *testing.T) {
 	if _, err := os.Stat(outPath); err != nil {
 		t.Fatalf("expected built binary at custom output path %s: %v", outPath, err)
 	}
+}
+
+// TestBalBuildNativeDependency exercises `bal build` end-to-end on a package
+// with a native Go dependency: it must build a native-woven standalone stub
+// (targeting cli/cmd/balrt, not the full CLI) instead of looking up the
+// predefined installed stub, and the produced binary must be genuinely
+// standalone — runnable with no bal/Go toolchain involved. Mirrors
+// TestNativeRunner_ColdBuildAndCacheHit's cold/cache-hit pattern for bal run
+// (native_runner_test.go) and this file's own stub-size/run-and-compare
+// pattern for bal build (TestBalBuildCorpus); reuses the same
+// native-multi-org-v fixture + golden output as TestNativeMultiOrgPackages
+// (native_runner_test.go).
+func TestBalBuildNativeDependency(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM")
+	}
+
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+
+	// Build a temp Ballerina home whose central cache contains the testdata
+	// native packages so bal build can resolve them.
+	tempHome := t.TempDir()
+	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
+	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
+	copyDir(t, srcRepo, centralCache)
+
+	// Copy the project to a temp dir so the output binary and native-build
+	// cache go to a fresh location each run.
+	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
+	projectDir := t.TempDir()
+	copyDir(t, srcProject, projectDir)
+
+	extraEnv := []string{"BAL_ENV=" + tempHome, "BALLERINA_SRC=" + repoRoot}
+	runBuild := func() (stdout, stderr string, code int) {
+		return runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv, "build", projectDir)
+	}
+
+	// First build: cold — must build a native-woven stub.
+	stdout1, stderr1, code1 := runBuild()
+	if code1 != 0 {
+		t.Fatalf("first bal build failed (exit %d)\nstdout: %s\nstderr: %s", code1, stdout1, stderr1)
+	}
+	if !strings.Contains(stderr1, "info: building native interpreter") {
+		t.Errorf("first build: expected 'info: building native interpreter' in stderr\nstderr: %s", stderr1)
+	}
+
+	binPath := filepath.Join(projectDir, "target", "bin", "nativemultiorg")
+	wantMessage := "Created " + binPath
+	if !strings.Contains(stdout1, wantMessage) {
+		t.Fatalf("expected bal build stdout to report %q, got:\n%s", wantMessage, stdout1)
+	}
+
+	builtInfo, err := os.Stat(binPath)
+	if err != nil {
+		t.Fatalf("expected built binary at %s: %v", binPath, err)
+	}
+	balInfo, err := os.Stat(balBin)
+	if err != nil {
+		t.Fatalf("failed to stat bal binary %s: %v", balBin, err)
+	}
+	if builtInfo.Size() >= balInfo.Size()/2 {
+		t.Fatalf("built binary %s (%d bytes) is not meaningfully smaller than bal (%d bytes); expected the slim cli/cmd/balrt-targeted stub, not the full CLI",
+			binPath, builtInfo.Size(), balInfo.Size())
+	}
+
+	// Second build: must hit the fingerprint cache and skip rebuilding.
+	stdout2, stderr2, code2 := runBuild()
+	if code2 != 0 {
+		t.Fatalf("second bal build failed (exit %d)\nstdout: %s\nstderr: %s", code2, stdout2, stderr2)
+	}
+	if strings.Contains(stderr2, "info: building native interpreter") {
+		t.Errorf("second build: unexpected native interpreter rebuild (cache miss)\nstderr: %s", stderr2)
+	}
+
+	// The produced binary must be genuinely standalone — run it directly,
+	// with no bal/Go toolchain involved, and compare against the same golden
+	// output TestNativeMultiOrgPackages already verifies for this fixture.
+	runOut, runErr, runExit := runCLICommand(t, binPath, repoRoot, coverDir)
+	runOut = test_util.NormalizeNewlines(runOut)
+	runErr = test_util.NormalizeNewlines(runErr)
+
+	expectedOut, expectedErr, err := test_util.LoadTxtarStdoutStderr(filepath.Join(repoRoot, "corpus", "extern", "output", "native-multi-org-v.txtar"))
+	if err != nil {
+		t.Fatalf("failed to parse golden txtar: %v", err)
+	}
+	expectedOut = test_util.NormalizeNewlines(expectedOut)
+	expectedErr = test_util.NormalizeNewlines(expectedErr)
+	if runOut != expectedOut {
+		t.Fatalf("unexpected stdout from built binary %s\n%s", binPath, test_util.FormatExpectedGot(expectedOut, runOut))
+	}
+	if runErr != expectedErr {
+		t.Fatalf("unexpected stderr from built binary %s\n%s", binPath, test_util.FormatExpectedGot(expectedErr, runErr))
+	}
+	if runExit != 0 {
+		t.Fatalf("expected exit code 0 from built binary, got %d", runExit)
+	}
+}
+
+// TestBalBuildNativeDependencyCrossCompile exercises `bal build
+// --target-os/--target-arch` on a package with a native Go dependency:
+// cross-compilation must actually cross-compile (LocalExecutor sets
+// GOOS/GOARCH on the go build subprocess) rather than silently producing a
+// host binary mislabeled as the requested target. The target is chosen to
+// never equal the host's own platform, so a regression back to the old
+// host-only behavior would be caught by a format mismatch, not just a
+// missing file.
+func TestBalBuildNativeDependencyCrossCompile(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM")
+	}
+
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+
+	tempHome := t.TempDir()
+	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
+	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
+	copyDir(t, srcRepo, centralCache)
+
+	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
+	projectDir := t.TempDir()
+	copyDir(t, srcProject, projectDir)
+
+	targetOS, targetArch := "linux", "amd64"
+	if runtime.GOOS == "linux" && runtime.GOARCH == "amd64" {
+		targetOS, targetArch = "darwin", "arm64"
+	}
+
+	extraEnv := []string{"BAL_ENV=" + tempHome, "BALLERINA_SRC=" + repoRoot}
+	stdout, stderr, code := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv,
+		"build", projectDir, "--target-os", targetOS, "--target-arch", targetArch)
+	if code != 0 {
+		t.Fatalf("cross-compiled bal build failed (exit %d)\nstdout: %s\nstderr: %s", code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, "info: building native interpreter") {
+		t.Errorf("expected 'info: building native interpreter' in stderr\nstderr: %s", stderr)
+	}
+
+	binName := "nativemultiorg"
+	if targetOS == "windows" {
+		binName += ".exe"
+	}
+	binPath := filepath.Join(projectDir, "target", "bin", binName)
+	if _, err := os.Stat(binPath); err != nil {
+		t.Fatalf("expected cross-compiled binary at %s: %v", binPath, err)
+	}
+
+	gotFormat, err := binaryFormat(binPath)
+	if err != nil {
+		t.Fatalf("reading binary format of %s: %v", binPath, err)
+	}
+	wantFormat := expectedBinaryFormat(targetOS)
+	if gotFormat != wantFormat {
+		t.Fatalf("cross-compiled binary %s has format %q, want %q for target OS %q — cross-compilation likely silently produced a host binary instead",
+			binPath, gotFormat, wantFormat, targetOS)
+	}
+}
+
+// binaryFormat identifies an executable's format by its magic bytes,
+// without depending on an external "file" command being present in CI.
+func binaryFormat(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = f.Close() }()
+
+	magic := make([]byte, 4)
+	if _, err := io.ReadFull(f, magic); err != nil {
+		return "", err
+	}
+	switch {
+	case magic[0] == 0x7f && magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F':
+		return "elf", nil
+	case magic[0] == 0xcf && magic[1] == 0xfa && magic[2] == 0xed && magic[3] == 0xfe:
+		return "macho", nil
+	case magic[0] == 'M' && magic[1] == 'Z':
+		return "pe", nil
+	default:
+		return "unknown", nil
+	}
+}
+
+// expectedBinaryFormat maps a GOOS value to the executable format Go
+// produces for it.
+func expectedBinaryFormat(goos string) string {
+	switch goos {
+	case "linux":
+		return "elf"
+	case "darwin":
+		return "macho"
+	case "windows":
+		return "pe"
+	default:
+		return "unknown"
+	}
+}
+
+// TestBalBuildNativeDependencyInvalidTarget covers a bogus --target-os/
+// --target-arch combined with a native Go dependency. Unlike the
+// no-native-dep path (executable.ResolveStub, which validates against a
+// curated supportedPlatforms list before touching any toolchain), the
+// native path passes whatever's given straight to the go build subprocess's
+// GOOS/GOARCH — go build's own validation must still surface a clear error,
+// not a cryptic failure or (worse) a silently-produced host binary
+// mislabeled as the bogus target.
+func TestBalBuildNativeDependencyInvalidTarget(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM")
+	}
+
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+
+	tempHome := t.TempDir()
+	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
+	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
+	copyDir(t, srcRepo, centralCache)
+
+	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
+	projectDir := t.TempDir()
+	copyDir(t, srcProject, projectDir)
+
+	extraEnv := []string{"BAL_ENV=" + tempHome, "BALLERINA_SRC=" + repoRoot}
+	stdout, stderr, code := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv,
+		"build", projectDir, "--target-os", "bogus", "--target-arch", "amd64")
+
+	if code == 0 {
+		t.Fatalf("expected a non-zero exit code for an invalid target platform, got 0\nstdout: %s\nstderr: %s", stdout, stderr)
+	}
+	if !strings.Contains(stderr, "unsupported GOOS/GOARCH pair") {
+		t.Errorf("expected stderr to surface the Go toolchain's own validation error, got:\n%s", stderr)
+	}
+	if !strings.Contains(stderr, "building native interpreter stub") {
+		t.Errorf("expected stderr to show bal's own wrapping context, got:\n%s", stderr)
+	}
+
+	binPath := filepath.Join(projectDir, "target", "bin", "nativemultiorg")
+	if _, err := os.Stat(binPath); err == nil {
+		t.Errorf("expected no output binary to be produced for a failed build, found one at %s", binPath)
+	}
+}
+
+// twoNonHostNativeTargets returns two GOOS/GOARCH pairs, both different from
+// the host platform and from each other, so cache/cross-compile tests
+// aren't sensitive to which platform they happen to run on.
+func twoNonHostNativeTargets(t *testing.T) (osA, archA, osB, archB string) {
+	t.Helper()
+	candidates := [][2]string{
+		{"linux", "amd64"},
+		{"linux", "arm64"},
+		{"darwin", "amd64"},
+		{"darwin", "arm64"},
+		{"windows", "amd64"},
+	}
+	var picked [][2]string
+	for _, c := range candidates {
+		if c[0] == runtime.GOOS && c[1] == runtime.GOARCH {
+			continue
+		}
+		picked = append(picked, c)
+		if len(picked) == 2 {
+			break
+		}
+	}
+	if len(picked) < 2 {
+		t.Fatalf("could not find two non-host target platforms (host: %s/%s)", runtime.GOOS, runtime.GOARCH)
+	}
+	return picked[0][0], picked[0][1], picked[1][0], picked[1][1]
+}
+
+func mustReadFileBytes(t *testing.T, path string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading %s: %v", path, err)
+	}
+	return data
+}
+
+// TestBalBuildNativeDependencyCacheByTarget covers cache correctness across
+// alternating cross-compile targets: building for target A, then target B,
+// then target A again must cache-hit the third time (not needlessly
+// rebuild) and must reuse target A's own cached stub — not target B's, nor
+// a stale/incorrect one. Directly exercises buildNativeStub's
+// platform-segmented cache path (target/bin/native/<os>-<arch>/).
+func TestBalBuildNativeDependencyCacheByTarget(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM")
+	}
+
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+
+	tempHome := t.TempDir()
+	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
+	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
+	copyDir(t, srcRepo, centralCache)
+
+	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
+	projectDir := t.TempDir()
+	copyDir(t, srcProject, projectDir)
+
+	targetAOS, targetAArch, targetBOS, targetBArch := twoNonHostNativeTargets(t)
+
+	extraEnv := []string{"BAL_ENV=" + tempHome, "BALLERINA_SRC=" + repoRoot}
+	build := func(targetOS, targetArch string) (stdout, stderr string, code int) {
+		return runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv,
+			"build", projectDir, "--target-os", targetOS, "--target-arch", targetArch)
+	}
+	stubPathFor := func(targetOS, targetArch string) string {
+		name := "balrt-native"
+		if targetOS == "windows" {
+			name += ".exe"
+		}
+		return filepath.Join(projectDir, "target", "bin", "native", targetOS+"-"+targetArch, name)
+	}
+
+	// Build A (cold).
+	_, stderrA1, codeA1 := build(targetAOS, targetAArch)
+	if codeA1 != 0 {
+		t.Fatalf("build A (cold) failed: %s", stderrA1)
+	}
+	if !strings.Contains(stderrA1, "info: building native interpreter") {
+		t.Fatalf("expected a cold build for target A, got:\n%s", stderrA1)
+	}
+	stubABytes1 := mustReadFileBytes(t, stubPathFor(targetAOS, targetAArch))
+
+	// Build B (cold — a different target must not reuse A's cache).
+	_, stderrB, codeB := build(targetBOS, targetBArch)
+	if codeB != 0 {
+		t.Fatalf("build B (cold) failed: %s", stderrB)
+	}
+	if !strings.Contains(stderrB, "info: building native interpreter") {
+		t.Fatalf("expected a cold build for target B (different from A), got:\n%s", stderrB)
+	}
+
+	// Build A again: must cache-hit (no rebuild message) and reuse the exact
+	// same stub bytes as the first A build, not B's.
+	_, stderrA2, codeA2 := build(targetAOS, targetAArch)
+	if codeA2 != 0 {
+		t.Fatalf("build A (second) failed: %s", stderrA2)
+	}
+	if strings.Contains(stderrA2, "info: building native interpreter") {
+		t.Errorf("expected a cache hit rebuilding target A after building B in between, got a rebuild:\n%s", stderrA2)
+	}
+	stubABytes2 := mustReadFileBytes(t, stubPathFor(targetAOS, targetAArch))
+	if !bytes.Equal(stubABytes1, stubABytes2) {
+		t.Error("expected target A's cached stub to be byte-identical across builds; got different bytes")
+	}
+
+	// Both targets' stubs must still coexist on disk — a shared cache path
+	// would have one silently overwrite the other.
+	if _, err := os.Stat(stubPathFor(targetBOS, targetBArch)); err != nil {
+		t.Errorf("expected target B's stub to still exist at %s: %v", stubPathFor(targetBOS, targetBArch), err)
+	}
+}
+
+// TestBalBuildNativeDependencyPartialTargetOverride covers --target-arch
+// given alone (no --target-os) combined with a native dependency: the
+// unset OS dimension must default to the host's own, matching Go's own
+// GOOS/GOARCH convention. That defaulting is already unit-tested generically
+// (TestResolveTargetPlatform), but this exercises it actually threading
+// through build.go's native path into buildNativeStub's cache path and
+// LocalExecutor's cross-compile env — not just the flag-parsing layer.
+func TestBalBuildNativeDependencyPartialTargetOverride(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM")
+	}
+
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+
+	tempHome := t.TempDir()
+	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
+	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
+	copyDir(t, srcRepo, centralCache)
+
+	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
+	projectDir := t.TempDir()
+	copyDir(t, srcProject, projectDir)
+
+	overrideArch := "amd64"
+	if runtime.GOARCH == "amd64" {
+		overrideArch = "arm64"
+	}
+
+	extraEnv := []string{"BAL_ENV=" + tempHome, "BALLERINA_SRC=" + repoRoot}
+	stdout, stderr, code := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv,
+		"build", projectDir, "--target-arch", overrideArch)
+	if code != 0 {
+		t.Fatalf("bal build --target-arch %s failed (exit %d)\nstdout: %s\nstderr: %s", overrideArch, code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, "info: building native interpreter") {
+		t.Fatalf("expected a cold build, got:\n%s", stderr)
+	}
+
+	binName := "nativemultiorg"
+	if runtime.GOOS == "windows" {
+		binName += ".exe"
+	}
+	binPath := filepath.Join(projectDir, "target", "bin", binName)
+	if _, err := os.Stat(binPath); err != nil {
+		t.Fatalf("expected built binary at %s: %v", binPath, err)
+	}
+
+	// The stub cache path must reflect host OS + overridden arch, not the
+	// host's own arch — confirms the host-defaulted targetPlatform was
+	// actually threaded through to buildNativeStub's cache path, not
+	// silently ignored.
+	stubName := "balrt-native"
+	if runtime.GOOS == "windows" {
+		stubName += ".exe"
+	}
+	expectedStubPath := filepath.Join(projectDir, "target", "bin", "native", runtime.GOOS+"-"+overrideArch, stubName)
+	if _, err := os.Stat(expectedStubPath); err != nil {
+		t.Fatalf("expected native stub cached at %s (host OS %q + overridden arch %q): %v", expectedStubPath, runtime.GOOS, overrideArch, err)
+	}
+
+	gotArch, err := binaryArch(binPath)
+	if err != nil {
+		t.Fatalf("reading architecture of %s: %v", binPath, err)
+	}
+	if gotArch != overrideArch {
+		t.Fatalf("built binary %s has architecture %q, want %q — --target-arch alone was not correctly threaded through the native build path",
+			binPath, gotArch, overrideArch)
+	}
+}
+
+// binaryArch identifies an executable's target architecture by parsing its
+// format-specific header (ELF/Mach-O/PE), returning a GOARCH-style string
+// ("amd64", "arm64"). More precise than binaryFormat: it verifies the
+// architecture actually threaded through, not just the OS-level format
+// (which alone can't distinguish amd64 from arm64 on the same OS).
+func binaryArch(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = f.Close() }()
+
+	if ef, err := elf.NewFile(f); err == nil {
+		switch ef.Machine {
+		case elf.EM_X86_64:
+			return "amd64", nil
+		case elf.EM_AARCH64:
+			return "arm64", nil
+		default:
+			return "", fmt.Errorf("unrecognized ELF machine %v", ef.Machine)
+		}
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return "", err
+	}
+	if mf, err := macho.NewFile(f); err == nil {
+		switch mf.Cpu {
+		case macho.CpuAmd64:
+			return "amd64", nil
+		case macho.CpuArm64:
+			return "arm64", nil
+		default:
+			return "", fmt.Errorf("unrecognized Mach-O cpu %v", mf.Cpu)
+		}
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return "", err
+	}
+	if pf, err := pe.NewFile(f); err == nil {
+		switch pf.Machine {
+		case pe.IMAGE_FILE_MACHINE_AMD64:
+			return "amd64", nil
+		case pe.IMAGE_FILE_MACHINE_ARM64:
+			return "arm64", nil
+		default:
+			return "", fmt.Errorf("unrecognized PE machine %v", pf.Machine)
+		}
+	}
+	return "", fmt.Errorf("unrecognized binary format at %s", path)
 }
 
 func assertBalCommandMatchesTxtarFragments(t *testing.T, args []string, txtarPathParts ...string) {

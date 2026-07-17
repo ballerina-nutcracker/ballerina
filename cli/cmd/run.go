@@ -384,7 +384,7 @@ func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBa
 	if goruntime.GOOS == "windows" {
 		outBin += ".exe"
 	}
-	executor, err := chooseNativeExecutor(outBin)
+	executor, err := chooseNativeExecutor(outBin, "cli/cmd")
 	if err != nil {
 		return err
 	}
@@ -449,16 +449,19 @@ func isEmbeddedPackage(bp *projects.BalaProject) bool {
 	return stdlibs.Contains(desc.Org().Value(), desc.Name().Value(), desc.Version().String())
 }
 
-// chooseNativeExecutor returns a LocalExecutor when the Go toolchain and
-// interpreter source are available. Returns an error if Go is not installed or
-// the interpreter source cannot be located — native packages are not supported
-// without a local Go toolchain. Remote build support is reserved for WASM.
-func chooseNativeExecutor(outBin string) (nativeexec.NativeExecutor, error) {
+// chooseNativeExecutor returns a LocalExecutor targeting targetPackage
+// (relative to the interpreter root — e.g. "cli/cmd" for bal run's re-exec
+// case, "cli/cmd/balrt" for bal build's slim-stub case) when the Go
+// toolchain and interpreter source are available. Returns an error if Go is
+// not installed or the interpreter source cannot be located — native
+// packages are not supported without a local Go toolchain. Remote build
+// support is reserved for WASM.
+func chooseNativeExecutor(outBin, targetPackage string) (nativeexec.NativeExecutor, error) {
 	root, err := findInterpreterRoot()
 	if err != nil {
 		return nil, fmt.Errorf("native Go packages require the interpreter source: %w", err)
 	}
-	local := nativerunner.New(root, outBin)
+	local := nativerunner.NewForTarget(root, outBin, targetPackage)
 	if !local.Available() {
 		return nil, fmt.Errorf("native Go packages require Go %s or later to be installed", nativerunner.MinGoVersion)
 	}

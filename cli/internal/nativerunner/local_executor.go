@@ -40,6 +40,10 @@ const (
 	MinGoVersion = "1.26"
 )
 
+// defaultTargetPackage is the Go import path (relative to interpreterRoot)
+// New builds — the full bal CLI, matching bal run's re-exec use case.
+const defaultTargetPackage = "cli/cmd"
+
 // LocalExecutor builds a custom interpreter binary using the local Go toolchain.
 // It implements nativeexec.NativeExecutor.
 type LocalExecutor struct {
@@ -48,17 +52,35 @@ type LocalExecutor struct {
 	// outputBinary is the path where the compiled native binary is written.
 	// Relative paths are resolved against the interpreter root.
 	outputBinary string
+	// targetPackage is the Go import path, relative to interpreterRoot, that
+	// go build compiles — e.g. "cli/cmd" (the full CLI, for bal run's
+	// re-exec use) or "cli/cmd/balrt" (the slim runtime-only stub, for bal
+	// build). The generated blank-import file is injected into this same
+	// package directory via the build overlay, so its init()s register
+	// against whichever binary is actually being produced.
+	targetPackage string
 }
 
 var _ nativeexec.NativeExecutor = (*LocalExecutor)(nil)
 
-// New creates a LocalExecutor. interpreterRoot is the directory containing the
+// New creates a LocalExecutor targeting the full bal CLI (cli/cmd) —
+// bal run's use case, where the rebuilt binary re-executes and takes over
+// the whole process. interpreterRoot is the directory containing the
 // ballerina-lang-go go.mod; outputBinary is the destination path for the
 // compiled native interpreter (typically <project>/target/bin/bal).
 func New(interpreterRoot, outputBinary string) *LocalExecutor {
+	return NewForTarget(interpreterRoot, outputBinary, defaultTargetPackage)
+}
+
+// NewForTarget creates a LocalExecutor targeting an arbitrary Go package
+// (relative to interpreterRoot) instead of the full CLI — e.g. bal build
+// uses "cli/cmd/balrt" to produce a slim, standalone stub with native code
+// woven in, rather than rebuilding the full bal CLI.
+func NewForTarget(interpreterRoot, outputBinary, targetPackage string) *LocalExecutor {
 	return &LocalExecutor{
 		interpreterRoot: interpreterRoot,
 		outputBinary:    outputBinary,
+		targetPackage:   targetPackage,
 	}
 }
 
@@ -127,38 +149,89 @@ func versionAtLeast(a, b string) bool {
 // If a previously built binary with a matching fingerprint already exists at
 // outputBinary, it is reused without rebuilding.
 func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunnerRequest) (nativeexec.Runner, error) {
+	outBin, tmpDir, err := e.buildOrReuse(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &localRunner{
+		binaryPath: outBin,
+		args:       req.Args,
+		env:        nativeexec.AppendNativeMode(req.Env),
+		stdout:     req.Stdout,
+		stderr:     req.Stderr,
+		tmpDir:     tmpDir, // "" on a cache hit — nothing to clean up
+	}, nil
+}
+
+// Build compiles (or reuses a cached) binary that embeds all req.Payloads'
+// native Go sources and returns its path. Unlike Prepare, it never wraps the
+// result for re-exec: bal build needs a bare artifact path to hand to
+// executable.Pack, not a Runner that takes over the process. Any temporary
+// build directory is cleaned up before returning, since there's no re-exec
+// step left to keep it alive for.
+func (e *LocalExecutor) Build(ctx context.Context, req nativeexec.NativeRunnerRequest) (string, error) {
+	outBin, tmpDir, err := e.buildOrReuse(ctx, req)
+	if tmpDir != "" {
+		defer func() { _ = os.RemoveAll(tmpDir) }()
+	}
+	if err != nil {
+		return "", err
+	}
+	return outBin, nil
+}
+
+// buildOrReuse is the shared core of Prepare and Build: it resolves the
+// output binary path, reuses it as-is on a fingerprint cache hit (tmpDir ==
+// ""), or else assembles a temp bundle module, runs go build, and persists
+// the new fingerprint. The caller owns cleaning up tmpDir when non-empty.
+func (e *LocalExecutor) buildOrReuse(ctx context.Context, req nativeexec.NativeRunnerRequest) (outBin, tmpDir string, err error) {
+	// Empty TargetOS/TargetArch means build for the host — the same
+	// convention Go's own GOOS/GOARCH env vars use.
+	targetOS := req.TargetOS
+	if targetOS == "" {
+		targetOS = runtime.GOOS
+	}
+	targetArch := req.TargetArch
+	if targetArch == "" {
+		targetArch = runtime.GOARCH
+	}
+
 	// Fast path: reuse cached binary when native imports haven't changed.
-	fingerprint, fpErr := localFingerprint(e.interpreterRoot, req.Payloads)
+	fingerprint, fpErr := localFingerprint(e.interpreterRoot, req.Payloads, targetOS, targetArch)
 	if fpErr == nil {
-		if cached, ok := e.loadCachedRunner(fingerprint, req); ok {
-			return cached, nil
+		if cachedBin, ok := e.loadCachedBinary(fingerprint); ok {
+			return cachedBin, "", nil
 		}
 	}
 
-	tmpDir, err := os.MkdirTemp("", "bal-bundle-*")
-	if err != nil {
-		return nil, fmt.Errorf("creating temp bundle dir: %w", err)
+	// dir (not the named tmpDir return) holds the real temp path throughout,
+	// so the cleanup defer below always targets the directory that was
+	// actually created — even on early-error returns, which set the named
+	// tmpDir return to "" before the defer runs.
+	dir, mkErr := os.MkdirTemp("", "bal-bundle-*")
+	if mkErr != nil {
+		return "", "", fmt.Errorf("creating temp bundle dir: %w", mkErr)
 	}
 	ok := false
 	defer func() {
 		if !ok {
-			_ = os.RemoveAll(tmpDir)
+			_ = os.RemoveAll(dir)
 		}
 	}()
 
 	// Write each native package into its own subdirectory with its own go.mod.
 	for _, payload := range req.Payloads {
-		pkgDir := filepath.Join(tmpDir, moduleDirName(payload.GoModuleName()))
+		pkgDir := filepath.Join(dir, moduleDirName(payload.GoModuleName()))
 		if err := os.MkdirAll(pkgDir, 0o755); err != nil {
-			return nil, fmt.Errorf("creating package dir: %w", err)
+			return "", "", fmt.Errorf("creating package dir: %w", err)
 		}
 		if err := writeNativeFiles(pkgDir, payload); err != nil {
-			return nil, err
+			return "", "", err
 		}
 		modContent := fmt.Sprintf("module %s\n\ngo %s\n\nrequire ballerina-lang-go v0.0.0\nreplace ballerina-lang-go => %s\n",
 			payload.GoModuleName(), MinGoVersion, e.interpreterRoot)
 		if err := os.WriteFile(filepath.Join(pkgDir, "go.mod"), []byte(modContent), 0o600); err != nil {
-			return nil, fmt.Errorf("writing go.mod for %s: %w", payload.GoModuleName(), err)
+			return "", "", fmt.Errorf("writing go.mod for %s: %w", payload.GoModuleName(), err)
 		}
 	}
 
@@ -168,39 +241,39 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 	for _, payload := range req.Payloads {
 		fmt.Fprintf(&initContent, "import _ %q\n", payload.GoModuleName())
 	}
-	initFile := filepath.Join(tmpDir, "native_init_gen.go")
+	initFile := filepath.Join(dir, "native_init_gen.go")
 	if err := os.WriteFile(initFile, []byte(initContent.String()), 0o600); err != nil {
-		return nil, fmt.Errorf("writing native_init_gen.go: %w", err)
+		return "", "", fmt.Errorf("writing native_init_gen.go: %w", err)
 	}
 
-	// Write overlay.json that injects native_init_gen.go into cli/cmd.
-	overlayDst := filepath.Join(e.interpreterRoot, "cli", "cmd", "native_init_gen.go")
+	// Write overlay.json that injects native_init_gen.go into the target package.
+	overlayDst := filepath.Join(e.interpreterRoot, filepath.FromSlash(e.targetPackage), "native_init_gen.go")
 	overlay := map[string]map[string]string{
 		"Replace": {overlayDst: initFile},
 	}
 	overlayJSON, err := json.Marshal(overlay)
 	if err != nil {
-		return nil, fmt.Errorf("marshalling overlay: %w", err)
+		return "", "", fmt.Errorf("marshalling overlay: %w", err)
 	}
-	overlayFile := filepath.Join(tmpDir, "overlay.json")
+	overlayFile := filepath.Join(dir, "overlay.json")
 	if err := os.WriteFile(overlayFile, overlayJSON, 0o600); err != nil {
-		return nil, fmt.Errorf("writing overlay.json: %w", err)
+		return "", "", fmt.Errorf("writing overlay.json: %w", err)
 	}
 
-	// Write patched go.mod + go.sum into tmpDir with all native packages.
-	patchedModFile, err := writePatchedGoMod(tmpDir, e.interpreterRoot, req.Payloads, tmpDir)
+	// Write patched go.mod + go.sum into dir with all native packages.
+	patchedModFile, err := writePatchedGoMod(dir, e.interpreterRoot, req.Payloads, dir)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
 	// Ensure output directory exists. Resolve relative paths against interpreterRoot
 	// so that build, fingerprint, and run all reference the same absolute path.
-	outBin := e.outputBinary
+	outBin = e.outputBinary
 	if !filepath.IsAbs(outBin) {
 		outBin = filepath.Join(e.interpreterRoot, outBin)
 	}
 	if err := os.MkdirAll(filepath.Dir(outBin), 0o755); err != nil {
-		return nil, fmt.Errorf("creating output directory: %w", err)
+		return "", "", fmt.Errorf("creating output directory: %w", err)
 	}
 
 	stderr := req.Stderr
@@ -208,7 +281,7 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 		stderr = os.Stderr
 	}
 	if _, err := fmt.Fprintln(stderr, "info: building native interpreter using local Go toolchain"); err != nil {
-		return nil, fmt.Errorf("writing build status: %w", err)
+		return "", "", fmt.Errorf("writing build status: %w", err)
 	}
 	buildCmd := exec.CommandContext(ctx, "go", "build",
 		"-C", e.interpreterRoot,
@@ -216,12 +289,13 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 		"-overlay", overlayFile,
 		"-tags", "native_interp",
 		"-o", outBin,
-		"./cli/cmd",
+		"./"+e.targetPackage,
 	)
+	buildCmd.Env = crossCompileEnv(targetOS, targetArch)
 	buildCmd.Stdout = io.Discard
 	buildCmd.Stderr = stderr
 	if err := buildCmd.Run(); err != nil {
-		return nil, fmt.Errorf("building native interpreter: %w", err)
+		return "", "", fmt.Errorf("building native interpreter: %w", err)
 	}
 
 	// Persist fingerprint so the next invocation can skip the build.
@@ -230,19 +304,12 @@ func (e *LocalExecutor) Prepare(ctx context.Context, req nativeexec.NativeRunner
 	}
 
 	ok = true
-	return &localRunner{
-		binaryPath: outBin,
-		args:       req.Args,
-		env:        nativeexec.AppendNativeMode(req.Env),
-		stdout:     req.Stdout,
-		stderr:     req.Stderr,
-		tmpDir:     tmpDir,
-	}, nil
+	return outBin, dir, nil
 }
 
-// loadCachedRunner returns a runner backed by the already-compiled binary when
-// the stored fingerprint matches the current one. Returns false if a rebuild is needed.
-func (e *LocalExecutor) loadCachedRunner(fingerprint string, req nativeexec.NativeRunnerRequest) (*localRunner, bool) {
+// loadCachedBinary returns the already-compiled binary's path when the stored
+// fingerprint matches the current one. Returns false if a rebuild is needed.
+func (e *LocalExecutor) loadCachedBinary(fingerprint string) (string, bool) {
 	outBin := e.outputBinary
 	if !filepath.IsAbs(outBin) {
 		outBin = filepath.Join(e.interpreterRoot, outBin)
@@ -250,26 +317,22 @@ func (e *LocalExecutor) loadCachedRunner(fingerprint string, req nativeexec.Nati
 	fpFile := nativeexec.FingerprintPath(outBin)
 	existing, err := os.ReadFile(fpFile)
 	if err != nil || strings.TrimSpace(string(existing)) != fingerprint {
-		return nil, false
+		return "", false
 	}
 	if _, err := os.Stat(outBin); err != nil {
-		return nil, false
+		return "", false
 	}
-	return &localRunner{
-		binaryPath: outBin,
-		args:       req.Args,
-		env:        nativeexec.AppendNativeMode(req.Env),
-		stdout:     req.Stdout,
-		stderr:     req.Stderr,
-		// tmpDir is empty — cached binary, nothing to clean up
-	}, true
+	return outBin, true
 }
 
 // localFingerprint hashes the interpreter's go.mod + go.sum, the installed Go
-// toolchain version, and the current GOOS/GOARCH (to catch toolchain upgrades,
+// toolchain version, and the target GOOS/GOARCH (to catch toolchain upgrades,
 // dependency changes, and cross-compilation target changes) plus the payload
-// contents via FingerprintPayloads.
-func localFingerprint(interpreterRoot string, payloads []nativeexec.NativePayload) (string, error) {
+// contents via FingerprintPayloads. targetOS/targetArch must already be
+// resolved to concrete values (the host's own, if the caller didn't
+// override) — this function doesn't itself default empty strings to host,
+// so a fingerprint always reflects exactly what was actually built.
+func localFingerprint(interpreterRoot string, payloads []nativeexec.NativePayload, targetOS, targetArch string) (string, error) {
 	seeds := make([][]byte, 0, 4)
 	for _, name := range []string{"go.mod", "go.sum"} {
 		data, err := os.ReadFile(filepath.Join(interpreterRoot, name))
@@ -281,8 +344,30 @@ func localFingerprint(interpreterRoot string, payloads []nativeexec.NativePayloa
 	if ver, err := installedGoVersion(); err == nil {
 		seeds = append(seeds, []byte(ver))
 	}
-	seeds = append(seeds, []byte(runtime.GOOS+"/"+runtime.GOARCH))
+	seeds = append(seeds, []byte(targetOS+"/"+targetArch))
 	return nativeexec.FingerprintPayloads(payloads, seeds...)
+}
+
+// crossCompileEnv returns the environment for the go build subprocess,
+// targeting targetOS/targetArch. CGO_ENABLED=0 matches the existing
+// non-native cross-compilation path (build.go) and is a safety net, not
+// strictly required: native dependencies are confirmed Go-sources-only (no
+// cgo), so this should never actually change behavior — but if one ever
+// snuck in a cgo import, this makes it fail clearly (no C cross-compiler
+// available) rather than silently attempting something unsupported. Any
+// GOOS/GOARCH/CGO_ENABLED already present in the parent environment are
+// dropped first, so there's exactly one value for each — os/exec does not
+// guarantee which of two duplicate keys wins.
+func crossCompileEnv(targetOS, targetArch string) []string {
+	base := os.Environ()
+	env := make([]string, 0, len(base)+3)
+	for _, e := range base {
+		if strings.HasPrefix(e, "GOOS=") || strings.HasPrefix(e, "GOARCH=") || strings.HasPrefix(e, "CGO_ENABLED=") {
+			continue
+		}
+		env = append(env, e)
+	}
+	return append(env, "GOOS="+targetOS, "GOARCH="+targetArch, "CGO_ENABLED=0")
 }
 
 // installedGoVersion returns the full version string from `go version`.

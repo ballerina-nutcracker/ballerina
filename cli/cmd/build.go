@@ -17,12 +17,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"ballerina-lang-go/cli/internal/executable"
+	"ballerina-lang-go/cli/internal/nativeexec"
 	debugcommon "ballerina-lang-go/common"
 	"ballerina-lang-go/projects"
 	"ballerina-lang-go/tools/diagnostics"
@@ -234,22 +236,35 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		outPath = filepath.Join(absBaseDir, projects.TargetDir, binSubdir, pkgName)
 	}
 
-	// Resolve the slim runner stub to embed the payload into. Fingerprint is
-	// empty until native-Go-dependency detection lands (see
-	// migration-docs/specs/build-command-architecture.md) — every build
-	// today looks up the stub bundled alongside bal's own distribution for
-	// targetPlatform; no Go toolchain involved. RuntimeStubPath (set via
-	// -ldflags at bal's own build time, not a bal build flag) overrides the
-	// default <dist>/rt/<os>-<arch> lookup, so the predefined layout can
-	// change later without breaking a packager who already pins an explicit
-	// path.
-	distDir, err := executable.DistributionDir()
-	if err != nil {
-		return buildError(stderr, "resolve bal distribution directory: %w", err)
-	}
-	stubPath, err := executable.ResolveStub(executable.Key{Platform: targetPlatform}, distDir, RuntimeStubPath)
-	if err != nil {
-		return buildError(stderr, "cannot locate runner stub: %w", err)
+	// Resolve the runner stub to embed the payload into. Packages with no
+	// native Go dependencies (the common case) look up the stub bundled
+	// alongside bal's own distribution for targetPlatform; no Go toolchain
+	// involved. Packages that depend on a native Go bala instead build a
+	// custom stub with that native code woven in — see buildNativeStub.
+	resolution := pkg.Resolution()
+	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
+
+	var stubPath string
+	if len(nativeBalaProjects) == 0 {
+		// RuntimeStubPath (set via -ldflags at bal's own build time, not a
+		// bal build flag) overrides the default <dist>/rt/<os>-<arch>
+		// lookup, so the predefined layout can change later without
+		// breaking a packager who already pins an explicit path.
+		distDir, dErr := executable.DistributionDir()
+		if dErr != nil {
+			return buildError(stderr, "resolve bal distribution directory: %w", dErr)
+		}
+		sp, rErr := executable.ResolveStub(executable.Key{Platform: targetPlatform}, distDir, RuntimeStubPath)
+		if rErr != nil {
+			return buildError(stderr, "cannot locate runner stub: %w", rErr)
+		}
+		stubPath = sp
+	} else {
+		sp, bErr := buildNativeStub(stderr, absBaseDir, nativeBalaProjects, targetPlatform)
+		if bErr != nil {
+			return buildError(stderr, "building native interpreter stub: %w", bErr)
+		}
+		stubPath = sp
 	}
 
 	if err := executable.Pack(stubPath, birPkgs, tyEnv, outPath); err != nil {
@@ -258,4 +273,55 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Created %s\n", outPath)
 	return nil
+}
+
+// nativeStubName is the intermediate, native-woven stub buildNativeStub
+// produces — distinct from both outPath (the final packed executable) and
+// the installed "balrt" name, so nothing collides on disk.
+const nativeStubName = "balrt-native"
+
+// buildNativeStub builds (or reuses a fingerprint-cached) balrt-shaped stub
+// that embeds nativeBalaProjects' native Go sources, for bal build to embed
+// the BIR payload into instead of the predefined installed stub. It mirrors
+// execWithNativeRunner's (run.go) native-dependency build, but targets
+// cli/cmd/balrt — a slim, standalone stub — rather than the full cli/cmd
+// CLI, and returns a bare binary path rather than an auto-executing Runner:
+// bal build needs to hand that path to executable.Pack, not re-exec into it.
+//
+// Cross-compiling is supported: LocalExecutor.Build sets GOOS/GOARCH on the
+// go build subprocess, the same as the no-native-dep cross-compile path —
+// native dependencies package Go sources only (no cgo), so no C
+// cross-compiler is ever needed. The cache path is segmented by target
+// platform (not just kept flat) so building for two different targets from
+// the same project doesn't clobber each other's cached stub/fingerprint.
+func buildNativeStub(stderr io.Writer, absBaseDir string, nativeBalaProjects []*projects.BalaProject, targetPlatform executable.Platform) (string, error) {
+	stubName := nativeStubName
+	if targetPlatform.OS == "windows" {
+		stubName += ".exe"
+	}
+	platformDir := targetPlatform.OS + "-" + targetPlatform.Arch
+	outBin := filepath.Join(absBaseDir, projects.TargetDir, binSubdir, "native", platformDir, stubName)
+
+	executor, err := chooseNativeExecutor(outBin, "cli/cmd/balrt")
+	if err != nil {
+		return "", err
+	}
+
+	payloads := make([]nativeexec.NativePayload, 0, len(nativeBalaProjects))
+	for _, bp := range nativeBalaProjects {
+		goFS, err := bp.NativeGoSourceFS()
+		if err != nil {
+			return "", fmt.Errorf("reading native Go sources for %s: %w", bp.CurrentPackage().Descriptor().Name().Value(), err)
+		}
+		desc := bp.CurrentPackage().Descriptor()
+		moduleName := desc.Org().Value() + "/" + desc.Name().Value() + "-native"
+		payloads = append(payloads, &nativeexec.GoSourcePayload{GoFiles: goFS, Module: moduleName})
+	}
+
+	return executor.Build(context.Background(), nativeexec.NativeRunnerRequest{
+		Payloads:   payloads,
+		Stderr:     stderr,
+		TargetOS:   targetPlatform.OS,
+		TargetArch: targetPlatform.Arch,
+	})
 }
