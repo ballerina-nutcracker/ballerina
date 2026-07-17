@@ -209,6 +209,15 @@ func TestHttpServiceLargeBody(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-large-body-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceForwardLargeBody covers Client->forward() passing an unread
+// request-body stream straight through to palnative's httpClient.Execute,
+// which is the only production path that reaches limitedReadCloser (every
+// other client body is buffered into a *bytes.Reader before Execute).
+func TestHttpServiceForwardLargeBody(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-forward-large-body-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceTLSOptions covers the optional TLS listener settings in
 // buildListenerTLSConfig: protocol version bounds, cipher suites, and disabled
 // session tickets.

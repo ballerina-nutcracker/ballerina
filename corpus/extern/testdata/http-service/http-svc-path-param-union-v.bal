@@ -27,7 +27,7 @@ type Point record {|
 // Exercises union-typed path parameters: the segment coercer must fall
 // through to the next candidate type when an earlier one fails to parse,
 // rather than rejecting the whole segment on the first parse failure.
-service /api on new http:Listener(19205) {
+service /api on new http:Listener(19217) {
     resource function get value/[int|float v]() returns http:Response {
         http:Response resp = new;
         resp.setTextPayload(string `value=${v}`);
@@ -42,7 +42,7 @@ service /api on new http:Listener(19205) {
 }
 
 public function testMain() returns error? {
-    http:Client c = check new http:Client("http://localhost:19205", {});
+    http:Client c = check new http:Client("http://localhost:19217", {});
 
     // "5" parses as int first.
     http:Response asInt = check c->get("/api/value/5");
