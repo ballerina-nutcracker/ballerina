@@ -366,6 +366,63 @@ service on l {
 	}
 }
 
+const startFailureLifecycleSource = `
+import ballerina/io;
+
+class FailingListener {
+    public function attach(service object {} svc, () attachPoint = ()) returns error? {
+        var _ = svc;
+        var _ = attachPoint;
+    }
+
+    public function detach(service object {} svc) returns error? {
+        var _ = svc;
+    }
+
+    public function 'start() returns error? {
+        return error("start failed");
+    }
+
+    public function gracefulStop() returns error? {
+        io:println("graceful:one");
+    }
+
+    public function immediateStop() returns error? {
+        io:println("immediate:one");
+    }
+}
+
+listener FailingListener l = new ();
+
+service on l {
+}
+`
+
+// TestLifecycleStartFailureThenStraySignalIsNoOp reproduces the WASM CI
+// panic (invalid lifecycle transition from stopped -> gracefulStopping): a
+// $start failure makes rt.Listen() cascade synchronously all the way to
+// Stopped before it returns. A caller that only knows the package declares
+// $start hooks (like test_util/testharness.Run) may still send a stop
+// signal unconditionally, unaware the runtime already stopped on its own.
+// Delivering that stray signal must be a no-op, not a panic.
+func TestLifecycleStartFailureThenStraySignalIsNoOp(t *testing.T) {
+	pal := newLifecycleTestPal(t)
+	rt := newLifecycleTestRuntime(t, startFailureLifecycleSource, pal)
+
+	rt.Listen()
+
+	code := readExitStatus(t, rt)
+	if code != 1 {
+		t.Fatalf("expected start-failure exit code 1, got %d", code)
+	}
+	if got, want := pal.Stdout(), "graceful:one\n"; got != want {
+		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
+	}
+
+	pal.Send(palSignalGracefulStop)
+	time.Sleep(100 * time.Millisecond)
+}
+
 func invokeAndRecover(rt *runtime.Runtime, fn any) (recovered any) {
 	defer func() {
 		recovered = recover()

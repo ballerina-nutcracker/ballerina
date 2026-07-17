@@ -17,32 +17,48 @@
 package extern_test
 
 import (
+	goruntime "runtime"
 	"testing"
 
 	"ballerina-lang-go/test_util/testharness"
 )
 
+// skipIfNoFileWatch skips on platforms without a native directory-watch
+// backend (js/wasm): fsnotify has no js/wasm backend, so file:Listener's
+// 'start() always fails there with "fsnotify not supported on the current
+// platform".
+func skipIfNoFileWatch(t *testing.T) {
+	t.Helper()
+	if goruntime.GOOS == "js" {
+		t.Skip("skipping file-watch-dependent test on js/wasm")
+	}
+}
+
 // TestFileListenerEvents exercises the create/modify/delete dispatch of a
 // single file:Listener service against a real OS-level directory watch.
 func TestFileListenerEvents(t *testing.T) {
+	skipIfNoFileWatch(t)
 	runExtern(t, fileCase("file-listener/file-listener-events-v"), testharness.NewTestPal(), nil)
 }
 
 // TestFileListenerRecursive exercises dynamic recursive registration: a
 // subdirectory created after start is itself watched for further events.
 func TestFileListenerRecursive(t *testing.T) {
+	skipIfNoFileWatch(t)
 	runExtern(t, fileCase("file-listener/file-listener-recursive-v"), testharness.NewTestPal(), nil)
 }
 
 // TestFileListenerMultiService exercises dispatch to every service attached
 // to the same listener.
 func TestFileListenerMultiService(t *testing.T) {
+	skipIfNoFileWatch(t)
 	runExtern(t, fileCase("file-listener/file-listener-multi-service-v"), testharness.NewTestPal(), nil)
 }
 
 // TestFileListenerDetach exercises attach/detach: a detached service must
 // stop receiving events.
 func TestFileListenerDetach(t *testing.T) {
+	skipIfNoFileWatch(t)
 	runExtern(t, fileCase("file-listener/file-listener-detach-v"), testharness.NewTestPal(), nil)
 }
 

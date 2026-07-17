@@ -73,7 +73,7 @@ func (s State) String() string {
 // 4. We try to do best effort escalation on repeated graceful stop signals
 //   - We'll finish whatever the module we are trying to gracefully stop and then escalate to immediate stop
 //
-// 5 . Sending signals to a stopped runtime could trigger a panic (this is treated as undefined behavior)
+// 5 . Sending signals to a stopped runtime is a no-op: there is nothing left to stop
 // IMPORTANT: "sender" for pal.Signal must close it after we write to ExitStatus channel
 type lifeCycle struct {
 	mu               sync.Mutex
@@ -126,6 +126,15 @@ func (rt *Runtime) transition(target State) {
 	action := transitionTable[from][target]
 	rt.mu.Unlock()
 	if action == nil {
+		if from == StateStopped && (target == StateGracefulStopping || target == StateImmediateStopping) {
+			// A stop signal can legitimately arrive after the runtime already
+			// reached Stopped by another path (e.g. a $start failure cascades
+			// straight to Stopped before a caller's stop signal is delivered).
+			// There is nothing left to stop, so treat it as a no-op rather
+			// than panicking. Other illegal edges out of Stopped (e.g. a
+			// re-Init attempt) still panic loudly.
+			return
+		}
 		panic(fmt.Sprintf("invalid lifecycle transition from %s -> %s", from, target))
 	}
 	action(rt)
