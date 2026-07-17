@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-is not a package directory or a .bal file
+error creating log file
 -- exitcode --
 1

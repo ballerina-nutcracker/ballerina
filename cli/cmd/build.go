@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -35,12 +36,8 @@ import (
 const binSubdir = "bin"
 
 // RuntimeStubPath overrides the default <dist>/rt/<os>-<arch> runner-stub
-// lookup (executable.ResolveStub) when non-empty. It is set via
-// -ldflags at bal's own build time (e.g. -X main.RuntimeStubPath=/custom/path),
-// the same mechanism as Version (see version.go) — not a bal build flag, so
-// the stub's location stays transparent to whoever just runs bal build. Only
-// whoever builds/packages bal itself would ever set this, e.g. to match a
-// non-default installation layout.
+// lookup (executable.ResolveStub) when non-empty. Set via -ldflags at bal's
+// own build time (like Version in version.go), not a bal build flag.
 var RuntimeStubPath = ""
 
 type buildOptions struct {
@@ -68,11 +65,12 @@ func createBuildCmd() *cobra.Command {
 		Short: "Compile the current package into a standalone executable",
 		Long: `	Compile the current Ballerina package into a standalone executable.
 
-	The output binary embeds the compiled program and the Ballerina runtime.
-	It runs without a bal installation and without the source files present.
+	Compiles the current package or the provided standalone '.bal' file and 
+	generates a standalone executable in the <project>/target/bin
+	directory.
+	Note: Building individual '.bal' files of a package is not allowed.
 
-	The default output path is <project>/target/bin/<package-name>.
-	Use -o to specify a different path.
+	Use -o to specify a different output path.
 
 	Use --target-os/--target-arch to cross-compile for a different platform.
 	Either may be given alone; the other defaults to the host's own value.`,
@@ -150,16 +148,13 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		return buildError(stderr, "invalid project path %q: %w", path, err)
 	}
 
-	// A single .bal file is loaded the same way bal run loads one: fsys is
-	// rooted at the file's parent directory, and loadPath is just the
-	// filename within it. baseDir (the fsys root) doubles as the "project
-	// root" for default-output-path purposes below, same as a package
-	// directory's own path serves that role.
+	// A single .bal file loads like bal run loads one: fsys rooted at the
+	// parent dir, loadPath is the filename within it.
 	baseDir := path
 	loadPath := "."
 	if !info.IsDir() {
 		if filepath.Ext(path) != ".bal" {
-			return buildError(stderr, "build requires a package directory or a .bal file; got %q", path)
+			return buildError(stderr, "%q is not a package directory or a .bal file", path)
 		}
 		baseDir = filepath.Dir(path)
 		loadPath = filepath.Base(path)
@@ -193,9 +188,62 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 
 	project := result.Project()
 	if project.Kind() == projects.ProjectKindWorkspace {
-		return buildError(stderr, "provided path %q is a workspace; expected a package directory", path)
+		// -o names a single explicit output path, which doesn't make sense
+		// when building every member of a workspace to its own executable.
+		if opts.output != "" {
+			return buildError(stderr, "-o cannot be used when building a workspace; run bal build <package-path> to build a single package with a custom output path")
+		}
+
+		workspace := project.(*projects.WorkspaceProject)
+		for _, bp := range workspace.Projects() {
+			// SourceRoot() is relative to the workspace root, not the member's
+			// own directory (same reconstruction bal run's findBuildProjectByPath uses).
+			memberDir := filepath.Join(absBaseDir, bp.SourceRoot())
+
+			// Re-load the whole workspace fresh for each member rather than
+			// reusing bp or loading the member's own directory in isolation.
+			// Reusing bp would share one CompilerEnvironment across every
+			// member — compiling a lang lib twice in the same environment
+			// trips the distinct-type-symbol registry's once-per-environment
+			// assumption. Loading just the member's own directory avoids
+			// that sharing but loses workspaceRepository, breaking
+			// member-to-member dependencies. Reloading the whole workspace
+			// gives this iteration its own fresh environment (still with
+			// sibling resolution intact) while only ever compiling the one
+			// member picked out below, so no environment is shared across
+			// two actual compiles.
+			memberResult, err := projects.Load(fsys, loadPath, projects.ProjectLoadConfig{
+				BallerinaEnvFs: os.DirFS(ballerinaEnvPath),
+				BuildOptions:   &buildOpts,
+			})
+			if err != nil {
+				return buildError(stderr, "failed to load package: %w", err)
+			}
+
+			memberWorkspace := memberResult.Project().(*projects.WorkspaceProject)
+			memberProject := findBuildProjectByPath(memberWorkspace, absBaseDir, memberDir)
+			if memberProject == nil {
+				return buildError(stderr, "no package found at path %s within workspace %s", memberDir, absBaseDir)
+			}
+
+			// Stop at the first member that fails, matching jballerina
+			// (which aborts the whole process on a compile error) instead
+			// of continuing to later members.
+			if err := buildOneProject(cmd, opts, stderr, fsys, memberProject, memberDir); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
+	return buildOneProject(cmd, opts, stderr, fsys, project, absBaseDir)
+}
+
+// buildOneProject compiles a single package (a plain build, or one workspace
+// member) and packs it into a standalone executable. For a workspace
+// member, projectDir is that member's own directory, so output and any
+// native-stub cache land under its own target/.
+func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, fsys fs.FS, project projects.Project, projectDir string) error {
 	pkg := project.CurrentPackage()
 	compilation := pkg.Compilation()
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() || cd.HasWarnings() {
@@ -214,53 +262,50 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	backend := projects.NewBallerinaBackend(compilation)
 	birPkgs := backend.BIRPackages()
 	if len(birPkgs) == 0 {
-		return buildError(stderr, "BIR generation failed: no packages produced")
+		return buildError(stderr, "BIR generation failed: no BIR package produced")
 	}
 
 	tyEnv := project.Environment().TypeEnv()
 
-	// --target-os/--target-arch default to the host's own value when unset —
-	// the same convention Go's GOOS/GOARCH env vars use, so setting only one
-	// dimension does what a user would expect.
+	// Unset --target-os/--target-arch default to the host, like Go's GOOS/GOARCH.
 	targetPlatform := executable.ResolveTargetPlatform(opts.targetOS, opts.targetArch)
 
-	// Determine output path. The executable suffix follows the target
-	// platform, not the host running bal build — cross-compiling for
-	// Windows from a non-Windows machine must still produce a ".exe".
+	// Suffix follows the target platform, not the host running bal build.
 	outPath := opts.output
 	if outPath == "" {
 		pkgName := pkg.PackageName().Value()
 		if targetPlatform.OS == "windows" {
 			pkgName += ".exe"
 		}
-		outPath = filepath.Join(absBaseDir, projects.TargetDir, binSubdir, pkgName)
+		outPath = filepath.Join(projectDir, projects.TargetDir, binSubdir, pkgName)
 	}
 
-	// Resolve the runner stub to embed the payload into. Packages with no
-	// native Go dependencies (the common case) look up the stub bundled
-	// alongside bal's own distribution for targetPlatform; no Go toolchain
-	// involved. Packages that depend on a native Go bala instead build a
-	// custom stub with that native code woven in — see buildNativeStub.
+	// Packages with no native Go deps use the bundled stub for targetPlatform;
+	// packages with a native Go bala build a custom stub (buildNativeStub).
 	resolution := pkg.Resolution()
 	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
 
 	var stubPath string
 	if len(nativeBalaProjects) == 0 {
-		// RuntimeStubPath (set via -ldflags at bal's own build time, not a
-		// bal build flag) overrides the default <dist>/rt/<os>-<arch>
-		// lookup, so the predefined layout can change later without
-		// breaking a packager who already pins an explicit path.
+		// RuntimeStubPath is a host-platform binary; reject it when cross-compiling.
+		if RuntimeStubPath != "" {
+			if host := executable.HostPlatform(); targetPlatform != host {
+				return buildError(stderr,
+					"runtime stub override cannot be used when cross-compiling to %s/%s",
+					targetPlatform.OS, targetPlatform.Arch)
+			}
+		}
 		distDir, dErr := executable.DistributionDir()
 		if dErr != nil {
 			return buildError(stderr, "resolve bal distribution directory: %w", dErr)
 		}
-		sp, rErr := executable.ResolveStub(executable.Key{Platform: targetPlatform}, distDir, RuntimeStubPath)
+		sp, rErr := executable.ResolveStub(targetPlatform, distDir, RuntimeStubPath)
 		if rErr != nil {
-			return buildError(stderr, "cannot locate runner stub: %w", rErr)
+			return buildError(stderr, "%w", rErr)
 		}
 		stubPath = sp
 	} else {
-		sp, bErr := buildNativeStub(stderr, absBaseDir, nativeBalaProjects, targetPlatform)
+		sp, bErr := buildNativeStub(stderr, projectDir, nativeBalaProjects, targetPlatform)
 		if bErr != nil {
 			return buildError(stderr, "building native interpreter stub: %w", bErr)
 		}
@@ -268,7 +313,7 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	}
 
 	if err := executable.Pack(stubPath, birPkgs, tyEnv, outPath); err != nil {
-		return buildError(stderr, "writing executable: %w", err)
+		return buildError(stderr, "write executable: %w", err)
 	}
 
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Created %s\n", outPath)
@@ -276,24 +321,18 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 }
 
 // nativeStubName is the intermediate, native-woven stub buildNativeStub
-// produces — distinct from both outPath (the final packed executable) and
-// the installed "balrt" name, so nothing collides on disk.
+// produces — distinct from outPath and the installed "balrt" name.
 const nativeStubName = "balrt-native"
 
 // buildNativeStub builds (or reuses a fingerprint-cached) balrt-shaped stub
-// that embeds nativeBalaProjects' native Go sources, for bal build to embed
-// the BIR payload into instead of the predefined installed stub. It mirrors
-// execWithNativeRunner's (run.go) native-dependency build, but targets
-// cli/cmd/balrt — a slim, standalone stub — rather than the full cli/cmd
-// CLI, and returns a bare binary path rather than an auto-executing Runner:
-// bal build needs to hand that path to executable.Pack, not re-exec into it.
+// embedding nativeBalaProjects' native Go sources, for bal build to pack
+// instead of the predefined stub. Like execWithNativeRunner (run.go), but
+// targets the slim cli/cmd/balrt stub and returns a bare binary path rather
+// than an auto-executing Runner.
 //
-// Cross-compiling is supported: LocalExecutor.Build sets GOOS/GOARCH on the
-// go build subprocess, the same as the no-native-dep cross-compile path —
-// native dependencies package Go sources only (no cgo), so no C
-// cross-compiler is ever needed. The cache path is segmented by target
-// platform (not just kept flat) so building for two different targets from
-// the same project doesn't clobber each other's cached stub/fingerprint.
+// Cross-compiling works the same way (LocalExecutor.Build sets GOOS/GOARCH);
+// the cache path is segmented by target platform so two targets don't
+// clobber each other's cached stub.
 func buildNativeStub(stderr io.Writer, absBaseDir string, nativeBalaProjects []*projects.BalaProject, targetPlatform executable.Platform) (string, error) {
 	stubName := nativeStubName
 	if targetPlatform.OS == "windows" {

@@ -37,25 +37,16 @@ import (
 	"ballerina-lang-go/test_util"
 	"ballerina-lang-go/test_util/testharness"
 
-	// Blank-import native package implementations so their init() functions
-	// register extern functions with the runtime before the tests run.
-	// These packages live in testdata and are not included in ./... builds,
-	// but explicit imports compile and link them normally.
+	// Blank-import native packages so their init() registers extern
+	// functions before tests run; testdata isn't in ./... builds otherwise.
 	_ "ballerina-lang-go/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
 	_ "ballerina-lang-go/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
 )
 
 const nativeTestDataDir = "extern/testdata"
 
-// TestNativeMultiOrgPackages verifies that native (Go-implemented) Ballerina
-// packages from multiple organisations resolve and execute correctly alongside
-// pure-Ballerina packages with transitive dependencies.
-//
-// Package matrix:
-//   - mockorg/nativepkg  — native, one org (hello() returns a string)
-//   - acmeorg/calcpkg    — native, second org (multiply, abs)
-//   - mockorg/greetpkg   — pure Ballerina, v4 bala format
-//   - mockorg/middlepkg  — pure Ballerina, transitive deps (leafpkg, aaaleafpkg)
+// TestNativeMultiOrgPackages verifies native Go packages from multiple orgs
+// resolve and run alongside pure-Ballerina packages with transitive deps.
 func TestNativeMultiOrgPackages(t *testing.T) {
 	t.Parallel()
 	projectDir := filepath.Join(nativeTestDataDir, "native-multi-org-v")
@@ -141,10 +132,8 @@ func nativeTestRepoPath(t *testing.T) string {
 	return p
 }
 
-// TestNativeGoSourceFS_Pipeline loads a go-platform bala via the file-system
-// repository, calls NativeGoSourceFS(), and verifies the returned FS exposes
-// the expected Go source file. This exercises the NativeGoSourceFS path in
-// bala_project.go end-to-end, including the fsys → fs.Sub plumbing.
+// TestNativeGoSourceFS_Pipeline loads a go-platform bala and verifies
+// NativeGoSourceFS() exposes the expected Go source file end-to-end.
 func TestNativeGoSourceFS_Pipeline(t *testing.T) {
 	t.Parallel()
 	require := test_util.NewRequire(t)
@@ -165,13 +154,11 @@ func TestNativeGoSourceFS_Pipeline(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(goFS)
 
-	// The native Go source file must be accessible via the returned FS.
 	f, err := goFS.Open("nativepkg.go")
 	require.NoError(err)
 	require.NoError(f.Close())
 
-	// No other packages in this bala have a native/ dir, so NativeGoSourceFS
-	// for a non-go-platform bala must return an error or an empty FS.
+	// A non-go-platform bala has no native/ dir, so this must error or be empty.
 	anyRepo := projects.NewFileSystemRepository(os.DirFS(nativeTestRepoPath(t)), ".")
 	anyPkg, err := anyRepo.GetPackage(context.Background(), "mockorg", "greetpkg", "1.0.0", projects.ResolutionOptions{})
 	require.NoError(err)
@@ -182,21 +169,17 @@ func TestNativeGoSourceFS_Pipeline(t *testing.T) {
 	}
 	assert.False(strings.HasPrefix(greetBP.Platform(), "go"), "greetpkg should be 'any' platform")
 
-	// any-platform balas have no native/ dir; fs.Sub still succeeds but the
-	// directory is empty — opening a .go file must fail.
+	// any-platform balas have no native/ dir; fs.Sub succeeds but is empty.
 	anyNativeFS, err := greetBP.NativeGoSourceFS()
 	if err == nil {
 		_, statErr := fs.Stat(anyNativeFS, ".")
-		// Either the Sub fails outright or the directory doesn't exist.
 		assert.NotNil(statErr, "expected no-native bala's FS to be inaccessible or empty")
 	}
 }
 
-// TestNativeResolution_EmbeddedStdlibFilter loads the multi-org native test
-// project and walks its resolved dependency graph. It verifies that
-// go-platform packages that are part of the embedded stdlib bundle are
-// distinguishable from user-defined native packages, mirroring the
-// isEmbeddedPackage check in cli/cmd/run.go.
+// TestNativeResolution_EmbeddedStdlibFilter verifies embedded-stdlib
+// go-platform packages are distinguishable from user-defined native ones,
+// mirroring the isEmbeddedPackage check in cli/cmd/run.go.
 func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
 	t.Parallel()
 	require := test_util.NewRequire(t)
@@ -241,14 +224,12 @@ func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
 		}
 	}
 
-	// ballerina/io is bundled in the embedded stdlib — it must not reach the
-	// native interpreter rebuild path.
+	// ballerina/io is embedded stdlib — must not need a rebuild.
 	if !slices.Contains(embeddedNative, "ballerina/io") {
 		t.Errorf("expected ballerina/io in embedded native list, got %v", embeddedNative)
 	}
 
-	// mockorg/nativepkg and acmeorg/calcpkg are user-defined native packages
-	// that do require a rebuild.
+	// These are user-defined native packages — they do require a rebuild.
 	if !slices.Contains(userNative, "mockorg/nativepkg") {
 		t.Errorf("expected mockorg/nativepkg in user native list, got %v", userNative)
 	}
@@ -256,7 +237,6 @@ func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
 		t.Errorf("expected acmeorg/calcpkg in user native list, got %v", userNative)
 	}
 
-	// No user-defined native package must appear in the embedded list.
 	for _, name := range userNative {
 		if slices.Contains(embeddedNative, name) {
 			t.Errorf("user-defined native package %q must not appear in embedded list", name)
@@ -264,9 +244,8 @@ func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
 	}
 }
 
-// TestInterpsrc_ExtractAndCache exercises interpsrc.ExtractTo end-to-end:
-// the first call extracts the embedded source tree to a temp directory, and
-// a second call with the same version skips re-extraction (fast path).
+// TestInterpsrc_ExtractAndCache checks interpsrc.ExtractTo extracts once,
+// then skips re-extraction on a second call with the same version.
 func TestInterpsrc_ExtractAndCache(t *testing.T) {
 	t.Parallel()
 	require := test_util.NewRequire(t)
@@ -275,7 +254,6 @@ func TestInterpsrc_ExtractAndCache(t *testing.T) {
 	cacheRoot := t.TempDir()
 	const version = "test-v0.0.1"
 
-	// First call: must extract and return a valid path with go.mod.
 	dir1, err := interpsrc.ExtractTo(cacheRoot, version)
 	require.NoError(err)
 	require.NotEmpty(dir1)
@@ -283,18 +261,15 @@ func TestInterpsrc_ExtractAndCache(t *testing.T) {
 	_, err = os.Stat(filepath.Join(dir1, "go.mod"))
 	require.NoError(err, "go.mod must exist after extraction")
 
-	// Second call: go.mod already exists, so extraction is skipped.
-	// The returned path must be identical.
+	// go.mod already exists, so this call should skip extraction and return
+	// the same path.
 	dir2, err := interpsrc.ExtractTo(cacheRoot, version)
 	require.NoError(err)
 	assert.Equal(dir1, dir2, "second call must return the cached path without re-extracting")
 }
 
-// TestNativeRunner_EmbeddedOnlyProjectNoRebuild runs `bal run` on a project
-// whose only stdlib dependency is ballerina/io (an embedded native package).
-// It asserts that no "info: building native interpreter" message appears in
-// stderr, confirming that isEmbeddedPackage correctly suppresses spurious
-// native interpreter rebuilds.
+// TestNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
+// only on embedded ballerina/io never triggers a native interpreter rebuild.
 func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -313,13 +288,9 @@ func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_ColdBuildAndCacheHit runs `bal run` on a project with a
-// user-defined native Go dependency twice, using a temp project directory.
-//
-//   - First run (cold): stderr must contain "info: building native interpreter"
-//     and stdout must match expected output.
-//   - Second run (cache hit): stderr must NOT contain "info: building", confirming
-//     that loadCachedRunner's fingerprint match bypasses the rebuild.
+// TestNativeRunner_ColdBuildAndCacheHit runs a native-dependency project
+// twice: the first run must build the interpreter (cold), the second must
+// hit loadCachedRunner's fingerprint cache and skip the rebuild.
 func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -328,15 +299,13 @@ func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
 
-	// Build a temp Ballerina home whose central cache contains the testdata
-	// native packages so the CLI can resolve them.
+	// Temp Ballerina home with the testdata native packages in its central cache.
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
 	srcRepo := filepath.Join(repoRoot, "projects", "testdata", "repo", "bala")
 	copyDir(t, srcRepo, centralCache)
 
-	// Copy the project to a temp dir so the output binary goes to a fresh location
-	// (preventing leftover binaries from a previous run from masking cache misses).
+	// Fresh project copy so no leftover binary can mask a cache miss.
 	srcProject := filepath.Join(repoRoot, "corpus", "extern", "testdata", "native-multi-org-v")
 	tempProject := t.TempDir()
 	copyDir(t, srcProject, tempProject)
@@ -352,7 +321,6 @@ func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 		return runNativeCLICommandWithEnv(t, balBin, repoRoot, []string{"run", tempProject}, env)
 	}
 
-	// First run: cold build.
 	stdout1, stderr1, code1 := runNative()
 	if code1 != 0 {
 		t.Fatalf("first run failed (exit %d)\nstdout: %s\nstderr: %s", code1, stdout1, stderr1)
@@ -361,7 +329,6 @@ func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 		t.Errorf("first run: expected 'info: building native interpreter' in stderr\nstderr: %s", stderr1)
 	}
 
-	// Second run: should hit the fingerprint cache and skip the build.
 	stdout2, stderr2, code2 := runNative()
 	if code2 != 0 {
 		t.Fatalf("second run failed (exit %d)\nstdout: %s\nstderr: %s", code2, stdout2, stderr2)
@@ -374,11 +341,9 @@ func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 	}
 }
 
-// runNativeCLICommandWithEnv runs balBin with args under the given working
-// directory and environment. It is like runCLICommand but accepts a custom
-// env slice outright, without the GOCOVERDIR/sandboxing logic
-// runCLICommandWithEnv (cli_integration_test.go) applies — this test already
-// isolates its project into a temp dir itself and manages its own env.
+// runNativeCLICommandWithEnv is like runCLICommand but takes a custom env
+// slice directly, skipping runCLICommandWithEnv's GOCOVERDIR/sandboxing
+// logic — callers here already isolate their project and manage their own env.
 func runNativeCLICommandWithEnv(t *testing.T, balBin, workDir string, args, env []string) (stdout, stderr string, exitCode int) {
 	t.Helper()
 	cmd := exec.Command(balBin, args...)
@@ -410,12 +375,9 @@ func runNativeCLICommandWithEnv(t *testing.T, balBin, workDir string, args, env 
 	return "", "", 0
 }
 
-// TestNativeGoSourceFS_MissingNativeDirDespiteGoPlatform covers a bala that
-// declares a go-platform (so findNativeGoBalaProjects would treat it as
-// requiring a native rebuild) but has no native/ directory at all — e.g. a
-// malformed or hand-edited bala. Constructed entirely in-memory (no new
-// checked-in fixture needed) by mirroring mockorg/nativepkg's real,
-// working file layout minus the native/ subdirectory.
+// TestNativeGoSourceFS_MissingNativeDirDespiteGoPlatform covers a
+// go-platform bala with no native/ directory (e.g. malformed/hand-edited).
+// Built in-memory, mirroring mockorg/nativepkg's layout minus native/.
 func TestNativeGoSourceFS_MissingNativeDirDespiteGoPlatform(t *testing.T) {
 	t.Parallel()
 	require := test_util.NewRequire(t)
@@ -466,11 +428,9 @@ version = "1.0.0"
 	}
 }
 
-// setupNativeTestFixtures copies the shared native-multi-org-v project and
-// its bala dependencies into fresh temp directories, returning the
-// central-cache-backed BAL_ENV root and the copied project directory —
-// mutable copies, so tests can safely modify them without touching the
-// checked-in fixtures.
+// setupNativeTestFixtures copies native-multi-org-v and its bala deps into
+// fresh temp dirs, returning the BAL_ENV root and project dir, so tests can
+// mutate them without touching the checked-in fixtures.
 func setupNativeTestFixtures(t *testing.T, repoRoot string) (balEnv, projectDir string) {
 	t.Helper()
 	tempHome := t.TempDir()
@@ -485,9 +445,8 @@ func setupNativeTestFixtures(t *testing.T, repoRoot string) (balEnv, projectDir 
 	return tempHome, tempProject
 }
 
-// envWithoutVars returns base with every entry whose key matches one of
-// names removed, so the caller can append its own value for that key
-// without relying on os/exec's undefined behavior for duplicate keys.
+// envWithoutVars returns base with entries matching any of names removed,
+// so the caller can safely append its own value for that key.
 func envWithoutVars(base []string, names ...string) []string {
 	filtered := make([]string, 0, len(base))
 	for _, e := range base {
@@ -505,14 +464,11 @@ func envWithoutVars(base []string, names ...string) []string {
 	return filtered
 }
 
-// TestNativeRunner_GoToolchainUnavailable covers a project with a native Go
-// dependency when the Go toolchain isn't on PATH: chooseNativeExecutor must
-// reject with a clear "require Go ... installed" error — and (this is what
-// motivated the test) that error must actually reach the user. bal run's
-// root command sets SilenceErrors (cobra never auto-prints a RunE error),
-// so every error path needs its own explicit print; execWithNativeRunner's
-// didn't have one until this test surfaced it as a real, silent-failure bug
-// (fixed in run.go by adding printRunError before returning).
+// TestNativeRunner_GoToolchainUnavailable covers a native-dependency
+// project when Go isn't on PATH: must fail with a clear "require Go ...
+// installed" error that actually reaches the user (cobra's SilenceErrors
+// means every error path needs its own explicit print — this test caught a
+// case that was missing one, fixed in run.go).
 func TestNativeRunner_GoToolchainUnavailable(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -521,9 +477,7 @@ func TestNativeRunner_GoToolchainUnavailable(t *testing.T) {
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
-	// A guaranteed-empty directory as PATH, so exec.LookPath("go") fails
-	// inside the child process without touching the real PATH this test
-	// itself runs under.
+	// Empty dir as PATH so exec.LookPath("go") fails in the child process only.
 	emptyPathDir := t.TempDir()
 	env := append(envWithoutVars(os.Environ(), "PATH", "Path"),
 		"BAL_ENV="+tempHome,
@@ -543,17 +497,43 @@ func TestNativeRunner_GoToolchainUnavailable(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_InterpreterSourceUnresolvable covers a project with a
-// native Go dependency when neither BALLERINA_SRC nor the embedded-source
-// cache extraction can succeed. The dev-build extraction path
-// (interpsrc.ExtractTo for Version=="dev") ignores BAL_ENV entirely and
-// extracts under os.TempDir() instead — so blocking BAL_ENV wouldn't touch
-// it (and would also break package resolution, which shares BAL_ENV for its
-// central cache). Redirecting TMPDIR/TMP/TEMP to a path with a blocking
-// regular file at the expected extraction location breaks only the
-// interpreter-source cache, in a way isolated to this test's own child
-// process — never touching the real, shared system temp directory other
-// parallel tests rely on.
+// TestBalBuildNativeDependencyGoToolchainUnavailable is
+// TestNativeRunner_GoToolchainUnavailable's counterpart for `bal build`:
+// buildNativeStub must fail the same way (chooseNativeExecutor rejecting an
+// unavailable toolchain) rather than only being covered for bal run's
+// execWithNativeRunner path.
+func TestBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T) {
+	t.Parallel()
+	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
+
+	emptyPathDir := t.TempDir()
+	env := append(envWithoutVars(os.Environ(), "PATH", "Path"),
+		"BAL_ENV="+tempHome,
+		"BALLERINA_SRC="+repoRoot,
+		"PATH="+emptyPathDir,
+	)
+	if coverDir != "" {
+		env = append(env, "GOCOVERDIR="+coverDir)
+	}
+
+	_, stderr, code := runNativeCLICommandWithEnv(t, balBin, repoRoot, []string{"build", tempProject}, env)
+	if code == 0 {
+		t.Fatalf("expected a non-zero exit code when the Go toolchain is unavailable, got 0\nstderr: %s", stderr)
+	}
+	if !strings.Contains(stderr, "require Go") || !strings.Contains(stderr, "installed") {
+		t.Errorf("expected a clear 'require Go ... installed' error, got:\n%s", stderr)
+	}
+}
+
+// TestNativeRunner_InterpreterSourceUnresolvable covers a native-dependency
+// project when the embedded-source cache extraction can't succeed. The
+// dev-build extraction path ignores BAL_ENV and uses os.TempDir(), so this
+// redirects TMPDIR/TMP/TEMP (in the child process only) to a path blocked by
+// a regular file, without touching the real shared temp dir.
 func TestNativeRunner_InterpreterSourceUnresolvable(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -586,11 +566,8 @@ func TestNativeRunner_InterpreterSourceUnresolvable(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_OutputPathBlocked covers a pre-existing regular file
-// blocking the directory LocalExecutor needs to create for its output
-// binary — e.g. leftover state from something else having created a file
-// named "target" in the project root. os.MkdirAll(filepath.Dir(outBin))
-// must fail cleanly rather than silently writing somewhere unexpected.
+// TestNativeRunner_OutputPathBlocked covers a regular file blocking the
+// output directory LocalExecutor needs to create — must fail cleanly.
 func TestNativeRunner_OutputPathBlocked(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -618,11 +595,9 @@ func TestNativeRunner_OutputPathBlocked(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_FingerprintInvalidatesOnSourceChange covers the
-// correctness counterpart to the cache-hit tests: modifying a native
-// dependency's Go source between two runs must invalidate the fingerprint
-// and trigger a rebuild — not silently serve stale output compiled from the
-// old source.
+// TestNativeRunner_FingerprintInvalidatesOnSourceChange checks that editing
+// a native dependency's Go source invalidates the fingerprint and triggers
+// a rebuild, instead of serving stale output.
 func TestNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -649,8 +624,7 @@ func TestNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T) {
 		t.Fatalf("expected a cold build, got:\n%s", stderr1)
 	}
 
-	// Modify the cached copy of mockorg/nativepkg's native source — a real
-	// dependency change, which must invalidate the fingerprint.
+	// Modify the cached native source — must invalidate the fingerprint.
 	const wantOriginal, wantModified = "hello from native Go", "hello from MODIFIED native Go"
 	nativeGoFile := filepath.Join(centralCache, "mockorg", "nativepkg", "1.0.0", "go1.26", "native", "nativepkg.go")
 	original := mustReadFileBytes(t, nativeGoFile)
@@ -662,7 +636,6 @@ func TestNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T) {
 		t.Fatalf("writing modified native source: %v", err)
 	}
 
-	// Second run: must detect the change and rebuild, not serve stale output.
 	stdout2, stderr2, code2 := run()
 	if code2 != 0 {
 		t.Fatalf("second run failed (exit %d): %s", code2, stderr2)

@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "pkga"
+version = "not-a-valid-semver"

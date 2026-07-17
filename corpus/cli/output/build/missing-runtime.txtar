@@ -1,5 +1,8 @@
 -- stdout --
 -- stderr --
-runner stub not found
+ballerina runtime binary for
+not found at
+your bal installation may be incomplete
+try reinstalling bal
 -- exitcode --
 1

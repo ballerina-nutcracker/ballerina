@@ -21,7 +21,6 @@ package nativeexec
 
 import (
 	"context"
-	"errors"
 	"io"
 	"io/fs"
 	"os"
@@ -50,10 +49,6 @@ func AppendNativeMode(env []string) []string {
 	return append(append([]string(nil), env...), envNativeMode+"=1")
 }
 
-// ErrNativeUnsupported is returned when native Go packages cannot be built in
-// the current environment (e.g., WASM playground, serverless runtimes).
-var ErrNativeUnsupported = errors.New("native Go packages are not supported in this environment")
-
 // NativeExecutor builds a custom interpreter binary that includes Go-native
 // function implementations from external Ballerina packages and returns a Runner
 // that can re-execute the program with those implementations registered.
@@ -65,11 +60,9 @@ type NativeExecutor interface {
 	// sources described by req.Payload. Returns a Runner whose Run method
 	// re-executes the current program via the compiled binary.
 	Prepare(ctx context.Context, req NativeRunnerRequest) (Runner, error)
-	// Build compiles (or reuses a cached) binary that embeds the native
-	// sources described by req.Payloads and returns its path, without
-	// wrapping it for re-exec. Used by bal build, which needs a bare
-	// artifact path to hand to executable.Pack rather than a Runner that
-	// takes over the process.
+	// Build is like Prepare but returns a bare binary path instead of a
+	// Runner — for bal build, which hands that path to executable.Pack
+	// rather than re-executing into it.
 	Build(ctx context.Context, req NativeRunnerRequest) (string, error)
 }
 
@@ -100,12 +93,9 @@ type NativeRunnerRequest struct {
 	// Env is the environment for the re-executed binary (typically os.Environ()
 	// with BAL_NATIVE=1 appended).
 	Env []string
-	// TargetOS and TargetArch cross-compile the native interpreter for a
-	// platform other than the host. Empty means build for the host — the
-	// same convention Go's own GOOS/GOARCH environment variables use, and
-	// what bal run always leaves them as (it re-executes the result on the
-	// same machine, so cross-compiling would produce a binary it can't run).
-	// bal build sets these from --target-os/--target-arch.
+	// TargetOS/TargetArch cross-compile for a platform other than the host;
+	// empty means build for the host (like GOOS/GOARCH). bal run always
+	// leaves these empty; bal build sets them from --target-os/--target-arch.
 	TargetOS   string
 	TargetArch string
 }
@@ -128,19 +118,3 @@ type GoSourcePayload struct {
 
 func (p *GoSourcePayload) FS() fs.FS            { return p.GoFiles }
 func (p *GoSourcePayload) GoModuleName() string { return p.Module }
-
-// Noop is a NativeExecutor that is always unavailable. It is the default for
-// environments where native builds are not supported.
-type Noop struct{}
-
-var _ NativeExecutor = Noop{}
-
-func (Noop) Available() bool { return false }
-
-func (Noop) Prepare(_ context.Context, _ NativeRunnerRequest) (Runner, error) {
-	return nil, ErrNativeUnsupported
-}
-
-func (Noop) Build(_ context.Context, _ NativeRunnerRequest) (string, error) {
-	return "", ErrNativeUnsupported
-}

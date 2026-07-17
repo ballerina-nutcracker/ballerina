@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-is not a package directory or a .bal file
+failed to load package
 -- exitcode --
 1

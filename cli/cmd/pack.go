@@ -191,7 +191,7 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 
 	project := result.Project()
 	if project.Kind() == projects.ProjectKindWorkspace {
-		return packError(stderr, "provided path %q is a workspace; expected a package directory", path)
+		return packError(stderr, "%q is a workspace; run bal pack <package-path> to pack a specific package within it", path)
 	}
 
 	pkg := project.CurrentPackage()

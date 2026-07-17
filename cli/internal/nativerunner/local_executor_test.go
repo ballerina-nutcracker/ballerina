@@ -18,8 +18,11 @@ package nativerunner
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -44,12 +47,75 @@ func TestVersionAtLeast(t *testing.T) {
 		{"1.0", "2.0", false},
 		{"1.26rc1", "1.26", false},
 		{"1.26beta2", "1.26", false},
+		{"1.26", "1.26rc1", false},
 	}
 	for _, tc := range cases {
 		got := versionAtLeast(tc.a, tc.b)
 		if got != tc.want {
 			t.Errorf("versionAtLeast(%q, %q) = %v, want %v", tc.a, tc.b, got, tc.want)
 		}
+	}
+}
+
+// TestGoVersionAtLeast_ExecFails covers goExe not being runnable at all
+// (e.g. a stale cached path to a binary that's since been removed).
+func TestGoVersionAtLeast_ExecFails(t *testing.T) {
+	t.Parallel()
+	if goVersionAtLeast(filepath.Join(t.TempDir(), "no-such-go-binary"), "1.26") {
+		t.Error("expected false when the go binary can't be executed")
+	}
+}
+
+// writeFakeGoStub writes a fake "go" executable into dir that prints output
+// (unquoted) when run as `<stub> version`, on both POSIX shells and Windows
+// cmd.exe — name matches what exec.LookPath("go") resolves on each OS
+// (PATHEXT includes .bat on Windows), so it also works when found via PATH.
+func writeFakeGoStub(t *testing.T, dir, output string) string {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		path := filepath.Join(dir, "go.bat")
+		mustWriteFile(t, path, "@echo off\r\necho "+output+"\r\n")
+		return path
+	}
+	path := filepath.Join(dir, "go")
+	mustWriteFile(t, path, "#!/bin/sh\necho "+output+"\n")
+	if err := os.Chmod(path, 0o755); err != nil {
+		t.Fatalf("chmod fake go stub: %v", err)
+	}
+	return path
+}
+
+// TestGoVersionAtLeast_MalformedOutput covers a `go version` invocation
+// that runs but doesn't print the expected "go version goX.Y os/arch" shape.
+func TestGoVersionAtLeast_MalformedOutput(t *testing.T) {
+	t.Parallel()
+	fakeGo := writeFakeGoStub(t, t.TempDir(), "garbage")
+	if goVersionAtLeast(fakeGo, "1.26") {
+		t.Error("expected false for malformed `go version` output")
+	}
+}
+
+// TestAvailable_NoGoOnPath covers the environment having no usable go
+// toolchain at all — Available must report false, not error.
+func TestAvailable_NoGoOnPath(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	e := New("/interp/root", "/out/bal")
+	if e.Available() {
+		t.Error("expected Available() to be false when go is not on PATH")
+	}
+}
+
+// TestAvailable_GoTooOld covers a go on PATH that's older than
+// MinGoVersion — Available must report false, distinct from go being
+// entirely absent.
+func TestAvailable_GoTooOld(t *testing.T) {
+	dir := t.TempDir()
+	writeFakeGoStub(t, dir, "go version go1.20.0 linux/amd64")
+	t.Setenv("PATH", dir)
+
+	e := New("/interp/root", "/out/bal")
+	if e.Available() {
+		t.Error("expected Available() to be false when go is older than MinGoVersion")
 	}
 }
 
@@ -124,6 +190,65 @@ func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
 	}
 }
 
+// TestWritePatchedGoMod_QuotesPathsWithSpaces covers a replace target
+// containing a space (e.g. a macOS home directory like "/Users/John Doe"):
+// the generated go.mod must quote it, or "go mod edit" fails to parse the
+// file at all.
+func TestWritePatchedGoMod_QuotesPathsWithSpaces(t *testing.T) {
+	t.Parallel()
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("go toolchain not available")
+	}
+
+	interpRoot := t.TempDir()
+	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
+
+	// tmpDir itself contains a space, matching pkgDir (tmpDir/<moduleDirName>).
+	tmpDir := filepath.Join(t.TempDir(), "with space")
+	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
+		t.Fatalf("creating tmpDir with a space: %v", err)
+	}
+	payloads := []nativeexec.NativePayload{
+		&nativeexec.GoSourcePayload{Module: "example.com/mypkg"},
+	}
+
+	patchedModFile, err := writePatchedGoMod(tmpDir, interpRoot, payloads, tmpDir)
+	if err != nil {
+		t.Fatalf("writePatchedGoMod: %v", err)
+	}
+
+	cmd := exec.Command("go", "mod", "edit", "-json", patchedModFile)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("go mod edit -json failed to parse the generated go.mod: %v\n%s", err, out)
+	}
+
+	// Decode rather than substring-match: the JSON encoding escapes
+	// backslashes (Windows paths), so a raw string.Contains against an
+	// unescaped path never matches there even when the parsed value is correct.
+	var modFile struct {
+		Replace []struct {
+			Old struct{ Path string }
+			New struct{ Path string }
+		}
+	}
+	if err := json.Unmarshal(out, &modFile); err != nil {
+		t.Fatalf("parsing go mod edit -json output: %v\n%s", err, out)
+	}
+	var gotPath string
+	for _, r := range modFile.Replace {
+		if r.Old.Path == "example.com/mypkg" {
+			gotPath = r.New.Path
+		}
+	}
+
+	wantPath := filepath.Join(tmpDir, moduleDirName("example.com/mypkg"))
+	if gotPath != wantPath {
+		t.Errorf("expected the parsed replace target to resolve to %q, got %q (full output:\n%s)", wantPath, gotPath, out)
+	}
+}
+
 func TestWritePatchedGoMod_MultiplePayloads(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
@@ -182,10 +307,8 @@ func TestWritePatchedGoMod_MissingGoMod(t *testing.T) {
 	}
 }
 
-// TestNew_DefaultsToCliCmdTarget mirrors bal run's use of New: it must target
-// the full CLI (cli/cmd), matching the pre-existing hardcoded behavior New
-// replaced, so bal run's re-exec-into-the-full-binary flow is unaffected by
-// the targetPackage parameterization.
+// TestNew_DefaultsToCliCmdTarget checks New targets the full CLI (cli/cmd),
+// matching bal run's re-exec use case.
 func TestNew_DefaultsToCliCmdTarget(t *testing.T) {
 	t.Parallel()
 	e := New("/interp/root", "/out/bal")
@@ -194,8 +317,8 @@ func TestNew_DefaultsToCliCmdTarget(t *testing.T) {
 	}
 }
 
-// TestNewForTarget_SetsTargetPackage mirrors bal build's use: it must target
-// cli/cmd/balrt (the slim stub) rather than the full CLI.
+// TestNewForTarget_SetsTargetPackage checks it targets the slim stub
+// (cli/cmd/balrt) rather than the full CLI, matching bal build's use.
 func TestNewForTarget_SetsTargetPackage(t *testing.T) {
 	t.Parallel()
 	e := NewForTarget("/interp/root", "/out/balrt", "cli/cmd/balrt")
@@ -204,8 +327,8 @@ func TestNewForTarget_SetsTargetPackage(t *testing.T) {
 	}
 }
 
-// newFakeInterpreterRoot creates a temp directory with a minimal go.mod/go.sum,
-// enough for localFingerprint to hash without a real interpreter checkout.
+// newFakeInterpreterRoot creates a minimal go.mod/go.sum, enough for
+// localFingerprint without a real interpreter checkout.
 func newFakeInterpreterRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -214,12 +337,38 @@ func newFakeInterpreterRoot(t *testing.T) string {
 	return root
 }
 
-// TestLoadCachedBinary mirrors the real-world case of a repeated bal
-// build/run on an unchanged native dependency (cache hit — skip the
-// toolchain build entirely) versus a changed dependency, a corrupted
-// fingerprint file, or a binary deleted out from under a still-valid
-// fingerprint (all cache misses — must fall back to a real rebuild rather
-// than serve a stale or missing binary).
+// TestLocalFingerprint_DiffersByTargetPackage covers two identical builds
+// (same interpreter root, payloads, Go version, platform) that differ only
+// in targetPackage — e.g. bal run's "cli/cmd" vs bal build's
+// "cli/cmd/balrt" — which must produce different fingerprints, so a cache
+// hit can never reuse a binary built for the wrong target package.
+func TestLocalFingerprint_DiffersByTargetPackage(t *testing.T) {
+	t.Parallel()
+	interpRoot := newFakeInterpreterRoot(t)
+	payloads := []nativeexec.NativePayload{
+		&nativeexec.GoSourcePayload{
+			GoFiles: fstest.MapFS{"pkg.go": {Data: []byte("package pkg\n")}},
+			Module:  "example.com/pkg",
+		},
+	}
+
+	fpA, err := localFingerprint(interpRoot, "cli/cmd", payloads, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Fatalf("localFingerprint (cli/cmd): %v", err)
+	}
+	fpB, err := localFingerprint(interpRoot, "cli/cmd/balrt", payloads, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Fatalf("localFingerprint (cli/cmd/balrt): %v", err)
+	}
+	if fpA == fpB {
+		t.Fatal("expected different fingerprints for different target packages, got the same one")
+	}
+}
+
+// TestLoadCachedBinary covers a cache hit (unchanged dependency) versus
+// misses (changed dependency, corrupted fingerprint, or a binary deleted
+// out from under a still-valid fingerprint) — misses must fall back to a
+// rebuild, not serve stale/missing output.
 func TestLoadCachedBinary(t *testing.T) {
 	t.Parallel()
 	interpRoot := newFakeInterpreterRoot(t)
@@ -229,7 +378,7 @@ func TestLoadCachedBinary(t *testing.T) {
 			Module:  "example.com/pkg",
 		},
 	}
-	fingerprint, err := localFingerprint(interpRoot, payloads, runtime.GOOS, runtime.GOARCH)
+	fingerprint, err := localFingerprint(interpRoot, "cli/cmd/balrt", payloads, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		t.Fatalf("localFingerprint: %v", err)
 	}
@@ -282,49 +431,13 @@ func TestLoadCachedBinary(t *testing.T) {
 	})
 }
 
-// TestLocalFingerprint_DiffersByTargetPlatform mirrors cross-compiling the
-// same native dependency for two different targets from the same project:
-// each target must get its own fingerprint, so a build for one platform is
-// never mistaken for a cache hit on another (which would serve a binary of
-// the wrong architecture).
-func TestLocalFingerprint_DiffersByTargetPlatform(t *testing.T) {
-	t.Parallel()
-	interpRoot := newFakeInterpreterRoot(t)
-	payloads := []nativeexec.NativePayload{
-		&nativeexec.GoSourcePayload{
-			GoFiles: fstest.MapFS{"pkg.go": {Data: []byte("package pkg\n")}},
-			Module:  "example.com/pkg",
-		},
-	}
+// Fingerprint-differs-by-target-platform coverage (different targets don't
+// collide, same target is stable/cached) moved to a corpus-level test
+// against the real bal build CLI: TestBalBuildNativeDependencyCacheByTarget
+// (corpus/cli_integration_test.go).
 
-	linuxAmd64, err := localFingerprint(interpRoot, payloads, "linux", "amd64")
-	if err != nil {
-		t.Fatalf("localFingerprint(linux/amd64): %v", err)
-	}
-	darwinArm64, err := localFingerprint(interpRoot, payloads, "darwin", "arm64")
-	if err != nil {
-		t.Fatalf("localFingerprint(darwin/arm64): %v", err)
-	}
-	if linuxAmd64 == darwinArm64 {
-		t.Error("expected different fingerprints for different target platforms, got the same one")
-	}
-
-	// Re-requesting the same target must be stable (deterministic), or the
-	// cache would never hit even for an unchanged target.
-	linuxAmd64Again, err := localFingerprint(interpRoot, payloads, "linux", "amd64")
-	if err != nil {
-		t.Fatalf("localFingerprint(linux/amd64) again: %v", err)
-	}
-	if linuxAmd64 != linuxAmd64Again {
-		t.Error("expected the same target platform to produce a stable fingerprint")
-	}
-}
-
-// TestCrossCompileEnv verifies the go build subprocess environment
-// buildOrReuse constructs for a target platform: it must set exactly one
-// GOOS/GOARCH/CGO_ENABLED each (not append duplicates on top of whatever the
-// parent process's environment already had), so os/exec's undefined
-// behavior for duplicate keys never comes into play.
+// TestCrossCompileEnv checks the build env has exactly one
+// GOOS/GOARCH/CGO_ENABLED each, not duplicates on top of the parent env.
 func TestCrossCompileEnv(t *testing.T) {
 	t.Parallel()
 	env := crossCompileEnv("linux", "amd64")
@@ -362,11 +475,8 @@ func TestCrossCompileEnv(t *testing.T) {
 }
 
 // TestBuild_CacheHit_ReturnsCachedPathNoToolchain and
-// TestPrepare_CacheHit_EmptyTmpDir exercise Build/Prepare's fast path (a
-// pre-seeded, matching fingerprint) without invoking the real Go toolchain —
-// a genuine cold build is covered at the corpus level (too slow/
-// integration-shaped for a unit test, matching this file's existing
-// precedent for writeNativeFiles/writePatchedGoMod).
+// TestPrepare_CacheHit_EmptyTmpDir exercise the cache-hit fast path without
+// invoking the real toolchain; a cold build is covered at the corpus level.
 func TestBuild_CacheHit_ReturnsCachedPathNoToolchain(t *testing.T) {
 	t.Parallel()
 	interpRoot := newFakeInterpreterRoot(t)
@@ -376,7 +486,7 @@ func TestBuild_CacheHit_ReturnsCachedPathNoToolchain(t *testing.T) {
 			Module:  "example.com/pkg",
 		},
 	}
-	fingerprint, err := localFingerprint(interpRoot, payloads, runtime.GOOS, runtime.GOARCH)
+	fingerprint, err := localFingerprint(interpRoot, "cli/cmd/balrt", payloads, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		t.Fatalf("localFingerprint: %v", err)
 	}
@@ -404,7 +514,7 @@ func TestPrepare_CacheHit_EmptyTmpDir(t *testing.T) {
 			Module:  "example.com/pkg",
 		},
 	}
-	fingerprint, err := localFingerprint(interpRoot, payloads, runtime.GOOS, runtime.GOARCH)
+	fingerprint, err := localFingerprint(interpRoot, "cli/cmd", payloads, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		t.Fatalf("localFingerprint: %v", err)
 	}
@@ -431,6 +541,126 @@ func TestPrepare_CacheHit_EmptyTmpDir(t *testing.T) {
 	}
 	if err := local.Close(); err != nil {
 		t.Errorf("Close on a cache-hit runner should be a no-op, got: %v", err)
+	}
+}
+
+// TestBuildOrReuse_TempDirCreationFails covers os.MkdirTemp itself failing
+// (e.g. TMPDIR pointing at a read-only or missing directory) — must surface
+// a clear error rather than a nil-dir panic downstream.
+func TestBuildOrReuse_TempDirCreationFails(t *testing.T) {
+	interpRoot := newFakeInterpreterRoot(t)
+	blockedTMPDIR := filepath.Join(t.TempDir(), "no-such-tmpdir")
+	t.Setenv("TMPDIR", blockedTMPDIR) // consulted by os.TempDir on unix
+	t.Setenv("TMP", blockedTMPDIR)    // consulted by os.TempDir on windows
+
+	e := NewForTarget(interpRoot, filepath.Join(t.TempDir(), "out"), "cli/cmd/balrt")
+	payloads := []nativeexec.NativePayload{
+		&nativeexec.GoSourcePayload{
+			GoFiles: fstest.MapFS{"pkg.go": {Data: []byte("package pkg\n")}},
+			Module:  "example.com/pkg",
+		},
+	}
+	_, err := e.Build(context.Background(), nativeexec.NativeRunnerRequest{Payloads: payloads})
+	if err == nil {
+		t.Fatal("expected an error when the temp bundle dir can't be created")
+	}
+	if !strings.Contains(err.Error(), "creating temp bundle dir") {
+		t.Errorf("expected a 'creating temp bundle dir' error, got: %v", err)
+	}
+}
+
+// TestBuildOrReuse_OutputDirBlocked covers the output binary's parent
+// directory being unable to be created (a regular file sits where a
+// directory component is needed).
+func TestBuildOrReuse_OutputDirBlocked(t *testing.T) {
+	t.Parallel()
+	interpRoot := newFakeInterpreterRoot(t)
+	blockingFile := filepath.Join(t.TempDir(), "blocker")
+	mustWriteFile(t, blockingFile, "not a directory")
+	outBin := filepath.Join(blockingFile, "bin", "balrt-native")
+
+	e := NewForTarget(interpRoot, outBin, "cli/cmd/balrt")
+	payloads := []nativeexec.NativePayload{
+		&nativeexec.GoSourcePayload{
+			GoFiles: fstest.MapFS{"pkg.go": {Data: []byte("package pkg\n")}},
+			Module:  "example.com/pkg",
+		},
+	}
+	_, err := e.Build(context.Background(), nativeexec.NativeRunnerRequest{Payloads: payloads})
+	if err == nil {
+		t.Fatal("expected an error when the output directory can't be created")
+	}
+	if !strings.Contains(err.Error(), "creating output directory") {
+		t.Errorf("expected a 'creating output directory' error, got: %v", err)
+	}
+}
+
+// errWriter always fails, simulating a broken Stderr sink.
+type errWriter struct{}
+
+func (errWriter) Write([]byte) (int, error) { return 0, errors.New("write failed") }
+
+// TestBuildOrReuse_WriteBuildStatusFails covers the "info: building native
+// interpreter" status line itself failing to write — must surface as a
+// clear error and bail out before ever invoking the go toolchain.
+func TestBuildOrReuse_WriteBuildStatusFails(t *testing.T) {
+	t.Parallel()
+	interpRoot := newFakeInterpreterRoot(t)
+	e := NewForTarget(interpRoot, filepath.Join(t.TempDir(), "out"), "cli/cmd/balrt")
+	payloads := []nativeexec.NativePayload{
+		&nativeexec.GoSourcePayload{
+			GoFiles: fstest.MapFS{"pkg.go": {Data: []byte("package pkg\n")}},
+			Module:  "example.com/pkg",
+		},
+	}
+	_, err := e.Build(context.Background(), nativeexec.NativeRunnerRequest{
+		Payloads: payloads,
+		Stderr:   errWriter{},
+	})
+	if err == nil {
+		t.Fatal("expected an error when writing the build status line fails")
+	}
+	if !strings.Contains(err.Error(), "writing build status") {
+		t.Errorf("expected a 'writing build status' error, got: %v", err)
+	}
+}
+
+// TestLocalRunner_Run_InvalidBinaryPath covers the non-ExitError failure
+// path: a binaryPath that can't be executed at all (not merely a nonzero
+// exit) must surface a wrapped "executing native interpreter" error.
+func TestLocalRunner_Run_InvalidBinaryPath(t *testing.T) {
+	t.Parallel()
+	r := &localRunner{binaryPath: filepath.Join(t.TempDir(), "does-not-exist")}
+	_, err := r.Run(context.Background())
+	if err == nil {
+		t.Fatal("expected an error for a nonexistent binary path")
+	}
+	if !strings.Contains(err.Error(), "executing native interpreter") {
+		t.Errorf("expected an 'executing native interpreter' error, got: %v", err)
+	}
+}
+
+// TestLocalRunner_Close_RemoveFails covers cleanup itself failing (e.g. a
+// file inside tmpDir left without write permission on its parent) — Close
+// must propagate that error rather than silently swallowing it.
+func TestLocalRunner_Close_RemoveFails(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX permission bits don't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores POSIX permission bits, so removal wouldn't actually fail")
+	}
+	tmpDir := t.TempDir()
+	mustWriteFile(t, filepath.Join(tmpDir, "leftover"), "data")
+	if err := os.Chmod(tmpDir, 0o500); err != nil {
+		t.Fatalf("chmod tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chmod(tmpDir, 0o700) }() // let t.TempDir() clean up
+
+	r := &localRunner{tmpDir: tmpDir}
+	if err := r.Close(); err == nil {
+		t.Error("expected Close to propagate the RemoveAll failure")
 	}
 }
 
@@ -463,14 +693,10 @@ func mustReadFile(t *testing.T, path string) string {
 	return string(data)
 }
 
-// TestBuild_CompileErrorInNativeSource covers a native Go dependency whose
-// source fails to compile. Unlike this file's other tests, it uses the real
-// repo as interpreterRoot (not newFakeInterpreterRoot) — a fake minimal
-// go.mod can't compile cli/cmd/balrt at all, so exercising a genuine build
-// failure needs a genuine buildable module. The failure must surface as a
-// clear "building native interpreter" error, not a panic or a hang,
-// regardless of whether it's triggered via bal run or bal build (both
-// funnel through this same Build method).
+// TestBuild_CompileErrorInNativeSource covers a native Go dependency that
+// fails to compile — must surface as a clear "building native interpreter"
+// error, not a panic or hang. Uses the real repo as interpreterRoot (a fake
+// minimal go.mod can't compile cli/cmd/balrt).
 func TestBuild_CompileErrorInNativeSource(t *testing.T) {
 	t.Parallel()
 	repoRoot, err := filepath.Abs("../../..")

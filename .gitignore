@@ -32,12 +32,7 @@ go.work.sum
 /bal-debug
 /balrt
 
-# bal build/pack output directories (projects.TargetDir); already-tracked
-# fixture .bala files under testdata/**/target/ are unaffected since
-# .gitignore does not untrack files already in the index.
-target/
-
-# Build outputs written by `bal run`/`bal pack` (mirrors Ballerina's target/ convention)
+# bal build/pack output directories (projects.TargetDir), at any depth;
 **/target/
 
 # Generated test data files (run ./init.sh to regenerate).

@@ -17,9 +17,12 @@
 package executable
 
 import (
+	"bytes"
 	"encoding/binary"
+	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -28,10 +31,8 @@ import (
 	"ballerina-lang-go/semtypes"
 )
 
-// compileMinimalPackage compiles a tiny, import-free Ballerina package and
-// returns its BIR packages and type environment — real compiler output, not
-// hand-built structs, so these tests exercise Pack/TryLoad against the same
-// shape of data bal build actually produces.
+// compileMinimalPackage compiles a tiny package and returns its BIR
+// packages and type env — real compiler output, not hand-built structs.
 func compileMinimalPackage(t *testing.T) ([]*bir.BIRPackage, semtypes.Env) {
 	t.Helper()
 
@@ -69,9 +70,8 @@ func compileMinimalPackage(t *testing.T) ([]*bir.BIRPackage, semtypes.Env) {
 	return birPkgs, result.Project().Environment().TypeEnv()
 }
 
-// writeStub writes arbitrary content to serve as a "stub" for Pack — the
-// tests only care about the trailer/payload framing Pack adds, not about
-// having a real bal/balrt binary underneath.
+// writeStub writes arbitrary content as a "stub" for Pack — tests only
+// care about the trailer/payload framing, not a real bal/balrt binary.
 func writeStub(t *testing.T, content string) string {
 	t.Helper()
 	stubPath := filepath.Join(t.TempDir(), "stub")
@@ -81,10 +81,8 @@ func writeStub(t *testing.T, content string) string {
 	return stubPath
 }
 
-// TestBuildAndRun mirrors a user's first-ever build of a new project: the
-// output directory doesn't exist yet, and running bal build should produce a
-// working executable in one step. Covers both the round-trip guarantee
-// (Pack then read back the same program) and parent-directory creation.
+// TestBuildAndRun covers a first build into a nonexistent output directory:
+// Pack must create parent dirs, and the packed program must read back intact.
 func TestBuildAndRun(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -98,7 +96,9 @@ func TestBuildAndRun(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected output at %s (parent dirs should have been created): %v", outPath, err)
 	}
-	if info.Mode()&0o111 == 0 {
+	// Windows has no POSIX execute bit — os.FileMode there only ever reflects
+	// the read-only attribute (0666/0444), regardless of what Chmod requested.
+	if runtime.GOOS != "windows" && info.Mode()&0o111 == 0 {
 		t.Fatalf("expected output to be executable, got mode %v", info.Mode())
 	}
 
@@ -116,10 +116,9 @@ func TestBuildAndRun(t *testing.T) {
 	}
 }
 
-// TestEditRebuildRun mirrors the everyday edit-build-run loop: bal build is
-// run twice against the same output path (a user editing code and
-// rebuilding). Regression test for the O_TRUNC-reuses-inode case, where the
-// second build could silently lose its executable bit.
+// TestEditRebuildRun packs the same output path twice (edit-rebuild).
+// Regression test: O_TRUNC reuses the inode, so a rebuild could silently
+// lose its executable bit.
 func TestEditRebuildRun(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -128,7 +127,7 @@ func TestEditRebuildRun(t *testing.T) {
 	if err := Pack(stubPath, birPkgs, tyEnv, outPath); err != nil {
 		t.Fatalf("first Pack: %v", err)
 	}
-	if err := os.Chmod(outPath, 0o644); err != nil { // simulate a non-executable pre-existing file at that inode
+	if err := os.Chmod(outPath, 0o644); err != nil { // simulate a stale non-executable file at that inode
 		t.Fatalf("chmod: %v", err)
 	}
 	if err := Pack(stubPath, birPkgs, tyEnv, outPath); err != nil {
@@ -139,15 +138,14 @@ func TestEditRebuildRun(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat after rebuild: %v", err)
 	}
-	if info.Mode()&0o111 == 0 {
+	// See TestBuildAndRun: Windows has no POSIX execute bit to check.
+	if runtime.GOOS != "windows" && info.Mode()&0o111 == 0 {
 		t.Fatalf("expected output to still be executable after rebuild, got mode %v", info.Mode())
 	}
 }
 
-// TestCorruptedCopy mirrors a build artifact that got mangled in transit
-// (e.g. a text-mode file transfer altering binary content) — the trailer's
-// magic marker no longer matches. This must be treated as "not a compiled
-// program" rather than an error, same as any other plain binary.
+// TestCorruptedCopy covers a mangled trailer magic marker (e.g. a
+// text-mode transfer) — must be treated as "not a compiled program", not an error.
 func TestCorruptedCopy(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -177,10 +175,8 @@ func TestCorruptedCopy(t *testing.T) {
 	}
 }
 
-// TestCorruptedOffset mirrors a build artifact whose own bytes got corrupted
-// (a flaky disk or storage error hitting the trailer specifically) so the
-// payload offset it records is invalid. Must fail with a clear error, not
-// crash or attempt a huge/negative allocation.
+// TestCorruptedOffset covers a trailer whose recorded payload offset is
+// invalid — must fail cleanly, not crash or attempt a huge allocation.
 func TestCorruptedOffset(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -193,9 +189,8 @@ func TestCorruptedOffset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading packed file: %v", err)
 	}
-	// Overwrite the offset (first 8 bytes of the trailer) with a value far
-	// beyond the file's size, leaving the magic intact so TryLoad proceeds
-	// past the "is this a compiled program" check into the offset guard.
+	// Offset far beyond the file size, magic left intact, so tryLoadFrom
+	// reaches the offset guard rather than bailing out early.
 	binary.LittleEndian.PutUint64(data[len(data)-trailerSize:], ^uint64(0))
 	if err := os.WriteFile(outPath, data, 0o755); err != nil {
 		t.Fatalf("writing corrupted file: %v", err)
@@ -207,12 +202,9 @@ func TestCorruptedOffset(t *testing.T) {
 	}
 }
 
-// TestInterruptedTransfer mirrors a file transfer that was cut off partway
-// (e.g. a dropped scp connection uploading to a deployment target): the
-// trailer is intact and points at a real offset, but the payload bytes
-// before it are shorter than what the payload's own internal structure
-// declares. Must fail with a clear "truncated" error, not misinterpret
-// leftover/partial bytes as a different, corrupt program.
+// TestInterruptedTransfer covers a truncated payload with an intact
+// trailer — must fail with a clear "truncated" error, not misread
+// leftover bytes as a different program.
 func TestInterruptedTransfer(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -232,10 +224,8 @@ func TestInterruptedTransfer(t *testing.T) {
 	if payloadEnd-int(payloadOffset) < 8 {
 		t.Fatalf("payload too small to truncate meaningfully in this test")
 	}
-	// Drop the last few bytes of the payload (simulating a transfer cut off
-	// partway) while keeping the offset and magic intact, so tryLoadFrom
-	// gets past the outer checks and into unmarshalPayload's own truncation
-	// detection.
+	// Drop the last few payload bytes; keep offset and magic intact so
+	// tryLoadFrom reaches unmarshalPayload's own truncation check.
 	truncatedPayloadEnd := payloadEnd - 4
 	var truncated []byte
 	truncated = append(truncated, data[:truncatedPayloadEnd]...)
@@ -254,21 +244,43 @@ func TestInterruptedTransfer(t *testing.T) {
 	}
 }
 
-// TestNativeDependencyRejected mirrors the current, real behavior for any
-// package with native Go dependencies (once that detection is wired into
-// bal build) — ResolveStub must reject a non-empty Fingerprint with a clear
-// error rather than mishandling it, since the toolchain-based build path
-// isn't implemented yet.
-func TestNativeDependencyRejected(t *testing.T) {
-	_, err := ResolveStub(Key{Fingerprint: "deadbeef"}, t.TempDir(), "")
-	if err == nil {
-		t.Fatalf("expected an error for a non-empty Fingerprint, got none")
+// TestMarshalPayload_RejectsEmptyPackages covers marshaling zero BIR
+// packages — Run would initialize nothing, so this must fail up front.
+func TestMarshalPayload_RejectsEmptyPackages(t *testing.T) {
+	_, tyEnv := compileMinimalPackage(t)
+	if _, err := marshalPayload(nil, tyEnv); err == nil {
+		t.Fatal("expected an error when marshaling zero BIR packages")
 	}
 }
 
-// TestMissingStub mirrors the stub file having been deleted between
-// ResolveStub resolving its path and Pack reading it (a real race — e.g. a
-// concurrent process cleaning up, or a caller simply passing a stale path).
+// TestUnmarshalPayload_RejectsZeroCount covers a payload whose header
+// declares zero packages — must fail rather than reach Run with nothing
+// initialized.
+func TestUnmarshalPayload_RejectsZeroCount(t *testing.T) {
+	payload := make([]byte, 4) // count = 0
+	if _, _, err := unmarshalPayload(payload); err == nil {
+		t.Fatal("expected an error for a payload declaring zero packages")
+	}
+}
+
+// TestUnmarshalPayload_RejectsTrailingBytes covers a payload with extra
+// bytes after the last declared package — must not be silently accepted
+// as valid framing.
+func TestUnmarshalPayload_RejectsTrailingBytes(t *testing.T) {
+	birPkgs, tyEnv := compileMinimalPackage(t)
+	payload, err := marshalPayload(birPkgs, tyEnv)
+	if err != nil {
+		t.Fatalf("marshalPayload: %v", err)
+	}
+	payload = append(payload, 0xFF, 0xFF, 0xFF)
+
+	if _, _, err := unmarshalPayload(payload); err == nil {
+		t.Fatal("expected an error for a payload with unconsumed trailing bytes")
+	}
+}
+
+// TestMissingStub covers the stub file being gone by the time Pack reads
+// it (e.g. a stale path, or a concurrent cleanup).
 func TestMissingStub(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	missingStub := filepath.Join(t.TempDir(), "does-not-exist")
@@ -280,9 +292,8 @@ func TestMissingStub(t *testing.T) {
 	}
 }
 
-// TestOutputParentIsAFile mirrors a naming collision: a regular file
-// already sits where Pack needs to create a parent directory (e.g. stale
-// state from an earlier, different build, or a typo in the output path).
+// TestOutputParentIsAFile covers a regular file sitting where Pack needs
+// to create a parent directory.
 func TestOutputParentIsAFile(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -299,9 +310,8 @@ func TestOutputParentIsAFile(t *testing.T) {
 	}
 }
 
-// TestOutputPathIsADirectory mirrors leftover state from a previous failed
-// build (or a typo) leaving a directory at the exact path bal build needs
-// to write its output file to.
+// TestOutputPathIsADirectory covers a directory already existing at the
+// exact path Pack needs to write its output file to.
 func TestOutputPathIsADirectory(t *testing.T) {
 	birPkgs, tyEnv := compileMinimalPackage(t)
 	stubPath := writeStub(t, "stub-bytes")
@@ -317,10 +327,219 @@ func TestOutputPathIsADirectory(t *testing.T) {
 	}
 }
 
-// TestResolveTargetPlatform covers --target-os/--target-arch's defaulting
-// behavior: either flag alone defaults the other dimension to the host's
-// own value, matching Go's own GOOS/GOARCH convention, rather than being an
-// error or defaulting to some fixed platform.
+// TestPackFailureLeavesExistingExecutableIntact covers Pack's atomic-write
+// guarantee: a failure partway through (here, a directory passed as the
+// stub path, which fails io.Copy after the temp file already exists) must
+// leave a previously-packed outPath byte-for-byte untouched, with no
+// leftover temp file — not a truncated or corrupted executable.
+func TestPackFailureLeavesExistingExecutableIntact(t *testing.T) {
+	birPkgs, tyEnv := compileMinimalPackage(t)
+	validStub := writeStub(t, "valid-stub-bytes")
+	outPath := filepath.Join(t.TempDir(), "program")
+
+	if err := Pack(validStub, birPkgs, tyEnv, outPath); err != nil {
+		t.Fatalf("first Pack: %v", err)
+	}
+	before, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("reading packed file: %v", err)
+	}
+
+	dirAsStub := t.TempDir()
+	if err := Pack(dirAsStub, birPkgs, tyEnv, outPath); err == nil {
+		t.Fatal("expected Pack to fail when stubPath is a directory")
+	}
+
+	after, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("reading packed file after failed re-pack: %v", err)
+	}
+	if !bytes.Equal(before, after) {
+		t.Fatal("expected outPath to be untouched after a failed Pack, but its contents changed")
+	}
+
+	entries, err := os.ReadDir(filepath.Dir(outPath))
+	if err != nil {
+		t.Fatalf("reading output dir: %v", err)
+	}
+	for _, e := range entries {
+		if e.Name() != filepath.Base(outPath) {
+			t.Errorf("expected no leftover temp file, found %q", e.Name())
+		}
+	}
+}
+
+// TestPack_RejectsEmptyPackages covers Pack forwarding marshalPayload's
+// own "no BIR packages to embed" error rather than writing a useless stub.
+func TestPack_RejectsEmptyPackages(t *testing.T) {
+	t.Parallel()
+	_, tyEnv := compileMinimalPackage(t)
+	stubPath := writeStub(t, "stub-bytes")
+	outPath := filepath.Join(t.TempDir(), "program")
+
+	if err := Pack(stubPath, nil, tyEnv, outPath); err == nil {
+		t.Fatal("expected an error when packing zero BIR packages")
+	}
+	if _, err := os.Stat(outPath); err == nil {
+		t.Error("expected no output file when packing fails before any write")
+	}
+}
+
+// TestPack_CreateTempFails covers the output directory existing but not
+// being writable — os.CreateTemp must fail cleanly rather than partially
+// writing over a previous executable.
+func TestPack_CreateTempFails(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX permission bits don't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores POSIX permission bits, so the directory wouldn't actually be unwritable")
+	}
+	birPkgs, tyEnv := compileMinimalPackage(t)
+	stubPath := writeStub(t, "stub-bytes")
+
+	outDir := t.TempDir()
+	if err := os.Chmod(outDir, 0o500); err != nil {
+		t.Fatalf("chmod outDir: %v", err)
+	}
+	defer func() { _ = os.Chmod(outDir, 0o700) }() // let t.TempDir() clean up
+	outPath := filepath.Join(outDir, "program")
+
+	err := Pack(stubPath, birPkgs, tyEnv, outPath)
+	if err == nil {
+		t.Fatal("expected an error when the output directory isn't writable")
+	}
+	if !strings.Contains(err.Error(), "creating temp output file") {
+		t.Errorf("expected a 'creating temp output file' error, got: %v", err)
+	}
+}
+
+// errWriter always fails, simulating a broken output sink partway through
+// writePackedFile's stub/payload/trailer sequence.
+type errWriter struct {
+	failAfter int // number of successful Write calls before failing
+	calls     int
+}
+
+func (w *errWriter) Write(p []byte) (int, error) {
+	w.calls++
+	if w.calls > w.failAfter {
+		return 0, errors.New("write failed")
+	}
+	return len(p), nil
+}
+
+// TestWritePackedFile_PayloadWriteFails and TestWritePackedFile_TrailerWriteFails
+// cover the two writes after the stub copy, each requiring the prior
+// write(s) to succeed first.
+func TestWritePackedFile_PayloadWriteFails(t *testing.T) {
+	t.Parallel()
+	w := &errWriter{failAfter: 1} // stub copy succeeds, payload write fails
+	err := writePackedFile(w, strings.NewReader("stub-bytes"), 10, []byte("payload"))
+	if err == nil {
+		t.Fatal("expected an error when the payload write fails")
+	}
+	if !strings.Contains(err.Error(), "writing BIR payload") {
+		t.Errorf("expected a 'writing BIR payload' error, got: %v", err)
+	}
+}
+
+func TestWritePackedFile_TrailerWriteFails(t *testing.T) {
+	t.Parallel()
+	w := &errWriter{failAfter: 2} // stub copy and payload write succeed, trailer fails
+	err := writePackedFile(w, strings.NewReader("stub-bytes"), 10, []byte("payload"))
+	if err == nil {
+		t.Fatal("expected an error when the trailer write fails")
+	}
+	if !strings.Contains(err.Error(), "writing trailer") {
+		t.Errorf("expected a 'writing trailer' error, got: %v", err)
+	}
+}
+
+// TestTryLoadFrom_NonexistentPath covers the exe path itself being
+// unreadable (e.g. deleted or permission-denied) — must be treated as "not
+// a compiled program", not surfaced as an error.
+func TestTryLoadFrom_NonexistentPath(t *testing.T) {
+	t.Parallel()
+	pkgs, tyEnv, err := tryLoadFrom(filepath.Join(t.TempDir(), "does-not-exist"))
+	if err != nil {
+		t.Fatalf("expected no error for an unreadable path, got: %v", err)
+	}
+	if pkgs != nil || tyEnv != nil {
+		t.Fatalf("expected (nil, nil) for an unreadable path, got pkgs=%v tyEnv=%v", pkgs, tyEnv)
+	}
+}
+
+// TestTryLoadFrom_FileTooSmall covers a file too small to even contain a
+// trailer (e.g. a stub with no embedded program at all) — must be treated
+// as "not a compiled program", not an error.
+func TestTryLoadFrom_FileTooSmall(t *testing.T) {
+	t.Parallel()
+	path := writeStub(t, "tiny")
+	pkgs, tyEnv, err := tryLoadFrom(path)
+	if err != nil {
+		t.Fatalf("expected no error for a too-small file, got: %v", err)
+	}
+	if pkgs != nil || tyEnv != nil {
+		t.Fatalf("expected (nil, nil) for a too-small file, got pkgs=%v tyEnv=%v", pkgs, tyEnv)
+	}
+}
+
+// TestCorruptedZeroLengthPayload covers a trailer offset that passes the
+// out-of-range guard exactly (pointing right at the trailer itself), so the
+// derived payload size is zero — distinct from TestCorruptedOffset, which
+// covers an offset that fails that guard outright.
+func TestCorruptedZeroLengthPayload(t *testing.T) {
+	t.Parallel()
+	birPkgs, tyEnv := compileMinimalPackage(t)
+	stubPath := writeStub(t, "stub-bytes")
+	outPath := filepath.Join(t.TempDir(), "program")
+	if err := Pack(stubPath, birPkgs, tyEnv, outPath); err != nil {
+		t.Fatalf("Pack: %v", err)
+	}
+
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("reading packed file: %v", err)
+	}
+	// Offset == size-trailerSize passes the range guard but yields a
+	// derived payload size of exactly zero.
+	zeroOffset := uint64(len(data) - trailerSize)
+	binary.LittleEndian.PutUint64(data[len(data)-trailerSize:], zeroOffset)
+	if err := os.WriteFile(outPath, data, 0o755); err != nil {
+		t.Fatalf("writing corrupted file: %v", err)
+	}
+
+	pkgs, tyEnvOut, err := tryLoadFrom(outPath)
+	if err == nil {
+		t.Fatalf("expected an error for a zero-length payload, got pkgs=%v tyEnv=%v", pkgs, tyEnvOut)
+	}
+}
+
+// TestUnmarshalPayload_RejectsTooShortPayload covers a payload too short to
+// even contain the 4-byte package count.
+func TestUnmarshalPayload_RejectsTooShortPayload(t *testing.T) {
+	t.Parallel()
+	if _, _, err := unmarshalPayload([]byte{1, 2, 3}); err == nil {
+		t.Fatal("expected an error for a payload shorter than the count header")
+	}
+}
+
+// TestUnmarshalPayload_RejectsCountExceedingSize covers a declared package
+// count too large to possibly fit in the remaining bytes, distinct from
+// TestUnmarshalPayload_RejectsTrailingBytes (which under-declares).
+func TestUnmarshalPayload_RejectsCountExceedingSize(t *testing.T) {
+	t.Parallel()
+	payload := make([]byte, 8) // count header + 4 bytes, nowhere near enough for count=1000
+	binary.BigEndian.PutUint32(payload[:4], 1000)
+	if _, _, err := unmarshalPayload(payload); err == nil {
+		t.Fatal("expected an error for a package count too large for the payload size")
+	}
+}
+
+// TestResolveTargetPlatform covers --target-os/--target-arch defaulting:
+// either flag alone defaults the other to the host's value, like GOOS/GOARCH.
 func TestResolveTargetPlatform(t *testing.T) {
 	host := HostPlatform()
 
@@ -346,64 +565,8 @@ func TestResolveTargetPlatform(t *testing.T) {
 	}
 }
 
-// TestResolveStubUnsupportedPlatform mirrors a typo or a genuinely
-// unsupported --target-os/--target-arch combination — must fail clearly,
-// naming the supported list, rather than silently looking for a stub that
-// will never exist.
-func TestResolveStubUnsupportedPlatform(t *testing.T) {
-	_, err := ResolveStub(Key{Platform: Platform{OS: "plan9", Arch: "amd64"}}, t.TempDir(), "")
-	if err == nil {
-		t.Fatalf("expected an error for an unsupported platform, got none")
-	}
-	if !strings.Contains(err.Error(), "unsupported target platform plan9/amd64") {
-		t.Fatalf("expected error to name the unsupported platform, got: %v", err)
-	}
-}
-
-// TestResolveStubPlatformSegmentedPath mirrors cross-compiling: a
-// distribution bundles balrt for every supported platform, and ResolveStub
-// must pick the one matching the requested target — not fall back to
-// whichever one happens to exist.
-func TestResolveStubPlatformSegmentedPath(t *testing.T) {
-	distDir := t.TempDir()
-	linuxStub := filepath.Join(distDir, "rt", "linux-amd64", "balrt")
-	darwinStub := filepath.Join(distDir, "rt", "darwin-arm64", "balrt")
-	for _, p := range []string{linuxStub, darwinStub} {
-		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-			t.Fatalf("creating stub directory: %v", err)
-		}
-		if err := os.WriteFile(p, []byte("stub-bytes-"+filepath.Base(filepath.Dir(p))), 0o755); err != nil {
-			t.Fatalf("writing stub: %v", err)
-		}
-	}
-
-	got, err := ResolveStub(Key{Platform: Platform{OS: "linux", Arch: "amd64"}}, distDir, "")
-	if err != nil {
-		t.Fatalf("ResolveStub: %v", err)
-	}
-	if got != linuxStub {
-		t.Fatalf("expected the linux/amd64 stub at %s, got %s", linuxStub, got)
-	}
-}
-
-// TestResolveStubWindowsExeSuffix mirrors a Windows cross-compile target —
-// the resolved stub path must carry a ".exe" suffix, matching the produced
-// artifact's own naming convention (see runBuild's output-path logic).
-func TestResolveStubWindowsExeSuffix(t *testing.T) {
-	distDir := t.TempDir()
-	stubPath := filepath.Join(distDir, "rt", "windows-amd64", "balrt.exe")
-	if err := os.MkdirAll(filepath.Dir(stubPath), 0o755); err != nil {
-		t.Fatalf("creating stub directory: %v", err)
-	}
-	if err := os.WriteFile(stubPath, []byte("stub-bytes"), 0o755); err != nil {
-		t.Fatalf("writing stub: %v", err)
-	}
-
-	got, err := ResolveStub(Key{Platform: Platform{OS: "windows", Arch: "amd64"}}, distDir, "")
-	if err != nil {
-		t.Fatalf("ResolveStub: %v", err)
-	}
-	if !strings.HasSuffix(got, ".exe") {
-		t.Fatalf("expected resolved stub path to end in .exe, got %s", got)
-	}
-}
+// Non-native cross-compile ResolveStub coverage (unsupported-platform
+// rejection, correct-platform-among-several selection, Windows .exe suffix)
+// moved to corpus-level tests against the real bal build CLI:
+// TestBalBuildUnsupportedTargetPlatform and TestBalBuildCrossCompile
+// (corpus/cli_integration_test.go).

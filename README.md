@@ -99,6 +99,28 @@ E.g.
 ./bal run project-api-test/testdata/myproject
 ```
 
+#### Building a standalone executable
+
+`bal build` compiles a package, workspace, or single source file into a standalone executable that bundles the Ballerina runtime. It needs a `balrt` stripped-down runtime in the same working directory:
+
+```bash
+go build -o balrt ./cli/cmd/balrt
+go build -o bal ./cli/cmd
+```
+
+It also accepts a `main.RuntimeStubPath` link-time override to point at a `balrt` anywhere else (host-platform builds only), taking priority over the default above:
+
+```bash
+go build -ldflags "-X main.RuntimeStubPath=/path/to/balrt" -o bal ./cli/cmd
+```
+
+Then build and run a package or file:
+
+```bash
+./bal build project-api-test/testdata/myproject
+./target/bin/myproject
+```
+
 ### Testing
 
 To run the tests, use the following command:

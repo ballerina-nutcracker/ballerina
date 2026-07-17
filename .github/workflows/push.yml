@@ -60,7 +60,7 @@ jobs:
           # release archive bundles every supported platform's balrt, not
           # just its own, so cross-compilation works right after extracting
           # a single archive.
-          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64" "windows/arm64")
+          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
           for platform in "${platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
@@ -81,7 +81,7 @@ jobs:
         run: |
           mkdir -p artifacts
           bal_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          rt_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64" "windows/arm64")
+          rt_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
           for platform in "${bal_platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
