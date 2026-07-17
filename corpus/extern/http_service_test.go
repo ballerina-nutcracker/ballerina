@@ -103,6 +103,31 @@ func TestHttpServiceRequestAccessors(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-request-accessors-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceMultipartRequest exercises Request.getBodyParts() on the
+// inbound Request injected into a service resource, decoding a multipart
+// body sent by the client.
+func TestHttpServiceMultipartRequest(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-multipart-request-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceRequestMutators exercises every Request mutator method
+// (setHeader/addHeader/removeHeader/removeAllHeaders/setContentType/
+// setTextPayload/setJsonPayload/setBinaryPayload) on the inbound Request
+// injected into a service resource.
+func TestHttpServiceRequestMutators(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-request-mutators-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceMultipartResponse exercises Response.getBodyParts() on an
+// inbound Response received from an http:Client call, decoding a multipart
+// body sent by the server.
+func TestHttpServiceMultipartResponse(t *testing.T) {
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("http-service/http-svc-multipart-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceHTTP10Fallback verifies that a listener configured with
 // HTTP_1_0 (accepted by the enum but unsupported by the Go HTTP runtime)
 // falls back to HTTP/1.1 with a warning instead of forwarding "1.0" to the

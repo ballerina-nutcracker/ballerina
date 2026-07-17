@@ -425,8 +425,11 @@ func validateServiceForHTTP(svcObj *values.Object) string {
 func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandle, error) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if recover() != nil {
-				writeErrorJSON(rt, w, r, http.StatusInternalServerError, "internal server error")
+			if rec := recover(); rec != nil {
+				msg := panicMessage(rec)
+				logMsg := fmt.Sprintf("error [ballerina/http]: panic while handling %s %s: %s\n", r.Method, r.URL.Path, msg)
+				_, _ = rt.Platform().IO.Stderr([]byte(logMsg))
+				writeErrorJSON(rt, w, r, http.StatusInternalServerError, msg)
 			}
 		}()
 		dispatchRequest(rt, state, w, r)
@@ -439,6 +442,22 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 		TLS:          state.tlsCfg,
 	}
 	return rt.Platform().HTTP.Listen(cfg, handler)
+}
+
+// panicMessage extracts a human-readable message from a recovered panic value,
+// unwrapping Ballerina error values so a resource method's unrecovered runtime panic
+// (e.g. a missing method or an out-of-range access) surfaces the same message a
+// returned `error` would have (see the err.Error() branch in dispatchRequest), instead
+// of a generic, undiagnosable "internal server error".
+func panicMessage(r any) string {
+	switch v := r.(type) {
+	case *values.Error:
+		return v.Message
+	case error:
+		return v.Error()
+	default:
+		return fmt.Sprintf("%v", r)
+	}
 }
 
 // dispatchRequest routes an incoming HTTP request to the matching service and
@@ -604,19 +623,7 @@ func buildRequest(tc semtypes.Context, method, rawPath, httpVersion string, head
 			"$body":       holder,
 			"$queryStr":   rawQuery,
 		},
-		map[string]string{
-			"getTextPayload":      "ballerina/http:Request.getTextPayload",
-			"getJsonPayload":      "ballerina/http:Request.getJsonPayload",
-			"getBinaryPayload":    "ballerina/http:Request.getBinaryPayload",
-			"getHeader":           "ballerina/http:Request.getHeader",
-			"getHeaders":          "ballerina/http:Request.getHeaders",
-			"hasHeader":           "ballerina/http:Request.hasHeader",
-			"getHeaderNames":      "ballerina/http:Request.getHeaderNames",
-			"getContentType":      "ballerina/http:Request.getContentType",
-			"getQueryParams":      "ballerina/http:Request.getQueryParams",
-			"getQueryParamValue":  "ballerina/http:Request.getQueryParamValue",
-			"getQueryParamValues": "ballerina/http:Request.getQueryParamValues",
-		},
+		requestMethodKeys(),
 		nil,
 	)
 }
