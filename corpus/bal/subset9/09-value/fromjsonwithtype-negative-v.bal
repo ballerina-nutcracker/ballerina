@@ -43,6 +43,8 @@ type PersonWithDefault record {|
     int age = 99;
 |};
 
+type IntOrBoolean int|boolean;
+
 public function main() returns error? {
     json badBool = "2022";
     io:println(badBool.fromJsonWithType(boolean) is error); // @output true
@@ -108,6 +110,11 @@ public function main() returns error? {
     if withDefault is error {
         io:println(withDefault.message()); // @output '{| json... |}' value cannot be converted to '{| age: int, name: string, never... |}': field 'age' not present in value, and default values are not supported
     }
+
+    // a simple (non-structured) value matching no member of a scalar union,
+    // not even via numeric coercion
+    json neitherIntNorBool = "hello";
+    io:println(neitherIntNorBool.fromJsonWithType(IntOrBoolean) is error); // @output true
 
     return;
 }

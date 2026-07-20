@@ -107,11 +107,12 @@ public function main() returns error? {
     ByteArray ba = check floatBytes.cloneWithType(ByteArray);
     io:println(ba); // @output [1,200,255]
 
-    // decimal[] → int[] (truncates each element)
-    decimal[] decArr = [1.23, 2.34, 3.45];
+    // decimal[] → int[]: recursive round-to-even, not truncation (1.6 → 2; ties
+    // to even in both directions: 2.5 → 2, 3.5 → 4)
+    decimal[] decArr = [1.6, 2.5, 3.5];
     anydata decArrAny = decArr;
     IntArray fromDecArr = check decArrAny.cloneWithType(IntArray);
-    io:println(fromDecArr); // @output [1,2,3]
+    io:println(fromDecArr); // @output [2,2,4]
 
     // map<float> → map<int>: round-to-even (1.2 → 1, 2.7 → 3)
     anydata mf = {a: 1.2, b: 2.7};

@@ -49,23 +49,19 @@ main() -> nil|error{
   bb8 {
     %21 = ConstantLoad nickname
     %22 = ConstantLoad Fido
-    %23 = ConstantLoad pet_type
-    %24 = ConstantLoad Dog
-    %25 = ConstantLoad age
-    %26 = ConstantLoad 4
-    %27 = newMap {| json... |}{%21=%22, %23=%24, %25=%26}
-    petJson = %27;
-    %29 = ConstantLoad typedesc
-    %30 = fromJsonWithType(petJson,%29) -> bb9;
+    %23 = newMap {| json... |}{%21=%22}
+    petJson = %23;
+    %25 = ConstantLoad typedesc
+    %26 = fromJsonWithType(petJson,%25) -> bb9;
   }
   bb9 {
-    %31 = %30 is error
-    %32 = %31;
-    %33 = println(%32) -> bb10;
+    %27 = %26 is error
+    %28 = %27;
+    %29 = println(%28) -> bb10;
   }
   bb10 {
-    %34 = ConstantLoad <nil>
-    %0 = %34;
+    %30 = ConstantLoad <nil>
+    %0 = %30;
     return;
   }
 }

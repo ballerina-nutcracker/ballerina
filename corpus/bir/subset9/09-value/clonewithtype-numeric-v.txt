@@ -318,9 +318,9 @@ main() -> nil|error{
     %135 = println(ba) -> bb56;
   }
   bb56 {
-    %136 = ConstantLoad 1.23
-    %137 = ConstantLoad 2.34
-    %138 = ConstantLoad 3.45
+    %136 = ConstantLoad 1.6
+    %137 = ConstantLoad 2.5
+    %138 = ConstantLoad 3.5
     %139 = ConstantLoad 3
     %140 = newArray [decimal...][%139]{%136, %137, %138}
     decArr = %140;

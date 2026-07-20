@@ -49,6 +49,10 @@
       (field age
         (value-type int)
         (literal 99))))
+  (type-definition IntOrBoolean
+    (union-type
+      (value-type int)
+      (value-type boolean)))
   (function main () (
     (union-type
       (error-type)
@@ -305,5 +309,16 @@
               (invocation message expr:
                 (simple-var-ref withDefault) ()))))) ())
       (block-stmt
+        (var-def
+          (variable neitherIntNorBool (type
+            (builtin-ref-type json)) (expr
+            (literal hello))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (invocation fromJsonWithType expr:
+                (simple-var-ref neitherIntNorBool) (
+                (simple-var-ref IntOrBoolean)))
+              (error-type)))))
         (return
           (literal <nil>))))))

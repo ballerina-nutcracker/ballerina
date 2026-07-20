@@ -40,13 +40,7 @@
         (mapping-constructor-expr
           (key-value
             (literal nickname)
-            (literal Fido))
-          (key-value
-            (literal pet_type)
-            (literal Dog))
-          (key-value
-            (literal age)
-            (literal 4))))))
+            (literal Fido))))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is

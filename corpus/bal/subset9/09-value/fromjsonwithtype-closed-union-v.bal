@@ -23,6 +23,7 @@ type PetByAge record {|
 
 type PetByType record {|
     "Cat"|"Dog" pet_type;
+    int nickname?;
     boolean hunts?;
 |};
 
@@ -39,8 +40,11 @@ public function main() returns error? {
     Pet typeOnlyPet = check typeOnly.fromJsonWithType(Pet);
     io:println(typeOnlyPet); // @output {"pet_type":"Cat"}
 
-    // Both PetByAge and PetByType required fields present — ambiguous closed union → error.
-    json petJson = {"nickname": "Fido", "pet_type": "Dog", "age": 4};
+    // "nickname" is declared (with different types) in both members, so on its own it
+    // can never trigger unknown-field rejection against either. But neither member's
+    // own distinguishing required field ("age" / "pet_type") is present, so both are
+    // rejected for their own reasons — genuine ambiguity, not unknown-field rejection.
+    json petJson = {"nickname": "Fido"};
     io:println(petJson.fromJsonWithType(Pet) is error); // @output true
     return;
 }

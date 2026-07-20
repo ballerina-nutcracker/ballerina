@@ -228,9 +228,9 @@
         (array-type
           (value-type decimal) dimensions: 1 ([]))) (expr
         (list-constructor-expr
-          (literal 1.23)
-          (literal 2.34)
-          (literal 3.45)))))
+          (literal 1.6)
+          (literal 2.5)
+          (literal 3.5)))))
     (var-def
       (variable decArrAny (type
         (value-type anydata)) (expr

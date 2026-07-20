@@ -14,8 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// This module currently exposes no symbols; it exists so that the lang.value
-// langlib resolves as a real bundle.
+// This module exposes the anydata value-conversion functions cloneWithType and
+// fromJsonWithType.
 
 # Constructs a value with a specified type by cloning another value.
 #

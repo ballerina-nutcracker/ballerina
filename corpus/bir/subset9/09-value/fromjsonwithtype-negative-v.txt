@@ -245,9 +245,20 @@ main() -> nil|error{
     GOTO bb39;
   }
   bb39 {
-    PushScopeFrame 1
-    %0 = ConstantLoad <nil>
-    (1, %0) = %0;
+    PushScopeFrame 8
+    %0 = ConstantLoad hello
+    neitherIntNorBool = %0;
+    %2 = ConstantLoad typedesc
+    %3 = fromJsonWithType(neitherIntNorBool,%2) -> bb40;
+  }
+  bb40 {
+    %4 = %3 is error
+    %5 = %4;
+    %6 = println(%5) -> bb41;
+  }
+  bb41 {
+    %7 = ConstantLoad <nil>
+    (1, %0) = %7;
     PopScopeFrame
     return;
   }
