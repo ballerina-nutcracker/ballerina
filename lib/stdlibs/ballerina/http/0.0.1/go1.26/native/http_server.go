@@ -681,10 +681,7 @@ func writeResult(rt *runtime.Runtime, _ semtypes.Context, w http.ResponseWriter,
 						continue
 					}
 					val, _ := hdrs.Get(k)
-					list, ok := val.(*values.List)
-					if !ok {
-						continue
-					}
+					list := val.(*values.List)
 					for i := range list.Len() {
 						s, _ := list.Get(i).(string)
 						if i == 0 {
