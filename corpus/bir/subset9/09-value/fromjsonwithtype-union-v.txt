@@ -46,7 +46,7 @@ main() -> nil|error{
     %17 = ConstantLoad 1
     %18 = ConstantLoad 2
     %19 = ConstantLoad 2
-    %20 = newArray [nil|boolean|int|float|decimal|string|...|......][%19]{%17, %18}
+    %20 = newArray [json...][%19]{%17, %18}
     arr = %20;
     %22 = ConstantLoad typedesc
     %23 = fromJsonWithType(arr,%22) -> bb9;
@@ -92,7 +92,7 @@ main() -> nil|error{
   bb16 {
     %38 = ConstantLoad name
     %39 = ConstantLoad Bob
-    %40 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%38=%39}
+    %40 = newMap {| json... |}{%38=%39}
     partial = %40;
     %42 = ConstantLoad typedesc
     %43 = fromJsonWithType(partial,%42) -> bb17;
@@ -115,7 +115,7 @@ main() -> nil|error{
   bb20 {
     %48 = ConstantLoad name
     %49 = ConstantLoad Carol
-    %50 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%48=%49}
+    %50 = newMap {| json... |}{%48=%49}
     missingNilable = %50;
     %52 = ConstantLoad typedesc
     %53 = fromJsonWithType(missingNilable,%52) -> bb21;
@@ -130,7 +130,7 @@ main() -> nil|error{
     %58 = ConstantLoad Carol
     %59 = ConstantLoad score
     %60 = ConstantLoad <nil>
-    %61 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%57=%58, %59=%60}
+    %61 = newMap {| json... |}{%57=%58, %59=%60}
     explicitNull = %61;
     %63 = ConstantLoad typedesc
     %64 = fromJsonWithType(explicitNull,%63) -> bb23;
@@ -155,7 +155,7 @@ main() -> nil|error{
     %70 = ConstantLoad Ann
     %71 = ConstantLoad age
     %72 = ConstantLoad <nil>
-    %73 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%69=%70, %71=%72}
+    %73 = newMap {| json... |}{%69=%70, %71=%72}
     withNullAge = %73;
     %75 = ConstantLoad typedesc
     %76 = fromJsonWithType(withNullAge,%75) -> bb27;
@@ -178,7 +178,7 @@ main() -> nil|error{
   bb30 {
     %81 = ConstantLoad a
     %82 = ConstantLoad 1
-    %83 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%81=%82}
+    %83 = newMap {| json... |}{%81=%82}
     openMap = %83;
     %85 = ConstantLoad typedesc
     %86 = fromJsonWithType(openMap,%85) -> bb31;

@@ -68,7 +68,7 @@ main() -> nil|error{
     %26 = ConstantLoad <nil>
     %27 = ConstantLoad 3
     %28 = ConstantLoad 3
-    %29 = newArray [nil|boolean|int|float|decimal|string|...|......][%28]{%25, %26, %27}
+    %29 = newArray [json...][%28]{%25, %26, %27}
     arr = %29;
     %31 = ConstantLoad typedesc
     %32 = fromJsonWithType(arr,%31) -> bb13;
@@ -93,7 +93,7 @@ main() -> nil|error{
     %38 = ConstantLoad 1
     %39 = ConstantLoad b
     %40 = ConstantLoad <nil>
-    %41 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%37=%38, %39=%40}
+    %41 = newMap {| json... |}{%37=%38, %39=%40}
     m = %41;
     %43 = ConstantLoad typedesc
     %44 = fromJsonWithType(m,%43) -> bb17;
@@ -117,13 +117,13 @@ main() -> nil|error{
     %49 = ConstantLoad 1
     %50 = ConstantLoad 2
     %51 = ConstantLoad 2
-    %52 = newArray [nil|boolean|int|float|decimal|string|...|......][%51]{%49, %50}
+    %52 = newArray [json...][%51]{%49, %50}
     %53 = ConstantLoad 3
     %54 = ConstantLoad 4
     %55 = ConstantLoad 2
-    %56 = newArray [nil|boolean|int|float|decimal|string|...|......][%55]{%53, %54}
+    %56 = newArray [json...][%55]{%53, %54}
     %57 = ConstantLoad 2
-    %58 = newArray [nil|boolean|int|float|decimal|string|...|......][%57]{%52, %56}
+    %58 = newArray [json...][%57]{%52, %56}
     nested = %58;
     %60 = ConstantLoad typedesc
     %61 = fromJsonWithType(nested,%60) -> bb21;
@@ -148,12 +148,12 @@ main() -> nil|error{
     %67 = ConstantLoad 1
     %68 = ConstantLoad 2
     %69 = ConstantLoad 2
-    %70 = newArray [nil|boolean|int|float|decimal|string|...|......][%69]{%67, %68}
+    %70 = newArray [json...][%69]{%67, %68}
     %71 = ConstantLoad meta
     %72 = ConstantLoad n
     %73 = ConstantLoad 2
-    %74 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%72=%73}
-    %75 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%66=%70, %71=%74}
+    %74 = newMap {| json... |}{%72=%73}
+    %75 = newMap {| json... |}{%66=%70, %71=%74}
     rec = %75;
     %77 = ConstantLoad typedesc
     %78 = fromJsonWithType(rec,%77) -> bb25;

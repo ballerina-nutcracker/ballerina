@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad name
     %2 = ConstantLoad Alice
-    %3 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%1=%2}
+    %3 = newMap {| json... |}{%1=%2}
     missing = %3;
     %5 = ConstantLoad typedesc
     %6 = fromJsonWithType(missing,%5) -> bb1;

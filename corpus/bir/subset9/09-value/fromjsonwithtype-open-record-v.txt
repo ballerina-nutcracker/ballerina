@@ -5,7 +5,7 @@ main() -> nil|error{
     %2 = ConstantLoad Whiskers
     %3 = ConstantLoad lives
     %4 = ConstantLoad 9
-    %5 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%1=%2, %3=%4}
+    %5 = newMap {| json... |}{%1=%2, %3=%4}
     catJson = %5;
     %7 = ConstantLoad typedesc
     %8 = fromJsonWithType(catJson,%7) -> bb1;
@@ -30,7 +30,7 @@ main() -> nil|error{
     %14 = ConstantLoad Rex
     %15 = ConstantLoad breed
     %16 = ConstantLoad Labrador
-    %17 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%13=%14, %15=%16}
+    %17 = newMap {| json... |}{%13=%14, %15=%16}
     dogJson = %17;
     %19 = ConstantLoad typedesc
     %20 = fromJsonWithType(dogJson,%19) -> bb5;
@@ -55,7 +55,7 @@ main() -> nil|error{
     %26 = ConstantLoad hello
     %27 = ConstantLoad b
     %28 = ConstantLoad world
-    %29 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%25=%26, %27=%28}
+    %29 = newMap {| json... |}{%25=%26, %27=%28}
     strMapJson = %29;
     %31 = ConstantLoad typedesc
     %32 = fromJsonWithType(strMapJson,%31) -> bb9;
@@ -80,7 +80,7 @@ main() -> nil|error{
     %38 = ConstantLoad 1
     %39 = ConstantLoad y
     %40 = ConstantLoad 2
-    %41 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%37=%38, %39=%40}
+    %41 = newMap {| json... |}{%37=%38, %39=%40}
     intMapJson = %41;
     %43 = ConstantLoad typedesc
     %44 = fromJsonWithType(intMapJson,%43) -> bb13;
@@ -103,7 +103,7 @@ main() -> nil|error{
   bb16 {
     %49 = ConstantLoad name
     %50 = ConstantLoad Whiskers
-    %51 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%49=%50}
+    %51 = newMap {| json... |}{%49=%50}
     neither = %51;
     %53 = ConstantLoad typedesc
     %54 = fromJsonWithType(neither,%53) -> bb17;

@@ -228,7 +228,7 @@ main() -> nil|error{
     %95 = ConstantLoad 2
     %96 = ConstantLoad 3
     %97 = ConstantLoad 3
-    %98 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%97]{%94, %95, %96}
+    %98 = newArray [anydata...][%97]{%94, %95, %96}
     ints = %98;
     %100 = ConstantLoad typedesc
     %101 = cloneWithType(ints,%100) -> bb41;
@@ -272,7 +272,7 @@ main() -> nil|error{
     %113 = ConstantLoad 2
     %114 = ConstantLoad 3
     %115 = ConstantLoad 3
-    %116 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%115]{%112, %113, %114}
+    %116 = newArray [anydata...][%115]{%112, %113, %114}
     floats = %116;
     %118 = ConstantLoad typedesc
     %119 = cloneWithType(floats,%118) -> bb49;
@@ -297,7 +297,7 @@ main() -> nil|error{
     %125 = ConstantLoad 200
     %126 = ConstantLoad 255
     %127 = ConstantLoad 3
-    %128 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%127]{%124, %125, %126}
+    %128 = newArray [anydata...][%127]{%124, %125, %126}
     floatBytes = %128;
     %130 = ConstantLoad typedesc
     %131 = cloneWithType(floatBytes,%130) -> bb53;
@@ -348,7 +348,7 @@ main() -> nil|error{
     %150 = ConstantLoad 1.2
     %151 = ConstantLoad b
     %152 = ConstantLoad 2.7
-    %153 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%149=%150, %151=%152}
+    %153 = newMap {| anydata... |}{%149=%150, %151=%152}
     mf = %153;
     %155 = ConstantLoad typedesc
     %156 = cloneWithType(mf,%155) -> bb61;
@@ -375,7 +375,7 @@ main() -> nil|error{
     %164 = ConstantLoad Alice
     %165 = ConstantLoad c
     %166 = ConstantLoad 1000
-    %167 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%161=%162, %163=%164, %165=%166}
+    %167 = newMap {| anydata... |}{%161=%162, %163=%164, %165=%166}
     r = %167;
     %169 = ConstantLoad typedesc
     %170 = cloneWithType(r,%169) -> bb65;

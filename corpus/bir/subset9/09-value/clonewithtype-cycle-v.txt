@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %1 = newMap {| anydata... |}{}
     m = %1;
     cyclic = m;
     %4 = ConstantLoad self
@@ -24,7 +24,7 @@ main() -> nil{
   }
   bb4 {
     %12 = ConstantLoad 0
-    %13 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table...][%12]{}
+    %13 = newArray [anydata...][%12]{}
     arr = %13;
     cyclicArr = arr;
     %16 = push(arr,cyclicArr) -> bb5;
@@ -47,9 +47,9 @@ main() -> nil{
     %23 = println(%22) -> bb9;
   }
   bb9 {
-    %24 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %24 = newMap {| anydata... |}{}
     m1 = %24;
-    %26 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %26 = newMap {| anydata... |}{}
     m2 = %26;
     c1 = m1;
     c2 = m2;
@@ -76,11 +76,11 @@ main() -> nil{
   bb13 {
     %39 = ConstantLoad x
     %40 = ConstantLoad 1
-    %41 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%39=%40}
+    %41 = newMap {| anydata... |}{%39=%40}
     shared = %41;
     %43 = ConstantLoad a
     %44 = ConstantLoad b
-    %45 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%43=shared, %44=shared}
+    %45 = newMap {| anydata... |}{%43=shared, %44=shared}
     dag = %45;
     GOTO bb14;
   }

@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{}
+    %1 = newMap {| anydata... |}{}
     m = %1;
     cyclic = m;
     %4 = ConstantLoad self

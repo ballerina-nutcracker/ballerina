@@ -4,7 +4,7 @@ main() -> nil|error{
     %1 = ConstantLoad 1
     %2 = ConstantLoad 2
     %3 = ConstantLoad 2
-    %4 = newArray [nil|boolean|int|float|decimal|string|...|......][%3]{%1, %2}
+    %4 = newArray [json...][%3]{%1, %2}
     arrForAny = %4;
     %6 = ConstantLoad typedesc
     %7 = fromJsonWithType(arrForAny,%6) -> bb1;
@@ -114,7 +114,7 @@ main() -> nil|error{
   bb20 {
     %47 = ConstantLoad name
     %48 = ConstantLoad Alice
-    %49 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%47=%48}
+    %49 = newMap {| json... |}{%47=%48}
     noAge = %49;
     %51 = ConstantLoad typedesc
     %52 = fromJsonWithType(noAge,%51) -> bb21;
@@ -129,7 +129,7 @@ main() -> nil|error{
     %57 = ConstantLoad Alice
     %58 = ConstantLoad age
     %59 = ConstantLoad <nil>
-    %60 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%56=%57, %58=%59}
+    %60 = newMap {| json... |}{%56=%57, %58=%59}
     nullAge = %60;
     %62 = ConstantLoad typedesc
     %63 = fromJsonWithType(nullAge,%62) -> bb23;
@@ -155,7 +155,7 @@ main() -> nil|error{
     %70 = ConstantLoad 3
     %71 = ConstantLoad 4
     %72 = ConstantLoad 4
-    %73 = newArray [nil|boolean|int|float|decimal|string|...|......][%72]{%68, %69, %70, %71}
+    %73 = newArray [json...][%72]{%68, %69, %70, %71}
     arr = %73;
     %75 = ConstantLoad typedesc
     %76 = fromJsonWithType(arr,%75) -> bb27;
@@ -180,7 +180,7 @@ main() -> nil|error{
     %82 = ConstantLoad Alice
     %83 = ConstantLoad age
     %84 = ConstantLoad 30
-    %85 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%81=%82, %83=%84}
+    %85 = newMap {| json... |}{%81=%82, %83=%84}
     p = %85;
     %87 = ConstantLoad typedesc
     %88 = fromJsonWithType(p,%87) -> bb31;

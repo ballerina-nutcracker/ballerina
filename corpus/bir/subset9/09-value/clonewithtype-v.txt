@@ -70,7 +70,7 @@ main() -> nil|error{
     %28 = ConstantLoad Alice
     %29 = ConstantLoad age
     %30 = ConstantLoad 30
-    %31 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%27=%28, %29=%30}
+    %31 = newMap {| anydata... |}{%27=%28, %29=%30}
     raw = %31;
     %33 = ConstantLoad typedesc
     %34 = cloneWithType(raw,%33) -> bb13;
@@ -95,7 +95,7 @@ main() -> nil|error{
     %40 = ConstantLoad 2
     %41 = ConstantLoad 3
     %42 = ConstantLoad 3
-    %43 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%42]{%39, %40, %41}
+    %43 = newArray [anydata...][%42]{%39, %40, %41}
     nums = %43;
     %45 = ConstantLoad typedesc
     %46 = cloneWithType(nums,%45) -> bb17;
@@ -120,7 +120,7 @@ main() -> nil|error{
     %52 = ConstantLoad 20
     %53 = ConstantLoad 30
     %54 = ConstantLoad 3
-    %55 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%54]{%51, %52, %53}
+    %55 = newArray [anydata...][%54]{%51, %52, %53}
     ints = %55;
     %57 = ConstantLoad typedesc
     %58 = cloneWithType(ints,%57) -> bb21;
@@ -145,7 +145,7 @@ main() -> nil|error{
     %64 = ConstantLoad 3
     %65 = ConstantLoad y
     %66 = ConstantLoad 4
-    %67 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%63=%64, %65=%66}
+    %67 = newMap {| anydata... |}{%63=%64, %65=%66}
     coords = %67;
     %69 = ConstantLoad typedesc
     %70 = cloneWithType(coords,%69) -> bb25;
@@ -173,8 +173,8 @@ main() -> nil|error{
     %79 = ConstantLoad 0
     %80 = ConstantLoad y
     %81 = ConstantLoad 0
-    %82 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%78=%79, %80=%81}
-    %83 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%75=%76, %77=%82}
+    %82 = newMap {| anydata... |}{%78=%79, %80=%81}
+    %83 = newMap {| anydata... |}{%75=%76, %77=%82}
     shapeRaw = %83;
     %85 = ConstantLoad typedesc
     %86 = cloneWithType(shapeRaw,%85) -> bb29;
@@ -199,7 +199,7 @@ main() -> nil|error{
     %92 = ConstantLoad Bob
     %93 = ConstantLoad age
     %94 = ConstantLoad 25
-    %95 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%91=%92, %93=%94}
+    %95 = newMap {| anydata... |}{%91=%92, %93=%94}
     personMap = %95;
     %97 = ConstantLoad typedesc
     %98 = cloneWithType(personMap,%97) -> bb33;
@@ -224,7 +224,7 @@ main() -> nil|error{
     %104 = ConstantLoad Carol
     %105 = ConstantLoad age
     %106 = ConstantLoad <nil>
-    %107 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%103=%104, %105=%106}
+    %107 = newMap {| anydata... |}{%103=%104, %105=%106}
     withNull = %107;
     %109 = ConstantLoad typedesc
     %110 = cloneWithType(withNull,%109) -> bb37;
@@ -247,7 +247,7 @@ main() -> nil|error{
   bb40 {
     %115 = ConstantLoad name
     %116 = ConstantLoad Dave
-    %117 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%115=%116}
+    %117 = newMap {| anydata... |}{%115=%116}
     partial = %117;
     %119 = ConstantLoad typedesc
     %120 = cloneWithType(partial,%119) -> bb41;

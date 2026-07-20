@@ -7,7 +7,7 @@ main() -> nil|error{
     %4 = ConstantLoad Dog
     %5 = ConstantLoad age
     %6 = ConstantLoad 4
-    %7 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%1=%2, %3=%4, %5=%6}
+    %7 = newMap {| json... |}{%1=%2, %3=%4, %5=%6}
     petJson = %7;
     %9 = ConstantLoad typedesc
     %10 = fromJsonWithType(petJson,%9) -> bb1;
@@ -31,7 +31,7 @@ main() -> nil|error{
     %15 = ConstantLoad 1
     %16 = ConstantLoad 2
     %17 = ConstantLoad 2
-    %18 = newArray [nil|boolean|int|float|decimal|string|...|......][%17]{%15, %16}
+    %18 = newArray [json...][%17]{%15, %16}
     arrJson = %18;
     %20 = ConstantLoad typedesc
     %21 = fromJsonWithType(arrJson,%20) -> bb5;
@@ -55,7 +55,7 @@ main() -> nil|error{
     %26 = ConstantLoad a
     %27 = ConstantLoad b
     %28 = ConstantLoad 2
-    %29 = newArray [nil|boolean|int|float|decimal|string|...|......][%28]{%26, %27}
+    %29 = newArray [json...][%28]{%26, %27}
     strArrJson = %29;
     %31 = ConstantLoad typedesc
     %32 = fromJsonWithType(strArrJson,%31) -> bb9;

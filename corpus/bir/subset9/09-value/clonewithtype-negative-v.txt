@@ -16,7 +16,7 @@ main() -> nil|error{
     %9 = ConstantLoad 2
     %10 = ConstantLoad 3
     %11 = ConstantLoad 3
-    %12 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%11]{%8, %9, %10}
+    %12 = newArray [anydata...][%11]{%8, %9, %10}
     badArr = %12;
     %14 = ConstantLoad typedesc
     %15 = cloneWithType(badArr,%14) -> bb3;
@@ -33,7 +33,7 @@ main() -> nil|error{
     %22 = ConstantLoad 30
     %23 = ConstantLoad extra
     %24 = ConstantLoad oops
-    %25 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%19=%20, %21=%22, %23=%24}
+    %25 = newMap {| anydata... |}{%19=%20, %21=%22, %23=%24}
     extra = %25;
     %27 = ConstantLoad typedesc
     %28 = cloneWithType(extra,%27) -> bb5;
@@ -46,7 +46,7 @@ main() -> nil|error{
   bb6 {
     %32 = ConstantLoad name
     %33 = ConstantLoad Alice
-    %34 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%32=%33}
+    %34 = newMap {| anydata... |}{%32=%33}
     missing = %34;
     %36 = ConstantLoad typedesc
     %37 = cloneWithType(missing,%36) -> bb7;
@@ -59,7 +59,7 @@ main() -> nil|error{
   bb8 {
     %41 = ConstantLoad a
     %42 = ConstantLoad 1
-    %43 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%41=%42}
+    %43 = newMap {| anydata... |}{%41=%42}
     mapVal = %43;
     %45 = ConstantLoad typedesc
     %46 = cloneWithType(mapVal,%45) -> bb9;
@@ -73,7 +73,7 @@ main() -> nil|error{
     %50 = ConstantLoad 1
     %51 = ConstantLoad 2
     %52 = ConstantLoad 2
-    %53 = newArray [nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...][%52]{%50, %51}
+    %53 = newArray [anydata...][%52]{%50, %51}
     arrVal = %53;
     %55 = ConstantLoad typedesc
     %56 = cloneWithType(arrVal,%55) -> bb11;
@@ -86,7 +86,7 @@ main() -> nil|error{
   bb12 {
     %60 = ConstantLoad name
     %61 = ConstantLoad Bob
-    %62 = newMap {| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}{%60=%61}
+    %62 = newMap {| anydata... |}{%60=%61}
     missingNilable = %62;
     %64 = ConstantLoad typedesc
     %65 = cloneWithType(missingNilable,%64) -> bb13;
