@@ -1,0 +1,58 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 12345
+    %2 = fromString(%1) -> bb1;
+  }
+  bb1 {
+    n = %2;
+    %4 = println(n) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad -42
+    %6 = fromString(%5) -> bb3;
+  }
+  bb3 {
+    neg = %6;
+    %8 = println(neg) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad not-a-number
+    %10 = fromString(%9) -> bb5;
+  }
+  bb5 {
+    invalid = %10;
+    %12 = invalid is error
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %15 = ConstantLoad ff
+    %16 = fromHexString(%15) -> bb7;
+  }
+  bb7 {
+    h = %16;
+    %18 = println(h) -> bb8;
+  }
+  bb8 {
+    %19 = ConstantLoad -1a
+    %20 = fromHexString(%19) -> bb9;
+  }
+  bb9 {
+    negH = %20;
+    %22 = println(negH) -> bb10;
+  }
+  bb10 {
+    %23 = ConstantLoad zz
+    %24 = fromHexString(%23) -> bb11;
+  }
+  bb11 {
+    invalidHex = %24;
+    %26 = invalidHex is error
+    %27 = %26;
+    %28 = println(%27) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

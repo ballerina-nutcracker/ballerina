@@ -14,8 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Returns a string that represents `v`.
-#
-# + v - the value
-# + return - a string representing `v`
-public isolated function toString(anydata v) returns string = external;
+import ballerina/io;
+
+public function main() {
+    map<string> m = {"a": "1", "b": "2"};
+    io:println(m.hasKey("a")); // @output true
+    io:println(m.hasKey("z")); // @output false
+
+    _ = m.remove("a");
+    io:println(m.hasKey("a")); // @output false
+}

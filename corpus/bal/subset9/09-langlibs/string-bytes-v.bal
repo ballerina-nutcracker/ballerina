@@ -14,8 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Returns a string that represents `v`.
-#
-# + v - the value
-# + return - a string representing `v`
-public isolated function toString(anydata v) returns string = external;
+import ballerina/io;
+
+public function main() {
+    byte[] bytes = "hi".toBytes();
+    io:println(bytes.length()); // @output 2
+
+    string|error back = string:fromBytes(bytes);
+    io:println(back); // @output hi
+
+    byte[] invalid = [255, 254];
+    string|error invalidStr = string:fromBytes(invalid);
+    io:println(invalidStr is error); // @output true
+}

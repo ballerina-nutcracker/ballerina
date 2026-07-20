@@ -122,6 +122,7 @@ func NewPlatform() (pal.Platform, func()) {
 		Time: pal.Time{
 			Now:          time.Now,
 			MonotonicNow: func() time.Duration { return time.Since(processStart) },
+			Sleep:        time.Sleep,
 		},
 		HTTP: pal.HTTP{
 			NewClient: NewHTTPClient,

@@ -14,8 +14,28 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Returns a string that represents `v`.
-#
-# + v - the value
-# + return - a string representing `v`
-public isolated function toString(anydata v) returns string = external;
+import ballerina/io;
+
+public function main() {
+    int[] arr = [10, 20, 30, 40, 30];
+
+    int? first = arr.indexOf(30, 0);
+    if first is int {
+        io:println(first); // @output 2
+    }
+
+    int? afterFirst = arr.indexOf(30, 3);
+    if afterFirst is int {
+        io:println(afterFirst); // @output 4
+    }
+
+    int? missing = arr.indexOf(99, 0);
+    io:println(missing is ()); // @output true
+
+    int removed = arr.remove(1);
+    io:println(removed); // @output 20
+    io:println(arr.length()); // @output 4
+
+    arr.removeAll();
+    io:println(arr.length()); // @output 0
+}

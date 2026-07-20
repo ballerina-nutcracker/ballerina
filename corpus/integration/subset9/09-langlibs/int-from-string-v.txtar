@@ -1,0 +1,8 @@
+-- stdout --
+12345
+-42
+true
+255
+-26
+true
+-- stderr --

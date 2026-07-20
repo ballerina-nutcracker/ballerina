@@ -130,6 +130,20 @@ func (l *List) Append(tc semtypes.Context, vs ...BalValue) {
 	l.elems = append(l.elems, vs...)
 }
 
+// RemoveAt removes and returns the element at idx, shifting subsequent elements down.
+func (l *List) RemoveAt(idx int) BalValue {
+	l.checkMutable()
+	val := l.elems[idx]
+	l.elems = append(l.elems[:idx], l.elems[idx+1:]...)
+	return val
+}
+
+// Clear removes all elements from the list.
+func (l *List) Clear() {
+	l.checkMutable()
+	l.elems = l.elems[:0]
+}
+
 func (l *List) checkMutable() {
 	if l.isReadonly {
 		panic(NewErrorWithMessage("inherent type violation: cannot mutate readonly value"))

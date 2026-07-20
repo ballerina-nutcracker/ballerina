@@ -14,8 +14,31 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Returns a string that represents `v`.
-#
-# + v - the value
-# + return - a string representing `v`
-public isolated function toString(anydata v) returns string = external;
+package langruntime
+
+import (
+	"time"
+
+	"ballerina-lang-go/decimal"
+	"ballerina-lang-go/runtime"
+	"ballerina-lang-go/runtime/extern"
+	"ballerina-lang-go/values"
+)
+
+const (
+	orgName    = "ballerina"
+	moduleName = "lang.runtime"
+)
+
+func initRuntimeModule(rt *runtime.Runtime) {
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "sleep",
+		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			seconds, _ := args[0].(*decimal.Decimal)
+			rt.Platform().Time.Sleep(time.Duration(seconds.Float64() * float64(time.Second)))
+			return nil, nil
+		})
+}
+
+func init() {
+	runtime.RegisterModuleInitializer(initRuntimeModule)
+}

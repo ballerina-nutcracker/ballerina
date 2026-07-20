@@ -1,0 +1,70 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromString (
+            (literal 12345))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))
+      (var-def
+        (variable neg (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromString (
+            (literal -42))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref neg))))
+      (var-def
+        (variable invalid (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromString (
+            (literal not-a-number))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref invalid)
+            (error-type)))))
+      (var-def
+        (variable h (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromHexString (
+            (literal ff))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref h))))
+      (var-def
+        (variable negH (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromHexString (
+            (literal -1a))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref negH))))
+      (var-def
+        (variable invalidHex (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromHexString (
+            (literal zz))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref invalidHex)
+            (error-type))))))))

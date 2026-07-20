@@ -14,8 +14,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Returns a string that represents `v`.
-#
-# + v - the value
-# + return - a string representing `v`
-public isolated function toString(anydata v) returns string = external;
+import ballerina/io;
+
+public function main() {
+    int|error n = int:fromString("12345");
+    io:println(n); // @output 12345
+
+    int|error neg = int:fromString("-42");
+    io:println(neg); // @output -42
+
+    int|error invalid = int:fromString("not-a-number");
+    io:println(invalid is error); // @output true
+
+    int|error h = int:fromHexString("ff");
+    io:println(h); // @output 255
+
+    int|error negH = int:fromHexString("-1a");
+    io:println(negH); // @output -26
+
+    int|error invalidHex = int:fromHexString("zz");
+    io:println(invalidHex is error); // @output true
+}

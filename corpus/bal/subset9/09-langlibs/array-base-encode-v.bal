@@ -14,8 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Returns a string that represents `v`.
-#
-# + v - the value
-# + return - a string representing `v`
-public isolated function toString(anydata v) returns string = external;
+import ballerina/io;
+
+public function main() {
+    byte[] data = [222, 173, 190, 239];
+    io:println(data.toBase16()); // @output deadbeef
+    io:println(data.toBase64()); // @output 3q2+7w==
+
+    byte[] empty = [];
+    io:println(empty.toBase16().length()); // @output 0
+    io:println(empty.toBase64().length()); // @output 0
+}
