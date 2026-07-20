@@ -9,7 +9,7 @@ main() -> nil|error{
     nsContent = %3;
     $desugar$0 = nsPath;
     $desugar$1 = nsContent;
-    %9 = $default$0($desugar$0,$desugar$1) -> bb1;
+    %9 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
     $desugar$2 = %9;
@@ -51,7 +51,7 @@ main() -> nil|error{
     multiContent = %21;
     $desugar$5 = multiPath;
     $desugar$6 = multiContent;
-    %25 = $default$0($desugar$5,$desugar$6) -> bb9;
+    %25 = $default$1($desugar$5,$desugar$6) -> bb9;
   }
   bb9 {
     $desugar$7 = %25;
@@ -93,7 +93,7 @@ main() -> nil|error{
     %38 = ConstantLoad    
   
     $desugar$11 = %38;
-    %40 = $default$0($desugar$10,$desugar$11) -> bb17;
+    %40 = $default$1($desugar$10,$desugar$11) -> bb17;
   }
   bb17 {
     $desugar$12 = %40;
@@ -137,7 +137,7 @@ main() -> nil|error{
     $desugar$15 = badPath;
     %56 = ConstantLoad <root><unclosed></root>
     $desugar$16 = %56;
-    %58 = $default$0($desugar$15,$desugar$16) -> bb25;
+    %58 = $default$1($desugar$15,$desugar$16) -> bb25;
   }
   bb25 {
     $desugar$17 = %58;
@@ -169,7 +169,7 @@ main() -> nil|error{
     $desugar$19 = strayPath;
     %71 = ConstantLoad </root>
     $desugar$20 = %71;
-    %73 = $default$0($desugar$19,$desugar$20) -> bb31;
+    %73 = $default$1($desugar$19,$desugar$20) -> bb31;
   }
   bb31 {
     $desugar$21 = %73;

@@ -6,7 +6,7 @@ main() -> nil|error{
     $desugar$0 = stringPath;
     %4 = ConstantLoad hello
     $desugar$1 = %4;
-    %6 = $default$0($desugar$0,$desugar$1) -> bb1;
+    %6 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
     $desugar$2 = %6;
@@ -49,7 +49,7 @@ main() -> nil|error{
     %20 = ConstantLoad 2
     %21 = newArray [string...][%20]{%18, %19}
     $desugar$6 = %21;
-    %23 = $default$1($desugar$5,$desugar$6) -> bb9;
+    %23 = $default$2($desugar$5,$desugar$6) -> bb9;
   }
   bb9 {
     $desugar$7 = %23;
@@ -93,7 +93,7 @@ main() -> nil|error{
     %38 = ConstantLoad 3
     %39 = newArray [int:Unsigned8...][%38]{%35, %36, %37}
     $desugar$11 = %39;
-    %41 = $default$2($desugar$10,$desugar$11) -> bb17;
+    %41 = $default$4($desugar$10,$desugar$11) -> bb17;
   }
   bb17 {
     $desugar$12 = %41;
@@ -170,7 +170,7 @@ main() -> nil|error{
     %65 = ConstantLoad a
     %66 = newXMLElement(%65, ())
     $desugar$18 = %66;
-    %68 = $default$3($desugar$17,$desugar$18) -> bb32;
+    %68 = $default$6($desugar$17,$desugar$18) -> bb32;
   }
   bb32 {
     $desugar$19 = %68;
@@ -210,7 +210,7 @@ main() -> nil|error{
     $desugar$22 = appendPath;
     %80 = ConstantLoad First
     $desugar$23 = %80;
-    %82 = $default$0($desugar$22,$desugar$23) -> bb40;
+    %82 = $default$1($desugar$22,$desugar$23) -> bb40;
   }
   bb40 {
     $desugar$24 = %82;

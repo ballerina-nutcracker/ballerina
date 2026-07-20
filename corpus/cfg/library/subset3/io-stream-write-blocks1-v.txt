@@ -1,0 +1,136 @@
+(BlockProvider
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access blocks
+          (simple-var-ref self))
+        (simple-var-ref blocks))
+    )
+  )
+  (next
+    (bb0 () (bb1 bb2)
+      (binary-expr >=
+        (field-based-access idx
+          (simple-var-ref self))
+        (invocation lang.array length (
+          (field-based-access blocks
+            (simple-var-ref self)))))
+    )
+    (bb1 (bb0) ()
+      (return
+        (literal <nil>))
+    )
+    (bb2 (bb0) ()
+      (var-def
+        (variable block (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (index-based-access
+            (field-based-access blocks
+              (simple-var-ref self))
+            (field-based-access idx
+              (simple-var-ref self))))))
+      (compound-assignment +
+        (field-based-access idx
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref block))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_stream_write_blocks1.bin))))
+    (var-def
+      (variable byteStream (type
+        (stream-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (union-type
+            (user-defined-type io Error)
+            (value-type null)))) (expr
+        (new (
+          (new
+            (user-defined-type BlockProvider) (
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3))
+              (list-constructor-expr
+                (literal 4)
+                (literal 5))
+              (list-constructor-expr
+                (literal 6))))))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBlocksFromStream (
+          (simple-var-ref path)
+          (simple-var-ref byteStream)))))
+    (var-def
+      (variable readBack (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref readBack))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref readBack)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref readBack)
+          (literal 5)))))
+    (var-def
+      (variable appendStream (type
+        (stream-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (union-type
+            (user-defined-type io Error)
+            (value-type null)))) (expr
+        (new (
+          (new
+            (user-defined-type BlockProvider) (
+            (list-constructor-expr
+              (list-constructor-expr
+                (literal 7)
+                (literal 8))))))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBlocksFromStream (
+          (simple-var-ref path)
+          (simple-var-ref appendStream)
+          (simple-var-ref io APPEND)))))
+    (var-def
+      (variable combined (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref combined))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref combined)
+          (literal 7)))))
+  )
+)

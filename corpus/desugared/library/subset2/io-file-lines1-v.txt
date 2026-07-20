@@ -21,7 +21,7 @@
             (literal Gamma)))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def

@@ -24,7 +24,7 @@
           (simple-var-ref data))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$3 (
+          (invocation $default$6 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def
@@ -70,7 +70,7 @@
           (simple-var-ref data2))))
       (var-def
         (variable $desugar$7 (expr
-          (invocation $default$3 (
+          (invocation $default$6 (
             (simple-var-ref $desugar$5)
             (simple-var-ref $desugar$6))))))
       (var-def

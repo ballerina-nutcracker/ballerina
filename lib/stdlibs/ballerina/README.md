@@ -14,14 +14,14 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 |---------------------------------------------------|---|---|---|---|
 | [crypto](crypto/0.0.1/go1.26/README.md)           | 26 | 1 | 5 | 81% |
 | [http](http/0.0.1/go1.26/README.md)               | 24 | 2 | 46 | 33% |
-| [io](io/0.0.1/go1.26/README.md)                   | 14 | 1 | 12 | 52% |
+| [io](io/0.0.1/go1.26/README.md)                   | 18 | 1 | 8 | 67% |
 | [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
 | [os](os/0.0.1/go1.26/README.md)                   | 11 | 1 | 0 | 92% |
 | [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **124** | **9** | **80** | **58%** |
+| **Total**                                         | **128** | **9** | **76** | **60%** |
 
 ## Notable Behavioural Changes
 
@@ -45,6 +45,7 @@ tables instead.
 ### io
 
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
+- **Write-from-stream accepts a generic `error?` completion.** `fileWriteLinesFromStream`/`fileWriteBlocksFromStream` widen the stream parameter's completion type from jBallerina's `io:Error?` to the generic `error?`, so a stream held as `stream<_, error?>` (which jBallerina rejects) can be written back. This is a strict superset of jBallerina's accepted inputs; the return type stays `io:Error?`.
 
 ### log
 

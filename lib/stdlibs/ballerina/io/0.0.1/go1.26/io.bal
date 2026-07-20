@@ -42,6 +42,10 @@ public enum FileWriteOption {
     APPEND
 }
 
+# The byte array that is used to read the byte content from the streams.
+# Note: jBallerina defines this as `readonly & byte[]`; `readonly &` intersections are not yet supported here, so this is a plain `byte[]`.
+public type Block byte[];
+
 # Prints `any` or `error` to the standard output stream.
 # ```ballerina
 # io:print("Start processing the CSV file from ", srcFileName);
@@ -106,6 +110,17 @@ public isolated function fileReadLines(string path) returns string[]|Error {
     return externFileReadLines(path);
 }
 
+# Reads file content as a stream of lines.
+# The resulting stream does not contain the terminal carriage characters (`\r` or `\r\n`).
+# ```ballerina
+# stream<string, io:Error?>|io:Error content = io:fileReadLinesAsStream("./resources/myfile.txt");
+# ```
+# + path - The file path
+# + return - The file content as a stream of strings or an `io:Error`
+public isolated function fileReadLinesAsStream(string path) returns stream<string, Error?>|Error {
+    return externFileReadLinesAsStream(path);
+}
+
 # Reads the entire file content as a byte array.
 # ```ballerina
 # byte[]|io:Error content = io:fileReadBytes("./resources/myfile.txt");
@@ -114,6 +129,17 @@ public isolated function fileReadLines(string path) returns string[]|Error {
 # + return - A byte array or an `io:Error`
 public isolated function fileReadBytes(string path) returns byte[]|Error {
     return externFileReadBytes(path);
+}
+
+# Reads the entire file content as a stream of blocks.
+# ```ballerina
+# stream<io:Block, io:Error?>|io:Error content = io:fileReadBlocksAsStream("./resources/myfile.txt", 1000);
+# ```
+# + path - The file path
+# + blockSize - An optional size of the byte block. The default size is 4KB
+# + return - A byte block stream or an `io:Error`
+public isolated function fileReadBlocksAsStream(string path, int blockSize = 4096) returns stream<Block, Error?>|Error {
+    return externFileReadBlocksAsStream(path, blockSize);
 }
 
 # Reads file content as a JSON.
@@ -151,6 +177,21 @@ public isolated function fileWriteLines(string path, string[] content, FileWrite
     return externFileWriteLines(path, content, option);
 }
 
+# Writes a stream of lines to a file.
+# During the writing operation, a newline character `\n` is added after each line.
+# ```ballerina
+# stream<string, io:Error?> lineStream = content.toStream();
+# io:Error? result = io:fileWriteLinesFromStream("./resources/myfile.txt", lineStream);
+# ```
+# + path - The file path
+# + lineStream - A stream of lines to write. The completion type is the generic `error?` so that
+#                streams with either an `io:Error?` or a plain `error?` completion are accepted.
+# + option - Whether to overwrite or append the given content (default: `OVERWRITE`)
+# + return - `()` when the write was successful or an `io:Error`
+public isolated function fileWriteLinesFromStream(string path, stream<string, error?> lineStream, FileWriteOption option = OVERWRITE) returns Error? {
+    return externFileWriteLinesFromStream(path, lineStream, option);
+}
+
 # Writes a byte array to a file.
 # ```ballerina
 # io:Error? result = io:fileWriteBytes("./resources/myfile.bin", [72, 101, 108, 108, 111]);
@@ -161,6 +202,20 @@ public isolated function fileWriteLines(string path, string[] content, FileWrite
 # + return - `()` when the write was successful or an `io:Error`
 public isolated function fileWriteBytes(string path, byte[] content, FileWriteOption option = OVERWRITE) returns Error? {
     return externFileWriteBytes(path, content, option);
+}
+
+# Writes a byte stream to a file.
+# ```ballerina
+# stream<byte[], io:Error?> byteStream = content.toStream();
+# io:Error? result = io:fileWriteBlocksFromStream("./resources/myfile.bin", byteStream);
+# ```
+# + path - The file path
+# + byteStream - Byte stream to write. The completion type is the generic `error?` so that
+#                streams with either an `io:Error?` or a plain `error?` completion are accepted.
+# + option - Whether to overwrite or append the given content (default: `OVERWRITE`)
+# + return - `()` when the write was successful or an `io:Error`
+public isolated function fileWriteBlocksFromStream(string path, stream<byte[], error?> byteStream, FileWriteOption option = OVERWRITE) returns Error? {
+    return externFileWriteBlocksFromStream(path, byteStream, option);
 }
 
 # Writes a JSON to a file.
@@ -198,11 +253,15 @@ public isolated function fileWriteXml(string path, xml content, FileWriteOption 
 
 isolated function externFileReadString(string path) returns string|Error = external;
 isolated function externFileReadLines(string path) returns string[]|Error = external;
+isolated function externFileReadLinesAsStream(string path) returns stream<string, Error?>|Error = external;
 isolated function externFileReadBytes(string path) returns byte[]|Error = external;
+isolated function externFileReadBlocksAsStream(string path, int blockSize) returns stream<Block, Error?>|Error = external;
 isolated function externFileReadJson(string path) returns json|Error = external;
 isolated function externFileWriteString(string path, string content, FileWriteOption option) returns Error? = external;
 isolated function externFileWriteLines(string path, string[] content, FileWriteOption option) returns Error? = external;
+isolated function externFileWriteLinesFromStream(string path, stream<string, error?> lineStream, FileWriteOption option) returns Error? = external;
 isolated function externFileWriteBytes(string path, byte[] content, FileWriteOption option) returns Error? = external;
+isolated function externFileWriteBlocksFromStream(string path, stream<byte[], error?> byteStream, FileWriteOption option) returns Error? = external;
 isolated function externFileWriteJson(string path, json content) returns Error? = external;
 isolated function externFileReadXml(string path) returns xml|Error = external;
 isolated function externFileWriteXml(string path, xml content, FileWriteOption option) returns Error? = external;

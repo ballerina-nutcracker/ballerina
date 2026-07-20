@@ -30,10 +30,26 @@ import (
 )
 
 type fileIOTypes struct {
-	strArrTy   semtypes.SemType
-	byteArrTy  semtypes.SemType
-	jsonListTy semtypes.SemType
-	jsonMapTy  semtypes.SemType
+	strArrTy    semtypes.SemType
+	byteArrTy   semtypes.SemType
+	byteArrAtom *semtypes.ListAtomicType
+	jsonListTy  semtypes.SemType
+	jsonMapTy   semtypes.SemType
+
+	lineStreamTy   semtypes.SemType
+	lineRecordTy   semtypes.SemType
+	lineRecordAtom *semtypes.MappingAtomicType
+
+	blockStreamTy   semtypes.SemType
+	blockRecordTy   semtypes.SemType
+	blockRecordAtom *semtypes.MappingAtomicType
+}
+
+// closedNextRecordType builds the `record {| T value; |}` type used as the
+// per-element value yielded by a stream's `next()` method.
+func closedNextRecordType(env semtypes.Env, valueTy semtypes.SemType) semtypes.SemType {
+	md := semtypes.NewMappingDefinition()
+	return md.DefineMappingTypeWrapped(env, []semtypes.Field{semtypes.FieldFrom("value", valueTy, false, false)}, semtypes.NEVER)
 }
 
 func fileIOError(msg string) values.BalValue {
@@ -64,6 +80,20 @@ func initFileIOModule(rt *runtime.Runtime) {
 		jsonMapTy:  jmd.DefineMappingTypeWrapped(env, nil, jsonTy),
 		jsonListTy: jld.DefineListTypeWrappedWithEnvSemType(env, jsonTy),
 	}
+
+	types.byteArrAtom = semtypes.ToListAtomicType(typCtx, types.byteArrTy)
+
+	streamCompletionTy := semtypes.Union(semtypes.ERROR, semtypes.NIL)
+
+	lsd := semtypes.NewStreamDefinition()
+	types.lineRecordTy = closedNextRecordType(env, semtypes.STRING)
+	types.lineRecordAtom = semtypes.ToMappingAtomicType(typCtx, types.lineRecordTy)
+	types.lineStreamTy = lsd.Define(env, semtypes.STRING, streamCompletionTy)
+
+	bsd := semtypes.NewStreamDefinition()
+	types.blockRecordTy = closedNextRecordType(env, types.byteArrTy)
+	types.blockRecordAtom = semtypes.ToMappingAtomicType(typCtx, types.blockRecordTy)
+	types.blockStreamTy = bsd.Define(env, types.byteArrTy, streamCompletionTy)
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileReadString",
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -235,6 +265,8 @@ func initFileIOModule(rt *runtime.Runtime) {
 			}
 			return nil, nil
 		})
+
+	registerStreamIOExterns(rt, types)
 }
 
 func init() {

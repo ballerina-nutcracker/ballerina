@@ -18,6 +18,7 @@ package extern_test
 
 import (
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
@@ -93,7 +94,21 @@ func (p *httpPal) Platform() pal.Platform {
 	base := p.TestPal.Platform()
 	base.HTTP = pal.HTTP{NewClient: p.newClient, Listen: palnative.Listen}
 	if p.realFS {
-		base.FS = pal.FS{ReadFile: os.ReadFile}
+		base.FS = pal.FS{
+			ReadFile: os.ReadFile,
+			OpenReadable: func(path string) (io.ReadCloser, error) {
+				return os.Open(path)
+			},
+			OpenWritable: func(path string, appendMode bool) (io.WriteCloser, error) {
+				openFlag := os.O_CREATE | os.O_WRONLY
+				if appendMode {
+					openFlag |= os.O_APPEND
+				} else {
+					openFlag |= os.O_TRUNC
+				}
+				return os.OpenFile(path, openFlag, 0o644)
+			},
+		}
 	}
 	return base
 }

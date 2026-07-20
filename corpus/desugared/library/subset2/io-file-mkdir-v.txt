@@ -17,7 +17,7 @@
           (literal hello))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def
@@ -61,7 +61,7 @@
             (literal two)))))
       (var-def
         (variable $desugar$7 (expr
-          (invocation $default$1 (
+          (invocation $default$2 (
             (simple-var-ref $desugar$5)
             (simple-var-ref $desugar$6))))))
       (var-def
@@ -106,7 +106,7 @@
             (literal 3)))))
       (var-def
         (variable $desugar$12 (expr
-          (invocation $default$2 (
+          (invocation $default$4 (
             (simple-var-ref $desugar$10)
             (simple-var-ref $desugar$11))))))
       (var-def
@@ -181,7 +181,7 @@
           (xml-element-literal a))))
       (var-def
         (variable $desugar$19 (expr
-          (invocation $default$3 (
+          (invocation $default$6 (
             (simple-var-ref $desugar$17)
             (simple-var-ref $desugar$18))))))
       (var-def
@@ -223,7 +223,7 @@
           (literal First))))
       (var-def
         (variable $desugar$24 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$22)
             (simple-var-ref $desugar$23))))))
       (var-def
