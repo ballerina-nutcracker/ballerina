@@ -17,7 +17,7 @@
 import ballerina/http;
 import ballerina/io;
 
-listener http:Listener multiListener = new (19195);
+listener http:Listener multiListener = new (19218);
 
 service /foo on multiListener {
     resource function get name() returns http:Response {
@@ -36,7 +36,7 @@ service /bar on multiListener {
 }
 
 public function testMain() returns error? {
-    http:Client c = check new http:Client("http://localhost:19195", {});
+    http:Client c = check new http:Client("http://localhost:19218", {});
     http:Response r1 = check c->get("/foo/name");
     io:println(r1.getTextPayload()); // @output foo-service
     http:Response r2 = check c->get("/bar/name");

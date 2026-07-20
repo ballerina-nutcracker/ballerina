@@ -41,12 +41,14 @@ func skipIfNoLoopback(t *testing.T) {
 // listener → dispatch → resource → response path.
 func TestHttpServiceBasic(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-basic-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
 // TestHttpServicePathParam exercises a typed (int) path parameter.
 func TestHttpServicePathParam(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-path-param-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -55,6 +57,7 @@ func TestHttpServicePathParam(t *testing.T) {
 // never matches a raw URL segment.
 func TestHttpServicePathParamUnion(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-path-param-union-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -62,6 +65,7 @@ func TestHttpServicePathParamUnion(t *testing.T) {
 // through a POST resource.
 func TestHttpServiceRequest(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-request-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -69,6 +73,7 @@ func TestHttpServiceRequest(t *testing.T) {
 // method) dispatch outcomes.
 func TestHttpServiceRouting(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-routing-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -77,6 +82,7 @@ func TestHttpServiceRouting(t *testing.T) {
 // or /foobaz.
 func TestHttpServicePathBoundary(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-path-boundary-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -84,6 +90,7 @@ func TestHttpServicePathBoundary(t *testing.T) {
 // single listener and confirms each routes to the correct service.
 func TestHttpServiceMultiService(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-multi-service-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -92,6 +99,7 @@ func TestHttpServiceMultiService(t *testing.T) {
 // sub-paths at a segment boundary, the same as "/foo" would.
 func TestHttpServiceAttachTrailingSlash(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-attach-trailing-slash-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -100,6 +108,7 @@ func TestHttpServiceAttachTrailingSlash(t *testing.T) {
 // getContentType/getHeaderNames/getQueryParamValues accessors.
 func TestHttpServiceRequestAccessors(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-request-accessors-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -109,6 +118,7 @@ func TestHttpServiceRequestAccessors(t *testing.T) {
 // injected into a service resource.
 func TestHttpServiceRequestMutators(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-request-mutators-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -118,6 +128,7 @@ func TestHttpServiceRequestMutators(t *testing.T) {
 // platform layer.
 func TestHttpServiceHTTP10Fallback(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-http10-fallback-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -125,6 +136,7 @@ func TestHttpServiceHTTP10Fallback(t *testing.T) {
 // boolean, decimal, and string path parameters.
 func TestHttpServiceTypedParams(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-typed-params-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -133,12 +145,14 @@ func TestHttpServiceTypedParams(t *testing.T) {
 // must not miscount the rest segment as an extra caller-supplied argument).
 func TestHttpServiceRestPathParam(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-rest-path-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
 // TestHttpServiceDuplicateBasePath verifies that attaching two services at the
 // same base path fails at listener-init time with a runtime error.
 func TestHttpServiceDuplicateBasePath(t *testing.T) {
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-dup-path-p"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -147,6 +161,7 @@ func TestHttpServiceDuplicateBasePath(t *testing.T) {
 // field default of 200 is used when no assignment is made.
 func TestHttpServiceStatusCode(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-status-code-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -155,6 +170,7 @@ func TestHttpServiceStatusCode(t *testing.T) {
 // disabled for the self-signed cert.
 func TestHttpServiceTLS(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-tls-v"), newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
 
@@ -163,6 +179,7 @@ func TestHttpServiceTLS(t *testing.T) {
 // getBinaryPayload) and a default-200 response over the real palnative client.
 func TestHttpServiceClientPayloads(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-client-payloads-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -170,6 +187,7 @@ func TestHttpServiceClientPayloads(t *testing.T) {
 // verbs against dedicated local resources that each return 200.
 func TestHttpServiceClientMethods(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-client-methods-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -177,6 +195,7 @@ func TestHttpServiceClientMethods(t *testing.T) {
 // (Location header) emitted by a local service and lands on the 200 target.
 func TestHttpServiceClientRedirect(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-client-redirect-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -185,6 +204,7 @@ func TestHttpServiceClientRedirect(t *testing.T) {
 // header, and a hop-by-hop header dropped before reaching the client.
 func TestHttpServiceResponseVariants(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-response-variants-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -192,6 +212,7 @@ func TestHttpServiceResponseVariants(t *testing.T) {
 // path and a request to a bare base path that resolves no resource.
 func TestHttpServiceNoMatch(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-no-match-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -199,6 +220,7 @@ func TestHttpServiceNoMatch(t *testing.T) {
 // fields in initNative.
 func TestHttpServiceConfig(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-config-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -206,6 +228,7 @@ func TestHttpServiceConfig(t *testing.T) {
 // in buildRequestFromHTTP by posting a body larger than eagerBufferThreshold.
 func TestHttpServiceLargeBody(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-large-body-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -215,6 +238,7 @@ func TestHttpServiceLargeBody(t *testing.T) {
 // other client body is buffered into a *bytes.Reader before Execute).
 func TestHttpServiceForwardLargeBody(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-forward-large-body-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -223,6 +247,7 @@ func TestHttpServiceForwardLargeBody(t *testing.T) {
 // session tickets.
 func TestHttpServiceTLSOptions(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-tls-options-v"), newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
 
@@ -234,6 +259,7 @@ func TestHttpServiceTLSOptions(t *testing.T) {
 // the fix this test hangs forever.
 func TestHttpServiceGracefulStop(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-graceful-stop-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -245,6 +271,7 @@ func TestHttpServiceGracefulStop(t *testing.T) {
 // stop is connection-refused.
 func TestHttpServiceImmediateStop(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-immediate-stop-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -254,6 +281,7 @@ func TestHttpServiceImmediateStop(t *testing.T) {
 // generateTestCerts), so the .bal source embedding the temp cert paths is
 // materialised per run, mirroring TestHttpClientMTLS.
 func TestHttpServiceMTLS(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	caCertPEM, serverCertPEM, serverKeyPEM, clientCertPEM, clientKeyPEM := generateTestCerts(t)
 
