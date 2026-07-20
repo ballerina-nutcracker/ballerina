@@ -128,6 +128,12 @@ func NewPlatform() (pal.Platform, func()) {
 			NewClient: NewHTTPClient,
 			Listen:    Listen,
 		},
+		Net: pal.Net{
+			Dial:         Dial,
+			Listen:       ListenTCP,
+			DialPacket:   DialPacket,
+			ListenPacket: ListenPacket,
+		},
 		Signals: signals,
 	}, cleanupSignals
 }
