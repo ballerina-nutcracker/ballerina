@@ -1,0 +1,151 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_byte_channel_closed.bin))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref path))))
+      (var-def
+        (variable $desugar$1 (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$4 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io openReadableFile (
+            (simple-var-ref path))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable reader (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation close expr:
+            (simple-var-ref reader) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$5))
+      (var-def
+        (variable secondClose (type
+          (union-type
+            (user-defined-type io Error)
+            (value-type null))) (expr
+          (invocation close expr:
+            (simple-var-ref reader) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref secondClose)
+            (user-defined-type io Error)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref secondClose)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.error message (
+                (simple-var-ref secondClose))))))) ())
+      (block-stmt
+        (var-def
+          (variable readAfterClose (type
+            (union-type
+              (array-type
+                (value-type byte) dimensions: 1 ([]))
+              (user-defined-type io Error))) (expr
+            (invocation read expr:
+              (simple-var-ref reader) (
+              (literal 1))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref readAfterClose)
+              (user-defined-type io Error)))))
+        (var-def
+          (variable $desugar$6 (expr
+            (simple-var-ref path))))
+        (var-def
+          (variable $desugar$7 (expr
+            (invocation $default$7 (
+              (simple-var-ref $desugar$6))))))
+        (var-def
+          (variable $desugar$8 (expr
+            (invocation io openWritableFile (
+              (simple-var-ref $desugar$6)
+              (simple-var-ref $desugar$7))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref $desugar$8))
+          (block-stmt
+            (return
+              (simple-var-ref $desugar$8))) ())
+        (var-def
+          (variable writer (type
+            (user-defined-type io WritableByteChannel)) (expr
+            (simple-var-ref $desugar$8))))
+        (var-def
+          (variable $desugar$9 (expr
+            (invocation close expr:
+              (simple-var-ref writer) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref $desugar$9))
+          (block-stmt
+            (return
+              (simple-var-ref $desugar$9))) ())
+        (expression-stmt
+          (simple-var-ref $desugar$9))
+        (var-def
+          (variable writeAfterClose (type
+            (union-type
+              (value-type int)
+              (user-defined-type io Error))) (expr
+            (invocation write expr:
+              (simple-var-ref writer) (
+              (list-constructor-expr
+                (literal 1))
+              (literal 0))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref writeAfterClose)
+              (user-defined-type io Error)))))))))

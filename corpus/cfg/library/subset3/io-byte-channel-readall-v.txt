@@ -1,0 +1,58 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_byte_channel_readall.bin))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBytes (
+          (simple-var-ref path)
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)
+            (literal 40)
+            (literal 50))))))
+    (var-def
+      (variable channel (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io openReadableFile (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable content (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type io Error))) (expr
+        (invocation readAll expr:
+          (simple-var-ref channel) ()))))
+    (type-test-expr is
+      (simple-var-ref content)
+      (array-type
+        (value-type byte) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref content))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref content)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref content)
+          (literal 4)))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref channel) ())))
+  )
+)

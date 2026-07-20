@@ -1,0 +1,84 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable content (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 11)
+            (literal 22)
+            (literal 33)
+            (literal 44)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation io createReadableChannel (
+            (simple-var-ref content))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable channel (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable result (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type io Error))) (expr
+          (invocation readAll expr:
+            (simple-var-ref channel) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref result)
+          (array-type
+            (value-type byte) dimensions: 1 ([])))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.array length (
+                (simple-var-ref result))))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref result)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref result)
+                (literal 3)))))) ())
+      (block-stmt
+        (var-def
+          (variable $desugar$1 (expr
+            (invocation close expr:
+              (simple-var-ref channel) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref $desugar$1))
+          (block-stmt
+            (return
+              (simple-var-ref $desugar$1))) ())
+        (expression-stmt
+          (simple-var-ref $desugar$1))
+        (var-def
+          (variable second (type
+            (union-type
+              (user-defined-type io Error)
+              (value-type null))) (expr
+            (invocation close expr:
+              (simple-var-ref channel) ()))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref second)
+              (user-defined-type io Error)))))))))

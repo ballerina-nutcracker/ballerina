@@ -1,0 +1,185 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_byte_channel_blockstream.bin
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 4
+    %8 = ConstantLoad 5
+    %9 = ConstantLoad 6
+    %10 = ConstantLoad 7
+    %11 = ConstantLoad 7
+    %12 = newArray [int:Unsigned8...][%11]{%4, %5, %6, %7, %8, %9, %10}
+    $desugar$1 = %12;
+    %14 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %14;
+    %16 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %16;
+    %18 = $desugar$3 is error
+    %18 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %19 = openReadableFile(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %19;
+    %21 = $desugar$4 is error
+    %21 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    channel = $desugar$4;
+    %23 = ConstantLoad 3
+    %24 = %23;
+    %25 = blockStream(channel,%24) -> bb8;
+  }
+  bb8 {
+    s = %25;
+    %27 = s is stream
+    %27 ? bb9 : bb29;
+  }
+  bb9 {
+    PushScopeFrame 3
+    %0 = streamNext (1, s)
+    r1 = %0;
+    %2 = r1 is {| value: [int:Unsigned8...], never... |}
+    %2 ? bb10 : bb14;
+  }
+  bb10 {
+    PushScopeFrame 11
+    %1 = ConstantLoad value
+    %0 = (1, r1)[%1];
+    %2 = length(%0) -> bb11;
+  }
+  bb11 {
+    %3 = %2;
+    %4 = println(%3) -> bb12;
+  }
+  bb12 {
+    %6 = ConstantLoad 0
+    %8 = ConstantLoad value
+    %7 = (1, r1)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    PushScopeFrame 3
+    %0 = streamNext (2, s)
+    r2 = %0;
+    %2 = r2 is {| value: [int:Unsigned8...], never... |}
+    %2 ? bb15 : bb18;
+  }
+  bb15 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, r2)[%1];
+    %2 = length(%0) -> bb16;
+  }
+  bb16 {
+    %3 = %2;
+    %4 = println(%3) -> bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    PushScopeFrame 3
+    %0 = streamNext (3, s)
+    r3 = %0;
+    %2 = r3 is {| value: [int:Unsigned8...], never... |}
+    %2 ? bb19 : bb23;
+  }
+  bb19 {
+    PushScopeFrame 11
+    %1 = ConstantLoad value
+    %0 = (1, r3)[%1];
+    %2 = length(%0) -> bb20;
+  }
+  bb20 {
+    %3 = %2;
+    %4 = println(%3) -> bb21;
+  }
+  bb21 {
+    %6 = ConstantLoad 0
+    %8 = ConstantLoad value
+    %7 = (1, r3)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb22;
+  }
+  bb22 {
+    PopScopeFrame
+    GOTO bb23;
+  }
+  bb23 {
+    PushScopeFrame 3
+    %0 = streamNext (4, s)
+    r4 = %0;
+    %2 = r4 is nil
+    %2 ? bb24 : bb26;
+  }
+  bb24 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb25;
+  }
+  bb25 {
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb26 {
+    PushScopeFrame 3
+    %0 = streamClose (5, s)
+    $desugar$5 = %0;
+    %2 = $desugar$5 is error
+    %2 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (6, %0) = (1, $desugar$5);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb29;
+  }
+  bb29 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

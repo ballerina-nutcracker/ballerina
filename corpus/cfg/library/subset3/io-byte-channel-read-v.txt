@@ -1,0 +1,106 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_byte_channel_read.bin))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBytes (
+          (simple-var-ref path)
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)
+            (literal 5)
+            (literal 6)
+            (literal 7))))))
+    (var-def
+      (variable channel (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io openReadableFile (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref channel)
+          (user-defined-type io ReadableByteChannel)))))
+    (var-def
+      (variable r1 (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type io Error))) (expr
+        (invocation read expr:
+          (simple-var-ref channel) (
+          (literal 3))))))
+    (type-test-expr is
+      (simple-var-ref r1)
+      (array-type
+        (value-type byte) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref r1))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref r1)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref r1)
+          (literal 2)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable r2 (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type io Error))) (expr
+        (invocation read expr:
+          (simple-var-ref channel) (
+          (literal 100))))))
+    (type-test-expr is
+      (simple-var-ref r2)
+      (array-type
+        (value-type byte) dimensions: 1 ([])))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref r2))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref r2)
+          (literal 3)))))
+  )
+  (bb4 (bb3 bb2) ()
+    (var-def
+      (variable r3 (type
+        (union-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (user-defined-type io Error))) (expr
+        (invocation read expr:
+          (simple-var-ref channel) (
+          (literal 10))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r3)
+          (user-defined-type io Error)))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref channel) ())))
+  )
+)

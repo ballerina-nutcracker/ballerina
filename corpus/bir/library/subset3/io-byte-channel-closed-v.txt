@@ -1,0 +1,149 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_byte_channel_closed.bin
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 3
+    %8 = newArray [int:Unsigned8...][%7]{%4, %5, %6}
+    $desugar$1 = %8;
+    %10 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %10;
+    %12 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %12;
+    %14 = $desugar$3 is error
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %15 = openReadableFile(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %15;
+    %17 = $desugar$4 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    reader = $desugar$4;
+    %19 = close(reader) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %19;
+    %21 = $desugar$5 is error
+    %21 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    %22 = close(reader) -> bb11;
+  }
+  bb11 {
+    secondClose = %22;
+    %24 = secondClose is error
+    %25 = %24;
+    %26 = println(%25) -> bb12;
+  }
+  bb12 {
+    %27 = secondClose is error
+    %27 ? bb13 : bb16;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = message((1, secondClose)) -> bb14;
+  }
+  bb14 {
+    %1 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 27
+    %0 = ConstantLoad 1
+    %1 = %0;
+    %2 = read((1, reader),%1) -> bb17;
+  }
+  bb17 {
+    readAfterClose = %2;
+    %4 = readAfterClose is error
+    %5 = %4;
+    %6 = println(%5) -> bb18;
+  }
+  bb18 {
+    $desugar$6 = (1, path);
+    %8 = $default$7($desugar$6) -> bb19;
+  }
+  bb19 {
+    $desugar$7 = %8;
+    %10 = openWritableFile($desugar$6,$desugar$7) -> bb20;
+  }
+  bb20 {
+    $desugar$8 = %10;
+    %12 = $desugar$8 is error
+    %12 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$8);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    writer = $desugar$8;
+    %14 = close(writer) -> bb23;
+  }
+  bb23 {
+    $desugar$9 = %14;
+    %16 = $desugar$9 is error
+    %16 ? bb24 : bb25;
+  }
+  bb24 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$9);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    %17 = ConstantLoad 1
+    %18 = ConstantLoad 1
+    %19 = newArray [int:Unsigned8...][%18]{%17}
+    %20 = ConstantLoad 0
+    %21 = %20;
+    %22 = write(writer,%19,%21) -> bb26;
+  }
+  bb26 {
+    writeAfterClose = %22;
+    %24 = writeAfterClose is error
+    %25 = %24;
+    %26 = println(%25) -> bb27;
+  }
+  bb27 {
+    PopScopeFrame
+    return;
+  }
+}

@@ -265,3 +265,129 @@ isolated function externFileWriteBlocksFromStream(string path, stream<byte[], er
 isolated function externFileWriteJson(string path, json content) returns Error? = external;
 isolated function externFileReadXml(string path) returns xml|Error = external;
 isolated function externFileWriteXml(string path, xml content, FileWriteOption option) returns Error? = external;
+
+# Represents a readable byte channel that represents an input resource (i.e. a file), which could be used to source bytes.
+# A file path or an in-memory `byte` array can be used to obtain an `io:ReadableByteChannel`.
+#
+# `io:openReadableFile("./files/sample.txt")` - used to obtain an `io:ReadableByteChannel` from a given file path
+# `io:createReadableChannel(byteArray)` - used to obtain an `io:ReadableByteChannel` from a given `byte` array
+public class ReadableByteChannel {
+
+    # Adding default init function to prevent the object getting initialized from user code.
+    isolated function init() {
+    }
+
+    private isolated function attachFile(string path) returns Error? = external;
+
+    private isolated function attachBytes(byte[] content) returns Error? = external;
+
+    # Reads bytes from a given input resource.
+    # This operation returns however many bytes were available at the time of the call, which may be fewer than
+    # `nBytes`. An `io:Error` will return once the channel reaches the end.
+    # ```ballerina
+    # byte[]|io:Error result = readableByteChannel.read(1000);
+    # ```
+    #
+    # + nBytes - Represents the number of bytes, which should be read. This should be a positive integer.
+    # + return - Content (the number of bytes) read, an error once the channel reaches the end or else an `io:Error`
+    public isolated function read(int nBytes) returns byte[]|Error = external;
+
+    # Reads all content of the channel as a `byte` array.
+    # ```ballerina
+    # byte[]|io:Error result = readableByteChannel.readAll();
+    # ```
+    #
+    # + return - A `byte` array or else an `io:Error`
+    public isolated function readAll() returns byte[]|Error = external;
+
+    # Returns a block stream that can be used to read all `byte` blocks as a stream.
+    # ```ballerina
+    # stream<io:Block, io:Error?>|io:Error result = readableByteChannel.blockStream(1000);
+    # ```
+    # + blockSize - The size of the block. This should be a positive integer.
+    # + return - A block stream or else an `io:Error`
+    public isolated function blockStream(int blockSize) returns stream<Block, Error?>|Error = external;
+
+    // Note: base64Encode()/base64Decode() are not yet implemented.
+
+    # Closes the readable byte channel to release any underlying resources.
+    # After a channel is closed, any further reading operations will cause an error.
+    # ```ballerina
+    # io:Error? err = readableByteChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents a writable byte channel that acts as an output resource (e.g., a file) for writing bytes.
+# A file path can be used to obtain an `io:WritableByteChannel`.
+#
+# `io:openWritableFile("./files/sample.txt")` - used to obtain an `io:WritableByteChannel` from a given file path
+public class WritableByteChannel {
+
+    # Adding default init function to prevent the object getting initialized from user code.
+    isolated function init() {
+    }
+
+    private isolated function attachFile(string path, FileWriteOption option) returns Error? = external;
+
+    # Sinks bytes from a given input/output resource.
+    # ```ballerina
+    # int|io:Error result = writableByteChannel.write(content, 0);
+    # ```
+    #
+    # + content - Block of bytes to be written
+    # + offset - Number of leading bytes of `content` to skip before writing
+    # + return - Number of bytes written or else an `io:Error`
+    public isolated function write(byte[] content, int offset) returns int|Error = external;
+
+    # Closes the byte channel.
+    # After a channel is closed, any further writing operations will cause an error.
+    # ```ballerina
+    # io:Error? err = writableByteChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Retrieves a readable byte channel from a given file path.
+# ```ballerina
+# io:ReadableByteChannel readableFieldResult = check io:openReadableFile("./files/sample.txt");
+# ```
+#
+# + path - The relative or absolute file path
+# + return - The `io:ReadableByteChannel` related to the given file or else an `io:Error` if there is an error while opening
+public isolated function openReadableFile(string path) returns ReadableByteChannel|Error {
+    ReadableByteChannel channel = new;
+    check channel.attachFile(path);
+    return channel;
+}
+
+# Retrieves a writable byte channel from a given file path.
+# ```ballerina
+# io:WritableByteChannel writableFileResult = check io:openWritableFile("./files/sampleResponse.txt");
+# ```
+#
+# + path - The relative or absolute file path
+# + option - Indicate whether to overwrite or append the given content
+# + return - The `io:WritableByteChannel` related to the given file or else an `io:Error` if any error occurred
+public isolated function openWritableFile(string path, FileWriteOption option = OVERWRITE) returns WritableByteChannel|Error {
+    WritableByteChannel channel = new;
+    check channel.attachFile(path, option);
+    return channel;
+}
+
+# Creates an in-memory channel, which will be a reference stream of bytes.
+# ```ballerina
+# io:ReadableByteChannel|io:Error byteChannel = io:createReadableChannel(content);
+# ```
+#
+# + content - The content as a byte array, which should be exposed as a channel
+# + return - The `io:ReadableByteChannel` related to the given bytes or else an `io:Error` if any error occurred
+public isolated function createReadableChannel(byte[] content) returns ReadableByteChannel|Error {
+    ReadableByteChannel channel = new;
+    check channel.attachBytes(content);
+    return channel;
+}
