@@ -1,0 +1,334 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina file (as file))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable baseDir (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation file createTempDir (
+              (named-arg prefix
+                (literal bal-file2-))))))))
+      (var-def
+        (variable f1 (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /a.txt)))))
+      (var-def
+        (variable f2 (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /b.txt)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file create (
+            (simple-var-ref f1)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file create (
+            (simple-var-ref f2)))))
+      (var-def
+        (variable entries (type
+          (array-type
+            (user-defined-type file MetaData) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation file readDir (
+              (simple-var-ref baseDir)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref entries) ()))))
+      (var-def
+        (variable copyDest (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /a-copy.txt)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file copy (
+            (simple-var-ref f1)
+            (simple-var-ref copyDest)))))
+      (var-def
+        (variable copyExists (type
+          (value-type boolean)) (expr
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref copyDest)
+              (simple-var-ref file EXISTS)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref copyExists))))
+      (var-def
+        (variable copyNoReplace (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file copy (
+            (simple-var-ref f2)
+            (simple-var-ref copyDest))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref copyNoReplace)
+            (user-defined-type file Error)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file copy (
+            (simple-var-ref f2)
+            (simple-var-ref copyDest)
+            (simple-var-ref file REPLACE_EXISTING)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref copyDest)
+              (simple-var-ref file EXISTS)))))))
+      (var-def
+        (variable copyMissing (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file copy (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /missing.txt))
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /x.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref copyMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable renamed (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /a-renamed.txt)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file rename (
+            (simple-var-ref f1)
+            (simple-var-ref renamed)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref renamed)
+              (simple-var-ref file EXISTS)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref f1)
+              (simple-var-ref file EXISTS)))))))
+      (var-def
+        (variable renameMissing (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file rename (
+            (simple-var-ref f1)
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /y.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref renameMissing)
+            (user-defined-type file Error)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref f2)
+              (simple-var-ref file READABLE)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref f2)
+              (simple-var-ref file WRITABLE)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref f2)
+              (simple-var-ref file IS_SYMLINK)))))))
+      (var-def
+        (variable dirExistsErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file createDir (
+            (simple-var-ref baseDir))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref dirExistsErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable nested (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /nested/child)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file createDir (
+            (simple-var-ref nested)
+            (simple-var-ref file RECURSIVE)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref nested)
+              (simple-var-ref file IS_DIR)))))))
+      (var-def
+        (variable createExistsErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file create (
+            (simple-var-ref f2))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref createExistsErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable removeMissingErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file remove (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref removeMissingErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable cwd (type
+          (value-type string)) (expr
+          (invocation file getCurrentDir ()))))
+      (var-def
+        (variable removeCwdErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file remove (
+            (simple-var-ref cwd))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref removeCwdErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable readDirOnFile (type
+          (union-type
+            (array-type
+              (user-defined-type file MetaData) dimensions: 1 ([]))
+            (user-defined-type file Error))) (expr
+          (invocation file readDir (
+            (simple-var-ref f2))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readDirOnFile)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable readDirMissing (type
+          (union-type
+            (array-type
+              (user-defined-type file MetaData) dimensions: 1 ([]))
+            (user-defined-type file Error))) (expr
+          (invocation file readDir (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readDirMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable metaMissing (type
+          (union-type
+            (user-defined-type file MetaData)
+            (user-defined-type file Error))) (expr
+          (invocation file getMetaData (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref metaMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable dirNoParentErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file createDir (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /no/such/parent)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref dirNoParentErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable tempMissingDir (type
+          (union-type
+            (value-type string)
+            (user-defined-type file Error))) (expr
+          (invocation file createTemp (
+            (named-arg dir
+              (binary-expr +
+                (simple-var-ref baseDir)
+                (literal /does-not-exist))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref tempMissingDir)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable tempDirMissingDir (type
+          (union-type
+            (value-type string)
+            (user-defined-type file Error))) (expr
+          (invocation file createTempDir (
+            (named-arg dir
+              (binary-expr +
+                (simple-var-ref baseDir)
+                (literal /does-not-exist))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref tempDirMissingDir)
+            (user-defined-type file Error)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file remove (
+            (simple-var-ref baseDir)
+            (simple-var-ref file RECURSIVE)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (simple-var-ref baseDir)
+              (simple-var-ref file EXISTS))))))))))
