@@ -1,3 +1,4 @@
 -- stdout --
-200
+foo-service
+bar-service
 -- stderr --

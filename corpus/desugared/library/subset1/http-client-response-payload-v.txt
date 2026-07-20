@@ -12,7 +12,7 @@
           (literal https://example.com))))
       (var-def
         (variable $desugar$1 (expr
-          (invocation $default$13 (
+          (invocation $default$15 (
             (simple-var-ref $desugar$0))))))
       (var-def
         (variable $desugar$2 (expr
@@ -34,7 +34,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$4 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$3))))))
       (var-def
         (variable $desugar$5 (expr

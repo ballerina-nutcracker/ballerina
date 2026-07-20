@@ -3,7 +3,7 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad https://example.com
     $desugar$0 = %1;
-    %3 = $default$13($desugar$0) -> bb1;
+    %3 = $default$15($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %3;
@@ -39,11 +39,11 @@ main() -> nil|error{
     $desugar$3 = %12;
     %14 = ConstantLoad body
     $desugar$4 = %14;
-    %16 = $default$26($desugar$3,$desugar$4) -> bb8;
+    %16 = $default$28($desugar$3,$desugar$4) -> bb8;
   }
   bb8 {
     $desugar$5 = %16;
-    %18 = $default$27($desugar$3,$desugar$4,$desugar$5) -> bb9;
+    %18 = $default$29($desugar$3,$desugar$4,$desugar$5) -> bb9;
   }
   bb9 {
     $desugar$6 = %18;
@@ -74,11 +74,11 @@ main() -> nil|error{
     %31 = ConstantLoad val
     %32 = newMap {| json... |}{%30=%31}
     $desugar$9 = %32;
-    %34 = $default$22($desugar$8,$desugar$9) -> bb14;
+    %34 = $default$24($desugar$8,$desugar$9) -> bb14;
   }
   bb14 {
     $desugar$10 = %34;
-    %36 = $default$23($desugar$8,$desugar$9,$desugar$10) -> bb15;
+    %36 = $default$25($desugar$8,$desugar$9,$desugar$10) -> bb15;
   }
   bb15 {
     $desugar$11 = %36;
@@ -105,15 +105,15 @@ main() -> nil|error{
   bb19 {
     %46 = ConstantLoad /delete
     $desugar$13 = %46;
-    %48 = $default$14($desugar$13) -> bb20;
+    %48 = $default$16($desugar$13) -> bb20;
   }
   bb20 {
     $desugar$14 = %48;
-    %50 = $default$15($desugar$13,$desugar$14) -> bb21;
+    %50 = $default$17($desugar$13,$desugar$14) -> bb21;
   }
   bb21 {
     $desugar$15 = %50;
-    %52 = $default$16($desugar$13,$desugar$14,$desugar$15) -> bb22;
+    %52 = $default$18($desugar$13,$desugar$14,$desugar$15) -> bb22;
   }
   bb22 {
     $desugar$16 = %52;
@@ -140,7 +140,7 @@ main() -> nil|error{
   bb26 {
     %62 = ConstantLoad /head
     $desugar$18 = %62;
-    %64 = $default$20($desugar$18) -> bb27;
+    %64 = $default$22($desugar$18) -> bb27;
   }
   bb27 {
     $desugar$19 = %64;
@@ -167,7 +167,7 @@ main() -> nil|error{
   bb31 {
     %74 = ConstantLoad /options
     $desugar$21 = %74;
-    %76 = $default$21($desugar$21) -> bb32;
+    %76 = $default$23($desugar$21) -> bb32;
   }
   bb32 {
     $desugar$22 = %76;
@@ -198,11 +198,11 @@ main() -> nil|error{
     $desugar$25 = %88;
     %90 = ConstantLoad exec body
     $desugar$26 = %90;
-    %92 = $default$17($desugar$24,$desugar$25,$desugar$26) -> bb37;
+    %92 = $default$19($desugar$24,$desugar$25,$desugar$26) -> bb37;
   }
   bb37 {
     $desugar$27 = %92;
-    %94 = $default$18($desugar$24,$desugar$25,$desugar$26,$desugar$27) -> bb38;
+    %94 = $default$20($desugar$24,$desugar$25,$desugar$26,$desugar$27) -> bb38;
   }
   bb38 {
     $desugar$28 = %94;

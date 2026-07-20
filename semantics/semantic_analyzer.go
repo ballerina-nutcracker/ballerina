@@ -2144,7 +2144,13 @@ func validateResourceMethodReturnType[A analyzer](a A, retTy semtypes.SemType, r
 		a.semanticErr("resource method return type must not include a function type", rm.GetPosition())
 		return
 	}
-	if !semtypes.IsEmpty(a.tyCtx(), semtypes.Intersect(retTy, semtypes.CreateClientObject(a.tyCtx()))) {
+	// A resource must not surface a client object. We test client-ness directly
+	// (network qualifier subtype of "client") rather than intersecting with the
+	// open `client object {}` type: a plain object encodes its network qualifier
+	// as the union "client"|"service" (see semtypes/object_qualifiers.go), so an
+	// Intersect-based check would also reject ordinary object returns such as
+	// http:Response.
+	if semtypes.IsClientObject(a.tyCtx(), retTy) {
 		a.semanticErr("resource method return type must not include a client object type", rm.GetPosition())
 	}
 }

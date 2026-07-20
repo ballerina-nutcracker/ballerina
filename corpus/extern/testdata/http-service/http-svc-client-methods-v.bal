@@ -17,20 +17,36 @@
 import ballerina/http;
 import ballerina/io;
 
-public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com");
+service /verb on new http:Listener(19201) {
+    resource function post post() returns http:Response {
+        return new;
+    }
 
-    http:Response r1 = check c->post("/post", "hello");
+    resource function put put() returns http:Response {
+        return new;
+    }
+
+    resource function delete delete() returns http:Response {
+        return new;
+    }
+
+    resource function patch patch() returns http:Response {
+        return new;
+    }
+}
+
+public function testMain() returns error? {
+    http:Client c = check new http:Client("http://localhost:19201", {});
+
+    http:Response r1 = check c->post("/verb/post", "hello");
     io:println(r1.statusCode); // @output 200
 
-    http:Response r2 = check c->put("/put", "world");
+    http:Response r2 = check c->put("/verb/put", "world");
     io:println(r2.statusCode); // @output 200
 
-    http:Response r3 = check c->delete("/delete");
+    http:Response r3 = check c->delete("/verb/delete");
     io:println(r3.statusCode); // @output 200
 
-    http:Response r4 = check c->patch("/patch", {"key": "value"});
+    http:Response r4 = check c->patch("/verb/patch", {"key": "value"});
     io:println(r4.statusCode); // @output 200
-
-    return;
 }

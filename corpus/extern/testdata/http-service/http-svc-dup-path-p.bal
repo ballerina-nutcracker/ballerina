@@ -15,12 +15,23 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/io;
 
-public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com");
-    http:Response r = check c->get("/html");
-    string text = r.getTextPayload();
-    io:println(text.length() > 0); // @output true
-    return;
+listener http:Listener dupListener = new (19197);
+
+service /dup on dupListener {
+    resource function get a() returns http:Response {
+        http:Response resp = new;
+        resp.setTextPayload("a");
+        return resp;
+    }
+}
+
+// Attaching a second service at the same base path is a runtime error,
+// surfaced when the module initializes the listeners. // @panic
+service /dup on dupListener {
+    resource function get b() returns http:Response {
+        http:Response resp = new;
+        resp.setTextPayload("b");
+        return resp;
+    }
 }

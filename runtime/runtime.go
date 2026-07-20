@@ -96,11 +96,12 @@ func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
 	}
 	registry := modules.NewRegistry(rt.runtimeBuiltins())
 	env := extern.InitEnv(platform, tyEnv, registry, extern.DispatchHandles{
-		LookupObject:   exec.LookupObjectMethod,
-		LookupRemote:   exec.LookupRemoteMethod,
-		LookupResource: exec.LookupResourceMethod,
-		Invoke:         exec.Invoke,
-		Start:          exec.StartMethod,
+		LookupObject:         exec.LookupObjectMethod,
+		LookupRemote:         exec.LookupRemoteMethod,
+		LookupResource:       exec.LookupResourceMethod,
+		LookupResourceByPath: exec.LookupResourceMethodByPath,
+		Invoke:               exec.Invoke,
+		Start:                exec.StartMethod,
 		LookupFunction: func(cx *extern.Context, org, module, name string) (any, bool) {
 			return exec.LookupFunction(cx.Env, org, module, name)
 		},
@@ -189,6 +190,14 @@ func RegisterModuleInitializer(init ModuleInitializer) {
 // GetTypeEnv returns the semantic type environment.
 func (rt *Runtime) GetTypeEnv() semtypes.Env {
 	return rt.env.TypeEnv
+}
+
+// NewExternContext creates a properly initialised extern.Context with a fresh
+// call stack. Use this when dispatching Ballerina code from outside the main
+// interpreter loop, such as from HTTP handler goroutines. Each concurrent
+// execution path must have its own context.
+func (rt *Runtime) NewExternContext() *extern.Context {
+	return exec.CreateContext(rt.env)
 }
 
 // RegisterExternFunction registers a native (extern) function implementation in

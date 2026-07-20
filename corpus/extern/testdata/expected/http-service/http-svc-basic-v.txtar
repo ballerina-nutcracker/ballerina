@@ -1,3 +1,4 @@
 -- stdout --
-true
+200
+Hello, World!
 -- stderr --

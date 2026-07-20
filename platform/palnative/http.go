@@ -22,6 +22,7 @@
 package palnative
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -42,7 +43,40 @@ type httpClient struct {
 	maxEntityBodySize int64 // -1 = no limit; 0 or positive = byte cap
 }
 
+// limitedReadCloser bounds reads to n bytes (like io.LimitReader) while still
+// forwarding Close to the underlying stream when it is an io.Closer. The bound
+// gives net/http's post-write drain read a clean EOF without touching the
+// underlying stream; forwarding Close ensures an owned stream is not leaked.
+type limitedReadCloser struct {
+	lr   *io.LimitedReader
+	body io.Reader
+}
+
+func newLimitedReadCloser(body io.Reader, n int64) *limitedReadCloser {
+	return &limitedReadCloser{lr: &io.LimitedReader{R: body, N: n}, body: body}
+}
+
+func (l *limitedReadCloser) Read(p []byte) (int, error) { return l.lr.Read(p) }
+
+func (l *limitedReadCloser) Close() error {
+	if c, ok := l.body.(io.Closer); ok {
+		return c.Close()
+	}
+	return nil
+}
+
 func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body io.Reader, contentLength int64, contentType string, reqHeaders map[string][]string) (int, map[string][]string, io.ReadCloser, error) {
+	// A bounded streamed body must return a clean EOF after contentLength bytes so
+	// net/http's post-write drain read never touches the (possibly already-closed)
+	// underlying stream; in-memory bodies are left untouched so GetBody still works.
+	if body != nil && contentLength >= 0 {
+		switch body.(type) {
+		case *bytes.Reader, *bytes.Buffer, *strings.Reader:
+			// replayable in-memory body — leave untouched
+		default:
+			body = newLimitedReadCloser(body, contentLength)
+		}
+	}
 	req, err := http.NewRequestWithContext(ctx, method, targetURL, body)
 	if err != nil {
 		return 0, nil, nil, err

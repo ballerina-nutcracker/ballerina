@@ -16,7 +16,11 @@
 
 package values
 
-import "ballerina-lang-go/semtypes"
+import (
+	"strings"
+
+	"ballerina-lang-go/semtypes"
+)
 
 type Object struct {
 	Type       semtypes.SemType
@@ -71,6 +75,17 @@ func (o *Object) ResourceEntries(methodName string) ([]ResourceEntry, bool) {
 	return entries, ok
 }
 
+// AllResourceMethodNames returns the accessor names (e.g. HTTP methods and
+// "default") for which this object declares at least one resource method.
+// The order is unspecified.
+func (o *Object) AllResourceMethodNames() []string {
+	names := make([]string, 0, len(o.rtable))
+	for name := range o.rtable {
+		names = append(names, name)
+	}
+	return names
+}
+
 func (o *Object) Put(field string, value BalValue) {
 	o.fields[field] = value
 }
@@ -83,4 +98,15 @@ func (o *Object) Get(field string) (BalValue, bool) {
 func (o *Object) MethodLookupKey(name string) (string, bool) {
 	key, ok := o.methodKeys[name]
 	return key, ok
+}
+
+// HasRemoteMethods reports whether the object declares any remote methods.
+// Remote methods are recorded under "$remote$"-prefixed method keys.
+func (o *Object) HasRemoteMethods() bool {
+	for k := range o.methodKeys {
+		if strings.HasPrefix(k, "$remote$") {
+			return true
+		}
+	}
+	return false
 }

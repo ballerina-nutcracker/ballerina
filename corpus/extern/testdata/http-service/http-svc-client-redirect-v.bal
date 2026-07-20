@@ -17,10 +17,25 @@
 import ballerina/http;
 import ballerina/io;
 
-public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com");
-    http:Response r = check c->get("/bytes/16");
-    byte[] b = check r.getBinaryPayload();
-    io:println(b.length() > 0); // @output true
-    return;
+service /r on new http:Listener(19202) {
+    resource function get redirect() returns http:Response {
+        http:Response resp = new;
+        resp.statusCode = 302;
+        resp.setHeader("Location", "/r/done");
+        return resp;
+    }
+
+    resource function get done() returns http:Response {
+        http:Response resp = new;
+        resp.setTextPayload("arrived");
+        return resp;
+    }
+}
+
+public function testMain() returns error? {
+    http:Client c = check new http:Client("http://localhost:19202", {
+        followRedirects: {enabled: true, maxCount: 3}
+    });
+    http:Response r = check c->get("/r/redirect");
+    io:println(r.statusCode); // @output 200
 }

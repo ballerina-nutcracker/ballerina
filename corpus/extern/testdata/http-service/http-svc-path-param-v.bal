@@ -17,11 +17,17 @@
 import ballerina/http;
 import ballerina/io;
 
-public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com", {
-        followRedirects: {enabled: true, maxCount: 3}
-    });
-    http:Response r = check c->get("/redirect/1");
+service /items on new http:Listener(19191) {
+    resource function get [int id]() returns http:Response {
+        http:Response resp = new;
+        resp.setTextPayload(string `item ${id}`);
+        return resp;
+    }
+}
+
+public function testMain() returns error? {
+    http:Client c = check new http:Client("http://localhost:19191", {});
+    http:Response r = check c->get("/items/42");
     io:println(r.statusCode); // @output 200
-    return;
+    io:println(r.getTextPayload()); // @output item 42
 }

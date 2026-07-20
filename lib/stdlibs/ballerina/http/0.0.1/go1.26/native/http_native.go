@@ -226,6 +226,26 @@ func goCtxOrBackground(_ *extern.Context) context.Context {
 	return context.Background()
 }
 
+// requestMethodKeys lists every public Request instance method (excluding initNative,
+// which only applies to `new http:Request()`), keyed by name, pointing at its qualified
+// BIR lookup key. Shared by requestClassDef's VTable and buildRequest (for inbound
+// requests built by the server) so both dispatch identically — a Request built natively
+// from an incoming HTTP request must support the exact same method set as one built via
+// `new http:Request()`, since Ballerina code can't tell them apart.
+func requestMethodKeys() map[string]string {
+	names := []string{
+		"setTextPayload", "setJsonPayload", "setBinaryPayload",
+		"setHeader", "addHeader", "removeHeader", "removeAllHeaders", "getHeaderNames",
+		"setContentType", "getContentType", "getTextPayload", "getJsonPayload", "getBinaryPayload",
+		"getHeader", "getHeaders", "hasHeader", "getQueryParams", "getQueryParamValue", "getQueryParamValues",
+	}
+	keys := make(map[string]string, len(names))
+	for _, n := range names {
+		keys[n] = "ballerina/http:Request." + n
+	}
+	return keys
+}
+
 // compressionModeOf reads the "$compression" field from a Client object.
 // Returns "AUTO" when the field is absent (safe default).
 func compressionModeOf(self *values.Object) string {
@@ -847,39 +867,30 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) { return leading, nil })
 
 	// Response class def — registers `new http:Response()` constructor support.
+	responseVTable := map[string]*bir.BIRFunction{
+		"initNative": {FunctionLookupKey: "ballerina/http:Response.initNative"},
+	}
+	for name, key := range responseMethodKeys() {
+		responseVTable[name] = &bir.BIRFunction{FunctionLookupKey: key}
+	}
 	responseClassDef := &bir.BIRClassDef{
 		Name:      model.Name("Response"),
 		LookupKey: "ballerina/http:Response",
 		Fields: []bir.ObjectField{
 			{Name: "statusCode", Ty: semtypes.INT},
 		},
-		VTable: map[string]*bir.BIRFunction{
-			"initNative":       {FunctionLookupKey: "ballerina/http:Response.initNative"},
-			"setTextPayload":   {FunctionLookupKey: "ballerina/http:Response.setTextPayload"},
-			"setJsonPayload":   {FunctionLookupKey: "ballerina/http:Response.setJsonPayload"},
-			"setBinaryPayload": {FunctionLookupKey: "ballerina/http:Response.setBinaryPayload"},
-			"setHeader":        {FunctionLookupKey: "ballerina/http:Response.setHeader"},
-			"addHeader":        {FunctionLookupKey: "ballerina/http:Response.addHeader"},
-			"removeHeader":     {FunctionLookupKey: "ballerina/http:Response.removeHeader"},
-			"removeAllHeaders": {FunctionLookupKey: "ballerina/http:Response.removeAllHeaders"},
-			"setContentType":   {FunctionLookupKey: "ballerina/http:Response.setContentType"},
-			"getContentType":   {FunctionLookupKey: "ballerina/http:Response.getContentType"},
-			"getTextPayload":   {FunctionLookupKey: "ballerina/http:Response.getTextPayload"},
-			"getJsonPayload":   {FunctionLookupKey: "ballerina/http:Response.getJsonPayload"},
-			"getBinaryPayload": {FunctionLookupKey: "ballerina/http:Response.getBinaryPayload"},
-			"hasHeader":        {FunctionLookupKey: "ballerina/http:Response.hasHeader"},
-			"getHeader":        {FunctionLookupKey: "ballerina/http:Response.getHeader"},
-			"getHeaders":       {FunctionLookupKey: "ballerina/http:Response.getHeaders"},
-			"getHeaderNames":   {FunctionLookupKey: "ballerina/http:Response.getHeaderNames"},
-		},
+		VTable: responseVTable,
 	}
 	runtime.RegisterExternClassDef(rt, responseClassDef)
 
 	// Response write methods.
+	// initNative initialises internal fields not covered by Ballerina field defaults:
+	// $headers and body. statusCode is initialised to 200 by the field default in
+	// http.bal and must not be overridden here — doing so would mask any value the
+	// caller stored via direct field assignment before initNative runs.
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.initNative",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			self.Put("statusCode", int64(200))
 			self.Put("$headers", newMappingValue(ctx.TypeCtx))
 			self.Put("body", &responseBodyHolder{buf: []byte{}})
 			return nil, nil
@@ -1116,6 +1127,12 @@ func initHttpModule(rt *runtime.Runtime) {
 		})
 
 	// Request class def.
+	requestVTable := map[string]*bir.BIRFunction{
+		"initNative": {FunctionLookupKey: "ballerina/http:Request.initNative"},
+	}
+	for name, key := range requestMethodKeys() {
+		requestVTable[name] = &bir.BIRFunction{FunctionLookupKey: key}
+	}
 	requestClassDef := &bir.BIRClassDef{
 		Name:      model.Name("Request"),
 		LookupKey: "ballerina/http:Request",
@@ -1124,28 +1141,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			{Name: "method", Ty: semtypes.STRING},
 			{Name: "httpVersion", Ty: semtypes.STRING},
 		},
-		VTable: map[string]*bir.BIRFunction{
-			"initNative":          {FunctionLookupKey: "ballerina/http:Request.initNative"},
-			"setTextPayload":      {FunctionLookupKey: "ballerina/http:Request.setTextPayload"},
-			"setJsonPayload":      {FunctionLookupKey: "ballerina/http:Request.setJsonPayload"},
-			"setBinaryPayload":    {FunctionLookupKey: "ballerina/http:Request.setBinaryPayload"},
-			"setHeader":           {FunctionLookupKey: "ballerina/http:Request.setHeader"},
-			"addHeader":           {FunctionLookupKey: "ballerina/http:Request.addHeader"},
-			"removeHeader":        {FunctionLookupKey: "ballerina/http:Request.removeHeader"},
-			"removeAllHeaders":    {FunctionLookupKey: "ballerina/http:Request.removeAllHeaders"},
-			"getHeaderNames":      {FunctionLookupKey: "ballerina/http:Request.getHeaderNames"},
-			"setContentType":      {FunctionLookupKey: "ballerina/http:Request.setContentType"},
-			"getContentType":      {FunctionLookupKey: "ballerina/http:Request.getContentType"},
-			"getTextPayload":      {FunctionLookupKey: "ballerina/http:Request.getTextPayload"},
-			"getJsonPayload":      {FunctionLookupKey: "ballerina/http:Request.getJsonPayload"},
-			"getBinaryPayload":    {FunctionLookupKey: "ballerina/http:Request.getBinaryPayload"},
-			"getHeader":           {FunctionLookupKey: "ballerina/http:Request.getHeader"},
-			"getHeaders":          {FunctionLookupKey: "ballerina/http:Request.getHeaders"},
-			"hasHeader":           {FunctionLookupKey: "ballerina/http:Request.hasHeader"},
-			"getQueryParams":      {FunctionLookupKey: "ballerina/http:Request.getQueryParams"},
-			"getQueryParamValue":  {FunctionLookupKey: "ballerina/http:Request.getQueryParamValue"},
-			"getQueryParamValues": {FunctionLookupKey: "ballerina/http:Request.getQueryParamValues"},
-		},
+		VTable: requestVTable,
 	}
 	runtime.RegisterExternClassDef(rt, requestClassDef)
 
@@ -1484,6 +1480,9 @@ func initHttpModule(rt *runtime.Runtime) {
 			}
 			return newTypedListValue(ctx.TypeCtx, types.strArrTy, items), nil
 		})
+
+	// Server-side: register the http:Listener class and its native methods.
+	registerListenerExterns(rt)
 }
 
 // splitOutsideQuotes splits s on every occurrence of sep that is not inside a
@@ -1676,6 +1675,26 @@ func extractHeaders(arg values.BalValue) map[string][]string {
 	return result
 }
 
+// responseMethodKeys lists every public Response instance method (excluding initNative,
+// which only applies to `new http:Response()`), keyed by name, pointing at its qualified
+// BIR lookup key. Shared by responseClassDef's VTable and buildResponse (for responses
+// received from a client call) so both dispatch identically — a Response built natively
+// from a client's HTTP transport must support the exact same method set as one built via
+// `new http:Response()`, since Ballerina code can't tell them apart.
+func responseMethodKeys() map[string]string {
+	names := []string{
+		"setTextPayload", "setJsonPayload", "setBinaryPayload",
+		"setHeader", "addHeader", "removeHeader", "removeAllHeaders",
+		"setContentType", "getContentType", "getTextPayload", "getJsonPayload", "getBinaryPayload",
+		"hasHeader", "getHeader", "getHeaders", "getHeaderNames",
+	}
+	keys := make(map[string]string, len(names))
+	for _, n := range names {
+		keys[n] = "ballerina/http:Response." + n
+	}
+	return keys
+}
+
 // buildResponse constructs a Ballerina Response object from HTTP response data.
 // All header values are stored as *values.List under the internal "$headers" key.
 // Content-Encoding (gzip/deflate) is transparently decoded, mirroring jBallerina's
@@ -1698,15 +1717,7 @@ func buildResponse(tc semtypes.Context, statusCode int, respHeaders map[string][
 			"$headers":   headersMap,
 			"body":       holder,
 		},
-		map[string]string{
-			"getTextPayload":   "ballerina/http:Response.getTextPayload",
-			"getJsonPayload":   "ballerina/http:Response.getJsonPayload",
-			"getBinaryPayload": "ballerina/http:Response.getBinaryPayload",
-			"hasHeader":        "ballerina/http:Response.hasHeader",
-			"getHeader":        "ballerina/http:Response.getHeader",
-			"getHeaders":       "ballerina/http:Response.getHeaders",
-			"getHeaderNames":   "ballerina/http:Response.getHeaderNames",
-		},
+		responseMethodKeys(),
 		nil,
 	)
 }

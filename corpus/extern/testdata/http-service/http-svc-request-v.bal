@@ -17,9 +17,21 @@
 import ballerina/http;
 import ballerina/io;
 
-public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com");
-    http:Response r = check c->get("/status/200");
+service /echo on new http:Listener(19192) {
+    resource function post msg(http:Request req) returns http:Response|error {
+        json payload = check req.getJsonPayload();
+        http:Response resp = new;
+        resp.setJsonPayload(payload);
+        return resp;
+    }
+}
+
+public function testMain() returns error? {
+    http:Client c = check new http:Client("http://localhost:19192", {});
+    json body = {name: "ballerina", version: 1};
+    http:Response r = check c->post("/echo/msg", body);
     io:println(r.statusCode); // @output 200
-    return;
+    // Read the echoed JSON back as text (deterministic key order from the
+    // server's json.Marshal).
+    io:println(r.getTextPayload()); // @output {"name":"ballerina","version":1}
 }

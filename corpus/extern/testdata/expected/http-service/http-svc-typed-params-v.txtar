@@ -1,0 +1,5 @@
+-- stdout --
+flag=true
+price=9.99
+hello
+-- stderr --
