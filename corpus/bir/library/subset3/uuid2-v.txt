@@ -1,0 +1,108 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 550e8400-e29b-41d4-a716-446655440000
+    known = %1;
+    %3 = toRecord(known) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %5 = $desugar$0 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    rec = $desugar$0;
+    %7 = toString(rec) -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %7;
+    %9 = $desugar$1 is error
+    %9 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    back = $desugar$1;
+    %11 = println(back) -> bb7;
+  }
+  bb7 {
+    %12 = toBytes(known) -> bb8;
+  }
+  bb8 {
+    bytes = %12;
+    %14 = bytes is [int:Unsigned8...]
+    %15 = %14;
+    %16 = println(%15) -> bb9;
+  }
+  bb9 {
+    %17 = bytes is [int:Unsigned8...]
+    %17 ? bb10 : bb17;
+  }
+  bb10 {
+    PushScopeFrame 6
+    %0 = length((1, bytes)) -> bb11;
+  }
+  bb11 {
+    %1 = %0;
+    %2 = println(%1) -> bb12;
+  }
+  bb12 {
+    %3 = toString((1, bytes)) -> bb13;
+  }
+  bb13 {
+    fromBytes = %3;
+    %5 = fromBytes is string
+    %5 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 1
+    %0 = println((1, fromBytes)) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    PushScopeFrame 8
+    %0 = getVersion((1, known)) -> bb18;
+  }
+  bb18 {
+    $desugar$2 = %0;
+    %2 = $desugar$2 is error
+    %2 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$2);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb20 {
+    ver = $desugar$2;
+    %5 = ConstantLoad V4
+    %4 = == ver %5;
+    %6 = %4;
+    %7 = println(%6) -> bb21;
+  }
+  bb21 {
+    PopScopeFrame
+    return;
+  }
+}
