@@ -1,5 +1,5 @@
 (main
-  (bb0 () ()
+  (bb0 () (bb1 bb2)
     (var-def
       (variable badBool (type
         (builtin-ref-type json)) (expr
@@ -226,6 +226,32 @@
             (simple-var-ref missingNilableReq)
             (simple-var-ref PersonNilRequired)))
           (error-type)))))
+    (var-def
+      (variable missingWithDefault (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Carol))))))
+    (var-def
+      (variable withDefault (type
+        (union-type
+          (user-defined-type PersonWithDefault)
+          (error-type))) (expr
+        (invocation lang.value fromJsonWithType (
+          (simple-var-ref missingWithDefault)
+          (simple-var-ref PersonWithDefault))))))
+    (type-test-expr is
+      (simple-var-ref withDefault)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref withDefault))))))
+  )
+  (bb2 (bb1 bb0) ()
     (return
       (literal <nil>))
   )

@@ -1,4 +1,41 @@
 -- stdout --
 -- stderr --
-error: {ballerina/lang.value}ConversionError
+error: 
+		{
+		  {
+		    '{| anydata... |}' value has cyclic reference
+		    or
+		    '{| anydata... |}' value cannot be converted to '[anydata...]'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'nil'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'boolean'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'int'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'float'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'decimal'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'string'
+		    or
+		    '{| anydata... |}' value cannot be converted to 'xml'
+		  }
+		  or
+		  '{| anydata... |}' value cannot be converted to '[anydata...]'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'nil'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'boolean'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'int'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'float'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'decimal'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'string'
+		  or
+		  '{| anydata... |}' value cannot be converted to 'xml'
+		}
         at main(clonewithtype-p.bal:21)

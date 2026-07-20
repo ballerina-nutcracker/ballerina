@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: {ballerina/lang.value}ConversionError
+error: '{| json... |}' value cannot be converted to '{| age: int, name: string, never... |}': field 'age' not present in value, and default values are not supported
         at main(fromjsonwithtype-p.bal:24)

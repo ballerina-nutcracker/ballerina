@@ -221,8 +221,41 @@ main() -> nil|error{
     %152 = println(%151) -> bb34;
   }
   bb34 {
-    %153 = ConstantLoad <nil>
-    %0 = %153;
+    %153 = ConstantLoad name
+    %154 = ConstantLoad Carol
+    %155 = newMap {| json... |}{%153=%154}
+    missingWithDefault = %155;
+    %157 = ConstantLoad typedesc
+    %158 = fromJsonWithType(missingWithDefault,%157) -> bb35;
+  }
+  bb35 {
+    withDefault = %158;
+    %160 = withDefault is error
+    %160 ? bb36 : bb39;
+  }
+  bb36 {
+    PushScopeFrame 2
+    %0 = message((1, withDefault)) -> bb37;
+  }
+  bb37 {
+    %1 = println(%0) -> bb38;
+  }
+  bb38 {
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb39 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 99
+    %0 = %1;
     return;
   }
 }

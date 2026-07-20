@@ -30,7 +30,9 @@
 # - the graph structure is not preserved (result is always a tree); an error is returned if `v` has cycles
 # - immutable structural values are copied rather than returned as-is
 # - numeric values may be converted via NumericConvert
-# - missing record fields are filled from default values specified in `t`
+#
+# A record field missing from `v` is always an error, even when the field declares
+# a default value in `t`; default-value injection is not yet supported.
 #
 # ```ballerina
 # anydata rec = {name: "Alice", age: 30};

@@ -36,8 +36,7 @@ import (
 //
 // On failure it returns a ConversionError wrapped as *Error.
 func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, *Error) {
-	var unionErrors []string
-	result, err := tryConvert(tc, value, targetType, &unionErrors, true, nil)
+	result, err := tryConvert(tc, value, targetType, true, nil)
 	if err != nil {
 		return nil, wrapConversionError(err)
 	}
@@ -45,7 +44,7 @@ func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemT
 }
 
 func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType,
-	unionErrors *[]string, allowNumeric bool, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
+	allowNumeric bool, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	if value == nil {
 		if isNilable(target) {
 			return nil, nil
@@ -54,17 +53,17 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	}
 
 	if members := unionMemberTypes(tc, target); len(members) > 1 {
-		return tryConvertUnion(tc, value, target, members, unionErrors, allowNumeric, visiting)
+		return tryConvertUnion(tc, value, target, members, allowNumeric, visiting)
 	}
 
 	switch v := value.(type) {
 	case *Map:
 		if semtypes.IsSubtypeSimple(target, semtypes.MAPPING) {
-			return tryConvertMapping(tc, v, target, unionErrors, allowNumeric, visiting)
+			return tryConvertMapping(tc, v, target, allowNumeric, visiting)
 		}
 	case *List:
 		if semtypes.IsSubtypeSimple(target, semtypes.LIST) {
-			return tryConvertList(tc, v, target, unionErrors, allowNumeric, visiting)
+			return tryConvertList(tc, v, target, allowNumeric, visiting)
 		}
 	default:
 		valueTy := SemTypeForValue(v)
@@ -88,36 +87,28 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType,
 }
 
 func tryConvertUnion(tc semtypes.Context, value BalValue, target semtypes.SemType,
-	members []semtypes.SemType, unionErrors *[]string, allowNumeric bool, visiting map[BalValue]struct{},
+	members []semtypes.SemType, allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
 	if isStructuredValue(value) {
-		initial := len(*unionErrors)
-		*unionErrors = append(*unionErrors, "{")
-		for i, member := range members {
-			if i > 0 {
-				*unionErrors = append(*unionErrors, "or")
-			}
-			before := len(*unionErrors)
-			result, err := tryConvert(tc, value, member, unionErrors, allowNumeric, visiting)
+		children := make([]*conversionFailure, 0, len(members))
+		for _, member := range members {
+			result, err := tryConvert(tc, value, member, allowNumeric, visiting)
 			if err == nil {
-				*unionErrors = (*unionErrors)[:initial]
 				return result, nil
 			}
-			*unionErrors = (*unionErrors)[:before]
-			*unionErrors = append(*unionErrors, err.Error())
+			children = append(children, err)
 		}
-		*unionErrors = append(*unionErrors, "}")
-		return nil, newConversionFailure(unionErrorMessage((*unionErrors)[initial:]))
+		return nil, newUnionConversionFailure(children)
 	}
 
 	// For simple values prefer exact type match before allowing numeric conversion.
 	for _, member := range members {
 		if semtypes.IsSubtype(tc, SemTypeForValue(value), member) {
-			return tryConvert(tc, value, member, unionErrors, false, visiting)
+			return tryConvert(tc, value, member, false, visiting)
 		}
 	}
 	for _, member := range members {
-		if result, err := tryConvert(tc, value, member, unionErrors, allowNumeric, visiting); err == nil {
+		if result, err := tryConvert(tc, value, member, allowNumeric, visiting); err == nil {
 			return result, nil
 		}
 	}
@@ -125,7 +116,7 @@ func tryConvertUnion(tc semtypes.Context, value BalValue, target semtypes.SemTyp
 }
 
 func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType,
-	unionErrors *[]string, allowNumeric bool, visiting map[BalValue]struct{},
+	allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
 	var cycleErr *conversionFailure
 	visiting, cycleErr = enterCycleCheck(tc, source.Type, source, visiting)
@@ -161,7 +152,7 @@ func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType
 		}
 		fieldTy := mappingFieldType(tc, target, atomic, key)
 		val, _ := source.Get(key)
-		converted, err := tryConvert(tc, val, fieldTy, unionErrors, allowNumeric, visiting)
+		converted, err := tryConvert(tc, val, fieldTy, allowNumeric, visiting)
 		if err != nil {
 			return nil, err
 		}
@@ -176,8 +167,9 @@ func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType
 			continue
 		}
 		// Required field (nilable or not) absent in source — always an error.
-		// A nil value must be explicitly present in the source; it is not injected.
-		return nil, incompatibleConversion(tc, source, target)
+		// A nil value must be explicitly present in the source; it is not injected,
+		// and neither is a declared default value (not yet supported).
+		return nil, missingRequiredField(tc, source, target, name)
 	}
 
 	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
@@ -185,7 +177,7 @@ func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType
 }
 
 func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType,
-	unionErrors *[]string, allowNumeric bool, visiting map[BalValue]struct{},
+	allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
 	var cycleErr *conversionFailure
 	visiting, cycleErr = enterCycleCheck(tc, source.Type, source, visiting)
@@ -211,7 +203,7 @@ func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType,
 	items := make([]BalValue, source.Len())
 	for i := 0; i < source.Len(); i++ {
 		memberTy := atomic.MemberAtInnerVal(i)
-		converted, err := tryConvert(tc, source.Get(i), memberTy, unionErrors, allowNumeric, visiting)
+		converted, err := tryConvert(tc, source.Get(i), memberTy, allowNumeric, visiting)
 		if err != nil {
 			return nil, err
 		}
@@ -267,4 +259,74 @@ func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType
 		}
 		return d, nil
 	}
+}
+
+func isNilable(target semtypes.SemType) bool {
+	return semtypes.ContainsBasicType(target, semtypes.NIL)
+}
+
+func mappingFieldType(tc semtypes.Context, target semtypes.SemType, atomic *semtypes.MappingAtomicType, key string) semtypes.SemType {
+	if atomic != nil {
+		for _, name := range atomic.Names {
+			if name == key {
+				return atomic.FieldInnerVal(key)
+			}
+		}
+	}
+	return semtypes.MappingMemberTypeInnerVal(tc, target, semtypes.StringConst(key))
+}
+
+func isClosedRecord(atomic *semtypes.MappingAtomicType) bool {
+	restTy := atomic.FieldInnerVal("\x00")
+	return semtypes.IsNever(restTy)
+}
+
+func fieldMayOmitKey(tc semtypes.Context, target semtypes.SemType, name string) bool {
+	return semtypes.AllMappingAtomsHaveOptionalFieldByName(tc, target, name)
+}
+
+func isStructuredValue(value BalValue) bool {
+	switch value.(type) {
+	case *List, *Map:
+		return true
+	default:
+		return false
+	}
+}
+
+var simpleBasicTypes = []semtypes.SemType{
+	semtypes.NIL, semtypes.BOOLEAN, semtypes.INT, semtypes.FLOAT, semtypes.DECIMAL,
+	semtypes.STRING, semtypes.XML, semtypes.ERROR,
+}
+
+func unionMemberTypes(tc semtypes.Context, ty semtypes.SemType) []semtypes.SemType {
+	var members []semtypes.SemType
+	basic := semtypes.WidenToBasicTypes(ty)
+
+	if semtypes.ContainsBasicType(basic, semtypes.MAPPING) {
+		mappingTy := semtypes.Intersect(ty, semtypes.MAPPING)
+		if !semtypes.IsEmpty(tc, mappingTy) {
+			for _, alt := range semtypes.MappingAlternatives(tc, mappingTy) {
+				members = append(members, alt.SemType)
+			}
+		}
+	}
+	if semtypes.ContainsBasicType(basic, semtypes.LIST) {
+		listTy := semtypes.Intersect(ty, semtypes.LIST)
+		if !semtypes.IsEmpty(tc, listTy) {
+			for _, alt := range semtypes.ListAlternatives(tc, listTy) {
+				members = append(members, alt.SemType)
+			}
+		}
+	}
+
+	for _, bt := range simpleBasicTypes {
+		if semtypes.ContainsBasicType(basic, bt) {
+			member := semtypes.Intersect(ty, bt)
+			if !semtypes.IsEmpty(tc, member) {
+				members = append(members, member)
+			}
+		}
+	}
+	return members
 }

@@ -7,15 +7,15 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable floatNum (type
+        (variable maxByte (type
           (builtin-ref-type json)) (expr
-          (literal 2.5))))
+          (literal 255))))
       (var-def
         (variable $desugar$0 (expr
           (invocation lang.value fromJsonWithType (
-            (simple-var-ref floatNum)
+            (simple-var-ref maxByte)
             (typedesc-expr
-              (value-type int)))))))
+              (value-type byte)))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$0))
@@ -23,116 +23,12 @@
           (return
             (simple-var-ref $desugar$0))) ())
       (var-def
-        (variable rounded (type
-          (value-type int)) (expr
+        (variable b (type
+          (value-type byte)) (expr
           (simple-var-ref $desugar$0))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref rounded))))
-      (var-def
-        (variable intNum (type
-          (builtin-ref-type json)) (expr
-          (literal 42))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref intNum)
-            (typedesc-expr
-              (value-type float)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
-        (variable asFloat (type
-          (value-type float)) (expr
-          (simple-var-ref $desugar$1))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref asFloat))))
-      (var-def
-        (variable decNum (type
-          (builtin-ref-type json)) (expr
-          (literal 7))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref decNum)
-            (typedesc-expr
-              (value-type decimal)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
-        (variable asDecimal (type
-          (value-type decimal)) (expr
-          (simple-var-ref $desugar$2))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref asDecimal))))
-      (var-def
-        (variable maxByte (type
-          (builtin-ref-type json)) (expr
-          (literal 255))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref maxByte)
-            (typedesc-expr
-              (value-type byte)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
-      (var-def
-        (variable b (type
-          (value-type byte)) (expr
-          (simple-var-ref $desugar$3))))
-      (expression-stmt
-        (invocation io println (
           (simple-var-ref b))))
-      (var-def
-        (variable floatByte (type
-          (builtin-ref-type json)) (expr
-          (literal 200))))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref floatByte)
-            (typedesc-expr
-              (value-type byte)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
-      (var-def
-        (variable fromFloat (type
-          (value-type byte)) (expr
-          (simple-var-ref $desugar$4))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref fromFloat))))
-      (var-def
-        (variable outOfRange (type
-          (builtin-ref-type json)) (expr
-          (literal 256))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref outOfRange)
-              (typedesc-expr
-                (value-type byte))))
-            (error-type)))))
       (var-def
         (variable roundedOutOfRange (type
           (builtin-ref-type json)) (expr
@@ -144,55 +40,6 @@
               (simple-var-ref roundedOutOfRange)
               (typedesc-expr
                 (value-type byte))))
-            (error-type)))))
-      (var-def
-        (variable negByte (type
-          (builtin-ref-type json)) (expr
-          (unary-expr -
-            (literal 1)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref negByte)
-              (typedesc-expr
-                (value-type byte))))
-            (error-type)))))
-      (var-def
-        (variable nan (type
-          (value-type float)) (expr
-          (binary-expr /
-            (literal 0)
-            (literal 0)))))
-      (var-def
-        (variable nanJson (type
-          (builtin-ref-type json)) (expr
-          (simple-var-ref nan))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref nanJson)
-              (typedesc-expr
-                (value-type int))))
-            (error-type)))))
-      (var-def
-        (variable inf (type
-          (value-type float)) (expr
-          (binary-expr /
-            (literal 1)
-            (literal 0)))))
-      (var-def
-        (variable infJson (type
-          (builtin-ref-type json)) (expr
-          (simple-var-ref inf))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref infJson)
-              (typedesc-expr
-                (value-type int))))
             (error-type)))))
       (var-def
         (variable hugeFloat (type
@@ -223,33 +70,6 @@
                 (value-type int))))
             (error-type)))))
       (var-def
-        (variable decVal (type
-          (value-type decimal)) (expr
-          (literal 42))))
-      (var-def
-        (variable decJson (type
-          (builtin-ref-type json)) (expr
-          (simple-var-ref decVal))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref decJson)
-            (typedesc-expr
-              (value-type int)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
-      (var-def
-        (variable fromDec (type
-          (value-type int)) (expr
-          (simple-var-ref $desugar$5))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref fromDec))))
-      (var-def
         (variable tooBig (type
           (value-type decimal)) (expr
           (literal 9.223372036854776E+18))))
@@ -266,86 +86,56 @@
                 (value-type int))))
             (error-type)))))
       (var-def
-        (variable floatToDec (type
-          (builtin-ref-type json)) (expr
-          (literal 1.5))))
-      (var-def
-        (variable $desugar$6 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref floatToDec)
-            (typedesc-expr
-              (value-type decimal)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$6))) ())
-      (var-def
-        (variable decFromFloat (type
-          (value-type decimal)) (expr
-          (simple-var-ref $desugar$6))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref decFromFloat))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref nanJson)
-              (typedesc-expr
-                (value-type decimal))))
-            (error-type)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref infJson)
-              (typedesc-expr
-                (value-type decimal))))
-            (error-type)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref nanJson)
-              (typedesc-expr
-                (value-type byte))))
-            (error-type)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation lang.value fromJsonWithType (
-              (simple-var-ref infJson)
-              (typedesc-expr
-                (value-type byte))))
-            (error-type)))))
-      (var-def
-        (variable decForFloat (type
-          (value-type decimal)) (expr
-          (literal 3.5))))
-      (var-def
-        (variable decForFloatJson (type
-          (builtin-ref-type json)) (expr
-          (simple-var-ref decForFloat))))
-      (var-def
-        (variable $desugar$7 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref decForFloatJson)
-            (typedesc-expr
-              (value-type float)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$7))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$7))) ())
-      (var-def
-        (variable floatFromDec (type
+        (variable nan (type
           (value-type float)) (expr
-          (simple-var-ref $desugar$7))))
+          (binary-expr /
+            (literal 0)
+            (literal 0)))))
+      (var-def
+        (variable nanJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref nan))))
+      (var-def
+        (variable inf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1)
+            (literal 0)))))
+      (var-def
+        (variable infJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref inf))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref floatFromDec))))
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref nanJson)
+              (typedesc-expr
+                (value-type decimal))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref infJson)
+              (typedesc-expr
+                (value-type decimal))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref nanJson)
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref infJson)
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
       (return
         (literal <nil>)))))

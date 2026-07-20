@@ -1,10 +1,10 @@
 module $anon.. v 0.0.0;
 main() -> nil|error{
   bb0 {
-    %1 = ConstantLoad 2.5
-    floatNum = %1;
+    %1 = ConstantLoad 255
+    maxByte = %1;
     %3 = ConstantLoad typedesc
-    %4 = fromJsonWithType(floatNum,%3) -> bb1;
+    %4 = fromJsonWithType(maxByte,%3) -> bb1;
   }
   bb1 {
     $desugar$0 = %4;
@@ -18,306 +18,109 @@ main() -> nil|error{
     return;
   }
   bb3 {
-    rounded = $desugar$0;
-    %8 = rounded;
+    b = $desugar$0;
+    %8 = b;
     %9 = println(%8) -> bb4;
   }
   bb4 {
-    %10 = ConstantLoad 42
-    intNum = %10;
+    %10 = ConstantLoad 255.6
+    roundedOutOfRange = %10;
     %12 = ConstantLoad typedesc
-    %13 = fromJsonWithType(intNum,%12) -> bb5;
+    %13 = fromJsonWithType(roundedOutOfRange,%12) -> bb5;
   }
   bb5 {
-    $desugar$1 = %13;
-    %15 = $desugar$1 is error
-    %15 ? bb6 : bb7;
+    %14 = %13 is error
+    %15 = %14;
+    %16 = println(%15) -> bb6;
   }
   bb6 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$1);
-    PopScopeFrame
-    return;
+    %17 = ConstantLoad 1e+100
+    hugeFloat = %17;
+    %19 = ConstantLoad typedesc
+    %20 = fromJsonWithType(hugeFloat,%19) -> bb7;
   }
   bb7 {
-    asFloat = $desugar$1;
-    %17 = asFloat;
-    %18 = println(%17) -> bb8;
+    %21 = %20 is error
+    %22 = %21;
+    %23 = println(%22) -> bb8;
   }
   bb8 {
-    %19 = ConstantLoad 7
-    decNum = %19;
-    %21 = ConstantLoad typedesc
-    %22 = fromJsonWithType(decNum,%21) -> bb9;
+    %24 = ConstantLoad 9.223372036854776e+18
+    maxIntOverflow = %24;
+    maxIntOverflowJson = maxIntOverflow;
+    %27 = ConstantLoad typedesc
+    %28 = fromJsonWithType(maxIntOverflowJson,%27) -> bb9;
   }
   bb9 {
-    $desugar$2 = %22;
-    %24 = $desugar$2 is error
-    %24 ? bb10 : bb11;
+    %29 = %28 is error
+    %30 = %29;
+    %31 = println(%30) -> bb10;
   }
   bb10 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$2);
-    PopScopeFrame
-    return;
+    %32 = ConstantLoad 9.223372036854776E+18
+    tooBig = %32;
+    tooBigJson = tooBig;
+    %35 = ConstantLoad typedesc
+    %36 = fromJsonWithType(tooBigJson,%35) -> bb11;
   }
   bb11 {
-    asDecimal = $desugar$2;
-    %26 = asDecimal;
-    %27 = println(%26) -> bb12;
+    %37 = %36 is error
+    %38 = %37;
+    %39 = println(%38) -> bb12;
   }
   bb12 {
-    %28 = ConstantLoad 255
-    maxByte = %28;
-    %30 = ConstantLoad typedesc
-    %31 = fromJsonWithType(maxByte,%30) -> bb13;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %43 = ConstantLoad 0
+    %44 = %43;
+    %40 = / %42 %44;
+    nan = %40;
+    nanJson = nan;
+    %48 = ConstantLoad 1
+    %49 = %48;
+    %50 = ConstantLoad 0
+    %51 = %50;
+    %47 = / %49 %51;
+    inf = %47;
+    infJson = inf;
+    %54 = ConstantLoad typedesc
+    %55 = fromJsonWithType(nanJson,%54) -> bb13;
   }
   bb13 {
-    $desugar$3 = %31;
-    %33 = $desugar$3 is error
-    %33 ? bb14 : bb15;
+    %56 = %55 is error
+    %57 = %56;
+    %58 = println(%57) -> bb14;
   }
   bb14 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$3);
-    PopScopeFrame
-    return;
+    %59 = ConstantLoad typedesc
+    %60 = fromJsonWithType(infJson,%59) -> bb15;
   }
   bb15 {
-    b = $desugar$3;
-    %35 = b;
-    %36 = println(%35) -> bb16;
+    %61 = %60 is error
+    %62 = %61;
+    %63 = println(%62) -> bb16;
   }
   bb16 {
-    %37 = ConstantLoad 200
-    floatByte = %37;
-    %39 = ConstantLoad typedesc
-    %40 = fromJsonWithType(floatByte,%39) -> bb17;
+    %64 = ConstantLoad typedesc
+    %65 = fromJsonWithType(nanJson,%64) -> bb17;
   }
   bb17 {
-    $desugar$4 = %40;
-    %42 = $desugar$4 is error
-    %42 ? bb18 : bb19;
+    %66 = %65 is error
+    %67 = %66;
+    %68 = println(%67) -> bb18;
   }
   bb18 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$4);
-    PopScopeFrame
-    return;
+    %69 = ConstantLoad typedesc
+    %70 = fromJsonWithType(infJson,%69) -> bb19;
   }
   bb19 {
-    fromFloat = $desugar$4;
-    %44 = fromFloat;
-    %45 = println(%44) -> bb20;
+    %71 = %70 is error
+    %72 = %71;
+    %73 = println(%72) -> bb20;
   }
   bb20 {
-    %46 = ConstantLoad 256
-    outOfRange = %46;
-    %48 = ConstantLoad typedesc
-    %49 = fromJsonWithType(outOfRange,%48) -> bb21;
-  }
-  bb21 {
-    %50 = %49 is error
-    %51 = %50;
-    %52 = println(%51) -> bb22;
-  }
-  bb22 {
-    %53 = ConstantLoad 255.6
-    roundedOutOfRange = %53;
-    %55 = ConstantLoad typedesc
-    %56 = fromJsonWithType(roundedOutOfRange,%55) -> bb23;
-  }
-  bb23 {
-    %57 = %56 is error
-    %58 = %57;
-    %59 = println(%58) -> bb24;
-  }
-  bb24 {
-    %60 = ConstantLoad 1
-    %61 = unknown %60;
-    negByte = %61;
-    %63 = ConstantLoad typedesc
-    %64 = fromJsonWithType(negByte,%63) -> bb25;
-  }
-  bb25 {
-    %65 = %64 is error
-    %66 = %65;
-    %67 = println(%66) -> bb26;
-  }
-  bb26 {
-    %69 = ConstantLoad 0
-    %70 = %69;
-    %71 = ConstantLoad 0
-    %72 = %71;
-    %68 = / %70 %72;
-    nan = %68;
-    nanJson = nan;
-    %75 = ConstantLoad typedesc
-    %76 = fromJsonWithType(nanJson,%75) -> bb27;
-  }
-  bb27 {
-    %77 = %76 is error
-    %78 = %77;
-    %79 = println(%78) -> bb28;
-  }
-  bb28 {
-    %81 = ConstantLoad 1
-    %82 = %81;
-    %83 = ConstantLoad 0
-    %84 = %83;
-    %80 = / %82 %84;
-    inf = %80;
-    infJson = inf;
-    %87 = ConstantLoad typedesc
-    %88 = fromJsonWithType(infJson,%87) -> bb29;
-  }
-  bb29 {
-    %89 = %88 is error
-    %90 = %89;
-    %91 = println(%90) -> bb30;
-  }
-  bb30 {
-    %92 = ConstantLoad 1e+100
-    hugeFloat = %92;
-    %94 = ConstantLoad typedesc
-    %95 = fromJsonWithType(hugeFloat,%94) -> bb31;
-  }
-  bb31 {
-    %96 = %95 is error
-    %97 = %96;
-    %98 = println(%97) -> bb32;
-  }
-  bb32 {
-    %99 = ConstantLoad 9.223372036854776e+18
-    maxIntOverflow = %99;
-    maxIntOverflowJson = maxIntOverflow;
-    %102 = ConstantLoad typedesc
-    %103 = fromJsonWithType(maxIntOverflowJson,%102) -> bb33;
-  }
-  bb33 {
-    %104 = %103 is error
-    %105 = %104;
-    %106 = println(%105) -> bb34;
-  }
-  bb34 {
-    %107 = ConstantLoad 42
-    decVal = %107;
-    decJson = decVal;
-    %110 = ConstantLoad typedesc
-    %111 = fromJsonWithType(decJson,%110) -> bb35;
-  }
-  bb35 {
-    $desugar$5 = %111;
-    %113 = $desugar$5 is error
-    %113 ? bb36 : bb37;
-  }
-  bb36 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$5);
-    PopScopeFrame
-    return;
-  }
-  bb37 {
-    fromDec = $desugar$5;
-    %115 = fromDec;
-    %116 = println(%115) -> bb38;
-  }
-  bb38 {
-    %117 = ConstantLoad 9.223372036854776E+18
-    tooBig = %117;
-    tooBigJson = tooBig;
-    %120 = ConstantLoad typedesc
-    %121 = fromJsonWithType(tooBigJson,%120) -> bb39;
-  }
-  bb39 {
-    %122 = %121 is error
-    %123 = %122;
-    %124 = println(%123) -> bb40;
-  }
-  bb40 {
-    %125 = ConstantLoad 1.5
-    floatToDec = %125;
-    %127 = ConstantLoad typedesc
-    %128 = fromJsonWithType(floatToDec,%127) -> bb41;
-  }
-  bb41 {
-    $desugar$6 = %128;
-    %130 = $desugar$6 is error
-    %130 ? bb42 : bb43;
-  }
-  bb42 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$6);
-    PopScopeFrame
-    return;
-  }
-  bb43 {
-    decFromFloat = $desugar$6;
-    %132 = decFromFloat;
-    %133 = println(%132) -> bb44;
-  }
-  bb44 {
-    %134 = ConstantLoad typedesc
-    %135 = fromJsonWithType(nanJson,%134) -> bb45;
-  }
-  bb45 {
-    %136 = %135 is error
-    %137 = %136;
-    %138 = println(%137) -> bb46;
-  }
-  bb46 {
-    %139 = ConstantLoad typedesc
-    %140 = fromJsonWithType(infJson,%139) -> bb47;
-  }
-  bb47 {
-    %141 = %140 is error
-    %142 = %141;
-    %143 = println(%142) -> bb48;
-  }
-  bb48 {
-    %144 = ConstantLoad typedesc
-    %145 = fromJsonWithType(nanJson,%144) -> bb49;
-  }
-  bb49 {
-    %146 = %145 is error
-    %147 = %146;
-    %148 = println(%147) -> bb50;
-  }
-  bb50 {
-    %149 = ConstantLoad typedesc
-    %150 = fromJsonWithType(infJson,%149) -> bb51;
-  }
-  bb51 {
-    %151 = %150 is error
-    %152 = %151;
-    %153 = println(%152) -> bb52;
-  }
-  bb52 {
-    %154 = ConstantLoad 3.5
-    decForFloat = %154;
-    decForFloatJson = decForFloat;
-    %157 = ConstantLoad typedesc
-    %158 = fromJsonWithType(decForFloatJson,%157) -> bb53;
-  }
-  bb53 {
-    $desugar$7 = %158;
-    %160 = $desugar$7 is error
-    %160 ? bb54 : bb55;
-  }
-  bb54 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$7);
-    PopScopeFrame
-    return;
-  }
-  bb55 {
-    floatFromDec = $desugar$7;
-    %162 = floatFromDec;
-    %163 = println(%162) -> bb56;
-  }
-  bb56 {
-    %164 = ConstantLoad <nil>
-    %0 = %164;
+    %74 = ConstantLoad <nil>
+    %0 = %74;
     return;
   }
 }
