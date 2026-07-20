@@ -19,6 +19,9 @@ package values
 
 import (
 	"encoding/json"
+	stdruntime "runtime"
+	"sync"
+	"weak"
 
 	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
@@ -66,6 +69,49 @@ func balToGoJSON(v BalValue) any {
 	default:
 		return nil
 	}
+}
+
+type jsonTypePair struct {
+	listTy semtypes.SemType
+	mapTy  semtypes.SemType
+}
+
+// jsonTypesByEnv associates a weak pointer to a semtypes.Env with the canonical
+// json[]/map<json> semtypes built for it, self-cleaning once the Env is unreachable.
+var jsonTypesByEnv sync.Map // weak.Pointer[env-pointee] -> jsonTypePair
+
+// JSONListAndMapTypes returns the canonical json[]/map<json> semtypes for a context's
+// environment, memoized per environment. semtypes.ContextFrom builds a fresh Context
+// (with empty memo maps) on every call, so semtypes.CreateJSON's own per-Context memo
+// does not stop two independent callers (e.g. two stdlibs) building separate
+// ListDefinition/MappingDefinition instances for "the same" json list/map type — each
+// registers its own atom into the shared environment, which is otherwise-harmless but
+// shifts how unrelated recursive types print in that environment (extra atoms shift
+// atom-table numbering). Every caller that needs these types for GoToBalValue must go
+// through this shared accessor instead of building its own.
+func JSONListAndMapTypes(ctx semtypes.Context) (semtypes.SemType, semtypes.SemType) {
+	env := ctx.Env()
+	// Boxed as `any` immediately: env's pointee type is unexported in semtypes, so this
+	// package can only name weak.Pointer[...] for it via type inference, not explicitly —
+	// boxing lets the AddCleanup callback below stay a plain func(any).
+	key := any(weak.Make(env))
+	if v, ok := jsonTypesByEnv.Load(key); ok {
+		p := v.(jsonTypePair)
+		return p.listTy, p.mapTy
+	}
+	jsonTy := semtypes.CreateJSON(ctx)
+	listLd := semtypes.NewListDefinition()
+	mapMd := semtypes.NewMappingDefinition()
+	listTy := listLd.DefineListTypeWrappedWithEnvSemType(env, jsonTy)
+	mapTy := mapMd.DefineMappingTypeWrapped(env, nil, jsonTy)
+	p := jsonTypePair{listTy, mapTy}
+	jsonTypesByEnv.Store(key, p)
+	stdruntime.AddCleanup(env, cleanupJSONTypes, key)
+	return listTy, mapTy
+}
+
+func cleanupJSONTypes(key any) {
+	jsonTypesByEnv.Delete(key)
 }
 
 // GoToBalValue converts a Go value decoded from JSON into a Ballerina value.
