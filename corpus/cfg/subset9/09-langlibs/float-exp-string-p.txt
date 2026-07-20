@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.float toExpString (
+        (group-expr
+          (literal 12.456))
+        (unary-expr -
+          (literal 1)))))
+  )
+)

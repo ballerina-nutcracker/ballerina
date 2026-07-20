@@ -71,7 +71,8 @@ func TestPackageResolution_PackageNotFound(t *testing.T) {
 	version, err := projects.NewPackageVersionFromString("1.0.0")
 	require.NoError(err)
 
-	resp := env.PackageResolver().ResolvePackages(context.Background(),
+	resp := env.PackageResolver().ResolvePackages(
+		context.Background(),
 		[]projects.ResolutionRequest{
 			projects.NewResolutionRequest(projects.NewPackageDescriptor(
 				projects.NewPackageOrg("missingorg"),

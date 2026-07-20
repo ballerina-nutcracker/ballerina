@@ -53,9 +53,17 @@
         (variable x (type
           (value-type float)) (expr
           (literal 5))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref x))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
           (binary-expr ==
             (invocation lang.float round (
-              (simple-var-ref x)))
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1)))
             (simple-var-ref x))))))))
