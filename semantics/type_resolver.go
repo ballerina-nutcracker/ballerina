@@ -562,7 +562,7 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 		}
 	}
 	if fn, ok := t.functionNodes[ref]; ok {
-		_, ok := resolveFunctionSignature(t, fn)
+		_, ok := resolveFunctionSignature(t, fn, depth)
 		return ok
 	}
 	return true
@@ -856,17 +856,17 @@ func topologicallySortConstants(t typeResolver, constants []ast.BLangConstant) (
 	return order, true
 }
 
-func resolveInvokableSignature(t typeResolver, fn functionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangSimpleVariable) (semtypes.SemType, []semtypes.SemType, semtypes.SemType, semtypes.SemType, bool) {
+func resolveInvokableSignature(t typeResolver, fn functionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangSimpleVariable, depth int) (semtypes.SemType, []semtypes.SemType, semtypes.SemType, semtypes.SemType, bool) {
 	paramTypes := make([]semtypes.SemType, len(requiredParams))
 	for i := range requiredParams {
-		resolveSimpleVariable(t, nil, &requiredParams[i])
+		resolveSimpleVariableInner(t, nil, &requiredParams[i], depth+1)
 		setOtherNodesAsNever(&requiredParams[i])
 		paramTypes[i] = requiredParams[i].GetDeterminedType()
 	}
 	restTy := semtypes.NEVER
 	if rp := fn.GetRestParam(); rp != nil {
 		restParam := rp.(*ast.BLangSimpleVariable)
-		resolveSimpleVariable(t, nil, restParam)
+		resolveSimpleVariableInner(t, nil, restParam, depth+1)
 		setOtherNodesAsNever(restParam)
 		elementType := restParam.GetDeterminedType()
 		restTy = elementType
@@ -880,7 +880,7 @@ func resolveInvokableSignature(t typeResolver, fn functionDecl, fnSym model.Func
 	var returnTy semtypes.SemType
 	if retTd := fn.GetReturnTypeDescriptor(); retTd != nil {
 		var ok bool
-		returnTy, ok = resolveBType(t, retTd, 0)
+		returnTy, ok = resolveBType(t, retTd, depth+1)
 		if !ok {
 			return semtypes.SemType{}, nil, semtypes.SemType{}, semtypes.SemType{}, false
 		}
@@ -987,12 +987,12 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	populateMappingAtomMaps(t, pkg, t.importedSymbols)
 	for i := range pkg.Functions {
 		fn := &pkg.Functions[i]
-		if _, ok := resolveFunctionSignature(t, fn); !ok {
+		if _, ok := resolveFunctionSignature(t, fn, 0); !ok {
 			return
 		}
 	}
 	if pkg.InitFunction != nil {
-		if _, ok := resolveFunctionSignature(t, pkg.InitFunction); !ok {
+		if _, ok := resolveFunctionSignature(t, pkg.InitFunction, 0); !ok {
 			return
 		}
 	}
@@ -1700,16 +1700,16 @@ func resolveOnFailClause(t typeResolver, chain *binding, clause *ast.BLangOnFail
 	}
 }
 
-func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction) (semtypes.SemType, bool) {
+func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) (semtypes.SemType, bool) {
 	fnSym := t.getSymbol(fn.Symbol())
 	if depSym, ok := fnSym.(model.DependentlyTypedFunctionSymbol); ok {
-		return resolveDependentlyTypedFunctionSignature(t, fn, depSym)
+		return resolveDependentlyTypedFunctionSignature(t, fn, depSym, depth)
 	}
 	if ty := t.symbolType(fn.Symbol()); !semtypes.IsZero(ty) {
 		return ty, true
 	}
 	fnSymbol := fnSym.(model.FunctionSymbol)
-	fnType, paramTypes, _, _, ok := resolveInvokableSignature(t, fn, fnSymbol, fn.RequiredParams)
+	fnType, paramTypes, _, _, ok := resolveInvokableSignature(t, fn, fnSymbol, fn.RequiredParams, depth)
 	if !ok {
 		return semtypes.SemType{}, false
 	}
@@ -1789,12 +1789,12 @@ func validateIncludedRecordParams(t typeResolver, fn *ast.BLangFunction, fnSymbo
 	return true
 }
 
-func resolveDependentlyTypedFunctionSignature(t typeResolver, fn *ast.BLangFunction, sym model.DependentlyTypedFunctionSymbol) (semtypes.SemType, bool) {
+func resolveDependentlyTypedFunctionSignature(t typeResolver, fn *ast.BLangFunction, sym model.DependentlyTypedFunctionSymbol, depth int) (semtypes.SemType, bool) {
 	paramTypes := make([]semtypes.SemType, len(fn.RequiredParams))
 	paramsByName := make(map[string]param, len(fn.RequiredParams))
 	for i := range fn.RequiredParams {
 		p := &fn.RequiredParams[i]
-		resolveSimpleVariable(t, nil, p)
+		resolveSimpleVariableInner(t, nil, p, depth+1)
 		paramTypes[i] = p.GetDeterminedType()
 		paramsByName[p.GetName().GetValue()] = param{index: i, ty: paramTypes[i]}
 	}
@@ -1893,7 +1893,7 @@ func buildReturnTypeOp(t typeResolver, params map[string]param, node ast.BLangNo
 }
 
 func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambdaFunction) (semtypes.SemType, expressionEffect, bool) {
-	fnType, ok := resolveFunctionSignature(t, e.Function)
+	fnType, ok := resolveFunctionSignature(t, e.Function, 0)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -2463,7 +2463,7 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 	}
 
 	if initFn != nil {
-		if _, ok := resolveFunctionSignature(t, initFn); !ok {
+		if _, ok := resolveFunctionSignature(t, initFn, depth+1); !ok {
 			return semtypes.SemType{}, false
 		}
 		initFn.SetDeterminedType(semtypes.NEVER)
@@ -2472,7 +2472,7 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 
 	for name := range methods {
 		method := methods[name]
-		if _, ok := resolveFunctionSignature(t, method); !ok {
+		if _, ok := resolveFunctionSignature(t, method, depth+1); !ok {
 			return semtypes.SemType{}, false
 		}
 		method.SetDeterminedType(semtypes.NEVER)
@@ -2480,7 +2480,7 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 	}
 
 	for _, rm := range resourceMethods {
-		if !resolveResourceMethodSignature(t, isClient, isService, rm) {
+		if !resolveResourceMethodSignature(t, isClient, isService, rm, depth+1) {
 			return semtypes.SemType{}, false
 		}
 		rm.SetDeterminedType(semtypes.NEVER)
@@ -3150,6 +3150,10 @@ func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemT
 }
 
 func resolveSimpleVariable(t typeResolver, chain *binding, node *ast.BLangSimpleVariable) bool {
+	return resolveSimpleVariableInner(t, chain, node, 0)
+}
+
+func resolveSimpleVariableInner(t typeResolver, chain *binding, node *ast.BLangSimpleVariable, depth int) bool {
 	node.Name.SetDeterminedType(semtypes.NEVER)
 	typeNode := node.TypeNode()
 	if typeNode == nil {
@@ -3164,7 +3168,7 @@ func resolveSimpleVariable(t typeResolver, chain *binding, node *ast.BLangSimple
 		return true
 	}
 
-	semType, ok := resolveBType(t, typeNode, 0)
+	semType, ok := resolveBType(t, typeNode, depth)
 	if !ok {
 		setExpectedType(node, semtypes.NEVER)
 		updateSymbolType(t, node, semtypes.NEVER)
@@ -5852,7 +5856,7 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 	return symbolRef, retTy, defaultExpressionEffect(chain), true
 }
 
-func resolveResourceMethodSignature(t typeResolver, isClient bool, isService bool, method *ast.BLangResourceMethod) bool {
+func resolveResourceMethodSignature(t typeResolver, isClient bool, isService bool, method *ast.BLangResourceMethod, depth int) bool {
 	if !isClient && !isService {
 		t.semanticError("resource methods are only allowed in client or service classes", method.GetPosition())
 		return false
@@ -5862,18 +5866,18 @@ func resolveResourceMethodSignature(t typeResolver, isClient bool, isService boo
 		t.internalError("expected resource method symbol", method.GetPosition())
 		return false
 	}
-	pathTy, pathParamRefs, ok := resolveResourcePathType(t, method)
+	pathTy, pathParamRefs, ok := resolveResourcePathType(t, method, depth)
 	if !ok {
 		return false
 	}
 	sym.SetPathListType(pathTy)
 	sym.SetPathParams(pathParamRefs)
 
-	_, _, _, _, ok = resolveInvokableSignature(t, method, sym, method.RequiredParams)
+	_, _, _, _, ok = resolveInvokableSignature(t, method, sym, method.RequiredParams, depth)
 	return ok
 }
 
-func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod) (semtypes.SemType, []model.SymbolRef, bool) {
+func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, depth int) (semtypes.SemType, []model.SymbolRef, bool) {
 	anydata := semtypes.CreateAnydata(t.typeContext())
 	var members []semtypes.SemType
 	restMember := semtypes.NEVER
@@ -5890,7 +5894,7 @@ func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod) (s
 				t.internalError("resource path parameter is missing type", seg.GetPosition())
 				return semtypes.SemType{}, nil, false
 			}
-			paramTy, ok := resolveBType(t, seg.ParamType, 0)
+			paramTy, ok := resolveBType(t, seg.ParamType, depth+1)
 			if !ok {
 				return semtypes.SemType{}, nil, false
 			}
