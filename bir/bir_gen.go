@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"sort"
 
-	"ballerina-lang-go/ast"
-	compilerctx "ballerina-lang-go/context"
-	"ballerina-lang-go/desugar"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/ast"
+	compilerctx "ballerina/context"
+	"ballerina/desugar"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 // birLoc converts a diagnostics.Location (byte offsets) to a bir.Location (line/column)

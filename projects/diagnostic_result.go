@@ -19,7 +19,7 @@ package projects
 import (
 	"slices"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // DiagnosticResult represents a collection of diagnostics from a project operation.

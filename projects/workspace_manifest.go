@@ -19,7 +19,7 @@ package projects
 import (
 	"slices"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // WorkspaceManifest represents the parsed [workspace] section from Ballerina.toml.

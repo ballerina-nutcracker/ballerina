@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/test_util"
+	"ballerina/projects"
+	"ballerina/test_util"
 )
 
 // TestModuleResolver_ExternalPackage tests that the module resolver can identify external imports.

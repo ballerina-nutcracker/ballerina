@@ -17,11 +17,11 @@
 package compile
 
 import (
-	"ballerina-lang-go/context"
-	libcommon "ballerina-lang-go/lib/common"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/context"
+	libcommon "ballerina/lib/common"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 var PackageID = model.INTERNAL_PKG

@@ -25,11 +25,11 @@ import (
 	"math/big"
 	"time"
 
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/decimal"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/semtypes"
+	"ballerina/values"
 	"golang.org/x/crypto/pkcs12"
 )
 

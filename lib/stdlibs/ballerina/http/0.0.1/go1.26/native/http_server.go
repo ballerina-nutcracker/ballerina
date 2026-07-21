@@ -27,14 +27,14 @@ import (
 	"sync"
 	"time"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/decimal"
+	"ballerina/model"
+	"ballerina/platform/pal"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 // listenerState is the Go-side state of an http:Listener object, stored on the

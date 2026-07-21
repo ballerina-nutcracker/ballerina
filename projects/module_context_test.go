@@ -19,8 +19,8 @@ package projects
 import (
 	"testing"
 
-	compilercontext "ballerina-lang-go/context"
-	"ballerina-lang-go/semtypes"
+	compilercontext "ballerina/context"
+	"ballerina/semtypes"
 )
 
 func TestNewModuleCompilerContextInitializesStats(t *testing.T) {

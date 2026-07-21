@@ -23,16 +23,16 @@ import (
 	"io/fs"
 	"os"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/desugar"
-	"ballerina-lang-go/lib/stdlibs"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/parser"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/test_util/langlib"
-	"ballerina-lang-go/tools/text"
+	"ballerina/ast"
+	"ballerina/bir"
+	"ballerina/context"
+	"ballerina/desugar"
+	"ballerina/lib/stdlibs"
+	"ballerina/model"
+	"ballerina/parser"
+	"ballerina/semantics"
+	"ballerina/test_util/langlib"
+	"ballerina/tools/text"
 )
 
 // Phase represents a frontend compilation phase

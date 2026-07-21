@@ -41,9 +41,9 @@ isolated function externFn(string arg) returns string|error = external;
 package native
 
 import (
-    "ballerina-lang-go/runtime"
-    "ballerina-lang-go/runtime/extern"
-    "ballerina-lang-go/values"
+    "ballerina/runtime"
+    "ballerina/runtime/extern"
+    "ballerina/values"
 )
 
 const (

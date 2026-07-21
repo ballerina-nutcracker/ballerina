@@ -29,10 +29,10 @@ import (
 	"strings"
 	"testing"
 
-	interpsrc "ballerina-lang-go"
-	"ballerina-lang-go/lib/stdlibs"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/test_util"
+	interpsrc "ballerina"
+	"ballerina/lib/stdlibs"
+	"ballerina/projects"
+	"ballerina/test_util"
 )
 
 // nativeTestRepoPath returns the absolute path to the bala test repository.

@@ -53,7 +53,7 @@ var WASMUnsupportedTests = []string{
 // relative test name or an absolute path.
 var UnsupportedTests = []string{
 	// --- Needs constant folding ---
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/83
+	// https://github.com/ballerina-nutcracker/ballerina/issues/83
 
 	// pure literal fold + reachability of always-false branch.
 	"subset8/08-bitwise/complement3-e.bal",
@@ -164,16 +164,16 @@ var UnsupportedTests = []string{
 
 	// ----- End float-related skips -----
 
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/283
+	// https://github.com/ballerina-nutcracker/ballerina/issues/283
 	"subset8/08-future/fieldexpr1-v.bal",
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/442
+	// https://github.com/ballerina-nutcracker/ballerina/issues/442
 	"subset8/08-future/main-v.bal",
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/288
+	// https://github.com/ballerina-nutcracker/ballerina/issues/288
 	"subset8/08-future/xmlsubtype-v.bal", // xml:Element type unknown
 
 	// Match patterns:
 	//  Unsupported match pattern diagnostics for list/mapping patterns.
-	// 	https://github.com/ballerina-platform/ballerina-lang-go/issues/162
+	// 	https://github.com/ballerina-nutcracker/ballerina/issues/162
 	"subset8/08-list/10-e.bal",
 	"subset8/08-mapping/9-e.bal",
 

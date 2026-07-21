@@ -17,7 +17,7 @@ import ballerina/io;
 
 public function main() {
     int[] values = [1, 2];
-    // TODO: Support XML sequence insertion from query result: https://github.com/ballerina-platform/ballerina-lang-go/issues/533
+    // TODO: Support XML sequence insertion from query result: https://github.com/ballerina-nutcracker/ballerina/issues/533
     xml x = xml `<root>${from var n in values select xml `<n>${n}</n>`}</root>`; // @error future: XML sequence insertion from query result
     io:println(x); // @output <root><n>1</n><n>2</n></root>
 }

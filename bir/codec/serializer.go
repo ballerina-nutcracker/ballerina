@@ -22,11 +22,11 @@ import (
 	"math"
 	"sort"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/decimal"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 const (

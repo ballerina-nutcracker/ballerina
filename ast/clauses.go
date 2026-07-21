@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"ballerina-lang-go/common"
+	"ballerina/common"
 )
 
 type TypeParamEntry struct {

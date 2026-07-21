@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 )
 
 var processStart = time.Now()

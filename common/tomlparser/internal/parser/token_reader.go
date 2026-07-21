@@ -18,7 +18,7 @@
 
 package parser
 
-import "ballerina-lang-go/common/tomlparser/internal/lexer"
+import "ballerina/common/tomlparser/internal/lexer"
 
 const tokenBufferCap = 20
 

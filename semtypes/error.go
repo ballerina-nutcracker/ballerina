@@ -16,7 +16,7 @@
 
 package semtypes
 
-import "ballerina-lang-go/common"
+import "ballerina/common"
 
 func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
 	errorType = Intersect(errorType, ERROR)

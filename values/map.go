@@ -21,7 +21,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 type mapEntry struct {

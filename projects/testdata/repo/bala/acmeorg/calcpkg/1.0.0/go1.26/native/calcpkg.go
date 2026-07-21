@@ -17,9 +17,9 @@
 package calcpkg
 
 import (
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 )
 
 func initCalcpkgModule(rt *runtime.Runtime) {

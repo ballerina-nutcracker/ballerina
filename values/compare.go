@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 
-	"ballerina-lang-go/decimal"
+	"ballerina/decimal"
 )
 
 type CompareResult int8

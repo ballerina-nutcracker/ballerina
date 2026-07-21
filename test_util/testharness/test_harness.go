@@ -38,14 +38,14 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/platform/palnative"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/bir"
+	"ballerina/platform/pal"
+	"ballerina/platform/palnative"
+	"ballerina/projects"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/test_util"
+	"ballerina/tools/diagnostics"
 )
 
 // TestCase / TestKind / TestSuffix and the suffix constants live in test_util

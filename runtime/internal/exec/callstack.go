@@ -16,7 +16,7 @@
 
 package exec
 
-import "ballerina-lang-go/bir"
+import "ballerina/bir"
 
 type callStackEntry struct {
 	frame    *Frame

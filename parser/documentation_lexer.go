@@ -17,10 +17,10 @@
 package parser
 
 import (
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/tools/text"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
+	"ballerina/tools/diagnostics"
+	"ballerina/tools/text"
 )
 
 var deprecatedChars = []rune{'D', 'e', 'p', 'r', 'e', 'c', 'a', 't', 'e', 'd'}

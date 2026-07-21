@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"math/bits"
 
-	"ballerina-lang-go/common"
-	"ballerina-lang-go/decimal"
+	"ballerina/common"
+	"ballerina/decimal"
 )
 
 const (

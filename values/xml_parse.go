@@ -22,7 +22,7 @@ import (
 	"io"
 	"strings"
 
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 const xmlNamespaceURI = "http://www.w3.org/XML/1998/namespace"

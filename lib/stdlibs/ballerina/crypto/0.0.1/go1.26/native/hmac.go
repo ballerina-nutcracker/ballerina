@@ -24,9 +24,9 @@ import (
 	"crypto/sha512"
 	"hash"
 
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 )
 
 func registerHmacFunctions(rt *runtime.Runtime, types cryptoTypes) {

@@ -22,16 +22,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ballerina-lang-go/bir"
-	bircodec "ballerina-lang-go/bir/codec"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/model/symbolpool"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/test_util/testharness"
+	"ballerina/bir"
+	bircodec "ballerina/bir/codec"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/model/symbolpool"
+	"ballerina/projects"
+	"ballerina/semantics"
+	"ballerina/semtypes"
+	"ballerina/test_util"
+	"ballerina/test_util/testharness"
 )
 
 type serializationFixture struct {

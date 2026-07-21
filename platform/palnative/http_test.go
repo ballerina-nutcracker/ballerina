@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 )
 
 // ---------------------------------------------------------------------------

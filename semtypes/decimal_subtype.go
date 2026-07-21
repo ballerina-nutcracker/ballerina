@@ -17,8 +17,8 @@
 package semtypes
 
 import (
-	"ballerina-lang-go/common"
-	"ballerina-lang-go/decimal"
+	"ballerina/common"
+	"ballerina/decimal"
 )
 
 type decimalSubtype struct {

@@ -31,7 +31,7 @@ import (
 	"strconv"
 	"time"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 )
 
 // Listen is the pal.HTTP.Listen factory for the native-CLI platform. It binds a

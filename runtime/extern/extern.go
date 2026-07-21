@@ -20,10 +20,10 @@ package extern
 import (
 	"sync/atomic"
 
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/runtime/internal/locks"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/platform/pal"
+	"ballerina/runtime/internal/locks"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 // NativeFunc is the signature for extern (native) function implementations.

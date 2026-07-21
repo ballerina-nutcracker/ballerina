@@ -28,7 +28,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/common/bfs"
+	"ballerina/common/bfs"
 
 	"golang.org/x/tools/txtar"
 )

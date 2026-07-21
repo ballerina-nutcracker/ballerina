@@ -22,7 +22,7 @@ import (
 	"sync"
 	"syscall"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 )
 
 // newSignalSource installs an os/signal.Notify handler and returns a

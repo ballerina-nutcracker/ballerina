@@ -17,8 +17,8 @@
 package native
 
 import (
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/semtypes"
+	"ballerina/runtime"
+	"ballerina/semtypes"
 )
 
 func initCryptoModule(rt *runtime.Runtime) {

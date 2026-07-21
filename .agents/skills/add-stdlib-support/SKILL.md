@@ -151,7 +151,7 @@ Shared patterns — read the relevant file only when the situation applies:
 
 1. **`lib/rt/libs.go`** — add a blank import so the `init()` in the native package runs at binary start:
    ```go
-   _ "ballerina-lang-go/lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native"
+   _ "ballerina/lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native"
    ```
    Without this, all `= external` functions produce "function not found" at runtime even though the binary compiles cleanly. Skip this line if your stdlib has no `native/` directory.
 

@@ -20,12 +20,12 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/decimal"
+	"ballerina/model"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/modules"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 // LookupObjectMethod resolves a regular method named methodName on obj. The

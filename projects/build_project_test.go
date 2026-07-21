@@ -26,9 +26,9 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/projects"
+	"ballerina/test_util"
+	"ballerina/tools/diagnostics"
 )
 
 // TestBuildProjectAPI tests loading a valid build project.

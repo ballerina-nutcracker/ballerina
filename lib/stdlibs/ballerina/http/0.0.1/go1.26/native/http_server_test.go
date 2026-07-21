@@ -21,7 +21,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 // failingReadCloser errors out of Read before delivering the number of bytes

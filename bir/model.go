@@ -19,8 +19,8 @@ package bir
 import (
 	"fmt"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
+	"ballerina/model"
+	"ballerina/semtypes"
 )
 
 type ConstValue struct {

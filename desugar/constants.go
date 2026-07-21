@@ -17,12 +17,12 @@
 package desugar
 
 import (
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/ast"
+	"ballerina/decimal"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 // materializeConstantRef replaces a reference to a folded constant with a

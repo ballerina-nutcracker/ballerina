@@ -17,7 +17,7 @@
 package semtypes
 
 import (
-	"ballerina-lang-go/common"
+	"ballerina/common"
 )
 
 type booleanSubtype struct {

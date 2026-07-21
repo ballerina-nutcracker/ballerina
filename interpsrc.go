@@ -18,7 +18,7 @@
 
 // Package interpsrc embeds the interpreter Go source tree into the released
 // bal binary so that end users can build native interpreter variants without
-// needing to check out the ballerina-lang-go repository separately.
+// needing to check out the ballerina repository separately.
 //
 // When building the native interpreter itself (go build -tags native_interp),
 // this file is excluded and interpsrc_stub.go is compiled instead, so the

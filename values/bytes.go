@@ -16,7 +16,7 @@
 
 package values
 
-import "ballerina-lang-go/semtypes"
+import "ballerina/semtypes"
 
 // ToByteSlice converts a Ballerina byte[] (List of int64 in 0-255) to a Go []byte.
 func (l *List) ToByteSlice() []byte {

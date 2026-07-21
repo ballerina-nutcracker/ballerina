@@ -16,7 +16,7 @@
 
 package semtypes
 
-import "ballerina-lang-go/common"
+import "ballerina/common"
 
 type typeAtom struct {
 	idx        int

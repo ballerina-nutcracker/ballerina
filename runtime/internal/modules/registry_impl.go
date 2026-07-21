@@ -17,9 +17,9 @@
 package modules
 
 import (
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/runtime/extern"
+	"ballerina/bir"
+	"ballerina/model"
+	"ballerina/runtime/extern"
 )
 
 type Registry struct {

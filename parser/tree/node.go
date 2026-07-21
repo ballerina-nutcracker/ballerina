@@ -21,8 +21,8 @@ package tree
 import (
 	"iter"
 
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/parser/common"
+	"ballerina/tools/diagnostics"
 )
 
 // This represent red nodes in the syntax tree. Red nodes satisfy fallowing properties:

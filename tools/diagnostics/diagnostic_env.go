@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sync"
 
-	"ballerina-lang-go/tools/text"
+	"ballerina/tools/text"
 )
 
 // Sentinel fileIndex values for synthetic sources that carry no TextDocument

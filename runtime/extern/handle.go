@@ -16,7 +16,7 @@
 
 package extern
 
-import "ballerina-lang-go/values"
+import "ballerina/values"
 
 // MethodHandle is an opaque reference to a resolved method on a Ballerina
 // object. Obtain one from Context.LookupObjectMethod,

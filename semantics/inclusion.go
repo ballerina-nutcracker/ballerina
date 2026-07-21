@@ -17,9 +17,9 @@
 package semantics
 
 import (
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 // collectIncludedMembers resolves each included type, validates it is a subtype of expectedBasicType,

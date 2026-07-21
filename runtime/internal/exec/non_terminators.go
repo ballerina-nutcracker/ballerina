@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"unsafe"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/modules"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 func execConstantLoad(ctx *extern.Context, constantLoad *bir.ConstantLoad, frame *Frame) {

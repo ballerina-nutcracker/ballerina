@@ -21,10 +21,10 @@ import (
 	"iter"
 	"sync"
 
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/exec"
-	"ballerina-lang-go/values"
+	"ballerina/platform/pal"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/exec"
+	"ballerina/values"
 )
 
 // State is the runtime lifecycle state.

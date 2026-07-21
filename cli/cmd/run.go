@@ -24,18 +24,18 @@ import (
 	goruntime "runtime"
 	"strings"
 
-	interpsrc "ballerina-lang-go"
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/cli/internal/nativeexec"
-	"ballerina-lang-go/cli/internal/nativerunner"
-	debugcommon "ballerina-lang-go/common"
-	_ "ballerina-lang-go/lib/rt"
-	"ballerina-lang-go/lib/stdlibs"
-	"ballerina-lang-go/platform/palnative"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	interpsrc "ballerina"
+	"ballerina/bir"
+	"ballerina/cli/internal/nativeexec"
+	"ballerina/cli/internal/nativerunner"
+	debugcommon "ballerina/common"
+	_ "ballerina/lib/rt"
+	"ballerina/lib/stdlibs"
+	"ballerina/platform/palnative"
+	"ballerina/projects"
+	"ballerina/runtime"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 )
@@ -468,7 +468,7 @@ func chooseNativeExecutor(outBin string) (nativeexec.NativeExecutor, error) {
 	return local, nil
 }
 
-// findInterpreterRoot returns the absolute path to the ballerina-lang-go source tree.
+// findInterpreterRoot returns the absolute path to the ballerina source tree.
 // It checks BALLERINA_SRC first, then falls back to the source tree embedded
 // in the binary (extracted to a cache directory on first use).
 func findInterpreterRoot() (string, error) {
@@ -486,7 +486,7 @@ func findInterpreterRoot() (string, error) {
 	return resolved, nil
 }
 
-// locateInterpreterRoot finds the ballerina-lang-go source tree without
+// locateInterpreterRoot finds the ballerina source tree without
 // resolving symlinks; see findInterpreterRoot for why that resolution matters.
 func locateInterpreterRoot() (string, error) {
 	if src := os.Getenv("BALLERINA_SRC"); src != "" {
@@ -495,7 +495,7 @@ func locateInterpreterRoot() (string, error) {
 
 	cacheRoot, err := getBallerinaEnvPath()
 	if err != nil {
-		return "", fmt.Errorf("interpreter source not found; set BALLERINA_SRC to the ballerina-lang-go directory")
+		return "", fmt.Errorf("interpreter source not found; set BALLERINA_SRC to the ballerina directory")
 	}
 	return interpsrc.ExtractTo(cacheRoot, Version)
 }

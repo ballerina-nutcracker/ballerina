@@ -21,11 +21,11 @@ import (
 	"sync"
 	"time"
 
-	common "ballerina-lang-go/common"
-	compilercontext "ballerina-lang-go/context"
-	"ballerina-lang-go/parser"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/text"
+	common "ballerina/common"
+	compilercontext "ballerina/context"
+	"ballerina/parser"
+	"ballerina/parser/tree"
+	"ballerina/tools/text"
 )
 
 // documentContext holds internal state for a Document.

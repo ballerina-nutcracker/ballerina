@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 var unicodeCodepointPattern = regexp.MustCompile(`\\(\\*)u\{([a-fA-F0-9]+)\}`)
