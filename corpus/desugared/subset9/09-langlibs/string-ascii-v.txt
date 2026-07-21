@@ -29,6 +29,24 @@
               (simple-var-ref s)))
             (literal 0)
             (literal 5))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.string trim (
+            (simple-var-ref s))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 6))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string substring (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.string equalsIgnoreCaseAscii (
@@ -38,4 +56,14 @@
         (invocation io println (
           (invocation lang.string equalsIgnoreCaseAscii (
             (literal HELLO)
-            (literal world)))))))))
+            (literal world))))))
+      (var-def
+        (variable nonAsciiEdges (type
+          (value-type string)) (expr
+          (literal   middle  ))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation lang.string trim (
+              (simple-var-ref nonAsciiEdges)))
+            (simple-var-ref nonAsciiEdges))))))))

@@ -86,7 +86,6 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 	// Copy dependencies
 	depsCopy := slices.Clone(moduleConfig.Dependencies())
 
-	env := project.Environment().compilerEnvironment()
 	return &moduleContext{
 		project:                project,
 		moduleID:               moduleConfig.ModuleID(),
@@ -97,7 +96,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 		testDocContextMap:      testDocContextMap,
 		testSrcDocIDs:          testSrcDocIDs,
 		moduleDescDependencies: depsCopy,
-		compilerCtx:            context.NewCompilerContext(env),
+		compilerCtx:            newModuleCompilerContext(project.Environment().compilerEnvironment(), moduleConfig.ModuleDescriptor().Name()),
 	}
 }
 
@@ -149,7 +148,6 @@ func newModuleContextFromMaps(
 		testDocContextMap = make(map[DocumentID]*documentContext)
 	}
 
-	env := project.Environment().compilerEnvironment()
 	return &moduleContext{
 		project:                project,
 		moduleID:               moduleID,
@@ -160,8 +158,14 @@ func newModuleContextFromMaps(
 		testDocContextMap:      testDocContextMap,
 		testSrcDocIDs:          testSrcDocIDs,
 		moduleDescDependencies: slices.Clone(moduleDescDependencies),
-		compilerCtx:            context.NewCompilerContext(env),
+		compilerCtx:            newModuleCompilerContext(project.Environment().compilerEnvironment(), moduleDescriptor.Name()),
 	}
+}
+
+func newModuleCompilerContext(env *context.CompilerEnvironment, name ModuleName) *context.CompilerContext {
+	compilerCtx := context.NewCompilerContext(env)
+	compilerCtx.InitModuleStats(name.String())
+	return compilerCtx
 }
 
 // getModuleID returns the module identifier.
@@ -233,14 +237,13 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	compilerCtx := moduleCtx.compilerCtx
 
 	// Parse all source and test documents in parallel.
-	compilerCtx.StartStage(context.StageParse)
 	syntaxTrees := parseDocumentsParallel(
+		compilerCtx,
 		moduleCtx.srcDocIDs,
 		moduleCtx.srcDocContextMap,
 		moduleCtx.testSrcDocIDs,
 		moduleCtx.testDocContextMap,
 	)
-	compilerCtx.EndStage()
 
 	if len(syntaxTrees) == 0 {
 		return
@@ -373,6 +376,7 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 // parseDocumentsParallel parses source and test documents in parallel.
 // Returns syntax trees from source documents only (test docs are parsed but not returned).
 func parseDocumentsParallel(
+	compilerCtx *context.CompilerContext,
 	srcDocIDs []DocumentID,
 	srcDocContextMap map[DocumentID]*documentContext,
 	testDocIDs []DocumentID,
@@ -394,7 +398,7 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			st := dc.parse()
+			st := dc.parseWithStats(compilerCtx)
 			if st != nil {
 				mu.Lock()
 				syntaxTrees = append(syntaxTrees, st)
@@ -413,7 +417,7 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			dc.parse()
+			dc.parseWithStats(compilerCtx)
 		}(docCtx)
 	}
 
@@ -422,15 +426,24 @@ func parseDocumentsParallel(
 }
 
 func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*tree.SyntaxTree, compilationOptions CompilationOptions) []*ast.BLangCompilationUnit {
-	dumpAST := compilationOptions.DumpAST()
+	dumpRecoveredAST := compilationOptions.DumpRecoveredAST()
+	dumpAST := compilationOptions.DumpAST() || dumpRecoveredAST
 	var prettyPrinter ast.PrettyPrinter
 	if dumpAST {
-		prettyPrinter = ast.PrettyPrinter{}
+		prettyPrinter = ast.PrettyPrinter{
+			ShowNodeLocations: dumpRecoveredAST,
+			DiagnosticEnv:     cx.DiagnosticEnv(),
+		}
 	}
 
 	compilationUnits := make([]*ast.BLangCompilationUnit, 0, len(syntaxTrees))
 	for _, st := range syntaxTrees {
-		cu := ast.GetCompilationUnit(cx, st)
+		var cu *ast.BLangCompilationUnit
+		if dumpRecoveredAST {
+			cu = ast.GetRecoveredCompilationUnit(cx, st)
+		} else {
+			cu = ast.GetCompilationUnit(cx, st)
+		}
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
 		}
@@ -567,7 +580,7 @@ func (m *moduleContext) populateModuleLoadRequests() []*moduleLoadRequest {
 	for _, docID := range m.srcDocIDs {
 		docCtx := m.srcDocContextMap[docID]
 		if docCtx != nil {
-			requests = append(requests, docCtx.moduleLoadRequests()...)
+			requests = append(requests, docCtx.moduleLoadRequests(m.compilerCtx)...)
 		}
 	}
 	return requests
@@ -578,7 +591,7 @@ func (m *moduleContext) populateTestModuleLoadRequests() []*moduleLoadRequest {
 	for _, docID := range m.testSrcDocIDs {
 		docCtx := m.testDocContextMap[docID]
 		if docCtx != nil {
-			requests = append(requests, docCtx.moduleLoadRequests()...)
+			requests = append(requests, docCtx.moduleLoadRequests(m.compilerCtx)...)
 		}
 	}
 	return requests

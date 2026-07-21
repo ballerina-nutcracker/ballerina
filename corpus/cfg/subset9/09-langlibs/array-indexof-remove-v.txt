@@ -30,6 +30,24 @@
   )
   (bb2 (bb1 bb0) (bb3 bb4)
     (var-def
+      (variable firstDefault (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 30))))))
+    (type-test-expr is
+      (simple-var-ref firstDefault)
+      (value-type int))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref firstDefault))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (var-def
       (variable afterFirst (type
         (union-type
           (value-type int)
@@ -42,12 +60,12 @@
       (simple-var-ref afterFirst)
       (value-type int))
   )
-  (bb3 (bb2) (bb4)
+  (bb5 (bb4) (bb6)
     (expression-stmt
       (invocation io println (
         (simple-var-ref afterFirst))))
   )
-  (bb4 (bb3 bb2) ()
+  (bb6 (bb5 bb4) ()
     (var-def
       (variable missing (type
         (union-type
@@ -61,6 +79,38 @@
       (invocation io println (
         (type-test-expr is
           (simple-var-ref missing)
+          (value-type null)))))
+    (var-def
+      (variable atLength (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 30)
+          (invocation lang.array length (
+            (simple-var-ref arr))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref atLength)
+          (value-type null)))))
+    (var-def
+      (variable pastLength (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 30)
+          (binary-expr +
+            (invocation lang.array length (
+              (simple-var-ref arr)))
+            (literal 1000)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref pastLength)
           (value-type null)))))
     (var-def
       (variable removed (type

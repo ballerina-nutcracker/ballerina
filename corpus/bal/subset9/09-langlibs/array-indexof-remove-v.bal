@@ -24,6 +24,11 @@ public function main() {
         io:println(first); // @output 2
     }
 
+    int? firstDefault = arr.indexOf(30);
+    if firstDefault is int {
+        io:println(firstDefault); // @output 2
+    }
+
     int? afterFirst = arr.indexOf(30, 3);
     if afterFirst is int {
         io:println(afterFirst); // @output 4
@@ -31,6 +36,12 @@ public function main() {
 
     int? missing = arr.indexOf(99, 0);
     io:println(missing is ()); // @output true
+
+    int? atLength = arr.indexOf(30, arr.length());
+    io:println(atLength is ()); // @output true
+
+    int? pastLength = arr.indexOf(30, arr.length() + 1000);
+    io:println(pastLength is ()); // @output true
 
     int removed = arr.remove(1);
     io:println(removed); // @output 20

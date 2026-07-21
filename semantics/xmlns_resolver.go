@@ -67,7 +67,7 @@ func defineXMLNS[T symbolResolver](resolver T, scope model.Scope, prefix, uri st
 		semanticError(resolver, "redeclared symbol '"+name+"'", pos)
 		return model.SymbolRef{}, false
 	}
-	return defineXMLNSSymbol(resolver, scope, name, uri), true
+	return defineXMLNSSymbol(resolver, scope, name, uri, pos), true
 }
 
 func ensurePrefixMap[T symbolResolver](resolver T, scope model.Scope) {
@@ -77,7 +77,7 @@ func ensurePrefixMap[T symbolResolver](resolver T, scope model.Scope) {
 			s.Prefix = make(map[string]model.ExportedSymbolSpace)
 		}
 		if _, ok := s.Prefix[model.XMLNSReservedPrefix]; !ok {
-			defineXMLNSSymbol(resolver, s, model.XMLNSReservedPrefix, model.XMLNSReservedURI)
+			defineXMLNSSymbol(resolver, s, model.XMLNSReservedPrefix, model.XMLNSReservedURI, diagnostics.NewBuiltinLocation())
 		}
 	case *model.BlockScope:
 		if s.Prefix == nil {
@@ -94,9 +94,9 @@ func ensurePrefixMap[T symbolResolver](resolver T, scope model.Scope) {
 	}
 }
 
-func defineXMLNSSymbol[T symbolResolver](resolver T, scope model.Scope, prefix, uri string) model.SymbolRef {
+func defineXMLNSSymbol[T symbolResolver](resolver T, scope model.Scope, prefix, uri string, location diagnostics.Location) model.SymbolRef {
 	space := resolver.GetCtx().NewSymbolSpace(resolver.GetPkgID())
-	space.AddSymbol(prefix, model.NewXMLNSSymbol(prefix, uri))
+	space.AddSymbol(prefix, model.NewXMLNSSymbol(prefix, uri, location))
 	exported := model.NewExportedSymbolSpaces([]*model.SymbolSpace{space}, nil)
 	setLocalPrefix(scope, prefix, exported)
 	ref, _ := exported.GetSymbol(prefix)

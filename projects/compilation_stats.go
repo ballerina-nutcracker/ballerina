@@ -37,7 +37,6 @@ var analysisStages = []context.CompilationStage{
 	context.StageSemanticAnalysis,
 	context.StageCFGCreation,
 	context.StageCFGAnalysis,
-	context.StageDesugaring,
 }
 
 func formatStatsReport(allStats []*context.ModuleStats) string {
@@ -73,59 +72,14 @@ func formatStatsReport(allStats []*context.ModuleStats) string {
 		}
 	}
 
-	// Analysis and Desugaring grouped phase
-	var analysisTotal time.Duration
-	type analysisModuleEntry struct {
-		name      string
-		total     time.Duration
-		subStages []context.StageTiming
-	}
-	var analysisEntries []analysisModuleEntry
-	for _, ms := range allStats {
-		var moduleTotal time.Duration
-		var subs []context.StageTiming
-		for _, stage := range analysisStages {
-			if d := findStageDuration(ms, stage); d > 0 {
-				subs = append(subs, context.StageTiming{Name: stage, Duration: d})
-				moduleTotal += d
-			}
-		}
-		if moduleTotal > 0 {
-			analysisEntries = append(analysisEntries, analysisModuleEntry{ms.ModuleName, moduleTotal, subs})
-			analysisTotal += moduleTotal
-		}
-	}
-	if analysisTotal > 0 {
-		grandTotal += analysisTotal
-		fmt.Fprintf(&b, "  %-40s %s\n", "Analysis and Desugaring", formatDuration(analysisTotal))
-		for _, e := range analysisEntries {
-			fmt.Fprintf(&b, "    %-38s %s\n", e.name, formatDuration(e.total))
-			for _, sub := range e.subStages {
-				fmt.Fprintf(&b, "      %-36s %s\n", string(sub.Name), formatDuration(sub.Duration))
-			}
-		}
-	}
+	analysisTotal := writeGroupedStageStats(&b, allStats, "Analysis", analysisStages)
+	grandTotal += analysisTotal
 
-	// BIR Generation
-	var birTotal time.Duration
-	type moduleEntry struct {
-		name     string
-		duration time.Duration
-	}
-	var birEntries []moduleEntry
-	for _, ms := range allStats {
-		if d := findStageDuration(ms, context.StageBIRGeneration); d > 0 {
-			birEntries = append(birEntries, moduleEntry{ms.ModuleName, d})
-			birTotal += d
-		}
-	}
-	if birTotal > 0 {
-		grandTotal += birTotal
-		fmt.Fprintf(&b, "  %-40s %s\n", string(context.StageBIRGeneration), formatDuration(birTotal))
-		for _, e := range birEntries {
-			fmt.Fprintf(&b, "    %-38s %s\n", e.name, formatDuration(e.duration))
-		}
-	}
+	desugaringTotal := writeSingleStageStats(&b, allStats, context.StageDesugaring)
+	grandTotal += desugaringTotal
+
+	birTotal := writeSingleStageStats(&b, allStats, context.StageBIRGeneration)
+	grandTotal += birTotal
 
 	fmt.Fprintf(&b, "  %-40s %s\n", "Total", formatDuration(grandTotal))
 
@@ -154,21 +108,22 @@ func formatStatsReportOneline(allStats []*context.ModuleStats) string {
 		fmt.Fprintf(&b, "  %-40s %s\n", string(stage), formatDuration(stageTotal))
 	}
 
-	var analysisTotal time.Duration
-	for _, ms := range allStats {
-		for _, stage := range analysisStages {
-			analysisTotal += findStageDuration(ms, stage)
+	for _, stage := range analysisStages {
+		stageTotal := singleStageTotal(allStats, stage)
+		if stageTotal == 0 {
+			continue
 		}
-	}
-	if analysisTotal > 0 {
-		grandTotal += analysisTotal
-		fmt.Fprintf(&b, "  %-40s %s\n", "Analysis and Desugaring", formatDuration(analysisTotal))
+		grandTotal += stageTotal
+		fmt.Fprintf(&b, "  %-40s %s\n", string(stage), formatDuration(stageTotal))
 	}
 
-	var birTotal time.Duration
-	for _, ms := range allStats {
-		birTotal += findStageDuration(ms, context.StageBIRGeneration)
+	desugaringTotal := singleStageTotal(allStats, context.StageDesugaring)
+	if desugaringTotal > 0 {
+		grandTotal += desugaringTotal
+		fmt.Fprintf(&b, "  %-40s %s\n", string(context.StageDesugaring), formatDuration(desugaringTotal))
 	}
+
+	birTotal := singleStageTotal(allStats, context.StageBIRGeneration)
 	if birTotal > 0 {
 		grandTotal += birTotal
 		fmt.Fprintf(&b, "  %-40s %s\n", string(context.StageBIRGeneration), formatDuration(birTotal))
@@ -179,13 +134,84 @@ func formatStatsReportOneline(allStats []*context.ModuleStats) string {
 	return b.String()
 }
 
-func findStageDuration(ms *context.ModuleStats, stage context.CompilationStage) time.Duration {
-	for _, s := range ms.Stages {
-		if s.Name == stage {
-			return s.Duration
+func writeGroupedStageStats(b *strings.Builder, allStats []*context.ModuleStats, name string, stages []context.CompilationStage) time.Duration {
+	type moduleEntry struct {
+		name      string
+		total     time.Duration
+		subStages []context.StageTiming
+	}
+
+	var total time.Duration
+	var entries []moduleEntry
+	for _, ms := range allStats {
+		var moduleTotal time.Duration
+		var subs []context.StageTiming
+		for _, stage := range stages {
+			if d := findStageDuration(ms, stage); d > 0 {
+				subs = append(subs, context.StageTiming{Name: stage, Duration: d})
+				moduleTotal += d
+			}
+		}
+		if moduleTotal > 0 {
+			entries = append(entries, moduleEntry{ms.ModuleName, moduleTotal, subs})
+			total += moduleTotal
 		}
 	}
-	return 0
+	if total == 0 {
+		return 0
+	}
+
+	fmt.Fprintf(b, "  %-40s %s\n", name, formatDuration(total))
+	for _, e := range entries {
+		fmt.Fprintf(b, "    %-38s %s\n", e.name, formatDuration(e.total))
+		for _, sub := range e.subStages {
+			fmt.Fprintf(b, "      %-36s %s\n", string(sub.Name), formatDuration(sub.Duration))
+		}
+	}
+	return total
+}
+
+func writeSingleStageStats(b *strings.Builder, allStats []*context.ModuleStats, stage context.CompilationStage) time.Duration {
+	type moduleEntry struct {
+		name     string
+		duration time.Duration
+	}
+
+	var total time.Duration
+	var entries []moduleEntry
+	for _, ms := range allStats {
+		if d := findStageDuration(ms, stage); d > 0 {
+			entries = append(entries, moduleEntry{ms.ModuleName, d})
+			total += d
+		}
+	}
+	if total == 0 {
+		return 0
+	}
+
+	fmt.Fprintf(b, "  %-40s %s\n", string(stage), formatDuration(total))
+	for _, e := range entries {
+		fmt.Fprintf(b, "    %-38s %s\n", e.name, formatDuration(e.duration))
+	}
+	return total
+}
+
+func singleStageTotal(allStats []*context.ModuleStats, stage context.CompilationStage) time.Duration {
+	var total time.Duration
+	for _, ms := range allStats {
+		total += findStageDuration(ms, stage)
+	}
+	return total
+}
+
+func findStageDuration(ms *context.ModuleStats, stage context.CompilationStage) time.Duration {
+	var total time.Duration
+	for _, s := range ms.Stages {
+		if s.Name == stage {
+			total += s.Duration
+		}
+	}
+	return total
 }
 
 func formatDuration(d time.Duration) string {

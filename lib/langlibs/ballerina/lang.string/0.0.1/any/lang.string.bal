@@ -26,7 +26,7 @@ public isolated function length(string str) returns int = external;
 # + startIndex - the starting index, inclusive
 # + endIndex - the ending index, exclusive
 # + return - substring consisting of characters with index startIndex up to endIndex-1
-public isolated function substring(string str, int startIndex, int endIndex) returns string = external;
+public isolated function substring(string str, int startIndex, int endIndex = length(str)) returns string = external;
 
 # Tests whether `str1` and `str2` are equal, ignoring the case of ASCII characters.
 #

@@ -26,6 +26,7 @@ import (
 	"testing"
 	"time"
 
+	"ballerina-lang-go/bir"
 	_ "ballerina-lang-go/lib/rt"
 	"ballerina-lang-go/platform/pal"
 	"ballerina-lang-go/projects"
@@ -420,7 +421,57 @@ func TestLifecycleStartFailureThenStraySignalIsNoOp(t *testing.T) {
 	}
 
 	pal.Send(palSignalGracefulStop)
-	time.Sleep(100 * time.Millisecond)
+	waitForSignalConsumed(t, pal)
+	if got, want := pal.Stdout(), "graceful:one\n"; got != want {
+		t.Fatalf("unexpected stdout after stray signal: got %q, want %q", got, want)
+	}
+}
+
+// TestLifecycleReInitAfterStoppedPanics exercises the general "invalid
+// lifecycle transition" panic (as opposed to the Stopped -> {Graceful,
+// Immediate}Stopping edges, which are a no-op - see
+// TestLifecycleStartFailureThenStraySignalIsNoOp). Re-Init after the runtime
+// has already reached Stopped is still an illegal edge and must panic loudly.
+func TestLifecycleReInitAfterStoppedPanics(t *testing.T) {
+	pal := newLifecycleTestPal(t)
+	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
+
+	rt.Listen()
+	pal.Send(palSignalGracefulStop)
+	readExitStatus(t, rt)
+
+	recovered := reInitAndRecover(rt)
+	if recovered == nil {
+		t.Fatal("expected a panic when Init is called again after Stopped")
+	}
+	msg, ok := recovered.(string)
+	if !ok || !strings.Contains(msg, "invalid lifecycle transition from stopped -> initializing") {
+		t.Fatalf("unexpected panic value: %v", recovered)
+	}
+}
+
+func reInitAndRecover(rt *runtime.Runtime) (recovered any) {
+	defer func() {
+		recovered = recover()
+	}()
+	_ = rt.Init(bir.BIRPackage{})
+	return nil
+}
+
+// waitForSignalConsumed polls (instead of sleeping a fixed duration) until
+// the signal channel drains, i.e. the signal-listener goroutine actually
+// read the stray signal, then gives it a brief grace period to run the
+// (async) transition it triggers. If the listener already exited - because
+// the runtime was already Stopped when the signal was sent - the channel
+// never drains and this just returns after the timeout; that is itself a
+// valid no-op outcome.
+func waitForSignalConsumed(t *testing.T, pal *lifecycleTestPal) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for len(pal.signals) > 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(20 * time.Millisecond)
 }
 
 func invokeAndRecover(rt *runtime.Runtime, fn any) (recovered any) {

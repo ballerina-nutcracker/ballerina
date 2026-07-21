@@ -67,8 +67,8 @@ func initIntModule(rt *runtime.Runtime) {
 		}
 		negative := false
 		input := s
-		if len(input) > 0 && input[0] == '-' {
-			negative = true
+		if len(input) > 0 && (input[0] == '-' || input[0] == '+') {
+			negative = input[0] == '-'
 			input = input[1:]
 		}
 		if len(input) == 0 {
@@ -78,11 +78,20 @@ func initIntModule(rt *runtime.Runtime) {
 		if err != nil {
 			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
 		}
-		result := int64(n)
+		// n is the unsigned magnitude; the largest representable magnitude is
+		// 2^63 (int64 min). Compute -n via -(n-1)-1 so the n == 2^63 case
+		// doesn't overflow an intermediate int64.
+		const maxMagnitude = uint64(math.MaxInt64) + 1
 		if negative {
-			result = -result
+			if n > maxMagnitude {
+				return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+			}
+			return -int64(n-1) - 1, nil
 		}
-		return result, nil
+		if n > math.MaxInt64 {
+			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+		}
+		return int64(n), nil
 	})
 }
 

@@ -109,7 +109,9 @@ func initStringModule(rt *runtime.Runtime) {
 		if !ok {
 			return nil, fmt.Errorf("first argument must be a string")
 		}
-		return strings.TrimSpace(s), nil
+		// ASCII whitespace only (space, \t, \n, \v, \f, \r); strings.TrimSpace
+		// is Unicode-aware and would also strip U+0085/U+00A0.
+		return strings.Trim(s, " \t\n\v\f\r"), nil
 	})
 
 }
