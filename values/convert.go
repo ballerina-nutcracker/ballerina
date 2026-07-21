@@ -59,6 +59,49 @@ func convert(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	return convertBasicTypeValue(tc, value, target, allowNumeric, visiting)
 }
 
+func isNilable(target semtypes.SemType) bool {
+	return semtypes.ContainsBasicType(target, semtypes.NIL)
+}
+
+var simpleBasicTypes = []semtypes.SemType{
+	semtypes.NIL, semtypes.BOOLEAN, semtypes.INT, semtypes.FLOAT, semtypes.DECIMAL,
+	semtypes.STRING, semtypes.XML, semtypes.ERROR,
+}
+
+// candidateTypes decomposes ty into its per-basic-type constituents (e.g. the mapping and list
+// alternatives of a union), skipping any constituent that is empty under tc.
+func candidateTypes(tc semtypes.Context, ty semtypes.SemType) []semtypes.SemType {
+	var members []semtypes.SemType
+	basic := semtypes.WidenToBasicTypes(ty)
+
+	if semtypes.ContainsBasicType(basic, semtypes.MAPPING) {
+		mappingTy := semtypes.Intersect(ty, semtypes.MAPPING)
+		if !semtypes.IsEmpty(tc, mappingTy) {
+			for _, alt := range semtypes.MappingAlternatives(tc, mappingTy) {
+				members = append(members, alt.SemType)
+			}
+		}
+	}
+	if semtypes.ContainsBasicType(basic, semtypes.LIST) {
+		listTy := semtypes.Intersect(ty, semtypes.LIST)
+		if !semtypes.IsEmpty(tc, listTy) {
+			for _, alt := range semtypes.ListAlternatives(tc, listTy) {
+				members = append(members, alt.SemType)
+			}
+		}
+	}
+
+	for _, bt := range simpleBasicTypes {
+		if semtypes.ContainsBasicType(basic, bt) {
+			member := semtypes.Intersect(ty, bt)
+			if !semtypes.IsEmpty(tc, member) {
+				members = append(members, member)
+			}
+		}
+	}
+	return members
+}
+
 func convertUnion(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	candidates []semtypes.SemType, allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
@@ -86,6 +129,15 @@ func convertUnion(tc semtypes.Context, value BalValue, target semtypes.SemType,
 		}
 	}
 	return nil, incompatibleConversion(tc, value, target)
+}
+
+func isStructuredValue(value BalValue) bool {
+	switch value.(type) {
+	case *List, *Map:
+		return true
+	default:
+		return false
+	}
 }
 
 // convertBasicTypeValue converts value to a single, already-decomposed basic-type target (never a union).
@@ -182,6 +234,40 @@ func convertMapping(tc semtypes.Context, source *Map, target semtypes.SemType,
 	return NewMap(target, atomic, readonly, entries), nil
 }
 
+// enterCycleCheck lazily initialises visiting and checks whether source is already being
+// converted in the current recursion stack. The caller must defer delete(visiting, source)
+// on success so DAG-shared nodes are not falsely reported as cycles on the second reference.
+func enterCycleCheck(tc semtypes.Context, sourceType semtypes.SemType, source BalValue, visiting map[BalValue]struct{}) (map[BalValue]struct{}, *conversionFailure) {
+	if visiting == nil {
+		visiting = make(map[BalValue]struct{})
+	}
+	if _, cycle := visiting[source]; cycle {
+		return visiting, newConversionFailure(fmt.Sprintf("'%s' value has cyclic reference", semtypes.ToString(tc, sourceType)))
+	}
+	visiting[source] = struct{}{}
+	return visiting, nil
+}
+
+func isClosedRecord(atomic *semtypes.MappingAtomicType) bool {
+	restTy := atomic.FieldInnerVal("\x00")
+	return semtypes.IsNever(restTy)
+}
+
+func mappingFieldType(tc semtypes.Context, target semtypes.SemType, atomic *semtypes.MappingAtomicType, key string) semtypes.SemType {
+	if atomic != nil {
+		for _, name := range atomic.Names {
+			if name == key {
+				return atomic.FieldInnerVal(key)
+			}
+		}
+	}
+	return semtypes.MappingMemberTypeInnerVal(tc, target, semtypes.StringConst(key))
+}
+
+func fieldMayOmitKey(tc semtypes.Context, target semtypes.SemType, name string) bool {
+	return semtypes.AllMappingAtomsHaveOptionalFieldByName(tc, target, name)
+}
+
 func convertList(tc semtypes.Context, source *List, target semtypes.SemType,
 	allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
@@ -221,20 +307,6 @@ func convertList(tc semtypes.Context, source *List, target semtypes.SemType,
 	return NewList(target, atomic, readonly, restFiller, len(items), items), nil
 }
 
-// enterCycleCheck lazily initialises visiting and checks whether source is already being
-// converted in the current recursion stack. The caller must defer delete(visiting, source)
-// on success so DAG-shared nodes are not falsely reported as cycles on the second reference.
-func enterCycleCheck(tc semtypes.Context, sourceType semtypes.SemType, source BalValue, visiting map[BalValue]struct{}) (map[BalValue]struct{}, *conversionFailure) {
-	if visiting == nil {
-		visiting = make(map[BalValue]struct{})
-	}
-	if _, cycle := visiting[source]; cycle {
-		return visiting, newConversionFailure(fmt.Sprintf("'%s' value has cyclic reference", semtypes.ToString(tc, sourceType)))
-	}
-	visiting[source] = struct{}{}
-	return visiting, nil
-}
-
 func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType) (BalValue, *conversionFailure) {
 	switch {
 	case semtypes.IsSubtype(tc, target, semtypes.BYTE):
@@ -265,76 +337,4 @@ func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType
 		}
 		return d, nil
 	}
-}
-
-func isNilable(target semtypes.SemType) bool {
-	return semtypes.ContainsBasicType(target, semtypes.NIL)
-}
-
-func mappingFieldType(tc semtypes.Context, target semtypes.SemType, atomic *semtypes.MappingAtomicType, key string) semtypes.SemType {
-	if atomic != nil {
-		for _, name := range atomic.Names {
-			if name == key {
-				return atomic.FieldInnerVal(key)
-			}
-		}
-	}
-	return semtypes.MappingMemberTypeInnerVal(tc, target, semtypes.StringConst(key))
-}
-
-func isClosedRecord(atomic *semtypes.MappingAtomicType) bool {
-	restTy := atomic.FieldInnerVal("\x00")
-	return semtypes.IsNever(restTy)
-}
-
-func fieldMayOmitKey(tc semtypes.Context, target semtypes.SemType, name string) bool {
-	return semtypes.AllMappingAtomsHaveOptionalFieldByName(tc, target, name)
-}
-
-func isStructuredValue(value BalValue) bool {
-	switch value.(type) {
-	case *List, *Map:
-		return true
-	default:
-		return false
-	}
-}
-
-var simpleBasicTypes = []semtypes.SemType{
-	semtypes.NIL, semtypes.BOOLEAN, semtypes.INT, semtypes.FLOAT, semtypes.DECIMAL,
-	semtypes.STRING, semtypes.XML, semtypes.ERROR,
-}
-
-// candidateTypes decomposes ty into its per-basic-type constituents (e.g. the mapping and list
-// alternatives of a union), skipping any constituent that is empty under tc.
-func candidateTypes(tc semtypes.Context, ty semtypes.SemType) []semtypes.SemType {
-	var members []semtypes.SemType
-	basic := semtypes.WidenToBasicTypes(ty)
-
-	if semtypes.ContainsBasicType(basic, semtypes.MAPPING) {
-		mappingTy := semtypes.Intersect(ty, semtypes.MAPPING)
-		if !semtypes.IsEmpty(tc, mappingTy) {
-			for _, alt := range semtypes.MappingAlternatives(tc, mappingTy) {
-				members = append(members, alt.SemType)
-			}
-		}
-	}
-	if semtypes.ContainsBasicType(basic, semtypes.LIST) {
-		listTy := semtypes.Intersect(ty, semtypes.LIST)
-		if !semtypes.IsEmpty(tc, listTy) {
-			for _, alt := range semtypes.ListAlternatives(tc, listTy) {
-				members = append(members, alt.SemType)
-			}
-		}
-	}
-
-	for _, bt := range simpleBasicTypes {
-		if semtypes.ContainsBasicType(basic, bt) {
-			member := semtypes.Intersect(ty, bt)
-			if !semtypes.IsEmpty(tc, member) {
-				members = append(members, member)
-			}
-		}
-	}
-	return members
 }

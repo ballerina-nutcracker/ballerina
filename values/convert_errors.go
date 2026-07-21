@@ -42,26 +42,6 @@ func wrapConversionError(err *conversionFailure) *Error {
 	return NewError(semtypes.ERROR, message, nil, conversionErrorTypeName, detailMap)
 }
 
-func incompatibleConversion(tc semtypes.Context, value BalValue, targetType semtypes.SemType) *conversionFailure {
-	sourceTy := SemTypeForValue(value)
-	return newConversionFailure(fmt.Sprintf("'%s' value cannot be converted to '%s'",
-		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType)))
-}
-
-func cannotConvertNil(tc semtypes.Context, targetType semtypes.SemType) *conversionFailure {
-	return newConversionFailure(fmt.Sprintf("'()' value cannot be converted to '%s'", semtypes.ToString(tc, targetType)))
-}
-
-// missingRequiredField reports a required field absent from the source value. Note this
-// fires whether or not the field declares a default in `t`: default-value injection is not
-// yet implemented, so a declared default does not make the field any less required here.
-func missingRequiredField(tc semtypes.Context, value BalValue, targetType semtypes.SemType, fieldName string) *conversionFailure {
-	sourceTy := SemTypeForValue(value)
-	return newConversionFailure(fmt.Sprintf(
-		"'%s' value cannot be converted to '%s': field '%s' not present in value, and default values are not supported",
-		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType), fieldName))
-}
-
 func (e *conversionFailure) Error() string {
 	if len(e.children) == 0 {
 		return e.detailMessage
@@ -70,17 +50,6 @@ func (e *conversionFailure) Error() string {
 	b.WriteString("\n\t\t")
 	e.render(&b, 0)
 	return b.String()
-}
-
-func newConversionFailure(message string) *conversionFailure {
-	return &conversionFailure{detailMessage: message}
-}
-
-// newUnionConversionFailure reports that every member of a union target was rejected, one
-// failure per member (in try order). A member failure that is itself a union group renders
-// as a nested, correctly-indented block instead of a pre-rendered string.
-func newUnionConversionFailure(children []*conversionFailure) *conversionFailure {
-	return &conversionFailure{children: children}
 }
 
 // render writes this failure at the given nesting depth, assuming the caller has already
@@ -107,4 +76,35 @@ func (e *conversionFailure) render(b *strings.Builder, tabs int) {
 	b.WriteString("\n\t\t")
 	b.WriteString(indent)
 	b.WriteByte('}')
+}
+
+func cannotConvertNil(tc semtypes.Context, targetType semtypes.SemType) *conversionFailure {
+	return newConversionFailure(fmt.Sprintf("'()' value cannot be converted to '%s'", semtypes.ToString(tc, targetType)))
+}
+
+func newConversionFailure(message string) *conversionFailure {
+	return &conversionFailure{detailMessage: message}
+}
+
+// newUnionConversionFailure reports that every member of a union target was rejected, one
+// failure per member (in try order). A member failure that is itself a union group renders
+// as a nested, correctly-indented block instead of a pre-rendered string.
+func newUnionConversionFailure(children []*conversionFailure) *conversionFailure {
+	return &conversionFailure{children: children}
+}
+
+func incompatibleConversion(tc semtypes.Context, value BalValue, targetType semtypes.SemType) *conversionFailure {
+	sourceTy := SemTypeForValue(value)
+	return newConversionFailure(fmt.Sprintf("'%s' value cannot be converted to '%s'",
+		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType)))
+}
+
+// missingRequiredField reports a required field absent from the source value. Note this
+// fires whether or not the field declares a default in `t`: default-value injection is not
+// yet implemented, so a declared default does not make the field any less required here.
+func missingRequiredField(tc semtypes.Context, value BalValue, targetType semtypes.SemType, fieldName string) *conversionFailure {
+	sourceTy := SemTypeForValue(value)
+	return newConversionFailure(fmt.Sprintf(
+		"'%s' value cannot be converted to '%s': field '%s' not present in value, and default values are not supported",
+		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType), fieldName))
 }
