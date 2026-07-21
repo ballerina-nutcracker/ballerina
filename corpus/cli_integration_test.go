@@ -62,17 +62,20 @@ func TestBalRunDumpFlags(t *testing.T) {
 	}
 
 	singleBal := filepath.Join("corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
+	recoveryBal := filepath.Join("corpus", "cli", "testdata", "run", "dump-flags", "recovered-ast.bal")
 
 	tests := []struct {
-		name string
-		flag string
-		file string
+		name   string
+		flag   string
+		file   string
+		source string
 	}{
-		{"dump-bir", "--dump-bir", "dump-bir.txtar"},
-		{"dump-st", "--dump-st", "dump-st.txtar"},
-		{"dump-tokens", "--dump-tokens", "dump-tokens.txtar"},
-		{"dump-ast", "--dump-ast", "dump-ast.txtar"},
-		{"dump-cfg", "--dump-cfg", "dump-cfg.txtar"},
+		{"dump-bir", "--dump-bir", "dump-bir.txtar", singleBal},
+		{"dump-st", "--dump-st", "dump-st.txtar", singleBal},
+		{"dump-tokens", "--dump-tokens", "dump-tokens.txtar", singleBal},
+		{"dump-ast", "--dump-ast", "dump-ast.txtar", singleBal},
+		{"dump-recovered-ast", "--dump-recovered-ast", "dump-recovered-ast.txtar", recoveryBal},
+		{"dump-cfg", "--dump-cfg", "dump-cfg.txtar", singleBal},
 	}
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
 
@@ -80,7 +83,7 @@ func TestBalRunDumpFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assertBalCommandMatchesTxtarFragmentsForBinary(t, balBin, repoRoot, coverDir,
-				[]string{"run", tt.flag, singleBal},
+				[]string{"run", tt.flag, tt.source},
 				"run-dump-flags", tt.file)
 		})
 	}

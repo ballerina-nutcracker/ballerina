@@ -70,7 +70,7 @@ type (
 
 	BLangAnnotation struct {
 		bLangNodeBase
-		Name                            *BLangIdentifier
+		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		AnnAttachments                  []BLangAnnotationAttachment
 		MarkdownDocumentationAttachment *BLangMarkdownDocumentation
@@ -83,8 +83,8 @@ type (
 		bLangNodeBase
 		Expr            BLangExpression
 		HasValue        bool
-		AnnotationName  *BLangIdentifier
-		PkgAlias        *BLangIdentifier
+		AnnotationName  IdentifierNode
+		PkgAlias        IdentifierNode
 		symbol          model.SymbolRef
 		AnnotationValue values.AnnotationValue
 	}
@@ -124,7 +124,6 @@ type (
 		OrgName      *BLangIdentifier
 		PkgNameComps []BLangIdentifier
 		Alias        *BLangIdentifier
-		CompUnit     *BLangIdentifier
 		Version      *BLangIdentifier
 	}
 
@@ -148,7 +147,7 @@ type (
 
 	BLangClassDefinition struct {
 		classDefnBase
-		Name   *BLangIdentifier
+		Name   IdentifierNode
 		symbol model.SymbolRef
 	}
 
@@ -230,12 +229,12 @@ type (
 
 	BLangConstant struct {
 		BLangVariableBase
-		Name *BLangIdentifier
+		Name IdentifierNode
 	}
 
 	BLangSimpleVariable struct {
 		BLangVariableBase
-		Name *BLangIdentifier
+		Name IdentifierNode
 	}
 
 	ClosureVarSymbol struct {
@@ -244,13 +243,14 @@ type (
 
 	bLangInvokableNodeBase struct {
 		bLangNodeBase
-		Name                            BLangIdentifier
+		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		AnnAttachments                  []BLangAnnotationAttachment
 		MarkdownDocumentationAttachment *BLangMarkdownDocumentation
 		RequiredParams                  []BLangSimpleVariable
 		RestParam                       SimpleVariableNode
 		returnTypeDescriptor            *BLangReturnTypeDescriptor
+		ParamListPos                    Location // range from ( to ) inclusive
 		Body                            FunctionBodyNode
 		flags                           model.Flag
 		scope                           model.Scope
@@ -274,7 +274,7 @@ type (
 
 	BLangTypeDefinition struct {
 		bLangNodeBase
-		Name                            *BLangIdentifier
+		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		typeData                        TypeData
 		annAttachments                  []BLangAnnotationAttachment
@@ -514,19 +514,19 @@ var (
 	_ BNodeWithSymbol = &BLangTypeDefinition{}
 )
 
-func (b *BLangAnnotationAttachment) GetPackageAlias() *BLangIdentifier {
+func (b *BLangAnnotationAttachment) GetPackageAlias() IdentifierNode {
 	return b.PkgAlias
 }
 
-func (b *BLangAnnotationAttachment) SetPackageAlias(pkgAlias *BLangIdentifier) {
+func (b *BLangAnnotationAttachment) SetPackageAlias(pkgAlias IdentifierNode) {
 	b.PkgAlias = pkgAlias
 }
 
-func (b *BLangAnnotationAttachment) GetAnnotationName() *BLangIdentifier {
+func (b *BLangAnnotationAttachment) GetAnnotationName() IdentifierNode {
 	return b.AnnotationName
 }
 
-func (b *BLangAnnotationAttachment) SetAnnotationName(name *BLangIdentifier) {
+func (b *BLangAnnotationAttachment) SetAnnotationName(name IdentifierNode) {
 	b.AnnotationName = name
 }
 
@@ -538,11 +538,11 @@ func (b *BLangAnnotationAttachment) SetExpressionNode(expr BLangExpression) {
 	b.Expr = expr
 }
 
-func (b *BLangAnnotation) GetName() *BLangIdentifier {
+func (b *BLangAnnotation) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangAnnotation) SetName(name *BLangIdentifier) {
+func (b *BLangAnnotation) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -695,11 +695,11 @@ func (b *classDefnBase) PopUnresolvedInclusions() []*BLangUserDefinedType {
 	return inclusions
 }
 
-func (b *BLangClassDefinition) GetName() *BLangIdentifier {
+func (b *BLangClassDefinition) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangClassDefinition) SetName(name *BLangIdentifier) {
+func (b *BLangClassDefinition) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -813,11 +813,11 @@ func (b *BLangCompilationUnit) SetPackageID(packageID *model.PackageID) {
 	b.packageID = packageID
 }
 
-func (b *BLangConstant) GetName() *BLangIdentifier {
+func (b *BLangConstant) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangConstant) SetName(name *BLangIdentifier) {
+func (b *BLangConstant) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -852,11 +852,11 @@ func (b *BLangConstant) GetAssociatedType() semtypes.SemType {
 	return semtypes.SemType{}
 }
 
-func (b *BLangSimpleVariable) GetName() *BLangIdentifier {
+func (b *BLangSimpleVariable) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangSimpleVariable) SetName(name *BLangIdentifier) {
+func (b *BLangSimpleVariable) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -1016,15 +1016,11 @@ const (
 )
 
 func (b *bLangInvokableNodeBase) GetName() IdentifierNode {
-	return &b.Name
+	return b.Name
 }
 
 func (b *bLangInvokableNodeBase) SetName(name IdentifierNode) {
-	if id, ok := name.(*BLangIdentifier); ok {
-		b.Name = *id
-	} else {
-		panic("name is not a BLangIdentifier")
-	}
+	b.Name = name
 }
 
 func (b *bLangInvokableNodeBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
@@ -1195,6 +1191,14 @@ func (b *bLangInvokableNodeBase) ReturnTypeDescriptorNode() *BLangReturnTypeDesc
 	return b.returnTypeDescriptor
 }
 
+func (b *bLangInvokableNodeBase) HasExplicitReturnTypeDescriptor() bool {
+	return b.flags.Has(model.FlagExplicitReturnTypeDescriptor)
+}
+
+func (b *bLangInvokableNodeBase) SetExplicitReturnTypeDescriptor() {
+	b.flags |= model.FlagExplicitReturnTypeDescriptor
+}
+
 func (b *bLangInvokableNodeBase) GetBody() FunctionBodyNode {
 	return b.Body
 }
@@ -1268,11 +1272,11 @@ func NewBLangTypeDefinition() *BLangTypeDefinition {
 	return b
 }
 
-func (b *BLangTypeDefinition) GetName() *BLangIdentifier {
+func (b *BLangTypeDefinition) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangTypeDefinition) SetName(name *BLangIdentifier) {
+func (b *BLangTypeDefinition) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
@@ -1524,15 +1528,6 @@ func (b *BLangTestablePackage) AddIsLegacyMockingMap(id string, isLegacy bool) {
 	b.isLegacyMockingMap[id] = isLegacy
 }
 
-func createSimpleVariableNodeWithLocationTokenLocation(location diagnostics.Location, identifier tree.Token, identifierPos diagnostics.Location) *BLangSimpleVariable {
-	memberVar := createSimpleVariableNode()
-	memberVar.pos = location
-	name := createIdentifierFromToken(identifierPos, identifier)
-	BLangNode(&name).SetPosition(identifierPos)
-	memberVar.SetName(&name)
-	return memberVar
-}
-
 func createSimpleVariableNode() *BLangSimpleVariable {
 	return &BLangSimpleVariable{}
 }
@@ -1545,6 +1540,13 @@ func createConstantNode() *BLangConstant {
 
 func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *tree.SyntaxTree) *BLangCompilationUnit {
 	nodeBuilder := NewNodeBuilder(cx)
+	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
+	return compilationUnit.(*BLangCompilationUnit)
+}
+
+// GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
+func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *tree.SyntaxTree) *BLangCompilationUnit {
+	nodeBuilder := NewRecoveringNodeBuilder(cx)
 	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
 	return compilationUnit.(*BLangCompilationUnit)
 }
@@ -1574,7 +1576,7 @@ func addCompilationUnitNodesToPackage(p *BLangPackage, compilationUnit *BLangCom
 		case *BLangSimpleVariable:
 			p.GlobalVars = append(p.GlobalVars, *node)
 		case *BLangFunction:
-			if node.Name.Value == "init" {
+			if node.Name.GetValue() == "init" {
 				p.InitFunction = node
 			} else {
 				p.Functions = append(p.Functions, *node)

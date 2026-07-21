@@ -604,6 +604,12 @@ func (b *BallerinaParser) Parse() tree.STNode {
 	return ast
 }
 
+func (b *BallerinaParser) ParseImports() tree.STNode {
+	ast := b.parseCompUnitImports()
+	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return tree.GenerateJSON(ast) })
+	return ast
+}
+
 func (b *BallerinaParser) ParseAsStatement() tree.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
@@ -836,6 +842,20 @@ func (b *BallerinaParser) parseCompUnit() tree.STNode {
 	eof := b.consume()
 	b.endContext()
 	return tree.CreateModulePartNode(tree.CreateNodeList(importDecls...), tree.CreateNodeList(otherDecls...), eof)
+}
+
+func (b *BallerinaParser) parseCompUnitImports() tree.STNode {
+	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
+	var importDecls []tree.STNode
+	for b.peek().Kind() == common.IMPORT_KEYWORD {
+		importDecls = append(importDecls, b.parseImportDecl())
+	}
+	b.endContext()
+	return tree.CreateModulePartNode(
+		tree.CreateNodeList(importDecls...),
+		tree.CreateEmptyNodeList(),
+		tree.CreateMissingToken(common.EOF_TOKEN, nil),
+	)
 }
 
 func (b *BallerinaParser) parseTopLevelNode() tree.STNode {
@@ -14677,11 +14697,24 @@ func (b *BallerinaParser) isSpecialMethodName(token tree.STToken) bool {
 // GetSyntaxTree parses content into a syntax tree, attributing it to fileName
 // (used for diagnostics and the syntax tree's text document).
 func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*tree.SyntaxTree, error) {
+	return getSyntaxTree(ctx, fileName, content, false)
+}
+
+func GetImportSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*tree.SyntaxTree, error) {
+	return getSyntaxTree(ctx, fileName, content, true)
+}
+
+func getSyntaxTree(ctx *context.CompilerContext, fileName string, content string, importsOnly bool) (*tree.SyntaxTree, error) {
 	reader := text.CharReaderFromText(content)
 	lexer := NewLexer(reader)
 	tokenReader := CreateTokenReader(lexer)
 	ballerinaParser := NewBallerinaParserFromTokenReader(tokenReader)
-	rootNode := ballerinaParser.Parse().(*tree.STModulePart)
+	var rootNode *tree.STModulePart
+	if importsOnly {
+		rootNode = ballerinaParser.ParseImports().(*tree.STModulePart)
+	} else {
+		rootNode = ballerinaParser.Parse().(*tree.STModulePart)
+	}
 	moduleNode := tree.CreateUnlinkedFacade[*tree.STModulePart, *tree.ModulePart](rootNode)
 	syntaxTree := tree.NewSyntaxTreeFromNodeTextDocument(moduleNode, nil, fileName, false)
 	if syntaxTree.HasDiagnostics() {

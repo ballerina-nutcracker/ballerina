@@ -454,11 +454,11 @@ func validateMainFunction(a analyzer, fnSymbol model.FunctionSymbol, pos diagnos
 func initializeFunctionAnalyzer(parent analyzer, function *ast.BLangFunction) *functionAnalyzer {
 	fa := initializeFunctionAnalyzerInner(parent, function, nil)
 	// Validate main function constraints
-	if function.Name.Value == "main" {
+	if function.Name.GetValue() == "main" {
 		fnSymbol := parent.ctx().GetSymbol(function.Symbol()).(model.FunctionSymbol)
 		validateMainFunction(parent, fnSymbol, function.GetPosition())
 	}
-	if function.Name.Value == "init" {
+	if function.Name.GetValue() == "init" {
 		// this is to seperate class init from module init
 		if _, isTopLevel := parent.(*SemanticAnalyzer); isTopLevel {
 			fnSymbol := parent.ctx().GetSymbol(function.Symbol()).(model.FunctionSymbol)
@@ -668,7 +668,7 @@ func validateDefaultParamTypes(a analyzer, function invokableSignatureNode) {
 			continue
 		}
 		if !semtypes.IsSubtype(a.tyCtx(), exprTy, paramTy) {
-			a.semanticErr("incompatible default value for parameter '"+param.Name.Value+"'", param.Expr.(ast.BLangNode).GetPosition())
+			a.semanticErr("incompatible default value for parameter '"+param.Name.GetValue()+"'", param.Expr.(ast.BLangNode).GetPosition())
 		}
 	}
 }
@@ -1725,7 +1725,7 @@ func resourcePathSegmentExpectedType(ctx semtypes.Context, pathType semtypes.Sem
 
 func analyzeStreamOperation[A analyzer](a A, invocation *ast.BLangInvocation, expectedType semtypes.SemType) bool {
 	if len(invocation.ArgExprs) != 0 {
-		a.semanticErr("stream method '"+invocation.Name.Value+"' takes no arguments", invocation.GetPosition())
+		a.semanticErr("stream method '"+invocation.Name.GetValue()+"' takes no arguments", invocation.GetPosition())
 		return false
 	}
 	if invocation.Expr != nil {
@@ -1742,7 +1742,7 @@ func analyzeDirectInvocation[A analyzer](a A, inv invocable, fnSymbol model.Func
 	for i, arg := range inv.CallArgs() {
 		switch arg := arg.(type) {
 		case *ast.BLangNamedArgsExpression:
-			name := arg.Name.Value
+			name := arg.Name.GetValue()
 			targetIndex := -1
 			for j, each := range signature.ParamNames {
 				if each == name {
@@ -2104,7 +2104,7 @@ func recordKeyName(key *ast.BLangMappingKey) string {
 	case *ast.BLangLiteral:
 		return expr.Value.(string)
 	case *ast.BLangSimpleVarRef:
-		return expr.VariableName.Value
+		return expr.VariableName.GetValue()
 	default:
 		panic(fmt.Sprintf("unexpected record key expression type: %T", key.Expr))
 	}

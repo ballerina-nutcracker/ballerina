@@ -21,6 +21,7 @@ import (
 	libcommon "ballerina-lang-go/lib/common"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
+	"ballerina-lang-go/tools/diagnostics"
 )
 
 var PackageID = model.INTERNAL_PKG
@@ -55,7 +56,7 @@ func GetInternalSymbols(ctx *context.CompilerContext) model.ExportedSymbolSpace 
 }
 
 func addInternalFunction(ctx *context.CompilerContext, space *model.SymbolSpace, name string, sig model.FunctionSignature) {
-	symbol := model.NewFunctionSymbol(name, sig, true)
+	symbol := model.NewFunctionSymbol(name, sig, true, diagnostics.NewBuiltinLocation())
 	space.AddSymbol(name, symbol)
 	ref, _ := space.GetSymbol(name)
 	ctx.SetSymbolType(ref, libcommon.FunctionSignatureToSemType(ctx.GetTypeEnv(), &sig))

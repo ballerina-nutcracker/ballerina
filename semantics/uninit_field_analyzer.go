@@ -179,7 +179,7 @@ func extractFieldAssignment(node ast.Node) string {
 	if assignment, ok := node.(*ast.BLangAssignment); ok {
 		if fieldAccess, ok := assignment.VarRef.(*ast.BLangFieldBaseAccess); ok {
 			if isSelfFieldAccess(fieldAccess) {
-				return fieldAccess.Field.Value
+				return fieldAccess.Field.GetValue()
 			}
 		}
 	}
@@ -191,7 +191,7 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	var varsNeedingInit []string
 	for i := range pkg.GlobalVars {
 		if pkg.GlobalVars[i].Expr == nil {
-			varsNeedingInit = append(varsNeedingInit, pkg.GlobalVars[i].Name.Value)
+			varsNeedingInit = append(varsNeedingInit, pkg.GlobalVars[i].Name.GetValue())
 			globalSymbols[pkg.GlobalVars[i].Symbol()] = true
 		}
 	}
@@ -201,7 +201,7 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	if pkg.InitFunction == nil {
 		for _, name := range varsNeedingInit {
 			for i := range pkg.GlobalVars {
-				if pkg.GlobalVars[i].Name.Value == name {
+				if pkg.GlobalVars[i].Name.GetValue() == name {
 					ctx.SemanticError("variable '"+name+"' is not initialized", pkg.GlobalVars[i].Name.GetPosition())
 					break
 				}
@@ -220,7 +220,7 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 		if assignment, ok := node.(*ast.BLangAssignment); ok {
 			if varRef, ok := assignment.VarRef.(*ast.BLangSimpleVarRef); ok {
 				if globalSymbols[varRef.Symbol()] {
-					return varRef.VariableName.Value
+					return varRef.VariableName.GetValue()
 				}
 			}
 		}
@@ -230,7 +230,7 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	analyzer.analyze()
 	for _, name := range analyzer.uninitializedNames() {
 		for i := range pkg.GlobalVars {
-			if pkg.GlobalVars[i].Name.Value == name {
+			if pkg.GlobalVars[i].Name.GetValue() == name {
 				ctx.SemanticError("variable '"+name+"' is not initialized", pkg.GlobalVars[i].Name.GetPosition())
 				break
 			}

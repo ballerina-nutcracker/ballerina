@@ -118,9 +118,6 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Alias != nil {
 			Walk(v, node.Alias)
 		}
-		if node.CompUnit != nil {
-			Walk(v, node.CompUnit)
-		}
 		if node.Version != nil {
 			Walk(v, node.Version)
 		}
@@ -207,7 +204,9 @@ func Walk(v Visitor, node BLangNode) {
 
 	// Section 3: Function & Body
 	case *BLangFunction:
-		Walk(v, &node.Name)
+		if node.Name != nil {
+			Walk(v, node.Name)
+		}
 		for i := range node.AnnAttachments {
 			Walk(v, &node.AnnAttachments[i])
 		}
@@ -225,7 +224,9 @@ func Walk(v Visitor, node BLangNode) {
 		}
 
 	case *BLangResourceMethod:
-		Walk(v, &node.Name)
+		if node.Name != nil {
+			Walk(v, node.Name)
+		}
 		for i := range node.AnnAttachments {
 			Walk(v, &node.AnnAttachments[i])
 		}
@@ -907,11 +908,16 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangIdentifier:
 		// Leaf node
 
+	case *BLangBadIdentifier, *BLangBadExprOrAction, *BLangBadStmt, *BLangBadTypeNode, *BLangBadTopLevelNode:
+		// Leaf node
+
 	case *BLangMarkdownReferenceDocumentation:
 		// Leaf node
 
 	case *BLangNamedArgsExpression:
-		Walk(v, &node.Name)
+		if node.Name != nil {
+			Walk(v, node.Name)
+		}
 		Walk(v, node.Expr.(BLangNode))
 
 	case *BLangNewExpression:

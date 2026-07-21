@@ -18,6 +18,7 @@ package model
 
 import (
 	"ballerina-lang-go/semtypes"
+	"ballerina-lang-go/tools/diagnostics"
 )
 
 // OpaqueSymbol is a symbol whose definition cannot be written in Ballerina
@@ -59,7 +60,10 @@ func newOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
 func (s *OpaqueFunctionSymbol) Name() string     { return s.name }
 func (s *OpaqueFunctionSymbol) OpaqueID() int    { return s.ID }
 func (s *OpaqueFunctionSymbol) Kind() SymbolKind { return SymbolKindFunction }
-func (s *OpaqueFunctionSymbol) IsPublic() bool   { return true }
+func (s *OpaqueFunctionSymbol) Location() diagnostics.Location {
+	return diagnostics.NewBuiltinLocation()
+}
+func (s *OpaqueFunctionSymbol) IsPublic() bool { return true }
 func (s *OpaqueFunctionSymbol) Type() semtypes.SemType {
 	panic("opaque function must be monomorphized")
 }
@@ -93,7 +97,7 @@ var (
 )
 
 func newOpaqueTypeSymbol(name string, ty semtypes.SemType, index int) *OpaqueTypeSymbol {
-	ts := NewTypeSymbol(name, true)
+	ts := NewTypeSymbol(name, true, diagnostics.NewBuiltinLocation())
 	ts.SetType(ty)
 	return &OpaqueTypeSymbol{TypeSymbol: ts, opaqueID: index}
 }
