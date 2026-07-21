@@ -109,4 +109,16 @@
         (invocation io println (
           (type-test-expr is
             (simple-var-ref overflowH)
+            (error-type)))))
+      (var-def
+        (variable negOverflowH (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation int fromHexString (
+            (literal -8000000000000001))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref negOverflowH)
             (error-type))))))))

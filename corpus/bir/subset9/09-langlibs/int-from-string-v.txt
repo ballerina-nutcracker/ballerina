@@ -87,6 +87,16 @@ main() -> nil{
     %46 = println(%45) -> bb20;
   }
   bb20 {
+    %47 = ConstantLoad -8000000000000001
+    %48 = fromHexString(%47) -> bb21;
+  }
+  bb21 {
+    negOverflowH = %48;
+    %50 = negOverflowH is error
+    %51 = %50;
+    %52 = println(%51) -> bb22;
+  }
+  bb22 {
     return;
   }
 }

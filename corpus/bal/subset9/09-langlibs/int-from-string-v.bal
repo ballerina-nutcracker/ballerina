@@ -46,4 +46,7 @@ public function main() {
 
     int|error overflowH = int:fromHexString("ffffffffffffffff");
     io:println(overflowH is error); // @output true
+
+    int|error negOverflowH = int:fromHexString("-8000000000000001");
+    io:println(negOverflowH is error); // @output true
 }
