@@ -82,6 +82,38 @@
                   (simple-var-ref missing)
                   (value-type null)))))
             (var-def
+              (variable atLength (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (invocation lang.array indexOf (
+                  (simple-var-ref arr)
+                  (literal 30)
+                  (invocation lang.array length (
+                    (simple-var-ref arr))))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref atLength)
+                  (value-type null)))))
+            (var-def
+              (variable pastLength (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (invocation lang.array indexOf (
+                  (simple-var-ref arr)
+                  (literal 30)
+                  (binary-expr +
+                    (invocation lang.array length (
+                      (simple-var-ref arr)))
+                    (literal 1000)))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref pastLength)
+                  (value-type null)))))
+            (var-def
               (variable removed (type
                 (value-type int)) (expr
                 (invocation lang.array remove (

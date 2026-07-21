@@ -136,7 +136,10 @@ func (l *List) RemoveAt(idx int) BalValue {
 	l.checkMutable()
 	l.checkNotFixedLength()
 	val := l.elems[idx]
-	l.elems = append(l.elems[:idx], l.elems[idx+1:]...)
+	copy(l.elems[idx:], l.elems[idx+1:])
+	last := len(l.elems) - 1
+	l.elems[last] = nil // release the vacated slot so the GC can reclaim it
+	l.elems = l.elems[:last]
 	return val
 }
 
@@ -145,6 +148,7 @@ func (l *List) RemoveAt(idx int) BalValue {
 func (l *List) Clear() {
 	l.checkMutable()
 	l.checkNotFixedLength()
+	clear(l.elems) // release references before truncating so the GC can reclaim them
 	l.elems = l.elems[:0]
 }
 

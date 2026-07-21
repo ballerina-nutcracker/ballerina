@@ -420,7 +420,26 @@ func TestLifecycleStartFailureThenStraySignalIsNoOp(t *testing.T) {
 	}
 
 	pal.Send(palSignalGracefulStop)
-	time.Sleep(100 * time.Millisecond)
+	waitForSignalConsumed(t, pal)
+	if got, want := pal.Stdout(), "graceful:one\n"; got != want {
+		t.Fatalf("unexpected stdout after stray signal: got %q, want %q", got, want)
+	}
+}
+
+// waitForSignalConsumed polls (instead of sleeping a fixed duration) until
+// the signal channel drains, i.e. the signal-listener goroutine actually
+// read the stray signal, then gives it a brief grace period to run the
+// (async) transition it triggers. If the listener already exited - because
+// the runtime was already Stopped when the signal was sent - the channel
+// never drains and this just returns after the timeout; that is itself a
+// valid no-op outcome.
+func waitForSignalConsumed(t *testing.T, pal *lifecycleTestPal) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for len(pal.signals) > 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(20 * time.Millisecond)
 }
 
 func invokeAndRecover(rt *runtime.Runtime, fn any) (recovered any) {

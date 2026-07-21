@@ -26,4 +26,9 @@ public function main() {
 
     io:println("HELLO".equalsIgnoreCaseAscii("hello")); // @output true
     io:println("HELLO".equalsIgnoreCaseAscii("world")); // @output false
+
+    // trim removes only ASCII whitespace; non-ASCII whitespace (e.g. NBSP)
+    // at the edges must be left untouched.
+    string nonAsciiEdges = "\u{00A0} middle \u{00A0}";
+    io:println(nonAsciiEdges.trim() == nonAsciiEdges); // @output true
 }

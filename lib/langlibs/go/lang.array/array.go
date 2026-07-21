@@ -111,6 +111,12 @@ func initArrayModule(rt *runtime.Runtime) {
 		if startIndex < 0 {
 			panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", startIndex)))
 		}
+		// Bail out before the int64->int conversion below: on a 32-bit int
+		// platform (e.g. wasm) a large startIndex would truncate, possibly to
+		// a negative value, and list.Get is unchecked.
+		if startIndex >= int64(list.Len()) {
+			return nil, nil
+		}
 		for i := int(startIndex); i < list.Len(); i++ {
 			if values.DeepEquals(list.Get(i), val) {
 				return int64(i), nil

@@ -77,6 +77,16 @@ main() -> nil{
     %38 = println(%37) -> bb19;
   }
   bb19 {
+    %39 = ConstantLoad   middle  
+    nonAsciiEdges = %39;
+    %42 = trim(nonAsciiEdges) -> bb20;
+  }
+  bb20 {
+    %41 = == %42 nonAsciiEdges;
+    %43 = %41;
+    %44 = println(%43) -> bb21;
+  }
+  bb21 {
     return;
   }
 }

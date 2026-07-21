@@ -44,4 +44,14 @@
         (invocation io println (
           (invocation equalsIgnoreCaseAscii expr:
             (literal HELLO) (
-            (literal world)))))))))
+            (literal world))))))
+      (var-def
+        (variable nonAsciiEdges (type
+          (value-type string)) (expr
+          (literal   middle  ))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation trim expr:
+              (simple-var-ref nonAsciiEdges) ())
+            (simple-var-ref nonAsciiEdges))))))))
