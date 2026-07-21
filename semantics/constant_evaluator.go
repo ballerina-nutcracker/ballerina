@@ -145,7 +145,7 @@ func constantMappingKey(key *ast.BLangMappingKey) (string, bool) {
 		value, ok := expr.Value.(string)
 		return value, ok
 	case *ast.BLangSimpleVarRef:
-		return expr.VariableName.Value, true
+		return expr.VariableName.GetValue(), true
 	default:
 		return "", false
 	}

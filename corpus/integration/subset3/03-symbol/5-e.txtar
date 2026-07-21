@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
+  --> 5-e.bal:17:7
+   |
+17 | const foo = 23; // @error
+   |       ^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
+  --> 5-e.bal:18:7
+   |
+18 | const foo = 42; // @error
+   |       ^^^

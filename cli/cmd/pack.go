@@ -36,16 +36,17 @@ const balaSubdir = "bala"
 // packOptions holds CLI flag values for `bal pack`. Kept structurally identical
 // to runOpts so the two commands share the same compile-observability surface.
 type packOptions struct {
-	dumpTokens    bool
-	dumpST        bool
-	dumpAST       bool
-	dumpCFG       bool
-	dumpBIR       bool
-	traceRecovery bool
-	stats         bool
-	statsOneline  bool
-	logFile       string
-	format        string
+	dumpTokens       bool
+	dumpST           bool
+	dumpAST          bool
+	dumpRecoveredAST bool
+	dumpCFG          bool
+	dumpBIR          bool
+	traceRecovery    bool
+	stats            bool
+	statsOneline     bool
+	logFile          string
+	format           string
 }
 
 var packCmd = createPackCmd()
@@ -76,6 +77,7 @@ func createPackCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.dumpTokens, "dump-tokens", false, "Dump lexer tokens")
 	cmd.Flags().BoolVar(&opts.dumpST, "dump-st", false, "Dump syntax tree")
 	cmd.Flags().BoolVar(&opts.dumpAST, "dump-ast", false, "Dump abstract syntax tree")
+	cmd.Flags().BoolVar(&opts.dumpRecoveredAST, "dump-recovered-ast", false, "Dump recovered abstract syntax tree")
 	cmd.Flags().BoolVar(&opts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
 	cmd.Flags().BoolVar(&opts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	cmd.Flags().BoolVar(&opts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
@@ -104,6 +106,7 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 	// buildOpts is the single source of truth for all flag reads.
 	buildOpts := projects.NewBuildOptionsBuilder().
 		WithDumpAST(opts.dumpAST).
+		WithDumpRecoveredAST(opts.dumpRecoveredAST).
 		WithDumpBIR(opts.dumpBIR).
 		WithDumpCFG(opts.dumpCFG).
 		WithDumpCFGFormat(projects.ParseCFGFormat(opts.format)).

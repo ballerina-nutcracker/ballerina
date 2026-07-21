@@ -13,12 +13,18 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// @productions module-enum-decl
-public enum Color {
-    RED, // @error
-    GREEN = "G", // @error
-    BLUE
+
+import ballerina/io;
+
+public class Box {
+    public isolated function dup() returns Box {
+        return self;
+    }
 }
 
-public const string RED = "red"; // @error
-public const string GREEN = "green"; // @error
+public function main() {
+    Box b = new;
+    Box b2 = b.dup();
+    _ = b2;
+    io:println("ok"); // @output ok
+}

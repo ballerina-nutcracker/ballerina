@@ -13,12 +13,26 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// @productions module-enum-decl
-public enum Color {
-    RED, // @error
-    GREEN = "G", // @error
-    BLUE
-}
 
-public const string RED = "red"; // @error
-public const string GREEN = "green"; // @error
+package projects
+
+import (
+	"testing"
+
+	compilercontext "ballerina-lang-go/context"
+	"ballerina-lang-go/semtypes"
+)
+
+func TestNewModuleCompilerContextInitializesStats(t *testing.T) {
+	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	name := NewDefaultModuleName(NewPackageName("module"))
+
+	compilerCtx := newModuleCompilerContext(env, name)
+	stats := compilerCtx.GetModuleStats()
+	if stats == nil {
+		t.Fatal("expected module stats")
+	}
+	if stats.ModuleName != name.String() {
+		t.Fatalf("module name = %q, want %q", stats.ModuleName, name.String())
+	}
+}

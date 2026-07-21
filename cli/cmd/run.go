@@ -41,16 +41,17 @@ import (
 )
 
 var runOpts struct {
-	dumpTokens    bool
-	dumpST        bool
-	dumpAST       bool
-	dumpCFG       bool
-	dumpBIR       bool
-	traceRecovery bool
-	stats         bool
-	statsOneline  bool
-	logFile       string
-	format        string // Output format (dot, etc.)
+	dumpTokens       bool
+	dumpST           bool
+	dumpAST          bool
+	dumpRecoveredAST bool
+	dumpCFG          bool
+	dumpBIR          bool
+	traceRecovery    bool
+	stats            bool
+	statsOneline     bool
+	logFile          string
+	format           string // Output format (dot, etc.)
 }
 
 var runCmd = &cobra.Command{
@@ -89,6 +90,7 @@ func init() {
 	runCmd.Flags().BoolVar(&runOpts.dumpTokens, "dump-tokens", false, "Dump lexer tokens")
 	runCmd.Flags().BoolVar(&runOpts.dumpST, "dump-st", false, "Dump syntax tree")
 	runCmd.Flags().BoolVar(&runOpts.dumpAST, "dump-ast", false, "Dump abstract syntax tree")
+	runCmd.Flags().BoolVar(&runOpts.dumpRecoveredAST, "dump-recovered-ast", false, "Dump recovered abstract syntax tree")
 	runCmd.Flags().BoolVar(&runOpts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
 	runCmd.Flags().BoolVar(&runOpts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	runCmd.Flags().BoolVar(&runOpts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
@@ -104,6 +106,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	// buildOpts can be the single source of truth for all flag reads.
 	buildOpts := projects.NewBuildOptionsBuilder().
 		WithDumpAST(runOpts.dumpAST).
+		WithDumpRecoveredAST(runOpts.dumpRecoveredAST).
 		WithDumpBIR(runOpts.dumpBIR).
 		WithDumpCFG(runOpts.dumpCFG).
 		WithDumpCFGFormat(projects.ParseCFGFormat(runOpts.format)).

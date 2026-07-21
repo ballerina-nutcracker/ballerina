@@ -117,7 +117,6 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// one shot, but a dependent of an errored module is skipped to avoid cascading
 		// noise (its imports would not resolve).
 		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
-			moduleCtx.compilerCtx.InitModuleStats(moduleCtx.getModuleName().String())
 			if moduleCtx.getCompilationState() != moduleCompilationStateLoadedFromSources {
 				// TODO: Handle LOADED_FROM_CACHE state - load symbols from BIR
 				continue

@@ -19,8 +19,10 @@ package projects
 import (
 	"strings"
 	"sync"
+	"time"
 
 	common "ballerina-lang-go/common"
+	compilercontext "ballerina-lang-go/context"
 	"ballerina-lang-go/parser"
 	"ballerina-lang-go/parser/tree"
 	"ballerina-lang-go/tools/text"
@@ -106,26 +108,32 @@ func (d *documentContext) parseContent(content string, textDoc text.TextDocument
 	return &syntaxTree
 }
 
-// parse parses the document and returns the syntax tree.
+// parseWithStats parses the document and returns the syntax tree.
 // Uses lazy loading with sync.Once for memoization when disableSyntaxTree is false.
 // When disableSyntaxTree is true, parsing happens on every call (no caching).
-func (d *documentContext) parse() *tree.SyntaxTree {
+func (d *documentContext) parseWithStats(cx *compilercontext.CompilerContext) *tree.SyntaxTree {
 	if d.disableSyntaxTree {
 		// Parse every time without caching
+		start := time.Now()
 		textDoc := d.getTextDocumentInternal()
-		return d.parseContent(d.content(), textDoc)
+		syntaxTree := d.parseContent(d.content(), textDoc)
+		recordParseDuration(cx, time.Since(start))
+		return syntaxTree
 	}
 
 	d.syntaxTreeOnce.Do(func() {
+		start := time.Now()
 		textDoc := d.getTextDocument()
 		d.syntaxTree = d.parseContent(d.content(), textDoc)
+		recordParseDuration(cx, time.Since(start))
 	})
 	return d.syntaxTree
 }
 
-// getSyntaxTree returns the cached or parsed syntax tree.
-func (d *documentContext) getSyntaxTree() *tree.SyntaxTree {
-	return d.parse()
+func recordParseDuration(cx *compilercontext.CompilerContext, duration time.Duration) {
+	if cx != nil {
+		cx.RecordStageDuration(compilercontext.StageParse, duration)
+	}
 }
 
 // getTextDocument returns the text document (lazy loaded).
@@ -167,8 +175,8 @@ func (d *documentContext) duplicate() *documentContext {
 	}
 }
 
-func (d *documentContext) moduleLoadRequests() []*moduleLoadRequest {
-	syntaxTree := d.getSyntaxTree()
+func (d *documentContext) moduleLoadRequests(cx *compilercontext.CompilerContext) []*moduleLoadRequest {
+	syntaxTree := d.parseWithStats(cx)
 	if syntaxTree == nil {
 		return nil
 	}

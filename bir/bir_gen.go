@@ -1216,7 +1216,7 @@ func mappingKeyName(key *ast.BLangMappingKey) string {
 	case *ast.BLangLiteral:
 		return expr.Value.(string)
 	case *ast.BLangSimpleVarRef:
-		return expr.VariableName.Value
+		return expr.VariableName.GetValue()
 	default:
 		panic(fmt.Sprintf("unexpected mapping key expression type: %T", key.Expr))
 	}
@@ -1264,7 +1264,7 @@ func errorConstructorExpression(ctx context, curBB *BIRBasicBlock, expr *ast.BLa
 	if len(expr.NamedArgs) > 0 {
 		var fields []mappingField
 		for _, namedArg := range expr.NamedArgs {
-			fields = append(fields, mappingField{key: namedArg.Name.Value, value: namedArg.Expr})
+			fields = append(fields, mappingField{key: namedArg.Name.GetValue(), value: namedArg.Expr})
 		}
 		detailEffect := mappingConstructorExpressionInner(ctx, curBB, semtypes.MAPPING, fields, nil, ctx.function().loc(expr.GetPosition()))
 		curBB = detailEffect.block
