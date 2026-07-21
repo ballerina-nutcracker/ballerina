@@ -8,7 +8,7 @@ main() -> nil|error{
     %5 = ConstantLoad hello
     %6 = ConstantLoad <nil>
     %7 = ConstantLoad 4
-    %8 = newArray [nil|boolean|int|float|decimal|string|...|......][%7]{%3, %4, %5, %6}
+    %8 = newArray [json...][%7]{%3, %4, %5, %6}
     data = %8;
     %10 = fileWriteJson(path,data) -> bb1;
   }
@@ -39,7 +39,7 @@ main() -> nil|error{
   }
   bb6 {
     result = $desugar$1;
-    %17 = <[nil|boolean|int|float|decimal|string|[nil|boolean|int|float|decimal|string|...|......]|{| nil|boolean|int|float|decimal|string|...|...... |}...]>(result)
+    %17 = <[json...]>(result)
     arr = %17;
     %19 = length(arr) -> bb7;
   }

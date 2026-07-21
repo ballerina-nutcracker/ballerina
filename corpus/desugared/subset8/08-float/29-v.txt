@@ -4,62 +4,142 @@
   (function main () (
     (value-type null))
     (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (group-expr
+            (literal 2.5)))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float round (
-            (group-expr
-              (literal 2.5)))))))
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (group-expr
+            (literal 3.5)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$2))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float round (
-            (group-expr
-              (literal 3.5)))))))
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (group-expr
+            (unary-expr -
+              (literal 2.5))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$4))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float round (
-            (group-expr
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (group-expr
+            (literal 2.4)))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (group-expr
+            (literal 2.6)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$8))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$8)
+            (simple-var-ref $desugar$9))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (group-expr
+            (literal 0)))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$10))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))
+      (var-def
+        (variable $desugar$12 (expr
+          (group-expr
+            (unary-expr -
+              (literal 0))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$12))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13))))))
+      (var-def
+        (variable $desugar$14 (expr
+          (group-expr
+            (binary-expr /
+              (literal 1)
+              (literal 0))))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$14))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.float round (
+            (simple-var-ref $desugar$14)
+            (simple-var-ref $desugar$15))))))
+      (var-def
+        (variable $desugar$16 (expr
+          (group-expr
+            (binary-expr /
               (unary-expr -
-                (literal 2.5))))))))
+                (literal 1))
+              (literal 0))))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$16))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float round (
-            (group-expr
-              (literal 2.4)))))))
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17))))))
+      (var-def
+        (variable $desugar$18 (expr
+          (group-expr
+            (binary-expr /
+              (literal 0)
+              (literal 0))))))
+      (var-def
+        (variable $desugar$19 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$18))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.float round (
-            (group-expr
-              (literal 2.6)))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.float round (
-            (group-expr
-              (literal 0)))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.float round (
-            (group-expr
-              (unary-expr -
-                (literal 0))))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.float round (
-            (group-expr
-              (binary-expr /
-                (literal 1)
-                (literal 0))))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.float round (
-            (group-expr
-              (binary-expr /
-                (unary-expr -
-                  (literal 1))
-                (literal 0))))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.float round (
-            (group-expr
-              (binary-expr /
-                (literal 0)
-                (literal 0)))))))))))
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19)))))))))

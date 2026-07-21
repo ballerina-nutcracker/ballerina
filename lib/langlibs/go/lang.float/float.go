@@ -18,6 +18,9 @@ package floatruntime
 
 import (
 	"math"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
@@ -29,32 +32,209 @@ const (
 	moduleName = "lang.float"
 )
 
-func initFloatModule(rt *runtime.Runtime) {
-	reg := func(name string, f extern.NativeFunc) {
-		runtime.RegisterExternFunction(rt, orgName, moduleName, name, func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return f(nil, args)
-		})
-	}
+var (
+	decimalFloatingPointStringPattern     = regexp.MustCompile(`^(?:NaN|[+-]?(?:Infinity|(?:(?:0|[1-9][0-9]*)|(?:(?:0|[1-9][0-9]*)\.[0-9]+|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|(?:0|[1-9][0-9]*)[eE][+-]?[0-9]+)))$`)
+	hexadecimalFloatingPointStringPattern = regexp.MustCompile(`^(?:NaN|[+-]?(?:Infinity|0[xX](?:(?:[0-9A-Fa-f]+\.[0-9A-Fa-f]+|\.[0-9A-Fa-f]+)(?:[pP][+-]?[0-9]+)?|[0-9A-Fa-f]+[pP][+-]?[0-9]+)))$`)
+)
 
-	reg("abs", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return math.Abs(args[0].(float64)), nil
-	})
-	reg("ceiling", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return math.Ceil(args[0].(float64)), nil
-	})
-	reg("floor", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return math.Floor(args[0].(float64)), nil
-	})
-	reg("round", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		// Ballerina float:round is IEEE roundToIntegralTiesToEven, not half-away-from-zero.
-		return math.RoundToEven(args[0].(float64)), nil
-	})
-	reg("sqrt", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return math.Sqrt(args[0].(float64)), nil
-	})
-	reg("pow", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return math.Pow(args[0].(float64), args[1].(float64)), nil
-	})
+func initFloatModule(rt *runtime.Runtime) {
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "isFinite", floatIsFinite)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "isInfinite", floatIsInfinite)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "isNaN", floatIsNaN)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "sum", floatSum)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "max", floatMax)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "min", floatMin)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "abs", unaryMath(math.Abs))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "round", floatRound)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "floor", unaryMath(math.Floor))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "ceiling", unaryMath(math.Ceil))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "sqrt", unaryMath(math.Sqrt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "cbrt", unaryMath(math.Cbrt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "pow", floatPow)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "log", unaryMath(math.Log))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "log10", unaryMath(math.Log10))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "exp", unaryMath(math.Exp))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "sin", unaryMath(math.Sin))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "cos", unaryMath(math.Cos))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "tan", unaryMath(math.Tan))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "acos", unaryMath(math.Acos))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "atan", unaryMath(math.Atan))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "asin", unaryMath(math.Asin))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "atan2", floatAtan2)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "sinh", unaryMath(math.Sinh))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "cosh", unaryMath(math.Cosh))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "tanh", unaryMath(math.Tanh))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromString", floatFromString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toHexString", floatToHexString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromHexString", floatFromHexString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBitsInt", floatToBitsInt)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBitsInt", floatFromBitsInt)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toFixedString", floatToFixedString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toExpString", floatToExpString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "avg", floatAvg)
+}
+
+func floatIsFinite(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	x := args[0].(float64)
+	return !math.IsNaN(x) && !math.IsInf(x, 0), nil
+}
+
+func floatIsInfinite(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return math.IsInf(args[0].(float64), 0), nil
+}
+
+func floatIsNaN(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return math.IsNaN(args[0].(float64)), nil
+}
+
+func floatSum(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	out := 0.0
+	for _, arg := range args {
+		out += arg.(float64)
+	}
+	return out, nil
+}
+
+func floatMax(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	out := math.Inf(-1)
+	for _, arg := range args {
+		out = math.Max(out, arg.(float64))
+	}
+	return out, nil
+}
+
+func floatMin(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	out := math.Inf(1)
+	for _, arg := range args {
+		out = math.Min(out, arg.(float64))
+	}
+	return out, nil
+}
+
+func unaryMath(fn func(float64) float64) extern.NativeFunc {
+	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return fn(args[0].(float64)), nil
+	}
+}
+
+func floatRound(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	x := args[0].(float64)
+	fractionDigits := args[1].(int64)
+	if x == 0 || math.IsNaN(x) || math.IsInf(x, 0) {
+		return x, nil
+	}
+	scale := math.Pow10(int(fractionDigits))
+	if math.IsInf(scale, 0) {
+		return x, nil
+	}
+	if scale == 0 {
+		return 0.0, nil
+	}
+	scaled := x * scale
+	if math.IsInf(scaled, 0) {
+		return x, nil
+	}
+	rounded := math.RoundToEven(scaled)
+	if rounded == 0 {
+		return 0.0, nil
+	}
+	return rounded / scale, nil
+}
+
+func floatPow(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return math.Pow(args[0].(float64), args[1].(float64)), nil
+}
+
+func floatAtan2(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return math.Atan2(args[0].(float64), args[1].(float64)), nil
+}
+
+func floatFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	if !decimalFloatingPointStringPattern.MatchString(s) {
+		return values.NewErrorWithMessage("invalid decimal floating point string: " + s), nil
+	}
+	return parseFloat(s)
+}
+
+func floatFromHexString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	if !hexadecimalFloatingPointStringPattern.MatchString(s) {
+		return values.NewErrorWithMessage("invalid hexadecimal floating point string: " + s), nil
+	}
+	return parseFloat(addMissingHexExponent(s))
+}
+
+func addMissingHexExponent(s string) string {
+	unsigned := strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-")
+	if unsigned == "NaN" || unsigned == "Infinity" || strings.ContainsAny(unsigned, "pP") {
+		return s
+	}
+	return s + "p0"
+}
+
+func parseFloat(s string) (values.BalValue, error) {
+	out, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return values.NewErrorWithMessage(err.Error()), nil
+	}
+	return out, nil
+}
+
+func floatToHexString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	x := args[0].(float64)
+	if math.IsNaN(x) || math.IsInf(x, 0) {
+		return values.FormatFloat(x), nil
+	}
+	return strconv.FormatFloat(x, 'x', -1, 64), nil
+}
+
+func floatToBitsInt(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return int64(math.Float64bits(args[0].(float64))), nil
+}
+
+func floatFromBitsInt(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return math.Float64frombits(uint64(args[0].(int64))), nil
+}
+
+func floatToFixedString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	x := args[0].(float64)
+	if math.IsNaN(x) || math.IsInf(x, 0) {
+		return values.FormatFloat(x), nil
+	}
+	digits := -1
+	if args[1] != nil {
+		fractionDigits := args[1].(int64)
+		if fractionDigits < 0 {
+			panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
+		}
+		digits = int(fractionDigits)
+	}
+	return strconv.FormatFloat(x, 'f', digits, 64), nil
+}
+
+func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	x := args[0].(float64)
+	if math.IsNaN(x) || math.IsInf(x, 0) {
+		return values.FormatFloat(x), nil
+	}
+	digits := -1
+	if args[1] != nil {
+		fractionDigits := args[1].(int64)
+		if fractionDigits < 0 {
+			panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
+		}
+		digits = int(fractionDigits)
+	}
+	return strconv.FormatFloat(x, 'e', digits, 64), nil
+}
+
+func floatAvg(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	if len(args) == 0 {
+		return math.NaN(), nil
+	}
+	sum, _ := floatSum(nil, args)
+	return sum.(float64) / float64(len(args)), nil
 }
 
 func init() {

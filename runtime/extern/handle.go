@@ -37,12 +37,13 @@ type FunctionHandle struct {
 // Context.Lookup*/InvokeMethod/StartMethod methods. Lookup hooks return the
 // resolved payload along with a found bool; Context methods forward both.
 type DispatchHandles struct {
-	LookupObject   func(*Context, *values.Object, string) (any, bool)
-	LookupRemote   func(*Context, *values.Object, string) (any, bool)
-	LookupResource func(*Context, *values.Object, string, []values.BalValue) (any, bool) // resourceMethodName, path
-	LookupFunction func(*Context, string, string, string) (any, bool)                    // org, module, name
-	Invoke         func(*Context, any, []values.BalValue) (values.BalValue, error)
-	Start          func(*Context, any, []values.BalValue) (<-chan values.BalValue, error)
+	LookupObject         func(*Context, *values.Object, string) (any, bool)
+	LookupRemote         func(*Context, *values.Object, string) (any, bool)
+	LookupResource       func(*Context, *values.Object, string, []values.BalValue) (any, bool) // resourceMethodName, path
+	LookupResourceByPath func(*Context, *values.Object, string, []string) (any, int, bool)     // accessor, segments
+	LookupFunction       func(*Context, string, string, string) (any, bool)                    // org, module, name
+	Invoke               func(*Context, any, []values.BalValue) (values.BalValue, error)
+	Start                func(*Context, any, []values.BalValue) (<-chan values.BalValue, error)
 }
 
 // LookupObjectMethod resolves a regular method on obj. The second return is
@@ -70,6 +71,16 @@ func (c *Context) LookupRemoteMethod(obj *values.Object, name string) (MethodHan
 func (c *Context) LookupResourceMethod(obj *values.Object, resourceMethodName string, path []values.BalValue) (MethodHandle, bool) {
 	impl, ok := c.Env.dispatch.LookupResource(c, obj, resourceMethodName, path)
 	return MethodHandle{impl: impl}, ok
+}
+
+// LookupResourceMethodByPath resolves a resource method from raw URL-style path
+// segments relative to the receiver's attach point, coercing each segment to the
+// matching resource's parameter type. The second result is the number of
+// non-path parameters the resource expects (e.g. an injected request value);
+// the third is false when no candidate matches or the match is ambiguous.
+func (c *Context) LookupResourceMethodByPath(obj *values.Object, accessor string, segments []string) (MethodHandle, int, bool) {
+	impl, extraArgs, ok := c.Env.dispatch.LookupResourceByPath(c, obj, accessor, segments)
+	return MethodHandle{impl: impl}, extraArgs, ok
 }
 
 // InvokeMethod calls the method captured by h. For object and remote

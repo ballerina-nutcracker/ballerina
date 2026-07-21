@@ -1,0 +1,8 @@
+-- stdout --
+201
+created
+404
+not found
+200
+pong
+-- stderr --

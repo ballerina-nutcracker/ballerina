@@ -261,7 +261,7 @@ public class Response {
     # The resolved URI after any redirects.
     public string resolvedRequestedURI = "";
 
-    # Initialises the response with status code 200 and empty headers and body.
+    # Initialises the response with empty headers and body.
     public isolated function init() {
         self.initNative();
     }
@@ -514,6 +514,83 @@ public enum Method {
     PATCH,
     HEAD,
     OPTIONS
+}
+
+public type ListenerSecureSocket record {|
+    CertKey key;
+    string cert?;
+    boolean mutualSsl?;
+    string[] protocol?;
+    string[] ciphers?;
+    boolean shareSession?;
+|};
+
+// Provides a set of configurations for the HTTP listener.
+//
+//   host         - Bind address (default "0.0.0.0").
+//   timeout      - Response write timeout in seconds (default 60). Request headers
+//                  are bounded by a fixed internal timeout; request body reads are
+//                  not time-limited, so slow uploads and proxied streams are not
+//                  aborted mid-transfer.
+//   httpVersion  - Highest HTTP version supported (default HTTP_2_0). HTTP_2_0 enables
+//                  both HTTP/1.1 and HTTP/2; HTTP_1_1 restricts to HTTP/1.1 only.
+//   secureSocket - TLS settings; () disables TLS (plain HTTP).
+public type ListenerConfiguration record {|
+    string host?;
+    decimal timeout?;
+    HttpVersion httpVersion = HTTP_2_0;
+    ListenerSecureSocket? secureSocket?;
+|};
+
+// Represents the type of service objects that can be attached to an http:Listener.
+public type Service service object {
+};
+
+# An HTTP listener that accepts incoming connections and dispatches requests to attached
+# services based on path-based routing.
+#
+# Use `service /path on new http:Listener(port)` to attach a service at declaration time,
+# or call `attach` programmatically and then `start`.
+public isolated class Listener {
+
+    # Initialises the HTTP listener on the specified port.
+    #
+    # + port - The TCP port to listen on
+    # + config - Optional listener configuration (host, timeout, TLS)
+    # + return - `()` on success, or an `error` if initialisation fails
+    public isolated function init(int port, ListenerConfiguration? config = ()) returns error? {
+        return self.initNative(port, config);
+    }
+
+    private isolated function initNative(int port, ListenerConfiguration? config) returns error? = external;
+
+    # Attaches a service to this listener.
+    #
+    # + svc - The service object to attach
+    # + name - Optional base path string or path segment array; defaults to `"/"` when `()`
+    # + return - `()` on success, or an `error` if attachment fails
+    public isolated function attach(Service svc, string|string[]? name = ()) returns error? = external;
+
+    # Detaches a previously attached service from this listener.
+    #
+    # + svc - The service object to detach
+    # + return - `()` on success, or an `error` if detachment fails
+    public isolated function detach(Service svc) returns error? = external;
+
+    # Starts the listener. Begins accepting connections on the configured port.
+    #
+    # + return - `()` on success, or an `error` if starting fails
+    public isolated function 'start() returns error? = external;
+
+    # Gracefully stops the listener, waiting for in-flight requests to complete.
+    #
+    # + return - `()` on success, or an `error` if stopping fails
+    public isolated function gracefulStop() returns error? = external;
+
+    # Immediately stops the listener, closing all active connections.
+    #
+    # + return - `()` on success, or an `error` if stopping fails
+    public isolated function immediateStop() returns error? = external;
 }
 
 // ── Client ────────────────────────────────────────────────────────────────────

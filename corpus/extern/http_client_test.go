@@ -278,62 +278,24 @@ func TestHttpClientTLSInsecure(t *testing.T) {
 	runExtern(t, fileCase("http-client-tls-v"), newHTTPPal(clientFactory), nil)
 }
 
-// TestHttpClientPublicGet exercises palnative.NewHTTPClient against a real
-// public endpoint, ensuring the full Ballerina → PAL → palnative path is
-// covered. Skipped when EXTERN_SKIP_NETWORK=1 or no network is available.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
-func TestHttpClientPublicGet(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-public-get-v"), newHTTPPal(palnative.NewHTTPClient), nil)
-}
-
-// TestHttpClientRedirect exercises redirect-following through palnative.NewHTTPClient.
-func TestHttpClientRedirect(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-redirect-v"), newHTTPPal(palnative.NewHTTPClient), nil)
-}
-
-// TestHttpClientJson exercises Response.getJsonPayload against httpbin /json.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
-func TestHttpClientJson(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-json-v"), newHTTPPal(palnative.NewHTTPClient), nil)
-}
-
-// TestHttpClientText exercises Response.getTextPayload against httpbin /html.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
-func TestHttpClientText(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-text-v"), newHTTPPal(palnative.NewHTTPClient), nil)
-}
-
-// TestHttpClientBinary exercises Response.getBinaryPayload against httpbin /bytes/16.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
-func TestHttpClientBinary(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-binary-v"), newHTTPPal(palnative.NewHTTPClient), nil)
-}
-
-// TestHttpClientPublicMethods exercises POST, PUT, DELETE, and PATCH against
-// dedicated httpbin endpoints that each return 200 for their verb.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
-func TestHttpClientPublicMethods(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-public-methods-v"), newHTTPPal(palnative.NewHTTPClient), nil)
-}
-
-// TestHttpClientTimeout verifies that a 1-second timeout fires before
-// httpbin /delay/5 responds, and that the resulting error propagates to
-// Ballerina as an error value.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
+// TestHttpClientTimeout verifies that a 1-second client timeout fires before
+// a deliberately slow local server responds, and that the resulting error
+// propagates to Ballerina as an error value. Uses a local server (rather than
+// a real remote delay endpoint) so the test is hermetic and doesn't depend on
+// a third party's network behavior.
 func TestHttpClientTimeout(t *testing.T) {
-	skipIfNoNetwork(t)
-	runExtern(t, fileCase("http-client-timeout-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(1500 * time.Millisecond)
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-timeout-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
 
 // TestHttpClientConnectionError verifies that a DNS resolution failure for an
-// unreachable host propagates back to Ballerina as an error value.
-// TODO: Replace with a Ballerina HTTP service once server support lands.
+// unreachable host propagates back to Ballerina as an error value. Stays
+// network-gated: it asserts a failed connection, which a local listener can't
+// reproduce.
 func TestHttpClientConnectionError(t *testing.T) {
 	skipIfNoNetwork(t)
 	runExtern(t, fileCase("http-client-connection-error-v"), newHTTPPal(palnative.NewHTTPClient), nil)

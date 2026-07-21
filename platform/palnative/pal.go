@@ -125,13 +125,14 @@ func NewPlatform() (pal.Platform, func()) {
 		},
 		HTTP: pal.HTTP{
 			NewClient: NewHTTPClient,
+			Listen:    Listen,
 		},
 		Signals: signals,
 	}, cleanupSignals
 }
 
-// Exec starts a subprocess and returns a handle to it. It is exported so test
-// harnesses can wire real subprocess execution into an otherwise in-memory PAL.
+// Exec starts a subprocess and returns a handle to it. Exposed at package level
+// so test harnesses can wire real subprocess execution into a pal.Platform.
 func Exec(command string, args []string, envOverride map[string]string) (pal.ProcessHandle, error) {
 	cmd := exec.Command(command, args...) //nolint:gosec
 	if len(envOverride) > 0 {

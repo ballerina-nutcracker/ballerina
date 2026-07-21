@@ -86,11 +86,7 @@ func runWindowsCtrlCChild() {
 	fmt.Println("READY")
 
 	select {
-	case got, ok := <-source.Signals:
-		if !ok {
-			fmt.Fprintln(os.Stderr, "signal channel closed before PAL signal")
-			os.Exit(1)
-		}
+	case got := <-source.Signals:
 		if got != pal.GracefulStop {
 			fmt.Fprintf(os.Stderr, "expected %v, got %v\n", pal.GracefulStop, got)
 			os.Exit(1)

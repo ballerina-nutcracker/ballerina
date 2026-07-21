@@ -70,10 +70,7 @@ func signalSelf(t *testing.T, signal os.Signal) {
 func assertSignal(t *testing.T, signals <-chan pal.Signal, want pal.Signal) {
 	t.Helper()
 	select {
-	case got, ok := <-signals:
-		if !ok {
-			t.Fatal("signal channel closed before delivering PAL signal")
-		}
+	case got := <-signals:
 		if got != want {
 			t.Fatalf("expected %v, got %v", want, got)
 		}

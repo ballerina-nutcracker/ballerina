@@ -17,10 +17,19 @@
 import ballerina/http;
 import ballerina/io;
 
-public function main() returns error? {
-    http:Client c = check new ("https://httpbun.com");
-    http:Response r = check c->get("/json");
-    json|error payload = r.getJsonPayload();
-    io:println(payload is json); // @output true
-    return;
+service /hello on new http:Listener(19190) {
+    resource function get greeting() returns http:Response {
+        http:Response resp = new;
+        resp.setTextPayload("Hello, World!");
+        return resp;
+    }
+}
+
+// testMain is invoked by the harness while the runtime is parked in the
+// listening state. It drives the live service over a real HTTP client.
+public function testMain() returns error? {
+    http:Client c = check new http:Client("http://localhost:19190", {});
+    http:Response r = check c->get("/hello/greeting");
+    io:println(r.statusCode); // @output 200
+    io:println(r.getTextPayload()); // @output Hello, World!
 }

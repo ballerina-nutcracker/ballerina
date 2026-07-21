@@ -3,7 +3,7 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad https://example.com
     $desugar$0 = %1;
-    %3 = $default$13($desugar$0) -> bb1;
+    %3 = $default$15($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %3;
@@ -37,7 +37,7 @@ main() -> nil|error{
     c = $desugar$2;
     %12 = ConstantLoad /path
     $desugar$3 = %12;
-    %14 = $default$19($desugar$3) -> bb8;
+    %14 = $default$21($desugar$3) -> bb8;
   }
   bb8 {
     $desugar$4 = %14;

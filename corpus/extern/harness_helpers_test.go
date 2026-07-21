@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"ballerina-lang-go/platform/pal"
+	"ballerina-lang-go/platform/palnative"
 	"ballerina-lang-go/test_util"
 	"ballerina-lang-go/test_util/testharness"
 )
@@ -90,7 +91,7 @@ func (p *httpPal) withRealFS() *httpPal {
 
 func (p *httpPal) Platform() pal.Platform {
 	base := p.TestPal.Platform()
-	base.HTTP = pal.HTTP{NewClient: p.newClient}
+	base.HTTP = pal.HTTP{NewClient: p.newClient, Listen: palnative.Listen}
 	if p.realFS {
 		base.FS = pal.FS{ReadFile: os.ReadFile}
 	}
