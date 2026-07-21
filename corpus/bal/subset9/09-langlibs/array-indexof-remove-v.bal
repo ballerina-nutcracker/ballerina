@@ -24,6 +24,11 @@ public function main() {
         io:println(first); // @output 2
     }
 
+    int? firstDefault = arr.indexOf(30);
+    if firstDefault is int {
+        io:println(firstDefault); // @output 2
+    }
+
     int? afterFirst = arr.indexOf(30, 3);
     if afterFirst is int {
         io:println(afterFirst); // @output 4

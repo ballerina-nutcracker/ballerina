@@ -14,16 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
 public function main() {
-    string s = "  Hello World  ";
-    io:println(s.trim()); // @output Hello World
-    io:println(s.trim().toLowerAscii()); // @output hello world
-    io:println(s.trim().toUpperAscii()); // @output HELLO WORLD
-    io:println(s.trim().substring(0, 5)); // @output Hello
-    io:println(s.trim().substring(6)); // @output World
-
-    io:println("HELLO".equalsIgnoreCaseAscii("hello")); // @output true
-    io:println("HELLO".equalsIgnoreCaseAscii("world")); // @output false
+    int[2] arr = [1, 2];
+    _ = arr.remove(0); // @panic inherent type violation: cannot change the length of a fixed-length list
 }

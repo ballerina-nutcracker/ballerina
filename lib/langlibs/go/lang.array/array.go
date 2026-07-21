@@ -108,6 +108,9 @@ func initArrayModule(rt *runtime.Runtime) {
 				startIndex = si
 			}
 		}
+		if startIndex < 0 {
+			panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", startIndex)))
+		}
 		for i := int(startIndex); i < list.Len(); i++ {
 			if values.DeepEquals(list.Get(i), val) {
 				return int64(i), nil
@@ -123,6 +126,9 @@ func initArrayModule(rt *runtime.Runtime) {
 		index, ok := args[1].(int64)
 		if !ok {
 			return nil, fmt.Errorf("second argument must be an int")
+		}
+		if index < 0 || index >= int64(list.Len()) {
+			panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", index)))
 		}
 		return list.RemoveAt(int(index)), nil
 	})

@@ -31,6 +31,12 @@
             (literal 5))))))
       (expression-stmt
         (invocation io println (
+          (invocation substring expr:
+            (invocation trim expr:
+              (simple-var-ref s) ()) (
+            (literal 6))))))
+      (expression-stmt
+        (invocation io println (
           (invocation equalsIgnoreCaseAscii expr:
             (literal HELLO) (
             (literal hello))))))

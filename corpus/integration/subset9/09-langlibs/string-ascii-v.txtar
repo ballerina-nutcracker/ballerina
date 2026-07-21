@@ -3,6 +3,7 @@ Hello World
 hello world
 HELLO WORLD
 Hello
+World
 true
 false
 -- stderr --

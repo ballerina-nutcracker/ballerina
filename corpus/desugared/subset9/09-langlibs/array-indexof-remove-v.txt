@@ -33,54 +33,71 @@
               (simple-var-ref first))))) ())
       (block-stmt
         (var-def
-          (variable afterFirst (type
+          (variable firstDefault (type
             (union-type
               (value-type int)
               (value-type null))) (expr
             (invocation lang.array indexOf (
               (simple-var-ref arr)
-              (literal 30)
-              (literal 3))))))
+              (literal 30))))))
         (if
           (type-test-expr is
-            (simple-var-ref afterFirst)
+            (simple-var-ref firstDefault)
             (value-type int))
           (block-stmt
             (expression-stmt
               (invocation io println (
-                (simple-var-ref afterFirst))))) ())
+                (simple-var-ref firstDefault))))) ())
         (block-stmt
           (var-def
-            (variable missing (type
+            (variable afterFirst (type
               (union-type
                 (value-type int)
                 (value-type null))) (expr
               (invocation lang.array indexOf (
                 (simple-var-ref arr)
-                (literal 99)
-                (literal 0))))))
-          (expression-stmt
-            (invocation io println (
-              (type-test-expr is
-                (simple-var-ref missing)
-                (value-type null)))))
-          (var-def
-            (variable removed (type
-              (value-type int)) (expr
-              (invocation lang.array remove (
-                (simple-var-ref arr)
-                (literal 1))))))
-          (expression-stmt
-            (invocation io println (
-              (simple-var-ref removed))))
-          (expression-stmt
-            (invocation io println (
-              (invocation lang.array length (
-                (simple-var-ref arr))))))
-          (expression-stmt
-            (invocation lang.array removeAll (
-              (simple-var-ref arr))))
-          (expression-stmt
-            (invocation io println (
-              (invocation lang.array length (
-                (simple-var-ref arr)))))))))))
+                (literal 30)
+                (literal 3))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref afterFirst)
+              (value-type int))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref afterFirst))))) ())
+          (block-stmt
+            (var-def
+              (variable missing (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (invocation lang.array indexOf (
+                  (simple-var-ref arr)
+                  (literal 99)
+                  (literal 0))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref missing)
+                  (value-type null)))))
+            (var-def
+              (variable removed (type
+                (value-type int)) (expr
+                (invocation lang.array remove (
+                  (simple-var-ref arr)
+                  (literal 1))))))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref removed))))
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.array length (
+                  (simple-var-ref arr))))))
+            (expression-stmt
+              (invocation lang.array removeAll (
+                (simple-var-ref arr))))
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.array length (
+                  (simple-var-ref arr))))))))))))

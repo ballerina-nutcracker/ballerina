@@ -14,16 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
 public function main() {
-    string s = "  Hello World  ";
-    io:println(s.trim()); // @output Hello World
-    io:println(s.trim().toLowerAscii()); // @output hello world
-    io:println(s.trim().toUpperAscii()); // @output HELLO WORLD
-    io:println(s.trim().substring(0, 5)); // @output Hello
-    io:println(s.trim().substring(6)); // @output World
-
-    io:println("HELLO".equalsIgnoreCaseAscii("hello")); // @output true
-    io:println("HELLO".equalsIgnoreCaseAscii("world")); // @output false
+    int[] arr = [10, 20, 30, 40];
+    _ = arr.indexOf(20, -1); // @panic invalid array index: -1
 }

@@ -53,6 +53,40 @@ main() -> nil{
     %28 = println(%27) -> bb12;
   }
   bb12 {
+    %29 = ConstantLoad +1a
+    %30 = fromHexString(%29) -> bb13;
+  }
+  bb13 {
+    plusH = %30;
+    %32 = println(plusH) -> bb14;
+  }
+  bb14 {
+    %33 = ConstantLoad -8000000000000000
+    %34 = fromHexString(%33) -> bb15;
+  }
+  bb15 {
+    minH = %34;
+    %36 = println(minH) -> bb16;
+  }
+  bb16 {
+    %37 = ConstantLoad 7fffffffffffffff
+    %38 = fromHexString(%37) -> bb17;
+  }
+  bb17 {
+    maxH = %38;
+    %40 = println(maxH) -> bb18;
+  }
+  bb18 {
+    %41 = ConstantLoad ffffffffffffffff
+    %42 = fromHexString(%41) -> bb19;
+  }
+  bb19 {
+    overflowH = %42;
+    %44 = overflowH is error
+    %45 = %44;
+    %46 = println(%45) -> bb20;
+  }
+  bb20 {
     return;
   }
 }

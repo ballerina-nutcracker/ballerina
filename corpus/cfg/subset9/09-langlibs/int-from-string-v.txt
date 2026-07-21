@@ -64,5 +64,47 @@
         (type-test-expr is
           (simple-var-ref invalidHex)
           (error-type)))))
+    (var-def
+      (variable plusH (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation int fromHexString (
+          (literal +1a))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref plusH))))
+    (var-def
+      (variable minH (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation int fromHexString (
+          (literal -8000000000000000))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref minH))))
+    (var-def
+      (variable maxH (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation int fromHexString (
+          (literal 7fffffffffffffff))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref maxH))))
+    (var-def
+      (variable overflowH (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation int fromHexString (
+          (literal ffffffffffffffff))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref overflowH)
+          (error-type)))))
   )
 )

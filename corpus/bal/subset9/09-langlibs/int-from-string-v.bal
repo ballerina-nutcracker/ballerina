@@ -34,4 +34,16 @@ public function main() {
 
     int|error invalidHex = int:fromHexString("zz");
     io:println(invalidHex is error); // @output true
+
+    int|error plusH = int:fromHexString("+1a");
+    io:println(plusH); // @output 26
+
+    int|error minH = int:fromHexString("-8000000000000000");
+    io:println(minH); // @output -9223372036854775808
+
+    int|error maxH = int:fromHexString("7fffffffffffffff");
+    io:println(maxH); // @output 9223372036854775807
+
+    int|error overflowH = int:fromHexString("ffffffffffffffff");
+    io:println(overflowH is error); // @output true
 }
