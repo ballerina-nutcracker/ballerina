@@ -32,18 +32,19 @@ import (
 //   - missing required fields (with or without defaults) cause a ConversionError; default injection
 //     is not yet implemented (tracked as a separate work item)
 //
-// Cyclic values return a ConversionError (matching jballerina behaviour).
+// Cyclic values return a ConversionError: per the cloneWithType contract, the graph structure
+// is not preserved and the result is always a tree.
 //
 // On failure it returns a ConversionError wrapped as *Error.
 func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, *Error) {
-	result, err := tryConvert(tc, value, targetType, true, nil)
+	result, err := convert(tc, value, targetType, true, nil)
 	if err != nil {
 		return nil, wrapConversionError(err)
 	}
 	return result, nil
 }
 
-func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType,
+func convert(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	allowNumeric bool, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	if value == nil {
 		if isNilable(target) {
@@ -52,18 +53,52 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType,
 		return nil, cannotConvertNil(tc, target)
 	}
 
-	if members := unionMemberTypes(tc, target); len(members) > 1 {
-		return tryConvertUnion(tc, value, target, members, allowNumeric, visiting)
+	if candidates := candidateTypes(tc, target); len(candidates) > 1 {
+		return convertUnion(tc, value, target, candidates, allowNumeric, visiting)
+	}
+	return convertBasicTypeValue(tc, value, target, allowNumeric, visiting)
+}
+
+func convertUnion(tc semtypes.Context, value BalValue, target semtypes.SemType,
+	candidates []semtypes.SemType, allowNumeric bool, visiting map[BalValue]struct{},
+) (BalValue, *conversionFailure) {
+	if isStructuredValue(value) {
+		children := make([]*conversionFailure, 0, len(candidates))
+		for _, candidate := range candidates {
+			result, err := convertBasicTypeValue(tc, value, candidate, allowNumeric, visiting)
+			if err == nil {
+				return result, nil
+			}
+			children = append(children, err)
+		}
+		return nil, newUnionConversionFailure(children)
 	}
 
+	// For simple values prefer exact type match before allowing numeric conversion.
+	for _, candidate := range candidates {
+		if semtypes.IsSubtype(tc, SemTypeForValue(value), candidate) {
+			return convertBasicTypeValue(tc, value, candidate, false, visiting)
+		}
+	}
+	for _, candidate := range candidates {
+		if result, err := convertBasicTypeValue(tc, value, candidate, allowNumeric, visiting); err == nil {
+			return result, nil
+		}
+	}
+	return nil, incompatibleConversion(tc, value, target)
+}
+
+// convertBasicTypeValue converts value to a single, already-decomposed basic-type target (never a union).
+func convertBasicTypeValue(tc semtypes.Context, value BalValue, target semtypes.SemType,
+	allowNumeric bool, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	switch v := value.(type) {
 	case *Map:
-		if semtypes.IsSubtypeSimple(target, semtypes.MAPPING) {
-			return tryConvertMapping(tc, v, target, allowNumeric, visiting)
+		if semtypes.IsSubtype(tc, target, semtypes.MAPPING) {
+			return convertMapping(tc, v, target, allowNumeric, visiting)
 		}
 	case *List:
-		if semtypes.IsSubtypeSimple(target, semtypes.LIST) {
-			return tryConvertList(tc, v, target, allowNumeric, visiting)
+		if semtypes.IsSubtype(tc, target, semtypes.LIST) {
+			return convertList(tc, v, target, allowNumeric, visiting)
 		}
 	default:
 		valueTy := SemTypeForValue(v)
@@ -86,36 +121,7 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType,
 	return nil, incompatibleConversion(tc, value, target)
 }
 
-func tryConvertUnion(tc semtypes.Context, value BalValue, target semtypes.SemType,
-	members []semtypes.SemType, allowNumeric bool, visiting map[BalValue]struct{},
-) (BalValue, *conversionFailure) {
-	if isStructuredValue(value) {
-		children := make([]*conversionFailure, 0, len(members))
-		for _, member := range members {
-			result, err := tryConvert(tc, value, member, allowNumeric, visiting)
-			if err == nil {
-				return result, nil
-			}
-			children = append(children, err)
-		}
-		return nil, newUnionConversionFailure(children)
-	}
-
-	// For simple values prefer exact type match before allowing numeric conversion.
-	for _, member := range members {
-		if semtypes.IsSubtype(tc, SemTypeForValue(value), member) {
-			return tryConvert(tc, value, member, false, visiting)
-		}
-	}
-	for _, member := range members {
-		if result, err := tryConvert(tc, value, member, allowNumeric, visiting); err == nil {
-			return result, nil
-		}
-	}
-	return nil, incompatibleConversion(tc, value, target)
-}
-
-func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType,
+func convertMapping(tc semtypes.Context, source *Map, target semtypes.SemType,
 	allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
 	var cycleErr *conversionFailure
@@ -152,7 +158,7 @@ func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType
 		}
 		fieldTy := mappingFieldType(tc, target, atomic, key)
 		val, _ := source.Get(key)
-		converted, err := tryConvert(tc, val, fieldTy, allowNumeric, visiting)
+		converted, err := convert(tc, val, fieldTy, allowNumeric, visiting)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +182,7 @@ func tryConvertMapping(tc semtypes.Context, source *Map, target semtypes.SemType
 	return NewMap(target, atomic, readonly, entries), nil
 }
 
-func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType,
+func convertList(tc semtypes.Context, source *List, target semtypes.SemType,
 	allowNumeric bool, visiting map[BalValue]struct{},
 ) (BalValue, *conversionFailure) {
 	var cycleErr *conversionFailure
@@ -203,7 +209,7 @@ func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType,
 	items := make([]BalValue, source.Len())
 	for i := 0; i < source.Len(); i++ {
 		memberTy := atomic.MemberAtInnerVal(i)
-		converted, err := tryConvert(tc, source.Get(i), memberTy, allowNumeric, visiting)
+		converted, err := convert(tc, source.Get(i), memberTy, allowNumeric, visiting)
 		if err != nil {
 			return nil, err
 		}
@@ -299,7 +305,9 @@ var simpleBasicTypes = []semtypes.SemType{
 	semtypes.STRING, semtypes.XML, semtypes.ERROR,
 }
 
-func unionMemberTypes(tc semtypes.Context, ty semtypes.SemType) []semtypes.SemType {
+// candidateTypes decomposes ty into its per-basic-type constituents (e.g. the mapping and list
+// alternatives of a union), skipping any constituent that is empty under tc.
+func candidateTypes(tc semtypes.Context, ty semtypes.SemType) []semtypes.SemType {
 	var members []semtypes.SemType
 	basic := semtypes.WidenToBasicTypes(ty)
 
