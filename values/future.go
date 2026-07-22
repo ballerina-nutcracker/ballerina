@@ -40,6 +40,15 @@ func (f *Future) Complete(result BalValue, panicValue any) {
 	close(f.done)
 }
 
+func (f *Future) IsComplete() bool {
+	select {
+	case <-f.done:
+		return true
+	default:
+		return false
+	}
+}
+
 func (f *Future) Wait() BalValue {
 	<-f.done
 	if f.outcome.panic != nil {

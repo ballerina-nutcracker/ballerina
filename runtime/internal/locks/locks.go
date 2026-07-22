@@ -24,11 +24,10 @@
 // does NOT participate in lock release: if a Go-level panic raised inside a
 // `lock` body (div-by-zero, array OOB, nil deref, integer overflow, failed
 // `check`, etc.) is recovered by an outer `trap`, the strand retains the
-// lock. This is intentional at this stage — mutexes are strand-scoped and
-// re-entrant, so the retained ownership is harmless within the same strand,
-// and the interpreter is currently single-strand for the surfaces we ship.
-// Cross-strand release-on-trap is deferred to when multi-strand `lock`-using
-// code is exposed.
+// lock. Mutexes are strand-scoped and re-entrant, so the retained ownership
+// remains available to that strand. Starting a strand or yielding while a
+// lock is held is prohibited, preventing another strand on the same thread
+// from blocking on a lock retained by a suspended strand.
 package locks
 
 import (

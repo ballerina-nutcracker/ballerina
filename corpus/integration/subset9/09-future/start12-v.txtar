@@ -1,13 +1,13 @@
 -- stdout --
-99
+0
 1
 2
-1000
-12
-42
-42
-bad
+2
+3
+3
+4
+3
+5
 true
-true
-true
+7
 -- stderr --

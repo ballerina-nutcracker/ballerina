@@ -1,0 +1,82 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function bar (
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation lang.array length (
+          (simple-var-ref values))))))
+  (function foo (
+    (variable result (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref result))))))
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (literal 1)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation bar (
+                    (simple-var-ref values))))))))))
+      (var-def
+        (variable barResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$1)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (invocation foo (
+                    (simple-var-ref barResult))))))))))
+      (var-def
+        (variable fooResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (value-type int)
+              (error-type)))) (expr
+          (start-action
+            (simple-var-ref $desugar$3)))))
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref fooResult))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value)))))))

@@ -21,9 +21,24 @@ isolated function startedStrandId() returns int {
     return strandId();
 }
 
+function queuedStrandId(int value) returns int {
+    io:println(value);
+    return strandId();
+}
+
 public function main() {
     int parent = strandId();
     future<int> childFuture = start startedStrandId();
     int|error child = wait childFuture;
     io:println(child is int && parent != child); // @output true
+
+    future<int> first = start queuedStrandId(1);
+    future<int> second = start queuedStrandId(2);
+    io:println(0); // @output 0
+    int|error secondId = wait second;
+    int|error firstId = wait first;
+    io:println(firstId is int && secondId is int &&
+            parent != firstId && parent != secondId && firstId != secondId); // @output 1
+                                                                            // @output 2
+                                                                            // @output true
 }

@@ -36,7 +36,7 @@ func StartMethod(parent *extern.Context, h any, args []values.BalValue) (<-chan 
 	ch := make(chan values.BalValue, 1)
 	impl := h.(*InvokableHandle)
 	seed := snapshotSpawnFrames(parent.CallStack.(*callStack))
-	go runStrand(parent.Env, seed, impl, args, ch)
+	go runStrand(parent, seed, impl, args, ch)
 	return ch, nil
 }
 
@@ -63,8 +63,8 @@ func startFuture(parent *extern.Context, fn *values.Function, isolated bool, ty 
 	}
 	future := values.NewFuture(ty)
 	seed := snapshotSpawnFrames(parent.CallStack.(*callStack))
+	ctx := contextForStartedStrand(parent, seed, isolated)
 	run := func() {
-		ctx := contextForStartedStrand(parent.Env, seed)
 		var result values.BalValue
 		defer func() {
 			panicValue := recover()
@@ -83,23 +83,33 @@ func startFuture(parent *extern.Context, fn *values.Function, isolated bool, ty 
 	if isolated {
 		go run()
 	} else {
-		run()
+		continuation := ctx.Schedule()
+		go func() {
+			<-continuation
+			run()
+			ctx.Complete()
+		}()
 	}
 	return future
 }
 
-func contextForStartedStrand(env *extern.Env, seed []callStackEntry) *extern.Context {
-	ctx := CreateContext(env)
+func contextForStartedStrand(parent *extern.Context, seed []callStackEntry, isolated bool) *extern.Context {
+	var ctx *extern.Context
+	if isolated {
+		ctx = extern.CreateContext(parent.Env)
+	} else {
+		ctx = extern.CreateContextInSameThread(parent)
+	}
 	elems := make([]callStackEntry, len(seed), len(seed)+32)
 	copy(elems, seed)
 	ctx.CallStack = &callStack{elements: elems}
 	return ctx
 }
 
-func runStrand(env *extern.Env, seed []callStackEntry, h *InvokableHandle,
+func runStrand(parent *extern.Context, seed []callStackEntry, h *InvokableHandle,
 	args []values.BalValue, ch chan<- values.BalValue,
 ) {
-	ctx := contextForStartedStrand(env, seed)
+	ctx := contextForStartedStrand(parent, seed, true)
 
 	defer close(ch)
 	v, err := h.invoke(ctx, args)

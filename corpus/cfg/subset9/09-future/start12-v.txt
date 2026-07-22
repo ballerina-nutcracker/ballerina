@@ -1,0 +1,109 @@
+(crash
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal started strand panic))))
+  )
+)
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (start-action
+        (invocation printAndReturn (
+          (literal 1)))))
+    (var-def
+      (variable second (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation printAndReturn (
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (literal 0))))
+    (var-def
+      (variable secondResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref second)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref secondResult))))
+    (var-def
+      (variable completed (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation printAndReturn (
+            (literal 3)))))))
+    (var-def
+      (variable completedResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref completed)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref completedResult))))
+    (assignment
+      (wildcard-binding-pattern)
+      (start-action
+        (invocation printAndReturn (
+          (literal 4)))))
+    (assignment
+      (simple-var-ref completedResult)
+      (single-wait-action
+        (simple-var-ref completed)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref completedResult))))
+    (var-def
+      (variable failed (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation crash ())))))
+    (assignment
+      (wildcard-binding-pattern)
+      (start-action
+        (invocation printAndReturn (
+          (literal 5)))))
+    (var-def
+      (variable trapped (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref failed))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trapped)
+          (error-type)))))
+    (assignment
+      (wildcard-binding-pattern)
+      (start-action
+        (invocation printAndReturn (
+          (literal 6)))))
+    (expression-stmt
+      (invocation io println (
+        (literal 7))))
+  )
+)
+(printAndReturn
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+    (return
+      (simple-var-ref value))
+  )
+)

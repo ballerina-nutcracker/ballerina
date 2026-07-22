@@ -19,14 +19,12 @@ int count = 0;
 
 function argument() returns int {
     count += 1;
-    // @output 1
-    // @output 2
     io:println(count);
     return count;
 }
 
 function combine(int first, int second) returns int {
-    io:println(1000); // @output 1000
+    io:println(1000);
     return first * 10 + second;
 }
 
@@ -49,6 +47,10 @@ isolated function crash() {
 public function main() {
     future<int> ordered = start combine(argument(), argument());
     io:println(99); // @output 99
+    // wait is going to start the process
+                    // @output 1
+                    // @output 2
+                    // @output 1000
     int|error orderedResult = wait ordered;
     io:println(orderedResult); // @output 12
 

@@ -1,0 +1,159 @@
+(package
+  (import-package ballerina io (as io))
+  (function printAndReturn (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value))))
+      (return
+        (simple-var-ref value))))
+  (function crash () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal started strand panic))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation printAndReturn (
+                    (literal 1))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (start-action
+          (simple-var-ref $desugar$1)))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (invocation printAndReturn (
+                    (literal 2))))))))))
+      (var-def
+        (variable second (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$3)))))
+      (expression-stmt
+        (invocation io println (
+          (literal 0))))
+      (var-def
+        (variable secondResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref second)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref secondResult))))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $desugar$4 () ()
+              (block-function-body
+                (return
+                  (invocation printAndReturn (
+                    (literal 3))))))))))
+      (var-def
+        (variable completed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$5)))))
+      (var-def
+        (variable completedResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref completed)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref completedResult))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $desugar$6 () ()
+              (block-function-body
+                (return
+                  (invocation printAndReturn (
+                    (literal 4))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (start-action
+          (simple-var-ref $desugar$7)))
+      (assignment
+        (simple-var-ref completedResult)
+        (single-wait-action
+          (simple-var-ref completed)))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref completedResult))))
+      (var-def
+        (variable $desugar$9 (expr
+          (lambda
+            (function $desugar$8 () ()
+              (block-function-body
+                (return
+                  (invocation crash ()))))))))
+      (var-def
+        (variable failed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$9)))))
+      (var-def
+        (variable $desugar$11 (expr
+          (lambda
+            (function $desugar$10 () ()
+              (block-function-body
+                (return
+                  (invocation printAndReturn (
+                    (literal 5))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (start-action
+          (simple-var-ref $desugar$11)))
+      (var-def
+        (variable trapped (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref failed))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trapped)
+            (error-type)))))
+      (var-def
+        (variable $desugar$13 (expr
+          (lambda
+            (function $desugar$12 () ()
+              (block-function-body
+                (return
+                  (invocation printAndReturn (
+                    (literal 6))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (start-action
+          (simple-var-ref $desugar$13)))
+      (expression-stmt
+        (invocation io println (
+          (literal 7)))))))

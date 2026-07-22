@@ -36,8 +36,17 @@ func execStartAction(ctx *extern.Context, action *bir.StartAction, frame *Frame)
 
 func execSingleWaitAction(ctx *extern.Context, action *bir.SingleWaitAction, frame *Frame) *bir.BIRBasicBlock {
 	future := getOperandValue(ctx, &action.Future, frame).(*values.Future)
-	setOperandValue(ctx, action.LhsOp, frame, future.Wait())
+	setOperandValue(ctx, action.LhsOp, frame, waitFuture(ctx, future))
 	return action.ThenBB
+}
+
+func waitFuture(ctx *extern.Context, future *values.Future) values.BalValue {
+	for {
+		<-ctx.Yield()
+		if future.IsComplete() {
+			return future.Wait()
+		}
+	}
 }
 
 func execBranch(ctx *extern.Context, branchTerm *bir.Branch, frame *Frame) *bir.BIRBasicBlock {

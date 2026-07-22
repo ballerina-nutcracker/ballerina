@@ -22,6 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/runtime/internal/locks"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/thread"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -36,6 +37,7 @@ type Context struct {
 	CallStack any // opaque pointer to the call stack
 	typeCtx   semtypes.Context
 	StrandID  uint64
+	thread    *thread.Thread
 	heldLocks []*locks.ReentrantMutex
 }
 
@@ -80,7 +82,7 @@ func (e *Env) AllocateStrandID() uint64 {
 // its release). Callers that own a well-defined unit of work end-to-end (like
 // HTTP resource/remote dispatch) should prefer Runtime.AcquirePooledContext.
 func CreateContext(env *Env) *Context {
-	ctx := Context{Env: env, StrandID: env.AllocateStrandID()}
+	ctx := Context{Env: env, StrandID: env.AllocateStrandID(), thread: thread.New()}
 	return &ctx
 }
 
@@ -102,18 +104,41 @@ func (ctx *Context) TypeEnv() semtypes.Env {
 }
 
 // ResetForReuse clears a context's per-request mutable state — a fresh strand
-// ID, an empty held-lock stack, and (if one was ever built) a cleared TypeCtx
-// — while retaining the constant Env. Clearing TypeCtx rather than keeping its
-// memo caches warm bounds its memory across the pooled context's lifetime;
-// combined with TypeCtx's lazy construction, an invocation that never
-// type-checks pays nothing here either. Safe only under exclusive ownership
-// (e.g. via sync.Pool).
+// ID, scheduler, empty held-lock stack, and (if one was ever built) a cleared
+// TypeCtx — while retaining the constant Env. Clearing TypeCtx rather than
+// keeping its memo caches warm bounds its memory across the pooled context's
+// lifetime; combined with TypeCtx's lazy construction, an invocation that
+// never type-checks pays nothing here either. Safe only under exclusive
+// ownership (e.g. via sync.Pool).
 func (ctx *Context) ResetForReuse() {
 	ctx.StrandID = ctx.Env.AllocateStrandID()
+	ctx.thread = thread.New()
 	ctx.heldLocks = ctx.heldLocks[:0]
 	if ctx.typeCtx != nil {
 		ctx.typeCtx.Reset()
 	}
+}
+
+func CreateContextInSameThread(parent *Context) *Context {
+	ctx := CreateContext(parent.Env)
+	ctx.thread = parent.thread
+	return ctx
+}
+
+// Schedule queues this strand on its thread. Every call must be paired with
+// exactly one Complete when the scheduled strand finishes.
+func (ctx *Context) Schedule() <-chan struct{} {
+	return ctx.thread.Schedule()
+}
+
+// Yield queues this strand and selects the next strand on its thread.
+func (ctx *Context) Yield() <-chan struct{} {
+	return ctx.thread.Yield()
+}
+
+// Complete selects the next queued strand on this strand's thread.
+func (ctx *Context) Complete() {
+	ctx.thread.Complete()
 }
 
 // AcquireLock acquires the global re-entrant mutex for the given lock key on
