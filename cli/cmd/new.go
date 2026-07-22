@@ -30,13 +30,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newError returns an error formatted with the new-package USAGE block.
-// Cobra prefixes it with "ballerina:" when RunE returns.
 func newError(format string, args ...any) error {
 	return usageError("new <project-path>", format, args...)
 }
 
-// newWorkspaceError returns an error formatted with the new-workspace USAGE block.
 func newWorkspaceError(format string, args ...any) error {
 	return usageError("new --workspace <path>", format, args...)
 }

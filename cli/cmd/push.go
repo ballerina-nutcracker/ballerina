@@ -30,20 +30,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pushError returns an error formatted with the push-specific USAGE block.
-// Cobra prefixes it with "ballerina:" and writes to stderr when RunE returns.
 func pushError(format string, args ...any) error {
 	return usageError("push [<bala-path>]", format, args...)
 }
 
-// localRepoBalaSubpath is the subpath under <BAL_ENV> that holds bala archives
-// for the local repository. The destination of a `bal push --repository=local`
-// lands at <BAL_ENV>/<localRepoBalaSubpath>/<org>/<name>/<version>/<platform>/.
 const localRepoBalaSubpath = "repositories/local/bala"
-
-// localRepositoryName is the only --repository value accepted in this release.
-// Central (the implicit default) and custom remote repos are not yet
-// implemented, so the flag is required and constrained to this value.
 const localRepositoryName = "local"
 
 // pushOptions holds CLI flag values for `bal push`.
@@ -85,9 +76,7 @@ EXAMPLES
 	}
 	cmd.Flags().StringVar(&opts.repository, "repository", "",
 		"Target repository name. Required; only 'local' is supported in this release.")
-	// cobra's MarkFlagRequired routes the missing-flag check through the
-	// FlagErrorFunc, so the user sees the same "ballerina: ..." prefix
-	// applied to all other flag errors.
+	// Routes the missing-flag error through FlagErrorFunc for a consistent prefix.
 	_ = cmd.MarkFlagRequired("repository")
 	return cmd
 }
@@ -104,9 +93,8 @@ func runPush(cmd *cobra.Command, args []string, opts *pushOptions) error {
 		return pushError("%w", err)
 	}
 
-	// Identity is sourced from the archive's manifests — the filename is
-	// irrelevant. This must run before any destination side-effects so a
-	// malformed bala never touches the local repository.
+	// Runs before any destination side-effects so a malformed bala never
+	// touches the local repository.
 	org, name, version, platform, err := readBalaIdentity(balaPath)
 	if err != nil {
 		return pushError("%w", err)
@@ -122,8 +110,7 @@ func runPush(cmd *cobra.Command, args []string, opts *pushOptions) error {
 		org, name, version, platform,
 	)
 
-	// Wipe destination so a re-push is deterministic — no stale files left
-	// from a previous version's layout. Mirrors Java toolchain behaviour.
+	// Wipe destination first so a re-push doesn't leave stale files behind.
 	if err := os.RemoveAll(destDir); err != nil {
 		return pushError("remove existing destination %q: %w", destDir, err)
 	}
@@ -139,10 +126,8 @@ func runPush(cmd *cobra.Command, args []string, opts *pushOptions) error {
 	return nil
 }
 
-// resolveBalaSource returns the absolute path of the bala archive to push.
-// If args contains a positional, it is used verbatim (after a regular-file
-// check — extension is not inspected). Otherwise the function scans
-// <cwd>/target/bala/ for exactly one .bala file.
+// resolveBalaSource returns the absolute path of the bala archive to push:
+// the positional arg if given, else the sole .bala under <cwd>/target/bala/.
 func resolveBalaSource(args []string) (string, error) {
 	if len(args) > 0 {
 		p := args[0]
@@ -189,13 +174,8 @@ func resolveBalaSource(args []string) (string, error) {
 	}
 }
 
-// readBalaIdentity opens balaPath and returns (org, name, version, platform)
-// drawn from the manifest TOMLs inside. org/name/version come from
-// Ballerina.toml's [package] table; platform comes from Bala.toml's [build]
-// table. Platform values are not constrained here — today only "any" is
-// emitted, but accepting whatever the bala declares keeps this layer
-// forward-compatible. Returns descriptive errors for: cannot open as zip,
-// missing TOML entry, malformed TOML, or a missing required field.
+// readBalaIdentity returns (org, name, version, platform) read from
+// Ballerina.toml's [package] and Bala.toml's [build] inside balaPath.
 func readBalaIdentity(balaPath string) (org, name, version, platform string, err error) {
 	zr, zerr := zip.OpenReader(balaPath)
 	if zerr != nil {
@@ -251,9 +231,7 @@ func readBalaIdentity(balaPath string) (org, name, version, platform string, err
 	return org, name, version, platform, nil
 }
 
-// readTomlFromZipEntry reads, parses and returns the parsed Toml for f. The
-// entry's name is woven into error messages so callers can tell which TOML
-// failed without rewrapping at every site.
+// readTomlFromZipEntry reads and parses f as TOML.
 func readTomlFromZipEntry(f *zip.File) (*tomlparser.Toml, error) {
 	rc, err := f.Open()
 	if err != nil {
@@ -272,9 +250,8 @@ func readTomlFromZipEntry(f *zip.File) (*tomlparser.Toml, error) {
 	return toml, nil
 }
 
-// unzipBala extracts every entry of balaPath into destDir, preserving the
-// archive's directory structure. Entries that would escape destDir via ".."
-// (zip-slip) are rejected before any file is created.
+// unzipBala extracts every entry of balaPath into destDir, rejecting entries
+// that would escape destDir (zip-slip).
 func unzipBala(balaPath, destDir string) error {
 	zr, err := zip.OpenReader(balaPath)
 	if err != nil {
@@ -282,8 +259,6 @@ func unzipBala(balaPath, destDir string) error {
 	}
 	defer func() { _ = zr.Close() }()
 
-	// Use the cleaned absolute destination for the zip-slip prefix check so
-	// symlinks/relatives in destDir don't confuse the comparison.
 	absDest, err := filepath.Abs(destDir)
 	if err != nil {
 		return fmt.Errorf("resolve destination %q: %w", destDir, err)
@@ -298,13 +273,11 @@ func unzipBala(balaPath, destDir string) error {
 	return nil
 }
 
-// extractZipEntry writes a single zip entry under absDest. The full target
-// path is validated to live under absDest (zip-slip guard) before any
-// directories or files are created.
+// extractZipEntry writes a single zip entry under absDest, validating the
+// target path stays under absDest (zip-slip guard).
 func extractZipEntry(f *zip.File, absDest, absDestWithSep string) error {
-	// Reject backslash separators outright; zip entries use forward slashes
-	// per spec, so a backslash on a non-Windows host could otherwise smuggle
-	// a relative segment past filepath.Clean.
+	// Zip entries use forward slashes; a backslash could smuggle a relative
+	// segment past filepath.Clean on a non-Windows host.
 	if strings.Contains(f.Name, `\`) {
 		return fmt.Errorf("zip-slip: entry %q contains backslash", f.Name)
 	}

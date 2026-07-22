@@ -90,8 +90,6 @@ func createPackCmd() *cobra.Command {
 	return cmd
 }
 
-// packError returns an error formatted with the pack-specific USAGE block.
-// Cobra prefixes it with "ballerina:" and writes to stderr when RunE returns.
 func packError(format string, args ...any) error {
 	return usageError("pack [<package-dir>]", format, args...)
 }

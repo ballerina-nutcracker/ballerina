@@ -34,10 +34,6 @@ import (
 // Success Cases
 // =============================================================================
 
-// TestPushCommand_ExplicitPath verifies a push with an explicit positional
-// bala path lands the unzipped tree under
-// <BAL_ENV>/repositories/local/bala/<org>/<name>/<version>/<platform>/, where
-// the four identity components come from the bala's manifests.
 func TestPushCommand_ExplicitPath(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -92,11 +88,8 @@ func TestPushCommand_ExplicitPath(t *testing.T) {
 	}
 }
 
-// TestPushCommand_ArbitraryFilename is the load-bearing test for the
-// manifest-as-source-of-truth flip: the filename intentionally disagrees with
-// the manifest (filename says "foo-bar-any-9.9.9.zip"; manifest says
-// org=mockorg name=testpkg version=1.0.0). The destination MUST follow the
-// manifest, and the push MUST succeed even with a non-.bala extension.
+// Filename intentionally disagrees with the manifest; destination must
+// follow the manifest, not the filename.
 func TestPushCommand_ArbitraryFilename(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -112,7 +105,6 @@ func TestPushCommand_ArbitraryFilename(t *testing.T) {
 		t.Fatalf("push with non-.bala extension failed: %v\nstderr: %s", err, stderr)
 	}
 
-	// Destination uses MANIFEST values, not filename values.
 	manifestDest := filepath.Join(balaEnv, "repositories", "local", "bala",
 		"mockorg", "testpkg", "1.0.0", "any")
 	if _, err := os.Stat(manifestDest); err != nil {
@@ -124,8 +116,6 @@ func TestPushCommand_ArbitraryFilename(t *testing.T) {
 			manifestDest, stdout)
 	}
 
-	// Filename-derived path must NOT exist — flipping the rule means the
-	// filename is just a string we open, not an identity claim.
 	filenameDest := filepath.Join(balaEnv, "repositories", "local", "bala",
 		"foo", "bar", "9.9.9", "any")
 	if _, err := os.Stat(filenameDest); !os.IsNotExist(err) {
@@ -140,10 +130,6 @@ func TestPushCommand_ArbitraryFilename(t *testing.T) {
 	}
 }
 
-// TestPushCommand_AutoDiscovery verifies that when no positional argument is
-// supplied, the command picks up the lone .bala from <cwd>/target/bala/.
-// The destination is still manifest-derived; the .bala filename in
-// target/bala/ is only used as a discovery filter, not as an identity source.
 func TestPushCommand_AutoDiscovery(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -181,8 +167,6 @@ func TestPushCommand_AutoDiscovery(t *testing.T) {
 	}
 }
 
-// TestPushCommand_Overwrite verifies that a re-push wipes the destination
-// platform directory: stale files from the previous push must not survive.
 func TestPushCommand_Overwrite(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -221,8 +205,6 @@ func TestPushCommand_Overwrite(t *testing.T) {
 // Error Cases
 // =============================================================================
 
-// TestPushCommand_MultipleBalas verifies that auto-discovery fails when
-// <cwd>/target/bala/ contains more than one .bala file.
 func TestPushCommand_MultipleBalas(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -250,8 +232,6 @@ func TestPushCommand_MultipleBalas(t *testing.T) {
 	}
 }
 
-// TestPushCommand_NoBalaInTarget verifies auto-discovery fails cleanly when
-// the target/bala directory is missing or empty.
 func TestPushCommand_NoBalaInTarget(t *testing.T) {
 	setBallerinaEnv(t)
 	projectDir := t.TempDir()
@@ -267,8 +247,6 @@ func TestPushCommand_NoBalaInTarget(t *testing.T) {
 	}
 }
 
-// TestPushCommand_DirectoryAsBalaPath verifies push rejects a directory passed
-// as the positional argument before touching the local repository.
 func TestPushCommand_DirectoryAsBalaPath(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -282,9 +260,6 @@ func TestPushCommand_DirectoryAsBalaPath(t *testing.T) {
 	}
 }
 
-// TestPushCommand_AutoDiscoverySkipsDirectory verifies the auto-discovery scan
-// of <cwd>/target/bala/ skips subdirectory entries and picks the single .bala
-// file when one is present.
 func TestPushCommand_AutoDiscoverySkipsDirectory(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -308,11 +283,8 @@ func TestPushCommand_AutoDiscoverySkipsDirectory(t *testing.T) {
 	}
 }
 
-// TestPushCommand_ZipWithDirectoryEntry verifies extraction handles explicit
-// directory entries (FileHeader with ModeDir) correctly. bal pack itself does
-// not emit such entries — file entries with paths like "modules/sub/lib.bal"
-// suffice — but a third-party tool might, and the extract code branches on
-// f.FileInfo().IsDir(); this guards that branch.
+// bal pack never emits explicit directory entries, but a third-party tool
+// might; guards the IsDir branch in extractZipEntry.
 func TestPushCommand_ZipWithDirectoryEntry(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -321,7 +293,6 @@ func TestPushCommand_ZipWithDirectoryEntry(t *testing.T) {
 	writeBalaFileWithDirEntries(t, balaPath, []balaEntry{
 		{"Bala.toml", []byte("[build]\nplatform = \"any\"\n")},
 		{"Ballerina.toml", []byte("[package]\norg = \"mockorg\"\nname = \"foo\"\nversion = \"1.0.0\"\n")},
-		// Explicit directory entry — exercises the IsDir branch in extractZipEntry.
 		{"modules/", nil},
 		{"modules/sub/lib.bal", []byte("public function libfn() {}\n")},
 	})
@@ -341,9 +312,7 @@ func TestPushCommand_ZipWithDirectoryEntry(t *testing.T) {
 	}
 }
 
-// TestPushCommand_ZipSlip verifies the unzip code path refuses entries that
-// would land outside the destination directory via "..". Entries are written
-// in a deterministic order so the malicious one is encountered first.
+// Entries are written in a fixed order so the malicious one is encountered first.
 func TestPushCommand_ZipSlip(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -352,8 +321,6 @@ func TestPushCommand_ZipSlip(t *testing.T) {
 	writeOrderedBalaFile(t, balaPath, []balaEntry{
 		{"../evil", []byte("pwned")},
 		{"Bala.toml", []byte("[build]\nplatform = \"any\"\n")},
-		// Manifests are needed so identity reading succeeds and the unzip
-		// step actually runs — that's where zip-slip is enforced.
 		{"Ballerina.toml", []byte("[package]\norg = \"evil\"\nname = \"pkg\"\nversion = \"0.1.0\"\n")},
 	})
 
@@ -366,8 +333,6 @@ func TestPushCommand_ZipSlip(t *testing.T) {
 		t.Errorf("expected zip-slip error in stderr, got: %s", stderr)
 	}
 
-	// destDir is now manifest-derived (evil/pkg/0.1.0/any). The malicious
-	// entry must not have been written outside the destination.
 	destDir := filepath.Join(balaEnv, "repositories", "local", "bala",
 		"evil", "pkg", "0.1.0", "any")
 	escaped := filepath.Join(filepath.Dir(destDir), "evil")
@@ -380,8 +345,6 @@ func TestPushCommand_ZipSlip(t *testing.T) {
 // Manifest Identity Validation
 // =============================================================================
 
-// TestPushCommand_MissingBallerinaToml verifies the push errors out when the
-// bala does not contain a Ballerina.toml entry at all.
 func TestPushCommand_MissingBallerinaToml(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -399,17 +362,13 @@ func TestPushCommand_MissingBallerinaToml(t *testing.T) {
 		t.Errorf("expected missing-manifest error, got: %s", stderr)
 	}
 
-	// Side-effect guard: identity must be read before any destination is
-	// created. We can't predict a destination here because identity reading
-	// failed, but we can at least ensure the repo root is empty.
+	// Identity must be read before any destination is created.
 	repoRoot := filepath.Join(balaEnv, "repositories", "local", "bala")
 	if entries, err := os.ReadDir(repoRoot); err == nil && len(entries) != 0 {
 		t.Errorf("expected repo root untouched, found entries: %v", entries)
 	}
 }
 
-// TestPushCommand_MissingBalaToml verifies the push errors out when the
-// bala lacks the Bala.toml entry (which carries the platform).
 func TestPushCommand_MissingBalaToml(t *testing.T) {
 	balaEnv := setBallerinaEnv(t)
 
@@ -433,8 +392,6 @@ func TestPushCommand_MissingBalaToml(t *testing.T) {
 	}
 }
 
-// TestPushCommand_MalformedBallerinaToml verifies the push errors cleanly
-// (no panic) when the embedded Ballerina.toml is not valid TOML.
 func TestPushCommand_MalformedBallerinaToml(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -454,8 +411,6 @@ func TestPushCommand_MalformedBallerinaToml(t *testing.T) {
 	}
 }
 
-// TestPushCommand_MissingOrgField verifies a Ballerina.toml that parses
-// successfully but lacks [package].org is rejected with a clear message.
 func TestPushCommand_MissingOrgField(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -475,8 +430,6 @@ func TestPushCommand_MissingOrgField(t *testing.T) {
 	}
 }
 
-// TestPushCommand_MissingNameField verifies a Ballerina.toml that parses
-// successfully but lacks [package].name is rejected with a clear message.
 func TestPushCommand_MissingNameField(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -496,8 +449,6 @@ func TestPushCommand_MissingNameField(t *testing.T) {
 	}
 }
 
-// TestPushCommand_MissingVersionField verifies a Ballerina.toml that parses
-// successfully but lacks [package].version is rejected with a clear message.
 func TestPushCommand_MissingVersionField(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -517,9 +468,6 @@ func TestPushCommand_MissingVersionField(t *testing.T) {
 	}
 }
 
-// TestPushCommand_MalformedBalaToml verifies that a Bala.toml present but
-// containing invalid TOML is rejected with a parse error referencing the
-// file. Complements the Ballerina.toml-parse-failure test.
 func TestPushCommand_MalformedBalaToml(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -540,8 +488,6 @@ func TestPushCommand_MalformedBalaToml(t *testing.T) {
 	}
 }
 
-// TestPushCommand_MissingPlatformField verifies that a Bala.toml present but
-// lacking [build].platform is rejected with a clear message.
 func TestPushCommand_MissingPlatformField(t *testing.T) {
 	setBallerinaEnv(t)
 
@@ -565,9 +511,6 @@ func TestPushCommand_MissingPlatformField(t *testing.T) {
 // --repository flag
 // =============================================================================
 
-// validBalaEntries returns the minimal set of files a well-formed bala must
-// carry for push to accept it: Bala.toml with [build].platform, Ballerina.toml
-// with [package].org/name/version, and a single source file.
 func validBalaEntries() map[string][]byte {
 	return map[string][]byte{
 		"Bala.toml":      []byte("[build]\nplatform = \"any\"\n"),
@@ -576,8 +519,6 @@ func validBalaEntries() map[string][]byte {
 	}
 }
 
-// TestPushCommand_MissingRepositoryFlag verifies cobra rejects an invocation
-// that omits the mandatory --repository flag.
 func TestPushCommand_MissingRepositoryFlag(t *testing.T) {
 	t.Parallel()
 	balaPath := writeBalaFixture(t, "acme-widgets-any-1.2.3.bala", validBalaEntries())
@@ -591,8 +532,6 @@ func TestPushCommand_MissingRepositoryFlag(t *testing.T) {
 	}
 }
 
-// TestPushCommand_UnsupportedRepositoryValue verifies the value validation:
-// only "local" is accepted in this release.
 func TestPushCommand_UnsupportedRepositoryValue(t *testing.T) {
 	t.Parallel()
 	balaPath := writeBalaFixture(t, "acme-widgets-any-1.2.3.bala", validBalaEntries())
@@ -610,7 +549,6 @@ func TestPushCommand_UnsupportedRepositoryValue(t *testing.T) {
 // Help
 // =============================================================================
 
-// TestPushCommand_Help verifies --help renders the long description.
 func TestPushCommand_Help(t *testing.T) {
 	t.Parallel()
 	stdout, stderr, err := executePushCommand(t, "--help")
@@ -629,8 +567,7 @@ func TestPushCommand_Help(t *testing.T) {
 // Helpers
 // =============================================================================
 
-// executePushCommand runs a fresh push command instance with the given args.
-// A new instance is allocated per call so tests can run in parallel.
+// A fresh command instance per call keeps tests parallel-safe.
 func executePushCommand(t *testing.T, args ...string) (stdout, stderr string, err error) {
 	t.Helper()
 
@@ -644,8 +581,6 @@ func executePushCommand(t *testing.T, args ...string) (stdout, stderr string, er
 	return outBuf.String(), errBuf.String(), err
 }
 
-// setBallerinaEnv points BAL_ENV at a fresh tmpdir for the duration of the
-// test and returns that path. t.Setenv ensures cleanup after the test.
 func setBallerinaEnv(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -653,8 +588,6 @@ func setBallerinaEnv(t *testing.T) string {
 	return dir
 }
 
-// writeBalaFixture writes a zip containing entries to a fresh tmp file named
-// filename and returns its absolute path. Callers don't pre-create the file.
 func writeBalaFixture(t *testing.T, filename string, entries map[string][]byte) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -663,16 +596,12 @@ func writeBalaFixture(t *testing.T, filename string, entries map[string][]byte) 
 	return balaPath
 }
 
-// balaEntry is an order-preserving zip entry used by writeOrderedBalaFile
-// where iteration order over a map is unsuitable.
+// balaEntry preserves order, unlike a map, for tests where entry order matters.
 type balaEntry struct {
 	name    string
 	content []byte
 }
 
-// writeOrderedBalaFile writes a zip whose entries appear in the given slice
-// order. Use this when the test cares which entry the extractor processes
-// first (e.g. zip-slip).
 func writeOrderedBalaFile(t *testing.T, balaPath string, entries []balaEntry) {
 	t.Helper()
 	out, err := os.Create(balaPath)
@@ -702,11 +631,7 @@ func writeOrderedBalaFile(t *testing.T, balaPath string, entries []balaEntry) {
 	}
 }
 
-// writeBalaFileWithDirEntries writes a zip with file AND directory entries.
-// Entries whose name ends with "/" are written as explicit directory entries
-// (FileHeader.Mode includes ModeDir); all others are regular file entries.
-// Use this when a test needs to exercise the directory branch in the extract
-// logic; the more common case is covered by writeBalaFile.
+// Entries whose name ends with "/" are written as explicit directory entries.
 func writeBalaFileWithDirEntries(t *testing.T, balaPath string, entries []balaEntry) {
 	t.Helper()
 	out, err := os.Create(balaPath)
@@ -744,8 +669,6 @@ func writeBalaFileWithDirEntries(t *testing.T, balaPath string, entries []balaEn
 	}
 }
 
-// writeBalaFile writes a zip with the given entries to balaPath. Entry keys
-// use forward slashes as zip paths; values are the raw bytes.
 func writeBalaFile(t *testing.T, balaPath string, entries map[string][]byte) {
 	t.Helper()
 	out, err := os.Create(balaPath)

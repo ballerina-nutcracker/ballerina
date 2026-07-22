@@ -145,4 +145,3 @@ func TestRepository_ImplementsProjectsRepository(t *testing.T) {
 	// Compile-time check - if this compiles, FileSystemRepository implements projects.Repository
 	var _ projects.Repository = (*projects.FileSystemRepository)(nil)
 }
-

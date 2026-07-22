@@ -22,11 +22,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd is the root of the bal CLI. SetErrPrefix gives every error printed
-// by cobra (both flag-parse errors and errors returned from RunE) the
-// "ballerina:" prefix expected by users. SilenceUsage stays true because
-// subcommands embed their own concise USAGE block in the error (see
-// usageError); cobra's verbose UsageString would otherwise duplicate that.
+// SilenceUsage avoids duplicating the USAGE block subcommands already embed
+// in their errors (see usageError).
 var rootCmd = &cobra.Command{
 	Use:          "bal",
 	Short:        "The build system and package manager of Ballerina",
