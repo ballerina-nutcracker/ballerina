@@ -74,5 +74,6 @@ tables instead.
 ### uuid
 
 - **Type 1 UUID node identifier — random bytes instead of MAC address.** jBallerina uses the MAC address of the host machine as the node identifier in type 1 UUIDs; the Go-native version generates a random 6-byte node ID per RFC 4122 §4.5 for portability and privacy. The UUID is still valid and passes `validate()`.
+- **Byte-array UUID conversion validates length.** jBallerina's `toString(byte[])` and `toRecord(byte[])` do not validate that the input array is exactly 16 bytes before indexing it, so a malformed array either panics (too short) or is silently truncated (too long); the Go-native version validates the length explicitly and returns a graceful `uuid:Error` for both cases.
 
 The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.

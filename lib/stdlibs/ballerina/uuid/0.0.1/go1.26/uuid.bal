@@ -16,6 +16,7 @@
 // under the License.
 
 import ballerina/crypto;
+import ballerina/lang.'int as ints;
 
 // Represents UUID module related errors.
 public type Error error;
@@ -30,13 +31,13 @@ const string NIL_UUID = "00000000-0000-0000-0000-000000000000";
 // + clockSeqHiAndReserved - The high field of the clock sequence multiplexed with the variant
 // + clockSeqLo - The low field of the clock sequence
 // + node - The spatially unique node identifier
-public type Uuid record {
-    int timeLow;
-    int timeMid;
-    int timeHiAndVersion;
-    int clockSeqHiAndReserved;
-    int clockSeqLo;
-    int node;
+public type Uuid readonly & record {
+    ints:Unsigned32 timeLow;
+    ints:Unsigned16 timeMid;
+    ints:Unsigned16 timeHiAndVersion;
+    ints:Unsigned8 clockSeqHiAndReserved;
+    ints:Unsigned8 clockSeqLo;
+    int node; // Should be Unsigned48, but not available in lang.int at the moment
 };
 
 // Represents the UUID versions.
@@ -318,7 +319,8 @@ public isolated function toBytes(string|Uuid uuid) returns byte[]|Error {
 
 # Converts to a UUID string. Returns an error if the UUID is invalid.
 # ```ballerina
-# string s = check uuid:toString([5, 12, 16, 35]);
+# byte[] b = check uuid:toBytes("550e8400-e29b-41d4-a716-446655440000");
+# string s = check uuid:toString(b);
 # ```
 #
 # + uuid - UUID to be converted
@@ -326,6 +328,9 @@ public isolated function toBytes(string|Uuid uuid) returns byte[]|Error {
 # + return - UUID as string, or else a `uuid:Error`
 public isolated function toString(byte[]|Uuid uuid) returns string|error {
     if uuid is byte[] {
+        if uuid.length() != 16 {
+            return error Error("Invalid UUID byte array provided, expected 16 bytes");
+        }
         return getUuidFromBytes(uuid);
     }
     Uuid u = uuid;
@@ -340,7 +345,8 @@ public isolated function toString(byte[]|Uuid uuid) returns string|error {
 # Converts to a UUID record. Returns an error if the UUID is invalid.
 # ```ballerina
 # uuid:Uuid r1 = check uuid:toRecord("4397465e-35f9-11eb-adc1-0242ac120002");
-# uuid:Uuid r2 = check uuid:toRecord([10, 20, 30]);
+# byte[] b = check uuid:toBytes(r1);
+# uuid:Uuid r2 = check uuid:toRecord(b);
 # ```
 #
 # + uuid - UUID to be converted
@@ -354,6 +360,9 @@ public isolated function toRecord(string|byte[] uuid) returns Uuid|Error {
         }
         uuidStr = uuid;
     } else {
+        if uuid.length() != 16 {
+            return error Error("Invalid UUID byte array provided, expected 16 bytes");
+        }
         uuidStr = getUuidFromBytes(uuid);
     }
 
@@ -368,32 +377,32 @@ public isolated function toRecord(string|byte[] uuid) returns Uuid|Error {
     if timeLowIntFromHexString is error {
         return error Error("Failed to get int value of time-low hex string", timeLowIntFromHexString);
     }
-    int timeLowInt = timeLowIntFromHexString;
+    ints:Unsigned32 timeLowInt = <ints:Unsigned32>timeLowIntFromHexString;
 
     int|error timeMidIntFromHexString = externParseHexUint(part1);
     if timeMidIntFromHexString is error {
         return error Error("Failed to get int value of time-mid hex string", timeMidIntFromHexString);
     }
-    int timeMidInt = timeMidIntFromHexString;
+    ints:Unsigned16 timeMidInt = <ints:Unsigned16>timeMidIntFromHexString;
 
     int|error timeHiAndVersionIntFromHexString = externParseHexUint(part2);
     if timeHiAndVersionIntFromHexString is error {
         return error Error("Failed to get int value of time-hi-and-version hex string", timeHiAndVersionIntFromHexString);
     }
-    int timeHiAndVersionInt = timeHiAndVersionIntFromHexString;
+    ints:Unsigned16 timeHiAndVersionInt = <ints:Unsigned16>timeHiAndVersionIntFromHexString;
 
     int|error clockSeqHiAndReservedIntFromHexString = externParseHexUint(part3.substring(0, 2));
     if clockSeqHiAndReservedIntFromHexString is error {
         return error Error("Failed to get int value of clock-seq-hi-and-reserved hex string",
             clockSeqHiAndReservedIntFromHexString);
     }
-    int clockSeqHiAndReservedInt = clockSeqHiAndReservedIntFromHexString;
+    ints:Unsigned8 clockSeqHiAndReservedInt = <ints:Unsigned8>clockSeqHiAndReservedIntFromHexString;
 
     int|error clockSeqLoIntFromHexString = externParseHexUint(part3.substring(2, 4));
     if clockSeqLoIntFromHexString is error {
         return error Error("Failed to get int value of clock-seq-lo hex string", clockSeqLoIntFromHexString);
     }
-    int clockSeqLoInt = clockSeqLoIntFromHexString;
+    ints:Unsigned8 clockSeqLoInt = <ints:Unsigned8>clockSeqLoIntFromHexString;
 
     int|error nodeResult = externParseHexUint(part4);
     if nodeResult is error {

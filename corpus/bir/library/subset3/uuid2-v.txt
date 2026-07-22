@@ -79,7 +79,7 @@ main() -> nil|error{
     GOTO bb17;
   }
   bb17 {
-    PushScopeFrame 8
+    PushScopeFrame 58
     %0 = getVersion((1, known)) -> bb18;
   }
   bb18 {
@@ -102,6 +102,72 @@ main() -> nil|error{
     %7 = println(%6) -> bb21;
   }
   bb21 {
+    %8 = ConstantLoad 5
+    %9 = ConstantLoad 12
+    %10 = ConstantLoad 16
+    %11 = ConstantLoad 35
+    %12 = ConstantLoad 4
+    %13 = newArray [int:Unsigned8...][%12]{%8, %9, %10, %11}
+    shortArr = %13;
+    %15 = toString(shortArr) -> bb22;
+  }
+  bb22 {
+    shortToString = %15;
+    %17 = shortToString is error
+    %18 = %17;
+    %19 = println(%18) -> bb23;
+  }
+  bb23 {
+    %20 = toRecord(shortArr) -> bb24;
+  }
+  bb24 {
+    shortToRecord = %20;
+    %22 = shortToRecord is error
+    %23 = %22;
+    %24 = println(%23) -> bb25;
+  }
+  bb25 {
+    %25 = ConstantLoad 1
+    %26 = ConstantLoad 2
+    %27 = ConstantLoad 3
+    %28 = ConstantLoad 4
+    %29 = ConstantLoad 5
+    %30 = ConstantLoad 6
+    %31 = ConstantLoad 7
+    %32 = ConstantLoad 8
+    %33 = ConstantLoad 9
+    %34 = ConstantLoad 10
+    %35 = ConstantLoad 11
+    %36 = ConstantLoad 12
+    %37 = ConstantLoad 13
+    %38 = ConstantLoad 14
+    %39 = ConstantLoad 15
+    %40 = ConstantLoad 16
+    %41 = ConstantLoad 17
+    %42 = ConstantLoad 18
+    %43 = ConstantLoad 19
+    %44 = ConstantLoad 20
+    %45 = ConstantLoad 20
+    %46 = newArray [int:Unsigned8...][%45]{%25, %26, %27, %28, %29, %30, %31, %32, %33, %34, %35, %36, %37, %38, %39, %40, %41, %42, %43, %44}
+    longArr = %46;
+    %48 = toString(longArr) -> bb26;
+  }
+  bb26 {
+    longToString = %48;
+    %50 = longToString is error
+    %51 = %50;
+    %52 = println(%51) -> bb27;
+  }
+  bb27 {
+    %53 = toRecord(longArr) -> bb28;
+  }
+  bb28 {
+    longToRecord = %53;
+    %55 = longToRecord is error
+    %56 = %55;
+    %57 = println(%56) -> bb29;
+  }
+  bb29 {
     PopScopeFrame
     return;
   }

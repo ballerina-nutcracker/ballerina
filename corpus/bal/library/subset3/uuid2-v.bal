@@ -40,4 +40,19 @@ public function main() returns error? {
     // getVersion returns V4 for the known UUID (version nibble = 4)
     uuid:Version|uuid:Error ver = check uuid:getVersion(known);
     io:println(ver == uuid:V4); // @output true
+
+    // toString / toRecord reject byte arrays that aren't exactly 16 bytes
+    byte[] shortArr = [5, 12, 16, 35];
+    string|error shortToString = uuid:toString(shortArr);
+    io:println(shortToString is error); // @output true
+
+    uuid:Uuid|uuid:Error shortToRecord = uuid:toRecord(shortArr);
+    io:println(shortToRecord is uuid:Error); // @output true
+
+    byte[] longArr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    string|error longToString = uuid:toString(longArr);
+    io:println(longToString is error); // @output true
+
+    uuid:Uuid|uuid:Error longToRecord = uuid:toRecord(longArr);
+    io:println(longToRecord is uuid:Error); // @output true
 }

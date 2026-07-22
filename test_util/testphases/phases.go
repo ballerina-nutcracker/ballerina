@@ -19,6 +19,7 @@
 package testphases
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -98,14 +99,28 @@ var builtinStdlibs = []stdlibEntry{
 // sibling CompilerContexts that share env (and thus the same type-env and
 // symbol table). The returned map can be merged directly into the publicSymbols
 // passed to semantics.ResolveImports.
-func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.PackageIdentifier]model.ExportedSymbolSpace {
-	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
+//
+// Langlib symbols (lang.int, lang.array, ...) are seeded before the loop runs,
+// since a builtin stdlib may explicitly import one (e.g. ballerina/uuid imports
+// ballerina/lang.'int) and that import can only resolve if the package is
+// already present in the symbol map used by ResolveCompilationUnitImports.
+func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) (map[semantics.PackageIdentifier]model.ExportedSymbolSpace, error) {
+	seedCx := context.NewCompilerContext(env)
+	langlibSeed, err := langlib.Build(seedCx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("seeding langlib symbols failed: %w", err)
+	}
+
+	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace, len(langlibSeed.PublicSymbols))
+	for k, v := range langlibSeed.PublicSymbols {
+		result[k] = v
+	}
 
 	for _, entry := range builtinStdlibs {
 		balPath := fmt.Sprintf("ballerina/%s/%s/%s/%s.bal", entry.name, entry.version, entry.platform, entry.name)
 		contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("reading builtin stdlib %s: %w", entry.name, err)
 		}
 		content := string(contentBytes)
 
@@ -115,12 +130,12 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 
 		st, err := parser.GetSyntaxTree(cx, virtualPath, content)
 		if err != nil || cx.HasDiagnostics() {
-			continue
+			return nil, fmt.Errorf("parsing builtin stdlib %s: %w", entry.name, firstDiagnosticErr(cx, err))
 		}
 
 		cu := ast.GetCompilationUnit(cx, st)
 		if cu == nil || cx.HasDiagnostics() {
-			continue
+			return nil, fmt.Errorf("AST generation for builtin stdlib %s: %w", entry.name, firstDiagnosticErr(cx, nil))
 		}
 		pkgID := cx.NewPackageID(
 			model.Name(entry.org),
@@ -131,11 +146,11 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 		compilationUnits := []*ast.BLangCompilationUnit{cu}
 
 		// Pass accumulated stdlib symbols so packages that import other stdlibs (e.g. os→io, crypto→time) resolve correctly.
-		importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, semantics.GetImplicitImports(cx),
+		importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, langlibSeed.ImplicitImports,
 			result, entry.org)
 		pkgScope, exported := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
 		if cx.HasErrors() {
-			continue
+			return nil, fmt.Errorf("symbol resolution for builtin stdlib %s: %w", entry.name, firstDiagnosticErr(cx, nil))
 		}
 		pkg := ast.ToPackageFromCompilationUnits(compilationUnits)
 		pkg.PackageID = pkgID
@@ -144,17 +159,33 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 
 		semantics.ResolveTopLevelNodes(cx, pkg, importedByCU[0].Imports)
 		if cx.HasErrors() {
-			continue
+			return nil, fmt.Errorf("type resolution for builtin stdlib %s: %w", entry.name, firstDiagnosticErr(cx, nil))
 		}
 
 		result[semantics.PackageIdentifier{OrgName: entry.org, ModuleName: entry.name}] = exported
 	}
 
-	return result
+	return result, nil
+}
+
+// firstDiagnosticErr turns the first recorded diagnostic on cx into an error,
+// falling back to fallback (or a generic message) when there are none recorded
+// despite the failure that triggered this call.
+func firstDiagnosticErr(cx *context.CompilerContext, fallback error) error {
+	if diags := cx.Diagnostics(); len(diags) > 0 {
+		return errors.New(diags[0].String())
+	}
+	if fallback != nil {
+		return fallback
+	}
+	return errors.New("unknown compilation error")
 }
 
 func LoadLanglibs(env *context.CompilerEnvironment, cx *context.CompilerContext) (*langlib.Symbols, error) {
-	stdlibSymbols := loadBuiltinPublicSymbols(env)
+	stdlibSymbols, err := loadBuiltinPublicSymbols(env)
+	if err != nil {
+		return nil, err
+	}
 	symbols, err := langlib.Build(cx, stdlibSymbols)
 	if err != nil {
 		return nil, fmt.Errorf("loading lang libraries failed: %w", err)

@@ -79,4 +79,86 @@
           (invocation io println (
             (binary-expr ==
               (simple-var-ref ver)
-              (simple-var-ref uuid V4)))))))))
+              (simple-var-ref uuid V4)))))
+        (var-def
+          (variable shortArr (type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))) (expr
+            (list-constructor-expr
+              (literal 5)
+              (literal 12)
+              (literal 16)
+              (literal 35)))))
+        (var-def
+          (variable shortToString (type
+            (union-type
+              (value-type string)
+              (error-type))) (expr
+            (invocation uuid toString (
+              (simple-var-ref shortArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref shortToString)
+              (error-type)))))
+        (var-def
+          (variable shortToRecord (type
+            (union-type
+              (user-defined-type uuid Uuid)
+              (user-defined-type uuid Error))) (expr
+            (invocation uuid toRecord (
+              (simple-var-ref shortArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref shortToRecord)
+              (user-defined-type uuid Error)))))
+        (var-def
+          (variable longArr (type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))) (expr
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)
+              (literal 4)
+              (literal 5)
+              (literal 6)
+              (literal 7)
+              (literal 8)
+              (literal 9)
+              (literal 10)
+              (literal 11)
+              (literal 12)
+              (literal 13)
+              (literal 14)
+              (literal 15)
+              (literal 16)
+              (literal 17)
+              (literal 18)
+              (literal 19)
+              (literal 20)))))
+        (var-def
+          (variable longToString (type
+            (union-type
+              (value-type string)
+              (error-type))) (expr
+            (invocation uuid toString (
+              (simple-var-ref longArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref longToString)
+              (error-type)))))
+        (var-def
+          (variable longToRecord (type
+            (union-type
+              (user-defined-type uuid Uuid)
+              (user-defined-type uuid Error))) (expr
+            (invocation uuid toRecord (
+              (simple-var-ref longArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref longToRecord)
+              (user-defined-type uuid Error)))))))))
