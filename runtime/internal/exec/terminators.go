@@ -44,7 +44,7 @@ func waitFuture(ctx *extern.Context, future *values.Future) values.BalValue {
 	for {
 		<-ctx.Yield()
 		if future.IsComplete() {
-			return future.Wait()
+			return future.Get()
 		}
 	}
 }

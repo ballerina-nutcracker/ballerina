@@ -40,7 +40,7 @@ public function main() {
     _ = start printAndReturn(4);
     completedResult = wait completed;
     io:println(completedResult); // @output 4
-                                 // @output 3
+                                 // @output error("multiple waits on the same future is not allowed")
 
     future<int> failed = start crash();
     _ = start printAndReturn(5);

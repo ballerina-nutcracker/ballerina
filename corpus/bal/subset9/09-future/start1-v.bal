@@ -58,7 +58,7 @@ public function main() {
     int|error first = wait f;
     int|error second = wait f;
     io:println(first); // @output 42
-    io:println(second); // @output 42
+    io:println(second); // @output error("multiple waits on the same future is not allowed")
 
     future<error> errorFuture = start failure();
     error errorResult = wait errorFuture;
@@ -72,5 +72,5 @@ public function main() {
     var trappedFirst = trap wait panicFuture;
     var trappedSecond = trap wait panicFuture;
     io:println(trappedFirst is error); // @output true
-    io:println(trappedSecond is error); // @output true
+    io:println(trappedSecond); // @output error("multiple waits on the same future is not allowed")
 }

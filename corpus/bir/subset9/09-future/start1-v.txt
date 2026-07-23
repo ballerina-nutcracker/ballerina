@@ -224,9 +224,7 @@ main() -> nil{
     %50 = println(%49) -> bb24;
   }
   bb24 {
-    %51 = trappedSecond is error
-    %52 = %51;
-    %53 = println(%52) -> bb25;
+    %51 = println(trappedSecond) -> bb25;
   }
   bb25 {
     return;

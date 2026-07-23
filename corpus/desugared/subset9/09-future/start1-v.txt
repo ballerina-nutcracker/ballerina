@@ -216,6 +216,4 @@
             (error-type)))))
       (expression-stmt
         (invocation io println (
-          (type-test-expr is
-            (simple-var-ref trappedSecond)
-            (error-type))))))))
+          (simple-var-ref trappedSecond)))))))

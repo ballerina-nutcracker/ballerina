@@ -16,41 +16,64 @@
 
 package values
 
-import "github.com/ballerina-nutcracker/ballerina/semtypes"
+import (
+	"sync"
+
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+)
 
 type futureOutcome struct {
 	result BalValue
 	panic  any
 }
 
-// Future is a reusable completion state. Closing done publishes one immutable
-// outcome to every current and subsequent waiter.
+type futureState uint8
+
+const (
+	pending futureState = iota
+	ready
+	claimed
+)
+
+// Future is a single-consumer completion state.
 type Future struct {
 	Type    semtypes.SemType
-	done    chan struct{}
+	ready   chan struct{}
+	mu      sync.Mutex
+	state   futureState
 	outcome futureOutcome
 }
 
 func NewFuture(ty semtypes.SemType) *Future {
-	return &Future{Type: ty, done: make(chan struct{})}
+	return &Future{Type: ty, ready: make(chan struct{})}
 }
 
 func (f *Future) Complete(result BalValue, panicValue any) {
+	f.mu.Lock()
 	f.outcome = futureOutcome{result: result, panic: panicValue}
-	close(f.done)
+	f.state = ready
+	f.mu.Unlock()
+	close(f.ready)
 }
 
+// IsComplete is a "non blocking" lookup on whether future is completed or not. Use it determine if you should
+// wait on the future or should yeild.
 func (f *Future) IsComplete() bool {
-	select {
-	case <-f.done:
-		return true
-	default:
-		return false
-	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.state != pending
 }
 
-func (f *Future) Wait() BalValue {
-	<-f.done
+// Get the completed value. This should be paired with IsComplete; Get blocks the current thread (all the strands on the thread)
+// until future is ready.
+func (f *Future) Get() BalValue {
+	<-f.ready
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.state == claimed {
+		return NewErrorWithMessage("multiple waits on the same future is not allowed")
+	}
+	f.state = claimed
 	if f.outcome.panic != nil {
 		panic(f.outcome.panic)
 	}

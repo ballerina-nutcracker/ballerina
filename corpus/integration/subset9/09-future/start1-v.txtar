@@ -5,9 +5,9 @@
 1000
 12
 42
-42
+error("multiple waits on the same future is not allowed")
 bad
 true
 true
-true
+error("multiple waits on the same future is not allowed")
 -- stderr --
