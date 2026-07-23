@@ -97,6 +97,26 @@ main() -> nil{
     %52 = println(%51) -> bb22;
   }
   bb22 {
+    %53 = ConstantLoad 
+    %54 = fromHexString(%53) -> bb23;
+  }
+  bb23 {
+    emptyH = %54;
+    %56 = emptyH is error
+    %57 = %56;
+    %58 = println(%57) -> bb24;
+  }
+  bb24 {
+    %59 = ConstantLoad -
+    %60 = fromHexString(%59) -> bb25;
+  }
+  bb25 {
+    signOnlyH = %60;
+    %62 = signOnlyH is error
+    %63 = %62;
+    %64 = println(%63) -> bb26;
+  }
+  bb26 {
     return;
   }
 }

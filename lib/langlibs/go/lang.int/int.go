@@ -20,7 +20,6 @@ import (
 	"ballerina-lang-go/runtime"
 	"ballerina-lang-go/runtime/extern"
 	"ballerina-lang-go/values"
-	"fmt"
 	"math"
 	"strconv"
 )
@@ -30,69 +29,64 @@ const (
 	moduleName = "lang.int"
 )
 
+func intToHexString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	n := args[0].(int64)
+	switch {
+	case n == 0:
+		return "0", nil
+	case n == math.MinInt64:
+		return "-8000000000000000", nil
+	case n < 0:
+		return "-" + strconv.FormatInt(-n, 16), nil
+	default:
+		return strconv.FormatInt(n, 16), nil
+	}
+}
+
+func intFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return values.NewErrorWithMessage("'int' from string: invalid number format: " + s), nil
+	}
+	return n, nil
+}
+
+// intFromHexString treats n as the unsigned magnitude; the largest
+// representable magnitude is 2^63 (int64 min). It computes -n via
+// -(n-1)-1 so the n == 2^63 case doesn't overflow an intermediate int64.
+func intFromHexString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	negative := false
+	input := s
+	if len(input) > 0 && (input[0] == '-' || input[0] == '+') {
+		negative = input[0] == '-'
+		input = input[1:]
+	}
+	if len(input) == 0 {
+		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+	}
+	n, err := strconv.ParseUint(input, 16, 64)
+	if err != nil {
+		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+	}
+	const maxMagnitude = uint64(math.MaxInt64) + 1
+	if negative {
+		if n > maxMagnitude {
+			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+		}
+		return -int64(n-1) - 1, nil
+	}
+	if n > math.MaxInt64 {
+		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+	}
+	return int64(n), nil
+}
+
 func initIntModule(rt *runtime.Runtime) {
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toHexString", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		n, ok := args[0].(int64)
-		if !ok {
-			return nil, fmt.Errorf("first argument must be an int")
-		}
-		switch {
-		case n == 0:
-			return "0", nil
-		case n == math.MinInt64:
-			return "-8000000000000000", nil
-		case n < 0:
-			return "-" + strconv.FormatInt(-n, 16), nil
-		default:
-			return strconv.FormatInt(n, 16), nil
-		}
-	})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromString", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		s, ok := args[0].(string)
-		if !ok {
-			return nil, fmt.Errorf("argument must be a string")
-		}
-		n, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return values.NewErrorWithMessage("'int' from string: invalid number format: " + s), nil
-		}
-		return n, nil
-	})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromHexString", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		s, ok := args[0].(string)
-		if !ok {
-			return nil, fmt.Errorf("argument must be a string")
-		}
-		negative := false
-		input := s
-		if len(input) > 0 && (input[0] == '-' || input[0] == '+') {
-			negative = input[0] == '-'
-			input = input[1:]
-		}
-		if len(input) == 0 {
-			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
-		}
-		n, err := strconv.ParseUint(input, 16, 64)
-		if err != nil {
-			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
-		}
-		// n is the unsigned magnitude; the largest representable magnitude is
-		// 2^63 (int64 min). Compute -n via -(n-1)-1 so the n == 2^63 case
-		// doesn't overflow an intermediate int64.
-		const maxMagnitude = uint64(math.MaxInt64) + 1
-		if negative {
-			if n > maxMagnitude {
-				return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
-			}
-			return -int64(n-1) - 1, nil
-		}
-		if n > math.MaxInt64 {
-			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
-		}
-		return int64(n), nil
-	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toHexString", intToHexString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromString", intFromString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromHexString", intFromHexString)
 }
 
 func init() {

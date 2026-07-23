@@ -55,8 +55,23 @@
       (expression-stmt
         (invocation io println (
           (invocation lang.string equalsIgnoreCaseAscii (
+            (literal hello)
+            (literal HELLO))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string equalsIgnoreCaseAscii (
+            (literal Hello)
+            (literal Hello))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string equalsIgnoreCaseAscii (
             (literal HELLO)
             (literal world))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string equalsIgnoreCaseAscii (
+            (literal HELLO)
+            (literal HELL))))))
       (var-def
         (variable nonAsciiEdges (type
           (value-type string)) (expr

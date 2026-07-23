@@ -25,7 +25,10 @@ public function main() {
     io:println(s.trim().substring(6)); // @output World
 
     io:println("HELLO".equalsIgnoreCaseAscii("hello")); // @output true
+    io:println("hello".equalsIgnoreCaseAscii("HELLO")); // @output true
+    io:println("Hello".equalsIgnoreCaseAscii("Hello")); // @output true
     io:println("HELLO".equalsIgnoreCaseAscii("world")); // @output false
+    io:println("HELLO".equalsIgnoreCaseAscii("HELL")); // @output false
 
     // trim removes only ASCII whitespace; non-ASCII whitespace (e.g. NBSP)
     // at the edges must be left untouched.

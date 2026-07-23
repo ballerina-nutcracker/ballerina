@@ -118,5 +118,29 @@
         (type-test-expr is
           (simple-var-ref negOverflowH)
           (error-type)))))
+    (var-def
+      (variable emptyH (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation int fromHexString (
+          (literal ))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref emptyH)
+          (error-type)))))
+    (var-def
+      (variable signOnlyH (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation int fromHexString (
+          (literal -))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref signOnlyH)
+          (error-type)))))
   )
 )

@@ -49,4 +49,10 @@ public function main() {
 
     int|error negOverflowH = int:fromHexString("-8000000000000001");
     io:println(negOverflowH is error); // @output true
+
+    int|error emptyH = int:fromHexString("");
+    io:println(emptyH is error); // @output true
+
+    int|error signOnlyH = int:fromHexString("-");
+    io:println(signOnlyH is error); // @output true
 }
