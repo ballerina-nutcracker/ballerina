@@ -33,10 +33,11 @@ incrementally, either from a file or from an in-memory byte array.
 | `ReadableByteChannel.read(nBytes)` | Returns up to `nBytes` as `byte[]` — may return fewer bytes than requested (a single read, not a guaranteed full read); errors once the channel is exhausted |
 | `ReadableByteChannel.readAll()` | Reads the remaining content of the channel to completion as `readonly & byte[]` |
 | `ReadableByteChannel.blockStream(blockSize)` | Returns `stream<io:Block, io:Error?>\|io:Error` yielding `blockSize` `byte[]` blocks per `next()`; the final block may be shorter |
+| `ReadableByteChannel.base64Encode()` | Base64-encodes the channel's remaining content into a new in-memory `io:ReadableByteChannel`; the source channel is drained but stays open |
+| `ReadableByteChannel.base64Decode()` | Base64-decodes the channel's remaining content into a new in-memory `io:ReadableByteChannel`; final padding is optional, and malformed input panics |
 | `ReadableByteChannel.close()` | Releases the channel's underlying resources; a second `close()` call errors |
 | `WritableByteChannel.write(content, offset)` | Writes `content[offset:]`; `offset` is an index into `content`, not a file seek offset; returns the number of bytes written |
 | `WritableByteChannel.close()` | Releases the channel's underlying resources; a second `close()` call errors |
 
-`ReadableByteChannel.base64Encode()`/`base64Decode()` are not implemented in
-this subset. Character channels, data channels, and CSV/record channels are
-also out of scope for this subset and remain `Not Yet Supported`.
+Character channels, data channels, and CSV/record channels are out of scope
+for this subset and remain `Not Yet Supported`.

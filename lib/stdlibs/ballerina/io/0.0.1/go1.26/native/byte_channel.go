@@ -19,6 +19,8 @@ package native
 
 import (
 	"bytes"
+	"encoding/base64"
+	"fmt"
 	"io"
 
 	"ballerina-lang-go/runtime"
@@ -217,6 +219,51 @@ func initByteChannelModule(rt *runtime.Runtime) {
 				return nil
 			}
 			return values.NewStream(types.blockStreamTy, next, closeFn), nil
+		})
+
+	registerBase64Transform := func(name string, transform func(data []byte) ([]byte, error)) {
+		runtime.RegisterExternFunction(rt, orgName, moduleName, name,
+			func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				self, _ := args[0].(*values.Object)
+				if isClosed(self) {
+					return fileIOError("Channel is already closed."), nil
+				}
+				reader, ok := readerOf(self)
+				if !ok {
+					return fileIOError("Byte channel is not initialized"), nil
+				}
+				data, err := io.ReadAll(reader)
+				if err != nil {
+					return fileIOError(err.Error()), nil
+				}
+				out, err := transform(data)
+				if err != nil {
+					// A Go error return panics in the interpreter, matching
+					// jBallerina, where the Base64 IllegalArgumentException
+					// escapes uncaught.
+					return nil, err
+				}
+				return values.NewList(types.byteArrTy, types.byteArrAtom, false, nil, 0, bytesToItems(out)), nil
+			})
+	}
+
+	registerBase64Transform("ReadableByteChannel.base64EncodeBytes",
+		func(data []byte) ([]byte, error) {
+			return base64.StdEncoding.AppendEncode(nil, data), nil
+		})
+
+	registerBase64Transform("ReadableByteChannel.base64DecodeBytes",
+		func(data []byte) ([]byte, error) {
+			// jBallerina's decoder treats the final padding as optional.
+			enc := base64.StdEncoding
+			if len(data)%4 != 0 {
+				enc = base64.RawStdEncoding
+			}
+			decoded, err := enc.AppendDecode(nil, data)
+			if err != nil {
+				return nil, fmt.Errorf("illegal Base64 input: %s", err.Error())
+			}
+			return decoded, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "ReadableByteChannel.close",

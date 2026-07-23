@@ -307,7 +307,35 @@ public class ReadableByteChannel {
     # + return - A block stream or else an `io:Error`
     public isolated function blockStream(int blockSize) returns stream<Block, Error?>|Error = external;
 
-    // Note: base64Encode()/base64Decode() are not yet implemented.
+    # Encodes a given `io:ReadableByteChannel` using the Base64 encoding scheme.
+    # ```ballerina
+    # io:ReadableByteChannel|Error encodedChannel = readableByteChannel.base64Encode();
+    # ```
+    #
+    # + return - An encoded `io:ReadableByteChannel` or else an `io:Error`
+    public isolated function base64Encode() returns ReadableByteChannel|Error {
+        byte[] encodedBytes = check self.base64EncodeBytes();
+        ReadableByteChannel channel = new;
+        check channel.attachBytes(encodedBytes);
+        return channel;
+    }
+
+    # Decodes a given Base64 encoded `io:ReadableByteChannel`.
+    # ```ballerina
+    # io:ReadableByteChannel|Error encodedChannel = readableByteChannel.base64Decode();
+    # ```
+    #
+    # + return - A decoded `io:ReadableByteChannel` or else an `io:Error`
+    public isolated function base64Decode() returns ReadableByteChannel|Error {
+        byte[] decodedBytes = check self.base64DecodeBytes();
+        ReadableByteChannel channel = new;
+        check channel.attachBytes(decodedBytes);
+        return channel;
+    }
+
+    private isolated function base64EncodeBytes() returns byte[]|Error = external;
+
+    private isolated function base64DecodeBytes() returns byte[]|Error = external;
 
     # Closes the readable byte channel to release any underlying resources.
     # After a channel is closed, any further reading operations will cause an error.

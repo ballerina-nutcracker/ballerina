@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading and writing. The Go Native Interpreter currently supports console printing, file I/O (string, lines, bytes, JSON, XML), stream-based line/block reading and writing, and byte channels (`read`, `readAll`, `blockStream`, `write`, `close`).
+This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading and writing. The Go Native Interpreter currently supports console printing, file I/O (string, lines, bytes, JSON, XML), stream-based line/block reading and writing, and byte channels (`read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, `write`, `close`).
 
 ## Key Functionalities
 
@@ -13,7 +13,7 @@ This module provides I/O operations for Ballerina programs. The full jBallerina 
 - Read file content as a stream of lines or byte blocks using `fileReadLinesAsStream` and `fileReadBlocksAsStream`.
 - Write a stream of lines or byte blocks to a file using `fileWriteLinesFromStream` and `fileWriteBlocksFromStream`.
 - Control write behaviour with the `FileWriteOption` enum (`OVERWRITE` or `APPEND`).
-- Read bytes from a file or an in-memory byte array using `io:ReadableByteChannel`, obtained via `openReadableFile` or `createReadableChannel`, with `read`, `readAll`, `blockStream`, and `close`.
+- Read bytes from a file or an in-memory byte array using `io:ReadableByteChannel`, obtained via `openReadableFile` or `createReadableChannel`, with `read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, and `close`.
 - Write bytes to a file using `io:WritableByteChannel`, obtained via `openWritableFile`, with `write` and `close`.
 
 ## Examples
@@ -103,7 +103,7 @@ Support Levels:
 | File I/O — CSV | Not Yet Supported | `fileReadCsv`, `fileWriteCsv`, stream variants. `stream` type not yet supported; `typedesc` parameter handling complex. |
 | File write option enum | Supported | `FileWriteOption`: `OVERWRITE` and `APPEND` constants. |
 | Module-level error type | Partially Supported | `io:Error` declared as a plain `error` alias; `distinct` error subtypes (`FileNotFoundError`, `GenericError`, `AccessDeniedError`, `EofError`, `ConfigurationError`, `TypeMismatchError`) not yet supported. |
-| Byte channels | Partially Supported | `ReadableByteChannel`: `read`, `readAll` (returns `readonly & byte[]`), `blockStream`, `close`. `WritableByteChannel`: `write`, `close`. `base64Encode`/`base64Decode` not yet supported. |
+| Byte channels | Supported | `ReadableByteChannel`: `read`, `readAll` (returns `readonly & byte[]`), `blockStream`, `base64Encode`, `base64Decode`, `close`. `WritableByteChannel`: `write`, `close`. |
 | Character channels | Not Yet Supported | `ReadableCharacterChannel`, `WritableCharacterChannel`. Not implemented. |
 | Data channels | Not Yet Supported | Not implemented. |
 | CSV channels | Not Yet Supported | Not implemented. |

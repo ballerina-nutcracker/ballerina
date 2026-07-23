@@ -1,0 +1,9 @@
+-- stdout --
+SGkh
+Hi!
+0
+Hi
+SGkh
+Channel is already closed.
+Channel is already closed.
+-- stderr --
