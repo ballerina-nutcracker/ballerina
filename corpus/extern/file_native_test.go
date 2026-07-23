@@ -19,6 +19,7 @@ package extern_test
 import (
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"testing"
 
 	"ballerina-lang-go/runtime/extern"
@@ -34,6 +35,17 @@ func skipIfRoot(t *testing.T) {
 	t.Helper()
 	if os.Geteuid() == 0 {
 		t.Skip("skipping permission-dependent test when running as root")
+	}
+}
+
+// skipIfWindows skips permission-dependent tests on Windows: os.Chmod there
+// only toggles the read-only attribute (no execute bit gating directory
+// traversal, no separate read/write/execute semantics), so the POSIX chmod
+// modes used to deny access below don't produce the expected failures.
+func skipIfWindows(t *testing.T) {
+	t.Helper()
+	if goruntime.GOOS == "windows" {
+		t.Skip("skipping POSIX permission-dependent test on Windows")
 	}
 }
 
@@ -55,6 +67,7 @@ func mustChmod(t *testing.T, path string, mode os.FileMode) {
 // a real, restricted-permission directory on disk — not reachable through
 // pure .bal setup since the file module exposes no chmod-equivalent.
 func TestFileNativePermissionErrors(t *testing.T) {
+	skipIfWindows(t)
 	skipIfRoot(t)
 
 	root := t.TempDir()
