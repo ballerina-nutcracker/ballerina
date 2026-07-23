@@ -1,0 +1,444 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_char_props.properties))))
+      (var-def
+        (variable content (type
+          (value-type string)) (expr
+          (literal # a comment
+! another comment
+name=Ballerina
+  spaced.key : value with spaces  
+empty=
+esc\:aped=x
+multi=line one \
+    continued
+tabbed	value
+uni=\u00E9clair
+nl=a\nb
+))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref path))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref content))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io openReadableFile (
+            (simple-var-ref path))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable rb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable rc (type
+          (user-defined-type io ReadableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref rb)
+            (literal UTF-8))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal name))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$5))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$7))))
+      (var-def
+        (variable $desugar$8 (expr
+          (literal spaced.key))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$8))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$8)
+            (simple-var-ref $desugar$9))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$10))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$10))) ())
+      (expression-stmt
+        (invocation io println (
+          (literal [)
+          (simple-var-ref $desugar$10)
+          (literal ]))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (literal missing)
+            (literal fallback))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$11))))
+      (var-def
+        (variable $desugar$12 (expr
+          (literal esc:aped))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$12))))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$14))))
+      (var-def
+        (variable $desugar$15 (expr
+          (literal multi))))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$15))))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$17))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$17))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$17))))
+      (var-def
+        (variable $desugar$18 (expr
+          (literal tabbed))))
+      (var-def
+        (variable $desugar$19 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$18))))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$20))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$20))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$20))))
+      (var-def
+        (variable $desugar$21 (expr
+          (literal uni))))
+      (var-def
+        (variable $desugar$22 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$21))))))
+      (var-def
+        (variable $desugar$23 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$21)
+            (simple-var-ref $desugar$22))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$23))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$23))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$23))))
+      (var-def
+        (variable $desugar$24 (expr
+          (literal nl))))
+      (var-def
+        (variable $desugar$25 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$24))))))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation readProperty expr:
+            (simple-var-ref rc) (
+            (simple-var-ref $desugar$24)
+            (simple-var-ref $desugar$25))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$26))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$26))) ())
+      (var-def
+        (variable nl (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$26))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (simple-var-ref nl))))))
+      (var-def
+        (variable $desugar$27 (expr
+          (invocation readAllProperties expr:
+            (simple-var-ref rc) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$27))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$27))) ())
+      (var-def
+        (variable all (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (simple-var-ref $desugar$27))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref all))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref all)
+              (literal empty))
+            (literal )))))
+      (var-def
+        (variable $desugar$28 (expr
+          (invocation close expr:
+            (simple-var-ref rc) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$28))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$28))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$28))
+      (var-def
+        (variable wpath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_char_props_out.properties))))
+      (var-def
+        (variable $desugar$29 (expr
+          (simple-var-ref wpath))))
+      (var-def
+        (variable $desugar$30 (expr
+          (invocation $default$9 (
+            (simple-var-ref $desugar$29))))))
+      (var-def
+        (variable $desugar$31 (expr
+          (invocation io openWritableFile (
+            (simple-var-ref $desugar$29)
+            (simple-var-ref $desugar$30))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$31))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$31))) ())
+      (var-def
+        (variable wb (type
+          (user-defined-type io WritableByteChannel)) (expr
+          (simple-var-ref $desugar$31))))
+      (var-def
+        (variable wc (type
+          (user-defined-type io WritableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref wb)
+            (literal UTF-8))))))
+      (var-def
+        (variable $desugar$32 (expr
+          (invocation writeProperties expr:
+            (simple-var-ref wc) (
+            (mapping-constructor-expr
+              (key-value
+                (literal key one)
+                (literal value=1))
+              (key-value
+                (literal plain)
+                (literal text))
+              (key-value
+                (literal uni)
+                (literal ü))
+              (key-value
+                (literal tab)
+                (literal a	b))
+              (key-value
+                (literal line)
+                (literal a
+b)))
+            (literal generated))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$32))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$32))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$32))
+      (var-def
+        (variable $desugar$33 (expr
+          (invocation close expr:
+            (simple-var-ref wc) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$33))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$33))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$33))
+      (var-def
+        (variable $desugar$34 (expr
+          (invocation io openReadableFile (
+            (simple-var-ref wpath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$34))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$34))) ())
+      (var-def
+        (variable vb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$34))))
+      (var-def
+        (variable vc (type
+          (user-defined-type io ReadableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref vb)
+            (literal UTF-8))))))
+      (var-def
+        (variable $desugar$35 (expr
+          (invocation readAllProperties expr:
+            (simple-var-ref vc) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$35))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$35))) ())
+      (var-def
+        (variable written (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (simple-var-ref $desugar$35))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref written))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref written)
+            (literal key one)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref written)
+            (literal plain)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref written)
+            (literal uni)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref written)
+              (literal tab))
+            (literal a	b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref written)
+              (literal line))
+            (literal a
+b)))))
+      (var-def
+        (variable $desugar$36 (expr
+          (invocation close expr:
+            (simple-var-ref vc) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$36))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$36))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$36)))))

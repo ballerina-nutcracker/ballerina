@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading and writing. The Go Native Interpreter currently supports console printing, file I/O (string, lines, bytes, JSON, XML), stream-based line/block reading and writing, and byte channels (`read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, `write`, `close`).
+This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading and writing. The Go Native Interpreter currently supports console printing, file I/O (string, lines, bytes, JSON, XML), stream-based line/block reading and writing, byte channels (`read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, `write`, `close`), and character channels (charset-aware string, line, JSON, XML, and `.properties` reading and writing).
 
 ## Key Functionalities
 
@@ -15,6 +15,8 @@ This module provides I/O operations for Ballerina programs. The full jBallerina 
 - Control write behaviour with the `FileWriteOption` enum (`OVERWRITE` or `APPEND`).
 - Read bytes from a file or an in-memory byte array using `io:ReadableByteChannel`, obtained via `openReadableFile` or `createReadableChannel`, with `read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, and `close`.
 - Write bytes to a file using `io:WritableByteChannel`, obtained via `openWritableFile`, with `write` and `close`.
+- Read characters, lines, JSON, XML, or `.properties` content from a byte channel with a chosen charset using `io:ReadableCharacterChannel`.
+- Write characters, lines, JSON, XML, or `.properties` content to a byte channel with a chosen charset using `io:WritableCharacterChannel`.
 
 ## Examples
 
@@ -104,7 +106,7 @@ Support Levels:
 | File write option enum | Supported | `FileWriteOption`: `OVERWRITE` and `APPEND` constants. |
 | Module-level error type | Partially Supported | `io:Error` declared as a plain `error` alias; `distinct` error subtypes (`FileNotFoundError`, `GenericError`, `AccessDeniedError`, `EofError`, `ConfigurationError`, `TypeMismatchError`) not yet supported. |
 | Byte channels | Supported | `ReadableByteChannel`: `read`, `readAll` (returns `readonly & byte[]`), `blockStream`, `base64Encode`, `base64Decode`, `close`. `WritableByteChannel`: `write`, `close`. |
-| Character channels | Not Yet Supported | `ReadableCharacterChannel`, `WritableCharacterChannel`. Not implemented. |
+| Character channels | Supported | `ReadableCharacterChannel`: `read`, `readString`, `readAllLines`, `readJson`, `readXml`, `readProperty`, `readAllProperties`, `lineStream`, `close`, constructed as `new (byteChannel, charset)`. `WritableCharacterChannel`: `write` (returns bytes written, as in jBallerina), `writeLine`, `writeJson`, `writeXml` (with optional `XmlDoctype`), `writeProperties`, `close`. The `LineStream`/`BlockStream` public helper classes are not declared; `lineStream()`/`blockStream()` return plain stream values instead. |
 | Data channels | Not Yet Supported | Not implemented. |
 | CSV channels | Not Yet Supported | Not implemented. |
 | Channel file open functions | Partially Supported | `openReadableFile`, `openWritableFile`, `createReadableChannel` supported. `openReadableCsvFile`, `openWritableCsvFile` not yet supported (depend on CSV channels). |

@@ -1,0 +1,186 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_char_write.txt))))
+    (var-def
+      (variable wb (type
+        (user-defined-type io WritableByteChannel)) (expr
+        (checked-expr
+          (invocation io openWritableFile (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable wc (type
+        (user-defined-type io WritableCharacterChannel)) (expr
+        (new (
+          (simple-var-ref wb)
+          (literal UTF-8))))))
+    (var-def
+      (variable n1 (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation write expr:
+            (simple-var-ref wc) (
+            (literal héllo wörld)
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n1))))
+    (var-def
+      (variable n2 (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation write expr:
+            (simple-var-ref wc) (
+            (literal abc)
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n2))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeLine expr:
+          (simple-var-ref wc) (
+          (literal !)))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref wc) ())))
+    (var-def
+      (variable closedWrite (type
+        (union-type
+          (user-defined-type io Error)
+          (value-type null))) (expr
+        (invocation close expr:
+          (simple-var-ref wc) ()))))
+    (type-test-expr is
+      (simple-var-ref closedWrite)
+      (user-defined-type io Error))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref closedWrite))))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable afterClose (type
+        (union-type
+          (value-type int)
+          (user-defined-type io Error))) (expr
+        (invocation write expr:
+          (simple-var-ref wc) (
+          (literal x)
+          (literal 0))))))
+    (type-test-expr is
+      (simple-var-ref afterClose)
+      (user-defined-type io Error))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref afterClose))))))
+  )
+  (bb4 (bb3 bb2) ()
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation io fileReadString (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable ab (type
+        (user-defined-type io WritableByteChannel)) (expr
+        (checked-expr
+          (invocation io openWritableFile (
+            (simple-var-ref path)
+            (simple-var-ref io APPEND)))))))
+    (var-def
+      (variable ac (type
+        (user-defined-type io WritableCharacterChannel)) (expr
+        (new (
+          (simple-var-ref ab)
+          (literal UTF-8))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (checked-expr
+        (invocation write expr:
+          (simple-var-ref ac) (
+          (literal +more)
+          (literal 0)))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref ac) ())))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation io fileReadString (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable lpath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_char_write_latin1.txt))))
+    (var-def
+      (variable lb (type
+        (user-defined-type io WritableByteChannel)) (expr
+        (checked-expr
+          (invocation io openWritableFile (
+            (simple-var-ref lpath)))))))
+    (var-def
+      (variable lc (type
+        (user-defined-type io WritableCharacterChannel)) (expr
+        (new (
+          (simple-var-ref lb)
+          (literal ISO-8859-1))))))
+    (var-def
+      (variable n3 (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation write expr:
+            (simple-var-ref lc) (
+            (literal café)
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n3))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref lc) ())))
+    (var-def
+      (variable latinBytes (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (simple-var-ref lpath)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref latinBytes))))))
+    (var-def
+      (variable lrb (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io openReadableFile (
+            (simple-var-ref lpath)))))))
+    (var-def
+      (variable lrc (type
+        (user-defined-type io ReadableCharacterChannel)) (expr
+        (new (
+          (simple-var-ref lrb)
+          (literal ISO-8859-1))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readString expr:
+            (simple-var-ref lrc) ())))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref lrc) ())))
+  )
+)

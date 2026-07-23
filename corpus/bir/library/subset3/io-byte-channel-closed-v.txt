@@ -94,7 +94,7 @@ main() -> nil|error{
   }
   bb18 {
     $desugar$6 = (1, path);
-    %8 = $default$7($desugar$6) -> bb19;
+    %8 = $default$9($desugar$6) -> bb19;
   }
   bb19 {
     $desugar$7 = %8;

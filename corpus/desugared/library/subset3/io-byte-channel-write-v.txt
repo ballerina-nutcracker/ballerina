@@ -15,7 +15,7 @@
           (simple-var-ref path))))
       (var-def
         (variable $desugar$1 (expr
-          (invocation $default$7 (
+          (invocation $default$9 (
             (simple-var-ref $desugar$0))))))
       (var-def
         (variable $desugar$2 (expr

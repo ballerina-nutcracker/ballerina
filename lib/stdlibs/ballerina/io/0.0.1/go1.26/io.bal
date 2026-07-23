@@ -379,6 +379,198 @@ public class WritableByteChannel {
     public isolated function close() returns Error? = external;
 }
 
+# Represents the XML DOCTYPE entity.
+#
+# + system - The system identifier
+# + public - The public identifier
+# + internalSubset - Internal DTD schema
+public type XmlDoctype record {|
+    string? system = ();
+    string? 'public = ();
+    string? internalSubset = ();
+|};
+
+# Represents a channel, which could be used to read characters through a given ReadableByteChannel.
+public class ReadableCharacterChannel {
+
+    private ReadableByteChannel byteChannel;
+    private string charset;
+
+    # Initializes a readable character channel.
+    #
+    # + byteChannel - The `io:ReadableByteChannel`, which would be used to read the characters
+    # + charset - The character set, which is used to encode/decode the given bytes to characters
+    public isolated function init(ReadableByteChannel byteChannel, string charset) {
+        self.byteChannel = byteChannel;
+        self.charset = charset;
+        self.initChannel(byteChannel, charset);
+    }
+
+    private isolated function initChannel(ReadableByteChannel byteChannel, string charset) = external;
+
+    # Reads a given number of characters. This will attempt to read up to the `numberOfChars` characters of the channel.
+    # An `io:Error` will return once the channel reaches the end.
+    # ```ballerina
+    # string|io:Error result = readableCharChannel.read(1000);
+    # ```
+    #
+    # + numberOfChars - Number of characters, which should be read
+    # + return - The characters that read as a string, or an `io:Error` once the channel reaches the end or
+    # something went wrong while reading
+    public isolated function read(int numberOfChars) returns string|Error = external;
+
+    # Reads the entire channel content as a string.
+    # ```ballerina
+    # string|io:Error content = readableCharChannel.readString();
+    # ```
+    # + return - The content that read as a string or an `io:Error`
+    public isolated function readString() returns string|Error = external;
+
+    # Reads the entire channel content as a list of lines.
+    # ```ballerina
+    # string[]|io:Error content = readableCharChannel.readAllLines();
+    # ```
+    # + return - The content that read as an array of lines (separated by the `\n` character) or an `io:Error`
+    public isolated function readAllLines() returns string[]|Error = external;
+
+    # Reads a JSON from the given channel.
+    # ```ballerina
+    # json|io:Error result = readableCharChannel.readJson();
+    # ```
+    #
+    # + return - The content that is read as a JSON or else an `io:Error`
+    public isolated function readJson() returns json|Error = external;
+
+    # Reads an XML from the given channel.
+    # ```ballerina
+    # json|io:Error result = readableCharChannel.readXml();
+    # ```
+    #
+    # + return - The content that is read as an XML or else an `io:Error`
+    public isolated function readXml() returns xml|Error = external;
+
+    # Reads the value of a specified property key from a properties file.
+    # If the key is not found, the provided default value is returned.
+    # ```ballerina
+    # string|io:Error result = readableCharChannel.readProperty(key, defaultValue);
+    # ```
+    # + key - The property key to look up in the properties file
+    # + defaultValue - The default value to return if the key is not found
+    # + return - The property value related to the given key or else an `io:Error`
+    public isolated function readProperty(string key, string defaultValue = "") returns string|Error = external;
+
+    # Returns a stream of lines that can be used to read all the lines in a file as a stream.
+    # ```ballerina
+    # stream<string, io:Error>|io:Error? result = readableCharChannel.lineStream();
+    # ```
+    #
+    # + return - A stream of strings (lines) or an `io:Error`
+    public isolated function lineStream() returns stream<string, Error?>|Error = external;
+
+    # Reads all properties from a properties file.
+    # ```ballerina
+    # map<string>|io:Error result = readableCharChannel.readAllProperties();
+    # ```
+    #
+    # + return - A map of strings that contains all properties
+    public isolated function readAllProperties() returns map<string>|Error = external;
+
+    # Closes the character channel.
+    # After a channel is closed, any further reading operations will cause an error.
+    # ```ballerina
+    # io:Error? err = readableCharChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents a writable character channel used for writing characters.
+public class WritableCharacterChannel {
+
+    private WritableByteChannel bChannel;
+    private string charset;
+
+    # Initializes a writable character channel.
+    #
+    # + bChannel - The `io:WritableByteChannel`, which would be used to write the characters
+    # + charset - The character set, which would be used to encode the given bytes to characters
+    public isolated function init(WritableByteChannel bChannel, string charset) {
+        self.bChannel = bChannel;
+        self.charset = charset;
+        self.initChannel(bChannel, charset);
+    }
+
+    private isolated function initChannel(WritableByteChannel bChannel, string charset) = external;
+
+    # Writes a sequence of characters (string) to the writable character channel.
+    # ```ballerina
+    # int|io:Error result = writableCharChannel.write("Content", 0);
+    # ```
+    #
+    # + content - The string content to be written
+    # + startOffset - The number of characters to skip from the beginning of the content before writing
+    # + return - The number of bytes written to the channel, or an `io:Error` if an error occurs
+    public isolated function write(string content, int startOffset) returns int|Error = external;
+
+    # Writes a string as a line followed by a newline character (`\n`) to the writable character channel.
+    # ```ballerina
+    # io:Error? result = writableCharChannel.writeLine("Content");
+    # ```
+    #
+    # + content - The string content to be written
+    # + return - `()` if the writing was successful or an `io:Error`
+    public isolated function writeLine(string content) returns Error? {
+        string lineContent = content + "\n";
+        var result = self.write(lineContent, 0);
+        if result is Error {
+            return result;
+        }
+        return;
+    }
+
+    # Writes the provided JSON content to the writable character channel.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.writeJson(inputJson);
+    # ```
+    #
+    # + content - The JSON content to be written
+    # + return - `()` if the writing was successful or an `io:Error`
+    public isolated function writeJson(json content) returns Error? = external;
+
+    # Writes the provided XML content to the writable character channel.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.writeXml(inputXml);
+    # ```
+    #
+    # + content - The XML content to be written
+    # + xmlDoctype - An optional argument to specify the XML DOCTYPE configurations for the XML content
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function writeXml(xml content, XmlDoctype? xmlDoctype = ()) returns Error? {
+        return self.writeXmlExtern(content, xmlDoctype);
+    }
+
+    private isolated function writeXmlExtern(xml content, XmlDoctype? xmlDoctype) returns Error? = external;
+
+    # Writes a key-value pair map (`map<string>`) to a property file.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.writeProperties(properties, "comment");
+    # ```
+    # + properties - The map<string> that contains keys and values
+    # + comment - A comment describing the property list to be included
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function writeProperties(map<string> properties, string comment) returns Error? = external;
+
+    # Closes the character channel.
+    # After a channel is closed, any further writing operations will cause an error.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
 # Retrieves a readable byte channel from a given file path.
 # ```ballerina
 # io:ReadableByteChannel readableFieldResult = check io:openReadableFile("./files/sample.txt");

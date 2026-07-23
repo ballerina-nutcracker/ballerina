@@ -4,7 +4,7 @@ main() -> nil|error{
     %1 = ConstantLoad /tmp/bal_io_byte_channel_write.bin
     path = %1;
     $desugar$0 = path;
-    %4 = $default$7($desugar$0) -> bb1;
+    %4 = $default$9($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %4;
