@@ -419,6 +419,10 @@ func (br *birReader) readFunction() *bir.BIRFunction {
 				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
 					t.ThenBB = target
 				}
+			case *bir.AlternateWaitAction:
+				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
+					t.ThenBB = target
+				}
 			case *bir.Panic:
 				// Panic has no ThenBB
 			case *bir.LockStart:
@@ -947,6 +951,15 @@ func (br *birReader) readTerminator(varMap map[int32]*bir.BIRLocalVariableDcl) b
 		lhsOp := br.readOperand(varMap)
 		thenBBId := br.readStringCPEntry()
 		return bir.NewSingleWaitAction(*future, &bir.BIRBasicBlock{ID: thenBBId}, lhsOp, pos)
+	case bir.InstructionKindAlternateWait:
+		futureCount := br.readLength()
+		futures := make([]bir.BIROperand, futureCount)
+		for i := range futureCount {
+			futures[i] = *br.readOperand(varMap)
+		}
+		lhsOp := br.readOperand(varMap)
+		thenBBId := br.readStringCPEntry()
+		return bir.NewAlternateWaitAction(futures, &bir.BIRBasicBlock{ID: thenBBId}, lhsOp, pos)
 	case bir.InstructionKindPanic:
 		errorOp := br.readOperand(varMap)
 		return &bir.Panic{

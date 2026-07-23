@@ -9970,7 +9970,10 @@ func (b *ballerinaParser) parseSingleOrAlternateWaitAction(waitKeyword st.STNode
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return st.CreateWaitActionNode(waitKeyword, waitFutureExprList[0])
+	if len(waitFutureExprList) == 1 {
+		return st.CreateWaitActionNode(waitKeyword, waitFutureExprList[0])
+	}
+	return st.CreateWaitActionNode(waitKeyword, st.CreateNodeList(waitFutureExprList...))
 }
 
 func (b *ballerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind) bool {
@@ -9983,7 +9986,7 @@ func (b *ballerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind)
 }
 
 func (b *ballerinaParser) parseWaitFutureExpr() st.STNode {
-	waitFutureExpr := b.parseActionOrExpression()
+	waitFutureExpr := b.parseExpressionWithPrecedence(operatorPrecedenceBitwiseOr, true, true)
 	if waitFutureExpr.Kind() == st.MAPPING_CONSTRUCTOR {
 		waitFutureExpr = st.AddDiagnostic(waitFutureExpr,
 			&common.ERROR_MAPPING_CONSTRUCTOR_EXPR_AS_A_WAIT_EXPR)

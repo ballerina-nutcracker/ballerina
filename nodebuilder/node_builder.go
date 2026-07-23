@@ -4419,19 +4419,37 @@ func (n *nodeBuilder) transformTrippleGTToken(trippleGTTokenNode *st.TrippleGTTo
 }
 
 func (n *nodeBuilder) transformWaitAction(waitActionNode *st.WaitActionNode) ast.BLangNode {
-	futureExpr, ok := waitActionNode.WaitFutureExpr().(st.ExpressionNode)
-	if !ok {
-		n.cx.Unimplemented("alternate and multiple wait actions are not yet supported", n.getPosition(waitActionNode.WaitFutureExpr()))
+	waitFutureExpr := waitActionNode.WaitFutureExpr()
+	switch futureExpr := waitFutureExpr.(type) {
+	case *st.ExternalTreeNodeList:
+		futureExprs := make([]ast.BLangExpression, 0)
+		for child := range futureExpr.ChildNodes() {
+			if _, ok := child.(st.Token); ok {
+				continue
+			}
+			expr, ok := n.createActionOrExpression(child.(st.ExpressionNode)).(ast.BLangExpression)
+			if !ok {
+				n.cx.InternalError("alternate wait operand is not an expression", n.getPosition(child))
+				return nil
+			}
+			futureExprs = append(futureExprs, expr)
+		}
+		action := &ast.BLangAlternateWaitAction{FutureExprs: futureExprs}
+		action.SetPosition(n.getPosition(waitActionNode))
+		return action
+	case *st.WaitFieldsListNode:
+		n.cx.Unimplemented("multiple wait actions are not yet supported", n.getPosition(futureExpr))
 		return nil
+	default:
+		expr, ok := n.createActionOrExpression(futureExpr.(st.ExpressionNode)).(ast.BLangExpression)
+		if !ok {
+			n.cx.InternalError("single wait operand is not an expression", n.getPosition(futureExpr))
+			return nil
+		}
+		action := &ast.BLangSingleWaitAction{FutureExpr: expr}
+		action.SetPosition(n.getPosition(waitActionNode))
+		return action
 	}
-	expr, ok := n.createActionOrExpression(futureExpr).(ast.BLangExpression)
-	if !ok {
-		n.cx.InternalError("single wait operand is not an expression", n.getPosition(futureExpr))
-		return nil
-	}
-	action := &ast.BLangSingleWaitAction{FutureExpr: expr}
-	action.SetPosition(n.getPosition(waitActionNode))
-	return action
 }
 
 func (n *nodeBuilder) transformWaitFieldsList(waitFieldsListNode *st.WaitFieldsListNode) ast.BLangNode {

@@ -948,6 +948,8 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeStartAction(a, expr, expectedType)
 	case *ast.BLangSingleWaitAction:
 		return analyzeSingleWaitAction(a, expr, expectedType)
+	case *ast.BLangAlternateWaitAction:
+		return analyzeAlternateWaitAction(a, expr, expectedType)
 	case *ast.BLangInferredTypedescDefault:
 		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangDefaultArg:
@@ -1076,6 +1078,15 @@ func analyzeStartAction[A analyzer](a A, expr *ast.BLangStartAction, expectedTyp
 func analyzeSingleWaitAction[A analyzer](a A, expr *ast.BLangSingleWaitAction, expectedType semtypes.SemType) bool {
 	if !analyzeActionOrExpression(a, expr.FutureExpr, semtypes.Future) {
 		return false
+	}
+	return validateResolvedType(a, expr, expectedType)
+}
+
+func analyzeAlternateWaitAction[A analyzer](a A, expr *ast.BLangAlternateWaitAction, expectedType semtypes.SemType) bool {
+	for _, futureExpr := range expr.FutureExprs {
+		if !analyzeActionOrExpression(a, futureExpr, semtypes.Future) {
+			return false
+		}
 	}
 	return validateResolvedType(a, expr, expectedType)
 }

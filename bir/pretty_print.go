@@ -221,6 +221,8 @@ func (p *PrettyPrinter) PrintInstruction(instruction BIRInstruction) string {
 		return p.PrintStartAction(instruction)
 	case *SingleWaitAction:
 		return p.PrintSingleWaitAction(instruction)
+	case *AlternateWaitAction:
+		return p.PrintAlternateWaitAction(instruction)
 	case *NewObject:
 		return p.PrintNewObject(instruction)
 	case *NewStream:
@@ -471,6 +473,17 @@ func (p *PrettyPrinter) PrintStartAction(action *StartAction) string {
 
 func (p *PrettyPrinter) PrintSingleWaitAction(action *SingleWaitAction) string {
 	return fmt.Sprintf("%s = wait %s -> %s;", p.PrintOperand(*action.LhsOp), p.PrintOperand(action.Future), action.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintAlternateWaitAction(action *AlternateWaitAction) string {
+	futures := strings.Builder{}
+	for i, future := range action.Futures {
+		if i > 0 {
+			futures.WriteString(" | ")
+		}
+		futures.WriteString(p.PrintOperand(future))
+	}
+	return fmt.Sprintf("%s = wait %s -> %s;", p.PrintOperand(*action.LhsOp), futures.String(), action.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintCall(call *Call) string {

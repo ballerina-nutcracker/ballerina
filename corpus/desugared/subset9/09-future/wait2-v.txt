@@ -1,0 +1,414 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (function firstError () (
+    (error-type))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal first))))))
+  (function lastError () (
+    (error-type))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal last))))))
+  (function number () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function text () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal done))))
+  (function optionalError (
+    (variable shouldFail (type
+      (value-type boolean)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (if
+        (simple-var-ref shouldFail)
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal optional))))) ())
+      (block-stmt
+        (return
+          (literal <nil>)))))
+  (function crash () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal ignored))))))
+  (function identity (
+    (variable value (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (constrained-type
+      (builtin-ref-type future)
+      (value-type int)))
+    (block-function-body
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation firstError ()))))))))
+      (var-def
+        (variable failed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (simple-var-ref $desugar$1)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable succeeded (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$3)))))
+      (var-def
+        (variable firstSuccess (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref failed)
+            (simple-var-ref succeeded)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref firstSuccess))))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $desugar$4 () ()
+              (block-function-body
+                (return
+                  (invocation firstError ()))))))))
+      (var-def
+        (variable earlierError (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (simple-var-ref $desugar$5)))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $desugar$6 () ()
+              (block-function-body
+                (return
+                  (invocation lastError ()))))))))
+      (var-def
+        (variable laterError (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (simple-var-ref $desugar$7)))))
+      (var-def
+        (variable allFailed (type
+          (error-type)) (expr
+          (alternate-wait-action
+            (simple-var-ref laterError)
+            (simple-var-ref earlierError)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.error message (
+            (simple-var-ref allFailed))))))
+      (var-def
+        (variable $desugar$9 (expr
+          (lambda
+            (function $desugar$8 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable numberFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$9)))))
+      (var-def
+        (variable $desugar$11 (expr
+          (lambda
+            (function $desugar$10 () ()
+              (block-function-body
+                (return
+                  (invocation text ()))))))))
+      (var-def
+        (variable textFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))) (expr
+          (start-action
+            (simple-var-ref $desugar$11)))))
+      (var-def
+        (variable heterogeneous (type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type string))
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref numberFuture)
+            (simple-var-ref textFuture)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref heterogeneous))))
+      (var-def
+        (variable $desugar$13 (expr
+          (lambda
+            (function $desugar$12 () ()
+              (block-function-body
+                (return
+                  (invocation optionalError (
+                    (literal true))))))))))
+      (var-def
+        (variable optionalFailure (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (simple-var-ref $desugar$13)))))
+      (var-def
+        (variable $desugar$15 (expr
+          (lambda
+            (function $desugar$14 () ()
+              (block-function-body
+                (return
+                  (invocation optionalError (
+                    (literal false))))))))))
+      (var-def
+        (variable optionalSuccess (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (simple-var-ref $desugar$15)))))
+      (var-def
+        (variable optionalSuccessResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (alternate-wait-action
+            (simple-var-ref optionalFailure)
+            (simple-var-ref optionalSuccess)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref optionalSuccessResult)
+            (value-type null)))))
+      (var-def
+        (variable $desugar$17 (expr
+          (lambda
+            (function $desugar$16 () ()
+              (block-function-body
+                (return
+                  (invocation optionalError (
+                    (literal true))))))))))
+      (var-def
+        (variable optionalFailureOne (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (simple-var-ref $desugar$17)))))
+      (var-def
+        (variable $desugar$19 (expr
+          (lambda
+            (function $desugar$18 () ()
+              (block-function-body
+                (return
+                  (invocation optionalError (
+                    (literal true))))))))))
+      (var-def
+        (variable optionalFailureTwo (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (simple-var-ref $desugar$19)))))
+      (var-def
+        (variable optionalFailureResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (alternate-wait-action
+            (simple-var-ref optionalFailureOne)
+            (simple-var-ref optionalFailureTwo)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref optionalFailureResult)
+            (error-type)))))
+      (var-def
+        (variable $desugar$21 (expr
+          (lambda
+            (function $desugar$20 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable expressionFirst (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$21)))))
+      (var-def
+        (variable $desugar$23 (expr
+          (lambda
+            (function $desugar$22 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable expressionSecond (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$23)))))
+      (var-def
+        (variable expressionResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (invocation identity (
+              (simple-var-ref expressionFirst)))
+            (invocation identity (
+              (simple-var-ref expressionSecond)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref expressionResult))))
+      (var-def
+        (variable $desugar$25 (expr
+          (lambda
+            (function $desugar$24 () ()
+              (block-function-body
+                (return
+                  (invocation firstError ()))))))))
+      (var-def
+        (variable duplicate (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (simple-var-ref $desugar$25)))))
+      (var-def
+        (variable duplicateResult (type
+          (error-type)) (expr
+          (alternate-wait-action
+            (simple-var-ref duplicate)
+            (simple-var-ref duplicate)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.error message (
+            (simple-var-ref duplicateResult))))))
+      (var-def
+        (variable $desugar$27 (expr
+          (lambda
+            (function $desugar$26 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable claimed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$27)))))
+      (var-def
+        (variable claimedFirst (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref claimed)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (type-test-expr is
+          (simple-var-ref claimedFirst)
+          (value-type int)))
+      (var-def
+        (variable claimedResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref claimed)
+            (simple-var-ref claimed)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref claimedResult))))
+      (var-def
+        (variable $desugar$29 (expr
+          (lambda
+            (function $desugar$28 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable completed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$29)))))
+      (var-def
+        (variable $desugar$31 (expr
+          (lambda
+            (function $desugar$30 () ()
+              (block-function-body
+                (return
+                  (invocation crash ()))))))))
+      (var-def
+        (variable ignoredPanic (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$31)))))
+      (var-def
+        (variable completedResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref completed)
+            (simple-var-ref ignoredPanic)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref completedResult)))))))

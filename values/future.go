@@ -18,9 +18,12 @@ package values
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
+
+var futureCompletionOrder atomic.Uint64
 
 type futureOutcome struct {
 	result BalValue
@@ -41,6 +44,7 @@ type Future struct {
 	ready   chan struct{}
 	mu      sync.Mutex
 	state   futureState
+	ord     uint64
 	outcome futureOutcome
 }
 
@@ -52,6 +56,7 @@ func (f *Future) Complete(result BalValue, panicValue any) {
 	f.mu.Lock()
 	f.outcome = futureOutcome{result: result, panic: panicValue}
 	f.state = ready
+	f.ord = futureCompletionOrder.Add(1)
 	f.mu.Unlock()
 	close(f.ready)
 }
@@ -78,4 +83,12 @@ func (f *Future) Get() BalValue {
 		panic(f.outcome.panic)
 	}
 	return f.outcome.result
+}
+
+// IsAfter checks if the future was completed after other. This is best effort check. Caller must make sure both futures
+// are complet (IsComplete) before calling this.
+func (f *Future) IsAfter(other *Future) bool {
+	// NOTE: this don't handle the overflowing case. In general you can always overflow with enough load and time.
+	// Instead we assume both futures were completed close enough to each such that we can compare ord.
+	return f.ord > other.ord
 }

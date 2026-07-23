@@ -313,6 +313,8 @@ func execTerminator(ctx *extern.Context, term bir.BIRTerminator, frame *Frame) *
 		return execStartAction(ctx, v, frame)
 	case *bir.SingleWaitAction:
 		return execSingleWaitAction(ctx, v, frame)
+	case *bir.AlternateWaitAction:
+		return execAlternateWaitAction(ctx, v, frame)
 	case *bir.Call:
 		switch v.GetKind() {
 		case bir.InstructionKindCall:

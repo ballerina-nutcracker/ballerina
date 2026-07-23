@@ -40,6 +40,15 @@ func execSingleWaitAction(ctx *extern.Context, action *bir.SingleWaitAction, fra
 	return action.ThenBB
 }
 
+func execAlternateWaitAction(ctx *extern.Context, action *bir.AlternateWaitAction, frame *Frame) *bir.BIRBasicBlock {
+	futures := make([]*values.Future, len(action.Futures))
+	for i := range action.Futures {
+		futures[i] = getOperandValue(ctx, &action.Futures[i], frame).(*values.Future)
+	}
+	setOperandValue(ctx, action.LhsOp, frame, waitAnyFuture(ctx, futures))
+	return action.ThenBB
+}
+
 func waitFuture(ctx *extern.Context, future *values.Future) values.BalValue {
 	for {
 		<-ctx.Yield()
@@ -47,6 +56,48 @@ func waitFuture(ctx *extern.Context, future *values.Future) values.BalValue {
 			return future.Get()
 		}
 	}
+}
+
+func waitAnyFuture(ctx *extern.Context, futures []*values.Future) values.BalValue {
+	completed := make([]bool, len(futures))
+	remaining := len(futures)
+	var lastError *values.Error
+	for remaining > 0 {
+		<-ctx.Yield()
+		idx, found := earliestCompletedFuture(futures, completed)
+		if !found {
+			continue
+		}
+		future := futures[idx]
+		result := future.Get()
+		err, ok := result.(*values.Error)
+		if !ok {
+			return result
+		}
+		lastError = err
+		for i, candidate := range futures {
+			if !completed[i] && candidate == future {
+				completed[i] = true
+				remaining--
+			}
+		}
+	}
+	return lastError
+}
+
+func earliestCompletedFuture(futures []*values.Future, completed []bool) (int, bool) {
+	earliest := 0
+	found := false
+	for i, future := range futures {
+		if completed[i] || !future.IsComplete() {
+			continue
+		}
+		if !found || futures[earliest].IsAfter(future) {
+			earliest = i
+			found = true
+		}
+	}
+	return earliest, found
 }
 
 func execBranch(ctx *extern.Context, branchTerm *bir.Branch, frame *Frame) *bir.BIRBasicBlock {

@@ -1,0 +1,302 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function firstError () (
+    (error-type))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal first))))))
+  (function lastError () (
+    (error-type))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal last))))))
+  (function number () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function text () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal done))))
+  (function optionalError (
+    (variable shouldFail (type
+      (value-type boolean)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (if
+        (simple-var-ref shouldFail)
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal optional))))) ())
+      (block-stmt
+        (return
+          (literal <nil>)))))
+  (function crash () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal ignored))))))
+  (function identity (
+    (variable value (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (constrained-type
+      (builtin-ref-type future)
+      (value-type int)))
+    (block-function-body
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable failed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (invocation firstError ())))))
+      (var-def
+        (variable succeeded (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable firstSuccess (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref failed)
+            (simple-var-ref succeeded)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref firstSuccess))))
+      (var-def
+        (variable earlierError (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (invocation firstError ())))))
+      (var-def
+        (variable laterError (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (invocation lastError ())))))
+      (var-def
+        (variable allFailed (type
+          (error-type)) (expr
+          (alternate-wait-action
+            (simple-var-ref laterError)
+            (simple-var-ref earlierError)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation message expr:
+            (simple-var-ref allFailed) ()))))
+      (var-def
+        (variable numberFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable textFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))) (expr
+          (start-action
+            (invocation text ())))))
+      (var-def
+        (variable heterogeneous (type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type string))
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref numberFuture)
+            (simple-var-ref textFuture)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref heterogeneous))))
+      (var-def
+        (variable optionalFailure (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (invocation optionalError (
+              (literal true)))))))
+      (var-def
+        (variable optionalSuccess (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (invocation optionalError (
+              (literal false)))))))
+      (var-def
+        (variable optionalSuccessResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (alternate-wait-action
+            (simple-var-ref optionalFailure)
+            (simple-var-ref optionalSuccess)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref optionalSuccessResult)
+            (value-type null)))))
+      (var-def
+        (variable optionalFailureOne (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (invocation optionalError (
+              (literal true)))))))
+      (var-def
+        (variable optionalFailureTwo (type
+          (constrained-type
+            (builtin-ref-type future)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (start-action
+            (invocation optionalError (
+              (literal true)))))))
+      (var-def
+        (variable optionalFailureResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (alternate-wait-action
+            (simple-var-ref optionalFailureOne)
+            (simple-var-ref optionalFailureTwo)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref optionalFailureResult)
+            (error-type)))))
+      (var-def
+        (variable expressionFirst (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable expressionSecond (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable expressionResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (invocation identity (
+              (simple-var-ref expressionFirst)))
+            (invocation identity (
+              (simple-var-ref expressionSecond)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref expressionResult))))
+      (var-def
+        (variable duplicate (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (invocation firstError ())))))
+      (var-def
+        (variable duplicateResult (type
+          (error-type)) (expr
+          (alternate-wait-action
+            (simple-var-ref duplicate)
+            (simple-var-ref duplicate)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation message expr:
+            (simple-var-ref duplicateResult) ()))))
+      (var-def
+        (variable claimed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable claimedFirst (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref claimed)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (type-test-expr is
+          (simple-var-ref claimedFirst)
+          (value-type int)))
+      (var-def
+        (variable claimedResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref claimed)
+            (simple-var-ref claimed)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref claimedResult))))
+      (var-def
+        (variable completed (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable ignoredPanic (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation crash ())))))
+      (var-def
+        (variable completedResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref completed)
+            (simple-var-ref ignoredPanic)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref completedResult)))))))

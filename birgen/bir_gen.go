@@ -1045,6 +1045,8 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 		return generateStartAction(ctx, curBB, expr)
 	case *ast.BLangSingleWaitAction:
 		return generateSingleWaitAction(ctx, curBB, expr)
+	case *ast.BLangAlternateWaitAction:
+		return generateAlternateWaitAction(ctx, curBB, expr)
 	case *ast.BLangTypedescExpr:
 		return typedescExpression(ctx, curBB, expr)
 	case *ast.BLangXMLSequenceLiteral:
@@ -1079,6 +1081,19 @@ func generateSingleWaitAction(ctx context, curBB *bir.BIRBasicBlock, action *ast
 	thenBB := ctx.function().addBB()
 	result := ctx.addTempVar(action.GetDeterminedType())
 	futureEffect.block.Terminator = bir.NewSingleWaitAction(*futureEffect.result, thenBB, result, pos)
+	return expressionEffect{result: result, block: thenBB}
+}
+
+func generateAlternateWaitAction(ctx context, curBB *bir.BIRBasicBlock, action *ast.BLangAlternateWaitAction) expressionEffect {
+	futures := make([]bir.BIROperand, 0, len(action.FutureExprs))
+	for _, futureExpr := range action.FutureExprs {
+		futureEffect := handleActionOrExpression(ctx, curBB, futureExpr)
+		curBB = futureEffect.block
+		futures = append(futures, *futureEffect.result)
+	}
+	thenBB := ctx.function().addBB()
+	result := ctx.addTempVar(action.GetDeterminedType())
+	curBB.Terminator = bir.NewAlternateWaitAction(futures, thenBB, result, ctx.function().loc(action.GetPosition()))
 	return expressionEffect{result: result, block: thenBB}
 }
 

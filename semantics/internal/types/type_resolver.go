@@ -3729,6 +3729,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolved(resolveStartAction(t, chain, e, expectedType))
 	case *ast.BLangSingleWaitAction:
 		return resolved(resolveSingleWaitAction(t, chain, e))
+	case *ast.BLangAlternateWaitAction:
+		return resolved(resolveAlternateWaitAction(t, chain, e))
 	case *ast.BLangInferredTypedescDefault:
 		return resolved(resolveInferredTypedescDefault(t, chain, e, expectedType))
 	case *ast.BLangDefaultArg:
@@ -4205,6 +4207,24 @@ func resolveSingleWaitAction(t typeResolver, chain *binding, e *ast.BLangSingleW
 	resultTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
 	setExpectedType(e, resultTy)
 	return resultTy, futureResult.effect, true
+}
+
+func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlternateWaitAction) (semtypes.SemType, expressionEffect, bool) {
+	resultTy := semtypes.Error
+	for _, futureExpr := range e.FutureExprs {
+		futureResult, ok := resolveActionOrExpression(t, chain, futureExpr, semtypes.Future)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		futureTy := futureResult.ty
+		if !semtypes.IsSubtype(t.typeContext(), futureTy, semtypes.Future) {
+			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		resultTy = semtypes.Union(resultTy, semtypes.FutureEventualType(t.typeContext(), futureTy))
+	}
+	setExpectedType(e, resultTy)
+	return resultTy, defaultExpressionEffect(chain), true
 }
 
 func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semtypes.SemType, expressionEffect, bool) {

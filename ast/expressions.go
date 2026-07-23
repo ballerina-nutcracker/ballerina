@@ -437,6 +437,11 @@ type (
 		FutureExpr BLangExpression
 	}
 
+	BLangAlternateWaitAction struct {
+		bLangActionBase
+		FutureExprs []BLangExpression
+	}
+
 	BLangGroupExpr struct {
 		bLangExpressionBase
 		Expression BLangExpression
@@ -598,6 +603,7 @@ var (
 	_ BLangAction                 = &BLangClientResourceAccessAction{}
 	_ BLangAction                 = &BLangStartAction{}
 	_ BLangAction                 = &BLangSingleWaitAction{}
+	_ BLangAction                 = &BLangAlternateWaitAction{}
 	_ BLangExpression             = &BLangQueryExpr{}
 	_ GroupExpressionNode         = &BLangGroupExpr{}
 	_ TypedescExpressionNode      = &BLangTypedescExpr{}

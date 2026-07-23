@@ -95,6 +95,11 @@ type (
 		BIRTerminatorBase
 		Future BIROperand
 	}
+
+	AlternateWaitAction struct {
+		BIRTerminatorBase
+		Futures []BIROperand
+	}
 )
 
 var (
@@ -108,6 +113,7 @@ var (
 	_ BIRAssignInstruction = &ResourceFunctionCall{}
 	_ BIRAssignInstruction = &StartAction{}
 	_ BIRAssignInstruction = &SingleWaitAction{}
+	_ BIRAssignInstruction = &AlternateWaitAction{}
 )
 
 func (g *Goto) GetKind() InstructionKind {
@@ -269,6 +275,19 @@ func NewSingleWaitAction(future BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROpe
 			ThenBB:             thenBB,
 		},
 		Future: future,
+	}
+}
+
+func (a *AlternateWaitAction) GetKind() InstructionKind   { return InstructionKindAlternateWait }
+func (a *AlternateWaitAction) GetLhsOperand() *BIROperand { return a.LhsOp }
+
+func NewAlternateWaitAction(futures []BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *AlternateWaitAction {
+	return &AlternateWaitAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Futures: futures,
 	}
 }
 

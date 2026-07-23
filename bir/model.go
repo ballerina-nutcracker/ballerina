@@ -247,6 +247,7 @@ const (
 	InstructionKindLock
 	InstructionKindUnlock
 	InstructionKindResourceCall
+	InstructionKindAlternateWait
 	InstructionKindMove
 	InstructionKindConstLoad
 	InstructionKindNewStructure

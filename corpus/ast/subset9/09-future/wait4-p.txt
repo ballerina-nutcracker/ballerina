@@ -1,0 +1,43 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function crash () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal alternate wait panic))))))
+  (function number () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable panicked (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation crash ())))))
+      (var-def
+        (variable succeeded (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation number ())))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref panicked)
+            (simple-var-ref succeeded)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type int))))))

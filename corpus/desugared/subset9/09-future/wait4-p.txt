@@ -1,0 +1,56 @@
+(package
+  (function crash () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal alternate wait panic))))))
+  (function number () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation crash ()))))))))
+      (var-def
+        (variable panicked (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$1)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable succeeded (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$3)))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref panicked)
+            (simple-var-ref succeeded)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type int))))))
