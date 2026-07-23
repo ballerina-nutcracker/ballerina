@@ -1,0 +1,115 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_byte_readonly.bin))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBytes (
+          (simple-var-ref path)
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)
+            (literal 5))))))
+    (var-def
+      (variable bytes (type
+        (intersection-type
+          (value-type readonly)
+          (array-type
+            (value-type byte) dimensions: 1 ([])))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (simple-var-ref path)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref bytes)
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type byte) dimensions: 1 ([])))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref bytes))))))
+    (var-def
+      (variable blocks (type
+        (stream-type
+          (user-defined-type io Block)
+          (union-type
+            (user-defined-type io Error)
+            (value-type null)))) (expr
+        (checked-expr
+          (invocation io fileReadBlocksAsStream (
+            (simple-var-ref path)
+            (literal 2)))))))
+    (var-def
+      (variable first (type
+        (union-type
+          (record-type
+            (field value
+              (user-defined-type io Block)))
+          (union-type
+            (user-defined-type io Error)
+            (value-type null)))) (expr
+        (invocation next expr:
+          (simple-var-ref blocks) ()))))
+    (type-test-expr is
+      (simple-var-ref first)
+      (record-type
+        (field value
+          (user-defined-type io Block))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access value
+            (simple-var-ref first))
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type byte) dimensions: 1 ([])))))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref blocks) ())))
+    (var-def
+      (variable channel (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io openReadableFile (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable all (type
+        (intersection-type
+          (value-type readonly)
+          (array-type
+            (value-type byte) dimensions: 1 ([])))) (expr
+        (checked-expr
+          (invocation readAll expr:
+            (simple-var-ref channel) ())))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref all)
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type byte) dimensions: 1 ([])))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref all)
+          (literal 4)))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref channel) ())))
+  )
+)

@@ -30,11 +30,13 @@ import (
 )
 
 type fileIOTypes struct {
-	strArrTy    semtypes.SemType
-	byteArrTy   semtypes.SemType
-	byteArrAtom *semtypes.ListAtomicType
-	jsonListTy  semtypes.SemType
-	jsonMapTy   semtypes.SemType
+	strArrTy      semtypes.SemType
+	byteArrTy     semtypes.SemType
+	byteArrAtom   *semtypes.ListAtomicType
+	roByteArrTy   semtypes.SemType
+	roByteArrAtom *semtypes.ListAtomicType
+	jsonListTy    semtypes.SemType
+	jsonMapTy     semtypes.SemType
 
 	lineStreamTy   semtypes.SemType
 	lineRecordTy   semtypes.SemType
@@ -82,6 +84,11 @@ func initFileIOModule(rt *runtime.Runtime) {
 	}
 
 	types.byteArrAtom = semtypes.ToListAtomicType(typCtx, types.byteArrTy)
+	// io:Block is `readonly & byte[]`; a CELL_MUT_NONE list definition is the
+	// atom-backed equivalent of that intersection.
+	robld := semtypes.NewListDefinition()
+	types.roByteArrTy = robld.DefineListTypeWrappedWithEnvSemTypeCellMutability(env, semtypes.BYTE, semtypes.CellMutability_CELL_MUT_NONE)
+	types.roByteArrAtom = semtypes.ToListAtomicType(typCtx, types.roByteArrTy)
 
 	streamCompletionTy := semtypes.Union(semtypes.ERROR, semtypes.NIL)
 
@@ -91,9 +98,9 @@ func initFileIOModule(rt *runtime.Runtime) {
 	types.lineStreamTy = lsd.Define(env, semtypes.STRING, streamCompletionTy)
 
 	bsd := semtypes.NewStreamDefinition()
-	types.blockRecordTy = closedNextRecordType(env, types.byteArrTy)
+	types.blockRecordTy = closedNextRecordType(env, types.roByteArrTy)
 	types.blockRecordAtom = semtypes.ToMappingAtomicType(typCtx, types.blockRecordTy)
-	types.blockStreamTy = bsd.Define(env, types.byteArrTy, streamCompletionTy)
+	types.blockStreamTy = bsd.Define(env, types.roByteArrTy, streamCompletionTy)
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileReadString",
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -133,7 +140,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 			for i, b := range data {
 				items[i] = int64(b)
 			}
-			return values.NewList(types.byteArrTy, semtypes.ToListAtomicType(ctx.TypeCtx, types.byteArrTy), false, nil, 0, items), nil
+			return values.NewList(types.roByteArrTy, types.roByteArrAtom, true, nil, 0, items), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileReadJson",

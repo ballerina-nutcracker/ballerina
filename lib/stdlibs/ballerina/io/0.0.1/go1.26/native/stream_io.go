@@ -29,12 +29,14 @@ import (
 	"ballerina-lang-go/values"
 )
 
-func bytesToBlockList(byteArrTy semtypes.SemType, atom *semtypes.ListAtomicType, data []byte) *values.List {
+// bytesToBlockList builds an `io:Block` (`readonly & byte[]`) value, so the
+// given type/atom must be the readonly byte-array variants.
+func bytesToBlockList(roByteArrTy semtypes.SemType, atom *semtypes.ListAtomicType, data []byte) *values.List {
 	items := make([]values.BalValue, len(data))
 	for i, b := range data {
 		items[i] = int64(b)
 	}
-	return values.NewList(byteArrTy, atom, false, nil, 0, items)
+	return values.NewList(roByteArrTy, atom, true, nil, 0, items)
 }
 
 // readLineCRLF reads a single line from r, splitting on "\n", "\r" and "\r\n"
@@ -133,7 +135,7 @@ func registerStreamIOExterns(rt *runtime.Runtime, types fileIOTypes) {
 				buf := make([]byte, blockSize)
 				n, readErr := io.ReadFull(file, buf)
 				if n > 0 {
-					block := bytesToBlockList(types.byteArrTy, types.byteArrAtom, buf[:n])
+					block := bytesToBlockList(types.roByteArrTy, types.roByteArrAtom, buf[:n])
 					return values.NewMap(types.blockRecordTy, types.blockRecordAtom, false,
 						[]values.MapEntry{{Key: "value", Value: block}})
 				}

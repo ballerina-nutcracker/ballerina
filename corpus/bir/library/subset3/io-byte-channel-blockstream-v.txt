@@ -60,7 +60,7 @@ main() -> nil|error{
     PushScopeFrame 3
     %0 = streamNext (1, s)
     r1 = %0;
-    %2 = r1 is {| value: [int:Unsigned8...], never... |}
+    %2 = r1 is {| value: readonly&[int:Unsigned8...], never... |}
     %2 ? bb10 : bb14;
   }
   bb10 {
@@ -89,7 +89,7 @@ main() -> nil|error{
     PushScopeFrame 3
     %0 = streamNext (2, s)
     r2 = %0;
-    %2 = r2 is {| value: [int:Unsigned8...], never... |}
+    %2 = r2 is {| value: readonly&[int:Unsigned8...], never... |}
     %2 ? bb15 : bb18;
   }
   bb15 {
@@ -110,7 +110,7 @@ main() -> nil|error{
     PushScopeFrame 3
     %0 = streamNext (3, s)
     r3 = %0;
-    %2 = r3 is {| value: [int:Unsigned8...], never... |}
+    %2 = r3 is {| value: readonly&[int:Unsigned8...], never... |}
     %2 ? bb19 : bb23;
   }
   bb19 {

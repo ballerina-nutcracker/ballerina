@@ -47,7 +47,7 @@ main() -> nil|error{
   }
   bb7 {
     channel = $desugar$4;
-    %23 = channel is object { private function attachBytes([int:Unsigned8...]) returns nil|error; private function attachFile(string) returns nil|error; public function blockStream(int) returns error|stream; public function close() returns nil|error; public function init() returns nil; public function read(int) returns error|[int:Unsigned8...]; public function readAll() returns error|[int:Unsigned8...] }
+    %23 = channel is object { private function attachBytes([int:Unsigned8...]) returns nil|error; private function attachFile(string) returns nil|error; public function blockStream(int) returns error|stream; public function close() returns nil|error; public function init() returns nil; public function read(int) returns error|[int:Unsigned8...]; public function readAll() returns error|readonly&[int:Unsigned8...] }
     %24 = %23;
     %25 = println(%24) -> bb8;
   }

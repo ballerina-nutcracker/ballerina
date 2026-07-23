@@ -80,8 +80,10 @@ func byteChannelEofError() values.BalValue {
 }
 
 type byteChannelTypes struct {
-	byteArrTy   semtypes.SemType
-	byteArrAtom *semtypes.ListAtomicType
+	byteArrTy     semtypes.SemType
+	byteArrAtom   *semtypes.ListAtomicType
+	roByteArrTy   semtypes.SemType
+	roByteArrAtom *semtypes.ListAtomicType
 
 	blockStreamTy  semtypes.SemType
 	blockRecordTy  semtypes.SemType
@@ -97,12 +99,17 @@ func initByteChannelModule(rt *runtime.Runtime) {
 		byteArrTy: bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE),
 	}
 	types.byteArrAtom = semtypes.ToListAtomicType(typCtx, types.byteArrTy)
+	// io:Block is `readonly & byte[]`; a CELL_MUT_NONE list definition is the
+	// atom-backed equivalent of that intersection.
+	robld := semtypes.NewListDefinition()
+	types.roByteArrTy = robld.DefineListTypeWrappedWithEnvSemTypeCellMutability(env, semtypes.BYTE, semtypes.CellMutability_CELL_MUT_NONE)
+	types.roByteArrAtom = semtypes.ToListAtomicType(typCtx, types.roByteArrTy)
 
 	streamCompletionTy := semtypes.Union(semtypes.ERROR, semtypes.NIL)
 	bsd := semtypes.NewStreamDefinition()
-	types.blockRecordTy = closedNextRecordType(env, types.byteArrTy)
+	types.blockRecordTy = closedNextRecordType(env, types.roByteArrTy)
 	types.blockRecordAtm = semtypes.ToMappingAtomicType(typCtx, types.blockRecordTy)
-	types.blockStreamTy = bsd.Define(env, types.byteArrTy, streamCompletionTy)
+	types.blockStreamTy = bsd.Define(env, types.roByteArrTy, streamCompletionTy)
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "ReadableByteChannel.attachFile",
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -168,7 +175,7 @@ func initByteChannelModule(rt *runtime.Runtime) {
 			if err != nil {
 				return fileIOError("error occurred while reading bytes from the channel. " + err.Error()), nil
 			}
-			return values.NewList(types.byteArrTy, types.byteArrAtom, false, nil, 0, bytesToItems(data)), nil
+			return values.NewList(types.roByteArrTy, types.roByteArrAtom, true, nil, 0, bytesToItems(data)), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "ReadableByteChannel.blockStream",
@@ -191,7 +198,7 @@ func initByteChannelModule(rt *runtime.Runtime) {
 				buf := make([]byte, size)
 				n, err := reader.Read(buf)
 				if n > 0 {
-					block := values.NewList(types.byteArrTy, types.byteArrAtom, false, nil, 0, bytesToItems(buf[:n]))
+					block := values.NewList(types.roByteArrTy, types.roByteArrAtom, true, nil, 0, bytesToItems(buf[:n]))
 					return values.NewMap(types.blockRecordTy, types.blockRecordAtm, false,
 						[]values.MapEntry{{Key: "value", Value: block}})
 				}

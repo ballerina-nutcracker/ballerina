@@ -52,7 +52,7 @@ main() -> nil|error{
     s = $desugar$4;
     %26 = streamNext s
     r1 = %26;
-    %28 = r1 is {| value: [int:Unsigned8...], never... |}
+    %28 = r1 is {| value: readonly&[int:Unsigned8...], never... |}
     %28 ? bb8 : bb12;
   }
   bb8 {
@@ -81,7 +81,7 @@ main() -> nil|error{
     PushScopeFrame 3
     %0 = streamNext (1, s)
     r2 = %0;
-    %2 = r2 is {| value: [int:Unsigned8...], never... |}
+    %2 = r2 is {| value: readonly&[int:Unsigned8...], never... |}
     %2 ? bb13 : bb16;
   }
   bb13 {
@@ -102,7 +102,7 @@ main() -> nil|error{
     PushScopeFrame 3
     %0 = streamNext (2, s)
     r3 = %0;
-    %2 = r3 is {| value: [int:Unsigned8...], never... |}
+    %2 = r3 is {| value: readonly&[int:Unsigned8...], never... |}
     %2 ? bb17 : bb21;
   }
   bb17 {
@@ -203,7 +203,7 @@ main() -> nil|error{
     defaultStream = $desugar$11;
     %22 = streamNext defaultStream
     d1 = %22;
-    %24 = d1 is {| value: [int:Unsigned8...], never... |}
+    %24 = d1 is {| value: readonly&[int:Unsigned8...], never... |}
     %24 ? bb33 : bb36;
   }
   bb33 {

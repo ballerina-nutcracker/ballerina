@@ -43,8 +43,7 @@ public enum FileWriteOption {
 }
 
 # The byte array that is used to read the byte content from the streams.
-# Note: jBallerina defines this as `readonly & byte[]`; `readonly &` intersections are not yet supported here, so this is a plain `byte[]`.
-public type Block byte[];
+public type Block readonly & byte[];
 
 # Prints `any` or `error` to the standard output stream.
 # ```ballerina
@@ -126,8 +125,8 @@ public isolated function fileReadLinesAsStream(string path) returns stream<strin
 # byte[]|io:Error content = io:fileReadBytes("./resources/myfile.txt");
 # ```
 # + path - The file path
-# + return - A byte array or an `io:Error`
-public isolated function fileReadBytes(string path) returns byte[]|Error {
+# + return - A read-only byte array or an `io:Error`
+public isolated function fileReadBytes(string path) returns readonly & byte[]|Error {
     return externFileReadBytes(path);
 }
 
@@ -254,7 +253,7 @@ public isolated function fileWriteXml(string path, xml content, FileWriteOption 
 isolated function externFileReadString(string path) returns string|Error = external;
 isolated function externFileReadLines(string path) returns string[]|Error = external;
 isolated function externFileReadLinesAsStream(string path) returns stream<string, Error?>|Error = external;
-isolated function externFileReadBytes(string path) returns byte[]|Error = external;
+isolated function externFileReadBytes(string path) returns readonly & byte[]|Error = external;
 isolated function externFileReadBlocksAsStream(string path, int blockSize) returns stream<Block, Error?>|Error = external;
 isolated function externFileReadJson(string path) returns json|Error = external;
 isolated function externFileWriteString(string path, string content, FileWriteOption option) returns Error? = external;
@@ -297,8 +296,8 @@ public class ReadableByteChannel {
     # byte[]|io:Error result = readableByteChannel.readAll();
     # ```
     #
-    # + return - A `byte` array or else an `io:Error`
-    public isolated function readAll() returns byte[]|Error = external;
+    # + return - A read-only `byte` array or else an `io:Error`
+    public isolated function readAll() returns readonly & byte[]|Error = external;
 
     # Returns a block stream that can be used to read all `byte` blocks as a stream.
     # ```ballerina

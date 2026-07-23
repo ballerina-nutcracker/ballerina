@@ -89,10 +89,10 @@ Support Levels:
 | String template support in print functions | Not Yet Supported | `PrintableRawTemplate` type is not yet defined; string templates cannot be passed directly to print functions. As a consequence, the `Printable` type in this implementation is `any\|error` rather than jBallerina's `any\|error\|PrintableRawTemplate`. |
 | File read — string | Supported | `fileReadString`. Line endings normalised to `\n`; trailing newline stripped. |
 | File read — lines | Supported | `fileReadLines`. Terminal carriage characters stripped; trailing empty line excluded. |
-| File read — bytes | Supported | `fileReadBytes`. Returns `byte[]`; jBallerina returns `readonly & byte[]` (`readonly &` intersection not yet supported). |
+| File read — bytes | Supported | `fileReadBytes`. Returns `readonly & byte[]`. |
 | File read — JSON | Supported | `fileReadJson`. |
 | File read — stream of lines | Supported | `fileReadLinesAsStream`. Returns `stream<string, Error?>`. Terminal carriage characters stripped; trailing empty line excluded. See Notable Behavioural Changes (manual `next()`/`close()` consumption). |
-| File read — stream of blocks | Supported | `fileReadBlocksAsStream`. Returns `stream<Block, Error?>` where `Block` is `byte[]` (jBallerina uses `readonly & byte[]`; `readonly &` intersection not yet supported). Default `blockSize` is 4096. See Notable Behavioural Changes. |
+| File read — stream of blocks | Supported | `fileReadBlocksAsStream`. Returns `stream<Block, Error?>` where `Block` is `readonly & byte[]`. Default `blockSize` is 4096. See Notable Behavioural Changes. |
 | File write — string | Supported | `fileWriteString`. `OVERWRITE` and `APPEND` modes supported. |
 | File write — lines | Supported | `fileWriteLines`. `OVERWRITE` and `APPEND` modes supported; `\n` appended after each line. |
 | File write — bytes | Supported | `fileWriteBytes`. `OVERWRITE` and `APPEND` modes supported. |
@@ -103,7 +103,7 @@ Support Levels:
 | File I/O — CSV | Not Yet Supported | `fileReadCsv`, `fileWriteCsv`, stream variants. `stream` type not yet supported; `typedesc` parameter handling complex. |
 | File write option enum | Supported | `FileWriteOption`: `OVERWRITE` and `APPEND` constants. |
 | Module-level error type | Partially Supported | `io:Error` declared as a plain `error` alias; `distinct` error subtypes (`FileNotFoundError`, `GenericError`, `AccessDeniedError`, `EofError`, `ConfigurationError`, `TypeMismatchError`) not yet supported. |
-| Byte channels | Partially Supported | `ReadableByteChannel`: `read`, `readAll`, `blockStream`, `close`. `readAll` returns `byte[]`; jBallerina returns `readonly & byte[]` (`readonly &` intersection not yet supported), matching the existing `fileReadBytes` divergence. `WritableByteChannel`: `write`, `close`. `base64Encode`/`base64Decode` not yet supported. |
+| Byte channels | Partially Supported | `ReadableByteChannel`: `read`, `readAll` (returns `readonly & byte[]`), `blockStream`, `close`. `WritableByteChannel`: `write`, `close`. `base64Encode`/`base64Decode` not yet supported. |
 | Character channels | Not Yet Supported | `ReadableCharacterChannel`, `WritableCharacterChannel`. Not implemented. |
 | Data channels | Not Yet Supported | Not implemented. |
 | CSV channels | Not Yet Supported | Not implemented. |
@@ -113,5 +113,4 @@ Support Levels:
 
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
 - **Streams are consumed via `next()`/`close()` only.** The returned streams are driven with explicit `.next()` and `.close()` calls. Iterating a stream with a `foreach` statement or a query (`from ... in`) expression is not yet supported at the language level, so those constructs cannot yet consume these streams.
-- **`Block` type.** `fileReadBlocksAsStream` yields `io:Block`, defined here as `byte[]`; jBallerina defines it as `readonly & byte[]` (`readonly &` intersections are not yet supported), matching the existing `fileReadBytes` divergence.
 - **Write-from-stream accepts a generic `error?` completion.** jBallerina declares `fileWriteLinesFromStream`/`fileWriteBlocksFromStream` with a `stream<_, io:Error?>` parameter, which rejects a stream held as `stream<_, error?>` (e.g. `stream<byte[], error?> s = check io:fileReadBlocksAsStream(p); check io:fileWriteBlocksFromStream(out, s);` fails to compile in jBallerina). This port widens the parameter completion type to the generic `error?`, so both `io:Error?` and plain `error?` completion streams are accepted. This is a strict superset — every jBallerina-valid call still compiles — and the return type remains the specific `io:Error?`.
