@@ -837,6 +837,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 	pkg.AddGlobalVariable(global)
 
 	ref := &ast.BLangSimpleVarRef{VariableName: &ast.BLangIdentifier{Value: moduleListenersGlobalName}}
+	ref.VariableName.SetPosition(pos)
 	ref.SetSymbol(symRef)
 	ref.SetDeterminedType(arrTy)
 	ref.SetPosition(pos)
