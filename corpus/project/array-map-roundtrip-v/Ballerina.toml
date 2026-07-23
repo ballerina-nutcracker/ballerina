@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "array_map_roundtrip"
+version = "0.1.0"

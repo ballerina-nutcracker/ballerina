@@ -17,6 +17,7 @@
 package exec
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -248,7 +249,18 @@ func containsByte(s string, b byte) bool {
 // Invoke calls the closure captured by the handle returned from one of
 // the Lookup* functions.
 func Invoke(ctx *extern.Context, h any, args []values.BalValue) (values.BalValue, error) {
-	return h.(*InvokableHandle).invoke(ctx, args)
+	switch h := h.(type) {
+	case *InvokableHandle:
+		return h.invoke(ctx, args)
+	case *values.Function:
+		handle, err := NewFunctionValueHandle(ctx.Env, h)
+		if err != nil {
+			return nil, err
+		}
+		return handle.invoke(ctx, args)
+	default:
+		return nil, fmt.Errorf("unsupported invokable handle: %T", h)
+	}
 }
 
 func lookupByMethodName(ctx *extern.Context, obj *values.Object, methodName string) (any, bool) {

@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"ballerina-lang-go/ast"
+	"ballerina-lang-go/context"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
@@ -175,8 +176,8 @@ func validateLockInvocations(a analyzer, body *ast.BLangBlockStmt) bool {
 		case *ast.BLangLambdaFunction, *ast.BLangFunction:
 			return false
 		case *ast.BLangInvocation:
-			if !isIsolatedInvocation(a, n) {
-				a.semanticErr("invocation of a non-isolated function inside lock statement", n.GetPosition())
+			if loc, invalid := isolatedInvocationViolation(a, n); invalid {
+				a.semanticErr("invocation of a non-isolated function inside lock statement", loc)
 				ok = false
 			}
 		case *ast.BLangRemoteMethodCallAction:
@@ -191,14 +192,54 @@ func validateLockInvocations(a analyzer, body *ast.BLangBlockStmt) bool {
 	return ok
 }
 
-func isIsolatedInvocation(a analyzer, n *ast.BLangInvocation) bool {
+func isolatedInvocationViolation(a analyzer, n *ast.BLangInvocation) (diagnostics.Location, bool) {
+	return isolatedInvocationViolationInner(a.ctx(), a.tyCtx(), n)
+}
+
+func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtypes.Context, n *ast.BLangInvocation) (diagnostics.Location, bool) {
 	if ast.IsStreamOperation(n) {
-		return true
+		return diagnostics.Location{}, false
 	}
-	tyCtx := a.tyCtx()
 	isolatedFn := semtypes.CreateIsolatedFn(tyCtx)
-	fnSym := n.Symbol()
-	return semtypes.IsSubtype(tyCtx, a.ctx().SymbolType(fnSym), isolatedFn)
+	fnRef := n.Symbol()
+	if !semtypes.IsSubtype(tyCtx, ctx.SymbolType(fnRef), isolatedFn) {
+		return n.GetPosition(), true
+	}
+
+	resolvedSymbol := ctx.GetSymbol(fnRef)
+	resolvedFn, ok := resolvedSymbol.(model.FunctionSymbol)
+	if !ok {
+		if _, isFunctionValue := resolvedSymbol.(model.ValueSymbol); isFunctionValue {
+			return diagnostics.Location{}, false
+		}
+		ctx.InternalError(fmt.Sprintf("unexpected symbol kind in invocation: %T", resolvedSymbol), n.GetPosition())
+		return diagnostics.Location{}, false
+	}
+	originalRef := fnRef
+	if mono, ok := resolvedFn.(model.MonomorphicFunctionSymbol); ok {
+		originalRef = mono.PolymorphicSymbol()
+	}
+	opaque, ok := ctx.GetSymbol(originalRef).(*model.OpaqueFunctionSymbol)
+	if !ok {
+		return diagnostics.Location{}, false
+	}
+
+	paramNames := resolvedFn.ParamNames()
+	for i, arg := range n.CallArgs() {
+		paramIndex := i
+		argExpr := arg
+		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
+			paramIndex = paramIndexOf(paramNames, named.Name.GetValue())
+			argExpr = named.Expr
+		}
+		if paramIndex < 0 || !opaque.IsIsolatedParam(paramIndex) {
+			continue
+		}
+		if !semtypes.IsSubtype(tyCtx, argExpr.GetDeterminedType(), isolatedFn) {
+			return arg.GetPosition(), true
+		}
+	}
+	return diagnostics.Location{}, false
 }
 
 // validateLockBody validates transfer in and out conditions.
@@ -628,8 +669,8 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		})
 		return visitor
 	case *ast.BLangInvocation:
-		if !isIsolatedInvocation(a, node) {
-			a.semanticErr("invocation of a non-isolated function", node.GetPosition())
+		if loc, invalid := isolatedInvocationViolation(a, node); invalid {
+			a.semanticErr("invocation of a non-isolated function", loc)
 		}
 		return visitor
 	case *ast.BLangRemoteMethodCallAction:
@@ -730,11 +771,14 @@ func (visitor *isolatedFnVisitor) walkLock(node *ast.BLangLock) {
 func (visitor *isolatedFnVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return visitor }
 
 func checkIsolatedNew(a analyzer, expr *ast.BLangNewExpression) bool {
+	return checkIsolatedNewWithContext(a.ctx(), a.tyCtx(), expr)
+}
+
+func checkIsolatedNewWithContext(ctx *context.CompilerContext, tyCtx semtypes.Context, expr *ast.BLangNewExpression) bool {
 	if ast.IsStreamNewExpression(expr) {
 		return true
 	}
-	tyCtx := a.tyCtx()
-	classTy := a.ctx().SymbolType(expr.ClassSymbol)
+	classTy := ctx.SymbolType(expr.ClassSymbol)
 	initTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("init"), classTy)
 	if semtypes.IsZero(initTy) || !semtypes.IsSubtype(tyCtx, initTy, semtypes.CreateIsolatedFn(tyCtx)) {
 		return false

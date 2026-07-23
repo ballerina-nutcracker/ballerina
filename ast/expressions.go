@@ -221,7 +221,8 @@ type (
 
 	BLangLambdaFunction struct {
 		bLangExpressionBase
-		Function *BLangFunction
+		Function       *BLangFunction
+		InferredParams bool
 	}
 
 	BLangBinaryExpr struct {

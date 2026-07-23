@@ -80,10 +80,11 @@ var (
 		// once that's registered in DiagnosticEnv).
 		"project/missing-package-e",
 		"project/parse-error-e",
-		// Pre-existing -fp.bal test that does not currently surface a runtime
-		// panic or a compile-time `fatal[...]` bailout, so it does not satisfy
+		// Pre-existing future tests that do not currently surface a runtime
+		// panic or a compile-time `fatal[...]` bailout, so they do not satisfy
 		// the future-test contract yet. Tracked separately.
 		"subset8/08-future/fieldlvalue1-fp.bal",
+		"subset9/09-list/map-isolated-param-fv.bal",
 		// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
 		"subset8/08-xml/namespace12-v.bal",
 		// https://github.com/ballerina-platform/ballerina-lang-go/issues/533

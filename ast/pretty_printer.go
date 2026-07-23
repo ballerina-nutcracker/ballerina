@@ -76,6 +76,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printReturnTypeDescriptor(t)
 	case *BLangBlockFunctionBody:
 		p.printBlockFunctionBody(t)
+	case *BLangExprFunctionBody:
+		p.printExprFunctionBody(t)
 	case *BLangSimpleVariable:
 		p.printSimpleVariable(t)
 	case *BLangIf:
@@ -937,6 +939,17 @@ func (p *PrettyPrinter) printBlockFunctionBody(node *BLangBlockFunctionBody) {
 		p.PrintInner(stmt.(BLangNode))
 	}
 	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printExprFunctionBody(node *BLangExprFunctionBody) {
+	p.StartNode()
+	p.PrintString("expr-function-body")
+	if node.Expr != nil {
+		p.indentLevel++
+		p.PrintInner(node.Expr.(BLangNode))
+		p.indentLevel--
+	}
 	p.EndNode()
 }
 

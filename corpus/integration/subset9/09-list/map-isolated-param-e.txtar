@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> map-isolated-param-e.bal:59:16
+   |
+59 |         return value; // @error
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> map-isolated-param-e.bal:23:23
+   |
+23 |     return values.map(nonIsolated); // @error
+   |                       ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> map-isolated-param-e.bal:27:36
+   |
+27 |     return array:map(arr = values, func = nonIsolated); // @error
+   |                                    ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> map-isolated-param-e.bal:39:28
+   |
+39 |     int[] values = [1].map(nonIsolated); // @error
+   |                            ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> map-isolated-param-e.bal:42:57
+   |
+42 | isolated function invalidDefault(int[] values = [1].map(nonIsolated)) returns int { // @error
+   |                                                         ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> map-isolated-param-e.bal:48:24
+   |
+48 |         return [1].map(func = nonIsolated).length(); // @error
+   |                        ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> map-isolated-param-e.bal:32:41
+   |
+32 |         int explicitLength = values.map(nonIsolated).length(); // @error
+   |                                         ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> map-isolated-param-e.bal:33:41
+   |
+33 |         int inferredLength = values.map((value) => nonIsolated(value)).length(); // @error
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

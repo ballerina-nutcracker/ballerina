@@ -906,11 +906,9 @@ func handleExprFunctionBody(ctx context, body *ast.BLangExprFunctionBody) {
 	effect := handleActionOrExpression(ctx, curBB, body.Expr)
 	curBB = effect.block
 	if curBB != nil {
-		retAssign := &Move{}
-		retAssign.LhsOp = retVar(ctx)
-		retAssign.RhsOp = effect.result
-		curBB.Instructions = append(curBB.Instructions, retAssign)
-		curBB.Terminator = &Return{}
+		pos := ctx.function().loc(body.Expr.GetPosition())
+		curBB.Instructions = append(curBB.Instructions, NewMove(effect.result, retVar(ctx), pos))
+		curBB.Terminator = NewReturn(pos)
 	}
 }
 
