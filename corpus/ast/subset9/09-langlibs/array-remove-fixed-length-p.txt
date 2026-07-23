@@ -1,0 +1,18 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([
+            (literal 2)]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation remove expr:
+          (simple-var-ref arr) (
+          (literal 0)))))))

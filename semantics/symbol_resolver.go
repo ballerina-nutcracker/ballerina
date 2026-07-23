@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -876,17 +877,27 @@ func fillinOpaqueSymbol(sym model.Symbol, space *model.SymbolSpace) {
 	fn.Lookup, fn.Store = newMonomorphizationCache()
 }
 
-// TODO: when we have cases where we have more than one type param types we need to properly
-// implement this
+// newMonomorphizationCache builds a cache keyed by one or more semtypes (e.g.
+// a container type, plus any extra keys a monomorphizer needs to disambiguate
+// call sites that share a container type but resolve differently, such as by
+// arity). Each key is interned independently and the handles are joined into
+// a single composite cache key.
 func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, bool), func(model.SymbolRef, ...semtypes.SemType)) {
 	var mu sync.Mutex
 	interner := semtypes.NewSemtypeInterner()
-	cache := make(map[semtypes.InternHandle]model.SymbolRef)
-	keyOf := func(keys []semtypes.SemType) semtypes.InternHandle {
-		if len(keys) != 1 {
-			panic("monomorphization cache supports a single key type")
+	cache := make(map[string]model.SymbolRef)
+	keyOf := func(keys []semtypes.SemType) string {
+		if len(keys) == 1 {
+			return strconv.FormatInt(int64(interner.Intern(keys[0])), 10)
 		}
-		return interner.Intern(keys[0])
+		var b strings.Builder
+		for i, k := range keys {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			b.WriteString(strconv.FormatInt(int64(interner.Intern(k)), 10))
+		}
+		return b.String()
 	}
 	lookup := func(keys ...semtypes.SemType) (model.SymbolRef, bool) {
 		mu.Lock()
