@@ -978,11 +978,6 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 			return
 		}
 	}
-	for i := range pkg.Services {
-		if !resolveServiceType(t, &pkg.Services[i], 0) {
-			return
-		}
-	}
 	populateClassSymbolByType(t, pkg)
 	populateMappingAtomMaps(t, pkg, t.importedSymbols)
 	for i := range pkg.Functions {
@@ -1023,9 +1018,6 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		classDef.SetDeterminedType(semtypes.NEVER)
 		classDef.Name.SetDeterminedType(semtypes.NEVER)
 	}
-	for i := range pkg.Services {
-		pkg.Services[i].SetDeterminedType(semtypes.NEVER)
-	}
 	pkg.SetDeterminedType(semtypes.NEVER)
 	for i := range pkg.GlobalVars {
 		resolveGlobalVarInit(t, &pkg.GlobalVars[i])
@@ -1035,8 +1027,11 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	attachPointBound := listenerAttachPointBound(t.typeContext())
 	validateListenerVars(t, pkg, attachPointBound)
 	for i := range pkg.Services {
-		resolveServiceAttachedExpressions(t, &pkg.Services[i])
-		validateServiceDeclaration(t, &pkg.Services[i], attachPointBound)
+		svc := &pkg.Services[i]
+		if !resolveServiceAttachedExpressions(t, svc) || !resolveServiceType(t, svc, 0, attachPointBound) {
+			continue
+		}
+		svc.SetDeterminedType(semtypes.NEVER)
 	}
 	for i := range pkg.XmlnsList {
 		resolveXMLNS(t, nil, &pkg.XmlnsList[i])
@@ -2415,39 +2410,83 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 	return semType, true
 }
 
-func resolveServiceType(t typeResolver, svc *ast.BLangService, depth int) bool {
-	if !semtypes.IsZero(svc.GetDeterminedType()) {
+func resolveServiceType(t typeResolver, svc *ast.BLangService, depth int, attachPointBound semtypes.SemType) bool {
+	if !semtypes.IsZero(svc.ObjectBodyType) {
 		return true
 	}
-	if svc.Definition != nil {
-		return true
+
+	typeData := svc.GetTypeData()
+	var serviceTy semtypes.SemType
+	if typeData.TypeDescriptor != nil {
+		var ok bool
+		serviceTy, ok = resolveBType(t, typeData.TypeDescriptor.(ast.BType), depth+1)
+		if !ok {
+			return false
+		}
+	} else {
+		listenerServiceTypes := make([]semtypes.SemType, 0, len(svc.AttachedExprs))
+		for _, expr := range svc.AttachedExprs {
+			serviceTy, _, ok := listenerType(t, expr, attachPointBound)
+			if !ok {
+				return false
+			}
+			listenerServiceTypes = append(listenerServiceTypes, serviceTy)
+		}
+
+		serviceTy = inferServiceType(t, listenerServiceTypes)
+		if semtypes.IsEmpty(t.typeContext(), serviceTy) {
+			pos := svc.AttachedExprsPosition
+			t.semanticError("cannot derive a service type satisfying all listeners", pos)
+			return false
+		}
+	}
+	if !semtypes.IsSubtype(t.typeContext(), serviceTy, semtypes.CreateServiceObject(t.typeContext())) {
+		t.semanticError("service type must be a subtype of service object {}", svc.GetPosition())
+		return false
+	}
+
+	svc.AttachPointType = serviceAttachPointType(t, svc)
+	if semtypes.IsNever(svc.AttachPointType) {
+		return false
 	}
 
 	od := semtypes.NewObjectDefinition()
 	svc.Definition = &od
-
-	semType, ok := finishResolveObjectDefinitionType(t, &od, svc.Fields, svc.Methods, svc.ResourceMethods, svc.InitFunction,
-		nil, svc.GetPosition(), depth, svc.IsIsolated(), false, false, true, model.SymbolRef{})
-	if !ok {
-		return false
-	}
-
-	svc.SetDeterminedType(semType)
-	typeData := svc.GetTypeData()
-	if typeData.TypeDescriptor != nil {
-		if _, ok := resolveBType(t, typeData.TypeDescriptor.(ast.BType), depth+1); !ok {
+	var objectBodyTy semtypes.SemType
+	{
+		var ok bool
+		// We don't necessarily have a symbol ref for inclusion (type is derived or type is defined inline), so we need to manually include it and validate it
+		objectBodyTy, ok = finishResolveObjectDefinitionType(t, &od, svc.Fields, svc.Methods, svc.ResourceMethods, svc.InitFunction,
+			nil, svc.GetPosition(), depth, svc.IsIsolated(), false, false, true, model.SymbolRef{})
+		if !ok {
 			return false
 		}
+		structuralServiceTy := semtypes.StripObjectDistinctAtoms(serviceTy)
+		if !semtypes.IsSubtype(t.typeContext(), objectBodyTy, structuralServiceTy) {
+			t.semanticError("service body does not implement the service type", svc.GetPosition())
+			return false
+		}
+		objectBodyTy = semtypes.Intersect(objectBodyTy, serviceTy)
 	}
-	typeData.Type = semType
+
+	typeData.Type = serviceTy
 	svc.SetTypeData(typeData)
+	svc.ObjectBodyType = objectBodyTy
 	if selfRef, ok := svc.Scope().GetSymbol("self"); ok {
-		t.setSymbolType(selfRef, semType)
+		t.setSymbolType(selfRef, objectBodyTy)
 	}
-	t.ensureNotEmpty(semType, func() {
+	t.ensureNotEmpty(objectBodyTy, func() {
 		t.semanticError("service definition is empty", svc.GetPosition())
 	})
 	return true
+}
+
+func inferServiceType(_ typeResolver, listenerServiceTypes []semtypes.SemType) semtypes.SemType {
+	serviceTy := listenerServiceTypes[0]
+	for _, listenerServiceTy := range listenerServiceTypes[1:] {
+		serviceTy = semtypes.Intersect(serviceTy, listenerServiceTy)
+	}
+	return serviceTy
 }
 
 func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefinition, fields []ast.SimpleVariableNode,
@@ -3054,12 +3093,14 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangSimpleVariable) bool {
 }
 
 // resolveServiceAttachedExpressions type-checks the listener expressions in
-// a service's `on` clause so subsequent validation can read each expression's
-// determined type.
-func resolveServiceAttachedExpressions(t typeResolver, svc *ast.BLangService) {
+// a service's `on` clause so service type resolution can inspect them.
+func resolveServiceAttachedExpressions(t typeResolver, svc *ast.BLangService) bool {
 	for _, expr := range svc.AttachedExprs {
-		resolveActionOrExpression(t, nil, expr, semtypes.SemType{})
+		if _, _, ok := resolveActionOrExpression(t, nil, expr, semtypes.SemType{}); !ok {
+			return false
+		}
 	}
+	return true
 }
 
 // validateListenerVars verifies each module-level listener variable's
@@ -3077,56 +3118,20 @@ func validateListenerVars(t typeResolver, pkg *ast.BLangPackage, attachPointBoun
 			t.internalError("listener variable has no determined type", gv.GetPosition())
 			continue
 		}
-		if _, _, ok := validateListenerType(tyCtx, ty, attachPointBound); !ok {
+		if _, _, ok := listenerTypes(tyCtx, ty, attachPointBound); !ok {
 			t.semanticError("listener initializer is not a listener", gv.GetPosition())
 		}
 	}
 }
 
-// validateServiceDeclaration implements the type-resolver rules from the
-// service/listener design: the `on` expression list must consist of
-// listener variables, the attach-point type must be a subtype of the
-// listeners' attach-point union, and the service body must be a subtype
-// of the listeners' target object union (or the user-supplied service
-// type when present).
-func validateServiceDeclaration(t typeResolver, svc *ast.BLangService, attachPointBound semtypes.SemType) {
-	tyCtx := t.typeContext()
-
-	var expectedT semtypes.SemType
-	var expectedA semtypes.SemType
-	for i, expr := range svc.AttachedExprs {
-		targetTy, attachTy, ok := validateListenerOnExpression(t, expr, attachPointBound)
-		if !ok {
-			return
-		}
-		if i == 0 {
-			expectedT = targetTy
-			expectedA = attachTy
-			continue
-		}
-		expectedT = semtypes.Intersect(expectedT, targetTy)
-		expectedA = semtypes.Intersect(expectedA, attachTy)
-	}
-
-	attachPointTy := serviceAttachPointType(t, svc)
-	if !semtypes.IsSubtype(tyCtx, attachPointTy, expectedA) {
-		t.semanticError("attach point is not assignable to listener's attach-point type", svc.GetPosition())
-	}
-
-	bodyTy := svc.Definition.GetSemType(t.typeEnv())
-	if !semtypes.IsSubtype(tyCtx, bodyTy, expectedT) {
-		t.semanticError("service body is not a subtype of the listener's expected service type", svc.GetPosition())
-	}
-}
-
-func validateListenerOnExpression(t typeResolver, expr ast.BLangExpression, attachPointBound semtypes.SemType) (semtypes.SemType, semtypes.SemType, bool) {
+func listenerType(t typeResolver, expr ast.BLangExpression, attachPointBound semtypes.SemType) (semtypes.SemType, semtypes.SemType, bool) {
 	exprTy := expr.GetDeterminedType()
 	if semtypes.IsZero(exprTy) {
 		t.internalError("listener expression has no determined type", expr.GetPosition())
 		return semtypes.SemType{}, semtypes.SemType{}, false
 	}
 	checkedTy := semtypes.Diff(exprTy, semtypes.ERROR)
-	targetTy, attachTy, ok := validateListenerType(t.typeContext(), checkedTy, attachPointBound)
+	targetTy, attachTy, ok := listenerTypes(t.typeContext(), checkedTy, attachPointBound)
 	if !ok {
 		t.semanticError("expression in 'on' clause is not a listener", expr.GetPosition())
 		return semtypes.SemType{}, semtypes.SemType{}, false
@@ -3141,12 +3146,13 @@ func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemT
 		}
 		return svc.AttachPointLiteral.GetDeterminedType()
 	}
-	if len(svc.AbsoluteResourcePath) == 0 {
+	if svc.AbsoluteResourcePath == nil {
 		return semtypes.NIL
 	}
 	segmentTypes := make([]semtypes.SemType, len(svc.AbsoluteResourcePath))
 	for i := range svc.AbsoluteResourcePath {
 		segmentTypes[i] = semtypes.StringConst(svc.AbsoluteResourcePath[i].Value)
+		svc.AbsoluteResourcePath[i].SetDeterminedType(semtypes.NEVER)
 	}
 	listDefn := semtypes.NewListDefinition()
 	return listDefn.DefineListTypeWrapped(t.typeEnv(), segmentTypes, len(segmentTypes), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)

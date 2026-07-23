@@ -860,17 +860,13 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 // service's `on` clause. The statements run in the module init function
 // after all module-level variable initializers.
 func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *ast.BLangService) []ast.StatementNode {
-	if svc.Definition == nil {
-		pkgCtx.internalError("service has no object definition at desugar")
-		return nil
-	}
-	svcTy := svc.Definition.GetSemType(pkgCtx.typeEnv())
-	if semtypes.IsZero(svcTy) {
-		pkgCtx.internalError("service object type unresolved at desugar")
+	svcTy := svc.GetTypeData().Type
+	if semtypes.IsZero(svcTy) || semtypes.IsZero(svc.ObjectBodyType) {
+		pkgCtx.internalError("service types unresolved at desugar")
 		return nil
 	}
 	initExpr := &BLangServiceInit{Service: svc}
-	initExpr.SetDeterminedType(serviceInitResultType(pkgCtx, svc, svcTy))
+	initExpr.SetDeterminedType(serviceInitResultType(pkgCtx, svc, svc.ObjectBodyType))
 	initExpr.SetPosition(svc.GetPosition())
 
 	varDef, svcRef := createDesugaredLocal(pkgCtx, pkg.InitFunction.Scope(), svcTy, wrapInCheck(initExpr), svc.GetPosition())
@@ -1027,13 +1023,22 @@ func buildListenerAttachInvocation(pkgCtx *packageContext, svc *ast.BLangService
 		pkgCtx.internalError("listener type has no attach method type at desugar")
 		return nil
 	}
-	attachPointExpr := buildAttachPointExpression(pkgCtx, svc)
+	paramListTy := semtypes.FunctionParamListType(tyCtx, attachFnTy)
+	attachPointParamTy := semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, semtypes.IntConst(1))
+	attachPointExpr := buildAttachPointExpression(pkgCtx, svc, attachPointParamTy)
+	if attachPointExpr == nil {
+		return nil
+	}
 	inv := &ast.BLangInvocation{}
 	inv.Name = &ast.BLangIdentifier{Value: "attach"}
 	inv.Expr = listenerExpr
 	inv.ArgExprs = []ast.BLangExpression{svcRef, attachPointExpr}
 	argListDefn := semtypes.NewListDefinition()
 	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{svcRef.GetDeterminedType(), attachPointExpr.GetDeterminedType()}, 2, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	if !semtypes.IsSubtype(tyCtx, argListTy, paramListTy) {
+		pkgCtx.internalError("desugared listener attach arguments do not match the listener parameter types")
+		return nil
+	}
 	inv.SetDeterminedType(semtypes.FunctionReturnType(tyCtx, attachFnTy, argListTy))
 	inv.SetPosition(svc.GetPosition())
 	return inv
@@ -1042,31 +1047,37 @@ func buildListenerAttachInvocation(pkgCtx *packageContext, svc *ast.BLangService
 // buildAttachPointExpression returns an AST expression representing the
 // service's attach-point value: () for the absent case, the original string
 // literal, or an array literal of the resource path segments.
-func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService) ast.BLangExpression {
+func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService, attachPointParamTy semtypes.SemType) ast.BLangExpression {
+	attachPointTy := svc.AttachPointType
+	if semtypes.IsZero(attachPointTy) {
+		pkgCtx.internalError("service attach-point type unresolved at desugar")
+		return nil
+	}
 	if svc.AttachPointLiteral != nil {
+		svc.AttachPointLiteral.SetDeterminedType(attachPointTy)
 		return svc.AttachPointLiteral
 	}
-	if len(svc.AbsoluteResourcePath) == 0 {
+	if svc.AbsoluteResourcePath == nil {
 		lit := &ast.BLangLiteral{Value: nil}
-		lit.SetDeterminedType(semtypes.NIL)
+		lit.SetDeterminedType(attachPointTy)
 		lit.SetPosition(svc.GetPosition())
 		return lit
 	}
 	elements := make([]ast.BLangExpression, len(svc.AbsoluteResourcePath))
-	tupleMembers := make([]semtypes.SemType, len(svc.AbsoluteResourcePath))
 	for i := range svc.AbsoluteResourcePath {
 		lit := &ast.BLangLiteral{Value: svc.AbsoluteResourcePath[i].Value}
-		litTy := semtypes.StringConst(svc.AbsoluteResourcePath[i].Value)
-		lit.SetDeterminedType(litTy)
+		lit.SetDeterminedType(semtypes.StringConst(svc.AbsoluteResourcePath[i].Value))
 		lit.SetPosition(svc.AbsoluteResourcePath[i].GetPosition())
 		elements[i] = lit
-		tupleMembers[i] = litTy
 	}
-	ld := semtypes.NewListDefinition()
-	listTy := ld.DefineListTypeWrapped(pkgCtx.typeEnv(), tupleMembers, len(tupleMembers), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_LIMITED)
-	lat := semtypes.ToListAtomicType(pkgCtx.typeCtx(), listTy)
+	arrayTy := semtypes.Intersect(attachPointParamTy, semtypes.LIST)
+	lat := semtypes.ToListAtomicType(pkgCtx.typeCtx(), arrayTy)
+	if lat == nil {
+		pkgCtx.internalError("listener attach-point parameter has no list type")
+		return nil
+	}
 	arr := &ast.BLangListConstructorExpr{Exprs: elements, AtomicType: *lat}
-	arr.SetDeterminedType(listTy)
+	arr.SetDeterminedType(arrayTy)
 	arr.SetPosition(svc.GetPosition())
 	return arr
 }

@@ -1,0 +1,103 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition FirstService
+    (object-type service))
+  (type-definition SecondService
+    (object-type service))
+  (class-definition FirstListener
+    (function attach (
+      (variable svc (type
+        (user-defined-type FirstService)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type FirstService)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (class-definition SecondListener
+    (function attach (
+      (variable svc (type
+        (user-defined-type SecondService)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type SecondService)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable first (type
+    (user-defined-type FirstListener)) (expr
+    (new ())))
+  (variable second (type
+    (user-defined-type SecondListener)) (expr
+    (new ())))
+  (service
+    (on
+    (simple-var-ref first)
+    (simple-var-ref second)))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

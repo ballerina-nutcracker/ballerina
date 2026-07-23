@@ -46,6 +46,7 @@
         (value-type null)))
       (block-function-body)))
   (service isolated
+    (absolute-resource-path /)
     (on
     (new
       (user-defined-type SimpleListener) ()))

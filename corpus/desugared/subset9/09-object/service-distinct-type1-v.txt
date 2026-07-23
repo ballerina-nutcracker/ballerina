@@ -1,32 +1,49 @@
 (package
+  (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
-  (variable $desugar$0)
+  (import-package ballerina lang array (as lang.array))
+  (variable l (type
+    (user-defined-type Listener)))
+  (variable explicitListener (type
+    (user-defined-type ExplicitListener)))
   (variable $moduleListeners)
-  (class-definition SimpleListener
+  (type-definition ServiceType
+    (object-type service
+      (method-decl value public () (
+        (value-type int)))))
+  (class-definition Listener
     (function init () ()
       (block-function-body))
     (function attach (
       (variable svc (type
-        (object-type service)))
+        (user-defined-type ServiceType)))
       (variable attachPoint (type
-        (union-type
-          (array-type
-            (value-type string) dimensions: 1 ([]))
-          (union-type
-            (value-type string)
-            (value-type null)))) (expr
-        (literal <nil>)))) (
-      (value-type null))
+        (array-type
+          (value-type string) dimensions: 1 ([]))))) (
+      (union-type
+        (error-type)
+        (value-type null)))
       (block-function-body
         (var-def
-          (variable _ (expr
+          (variable broad (type
+            (object-type service)) (expr
             (simple-var-ref svc))))
-        (var-def
-          (variable _ (expr
-            (simple-var-ref attachPoint))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref broad)
+              (user-defined-type ServiceType)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation value expr:
+              (simple-var-ref svc) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.array length (
+              (simple-var-ref attachPoint))))))))
     (function detach (
       (variable svc (type
-        (object-type service)))) (
+        (user-defined-type ServiceType)))) (
       (union-type
         (error-type)
         (value-type null)))
@@ -49,73 +66,174 @@
         (error-type)
         (value-type null)))
       (block-function-body)))
-  (service isolated
+  (class-definition ExplicitListener
+    (function init () ()
+      (block-function-body))
+    (function attach (
+      (variable svc (type
+        (user-defined-type ServiceType)))
+      (variable attachPoint (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable broad (type
+            (object-type service)) (expr
+            (simple-var-ref svc))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref broad)
+              (user-defined-type ServiceType)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation value expr:
+              (simple-var-ref svc) ()))))
+        (expression-stmt
+          (invocation io println (
+            (invocation lang.array length (
+              (simple-var-ref attachPoint))))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type ServiceType)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (service
     (absolute-resource-path /)
     (on
-    (simple-var-ref $desugar$0))
-    (variable foo (type
-      (value-type string)))
+    (simple-var-ref l))
+    (variable base (type
+      (value-type int)))
     (function init () ()
       (block-function-body
         (assignment
           (index-based-access
             (simple-var-ref self)
-            (literal foo))
-          (literal foo))))
-    (function $remote$greet () (
-      (value-type string))
+            (literal base))
+          (literal 40))))
+    (function increment () (
+      (value-type int))
       (block-function-body
-        (lock
-          (block-stmt
-            (return
-              (index-based-access
-                (simple-var-ref self)
-                (literal foo)))))))
-    (resource-function get name:hello
-      (variable name (type
-        (value-type string)))
-      (value-type string)
+        (return
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref self)
+              (literal base))
+            (literal 1)))))
+    (function value () (
+      (value-type int))
       (block-function-body
-        (var-def
-          (variable _ (expr
-            (simple-var-ref name))))
-        (lock
-          (block-stmt
-            (return
-              (binary-expr +
-                (literal Hello, )
-                (index-based-access
-                  (simple-var-ref self)
-                  (literal foo)))))))))
+        (return
+          (invocation increment expr:
+            (simple-var-ref self) ())))))
+  (service
+    (user-defined-type ServiceType)
+    (absolute-resource-path /)
+    (on
+    (simple-var-ref explicitListener))
+    (variable base (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal base))
+          (literal 41))))
+    (function increment () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref self)
+              (literal base))
+            (literal 1)))))
+    (function value () (
+      (value-type int))
+      (block-function-body
+        (return
+          (invocation increment expr:
+            (simple-var-ref self) ())))))
   (function init () ()
     (block-function-body
       (assignment
         (simple-var-ref $moduleListeners)
         (list-constructor-expr))
       (assignment
-        (simple-var-ref $desugar$0)
-        (new
-          (user-defined-type SimpleListener) ()))
+        (simple-var-ref l)
+        (new ()))
       (expression-stmt
         (invocation lang.array push (
           (simple-var-ref $moduleListeners)
-          (simple-var-ref $desugar$0))))
+          (simple-var-ref l))))
+      (assignment
+        (simple-var-ref explicitListener)
+        (new ()))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref $moduleListeners)
+          (simple-var-ref explicitListener))))
+      (var-def
+        (variable $desugar$0 (expr
+          (service-init))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation attach expr:
+            (simple-var-ref l) (
+            (simple-var-ref $desugar$0)
+            (list-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$0))
       (var-def
         (variable $desugar$1 (expr
           (service-init))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation attach expr:
+            (simple-var-ref explicitListener) (
+            (simple-var-ref $desugar$1)
+            (list-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
       (expression-stmt
-        (invocation attach expr:
-          (simple-var-ref $desugar$0) (
-          (simple-var-ref $desugar$1)
-          (list-constructor-expr))))))
+        (simple-var-ref $desugar$1))))
   (function main () (
     (value-type null))
     (block-function-body))
-  (function $default$0 (
-    (variable svc)) ()
-    (block-function-body
-      (return
-        (literal <nil>))))
   (function $start () ()
     (block-function-body
       (var-def

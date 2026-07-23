@@ -37,7 +37,7 @@ func ObjectDefinitionDistinct(distinctId int) SemType {
 	return getBasicSubtype(BTObject, bdd)
 }
 
-func stripObjectDistinctAtoms(ty SemType) SemType {
+func StripObjectDistinctAtoms(ty SemType) SemType {
 	return stripDistinctAtomsFromSemType(ty, BTObject, stripDistinctAtomsFromBdd)
 }
 
