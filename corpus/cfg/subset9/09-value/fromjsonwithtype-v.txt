@@ -1,0 +1,147 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable arrForAny (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (var-def
+      (variable ad (type
+        (value-type anydata)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arrForAny)
+            (typedesc-expr
+              (value-type anydata))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ad))))
+    (var-def
+      (variable num (type
+        (builtin-ref-type json)) (expr
+        (literal 2022))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref num)
+            (typedesc-expr
+              (value-type int))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+    (var-def
+      (variable b (type
+        (value-type boolean)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (literal true)
+            (typedesc-expr
+              (value-type boolean))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable f (type
+        (value-type boolean)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (literal false)
+            (typedesc-expr
+              (value-type boolean))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (var-def
+      (variable strVal (type
+        (builtin-ref-type json)) (expr
+        (literal hello))))
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref strVal)
+            (typedesc-expr
+              (value-type string))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+    (var-def
+      (variable noAge (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref noAge)
+            (simple-var-ref PersonNilAge)))
+          (error-type)))))
+    (var-def
+      (variable nullAge (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal <nil>))))))
+    (var-def
+      (variable nilAgePerson (type
+        (user-defined-type PersonNilAge)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref nullAge)
+            (simple-var-ref PersonNilAge)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilAgePerson))))
+    (var-def
+      (variable arr (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)
+          (literal 4)))))
+    (var-def
+      (variable inferred (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inferred))))
+    (var-def
+      (variable p (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal 30))))))
+    (var-def
+      (variable person (type
+        (user-defined-type Person)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref p)
+            (simple-var-ref Person)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref person))))
+    (return
+      (literal <nil>))
+  )
+)

@@ -1,0 +1,109 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1.5
+    d = %1;
+    %3 = ConstantLoad f1
+    %4 = ConstantLoad f3
+    %5 = newMap {| anydata... |}{%4=d}
+    %6 = newMap {| anydata... |}{%3=%5}
+    v1 = %6;
+    %8 = ConstantLoad typedesc
+    %9 = cloneWithType(v1,%8) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %9;
+    %11 = $desugar$0 is error
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    r1 = $desugar$0;
+    %13 = println(r1) -> bb4;
+  }
+  bb4 {
+    %14 = ConstantLoad typedesc
+    %15 = cloneWithType(v1,%14) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %15;
+    %17 = $desugar$1 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    r1b = $desugar$1;
+    %19 = println(r1b) -> bb8;
+  }
+  bb8 {
+    %20 = ConstantLoad f2
+    %21 = ConstantLoad f3
+    %22 = newMap {| anydata... |}{%21=d}
+    %23 = newMap {| anydata... |}{%20=%22}
+    v2 = %23;
+    %25 = ConstantLoad typedesc
+    %26 = cloneWithType(v2,%25) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %26;
+    %28 = $desugar$2 is error
+    %28 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    r2 = $desugar$2;
+    %30 = println(r2) -> bb12;
+  }
+  bb12 {
+    %31 = ConstantLoad f1
+    %32 = ConstantLoad f3
+    %33 = ConstantLoad true
+    %34 = newMap {| anydata... |}{%32=%33}
+    %35 = newMap {| anydata... |}{%31=%34}
+    v3 = %35;
+    %37 = ConstantLoad typedesc
+    %38 = cloneWithType(v3,%37) -> bb13;
+  }
+  bb13 {
+    r3 = %38;
+    %40 = r3 is error
+    %40 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 2
+    %0 = ConstantLoad error
+    %1 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb16 {
+    PushScopeFrame 1
+    %0 = println((1, r3)) -> bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    %41 = ConstantLoad <nil>
+    %0 = %41;
+    return;
+  }
+}

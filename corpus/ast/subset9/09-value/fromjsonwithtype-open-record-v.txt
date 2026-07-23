@@ -1,0 +1,132 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Cat
+    (record-type
+      (field name
+        (value-type string))
+      (field lives
+        (value-type int))))
+  (type-definition Dog
+    (record-type
+      (field name
+        (value-type string))
+      (field breed
+        (value-type string))))
+  (type-definition Animal
+    (union-type
+      (user-defined-type Cat)
+      (user-defined-type Dog)))
+  (type-definition StrMap
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type string)))
+  (type-definition IntMap
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int)))
+  (type-definition StrOrInt
+    (union-type
+      (user-defined-type StrMap)
+      (user-defined-type IntMap)))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable catJson (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Whiskers))
+            (key-value
+              (literal lives)
+              (literal 9))))))
+      (var-def
+        (variable cat (type
+          (user-defined-type Animal)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref catJson) (
+              (simple-var-ref Animal)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref cat))))
+      (var-def
+        (variable dogJson (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Rex))
+            (key-value
+              (literal breed)
+              (literal Labrador))))))
+      (var-def
+        (variable dog (type
+          (user-defined-type Animal)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref dogJson) (
+              (simple-var-ref Animal)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref dog))))
+      (var-def
+        (variable strMapJson (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal hello))
+            (key-value
+              (literal b)
+              (literal world))))))
+      (var-def
+        (variable strMap (type
+          (user-defined-type StrOrInt)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref strMapJson) (
+              (simple-var-ref StrOrInt)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref strMap))))
+      (var-def
+        (variable intMapJson (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable intMap (type
+          (user-defined-type StrOrInt)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref intMapJson) (
+              (simple-var-ref StrOrInt)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref intMap))))
+      (var-def
+        (variable neither (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Whiskers))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref neither) (
+              (simple-var-ref Animal)))
+            (error-type)))))
+      (return
+        (literal <nil>)))))

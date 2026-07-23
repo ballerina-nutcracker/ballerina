@@ -1,0 +1,141 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable strJson (type
+          (builtin-ref-type json)) (expr
+          (literal hello))))
+      (var-def
+        (variable strOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref strJson) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref strOut))))
+      (var-def
+        (variable intJson (type
+          (builtin-ref-type json)) (expr
+          (literal 42))))
+      (var-def
+        (variable intOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref intJson) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref intOut))))
+      (var-def
+        (variable boolJson (type
+          (builtin-ref-type json)) (expr
+          (literal true))))
+      (var-def
+        (variable boolOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref boolJson) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref boolOut))))
+      (var-def
+        (variable arr (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal <nil>)
+            (literal 3)))))
+      (var-def
+        (variable arrOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref arr) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref arrOut))))
+      (var-def
+        (variable m (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal <nil>))))))
+      (var-def
+        (variable mapOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref m) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mapOut))))
+      (var-def
+        (variable nested (type
+          (builtin-ref-type json)) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))
+            (list-constructor-expr
+              (literal 3)
+              (literal 4))))))
+      (var-def
+        (variable nestedOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nested) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nestedOut))))
+      (var-def
+        (variable rec (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal items)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (key-value
+              (literal meta)
+              (mapping-constructor-expr
+                (key-value
+                  (literal n)
+                  (literal 2))))))))
+      (var-def
+        (variable recOut (type
+          (builtin-ref-type json)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref rec) (
+              (typedesc-expr
+                (builtin-ref-type json))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref recOut))))
+      (return
+        (literal <nil>)))))

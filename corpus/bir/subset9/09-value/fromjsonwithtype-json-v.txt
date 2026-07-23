@@ -1,0 +1,181 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad hello
+    strJson = %1;
+    %3 = ConstantLoad typedesc
+    %4 = fromJsonWithType(strJson,%3) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %4;
+    %6 = $desugar$0 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    strOut = $desugar$0;
+    %8 = println(strOut) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 42
+    intJson = %9;
+    %11 = ConstantLoad typedesc
+    %12 = fromJsonWithType(intJson,%11) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %12;
+    %14 = $desugar$1 is error
+    %14 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    intOut = $desugar$1;
+    %16 = println(intOut) -> bb8;
+  }
+  bb8 {
+    %17 = ConstantLoad true
+    boolJson = %17;
+    %19 = ConstantLoad typedesc
+    %20 = fromJsonWithType(boolJson,%19) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %20;
+    %22 = $desugar$2 is error
+    %22 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    boolOut = $desugar$2;
+    %24 = println(boolOut) -> bb12;
+  }
+  bb12 {
+    %25 = ConstantLoad 1
+    %26 = ConstantLoad <nil>
+    %27 = ConstantLoad 3
+    %28 = ConstantLoad 3
+    %29 = newArray [json...][%28]{%25, %26, %27}
+    arr = %29;
+    %31 = ConstantLoad typedesc
+    %32 = fromJsonWithType(arr,%31) -> bb13;
+  }
+  bb13 {
+    $desugar$3 = %32;
+    %34 = $desugar$3 is error
+    %34 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    arrOut = $desugar$3;
+    %36 = println(arrOut) -> bb16;
+  }
+  bb16 {
+    %37 = ConstantLoad a
+    %38 = ConstantLoad 1
+    %39 = ConstantLoad b
+    %40 = ConstantLoad <nil>
+    %41 = newMap {| json... |}{%37=%38, %39=%40}
+    m = %41;
+    %43 = ConstantLoad typedesc
+    %44 = fromJsonWithType(m,%43) -> bb17;
+  }
+  bb17 {
+    $desugar$4 = %44;
+    %46 = $desugar$4 is error
+    %46 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    mapOut = $desugar$4;
+    %48 = println(mapOut) -> bb20;
+  }
+  bb20 {
+    %49 = ConstantLoad 1
+    %50 = ConstantLoad 2
+    %51 = ConstantLoad 2
+    %52 = newArray [json...][%51]{%49, %50}
+    %53 = ConstantLoad 3
+    %54 = ConstantLoad 4
+    %55 = ConstantLoad 2
+    %56 = newArray [json...][%55]{%53, %54}
+    %57 = ConstantLoad 2
+    %58 = newArray [json...][%57]{%52, %56}
+    nested = %58;
+    %60 = ConstantLoad typedesc
+    %61 = fromJsonWithType(nested,%60) -> bb21;
+  }
+  bb21 {
+    $desugar$5 = %61;
+    %63 = $desugar$5 is error
+    %63 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    nestedOut = $desugar$5;
+    %65 = println(nestedOut) -> bb24;
+  }
+  bb24 {
+    %66 = ConstantLoad items
+    %67 = ConstantLoad 1
+    %68 = ConstantLoad 2
+    %69 = ConstantLoad 2
+    %70 = newArray [json...][%69]{%67, %68}
+    %71 = ConstantLoad meta
+    %72 = ConstantLoad n
+    %73 = ConstantLoad 2
+    %74 = newMap {| json... |}{%72=%73}
+    %75 = newMap {| json... |}{%66=%70, %71=%74}
+    rec = %75;
+    %77 = ConstantLoad typedesc
+    %78 = fromJsonWithType(rec,%77) -> bb25;
+  }
+  bb25 {
+    $desugar$6 = %78;
+    %80 = $desugar$6 is error
+    %80 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    recOut = $desugar$6;
+    %82 = println(recOut) -> bb28;
+  }
+  bb28 {
+    %83 = ConstantLoad <nil>
+    %0 = %83;
+    return;
+  }
+}

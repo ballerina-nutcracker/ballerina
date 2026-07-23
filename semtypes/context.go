@@ -25,8 +25,6 @@ type context struct {
 	_memoStack    []*bddMemo
 	_conjunctions []conjunction
 
-	_jsonMemo           SemType
-	_anydataMemo        SemType
 	_cloneableMemo      SemType
 	_orderedMemo        SemType
 	_isolatedObjectMemo SemType
@@ -87,22 +85,6 @@ func (c *context) popFromMemoStack() *bddMemo {
 
 func (c *context) Env() Env {
 	return c._env
-}
-
-func (c *context) jsonMemo() SemType {
-	return c._jsonMemo
-}
-
-func (c *context) setJsonMemo(t SemType) {
-	c._jsonMemo = t
-}
-
-func (c *context) anydataMemo() SemType {
-	return c._anydataMemo
-}
-
-func (c *context) setAnydataMemo(t SemType) {
-	c._anydataMemo = t
 }
 
 func (c *context) cloneableMemo() SemType {

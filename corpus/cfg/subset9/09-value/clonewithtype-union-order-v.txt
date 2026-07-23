@@ -1,0 +1,89 @@
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable d (type
+        (value-type decimal)) (expr
+        (literal 1.5))))
+    (var-def
+      (variable v1 (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal f1)
+            (mapping-constructor-expr
+              (key-value
+                (literal f3)
+                (simple-var-ref d))))))))
+    (var-def
+      (variable r1 (type
+        (user-defined-type R)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref v1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r1))))
+    (var-def
+      (variable r1b (type
+        (user-defined-type Rb)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref v1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r1b))))
+    (var-def
+      (variable v2 (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal f2)
+            (mapping-constructor-expr
+              (key-value
+                (literal f3)
+                (simple-var-ref d))))))))
+    (var-def
+      (variable r2 (type
+        (user-defined-type R)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref v2)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r2))))
+    (var-def
+      (variable v3 (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal f1)
+            (mapping-constructor-expr
+              (key-value
+                (literal f3)
+                (literal true))))))))
+    (var-def
+      (variable r3 (type
+        (union-type
+          (user-defined-type R)
+          (error-type))) (expr
+        (invocation lang.value cloneWithType (
+          (simple-var-ref v3))))))
+    (type-test-expr is
+      (simple-var-ref r3)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal error))))
+  )
+  (bb2 (bb1 bb3) ()
+    (return
+      (literal <nil>))
+  )
+  (bb3 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r3))))
+  )
+)

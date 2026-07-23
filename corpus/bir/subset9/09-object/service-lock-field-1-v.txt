@@ -113,7 +113,7 @@ class $service$0 {
 
   get() -> int{
     bb0 {
-      lock-start "$anon/.:$service.436.0.count" GOTO bb1;
+      lock-start "$anon/.:$service.438.0.count" GOTO bb1;
     }
     bb1 {
       PushScopeFrame 2
@@ -121,7 +121,7 @@ class $service$0 {
       %0 = (1, self)[%1];
       (1, %0) = %0;
       PopScopeFrame
-      lock-end "$anon/.:$service.436.0.count" GOTO bb2;
+      lock-end "$anon/.:$service.438.0.count" GOTO bb2;
     }
     bb2 {
       return;
@@ -133,7 +133,7 @@ class $service$0 {
 
   inc() -> nil{
     bb0 {
-      lock-start "$anon/.:$service.436.0.count" GOTO bb1;
+      lock-start "$anon/.:$service.438.0.count" GOTO bb1;
     }
     bb1 {
       PushScopeFrame 7
@@ -146,7 +146,7 @@ class $service$0 {
       %6 = ConstantLoad count
       (1, self)[%6] = %0;
       PopScopeFrame
-      lock-end "$anon/.:$service.436.0.count" GOTO bb2;
+      lock-end "$anon/.:$service.438.0.count" GOTO bb2;
     }
     bb2 {
       return;

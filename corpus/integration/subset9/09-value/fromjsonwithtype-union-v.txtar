@@ -1,0 +1,11 @@
+-- stdout --
+42
+hello
+[1,2]
+true
+{"name":"Bob"}
+true
+{"name":"Carol","score":null}
+{"name":"Ann","age":null}
+{"a":1}
+-- stderr --

@@ -1,0 +1,73 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad n
+      %2 = self[%3];
+      current = %2;
+      %6 = current;
+      %7 = ConstantLoad 3
+      %8 = %7;
+      %5 = >= %6 %8;
+      %5 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 7
+      %1 = (1, current);
+      %2 = ConstantLoad 1
+      %3 = %2;
+      %0 = + %1 %3;
+      %4 = ConstantLoad n
+      (1, self)[%4] = %0;
+      %5 = ConstantLoad value
+      %6 = newMap {| value: int, never... |}{%5=(1, current)}
+      (1, %0) = %6;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %5 = newStream stream %3
+    s = %5;
+    %7 = println(s) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

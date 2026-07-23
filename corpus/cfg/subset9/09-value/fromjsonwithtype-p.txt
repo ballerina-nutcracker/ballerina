@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable missing (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))))))
+    (var-def
+      (variable _ (type
+        (user-defined-type Person)) (expr
+        (check-panicked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref missing)
+            (simple-var-ref Person)))))))
+  )
+)

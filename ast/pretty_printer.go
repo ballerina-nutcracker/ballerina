@@ -372,8 +372,11 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	p.StartNode()
 	p.PrintString("package")
 	p.indentLevel++
-	for i := range node.Imports {
-		p.PrintInner(&node.Imports[i])
+	sortedImports := slices.SortedFunc(slices.Values(node.Imports), func(a, b BLangImportPackage) int {
+		return cmp.Compare(a.Alias.Value, b.Alias.Value)
+	})
+	for i := range sortedImports {
+		p.PrintInner(&sortedImports[i])
 	}
 	for i := range node.Constants {
 		p.PrintInner(&node.Constants[i])

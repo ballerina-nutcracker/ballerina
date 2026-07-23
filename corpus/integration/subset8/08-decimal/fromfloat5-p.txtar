@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: arithmetic overflow
+error: bad type cast: arithmetic overflow
         at main(fromfloat5-p.bal:21)

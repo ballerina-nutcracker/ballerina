@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: cannot convert 1E+19 to int64: value out of range
+error: bad type cast: cannot convert 1E+19 to int64: value out of range
         at main(14-p.bal:22)

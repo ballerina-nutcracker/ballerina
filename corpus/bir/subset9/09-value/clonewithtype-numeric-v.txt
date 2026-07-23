@@ -1,0 +1,458 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1234
+    i = %1;
+    %3 = ConstantLoad typedesc
+    %4 = cloneWithType(i,%3) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %4;
+    %6 = $desugar$0 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    f = $desugar$0;
+    %8 = f;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad 1234.6
+    fv = %10;
+    %12 = ConstantLoad typedesc
+    %13 = cloneWithType(fv,%12) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %13;
+    %15 = $desugar$1 is error
+    %15 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    iv = $desugar$1;
+    %17 = iv;
+    %18 = println(%17) -> bb8;
+  }
+  bb8 {
+    %19 = ConstantLoad 2.5
+    half = %19;
+    %21 = ConstantLoad typedesc
+    %22 = cloneWithType(half,%21) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %22;
+    %24 = $desugar$2 is error
+    %24 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    halfInt = $desugar$2;
+    %26 = halfInt;
+    %27 = println(%26) -> bb12;
+  }
+  bb12 {
+    %28 = ConstantLoad 7
+    di = %28;
+    %30 = ConstantLoad typedesc
+    %31 = cloneWithType(di,%30) -> bb13;
+  }
+  bb13 {
+    $desugar$3 = %31;
+    %33 = $desugar$3 is error
+    %33 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    d = $desugar$3;
+    %35 = d;
+    %36 = println(%35) -> bb16;
+  }
+  bb16 {
+    %37 = ConstantLoad 1.5
+    fdv = %37;
+    %39 = ConstantLoad typedesc
+    %40 = cloneWithType(fdv,%39) -> bb17;
+  }
+  bb17 {
+    $desugar$4 = %40;
+    %42 = $desugar$4 is error
+    %42 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    fd = $desugar$4;
+    %44 = fd;
+    %45 = println(%44) -> bb20;
+  }
+  bb20 {
+    %46 = ConstantLoad 12.3456
+    decVal = %46;
+    decAny = decVal;
+    %49 = ConstantLoad typedesc
+    %50 = cloneWithType(decAny,%49) -> bb21;
+  }
+  bb21 {
+    $desugar$5 = %50;
+    %52 = $desugar$5 is error
+    %52 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    fromDec = $desugar$5;
+    %54 = fromDec;
+    %55 = println(%54) -> bb24;
+  }
+  bb24 {
+    %56 = ConstantLoad 3.5
+    decF = %56;
+    decFAny = decF;
+    %59 = ConstantLoad typedesc
+    %60 = cloneWithType(decFAny,%59) -> bb25;
+  }
+  bb25 {
+    $desugar$6 = %60;
+    %62 = $desugar$6 is error
+    %62 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    floatFromDec = $desugar$6;
+    %64 = floatFromDec;
+    %65 = println(%64) -> bb28;
+  }
+  bb28 {
+    %66 = ConstantLoad 200
+    bv = %66;
+    %68 = ConstantLoad typedesc
+    %69 = cloneWithType(bv,%68) -> bb29;
+  }
+  bb29 {
+    $desugar$7 = %69;
+    %71 = $desugar$7 is error
+    %71 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb31 {
+    b = $desugar$7;
+    %73 = b;
+    %74 = println(%73) -> bb32;
+  }
+  bb32 {
+    %75 = ConstantLoad 200
+    fbv = %75;
+    %77 = ConstantLoad typedesc
+    %78 = cloneWithType(fbv,%77) -> bb33;
+  }
+  bb33 {
+    $desugar$8 = %78;
+    %80 = $desugar$8 is error
+    %80 ? bb34 : bb35;
+  }
+  bb34 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb35 {
+    fb = $desugar$8;
+    %82 = fb;
+    %83 = println(%82) -> bb36;
+  }
+  bb36 {
+    %84 = ConstantLoad 42.9
+    decByte = %84;
+    decByteAny = decByte;
+    %87 = ConstantLoad typedesc
+    %88 = cloneWithType(decByteAny,%87) -> bb37;
+  }
+  bb37 {
+    $desugar$9 = %88;
+    %90 = $desugar$9 is error
+    %90 ? bb38 : bb39;
+  }
+  bb38 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb39 {
+    dby = $desugar$9;
+    %92 = dby;
+    %93 = println(%92) -> bb40;
+  }
+  bb40 {
+    %94 = ConstantLoad 1
+    %95 = ConstantLoad 2
+    %96 = ConstantLoad 3
+    %97 = ConstantLoad 3
+    %98 = newArray [anydata...][%97]{%94, %95, %96}
+    ints = %98;
+    %100 = ConstantLoad typedesc
+    %101 = cloneWithType(ints,%100) -> bb41;
+  }
+  bb41 {
+    $desugar$10 = %101;
+    %103 = $desugar$10 is error
+    %103 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$10);
+    PopScopeFrame
+    return;
+  }
+  bb43 {
+    fa = $desugar$10;
+    %105 = println(fa) -> bb44;
+  }
+  bb44 {
+    %106 = ConstantLoad typedesc
+    %107 = cloneWithType(ints,%106) -> bb45;
+  }
+  bb45 {
+    $desugar$11 = %107;
+    %109 = $desugar$11 is error
+    %109 ? bb46 : bb47;
+  }
+  bb46 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$11);
+    PopScopeFrame
+    return;
+  }
+  bb47 {
+    da = $desugar$11;
+    %111 = println(da) -> bb48;
+  }
+  bb48 {
+    %112 = ConstantLoad 1
+    %113 = ConstantLoad 2
+    %114 = ConstantLoad 3
+    %115 = ConstantLoad 3
+    %116 = newArray [anydata...][%115]{%112, %113, %114}
+    floats = %116;
+    %118 = ConstantLoad typedesc
+    %119 = cloneWithType(floats,%118) -> bb49;
+  }
+  bb49 {
+    $desugar$12 = %119;
+    %121 = $desugar$12 is error
+    %121 ? bb50 : bb51;
+  }
+  bb50 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb51 {
+    ia = $desugar$12;
+    %123 = println(ia) -> bb52;
+  }
+  bb52 {
+    %124 = ConstantLoad 1
+    %125 = ConstantLoad 200
+    %126 = ConstantLoad 255
+    %127 = ConstantLoad 3
+    %128 = newArray [anydata...][%127]{%124, %125, %126}
+    floatBytes = %128;
+    %130 = ConstantLoad typedesc
+    %131 = cloneWithType(floatBytes,%130) -> bb53;
+  }
+  bb53 {
+    $desugar$13 = %131;
+    %133 = $desugar$13 is error
+    %133 ? bb54 : bb55;
+  }
+  bb54 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb55 {
+    ba = $desugar$13;
+    %135 = println(ba) -> bb56;
+  }
+  bb56 {
+    %136 = ConstantLoad 1.6
+    %137 = ConstantLoad 2.5
+    %138 = ConstantLoad 3.5
+    %139 = ConstantLoad 3
+    %140 = newArray [decimal...][%139]{%136, %137, %138}
+    decArr = %140;
+    decArrAny = decArr;
+    %143 = ConstantLoad typedesc
+    %144 = cloneWithType(decArrAny,%143) -> bb57;
+  }
+  bb57 {
+    $desugar$14 = %144;
+    %146 = $desugar$14 is error
+    %146 ? bb58 : bb59;
+  }
+  bb58 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$14);
+    PopScopeFrame
+    return;
+  }
+  bb59 {
+    fromDecArr = $desugar$14;
+    %148 = println(fromDecArr) -> bb60;
+  }
+  bb60 {
+    %149 = ConstantLoad a
+    %150 = ConstantLoad 1.2
+    %151 = ConstantLoad b
+    %152 = ConstantLoad 2.7
+    %153 = newMap {| anydata... |}{%149=%150, %151=%152}
+    mf = %153;
+    %155 = ConstantLoad typedesc
+    %156 = cloneWithType(mf,%155) -> bb61;
+  }
+  bb61 {
+    $desugar$15 = %156;
+    %158 = $desugar$15 is error
+    %158 ? bb62 : bb63;
+  }
+  bb62 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$15);
+    PopScopeFrame
+    return;
+  }
+  bb63 {
+    mi = $desugar$15;
+    %160 = println(mi) -> bb64;
+  }
+  bb64 {
+    %161 = ConstantLoad a
+    %162 = ConstantLoad 21
+    %163 = ConstantLoad b
+    %164 = ConstantLoad Alice
+    %165 = ConstantLoad c
+    %166 = ConstantLoad 1000
+    %167 = newMap {| anydata... |}{%161=%162, %163=%164, %165=%166}
+    r = %167;
+    %169 = ConstantLoad typedesc
+    %170 = cloneWithType(r,%169) -> bb65;
+  }
+  bb65 {
+    $desugar$16 = %170;
+    %172 = $desugar$16 is error
+    %172 ? bb66 : bb67;
+  }
+  bb66 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$16);
+    PopScopeFrame
+    return;
+  }
+  bb67 {
+    fr = $desugar$16;
+    %174 = println(fr) -> bb68;
+  }
+  bb68 {
+    %175 = ConstantLoad 256
+    over = %175;
+    %177 = ConstantLoad typedesc
+    %178 = cloneWithType(over,%177) -> bb69;
+  }
+  bb69 {
+    %179 = %178 is error
+    %180 = %179;
+    %181 = println(%180) -> bb70;
+  }
+  bb70 {
+    %182 = ConstantLoad 1
+    %183 = unknown %182;
+    neg = %183;
+    %185 = ConstantLoad typedesc
+    %186 = cloneWithType(neg,%185) -> bb71;
+  }
+  bb71 {
+    %187 = %186 is error
+    %188 = %187;
+    %189 = println(%188) -> bb72;
+  }
+  bb72 {
+    %191 = ConstantLoad 0
+    %192 = %191;
+    %193 = ConstantLoad 0
+    %194 = %193;
+    %190 = / %192 %194;
+    nan = %190;
+    nanAny = nan;
+    %197 = ConstantLoad typedesc
+    %198 = cloneWithType(nanAny,%197) -> bb73;
+  }
+  bb73 {
+    %199 = %198 is error
+    %200 = %199;
+    %201 = println(%200) -> bb74;
+  }
+  bb74 {
+    %203 = ConstantLoad 1
+    %204 = %203;
+    %205 = ConstantLoad 0
+    %206 = %205;
+    %202 = / %204 %206;
+    inf = %202;
+    infAny = inf;
+    %209 = ConstantLoad typedesc
+    %210 = cloneWithType(infAny,%209) -> bb75;
+  }
+  bb75 {
+    %211 = %210 is error
+    %212 = %211;
+    %213 = println(%212) -> bb76;
+  }
+  bb76 {
+    %214 = ConstantLoad <nil>
+    %0 = %214;
+    return;
+  }
+}

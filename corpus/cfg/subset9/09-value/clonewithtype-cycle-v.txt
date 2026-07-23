@@ -1,0 +1,141 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable cyclic (type
+        (value-type anydata)) (expr
+        (simple-var-ref m))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal self))
+      (simple-var-ref cyclic))
+    (var-def
+      (variable r1 (type
+        (union-type
+          (value-type anydata)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref cyclic)
+            (typedesc-expr
+              (value-type anydata))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r1)
+          (error-type)))))
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type anydata) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable cyclicArr (type
+        (value-type anydata)) (expr
+        (simple-var-ref arr))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref arr)
+        (simple-var-ref cyclicArr))))
+    (var-def
+      (variable r2 (type
+        (union-type
+          (value-type anydata)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref cyclicArr)
+            (typedesc-expr
+              (value-type anydata))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r2)
+          (error-type)))))
+    (var-def
+      (variable m1 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable m2 (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable c1 (type
+        (value-type anydata)) (expr
+        (simple-var-ref m1))))
+    (var-def
+      (variable c2 (type
+        (value-type anydata)) (expr
+        (simple-var-ref m2))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m1)
+        (literal next))
+      (simple-var-ref c2))
+    (assignment
+      (index-based-access
+        (simple-var-ref m2)
+        (literal prev))
+      (simple-var-ref c1))
+    (var-def
+      (variable r3 (type
+        (union-type
+          (value-type anydata)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref c1)
+            (typedesc-expr
+              (value-type anydata))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r3)
+          (error-type)))))
+    (var-def
+      (variable shared (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))))))
+    (var-def
+      (variable dag (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (simple-var-ref shared))
+          (key-value
+            (literal b)
+            (simple-var-ref shared))))))
+    (var-def
+      (variable r4 (type
+        (union-type
+          (value-type anydata)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref dag)
+            (typedesc-expr
+              (value-type anydata))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r4)
+          (error-type)))))
+  )
+)

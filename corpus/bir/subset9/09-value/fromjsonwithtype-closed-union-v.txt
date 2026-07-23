@@ -1,0 +1,67 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad age
+    %2 = ConstantLoad 5
+    %3 = newMap {| json... |}{%1=%2}
+    ageOnly = %3;
+    %5 = ConstantLoad typedesc
+    %6 = fromJsonWithType(ageOnly,%5) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    %8 = $desugar$0 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    ageOnlyPet = $desugar$0;
+    %10 = println(ageOnlyPet) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad pet_type
+    %12 = ConstantLoad Cat
+    %13 = newMap {| json... |}{%11=%12}
+    typeOnly = %13;
+    %15 = ConstantLoad typedesc
+    %16 = fromJsonWithType(typeOnly,%15) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %16;
+    %18 = $desugar$1 is error
+    %18 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    typeOnlyPet = $desugar$1;
+    %20 = println(typeOnlyPet) -> bb8;
+  }
+  bb8 {
+    %21 = ConstantLoad nickname
+    %22 = ConstantLoad Fido
+    %23 = newMap {| json... |}{%21=%22}
+    petJson = %23;
+    %25 = ConstantLoad typedesc
+    %26 = fromJsonWithType(petJson,%25) -> bb9;
+  }
+  bb9 {
+    %27 = %26 is error
+    %28 = %27;
+    %29 = println(%28) -> bb10;
+  }
+  bb10 {
+    %30 = ConstantLoad <nil>
+    %0 = %30;
+    return;
+  }
+}

@@ -147,6 +147,27 @@ func TestDependentlyTyped(t *testing.T) {
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredWithDefault typedesc constraint"))
 		}},
+		{Org: org, Module: mod, FuncName: "inferredMaybeError", Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[0].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
+			}
+			// return an error to verify the inferred typedesc was widened to include error
+			if semtypes.IsSubtype(ctx.TypeCtx, semtypes.ERROR, td.Type) {
+				return values.NewErrorWithMessage("error"), nil
+			}
+			panic(values.NewErrorWithMessage("inferredMaybeError: expected error to be in typedesc"))
+		}},
+		{Org: org, Module: mod, FuncName: "Getter." + model.RemoteMethodName("get"), Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[1].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
+			}
+			if !semtypes.IsSubtype(ctx.TypeCtx, semtypes.STRING, td.Type) {
+				panic(values.NewErrorWithMessage("Getter.get: expected string-compatible typedesc"))
+			}
+			return "immutable", nil
+		}},
 	}
 	runExtern(t, fileCase("dependently-typed-v"), testharness.NewTestPal(), externs)
 }

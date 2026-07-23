@@ -19,9 +19,7 @@ package values
 import (
 	"errors"
 	"fmt"
-	"math"
 
-	"ballerina-lang-go/decimal"
 	"ballerina-lang-go/semtypes"
 )
 
@@ -42,77 +40,30 @@ func CastValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.Sem
 	return converted, nil
 }
 
+// ConvertNumericValue performs the numeric conversion behind the `<Type>` cast
+// operator, sharing the same NumericConvertTo* rules used by cloneWithType and
+// fromJsonWithType. Any conversion failure is reported as a bad-type-cast error.
 func ConvertNumericValue(value BalValue, targetType semtypes.SemType) (BalValue, error) {
 	switch {
 	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
-		return ToInt(value)
-	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
-		return ToFloat(value)
-	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
-		return ToDecimal(value)
-	default:
-		return nil, ErrBadTypeCast
-	}
-}
-
-func ToInt(value BalValue) (int64, error) {
-	switch v := value.(type) {
-	case int64:
-		return v, nil
-	case float64:
-		if math.IsNaN(v) || math.IsInf(v, 0) {
-			return 0, fmt.Errorf("bad type cast: cannot cast non-finite value %v to int", v)
-		}
-		if v < float64(math.MinInt64) || v > float64(math.MaxInt64) {
-			return 0, fmt.Errorf("bad type cast: cannot cast out-of-range value %v to int", v)
-		}
-		return int64(math.RoundToEven(v)), nil
-	case *decimal.Decimal:
-		n, ok, err := v.Int64()
+		n, err := NumericConvertToInt(value)
 		if err != nil {
-			return 0, fmt.Errorf("cannot convert %v to int: %v", v, err)
-		}
-		if !ok {
-			return 0, fmt.Errorf("cannot convert %v to int64: value out of range", v)
+			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return n, nil
-	default:
-		return 0, fmt.Errorf("bad type cast: cannot cast %v to int", value)
-	}
-}
-
-func ToFloat(value BalValue) (float64, error) {
-	switch v := value.(type) {
-	case int64:
-		return float64(v), nil
-	case float64:
-		return v, nil
-	case *decimal.Decimal:
-		return v.Float64(), nil
-	default:
-		return 0, fmt.Errorf("bad type cast: cannot cast %v to float", value)
-	}
-}
-
-func ToDecimal(value BalValue) (*decimal.Decimal, error) {
-	switch v := value.(type) {
-	case int64:
-		return decimal.FromInt64(v), nil
-	case float64:
-		if math.IsInf(v, 0) {
-			return nil, &decimal.Error{Kind: decimal.ErrOverflow}
-		}
-		if math.IsNaN(v) {
-			return nil, &decimal.Error{Kind: decimal.ErrInvalid}
-		}
-		d, err := decimal.FromFloat64(v)
+	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
+		f, err := NumericConvertToFloat(value)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("bad type cast: %w", err)
+		}
+		return f, nil
+	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
+		d, err := NumericConvertToDecimal(value)
+		if err != nil {
+			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return d, nil
-	case *decimal.Decimal:
-		return v, nil
 	default:
-		return nil, fmt.Errorf("bad type cast: cannot cast %v to decimal", value)
+		return nil, ErrBadTypeCast
 	}
 }

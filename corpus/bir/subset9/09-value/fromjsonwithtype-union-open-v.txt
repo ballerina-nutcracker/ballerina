@@ -1,0 +1,127 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad nickname
+    %2 = ConstantLoad Fido
+    %3 = ConstantLoad pet_type
+    %4 = ConstantLoad Dog
+    %5 = ConstantLoad age
+    %6 = ConstantLoad 4
+    %7 = newMap {| json... |}{%1=%2, %3=%4, %5=%6}
+    petJson = %7;
+    %9 = ConstantLoad typedesc
+    %10 = fromJsonWithType(petJson,%9) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %10;
+    %12 = $desugar$0 is error
+    %12 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    pet = $desugar$0;
+    %14 = println(pet) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad 1
+    %16 = ConstantLoad 2
+    %17 = ConstantLoad 2
+    %18 = newArray [json...][%17]{%15, %16}
+    arrJson = %18;
+    %20 = ConstantLoad typedesc
+    %21 = fromJsonWithType(arrJson,%20) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %21;
+    %23 = $desugar$1 is error
+    %23 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    arrVal = $desugar$1;
+    %25 = println(arrVal) -> bb8;
+  }
+  bb8 {
+    %26 = ConstantLoad a
+    %27 = ConstantLoad b
+    %28 = ConstantLoad 2
+    %29 = newArray [json...][%28]{%26, %27}
+    strArrJson = %29;
+    %31 = ConstantLoad typedesc
+    %32 = fromJsonWithType(strArrJson,%31) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %32;
+    %34 = $desugar$2 is error
+    %34 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    strArrVal = $desugar$2;
+    %36 = println(strArrVal) -> bb12;
+  }
+  bb12 {
+    %37 = ConstantLoad 12
+    floatJson = %37;
+    %39 = ConstantLoad typedesc
+    %40 = fromJsonWithType(floatJson,%39) -> bb13;
+  }
+  bb13 {
+    $desugar$3 = %40;
+    %42 = $desugar$3 is error
+    %42 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    numVal = $desugar$3;
+    %44 = numVal is float
+    %45 = %44;
+    %46 = println(%45) -> bb16;
+  }
+  bb16 {
+    %47 = ConstantLoad 200
+    floatAsByte = %47;
+    %49 = ConstantLoad typedesc
+    %50 = fromJsonWithType(floatAsByte,%49) -> bb17;
+  }
+  bb17 {
+    $desugar$4 = %50;
+    %52 = $desugar$4 is error
+    %52 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    asByte = $desugar$4;
+    %54 = println(asByte) -> bb20;
+  }
+  bb20 {
+    %55 = ConstantLoad <nil>
+    %0 = %55;
+    return;
+  }
+}

@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package values has value representations use in runtime.
 package values
 
 // Given we use nil for ballerina nil we'll have an explicit never value. If tried to use as operand in any operation

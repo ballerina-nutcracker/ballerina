@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  close() -> nil{
+    bb0 {
+      %2 = ConstantLoad <nil>
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad n
+      %2 = self[%3];
+      current = %2;
+      %6 = current;
+      %7 = ConstantLoad 1
+      %8 = %7;
+      %5 = + %6 %8;
+      %9 = ConstantLoad n
+      self[%9] = %5;
+      %10 = ConstantLoad value
+      %11 = newMap {| value: int, never... |}{%10=current}
+      %0 = %11;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %5 = newStream stream %3
+    s = %5;
+    %7 = s is stream
+    %8 = %7;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %10 = s is stream
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

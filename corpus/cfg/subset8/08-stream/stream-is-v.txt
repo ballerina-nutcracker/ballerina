@@ -1,0 +1,54 @@
+(Counter
+  (close
+    (bb0 () ()
+      (return
+        (literal <nil>))
+    )
+  )
+  (next
+    (bb0 () ()
+      (var-def
+        (variable current (type
+          (value-type int)) (expr
+          (field-based-access n
+            (simple-var-ref self)))))
+      (assignment
+        (field-based-access n
+          (simple-var-ref self))
+        (binary-expr +
+          (simple-var-ref current)
+          (literal 1)))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref current))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (stream-type
+          (value-type int)
+          (value-type null))) (expr
+        (new (
+          (new
+            (user-defined-type Counter) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref s)
+          (stream-type
+            (value-type int)
+            (value-type null))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref s)
+          (stream-type
+            (value-type string)
+            (value-type null))))))
+  )
+)

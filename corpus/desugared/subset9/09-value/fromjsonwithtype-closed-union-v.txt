@@ -1,0 +1,96 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (type-definition PetByAge
+    (record-type
+      (field age
+        (value-type int))
+      (field nickname optional
+        (value-type string))))
+  (type-definition PetByType
+    (record-type
+      (field pet_type
+        (union-type
+          (finite-type
+            (literal Cat))
+          (finite-type
+            (literal Dog))))
+      (field nickname optional
+        (value-type int))
+      (field hunts optional
+        (value-type boolean))))
+  (type-definition Pet
+    (union-type
+      (user-defined-type PetByAge)
+      (user-defined-type PetByType)))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable ageOnly (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal age)
+              (literal 5))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref ageOnly)
+            (simple-var-ref Pet))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable ageOnlyPet (type
+          (user-defined-type Pet)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ageOnlyPet))))
+      (var-def
+        (variable typeOnly (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal pet_type)
+              (literal Cat))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref typeOnly)
+            (simple-var-ref Pet))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable typeOnlyPet (type
+          (user-defined-type Pet)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref typeOnlyPet))))
+      (var-def
+        (variable petJson (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal nickname)
+              (literal Fido))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref petJson)
+              (simple-var-ref Pet)))
+            (error-type)))))
+      (return
+        (literal <nil>)))))

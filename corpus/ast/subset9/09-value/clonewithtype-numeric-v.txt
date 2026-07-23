@@ -1,0 +1,391 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition FloatArray
+    (array-type
+      (value-type float) dimensions: 1 ([])))
+  (type-definition DecimalArray
+    (array-type
+      (value-type decimal) dimensions: 1 ([])))
+  (type-definition IntArray
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+  (type-definition ByteArray
+    (array-type
+      (value-type byte) dimensions: 1 ([])))
+  (type-definition IntMap
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int)))
+  (type-definition IntRec
+    (record-type
+      (field a
+        (value-type int))
+      (field b
+        (value-type string))
+      (field c
+        (value-type int))))
+  (type-definition FloatRec
+    (record-type
+      (field a
+        (value-type float))
+      (field b
+        (value-type string))
+      (field c
+        (value-type float))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type anydata)) (expr
+          (literal 1234))))
+      (var-def
+        (variable f (type
+          (value-type float)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref i) (
+              (typedesc-expr
+                (value-type float))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f))))
+      (var-def
+        (variable fv (type
+          (value-type anydata)) (expr
+          (literal 1234.6))))
+      (var-def
+        (variable iv (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref fv) (
+              (typedesc-expr
+                (value-type int))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref iv))))
+      (var-def
+        (variable half (type
+          (value-type anydata)) (expr
+          (literal 2.5))))
+      (var-def
+        (variable halfInt (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref half) (
+              (typedesc-expr
+                (value-type int))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref halfInt))))
+      (var-def
+        (variable di (type
+          (value-type anydata)) (expr
+          (literal 7))))
+      (var-def
+        (variable d (type
+          (value-type decimal)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref di) (
+              (typedesc-expr
+                (value-type decimal))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (var-def
+        (variable fdv (type
+          (value-type anydata)) (expr
+          (literal 1.5))))
+      (var-def
+        (variable fd (type
+          (value-type decimal)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref fdv) (
+              (typedesc-expr
+                (value-type decimal))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fd))))
+      (var-def
+        (variable decVal (type
+          (value-type decimal)) (expr
+          (literal 12.3456))))
+      (var-def
+        (variable decAny (type
+          (value-type anydata)) (expr
+          (simple-var-ref decVal))))
+      (var-def
+        (variable fromDec (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref decAny) (
+              (typedesc-expr
+                (value-type int))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromDec))))
+      (var-def
+        (variable decF (type
+          (value-type decimal)) (expr
+          (literal 3.5))))
+      (var-def
+        (variable decFAny (type
+          (value-type anydata)) (expr
+          (simple-var-ref decF))))
+      (var-def
+        (variable floatFromDec (type
+          (value-type float)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref decFAny) (
+              (typedesc-expr
+                (value-type float))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref floatFromDec))))
+      (var-def
+        (variable bv (type
+          (value-type anydata)) (expr
+          (literal 200))))
+      (var-def
+        (variable b (type
+          (value-type byte)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref bv) (
+              (typedesc-expr
+                (value-type byte))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable fbv (type
+          (value-type anydata)) (expr
+          (literal 200.0))))
+      (var-def
+        (variable fb (type
+          (value-type byte)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref fbv) (
+              (typedesc-expr
+                (value-type byte))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fb))))
+      (var-def
+        (variable decByte (type
+          (value-type decimal)) (expr
+          (literal 42.9))))
+      (var-def
+        (variable decByteAny (type
+          (value-type anydata)) (expr
+          (simple-var-ref decByte))))
+      (var-def
+        (variable dby (type
+          (value-type byte)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref decByteAny) (
+              (typedesc-expr
+                (value-type byte))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref dby))))
+      (var-def
+        (variable ints (type
+          (value-type anydata)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable fa (type
+          (user-defined-type FloatArray)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref ints) (
+              (simple-var-ref FloatArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fa))))
+      (var-def
+        (variable da (type
+          (user-defined-type DecimalArray)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref ints) (
+              (simple-var-ref DecimalArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref da))))
+      (var-def
+        (variable floats (type
+          (value-type anydata)) (expr
+          (list-constructor-expr
+            (literal 1.0)
+            (literal 2.0)
+            (literal 3.0)))))
+      (var-def
+        (variable ia (type
+          (user-defined-type IntArray)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref floats) (
+              (simple-var-ref IntArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ia))))
+      (var-def
+        (variable floatBytes (type
+          (value-type anydata)) (expr
+          (list-constructor-expr
+            (literal 1.0)
+            (literal 200.0)
+            (literal 255.0)))))
+      (var-def
+        (variable ba (type
+          (user-defined-type ByteArray)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref floatBytes) (
+              (simple-var-ref ByteArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ba))))
+      (var-def
+        (variable decArr (type
+          (array-type
+            (value-type decimal) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1.6)
+            (literal 2.5)
+            (literal 3.5)))))
+      (var-def
+        (variable decArrAny (type
+          (value-type anydata)) (expr
+          (simple-var-ref decArr))))
+      (var-def
+        (variable fromDecArr (type
+          (user-defined-type IntArray)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref decArrAny) (
+              (simple-var-ref IntArray)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromDecArr))))
+      (var-def
+        (variable mf (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1.2))
+            (key-value
+              (literal b)
+              (literal 2.7))))))
+      (var-def
+        (variable mi (type
+          (user-defined-type IntMap)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref mf) (
+              (simple-var-ref IntMap)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mi))))
+      (var-def
+        (variable r (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 21))
+            (key-value
+              (literal b)
+              (literal Alice))
+            (key-value
+              (literal c)
+              (literal 1000))))))
+      (var-def
+        (variable fr (type
+          (user-defined-type FloatRec)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref r) (
+              (simple-var-ref FloatRec)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fr))))
+      (var-def
+        (variable over (type
+          (value-type anydata)) (expr
+          (literal 256))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation cloneWithType expr:
+              (simple-var-ref over) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (var-def
+        (variable neg (type
+          (value-type anydata)) (expr
+          (unary-expr -
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation cloneWithType expr:
+              (simple-var-ref neg) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (var-def
+        (variable nan (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0)))))
+      (var-def
+        (variable nanAny (type
+          (value-type anydata)) (expr
+          (simple-var-ref nan))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation cloneWithType expr:
+              (simple-var-ref nanAny) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable inf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1.0)
+            (literal 0.0)))))
+      (var-def
+        (variable infAny (type
+          (value-type anydata)) (expr
+          (simple-var-ref inf))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation cloneWithType expr:
+              (simple-var-ref infAny) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (return
+        (literal <nil>)))))
