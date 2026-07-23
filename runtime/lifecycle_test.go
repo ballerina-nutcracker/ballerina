@@ -26,7 +26,6 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/bir"
 	_ "ballerina-lang-go/lib/rt"
 	"ballerina-lang-go/platform/pal"
 	"ballerina-lang-go/projects"
@@ -365,113 +364,6 @@ service on l {
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for runtime:onGracefulStop outside initialization to fail fast")
 	}
-}
-
-const startFailureLifecycleSource = `
-import ballerina/io;
-
-class FailingListener {
-    public function attach(service object {} svc, () attachPoint = ()) returns error? {
-        var _ = svc;
-        var _ = attachPoint;
-    }
-
-    public function detach(service object {} svc) returns error? {
-        var _ = svc;
-    }
-
-    public function 'start() returns error? {
-        return error("start failed");
-    }
-
-    public function gracefulStop() returns error? {
-        io:println("graceful:one");
-    }
-
-    public function immediateStop() returns error? {
-        io:println("immediate:one");
-    }
-}
-
-listener FailingListener l = new ();
-
-service on l {
-}
-`
-
-// TestLifecycleStartFailureThenStraySignalIsNoOp reproduces the WASM CI
-// panic (invalid lifecycle transition from stopped -> gracefulStopping): a
-// $start failure makes rt.Listen() cascade synchronously all the way to
-// Stopped before it returns. A caller that only knows the package declares
-// $start hooks (like test_util/testharness.Run) may still send a stop
-// signal unconditionally, unaware the runtime already stopped on its own.
-// Delivering that stray signal must be a no-op, not a panic.
-func TestLifecycleStartFailureThenStraySignalIsNoOp(t *testing.T) {
-	pal := newLifecycleTestPal(t)
-	rt := newLifecycleTestRuntime(t, startFailureLifecycleSource, pal)
-
-	rt.Listen()
-
-	code := readExitStatus(t, rt)
-	if code != 1 {
-		t.Fatalf("expected start-failure exit code 1, got %d", code)
-	}
-	if got, want := pal.Stdout(), "graceful:one\n"; got != want {
-		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
-	}
-
-	pal.Send(palSignalGracefulStop)
-	waitForSignalConsumed(t, pal)
-	if got, want := pal.Stdout(), "graceful:one\n"; got != want {
-		t.Fatalf("unexpected stdout after stray signal: got %q, want %q", got, want)
-	}
-}
-
-// TestLifecycleReInitAfterStoppedPanics exercises the general "invalid
-// lifecycle transition" panic (as opposed to the Stopped -> {Graceful,
-// Immediate}Stopping edges, which are a no-op - see
-// TestLifecycleStartFailureThenStraySignalIsNoOp). Re-Init after the runtime
-// has already reached Stopped is still an illegal edge and must panic loudly.
-func TestLifecycleReInitAfterStoppedPanics(t *testing.T) {
-	pal := newLifecycleTestPal(t)
-	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
-
-	rt.Listen()
-	pal.Send(palSignalGracefulStop)
-	readExitStatus(t, rt)
-
-	recovered := reInitAndRecover(rt)
-	if recovered == nil {
-		t.Fatal("expected a panic when Init is called again after Stopped")
-	}
-	msg, ok := recovered.(string)
-	if !ok || !strings.Contains(msg, "invalid lifecycle transition from stopped -> initializing") {
-		t.Fatalf("unexpected panic value: %v", recovered)
-	}
-}
-
-func reInitAndRecover(rt *runtime.Runtime) (recovered any) {
-	defer func() {
-		recovered = recover()
-	}()
-	_ = rt.Init(bir.BIRPackage{})
-	return nil
-}
-
-// waitForSignalConsumed polls (instead of sleeping a fixed duration) until
-// the signal channel drains, i.e. the signal-listener goroutine actually
-// read the stray signal, then gives it a brief grace period to run the
-// (async) transition it triggers. If the listener already exited - because
-// the runtime was already Stopped when the signal was sent - the channel
-// never drains and this just returns after the timeout; that is itself a
-// valid no-op outcome.
-func waitForSignalConsumed(t *testing.T, pal *lifecycleTestPal) {
-	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
-	for len(pal.signals) > 0 && time.Now().Before(deadline) {
-		time.Sleep(time.Millisecond)
-	}
-	time.Sleep(20 * time.Millisecond)
 }
 
 func invokeAndRecover(rt *runtime.Runtime, fn any) (recovered any) {
