@@ -88,27 +88,25 @@ func initUUIDModule(rt *runtime.Runtime) {
 				uuid[10:16]), nil
 		})
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "externValidate",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			s, ok := args[0].(string)
-			if !ok {
-				return false, nil
-			}
-			return uuidRegexp.MatchString(s), nil
-		})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "externValidate", validateExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "externParseHexUint", parseHexUintExtern)
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "externParseHexUint",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			s, ok := args[0].(string)
-			if !ok {
-				return nil, fmt.Errorf("argument must be a string")
-			}
-			n, err := strconv.ParseUint(s, 16, 64)
-			if err != nil {
-				return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
-			}
-			return int64(n), nil
-		})
+// validateExtern's argument is declared `string` in uuid.bal, so the
+// Ballerina type checker guarantees args[0] is always a string.
+func validateExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return uuidRegexp.MatchString(args[0].(string)), nil
+}
+
+// parseHexUintExtern's argument is declared `string` in uuid.bal, so the
+// Ballerina type checker guarantees args[0] is always a string.
+func parseHexUintExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	s := args[0].(string)
+	n, err := strconv.ParseUint(s, 16, 64)
+	if err != nil {
+		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+	}
+	return int64(n), nil
 }
 
 func init() {
