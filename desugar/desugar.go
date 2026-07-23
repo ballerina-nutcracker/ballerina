@@ -19,6 +19,7 @@ package desugar
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 
 	"ballerina-lang-go/ast"
@@ -41,14 +42,16 @@ type desugaredNode[E ast.Node] struct {
 // Worker goroutines (per-function/class/service) must use their own non-shared
 // typeContext via functionContext.typeCtx().
 type packageContext struct {
-	compilerCtx          *context.CompilerContext
-	pkg                  *ast.BLangPackage
-	importedSymbols      map[string]model.ExportedSymbolSpace
-	importMu             sync.Mutex
-	addedImplicitImports map[string]bool
-	desugarSymbolCounter int
-	typeContext          semtypes.Context
-	xmlIteratorTypes     *semtypes.SemTypeCache
+	compilerCtx            *context.CompilerContext
+	pkg                    *ast.BLangPackage
+	importedSymbols        map[string]model.ExportedSymbolSpace
+	importMu               sync.Mutex
+	addedImplicitImports   map[string]bool
+	defaultClosureOwnersMu sync.Mutex
+	defaultClosureOwners   map[model.SymbolRef]struct{}
+	desugarSymbolCounter   int
+	typeContext            semtypes.Context
+	xmlIteratorTypes       *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -59,6 +62,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		pkg:                  pkg,
 		importedSymbols:      importedSymbols,
 		addedImplicitImports: make(map[string]bool),
+		defaultClosureOwners: make(map[model.SymbolRef]struct{}),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
 		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
 	}
@@ -77,6 +81,48 @@ func (ctx *packageContext) addImplicitImport(pkgName string, imp ast.BLangImport
 	}
 }
 
+func sortedGeneratedFunctions(generatedFunctions []*ast.BLangFunction) []*ast.BLangFunction {
+	// Ideally this shouldn't be needed (this is used only to keep desguared functions in generated closures in same order)
+	functions := append([]*ast.BLangFunction(nil), generatedFunctions...)
+	sort.Slice(functions, func(i, j int) bool {
+		left := functions[i].Symbol()
+		right := functions[j].Symbol()
+		if left.SpaceIndex != right.SpaceIndex {
+			return left.SpaceIndex < right.SpaceIndex
+		}
+		return left.Index < right.Index
+	})
+	return functions
+}
+
+func (ctx *packageContext) addDefaultClosureOwner(expr ast.BLangActionOrExpression) {
+	lambda := inferredLambda(expr)
+	if lambda == nil {
+		return
+	}
+	ctx.defaultClosureOwnersMu.Lock()
+	defer ctx.defaultClosureOwnersMu.Unlock()
+	ctx.defaultClosureOwners[lambda.Function.Symbol()] = struct{}{}
+}
+
+func (ctx *packageContext) needsDefaultClosures(owner model.SymbolRef) bool {
+	ctx.defaultClosureOwnersMu.Lock()
+	defer ctx.defaultClosureOwnersMu.Unlock()
+	_, ok := ctx.defaultClosureOwners[owner]
+	return ok
+}
+
+func inferredLambda(expr ast.BLangActionOrExpression) *ast.BLangLambdaFunction {
+	switch expr := expr.(type) {
+	case *ast.BLangGroupExpr:
+		return inferredLambda(expr.Expression)
+	case *ast.BLangLambdaFunction:
+		return expr
+	default:
+		return nil
+	}
+}
+
 func (ctx *packageContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
 	space, ok := ctx.importedSymbols[pkgName]
 	return space, ok
@@ -92,6 +138,24 @@ func (ctx *packageContext) newFunctionScope(parent model.Scope) *model.FunctionS
 
 func (ctx *packageContext) getSymbol(ref model.SymbolRef) model.Symbol {
 	return ctx.compilerCtx.GetSymbol(ref)
+}
+
+func (ctx *packageContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return ctx.compilerCtx.GetFunctionSignature(ref)
+}
+
+func (ctx *packageContext) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return ctx.compilerCtx.GetFunctionSignatureByRef(ref)
+}
+
+func (ctx *packageContext) associateFunctionSignature(source, target model.SymbolRef) {
+	ref, ok := ctx.compilerCtx.FunctionSignatureRef(source)
+	if !ok {
+		return
+	}
+	if !ctx.compilerCtx.AssociateFunctionSignature(target, ref) {
+		ctx.internalError("function signature already set")
+	}
 }
 
 func (ctx *packageContext) getSymbolType(ref model.SymbolRef) semtypes.SemType {
@@ -135,6 +199,8 @@ type functionContext struct {
 	scopeStack           []model.Scope
 	desugarSymbolCounter int
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
+	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
+	generatedFunctions   []*ast.BLangFunction
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
@@ -158,6 +224,18 @@ func (ctx *functionContext) internalError(msg string) {
 
 func (ctx *functionContext) unimplemented(msg string) {
 	ctx.pkgCtx.unimplemented(msg)
+}
+
+func (ctx *functionContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return ctx.pkgCtx.functionSignature(ref)
+}
+
+func (ctx *functionContext) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return ctx.pkgCtx.functionSignatureByRef(ref)
+}
+
+func (ctx *functionContext) associateFunctionSignature(source, target model.SymbolRef) {
+	ctx.pkgCtx.associateFunctionSignature(source, target)
 }
 
 func (ctx *functionContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
@@ -241,6 +319,9 @@ type desugarContext interface {
 	setSymbolType(ref model.SymbolRef, ty semtypes.SemType)
 	symbolType(ref model.SymbolRef) semtypes.SemType
 	getSymbol(ref model.SymbolRef) model.Symbol
+	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
+	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
+	associateFunctionSignature(source, target model.SymbolRef)
 	typeEnv() semtypes.Env
 	internalError(msg string)
 }
@@ -504,17 +585,17 @@ func serviceInitResultType(pkgCtx *packageContext, svc *ast.BLangService, svcTy 
 		pkgCtx.internalError("failed to find init function symbol")
 		return semtypes.NEVER
 	}
-	retTy := fnSym.Signature().ReturnType
+	retTy := fnSym.TypedSignature().ReturnType
 	errComponent := semtypes.Diff(retTy, semtypes.NIL)
 	return semtypes.Union(errComponent, svcTy)
 }
 
-func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) {
+func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) []*ast.BLangFunction {
 	nodes := collectModuleInitNodes(pkg)
 	order, ok := toplogicallySortInits(compilerCtx, nodes)
 	if !ok {
 		pkgCtx.internalError("module init dependency ordering failed")
-		return
+		return nil
 	}
 
 	// we need init if the package has any module level constant/variable with init expressions or services
@@ -528,7 +609,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		}
 	}
 	if !needInit {
-		return
+		return nil
 	}
 
 	initFnCreated := pkg.InitFunction == nil
@@ -575,11 +656,13 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		body.Stmts = append(initStmts, body.Stmts...)
 	}
 
-	*pkg.InitFunction = *desugarFunction(pkgCtx, pkg.InitFunction)
+	initFn, generatedFunctions := desugarFunction(pkgCtx, pkg.InitFunction)
+	*pkg.InitFunction = *initFn
 
 	if hasListeners {
 		createLifeCycleHooks(pkgCtx, pkg, moduleListenersRef, initPos)
 	}
+	return generatedFunctions
 }
 
 // createLifeCycleHooks generates `$start`, `$gracefulStop` and `$immediateStop`
@@ -665,7 +748,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		fn.SetDeterminedType(semtypes.NEVER)
 		fn.SetPosition(initPos)
 
-		signature := model.FunctionSignature{ReturnType: errorOrNil}
+		signature := model.TypedFunctionSignature{ReturnType: errorOrNil}
 		fnSymbol := model.NewFunctionSymbol(fnName, signature, false, initPos)
 		symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 		symbolSpace.AddSymbol(fnName, fnSymbol)
@@ -777,9 +860,9 @@ func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, in
 		compilerCtx.InternalError("module init function symbol is not a FunctionSymbol", initFn.GetPosition())
 		return
 	}
-	sig := fnSym.Signature()
+	sig := fnSym.TypedSignature()
 	sig.ReturnType = newRet
-	fnSym.SetSignature(sig)
+	fnSym.SetTypedSignature(sig)
 }
 
 func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, initPos diagnostics.Location) {
@@ -793,7 +876,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 	pkg.InitFunction.SetDeterminedType(semtypes.NEVER)
 	pkg.InitFunction.SetPosition(initPos)
 	pkgID := pkg.PackageID
-	signature := model.FunctionSignature{ReturnType: semtypes.NIL}
+	signature := model.TypedFunctionSignature{ReturnType: semtypes.NIL}
 	initSymbol := model.NewFunctionSymbol("init", signature, false, initPos)
 	symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 	symbolSpace.AddSymbol("init", initSymbol)
@@ -1101,19 +1184,123 @@ type desugaredRecordFieldResult struct {
 
 type desugaredTypeDescResult struct {
 	recordFields []desugaredRecordFieldResult
+	functions    []*ast.BLangFunction
+}
+
+func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) []ast.StatementNode {
+	fnType := cx.symbolType(fn.Symbol())
+	lambda := &ast.BLangLambdaFunction{Function: fn}
+	lambda.SetDeterminedType(fnType)
+	setPositionIfMissing(lambda, fn.GetPosition())
+
+	result := walkExpression(cx, lambda)
+	varDef, varRef := assignToLocal(cx, result.replacementNode.(ast.BLangExpression), fn.GetPosition())
+	if cx.defaultClosureVars == nil {
+		cx.defaultClosureVars = make(map[model.SymbolRef]model.SymbolRef)
+	}
+	cx.defaultClosureVars[fn.Symbol()] = varRef.Symbol()
+	return append(result.initStmts, varDef)
+}
+
+func desugarLocalTypeDescDefaults(cx *functionContext, functions []*ast.BLangFunction) []ast.StatementNode {
+	var initStmts []ast.StatementNode
+	for _, fn := range functions {
+		initStmts = append(initStmts, desugarLocalDefaultClosure(cx, fn)...)
+	}
+	return initStmts
+}
+
+func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldResult) ast.StatementNode {
+	fn := desugarNestedFunction(cx, field.fn)
+	fnType := cx.symbolType(field.symRef)
+	lambda := &ast.BLangLambdaFunction{Function: fn}
+	lambda.SetDeterminedType(fnType)
+	setPositionIfMissing(lambda, fn.GetPosition())
+
+	varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, fn.GetPosition())
+	varIdent := &ast.BLangIdentifier{Value: varName}
+	varIdent.SetDeterminedType(semtypes.NEVER)
+	simpleVar := &ast.BLangSimpleVariable{Name: varIdent}
+	simpleVar.Expr = lambda
+	simpleVar.SetDeterminedType(fnType)
+	simpleVar.SetSymbol(varSymRef)
+	varDef := &ast.BLangSimpleVariableDef{Var: simpleVar}
+	varDef.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(varDef, fn.GetPosition())
+	return varDef
+}
+
+func (r *desugaredTypeDescResult) append(other desugaredTypeDescResult) {
+	r.recordFields = append(r.recordFields, other.recordFields...)
+	r.functions = append(r.functions, other.functions...)
 }
 
 func desugarTypeDesc(ctx desugarContext, typeDesc ast.BType, parentScope model.Scope) desugaredTypeDescResult {
 	switch td := typeDesc.(type) {
 	case *ast.BLangRecordType:
 		return desugarRecordTypeDesc(ctx, td, parentScope)
+	case *ast.BLangFunctionType:
+		return desugarFunctionTypeDesc(ctx, td, parentScope)
+	case *ast.BLangObjectType:
+		return desugarObjectTypeDesc(ctx, td, parentScope)
+	case *ast.BLangArrayType:
+		if elem, ok := td.Elemtype.TypeDescriptor.(ast.BType); ok {
+			return desugarTypeDesc(ctx, elem, parentScope)
+		}
+	case *ast.BLangConstrainedType:
+		if constraint, ok := td.Constraint.TypeDescriptor.(ast.BType); ok {
+			return desugarTypeDesc(ctx, constraint, parentScope)
+		}
+	case *ast.BLangTupleTypeNode:
+		var result desugaredTypeDescResult
+		for i := range td.Members {
+			if member, ok := td.Members[i].TypeDesc.(ast.BType); ok {
+				result.append(desugarTypeDesc(ctx, member, parentScope))
+			}
+		}
+		if td.Rest != nil {
+			result.append(desugarTypeDesc(ctx, td.Rest, parentScope))
+		}
+		return result
+	case *ast.BLangUnionTypeNode:
+		var result desugaredTypeDescResult
+		if lhs, ok := td.Lhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, lhs, parentScope))
+		}
+		if rhs, ok := td.Rhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, rhs, parentScope))
+		}
+		return result
+	case *ast.BLangIntersectionTypeNode:
+		var result desugaredTypeDescResult
+		if lhs, ok := td.Lhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, lhs, parentScope))
+		}
+		if rhs, ok := td.Rhs().TypeDescriptor.(ast.BType); ok {
+			result.append(desugarTypeDesc(ctx, rhs, parentScope))
+		}
+		return result
 	}
 	return desugaredTypeDescResult{}
 }
 
+func desugarFunctionTypeDesc(ctx desugarContext, fnType *ast.BLangFunctionType, parentScope model.Scope) desugaredTypeDescResult {
+	result := desugaredTypeDescResult{functions: desugarFunctionTypeParamDefaults(ctx, fnType, parentScope)}
+	for i := range fnType.RequiredParams {
+		result.append(desugarTypeDesc(ctx, fnType.RequiredParams[i].TypeDesc, parentScope))
+	}
+	if fnType.RestParam != nil && fnType.RestParam.TypeDesc != nil {
+		result.append(desugarTypeDesc(ctx, fnType.RestParam.TypeDesc, parentScope))
+	}
+
+	result.append(desugarTypeDesc(ctx, fnType.ReturnTypeDescriptor, parentScope))
+	return result
+}
+
 func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, parentScope model.Scope) desugaredTypeDescResult {
-	var fields []desugaredRecordFieldResult
+	var result desugaredTypeDescResult
 	for _, field := range recType.FieldPtrs() {
+		result.append(desugarTypeDesc(ctx, field.Type, parentScope))
 		if field.DefaultExpr == nil {
 			continue
 		}
@@ -1123,10 +1310,26 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 		fn.SetSymbol(symRef)
 		fn.SetScope(fnScope)
 
-		fields = append(fields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
+		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
 
 	}
-	return desugaredTypeDescResult{recordFields: fields}
+	if recType.RestType != nil {
+		result.append(desugarTypeDesc(ctx, recType.RestType, parentScope))
+	}
+	return result
+}
+
+func desugarObjectTypeDesc(ctx desugarContext, objType *ast.BLangObjectType, parentScope model.Scope) desugaredTypeDescResult {
+	var result desugaredTypeDescResult
+	for member := range objType.Members() {
+		switch m := member.(type) {
+		case *ast.BObjectField:
+			result.append(desugarTypeDesc(ctx, m.Ty, parentScope))
+		case *ast.BMethodDecl:
+			result.append(desugarFunctionTypeDesc(ctx, &m.BLangFunctionType, parentScope))
+		}
+	}
+	return result
 }
 
 func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
@@ -1138,86 +1341,189 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 			return
 		}
 		result := desugarTypeDesc(cx, typeDesc, nil)
+		for _, fn := range result.functions {
+			pkg.Functions = append(pkg.Functions, *fn)
+		}
 		for _, rf := range result.recordFields {
 			pkg.Functions = append(pkg.Functions, *rf.fn)
 		}
 	}
 }
 
-func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*ast.BLangFunction {
-	fnSym := ctx.getSymbol(fn.Symbol()).(model.FunctionSymbol)
-	defaultableParams := fnSym.DefaultableParams()
-	var results []*ast.BLangFunction
-	for j := range fn.RequiredParams {
-		param := &fn.RequiredParams[j]
-		dp, ok := defaultableParams.Get(j)
-		if !ok {
-			if param.IsDefaultableParam() {
-				ctx.internalError("defaultable param info missing for parameter marked as defaultable")
+func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignature,
+	paramTypeSupplier func(int) semtypes.SemType, paramExprSupplier func(int) ast.BLangExpression, paramSymbolSupplier func(int) model.SymbolRef,
+	scope model.Scope,
+) []*ast.BLangFunction {
+	var prevParamNames []string
+	var prevParamTypes []semtypes.SemType
+	var prevParamSymbol []model.SymbolRef
+	var defaultClosures []*ast.BLangFunction
+	for i := range sig.FixedParamCount() {
+		def := sig.Default[i]
+		if def != nil && def.Kind != model.DefaultableParamKindInferredTypedesc {
+			expr := paramExprSupplier(i)
+			if expr == nil {
+				ctx.internalError("missing expression for defaultable param")
+				return nil
+			}
+			defaultClosure := createDefaultClosure(ctx, def.Symbol, expr, scope, prevParamNames, prevParamTypes, prevParamSymbol)
+			defaultClosures = append(defaultClosures, defaultClosure)
+		}
+		prevParamNames = append(prevParamNames, sig.ParamNames[i])
+		prevParamTypes = append(prevParamTypes, paramTypeSupplier(i))
+		prevParamSymbol = append(prevParamSymbol, paramSymbolSupplier(i))
+	}
+	return defaultClosures
+}
+
+func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.BLangExpression, scope model.Scope,
+	prevParamNames []string, prevParamTypes []semtypes.SemType, prevParamSymbol []model.SymbolRef,
+) *ast.BLangFunction {
+	fnName := ctx.getSymbol(symRef).Name()
+	fnScope := ctx.newFunctionScope(scope)
+	defaultClosure := createDefaultValueFunction(fnName, expr)
+	defaultClosure.SetSymbol(symRef)
+	defaultClosure.SetScope(fnScope)
+	symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
+	for j := range len(prevParamNames) {
+		paramName := prevParamNames[j]
+		paramTy := prevParamTypes[j]
+		param := newSimpleVariable(paramName, paramTy)
+		param.SetRequiredParam()
+		fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, ctx.getSymbol(prevParamSymbol[j]).Location())))
+		paramSymRef, _ := fnScope.GetSymbol(paramName)
+		ctx.setSymbolType(paramSymRef, paramTy)
+		param.SetSymbol(paramSymRef)
+		defaultClosure.AddParameter(param)
+		ctx.associateFunctionSignature(prevParamSymbol[j], paramSymRef)
+		symbolMapping[prevParamSymbol[j]] = paramSymRef
+	}
+	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping)
+	return defaultClosure
+}
+
+func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, symbol model.SymbolRef,
+	scope model.Scope,
+) []*ast.BLangFunction {
+	params := fn.Parameters()
+	sig, ok := ctx.functionSignature(symbol)
+	if !ok {
+		ctx.internalError("function signature not found")
+		return nil
+	}
+	// Desugar closures for this function
+	functions := createDefaultClosures(ctx, sig,
+		func(i int) semtypes.SemType {
+			return ctx.symbolType(params[i].Symbol())
+		},
+		func(i int) ast.BLangExpression {
+			return params[i].DefaultExpr()
+		},
+		func(i int) model.SymbolRef {
+			return params[i].Symbol()
+		},
+		scope,
+	)
+	appendTypeDefaults := func(typeDesc ast.BType) {
+		if typeDesc == nil {
+			return
+		}
+		result := desugarTypeDesc(ctx, typeDesc, scope)
+		functions = append(functions, result.functions...)
+		for _, field := range result.recordFields {
+			functions = append(functions, field.fn)
+		}
+	}
+	// Desugar closures for types used in the function signature
+	for _, param := range params {
+		appendTypeDefaults(param.Type())
+	}
+	if restParam := fn.RestParameter(); restParam != nil {
+		appendTypeDefaults(restParam.Type())
+	}
+	if returnType := fn.ReturnType(); returnType != nil {
+		if returnTypeNode, ok := returnType.(*ast.BLangReturnTypeDescriptor); ok {
+			if returnTypeNode != nil {
+				appendTypeDefaults(returnTypeNode.TypeDescriptor)
+			}
+		} else if typeDesc, ok := returnType.(ast.BType); ok {
+			appendTypeDefaults(typeDesc)
+		}
+	}
+	return functions
+}
+
+func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
+	if fnType.IsAnyFunction() {
+		return nil
+	}
+	sig := ctx.functionSignatureByRef(fnType.SignatureRef())
+	return createDefaultClosures(ctx, sig,
+		func(i int) semtypes.SemType {
+			return fnType.RequiredParams[i].GetDeterminedType()
+		},
+		func(i int) ast.BLangExpression {
+			return fnType.RequiredParams[i].InitExpr
+		},
+		func(i int) model.SymbolRef {
+			return fnType.RequiredParams[i].SymbolRef
+		},
+		scope,
+	)
+}
+
+func desugarGlobalVars(pkgCtx *packageContext, pkg *ast.BLangPackage) {
+	for i := range pkg.GlobalVars {
+		gv := &pkg.GlobalVars[i]
+		if typeNode := gv.TypeNode(); typeNode != nil {
+			result := desugarTypeDesc(pkgCtx, typeNode, nil)
+			for _, fn := range result.functions {
+				pkg.Functions = append(pkg.Functions, *fn)
+			}
+			for _, field := range result.recordFields {
+				pkg.Functions = append(pkg.Functions, *field.fn)
 			}
 			continue
 		}
-		if dp.Kind == model.DefaultableParamKindInferredTypedesc {
-			continue
-		}
-		symRef := dp.Symbol
-		fnName := ctx.getSymbol(symRef).Name()
-		fnScope := ctx.newFunctionScope(fn.Scope())
-
-		defaultFn := createDefaultValueFunction(fnName, param.Expr.(ast.BLangExpression))
-		defaultFn.SetSymbol(symRef)
-		defaultFn.SetScope(fnScope)
-
-		symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
-		for k := range fn.RequiredParams[:j] {
-			precedingParam := fn.RequiredParams[k]
-			paramName := precedingParam.Name.GetValue()
-			paramTy := ctx.symbolType(precedingParam.Symbol())
-			newParam := newSimpleVariable(paramName, paramTy)
-			newParam.SetRequiredParam()
-			fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, precedingParam.Name.GetPosition())))
-			paramSymRef, _ := fnScope.GetSymbol(paramName)
-			ctx.setSymbolType(paramSymRef, paramTy)
-			newParam.SetSymbol(paramSymRef)
-			defaultFn.AddParameter(newParam)
-			symbolMapping[precedingParam.Symbol()] = paramSymRef
-		}
-		remapSymbolRefs(defaultFn.Body.(ast.BLangNode), symbolMapping)
-
-		results = append(results, defaultFn)
+		pkgCtx.addDefaultClosureOwner(gv.Expr)
 	}
-	return results
 }
 
 func desugarTopLevelFunctionDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	fnCount := len(pkg.Functions)
 	for i := range fnCount {
-		for _, fn := range desugarFunctionParamDefaults(pkgCtx, &pkg.Functions[i]) {
+		function := &pkg.Functions[i]
+		for _, fn := range desugarFunctionParamDefaults(pkgCtx, function, function.Symbol(), function.Scope()) {
 			pkg.Functions = append(pkg.Functions, *fn)
 		}
 	}
 }
 
 func desugarClassMethodDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
-	desugarObjectMethodDefaults := func(initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction) {
+	desugarObjectMethodDefaults := func(initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		if initFn != nil {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, initFn) {
+			for _, fn := range desugarFunctionParamDefaults(pkgCtx, initFn, initFn.Symbol(), initFn.Scope()) {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
 		}
 		for _, method := range methods {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method) {
+			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope()) {
+				pkg.Functions = append(pkg.Functions, *fn)
+			}
+		}
+		for _, method := range resourceMethods {
+			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope()) {
 				pkg.Functions = append(pkg.Functions, *fn)
 			}
 		}
 	}
 	for i := range pkg.ClassDefinitions {
 		classDef := &pkg.ClassDefinitions[i]
-		desugarObjectMethodDefaults(classDef.InitFunction, classDef.Methods)
+		desugarObjectMethodDefaults(classDef.InitFunction, classDef.Methods, classDef.ResourceMethods)
 	}
 	for i := range pkg.Services {
 		svc := &pkg.Services[i]
-		desugarObjectMethodDefaults(svc.InitFunction, svc.Methods)
+		desugarObjectMethodDefaults(svc.InitFunction, svc.Methods, svc.ResourceMethods)
 	}
 }
 
@@ -1256,79 +1562,103 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 
 	var wg sync.WaitGroup
 	var panicErr any
+	var panicMu sync.Mutex
 
-	desugarFn := func(fn *ast.BLangFunction) {
-		wg.Go(func() {
-			defer func() {
-				if r := recover(); r != nil {
-					panicErr = r
-				}
-			}()
-			*fn = *desugarFunction(pkgCtx, fn)
-		})
+	recoverPanic := func() {
+		if r := recover(); r != nil {
+			panicMu.Lock()
+			defer panicMu.Unlock()
+			if panicErr == nil {
+				panicErr = r
+			}
+		}
 	}
 
 	// Desugar type definition default expressions into standalone functions
 	desugarTopLevelTypeDescs(pkgCtx, pkg)
 
+	desugarGlobalVars(pkgCtx, pkg)
 	desugarTopLevelFunctionDefaults(pkgCtx, pkg)
 	desugarClassMethodDefaults(pkgCtx, pkg)
 
-	desugarObjectDefinitionConcurrently := func(class *ast.BLangClassDefinition) {
-		wg.Go(func() {
-			defer func() {
-				if r := recover(); r != nil {
-					panicErr = r
-				}
-			}()
-			desugarClassDefinition(pkgCtx, class)
-			for name, method := range class.Methods {
-				class.Methods[name] = desugarFunction(pkgCtx, method)
-			}
-			for _, rm := range class.ResourceMethods {
-				desugarResourceMethod(pkgCtx, rm)
-			}
-			*class.InitFunction = *desugarFunction(pkgCtx, class.InitFunction)
-		})
+	desugarObject := func(class *ast.BLangClassDefinition) []*ast.BLangFunction {
+		desugarClassDefinition(pkgCtx, class)
+		var generatedFunctions []*ast.BLangFunction
+		for name, method := range class.Methods {
+			fn, generated := desugarFunction(pkgCtx, method)
+			class.Methods[name] = fn
+			generatedFunctions = append(generatedFunctions, generated...)
+		}
+		for _, rm := range class.ResourceMethods {
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+		}
+		fn, generated := desugarFunction(pkgCtx, class.InitFunction)
+		*class.InitFunction = *fn
+		return append(generatedFunctions, generated...)
 	}
-	desugarServiceConcurrently := func(svc *ast.BLangService) {
-		wg.Go(func() {
-			defer func() {
-				if r := recover(); r != nil {
-					panicErr = r
-				}
-			}()
-			desugarServiceDefinition(pkgCtx, svc)
-			for name, method := range svc.Methods {
-				svc.Methods[name] = desugarFunction(pkgCtx, method)
-			}
-			for _, rm := range svc.ResourceMethods {
-				desugarResourceMethod(pkgCtx, rm)
-			}
-			*svc.InitFunction = *desugarFunction(pkgCtx, svc.InitFunction)
-		})
+	desugarService := func(svc *ast.BLangService) []*ast.BLangFunction {
+		desugarServiceDefinition(pkgCtx, svc)
+		var generatedFunctions []*ast.BLangFunction
+		for name, method := range svc.Methods {
+			fn, generated := desugarFunction(pkgCtx, method)
+			svc.Methods[name] = fn
+			generatedFunctions = append(generatedFunctions, generated...)
+		}
+		for _, rm := range svc.ResourceMethods {
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+		}
+		fn, generated := desugarFunction(pkgCtx, svc.InitFunction)
+		*svc.InitFunction = *fn
+		return append(generatedFunctions, generated...)
 	}
 	for i := range pkg.Services {
 		ensureServiceDefaultInitFunction(pkgCtx, &pkg.Services[i])
 	}
 
 	hoistInlineServiceListeners(pkgCtx, pkg)
-	desugarInitFn(pkgCtx, compilerCtx, pkg)
+	generatedFunctions := desugarInitFn(pkgCtx, compilerCtx, pkg)
 
-	// Desugar all functions after desugarInitFn has created any lifecycle hooks.
+	// Each worker writes generated functions to its own result slot. The slots
+	// are merged only after all workers finish, so generation never blocks on
+	// package-level result collection.
+	functionResults := make([][]*ast.BLangFunction, len(pkg.Functions))
 	for i := range pkg.Functions {
-		desugarFn(&pkg.Functions[i])
+		wg.Go(func() {
+			defer recoverPanic()
+			fn, generated := desugarFunction(pkgCtx, &pkg.Functions[i])
+			pkg.Functions[i] = *fn
+			functionResults[i] = generated
+		})
 	}
 
-	// Desugar class definitions (each class concurrently, members sequentially)
+	objectResults := make([][]*ast.BLangFunction, len(pkg.ClassDefinitions))
 	for i := range pkg.ClassDefinitions {
-		desugarObjectDefinitionConcurrently(&pkg.ClassDefinitions[i])
+		wg.Go(func() {
+			defer recoverPanic()
+			objectResults[i] = desugarObject(&pkg.ClassDefinitions[i])
+		})
 	}
+	serviceResults := make([][]*ast.BLangFunction, len(pkg.Services))
 	for i := range pkg.Services {
-		desugarServiceConcurrently(&pkg.Services[i])
+		wg.Go(func() {
+			defer recoverPanic()
+			serviceResults[i] = desugarService(&pkg.Services[i])
+		})
 	}
 
 	wg.Wait()
+	for _, result := range functionResults {
+		generatedFunctions = append(generatedFunctions, result...)
+	}
+	for _, result := range objectResults {
+		generatedFunctions = append(generatedFunctions, result...)
+	}
+	for _, result := range serviceResults {
+		generatedFunctions = append(generatedFunctions, result...)
+	}
+	for _, fn := range sortedGeneratedFunctions(generatedFunctions) {
+		pkg.Functions = append(pkg.Functions, *fn)
+	}
 	if panicErr != nil {
 		panic(panicErr)
 	}
@@ -1359,7 +1689,7 @@ func synthesizeDefaultInitFunction(pkgCtx *packageContext, classScope model.Scop
 	fn.SetDeterminedType(semtypes.NEVER)
 	fn.SetScope(pkgCtx.newFunctionScope(classScope))
 	fn.SetPosition(pos)
-	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false, pos)
+	initSymbol := model.NewFunctionSymbol("init", model.TypedFunctionSignature{ReturnType: semtypes.NIL}, false, pos)
 	classScope.AddSymbol("init", initSymbol)
 	symRef, _ := classScope.GetSymbol("init")
 	fn.SetSymbol(symRef)
@@ -1421,9 +1751,9 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 	}
 }
 
-func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) {
+func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
 	if rm.Body == nil {
-		return
+		return nil
 	}
 	cx := &functionContext{pkgCtx: pkgCtx}
 	cx.pushScope(rm.Scope())
@@ -1439,16 +1769,25 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 			body.Expr = result.replacementNode.(ast.BLangExpression)
 		}
 	}
+	return cx.generatedFunctions
 }
 
-// desugarFunction returns a desugared function (may be same or new instance)
-func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) *ast.BLangFunction {
+// desugarFunction returns a desugared function and functions generated while
+// desugaring it.
+func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
+	cx := &functionContext{pkgCtx: pkgCtx}
+	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
+}
+
+func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
+	fn, generated := desugarFunction(cx.pkgCtx, fn)
+	cx.generatedFunctions = append(cx.generatedFunctions, generated...)
+	return fn
+}
+
+func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
 	if fn.Body == nil {
 		return fn
-	}
-
-	cx := &functionContext{
-		pkgCtx: pkgCtx,
 	}
 
 	// Push function scope

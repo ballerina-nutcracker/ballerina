@@ -102,6 +102,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printClientResourceAccessAction(t)
 	case *BLangNamedArgsExpression:
 		p.printNamedArgsExpression(t)
+	case *BLangDefaultArg:
+		p.PrintString("<default>")
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:

@@ -1,0 +1,5 @@
+-- stdout --
+/tmp:true
+/var:true
+/etc:false
+-- stderr --

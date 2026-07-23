@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "named_lambda_args"
+version = "0.1.0"

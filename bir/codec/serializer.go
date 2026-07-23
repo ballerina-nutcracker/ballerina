@@ -35,9 +35,11 @@ const (
 )
 
 type birWriter struct {
-	cp  *ConstantPool
-	tp  *semtypes.TypePool
-	env semtypes.Env
+	cp           *ConstantPool
+	tp           *semtypes.TypePool
+	env          semtypes.Env
+	localDclIDs  map[*bir.BIRLocalVariableDcl]int32
+	localDclList []*bir.BIRLocalVariableDcl
 }
 
 func Marshal(tyEnv semtypes.Env, pkg *bir.BIRPackage) ([]byte, error) {
@@ -171,6 +173,9 @@ func (bw *birWriter) writeFunctions(buf *bytes.Buffer, pkg *bir.BIRPackage) {
 }
 
 func (bw *birWriter) writeFunction(buf *bytes.Buffer, fn *bir.BIRFunction) {
+	bw.localDclIDs = make(map[*bir.BIRLocalVariableDcl]int32)
+	bw.localDclList = nil
+
 	bw.writePosition(buf, fn.Pos)
 	bw.writeStringCPEntry(buf, fn.Name.Value())
 	bw.writeStringCPEntry(buf, fn.OriginalName.Value())
@@ -200,21 +205,33 @@ func (bw *birWriter) writeFunction(buf *bytes.Buffer, fn *bir.BIRFunction) {
 		bw.writeLocalVar(birbuf, &localVar)
 	}
 
-	bw.writeLength(birbuf, len(fn.BasicBlocks))
+	codebuf := &bytes.Buffer{}
+	bw.writeLength(codebuf, len(fn.BasicBlocks))
 	for _, bb := range fn.BasicBlocks {
-		bw.writeBasicBlock(birbuf, &bb)
+		bw.writeBasicBlock(codebuf, &bb)
 	}
 
-	bw.writeLength(birbuf, len(fn.ErrorTable))
+	bw.writeLength(codebuf, len(fn.ErrorTable))
 	for _, entry := range fn.ErrorTable {
-		bw.writeStringCPEntry(birbuf, fmt.Sprintf("bb%d", entry.Start))
-		bw.writeStringCPEntry(birbuf, fmt.Sprintf("bb%d", entry.End))
-		bw.writeStringCPEntry(birbuf, fmt.Sprintf("bb%d", entry.Target))
-		bw.writeOperand(birbuf, entry.ErrorOp)
+		bw.writeStringCPEntry(codebuf, fmt.Sprintf("bb%d", entry.Start))
+		bw.writeStringCPEntry(codebuf, fmt.Sprintf("bb%d", entry.End))
+		bw.writeStringCPEntry(codebuf, fmt.Sprintf("bb%d", entry.Target))
+		bw.writeOperand(codebuf, entry.ErrorOp)
+	}
+
+	bw.writeLength(birbuf, len(bw.localDclList))
+	for _, dcl := range bw.localDclList {
+		name := dcl.GetName()
+		bw.writeStringCPEntry(birbuf, name.Value())
+		bw.writeType(birbuf, dcl.GetType())
+	}
+	_, err := birbuf.Write(codebuf.Bytes())
+	if err != nil {
+		panic(fmt.Sprintf("writing function code bytes: %v", err))
 	}
 
 	bw.writeBufferLength(buf, birbuf)
-	_, err := buf.Write(birbuf.Bytes())
+	_, err = buf.Write(birbuf.Bytes())
 	if err != nil {
 		panic(fmt.Sprintf("writing function body bytes: %v", err))
 	}
@@ -461,36 +478,38 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 
 func (bw *birWriter) writeOperand(buf *bytes.Buffer, op *bir.BIROperand) {
 	if op == nil || op.VariableDcl == nil {
-		write(buf, false)
-		write(buf, uint8(bir.VAR_KIND_TEMP))
-		bw.writeScope(buf, bir.VAR_SCOPE_FUNCTION)
-		bw.writeStringCPEntry(buf, "")
+		write(buf, true)
+		bw.writeType(buf, semtypes.SemType{})
 		return
 	}
 
 	write(buf, false)
-	// Determine kind and scope from concrete type
-	var kind bir.VarKind
-	var scope bir.VarScope
-	if _, ok := op.VariableDcl.(*bir.BIRGlobalVariableDcl); ok {
-		kind = bir.VAR_KIND_GLOBAL
-		scope = bir.VAR_SCOPE_GLOBAL
-	} else {
-		kind = bir.VAR_KIND_LOCAL
-		scope = bir.VAR_SCOPE_FUNCTION
-	}
-	bw.writeKind(buf, kind)
-	bw.writeScope(buf, scope)
-	name := op.VariableDcl.GetName()
-	bw.writeStringCPEntry(buf, name.Value())
 	if gv, ok := op.VariableDcl.(*bir.BIRGlobalVariableDcl); ok {
+		bw.writeKind(buf, bir.VAR_KIND_GLOBAL)
+		bw.writeScope(buf, bir.VAR_SCOPE_GLOBAL)
+		name := gv.GetName()
+		bw.writeStringCPEntry(buf, name.Value())
 		bw.writeStringCPEntry(buf, gv.GlobalVarLookupKey)
 		bw.writePackageCPEntry(buf, gv.PkgId)
-	} else {
-		write(buf, uint8(op.Address.Mode))
-		write(buf, int32(op.Address.FrameIndex))
-		write(buf, int32(op.Address.BaseIndex))
+		return
 	}
+
+	localDcl, ok := op.VariableDcl.(*bir.BIRLocalVariableDcl)
+	if !ok {
+		panic(fmt.Sprintf("unexpected local variable declaration type: %T", op.VariableDcl))
+	}
+	id, ok := bw.localDclIDs[localDcl]
+	if !ok {
+		id = int32(len(bw.localDclList))
+		bw.localDclIDs[localDcl] = id
+		bw.localDclList = append(bw.localDclList, localDcl)
+	}
+	bw.writeKind(buf, bir.VAR_KIND_LOCAL)
+	bw.writeScope(buf, bir.VAR_SCOPE_FUNCTION)
+	write(buf, id)
+	write(buf, uint8(op.Address.Mode))
+	write(buf, int32(op.Address.FrameIndex))
+	write(buf, int32(op.Address.BaseIndex))
 }
 
 func (bw *birWriter) writeConstValue(buf *bytes.Buffer, value any) {

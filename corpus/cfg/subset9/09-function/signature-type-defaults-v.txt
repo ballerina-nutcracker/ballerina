@@ -1,0 +1,37 @@
+(Client
+  (Client.$resource$get$0
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callbacks))))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 14))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal ok))))
+  )
+)
+(regular
+  (bb0 () ()
+    (var-def
+      (variable _ (expr
+        (simple-var-ref callbacks))))
+    (return
+      (lambda
+        (function $anonFunc$_0 (
+          (variable value (type
+            (value-type int)))) (
+          (value-type int))
+          (block-function-body
+            (return
+              (simple-var-ref value))))))
+  )
+)

@@ -39,6 +39,6 @@
     (expression-stmt
       (invocation io println (
         (invocation foo (
-          (simple-var-ref values))))))
+          (simple-var-ref values) <default>)))))
   )
 )

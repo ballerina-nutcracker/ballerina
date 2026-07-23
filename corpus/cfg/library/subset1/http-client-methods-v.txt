@@ -5,14 +5,14 @@
         (user-defined-type http Client)) (expr
         (checked-expr
           (new (
-            (literal https://example.com)))))))
+            (literal https://example.com) <default>))))))
     (var-def
       (variable r1 (expr
         (checked-expr
           (remote-method-call put expr:
             (simple-var-ref c) (
             (literal /put)
-            (literal body)))))))
+            (literal body) <default> <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -26,7 +26,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal key)
-                (literal val)))))))))
+                (literal val))) <default> <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -36,7 +36,7 @@
         (checked-expr
           (remote-method-call delete expr:
             (simple-var-ref c) (
-            (literal /delete)))))))
+            (literal /delete) <default> <default> <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -46,7 +46,7 @@
         (checked-expr
           (remote-method-call head expr:
             (simple-var-ref c) (
-            (literal /head)))))))
+            (literal /head) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -56,7 +56,7 @@
         (checked-expr
           (remote-method-call options expr:
             (simple-var-ref c) (
-            (literal /options)))))))
+            (literal /options) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -68,7 +68,7 @@
             (simple-var-ref c) (
             (literal PATCH)
             (literal /execute)
-            (literal exec body)))))))
+            (literal exec body) <default> <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode

@@ -21,7 +21,7 @@ import (
 	"ballerina-lang-go/semtypes"
 )
 
-func FunctionSignatureToSemType(env semtypes.Env, fs *model.FunctionSignature) semtypes.SemType {
+func FunctionSignatureToSemType(env semtypes.Env, fs *model.TypedFunctionSignature) semtypes.SemType {
 	var restTy semtypes.SemType
 	if !semtypes.IsZero(fs.RestParamType) {
 		restTy = fs.RestParamType

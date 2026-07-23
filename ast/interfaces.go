@@ -181,6 +181,25 @@ type FunctionNode interface {
 	TopLevelNode
 }
 
+type FunctionSignature interface {
+	BLangNode
+	Parameters() []Param
+	RestParameter() Param
+	ReturnType() TypeDescriptor
+	IsIsolated() bool
+	IsTransactional() bool
+}
+
+type Param interface {
+	BLangNode
+	ParamName() string
+	Type() BType
+	DefaultExpr() BLangExpression
+	Symbol() model.SymbolRef
+	IsDefaultable() bool
+	IsIncludedRecordParam() bool
+}
+
 // Class / service.
 
 type ClassDefinition interface {

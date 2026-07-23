@@ -13,16 +13,15 @@
     (expression-stmt
       (invocation foo (
         (literal Alice)
-        (named-arg config
-          (mapping-constructor-expr
-            (key-value
-              (literal age)
-              (literal 30))
-            (key-value
-              (literal city)
-              (literal New York))
-            (key-value
-              (literal country)
-              (literal USA)))))))
+        (mapping-constructor-expr
+          (key-value
+            (literal age)
+            (literal 30))
+          (key-value
+            (literal city)
+            (literal New York))
+          (key-value
+            (literal country)
+            (literal USA))))))
   )
 )

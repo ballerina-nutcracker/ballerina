@@ -142,6 +142,7 @@ type (
 		bObjectFieldBase
 		BLangFunctionType
 		memberKind ObjectMemberKind
+		symbol     model.SymbolRef
 	}
 
 	BLangObjectType struct {
@@ -222,14 +223,17 @@ type (
 		RestParam            *BLangFunctionTypeParam
 		ReturnTypeDescriptor BType
 		ParamListPos         Location
+		signatureRef         model.FunctionSignatureRef
 	}
 
 	BLangFunctionTypeParam struct {
 		bLangNodeBase
-		Name           *BLangIdentifier
-		TypeDesc       BType
-		InitExpr       BLangExpression
-		AnnAttachments []BLangAnnotationAttachment
+		Name                *BLangIdentifier
+		TypeDesc            BType
+		InitExpr            BLangExpression
+		AnnAttachments      []BLangAnnotationAttachment
+		SymbolRef           model.SymbolRef
+		IncludedRecordParam bool
 	}
 )
 
@@ -252,21 +256,22 @@ var (
 	_ RecordTypeNode       = &BLangRecordType{}
 	_ ObjectType           = &BLangObjectType{}
 	_ ObjectMember         = &BMethodDecl{}
+	_ FunctionSignature    = &BMethodDecl{}
 	_ ObjectMember         = &BObjectField{}
 	_ BLangNode            = &BObjectField{}
 	_ BLangNode            = &BMethodDecl{}
+	_ BNodeWithSymbol      = &BMethodDecl{}
 	_ FunctionTypeNode     = &BLangFunctionType{}
+	_ FunctionSignature    = &BLangFunctionType{}
 	_ FunctionTypeParam    = &BLangFunctionTypeParam{}
-)
-
-var (
-	_ BType     = &BLangUserDefinedType{}
-	_ BType     = &BLangBuiltInRefTypeNode{}
-	_ BType     = &BLangUserDefinedType{}
-	_ BType     = &BTypeBasic{}
-	_ BType     = &BLangFunctionType{}
-	_ BType     = &BLangRecordType{}
-	_ BLangNode = &BLangFunctionType{}
+	_ Param                = &BLangFunctionTypeParam{}
+	_ BType                = &BLangUserDefinedType{}
+	_ BType                = &BLangBuiltInRefTypeNode{}
+	_ BType                = &BLangUserDefinedType{}
+	_ BType                = &BTypeBasic{}
+	_ BType                = &BLangFunctionType{}
+	_ BType                = &BLangRecordType{}
+	_ BLangNode            = &BLangFunctionType{}
 )
 
 var (
@@ -402,6 +407,14 @@ func (b *BObjectField) MemberKind() ObjectMemberKind {
 
 func (b *BMethodDecl) MemberKind() ObjectMemberKind {
 	return b.memberKind
+}
+
+func (b *BMethodDecl) Symbol() model.SymbolRef {
+	return b.symbol
+}
+
+func (b *BMethodDecl) SetSymbol(ref model.SymbolRef) {
+	b.symbol = ref
 }
 
 func (b *bLangTypeBase) GetTypeData() TypeData {
@@ -554,6 +567,33 @@ func (b *BLangErrorTypeNode) SetDistinct() {
 	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagDistinct)
 }
 
+func (b *BLangFunctionType) SignatureRef() model.FunctionSignatureRef {
+	return b.signatureRef
+}
+
+func (b *BLangFunctionType) SetSignatureRef(ref model.FunctionSignatureRef) {
+	b.signatureRef = ref
+}
+
+func (b *BLangFunctionType) Parameters() []Param {
+	params := make([]Param, len(b.RequiredParams))
+	for i := range b.RequiredParams {
+		params[i] = &b.RequiredParams[i]
+	}
+	return params
+}
+
+func (b *BLangFunctionType) RestParameter() Param {
+	if b.RestParam == nil {
+		return nil
+	}
+	return b.RestParam
+}
+
+func (b *BLangFunctionType) ReturnType() TypeDescriptor {
+	return b.ReturnTypeDescriptor
+}
+
 func (b *BLangFunctionType) IsAnyFunction() bool {
 	return b.bTypeGetFlags().Has(model.FlagAnyFunction)
 }
@@ -664,8 +704,39 @@ func (b *BLangFunctionTypeParam) GetName() *string {
 	return &name
 }
 
+func (b *BLangFunctionTypeParam) ParamName() string {
+	if b.Name == nil {
+		return ""
+	}
+	return b.Name.Value
+}
+
+func (b *BLangFunctionTypeParam) Type() BType {
+	return b.TypeDesc
+}
+
+func (b *BLangFunctionTypeParam) DefaultExpr() BLangExpression {
+	return b.InitExpr
+}
+
+func (b *BLangFunctionTypeParam) Symbol() model.SymbolRef {
+	return b.SymbolRef
+}
+
+func (b *BLangFunctionTypeParam) IsDefaultable() bool {
+	return b.InitExpr != nil
+}
+
 func (b *BLangFunctionTypeParam) GetTypeDesc() Type {
 	return b.TypeDesc
+}
+
+func (b *BLangFunctionTypeParam) IsIncludedRecordParam() bool {
+	return b.IncludedRecordParam
+}
+
+func (b *BLangFunctionTypeParam) SetIncludedRecordParam() {
+	b.IncludedRecordParam = true
 }
 
 func (b *BLangFunctionType) GetParams() []FunctionTypeParam {

@@ -245,24 +245,12 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef
 	if stmt.Var != nil {
 		if typeNode := stmt.Var.TypeNode(); typeNode != nil {
 			result := desugarTypeDesc(cx, typeNode, cx.currentScope())
-			for _, rf := range result.recordFields {
-				rf.fn = desugarFunction(cx.pkgCtx, rf.fn)
-				fnType := cx.symbolType(rf.symRef)
-				lambda := &ast.BLangLambdaFunction{Function: rf.fn}
-				lambda.SetDeterminedType(fnType)
-				setPositionIfMissing(lambda, rf.fn.GetPosition())
-
-				varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, rf.fn.GetPosition())
-				varIdent := &ast.BLangIdentifier{Value: varName}
-				varIdent.SetDeterminedType(semtypes.NEVER)
-				simpleVar := &ast.BLangSimpleVariable{Name: varIdent}
-				simpleVar.Expr = lambda
-				simpleVar.SetDeterminedType(fnType)
-				simpleVar.SetSymbol(varSymRef)
-				varDef := &ast.BLangSimpleVariableDef{Var: simpleVar}
-				setPositionIfMissing(varDef, rf.fn.GetPosition())
-				initStmts = append(initStmts, varDef)
+			initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
+			for _, field := range result.recordFields {
+				initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
 			}
+		} else {
+			cx.pkgCtx.addDefaultClosureOwner(stmt.Var.Expr)
 		}
 		if stmt.Var.Expr != nil {
 			result := walkExpression(cx, stmt.Var.Expr)
@@ -684,7 +672,7 @@ func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *
 		return nil
 	}
 	fnSymbol := cx.getSymbol(symbolRef).(model.FunctionSymbol)
-	returnType := fnSymbol.Signature().ReturnType
+	returnType := fnSymbol.TypedSignature().ReturnType
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
 		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
 		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "map"}},

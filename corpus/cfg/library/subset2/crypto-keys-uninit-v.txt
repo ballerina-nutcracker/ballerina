@@ -59,7 +59,7 @@
           (user-defined-type crypto Error))) (expr
         (invocation crypto encryptRsaEcb (
           (simple-var-ref data)
-          (simple-var-ref pub))))))
+          (simple-var-ref pub) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is

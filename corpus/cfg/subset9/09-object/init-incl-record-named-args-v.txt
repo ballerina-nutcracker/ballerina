@@ -1,0 +1,49 @@
+(Listener
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access path
+          (simple-var-ref self))
+        (field-based-access path
+          (simple-var-ref config)))
+      (assignment
+        (field-based-access recursive
+          (simple-var-ref self))
+        (field-based-access recursive
+          (simple-var-ref config)))
+    )
+  )
+  (describe
+    (bb0 () ()
+      (return
+        (string-template-literal
+          (template-string "")
+          (field-based-access path
+            (simple-var-ref self))
+          (template-string ":")
+          (field-based-access recursive
+            (simple-var-ref self))
+          (template-string "")))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable instance (type
+        (user-defined-type Listener)) (expr
+        (checked-expr
+          (new (
+            (mapping-constructor-expr
+              (key-value
+                (literal path)
+                (literal /tmp))
+              (key-value
+                (literal recursive)
+                (literal true)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe expr:
+          (simple-var-ref instance) ()))))
+  )
+)

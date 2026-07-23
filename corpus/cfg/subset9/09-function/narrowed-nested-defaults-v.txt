@@ -1,0 +1,88 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable narrowedWithLambdaArg (type
+        (union-type
+          (function-type (
+            (function-type (
+              (value-type int)) (
+              (value-type int)))
+            (value-type int)) (
+            (value-type int)))
+          (value-type int))) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable callback (type
+              (function-type (
+                (value-type int)) (
+                (value-type int)))))
+            (variable result (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (assignment
+                (wildcard-binding-pattern)
+                (simple-var-ref callback))
+              (return
+                (simple-var-ref result))))))))
+    (type-test-expr is
+      (simple-var-ref narrowedWithLambdaArg)
+      (function-type (
+        (function-type (
+          (value-type int)) (
+          (value-type int)))
+        (value-type int)) (
+        (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowedWithLambdaArg (
+          (lambda
+            (function $anonFunc$_1 (
+              (variable actual (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref actual)
+                    (literal 1)))))) <default>)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable narrowedWithInlineRecord (type
+        (union-type
+          (function-type (
+            (record-type
+              (field value
+                (value-type int)))) (
+            (value-type int)))
+          (value-type int))) (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable input (type
+              (record-type
+                (field value
+                  (value-type int)))))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (field-based-access value
+                  (simple-var-ref input)))))))))
+    (type-test-expr is
+      (simple-var-ref narrowedWithInlineRecord)
+      (function-type (
+        (record-type
+          (field value
+            (value-type int)
+            (literal 12)))) (
+        (value-type int))))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowedWithInlineRecord ( <default>)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

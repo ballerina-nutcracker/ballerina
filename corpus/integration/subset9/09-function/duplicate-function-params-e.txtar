@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared symbol 'callback'
+  --> duplicate-function-params-e.bal:18:9
+   |
+18 |         function(string value) returns string callback) { // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

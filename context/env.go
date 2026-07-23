@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"sync"
 
+	"ballerina-lang-go/context/internal/functionsignatures"
 	"ballerina-lang-go/model"
 	"ballerina-lang-go/semtypes"
 	"ballerina-lang-go/tools/diagnostics"
@@ -101,6 +102,7 @@ type CompilerEnvironment struct {
 	symbolSpacesMu             sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
 	typeEnv                    semtypes.Env
 	underlyingSymbol           sync.Map
+	functionSignatures         functionsignatures.Store
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
 	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
@@ -225,11 +227,35 @@ func (c *CompilerEnvironment) CreateNarrowedSymbol(baseRef model.SymbolRef) mode
 	return narrowedSymbol
 }
 
-func (c *CompilerEnvironment) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.FunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
+func (c *CompilerEnvironment) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.TypedFunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
 	sym := model.NewFunctionSymbol(name, signature, false, diagnostics.NewBuiltinLocation())
 	sym.SetType(fnTy)
 	symbolIndex := space.AppendSymbol(sym)
 	return space.RefAt(symbolIndex)
+}
+
+func (c *CompilerEnvironment) AllocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
+	return c.functionSignatures.Allocate(params, hasRest)
+}
+
+func (c *CompilerEnvironment) AssociateFunctionSignature(sym model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return c.functionSignatures.Associate(sym, ref)
+}
+
+func (c *CompilerEnvironment) FunctionSignatureRef(sym model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return c.functionSignatures.Ref(sym)
+}
+
+func (c *CompilerEnvironment) UpdateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	c.functionSignatures.UpdateIncludedRecords(ref, includedRecords)
+}
+
+func (c *CompilerEnvironment) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return c.functionSignatures.Get(fn)
+}
+
+func (c *CompilerEnvironment) GetFunctionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return c.functionSignatures.GetByRef(ref)
 }
 
 func (c *CompilerEnvironment) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {
@@ -319,6 +345,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		anonTypeCount:              make(map[*model.PackageID]int),
 		anonFuncCount:              make(map[*model.PackageID]int),
 		packageInterner:            model.DefaultPackageIDInterner,
+		functionSignatures:         functionsignatures.NewStore(),
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,

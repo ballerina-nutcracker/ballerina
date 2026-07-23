@@ -13,8 +13,7 @@
                 (literal arguments)
                 (list-constructor-expr
                   (literal hello))))
-            (named-arg envProperties
-              (mapping-constructor-expr))))))))
+            (mapping-constructor-expr)))))))
     (var-def
       (variable code (type
         (value-type int)) (expr
@@ -30,7 +29,7 @@
           (value-type byte) dimensions: 1 ([]))) (expr
         (checked-expr
           (invocation output expr:
-            (simple-var-ref p) ())))))
+            (simple-var-ref p) ( <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr >
@@ -50,8 +49,7 @@
                 (literal arguments)
                 (list-constructor-expr
                   (literal world))))
-            (named-arg envProperties
-              (mapping-constructor-expr))))))))
+            (mapping-constructor-expr)))))))
     (var-def
       (variable _ (type
         (value-type int)) (expr
@@ -88,8 +86,7 @@
                 (list-constructor-expr
                   (literal -p)
                   (simple-var-ref dirWithSpace))))
-            (named-arg envProperties
-              (mapping-constructor-expr))))))))
+            (mapping-constructor-expr)))))))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -108,8 +105,7 @@
                 (literal arguments)
                 (list-constructor-expr
                   (simple-var-ref dirWithSpace))))
-            (named-arg envProperties
-              (mapping-constructor-expr))))))))
+            (mapping-constructor-expr)))))))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -129,8 +125,7 @@
                 (list-constructor-expr
                   (literal -rf)
                   (literal /tmp/bal_exec_space_test))))
-            (named-arg envProperties
-              (mapping-constructor-expr))))))))
+            (mapping-constructor-expr)))))))
     (var-def
       (variable _ (type
         (value-type int)) (expr
@@ -147,8 +142,7 @@
             (key-value
               (literal value)
               (literal no_such_command_xyz_123)))
-          (named-arg envProperties
-            (mapping-constructor-expr)))))))
+          (mapping-constructor-expr))))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -167,8 +161,7 @@
                 (literal arguments)
                 (list-constructor-expr
                   (literal bye))))
-            (named-arg envProperties
-              (mapping-constructor-expr))))))))
+            (mapping-constructor-expr)))))))
     (expression-stmt
       (invocation exit expr:
         (simple-var-ref p3) ()))

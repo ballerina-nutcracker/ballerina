@@ -1,0 +1,71 @@
+module $anon.. v 0.0.0;
+class Client {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get value Client.$resource$get$0(,[function(int) returns int...]...) -> {| value: int, never... |}{
+    bb0 {
+      _ = callbacks;
+      %4 = ConstantLoad value
+      %5 = ConstantLoad 14
+      %6 = newMap {| value: int, never... |}{%4=%5}
+      %0 = %6;
+      return;
+    }
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+regular([function(int) returns int...]...) -> function(int) returns int{
+  bb0 {
+    _ = callbacks;
+    %3 = fp $anon/.:$anonFunc$_0
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad ok
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 12
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 13
+    %0 = %1;
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 14
+    %0 = %1;
+    return;
+  }
+}

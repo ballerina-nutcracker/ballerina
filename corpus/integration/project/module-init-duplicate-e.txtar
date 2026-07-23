@@ -11,3 +11,9 @@ error[SEMANTIC_ERROR]: redeclared symbol 'init'
    |
 19 | function init() { // @error
    |          ^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'y'
+  --> other.bal:17:1
+   |
+17 | int y = 0; // @error
+   | ^^^^^^^^^^

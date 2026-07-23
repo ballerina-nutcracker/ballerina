@@ -551,16 +551,7 @@ func walkClientResourceAccessAction(cx *functionContext, expr *ast.BLangClientRe
 		initStmts = append(initStmts, result.initStmts...)
 		seg.Expr = result.replacementNode.(ast.BLangExpression)
 	}
-	for i := range expr.ArgExprs {
-		result := walkExpression(cx, expr.ArgExprs[i])
-		initStmts = append(initStmts, result.initStmts...)
-		expr.ArgExprs[i] = result.replacementNode.(ast.BLangExpression)
-	}
-	// Synthesize omitted defaultable arguments, mirroring walkInvocation's
-	// direct-call handling for the resolved resource method.
-	if fnSym, ok := cx.getSymbol(expr.MethodSymbol()).(model.FunctionSymbol); ok {
-		initStmts = append(initStmts, walkDirectCallArgs(cx, expr, fnSym)...)
-	}
+	initStmts = append(initStmts, walkInvocationArgs(cx, expr)...)
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: expr,
@@ -681,42 +672,91 @@ func walkInvocation(cx *functionContext, expr invocable) desugaredNode[ast.BLang
 		expr.SetReceiver(result.replacementNode.(ast.BLangExpression))
 	}
 
-	args := expr.CallArgs()
-	for i := range args {
-		result := walkExpression(cx, args[i])
-		initStmts = append(initStmts, result.initStmts...)
-		args[i] = result.replacementNode.(ast.BLangExpression)
-	}
-	expr.SetCallArgs(args)
-
-	if ast.IsStreamOperation(expr) {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-	symbolRef, hasSymbol := invocationSymbol(expr)
-	if !hasSymbol {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-	fnSym, isDirectCall := cx.getSymbol(symbolRef).(model.FunctionSymbol)
-	if !isDirectCall {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-
-	directStmts := walkDirectCallArgs(cx, expr, fnSym)
-	initStmts = append(initStmts, directStmts...)
+	initStmts = append(initStmts, walkInvocationArgs(cx, expr)...)
 
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: expr,
 	}
+}
+
+func walkInvocationArgs(cx *functionContext, expr invocable) []ast.StatementNode {
+	initStmts, args := walkCallArgs(cx, expr.CallArgs(), expr.GetPosition(), func() (model.UntypedFunctionSignature, bool) {
+		return cx.functionSignature(expr.ResolvedSymbol())
+	})
+	expr.SetCallArgs(args)
+	return initStmts
+}
+
+func walkCallArgs(cx *functionContext, args []ast.BLangExpression, pos diagnostics.Location, fnSig func() (model.UntypedFunctionSignature, bool)) ([]ast.StatementNode, []ast.BLangExpression) {
+	if shouldHoistArgs(args) {
+		sig, ok := fnSig()
+		if !ok {
+			cx.internalError("expected function signature to default expressions")
+		}
+		return hoistAndAddDefaultInvocations(cx, args, sig, pos)
+	}
+
+	initStmts := make([]ast.StatementNode, 0, len(args))
+	walkedArgs := make([]ast.BLangExpression, len(args))
+	for i, arg := range args {
+		result := walkExpression(cx, arg)
+		initStmts = append(initStmts, result.initStmts...)
+		walkedArgs[i] = result.replacementNode.(ast.BLangExpression)
+	}
+	return initStmts, walkedArgs
+}
+
+// If you have default invocations you should hoist the other args to local declarations such that we don't
+// invoke operations (such as function calls) twice
+func shouldHoistArgs(args []ast.BLangExpression) bool {
+	for _, arg := range args {
+		if _, ok := arg.(*ast.BLangDefaultArg); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func hoistAndAddDefaultInvocations(cx *functionContext, args []ast.BLangExpression, fnSig model.UntypedFunctionSignature, pos diagnostics.Location) ([]ast.StatementNode, []ast.BLangExpression) {
+	fixedCount := fnSig.FixedParamCount()
+	hoistInit := make([]ast.StatementNode, 0, len(args))
+	hoistedArgs := make([]ast.BLangExpression, len(args))
+	for i := range fixedCount {
+		arg := args[i]
+		if defaultArg, ok := arg.(*ast.BLangDefaultArg); ok {
+			defaultClosureSym := defaultArg.DefaultClosure
+			defaultCallSym := defaultClosureSym
+			if localSym, ok := cx.defaultClosureVars[defaultClosureSym]; ok {
+				defaultCallSym = localSym
+			}
+			defaultCall := &ast.BLangInvocation{}
+			defaultCall.Name = &ast.BLangIdentifier{Value: cx.pkgCtx.compilerCtx.SymbolName(defaultCallSym)}
+			defaultCall.ArgExprs = append([]ast.BLangExpression(nil), hoistedArgs[:i]...)
+			defaultCall.SetSymbol(defaultCallSym)
+			defaultCall.SetDeterminedType(cx.getSymbol(defaultClosureSym).(model.FunctionSymbol).TypedSignature().ReturnType)
+			setPositionIfMissing(defaultCall, pos)
+			result := walkExpression(cx, defaultCall)
+			hoistInit = append(hoistInit, result.initStmts...)
+			varDef, varRef := assignToLocal(cx, result.replacementNode.(ast.BLangExpression), pos)
+			hoistInit = append(hoistInit, varDef)
+			hoistedArgs[i] = varRef
+		} else {
+			result := walkExpression(cx, arg)
+			hoistInit = append(hoistInit, result.initStmts...)
+			varDef, varRef := assignToLocal(cx, result.replacementNode.(ast.BLangExpression), arg.GetPosition())
+			hoistInit = append(hoistInit, varDef)
+			hoistedArgs[i] = varRef
+		}
+	}
+	for i := fixedCount; i < len(args); i++ {
+		arg := args[i]
+		result := walkExpression(cx, arg)
+		hoistInit = append(hoistInit, result.initStmts...)
+		hoistedArgs[i] = result.replacementNode.(ast.BLangExpression)
+	}
+
+	return hoistInit, hoistedArgs
 }
 
 func invocationSymbol(expr invocable) (model.SymbolRef, bool) {
@@ -734,69 +774,6 @@ func invocationSymbol(expr invocable) (model.SymbolRef, bool) {
 	default:
 		panic("unexpected")
 	}
-}
-
-func walkDirectCallArgs(cx *functionContext, expr invocable, fnSym model.FunctionSymbol) []ast.StatementNode {
-	sig := fnSym.Signature()
-	totalParams := len(sig.ParamTypes)
-	if totalParams == 0 {
-		return nil
-	}
-
-	reordered := make([]ast.BLangExpression, totalParams)
-	for i, arg := range expr.CallArgs() {
-		switch arg := arg.(type) {
-		case *ast.BLangNamedArgsExpression:
-			for j, name := range sig.ParamNames {
-				if name == arg.Name.GetValue() {
-					reordered[j] = arg.Expr
-					break
-				}
-			}
-		default:
-			if i < totalParams {
-				reordered[i] = arg
-			} else {
-				reordered = append(reordered, arg)
-			}
-		}
-	}
-
-	pos := expr.GetPosition()
-	defaultableParams := fnSym.DefaultableParams()
-	var initStmts []ast.StatementNode
-
-	var transformed []ast.BLangExpression
-	for i := range totalParams {
-		if reordered[i] != nil {
-			continue
-		}
-		dp, isDefaultable := defaultableParams.Get(i)
-		if isDefaultable && dp.Kind == model.DefaultableParamKindInferredTypedesc {
-			reordered[i] = synthesizeInferredTypedescArg(cx, sig.ParamTypes[i], pos)
-			continue
-		}
-		for j := len(transformed); j < i; j++ {
-			varDef, varRef := assignToLocal(cx, reordered[j], pos)
-			initStmts = append(initStmts, varDef)
-			reordered[j] = varRef
-			transformed = append(transformed, varRef)
-		}
-		defaultInv := &ast.BLangInvocation{}
-		defaultInv.Name = &ast.BLangIdentifier{Value: cx.pkgCtx.compilerCtx.GetSymbol(dp.Symbol).Name()}
-		defaultInv.ArgExprs = reordered[:i]
-		defaultInv.SetSymbol(dp.Symbol)
-		defaultInv.SetDeterminedType(sig.ParamTypes[i])
-		setPositionIfMissing(defaultInv, pos)
-
-		varDef, varRef := assignToLocal(cx, defaultInv, pos)
-		initStmts = append(initStmts, varDef)
-		reordered[i] = varRef
-		transformed = append(transformed, varRef)
-	}
-
-	expr.SetCallArgs(reordered)
-	return initStmts
 }
 
 // synthesizeInferredTypedescArg builds the typedesc expression that fills a
@@ -1061,9 +1038,15 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 }
 
 func walkLambdaFunction(cx *functionContext, expr *ast.BLangLambdaFunction) desugaredNode[ast.BLangActionOrExpression] {
-	// Desugar the function body
 	if expr.Function != nil {
-		expr.Function = desugarFunction(cx.pkgCtx, expr.Function)
+		if cx.pkgCtx.needsDefaultClosures(expr.Function.Symbol()) {
+			defaults := desugarFunctionParamDefaults(cx, expr.Function, expr.Function.Symbol(), expr.Function.Scope())
+			for i := range defaults {
+				defaults[i] = desugarNestedFunction(cx, defaults[i])
+			}
+			cx.generatedFunctions = append(cx.generatedFunctions, defaults...)
+		}
+		expr.Function = desugarNestedFunction(cx, expr.Function)
 	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{
@@ -1079,6 +1062,13 @@ func walkTypeConversionExpr(cx *functionContext, expr *ast.BLangTypeConversionEx
 		initStmts = append(initStmts, result.initStmts...)
 		expr.Expression = result.replacementNode.(ast.BLangExpression)
 	}
+	if fnType, ok := expr.TypeDescriptor.(*ast.BLangFunctionType); ok {
+		result := desugarFunctionTypeDesc(cx, fnType, cx.currentScope())
+		initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
+		for _, field := range result.recordFields {
+			initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
+		}
+	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
@@ -1093,6 +1083,13 @@ func walkTypeTestExpr(cx *functionContext, expr *ast.BLangTypeTestExpr) desugare
 		result := walkExpression(cx, expr.Expr)
 		initStmts = append(initStmts, result.initStmts...)
 		expr.Expr = result.replacementNode.(ast.BLangExpression)
+	}
+	if fnType, ok := expr.Type.TypeDescriptor.(*ast.BLangFunctionType); ok {
+		result := desugarFunctionTypeDesc(cx, fnType, cx.currentScope())
+		initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
+		for _, field := range result.recordFields {
+			initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
+		}
 	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{
@@ -1131,88 +1128,32 @@ func walkArrowFunction(cx *functionContext, expr *ast.BLangArrowFunction) desuga
 
 func walkNewExpression(cx *functionContext, expr *ast.BLangNewExpression) desugaredNode[ast.BLangActionOrExpression] {
 	var initStmts []ast.StatementNode
+	argsInit, args := walkCallArgs(cx, expr.ArgsExprs, expr.GetPosition(), func() (model.UntypedFunctionSignature, bool) {
+		return initFunctionSymbol(cx, expr)
+	})
+	initStmts = append(initStmts, argsInit...)
 
-	for i := range expr.ArgsExprs {
-		result := walkExpression(cx, expr.ArgsExprs[i])
-		initStmts = append(initStmts, result.initStmts...)
-		expr.ArgsExprs[i] = result.replacementNode.(ast.BLangExpression)
-	}
-
-	// Fill in any defaultable init params the caller omitted. This mirrors what
-	// walkDirectCallArgs does for regular function calls via walkInvocation.
-	initStmts = append(initStmts, fillNewExprInitDefaults(cx, expr)...)
-
+	expr.ArgsExprs = args
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: expr,
 	}
 }
 
-func fillNewExprInitDefaults(cx *functionContext, expr *ast.BLangNewExpression) []ast.StatementNode {
+func initFunctionSymbol(cx *functionContext, expr *ast.BLangNewExpression) (model.UntypedFunctionSignature, bool) {
 	if expr.ClassSymbol.IsEmpty() {
-		return nil
+		return model.UntypedFunctionSignature{}, false
 	}
 	classSym, ok := cx.getSymbol(expr.ClassSymbol).(model.ClassSymbol)
 	if !ok {
-		return nil
+		return model.UntypedFunctionSignature{}, false
 	}
 	initRef, ok := classSym.MethodSymbol("init")
 	if !ok {
-		return nil
+		return model.UntypedFunctionSignature{}, false
 	}
-	initFnSym, ok := cx.getSymbol(initRef).(model.FunctionSymbol)
-	if !ok {
-		return nil
-	}
-	sig := initFnSym.Signature()
-	defaultableParams := initFnSym.DefaultableParams()
-	if defaultableParams == nil {
-		return nil
-	}
-	totalParams := len(sig.ParamTypes)
-	if totalParams <= len(expr.ArgsExprs) {
-		return nil
-	}
-
-	pos := expr.GetPosition()
-	var initStmts []ast.StatementNode
-
-	// Materialize original args into locals so the same node is not aliased into
-	// multiple default-lambda invocations. Mirrors walkDirectCallArgs behaviour.
-	originalLen := len(expr.ArgsExprs)
-	for j := 0; j < originalLen; j++ {
-		if _, ok := expr.ArgsExprs[j].(*ast.BLangSimpleVarRef); !ok {
-			varDef, varRef := assignToLocal(cx, expr.ArgsExprs[j], pos)
-			initStmts = append(initStmts, varDef)
-			expr.ArgsExprs[j] = varRef
-		}
-	}
-
-	for i := originalLen; i < totalParams; i++ {
-		dp, ok := defaultableParams.Get(i)
-		if !ok {
-			break
-		}
-		if dp.Kind == model.DefaultableParamKindInferredTypedesc {
-			tdExpr := synthesizeInferredTypedescArg(cx, sig.ParamTypes[i], pos)
-			setPositionIfMissing(tdExpr, pos)
-			varDef, varRef := assignToLocal(cx, tdExpr, pos)
-			initStmts = append(initStmts, varDef)
-			expr.ArgsExprs = append(expr.ArgsExprs, varRef)
-			continue
-		}
-		defaultInv := &ast.BLangInvocation{}
-		defaultInv.Name = &ast.BLangIdentifier{Value: cx.getSymbol(dp.Symbol).Name()}
-		defaultInv.ArgExprs = append([]ast.BLangExpression(nil), expr.ArgsExprs[:i]...)
-		defaultInv.SetSymbol(dp.Symbol)
-		defaultInv.SetDeterminedType(sig.ParamTypes[i])
-		setPositionIfMissing(defaultInv, pos)
-
-		varDef, varRef := assignToLocal(cx, defaultInv, pos)
-		initStmts = append(initStmts, varDef)
-		expr.ArgsExprs = append(expr.ArgsExprs, varRef)
-	}
-	return initStmts
+	untypedSig, ok := cx.pkgCtx.compilerCtx.GetFunctionSignature(initRef)
+	return untypedSig, ok
 }
 
 func walkMappingConstructorExpr(cx *functionContext, expr *ast.BLangMappingConstructorExpr) desugaredNode[ast.BLangActionOrExpression] {
@@ -1315,7 +1256,7 @@ func createVarRef(varName ast.IdentifierNode, symbol model.SymbolRef, ty semtype
 	return ref
 }
 
-func createResultAssignment(resultVarName ast.IdentifierNode, resultSymbol model.SymbolRef, resultTy semtypes.SemType, valueExpr ast.BLangExpression, pos diagnostics.Location) *ast.BLangAssignment {
+func createResultAssignment(resultVarName ast.IdentifierNode, resultSymbol model.SymbolRef, resultTy semtypes.SemType, valueExpr ast.BLangActionOrExpression, pos diagnostics.Location) *ast.BLangAssignment {
 	varRef := createVarRef(resultVarName, resultSymbol, resultTy)
 	assign := &ast.BLangAssignment{
 		VarRef: varRef,

@@ -62,6 +62,13 @@ $default$0(service object) -> nil{
     return;
   }
 }
+$default$1(service object) -> nil{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %0 = %2;
+    return;
+  }
+}
 $start() -> nil|error{
   bb0 {
     $desugar$0 = $moduleListeners;

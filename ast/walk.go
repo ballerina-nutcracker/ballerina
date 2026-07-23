@@ -494,6 +494,9 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangInferredTypedescDefault:
 		// leaf — no children
 
+	case *BLangDefaultArg:
+		// leaf — no children
+
 	case *BLangTypeConversionExpr:
 		if node.Expression != nil {
 			Walk(v, node.Expression.(BLangNode))

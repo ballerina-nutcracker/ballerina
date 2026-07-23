@@ -11,7 +11,7 @@
     (expression-stmt
       (invocation io println (
         (invocation foo (
-          (invocation nextVal ()))))))
+          (invocation nextVal ()) <default>)))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref counter))))

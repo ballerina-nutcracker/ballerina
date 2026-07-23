@@ -14,19 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public function main() {
-    int _ = inferred(0);
-}
-
 function nonDependentDefault(int val, typedesc retTy = <>) returns int = external; // @error
 
-function nonExternDependent(int val, typedesc retTy = <>) returns retTy { // @error
-    typedesc _ = retTy;
-    return val;
-}
-
-function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
-    int _ = val;
-    typedesc _ = retTy;
-    return 1;
-}
+function inferred(int val, typedesc retTy = <>) returns retTy|int = external; // @error
