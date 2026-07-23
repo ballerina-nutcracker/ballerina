@@ -50,13 +50,13 @@ func executeCall(ctx *extern.Context, callInfo *bir.Call, args []values.BalValue
 	if callInfo.CachedNativeFunc != nil {
 		result, err := callInfo.CachedNativeFunc(ctx, args)
 		if err != nil {
-			panic(err)
+			panicWithExternError(err)
 		}
 		return result
 	}
 	result, err := lookupAndExecute(ctx, callInfo, args, callInfo.FunctionLookupKey)
 	if err != nil {
-		panic(err)
+		panicWithExternError(err)
 	}
 	return result
 }
@@ -77,7 +77,7 @@ func dispatchMethodCall(ctx *extern.Context, callInfo *bir.Call, args []values.B
 		if callInfo.CachedNativeFunc != nil {
 			result, err := callInfo.CachedNativeFunc(ctx, args)
 			if err != nil {
-				panic(err)
+				panicWithExternError(err)
 			}
 			return result
 		}
@@ -88,7 +88,7 @@ func dispatchMethodCall(ctx *extern.Context, callInfo *bir.Call, args []values.B
 	callInfo.CachedMethodLookupKey = lookupKey
 	result, err := lookupAndExecute(ctx, callInfo, args, lookupKey)
 	if err != nil {
-		panic(err)
+		panicWithExternError(err)
 	}
 	return result
 }
@@ -127,7 +127,7 @@ func execResourceCall(ctx *extern.Context, instr *bir.ResourceFunctionCall, fram
 	argVals := extractArgs(ctx, instr.Args, frame)
 	result, err := Invoke(ctx, impl, argVals)
 	if err != nil {
-		panic(err)
+		panicWithExternError(err)
 	}
 	if instr.LhsOp != nil {
 		setOperandValue(ctx, instr.LhsOp, frame, result)
@@ -219,7 +219,7 @@ func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRB
 		var err error
 		result, err = builtin(ctx, args)
 		if err != nil {
-			panic(err)
+			panicWithExternError(err)
 		}
 	} else if fn := reg.GetBIRFunction(lookupKey); fn != nil {
 		result = executeFunction(ctx, fn, args, parentFrame)
@@ -227,7 +227,7 @@ func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRB
 		var err error
 		result, err = externFn.Impl(ctx, args)
 		if err != nil {
-			panic(err)
+			panicWithExternError(err)
 		}
 	} else {
 		panic("function not found: " + callInfo.Name.Value())
