@@ -1,11 +1,6 @@
 * text=auto eol=lf
 corpus/** linguist-generated=true
 
-# Golden output captures are compared byte-for-byte by the corpus test
-# harness against the interpreter's raw output, which can embed literal CR
-# bytes (e.g. multipart-body test fixtures). Line-ending normalization on
-# checkout/commit would silently corrupt those bytes, so exempt these
-# directories from text normalization entirely.
 corpus/ast/** -text
 corpus/bir/** -text
 corpus/cfg/** -text
