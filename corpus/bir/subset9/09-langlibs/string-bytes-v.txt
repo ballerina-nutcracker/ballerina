@@ -1,0 +1,39 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hi
+    %2 = toBytes(%1) -> bb1;
+  }
+  bb1 {
+    bytes = %2;
+    %4 = length(bytes) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = fromBytes(bytes) -> bb4;
+  }
+  bb4 {
+    back = %7;
+    %9 = println(back) -> bb5;
+  }
+  bb5 {
+    %10 = ConstantLoad 255
+    %11 = ConstantLoad 254
+    %12 = ConstantLoad 2
+    %13 = newArray [int:Unsigned8...][%12]{%10, %11}
+    invalid = %13;
+    %15 = fromBytes(invalid) -> bb6;
+  }
+  bb6 {
+    invalidStr = %15;
+    %17 = invalidStr is error
+    %18 = %17;
+    %19 = println(%18) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

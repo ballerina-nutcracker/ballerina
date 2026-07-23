@@ -1,0 +1,102 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 12345
+    %2 = fromString(%1) -> bb1;
+  }
+  bb1 {
+    n = %2;
+    %4 = println(n) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad -42
+    %6 = fromString(%5) -> bb3;
+  }
+  bb3 {
+    neg = %6;
+    %8 = println(neg) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad not-a-number
+    %10 = fromString(%9) -> bb5;
+  }
+  bb5 {
+    invalid = %10;
+    %12 = invalid is error
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %15 = ConstantLoad ff
+    %16 = fromHexString(%15) -> bb7;
+  }
+  bb7 {
+    h = %16;
+    %18 = println(h) -> bb8;
+  }
+  bb8 {
+    %19 = ConstantLoad -1a
+    %20 = fromHexString(%19) -> bb9;
+  }
+  bb9 {
+    negH = %20;
+    %22 = println(negH) -> bb10;
+  }
+  bb10 {
+    %23 = ConstantLoad zz
+    %24 = fromHexString(%23) -> bb11;
+  }
+  bb11 {
+    invalidHex = %24;
+    %26 = invalidHex is error
+    %27 = %26;
+    %28 = println(%27) -> bb12;
+  }
+  bb12 {
+    %29 = ConstantLoad +1a
+    %30 = fromHexString(%29) -> bb13;
+  }
+  bb13 {
+    plusH = %30;
+    %32 = println(plusH) -> bb14;
+  }
+  bb14 {
+    %33 = ConstantLoad -8000000000000000
+    %34 = fromHexString(%33) -> bb15;
+  }
+  bb15 {
+    minH = %34;
+    %36 = println(minH) -> bb16;
+  }
+  bb16 {
+    %37 = ConstantLoad 7fffffffffffffff
+    %38 = fromHexString(%37) -> bb17;
+  }
+  bb17 {
+    maxH = %38;
+    %40 = println(maxH) -> bb18;
+  }
+  bb18 {
+    %41 = ConstantLoad ffffffffffffffff
+    %42 = fromHexString(%41) -> bb19;
+  }
+  bb19 {
+    overflowH = %42;
+    %44 = overflowH is error
+    %45 = %44;
+    %46 = println(%45) -> bb20;
+  }
+  bb20 {
+    %47 = ConstantLoad -8000000000000001
+    %48 = fromHexString(%47) -> bb21;
+  }
+  bb21 {
+    negOverflowH = %48;
+    %50 = negOverflowH is error
+    %51 = %50;
+    %52 = println(%51) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}

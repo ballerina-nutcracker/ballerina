@@ -1,0 +1,55 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal   Hello World  ))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string trim (
+          (simple-var-ref s))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string toLowerAscii (
+          (invocation lang.string trim (
+            (simple-var-ref s))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string toUpperAscii (
+          (invocation lang.string trim (
+            (simple-var-ref s))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string substring (
+          (invocation lang.string trim (
+            (simple-var-ref s)))
+          (literal 0)
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string substring (
+          (invocation lang.string trim (
+            (simple-var-ref s)))
+          (literal 6))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string equalsIgnoreCaseAscii (
+          (literal HELLO)
+          (literal hello))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string equalsIgnoreCaseAscii (
+          (literal HELLO)
+          (literal world))))))
+    (var-def
+      (variable nonAsciiEdges (type
+        (value-type string)) (expr
+        (literal   middle  ))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (invocation lang.string trim (
+            (simple-var-ref nonAsciiEdges)))
+          (simple-var-ref nonAsciiEdges)))))
+  )
+)

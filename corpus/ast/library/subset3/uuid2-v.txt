@@ -1,0 +1,164 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina uuid (as uuid))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable known (type
+          (value-type string)) (expr
+          (literal 550e8400-e29b-41d4-a716-446655440000))))
+      (var-def
+        (variable rec (type
+          (user-defined-type uuid Uuid)) (expr
+          (checked-expr
+            (invocation uuid toRecord (
+              (simple-var-ref known)))))))
+      (var-def
+        (variable back (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation uuid toString (
+              (simple-var-ref rec)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref back))))
+      (var-def
+        (variable bytes (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type uuid Error))) (expr
+          (invocation uuid toBytes (
+            (simple-var-ref known))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bytes)
+            (array-type
+              (value-type byte) dimensions: 1 ([]))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref bytes)
+          (array-type
+            (value-type byte) dimensions: 1 ([])))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation length expr:
+                (simple-var-ref bytes) ()))))
+          (var-def
+            (variable fromBytes (type
+              (union-type
+                (value-type string)
+                (error-type))) (expr
+              (invocation uuid toString (
+                (simple-var-ref bytes))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref fromBytes)
+              (value-type string))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref fromBytes))))) ())
+          (block-stmt)) ())
+      (block-stmt
+        (var-def
+          (variable ver (type
+            (union-type
+              (user-defined-type uuid Version)
+              (user-defined-type uuid Error))) (expr
+            (checked-expr
+              (invocation uuid getVersion (
+                (simple-var-ref known)))))))
+        (expression-stmt
+          (invocation io println (
+            (binary-expr ==
+              (simple-var-ref ver)
+              (simple-var-ref uuid V4)))))
+        (var-def
+          (variable shortArr (type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))) (expr
+            (list-constructor-expr
+              (literal 5)
+              (literal 12)
+              (literal 16)
+              (literal 35)))))
+        (var-def
+          (variable shortToString (type
+            (union-type
+              (value-type string)
+              (error-type))) (expr
+            (invocation uuid toString (
+              (simple-var-ref shortArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref shortToString)
+              (error-type)))))
+        (var-def
+          (variable shortToRecord (type
+            (union-type
+              (user-defined-type uuid Uuid)
+              (user-defined-type uuid Error))) (expr
+            (invocation uuid toRecord (
+              (simple-var-ref shortArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref shortToRecord)
+              (user-defined-type uuid Error)))))
+        (var-def
+          (variable longArr (type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))) (expr
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)
+              (literal 4)
+              (literal 5)
+              (literal 6)
+              (literal 7)
+              (literal 8)
+              (literal 9)
+              (literal 10)
+              (literal 11)
+              (literal 12)
+              (literal 13)
+              (literal 14)
+              (literal 15)
+              (literal 16)
+              (literal 17)
+              (literal 18)
+              (literal 19)
+              (literal 20)))))
+        (var-def
+          (variable longToString (type
+            (union-type
+              (value-type string)
+              (error-type))) (expr
+            (invocation uuid toString (
+              (simple-var-ref longArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref longToString)
+              (error-type)))))
+        (var-def
+          (variable longToRecord (type
+            (union-type
+              (user-defined-type uuid Uuid)
+              (user-defined-type uuid Error))) (expr
+            (invocation uuid toRecord (
+              (simple-var-ref longArr))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref longToRecord)
+              (user-defined-type uuid Error)))))))))

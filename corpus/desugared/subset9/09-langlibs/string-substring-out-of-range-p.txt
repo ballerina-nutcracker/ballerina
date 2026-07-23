@@ -1,0 +1,15 @@
+(package
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal hello))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.string substring (
+          (simple-var-ref s)
+          (literal 2)
+          (literal 10)))))))

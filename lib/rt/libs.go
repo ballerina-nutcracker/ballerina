@@ -25,7 +25,9 @@ import (
 	_ "ballerina-lang-go/lib/langlibs/go/lang.float"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.int"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.map"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.runtime"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.string"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.value"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.xml"
 
 	// standard libraries
@@ -37,4 +39,5 @@ import (
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/random/0.0.1/go1.26/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/time/0.0.1/go1.26/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/url/0.0.1/go1.26/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/uuid/0.0.1/go1.26/native"
 )

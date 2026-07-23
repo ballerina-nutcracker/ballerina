@@ -14,5 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// This module currently exposes no symbols; it exists so that the lang.value
-// langlib resolves as a real bundle.
+# Returns a string that represents `v`.
+#
+# + v - the value
+# + return - a string representing `v`
+public isolated function toString(any v) returns string = external;

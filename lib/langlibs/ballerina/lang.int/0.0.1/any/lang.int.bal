@@ -19,3 +19,15 @@
 # + n - int value
 # + return - hexadecimal string representation of `n`
 public isolated function toHexString(int n) returns string = external;
+
+# Returns the integer that `str` represents.
+#
+# + str - string representation of an integer
+# + return - int value or error if `str` is not a valid representation of an integer
+public isolated function fromString(string str) returns int|error = external;
+
+# Returns the integer that `s` represents in hexadecimal.
+#
+# + s - hexadecimal string representation of an integer
+# + return - int value or error if `s` is not a valid hexadecimal representation of an integer
+public isolated function fromHexString(string s) returns int|error = external;
