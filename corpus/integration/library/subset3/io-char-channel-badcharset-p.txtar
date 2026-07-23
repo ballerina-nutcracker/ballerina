@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-error: Unsupported encoding type NOT-A-CHARSET
+error: unsupported encoding type NOT-A-CHARSET
         at ballerina/io:ReadableCharacterChannel.init(0.0.1::io.bal:406)
            main(io-char-channel-badcharset-p.bal:23)

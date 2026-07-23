@@ -54,7 +54,7 @@ func charChannelClosedError() values.BalValue {
 func lookupCharset(charset string) (encoding.Encoding, error) {
 	enc, err := ianaindex.IANA.Encoding(charset)
 	if err != nil || enc == nil {
-		return nil, fmt.Errorf("Unsupported encoding type %s", charset)
+		return nil, fmt.Errorf("unsupported encoding type %s", charset)
 	}
 	return enc, nil
 }
@@ -353,7 +353,7 @@ func registerReadableCharacterChannelExterns(rt *runtime.Runtime, types characte
 			}
 			reader, ok := readerOf(byteCh)
 			if !ok {
-				return nil, fmt.Errorf("Byte channel is not initialized")
+				return nil, fmt.Errorf("byte channel is not initialized")
 			}
 			self.Put("$charReader", bufio.NewReader(transform.NewReader(reader, enc.NewDecoder())))
 			self.Put("$byteChannel", byteCh)

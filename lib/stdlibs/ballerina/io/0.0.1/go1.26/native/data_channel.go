@@ -48,7 +48,7 @@ func readDataBytes(self *values.Object, width int) ([]byte, error) {
 	byteCh, _ := byteChannelOf(self)
 	reader, ok := readerOf(byteCh)
 	if !ok {
-		return nil, fmt.Errorf("Byte channel is not initialized")
+		return nil, fmt.Errorf("byte channel is not initialized")
 	}
 	buf := make([]byte, width)
 	n, err := io.ReadFull(reader, buf)
@@ -229,7 +229,7 @@ func initDataChannelModule(rt *runtime.Runtime) {
 			byteCh, _ := byteChannelOf(self)
 			reader, ok := readerOf(byteCh)
 			if !ok {
-				return nil, fmt.Errorf("Byte channel is not initialized")
+				return nil, fmt.Errorf("byte channel is not initialized")
 			}
 			buf := make([]byte, nBytes)
 			n, readErr := io.ReadFull(reader, buf)
@@ -256,7 +256,7 @@ func initDataChannelModule(rt *runtime.Runtime) {
 			byteCh, _ := byteChannelOf(self)
 			reader, ok := readerOf(byteCh)
 			if !ok {
-				return nil, fmt.Errorf("Byte channel is not initialized")
+				return nil, fmt.Errorf("byte channel is not initialized")
 			}
 			var groups []byte
 			one := make([]byte, 1)
