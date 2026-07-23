@@ -32,7 +32,9 @@ See the [README](README.md) for more details on building, running corpus tests, 
 
    **Commit message guidelines:**
 
-   PR titles (and commit subjects) must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+   This repo allows merge commit, squash, and rebase merges, so every commit
+   you push can end up in the `main` history as-is. Because of that, the PR
+   title **and every commit subject** must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 
    ```text
    <type>(<optional scope>): <description>
@@ -48,7 +50,7 @@ See the [README](README.md) for more details on building, running corpus tests, 
 
    Example: `fix(ast): recover missing identifier nodes`
 
-   PR titles are checked automatically by the [Lint PR](.github/workflows/lint-pr.yml) workflow.
+   Both the PR title and every commit subject are checked automatically by the [Lint PR](.github/workflows/lint-pr.yml) workflow.
 
 4. If prompted, accept the Contributor License Agreement (CLA) when submitting your first PR.
 

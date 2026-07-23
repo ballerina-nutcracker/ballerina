@@ -13,6 +13,20 @@ on:
 # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
 permissions: {}
 
+env:
+  COMMIT_TYPES: |
+    feat
+    fix
+    build
+    chore
+    ci
+    docs
+    style
+    refactor
+    perf
+    test
+    revert
+
 jobs:
   validate-pr-title:
     name: Validate PR Title
@@ -24,21 +38,46 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          types: |
-            feat
-            fix
-            build
-            chore
-            ci
-            docs
-            style
-            refactor
-            perf
-            test
-            revert
+          types: ${{ env.COMMIT_TYPES }}
           requireScope: false
-          validateSingleCommit: true
           subjectPattern: ^[a-z].*$
           subjectPatternError: |
             The subject must start with a lowercase letter, got: "{subject}".
             Example: "fix(ast): recover missing identifier nodes"
+
+  validate-commit-messages:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const types = process.env.COMMIT_TYPES.trim().split('\n').map((t) => t.trim()).filter(Boolean);
+            const pattern = new RegExp(`^(${types.join('|')})(\\([^)]+\\))?!?: [a-z].*$`);
+
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            const errors = [];
+            for (const item of commits) {
+              if (item.parents && item.parents.length > 1) continue;
+              const subject = item.commit.message.split('\n')[0];
+              if (!pattern.test(subject)) {
+                errors.push(`${item.sha.substring(0, 7)}: "${subject}"`);
+              }
+            }
+
+            if (errors.length > 0) {
+              core.setFailed(
+                'The following commits do not follow Conventional Commits format:\n' +
+                errors.join('\n') +
+                '\n\nExpected: <type>(<optional scope>): <description>\n' +
+                `Types: ${types.join(', ')}\n` +
+                'The description must start with a lowercase letter.'
+              );
+            }
