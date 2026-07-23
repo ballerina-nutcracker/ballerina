@@ -73,3 +73,11 @@ func TestFileListenerAttachError(t *testing.T) {
 func TestFileListenerInitError(t *testing.T) {
 	runExtern(t, fileCase("file-listener/file-listener-init-error-v"), testharness.NewTestPal(), nil)
 }
+
+// TestFileListenerStartError exercises start() failing when the watched
+// directory is removed between init and start, so the OS-level watch add
+// fails.
+func TestFileListenerStartError(t *testing.T) {
+	skipIfNoFileWatch(t)
+	runExtern(t, fileCase("file-listener/file-listener-start-error-v"), testharness.NewTestPal(), nil)
+}

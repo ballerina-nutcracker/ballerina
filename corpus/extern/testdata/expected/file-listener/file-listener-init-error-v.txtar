@@ -2,4 +2,5 @@
 'path' field is empty
 Folder does not exist: testdata/file-listener/no-such-dir
 Unable to find a directory: testdata/file-listener/fixture.txt
+true
 -- stderr --

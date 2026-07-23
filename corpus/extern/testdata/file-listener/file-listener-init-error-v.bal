@@ -38,4 +38,13 @@ public function testMain() returns error? {
     } else {
         io:println("unexpected success");
     }
+
+    // a path component that is itself a regular file fails Stat with ENOTDIR,
+    // distinct from the plain "does not exist" case above
+    file:Listener|error pathThroughFile = new ({path: "testdata/file-listener/fixture.txt/child", recursive: false});
+    if pathThroughFile is error {
+        io:println(pathThroughFile.message().length() > 0); // @output true
+    } else {
+        io:println("unexpected success");
+    }
 }
