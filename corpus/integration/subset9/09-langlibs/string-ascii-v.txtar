@@ -1,0 +1,10 @@
+-- stdout --
+Hello World
+hello world
+HELLO WORLD
+Hello
+World
+true
+false
+true
+-- stderr --

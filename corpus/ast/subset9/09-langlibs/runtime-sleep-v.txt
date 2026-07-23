@@ -1,0 +1,29 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang runtime (as runtime))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal before))))
+      (expression-stmt
+        (invocation runtime sleep (
+          (literal 0.01))))
+      (expression-stmt
+        (invocation io println (
+          (literal after))))
+      (expression-stmt
+        (invocation runtime sleep (
+          (literal 0))))
+      (expression-stmt
+        (invocation io println (
+          (literal zero-ok))))
+      (expression-stmt
+        (invocation runtime sleep (
+          (unary-expr -
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (literal negative-ok)))))))

@@ -20,18 +20,22 @@
 # + return - number of members in `arr`
 public isolated function length((any|error)[] arr) returns int = external;
 
-# Returns a base64 representation of a byte array.
+# Removes all members of an array.
 #
-# + arr - the byte array
-# + return - the base64 encoding of `arr`
-public isolated function toBase64(byte[] arr) returns string = external;
+# + arr - the array
+public isolated function removeAll((any|error)[] arr) = external;
 
-# Returns a base16 representation of a byte array.
+# Returns the lowercase hexadecimal encoding of an array of bytes.
 #
-# + arr - the byte array
-# + return - the hexadecimal encoding of `arr`
+# + arr - the array to be encoded
+# + return - the lowercase hexadecimal-encoded string
 public isolated function toBase16(byte[] arr) returns string = external;
 
+# Returns the base64 encoding of an array of bytes.
+#
+# + arr - the array to be encoded
+# + return - the base64-encoded string
+public isolated function toBase64(byte[] arr) returns string = external;
 # Returns a byte array decoded from a base64 string.
 #
 # + str - the base64 encoded string
