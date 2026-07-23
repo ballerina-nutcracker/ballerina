@@ -106,8 +106,22 @@ func TestFileNativePermissionErrors(t *testing.T) {
 // from pure .bal.
 func TestFileNativeSymlinkResolve(t *testing.T) {
 	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "target-file.txt"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
 	link := filepath.Join(root, "link")
 	if err := os.Symlink("target-file.txt", link); err != nil {
+		t.Fatal(err)
+	}
+
+	symlinkDir := filepath.Join(root, "symlink-dir")
+	if err := os.Mkdir(symlinkDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(symlinkDir, "target-file.txt"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("target-file.txt", filepath.Join(symlinkDir, "link")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -115,6 +129,10 @@ func TestFileNativeSymlinkResolve(t *testing.T) {
 		{Org: "$anon", Module: "file-symlink-v", FuncName: "symlinkPath",
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return link, nil
+			}},
+		{Org: "$anon", Module: "file-symlink-v", FuncName: "symlinkDirPath",
+			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+				return symlinkDir, nil
 			}},
 	}
 	runExtern(t, fileCase("file-native/file-symlink-v"), testharness.NewTestPal(), externs)

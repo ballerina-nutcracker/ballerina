@@ -207,6 +207,55 @@
             (simple-var-ref copyNoParent)
             (user-defined-type file Error)))))
       (var-def
+        (variable copyDirSrc (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /copy-dir-src)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file createDir (
+            (simple-var-ref copyDirSrc)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file create (
+            (binary-expr +
+              (simple-var-ref copyDirSrc)
+              (literal /inside.txt))))))
+      (var-def
+        (variable copyDirDest (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /copy-dir-dest)))))
+      (expression-stmt
+        (checked-expr
+          (invocation file copy (
+            (simple-var-ref copyDirSrc)
+            (simple-var-ref copyDirDest)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (binary-expr +
+                (simple-var-ref copyDirDest)
+                (literal /inside.txt))
+              (simple-var-ref file EXISTS)))))))
+      (expression-stmt
+        (checked-expr
+          (invocation file copy (
+            (simple-var-ref copyDirSrc)
+            (simple-var-ref copyDirDest)
+            (simple-var-ref file REPLACE_EXISTING)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation file test (
+              (binary-expr +
+                (simple-var-ref copyDirDest)
+                (literal /inside.txt))
+              (simple-var-ref file EXISTS)))))))
+      (var-def
         (variable tempDirWithSuffix (type
           (value-type string)) (expr
           (checked-expr

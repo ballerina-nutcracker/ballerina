@@ -64,6 +64,17 @@ public function main() returns error? {
     file:Error? copyNoParent = file:copy(copySrc, baseDir + "/no-such-parent/dst.txt");
     io:println(copyNoParent is file:Error); // @output true
 
+    // copy replicates a directory tree; re-copying with REPLACE_EXISTING
+    // tolerates the destination (and its entries) already existing
+    string copyDirSrc = baseDir + "/copy-dir-src";
+    check file:createDir(copyDirSrc);
+    check file:create(copyDirSrc + "/inside.txt");
+    string copyDirDest = baseDir + "/copy-dir-dest";
+    check file:copy(copyDirSrc, copyDirDest);
+    io:println(check file:test(copyDirDest + "/inside.txt", file:EXISTS)); // @output true
+    check file:copy(copyDirSrc, copyDirDest, file:REPLACE_EXISTING);
+    io:println(check file:test(copyDirDest + "/inside.txt", file:EXISTS)); // @output true
+
     // createTempDir with an explicit suffix
     string tempDirWithSuffix = check file:createTempDir(suffix = "-suffix", prefix = "bal-", dir = baseDir);
     io:println(check file:test(tempDirWithSuffix, file:IS_DIR)); // @output true
