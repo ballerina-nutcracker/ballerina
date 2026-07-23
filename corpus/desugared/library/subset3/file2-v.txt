@@ -1,0 +1,538 @@
+(package
+  (import-package ballerina file (as file))
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$6 ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal bal-file2-))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$8 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation file createTempDir (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable baseDir (type
+          (value-type string)) (expr
+          (simple-var-ref $desugar$3))))
+      (var-def
+        (variable f1 (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /a.txt)))))
+      (var-def
+        (variable f2 (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /b.txt)))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation file create (
+            (simple-var-ref f1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$4))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation file create (
+            (simple-var-ref f2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation file readDir (
+            (simple-var-ref baseDir))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (var-def
+        (variable entries (type
+          (array-type
+            (user-defined-type file MetaData) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$6))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref entries))))))
+      (var-def
+        (variable copyDest (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /a-copy.txt)))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation file copy (
+            (simple-var-ref f1)
+            (simple-var-ref copyDest))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$7))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation file test (
+            (simple-var-ref copyDest)
+            (literal EXISTS))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (var-def
+        (variable copyExists (type
+          (value-type boolean)) (expr
+          (simple-var-ref $desugar$8))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref copyExists))))
+      (var-def
+        (variable copyNoReplace (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file copy (
+            (simple-var-ref f2)
+            (simple-var-ref copyDest))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref copyNoReplace)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation file copy (
+            (simple-var-ref f2)
+            (simple-var-ref copyDest)
+            (literal REPLACE_EXISTING))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$9))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation file test (
+            (simple-var-ref copyDest)
+            (literal EXISTS))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$10))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$10))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$10))))
+      (var-def
+        (variable copyMissing (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file copy (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /missing.txt))
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /x.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref copyMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable renamed (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /a-renamed.txt)))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation file rename (
+            (simple-var-ref f1)
+            (simple-var-ref renamed))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$11))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation file test (
+            (simple-var-ref renamed)
+            (literal EXISTS))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$12))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$12))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation file test (
+            (simple-var-ref f1)
+            (literal EXISTS))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$13))))
+      (var-def
+        (variable renameMissing (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file rename (
+            (simple-var-ref f1)
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /y.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref renameMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation file test (
+            (simple-var-ref f2)
+            (literal READABLE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$14))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation file test (
+            (simple-var-ref f2)
+            (literal WRITABLE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$15))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$15))))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation file test (
+            (simple-var-ref f2)
+            (literal IS_SYMLINK))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$16))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$16))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$16))))
+      (var-def
+        (variable $desugar$17 (expr
+          (simple-var-ref baseDir))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$17))))))
+      (var-def
+        (variable dirExistsErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file createDir (
+            (simple-var-ref $desugar$17)
+            (simple-var-ref $desugar$18))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref dirExistsErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable nested (type
+          (value-type string)) (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /nested/child)))))
+      (var-def
+        (variable $desugar$19 (expr
+          (invocation file createDir (
+            (simple-var-ref nested)
+            (literal RECURSIVE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$19))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$19))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$19))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation file test (
+            (simple-var-ref nested)
+            (literal IS_DIR))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$20))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$20))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$20))))
+      (var-def
+        (variable createExistsErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file create (
+            (simple-var-ref f2))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref createExistsErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$21 (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /does-not-exist.txt)))))
+      (var-def
+        (variable $desugar$22 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$21))))))
+      (var-def
+        (variable removeMissingErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file remove (
+            (simple-var-ref $desugar$21)
+            (simple-var-ref $desugar$22))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref removeMissingErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable cwd (type
+          (value-type string)) (expr
+          (invocation file getCurrentDir ()))))
+      (var-def
+        (variable $desugar$23 (expr
+          (simple-var-ref cwd))))
+      (var-def
+        (variable $desugar$24 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$23))))))
+      (var-def
+        (variable removeCwdErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file remove (
+            (simple-var-ref $desugar$23)
+            (simple-var-ref $desugar$24))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref removeCwdErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable readDirOnFile (type
+          (union-type
+            (array-type
+              (user-defined-type file MetaData) dimensions: 1 ([]))
+            (user-defined-type file Error))) (expr
+          (invocation file readDir (
+            (simple-var-ref f2))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readDirOnFile)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable readDirMissing (type
+          (union-type
+            (array-type
+              (user-defined-type file MetaData) dimensions: 1 ([]))
+            (user-defined-type file Error))) (expr
+          (invocation file readDir (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readDirMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable metaMissing (type
+          (union-type
+            (user-defined-type file MetaData)
+            (user-defined-type file Error))) (expr
+          (invocation file getMetaData (
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist.txt)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref metaMissing)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$25 (expr
+          (binary-expr +
+            (simple-var-ref baseDir)
+            (literal /no/such/parent)))))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$25))))))
+      (var-def
+        (variable dirNoParentErr (type
+          (union-type
+            (user-defined-type file Error)
+            (value-type null))) (expr
+          (invocation file createDir (
+            (simple-var-ref $desugar$25)
+            (simple-var-ref $desugar$26))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref dirNoParentErr)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$27 (expr
+          (invocation $default$3 ()))))
+      (var-def
+        (variable $desugar$28 (expr
+          (invocation $default$4 (
+            (simple-var-ref $desugar$27))))))
+      (var-def
+        (variable tempMissingDir (type
+          (union-type
+            (value-type string)
+            (user-defined-type file Error))) (expr
+          (invocation file createTemp (
+            (simple-var-ref $desugar$27)
+            (simple-var-ref $desugar$28)
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref tempMissingDir)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$29 (expr
+          (invocation $default$6 ()))))
+      (var-def
+        (variable $desugar$30 (expr
+          (invocation $default$7 (
+            (simple-var-ref $desugar$29))))))
+      (var-def
+        (variable tempDirMissingDir (type
+          (union-type
+            (value-type string)
+            (user-defined-type file Error))) (expr
+          (invocation file createTempDir (
+            (simple-var-ref $desugar$29)
+            (simple-var-ref $desugar$30)
+            (binary-expr +
+              (simple-var-ref baseDir)
+              (literal /does-not-exist)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref tempDirMissingDir)
+            (user-defined-type file Error)))))
+      (var-def
+        (variable $desugar$31 (expr
+          (invocation file remove (
+            (simple-var-ref baseDir)
+            (literal RECURSIVE))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$31))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$31))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$31))
+      (var-def
+        (variable $desugar$32 (expr
+          (invocation file test (
+            (simple-var-ref baseDir)
+            (literal EXISTS))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$32))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$32))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$32)))))))

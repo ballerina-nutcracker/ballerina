@@ -17,6 +17,8 @@
 package stringruntime
 
 import (
+	"fmt"
+	"strings"
 	"unicode/utf8"
 
 	"ballerina-lang-go/runtime"
@@ -63,6 +65,86 @@ func initStringModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBytes", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return stringFromBytes(args)
 	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "substring", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s := args[0].(string)
+		startIndex := args[1].(int64)
+		endIndex := args[2].(int64)
+		runes := []rune(s)
+		length := int64(len(runes))
+		if startIndex < 0 || startIndex > length || endIndex < startIndex || endIndex > length {
+			panic(values.NewErrorWithMessage(fmt.Sprintf("string index out of range: startIndex=%d endIndex=%d length=%d", startIndex, endIndex, length)))
+		}
+		return string(runes[startIndex:endIndex]), nil
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "equalsIgnoreCaseAscii", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s1 := args[0].(string)
+		s2 := args[1].(string)
+		return equalsIgnoreCaseASCII(s1, s2), nil
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toLowerAscii", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s := args[0].(string)
+		return mapASCII(s, func(r rune) rune {
+			if r >= 'A' && r <= 'Z' {
+				return r + 32
+			}
+			return r
+		}), nil
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toUpperAscii", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s := args[0].(string)
+		return mapASCII(s, func(r rune) rune {
+			if r >= 'a' && r <= 'z' {
+				return r - 32
+			}
+			return r
+		}), nil
+	})
+
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "trim", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("first argument must be a string")
+		}
+		// ASCII whitespace only (space, \t, \n, \v, \f, \r); strings.TrimSpace
+		// is Unicode-aware and would also strip U+0085/U+00A0.
+		return strings.Trim(s, " \t\n\v\f\r"), nil
+	})
+
+}
+
+func equalsIgnoreCaseASCII(s1, s2 string) bool {
+	r1 := []rune(s1)
+	r2 := []rune(s2)
+	if len(r1) != len(r2) {
+		return false
+	}
+	for i, a := range r1 {
+		b := r2[i]
+		if a == b {
+			continue
+		}
+		if a >= 'A' && a <= 'Z' && a+32 == b {
+			continue
+		}
+		if a >= 'a' && a <= 'z' && a-32 == b {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func mapASCII(s string, f func(rune) rune) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		b.WriteRune(f(r))
+	}
+	return b.String()
 }
 
 func init() {

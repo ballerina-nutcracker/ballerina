@@ -22,6 +22,8 @@ package palnative
 
 import (
 	"bytes"
+	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"os/user"
@@ -80,6 +82,85 @@ func NewPlatform() (pal.Platform, func()) {
 				_, err = f.Write(data)
 				return err
 			},
+			Getwd: os.Getwd,
+			Mkdir: func(path string) error {
+				return os.Mkdir(path, 0o755)
+			},
+			MkdirAll: func(path string) error {
+				return os.MkdirAll(path, 0o755)
+			},
+			Remove:    os.Remove,
+			RemoveAll: os.RemoveAll,
+			Rename:    os.Rename,
+			CreateFile: func(path string) error {
+				f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+				if err != nil {
+					return err
+				}
+				return f.Close()
+			},
+			Stat: func(path string) (*pal.FileInfo, error) {
+				fi, err := os.Stat(path)
+				if err != nil {
+					return nil, err
+				}
+				absPath, _ := filepath.Abs(path)
+				return &pal.FileInfo{
+					AbsPath:    absPath,
+					Size:       fi.Size(),
+					ModifiedAt: fi.ModTime(),
+					IsDir:      fi.IsDir(),
+					IsSymlink:  false,
+					IsReadable: IsReadable(path, fi),
+					IsWritable: IsWritable(path, fi),
+				}, nil
+			},
+			Lstat: func(path string) (*pal.FileInfo, error) {
+				fi, err := os.Lstat(path)
+				if err != nil {
+					return nil, err
+				}
+				absPath, _ := filepath.Abs(path)
+				return &pal.FileInfo{
+					AbsPath:    absPath,
+					Size:       fi.Size(),
+					ModifiedAt: fi.ModTime(),
+					IsDir:      fi.IsDir(),
+					IsSymlink:  fi.Mode()&os.ModeSymlink != 0,
+					IsReadable: IsReadable(path, fi),
+					IsWritable: IsWritable(path, fi),
+				}, nil
+			},
+			ReadDir: func(path string) ([]pal.FileInfo, error) {
+				entries, err := os.ReadDir(path)
+				if err != nil {
+					return nil, err
+				}
+				result := make([]pal.FileInfo, 0, len(entries))
+				for _, entry := range entries {
+					childPath := filepath.Join(path, entry.Name())
+					fi, err := entry.Info()
+					if err != nil {
+						continue
+					}
+					absPath, _ := filepath.Abs(childPath)
+					result = append(result, pal.FileInfo{
+						AbsPath:    absPath,
+						Size:       fi.Size(),
+						ModifiedAt: fi.ModTime(),
+						IsDir:      fi.IsDir(),
+						IsSymlink:  fi.Mode()&os.ModeSymlink != 0,
+						IsReadable: IsReadable(childPath, fi),
+						IsWritable: IsWritable(childPath, fi),
+					})
+				}
+				return result, nil
+			},
+			Copy:          CopyFS,
+			CreateTemp:    CreateTemp,
+			CreateTempDir: CreateTempDir,
+			Readlink:      os.Readlink,
+			Watch:         Watch,
 		},
 		OS: pal.OS{
 			GetEnv: func(name string) string {
@@ -122,6 +203,7 @@ func NewPlatform() (pal.Platform, func()) {
 		Time: pal.Time{
 			Now:          time.Now,
 			MonotonicNow: func() time.Duration { return time.Since(processStart) },
+			Sleep:        time.Sleep,
 		},
 		HTTP: pal.HTTP{
 			NewClient: NewHTTPClient,
@@ -182,4 +264,134 @@ func (p *nativeProcess) Kill() {
 	if p.cmd.Process != nil {
 		_ = p.cmd.Process.Kill()
 	}
+}
+
+// FS helpers
+
+func IsReadable(path string, _ os.FileInfo) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	_ = f.Close()
+	return true
+}
+
+func IsWritable(path string, fi os.FileInfo) bool {
+	if fi.IsDir() {
+		return fi.Mode().Perm()&0o222 != 0
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return false
+	}
+	_ = f.Close()
+	return true
+}
+
+func CreateTemp(prefix, suffix, dir string) (string, error) {
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	f, err := os.CreateTemp(dir, prefix+"*"+suffix)
+	if err != nil {
+		return "", err
+	}
+	name := f.Name()
+	_ = f.Close()
+	abs, _ := filepath.Abs(name)
+	return abs, nil
+}
+
+func CreateTempDir(prefix, suffix, dir string) (string, error) {
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	path, err := os.MkdirTemp(dir, prefix+"*"+suffix)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(path)
+}
+
+func CopyFS(src, dst string, opts pal.CopyOptions) error {
+	srcInfo, err := os.Lstat(src)
+	if err != nil {
+		return err
+	}
+	if srcInfo.Mode()&os.ModeSymlink != 0 && opts.NoFollowLinks {
+		target, err := os.Readlink(src)
+		if err != nil {
+			return err
+		}
+		if opts.ReplaceExisting {
+			os.Remove(dst) //nolint:errcheck
+		}
+		return os.Symlink(target, dst)
+	}
+	if srcInfo.IsDir() {
+		return copyDir(src, dst, opts)
+	}
+	return copyFile(src, dst, opts)
+}
+
+func copyDir(src, dst string, opts pal.CopyOptions) error {
+	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		if d.IsDir() {
+			if mkErr := os.MkdirAll(target, 0o755); mkErr != nil && !os.IsExist(mkErr) {
+				return mkErr
+			}
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 && opts.NoFollowLinks {
+			linkTarget, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			if opts.ReplaceExisting {
+				os.Remove(target) //nolint:errcheck
+			}
+			return os.Symlink(linkTarget, target)
+		}
+		return copyFile(path, target, opts)
+	})
+}
+
+func copyFile(src, dst string, opts pal.CopyOptions) error {
+	if !opts.ReplaceExisting {
+		if _, err := os.Lstat(dst); err == nil {
+			return &os.PathError{Op: "copy", Path: dst, Err: os.ErrExist}
+		}
+	}
+	srcF, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = srcF.Close() }()
+	dstF, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = dstF.Close() }()
+	if _, err := io.Copy(dstF, srcF); err != nil {
+		return err
+	}
+	if opts.CopyAttributes {
+		if info, err := os.Stat(src); err == nil {
+			os.Chmod(dst, info.Mode()) //nolint:errcheck
+		}
+	}
+	return nil
 }

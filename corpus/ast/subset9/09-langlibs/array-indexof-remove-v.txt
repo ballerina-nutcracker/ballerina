@@ -1,0 +1,135 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)
+            (literal 40)
+            (literal 30)))))
+      (var-def
+        (variable first (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation indexOf expr:
+            (simple-var-ref arr) (
+            (literal 30)
+            (literal 0))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref first)
+          (value-type int))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref first))))) ())
+      (block-stmt
+        (var-def
+          (variable firstDefault (type
+            (union-type
+              (value-type int)
+              (value-type null))) (expr
+            (invocation indexOf expr:
+              (simple-var-ref arr) (
+              (literal 30))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref firstDefault)
+            (value-type int))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref firstDefault))))) ())
+        (block-stmt
+          (var-def
+            (variable afterFirst (type
+              (union-type
+                (value-type int)
+                (value-type null))) (expr
+              (invocation indexOf expr:
+                (simple-var-ref arr) (
+                (literal 30)
+                (literal 3))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref afterFirst)
+              (value-type int))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref afterFirst))))) ())
+          (block-stmt
+            (var-def
+              (variable missing (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (invocation indexOf expr:
+                  (simple-var-ref arr) (
+                  (literal 99)
+                  (literal 0))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref missing)
+                  (value-type null)))))
+            (var-def
+              (variable atLength (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (invocation indexOf expr:
+                  (simple-var-ref arr) (
+                  (literal 30)
+                  (invocation length expr:
+                    (simple-var-ref arr) ()))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref atLength)
+                  (value-type null)))))
+            (var-def
+              (variable pastLength (type
+                (union-type
+                  (value-type int)
+                  (value-type null))) (expr
+                (invocation indexOf expr:
+                  (simple-var-ref arr) (
+                  (literal 30)
+                  (binary-expr +
+                    (invocation length expr:
+                      (simple-var-ref arr) ())
+                    (literal 1000)))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref pastLength)
+                  (value-type null)))))
+            (var-def
+              (variable removed (type
+                (value-type int)) (expr
+                (invocation remove expr:
+                  (simple-var-ref arr) (
+                  (literal 1))))))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref removed))))
+            (expression-stmt
+              (invocation io println (
+                (invocation length expr:
+                  (simple-var-ref arr) ()))))
+            (expression-stmt
+              (invocation removeAll expr:
+                (simple-var-ref arr) ()))
+            (expression-stmt
+              (invocation io println (
+                (invocation length expr:
+                  (simple-var-ref arr) ()))))))))))

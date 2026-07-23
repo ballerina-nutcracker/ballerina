@@ -25,11 +25,14 @@ import (
 	_ "ballerina-lang-go/lib/langlibs/go/lang.float"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.int"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.map"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.runtime"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.string"
+	_ "ballerina-lang-go/lib/langlibs/go/lang.value"
 	_ "ballerina-lang-go/lib/langlibs/go/lang.xml"
 
 	// standard libraries
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/crypto/0.0.1/go1.26/native"
+	_ "ballerina-lang-go/lib/stdlibs/ballerina/file/0.0.1/go1.26/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/http/0.0.1/go1.26/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/io/0.0.1/go1.26/native"
 	_ "ballerina-lang-go/lib/stdlibs/ballerina/log/0.0.1/go1.26/native"
