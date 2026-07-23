@@ -1,0 +1,48 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation io createReadableChannel (
+            (list-constructor-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable rb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$9 (
+            (simple-var-ref rb))))))
+      (var-def
+        (variable rd (type
+          (user-defined-type io ReadableDataChannel)) (expr
+          (new (
+            (simple-var-ref rb)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation readInt64 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n)))))))

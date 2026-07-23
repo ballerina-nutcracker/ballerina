@@ -571,6 +571,204 @@ public class WritableCharacterChannel {
     public isolated function close() returns Error? = external;
 }
 
+# Represents network byte order.
+#
+# BIG_ENDIAN - specifies the bytes to be in the order of most significant byte first.
+#
+# LITTLE_ENDIAN - specifies the byte order to be the least significant byte first.
+public type ByteOrder "BE"|"LE";
+
+# Specifies the bytes to be in the order of most significant byte first.
+public const BIG_ENDIAN = "BE";
+
+# Specifies the byte order to be the least significant byte first.
+public const LITTLE_ENDIAN = "LE";
+
+# Represents a data channel for reading data.
+public class ReadableDataChannel {
+
+    # Initializes a readable data channel.
+    #
+    # + byteChannel - The `io:ReadableByteChannel` channel, which would represent the source to read/write data
+    # + bOrder - The byte order used for reading data. Defaults to `"BE"` (Big Endian)
+    public isolated function init(ReadableByteChannel byteChannel, ByteOrder bOrder = "BE") {
+        self.initChannel(byteChannel, bOrder);
+    }
+
+    private isolated function initChannel(ReadableByteChannel byteChannel, ByteOrder bOrder) = external;
+
+    # Reads a 16 bit integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readInt16();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readInt16() returns int|Error = external;
+
+    # Reads a 32 bit integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readInt32();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readInt32() returns int|Error = external;
+
+    # Reads a 64 bit integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readInt64();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readInt64() returns int|Error = external;
+
+    # Reads a 32 bit float.
+    # ```ballerina
+    # float|io:Error result = dataChannel.readFloat32();
+    # ```
+    #
+    # + return - The value of the float, which is read or else an `io:Error` if any error occurred
+    public isolated function readFloat32() returns float|Error = external;
+
+    # Reads a 64 bit float.
+    # ```ballerina
+    # float|io:Error result = dataChannel.readFloat64();
+    # ```
+    #
+    # + return - The value of the float, which is read or else an `io:Error` if any error occurred
+    public isolated function readFloat64() returns float|Error = external;
+
+    # Reads a byte and convert its value to a boolean.
+    # ```ballerina
+    # boolean|io:Error result = dataChannel.readBool();
+    # ```
+    #
+    # + return - The boolean value, which is read or else an `io:Error` if any error occurred
+    public isolated function readBool() returns boolean|Error = external;
+
+    # Reads the string value represented through the provided number of bytes.
+    # ```ballerina
+    # string|io:Error string = dataChannel.readString(10, "UTF-8");
+    # ```
+    #
+    # + nBytes - Specifies the number of bytes, which represents the string
+    # + encoding - Specifies the char-set encoding of the string
+    # + return - The string value, which is read or else an `io:Error` if any error occurred
+    public isolated function readString(int nBytes, string encoding) returns string|Error = external;
+
+    # Reads a variable-length integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readVarInt();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readVarInt() returns int|Error = external;
+
+    # Closes the data channel.
+    # After a channel is closed, any further reading operations will cause an error.
+    # ```ballerina
+    # io:Error? err = dataChannel.close();
+    # ```
+    #
+    # + return - `()` if the channel is closed successfully or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents a writable data channel used for writing various types of data.
+public class WritableDataChannel {
+
+    # Initializes a writable data channel.
+    #
+    # + byteChannel - The `io:WritableByteChannel`, which would represent the source to read/write data
+    # + bOrder - The network byte order, which specifies the order of bytes (e.g., `io:BIG_ENDIAN` or `io:LITTLE_ENDIAN`)
+    public isolated function init(WritableByteChannel byteChannel, ByteOrder bOrder = "BE") {
+        self.initChannel(byteChannel, bOrder);
+    }
+
+    private isolated function initChannel(WritableByteChannel byteChannel, ByteOrder bOrder) = external;
+
+    # Writes a 16 bit integer value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeInt16(length);
+    # ```
+    #
+    # + value - The 16-bit integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeInt16(int value) returns Error? = external;
+
+    # Writes a 32 bit integer value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeInt32(length);
+    # ```
+    #
+    # + value - The 32-bit integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeInt32(int value) returns Error? = external;
+
+    # Writes a 64 bit integer value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeInt64(length);
+    # ```
+    #
+    # + value - The 64-bit integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeInt64(int value) returns Error? = external;
+
+    # Writes a 32 bit float value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeFloat32(3.12);
+    # ```
+    #
+    # + value - The 32-bit float value to be written to the data channel
+    # + return - `()` if the float is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeFloat32(float value) returns Error? = external;
+
+    # Writes a 64 bit float value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeFloat64(3.12);
+    # ```
+    #
+    # + value - The 64-bit float value to be written to the data channel
+    # + return - `()` if the float is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeFloat64(float value) returns Error? = external;
+
+    # Writes a boolean value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeBool(true);
+    # ```
+    #
+    # + value - The boolean value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeBool(boolean value) returns Error? = external;
+
+    # Writes a given string value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeString(record, "UTF-8");
+    # ```
+    #
+    # + value - The string value to be written to the data channel
+    # + encoding - The encoding, which will represent the value string
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeString(string value, string encoding) returns Error? = external;
+
+    # Writes a variable-length integer to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeVarInt(length);
+    # ```
+    #
+    # + value - The integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeVarInt(int value) returns Error? = external;
+
+    # Closes the data channel.
+    # After a channel is closed, any further writing operations will cause an error.
+    # ```ballerina
+    # io:Error? err = dataChannel.close();
+    # ```
+    #
+    # + return - `()` if the channel is closed successfully or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
 # Retrieves a readable byte channel from a given file path.
 # ```ballerina
 # io:ReadableByteChannel readableFieldResult = check io:openReadableFile("./files/sample.txt");

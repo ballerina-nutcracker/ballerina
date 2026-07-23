@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: no bytes available to read from the channel
+        at main(io-data-channel-eof-p.bal:25)

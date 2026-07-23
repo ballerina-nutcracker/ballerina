@@ -3,7 +3,7 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_char_xml_nonelement.xml
     $desugar$0 = %1;
-    %3 = $default$9($desugar$0) -> bb1;
+    %3 = $default$11($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %3;

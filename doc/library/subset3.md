@@ -39,8 +39,20 @@ incrementally, either from a file or from an in-memory byte array.
 | `WritableByteChannel.write(content, offset)` | Writes `content[offset:]`; `offset` is an index into `content`, not a file seek offset; returns the number of bytes written |
 | `WritableByteChannel.close()` | Releases the channel's underlying resources; a second `close()` call errors |
 
-Data channels and CSV/record channels are out of scope for this subset and
-remain `Not Yet Supported`.
+CSV/record channels are out of scope for this subset and remain
+`Not Yet Supported`.
+
+### Data channels
+
+| Feature | Notes |
+|---|---|
+| `new ReadableDataChannel(byteChannel, byteOrder?)` / `new WritableDataChannel(byteChannel, byteOrder?)` | Wrap a byte channel for binary-encoded data; `io:ByteOrder` is `BIG_ENDIAN` (default) or `LITTLE_ENDIAN` |
+| `readInt16()` / `readInt32()` / `readInt64()` and `writeInt16(value)` / `writeInt32(value)` / `writeInt64(value)` | Fixed-width signed integers in the channel's byte order |
+| `readFloat32()` / `readFloat64()` and `writeFloat32(value)` / `writeFloat64(value)` | IEEE 754 floats in the channel's byte order |
+| `readBool()` / `writeBool(value)` | A single byte; `1` reads back as `true` |
+| `readString(nBytes, encoding)` / `writeString(value, encoding)` | Reads/writes a string as `nBytes` bytes decoded/encoded with the given charset |
+| `readVarInt()` / `writeVarInt(value)` | Variable-length integers in jBallerina's 7-bit-group wire format; the full `int` range round-trips (jBallerina itself breaks beyond 8 encoded bytes) |
+| `close()` | Closes the data channel and the wrapped byte channel; a second `close()` call errors |
 
 ### Character channels
 

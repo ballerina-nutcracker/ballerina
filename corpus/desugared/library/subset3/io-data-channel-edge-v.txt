@@ -1,0 +1,447 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation io createReadableChannel (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable cb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$9 (
+            (simple-var-ref cb))))))
+      (var-def
+        (variable cd (type
+          (user-defined-type io ReadableDataChannel)) (expr
+          (new (
+            (simple-var-ref cb)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation close expr:
+            (simple-var-ref cd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$2))
+      (var-def
+        (variable closedAgain (type
+          (union-type
+            (user-defined-type io Error)
+            (value-type null))) (expr
+          (invocation close expr:
+            (simple-var-ref cd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref closedAgain)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.error message (
+                (simple-var-ref closedAgain))))))) ())
+      (block-stmt
+        (var-def
+          (variable closedRead (type
+            (union-type
+              (value-type int)
+              (user-defined-type io Error))) (expr
+            (invocation readInt16 expr:
+              (simple-var-ref cd) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref closedRead)
+            (user-defined-type io Error))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.error message (
+                  (simple-var-ref closedRead))))))) ())
+        (block-stmt
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation io createReadableChannel (
+                (list-constructor-expr))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$3))
+            (block-stmt
+              (return
+                (simple-var-ref $desugar$3))) ())
+          (var-def
+            (variable eb (type
+              (user-defined-type io ReadableByteChannel)) (expr
+              (simple-var-ref $desugar$3))))
+          (var-def
+            (variable $desugar$4 (expr
+              (invocation $default$9 (
+                (simple-var-ref eb))))))
+          (var-def
+            (variable ed (type
+              (user-defined-type io ReadableDataChannel)) (expr
+              (new (
+                (simple-var-ref eb)
+                (simple-var-ref $desugar$4))))))
+          (var-def
+            (variable $desugar$5 (expr
+              (invocation readString expr:
+                (simple-var-ref ed) (
+                (literal 3)
+                (literal UTF-8))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$5))
+            (block-stmt
+              (return
+                (simple-var-ref $desugar$5))) ())
+          (var-def
+            (variable first (type
+              (value-type string)) (expr
+              (simple-var-ref $desugar$5))))
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.string length (
+                (simple-var-ref first))))))
+          (var-def
+            (variable second (type
+              (union-type
+                (value-type string)
+                (user-defined-type io Error))) (expr
+              (invocation readString expr:
+                (simple-var-ref ed) (
+                (literal 3)
+                (literal UTF-8))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref second)
+              (user-defined-type io Error))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation lang.error message (
+                    (simple-var-ref second))))))) ())
+          (block-stmt
+            (var-def
+              (variable $desugar$6 (expr
+                (invocation io createReadableChannel (
+                  (list-constructor-expr))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$6))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$6))) ())
+            (var-def
+              (variable tb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (simple-var-ref $desugar$6))))
+            (var-def
+              (variable $desugar$7 (expr
+                (invocation $default$9 (
+                  (simple-var-ref tb))))))
+            (var-def
+              (variable td (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref tb)
+                  (simple-var-ref $desugar$7))))))
+            (var-def
+              (variable trapped (type
+                (union-type
+                  (value-type int)
+                  (error-type))) (expr
+                (trap-expr
+                  (invocation readInt16 expr:
+                    (simple-var-ref td) ())))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref trapped)
+                  (error-type)))))
+            (var-def
+              (variable $desugar$8 (expr
+                (invocation io createReadableChannel (
+                  (list-constructor-expr
+                    (literal 1)
+                    (literal 2)))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$8))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$8))) ())
+            (var-def
+              (variable sb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (simple-var-ref $desugar$8))))
+            (var-def
+              (variable $desugar$9 (expr
+                (invocation $default$9 (
+                  (simple-var-ref sb))))))
+            (var-def
+              (variable sd (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref sb)
+                  (simple-var-ref $desugar$9))))))
+            (var-def
+              (variable $desugar$10 (expr
+                (invocation readInt32 expr:
+                  (simple-var-ref sd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$10))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$10))) ())
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref $desugar$10))))
+            (var-def
+              (variable $desugar$11 (expr
+                (invocation io createReadableChannel (
+                  (list-constructor-expr
+                    (literal 1)
+                    (literal 2)))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$11))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$11))) ())
+            (var-def
+              (variable lb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (simple-var-ref $desugar$11))))
+            (var-def
+              (variable ld (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref lb)
+                  (literal LE))))))
+            (var-def
+              (variable $desugar$12 (expr
+                (invocation readInt32 expr:
+                  (simple-var-ref ld) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$12))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$12))) ())
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref $desugar$12))))
+            (var-def
+              (variable path (type
+                (value-type string)) (expr
+                (literal /tmp/bal_io_dc_varint.bin))))
+            (var-def
+              (variable $desugar$13 (expr
+                (simple-var-ref path))))
+            (var-def
+              (variable $desugar$14 (expr
+                (invocation $default$11 (
+                  (simple-var-ref $desugar$13))))))
+            (var-def
+              (variable $desugar$15 (expr
+                (invocation io openWritableFile (
+                  (simple-var-ref $desugar$13)
+                  (simple-var-ref $desugar$14))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$15))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$15))) ())
+            (var-def
+              (variable wb (type
+                (user-defined-type io WritableByteChannel)) (expr
+                (simple-var-ref $desugar$15))))
+            (var-def
+              (variable $desugar$16 (expr
+                (invocation $default$10 (
+                  (simple-var-ref wb))))))
+            (var-def
+              (variable wd (type
+                (user-defined-type io WritableDataChannel)) (expr
+                (new (
+                  (simple-var-ref wb)
+                  (simple-var-ref $desugar$16))))))
+            (var-def
+              (variable $desugar$17 (expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (literal 1))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$17))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$17))) ())
+            (expression-stmt
+              (simple-var-ref $desugar$17))
+            (var-def
+              (variable $desugar$18 (expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (unary-expr -
+                    (literal 1)))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$18))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$18))) ())
+            (expression-stmt
+              (simple-var-ref $desugar$18))
+            (var-def
+              (variable $desugar$19 (expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (literal 9223372036854775807))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$19))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$19))) ())
+            (expression-stmt
+              (simple-var-ref $desugar$19))
+            (var-def
+              (variable $desugar$20 (expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (binary-expr -
+                    (unary-expr -
+                      (literal 9223372036854775807))
+                    (literal 1)))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$20))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$20))) ())
+            (expression-stmt
+              (simple-var-ref $desugar$20))
+            (var-def
+              (variable $desugar$21 (expr
+                (invocation close expr:
+                  (simple-var-ref wd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$21))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$21))) ())
+            (expression-stmt
+              (simple-var-ref $desugar$21))
+            (var-def
+              (variable $desugar$22 (expr
+                (invocation io openReadableFile (
+                  (simple-var-ref path))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$22))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$22))) ())
+            (var-def
+              (variable rb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (simple-var-ref $desugar$22))))
+            (var-def
+              (variable $desugar$23 (expr
+                (invocation $default$9 (
+                  (simple-var-ref rb))))))
+            (var-def
+              (variable rd (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref rb)
+                  (simple-var-ref $desugar$23))))))
+            (var-def
+              (variable $desugar$24 (expr
+                (invocation readVarInt expr:
+                  (simple-var-ref rd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$24))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$24))) ())
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref $desugar$24))))
+            (var-def
+              (variable $desugar$25 (expr
+                (invocation readVarInt expr:
+                  (simple-var-ref rd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$25))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$25))) ())
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref $desugar$25))))
+            (var-def
+              (variable $desugar$26 (expr
+                (invocation readVarInt expr:
+                  (simple-var-ref rd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$26))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$26))) ())
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref $desugar$26))))
+            (var-def
+              (variable $desugar$27 (expr
+                (invocation readVarInt expr:
+                  (simple-var-ref rd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$27))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$27))) ())
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref $desugar$27))))
+            (var-def
+              (variable $desugar$28 (expr
+                (invocation close expr:
+                  (simple-var-ref rd) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref $desugar$28))
+              (block-stmt
+                (return
+                  (simple-var-ref $desugar$28))) ())
+            (expression-stmt
+              (simple-var-ref $desugar$28))))))))

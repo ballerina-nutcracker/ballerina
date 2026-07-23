@@ -295,7 +295,7 @@ nl=a\nb
           (simple-var-ref wpath))))
       (var-def
         (variable $desugar$30 (expr
-          (invocation $default$9 (
+          (invocation $default$11 (
             (simple-var-ref $desugar$29))))))
       (var-def
         (variable $desugar$31 (expr

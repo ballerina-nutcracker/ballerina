@@ -14,7 +14,7 @@
           (simple-var-ref jpath))))
       (var-def
         (variable $desugar$1 (expr
-          (invocation $default$9 (
+          (invocation $default$11 (
             (simple-var-ref $desugar$0))))))
       (var-def
         (variable $desugar$2 (expr
@@ -222,7 +222,7 @@
           (simple-var-ref xpath))))
       (var-def
         (variable $desugar$15 (expr
-          (invocation $default$9 (
+          (invocation $default$11 (
             (simple-var-ref $desugar$14))))))
       (var-def
         (variable $desugar$16 (expr
@@ -292,7 +292,7 @@
           (simple-var-ref xpath))))
       (var-def
         (variable $desugar$21 (expr
-          (invocation $default$9 (
+          (invocation $default$11 (
             (simple-var-ref $desugar$20))))))
       (var-def
         (variable $desugar$22 (expr
@@ -365,7 +365,7 @@
           (simple-var-ref xpath))))
       (var-def
         (variable $desugar$27 (expr
-          (invocation $default$9 (
+          (invocation $default$11 (
             (simple-var-ref $desugar$26))))))
       (var-def
         (variable $desugar$28 (expr
@@ -435,7 +435,7 @@
           (simple-var-ref xpath))))
       (var-def
         (variable $desugar$33 (expr
-          (invocation $default$9 (
+          (invocation $default$11 (
             (simple-var-ref $desugar$32))))))
       (var-def
         (variable $desugar$34 (expr

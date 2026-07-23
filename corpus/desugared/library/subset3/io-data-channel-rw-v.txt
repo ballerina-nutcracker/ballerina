@@ -1,0 +1,641 @@
+(package
+  (import-package ballerina io (as io))
+  (function roundtrip (
+    (variable ord (type
+      (user-defined-type io ByteOrder)))
+    (variable path (type
+      (value-type string)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref path))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$11 (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation io openWritableFile (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable wb (type
+          (user-defined-type io WritableByteChannel)) (expr
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable wd (type
+          (user-defined-type io WritableDataChannel)) (expr
+          (new (
+            (simple-var-ref wb)
+            (simple-var-ref ord))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation writeInt16 expr:
+            (simple-var-ref wd) (
+            (literal 4660))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation writeInt16 expr:
+            (simple-var-ref wd) (
+            (unary-expr -
+              (literal 2)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$4))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation writeInt32 expr:
+            (simple-var-ref wd) (
+            (literal 305419896))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$5))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation writeInt32 expr:
+            (simple-var-ref wd) (
+            (unary-expr -
+              (literal 40000)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$6))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$6))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$6))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation writeInt64 expr:
+            (simple-var-ref wd) (
+            (literal 81985529216486895))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$7))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$7))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$7))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation writeInt64 expr:
+            (simple-var-ref wd) (
+            (unary-expr -
+              (literal 5)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$8))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation writeFloat32 expr:
+            (simple-var-ref wd) (
+            (literal 3.5))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$9))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation writeFloat64 expr:
+            (simple-var-ref wd) (
+            (literal 2.718281828459045))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$10))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$10))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$10))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation writeBool expr:
+            (simple-var-ref wd) (
+            (literal true))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$11))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$11))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$11))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation writeBool expr:
+            (simple-var-ref wd) (
+            (literal false))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$12))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$12))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$12))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation writeString expr:
+            (simple-var-ref wd) (
+            (literal héllo)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$13))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation writeVarInt expr:
+            (simple-var-ref wd) (
+            (literal 0))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$14))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation writeVarInt expr:
+            (simple-var-ref wd) (
+            (literal 300))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$15))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$15))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation writeVarInt expr:
+            (simple-var-ref wd) (
+            (unary-expr -
+              (literal 300)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$16))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$16))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$16))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation close expr:
+            (simple-var-ref wd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$17))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$17))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$17))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation io openReadableFile (
+            (simple-var-ref path))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$18))) ())
+      (var-def
+        (variable rb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (simple-var-ref $desugar$18))))
+      (var-def
+        (variable rd (type
+          (user-defined-type io ReadableDataChannel)) (expr
+          (new (
+            (simple-var-ref rb)
+            (simple-var-ref ord))))))
+      (var-def
+        (variable $desugar$19 (expr
+          (invocation readInt16 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$19))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$19))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$19))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation readInt16 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$20))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$20))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$20))))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation readInt32 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$21))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$21))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$21))))
+      (var-def
+        (variable $desugar$22 (expr
+          (invocation readInt32 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$22))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$22))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$22))))
+      (var-def
+        (variable $desugar$23 (expr
+          (invocation readInt64 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$23))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$23))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$23))))
+      (var-def
+        (variable $desugar$24 (expr
+          (invocation readInt64 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$24))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$24))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$24))))
+      (var-def
+        (variable $desugar$25 (expr
+          (invocation readFloat32 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$25))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$25))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$25))))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation readFloat64 expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$26))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$26))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$26))))
+      (var-def
+        (variable $desugar$27 (expr
+          (invocation readBool expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$27))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$27))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$27))))
+      (var-def
+        (variable $desugar$28 (expr
+          (invocation readBool expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$28))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$28))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$28))))
+      (var-def
+        (variable $desugar$29 (expr
+          (invocation readString expr:
+            (simple-var-ref rd) (
+            (literal 6)
+            (literal UTF-8))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$29))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$29))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$29))))
+      (var-def
+        (variable $desugar$30 (expr
+          (invocation readVarInt expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$30))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$30))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$30))))
+      (var-def
+        (variable $desugar$31 (expr
+          (invocation readVarInt expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$31))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$31))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$31))))
+      (var-def
+        (variable $desugar$32 (expr
+          (invocation readVarInt expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$32))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$32))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$32))))
+      (var-def
+        (variable $desugar$33 (expr
+          (invocation close expr:
+            (simple-var-ref rd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$33))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$33))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$33))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation roundtrip (
+            (literal BE)
+            (literal /tmp/bal_io_dc_be.bin))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$0))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation roundtrip (
+            (literal LE)
+            (literal /tmp/bal_io_dc_le.bin))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_io_dc_be.bin))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$2))) ())
+      (var-def
+        (variable beBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$2))))
+      (var-def
+        (variable beExpected (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 18)
+            (literal 52)
+            (literal 255)
+            (literal 254)
+            (literal 18)
+            (literal 52)
+            (literal 86)
+            (literal 120)
+            (literal 255)
+            (literal 255)
+            (literal 99)
+            (literal 192)
+            (literal 1)
+            (literal 35)
+            (literal 69)
+            (literal 103)
+            (literal 137)
+            (literal 171)
+            (literal 205)
+            (literal 239)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 251)
+            (literal 64)
+            (literal 96)
+            (literal 0)
+            (literal 0)
+            (literal 64)
+            (literal 5)
+            (literal 191)
+            (literal 10)
+            (literal 139)
+            (literal 20)
+            (literal 87)
+            (literal 105)
+            (literal 1)
+            (literal 0)
+            (literal 104)
+            (literal 195)
+            (literal 169)
+            (literal 108)
+            (literal 108)
+            (literal 111)
+            (literal 0)
+            (literal 130)
+            (literal 44)
+            (literal 253)
+            (literal 84)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref beBytes)
+            (simple-var-ref beExpected)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_io_dc_le.bin))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (var-def
+        (variable leBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$3))))
+      (var-def
+        (variable leExpected (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 52)
+            (literal 18)
+            (literal 254)
+            (literal 255)
+            (literal 120)
+            (literal 86)
+            (literal 52)
+            (literal 18)
+            (literal 192)
+            (literal 99)
+            (literal 255)
+            (literal 255)
+            (literal 239)
+            (literal 205)
+            (literal 171)
+            (literal 137)
+            (literal 103)
+            (literal 69)
+            (literal 35)
+            (literal 1)
+            (literal 251)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 255)
+            (literal 0)
+            (literal 0)
+            (literal 96)
+            (literal 64)
+            (literal 105)
+            (literal 87)
+            (literal 20)
+            (literal 139)
+            (literal 10)
+            (literal 191)
+            (literal 5)
+            (literal 64)
+            (literal 1)
+            (literal 0)
+            (literal 104)
+            (literal 195)
+            (literal 169)
+            (literal 108)
+            (literal 108)
+            (literal 111)
+            (literal 0)
+            (literal 172)
+            (literal 2)
+            (literal 212)
+            (literal 125)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref leBytes)
+            (simple-var-ref leExpected))))))))

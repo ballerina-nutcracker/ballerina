@@ -14,14 +14,14 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 |---------------------------------------------------|---|---|---|---|
 | [crypto](crypto/0.0.1/go1.26/README.md)           | 26 | 1 | 5 | 81% |
 | [http](http/0.0.1/go1.26/README.md)               | 24 | 2 | 46 | 33% |
-| [io](io/0.0.1/go1.26/README.md)                   | 20 | 2 | 5 | 74% |
+| [io](io/0.0.1/go1.26/README.md)                   | 21 | 2 | 4 | 78% |
 | [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
 | [os](os/0.0.1/go1.26/README.md)                   | 11 | 1 | 0 | 92% |
 | [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **130** | **10** | **73** | **61%** |
+| **Total**                                         | **131** | **10** | **72** | **62%** |
 
 ## Notable Behavioural Changes
 
@@ -47,6 +47,7 @@ tables instead.
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
 - **Streams are consumed via `next()`/`close()` only.** The returned streams are driven with explicit `.next()` and `.close()` calls. Iterating a stream with a `foreach` statement or a query (`from ... in`) expression is not yet supported at the language level, so those constructs cannot yet consume these streams.
 - **Write-from-stream accepts a generic `error?` completion.** jBallerina declares `fileWriteLinesFromStream`/`fileWriteBlocksFromStream` with a `stream<_, io:Error?>` parameter, which rejects a stream held as `stream<_, error?>` (e.g. `stream<byte[], error?> s = check io:fileReadBlocksAsStream(p); check io:fileWriteBlocksFromStream(out, s);` fails to compile in jBallerina). This port widens the parameter completion type to the generic `error?`, so both `io:Error?` and plain `error?` completion streams are accepted. This is a strict superset — every jBallerina-valid call still compiles — and the return type remains the specific `io:Error?`.
+- **`writeVarInt`/`readVarInt` round-trip the full `int` range.** jBallerina's variable-length integer implementation breaks for very large magnitudes (`readVarInt` panics on encodings longer than 8 bytes and `writeVarInt(int:MIN_VALUE)` writes `0x00`). This port encodes with the minimal correct width and reads up to 10 bytes, so every `int` round-trips; the wire format matches jBallerina for all values it handles correctly.
 
 ### log
 

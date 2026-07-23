@@ -303,7 +303,7 @@ nl=a\nb
     %105 = ConstantLoad /tmp/bal_io_char_props_out.properties
     wpath = %105;
     $desugar$29 = wpath;
-    %108 = $default$9($desugar$29) -> bb61;
+    %108 = $default$11($desugar$29) -> bb61;
   }
   bb61 {
     $desugar$30 = %108;

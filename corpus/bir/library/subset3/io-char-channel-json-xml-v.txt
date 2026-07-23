@@ -4,7 +4,7 @@ main() -> nil|error{
     %1 = ConstantLoad /tmp/bal_io_char_json.json
     jpath = %1;
     $desugar$0 = jpath;
-    %4 = $default$9($desugar$0) -> bb1;
+    %4 = $default$11($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %4;
@@ -237,7 +237,7 @@ main() -> nil|error{
     %87 = ConstantLoad /tmp/bal_io_char_xml.xml
     xpath = %87;
     $desugar$14 = xpath;
-    %90 = $default$9($desugar$14) -> bb46;
+    %90 = $default$11($desugar$14) -> bb46;
   }
   bb46 {
     $desugar$15 = %90;
@@ -323,7 +323,7 @@ main() -> nil|error{
   }
   bb63 {
     $desugar$20 = xpath;
-    %116 = $default$9($desugar$20) -> bb64;
+    %116 = $default$11($desugar$20) -> bb64;
   }
   bb64 {
     $desugar$21 = %116;
@@ -411,7 +411,7 @@ main() -> nil|error{
   }
   bb81 {
     $desugar$26 = xpath;
-    %144 = $default$9($desugar$26) -> bb82;
+    %144 = $default$11($desugar$26) -> bb82;
   }
   bb82 {
     $desugar$27 = %144;
@@ -497,7 +497,7 @@ main() -> nil|error{
   }
   bb99 {
     $desugar$32 = xpath;
-    %170 = $default$9($desugar$32) -> bb100;
+    %170 = $default$11($desugar$32) -> bb100;
   }
   bb100 {
     $desugar$33 = %170;

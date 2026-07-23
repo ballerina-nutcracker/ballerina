@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading and writing. The Go Native Interpreter currently supports console printing, file I/O (string, lines, bytes, JSON, XML), stream-based line/block reading and writing, byte channels (`read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, `write`, `close`), and character channels (charset-aware string, line, JSON, XML, and `.properties` reading and writing).
+This module provides I/O operations for Ballerina programs. The full jBallerina `io` module covers console output, file I/O (string, bytes, JSON, XML, CSV, lines), low-level byte/character/data channels, and stream-based reading and writing. The Go Native Interpreter currently supports console printing, file I/O (string, lines, bytes, JSON, XML), stream-based line/block reading and writing, byte channels (`read`, `readAll`, `blockStream`, `base64Encode`, `base64Decode`, `write`, `close`), character channels (charset-aware string, line, JSON, XML, and `.properties` reading and writing), and data channels (fixed-width integers, floats, booleans, strings, and variable-length integers in either byte order).
 
 ## Key Functionalities
 
@@ -17,6 +17,7 @@ This module provides I/O operations for Ballerina programs. The full jBallerina 
 - Write bytes to a file using `io:WritableByteChannel`, obtained via `openWritableFile`, with `write` and `close`.
 - Read characters, lines, JSON, XML, or `.properties` content from a byte channel with a chosen charset using `io:ReadableCharacterChannel`.
 - Write characters, lines, JSON, XML, or `.properties` content to a byte channel with a chosen charset using `io:WritableCharacterChannel`.
+- Read and write binary-encoded integers, floats, booleans, strings, and variable-length integers in either byte order using `io:ReadableDataChannel` and `io:WritableDataChannel`.
 
 ## Examples
 
@@ -107,7 +108,7 @@ Support Levels:
 | Module-level error type | Partially Supported | `io:Error` declared as a plain `error` alias; `distinct` error subtypes (`FileNotFoundError`, `GenericError`, `AccessDeniedError`, `EofError`, `ConfigurationError`, `TypeMismatchError`) not yet supported. |
 | Byte channels | Supported | `ReadableByteChannel`: `read`, `readAll` (returns `readonly & byte[]`), `blockStream`, `base64Encode`, `base64Decode`, `close`. `WritableByteChannel`: `write`, `close`. |
 | Character channels | Supported | `ReadableCharacterChannel`: `read`, `readString`, `readAllLines`, `readJson`, `readXml`, `readProperty`, `readAllProperties`, `lineStream`, `close`, constructed as `new (byteChannel, charset)`. `WritableCharacterChannel`: `write` (returns bytes written, as in jBallerina), `writeLine`, `writeJson`, `writeXml` (with optional `XmlDoctype`), `writeProperties`, `close`. The `LineStream`/`BlockStream` public helper classes are not declared; `lineStream()`/`blockStream()` return plain stream values instead. |
-| Data channels | Not Yet Supported | Not implemented. |
+| Data channels | Supported | `ReadableDataChannel`: `readInt16`/`readInt32`/`readInt64`, `readFloat32`/`readFloat64`, `readBool`, `readString`, `readVarInt`, `close`. `WritableDataChannel`: matching `write*` operations and `close`. Both constructed as `new (byteChannel, byteOrder)` with `io:ByteOrder` (`BIG_ENDIAN`/`LITTLE_ENDIAN`). Wire format matches jBallerina byte-for-byte, including the variable-length integer encoding. See Notable Behavioural Changes for very large `writeVarInt`/`readVarInt` values. |
 | CSV channels | Not Yet Supported | Not implemented. |
 | Channel file open functions | Partially Supported | `openReadableFile`, `openWritableFile`, `createReadableChannel` supported. `openReadableCsvFile`, `openWritableCsvFile` not yet supported (depend on CSV channels). |
 
@@ -116,3 +117,4 @@ Support Levels:
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
 - **Streams are consumed via `next()`/`close()` only.** The returned streams are driven with explicit `.next()` and `.close()` calls. Iterating a stream with a `foreach` statement or a query (`from ... in`) expression is not yet supported at the language level, so those constructs cannot yet consume these streams.
 - **Write-from-stream accepts a generic `error?` completion.** jBallerina declares `fileWriteLinesFromStream`/`fileWriteBlocksFromStream` with a `stream<_, io:Error?>` parameter, which rejects a stream held as `stream<_, error?>` (e.g. `stream<byte[], error?> s = check io:fileReadBlocksAsStream(p); check io:fileWriteBlocksFromStream(out, s);` fails to compile in jBallerina). This port widens the parameter completion type to the generic `error?`, so both `io:Error?` and plain `error?` completion streams are accepted. This is a strict superset — every jBallerina-valid call still compiles — and the return type remains the specific `io:Error?`.
+- **`writeVarInt`/`readVarInt` round-trip the full `int` range.** jBallerina's variable-length integer implementation breaks for very large magnitudes: `readVarInt` panics on encodings longer than 8 bytes (so its own `writeVarInt` output for values needing 9-10 bytes cannot be read back), and `writeVarInt(int:MIN_VALUE)` silently writes a single `0x00` byte. This port encodes such values with the minimal correct width and reads encodings up to 10 bytes, so every `int` round-trips; the wire format is identical to jBallerina for all values jBallerina handles correctly.

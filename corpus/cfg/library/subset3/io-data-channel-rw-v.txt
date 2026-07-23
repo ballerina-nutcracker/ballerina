@@ -1,0 +1,337 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation roundtrip (
+          (simple-var-ref io BIG_ENDIAN)
+          (literal /tmp/bal_io_dc_be.bin)))))
+    (expression-stmt
+      (checked-expr
+        (invocation roundtrip (
+          (simple-var-ref io LITTLE_ENDIAN)
+          (literal /tmp/bal_io_dc_le.bin)))))
+    (var-def
+      (variable beBytes (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_io_dc_be.bin)))))))
+    (var-def
+      (variable beExpected (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 18)
+          (literal 52)
+          (literal 255)
+          (literal 254)
+          (literal 18)
+          (literal 52)
+          (literal 86)
+          (literal 120)
+          (literal 255)
+          (literal 255)
+          (literal 99)
+          (literal 192)
+          (literal 1)
+          (literal 35)
+          (literal 69)
+          (literal 103)
+          (literal 137)
+          (literal 171)
+          (literal 205)
+          (literal 239)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 251)
+          (literal 64)
+          (literal 96)
+          (literal 0)
+          (literal 0)
+          (literal 64)
+          (literal 5)
+          (literal 191)
+          (literal 10)
+          (literal 139)
+          (literal 20)
+          (literal 87)
+          (literal 105)
+          (literal 1)
+          (literal 0)
+          (literal 104)
+          (literal 195)
+          (literal 169)
+          (literal 108)
+          (literal 108)
+          (literal 111)
+          (literal 0)
+          (literal 130)
+          (literal 44)
+          (literal 253)
+          (literal 84)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref beBytes)
+          (simple-var-ref beExpected)))))
+    (var-def
+      (variable leBytes (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (literal /tmp/bal_io_dc_le.bin)))))))
+    (var-def
+      (variable leExpected (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 52)
+          (literal 18)
+          (literal 254)
+          (literal 255)
+          (literal 120)
+          (literal 86)
+          (literal 52)
+          (literal 18)
+          (literal 192)
+          (literal 99)
+          (literal 255)
+          (literal 255)
+          (literal 239)
+          (literal 205)
+          (literal 171)
+          (literal 137)
+          (literal 103)
+          (literal 69)
+          (literal 35)
+          (literal 1)
+          (literal 251)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 255)
+          (literal 0)
+          (literal 0)
+          (literal 96)
+          (literal 64)
+          (literal 105)
+          (literal 87)
+          (literal 20)
+          (literal 139)
+          (literal 10)
+          (literal 191)
+          (literal 5)
+          (literal 64)
+          (literal 1)
+          (literal 0)
+          (literal 104)
+          (literal 195)
+          (literal 169)
+          (literal 108)
+          (literal 108)
+          (literal 111)
+          (literal 0)
+          (literal 172)
+          (literal 2)
+          (literal 212)
+          (literal 125)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref leBytes)
+          (simple-var-ref leExpected)))))
+  )
+)
+(roundtrip
+  (bb0 () ()
+    (var-def
+      (variable wb (type
+        (user-defined-type io WritableByteChannel)) (expr
+        (checked-expr
+          (invocation io openWritableFile (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable wd (type
+        (user-defined-type io WritableDataChannel)) (expr
+        (new (
+          (simple-var-ref wb)
+          (simple-var-ref ord))))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeInt16 expr:
+          (simple-var-ref wd) (
+          (literal 4660)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeInt16 expr:
+          (simple-var-ref wd) (
+          (unary-expr -
+            (literal 2))))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeInt32 expr:
+          (simple-var-ref wd) (
+          (literal 305419896)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeInt32 expr:
+          (simple-var-ref wd) (
+          (unary-expr -
+            (literal 40000))))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeInt64 expr:
+          (simple-var-ref wd) (
+          (literal 81985529216486895)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeInt64 expr:
+          (simple-var-ref wd) (
+          (unary-expr -
+            (literal 5))))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeFloat32 expr:
+          (simple-var-ref wd) (
+          (literal 3.5)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeFloat64 expr:
+          (simple-var-ref wd) (
+          (literal 2.718281828459045)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeBool expr:
+          (simple-var-ref wd) (
+          (literal true)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeBool expr:
+          (simple-var-ref wd) (
+          (literal false)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeString expr:
+          (simple-var-ref wd) (
+          (literal héllo)
+          (literal UTF-8)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeVarInt expr:
+          (simple-var-ref wd) (
+          (literal 0)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeVarInt expr:
+          (simple-var-ref wd) (
+          (literal 300)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeVarInt expr:
+          (simple-var-ref wd) (
+          (unary-expr -
+            (literal 300))))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref wd) ())))
+    (var-def
+      (variable rb (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io openReadableFile (
+            (simple-var-ref path)))))))
+    (var-def
+      (variable rd (type
+        (user-defined-type io ReadableDataChannel)) (expr
+        (new (
+          (simple-var-ref rb)
+          (simple-var-ref ord))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readInt16 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readInt16 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readInt32 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readInt32 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readInt64 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readInt64 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readFloat32 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readFloat64 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readBool expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readBool expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readString expr:
+            (simple-var-ref rd) (
+            (literal 6)
+            (literal UTF-8)))))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readVarInt expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readVarInt expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation readVarInt expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (checked-expr
+        (invocation close expr:
+          (simple-var-ref rd) ())))
+  )
+)
