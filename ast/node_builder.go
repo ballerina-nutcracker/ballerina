@@ -2849,7 +2849,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 		switch field.Kind() {
 		case common.RECORD_FIELD:
 			recordField := field.(*tree.RecordFieldNode)
-			fieldName := recordField.FieldName().Text()
+			fieldName, _ := normalizedIdentifierValue(recordField.FieldName().Text())
 			bField := BField{
 				Name: model.Name(fieldName),
 				Type: n.createTypeNode(recordField.TypeName()).(BType),
@@ -2865,7 +2865,7 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 			recordType.AddField(fieldName, bField)
 		case common.RECORD_FIELD_WITH_DEFAULT_VALUE:
 			recordFieldDV := field.(*tree.RecordFieldWithDefaultValueNode)
-			fieldName := recordFieldDV.FieldName().Text()
+			fieldName, _ := normalizedIdentifierValue(recordFieldDV.FieldName().Text())
 			bField := BField{
 				Name:        model.Name(fieldName),
 				Type:        n.createTypeNode(recordFieldDV.TypeName()).(BType),
