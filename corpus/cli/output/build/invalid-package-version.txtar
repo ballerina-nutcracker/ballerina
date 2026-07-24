@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+invalid version 'not-a-valid-semver'
+package loading reported errors
+-- exitcode --
+1

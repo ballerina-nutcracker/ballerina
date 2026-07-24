@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+-o cannot be used when building a workspace
+-- exitcode --
+1

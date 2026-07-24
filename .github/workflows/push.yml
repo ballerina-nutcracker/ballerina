@@ -53,13 +53,36 @@ jobs:
               ./cli/cmd
           done
 
+      - name: Build balrt for all supported platforms
+        run: |
+          # bal build's --target-os/--target-arch resolves its runner stub at
+          # <dist>/rt/<os>-<arch>/balrt (executable.ResolveStub) — every
+          # release archive bundles every supported platform's balrt, not
+          # just its own, so cross-compilation works right after extracting
+          # a single archive.
+          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+          for platform in "${platforms[@]}"; do
+            GOOS="${platform%/*}"
+            GOARCH="${platform#*/}"
+            output_dir="dist-rt/${GOOS}-${GOARCH}"
+            mkdir -p "$output_dir"
+            ext=""
+            [[ "$GOOS" == "windows" ]] && ext=".exe"
+            echo "Building balrt for $GOOS/$GOARCH..."
+            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build \
+              -ldflags="-s -w" \
+              -o "${output_dir}/balrt${ext}" \
+              ./cli/cmd/balrt
+          done
+
       - name: Prepare artifacts
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p artifacts
-          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          for platform in "${platforms[@]}"; do
+          bal_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+          rt_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+          for platform in "${bal_platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
             src_dir="dist/${GOOS}-${GOARCH}"
@@ -68,6 +91,16 @@ jobs:
             artifact_dir="artifacts/bal-${GOOS}-${GOARCH}/ballerina-${VERSION}"
             mkdir -p "$artifact_dir"
             cp "$src_dir/bal${ext}" "$artifact_dir/bal${ext}"
+
+            for rt_platform in "${rt_platforms[@]}"; do
+              RGOOS="${rt_platform%/*}"
+              RGOARCH="${rt_platform#*/}"
+              rt_ext=""
+              [[ "$RGOOS" == "windows" ]] && rt_ext=".exe"
+              rt_dir="$artifact_dir/rt/${RGOOS}-${RGOARCH}"
+              mkdir -p "$rt_dir"
+              cp "dist-rt/${RGOOS}-${RGOARCH}/balrt${rt_ext}" "$rt_dir/balrt${rt_ext}"
+            done
           done
 
       - name: Upload linux-amd64

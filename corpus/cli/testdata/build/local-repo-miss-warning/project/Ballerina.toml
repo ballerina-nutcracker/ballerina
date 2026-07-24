@@ -1,0 +1,10 @@
+[package]
+org = "testorg"
+name = "localrepomisswarning"
+version = "0.1.0"
+
+[[dependency]]
+org = "mockorg"
+name = "leafpkg"
+version = "1.0.0"
+repository = "local"

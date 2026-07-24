@@ -242,10 +242,10 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 
 	pkg := project.CurrentPackage()
 
-	// Detect native Go packages and re-execute via a custom interpreter if needed.
 	// Skipped when already running as a native interpreter (BAL_NATIVE=1).
 	if !nativeexec.InNativeMode() {
 		if err := execWithNativeRunner(pkg, project, absBaseDir); err != nil {
+			printRunError(err)
 			return err
 		}
 	}
@@ -278,9 +278,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		fmt.Fprint(os.Stderr, compilation.StatsReport())
 	}
 
-	// Dump BIR if requested — only include packages belonging to the root package
-	// (same org + package name), so all sub-modules are covered while external
-	// imports are excluded.
+	// Only dump BIR for packages belonging to the root package (same org+name).
 	tyEnv := project.Environment().TypeEnv()
 	if buildOpts.DumpBIR() {
 		prettyPrinter := bir.PrettyPrinter{}
@@ -337,9 +335,8 @@ func getBallerinaEnvPath() (string, error) {
 	return filepath.Join(userHome, projects.UserHomeDirName), nil
 }
 
-// findWorkspaceRootForRun walks up the directory tree from the given absolute path
-// to find a workspace root (a directory with Ballerina.toml containing [workspace]).
-// Returns empty string if not inside a workspace.
+// findWorkspaceRootForRun walks up from startPath to find a workspace root
+// (a Ballerina.toml with [workspace]), or "" if none is found.
 func findWorkspaceRootForRun(startPath string) string {
 	current := startPath
 	for {
@@ -357,13 +354,11 @@ func findWorkspaceRootForRun(startPath string) string {
 	}
 }
 
-// findBuildProjectByPath finds the BuildProject in a workspace whose source root
-// matches the given absolute path. The workspaceAbsRoot is the absolute path to
-// the workspace root on the local filesystem.
+// findBuildProjectByPath finds the workspace member whose absolute source
+// root matches absPath.
 func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRoot, absPath string) *projects.BuildProject {
 	for _, bp := range workspace.Projects() {
-		// BuildProject.SourceRoot() is relative to the workspace fs.FS root.
-		// Join with the absolute workspace root to get the absolute path.
+		// SourceRoot() is relative to the workspace fs.FS root.
 		bpAbs := filepath.Join(workspaceAbsRoot, bp.SourceRoot())
 		if bpAbs == absPath {
 			return bp
@@ -372,10 +367,8 @@ func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRo
 	return nil
 }
 
-// execWithNativeRunner checks whether any resolved dependency has Go-native
-// sources. If so, it builds a custom interpreter that embeds those sources and
-// re-executes the current command via that binary. On success this function never
-// returns — it calls os.Exit after the child process finishes.
+// execWithNativeRunner builds a custom interpreter embedding any native Go
+// dependencies and re-execs into it. On success it never returns (os.Exit).
 func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBaseDir string) error {
 	resolution := pkg.Resolution()
 	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
@@ -387,7 +380,7 @@ func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBa
 	if goruntime.GOOS == "windows" {
 		outBin += ".exe"
 	}
-	executor, err := chooseNativeExecutor(outBin)
+	executor, err := chooseNativeExecutor(outBin, "cli/cmd")
 	if err != nil {
 		return err
 	}
@@ -443,25 +436,22 @@ func findNativeGoBalaProjects(resolution *projects.PackageResolution, env *proje
 	return result
 }
 
-// isEmbeddedPackage reports whether the bala project is present in the
-// interpreter's bundled stdlib FS. Embedded packages have their Go native
-// code already compiled into the binary via lib/rt and do not require a
-// native interpreter rebuild.
+// isEmbeddedPackage reports whether bp is in the bundled stdlib FS — its
+// native code is already compiled in via lib/rt, so no rebuild is needed.
 func isEmbeddedPackage(bp *projects.BalaProject) bool {
 	desc := bp.CurrentPackage().Descriptor()
 	return stdlibs.Contains(desc.Org().Value(), desc.Name().Value(), desc.Version().String())
 }
 
-// chooseNativeExecutor returns a LocalExecutor when the Go toolchain and
-// interpreter source are available. Returns an error if Go is not installed or
-// the interpreter source cannot be located — native packages are not supported
-// without a local Go toolchain. Remote build support is reserved for WASM.
-func chooseNativeExecutor(outBin string) (nativeexec.NativeExecutor, error) {
+// chooseNativeExecutor returns a LocalExecutor targeting targetPackage
+// (e.g. "cli/cmd" for run's re-exec, "cli/cmd/balrt" for build's slim stub),
+// erroring if Go isn't installed or the interpreter source can't be found.
+func chooseNativeExecutor(outBin, targetPackage string) (nativeexec.NativeExecutor, error) {
 	root, err := findInterpreterRoot()
 	if err != nil {
 		return nil, fmt.Errorf("native Go packages require the interpreter source: %w", err)
 	}
-	local := nativerunner.New(root, outBin)
+	local := nativerunner.NewForTarget(root, outBin, targetPackage)
 	if !local.Available() {
 		return nil, fmt.Errorf("native Go packages require Go %s or later to be installed", nativerunner.MinGoVersion)
 	}
@@ -476,9 +466,8 @@ func findInterpreterRoot() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Must be canonical: nativerunner's -overlay matches paths against go
-	// build -C's resolved form, so a symlinked root (e.g. os.TempDir() on
-	// macOS) silently breaks native package injection otherwise.
+	// Must be canonical: a symlinked root (e.g. macOS os.TempDir()) silently
+	// breaks nativerunner's -overlay path matching otherwise.
 	resolved, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		return "", fmt.Errorf("resolving interpreter root %q: %w", root, err)

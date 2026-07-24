@@ -17,7 +17,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
+
+	"ballerina-lang-go/cli/internal/executable"
 
 	"github.com/spf13/cobra"
 )
@@ -31,9 +34,21 @@ var rootCmd = &cobra.Command{
 }
 
 func main() {
+	// Check whether this binary is a compiled Ballerina program (produced by
+	// bal build). If so, run the embedded BIR directly and skip the CLI.
+	birPkgs, tyEnv, err := executable.TryLoad()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ballerina:", err)
+		os.Exit(1)
+	}
+	if birPkgs != nil {
+		os.Exit(executable.Run(birPkgs, tyEnv))
+	}
+
 	rootCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(packCmd)
+	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
