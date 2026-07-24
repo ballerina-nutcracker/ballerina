@@ -23,8 +23,8 @@ import (
 	goruntime "runtime"
 	"testing"
 
-	"ballerina-lang-go/platform/palnative"
-	"ballerina-lang-go/test_util"
+	"ballerina/platform/palnative"
+	"ballerina/test_util"
 )
 
 // skipIfNoLoopback skips on platforms without loopback TCP (js/wasm). Unlike

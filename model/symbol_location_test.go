@@ -19,7 +19,7 @@ package model
 import (
 	"testing"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 func TestSymbolConstructorsSetLocation(t *testing.T) {

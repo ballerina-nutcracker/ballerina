@@ -19,12 +19,12 @@ package exec
 import (
 	"fmt"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/runtime/extern"
-	runtimeframe "ballerina-lang-go/runtime/internal/frame"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/model"
+	"ballerina/runtime/extern"
+	runtimeframe "ballerina/runtime/internal/frame"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 const maxRecursionDepth = 5000

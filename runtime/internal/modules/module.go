@@ -17,10 +17,10 @@
 package modules
 
 import (
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/runtime/extern"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type BIRModule struct {

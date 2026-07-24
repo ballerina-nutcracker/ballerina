@@ -21,13 +21,13 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/desugar"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/context"
+	"ballerina/decimal"
+	"ballerina/desugar"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type birReader struct {

@@ -13,9 +13,9 @@ linters:
             - "!$test"
             - "!**/test_util/**"
           deny:
-            - pkg: "ballerina-lang-go/test_util"
+            - pkg: "ballerina/test_util"
               desc: "test_util is test-only; import only from *_test.go"
-            - pkg: "ballerina-lang-go/test_util/testphases"
+            - pkg: "ballerina/test_util/testphases"
               desc: "test_util/testphases is test-only; import only from *_test.go"
     staticcheck:
       checks:

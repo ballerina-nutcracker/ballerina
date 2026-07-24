@@ -17,8 +17,8 @@
 package projects
 
 import (
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/text"
+	"ballerina/parser/tree"
+	"ballerina/tools/text"
 )
 
 // Document represents a Ballerina source file (.bal).

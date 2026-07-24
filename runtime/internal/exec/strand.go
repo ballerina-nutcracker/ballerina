@@ -17,8 +17,8 @@
 package exec
 
 import (
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 )
 
 // StartMethod is the dispatch hook backing Context.StartMethod. It snapshots

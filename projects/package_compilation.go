@@ -19,8 +19,8 @@ package projects
 import (
 	"sync"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/context"
+	"ballerina/tools/diagnostics"
 )
 
 // PackageCompilation represents compilation at package level by resolving all the dependencies.

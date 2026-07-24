@@ -21,12 +21,12 @@ import (
 	"fmt"
 	"sync"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type desugaredNode[E ast.Node] struct {
@@ -806,7 +806,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 // moduleListenersGlobalName is the module-level variable that holds every
 // listener value evaluated during module init (see design.md). Lifecycle
 // methods (`$gracefulStop`, `$immediateStop`) are suppose to use this array.
-// https://github.com/ballerina-platform/ballerina-lang-go/issues/475
+// https://github.com/ballerina-nutcracker/ballerina/issues/475
 const moduleListenersGlobalName = "$moduleListeners"
 
 func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos diagnostics.Location) (*ast.BLangSimpleVarRef, ast.StatementNode) {

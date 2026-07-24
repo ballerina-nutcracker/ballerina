@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 )
 
 // TestSignalTimeout bounds how long a test PAL waits before forcing a

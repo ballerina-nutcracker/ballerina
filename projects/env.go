@@ -19,10 +19,10 @@ package projects
 import (
 	"io/fs"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/semtypes"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/semantics"
+	"ballerina/semtypes"
 )
 
 // Environment represents an environment shared by a set of projects.

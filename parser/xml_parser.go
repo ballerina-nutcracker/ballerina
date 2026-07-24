@@ -19,8 +19,8 @@
 package parser
 
 import (
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
 )
 
 type xmlParser struct {

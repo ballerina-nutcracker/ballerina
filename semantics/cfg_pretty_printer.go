@@ -17,8 +17,8 @@
 package semantics
 
 import (
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
+	"ballerina/ast"
+	"ballerina/context"
 	"fmt"
 	"sort"
 	"strings"

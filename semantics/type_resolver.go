@@ -25,14 +25,14 @@ import (
 	"strings"
 	"sync"
 
-	"ballerina-lang-go/ast"
-	balCommon "ballerina-lang-go/common"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/ast"
+	balCommon "ballerina/common"
+	"ballerina/context"
+	"ballerina/decimal"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type distinctTypeSymbol interface {
@@ -5644,7 +5644,7 @@ func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BL
 	tyCtx := t.typeContext()
 	switch {
 	case semtypes.IsSubtype(tyCtx, T, semtypes.XML):
-		t.unimplemented("XML optional attribute access not supported", expr.GetPosition()) // https://github.com/ballerina-platform/ballerina-lang-go/issues/560
+		t.unimplemented("XML optional attribute access not supported", expr.GetPosition()) // https://github.com/ballerina-nutcracker/ballerina/issues/560
 		return semtypes.SemType{}, expressionEffect{}, false
 	case semtypes.IsSubtype(tyCtx, T, semtypes.Union(semtypes.MAPPING, semtypes.NIL)):
 		Tbar := semtypes.Intersect(T, semtypes.MAPPING)
@@ -5659,7 +5659,7 @@ func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BL
 		if semtypes.IsSubtype(tyCtx, semtypes.NIL, T) || semtypes.ContainsUndef(M) {
 			N = semtypes.NIL
 		}
-		// TODO: update for lax case https://github.com/ballerina-platform/ballerina-lang-go/issues/558
+		// TODO: update for lax case https://github.com/ballerina-nutcracker/ballerina/issues/558
 		E := semtypes.NEVER
 		resultTy := semtypes.Union(semtypes.Union(MBar, N), E)
 		setExpectedType(expr, resultTy)

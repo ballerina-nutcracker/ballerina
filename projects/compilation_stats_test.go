@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/context"
+	"ballerina/context"
 )
 
 func allStagesStats() []*context.ModuleStats {

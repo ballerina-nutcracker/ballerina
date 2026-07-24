@@ -4,7 +4,7 @@
 ![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
 [![stackoverflow](https://img.shields.io/badge/Get%20Support%20on%20Stack%20Overflow-ballerina-52C3C2)](https://stackoverflow.com/questions/tagged/ballerina)
 [![Join the community on Discord](https://img.shields.io/badge/Join%20us%20on%20Discord-Ballerina-52C3C2)](https://discord.gg/ballerinalang)
-[![codecov](https://codecov.io/gh/ballerina-platform/ballerina-lang-go/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/ballerina-lang-go)
+[![codecov](https://codecov.io/gh/ballerina-nutcracker/ballerina/graph/badge.svg)](https://codecov.io/gh/ballerina-nutcracker/ballerina)
 
 [Ballerina](https://ballerina.io) is an open-source, cloud-native programming language optimized for integration. It has built-in support for JSON and XML, first-class constructs for services and concurrency, and structural typing. It is developed and supported by WSO2.
 
@@ -14,7 +14,7 @@
 
 Ballerina Nutcracker is a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
 
-- **Progress:** [GitHub Milestones](https://github.com/ballerina-platform/ballerina-lang-go/milestones)
+- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
 - **Subset docs:** [doc/](doc/) (language features and restrictions per subset)
 
 ## Usage

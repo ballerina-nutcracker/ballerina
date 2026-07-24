@@ -21,8 +21,8 @@
 package tree
 
 import (
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/parser/common"
+	"ballerina/tools/diagnostics"
 	"bytes"
 	"encoding/json"
 	"fmt"

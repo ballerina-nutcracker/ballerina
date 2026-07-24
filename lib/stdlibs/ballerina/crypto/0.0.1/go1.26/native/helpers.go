@@ -17,8 +17,8 @@
 package native
 
 import (
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 const (

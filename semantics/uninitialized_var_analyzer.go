@@ -20,9 +20,9 @@ import (
 	"maps"
 	"sync"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/model"
 )
 
 // varInitState tracks which variables are definitely initialized

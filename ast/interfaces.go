@@ -19,9 +19,9 @@ package ast
 import (
 	"iter"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 // Field represents an annotated type member with a name and type.

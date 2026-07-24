@@ -19,8 +19,8 @@ package values
 import (
 	"strconv"
 
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/semtypes"
+	"ballerina/decimal"
+	"ballerina/semtypes"
 )
 
 // Currently this is just an alias on any but I think we will need to add methods to this like type

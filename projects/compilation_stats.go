@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"ballerina-lang-go/context"
+	"ballerina/context"
 )
 
 var standaloneStages = []context.CompilationStage{

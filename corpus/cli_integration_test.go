@@ -31,7 +31,7 @@ import (
 	"sync"
 	"testing"
 
-	"ballerina-lang-go/test_util"
+	"ballerina/test_util"
 )
 
 const cliCoverDirEnv = "BAL_GOCOVERDIR"

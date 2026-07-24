@@ -21,7 +21,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"ballerina-lang-go/decimal"
+	"ballerina/decimal"
 )
 
 type TypePool struct {

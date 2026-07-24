@@ -25,14 +25,14 @@ import (
 	"strings"
 	"sync"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/desugar"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/ast"
+	"ballerina/bir"
+	"ballerina/context"
+	"ballerina/desugar"
+	"ballerina/model"
+	"ballerina/parser/tree"
+	"ballerina/semantics"
+	"ballerina/tools/diagnostics"
 )
 
 // moduleContext holds internal state for a Module.

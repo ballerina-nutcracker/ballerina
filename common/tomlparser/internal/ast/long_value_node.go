@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 // IntValueNode holds an integer value (decimal, hex, octal, or binary).
 type IntValueNode struct {

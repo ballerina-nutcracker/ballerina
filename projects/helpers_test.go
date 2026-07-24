@@ -20,7 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"ballerina-lang-go/projects"
+	"ballerina/projects"
 )
 
 // loadProject loads a Ballerina project for tests. It always forces

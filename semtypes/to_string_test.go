@@ -19,7 +19,7 @@ package semtypes
 import (
 	"testing"
 
-	"ballerina-lang-go/decimal"
+	"ballerina/decimal"
 )
 
 func TestSimpleBasicType(t *testing.T) {

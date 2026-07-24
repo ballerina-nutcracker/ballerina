@@ -20,11 +20,11 @@ import (
 	"flag"
 	"testing"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/test_util/testphases"
+	"ballerina/context"
+	"ballerina/semantics"
+	"ballerina/semtypes"
+	"ballerina/test_util"
+	"ballerina/test_util/testphases"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -34,7 +34,7 @@ var updateCFG = flag.Bool("update", false, "update expected CFG text files")
 // cfgGenerationSkipList is the CFG-stage *additional* skip list, on top of
 // the shared test_util.UnsupportedTests baseline.
 var cfgGenerationSkipList = []string{
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	// https://github.com/ballerina-nutcracker/ballerina/issues/417
 	"subset8/08-xml/namespace12-v.bal",
 }
 

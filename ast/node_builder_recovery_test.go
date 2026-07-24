@@ -20,12 +20,12 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/parser"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/tools/text"
+	"ballerina/context"
+	"ballerina/parser"
+	"ballerina/parser/tree"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/tools/text"
 )
 
 func TestRecoveringNodeBuilderIncludesMinutiaeInNodeRanges(t *testing.T) {

@@ -17,9 +17,9 @@
 package bir
 
 import (
-	"ballerina-lang-go/common"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/runtime/extern"
+	"ballerina/common"
+	"ballerina/model"
+	"ballerina/runtime/extern"
 )
 
 type BIRTerminator = BIRInstruction

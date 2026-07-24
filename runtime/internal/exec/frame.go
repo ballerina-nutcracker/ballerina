@@ -17,12 +17,12 @@
 package exec
 
 import (
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/runtime/extern"
-	runtimeframe "ballerina-lang-go/runtime/internal/frame"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/model"
+	"ballerina/runtime/extern"
+	runtimeframe "ballerina/runtime/internal/frame"
+	"ballerina/runtime/internal/modules"
+	"ballerina/values"
 )
 
 type Frame = runtimeframe.Frame

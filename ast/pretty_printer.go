@@ -23,9 +23,9 @@ import (
 	"slices"
 	"strings"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/tools/diagnostics"
-	"ballerina-lang-go/values"
+	"ballerina/model"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 // TODO: may be we should rewrite this on top of a visitor.

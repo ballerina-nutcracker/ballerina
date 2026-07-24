@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"math"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/decimal"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/modules"
+	"ballerina/values"
 )
 
 func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) {

@@ -17,8 +17,8 @@
 package common
 
 import (
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
+	"ballerina/model"
+	"ballerina/semtypes"
 )
 
 func FunctionSignatureToSemType(env semtypes.Env, fs *model.FunctionSignature) semtypes.SemType {

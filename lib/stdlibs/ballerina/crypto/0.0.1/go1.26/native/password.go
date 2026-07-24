@@ -29,9 +29,9 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/values"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/values"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/pbkdf2"

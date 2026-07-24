@@ -19,7 +19,7 @@ package values
 import (
 	"strings"
 
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 type Object struct {

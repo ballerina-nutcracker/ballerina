@@ -23,7 +23,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"ballerina-lang-go/cli/internal/nativeexec"
+	"ballerina/cli/internal/nativeexec"
 )
 
 func TestVersionAtLeast(t *testing.T) {
@@ -94,7 +94,7 @@ func TestWriteNativeFiles_CopiesGoFiles(t *testing.T) {
 func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	origMod := "module ballerina-lang-go\n\ngo 1.26\n"
+	origMod := "module ballerina\n\ngo 1.26\n"
 	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), origMod)
 	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
 
@@ -116,7 +116,7 @@ func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
 		t.Errorf("patched go.mod missing replace directive:\n%s", content)
 	}
 	// Original module declaration must be preserved.
-	if !strings.Contains(content, "module ballerina-lang-go") {
+	if !strings.Contains(content, "module ballerina") {
 		t.Errorf("patched go.mod missing original module declaration:\n%s", content)
 	}
 }
@@ -124,7 +124,7 @@ func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
 func TestWritePatchedGoMod_MultiplePayloads(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina\n\ngo 1.26\n")
 	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
 
 	tmpDir := t.TempDir()
@@ -152,7 +152,7 @@ func TestWritePatchedGoMod_MultiplePayloads(t *testing.T) {
 func TestWritePatchedGoMod_WritesPatchedGoSum(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina\n\ngo 1.26\n")
 	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "github.com/foo/bar v1.0.0 h1:xxx\n")
 
 	tmpDir := t.TempDir()

@@ -33,11 +33,11 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/parser"
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/semtypes"
+	"ballerina/context"
+	"ballerina/parser"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
+	"ballerina/semtypes"
 )
 
 var skipDirs = map[string]bool{"tests": true, "build": true, "target": true}

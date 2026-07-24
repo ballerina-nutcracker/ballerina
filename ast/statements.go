@@ -16,7 +16,7 @@
 
 package ast
 
-import "ballerina-lang-go/model"
+import "ballerina/model"
 
 type FailureBreakMode uint
 

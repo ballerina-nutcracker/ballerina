@@ -22,9 +22,9 @@ import (
 	"os"
 	"path/filepath"
 
-	debugcommon "ballerina-lang-go/common"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/tools/diagnostics"
+	debugcommon "ballerina/common"
+	"ballerina/projects"
+	"ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 )

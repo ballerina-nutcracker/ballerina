@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 // The time module's behaviour is exercised end-to-end through the corpus tests
