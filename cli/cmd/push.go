@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ballerina-lang-go/common/tomlparser"
-	"ballerina-lang-go/projects"
+	"ballerina/common/tomlparser"
+	"ballerina/projects"
 
 	"github.com/spf13/cobra"
 )
@@ -110,16 +110,28 @@ func runPush(cmd *cobra.Command, args []string, opts *pushOptions) error {
 		org, name, version, platform,
 	)
 
-	// Wipe destination first so a re-push doesn't leave stale files behind.
+	// Extract into a sibling staging directory first and swap it in via
+	// rename only once extraction fully succeeds, so a failure partway
+	// through (disk full, a bad entry) never leaves destDir half-written.
+	destParent := filepath.Dir(destDir)
+	if err := os.MkdirAll(destParent, 0o755); err != nil {
+		return pushError("create destination parent %q: %w", destParent, err)
+	}
+	stagingDir, err := os.MkdirTemp(destParent, ".push-staging-*")
+	if err != nil {
+		return pushError("create staging directory: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(stagingDir) }()
+
+	if err := unzipBala(balaPath, stagingDir); err != nil {
+		return pushError("%w", err)
+	}
+
 	if err := os.RemoveAll(destDir); err != nil {
 		return pushError("remove existing destination %q: %w", destDir, err)
 	}
-	if err := os.MkdirAll(destDir, 0o755); err != nil {
-		return pushError("create destination %q: %w", destDir, err)
-	}
-
-	if err := unzipBala(balaPath, destDir); err != nil {
-		return pushError("%w", err)
+	if err := os.Rename(stagingDir, destDir); err != nil {
+		return pushError("finalize destination %q: %w", destDir, err)
 	}
 
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Pushed %s to %s\n", balaPath, destDir)
@@ -213,22 +225,44 @@ func readBalaIdentity(balaPath string) (org, name, version, platform string, err
 		return "", "", "", "", fmt.Errorf("%s [package] is missing required field org",
 			projects.BallerinaTomlFile)
 	}
+	if err := validateManifestComponent("org", org); err != nil {
+		return "", "", "", "", err
+	}
 	name, ok = pkgToml.GetString("package.name")
 	if !ok || name == "" {
 		return "", "", "", "", fmt.Errorf("%s [package] is missing required field name",
 			projects.BallerinaTomlFile)
+	}
+	if err := validateManifestComponent("name", name); err != nil {
+		return "", "", "", "", err
 	}
 	version, ok = pkgToml.GetString("package.version")
 	if !ok || version == "" {
 		return "", "", "", "", fmt.Errorf("%s [package] is missing required field version",
 			projects.BallerinaTomlFile)
 	}
+	if err := validateManifestComponent("version", version); err != nil {
+		return "", "", "", "", err
+	}
 	platform, ok = buildToml.GetString("build.platform")
 	if !ok || platform == "" {
 		return "", "", "", "", fmt.Errorf("%s [build] is missing required field platform",
 			projects.BalaTomlFile)
 	}
+	if err := validateManifestComponent("platform", platform); err != nil {
+		return "", "", "", "", err
+	}
 	return org, name, version, platform, nil
+}
+
+// validateManifestComponent rejects "." / ".." and path separators so a
+// crafted bala manifest can't make the destination path escape
+// ballerinaEnvPath (or point os.RemoveAll at an attacker-chosen directory).
+func validateManifestComponent(field, value string) error {
+	if value == "." || value == ".." || strings.ContainsAny(value, `/\`) {
+		return fmt.Errorf("invalid %s %q in bala manifest", field, value)
+	}
+	return nil
 }
 
 // readTomlFromZipEntry reads and parses f as TOML.

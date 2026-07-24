@@ -38,6 +38,17 @@ func newWorkspaceError(format string, args ...any) error {
 	return usageError("new --workspace <path>", format, args...)
 }
 
+// newErrorFor picks the package- or workspace-specific USAGE block based on
+// whether --workspace was set, so errors before the package/workspace split
+// (template validation, arg validation, path resolution) still show the
+// right usage line.
+func newErrorFor(workspace bool, format string, args ...any) error {
+	if workspace {
+		return newWorkspaceError(format, args...)
+	}
+	return newError(format, args...)
+}
+
 var newCmd = createNewCmd()
 
 // createNewCmd creates a new instance of the 'new' command.
@@ -76,7 +87,7 @@ func createNewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tmpl, err := validateTemplate(template)
 			if err != nil {
-				return newError("%w", err)
+				return newErrorFor(workspace, "%w", err)
 			}
 			return runNew(cmd, args, workspace, tmpl)
 		},
@@ -115,11 +126,12 @@ func validateTemplate(raw string) (templateName, error) {
 
 // validateNewArgs validates the arguments for the 'new' command.
 func validateNewArgs(cmd *cobra.Command, args []string) error {
+	ws, _ := cmd.Flags().GetBool("workspace")
 	if len(args) == 0 {
-		return newError("project path is not provided")
+		return newErrorFor(ws, "project path is not provided")
 	}
 	if len(args) > 1 {
-		return newError("too many arguments")
+		return newErrorFor(ws, "too many arguments")
 	}
 	return nil
 }
@@ -131,7 +143,7 @@ func runNew(cmd *cobra.Command, args []string, workspace bool, template template
 	// Convert to absolute path
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
-		return newError("invalid path: %w", err)
+		return newErrorFor(workspace, "invalid path: %w", err)
 	}
 
 	if workspace {

@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/projects"
+	"ballerina/projects"
 )
 
 // =============================================================================
@@ -504,6 +504,50 @@ func TestPushCommand_MissingPlatformField(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "missing required field platform") {
 		t.Errorf("expected missing-platform-field error, got: %s", stderr)
+	}
+}
+
+// Manifest fields flow straight into filepath.Join(...) for the destination
+// and into os.RemoveAll before extraction even starts, so "." / ".." /
+// embedded separators must be rejected rather than trusted.
+func TestPushCommand_MaliciousManifestFields(t *testing.T) {
+	tests := []struct {
+		name             string
+		org, pkg, ver    string
+		platform         string
+		wantErrSubstring string
+	}{
+		{"org traversal", "../../../../tmp", "foo", "1.0.0", "any", `invalid org "../../../../tmp"`},
+		{"name traversal", "mockorg", "..", "1.0.0", "any", `invalid name ".."`},
+		{"version separator", "mockorg", "foo", "1.0/0", "any", `invalid version "1.0/0"`},
+		{"platform separator", "mockorg", "foo", "1.0.0", "any/../evil", `invalid platform "any/../evil"`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			balaEnv := setBallerinaEnv(t)
+
+			entries := map[string][]byte{
+				"Bala.toml": []byte("[build]\nplatform = \"" + tt.platform + "\"\n"),
+				"Ballerina.toml": []byte("[package]\norg = \"" + tt.org + "\"\nname = \"" +
+					tt.pkg + "\"\nversion = \"" + tt.ver + "\"\n"),
+				"main.bal": []byte("public function main() {}\n"),
+			}
+			balaPath := writeBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
+
+			_, stderr, err := executePushCommand(t, balaPath, "--repository", "local")
+			if err == nil {
+				t.Fatal("expected rejection, got success")
+			}
+			if !strings.Contains(stderr, tt.wantErrSubstring) {
+				t.Errorf("expected %q in stderr, got: %s", tt.wantErrSubstring, stderr)
+			}
+
+			repoRoot := filepath.Join(balaEnv, "repositories", "local", "bala")
+			if entries, err := os.ReadDir(repoRoot); err == nil && len(entries) != 0 {
+				t.Errorf("expected repo root untouched, found entries: %v", entries)
+			}
+		})
 	}
 }
 
