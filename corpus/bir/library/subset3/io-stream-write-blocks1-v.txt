@@ -1,0 +1,220 @@
+module $anon.. v 0.0.0;
+class BlockProvider {
+  blocks [[int:Unsigned8...]...]
+  idx int
+
+  init([[int:Unsigned8...]...]) -> nil{
+    bb0 {
+      %3 = ConstantLoad 0
+      %4 = ConstantLoad idx
+      self[%4] = %3;
+      %5 = ConstantLoad blocks
+      self[%5] = blocks;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: [int:Unsigned8...], never... |}{
+    bb0 {
+      %4 = ConstantLoad idx
+      %3 = self[%4];
+      %5 = %3;
+      %7 = ConstantLoad blocks
+      %6 = self[%7];
+      %8 = length(%6) -> bb1;
+    }
+    bb1 {
+      %9 = %8;
+      %2 = >= %5 %9;
+      %2 ? bb2 : bb3;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 14
+      %2 = ConstantLoad idx
+      %1 = (1, self)[%2];
+      %4 = ConstantLoad blocks
+      %3 = (1, self)[%4];
+      %0 = %3[%1];
+      block = %0;
+      %6 = ConstantLoad idx
+      %7 = (1, self)[%6];
+      %8 = %7;
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %11 = + %8 %10;
+      (1, self)[%6] = %11;
+      %12 = ConstantLoad value
+      %13 = newMap {| value: [int:Unsigned8...], never... |}{%12=block}
+      (1, %0) = %13;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_write_blocks1.bin
+    path = %1;
+    %3 = newObject $anon/.:BlockProvider
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 3
+    %8 = newArray [int:Unsigned8...][%7]{%4, %5, %6}
+    %9 = ConstantLoad 4
+    %10 = ConstantLoad 5
+    %11 = ConstantLoad 2
+    %12 = newArray [int:Unsigned8...][%11]{%9, %10}
+    %13 = ConstantLoad 6
+    %14 = ConstantLoad 1
+    %15 = newArray [int:Unsigned8...][%14]{%13}
+    %16 = ConstantLoad 3
+    %17 = newArray [[int:Unsigned8...]...][%16]{%8, %12, %15}
+    %18 = init(%3,%17) -> bb1;
+  }
+  bb1 {
+    %20 = %18 is nil
+    %20 ? bb2 : bb3;
+  }
+  bb2 {
+    %19 = %3;
+    GOTO bb4;
+  }
+  bb3 {
+    %19 = %18;
+    GOTO bb4;
+  }
+  bb4 {
+    %21 = newStream stream %19
+    byteStream = %21;
+    $desugar$0 = path;
+    $desugar$1 = byteStream;
+    %25 = $default$5($desugar$0,$desugar$1) -> bb5;
+  }
+  bb5 {
+    $desugar$2 = %25;
+    %27 = fileWriteBlocksFromStream($desugar$0,$desugar$1,$desugar$2) -> bb6;
+  }
+  bb6 {
+    $desugar$3 = %27;
+    %29 = $desugar$3 is error
+    %29 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    %30 = fileReadBytes(path) -> bb9;
+  }
+  bb9 {
+    $desugar$4 = %30;
+    %32 = $desugar$4 is error
+    %32 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    readBack = $desugar$4;
+    %34 = length(readBack) -> bb12;
+  }
+  bb12 {
+    %35 = %34;
+    %36 = println(%35) -> bb13;
+  }
+  bb13 {
+    %38 = ConstantLoad 0
+    %37 = readBack[%38];
+    %39 = %37;
+    %40 = println(%39) -> bb14;
+  }
+  bb14 {
+    %42 = ConstantLoad 5
+    %41 = readBack[%42];
+    %43 = %41;
+    %44 = println(%43) -> bb15;
+  }
+  bb15 {
+    %45 = newObject $anon/.:BlockProvider
+    %46 = ConstantLoad 7
+    %47 = ConstantLoad 8
+    %48 = ConstantLoad 2
+    %49 = newArray [int:Unsigned8...][%48]{%46, %47}
+    %50 = ConstantLoad 1
+    %51 = newArray [[int:Unsigned8...]...][%50]{%49}
+    %52 = init(%45,%51) -> bb16;
+  }
+  bb16 {
+    %54 = %52 is nil
+    %54 ? bb17 : bb18;
+  }
+  bb17 {
+    %53 = %45;
+    GOTO bb19;
+  }
+  bb18 {
+    %53 = %52;
+    GOTO bb19;
+  }
+  bb19 {
+    %55 = newStream stream %53
+    appendStream = %55;
+    %57 = ConstantLoad APPEND
+    %58 = fileWriteBlocksFromStream(path,appendStream,%57) -> bb20;
+  }
+  bb20 {
+    $desugar$5 = %58;
+    %60 = $desugar$5 is error
+    %60 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    %61 = fileReadBytes(path) -> bb23;
+  }
+  bb23 {
+    $desugar$6 = %61;
+    %63 = $desugar$6 is error
+    %63 ? bb24 : bb25;
+  }
+  bb24 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    combined = $desugar$6;
+    %65 = length(combined) -> bb26;
+  }
+  bb26 {
+    %66 = %65;
+    %67 = println(%66) -> bb27;
+  }
+  bb27 {
+    %69 = ConstantLoad 7
+    %68 = combined[%69];
+    %70 = %68;
+    %71 = println(%70) -> bb28;
+  }
+  bb28 {
+    return;
+  }
+}

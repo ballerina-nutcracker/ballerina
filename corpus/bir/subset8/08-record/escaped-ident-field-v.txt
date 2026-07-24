@@ -1,0 +1,57 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad public
+    %2 = ConstantLoad pub-id
+    %3 = ConstantLoad system
+    %4 = ConstantLoad sys-id
+    %5 = ConstantLoad type
+    %6 = ConstantLoad 7
+    %7 = newMap {| public: nil|string, system: nil|string, type: int, never... |}{%1=%2, %3=%4, %5=%6} defaults{system=$anon/.:$desugar$0, public=$anon/.:$desugar$1}
+    d = %7;
+    %10 = ConstantLoad public
+    %9 = d[%10];
+    %11 = println(%9) -> bb1;
+  }
+  bb1 {
+    %13 = ConstantLoad system
+    %12 = d[%13];
+    %14 = println(%12) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad type
+    %15 = d[%16];
+    %17 = %15;
+    %18 = println(%17) -> bb3;
+  }
+  bb3 {
+    %20 = ConstantLoad public
+    %19 = d[%20];
+    %21 = println(%19) -> bb4;
+  }
+  bb4 {
+    %22 = ConstantLoad updated
+    %23 = ConstantLoad public
+    d[%23] = %22;
+    %25 = ConstantLoad public
+    %24 = d[%25];
+    %26 = println(%24) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$desugar$0() -> nil|string{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> nil|string{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}

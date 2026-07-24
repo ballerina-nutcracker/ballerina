@@ -1,0 +1,159 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_read_lines1.txt))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref path))))
+      (var-def
+        (variable $desugar$1 (expr
+          (list-constructor-expr
+            (literal Alpha)
+            (literal Beta)
+            (literal Gamma)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteLines (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io fileReadLinesAsStream (
+            (simple-var-ref path))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable s (type
+          (stream-type
+            (value-type string)
+            (union-type
+              (user-defined-type io Error)
+              (value-type null)))) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable r1 (type
+          (union-type
+            (record-type
+              (field value
+                (value-type string)))
+            (union-type
+              (user-defined-type io Error)
+              (value-type null)))) (expr
+          (invocation next expr:
+            (simple-var-ref s) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref r1)
+          (record-type
+            (field value
+              (value-type string))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref r1)
+                (literal value)))))) ())
+      (block-stmt
+        (var-def
+          (variable r2 (type
+            (union-type
+              (record-type
+                (field value
+                  (value-type string)))
+              (union-type
+                (user-defined-type io Error)
+                (value-type null)))) (expr
+            (invocation next expr:
+              (simple-var-ref s) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref r2)
+            (record-type
+              (field value
+                (value-type string))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref r2)
+                  (literal value)))))) ())
+        (block-stmt
+          (var-def
+            (variable r3 (type
+              (union-type
+                (record-type
+                  (field value
+                    (value-type string)))
+                (union-type
+                  (user-defined-type io Error)
+                  (value-type null)))) (expr
+              (invocation next expr:
+                (simple-var-ref s) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref r3)
+              (record-type
+                (field value
+                  (value-type string))))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref r3)
+                    (literal value)))))) ())
+          (block-stmt
+            (var-def
+              (variable r4 (type
+                (union-type
+                  (record-type
+                    (field value
+                      (value-type string)))
+                  (union-type
+                    (user-defined-type io Error)
+                    (value-type null)))) (expr
+                (invocation next expr:
+                  (simple-var-ref s) ()))))
+            (if
+              (type-test-expr is
+                (simple-var-ref r4)
+                (value-type null))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (literal done))))) ())
+            (block-stmt
+              (var-def
+                (variable closeResult (type
+                  (union-type
+                    (user-defined-type io Error)
+                    (value-type null))) (expr
+                  (invocation close expr:
+                    (simple-var-ref s) ()))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref closeResult)))))))))))

@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: incompatible types: 'xml' cannot be cast to 'xml:Element'
+        at ballerina/io:WritableCharacterChannel.writeXml(0.0.1::io.bal:550)
+           main(io-char-channel-xml-nonelement-p.bal:26)

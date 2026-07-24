@@ -42,6 +42,9 @@ public enum FileWriteOption {
     APPEND
 }
 
+# The byte array that is used to read the byte content from the streams.
+public type Block readonly & byte[];
+
 # Prints `any` or `error` to the standard output stream.
 # ```ballerina
 # io:print("Start processing the CSV file from ", srcFileName);
@@ -106,14 +109,36 @@ public isolated function fileReadLines(string path) returns string[]|Error {
     return externFileReadLines(path);
 }
 
+# Reads file content as a stream of lines.
+# The resulting stream does not contain the terminal carriage characters (`\r` or `\r\n`).
+# ```ballerina
+# stream<string, io:Error?>|io:Error content = io:fileReadLinesAsStream("./resources/myfile.txt");
+# ```
+# + path - The file path
+# + return - The file content as a stream of strings or an `io:Error`
+public isolated function fileReadLinesAsStream(string path) returns stream<string, Error?>|Error {
+    return externFileReadLinesAsStream(path);
+}
+
 # Reads the entire file content as a byte array.
 # ```ballerina
 # byte[]|io:Error content = io:fileReadBytes("./resources/myfile.txt");
 # ```
 # + path - The file path
-# + return - A byte array or an `io:Error`
-public isolated function fileReadBytes(string path) returns byte[]|Error {
+# + return - A read-only byte array or an `io:Error`
+public isolated function fileReadBytes(string path) returns readonly & byte[]|Error {
     return externFileReadBytes(path);
+}
+
+# Reads the entire file content as a stream of blocks.
+# ```ballerina
+# stream<io:Block, io:Error?>|io:Error content = io:fileReadBlocksAsStream("./resources/myfile.txt", 1000);
+# ```
+# + path - The file path
+# + blockSize - An optional size of the byte block. The default size is 4KB
+# + return - A byte block stream or an `io:Error`
+public isolated function fileReadBlocksAsStream(string path, int blockSize = 4096) returns stream<Block, Error?>|Error {
+    return externFileReadBlocksAsStream(path, blockSize);
 }
 
 # Reads file content as a JSON.
@@ -151,6 +176,21 @@ public isolated function fileWriteLines(string path, string[] content, FileWrite
     return externFileWriteLines(path, content, option);
 }
 
+# Writes a stream of lines to a file.
+# During the writing operation, a newline character `\n` is added after each line.
+# ```ballerina
+# stream<string, io:Error?> lineStream = content.toStream();
+# io:Error? result = io:fileWriteLinesFromStream("./resources/myfile.txt", lineStream);
+# ```
+# + path - The file path
+# + lineStream - A stream of lines to write. The completion type is the generic `error?` so that
+#                streams with either an `io:Error?` or a plain `error?` completion are accepted.
+# + option - Whether to overwrite or append the given content (default: `OVERWRITE`)
+# + return - `()` when the write was successful or an `io:Error`
+public isolated function fileWriteLinesFromStream(string path, stream<string, error?> lineStream, FileWriteOption option = OVERWRITE) returns Error? {
+    return externFileWriteLinesFromStream(path, lineStream, option);
+}
+
 # Writes a byte array to a file.
 # ```ballerina
 # io:Error? result = io:fileWriteBytes("./resources/myfile.bin", [72, 101, 108, 108, 111]);
@@ -161,6 +201,20 @@ public isolated function fileWriteLines(string path, string[] content, FileWrite
 # + return - `()` when the write was successful or an `io:Error`
 public isolated function fileWriteBytes(string path, byte[] content, FileWriteOption option = OVERWRITE) returns Error? {
     return externFileWriteBytes(path, content, option);
+}
+
+# Writes a byte stream to a file.
+# ```ballerina
+# stream<byte[], io:Error?> byteStream = content.toStream();
+# io:Error? result = io:fileWriteBlocksFromStream("./resources/myfile.bin", byteStream);
+# ```
+# + path - The file path
+# + byteStream - Byte stream to write. The completion type is the generic `error?` so that
+#                streams with either an `io:Error?` or a plain `error?` completion are accepted.
+# + option - Whether to overwrite or append the given content (default: `OVERWRITE`)
+# + return - `()` when the write was successful or an `io:Error`
+public isolated function fileWriteBlocksFromStream(string path, stream<byte[], error?> byteStream, FileWriteOption option = OVERWRITE) returns Error? {
+    return externFileWriteBlocksFromStream(path, byteStream, option);
 }
 
 # Writes a JSON to a file.
@@ -198,11 +252,559 @@ public isolated function fileWriteXml(string path, xml content, FileWriteOption 
 
 isolated function externFileReadString(string path) returns string|Error = external;
 isolated function externFileReadLines(string path) returns string[]|Error = external;
-isolated function externFileReadBytes(string path) returns byte[]|Error = external;
+isolated function externFileReadLinesAsStream(string path) returns stream<string, Error?>|Error = external;
+isolated function externFileReadBytes(string path) returns readonly & byte[]|Error = external;
+isolated function externFileReadBlocksAsStream(string path, int blockSize) returns stream<Block, Error?>|Error = external;
 isolated function externFileReadJson(string path) returns json|Error = external;
 isolated function externFileWriteString(string path, string content, FileWriteOption option) returns Error? = external;
 isolated function externFileWriteLines(string path, string[] content, FileWriteOption option) returns Error? = external;
+isolated function externFileWriteLinesFromStream(string path, stream<string, error?> lineStream, FileWriteOption option) returns Error? = external;
 isolated function externFileWriteBytes(string path, byte[] content, FileWriteOption option) returns Error? = external;
+isolated function externFileWriteBlocksFromStream(string path, stream<byte[], error?> byteStream, FileWriteOption option) returns Error? = external;
 isolated function externFileWriteJson(string path, json content) returns Error? = external;
 isolated function externFileReadXml(string path) returns xml|Error = external;
 isolated function externFileWriteXml(string path, xml content, FileWriteOption option) returns Error? = external;
+
+# Represents a readable byte channel that represents an input resource (i.e. a file), which could be used to source bytes.
+# A file path or an in-memory `byte` array can be used to obtain an `io:ReadableByteChannel`.
+#
+# `io:openReadableFile("./files/sample.txt")` - used to obtain an `io:ReadableByteChannel` from a given file path
+# `io:createReadableChannel(byteArray)` - used to obtain an `io:ReadableByteChannel` from a given `byte` array
+public class ReadableByteChannel {
+
+    # Adding default init function to prevent the object getting initialized from user code.
+    isolated function init() {
+    }
+
+    private isolated function attachFile(string path) returns Error? = external;
+
+    private isolated function attachBytes(byte[] content) returns Error? = external;
+
+    # Reads bytes from a given input resource.
+    # This operation returns however many bytes were available at the time of the call, which may be fewer than
+    # `nBytes`. An `io:Error` will return once the channel reaches the end.
+    # ```ballerina
+    # byte[]|io:Error result = readableByteChannel.read(1000);
+    # ```
+    #
+    # + nBytes - Represents the number of bytes, which should be read. This should be a positive integer.
+    # + return - Content (the number of bytes) read, an error once the channel reaches the end or else an `io:Error`
+    public isolated function read(int nBytes) returns byte[]|Error = external;
+
+    # Reads all content of the channel as a `byte` array.
+    # ```ballerina
+    # byte[]|io:Error result = readableByteChannel.readAll();
+    # ```
+    #
+    # + return - A read-only `byte` array or else an `io:Error`
+    public isolated function readAll() returns readonly & byte[]|Error = external;
+
+    # Returns a block stream that can be used to read all `byte` blocks as a stream.
+    # ```ballerina
+    # stream<io:Block, io:Error?>|io:Error result = readableByteChannel.blockStream(1000);
+    # ```
+    # + blockSize - The size of the block. This should be a positive integer.
+    # + return - A block stream or else an `io:Error`
+    public isolated function blockStream(int blockSize) returns stream<Block, Error?>|Error = external;
+
+    # Encodes a given `io:ReadableByteChannel` using the Base64 encoding scheme.
+    # ```ballerina
+    # io:ReadableByteChannel|Error encodedChannel = readableByteChannel.base64Encode();
+    # ```
+    #
+    # + return - An encoded `io:ReadableByteChannel` or else an `io:Error`
+    public isolated function base64Encode() returns ReadableByteChannel|Error {
+        byte[] encodedBytes = check self.base64EncodeBytes();
+        ReadableByteChannel channel = new;
+        check channel.attachBytes(encodedBytes);
+        return channel;
+    }
+
+    # Decodes a given Base64 encoded `io:ReadableByteChannel`.
+    # ```ballerina
+    # io:ReadableByteChannel|Error encodedChannel = readableByteChannel.base64Decode();
+    # ```
+    #
+    # + return - A decoded `io:ReadableByteChannel` or else an `io:Error`
+    public isolated function base64Decode() returns ReadableByteChannel|Error {
+        byte[] decodedBytes = check self.base64DecodeBytes();
+        ReadableByteChannel channel = new;
+        check channel.attachBytes(decodedBytes);
+        return channel;
+    }
+
+    private isolated function base64EncodeBytes() returns byte[]|Error = external;
+
+    private isolated function base64DecodeBytes() returns byte[]|Error = external;
+
+    # Closes the readable byte channel to release any underlying resources.
+    # After a channel is closed, any further reading operations will cause an error.
+    # ```ballerina
+    # io:Error? err = readableByteChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents a writable byte channel that acts as an output resource (e.g., a file) for writing bytes.
+# A file path can be used to obtain an `io:WritableByteChannel`.
+#
+# `io:openWritableFile("./files/sample.txt")` - used to obtain an `io:WritableByteChannel` from a given file path
+public class WritableByteChannel {
+
+    # Adding default init function to prevent the object getting initialized from user code.
+    isolated function init() {
+    }
+
+    private isolated function attachFile(string path, FileWriteOption option) returns Error? = external;
+
+    # Sinks bytes from a given input/output resource.
+    # ```ballerina
+    # int|io:Error result = writableByteChannel.write(content, 0);
+    # ```
+    #
+    # + content - Block of bytes to be written
+    # + offset - Number of leading bytes of `content` to skip before writing
+    # + return - Number of bytes written or else an `io:Error`
+    public isolated function write(byte[] content, int offset) returns int|Error = external;
+
+    # Closes the byte channel.
+    # After a channel is closed, any further writing operations will cause an error.
+    # ```ballerina
+    # io:Error? err = writableByteChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents the XML DOCTYPE entity.
+#
+# + system - The system identifier
+# + public - The public identifier
+# + internalSubset - Internal DTD schema
+public type XmlDoctype record {|
+    string? system = ();
+    string? 'public = ();
+    string? internalSubset = ();
+|};
+
+# Represents a channel, which could be used to read characters through a given ReadableByteChannel.
+public class ReadableCharacterChannel {
+
+    private ReadableByteChannel byteChannel;
+    private string charset;
+
+    # Initializes a readable character channel.
+    #
+    # + byteChannel - The `io:ReadableByteChannel`, which would be used to read the characters
+    # + charset - The character set, which is used to encode/decode the given bytes to characters
+    public isolated function init(ReadableByteChannel byteChannel, string charset) {
+        self.byteChannel = byteChannel;
+        self.charset = charset;
+        self.initChannel(byteChannel, charset);
+    }
+
+    private isolated function initChannel(ReadableByteChannel byteChannel, string charset) = external;
+
+    # Reads a given number of characters. This will attempt to read up to the `numberOfChars` characters of the channel.
+    # An `io:Error` will return once the channel reaches the end.
+    # ```ballerina
+    # string|io:Error result = readableCharChannel.read(1000);
+    # ```
+    #
+    # + numberOfChars - Number of characters, which should be read
+    # + return - The characters that read as a string, or an `io:Error` once the channel reaches the end or
+    # something went wrong while reading
+    public isolated function read(int numberOfChars) returns string|Error = external;
+
+    # Reads the entire channel content as a string.
+    # ```ballerina
+    # string|io:Error content = readableCharChannel.readString();
+    # ```
+    # + return - The content that read as a string or an `io:Error`
+    public isolated function readString() returns string|Error = external;
+
+    # Reads the entire channel content as a list of lines.
+    # ```ballerina
+    # string[]|io:Error content = readableCharChannel.readAllLines();
+    # ```
+    # + return - The content that read as an array of lines (separated by the `\n` character) or an `io:Error`
+    public isolated function readAllLines() returns string[]|Error = external;
+
+    # Reads a JSON from the given channel.
+    # ```ballerina
+    # json|io:Error result = readableCharChannel.readJson();
+    # ```
+    #
+    # + return - The content that is read as a JSON or else an `io:Error`
+    public isolated function readJson() returns json|Error = external;
+
+    # Reads an XML from the given channel.
+    # ```ballerina
+    # json|io:Error result = readableCharChannel.readXml();
+    # ```
+    #
+    # + return - The content that is read as an XML or else an `io:Error`
+    public isolated function readXml() returns xml|Error = external;
+
+    # Reads the value of a specified property key from a properties file.
+    # If the key is not found, the provided default value is returned.
+    # ```ballerina
+    # string|io:Error result = readableCharChannel.readProperty(key, defaultValue);
+    # ```
+    # + key - The property key to look up in the properties file
+    # + defaultValue - The default value to return if the key is not found
+    # + return - The property value related to the given key or else an `io:Error`
+    public isolated function readProperty(string key, string defaultValue = "") returns string|Error = external;
+
+    # Returns a stream of lines that can be used to read all the lines in a file as a stream.
+    # ```ballerina
+    # stream<string, io:Error>|io:Error? result = readableCharChannel.lineStream();
+    # ```
+    #
+    # + return - A stream of strings (lines) or an `io:Error`
+    public isolated function lineStream() returns stream<string, Error?>|Error = external;
+
+    # Reads all properties from a properties file.
+    # ```ballerina
+    # map<string>|io:Error result = readableCharChannel.readAllProperties();
+    # ```
+    #
+    # + return - A map of strings that contains all properties
+    public isolated function readAllProperties() returns map<string>|Error = external;
+
+    # Closes the character channel.
+    # After a channel is closed, any further reading operations will cause an error.
+    # ```ballerina
+    # io:Error? err = readableCharChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents a writable character channel used for writing characters.
+public class WritableCharacterChannel {
+
+    private WritableByteChannel bChannel;
+    private string charset;
+
+    # Initializes a writable character channel.
+    #
+    # + bChannel - The `io:WritableByteChannel`, which would be used to write the characters
+    # + charset - The character set, which would be used to encode the given bytes to characters
+    public isolated function init(WritableByteChannel bChannel, string charset) {
+        self.bChannel = bChannel;
+        self.charset = charset;
+        self.initChannel(bChannel, charset);
+    }
+
+    private isolated function initChannel(WritableByteChannel bChannel, string charset) = external;
+
+    # Writes a sequence of characters (string) to the writable character channel.
+    # ```ballerina
+    # int|io:Error result = writableCharChannel.write("Content", 0);
+    # ```
+    #
+    # + content - The string content to be written
+    # + startOffset - The number of characters to skip from the beginning of the content before writing
+    # + return - The number of bytes written to the channel, or an `io:Error` if an error occurs
+    public isolated function write(string content, int startOffset) returns int|Error = external;
+
+    # Writes a string as a line followed by a newline character (`\n`) to the writable character channel.
+    # ```ballerina
+    # io:Error? result = writableCharChannel.writeLine("Content");
+    # ```
+    #
+    # + content - The string content to be written
+    # + return - `()` if the writing was successful or an `io:Error`
+    public isolated function writeLine(string content) returns Error? {
+        string lineContent = content + "\n";
+        var result = self.write(lineContent, 0);
+        if result is Error {
+            return result;
+        }
+        return;
+    }
+
+    # Writes the provided JSON content to the writable character channel.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.writeJson(inputJson);
+    # ```
+    #
+    # + content - The JSON content to be written
+    # + return - `()` if the writing was successful or an `io:Error`
+    public isolated function writeJson(json content) returns Error? = external;
+
+    # Writes the provided XML content to the writable character channel.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.writeXml(inputXml);
+    # ```
+    #
+    # + content - The XML content to be written
+    # + xmlDoctype - An optional argument to specify the XML DOCTYPE configurations for the XML content
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function writeXml(xml content, XmlDoctype? xmlDoctype = ()) returns Error? {
+        return self.writeXmlExtern(content, xmlDoctype);
+    }
+
+    private isolated function writeXmlExtern(xml content, XmlDoctype? xmlDoctype) returns Error? = external;
+
+    # Writes a key-value pair map (`map<string>`) to a property file.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.writeProperties(properties, "comment");
+    # ```
+    # + properties - The map<string> that contains keys and values
+    # + comment - A comment describing the property list to be included
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function writeProperties(map<string> properties, string comment) returns Error? = external;
+
+    # Closes the character channel.
+    # After a channel is closed, any further writing operations will cause an error.
+    # ```ballerina
+    # io:Error? err = writableCharChannel.close();
+    # ```
+    #
+    # + return - `()` or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents network byte order.
+#
+# BIG_ENDIAN - specifies the bytes to be in the order of most significant byte first.
+#
+# LITTLE_ENDIAN - specifies the byte order to be the least significant byte first.
+public type ByteOrder "BE"|"LE";
+
+# Specifies the bytes to be in the order of most significant byte first.
+public const BIG_ENDIAN = "BE";
+
+# Specifies the byte order to be the least significant byte first.
+public const LITTLE_ENDIAN = "LE";
+
+# Represents a data channel for reading data.
+public class ReadableDataChannel {
+
+    # Initializes a readable data channel.
+    #
+    # + byteChannel - The `io:ReadableByteChannel` channel, which would represent the source to read/write data
+    # + bOrder - The byte order used for reading data. Defaults to `"BE"` (Big Endian)
+    public isolated function init(ReadableByteChannel byteChannel, ByteOrder bOrder = "BE") {
+        self.initChannel(byteChannel, bOrder);
+    }
+
+    private isolated function initChannel(ReadableByteChannel byteChannel, ByteOrder bOrder) = external;
+
+    # Reads a 16 bit integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readInt16();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readInt16() returns int|Error = external;
+
+    # Reads a 32 bit integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readInt32();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readInt32() returns int|Error = external;
+
+    # Reads a 64 bit integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readInt64();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readInt64() returns int|Error = external;
+
+    # Reads a 32 bit float.
+    # ```ballerina
+    # float|io:Error result = dataChannel.readFloat32();
+    # ```
+    #
+    # + return - The value of the float, which is read or else an `io:Error` if any error occurred
+    public isolated function readFloat32() returns float|Error = external;
+
+    # Reads a 64 bit float.
+    # ```ballerina
+    # float|io:Error result = dataChannel.readFloat64();
+    # ```
+    #
+    # + return - The value of the float, which is read or else an `io:Error` if any error occurred
+    public isolated function readFloat64() returns float|Error = external;
+
+    # Reads a byte and convert its value to a boolean.
+    # ```ballerina
+    # boolean|io:Error result = dataChannel.readBool();
+    # ```
+    #
+    # + return - The boolean value, which is read or else an `io:Error` if any error occurred
+    public isolated function readBool() returns boolean|Error = external;
+
+    # Reads the string value represented through the provided number of bytes.
+    # ```ballerina
+    # string|io:Error string = dataChannel.readString(10, "UTF-8");
+    # ```
+    #
+    # + nBytes - Specifies the number of bytes, which represents the string
+    # + encoding - Specifies the char-set encoding of the string
+    # + return - The string value, which is read or else an `io:Error` if any error occurred
+    public isolated function readString(int nBytes, string encoding) returns string|Error = external;
+
+    # Reads a variable-length integer.
+    # ```ballerina
+    # int|io:Error result = dataChannel.readVarInt();
+    # ```
+    #
+    # + return - The value of the integer, which is read or else an `io:Error` if any error occurred
+    public isolated function readVarInt() returns int|Error = external;
+
+    # Closes the data channel.
+    # After a channel is closed, any further reading operations will cause an error.
+    # ```ballerina
+    # io:Error? err = dataChannel.close();
+    # ```
+    #
+    # + return - `()` if the channel is closed successfully or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Represents a writable data channel used for writing various types of data.
+public class WritableDataChannel {
+
+    # Initializes a writable data channel.
+    #
+    # + byteChannel - The `io:WritableByteChannel`, which would represent the source to read/write data
+    # + bOrder - The network byte order, which specifies the order of bytes (e.g., `io:BIG_ENDIAN` or `io:LITTLE_ENDIAN`)
+    public isolated function init(WritableByteChannel byteChannel, ByteOrder bOrder = "BE") {
+        self.initChannel(byteChannel, bOrder);
+    }
+
+    private isolated function initChannel(WritableByteChannel byteChannel, ByteOrder bOrder) = external;
+
+    # Writes a 16 bit integer value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeInt16(length);
+    # ```
+    #
+    # + value - The 16-bit integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeInt16(int value) returns Error? = external;
+
+    # Writes a 32 bit integer value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeInt32(length);
+    # ```
+    #
+    # + value - The 32-bit integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeInt32(int value) returns Error? = external;
+
+    # Writes a 64 bit integer value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeInt64(length);
+    # ```
+    #
+    # + value - The 64-bit integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeInt64(int value) returns Error? = external;
+
+    # Writes a 32 bit float value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeFloat32(3.12);
+    # ```
+    #
+    # + value - The 32-bit float value to be written to the data channel
+    # + return - `()` if the float is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeFloat32(float value) returns Error? = external;
+
+    # Writes a 64 bit float value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeFloat64(3.12);
+    # ```
+    #
+    # + value - The 64-bit float value to be written to the data channel
+    # + return - `()` if the float is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeFloat64(float value) returns Error? = external;
+
+    # Writes a boolean value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeBool(true);
+    # ```
+    #
+    # + value - The boolean value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeBool(boolean value) returns Error? = external;
+
+    # Writes a given string value to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeString(record, "UTF-8");
+    # ```
+    #
+    # + value - The string value to be written to the data channel
+    # + encoding - The encoding, which will represent the value string
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeString(string value, string encoding) returns Error? = external;
+
+    # Writes a variable-length integer to the writable data channel.
+    # ```ballerina
+    # io:Error? err = dataChannel.writeVarInt(length);
+    # ```
+    #
+    # + value - The integer value to be written to the data channel
+    # + return - `()` if the content is written successfully or else an `io:Error` if any error occurred
+    public isolated function writeVarInt(int value) returns Error? = external;
+
+    # Closes the data channel.
+    # After a channel is closed, any further writing operations will cause an error.
+    # ```ballerina
+    # io:Error? err = dataChannel.close();
+    # ```
+    #
+    # + return - `()` if the channel is closed successfully or else an `io:Error` if any error occurred
+    public isolated function close() returns Error? = external;
+}
+
+# Retrieves a readable byte channel from a given file path.
+# ```ballerina
+# io:ReadableByteChannel readableFieldResult = check io:openReadableFile("./files/sample.txt");
+# ```
+#
+# + path - The relative or absolute file path
+# + return - The `io:ReadableByteChannel` related to the given file or else an `io:Error` if there is an error while opening
+public isolated function openReadableFile(string path) returns ReadableByteChannel|Error {
+    ReadableByteChannel channel = new;
+    check channel.attachFile(path);
+    return channel;
+}
+
+# Retrieves a writable byte channel from a given file path.
+# ```ballerina
+# io:WritableByteChannel writableFileResult = check io:openWritableFile("./files/sampleResponse.txt");
+# ```
+#
+# + path - The relative or absolute file path
+# + option - Indicate whether to overwrite or append the given content
+# + return - The `io:WritableByteChannel` related to the given file or else an `io:Error` if any error occurred
+public isolated function openWritableFile(string path, FileWriteOption option = OVERWRITE) returns WritableByteChannel|Error {
+    WritableByteChannel channel = new;
+    check channel.attachFile(path, option);
+    return channel;
+}
+
+# Creates an in-memory channel, which will be a reference stream of bytes.
+# ```ballerina
+# io:ReadableByteChannel|io:Error byteChannel = io:createReadableChannel(content);
+# ```
+#
+# + content - The content as a byte array, which should be exposed as a channel
+# + return - The `io:ReadableByteChannel` related to the given bytes or else an `io:Error` if any error occurred
+public isolated function createReadableChannel(byte[] content) returns ReadableByteChannel|Error {
+    ReadableByteChannel channel = new;
+    check channel.attachBytes(content);
+    return channel;
+}

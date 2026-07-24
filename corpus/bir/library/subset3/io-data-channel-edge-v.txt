@@ -1,0 +1,658 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int:Unsigned8...][%3]{%1, %2}
+    %5 = createReadableChannel(%4) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %5;
+    %7 = $desugar$0 is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    cb = $desugar$0;
+    %9 = $default$9(cb) -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %9;
+    %11 = newObject ballerina/io:ReadableDataChannel
+    %12 = init(%11,cb,$desugar$1) -> bb5;
+  }
+  bb5 {
+    %14 = %12 is nil
+    %14 ? bb6 : bb7;
+  }
+  bb6 {
+    %13 = %11;
+    GOTO bb8;
+  }
+  bb7 {
+    %13 = %12;
+    GOTO bb8;
+  }
+  bb8 {
+    cd = %13;
+    %16 = close(cd) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %16;
+    %18 = $desugar$2 is error
+    %18 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    %19 = close(cd) -> bb12;
+  }
+  bb12 {
+    closedAgain = %19;
+    %21 = closedAgain is error
+    %21 ? bb13 : bb16;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = message((1, closedAgain)) -> bb14;
+  }
+  bb14 {
+    %1 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 3
+    %0 = readInt16((1, cd)) -> bb17;
+  }
+  bb17 {
+    closedRead = %0;
+    %2 = closedRead is error
+    %2 ? bb18 : bb21;
+  }
+  bb18 {
+    PushScopeFrame 2
+    %0 = message((1, closedRead)) -> bb19;
+  }
+  bb19 {
+    %1 = println(%0) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 29
+    %0 = ConstantLoad 0
+    %1 = newArray [int:Unsigned8...][%0]{}
+    %2 = createReadableChannel(%1) -> bb22;
+  }
+  bb22 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb23 : bb24;
+  }
+  bb23 {
+    PushScopeFrame 0
+    (3, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb24 {
+    eb = $desugar$3;
+    %6 = $default$9(eb) -> bb25;
+  }
+  bb25 {
+    $desugar$4 = %6;
+    %8 = newObject ballerina/io:ReadableDataChannel
+    %9 = init(%8,eb,$desugar$4) -> bb26;
+  }
+  bb26 {
+    %11 = %9 is nil
+    %11 ? bb27 : bb28;
+  }
+  bb27 {
+    %10 = %8;
+    GOTO bb29;
+  }
+  bb28 {
+    %10 = %9;
+    GOTO bb29;
+  }
+  bb29 {
+    ed = %10;
+    %13 = ConstantLoad 3
+    %14 = %13;
+    %15 = ConstantLoad UTF-8
+    %16 = readString(ed,%14,%15) -> bb30;
+  }
+  bb30 {
+    $desugar$5 = %16;
+    %18 = $desugar$5 is error
+    %18 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    (3, %0) = (1, $desugar$5);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    first = $desugar$5;
+    %20 = length(first) -> bb33;
+  }
+  bb33 {
+    %21 = %20;
+    %22 = println(%21) -> bb34;
+  }
+  bb34 {
+    %23 = ConstantLoad 3
+    %24 = %23;
+    %25 = ConstantLoad UTF-8
+    %26 = readString(ed,%24,%25) -> bb35;
+  }
+  bb35 {
+    second = %26;
+    %28 = second is error
+    %28 ? bb36 : bb39;
+  }
+  bb36 {
+    PushScopeFrame 2
+    %0 = message((1, second)) -> bb37;
+  }
+  bb37 {
+    %1 = println(%0) -> bb38;
+  }
+  bb38 {
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb39 {
+    PushScopeFrame 131
+    %0 = ConstantLoad 0
+    %1 = newArray [int:Unsigned8...][%0]{}
+    %2 = createReadableChannel(%1) -> bb40;
+  }
+  bb40 {
+    $desugar$6 = %2;
+    %4 = $desugar$6 is error
+    %4 ? bb41 : bb42;
+  }
+  bb41 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$6);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb42 {
+    tb = $desugar$6;
+    %6 = $default$9(tb) -> bb43;
+  }
+  bb43 {
+    $desugar$7 = %6;
+    %8 = newObject ballerina/io:ReadableDataChannel
+    %9 = init(%8,tb,$desugar$7) -> bb44;
+  }
+  bb44 {
+    %11 = %9 is nil
+    %11 ? bb45 : bb46;
+  }
+  bb45 {
+    %10 = %8;
+    GOTO bb47;
+  }
+  bb46 {
+    %10 = %9;
+    GOTO bb47;
+  }
+  bb47 {
+    td = %10;
+    GOTO bb48;
+  }
+  bb48 {
+    %14 = readInt16(td) -> bb49;
+  }
+  bb49 {
+    %13 = %14;
+    GOTO bb50;
+  }
+  bb50 {
+    trapped = %13;
+    %16 = trapped is error
+    %17 = %16;
+    %18 = println(%17) -> bb51;
+  }
+  bb51 {
+    %19 = ConstantLoad 1
+    %20 = ConstantLoad 2
+    %21 = ConstantLoad 2
+    %22 = newArray [int:Unsigned8...][%21]{%19, %20}
+    %23 = createReadableChannel(%22) -> bb52;
+  }
+  bb52 {
+    $desugar$8 = %23;
+    %25 = $desugar$8 is error
+    %25 ? bb53 : bb54;
+  }
+  bb53 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$8);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb54 {
+    sb = $desugar$8;
+    %27 = $default$9(sb) -> bb55;
+  }
+  bb55 {
+    $desugar$9 = %27;
+    %29 = newObject ballerina/io:ReadableDataChannel
+    %30 = init(%29,sb,$desugar$9) -> bb56;
+  }
+  bb56 {
+    %32 = %30 is nil
+    %32 ? bb57 : bb58;
+  }
+  bb57 {
+    %31 = %29;
+    GOTO bb59;
+  }
+  bb58 {
+    %31 = %30;
+    GOTO bb59;
+  }
+  bb59 {
+    sd = %31;
+    %34 = readInt32(sd) -> bb60;
+  }
+  bb60 {
+    $desugar$10 = %34;
+    %36 = $desugar$10 is error
+    %36 ? bb61 : bb62;
+  }
+  bb61 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$10);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb62 {
+    %37 = println($desugar$10) -> bb63;
+  }
+  bb63 {
+    %38 = ConstantLoad 1
+    %39 = ConstantLoad 2
+    %40 = ConstantLoad 2
+    %41 = newArray [int:Unsigned8...][%40]{%38, %39}
+    %42 = createReadableChannel(%41) -> bb64;
+  }
+  bb64 {
+    $desugar$11 = %42;
+    %44 = $desugar$11 is error
+    %44 ? bb65 : bb66;
+  }
+  bb65 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$11);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb66 {
+    lb = $desugar$11;
+    %46 = newObject ballerina/io:ReadableDataChannel
+    %47 = ConstantLoad LE
+    %48 = init(%46,lb,%47) -> bb67;
+  }
+  bb67 {
+    %50 = %48 is nil
+    %50 ? bb68 : bb69;
+  }
+  bb68 {
+    %49 = %46;
+    GOTO bb70;
+  }
+  bb69 {
+    %49 = %48;
+    GOTO bb70;
+  }
+  bb70 {
+    ld = %49;
+    %52 = readInt32(ld) -> bb71;
+  }
+  bb71 {
+    $desugar$12 = %52;
+    %54 = $desugar$12 is error
+    %54 ? bb72 : bb73;
+  }
+  bb72 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$12);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb73 {
+    %55 = println($desugar$12) -> bb74;
+  }
+  bb74 {
+    %56 = ConstantLoad /tmp/bal_io_dc_varint.bin
+    path = %56;
+    $desugar$13 = path;
+    %59 = $default$11($desugar$13) -> bb75;
+  }
+  bb75 {
+    $desugar$14 = %59;
+    %61 = openWritableFile($desugar$13,$desugar$14) -> bb76;
+  }
+  bb76 {
+    $desugar$15 = %61;
+    %63 = $desugar$15 is error
+    %63 ? bb77 : bb78;
+  }
+  bb77 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$15);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb78 {
+    wb = $desugar$15;
+    %65 = $default$10(wb) -> bb79;
+  }
+  bb79 {
+    $desugar$16 = %65;
+    %67 = newObject ballerina/io:WritableDataChannel
+    %68 = init(%67,wb,$desugar$16) -> bb80;
+  }
+  bb80 {
+    %70 = %68 is nil
+    %70 ? bb81 : bb82;
+  }
+  bb81 {
+    %69 = %67;
+    GOTO bb83;
+  }
+  bb82 {
+    %69 = %68;
+    GOTO bb83;
+  }
+  bb83 {
+    wd = %69;
+    %72 = ConstantLoad 1
+    %73 = %72;
+    %74 = writeVarInt(wd,%73) -> bb84;
+  }
+  bb84 {
+    $desugar$17 = %74;
+    %76 = $desugar$17 is error
+    %76 ? bb85 : bb86;
+  }
+  bb85 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$17);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb86 {
+    %77 = ConstantLoad 1
+    %78 = unknown %77;
+    %79 = %78;
+    %80 = writeVarInt(wd,%79) -> bb87;
+  }
+  bb87 {
+    $desugar$18 = %80;
+    %82 = $desugar$18 is error
+    %82 ? bb88 : bb89;
+  }
+  bb88 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$18);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb89 {
+    %83 = ConstantLoad 9223372036854775807
+    %84 = %83;
+    %85 = writeVarInt(wd,%84) -> bb90;
+  }
+  bb90 {
+    $desugar$19 = %85;
+    %87 = $desugar$19 is error
+    %87 ? bb91 : bb92;
+  }
+  bb91 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$19);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb92 {
+    %89 = ConstantLoad 9223372036854775807
+    %90 = unknown %89;
+    %91 = %90;
+    %92 = ConstantLoad 1
+    %93 = %92;
+    %88 = - %91 %93;
+    %94 = %88;
+    %95 = writeVarInt(wd,%94) -> bb93;
+  }
+  bb93 {
+    $desugar$20 = %95;
+    %97 = $desugar$20 is error
+    %97 ? bb94 : bb95;
+  }
+  bb94 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$20);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb95 {
+    %98 = close(wd) -> bb96;
+  }
+  bb96 {
+    $desugar$21 = %98;
+    %100 = $desugar$21 is error
+    %100 ? bb97 : bb98;
+  }
+  bb97 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$21);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb98 {
+    %101 = openReadableFile(path) -> bb99;
+  }
+  bb99 {
+    $desugar$22 = %101;
+    %103 = $desugar$22 is error
+    %103 ? bb100 : bb101;
+  }
+  bb100 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$22);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb101 {
+    rb = $desugar$22;
+    %105 = $default$9(rb) -> bb102;
+  }
+  bb102 {
+    $desugar$23 = %105;
+    %107 = newObject ballerina/io:ReadableDataChannel
+    %108 = init(%107,rb,$desugar$23) -> bb103;
+  }
+  bb103 {
+    %110 = %108 is nil
+    %110 ? bb104 : bb105;
+  }
+  bb104 {
+    %109 = %107;
+    GOTO bb106;
+  }
+  bb105 {
+    %109 = %108;
+    GOTO bb106;
+  }
+  bb106 {
+    rd = %109;
+    %112 = readVarInt(rd) -> bb107;
+  }
+  bb107 {
+    $desugar$24 = %112;
+    %114 = $desugar$24 is error
+    %114 ? bb108 : bb109;
+  }
+  bb108 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$24);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb109 {
+    %115 = println($desugar$24) -> bb110;
+  }
+  bb110 {
+    %116 = readVarInt(rd) -> bb111;
+  }
+  bb111 {
+    $desugar$25 = %116;
+    %118 = $desugar$25 is error
+    %118 ? bb112 : bb113;
+  }
+  bb112 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$25);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb113 {
+    %119 = println($desugar$25) -> bb114;
+  }
+  bb114 {
+    %120 = readVarInt(rd) -> bb115;
+  }
+  bb115 {
+    $desugar$26 = %120;
+    %122 = $desugar$26 is error
+    %122 ? bb116 : bb117;
+  }
+  bb116 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$26);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb117 {
+    %123 = println($desugar$26) -> bb118;
+  }
+  bb118 {
+    %124 = readVarInt(rd) -> bb119;
+  }
+  bb119 {
+    $desugar$27 = %124;
+    %126 = $desugar$27 is error
+    %126 ? bb120 : bb121;
+  }
+  bb120 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$27);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb121 {
+    %127 = println($desugar$27) -> bb122;
+  }
+  bb122 {
+    %128 = close(rd) -> bb123;
+  }
+  bb123 {
+    $desugar$28 = %128;
+    %130 = $desugar$28 is error
+    %130 ? bb124 : bb125;
+  }
+  bb124 {
+    PushScopeFrame 0
+    (4, %0) = (1, $desugar$28);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb125 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb48, bb49] -> bb50, %13
+  }
+}

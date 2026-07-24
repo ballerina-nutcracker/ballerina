@@ -1,0 +1,316 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_char_read.txt))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref path)
+            (literal héllo
+wörld)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal 13)
+              (literal 10))
+            (simple-var-ref io APPEND)))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref path)
+            (literal last)
+            (simple-var-ref io APPEND)))))
+      (var-def
+        (variable rb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (checked-expr
+            (invocation io openReadableFile (
+              (simple-var-ref path)))))))
+      (var-def
+        (variable rc (type
+          (user-defined-type io ReadableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref rb)
+            (literal UTF-8))))))
+      (var-def
+        (variable first (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation read expr:
+              (simple-var-ref rc) (
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))
+      (var-def
+        (variable rest (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation readString expr:
+              (simple-var-ref rc) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rest))))
+      (var-def
+        (variable atEnd (type
+          (union-type
+            (value-type string)
+            (user-defined-type io Error))) (expr
+          (invocation read expr:
+            (simple-var-ref rc) (
+            (literal 1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref atEnd)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref atEnd) ()))))) ())
+      (block-stmt
+        (expression-stmt
+          (checked-expr
+            (invocation close expr:
+              (simple-var-ref rc) ())))
+        (var-def
+          (variable closedAgain (type
+            (union-type
+              (user-defined-type io Error)
+              (value-type null))) (expr
+            (invocation close expr:
+              (simple-var-ref rc) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref closedAgain)
+            (user-defined-type io Error))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation message expr:
+                  (simple-var-ref closedAgain) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable afterClose (type
+              (union-type
+                (value-type string)
+                (user-defined-type io Error))) (expr
+              (invocation read expr:
+                (simple-var-ref rc) (
+                (literal 1))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref afterClose)
+              (user-defined-type io Error))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation message expr:
+                    (simple-var-ref afterClose) ()))))) ())
+          (block-stmt
+            (var-def
+              (variable mb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (checked-expr
+                  (invocation io createReadableChannel (
+                    (list-constructor-expr
+                      (literal 97)
+                      (literal 98))))))))
+            (var-def
+              (variable mc (type
+                (user-defined-type io ReadableCharacterChannel)) (expr
+                (new (
+                  (simple-var-ref mb)
+                  (literal UTF-8))))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation read expr:
+                    (simple-var-ref mc) (
+                    (literal 2)))))))
+            (var-def
+              (variable empty (type
+                (value-type string)) (expr
+                (checked-expr
+                  (invocation read expr:
+                    (simple-var-ref mc) (
+                    (literal 1)))))))
+            (expression-stmt
+              (invocation io println (
+                (invocation length expr:
+                  (simple-var-ref empty) ()))))
+            (var-def
+              (variable eof (type
+                (union-type
+                  (value-type string)
+                  (user-defined-type io Error))) (expr
+                (invocation read expr:
+                  (simple-var-ref mc) (
+                  (literal 1))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref eof)
+                (user-defined-type io Error))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (invocation message expr:
+                      (simple-var-ref eof) ()))))) ())
+            (block-stmt
+              (expression-stmt
+                (checked-expr
+                  (invocation close expr:
+                    (simple-var-ref mc) ())))
+              (var-def
+                (variable lb (type
+                  (user-defined-type io ReadableByteChannel)) (expr
+                  (checked-expr
+                    (invocation io openReadableFile (
+                      (simple-var-ref path)))))))
+              (var-def
+                (variable lc (type
+                  (user-defined-type io ReadableCharacterChannel)) (expr
+                  (new (
+                    (simple-var-ref lb)
+                    (literal UTF-8))))))
+              (var-def
+                (variable lines (type
+                  (array-type
+                    (value-type string) dimensions: 1 ([]))) (expr
+                  (checked-expr
+                    (invocation readAllLines expr:
+                      (simple-var-ref lc) ())))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation length expr:
+                    (simple-var-ref lines) ()))))
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref lines)
+                    (literal 1)))))
+              (expression-stmt
+                (checked-expr
+                  (invocation close expr:
+                    (simple-var-ref lc) ())))
+              (var-def
+                (variable sb (type
+                  (user-defined-type io ReadableByteChannel)) (expr
+                  (checked-expr
+                    (invocation io openReadableFile (
+                      (simple-var-ref path)))))))
+              (var-def
+                (variable sc (type
+                  (user-defined-type io ReadableCharacterChannel)) (expr
+                  (new (
+                    (simple-var-ref sb)
+                    (literal UTF-8))))))
+              (var-def
+                (variable ls (type
+                  (stream-type
+                    (value-type string)
+                    (union-type
+                      (user-defined-type io Error)
+                      (value-type null)))) (expr
+                  (checked-expr
+                    (invocation lineStream expr:
+                      (simple-var-ref sc) ())))))
+              (var-def
+                (variable l1 (type
+                  (union-type
+                    (record-type
+                      (field value
+                        (value-type string)))
+                    (union-type
+                      (user-defined-type io Error)
+                      (value-type null)))) (expr
+                  (invocation next expr:
+                    (simple-var-ref ls) ()))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref l1)
+                  (record-type
+                    (field value
+                      (value-type string))))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (field-based-access value
+                        (simple-var-ref l1)))))) ())
+              (block-stmt
+                (var-def
+                  (variable l2 (type
+                    (union-type
+                      (record-type
+                        (field value
+                          (value-type string)))
+                      (union-type
+                        (user-defined-type io Error)
+                        (value-type null)))) (expr
+                    (invocation next expr:
+                      (simple-var-ref ls) ()))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref l2)
+                    (record-type
+                      (field value
+                        (value-type string))))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (field-based-access value
+                          (simple-var-ref l2)))))) ())
+                (block-stmt
+                  (var-def
+                    (variable l3 (type
+                      (union-type
+                        (record-type
+                          (field value
+                            (value-type string)))
+                        (union-type
+                          (user-defined-type io Error)
+                          (value-type null)))) (expr
+                      (invocation next expr:
+                        (simple-var-ref ls) ()))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref l3)
+                      (record-type
+                        (field value
+                          (value-type string))))
+                    (block-stmt
+                      (expression-stmt
+                        (invocation io println (
+                          (field-based-access value
+                            (simple-var-ref l3)))))) ())
+                  (block-stmt
+                    (var-def
+                      (variable l4 (type
+                        (union-type
+                          (record-type
+                            (field value
+                              (value-type string)))
+                          (union-type
+                            (user-defined-type io Error)
+                            (value-type null)))) (expr
+                        (invocation next expr:
+                          (simple-var-ref ls) ()))))
+                    (expression-stmt
+                      (invocation io println (
+                        (type-test-expr is
+                          (simple-var-ref l4)
+                          (value-type null)))))
+                    (expression-stmt
+                      (checked-expr
+                        (invocation close expr:
+                          (simple-var-ref ls) ())))))))))))))

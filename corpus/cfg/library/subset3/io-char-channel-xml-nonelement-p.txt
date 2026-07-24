@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable wb (type
+        (user-defined-type io WritableByteChannel)) (expr
+        (checked-expr
+          (invocation io openWritableFile (
+            (literal /tmp/bal_io_char_xml_nonelement.xml)))))))
+    (var-def
+      (variable wc (type
+        (user-defined-type io WritableCharacterChannel)) (expr
+        (new (
+          (simple-var-ref wb)
+          (literal UTF-8))))))
+    (var-def
+      (variable seq (type
+        (value-type xml)) (expr
+        (xml-sequence-literal
+          (xml-comment-literal c)
+          (xml-element-literal note)))))
+    (expression-stmt
+      (checked-expr
+        (invocation writeXml expr:
+          (simple-var-ref wc) (
+          (simple-var-ref seq)
+          (mapping-constructor-expr
+            (key-value
+              (literal system)
+              (literal note.dtd)))))))
+    (expression-stmt
+      (invocation io println (
+        (literal unreached))))
+  )
+)

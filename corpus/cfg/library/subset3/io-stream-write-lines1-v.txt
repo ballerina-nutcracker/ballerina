@@ -1,0 +1,127 @@
+(LineProvider
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access lines
+          (simple-var-ref self))
+        (simple-var-ref lines))
+    )
+  )
+  (next
+    (bb0 () (bb1 bb2)
+      (binary-expr >=
+        (field-based-access idx
+          (simple-var-ref self))
+        (invocation lang.array length (
+          (field-based-access lines
+            (simple-var-ref self)))))
+    )
+    (bb1 (bb0) ()
+      (return
+        (literal <nil>))
+    )
+    (bb2 (bb0) ()
+      (var-def
+        (variable line (type
+          (value-type string)) (expr
+          (index-based-access
+            (field-based-access lines
+              (simple-var-ref self))
+            (field-based-access idx
+              (simple-var-ref self))))))
+      (compound-assignment +
+        (field-based-access idx
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref line))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable path (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_stream_write_lines1.txt))))
+    (var-def
+      (variable lineStream (type
+        (stream-type
+          (value-type string)
+          (union-type
+            (user-defined-type io Error)
+            (value-type null)))) (expr
+        (new (
+          (new
+            (user-defined-type LineProvider) (
+            (list-constructor-expr
+              (literal One)
+              (literal Two)
+              (literal Three)))))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteLinesFromStream (
+          (simple-var-ref path)
+          (simple-var-ref lineStream)))))
+    (var-def
+      (variable lines (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadLines (
+            (simple-var-ref path)))))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref lines)
+    (var-def
+      (variable line (type
+        (value-type string))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref line))))
+  )
+  (bb3 (bb1) (bb4)
+    (var-def
+      (variable appendStream (type
+        (stream-type
+          (value-type string)
+          (union-type
+            (user-defined-type io Error)
+            (value-type null)))) (expr
+        (new (
+          (new
+            (user-defined-type LineProvider) (
+            (list-constructor-expr
+              (literal Four)))))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteLinesFromStream (
+          (simple-var-ref path)
+          (simple-var-ref appendStream)
+          (simple-var-ref io APPEND)))))
+    (var-def
+      (variable allLines (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadLines (
+            (simple-var-ref path)))))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref allLines)
+    (var-def
+      (variable line (type
+        (value-type string))))
+  )
+  (bb5 (bb4) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref line))))
+  )
+  (bb6 (bb4) ())
+)

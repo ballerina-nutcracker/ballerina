@@ -1,0 +1,57 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 33
+    %2 = ConstantLoad 64
+    %3 = ConstantLoad 35
+    %4 = ConstantLoad 36
+    %5 = ConstantLoad 4
+    %6 = newArray [int:Unsigned8...][%5]{%1, %2, %3, %4}
+    %7 = createReadableChannel(%6) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %7;
+    %9 = $desugar$0 is error
+    %9 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    bad = $desugar$0;
+    %11 = base64Decode(bad) -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %11;
+    %13 = $desugar$1 is error
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    dec = $desugar$1;
+    %15 = readAll(dec) -> bb7;
+  }
+  bb7 {
+    $desugar$2 = %15;
+    %17 = $desugar$2 is error
+    %17 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb9 {
+    _ = $desugar$2;
+    return;
+  }
+}

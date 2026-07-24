@@ -23,7 +23,7 @@
           (simple-var-ref nsContent))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def
@@ -73,7 +73,7 @@
           (simple-var-ref multiContent))))
       (var-def
         (variable $desugar$7 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$5)
             (simple-var-ref $desugar$6))))))
       (var-def
@@ -120,7 +120,7 @@
   ))))
       (var-def
         (variable $desugar$12 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$10)
             (simple-var-ref $desugar$11))))))
       (var-def
@@ -168,7 +168,7 @@
           (literal <root><unclosed></root>))))
       (var-def
         (variable $desugar$17 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$15)
             (simple-var-ref $desugar$16))))))
       (var-def
@@ -209,7 +209,7 @@
           (literal </root>))))
       (var-def
         (variable $desugar$21 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$19)
             (simple-var-ref $desugar$20))))))
       (var-def

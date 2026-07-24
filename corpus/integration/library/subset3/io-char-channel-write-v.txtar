@@ -1,0 +1,12 @@
+-- stdout --
+13
+2
+Character channel is already closed.
+Character channel is already closed.
+héllo wörldbc!
+héllo wörldbc!
++more
+4
+4
+café
+-- stderr --

@@ -1,0 +1,418 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 72
+    %2 = ConstantLoad 105
+    %3 = ConstantLoad 33
+    %4 = ConstantLoad 3
+    %5 = newArray [int:Unsigned8...][%4]{%1, %2, %3}
+    %6 = createReadableChannel(%5) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %6;
+    %8 = $desugar$0 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    src = $desugar$0;
+    %10 = base64Encode(src) -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %10;
+    %12 = $desugar$1 is error
+    %12 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    enc = $desugar$1;
+    %14 = readAll(enc) -> bb7;
+  }
+  bb7 {
+    $desugar$2 = %14;
+    %16 = $desugar$2 is error
+    %16 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb9 {
+    encBytes = $desugar$2;
+    %18 = fromBytes(encBytes) -> bb10;
+  }
+  bb10 {
+    $desugar$3 = %18;
+    %20 = $desugar$3 is error
+    %20 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    %21 = println($desugar$3) -> bb13;
+  }
+  bb13 {
+    %22 = createReadableChannel(encBytes) -> bb14;
+  }
+  bb14 {
+    $desugar$4 = %22;
+    %24 = $desugar$4 is error
+    %24 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb16 {
+    back = $desugar$4;
+    %26 = base64Decode(back) -> bb17;
+  }
+  bb17 {
+    $desugar$5 = %26;
+    %28 = $desugar$5 is error
+    %28 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb19 {
+    dec = $desugar$5;
+    %30 = readAll(dec) -> bb20;
+  }
+  bb20 {
+    $desugar$6 = %30;
+    %32 = $desugar$6 is error
+    %32 ? bb21 : bb22;
+  }
+  bb21 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$6);
+    PopScopeFrame
+    return;
+  }
+  bb22 {
+    decBytes = $desugar$6;
+    %34 = fromBytes(decBytes) -> bb23;
+  }
+  bb23 {
+    $desugar$7 = %34;
+    %36 = $desugar$7 is error
+    %36 ? bb24 : bb25;
+  }
+  bb24 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$7);
+    PopScopeFrame
+    return;
+  }
+  bb25 {
+    %37 = println($desugar$7) -> bb26;
+  }
+  bb26 {
+    %38 = base64Encode(src) -> bb27;
+  }
+  bb27 {
+    $desugar$8 = %38;
+    %40 = $desugar$8 is error
+    %40 ? bb28 : bb29;
+  }
+  bb28 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$8);
+    PopScopeFrame
+    return;
+  }
+  bb29 {
+    drainedEnc = $desugar$8;
+    %42 = readAll(drainedEnc) -> bb30;
+  }
+  bb30 {
+    $desugar$9 = %42;
+    %44 = $desugar$9 is error
+    %44 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$9);
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    emptyBytes = $desugar$9;
+    %46 = length(emptyBytes) -> bb33;
+  }
+  bb33 {
+    %47 = %46;
+    %48 = println(%47) -> bb34;
+  }
+  bb34 {
+    %49 = ConstantLoad 83
+    %50 = ConstantLoad 71
+    %51 = ConstantLoad 107
+    %52 = ConstantLoad 3
+    %53 = newArray [int:Unsigned8...][%52]{%49, %50, %51}
+    %54 = createReadableChannel(%53) -> bb35;
+  }
+  bb35 {
+    $desugar$10 = %54;
+    %56 = $desugar$10 is error
+    %56 ? bb36 : bb37;
+  }
+  bb36 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$10);
+    PopScopeFrame
+    return;
+  }
+  bb37 {
+    unpadded = $desugar$10;
+    %58 = base64Decode(unpadded) -> bb38;
+  }
+  bb38 {
+    $desugar$11 = %58;
+    %60 = $desugar$11 is error
+    %60 ? bb39 : bb40;
+  }
+  bb39 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$11);
+    PopScopeFrame
+    return;
+  }
+  bb40 {
+    dec2 = $desugar$11;
+    %62 = readAll(dec2) -> bb41;
+  }
+  bb41 {
+    $desugar$12 = %62;
+    %64 = $desugar$12 is error
+    %64 ? bb42 : bb43;
+  }
+  bb42 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$12);
+    PopScopeFrame
+    return;
+  }
+  bb43 {
+    unpaddedBytes = $desugar$12;
+    %66 = fromBytes(unpaddedBytes) -> bb44;
+  }
+  bb44 {
+    $desugar$13 = %66;
+    %68 = $desugar$13 is error
+    %68 ? bb45 : bb46;
+  }
+  bb45 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$13);
+    PopScopeFrame
+    return;
+  }
+  bb46 {
+    %69 = println($desugar$13) -> bb47;
+  }
+  bb47 {
+    %70 = ConstantLoad /tmp/bal_io_byte_channel_base64.bin
+    path = %70;
+    $desugar$14 = path;
+    %73 = ConstantLoad 72
+    %74 = ConstantLoad 105
+    %75 = ConstantLoad 33
+    %76 = ConstantLoad 3
+    %77 = newArray [int:Unsigned8...][%76]{%73, %74, %75}
+    $desugar$15 = %77;
+    %79 = $default$4($desugar$14,$desugar$15) -> bb48;
+  }
+  bb48 {
+    $desugar$16 = %79;
+    %81 = fileWriteBytes($desugar$14,$desugar$15,$desugar$16) -> bb49;
+  }
+  bb49 {
+    $desugar$17 = %81;
+    %83 = $desugar$17 is error
+    %83 ? bb50 : bb51;
+  }
+  bb50 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$17);
+    PopScopeFrame
+    return;
+  }
+  bb51 {
+    %84 = openReadableFile(path) -> bb52;
+  }
+  bb52 {
+    $desugar$18 = %84;
+    %86 = $desugar$18 is error
+    %86 ? bb53 : bb54;
+  }
+  bb53 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$18);
+    PopScopeFrame
+    return;
+  }
+  bb54 {
+    fileCh = $desugar$18;
+    %88 = base64Encode(fileCh) -> bb55;
+  }
+  bb55 {
+    $desugar$19 = %88;
+    %90 = $desugar$19 is error
+    %90 ? bb56 : bb57;
+  }
+  bb56 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$19);
+    PopScopeFrame
+    return;
+  }
+  bb57 {
+    fileEnc = $desugar$19;
+    %92 = readAll(fileEnc) -> bb58;
+  }
+  bb58 {
+    $desugar$20 = %92;
+    %94 = $desugar$20 is error
+    %94 ? bb59 : bb60;
+  }
+  bb59 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$20);
+    PopScopeFrame
+    return;
+  }
+  bb60 {
+    fileEncBytes = $desugar$20;
+    %96 = fromBytes(fileEncBytes) -> bb61;
+  }
+  bb61 {
+    $desugar$21 = %96;
+    %98 = $desugar$21 is error
+    %98 ? bb62 : bb63;
+  }
+  bb62 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$21);
+    PopScopeFrame
+    return;
+  }
+  bb63 {
+    %99 = println($desugar$21) -> bb64;
+  }
+  bb64 {
+    %100 = close(fileCh) -> bb65;
+  }
+  bb65 {
+    $desugar$22 = %100;
+    %102 = $desugar$22 is error
+    %102 ? bb66 : bb67;
+  }
+  bb66 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$22);
+    PopScopeFrame
+    return;
+  }
+  bb67 {
+    %103 = ConstantLoad 1
+    %104 = ConstantLoad 2
+    %105 = ConstantLoad 3
+    %106 = ConstantLoad 3
+    %107 = newArray [int:Unsigned8...][%106]{%103, %104, %105}
+    %108 = createReadableChannel(%107) -> bb68;
+  }
+  bb68 {
+    $desugar$23 = %108;
+    %110 = $desugar$23 is error
+    %110 ? bb69 : bb70;
+  }
+  bb69 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$23);
+    PopScopeFrame
+    return;
+  }
+  bb70 {
+    closedCh = $desugar$23;
+    %112 = close(closedCh) -> bb71;
+  }
+  bb71 {
+    $desugar$24 = %112;
+    %114 = $desugar$24 is error
+    %114 ? bb72 : bb73;
+  }
+  bb72 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$24);
+    PopScopeFrame
+    return;
+  }
+  bb73 {
+    %115 = base64Encode(closedCh) -> bb74;
+  }
+  bb74 {
+    encClosed = %115;
+    %117 = encClosed is error
+    %117 ? bb75 : bb78;
+  }
+  bb75 {
+    PushScopeFrame 2
+    %0 = message((1, encClosed)) -> bb76;
+  }
+  bb76 {
+    %1 = println(%0) -> bb77;
+  }
+  bb77 {
+    PopScopeFrame
+    GOTO bb78;
+  }
+  bb78 {
+    PushScopeFrame 3
+    %0 = base64Decode((1, closedCh)) -> bb79;
+  }
+  bb79 {
+    decClosed = %0;
+    %2 = decClosed is error
+    %2 ? bb80 : bb83;
+  }
+  bb80 {
+    PushScopeFrame 2
+    %0 = message((1, decClosed)) -> bb81;
+  }
+  bb81 {
+    %1 = println(%0) -> bb82;
+  }
+  bb82 {
+    PopScopeFrame
+    GOTO bb83;
+  }
+  bb83 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

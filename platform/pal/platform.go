@@ -64,6 +64,11 @@ type (
 		ReadFile   func(path string) ([]byte, error)
 		WriteFile  func(path string, data []byte) error
 		AppendFile func(path string, data []byte) error
+		// OpenReadable opens path for streaming reads. Close releases the handle.
+		OpenReadable func(path string) (io.ReadCloser, error)
+		// OpenWritable opens path for streaming writes, truncating unless appendMode
+		// is set. Close flushes and releases the handle.
+		OpenWritable func(path string, appendMode bool) (io.WriteCloser, error)
 	}
 	OS struct {
 		GetEnv      func(name string) string

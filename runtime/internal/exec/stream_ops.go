@@ -38,7 +38,7 @@ func resolveStreamMethods(ctx *extern.Context, impl *values.Object) (next, close
 	next = func() values.BalValue {
 		result, err := ctx.InvokeMethod(nextHandle, args)
 		if err != nil {
-			panic(err)
+			panicWithExternError(err)
 		}
 		return result
 	}
@@ -46,7 +46,7 @@ func resolveStreamMethods(ctx *extern.Context, impl *values.Object) (next, close
 		close = func() values.BalValue {
 			result, err := ctx.InvokeMethod(closeHandle, args)
 			if err != nil {
-				panic(err)
+				panicWithExternError(err)
 			}
 			return result
 		}

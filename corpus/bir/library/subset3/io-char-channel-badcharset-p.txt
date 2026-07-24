@@ -1,0 +1,60 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int:Unsigned8...][%3]{%1, %2}
+    %5 = createReadableChannel(%4) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %5;
+    %7 = $desugar$0 is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    rb = $desugar$0;
+    %9 = newObject ballerina/io:ReadableCharacterChannel
+    %10 = ConstantLoad NOT-A-CHARSET
+    %11 = init(%9,rb,%10) -> bb4;
+  }
+  bb4 {
+    %13 = %11 is nil
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    %12 = %9;
+    GOTO bb7;
+  }
+  bb6 {
+    %12 = %11;
+    GOTO bb7;
+  }
+  bb7 {
+    rc = %12;
+    %15 = ConstantLoad 1
+    %16 = %15;
+    %17 = read(rc,%16) -> bb8;
+  }
+  bb8 {
+    $desugar$1 = %17;
+    %19 = $desugar$1 is error
+    %19 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    _ = $desugar$1;
+    return;
+  }
+}

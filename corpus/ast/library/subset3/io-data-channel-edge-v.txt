@@ -1,0 +1,240 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable cb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (checked-expr
+            (invocation io createReadableChannel (
+              (list-constructor-expr
+                (literal 1)
+                (literal 2))))))))
+      (var-def
+        (variable cd (type
+          (user-defined-type io ReadableDataChannel)) (expr
+          (new (
+            (simple-var-ref cb))))))
+      (expression-stmt
+        (checked-expr
+          (invocation close expr:
+            (simple-var-ref cd) ())))
+      (var-def
+        (variable closedAgain (type
+          (union-type
+            (user-defined-type io Error)
+            (value-type null))) (expr
+          (invocation close expr:
+            (simple-var-ref cd) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref closedAgain)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref closedAgain) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable closedRead (type
+            (union-type
+              (value-type int)
+              (user-defined-type io Error))) (expr
+            (invocation readInt16 expr:
+              (simple-var-ref cd) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref closedRead)
+            (user-defined-type io Error))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation message expr:
+                  (simple-var-ref closedRead) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable eb (type
+              (user-defined-type io ReadableByteChannel)) (expr
+              (checked-expr
+                (invocation io createReadableChannel (
+                  (list-constructor-expr)))))))
+          (var-def
+            (variable ed (type
+              (user-defined-type io ReadableDataChannel)) (expr
+              (new (
+                (simple-var-ref eb))))))
+          (var-def
+            (variable first (type
+              (value-type string)) (expr
+              (checked-expr
+                (invocation readString expr:
+                  (simple-var-ref ed) (
+                  (literal 3)
+                  (literal UTF-8)))))))
+          (expression-stmt
+            (invocation io println (
+              (invocation length expr:
+                (simple-var-ref first) ()))))
+          (var-def
+            (variable second (type
+              (union-type
+                (value-type string)
+                (user-defined-type io Error))) (expr
+              (invocation readString expr:
+                (simple-var-ref ed) (
+                (literal 3)
+                (literal UTF-8))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref second)
+              (user-defined-type io Error))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation message expr:
+                    (simple-var-ref second) ()))))) ())
+          (block-stmt
+            (var-def
+              (variable tb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (checked-expr
+                  (invocation io createReadableChannel (
+                    (list-constructor-expr)))))))
+            (var-def
+              (variable td (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref tb))))))
+            (var-def
+              (variable trapped (type
+                (union-type
+                  (value-type int)
+                  (error-type))) (expr
+                (trap-expr
+                  (invocation readInt16 expr:
+                    (simple-var-ref td) ())))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref trapped)
+                  (error-type)))))
+            (var-def
+              (variable sb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (checked-expr
+                  (invocation io createReadableChannel (
+                    (list-constructor-expr
+                      (literal 1)
+                      (literal 2))))))))
+            (var-def
+              (variable sd (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref sb))))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation readInt32 expr:
+                    (simple-var-ref sd) ())))))
+            (var-def
+              (variable lb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (checked-expr
+                  (invocation io createReadableChannel (
+                    (list-constructor-expr
+                      (literal 1)
+                      (literal 2))))))))
+            (var-def
+              (variable ld (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref lb)
+                  (simple-var-ref io LITTLE_ENDIAN))))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation readInt32 expr:
+                    (simple-var-ref ld) ())))))
+            (var-def
+              (variable path (type
+                (value-type string)) (expr
+                (literal /tmp/bal_io_dc_varint.bin))))
+            (var-def
+              (variable wb (type
+                (user-defined-type io WritableByteChannel)) (expr
+                (checked-expr
+                  (invocation io openWritableFile (
+                    (simple-var-ref path)))))))
+            (var-def
+              (variable wd (type
+                (user-defined-type io WritableDataChannel)) (expr
+                (new (
+                  (simple-var-ref wb))))))
+            (expression-stmt
+              (checked-expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (literal 1)))))
+            (expression-stmt
+              (checked-expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (unary-expr -
+                    (literal 1))))))
+            (expression-stmt
+              (checked-expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (literal 9223372036854775807)))))
+            (expression-stmt
+              (checked-expr
+                (invocation writeVarInt expr:
+                  (simple-var-ref wd) (
+                  (binary-expr -
+                    (unary-expr -
+                      (literal 9223372036854775807))
+                    (literal 1))))))
+            (expression-stmt
+              (checked-expr
+                (invocation close expr:
+                  (simple-var-ref wd) ())))
+            (var-def
+              (variable rb (type
+                (user-defined-type io ReadableByteChannel)) (expr
+                (checked-expr
+                  (invocation io openReadableFile (
+                    (simple-var-ref path)))))))
+            (var-def
+              (variable rd (type
+                (user-defined-type io ReadableDataChannel)) (expr
+                (new (
+                  (simple-var-ref rb))))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation readVarInt expr:
+                    (simple-var-ref rd) ())))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation readVarInt expr:
+                    (simple-var-ref rd) ())))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation readVarInt expr:
+                    (simple-var-ref rd) ())))))
+            (expression-stmt
+              (invocation io println (
+                (checked-expr
+                  (invocation readVarInt expr:
+                    (simple-var-ref rd) ())))))
+            (expression-stmt
+              (checked-expr
+                (invocation close expr:
+                  (simple-var-ref rd) ())))))))))

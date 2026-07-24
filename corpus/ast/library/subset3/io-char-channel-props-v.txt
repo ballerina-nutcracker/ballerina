@@ -1,0 +1,223 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_char_props.properties))))
+      (var-def
+        (variable content (type
+          (value-type string)) (expr
+          (literal # a comment
+! another comment
+name=Ballerina
+  spaced.key : value with spaces  
+empty=
+esc\:aped=x
+multi=line one \
+    continued
+tabbed	value
+uni=\u00E9clair
+nl=a\nb
+))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteString (
+            (simple-var-ref path)
+            (simple-var-ref content)))))
+      (var-def
+        (variable rb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (checked-expr
+            (invocation io openReadableFile (
+              (simple-var-ref path)))))))
+      (var-def
+        (variable rc (type
+          (user-defined-type io ReadableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref rb)
+            (literal UTF-8))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal name)))))))
+      (expression-stmt
+        (invocation io println (
+          (literal [)
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal spaced.key))))
+          (literal ]))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal missing)
+              (literal fallback)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal esc:aped)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal multi)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal tabbed)))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal uni)))))))
+      (var-def
+        (variable nl (type
+          (value-type string)) (expr
+          (checked-expr
+            (invocation readProperty expr:
+              (simple-var-ref rc) (
+              (literal nl)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref nl) ()))))
+      (var-def
+        (variable all (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (checked-expr
+            (invocation readAllProperties expr:
+              (simple-var-ref rc) ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref all) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref all)
+              (literal empty))
+            (literal )))))
+      (expression-stmt
+        (checked-expr
+          (invocation close expr:
+            (simple-var-ref rc) ())))
+      (var-def
+        (variable wpath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_char_props_out.properties))))
+      (var-def
+        (variable wb (type
+          (user-defined-type io WritableByteChannel)) (expr
+          (checked-expr
+            (invocation io openWritableFile (
+              (simple-var-ref wpath)))))))
+      (var-def
+        (variable wc (type
+          (user-defined-type io WritableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref wb)
+            (literal UTF-8))))))
+      (expression-stmt
+        (checked-expr
+          (invocation writeProperties expr:
+            (simple-var-ref wc) (
+            (mapping-constructor-expr
+              (key-value
+                (literal key one)
+                (literal value=1))
+              (key-value
+                (literal plain)
+                (literal text))
+              (key-value
+                (literal uni)
+                (literal ü))
+              (key-value
+                (literal tab)
+                (literal a	b))
+              (key-value
+                (literal line)
+                (literal a
+b)))
+            (literal generated)))))
+      (expression-stmt
+        (checked-expr
+          (invocation close expr:
+            (simple-var-ref wc) ())))
+      (var-def
+        (variable vb (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (checked-expr
+            (invocation io openReadableFile (
+              (simple-var-ref wpath)))))))
+      (var-def
+        (variable vc (type
+          (user-defined-type io ReadableCharacterChannel)) (expr
+          (new (
+            (simple-var-ref vb)
+            (literal UTF-8))))))
+      (var-def
+        (variable written (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (checked-expr
+            (invocation readAllProperties expr:
+              (simple-var-ref vc) ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref written) ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref written)
+            (literal key one)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref written)
+            (literal plain)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref written)
+            (literal uni)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref written)
+              (literal tab))
+            (literal a	b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref written)
+              (literal line))
+            (literal a
+b)))))
+      (expression-stmt
+        (checked-expr
+          (invocation close expr:
+            (simple-var-ref vc) ()))))))

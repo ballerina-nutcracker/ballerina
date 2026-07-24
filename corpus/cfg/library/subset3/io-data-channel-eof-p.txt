@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable rb (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io createReadableChannel (
+            (list-constructor-expr)))))))
+    (var-def
+      (variable rd (type
+        (user-defined-type io ReadableDataChannel)) (expr
+        (new (
+          (simple-var-ref rb))))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation readInt64 expr:
+            (simple-var-ref rd) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)

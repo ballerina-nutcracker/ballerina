@@ -1,0 +1,89 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable inPath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_stream_generic_in.txt))))
+    (var-def
+      (variable outPath (type
+        (value-type string)) (expr
+        (literal /tmp/bal_io_stream_generic_out.txt))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBytes (
+          (simple-var-ref inPath)
+          (list-constructor-expr
+            (literal 72)
+            (literal 101)
+            (literal 108)
+            (literal 108)
+            (literal 111))))))
+    (var-def
+      (variable blocks (type
+        (stream-type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))
+          (union-type
+            (error-type)
+            (value-type null)))) (expr
+        (checked-expr
+          (invocation io fileReadBlocksAsStream (
+            (simple-var-ref inPath)
+            (literal 2)))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteBlocksFromStream (
+          (simple-var-ref outPath)
+          (simple-var-ref blocks)))))
+    (var-def
+      (variable outBytes (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadBytes (
+            (simple-var-ref outPath)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref outBytes))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteLines (
+          (simple-var-ref inPath)
+          (list-constructor-expr
+            (literal Alpha)
+            (literal Beta))))))
+    (var-def
+      (variable lines (type
+        (stream-type
+          (value-type string)
+          (union-type
+            (error-type)
+            (value-type null)))) (expr
+        (checked-expr
+          (invocation io fileReadLinesAsStream (
+            (simple-var-ref inPath)))))))
+    (expression-stmt
+      (checked-expr
+        (invocation io fileWriteLinesFromStream (
+          (simple-var-ref outPath)
+          (simple-var-ref lines)))))
+    (var-def
+      (variable outLines (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation io fileReadLines (
+            (simple-var-ref outPath)))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref outLines)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref outLines)
+          (literal 1)))))
+  )
+)

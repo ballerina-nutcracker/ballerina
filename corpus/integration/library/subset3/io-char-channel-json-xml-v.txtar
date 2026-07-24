@@ -1,0 +1,13 @@
+-- stdout --
+Ballerina
+12
+true
+<!DOCTYPE note SYSTEM "note.dtd">
+<note><to>Tove</to></note>
+<!DOCTYPE note PUBLIC "-//W3C//DTD//EN" "note.dtd">
+<note><to>Tove</to></note>
+<!DOCTYPE note [<!ELEMENT to (#PCDATA)>]>
+<note><to>Tove</to></note>
+<note><to>Tove</to></note>
+<note><to>Tove</to></note>
+-- stderr --
