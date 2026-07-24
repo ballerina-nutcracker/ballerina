@@ -22,18 +22,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// SilenceUsage avoids duplicating the USAGE block subcommands already embed
+// in their errors (see usageError).
 var rootCmd = &cobra.Command{
-	Use:           "bal",
-	Short:         "The build system and package manager of Ballerina",
-	Long:          `The build system and package manager of Ballerina`,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Use:          "bal",
+	Short:        "The build system and package manager of Ballerina",
+	Long:         `The build system and package manager of Ballerina`,
+	SilenceUsage: true,
 }
 
 func main() {
+	rootCmd.SetErrPrefix("ballerina:")
+
 	rootCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(packCmd)
+	rootCmd.AddCommand(pushCmd)
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {

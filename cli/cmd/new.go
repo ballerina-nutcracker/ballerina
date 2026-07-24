@@ -30,6 +30,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func newError(format string, args ...any) error {
+	return usageError("new <project-path>", format, args...)
+}
+
+func newWorkspaceError(format string, args ...any) error {
+	return usageError("new --workspace <path>", format, args...)
+}
+
+// newErrorFor picks the package- or workspace-specific USAGE block based on
+// whether --workspace was set, so errors before the package/workspace split
+// (template validation, arg validation, path resolution) still show the
+// right usage line.
+func newErrorFor(workspace bool, format string, args ...any) error {
+	if workspace {
+		return newWorkspaceError(format, args...)
+	}
+	return newError(format, args...)
+}
+
 var newCmd = createNewCmd()
 
 // createNewCmd creates a new instance of the 'new' command.
@@ -68,8 +87,7 @@ func createNewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tmpl, err := validateTemplate(template)
 			if err != nil {
-				printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-				return err
+				return newErrorFor(workspace, "%w", err)
 			}
 			return runNew(cmd, args, workspace, tmpl)
 		},
@@ -108,15 +126,12 @@ func validateTemplate(raw string) (templateName, error) {
 
 // validateNewArgs validates the arguments for the 'new' command.
 func validateNewArgs(cmd *cobra.Command, args []string) error {
+	ws, _ := cmd.Flags().GetBool("workspace")
 	if len(args) == 0 {
-		err := fmt.Errorf("project path is not provided")
-		printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-		return err
+		return newErrorFor(ws, "project path is not provided")
 	}
 	if len(args) > 1 {
-		err := fmt.Errorf("too many arguments")
-		printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-		return err
+		return newErrorFor(ws, "too many arguments")
 	}
 	return nil
 }
@@ -128,8 +143,7 @@ func runNew(cmd *cobra.Command, args []string, workspace bool, template template
 	// Convert to absolute path
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
-		printErrorTo(cmd.ErrOrStderr(), fmt.Errorf("invalid path: %w", err), "new <project-path>", false)
-		return err
+		return newErrorFor(workspace, "invalid path: %w", err)
 	}
 
 	if workspace {
@@ -148,20 +162,15 @@ func runNewPackage(cmd *cobra.Command, absPath, projectPath string, template tem
 	if err == nil {
 		// Directory exists - check for conflicts
 		if !info.IsDir() {
-			err := fmt.Errorf("path exists and is not a directory: %s", absPath)
-			printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-			return err
+			return newError("path exists and is not a directory: %s", absPath)
 		}
 
 		if err := checkExistingDirectory(absPath); err != nil {
-			printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-			return err
+			return newError("%w", err)
 		}
 	} else if !os.IsNotExist(err) {
 		// Some other error (not "does not exist")
-		err := fmt.Errorf("error checking path: %w", err)
-		printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-		return err
+		return newError("error checking path: %w", err)
 	}
 	// If path doesn't exist, it will be created by initPackage (including parent dirs)
 
@@ -186,8 +195,7 @@ func runNewPackage(cmd *cobra.Command, absPath, projectPath string, template tem
 
 	// Create the package
 	if err := initPackage(absPath, packageName, orgName, template); err != nil {
-		printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-		return err
+		return newError("%w", err)
 	}
 
 	// Print success message
@@ -206,12 +214,10 @@ func runNewPackage(cmd *cobra.Command, absPath, projectPath string, template tem
 	if workspaceRoot != "" {
 		relPath, err := filepath.Rel(workspaceRoot, absPath)
 		if err != nil {
-			printErrorTo(cmd.ErrOrStderr(), fmt.Errorf("failed to compute relative path: %w", err), "new <project-path>", false)
-			return err
+			return newError("failed to compute relative path: %w", err)
 		}
 		if err := addPackageToWorkspace(workspaceRoot, relPath); err != nil {
-			printErrorTo(cmd.ErrOrStderr(), err, "new <project-path>", false)
-			return err
+			return newError("%w", err)
 		}
 		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Added package to workspace at %s.\n", workspaceRoot)
 	}
@@ -223,14 +229,12 @@ func runNewPackage(cmd *cobra.Command, absPath, projectPath string, template tem
 func runNewWorkspace(cmd *cobra.Command, absPath, projectPath string, template templateName) error {
 	// Validate path
 	if err := validateWorkspacePath(absPath); err != nil {
-		printErrorTo(cmd.ErrOrStderr(), err, "new --workspace <path>", false)
-		return err
+		return newWorkspaceError("%w", err)
 	}
 
 	// Create directory if needed
 	if err := os.MkdirAll(absPath, 0755); err != nil {
-		printErrorTo(cmd.ErrOrStderr(), err, "new --workspace <path>", false)
-		return err
+		return newWorkspaceError("%w", err)
 	}
 
 	// Discover existing packages
@@ -244,8 +248,7 @@ func runNewWorkspace(cmd *cobra.Command, absPath, projectPath string, template t
 		orgName := guessOrgName()
 
 		if err := initPackage(pkgPath, pkgName, orgName, template); err != nil {
-			printErrorTo(cmd.ErrOrStderr(), err, "new --workspace <path>", false)
-			return err
+			return newWorkspaceError("%w", err)
 		}
 		packages = []string{pkgName}
 
@@ -272,8 +275,7 @@ func runNewWorkspace(cmd *cobra.Command, absPath, projectPath string, template t
 
 	// Write workspace Ballerina.toml
 	if err := writeWorkspaceToml(absPath, packages); err != nil {
-		printErrorTo(cmd.ErrOrStderr(), err, "new --workspace <path>", false)
-		return err
+		return newWorkspaceError("%w", err)
 	}
 
 	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Workspace created successfully.")

@@ -53,6 +53,13 @@ func printErrorTo(w io.Writer, err error, usage string, showHelp bool) {
 	}
 }
 
+// usageError wraps an error with a USAGE block; cobra prefixes the result
+// with "ballerina:" when printing.
+func usageError(usage, format string, args ...any) error {
+	inner := fmt.Errorf(format, args...)
+	return fmt.Errorf("%w\n\nUSAGE:\n    %s", inner, usage)
+}
+
 // validateSourceFile validates the source file argument for the 'run' command.
 // Allows zero arguments (defaults to current directory in runBallerina).
 func validateSourceFile(cmd *cobra.Command, args []string) error {

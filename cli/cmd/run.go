@@ -84,6 +84,9 @@ var runCmd = &cobra.Command{
 	Note: Running individual '.bal' files of a package is not allowed.`,
 	Args: validateSourceFile,
 	RunE: runBallerina,
+	// run prints its own errors (printRunError/printRuntimeError); other
+	// commands rely on cobra's default printing instead.
+	SilenceErrors: true,
 }
 
 func init() {
