@@ -31,15 +31,26 @@ See the [README](README.md) for more details on building, running corpus tests, 
 3. Commit and push to your fork, then open a Pull Request (PR).
 
    **Commit message guidelines:**
+
+   This repo allows merge commit, squash, and rebase merges, so every commit
+   you push can end up in the `main` history as-is. Because of that, the PR
+   title **and every commit subject** must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+
+   ```text
+   <type>(<optional scope>): <description>
+   ```
+
+   - `type` is one of: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`, `revert`
+   - `scope` is optional and usually the affected package (e.g., `ast`, `cli`, `http`, `semantics`)
+   - `description` starts with a lowercase letter, uses the imperative mood (e.g., "add X" not "added X"), and does not end with a period
+   - Keep the subject line under ~50 characters where practical (72 max)
    - Separate subject from body with a blank line
-   - Limit the subject line to 50 characters
-   - Capitalize the subject line
-   - Do not end the subject line with a period
-   - Use the imperative mood (e.g., "Add X" not "Added X")
    - Wrap the body at 72 characters
    - Use the body to explain what and why vs. how
 
-   See [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/) for more.
+   Example: `fix(ast): recover missing identifier nodes`
+
+   Both the PR title and every commit subject are checked automatically by the [Lint PR](.github/workflows/lint-pr.yml) workflow.
 
 4. If prompted, accept the Contributor License Agreement (CLA) when submitting your first PR.
 
