@@ -63,3 +63,6 @@ func (*BLangBadTypeNode) badNode() {}
 
 func (b *BLangBadIdentifier) GetValue() string { return b.Value }
 func (b *BLangBadIdentifier) IsLiteral() bool  { return b.isLiteral }
+func (b *BLangBadIdentifier) SetLiteral(isLiteral bool) {
+	b.isLiteral = isLiteral
+}

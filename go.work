@@ -13,6 +13,7 @@ use (
 	./desugar
 	./lib
 	./model
+	./node-builder
 	./parser
 	./platform
 	./projects
@@ -61,3 +62,5 @@ replace github.com/ballerina-nutcracker/ballerina/st v0.6.0 => ./st
 replace github.com/ballerina-nutcracker/ballerina/tools v0.6.0 => ./tools
 
 replace github.com/ballerina-nutcracker/ballerina/values v0.6.0 => ./values
+
+replace github.com/ballerina-nutcracker/ballerina/node-builder v0.6.0 => ./node-builder

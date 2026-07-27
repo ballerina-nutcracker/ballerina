@@ -30,6 +30,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	nodebuilder "github.com/ballerina-nutcracker/ballerina/node-builder"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -276,7 +277,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 
 	compilerCtx.StartStage(context.StageSymbolResolution)
 	pkgScope, exported := semantics.ResolveSymbols(compilerCtx, *pkgID, importedSymbolsByCU)
-	pkgNode := ast.ToPackageFromCompilationUnits(compilationUnits)
+	pkgNode := nodebuilder.ToPackageFromCompilationUnits(compilationUnits)
 	pkgNode.Imports = nil
 	pkgNode.PackageID = pkgID
 	pkgNode.Scope = pkgScope
@@ -440,9 +441,9 @@ func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*st.Syntax
 	for _, st := range syntaxTrees {
 		var cu *ast.BLangCompilationUnit
 		if dumpRecoveredAST {
-			cu = ast.GetRecoveredCompilationUnit(cx, st)
+			cu = nodebuilder.GetRecoveredCompilationUnit(cx, st)
 		} else {
-			cu = ast.GetCompilationUnit(cx, st)
+			cu = nodebuilder.GetCompilationUnit(cx, st)
 		}
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))

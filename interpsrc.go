@@ -43,6 +43,7 @@ import (
 	sourcedesugar "github.com/ballerina-nutcracker/ballerina/desugar"
 	sourcelib "github.com/ballerina-nutcracker/ballerina/lib"
 	sourcemodel "github.com/ballerina-nutcracker/ballerina/model"
+	sourcenodebuilder "github.com/ballerina-nutcracker/ballerina/node-builder"
 	sourceparser "github.com/ballerina-nutcracker/ballerina/parser"
 	sourceplatform "github.com/ballerina-nutcracker/ballerina/platform"
 	sourceprojects "github.com/ballerina-nutcracker/ballerina/projects"
@@ -77,6 +78,7 @@ var interpreterSources = []sourceTree{
 	{dir: "desugar", fs: sourcedesugar.InterpreterSource()},
 	{dir: "lib", fs: sourcelib.InterpreterSource()},
 	{dir: "model", fs: sourcemodel.InterpreterSource()},
+	{dir: "node-builder", fs: sourcenodebuilder.InterpreterSource()},
 	{dir: "parser", fs: sourceparser.InterpreterSource()},
 	{dir: "platform", fs: sourceplatform.InterpreterSource()},
 	{dir: "projects", fs: sourceprojects.InterpreterSource()},
@@ -228,6 +230,7 @@ use (
 	./desugar
 	./lib
 	./model
+	./node-builder
 	./parser
 	./platform
 	./projects
@@ -250,6 +253,7 @@ replace (
 	github.com/ballerina-nutcracker/ballerina/desugar v0.6.0 => ./desugar
 	github.com/ballerina-nutcracker/ballerina/lib v0.6.0 => ./lib
 	github.com/ballerina-nutcracker/ballerina/model v0.6.0 => ./model
+	github.com/ballerina-nutcracker/ballerina/node-builder v0.6.0 => ./node-builder
 	github.com/ballerina-nutcracker/ballerina/parser v0.6.0 => ./parser
 	github.com/ballerina-nutcracker/ballerina/platform v0.6.0 => ./platform
 	github.com/ballerina-nutcracker/ballerina/projects v0.6.0 => ./projects

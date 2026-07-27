@@ -17,15 +17,12 @@
 package ast
 
 import (
-	"fmt"
 	"iter"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/common"
-	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
-	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -689,6 +686,10 @@ func NewBLangService() BLangService {
 	return b
 }
 
+func (b *classDefnBase) AddUnresolvedInclusion(inclusion *BLangUserDefinedType) {
+	b.unresolvedInclusions = append(b.unresolvedInclusions, inclusion)
+}
+
 func (b *classDefnBase) PopUnresolvedInclusions() []*BLangUserDefinedType {
 	inclusions := b.unresolvedInclusions
 	b.unresolvedInclusions = nil
@@ -1002,6 +1003,10 @@ func (b *bLangInvokableNodeBase) SetScope(scope model.Scope) {
 	b.scope = scope
 }
 
+func (b *bLangInvokableNodeBase) SetParamListPosition(pos Location) {
+	b.ParamListPos = pos
+}
+
 var (
 	_ NodeWithScope = &BLangFunction{}
 	_ NodeWithScope = &BLangResourceMethod{}
@@ -1264,6 +1269,10 @@ func (m *BLangVariableBase) SetInitialExpression(expr BLangActionOrExpression) {
 
 // BLangTypeDefinition methods
 
+func NewBLangConstant() *BLangConstant {
+	return &BLangConstant{BLangVariableBase: BLangVariableBase{flags: model.FlagConstant}}
+}
+
 func NewBLangTypeDefinition() *BLangTypeDefinition {
 	b := &BLangTypeDefinition{}
 	b.annAttachments = []BLangAnnotationAttachment{}
@@ -1491,7 +1500,7 @@ func (b *BLangPackage) AddClassDefinition(classDefNode *BLangClassDefinition) {
 	b.ClassDefinitions = append(b.ClassDefinitions, *classDefNode)
 }
 
-func NewBLangPackage(env semtypes.Env) *BLangPackage {
+func NewBLangPackage() *BLangPackage {
 	b := &BLangPackage{}
 	b.Imports = []BLangImportPackage{}
 	b.XmlnsList = []BLangXMLNS{}
@@ -1526,71 +1535,4 @@ func (b *BLangTestablePackage) AddIsLegacyMockingMap(id string, isLegacy bool) {
 		b.isLegacyMockingMap = make(map[string]bool)
 	}
 	b.isLegacyMockingMap[id] = isLegacy
-}
-
-func createSimpleVariableNode() *BLangSimpleVariable {
-	return &BLangSimpleVariable{}
-}
-
-func createConstantNode() *BLangConstant {
-	c := &BLangConstant{}
-	c.flags = model.FlagConstant
-	return c
-}
-
-func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *BLangCompilationUnit {
-	nodeBuilder := NewNodeBuilder(cx)
-	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
-	return compilationUnit.(*BLangCompilationUnit)
-}
-
-// GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
-func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *BLangCompilationUnit {
-	nodeBuilder := NewRecoveringNodeBuilder(cx)
-	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
-	return compilationUnit.(*BLangCompilationUnit)
-}
-
-func ToPackageFromCompilationUnits(compilationUnits []*BLangCompilationUnit) *BLangPackage {
-	p := BLangPackage{}
-	for _, compilationUnit := range compilationUnits {
-		if p.PackageID == nil {
-			p.PackageID = compilationUnit.packageID
-		} else if compilationUnit.packageID != nil && p.PackageID != compilationUnit.packageID {
-			panic("compilation units have different package IDs")
-		}
-		addCompilationUnitNodesToPackage(&p, compilationUnit)
-	}
-	return &p
-}
-
-func addCompilationUnitNodesToPackage(p *BLangPackage, compilationUnit *BLangCompilationUnit) {
-	for _, node := range compilationUnit.TopLevelNodes {
-		switch node := node.(type) {
-		case *BLangImportPackage:
-			p.Imports = append(p.Imports, *node)
-		case *BLangConstant:
-			p.Constants = append(p.Constants, *node)
-		case *BLangService:
-			p.Services = append(p.Services, *node)
-		case *BLangSimpleVariable:
-			p.GlobalVars = append(p.GlobalVars, *node)
-		case *BLangFunction:
-			if node.Name.GetValue() == "init" {
-				p.InitFunction = node
-			} else {
-				p.Functions = append(p.Functions, *node)
-			}
-		case *BLangTypeDefinition:
-			p.TypeDefinitions = append(p.TypeDefinitions, *node)
-		case *BLangAnnotation:
-			p.Annotations = append(p.Annotations, *node)
-		case *BLangXMLNS:
-			p.XmlnsList = append(p.XmlnsList, *node)
-		case *BLangClassDefinition:
-			p.ClassDefinitions = append(p.ClassDefinitions, *node)
-		default:
-			panic(fmt.Sprintf("unexpected top-level node type: %T", node))
-		}
-	}
 }

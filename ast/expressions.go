@@ -628,6 +628,15 @@ func (n *BLangRemoteMethodCallAction) MethodSymbol() model.SymbolRef {
 	return *n.RawSymbol.(*model.SymbolRef)
 }
 
+func NewBLangRemoteMethodCallAction(invocation *BLangInvocation, receiver BLangExpression, pos diagnostics.Location) *BLangRemoteMethodCallAction {
+	action := &BLangRemoteMethodCallAction{
+		bLangNodeBase:       bLangNodeBase{pos: pos},
+		bLangInvocationBase: invocation.bLangInvocationBase,
+	}
+	action.Expr = receiver
+	return action
+}
+
 func (n *BLangRemoteMethodCallAction) SetMethodSymbol(symbolRef model.SymbolRef) {
 	n.RawSymbol = &symbolRef
 }
@@ -1033,6 +1042,10 @@ func (b *BLangTypeTestExpr) IsNegation() bool {
 	return b.isNegation
 }
 
+func (b *BLangTypeTestExpr) SetNegation(isNegation bool) {
+	b.isNegation = isNegation
+}
+
 func (b *BLangTypeTestExpr) GetExpression() BLangExpression {
 	return b.Expr
 }
@@ -1091,7 +1104,7 @@ func IsStreamNewExpression(expr *BLangNewExpression) bool {
 	return semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.STREAM)
 }
 
-func createBLangUnaryExpr(location diagnostics.Location, operator model.OperatorKind, expr BLangExpression) *BLangUnaryExpr {
+func NewBLangUnaryExpr(location diagnostics.Location, operator model.OperatorKind, expr BLangExpression) *BLangUnaryExpr {
 	exprNode := &BLangUnaryExpr{}
 	exprNode.pos = location
 	exprNode.Expr = expr

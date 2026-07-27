@@ -387,7 +387,7 @@ const interpreterModuleVersion = "v0.6.0"
 
 var interpreterModuleDirs = []string{
 	"", "ast", "bir", "cli", "common", "context", "decimal", "desugar", "lib",
-	"model", "parser", "platform", "projects", "runtime", "semantics", "semtypes",
+	"model", "node-builder", "parser", "platform", "projects", "runtime", "semantics", "semtypes",
 	"st", "tools", "values",
 }
 

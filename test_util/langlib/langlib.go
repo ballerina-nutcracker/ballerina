@@ -30,6 +30,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/lib/langlibs"
 	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	nodebuilder "github.com/ballerina-nutcracker/ballerina/node-builder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
@@ -249,7 +250,7 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	if err != nil {
 		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s: %w", lib.implicitID, err)
 	}
-	cu := ast.GetCompilationUnit(cx, syntaxTree)
+	cu := nodebuilder.GetCompilationUnit(cx, syntaxTree)
 	if cu == nil {
 		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: AST generation failed for %s", lib.implicitID)
 	}
@@ -266,7 +267,7 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, semantics.GetImplicitImports(cx),
 		make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace), lib.org)
 	pkgScope, exported := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
-	pkg := ast.ToPackageFromCompilationUnits(compilationUnits)
+	pkg := nodebuilder.ToPackageFromCompilationUnits(compilationUnits)
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
 	pkg.Imports = nil

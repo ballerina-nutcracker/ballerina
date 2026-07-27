@@ -14,12 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ast
+package nodebuilder
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -35,14 +36,14 @@ func TestRecoveringNodeBuilderIncludesMinutiaeInNodeRanges(t *testing.T) {
 	strict, _ := buildNodeBuilderCompilationUnit(t, source, false)
 	recovering, _ := buildNodeBuilderCompilationUnit(t, source, true)
 
-	strictFunction := strict.TopLevelNodes[0].(*BLangFunction)
+	strictFunction := strict.TopLevelNodes[0].(*ast.BLangFunction)
 	assertLocationOffsets(t, strictFunction.GetPosition(), strings.Index(source, "function"), strings.LastIndex(source, "}")+1)
-	strictReturn := strictFunction.Body.(*BLangBlockFunctionBody).Stmts[0]
+	strictReturn := strictFunction.Body.(*ast.BLangBlockFunctionBody).Stmts[0]
 	assertLocationOffsets(t, strictReturn.GetPosition(), strings.Index(source, "return;"), strings.Index(source, "return;")+len("return;"))
 
-	recoveringFunction := recovering.TopLevelNodes[0].(*BLangFunction)
+	recoveringFunction := recovering.TopLevelNodes[0].(*ast.BLangFunction)
 	assertLocationOffsets(t, recoveringFunction.GetPosition(), 0, len(source))
-	recoveringReturn := recoveringFunction.Body.(*BLangBlockFunctionBody).Stmts[0]
+	recoveringReturn := recoveringFunction.Body.(*ast.BLangBlockFunctionBody).Stmts[0]
 	assertLocationOffsets(t, recoveringReturn.GetPosition(), strings.Index(source, "\treturn;"), strings.Index(source, "\n}")+1)
 }
 
@@ -90,13 +91,13 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			compilationUnit, _ := buildNodeBuilderCompilationUnit(t, testCase.source, true)
-			function := compilationUnit.TopLevelNodes[0].(*BLangFunction)
-			assignment := function.Body.(*BLangBlockFunctionBody).Stmts[0].(*BLangAssignment)
-			reference := assignment.GetExpression().(*BLangSimpleVarRef)
+			function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
+			assignment := function.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
+			reference := assignment.GetExpression().(*ast.BLangSimpleVarRef)
 
 			assertIdentifierValue(t, reference.PkgAlias, testCase.aliasValue)
 			if testCase.missingName {
-				bad, ok := reference.VariableName.(*BLangBadIdentifier)
+				bad, ok := reference.VariableName.(*ast.BLangBadIdentifier)
 				if !ok {
 					t.Fatalf("variable name = %T, want *BLangBadIdentifier", reference.VariableName)
 				}
@@ -116,7 +117,7 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 func TestRecoveringNodeBuilderPreservesBadAnnotationAttachmentIdentifier(t *testing.T) {
 	source := "@mod:_{} function foo() {}"
 	compilationUnit, _ := buildNodeBuilderCompilationUnit(t, source, true)
-	function := compilationUnit.TopLevelNodes[0].(*BLangFunction)
+	function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
 	attachments := function.GetAnnotationAttachments()
 	if len(attachments) != 1 {
 		t.Fatalf("annotation attachment count = %d, want 1", len(attachments))
@@ -129,9 +130,9 @@ func TestRecoveringNodeBuilderPreservesBadAnnotationAttachmentIdentifier(t *test
 func TestRecoveringNodeBuilderPreservesBadAnnotationAccessIdentifier(t *testing.T) {
 	source := "function foo() { x = Target.@mod:_; }"
 	compilationUnit, _ := buildNodeBuilderCompilationUnit(t, source, true)
-	function := compilationUnit.TopLevelNodes[0].(*BLangFunction)
-	assignment := function.Body.(*BLangBlockFunctionBody).Stmts[0].(*BLangAssignment)
-	access := assignment.GetExpression().(*BLangAnnotAccessExpr)
+	function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
+	assignment := function.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
+	access := assignment.GetExpression().(*ast.BLangAnnotAccessExpr)
 	assertIdentifierValue(t, access.PkgAlias, "mod")
 	assertBadIdentifier(t, access.AnnotationName, "_", "_", strings.Index(source, "_"), strings.Index(source, "_")+1)
 }
@@ -147,7 +148,7 @@ func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
 	}
 
 	diagnosticsBeforeBuild := len(cx.Diagnostics())
-	builder := NewRecoveringNodeBuilder(cx)
+	builder := newRecoveringNodeBuilder(cx)
 	builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	if got := len(cx.Diagnostics()) - diagnosticsBeforeBuild; got != 1 {
 		t.Fatalf("node builder reported %d syntax diagnostics, want 1", got)
@@ -185,13 +186,13 @@ func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
 	cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
-	builder := NewRecoveringNodeBuilder(cx)
+	builder := newRecoveringNodeBuilder(cx)
 	bad := builder.badTopLevel(member)
 	expected := member.TextRangeWithMinutiae()
 	assertLocationOffsets(t, bad.GetPosition(), expected.StartOffset, expected.EndOffset)
 }
 
-func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering bool) (*BLangCompilationUnit, *st.SyntaxTree) {
+func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering bool) (*ast.BLangCompilationUnit, *st.SyntaxTree) {
 	t.Helper()
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
@@ -204,13 +205,13 @@ func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering boo
 	if !recovering {
 		return GetCompilationUnit(cx, syntaxTree), syntaxTree
 	}
-	builder := NewRecoveringNodeBuilder(cx)
-	return builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart)).(*BLangCompilationUnit), syntaxTree
+	builder := newRecoveringNodeBuilder(cx)
+	return builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart)).(*ast.BLangCompilationUnit), syntaxTree
 }
 
-func assertIdentifierValue(t *testing.T, identifier IdentifierNode, value string) {
+func assertIdentifierValue(t *testing.T, identifier ast.IdentifierNode, value string) {
 	t.Helper()
-	if _, ok := identifier.(*BLangIdentifier); !ok {
+	if _, ok := identifier.(*ast.BLangIdentifier); !ok {
 		t.Fatalf("identifier = %T, want *BLangIdentifier", identifier)
 	}
 	if got := identifier.GetValue(); got != value {
@@ -218,9 +219,9 @@ func assertIdentifierValue(t *testing.T, identifier IdentifierNode, value string
 	}
 }
 
-func assertBadIdentifier(t *testing.T, identifier IdentifierNode, value, originalValue string, start, end int) {
+func assertBadIdentifier(t *testing.T, identifier ast.IdentifierNode, value, originalValue string, start, end int) {
 	t.Helper()
-	bad, ok := identifier.(*BLangBadIdentifier)
+	bad, ok := identifier.(*ast.BLangBadIdentifier)
 	if !ok {
 		t.Fatalf("identifier = %T, want *BLangBadIdentifier", identifier)
 	}

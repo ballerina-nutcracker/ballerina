@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ast
+package nodebuilder
 
 import (
 	"fmt"
@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/st"
@@ -32,79 +33,81 @@ import (
 )
 
 type typeTable struct {
-	booleanType *BTypeBasic
-	intType     *BTypeBasic
-	nilType     *BTypeBasic
-	stringType  *BTypeBasic
-	floatType   *BTypeBasic
-	decimalType *BTypeBasic
-	byteType    *BTypeBasic
+	booleanType *ast.BTypeBasic
+	intType     *ast.BTypeBasic
+	nilType     *ast.BTypeBasic
+	stringType  *ast.BTypeBasic
+	floatType   *ast.BTypeBasic
+	decimalType *ast.BTypeBasic
+	byteType    *ast.BTypeBasic
 }
 
 func newTypeTable() typeTable {
+	newBasicType := func(tag ast.TypeTags) *ast.BTypeBasic {
+		return ast.NewBType(tag, model.Name(""), uint64(model.FlagReadonly)).(*ast.BTypeBasic)
+	}
 	return typeTable{
-		booleanType: &BTypeBasic{tag: TypeTags_BOOLEAN, flags: model.FlagReadonly},
-		intType:     &BTypeBasic{tag: TypeTags_INT, flags: model.FlagReadonly},
-		nilType:     &BTypeBasic{tag: TypeTags_NIL, flags: model.FlagReadonly},
-		stringType:  &BTypeBasic{tag: TypeTags_STRING, flags: model.FlagReadonly},
-		floatType:   &BTypeBasic{tag: TypeTags_FLOAT, flags: model.FlagReadonly},
-		decimalType: &BTypeBasic{tag: TypeTags_DECIMAL, flags: model.FlagReadonly},
-		byteType:    &BTypeBasic{tag: TypeTags_BYTE, flags: model.FlagReadonly},
+		booleanType: newBasicType(ast.TypeTags_BOOLEAN),
+		intType:     newBasicType(ast.TypeTags_INT),
+		nilType:     newBasicType(ast.TypeTags_NIL),
+		stringType:  newBasicType(ast.TypeTags_STRING),
+		floatType:   newBasicType(ast.TypeTags_FLOAT),
+		decimalType: newBasicType(ast.TypeTags_DECIMAL),
+		byteType:    newBasicType(ast.TypeTags_BYTE),
 	}
 }
 
-func (t *typeTable) getTypeFromTag(tag TypeTags) TypeDescriptor {
+func (t *typeTable) getTypeFromTag(tag ast.TypeTags) ast.TypeDescriptor {
 	switch tag {
-	case TypeTags_BOOLEAN:
+	case ast.TypeTags_BOOLEAN:
 		return t.booleanType
-	case TypeTags_INT:
+	case ast.TypeTags_INT:
 		return t.intType
-	case TypeTags_NIL:
+	case ast.TypeTags_NIL:
 		return t.nilType
-	case TypeTags_STRING:
+	case ast.TypeTags_STRING:
 		return t.stringType
-	case TypeTags_FLOAT:
+	case ast.TypeTags_FLOAT:
 		return t.floatType
-	case TypeTags_DECIMAL:
+	case ast.TypeTags_DECIMAL:
 		return t.decimalType
-	case TypeTags_BYTE:
+	case ast.TypeTags_BYTE:
 		return t.byteType
 	default:
 		panic("not implemented")
 	}
 }
 
-type NodeBuilderMode uint8
+type nodeBuilderMode uint8
 
 const (
-	NodeBuilderModeStrict NodeBuilderMode = iota
-	NodeBuilderModeRecover
+	nodeBuilderModeStrict nodeBuilderMode = iota
+	nodeBuilderModeRecover
 )
 
-type NodeBuilder struct {
+type nodeBuilder struct {
 	PackageID            *model.PackageID
 	anonTypeNameSuffixes []string // Stack for anonymous type name suffixes
-	currentCompUnit      *BLangCompilationUnit
+	currentCompUnit      *ast.BLangCompilationUnit
 	cx                   *context.CompilerContext
 	types                typeTable
-	mode                 NodeBuilderMode
+	mode                 nodeBuilderMode
 }
 
-func (n *NodeBuilder) de() *diagnostics.DiagnosticEnv {
+func (n *nodeBuilder) de() *diagnostics.DiagnosticEnv {
 	return n.cx.DiagnosticEnv()
 }
 
-// NewNodeBuilder creates and initializes a new NodeBuilder instance
-func NewNodeBuilder(cx *context.CompilerContext) *NodeBuilder {
-	return newNodeBuilder(cx, NodeBuilderModeStrict)
+func newNodeBuilder(cx *context.CompilerContext) *nodeBuilder {
+	return newNodeBuilderWithMode(cx, nodeBuilderModeStrict)
 }
 
-func NewRecoveringNodeBuilder(cx *context.CompilerContext) *NodeBuilder {
-	return newNodeBuilder(cx, NodeBuilderModeRecover)
+func newRecoveringNodeBuilder(cx *context.CompilerContext) *nodeBuilder {
+	return newNodeBuilderWithMode(cx, nodeBuilderModeRecover)
 }
 
-func newNodeBuilder(cx *context.CompilerContext, mode NodeBuilderMode) *NodeBuilder {
-	nodeBuilder := &NodeBuilder{
+func newNodeBuilderWithMode(cx *context.CompilerContext, mode nodeBuilderMode) *nodeBuilder {
+	nodeBuilder := &nodeBuilder{
 		cx:        cx,
 		PackageID: cx.GetDefaultPackage(),
 		types:     newTypeTable(),
@@ -113,14 +116,14 @@ func newNodeBuilder(cx *context.CompilerContext, mode NodeBuilderMode) *NodeBuil
 	return nodeBuilder
 }
 
-var _ st.NodeTransformer[BLangNode] = &NodeBuilder{}
+var _ st.NodeTransformer[ast.BLangNode] = &nodeBuilder{}
 
 const (
 	OPEN_ARRAY_INDICATOR     = -1
 	INFERRED_ARRAY_INDICATOR = -2
 )
 
-func (n *NodeBuilder) TransformSyntaxNode(node st.Node) BLangNode {
+func (n *nodeBuilder) TransformSyntaxNode(node st.Node) ast.BLangNode {
 	switch t := node.(type) {
 	case *st.ModulePart:
 		return n.TransformModulePart(t)
@@ -609,29 +612,29 @@ func diagnosticMessage(diagnostic st.STNodeDiagnostic) string {
 	return strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " ")
 }
 
-func (n *NodeBuilder) getPosition(node st.Node) diagnostics.Location {
+func (n *nodeBuilder) getPosition(node st.Node) diagnostics.Location {
 	textRange := node.TextRange()
-	if n.mode == NodeBuilderModeRecover {
+	if n.mode == nodeBuilderModeRecover {
 		textRange = node.TextRangeWithMinutiae()
 	}
 	return n.location(node, textRange)
 }
 
-func (n *NodeBuilder) getRecoveryPosition(node st.Node) diagnostics.Location {
+func (n *nodeBuilder) getRecoveryPosition(node st.Node) diagnostics.Location {
 	return n.location(node, node.TextRangeWithMinutiae())
 }
 
-func (n *NodeBuilder) location(node st.Node, textRange st.TextRange) diagnostics.Location {
+func (n *nodeBuilder) location(node st.Node, textRange st.TextRange) diagnostics.Location {
 	return diagnostics.NewLocation(n.de(), getFileName(node), textRange.StartOffset, textRange.EndOffset)
 }
 
-func (n *NodeBuilder) getPositionRange(startNode st.Node, endNode st.Node) diagnostics.Location {
+func (n *nodeBuilder) getPositionRange(startNode st.Node, endNode st.Node) diagnostics.Location {
 	startRange := startNode.TextRange()
 	endRange := endNode.TextRange()
 	return diagnostics.NewLocation(n.de(), getFileName(startNode), startRange.StartOffset, endRange.EndOffset)
 }
 
-func (n *NodeBuilder) getPositionWithoutMetadata(node st.Node) diagnostics.Location {
+func (n *nodeBuilder) getPositionWithoutMetadata(node st.Node) diagnostics.Location {
 	pos := n.getPosition(node)
 	return diagnostics.NewLocation(n.de(), getFileName(node), metadataExcludedStartOffset(node, pos.StartOffset()), pos.EndOffset())
 }
@@ -662,11 +665,11 @@ func getDocumentationString(metadata *st.MetadataNode) st.Node {
 	return metadata.DocumentationString()
 }
 
-func (n *NodeBuilder) populateMetadata(metadata *st.MetadataNode, target AnnotatableNode) {
+func (n *nodeBuilder) populateMetadata(metadata *st.MetadataNode, target ast.AnnotatableNode) {
 	if metadata == nil || metadata.IsMissing() {
 		return
 	}
-	if docTarget, ok := target.(DocumentableNode); ok {
+	if docTarget, ok := target.(ast.DocumentableNode); ok {
 		docString := getDocumentationString(metadata)
 		if docString != nil && !docString.IsMissing() {
 			docTarget.SetMarkdownDocumentationAttachment(n.createMarkdownDocumentationAttachment(docString))
@@ -675,14 +678,14 @@ func (n *NodeBuilder) populateMetadata(metadata *st.MetadataNode, target Annotat
 	n.addAnnotationAttachments(metadata.Annotations(), target)
 }
 
-func (n *NodeBuilder) addAnnotationAttachments(annotations st.NodeList[*st.AnnotationNode], target AnnotatableNode) {
+func (n *nodeBuilder) addAnnotationAttachments(annotations st.NodeList[*st.AnnotationNode], target ast.AnnotatableNode) {
 	for annotation := range annotations.Iterator() {
-		target.AddAnnotationAttachment(n.TransformAnnotation(annotation).(*BLangAnnotationAttachment))
+		target.AddAnnotationAttachment(n.TransformAnnotation(annotation).(*ast.BLangAnnotationAttachment))
 	}
 }
 
-func (n *NodeBuilder) createTrueLiteral(pos diagnostics.Location) *BLangLiteral {
-	literal := &BLangLiteral{}
+func (n *nodeBuilder) createTrueLiteral(pos diagnostics.Location) *ast.BLangLiteral {
+	literal := &ast.BLangLiteral{}
 	literal.SetValueType(n.types.booleanType)
 	literal.SetValue(true)
 	literal.SetOriginalValue("true")
@@ -691,7 +694,7 @@ func (n *NodeBuilder) createTrueLiteral(pos diagnostics.Location) *BLangLiteral 
 }
 
 // createMarkdownDocumentationAttachment creates a BLangMarkdownDocumentation from a documentation string node
-func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Node) *BLangMarkdownDocumentation {
+func (n *nodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Node) *ast.BLangMarkdownDocumentation {
 	if docStringNode == nil || docStringNode.IsMissing() {
 		return nil
 	}
@@ -701,17 +704,17 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 		return nil
 	}
 
-	doc := &BLangMarkdownDocumentation{}
-	documentationLines := []BLangMarkdownDocumentationLine{}
-	parameters := []BLangMarkdownParameterDocumentation{}
-	references := []BLangMarkdownReferenceDocumentation{}
+	doc := &ast.BLangMarkdownDocumentation{}
+	documentationLines := []ast.BLangMarkdownDocumentationLine{}
+	parameters := []ast.BLangMarkdownParameterDocumentation{}
+	references := []ast.BLangMarkdownReferenceDocumentation{}
 
 	docLineList := markdownDocumentationNode.DocumentationLines()
 
-	var bLangParaDoc *BLangMarkdownParameterDocumentation
-	var bLangReturnParaDoc *BLangMarkdownReturnParameterDocumentation
-	var bLangDeprecationDoc *BLangMarkDownDeprecationDocumentation
-	var bLangDeprecatedParaDoc *BLangMarkDownDeprecatedParametersDocumentation
+	var bLangParaDoc *ast.BLangMarkdownParameterDocumentation
+	var bLangReturnParaDoc *ast.BLangMarkdownReturnParameterDocumentation
+	var bLangDeprecationDoc *ast.BLangMarkDownDeprecationDocumentation
+	var bLangDeprecatedParaDoc *ast.BLangMarkDownDeprecatedParametersDocumentation
 
 	for i := 0; i < docLineList.Size(); i++ {
 		singleDocLine := docLineList.Get(i)
@@ -728,9 +731,9 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 			} else if bLangParaDoc != nil {
 				bLangParaDoc.ParameterDocumentationLines = append(bLangParaDoc.ParameterDocumentationLines, docText)
 			} else {
-				bLangDocLine := BLangMarkdownDocumentationLine{}
+				bLangDocLine := ast.BLangMarkdownDocumentationLine{}
 				bLangDocLine.Text = docText
-				bLangDocLine.pos = n.getPosition(docLineNode)
+				bLangDocLine.SetPosition(n.getPosition(docLineNode))
 				documentationLines = append(documentationLines, bLangDocLine)
 			}
 		case st.MARKDOWN_PARAMETER_DOCUMENTATION_LINE:
@@ -738,7 +741,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 				if bLangDeprecatedParaDoc != nil {
 					bLangDeprecatedParaDoc.Parameters = append(bLangDeprecatedParaDoc.Parameters, *bLangParaDoc)
 				} else if bLangDeprecationDoc != nil {
-					bLangDeprecatedParaDoc = &BLangMarkDownDeprecatedParametersDocumentation{}
+					bLangDeprecatedParaDoc = &ast.BLangMarkDownDeprecatedParametersDocumentation{}
 					bLangDeprecatedParaDoc.Parameters = append(bLangDeprecatedParaDoc.Parameters, *bLangParaDoc)
 					bLangDeprecationDoc = nil
 				} else {
@@ -746,10 +749,10 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 				}
 			}
 
-			bLangParaDoc = &BLangMarkdownParameterDocumentation{}
+			bLangParaDoc = &ast.BLangMarkdownParameterDocumentation{}
 			parameterDocLineNode := singleDocLine.(*st.MarkdownParameterDocumentationLineNode)
 
-			paraName := &BLangIdentifier{}
+			paraName := &ast.BLangIdentifier{}
 			parameterName := parameterDocLineNode.ParameterName()
 			parameterNameValue := ""
 			if parameterName != nil && !parameterName.IsMissing() {
@@ -765,19 +768,19 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 			paraDocText := n.addReferencesAndReturnDocumentationText(&references, paraDocElements)
 
 			bLangParaDoc.ParameterDocumentationLines = append(bLangParaDoc.ParameterDocumentationLines, paraDocText)
-			bLangParaDoc.pos = n.getPosition(parameterName)
+			bLangParaDoc.SetPosition(n.getPosition(parameterName))
 		case st.MARKDOWN_RETURN_PARAMETER_DOCUMENTATION_LINE:
-			bLangReturnParaDoc = &BLangMarkdownReturnParameterDocumentation{}
+			bLangReturnParaDoc = &ast.BLangMarkdownReturnParameterDocumentation{}
 			returnParaDocLineNode := singleDocLine.(*st.MarkdownParameterDocumentationLineNode)
 
 			returnParaDocElements := returnParaDocLineNode.DocumentElements()
 			returnParaDocText := n.addReferencesAndReturnDocumentationText(&references, returnParaDocElements)
 
 			bLangReturnParaDoc.ReturnParameterDocumentationLines = append(bLangReturnParaDoc.ReturnParameterDocumentationLines, returnParaDocText)
-			bLangReturnParaDoc.pos = n.getPosition(returnParaDocLineNode)
+			bLangReturnParaDoc.SetPosition(n.getPosition(returnParaDocLineNode))
 			doc.ReturnParameter = bLangReturnParaDoc
 		case st.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE:
-			bLangDeprecationDoc = &BLangMarkDownDeprecationDocumentation{}
+			bLangDeprecationDoc = &ast.BLangMarkDownDeprecationDocumentation{}
 			deprecationDocLineNode := singleDocLine.(*st.MarkdownDocumentationLineNode)
 
 			docElements := deprecationDocLineNode.DocumentElements()
@@ -789,7 +792,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 				}
 			}
 			bLangDeprecationDoc.AddDeprecationLine("# " + lineText)
-			bLangDeprecationDoc.pos = n.getPosition(deprecationDocLineNode)
+			bLangDeprecationDoc.SetPosition(n.getPosition(deprecationDocLineNode))
 		case st.MARKDOWN_CODE_BLOCK:
 			codeBlockNode := singleDocLine.(*st.MarkdownCodeBlockNode)
 			n.transformCodeBlock(&documentationLines, codeBlockNode)
@@ -801,7 +804,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 		if bLangDeprecatedParaDoc != nil {
 			bLangDeprecatedParaDoc.Parameters = append(bLangDeprecatedParaDoc.Parameters, *bLangParaDoc)
 		} else if bLangDeprecationDoc != nil {
-			bLangDeprecatedParaDoc = &BLangMarkDownDeprecatedParametersDocumentation{}
+			bLangDeprecatedParaDoc = &ast.BLangMarkDownDeprecatedParametersDocumentation{}
 			bLangDeprecatedParaDoc.Parameters = append(bLangDeprecatedParaDoc.Parameters, *bLangParaDoc)
 			bLangDeprecationDoc = nil
 		} else {
@@ -814,13 +817,13 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 	doc.References = references
 	doc.DeprecationDocumentation = bLangDeprecationDoc
 	doc.DeprecatedParametersDocumentation = bLangDeprecatedParaDoc
-	doc.pos = n.getPosition(markdownDocumentationNode)
+	doc.SetPosition(n.getPosition(markdownDocumentationNode))
 	return doc
 }
 
-func createIdentifier(pos diagnostics.Location, value, originalValue *string) BLangIdentifier {
-	bLIdentifer := BLangIdentifier{}
-	bLIdentifer.pos = pos
+func createIdentifier(pos diagnostics.Location, value, originalValue *string) ast.BLangIdentifier {
+	bLIdentifer := ast.BLangIdentifier{}
+	bLIdentifer.SetPosition(pos)
 	if value == nil {
 		return bLIdentifer
 	}
@@ -840,12 +843,12 @@ func normalizedIdentifierValue(value string) (string, bool) {
 }
 
 // createIdentifierFromToken creates an identifier from a token, handling missing tokens and validation
-func createIdentifierFromToken(pos diagnostics.Location, token st.Token) BLangIdentifier {
+func createIdentifierFromToken(pos diagnostics.Location, token st.Token) ast.BLangIdentifier {
 	return createIdentifierFromTokenInternal(pos, token, false)
 }
 
 // createIdentifierFromTokenInternal creates an identifier from a token with XML handling option
-func createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token, isXML bool) BLangIdentifier {
+func createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token, isXML bool) ast.BLangIdentifier {
 	if token == nil {
 		// Return empty identifier for nil token
 		return createIdentifier(pos, nil, nil)
@@ -864,7 +867,7 @@ func createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token,
 	return createIdentifier(pos, &identifierName, &identifierName)
 }
 
-func (n *NodeBuilder) createIgnoreIdentifier(node st.Node) BLangIdentifier {
+func (n *nodeBuilder) createIgnoreIdentifier(node st.Node) ast.BLangIdentifier {
 	pos := n.getPosition(node)
 	ignoreValue := string(model.IGNORE)
 	identifier := createIdentifier(pos, &ignoreValue, &ignoreValue)
@@ -873,24 +876,24 @@ func (n *NodeBuilder) createIgnoreIdentifier(node st.Node) BLangIdentifier {
 
 // getNextAnonymousTypeKey generates the next anonymous type key
 // Placeholder function - to be implemented
-func (n *NodeBuilder) getNextAnonymousTypeKey(packageID *model.PackageID, suffixes []string) string {
+func (n *nodeBuilder) getNextAnonymousTypeKey(packageID *model.PackageID, suffixes []string) string {
 	return n.cx.GetNextAnonymousTypeKey(packageID)
 }
 
 // createTypeNode creates a type node from a syntax tree node
 // This delegates to the appropriate Transform method based on the node type
-func (n *NodeBuilder) createTypeNode(typeNode st.Node) TypeDescriptor {
+func (n *nodeBuilder) createTypeNode(typeNode st.Node) ast.TypeDescriptor {
 	result, err := n.createTypeNodeInner(typeNode)
 	if err == nil {
 		return result
 	}
-	if n.mode == NodeBuilderModeRecover {
+	if n.mode == nodeBuilderModeRecover {
 		return n.badTypeNode(typeNode)
 	}
 	panic(err)
 }
 
-func (n *NodeBuilder) createTypeNodeInner(typeNode st.Node) (TypeDescriptor, error) {
+func (n *nodeBuilder) createTypeNodeInner(typeNode st.Node) (ast.TypeDescriptor, error) {
 	if typeNode == nil {
 		return nil, fmt.Errorf("createTypeNode: typeNode is nil")
 	}
@@ -902,22 +905,22 @@ func (n *NodeBuilder) createTypeNodeInner(typeNode st.Node) (TypeDescriptor, err
 	case st.NIL_TYPE_DESC:
 		return n.createBuiltInTypeNode(typeNode), nil
 	case st.QUALIFIED_NAME_REFERENCE, st.IDENTIFIER_TOKEN:
-		bLUserDefinedType := BLangUserDefinedType{}
+		bLUserDefinedType := ast.BLangUserDefinedType{}
 		nameRefence := n.createBLangNameReference(typeNode)
-		pkgAlias, pkgOK := nameRefence[0].(*BLangIdentifier)
-		typeName, nameOK := nameRefence[1].(*BLangIdentifier)
+		pkgAlias, pkgOK := nameRefence[0].(*ast.BLangIdentifier)
+		typeName, nameOK := nameRefence[1].(*ast.BLangIdentifier)
 		if !pkgOK || !nameOK {
 			return nil, fmt.Errorf("invalid user-defined type name")
 		}
 		bLUserDefinedType.PkgAlias = *pkgAlias
 		bLUserDefinedType.TypeName = *typeName
-		bLUserDefinedType.pos = n.getPosition(typeNode)
+		bLUserDefinedType.SetPosition(n.getPosition(typeNode))
 		return &bLUserDefinedType, nil
 	case st.SIMPLE_NAME_REFERENCE:
 		nameReferenceNode := typeNode.(*st.SimpleNameReferenceNode)
 		return n.createTypeNodeInner(nameReferenceNode.Name())
 	default:
-		result, ok := n.TransformSyntaxNode(typeNode).(BType)
+		result, ok := n.TransformSyntaxNode(typeNode).(ast.BType)
 		if !ok {
 			return nil, fmt.Errorf("syntax node %T is not a type descriptor", typeNode)
 		}
@@ -933,8 +936,8 @@ func isDeclaredWithVar(typeNode st.Node) bool {
 	return false
 }
 
-func (n *NodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, initializer st.Node, visibilityQualifier st.Token, annotations st.NodeList[*st.AnnotationNode]) *BLangSimpleVariable {
-	bLSimpleVar := createSimpleVariableNode()
+func (n *nodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, initializer st.Node, visibilityQualifier st.Token, annotations st.NodeList[*st.AnnotationNode]) *ast.BLangSimpleVariable {
+	bLSimpleVar := &ast.BLangSimpleVariable{}
 
 	var namePos diagnostics.Location
 	if name != nil {
@@ -946,7 +949,7 @@ func (n *NodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, init
 	if isDeclaredWithVar(typeName) {
 		bLSimpleVar.IsDeclaredWithVar = true
 	} else {
-		bLSimpleVar.SetTypeNode(n.createTypeNode(typeName).(BType))
+		bLSimpleVar.SetTypeNode(n.createTypeNode(typeName).(ast.BType))
 	}
 
 	if visibilityQualifier != nil {
@@ -966,7 +969,7 @@ func (n *NodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, init
 	return bLSimpleVar
 }
 
-func (n *NodeBuilder) createBuiltInTypeNode(typeNode st.Node) TypeDescriptor {
+func (n *nodeBuilder) createBuiltInTypeNode(typeNode st.Node) ast.TypeDescriptor {
 	var typeText string
 	if typeNode.Kind() == st.NIL_TYPE_DESC {
 		typeText = "()"
@@ -976,7 +979,7 @@ func (n *NodeBuilder) createBuiltInTypeNode(typeNode st.Node) TypeDescriptor {
 		} else if simpleNameRef.Name().IsMissing() {
 			name := getNextMissingNodeName(n.PackageID)
 			identifier := createIdentifier(n.getPosition(simpleNameRef.Name()), &name, &name)
-			pkgAlias := BLangIdentifier{}
+			pkgAlias := ast.BLangIdentifier{}
 			return createUserDefinedType(n.getPosition(typeNode), pkgAlias, identifier)
 		}
 		typeText = simpleNameRef.Name().Text()
@@ -1005,39 +1008,40 @@ func (n *NodeBuilder) createBuiltInTypeNode(typeNode st.Node) TypeDescriptor {
 		st.ANYDATA_TYPE_DESC,
 		st.READONLY_TYPE_DESC,
 		st.NEVER_TYPE_DESC:
-		valueType := BLangValueType{}
+		valueType := ast.BLangValueType{}
 		valueType.TypeKind = typeKind
-		valueType.pos = n.getPosition(typeNode)
+		valueType.SetPosition(n.getPosition(typeNode))
 		return &valueType
 	default:
-		builtInValueType := BLangBuiltInRefTypeNode{}
+		builtInValueType := ast.BLangBuiltInRefTypeNode{}
 		builtInValueType.TypeKind = typeKind
-		builtInValueType.pos = n.getPosition(typeNode)
+		builtInValueType.SetPosition(n.getPosition(typeNode))
 		return &builtInValueType
 	}
 }
 
 type mutableIdentifier interface {
-	IdentifierNode
+	ast.IdentifierNode
+
 	SetValue(string)
 }
 
-func setIdentifierValue(identifier IdentifierNode, value string) {
+func setIdentifierValue(identifier ast.IdentifierNode, value string) {
 	if identifier, ok := any(identifier).(mutableIdentifier); ok {
 		identifier.SetValue(value)
 	}
 	// We ignore immuatable identifiers such as BadIdentifier (not sure if this can be called for them)
 }
 
-func (n *NodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) IdentifierNode {
+func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
 	if token == nil {
-		if n.mode == NodeBuilderModeRecover {
+		if n.mode == nodeBuilderModeRecover {
 			return n.badIdentifier(token)
 		}
 		panic("missing identifier token")
 	}
 	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
-		if n.mode == NodeBuilderModeRecover {
+		if n.mode == nodeBuilderModeRecover {
 			return n.badIdentifier(token)
 		}
 		panic("invalid identifier")
@@ -1050,7 +1054,7 @@ func isUnsupportedIdentifierToken(token st.Token) bool {
 	return token.Text() == "'" || token.Text() == "_" || token.Text() == "'_"
 }
 
-func (n *NodeBuilder) createBLangNameReference(node st.Node) [2]IdentifierNode {
+func (n *nodeBuilder) createBLangNameReference(node st.Node) [2]ast.IdentifierNode {
 	switch node.Kind() {
 	case st.QUALIFIED_NAME_REFERENCE:
 		iNode := node.(*st.QualifiedNameReferenceNode)
@@ -1059,7 +1063,7 @@ func (n *NodeBuilder) createBLangNameReference(node st.Node) [2]IdentifierNode {
 		pkgAlias := n.createIdentifierNodeFromToken(n.getPosition(modulePrefix), modulePrefix)
 		namePos := n.getPosition(identifier)
 		name := n.createIdentifierNodeFromToken(namePos, identifier)
-		return [...]IdentifierNode{pkgAlias, name}
+		return [...]ast.IdentifierNode{pkgAlias, name}
 	case st.ERROR_TYPE_DESC:
 		builtinNode := node.(*st.BuiltinSimpleNameReferenceNode)
 		node = builtinNode.Name()
@@ -1079,11 +1083,11 @@ func (n *NodeBuilder) createBLangNameReference(node st.Node) [2]IdentifierNode {
 	emptyStr := ""
 	pkgAlias := createIdentifier(diagnostics.NewBuiltinLocation(), &emptyStr, &emptyStr)
 	name := n.createIdentifierNodeFromToken(n.getPosition(iToken), iToken)
-	return [...]IdentifierNode{&pkgAlias, name}
+	return [...]ast.IdentifierNode{&pkgAlias, name}
 }
 
 // isFunctionCallAsync checks if a function call expression is async
-func (n *NodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.FunctionCallExpressionNode) bool {
+func (n *nodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.FunctionCallExpressionNode) bool {
 	parent := functionCallBLangExpression.Parent()
 	if parent == nil {
 		panic("isFunctionCallAsync: parent is nil")
@@ -1092,24 +1096,24 @@ func (n *NodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.Functi
 }
 
 // createBLangInvocation creates a BLangInvocation from a name node and arguments
-func (n *NodeBuilder) createBLangInvocation(nameNode st.Node, arguments st.NodeList[st.FunctionArgumentNode], position diagnostics.Location, isAsync bool) *BLangInvocation {
-	var bLInvocation BLangInvocation
+func (n *nodeBuilder) createBLangInvocation(nameNode st.Node, arguments st.NodeList[st.FunctionArgumentNode], position diagnostics.Location, isAsync bool) *ast.BLangInvocation {
+	var bLInvocation ast.BLangInvocation
 	if isAsync {
 		panic("unimplemented")
 	} else {
-		bLInvocation = BLangInvocation{}
+		bLInvocation = ast.BLangInvocation{}
 	}
 
 	nameReference := n.createBLangNameReference(nameNode)
 	bLInvocation.PkgAlias = nameReference[0]
 	bLInvocation.Name = nameReference[1]
 
-	var args []BLangExpression
+	var args []ast.BLangExpression
 	for arg := range arguments.Iterator() {
 		args = append(args, n.createExpression(arg))
 	}
 	bLInvocation.ArgExprs = args
-	bLInvocation.pos = position
+	bLInvocation.SetPosition(position)
 	return &bLInvocation
 }
 
@@ -1165,12 +1169,12 @@ func isType(nodeKind st.SyntaxKind) bool {
 }
 
 // createSimpleLiteral creates a simple literal from a node
-func (n *NodeBuilder) createSimpleLiteral(literal st.Node) LiteralNode {
+func (n *nodeBuilder) createSimpleLiteral(literal st.Node) ast.LiteralNode {
 	return n.createSimpleLiteralInner(literal)
 }
 
 // getIntegerLiteral parses integer literals (decimal/hex)
-func (n *NodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
+func (n *nodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
 	basicLiteralNode := literal.(*st.BasicLiteralNode)
 	literalTokenKind := basicLiteralNode.LiteralToken().Kind()
 	switch literalTokenKind {
@@ -1267,10 +1271,10 @@ func isNumericLiteral(kind st.SyntaxKind) bool {
 }
 
 // createSimpleLiteralInner creates a simple literal from a node
-func (n *NodeBuilder) createSimpleLiteralInner(literal st.Node) LiteralNode {
-	var bLiteral LiteralNode
+func (n *nodeBuilder) createSimpleLiteralInner(literal st.Node) ast.LiteralNode {
+	var bLiteral ast.LiteralNode
 	kind := literal.Kind()
-	var typeTag TypeTags = -1
+	var typeTag ast.TypeTags = -1
 	var value any = nil
 	var originalValue *string = nil
 
@@ -1289,39 +1293,39 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal st.Node) LiteralNode {
 		literalTokenKind := basicLiteralNode.LiteralToken().Kind()
 		switch literalTokenKind {
 		case st.DECIMAL_INTEGER_LITERAL_TOKEN, st.HEX_INTEGER_LITERAL_TOKEN:
-			typeTag = TypeTags_INT
+			typeTag = ast.TypeTags_INT
 			value = n.getIntegerLiteral(literal, textValue)
 			originalValue = &textValue
 			// TODO: can we fix below?
 			if literalTokenKind == st.HEX_INTEGER_LITERAL_TOKEN && withinByteRange(value) {
-				typeTag = TypeTags_BYTE
+				typeTag = ast.TypeTags_BYTE
 			}
 		case st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
 			if balCommon.IsDecimalDiscriminated(textValue) {
-				typeTag = TypeTags_DECIMAL
+				typeTag = ast.TypeTags_DECIMAL
 			} else {
-				typeTag = TypeTags_FLOAT
+				typeTag = ast.TypeTags_FLOAT
 			}
 			value = textValue
 			originalValue = &textValue
 		default:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
-			typeTag = TypeTags_FLOAT
+			typeTag = ast.TypeTags_FLOAT
 			value = getHexNodeValue(textValue)
 			originalValue = &textValue
 		}
-		numericLiteral := &BLangNumericLiteral{}
-		numericLiteral.pos = n.getPosition(literal)
-		numericLiteral.SetValueType(n.types.getTypeFromTag(typeTag).(BType))
+		numericLiteral := &ast.BLangNumericLiteral{}
+		numericLiteral.SetPosition(n.getPosition(literal))
+		numericLiteral.SetValueType(n.types.getTypeFromTag(typeTag).(ast.BType))
 		numericLiteral.Value = value
 		numericLiteral.OriginalValue = *originalValue
 		return &numericLiteral.BLangLiteral
 	} else if kind == st.BOOLEAN_LITERAL {
-		typeTag = TypeTags_BOOLEAN
+		typeTag = ast.TypeTags_BOOLEAN
 		value = strings.ToLower(textValue) == "true"
 		originalValue = &textValue
-		bLiteral = &BLangLiteral{}
+		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.STRING_LITERAL || kind == st.XML_TEXT_CONTENT ||
 		kind == st.TEMPLATE_STRING || kind == st.IDENTIFIER_TOKEN ||
 		kind == st.PROMPT_CONTENT || isTokenInRegExp(kind) {
@@ -1351,41 +1355,41 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal st.Node) LiteralNode {
 			text = unescapeBallerinaString(text)
 		}
 
-		typeTag = TypeTags_STRING
+		typeTag = ast.TypeTags_STRING
 		value = text
 		originalValue = &textValue
-		bLiteral = &BLangLiteral{}
+		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.NIL_LITERAL {
-		typeTag = TypeTags_NIL
+		typeTag = ast.TypeTags_NIL
 		value = nil
 		originalValue = new(string(model.NIL_VALUE))
-		bLiteral = &BLangLiteral{}
+		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.NULL_LITERAL {
 		originalValue = new("null")
-		typeTag = TypeTags_NIL
-		bLiteral = &BLangLiteral{}
+		typeTag = ast.TypeTags_NIL
+		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.BINARY_EXPRESSION { // Should be base16 and base64
-		typeTag = TypeTags_BYTE_ARRAY
+		typeTag = ast.TypeTags_BYTE_ARRAY
 		value = textValue
 		originalValue = &textValue
 
 		// If numeric literal create a numeric literal expression; otherwise create a literal expression
 		if isNumericLiteral(kind) {
-			bLiteral = &BLangNumericLiteral{}
+			bLiteral = &ast.BLangNumericLiteral{}
 		} else {
-			bLiteral = &BLangLiteral{}
+			bLiteral = &ast.BLangLiteral{}
 		}
 	} else if kind == st.BYTE_ARRAY_LITERAL {
-		return n.TransformSyntaxNode(literal).(LiteralNode)
+		return n.TransformSyntaxNode(literal).(ast.LiteralNode)
 	}
-	bLangNode := bLiteral.(BLangNode)
+	bLangNode := bLiteral.(ast.BLangNode)
 	bLangNode.SetPosition(n.getPosition(literal))
-	bType := n.types.getTypeFromTag(typeTag).(BType)
+	bType := n.types.getTypeFromTag(typeTag).(ast.BType)
 	bType.BTypeSetTag(typeTag)
 	switch bl := bLiteral.(type) {
-	case *BLangLiteral:
+	case *ast.BLangLiteral:
 		bl.SetValueType(bType)
-	case *BLangNumericLiteral:
+	case *ast.BLangNumericLiteral:
 		bl.SetValueType(bType)
 	}
 	bLiteral.SetValue(value)
@@ -1393,11 +1397,11 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal st.Node) LiteralNode {
 	return bLiteral
 }
 
-func (n *NodeBuilder) TransformModulePart(modulePartNode *st.ModulePart) BLangNode {
-	compilationUnit := BLangCompilationUnit{}
+func (n *nodeBuilder) TransformModulePart(modulePartNode *st.ModulePart) ast.BLangNode {
+	compilationUnit := ast.BLangCompilationUnit{}
 	n.currentCompUnit = &compilationUnit
 	defer func() { n.currentCompUnit = nil }()
-	compilationUnit.packageID = n.PackageID
+	compilationUnit.SetPackageID(n.PackageID)
 	pos := n.getPosition(modulePartNode)
 
 	if modulePartNode.HasDiagnostics() {
@@ -1408,14 +1412,14 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *st.ModulePart) BLangNo
 	imports := modulePartNode.Imports()
 	for importDecl := range imports.Iterator() {
 		if importDecl.HasDiagnostics() {
-			if n.mode == NodeBuilderModeRecover {
+			if n.mode == nodeBuilderModeRecover {
 				compilationUnit.AddTopLevelNode(n.badTopLevel(importDecl))
 			}
 			continue
 		}
 		node, err := n.transformImportTopLevel(importDecl)
 		if err != nil {
-			if n.mode == NodeBuilderModeRecover {
+			if n.mode == nodeBuilderModeRecover {
 				node = n.badTopLevel(importDecl)
 			} else {
 				panic(err)
@@ -1430,7 +1434,7 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *st.ModulePart) BLangNo
 		// Dispatch to TransformSyntaxNode which handles all node types
 		var memberNode st.Node = member
 		if memberNode.HasDiagnostics() {
-			if n.mode != NodeBuilderModeRecover {
+			if n.mode != nodeBuilderModeRecover {
 				continue
 			}
 			if memberNode.Kind() != st.FUNCTION_DEFINITION {
@@ -1452,17 +1456,27 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *st.ModulePart) BLangNo
 	}
 
 	newLocation := diagnostics.NewLocation(n.de(), fileName, 0, 0)
-	compilationUnit.pos = newLocation
-	compilationUnit.packageID = n.PackageID
+	compilationUnit.SetPosition(newLocation)
+	compilationUnit.SetPackageID(n.PackageID)
 
 	return &compilationUnit
 }
 
-func setFunctionQualifiers(bLFunction *BLangFunction, qualifierList st.NodeList[st.Token]) {
-	setFunctionQualifiersOnBase(&bLFunction.bLangInvokableNodeBase, qualifierList)
+type invokableNode interface {
+	SetPublic()
+	SetRemote()
+	SetTransactional()
+	SetResource()
+	SetIsolated()
+	SetParamListPosition(pos ast.Location)
+	SetRestParameter(restParam ast.SimpleVariableNode)
+	AddParameter(param ast.SimpleVariableNode)
+	SetExplicitReturnTypeDescriptor()
+	SetReturnTypeDescriptor(typeDescriptor ast.TypeDescriptor)
+	ReturnTypeDescriptorNode() *ast.BLangReturnTypeDescriptor
 }
 
-func setFunctionQualifiersOnBase(base *bLangInvokableNodeBase, qualifierList st.NodeList[st.Token]) {
+func setFunctionQualifiers(base invokableNode, qualifierList st.NodeList[st.Token]) {
 	for qualifier := range qualifierList.Iterator() {
 		kind := qualifier.Kind()
 
@@ -1486,23 +1500,19 @@ func setFunctionQualifiersOnBase(base *bLangInvokableNodeBase, qualifierList st.
 	}
 }
 
-func (n *NodeBuilder) populateFuncSignature(bLFunction *BLangFunction, funcSignature *st.FunctionSignatureNode) {
-	n.populateFuncSignatureOnBase(&bLFunction.bLangInvokableNodeBase, funcSignature)
-}
-
-func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNodeBase, funcSignature *st.FunctionSignatureNode) {
-	bLFunction.ParamListPos = diagnostics.NewBuiltinLocation()
+func (n *nodeBuilder) populateFuncSignature(bLFunction invokableNode, funcSignature *st.FunctionSignatureNode) {
+	bLFunction.SetParamListPosition(diagnostics.NewBuiltinLocation())
 	openParen := funcSignature.OpenParenToken()
 	closeParen := funcSignature.CloseParenToken()
 	if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
-		bLFunction.ParamListPos = n.getPositionRange(openParen, closeParen)
+		bLFunction.SetParamListPosition(n.getPositionRange(openParen, closeParen))
 	}
 
 	// Set Parameters
 	parameters := funcSignature.Parameters()
 	for param := range parameters.Iterator() {
 		// Transform parameter using TransformSyntaxNode
-		paramNode := n.TransformSyntaxNode(param).(SimpleVariableNode)
+		paramNode := n.TransformSyntaxNode(param).(ast.SimpleVariableNode)
 
 		// Special handling for rest parameters
 		if _, isRestParam := param.(*st.RestParameterNode); isRestParam {
@@ -1537,13 +1547,13 @@ func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNode
 		n.addAnnotationAttachments(annots, bLFunction.ReturnTypeDescriptorNode())
 	} else {
 		// Default return type is nil when not specified
-		nilReturnType := &BLangValueType{TypeKind: TypeKind_NIL}
-		nilReturnType.pos = diagnostics.NewBuiltinLocation()
+		nilReturnType := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+		nilReturnType.SetPosition(diagnostics.NewBuiltinLocation())
 		bLFunction.SetReturnTypeDescriptor(nilReturnType)
 	}
 }
 
-func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *st.FunctionDefinition) BLangNode {
+func (n *nodeBuilder) TransformFunctionDefinition(funcDefNode *st.FunctionDefinition) ast.BLangNode {
 	// Check for resource functions - panic for now
 	relativeResourcePath := funcDefNode.RelativeResourcePath()
 	hasResourcePath := relativeResourcePath.Size() > 0
@@ -1553,7 +1563,7 @@ func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *st.FunctionDefini
 
 	// Create function node
 	bLFunction := n.createFunctionNode(funcDefNode.FunctionName(), funcDefNode.QualifierList(), funcDefNode.FunctionSignature(), funcDefNode.FunctionBody())
-	bLFunction.pos = n.getPositionWithoutMetadata(funcDefNode)
+	bLFunction.SetPosition(n.getPositionWithoutMetadata(funcDefNode))
 
 	metadata := funcDefNode.Metadata()
 	n.populateMetadata(metadata, bLFunction)
@@ -1561,14 +1571,14 @@ func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *st.FunctionDefini
 	return bLFunction
 }
 
-func (n *NodeBuilder) createFunctionNode(funcName *st.IdentifierToken, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode) *BLangFunction {
-	blFunction := BLangFunction{}
+func (n *nodeBuilder) createFunctionNode(funcName *st.IdentifierToken, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode) *ast.BLangFunction {
+	blFunction := ast.BLangFunction{}
 	name := n.createIdentifierNodeFromToken(n.getPosition(funcName), funcName)
 	n.populateFunctionNode(name, qualifierList, funcSignature, funcBody, &blFunction)
 	return &blFunction
 }
 
-func (n *NodeBuilder) populateFunctionNode(name IdentifierNode, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode, blFunction *BLangFunction) {
+func (n *nodeBuilder) populateFunctionNode(name ast.IdentifierNode, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode, blFunction *ast.BLangFunction) {
 	// Set function name
 	blFunction.Name = name
 	// Set method qualifiers
@@ -1585,44 +1595,44 @@ func (n *NodeBuilder) populateFunctionNode(name IdentifierNode, qualifierList st
 		blFunction.Body = nil
 		blFunction.SetInterface()
 	} else {
-		body := n.TransformSyntaxNode(funcBody).(FunctionBodyNode)
+		body := n.TransformSyntaxNode(funcBody).(ast.FunctionBodyNode)
 		blFunction.Body = body
-		if _, ok := body.(*BLangExternFunctionBody); ok {
+		if _, ok := body.(*ast.BLangExternFunctionBody); ok {
 			blFunction.SetNative()
 		}
 	}
 }
 
-func (n *NodeBuilder) transformImportTopLevel(importDecl *st.ImportDeclarationNode) (TopLevelNode, error) {
+func (n *nodeBuilder) transformImportTopLevel(importDecl *st.ImportDeclarationNode) (ast.TopLevelNode, error) {
 	transformedNode := n.TransformImportDeclaration(importDecl)
-	bLangImport, ok := transformedNode.(*BLangImportPackage)
+	bLangImport, ok := transformedNode.(*ast.BLangImportPackage)
 	if !ok {
 		return nil, fmt.Errorf("syntax node %T transformed to non-import node %T", importDecl, transformedNode)
 	}
 	return bLangImport, nil
 }
 
-func (n *NodeBuilder) transformTopLevel(node st.Node) (TopLevelNode, error) {
+func (n *nodeBuilder) transformTopLevel(node st.Node) (ast.TopLevelNode, error) {
 	result, err := n.transformTopLevelInner(node)
 	if err == nil {
 		return result, nil
 	}
-	if n.mode == NodeBuilderModeRecover {
+	if n.mode == nodeBuilderModeRecover {
 		return n.badTopLevel(node), nil
 	}
 	return nil, err
 }
 
-func (n *NodeBuilder) transformTopLevelInner(node st.Node) (TopLevelNode, error) {
+func (n *nodeBuilder) transformTopLevelInner(node st.Node) (ast.TopLevelNode, error) {
 	transformedNode := n.TransformSyntaxNode(node)
-	topLevel, ok := transformedNode.(TopLevelNode)
+	topLevel, ok := transformedNode.(ast.TopLevelNode)
 	if !ok {
 		return nil, fmt.Errorf("syntax node %T transformed to non-top-level node %T", node, transformedNode)
 	}
 	return topLevel, nil
 }
 
-func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *st.ImportDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformImportDeclaration(importDeclarationNode *st.ImportDeclarationNode) ast.BLangNode {
 	// 1. Extract org name (optional)
 	orgNameNode := importDeclarationNode.OrgName()
 	var orgNameToken st.Token
@@ -1637,7 +1647,7 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *st.Impor
 	position := n.getPosition(importDeclarationNode)
 
 	// 4. Process module name components
-	var pkgNameComps []BLangIdentifier
+	var pkgNameComps []ast.BLangIdentifier
 	moduleNames := importDeclarationNode.ModuleName()
 	for name := range moduleNames.Iterator() {
 		namePos := n.getPosition(name)
@@ -1647,8 +1657,8 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *st.Impor
 	}
 
 	// 5. Create BLangImportPackage node
-	importDcl := &BLangImportPackage{}
-	importDcl.pos = position
+	importDcl := &ast.BLangImportPackage{}
+	importDcl.SetPosition(position)
 	importDcl.PkgNameComps = pkgNameComps
 
 	// 6. Set org name (create identifier even if token is nil)
@@ -1694,7 +1704,7 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *st.Impor
 	return importDcl
 }
 
-func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *st.ListenerDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *st.ListenerDeclarationNode) ast.BLangNode {
 	metadata := listenerDeclarationNode.Metadata()
 
 	pos := n.getPositionWithoutMetadata(listenerDeclarationNode)
@@ -1702,13 +1712,13 @@ func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *st.L
 	namePos := n.getPosition(nameToken)
 	identifier := createIdentifierFromToken(namePos, nameToken)
 
-	bLSimpleVar := createSimpleVariableNode()
+	bLSimpleVar := &ast.BLangSimpleVariable{}
 	bLSimpleVar.SetName(&identifier)
-	bLSimpleVar.pos = pos
+	bLSimpleVar.SetPosition(pos)
 
 	typeDesc := listenerDeclarationNode.TypeDescriptor()
 	if typeDesc != nil && !typeDesc.IsMissing() {
-		bLSimpleVar.SetTypeNode(n.createTypeNode(typeDesc).(BType))
+		bLSimpleVar.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
 	} else {
 		bLSimpleVar.IsDeclaredWithVar = true
 	}
@@ -1743,8 +1753,8 @@ func isAllowedDistinctTypeDescriptor(kind st.SyntaxKind) bool {
 	}
 }
 
-func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *st.TypeDefinitionNode) BLangNode {
-	typeDef := NewBLangTypeDefinition()
+func (n *nodeBuilder) TransformTypeDefinition(typeDefinitionNode *st.TypeDefinitionNode) ast.BLangNode {
+	typeDef := ast.NewBLangTypeDefinition()
 
 	identifierNode := createIdentifierFromToken(n.getPosition(typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
 	typeDef.Name = &identifierNode
@@ -1756,16 +1766,16 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *st.TypeDefinit
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
 		if innerTypeDescriptorNode == nil || !isAllowedDistinctTypeDescriptor(innerTypeDescriptorNode.Kind()) {
 			n.cx.SyntaxError("only object and error types can be distinct", n.getPosition(distinctTypeDescriptorNode))
-			neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
-			neverType.pos = n.getPosition(distinctTypeDescriptorNode)
-			typeDef.SetTypeData(TypeData{TypeDescriptor: neverType})
+			neverType := &ast.BLangValueType{TypeKind: ast.TypeKind_NEVER}
+			neverType.SetPosition(n.getPosition(distinctTypeDescriptorNode))
+			typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
 			n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 			return typeDef
 		}
 		typeDescriptorNode = innerTypeDescriptorNode
 		typeDef.SetDistinct()
 	}
-	typeData := TypeData{
+	typeData := ast.TypeData{
 		TypeDescriptor: n.createTypeNode(typeDescriptorNode),
 	}
 	typeDef.SetTypeData(typeData)
@@ -1777,18 +1787,18 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *st.TypeDefinit
 		typeDef.SetPublic()
 	}
 
-	typeDef.pos = n.getPositionWithoutMetadata(typeDefinitionNode)
+	typeDef.SetPosition(n.getPositionWithoutMetadata(typeDefinitionNode))
 
 	n.populateMetadata(typeDefinitionNode.Metadata(), typeDef)
 
 	return typeDef
 }
 
-func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *st.ServiceDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *st.ServiceDeclarationNode) ast.BLangNode {
 	metadata := serviceDeclarationNode.Metadata()
 
-	service := NewBLangService()
-	service.pos = n.getPositionWithoutMetadata(serviceDeclarationNode)
+	service := ast.NewBLangService()
+	service.SetPosition(n.getPositionWithoutMetadata(serviceDeclarationNode))
 
 	if metadata != nil && !metadata.IsMissing() {
 		if annotations := metadata.Annotations(); annotations.Size() > 0 {
@@ -1798,7 +1808,7 @@ func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *st.Ser
 	}
 
 	if typeDesc := serviceDeclarationNode.TypeDescriptor(); typeDesc != nil && !typeDesc.IsMissing() {
-		service.SetTypeData(TypeData{TypeDescriptor: n.createTypeNode(typeDesc)})
+		service.SetTypeData(ast.TypeData{TypeDescriptor: n.createTypeNode(typeDesc)})
 	}
 
 	n.populateServiceQualifiers(&service, serviceDeclarationNode)
@@ -1812,7 +1822,7 @@ func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *st.Ser
 	service.ResourceMethods = members.ResourceMethods
 	for _, each := range members.UnresolvedInclusions {
 		// Parser should catch these
-		n.cx.InternalError("unexpected inclusions in service decl", each.pos)
+		n.cx.InternalError("unexpected inclusions in service decl", each.GetPosition())
 	}
 
 	return &service
@@ -1820,7 +1830,7 @@ func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *st.Ser
 
 // populateServiceQualifiers reads the user-controllable qualifiers from the
 // service declaration. The `service` flag is already set by NewBLangService.
-func (n *NodeBuilder) populateServiceQualifiers(service *BLangService, node *st.ServiceDeclarationNode) {
+func (n *nodeBuilder) populateServiceQualifiers(service *ast.BLangService, node *st.ServiceDeclarationNode) {
 	quals := node.Qualifiers()
 	for qual := range quals.Iterator() {
 		if qual.Kind() == st.ISOLATED_KEYWORD {
@@ -1829,7 +1839,7 @@ func (n *NodeBuilder) populateServiceQualifiers(service *BLangService, node *st.
 	}
 }
 
-func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *st.ServiceDeclarationNode) {
+func (n *nodeBuilder) populateServiceAttachPoint(service *ast.BLangService, node *st.ServiceDeclarationNode) {
 	paths := node.AbsoluteResourcePath()
 	if node.HasDiagnostics() {
 		return
@@ -1837,7 +1847,7 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *st
 	for i := 0; i < paths.Size(); i++ {
 		seg := paths.Get(i)
 		if seg.Kind() == st.STRING_LITERAL {
-			service.AttachPointLiteral = n.createSimpleLiteral(seg).(*BLangLiteral) //nolint:forcetypeassert // string literals always create BLangLiteral nodes
+			service.AttachPointLiteral = n.createSimpleLiteral(seg).(*ast.BLangLiteral) //nolint:forcetypeassert // string literals always create BLangLiteral nodes
 			continue
 		}
 		tok, ok := seg.(st.Token)
@@ -1857,7 +1867,7 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *st
 	}
 }
 
-func (n *NodeBuilder) populateServiceAttachedExprs(service *BLangService, node *st.ServiceDeclarationNode) {
+func (n *nodeBuilder) populateServiceAttachedExprs(service *ast.BLangService, node *st.ServiceDeclarationNode) {
 	exprs := node.Expressions()
 	for i := 0; i < exprs.Size(); i += 2 {
 		service.AttachedExprs = append(service.AttachedExprs, n.createExpression(exprs.Get(i)))
@@ -1865,18 +1875,18 @@ func (n *NodeBuilder) populateServiceAttachedExprs(service *BLangService, node *
 }
 
 type classDefnMembers struct {
-	Fields               []SimpleVariableNode
-	Methods              map[string]*BLangFunction
-	InitFunction         *BLangFunction
-	ResourceMethods      []*BLangResourceMethod
-	UnresolvedInclusions []*BLangUserDefinedType
+	Fields               []ast.SimpleVariableNode
+	Methods              map[string]*ast.BLangFunction
+	InitFunction         *ast.BLangFunction
+	ResourceMethods      []*ast.BLangResourceMethod
+	UnresolvedInclusions []*ast.BLangUserDefinedType
 }
 
 func newClassDefnMembers() classDefnMembers {
-	return classDefnMembers{Methods: map[string]*BLangFunction{}}
+	return classDefnMembers{Methods: map[string]*ast.BLangFunction{}}
 }
 
-func (n *NodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) classDefnMembers {
+func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) classDefnMembers {
 	members := newClassDefnMembers()
 	for i := 0; i < memberNodes.Size(); i++ {
 		member := memberNodes.Get(i)
@@ -1891,7 +1901,7 @@ func (n *NodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) 
 			members.ResourceMethods = append(members.ResourceMethods, rm)
 		case st.TYPE_REFERENCE:
 			typeRef := member.(*st.TypeReferenceNode)
-			members.UnresolvedInclusions = append(members.UnresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*BLangUserDefinedType))
+			members.UnresolvedInclusions = append(members.UnresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*ast.BLangUserDefinedType))
 		default:
 			panic("collectClassDefnMembers: unsupported member kind")
 		}
@@ -1899,16 +1909,16 @@ func (n *NodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) 
 	return members
 }
 
-func (n *NodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *st.FunctionDefinition) {
+func (n *nodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *st.FunctionDefinition) {
 	bLFunction := n.createFunctionNode(funcDef.FunctionName(), funcDef.QualifierList(), funcDef.FunctionSignature(), funcDef.FunctionBody())
-	bLFunction.pos = n.getPositionWithoutMetadata(funcDef)
+	bLFunction.SetPosition(n.getPositionWithoutMetadata(funcDef))
 	bLFunction.SetAttached()
 	n.populateMetadata(funcDef.Metadata(), bLFunction)
 
 	funcName := bLFunction.Name.GetValue()
 	if model.Name(funcName) == model.USER_DEFINED_INIT_SUFFIX {
 		if members.InitFunction != nil {
-			n.cx.SyntaxError("redeclared symbol 'init'", bLFunction.pos)
+			n.cx.SyntaxError("redeclared symbol 'init'", bLFunction.GetPosition())
 			return
 		}
 		members.InitFunction = bLFunction
@@ -1919,13 +1929,13 @@ func (n *NodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *st.
 		setIdentifierValue(bLFunction.Name, funcName)
 	}
 	if _, exists := members.Methods[funcName]; exists {
-		n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(funcName)+"'", bLFunction.pos)
+		n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(funcName)+"'", bLFunction.GetPosition())
 		return
 	}
 	members.Methods[funcName] = bLFunction
 }
 
-func (n *NodeBuilder) TransformAssignmentStatement(assignmentStatementNode *st.AssignmentStatementNode) BLangNode {
+func (n *nodeBuilder) TransformAssignmentStatement(assignmentStatementNode *st.AssignmentStatementNode) ast.BLangNode {
 	lhsKind := assignmentStatementNode.VarRef().Kind()
 	switch lhsKind {
 	case st.LIST_BINDING_PATTERN, st.MAPPING_BINDING_PATTERN, st.ERROR_BINDING_PATTERN:
@@ -1934,39 +1944,39 @@ func (n *NodeBuilder) TransformAssignmentStatement(assignmentStatementNode *st.A
 		break
 	}
 
-	bLAssignment := &BLangAssignment{}
+	bLAssignment := &ast.BLangAssignment{}
 	lhsExpr := n.createExpression(assignmentStatementNode.VarRef())
 	switch lhsExpr := lhsExpr.(type) {
-	case *BLangFieldBaseAccess:
+	case *ast.BLangFieldBaseAccess:
 		lhsExpr.SetLexpr()
-	case *BLangIndexBasedAccess:
+	case *ast.BLangIndexBasedAccess:
 		lhsExpr.SetLexpr()
 	}
 	bLAssignment.SetActionOrExpression(n.createActionOrExpression(assignmentStatementNode.Expression()))
-	bLAssignment.pos = n.getPosition(assignmentStatementNode)
-	bLAssignment.VarRef = lhsExpr.(LExpr)
+	bLAssignment.SetPosition(n.getPosition(assignmentStatementNode))
+	bLAssignment.VarRef = lhsExpr.(ast.LExpr)
 	return bLAssignment
 }
 
-func (n *NodeBuilder) TransformCompoundAssignmentStatement(compoundAssignmentStmtNode *st.CompoundAssignmentStatementNode) BLangNode {
-	bLCompAssignment := &BLangCompoundAssignment{}
+func (n *nodeBuilder) TransformCompoundAssignmentStatement(compoundAssignmentStmtNode *st.CompoundAssignmentStatementNode) ast.BLangNode {
+	bLCompAssignment := &ast.BLangCompoundAssignment{}
 	bLCompAssignment.SetActionOrExpression(n.createActionOrExpression(compoundAssignmentStmtNode.RhsExpression()))
 	lhsExpr := n.createExpression(compoundAssignmentStmtNode.LhsExpression())
 	switch lhsExpr := lhsExpr.(type) {
-	case *BLangFieldBaseAccess:
+	case *ast.BLangFieldBaseAccess:
 		lhsExpr.SetLexpr()
 		lhsExpr.SetCompoundAssignmentLValue()
-	case *BLangIndexBasedAccess:
+	case *ast.BLangIndexBasedAccess:
 		lhsExpr.SetLexpr()
 		lhsExpr.SetCompoundAssignmentLValue()
 	}
-	bLCompAssignment.SetVariable(lhsExpr.(LExpr))
-	BLangNode(bLCompAssignment).SetPosition(n.getPosition(compoundAssignmentStmtNode))
+	bLCompAssignment.SetVariable(lhsExpr.(ast.LExpr))
+	ast.BLangNode(bLCompAssignment).SetPosition(n.getPosition(compoundAssignmentStmtNode))
 	bLCompAssignment.OpKind = model.OperatorKindValueFrom(compoundAssignmentStmtNode.BinaryOperator().Text())
 	return bLCompAssignment
 }
 
-func (n *NodeBuilder) TransformVariableDeclaration(variableDeclarationNode *st.VariableDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformVariableDeclaration(variableDeclarationNode *st.VariableDeclarationNode) ast.BLangNode {
 	varNode := n.createBLangVarDef(
 		n.getPosition(variableDeclarationNode),
 		variableDeclarationNode.TypedBindingPattern(),
@@ -1974,14 +1984,14 @@ func (n *NodeBuilder) TransformVariableDeclaration(variableDeclarationNode *st.V
 		variableDeclarationNode.FinalKeyword(),
 	)
 	annotations := variableDeclarationNode.Annotations()
-	if simpleVarDef, ok := varNode.(*BLangSimpleVariableDef); ok {
+	if simpleVarDef, ok := varNode.(*ast.BLangSimpleVariableDef); ok {
 		n.addAnnotationAttachments(annotations, simpleVarDef.Var)
 	}
 
-	return varNode.(BLangNode)
+	return varNode.(ast.BLangNode)
 }
 
-func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBindingPattern *st.TypedBindingPatternNode, initializer st.ExpressionNode, finalKeyword st.Token) VariableDefinitionNode {
+func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBindingPattern *st.TypedBindingPatternNode, initializer st.ExpressionNode, finalKeyword st.Token) ast.VariableDefinitionNode {
 	bindingPattern := typedBindingPattern.BindingPattern()
 
 	variable := n.getBLangVariableNode(bindingPattern, location)
@@ -1994,13 +2004,13 @@ func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 
 	switch bindingPattern.Kind() {
 	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN:
-		variable := variable.(*BLangSimpleVariable)
-		bLVarDef := &BLangSimpleVariableDef{}
+		variable := variable.(*ast.BLangSimpleVariable)
+		bLVarDef := &ast.BLangSimpleVariableDef{}
 
-		bLVarDef.pos = location
+		bLVarDef.SetPosition(location)
 		variable.SetPosition(location)
 
-		var expr BLangActionOrExpression
+		var expr ast.BLangActionOrExpression
 		if initializer != nil {
 			expr = n.createActionOrExpression(initializer)
 		}
@@ -2016,7 +2026,7 @@ func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 		isDeclaredWithVar := isDeclaredWithVar(typeDesc)
 		variable.SetIsDeclaredWithVar(isDeclaredWithVar)
 		if !isDeclaredWithVar {
-			variable.SetTypeNode(n.createTypeNode(typeDesc).(BType))
+			variable.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
 		}
 
 		return bLVarDef
@@ -2035,43 +2045,43 @@ func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 	}
 }
 
-func (n *NodeBuilder) TransformBlockStatement(blockStatementNode *st.BlockStatementNode) BLangNode {
-	bLBlockStmt := BLangBlockStmt{}
+func (n *nodeBuilder) TransformBlockStatement(blockStatementNode *st.BlockStatementNode) ast.BLangNode {
+	bLBlockStmt := ast.BLangBlockStmt{}
 	bLBlockStmt.Stmts = n.generateBLangStatements(blockStatementNode.Statements(), blockStatementNode)
-	bLBlockStmt.pos = n.getPosition(blockStatementNode)
+	bLBlockStmt.SetPosition(n.getPosition(blockStatementNode))
 	return &bLBlockStmt
 }
 
-func (n *NodeBuilder) generateBLangStatements(statementNodes st.NodeList[st.StatementNode], endNode st.Node) []StatementNode {
-	statements := []StatementNode{}
+func (n *nodeBuilder) generateBLangStatements(statementNodes st.NodeList[st.StatementNode], endNode st.Node) []ast.StatementNode {
+	statements := []ast.StatementNode{}
 	return *n.generateAndAddBLangStatements(statementNodes, &statements, 0, endNode)
 }
 
-func (n *NodeBuilder) transformStatement(statement st.StatementNode) StatementNode {
+func (n *nodeBuilder) transformStatement(statement st.StatementNode) ast.StatementNode {
 	result, err := n.transformStatementInner(statement)
 	if err == nil {
 		return result
 	}
-	if n.mode == NodeBuilderModeRecover {
+	if n.mode == nodeBuilderModeRecover {
 		return n.badStmt(statement)
 	}
 	panic(err)
 }
 
-func (n *NodeBuilder) transformStatementInner(statement st.StatementNode) (StatementNode, error) {
+func (n *nodeBuilder) transformStatementInner(statement st.StatementNode) (ast.StatementNode, error) {
 	if statement == nil {
 		return nil, fmt.Errorf("statement is nil")
 	}
 	// TODO: Ideally we should have a switch that handles all possible stmt nodes instead.
 	transformedNode := n.TransformSyntaxNode(statement)
-	stmt, ok := transformedNode.(StatementNode)
+	stmt, ok := transformedNode.(ast.StatementNode)
 	if !ok {
 		return nil, fmt.Errorf("syntax node %T transformed to non-statement node %T", statement, transformedNode)
 	}
 	return stmt, nil
 }
 
-func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[st.StatementNode], statements *[]StatementNode, startPosition int, endNode st.Node) *[]StatementNode {
+func (n *nodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[st.StatementNode], statements *[]ast.StatementNode, startPosition int, endNode st.Node) *[]ast.StatementNode {
 	lastStmtIndex := statementNodes.Size() - 1
 	for j := startPosition; j < statementNodes.Size(); j++ {
 		currentStatement := statementNodes.Get(j)
@@ -2079,7 +2089,7 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[s
 		if currentStatement == nil {
 			continue
 		}
-		if currentStatement.HasDiagnostics() && n.mode != NodeBuilderModeRecover {
+		if currentStatement.HasDiagnostics() && n.mode != nodeBuilderModeRecover {
 			continue
 		}
 		if currentStatement.Kind() == st.FORK_STATEMENT {
@@ -2093,16 +2103,16 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[s
 			*statements = append(*statements, n.transformStatement(currentStatement))
 			if j == lastStmtIndex {
 				// Add an empty block statement if there are no statements following the `if` statement.
-				emptyBlock := &BLangBlockStmt{}
-				emptyBlock.pos = n.getPositionRange(currentStatement, endNode)
+				emptyBlock := &ast.BLangBlockStmt{}
+				emptyBlock.SetPosition(n.getPositionRange(currentStatement, endNode))
 				*statements = append(*statements, emptyBlock)
 				break
 			}
-			bLBlockStmt := &BLangBlockStmt{}
+			bLBlockStmt := &ast.BLangBlockStmt{}
 			nextStmtIndex := j + 1
 			n.generateAndAddBLangStatements(statementNodes, &bLBlockStmt.Stmts, nextStmtIndex, endNode)
 			if nextStmtIndex <= lastStmtIndex {
-				bLBlockStmt.pos = n.getPositionRange(statementNodes.Get(nextStmtIndex), endNode)
+				bLBlockStmt.SetPosition(n.getPositionRange(statementNodes.Get(nextStmtIndex), endNode))
 			}
 			*statements = append(*statements, bLBlockStmt)
 			break
@@ -2113,20 +2123,20 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[s
 	return statements
 }
 
-func (n *NodeBuilder) TransformBreakStatement(breakStatementNode *st.BreakStatementNode) BLangNode {
-	bLBreak := &BLangBreak{}
-	bLBreak.pos = n.getPosition(breakStatementNode)
+func (n *nodeBuilder) TransformBreakStatement(breakStatementNode *st.BreakStatementNode) ast.BLangNode {
+	bLBreak := &ast.BLangBreak{}
+	bLBreak.SetPosition(n.getPosition(breakStatementNode))
 	return bLBreak
 }
 
-func (n *NodeBuilder) TransformFailStatement(failStatementNode *st.FailStatementNode) BLangNode {
+func (n *nodeBuilder) TransformFailStatement(failStatementNode *st.FailStatementNode) ast.BLangNode {
 	panic("TransformFailStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformExpressionStatement(expressionStatement *st.ExpressionStatementNode) BLangNode {
-	bLExpressionStmt := BLangExpressionStmt{}
+func (n *nodeBuilder) TransformExpressionStatement(expressionStatement *st.ExpressionStatementNode) ast.BLangNode {
+	bLExpressionStmt := ast.BLangExpressionStmt{}
 	bLExpressionStmt.Expr = n.createActionOrExpression(expressionStatement.Expression())
-	bLExpressionStmt.pos = n.getPosition(expressionStatement)
+	bLExpressionStmt.SetPosition(n.getPosition(expressionStatement))
 	return &bLExpressionStmt
 }
 
@@ -2134,40 +2144,40 @@ func (n *NodeBuilder) TransformExpressionStatement(expressionStatement *st.Expre
 // non-computed mapping-constructor key. The field name is a static identifier
 // or string literal, not a runtime expression, so it must not be represented
 // as a var-ref.
-func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) BLangExpression {
+func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) ast.BLangExpression {
 	if basicLit, ok := fieldName.(*st.BasicLiteralNode); ok {
-		return n.createSimpleLiteral(basicLit).(BLangExpression)
+		return n.createSimpleLiteral(basicLit).(ast.BLangExpression)
 	}
 	nameRef := n.createBLangNameReference(fieldName)
 	name := nameRef[1].GetValue()
 	pos := n.getPosition(fieldName)
-	lit := &BLangLiteral{}
+	lit := &ast.BLangLiteral{}
 	lit.SetPosition(pos)
-	bType := &BTypeBasic{}
-	bType.BTypeSetTag(TypeTags_STRING)
+	bType := &ast.BTypeBasic{}
+	bType.BTypeSetTag(ast.TypeTags_STRING)
 	lit.SetValueType(bType)
 	lit.SetValue(name)
 	lit.SetOriginalValue(name)
 	return lit
 }
 
-func (n *NodeBuilder) createExpression(expressionNode st.Node) BLangExpression {
+func (n *nodeBuilder) createExpression(expressionNode st.Node) ast.BLangExpression {
 	result, err := n.createExpressionInner(expressionNode)
 	if err == nil {
 		return result
 	}
-	if n.mode == NodeBuilderModeRecover {
+	if n.mode == nodeBuilderModeRecover {
 		return n.badExprOrAction(expressionNode)
 	}
 	panic(err)
 }
 
-func (n *NodeBuilder) createExpressionInner(expressionNode st.Node) (BLangExpression, error) {
+func (n *nodeBuilder) createExpressionInner(expressionNode st.Node) (ast.BLangExpression, error) {
 	actionOrExpr, err := n.createActionOrExpressionInner(expressionNode)
 	if err != nil {
 		return nil, err
 	}
-	expr, ok := actionOrExpr.(BLangExpression)
+	expr, ok := actionOrExpr.(ast.BLangExpression)
 	if !ok {
 		return nil, fmt.Errorf("syntax node %T transformed to non-expression node %T", expressionNode, actionOrExpr)
 	}
@@ -2175,23 +2185,23 @@ func (n *NodeBuilder) createExpressionInner(expressionNode st.Node) (BLangExpres
 }
 
 // createActionOrExpression creates an action or expression node from a syntax tree node
-func (n *NodeBuilder) createActionOrExpression(actionOrExpression st.Node) BLangActionOrExpression {
+func (n *nodeBuilder) createActionOrExpression(actionOrExpression st.Node) ast.BLangActionOrExpression {
 	result, err := n.createActionOrExpressionInner(actionOrExpression)
 	if err == nil {
 		return result
 	}
-	if n.mode == NodeBuilderModeRecover {
+	if n.mode == nodeBuilderModeRecover {
 		return n.badExprOrAction(actionOrExpression)
 	}
 	panic(err)
 }
 
-func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) (BLangActionOrExpression, error) {
+func (n *nodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) (ast.BLangActionOrExpression, error) {
 	if actionOrExpression == nil {
 		return nil, fmt.Errorf("missing action or expression")
 	}
 	if isSimpleLiteral(actionOrExpression.Kind()) {
-		result, ok := n.createSimpleLiteral(actionOrExpression).(BLangActionOrExpression)
+		result, ok := n.createSimpleLiteral(actionOrExpression).(ast.BLangActionOrExpression)
 		if !ok {
 			return nil, fmt.Errorf("syntax node %T transformed to non-action-or-expression node", actionOrExpression)
 		}
@@ -2201,196 +2211,196 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) 
 		actionOrExpression.Kind() == st.QUALIFIED_NAME_REFERENCE ||
 		actionOrExpression.Kind() == st.IDENTIFIER_TOKEN {
 		nameReference := n.createBLangNameReference(actionOrExpression)
-		bLVarRef := BLangSimpleVarRef{}
-		bLVarRef.pos = n.getPosition(actionOrExpression)
+		bLVarRef := ast.BLangSimpleVarRef{}
+		bLVarRef.SetPosition(n.getPosition(actionOrExpression))
 		bLVarRef.PkgAlias = nameReference[0]
 		bLVarRef.VariableName = nameReference[1]
 		return &bLVarRef, nil
 	}
 	if actionOrExpression.Kind() == st.BRACED_EXPRESSION {
-		group := BLangGroupExpr{}
-		expr, ok := n.TransformSyntaxNode(actionOrExpression).(BLangExpression)
+		group := ast.BLangGroupExpr{}
+		expr, ok := n.TransformSyntaxNode(actionOrExpression).(ast.BLangExpression)
 		if !ok {
 			return nil, fmt.Errorf("braced syntax node %T transformed to non-expression node", actionOrExpression)
 		}
 		group.Expression = expr
-		group.pos = n.getPosition(actionOrExpression)
+		group.SetPosition(n.getPosition(actionOrExpression))
 		return &group, nil
 	}
 	if isType(actionOrExpression.Kind()) {
-		typeAccessExpr := BLangTypedescExpr{}
-		typeAccessExpr.pos = n.getPosition(actionOrExpression)
-		typeAccessExpr.typeDescriptor = n.createTypeNode(actionOrExpression)
+		typeAccessExpr := ast.BLangTypedescExpr{}
+		typeAccessExpr.SetPosition(n.getPosition(actionOrExpression))
+		typeAccessExpr.SetTypeDescriptor(n.createTypeNode(actionOrExpression))
 		return &typeAccessExpr, nil
 	}
 	transformedNode := n.TransformSyntaxNode(actionOrExpression)
-	result, ok := transformedNode.(BLangActionOrExpression)
+	result, ok := transformedNode.(ast.BLangActionOrExpression)
 	if !ok {
 		return nil, fmt.Errorf("syntax node %T transformed to non-action-or-expression node %T", actionOrExpression, transformedNode)
 	}
 	return result, nil
 }
 
-func (n *NodeBuilder) TransformContinueStatement(continueStatementNode *st.ContinueStatementNode) BLangNode {
-	blContinue := &BLangContinue{}
-	blContinue.pos = n.getPosition(continueStatementNode)
+func (n *nodeBuilder) TransformContinueStatement(continueStatementNode *st.ContinueStatementNode) ast.BLangNode {
+	blContinue := &ast.BLangContinue{}
+	blContinue.SetPosition(n.getPosition(continueStatementNode))
 	return blContinue
 }
 
-func (n *NodeBuilder) TransformExternalFunctionBody(externalFunctionBodyNode *st.ExternalFunctionBodyNode) BLangNode {
-	body := &BLangExternFunctionBody{}
-	body.pos = n.getPosition(externalFunctionBodyNode)
+func (n *nodeBuilder) TransformExternalFunctionBody(externalFunctionBodyNode *st.ExternalFunctionBodyNode) ast.BLangNode {
+	body := &ast.BLangExternFunctionBody{}
+	body.SetPosition(n.getPosition(externalFunctionBodyNode))
 	return body
 }
 
-func (n *NodeBuilder) TransformIfElseStatement(ifElseStatementNode *st.IfElseStatementNode) BLangNode {
-	bLIf := BLangIf{}
-	bLIf.pos = n.getPosition(ifElseStatementNode)
+func (n *nodeBuilder) TransformIfElseStatement(ifElseStatementNode *st.IfElseStatementNode) ast.BLangNode {
+	bLIf := ast.BLangIf{}
+	bLIf.SetPosition(n.getPosition(ifElseStatementNode))
 	bLIf.SetCondition(n.createExpression(ifElseStatementNode.Condition()))
-	bLIf.SetBody(n.TransformBlockStatement(ifElseStatementNode.IfBody()).(*BLangBlockStmt))
+	bLIf.SetBody(n.TransformBlockStatement(ifElseStatementNode.IfBody()).(*ast.BLangBlockStmt))
 	if ifElseStatementNode.ElseBody() != nil {
 		elseNode := ifElseStatementNode.ElseBody().(*st.ElseBlockNode)
-		bLIf.SetElseStatement(n.TransformSyntaxNode(elseNode.ElseBody()).(StatementNode))
+		bLIf.SetElseStatement(n.TransformSyntaxNode(elseNode.ElseBody()).(ast.StatementNode))
 	}
 	return &bLIf
 }
 
-func (n *NodeBuilder) TransformElseBlock(elseBlockNode *st.ElseBlockNode) BLangNode {
+func (n *nodeBuilder) TransformElseBlock(elseBlockNode *st.ElseBlockNode) ast.BLangNode {
 	panic("TransformElseBlock unimplemented")
 }
 
-func (n *NodeBuilder) TransformWhileStatement(whileStatementNode *st.WhileStatementNode) BLangNode {
-	bLWhile := &BLangWhile{}
+func (n *nodeBuilder) TransformWhileStatement(whileStatementNode *st.WhileStatementNode) ast.BLangNode {
+	bLWhile := &ast.BLangWhile{}
 	bLWhile.SetCondition(n.createExpression(whileStatementNode.Condition()))
-	bLWhile.pos = n.getPosition(whileStatementNode)
+	bLWhile.SetPosition(n.getPosition(whileStatementNode))
 
-	bLBlockStmt := n.TransformBlockStatement(whileStatementNode.WhileBody()).(*BLangBlockStmt)
-	bLBlockStmt.pos = n.getPosition(whileStatementNode.WhileBody())
+	bLBlockStmt := n.TransformBlockStatement(whileStatementNode.WhileBody()).(*ast.BLangBlockStmt)
+	bLBlockStmt.SetPosition(n.getPosition(whileStatementNode.WhileBody()))
 	bLWhile.SetBody(bLBlockStmt)
 	if whileStatementNode.OnFailClause() != nil {
 		onFailClauseNode := whileStatementNode.OnFailClause()
-		bLWhile.SetOnFailClause(n.TransformOnFailClause(onFailClauseNode).(*BLangOnFailClause))
+		bLWhile.SetOnFailClause(n.TransformOnFailClause(onFailClauseNode).(*ast.BLangOnFailClause))
 	} else {
-		bLWhile.OnFailClause.pos = diagnostics.NewBuiltinLocation()
+		bLWhile.OnFailClause.SetPosition(diagnostics.NewBuiltinLocation())
 	}
 	return bLWhile
 }
 
-func (n *NodeBuilder) TransformPanicStatement(panicStatementNode *st.PanicStatementNode) BLangNode {
-	bLPanic := &BLangPanic{}
-	bLPanic.pos = n.getPosition(panicStatementNode)
+func (n *nodeBuilder) TransformPanicStatement(panicStatementNode *st.PanicStatementNode) ast.BLangNode {
+	bLPanic := &ast.BLangPanic{}
+	bLPanic.SetPosition(n.getPosition(panicStatementNode))
 	bLPanic.Expr = n.createExpression(panicStatementNode.Expression())
 	return bLPanic
 }
 
-func (n *NodeBuilder) TransformReturnStatement(returnStatementNode *st.ReturnStatementNode) BLangNode {
-	bLReturn := &BLangReturn{}
-	bLReturn.pos = n.getPosition(returnStatementNode)
+func (n *nodeBuilder) TransformReturnStatement(returnStatementNode *st.ReturnStatementNode) ast.BLangNode {
+	bLReturn := &ast.BLangReturn{}
+	bLReturn.SetPosition(n.getPosition(returnStatementNode))
 	if returnStatementNode.Expression() != nil {
 		bLReturn.SetActionOrExpression(n.createActionOrExpression(returnStatementNode.Expression()))
 	} else {
-		nilLiteral := &BLangLiteral{}
-		nilLiteral.pos = n.getPosition(returnStatementNode)
+		nilLiteral := &ast.BLangLiteral{}
+		nilLiteral.SetPosition(n.getPosition(returnStatementNode))
 		nilLiteral.Value = nil
-		nilLiteral.SetValueType(n.types.getTypeFromTag(TypeTags_NIL).(BType))
+		nilLiteral.SetValueType(n.types.getTypeFromTag(ast.TypeTags_NIL).(ast.BType))
 		bLReturn.SetActionOrExpression(nilLiteral)
 	}
 
 	return bLReturn
 }
 
-func (n *NodeBuilder) TransformLocalTypeDefinitionStatement(localTypeDefinitionStatementNode *st.LocalTypeDefinitionStatementNode) BLangNode {
+func (n *nodeBuilder) TransformLocalTypeDefinitionStatement(localTypeDefinitionStatementNode *st.LocalTypeDefinitionStatementNode) ast.BLangNode {
 	panic("TransformLocalTypeDefinitionStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformLockStatement(lockStatementNode *st.LockStatementNode) BLangNode {
+func (n *nodeBuilder) TransformLockStatement(lockStatementNode *st.LockStatementNode) ast.BLangNode {
 	if lockStatementNode.OnFailClause() != nil {
 		n.cx.Unimplemented("on-fail clause on lock is not yet supported", n.getPosition(lockStatementNode.OnFailClause()))
 	}
-	bLLock := &BLangLock{}
-	bLLock.pos = n.getPosition(lockStatementNode)
-	bLBlockStmt := n.TransformBlockStatement(lockStatementNode.BlockStatement()).(*BLangBlockStmt)
-	bLBlockStmt.pos = n.getPosition(lockStatementNode.BlockStatement())
+	bLLock := &ast.BLangLock{}
+	bLLock.SetPosition(n.getPosition(lockStatementNode))
+	bLBlockStmt := n.TransformBlockStatement(lockStatementNode.BlockStatement()).(*ast.BLangBlockStmt)
+	bLBlockStmt.SetPosition(n.getPosition(lockStatementNode.BlockStatement()))
 	bLLock.Body = *bLBlockStmt
 	return bLLock
 }
 
-func (n *NodeBuilder) TransformForkStatement(forkStatementNode *st.ForkStatementNode) BLangNode {
+func (n *nodeBuilder) TransformForkStatement(forkStatementNode *st.ForkStatementNode) ast.BLangNode {
 	panic("TransformForkStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformForEachStatement(forEachStatementNode *st.ForEachStatementNode) BLangNode {
-	bLForeach := &BLangForeach{}
-	bLForeach.pos = n.getPosition(forEachStatementNode)
+func (n *nodeBuilder) TransformForEachStatement(forEachStatementNode *st.ForEachStatementNode) ast.BLangNode {
+	bLForeach := &ast.BLangForeach{}
+	bLForeach.SetPosition(n.getPosition(forEachStatementNode))
 
 	varDef := n.createBLangVarDef(
 		n.getPosition(forEachStatementNode.TypedBindingPattern()),
 		forEachStatementNode.TypedBindingPattern(),
 		nil,
 		nil,
-	).(*BLangSimpleVariableDef)
+	).(*ast.BLangSimpleVariableDef)
 	bLForeach.VariableDef = varDef
 	bLForeach.IsDeclaredWithVar = varDef.Var.IsDeclaredWithVar
 
 	bLForeach.Collection = n.createExpression(forEachStatementNode.ActionOrExpressionNode())
 
-	body := n.TransformBlockStatement(forEachStatementNode.BlockStatement()).(*BLangBlockStmt)
-	body.pos = n.getPosition(forEachStatementNode.BlockStatement())
+	body := n.TransformBlockStatement(forEachStatementNode.BlockStatement()).(*ast.BLangBlockStmt)
+	body.SetPosition(n.getPosition(forEachStatementNode.BlockStatement()))
 	bLForeach.Body = *body
 
 	if forEachStatementNode.OnFailClause() != nil {
 		bLForeach.SetOnFailClause(
-			n.TransformOnFailClause(forEachStatementNode.OnFailClause()).(*BLangOnFailClause),
+			n.TransformOnFailClause(forEachStatementNode.OnFailClause()).(*ast.BLangOnFailClause),
 		)
 	}
 	return bLForeach
 }
 
-func (n *NodeBuilder) TransformBinaryExpression(binaryBLangExpression *st.BinaryExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformBinaryExpression(binaryBLangExpression *st.BinaryExpressionNode) ast.BLangNode {
 	if binaryBLangExpression.Operator().Kind() == st.ELVIS_TOKEN {
 		panic("TransformBinaryExpression: elvis operator not supported")
 	}
 
-	bLBinaryExpr := BLangBinaryExpr{}
-	bLBinaryExpr.pos = n.getPosition(binaryBLangExpression)
+	bLBinaryExpr := ast.BLangBinaryExpr{}
+	bLBinaryExpr.SetPosition(n.getPosition(binaryBLangExpression))
 	bLBinaryExpr.LhsExpr = n.createExpression(binaryBLangExpression.LhsExpr())
 	bLBinaryExpr.RhsExpr = n.createExpression(binaryBLangExpression.RhsExpr())
 	if binaryBLangExpression.Operator() == nil {
-		n.cx.InternalError("binary expression is missing an operator token", bLBinaryExpr.pos)
+		n.cx.InternalError("binary expression is missing an operator token", bLBinaryExpr.GetPosition())
 		return &bLBinaryExpr
 	}
 	bLBinaryExpr.OpKind = model.OperatorKindValueFrom(binaryBLangExpression.Operator().Text())
 	return &bLBinaryExpr
 }
 
-func (n *NodeBuilder) TransformBracedExpression(bracedBLangExpression *st.BracedExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformBracedExpression(bracedBLangExpression *st.BracedExpressionNode) ast.BLangNode {
 	return n.createExpression(bracedBLangExpression.Expression())
 }
 
-func (n *NodeBuilder) TransformCheckExpression(checkBLangExpression *st.CheckExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformCheckExpression(checkBLangExpression *st.CheckExpressionNode) ast.BLangNode {
 	pos := n.getPosition(checkBLangExpression)
 	// we are deviating from the spec here (https://ballerina.io/spec/lang/master/#section_6.33) check is only suppose
 	// to work with expression but jBallerina also allow remote method calls (which is an action)
 	expr := n.createActionOrExpression(checkBLangExpression.Expression())
 	if checkBLangExpression.CheckKeyword().Kind() == st.CHECK_KEYWORD {
-		checkedExpr := &BLangCheckedExpr{}
-		checkedExpr.pos = pos
+		checkedExpr := &ast.BLangCheckedExpr{}
+		checkedExpr.SetPosition(pos)
 		checkedExpr.Expr = expr
 		return checkedExpr
 	}
-	checkPanickedExpr := &BLangCheckPanickedExpr{}
-	checkPanickedExpr.pos = pos
+	checkPanickedExpr := &ast.BLangCheckPanickedExpr{}
+	checkPanickedExpr.SetPosition(pos)
 	checkPanickedExpr.Expr = expr
 	return checkPanickedExpr
 }
 
-func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression *st.FieldAccessExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression *st.FieldAccessExpressionNode) ast.BLangNode {
 	fieldName := fieldAccessBLangExpression.FieldName()
 	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		panic("TransformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported")
 	}
 
-	bLFieldBasedAccess := &BLangFieldBaseAccess{}
+	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
 	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
 	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(fieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
 
@@ -2402,11 +2412,11 @@ func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression 
 		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
 	}
 
-	bLFieldBasedAccess.pos = n.getPosition(fieldAccessBLangExpression)
+	bLFieldBasedAccess.SetPosition(n.getPosition(fieldAccessBLangExpression))
 	return bLFieldBasedAccess
 }
 
-func (n *NodeBuilder) TransformFunctionCallExpression(functionCallBLangExpression *st.FunctionCallExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformFunctionCallExpression(functionCallBLangExpression *st.FunctionCallExpressionNode) ast.BLangNode {
 	return n.createBLangInvocation(
 		functionCallBLangExpression.FunctionName(),
 		functionCallBLangExpression.Arguments(),
@@ -2414,7 +2424,7 @@ func (n *NodeBuilder) TransformFunctionCallExpression(functionCallBLangExpressio
 		n.isFunctionCallAsync(functionCallBLangExpression))
 }
 
-func (n *NodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *st.MethodCallExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *st.MethodCallExpressionNode) ast.BLangNode {
 	bLInvocation := n.createBLangInvocation(methodCallBLangExpression.MethodName(),
 		methodCallBLangExpression.Arguments(),
 		n.getPosition(methodCallBLangExpression), false)
@@ -2422,9 +2432,9 @@ func (n *NodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *s
 	return bLInvocation
 }
 
-func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBLangExpression *st.MappingConstructorExpressionNode) BLangNode {
-	mappingConstructor := &BLangMappingConstructorExpr{
-		Fields: make([]MappingField, 0),
+func (n *nodeBuilder) TransformMappingConstructorExpression(mappingConstructorBLangExpression *st.MappingConstructorExpressionNode) ast.BLangNode {
+	mappingConstructor := &ast.BLangMappingConstructorExpr{
+		Fields: make([]ast.MappingField, 0),
 	}
 	fields := mappingConstructorBLangExpression.FieldNodes()
 	for i := 0; i < fields.Size(); i += 2 {
@@ -2435,12 +2445,12 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 		case st.COMPUTED_NAME_FIELD:
 			computedNameField := field.(*st.ComputedNameFieldNode)
 			keyExpr := n.createExpression(computedNameField.FieldNameExpr())
-			key := &BLangMappingKey{
+			key := &ast.BLangMappingKey{
 				Expr: keyExpr,
-				Kind: MappingKeyComputed,
+				Kind: ast.MappingKeyComputed,
 			}
 			key.SetPosition(n.getPosition(computedNameField.FieldNameExpr()))
-			keyValueField := &BLangMappingKeyValueField{
+			keyValueField := &ast.BLangMappingKeyValueField{
 				Key:       key,
 				ValueExpr: n.createExpression(computedNameField.ValueExpr()),
 			}
@@ -2452,16 +2462,16 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 				panic("mapping constructor var-name field not implemented")
 			}
 			_, isStringLit := specificField.FieldName().(*st.BasicLiteralNode)
-			keyKind := MappingKeyIdentifier
+			keyKind := ast.MappingKeyIdentifier
 			if isStringLit {
-				keyKind = MappingKeyStringLiteral
+				keyKind = ast.MappingKeyStringLiteral
 			}
-			key := &BLangMappingKey{
+			key := &ast.BLangMappingKey{
 				Expr: n.createSpecificFieldNameLiteral(specificField.FieldName()),
 				Kind: keyKind,
 			}
 			key.SetPosition(n.getPosition(specificField.FieldName()))
-			keyValueField := &BLangMappingKeyValueField{
+			keyValueField := &ast.BLangMappingKeyValueField{
 				Key:       key,
 				ValueExpr: n.createExpression(specificField.ValueExpr()),
 				Readonly:  specificField.ReadonlyKeyword() != nil,
@@ -2476,18 +2486,18 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 	return mappingConstructor
 }
 
-func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *st.IndexedExpressionNode) BLangNode {
-	indexBasedAccess := &BLangIndexBasedAccess{}
-	indexBasedAccess.pos = n.getPosition(indexedBLangExpression)
+func (n *nodeBuilder) TransformIndexedExpression(indexedBLangExpression *st.IndexedExpressionNode) ast.BLangNode {
+	indexBasedAccess := &ast.BLangIndexBasedAccess{}
+	indexBasedAccess.SetPosition(n.getPosition(indexedBLangExpression))
 	keys := indexedBLangExpression.KeyExpression()
 	if keys.Size() == 0 {
 		panic("missing key expression in member access expression")
 	} else if keys.Size() == 1 {
 		indexBasedAccess.IndexExpr = n.createExpression(keys.Get(0))
 	} else {
-		listConstructorExpr := &BLangListConstructorExpr{}
-		listConstructorExpr.pos = n.getPositionRange(keys.Get(0), keys.Get(keys.Size()-1))
-		exprs := make([]BLangExpression, 0, keys.Size())
+		listConstructorExpr := &ast.BLangListConstructorExpr{}
+		listConstructorExpr.SetPosition(n.getPositionRange(keys.Get(0), keys.Get(keys.Size()-1)))
+		exprs := make([]ast.BLangExpression, 0, keys.Size())
 		for i := 0; i < keys.Size(); i++ {
 			exprs = append(exprs, n.createExpression(keys.Get(i)))
 		}
@@ -2499,21 +2509,21 @@ func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *st.Inde
 	return indexBasedAccess
 }
 
-func (n *NodeBuilder) TransformTypeofExpression(typeofBLangExpression *st.TypeofExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformTypeofExpression(typeofBLangExpression *st.TypeofExpressionNode) ast.BLangNode {
 	panic("TransformTypeofExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformUnaryExpression(unaryBLangExpression *st.UnaryExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformUnaryExpression(unaryBLangExpression *st.UnaryExpressionNode) ast.BLangNode {
 	pos := n.getPosition(unaryBLangExpression)
 	operator := model.OperatorKindValueFrom(unaryBLangExpression.UnaryOperator().Text())
 	expr := n.createExpression(unaryBLangExpression.Expression())
 	if operator == model.OperatorKind_SUB {
-		if lit, ok := expr.(*BLangLiteral); ok && foldNegativeIntLiteral(lit) {
+		if lit, ok := expr.(*ast.BLangLiteral); ok && foldNegativeIntLiteral(lit) {
 			lit.SetPosition(pos)
 			return lit
 		}
 	}
-	return createBLangUnaryExpr(pos, operator, expr)
+	return ast.NewBLangUnaryExpr(pos, operator, expr)
 }
 
 // foldNegativeIntLiteral folds `-N` into a single int literal when `N` is an
@@ -2521,8 +2531,8 @@ func (n *NodeBuilder) TransformUnaryExpression(unaryBLangExpression *st.UnaryExp
 // fits (e.g. `-9223372036854775808`). Without this fold, `N` is parsed as a
 // float (losing precision) and later coerced back to int, corrupting the
 // value used at runtime (e.g. for `<decimal>-9223372036854775808`).
-func foldNegativeIntLiteral(lit *BLangLiteral) bool {
-	if lit.GetValueType().BTypeGetTag() != TypeTags_INT {
+func foldNegativeIntLiteral(lit *ast.BLangLiteral) bool {
+	if lit.GetValueType().BTypeGetTag() != ast.TypeTags_INT {
 		return false
 	}
 	if _, isFloat := lit.GetValue().(float64); !isFloat {
@@ -2543,13 +2553,13 @@ func foldNegativeIntLiteral(lit *BLangLiteral) bool {
 	return true
 }
 
-func (n *NodeBuilder) TransformComputedNameField(computedNameFieldNode *st.ComputedNameFieldNode) BLangNode {
+func (n *nodeBuilder) TransformComputedNameField(computedNameFieldNode *st.ComputedNameFieldNode) ast.BLangNode {
 	panic("TransformComputedNameField unimplemented")
 }
 
-func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *st.ConstantDeclarationNode) BLangNode {
-	// Line 940: BLangConstant constantNode = (BLangConstant) TreeBuilder.createConstantNode();
-	constantNode := createConstantNode()
+func (n *nodeBuilder) TransformConstantDeclaration(constantDeclarationNode *st.ConstantDeclarationNode) ast.BLangNode {
+	// Line 940: BLangConstant constantNode = (BLangConstant) TreeBuilder.NewBLangConstant();
+	constantNode := ast.NewBLangConstant()
 
 	pos := n.getPositionWithoutMetadata(constantDeclarationNode)
 
@@ -2560,11 +2570,11 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *st.C
 
 	constantNode.Expr = n.createExpression(constantDeclarationNode.Initializer())
 
-	constantNode.pos = pos
+	constantNode.SetPosition(pos)
 
 	typeDescriptor := constantDeclarationNode.TypeDescriptor()
 	if typeDescriptor != nil {
-		constantNode.SetTypeNode(n.createTypeNode(typeDescriptor).(BType))
+		constantNode.SetTypeNode(n.createTypeNode(typeDescriptor).(ast.BType))
 	}
 
 	n.populateMetadata(constantDeclarationNode.Metadata(), constantNode)
@@ -2577,7 +2587,7 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *st.C
 	return constantNode
 }
 
-func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *st.DefaultableParameterNode) BLangNode {
+func (n *nodeBuilder) TransformDefaultableParameter(defaultableParameterNode *st.DefaultableParameterNode) ast.BLangNode {
 	paramName := defaultableParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2586,7 +2596,7 @@ func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *st
 
 	simpleVar := n.createSimpleVarInner(paramName, defaultableParameterNode.TypeName(), defaultableParameterNode.Expression(), nil, defaultableParameterNode.Annotations())
 
-	simpleVar.pos = n.getPosition(defaultableParameterNode)
+	simpleVar.SetPosition(n.getPosition(defaultableParameterNode))
 
 	if paramName != nil {
 		simpleVar.Name.SetPosition(n.getPosition(paramName))
@@ -2600,14 +2610,14 @@ func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *st
 	return simpleVar
 }
 
-func (n *NodeBuilder) createSimpleVarWithTokenNodeNodeList(name st.Token, typeName st.Node, annotations st.NodeList[*st.AnnotationNode]) *BLangSimpleVariable {
+func (n *nodeBuilder) createSimpleVarWithTokenNodeNodeList(name st.Token, typeName st.Node, annotations st.NodeList[*st.AnnotationNode]) *ast.BLangSimpleVariable {
 	if name != nil {
 		return n.createSimpleVarInner(name, typeName, nil, nil, annotations)
 	}
 	return n.createSimpleVarInner(nil, typeName, nil, nil, annotations)
 }
 
-func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *st.RequiredParameterNode) BLangNode {
+func (n *nodeBuilder) TransformRequiredParameter(requiredParameterNode *st.RequiredParameterNode) ast.BLangNode {
 	paramName := requiredParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2616,7 +2626,7 @@ func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *st.Requi
 
 	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, requiredParameterNode.TypeName(), requiredParameterNode.Annotations())
 
-	simpleVar.pos = n.getPosition(requiredParameterNode)
+	simpleVar.SetPosition(n.getPosition(requiredParameterNode))
 
 	if paramName != nil {
 		simpleVar.Name.SetPosition(n.getPosition(paramName))
@@ -2632,7 +2642,7 @@ func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *st.Requi
 	return simpleVar
 }
 
-func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNode *st.IncludedRecordParameterNode) BLangNode {
+func (n *nodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNode *st.IncludedRecordParameterNode) ast.BLangNode {
 	paramName := includedRecordParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2641,7 +2651,7 @@ func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNo
 
 	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, includedRecordParameterNode.TypeName(), includedRecordParameterNode.Annotations())
 
-	simpleVar.pos = n.getPosition(includedRecordParameterNode)
+	simpleVar.SetPosition(n.getPosition(includedRecordParameterNode))
 
 	if paramName != nil {
 		simpleVar.Name.SetPosition(n.getPosition(paramName))
@@ -2656,7 +2666,7 @@ func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNo
 	return simpleVar
 }
 
-func (n *NodeBuilder) TransformRestParameter(restParameterNode *st.RestParameterNode) BLangNode {
+func (n *nodeBuilder) TransformRestParameter(restParameterNode *st.RestParameterNode) ast.BLangNode {
 	paramName := restParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2665,7 +2675,7 @@ func (n *NodeBuilder) TransformRestParameter(restParameterNode *st.RestParameter
 
 	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, restParameterNode.TypeName(), restParameterNode.Annotations())
 
-	simpleVar.pos = n.getPosition(restParameterNode)
+	simpleVar.SetPosition(n.getPosition(restParameterNode))
 
 	if paramName != nil {
 		simpleVar.Name.SetPosition(n.getPosition(paramName))
@@ -2679,56 +2689,56 @@ func (n *NodeBuilder) TransformRestParameter(restParameterNode *st.RestParameter
 	return simpleVar
 }
 
-func (n *NodeBuilder) TransformImportOrgName(importOrgNameNode *st.ImportOrgNameNode) BLangNode {
+func (n *nodeBuilder) TransformImportOrgName(importOrgNameNode *st.ImportOrgNameNode) ast.BLangNode {
 	panic("TransformImportOrgName unimplemented")
 }
 
-func (n *NodeBuilder) TransformImportPrefix(importPrefixNode *st.ImportPrefixNode) BLangNode {
+func (n *nodeBuilder) TransformImportPrefix(importPrefixNode *st.ImportPrefixNode) ast.BLangNode {
 	panic("TransformImportPrefix unimplemented")
 }
 
-func (n *NodeBuilder) TransformSpecificField(specificFieldNode *st.SpecificFieldNode) BLangNode {
+func (n *nodeBuilder) TransformSpecificField(specificFieldNode *st.SpecificFieldNode) ast.BLangNode {
 	panic("TransformSpecificField unimplemented")
 }
 
-func (n *NodeBuilder) TransformSpreadField(spreadFieldNode *st.SpreadFieldNode) BLangNode {
+func (n *nodeBuilder) TransformSpreadField(spreadFieldNode *st.SpreadFieldNode) ast.BLangNode {
 	panic("TransformSpreadField unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedArgument(namedArgumentNode *st.NamedArgumentNode) BLangNode {
-	namedArg := &BLangNamedArgsExpression{}
-	namedArg.pos = n.getPosition(namedArgumentNode)
+func (n *nodeBuilder) TransformNamedArgument(namedArgumentNode *st.NamedArgumentNode) ast.BLangNode {
+	namedArg := &ast.BLangNamedArgsExpression{}
+	namedArg.SetPosition(n.getPosition(namedArgumentNode))
 	nameToken := namedArgumentNode.ArgumentName().Name()
 	namedArg.Name = n.createIdentifierNodeFromToken(n.getPosition(nameToken), nameToken)
 	namedArg.Expr = n.createExpression(namedArgumentNode.Expression())
 	return namedArg
 }
 
-func (n *NodeBuilder) TransformPositionalArgument(positionalArgumentNode *st.PositionalArgumentNode) BLangNode {
+func (n *nodeBuilder) TransformPositionalArgument(positionalArgumentNode *st.PositionalArgumentNode) ast.BLangNode {
 	return n.createExpression(positionalArgumentNode.Expression())
 }
 
-func (n *NodeBuilder) TransformRestArgument(restArgumentNode *st.RestArgumentNode) BLangNode {
+func (n *nodeBuilder) TransformRestArgument(restArgumentNode *st.RestArgumentNode) ast.BLangNode {
 	panic("TransformRestArgument unimplemented")
 }
 
-func (n *NodeBuilder) TransformInferredTypedescDefault(inferredTypedescDefaultNode *st.InferredTypedescDefaultNode) BLangNode {
-	node := &BLangInferredTypedescDefault{}
-	node.pos = n.getPosition(inferredTypedescDefaultNode)
+func (n *nodeBuilder) TransformInferredTypedescDefault(inferredTypedescDefaultNode *st.InferredTypedescDefaultNode) ast.BLangNode {
+	node := &ast.BLangInferredTypedescDefault{}
+	node.SetPosition(n.getPosition(inferredTypedescDefaultNode))
 	return node
 }
 
-func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *st.ObjectTypeDescriptorNode) BLangNode {
-	objectType := &BLangObjectType{members: make(map[string]ObjectMember)}
+func (n *nodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *st.ObjectTypeDescriptorNode) ast.BLangNode {
+	objectType := ast.NewBLangObjectType()
 
 	// Process object type qualifiers (client/service/isolated)
 	qualifiers := objectTypeDescriptorNode.ObjectTypeQualifiers()
 	for q := range qualifiers.Iterator() {
 		switch q.Kind() {
 		case st.CLIENT_KEYWORD:
-			objectType.NetworkQuals = ObjectNetworkQualsClient
+			objectType.NetworkQuals = ast.ObjectNetworkQualsClient
 		case st.SERVICE_KEYWORD:
-			objectType.NetworkQuals = ObjectNetworkQualsService
+			objectType.NetworkQuals = ast.ObjectNetworkQualsService
 		case st.ISOLATED_KEYWORD:
 			objectType.Isolated = true
 		case st.READONLY_KEYWORD:
@@ -2745,36 +2755,36 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *st
 		case st.OBJECT_FIELD:
 			objectField := member.(*st.ObjectFieldNode)
 			fieldName, _ := normalizedIdentifierValue(objectField.FieldName().Text())
-			bField := &BObjectField{
-				Ty: n.createTypeNode(objectField.TypeName()).(BType),
+			bField := &ast.BObjectField{
+				Ty: n.createTypeNode(objectField.TypeName()).(ast.BType),
 			}
-			bField.name = fieldName
-			bField.pos = n.getPosition(objectField)
+			bField.SetName(fieldName)
+			bField.SetPosition(n.getPosition(objectField))
 			if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
-				bField.flags |= model.FlagPublic
+				bField.SetPublic()
 			}
 			n.populateMetadata(objectField.Metadata(), bField)
 			if objectType.AddMember(bField) {
-				n.cx.SyntaxError("redeclared symbol '"+fieldName+"'", bField.pos)
+				n.cx.SyntaxError("redeclared symbol '"+fieldName+"'", bField.GetPosition())
 			}
 		case st.METHOD_DECLARATION:
 			methodDecl := member.(*st.MethodDeclarationNode)
 			methodName, _ := normalizedIdentifierValue(methodDecl.MethodName().Text())
-			bMethod := &BMethodDecl{}
-			bMethod.name = methodName
-			bMethod.pos = n.getPosition(methodDecl)
-			bMethod.memberKind = ObjectMemberKindMethod
+			bMethod := &ast.BMethodDecl{}
+			bMethod.SetName(methodName)
+			bMethod.SetPosition(n.getPosition(methodDecl))
+			bMethod.SetMemberKind(ast.ObjectMemberKindMethod)
 
 			// Process visibility and method kind from qualifier list
 			methodQuals := methodDecl.QualifierList()
 			for q := range methodQuals.Iterator() {
 				switch q.Kind() {
 				case st.PUBLIC_KEYWORD:
-					bMethod.flags |= model.FlagPublic
+					bMethod.SetPublic()
 				case st.REMOTE_KEYWORD:
-					bMethod.memberKind = ObjectMemberKindRemoteMethod
+					bMethod.SetMemberKind(ast.ObjectMemberKindRemoteMethod)
 				case st.RESOURCE_KEYWORD:
-					bMethod.memberKind = ObjectMemberKindResourceMethod
+					bMethod.SetMemberKind(ast.ObjectMemberKindResourceMethod)
 				case st.ISOLATED_KEYWORD:
 					bMethod.SetIsolated()
 				case st.TRANSACTIONAL_KEYWORD:
@@ -2782,8 +2792,8 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *st
 				}
 			}
 
-			if bMethod.memberKind == ObjectMemberKindRemoteMethod {
-				bMethod.name = model.RemoteMethodName(bMethod.name)
+			if bMethod.MemberKind() == ast.ObjectMemberKindRemoteMethod {
+				bMethod.SetName(model.RemoteMethodName(bMethod.Name()))
 			}
 
 			// Build function type from method signature
@@ -2813,35 +2823,35 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *st
 					if returnsKeyword != nil && !returnsKeyword.IsMissing() {
 						bMethod.SetExplicitReturnTypeDescriptor()
 					}
-					bMethod.ReturnTypeDescriptor = n.createTypeNode(retTypeDesc.Type()).(BType)
+					bMethod.ReturnTypeDescriptor = n.createTypeNode(retTypeDesc.Type()).(ast.BType)
 				} else {
-					nilRet := &BLangValueType{TypeKind: TypeKind_NIL}
-					nilRet.pos = diagnostics.NewBuiltinLocation()
+					nilRet := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+					nilRet.SetPosition(diagnostics.NewBuiltinLocation())
 					bMethod.ReturnTypeDescriptor = nilRet
 				}
 			}
 
 			if objectType.AddMember(bMethod) {
-				n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(bMethod.name)+"'", bMethod.pos)
+				n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(bMethod.Name())+"'", bMethod.GetPosition())
 			}
 		case st.TYPE_REFERENCE:
 			typeRef := member.(*st.TypeReferenceNode)
-			objectType.unresolvedInclusions = append(objectType.unresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*BLangUserDefinedType))
+			objectType.AddUnresolvedInclusion(n.createTypeNode(typeRef.TypeName()).(*ast.BLangUserDefinedType))
 		default:
 			panic("unexpected member kind in object type descriptor")
 		}
 	}
 
-	objectType.pos = n.getPosition(objectTypeDescriptorNode)
+	objectType.SetPosition(n.getPosition(objectTypeDescriptorNode))
 	return objectType
 }
 
-func (n *NodeBuilder) TransformObjectConstructorExpression(objectConstructorBLangExpression *st.ObjectConstructorExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformObjectConstructorExpression(objectConstructorBLangExpression *st.ObjectConstructorExpressionNode) ast.BLangNode {
 	panic("TransformObjectConstructorExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *st.RecordTypeDescriptorNode) BLangNode {
-	recordType := &BLangRecordType{}
+func (n *nodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *st.RecordTypeDescriptorNode) ast.BLangNode {
+	recordType := &ast.BLangRecordType{}
 	fields := recordTypeDescriptorNode.Fields()
 	for i := 0; i < fields.Size(); i++ {
 		field := fields.Get(i)
@@ -2849,11 +2859,11 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *st
 		case st.RECORD_FIELD:
 			recordField := field.(*st.RecordFieldNode)
 			fieldName := recordField.FieldName().Text()
-			bField := BField{
+			bField := ast.BField{
 				Name: model.Name(fieldName),
-				Type: n.createTypeNode(recordField.TypeName()).(BType),
+				Type: n.createTypeNode(recordField.TypeName()).(ast.BType),
 			}
-			bField.pos = n.getPosition(recordField)
+			bField.SetPosition(n.getPosition(recordField))
 			if recordField.ReadonlyKeyword() != nil {
 				bField.SetReadonly()
 			}
@@ -2865,12 +2875,12 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *st
 		case st.RECORD_FIELD_WITH_DEFAULT_VALUE:
 			recordFieldDV := field.(*st.RecordFieldWithDefaultValueNode)
 			fieldName := recordFieldDV.FieldName().Text()
-			bField := BField{
+			bField := ast.BField{
 				Name:        model.Name(fieldName),
-				Type:        n.createTypeNode(recordFieldDV.TypeName()).(BType),
+				Type:        n.createTypeNode(recordFieldDV.TypeName()).(ast.BType),
 				DefaultExpr: n.createExpression(recordFieldDV.Expression()),
 			}
-			bField.pos = n.getPosition(recordFieldDV)
+			bField.SetPosition(n.getPosition(recordFieldDV))
 			if recordFieldDV.ReadonlyKeyword() != nil {
 				bField.SetReadonly()
 			}
@@ -2878,65 +2888,60 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *st
 			recordType.AddField(fieldName, bField)
 		case st.TYPE_REFERENCE:
 			typeRef := field.(*st.TypeReferenceNode)
-			recordType.TypeInclusions = append(recordType.TypeInclusions, n.createTypeNode(typeRef.TypeName()).(BType))
+			recordType.TypeInclusions = append(recordType.TypeInclusions, n.createTypeNode(typeRef.TypeName()).(ast.BType))
 		default:
 			panic("unexpected field kind in record type descriptor")
 		}
 	}
 	if restDesc := recordTypeDescriptorNode.RecordRestDescriptor(); restDesc != nil {
-		recordType.RestType = n.createTypeNode(restDesc.TypeName()).(BType)
+		recordType.RestType = n.createTypeNode(restDesc.TypeName()).(ast.BType)
 	}
 	recordType.IsOpen = recordTypeDescriptorNode.BodyStartDelimiter().Kind() == st.OPEN_BRACE_TOKEN
-	recordType.pos = n.getPosition(recordTypeDescriptorNode)
+	recordType.SetPosition(n.getPosition(recordTypeDescriptorNode))
 	return recordType
 }
 
-func (n *NodeBuilder) TransformReturnTypeDescriptor(returnTypeDescriptorNode *st.ReturnTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformReturnTypeDescriptor(returnTypeDescriptorNode *st.ReturnTypeDescriptorNode) ast.BLangNode {
 	panic("TransformReturnTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformNilTypeDescriptor(nilTypeDescriptorNode *st.NilTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformNilTypeDescriptor(nilTypeDescriptorNode *st.NilTypeDescriptorNode) ast.BLangNode {
 	panic("TransformNilTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode *st.OptionalTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode *st.OptionalTypeDescriptorNode) ast.BLangNode {
 	typeDesc := optionalTypeDescriptorNode.TypeDescriptor()
-	nilType := &BLangValueType{TypeKind: TypeKind_NIL}
-	nilType.pos = n.getPosition(optionalTypeDescriptorNode.QuestionMarkToken())
-	bLUnionType := &BLangUnionTypeNode{
-		lhs: TypeData{
-			TypeDescriptor: n.createTypeNode(typeDesc),
-		},
-		rhs: TypeData{
-			TypeDescriptor: nilType,
-		},
-	}
-	bLUnionType.pos = n.getPosition(optionalTypeDescriptorNode)
+	nilType := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+	nilType.SetPosition(n.getPosition(optionalTypeDescriptorNode.QuestionMarkToken()))
+	bLUnionType := &ast.BLangUnionTypeNode{}
+	bLUnionType.SetLhs(ast.TypeData{TypeDescriptor: n.createTypeNode(typeDesc)})
+	bLUnionType.SetRhs(ast.TypeData{TypeDescriptor: nilType})
+	bLUnionType.SetPosition(n.getPosition(optionalTypeDescriptorNode))
 	return bLUnionType
 }
 
-func (n *NodeBuilder) TransformObjectField(objectFieldNode *st.ObjectFieldNode) BLangNode {
+func (n *nodeBuilder) TransformObjectField(objectFieldNode *st.ObjectFieldNode) ast.BLangNode {
 	panic("TransformObjectField unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordField(recordFieldNode *st.RecordFieldNode) BLangNode {
+func (n *nodeBuilder) TransformRecordField(recordFieldNode *st.RecordFieldNode) ast.BLangNode {
 	panic("TransformRecordField unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordFieldWithDefaultValue(recordFieldWithDefaultValueNode *st.RecordFieldWithDefaultValueNode) BLangNode {
+func (n *nodeBuilder) TransformRecordFieldWithDefaultValue(recordFieldWithDefaultValueNode *st.RecordFieldWithDefaultValueNode) ast.BLangNode {
 	panic("TransformRecordFieldWithDefaultValue unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordRestDescriptor(recordRestDescriptorNode *st.RecordRestDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformRecordRestDescriptor(recordRestDescriptorNode *st.RecordRestDescriptorNode) ast.BLangNode {
 	panic("TransformRecordRestDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypeReference(typeReferenceNode *st.TypeReferenceNode) BLangNode {
+func (n *nodeBuilder) TransformTypeReference(typeReferenceNode *st.TypeReferenceNode) ast.BLangNode {
 	panic("TransformTypeReference unimplemented")
 }
 
-func (n *NodeBuilder) TransformAnnotation(annotationNode *st.AnnotationNode) BLangNode {
-	annotation := &BLangAnnotationAttachment{}
+func (n *nodeBuilder) TransformAnnotation(annotationNode *st.AnnotationNode) ast.BLangNode {
+	annotation := &ast.BLangAnnotationAttachment{}
 	annotation.SetPosition(n.getPosition(annotationNode))
 	nameReference := n.createBLangNameReference(annotationNode.AnnotReference())
 	annotation.PkgAlias = nameReference[0]
@@ -2950,7 +2955,7 @@ func (n *NodeBuilder) TransformAnnotation(annotationNode *st.AnnotationNode) BLa
 	return annotation
 }
 
-func (n *NodeBuilder) TransformMetadata(metadataNode *st.MetadataNode) BLangNode {
+func (n *nodeBuilder) TransformMetadata(metadataNode *st.MetadataNode) ast.BLangNode {
 	docString := getDocumentationString(metadataNode)
 	if docString == nil || docString.IsMissing() {
 		return nil
@@ -2958,20 +2963,20 @@ func (n *NodeBuilder) TransformMetadata(metadataNode *st.MetadataNode) BLangNode
 	return n.createMarkdownDocumentationAttachment(docString)
 }
 
-func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarationNode *st.ModuleVariableDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarationNode *st.ModuleVariableDeclarationNode) ast.BLangNode {
 	typedBindingPattern := moduleVariableDeclarationNode.TypedBindingPattern()
 	bindingPattern := typedBindingPattern.BindingPattern()
 	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
 
 	variable := n.getBLangVariableNode(bindingPattern, pos)
-	simpleVar := variable.(*BLangSimpleVariable)
+	simpleVar := variable.(*ast.BLangSimpleVariable)
 
 	typeDesc := typedBindingPattern.TypeDescriptor()
 	if typeDesc != nil {
 		if isDeclaredWithVar(typeDesc) {
 			simpleVar.SetIsDeclaredWithVar(true)
 		} else {
-			simpleVar.SetTypeNode(n.createTypeNode(typeDesc).(BType))
+			simpleVar.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
 		}
 	}
 
@@ -2988,11 +2993,11 @@ func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarati
 	n.populateModuleVariableVisibilityAndQualifiers(moduleVariableDeclarationNode, simpleVar)
 	n.populateMetadata(moduleVariableDeclarationNode.Metadata(), simpleVar)
 
-	simpleVar.pos = pos
+	simpleVar.SetPosition(pos)
 	return simpleVar
 }
 
-func (n *NodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *st.ModuleVariableDeclarationNode, simpleVar *BLangSimpleVariable) {
+func (n *nodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *st.ModuleVariableDeclarationNode, simpleVar *ast.BLangSimpleVariable) {
 	visibilityQualifier := node.VisibilityQualifier()
 	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
 		simpleVar.SetPublic()
@@ -3007,34 +3012,35 @@ func (n *NodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *st.Mod
 		case st.ISOLATED_KEYWORD:
 			simpleVar.SetIsolated()
 		case st.CONFIGURABLE_KEYWORD:
-			n.cx.Unimplemented("configurable module variables are not supported yet", simpleVar.pos)
+			n.cx.Unimplemented("configurable module variables are not supported yet", simpleVar.GetPosition())
 		}
 	}
 }
 
-func (n *NodeBuilder) TransformTypeTestExpression(typeTestBLangExpression *st.TypeTestExpressionNode) BLangNode {
-	typeTestExpr := &BLangTypeTestExpr{}
-	typeTestExpr.isNegation = typeTestBLangExpression.IsKeyword().Kind() == st.NOT_IS_KEYWORD
+func (n *nodeBuilder) TransformTypeTestExpression(typeTestBLangExpression *st.TypeTestExpressionNode) ast.BLangNode {
+	typeTestExpr := &ast.BLangTypeTestExpr{}
+	typeTestExpr.SetNegation(typeTestBLangExpression.IsKeyword().Kind() == st.NOT_IS_KEYWORD)
 	typeTestExpr.Expr = n.createExpression(typeTestBLangExpression.Expression())
-	typeTestExpr.Type = TypeData{TypeDescriptor: n.createTypeNode(typeTestBLangExpression.TypeDescriptor())}
+	typeTestExpr.Type = ast.TypeData{TypeDescriptor: n.createTypeNode(typeTestBLangExpression.TypeDescriptor())}
 	typeTestExpr.SetPosition(n.getPosition(typeTestBLangExpression))
 	return typeTestExpr
 }
 
-func (n *NodeBuilder) TransformRemoteMethodCallAction(remoteMethodCallActionNode *st.RemoteMethodCallActionNode) BLangNode {
+func (n *nodeBuilder) TransformRemoteMethodCallAction(remoteMethodCallActionNode *st.RemoteMethodCallActionNode) ast.BLangNode {
 	inv := n.createBLangInvocation(remoteMethodCallActionNode.MethodName(),
 		remoteMethodCallActionNode.Arguments(),
 		n.getPosition(remoteMethodCallActionNode), false)
-	action := &BLangRemoteMethodCallAction{}
-	action.bLangInvocationBase = inv.bLangInvocationBase
-	action.Expr = n.createExpression(remoteMethodCallActionNode.Expression())
-	action.pos = n.getPosition(remoteMethodCallActionNode)
+	action := ast.NewBLangRemoteMethodCallAction(
+		inv,
+		n.createExpression(remoteMethodCallActionNode.Expression()),
+		n.getPosition(remoteMethodCallActionNode),
+	)
 	return action
 }
 
-func (n *NodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTypeDescriptorNode) BLangNode {
-	refType := &BLangBuiltInRefTypeNode{
-		TypeKind: TypeKind_MAP,
+func (n *nodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTypeDescriptorNode) ast.BLangNode {
+	refType := &ast.BLangBuiltInRefTypeNode{
+		TypeKind: ast.TypeKind_MAP,
 	}
 	refType.SetPosition(n.getPosition(mapTypeDescriptorNode))
 
@@ -3044,20 +3050,20 @@ func (n *NodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTy
 	}
 	constraint := n.createTypeNode(mapTypeParamsNode.TypeNode())
 
-	constrainedType := &BLangConstrainedType{
-		Type:       TypeData{TypeDescriptor: refType},
-		Constraint: TypeData{TypeDescriptor: constraint},
+	constrainedType := &ast.BLangConstrainedType{
+		Type:       ast.TypeData{TypeDescriptor: refType},
+		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(refType.GetPosition())
 	return constrainedType
 }
 
-func (n *NodeBuilder) TransformNilLiteral(nilLiteralNode *st.NilLiteralNode) BLangNode {
+func (n *nodeBuilder) TransformNilLiteral(nilLiteralNode *st.NilLiteralNode) ast.BLangNode {
 	panic("TransformNilLiteral unimplemented")
 }
 
-func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *st.AnnotationDeclarationNode) BLangNode {
-	annotation := &BLangAnnotation{}
+func (n *nodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *st.AnnotationDeclarationNode) ast.BLangNode {
+	annotation := &ast.BLangAnnotation{}
 	annotation.SetPosition(n.getPositionWithoutMetadata(annotationDeclarationNode))
 	name := createIdentifierFromToken(n.getPosition(annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
 	annotation.Name = &name
@@ -3080,12 +3086,12 @@ func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *
 	return annotation
 }
 
-func (n *NodeBuilder) TransformAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) BLangNode {
+func (n *nodeBuilder) TransformAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) ast.BLangNode {
 	n.createAnnotationAttachPoint(annotationAttachPointNode)
 	return nil
 }
 
-func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) AttachPoint {
+func (n *nodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) ast.AttachPoint {
 	parts := []string{}
 	identifiers := annotationAttachPointNode.Identifiers()
 	for i := 0; i < identifiers.Size(); i++ {
@@ -3095,7 +3101,7 @@ func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.
 	if !ok {
 		n.cx.SyntaxError("unknown annotation attach point '"+strings.Join(parts, " ")+"'", n.getPosition(annotationAttachPointNode))
 	}
-	return AttachPoint{
+	return ast.AttachPoint{
 		Point:  point,
 		Source: annotationAttachPointNode.SourceKeyword() != nil,
 	}
@@ -3105,44 +3111,44 @@ func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.
 // annotation attach point to its Point. This is the inverse of Point.String(),
 // but keyed on the spelled-out source form (e.g. "object function"), which
 // differs from the canonical key (e.g. "objectfunction").
-func annotationAttachPointFromParts(parts []string) (Point, bool) {
+func annotationAttachPointFromParts(parts []string) (ast.Point, bool) {
 	switch strings.Join(parts, " ") {
 	case "type":
-		return Point_TYPE, true
+		return ast.Point_TYPE, true
 	case "object":
-		return Point_OBJECT, true
+		return ast.Point_OBJECT, true
 	case "function":
-		return Point_FUNCTION, true
+		return ast.Point_FUNCTION, true
 	case "object function":
-		return Point_OBJECT_METHOD, true
+		return ast.Point_OBJECT_METHOD, true
 	case "service remote function":
-		return Point_SERVICE_REMOTE, true
+		return ast.Point_SERVICE_REMOTE, true
 	case "parameter":
-		return Point_PARAMETER, true
+		return ast.Point_PARAMETER, true
 	case "return":
-		return Point_RETURN, true
+		return ast.Point_RETURN, true
 	case "service":
-		return Point_SERVICE, true
+		return ast.Point_SERVICE, true
 	case "field":
-		return Point_FIELD, true
+		return ast.Point_FIELD, true
 	case "object field":
-		return Point_OBJECT_FIELD, true
+		return ast.Point_OBJECT_FIELD, true
 	case "record field":
-		return Point_RECORD_FIELD, true
+		return ast.Point_RECORD_FIELD, true
 	case "listener":
-		return Point_LISTENER, true
+		return ast.Point_LISTENER, true
 	case "annotation":
-		return Point_ANNOTATION, true
+		return ast.Point_ANNOTATION, true
 	case "external":
-		return Point_EXTERNAL, true
+		return ast.Point_EXTERNAL, true
 	case "var":
-		return Point_VAR, true
+		return ast.Point_VAR, true
 	case "const":
-		return Point_CONST, true
+		return ast.Point_CONST, true
 	case "worker":
-		return Point_WORKER, true
+		return ast.Point_WORKER, true
 	case "class":
-		return Point_CLASS, true
+		return ast.Point_CLASS, true
 	default:
 		return 0, false
 	}
@@ -3154,23 +3160,23 @@ type xmlNamespaceDeclarationNode interface {
 	NamespacePrefix() *st.IdentifierToken
 }
 
-func (n *NodeBuilder) transformXMLNamespaceDeclaration(node xmlNamespaceDeclarationNode) BLangNode {
+func (n *nodeBuilder) transformXMLNamespaceDeclaration(node xmlNamespaceDeclarationNode) ast.BLangNode {
 	pos := n.getPosition(node)
-	xmlns := &BLangXMLNS{}
+	xmlns := &ast.BLangXMLNS{}
 	xmlns.SetPosition(pos)
 	n.populateXMLNS(xmlns, pos, node.Namespaceuri(), node.NamespacePrefix())
 	return xmlns
 }
 
-func (n *NodeBuilder) TransformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode *st.XMLNamespaceDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode *st.XMLNamespaceDeclarationNode) ast.BLangNode {
 	return n.transformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode)
 }
 
-func (n *NodeBuilder) TransformModuleXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode *st.ModuleXMLNamespaceDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformModuleXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode *st.ModuleXMLNamespaceDeclarationNode) ast.BLangNode {
 	return n.transformXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode)
 }
 
-func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location, uriNode st.ExpressionNode, prefixTok *st.IdentifierToken) {
+func (n *nodeBuilder) populateXMLNS(target *ast.BLangXMLNS, pos diagnostics.Location, uriNode st.ExpressionNode, prefixTok *st.IdentifierToken) {
 	if uriNode != nil {
 		target.SetNamespaceURI(n.createExpression(uriNode))
 	}
@@ -3180,9 +3186,9 @@ func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location
 	}
 }
 
-func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *st.FunctionBodyBlockNode) BLangNode {
-	bLFuncBody := &BLangBlockFunctionBody{}
-	statements := []StatementNode{}
+func (n *nodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *st.FunctionBodyBlockNode) ast.BLangNode {
+	bLFuncBody := &ast.BLangBlockFunctionBody{}
+	statements := []ast.StatementNode{}
 	stmtList := statements
 	namedWorkerDeclarator := functionBodyBlockNode.NamedWorkerDeclarator()
 	if namedWorkerDeclarator != nil {
@@ -3192,61 +3198,61 @@ func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &stmtList, 0, functionBodyBlockNode)
 
 	bLFuncBody.Stmts = stmtList
-	bLFuncBody.pos = n.getPosition(functionBodyBlockNode)
+	bLFuncBody.SetPosition(n.getPosition(functionBodyBlockNode))
 	return bLFuncBody
 }
 
-func (n *NodeBuilder) generateForkStatements(statements *[]StatementNode, forkStatementNode *st.ForkStatementNode) {
+func (n *nodeBuilder) generateForkStatements(statements *[]ast.StatementNode, forkStatementNode *st.ForkStatementNode) {
 	panic("generateForkStatements unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedWorkerDeclaration(namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformNamedWorkerDeclaration(namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode) ast.BLangNode {
 	panic("TransformNamedWorkerDeclaration unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedWorkerDeclarator(namedWorkerDeclarator *st.NamedWorkerDeclarator) BLangNode {
+func (n *nodeBuilder) TransformNamedWorkerDeclarator(namedWorkerDeclarator *st.NamedWorkerDeclarator) ast.BLangNode {
 	panic("TransformNamedWorkerDeclarator unimplemented")
 }
 
-func (n *NodeBuilder) TransformBasicLiteral(basicLiteralNode *st.BasicLiteralNode) BLangNode {
+func (n *nodeBuilder) TransformBasicLiteral(basicLiteralNode *st.BasicLiteralNode) ast.BLangNode {
 	panic("TransformBasicLiteral unimplemented")
 }
 
-func (n *NodeBuilder) TransformSimpleNameReference(simpleNameReferenceNode *st.SimpleNameReferenceNode) BLangNode {
+func (n *nodeBuilder) TransformSimpleNameReference(simpleNameReferenceNode *st.SimpleNameReferenceNode) ast.BLangNode {
 	panic("TransformSimpleNameReference unimplemented")
 }
 
-func (n *NodeBuilder) TransformQualifiedNameReference(qualifiedNameReferenceNode *st.QualifiedNameReferenceNode) BLangNode {
+func (n *nodeBuilder) TransformQualifiedNameReference(qualifiedNameReferenceNode *st.QualifiedNameReferenceNode) ast.BLangNode {
 	nameReference := n.createBLangNameReference(qualifiedNameReferenceNode)
-	bLVarRef := &BLangSimpleVarRef{}
-	bLVarRef.pos = n.getPosition(qualifiedNameReferenceNode)
+	bLVarRef := &ast.BLangSimpleVarRef{}
+	bLVarRef.SetPosition(n.getPosition(qualifiedNameReferenceNode))
 	bLVarRef.PkgAlias = nameReference[0]
 	bLVarRef.VariableName = nameReference[1]
 	return bLVarRef
 }
 
-func (n *NodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameReferenceNode *st.BuiltinSimpleNameReferenceNode) BLangNode {
+func (n *nodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameReferenceNode *st.BuiltinSimpleNameReferenceNode) ast.BLangNode {
 	panic("TransformBuiltinSimpleNameReference unimplemented")
 }
 
-func (n *NodeBuilder) TransformTrapExpression(trapBLangExpression *st.TrapExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformTrapExpression(trapBLangExpression *st.TrapExpressionNode) ast.BLangNode {
 	pos := n.getPosition(trapBLangExpression)
 	expr := n.createExpression(trapBLangExpression.Expression())
-	trapExpr := &BLangTrapExpr{}
-	trapExpr.pos = pos
+	trapExpr := &ast.BLangTrapExpr{}
+	trapExpr.SetPosition(pos)
 	trapExpr.Expr = expr
 	return trapExpr
 }
 
-func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExpression *st.ListConstructorExpressionNode) BLangNode {
-	argExprList := make([]BLangExpression, 0)
+func (n *nodeBuilder) TransformListConstructorExpression(listConstructorBLangExpression *st.ListConstructorExpressionNode) ast.BLangNode {
+	argExprList := make([]ast.BLangExpression, 0)
 	spreadMemberIndexes := make([]int, 0)
-	listConstructorExpr := &BLangListConstructorExpr{}
+	listConstructorExpr := &ast.BLangListConstructorExpr{}
 
 	expressions := listConstructorBLangExpression.Expressions()
 	for i := 0; i < expressions.Size(); i += 2 {
 		listMember := expressions.Get(i)
-		var memberExpr BLangExpression
+		var memberExpr ast.BLangExpression
 		if listMember.Kind() == st.SPREAD_MEMBER {
 			spreadMember := listMember.(*st.SpreadMemberNode)
 			memberExpr = n.createExpression(spreadMember.Expression())
@@ -3261,16 +3267,16 @@ func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExp
 	for _, index := range spreadMemberIndexes {
 		listConstructorExpr.SetSpreadMember(index)
 	}
-	listConstructorExpr.pos = n.getPosition(listConstructorBLangExpression)
+	listConstructorExpr.SetPosition(n.getPosition(listConstructorBLangExpression))
 	return listConstructorExpr
 }
 
-func (n *NodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *st.TypeCastExpressionNode) BLangNode {
-	typeConversionNode := &BLangTypeConversionExpr{}
+func (n *nodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *st.TypeCastExpressionNode) ast.BLangNode {
+	typeConversionNode := &ast.BLangTypeConversionExpr{}
 	typeConversionNode.SetPosition(n.getPosition(typeCastBLangExpression))
 	typeCastParamNode := typeCastBLangExpression.TypeCastParam()
 	if typeCastParamNode != nil && typeCastParamNode.Type() != nil {
-		typeConversionNode.TypeDescriptor = n.createTypeNode(typeCastParamNode.Type()).(BType)
+		typeConversionNode.TypeDescriptor = n.createTypeNode(typeCastParamNode.Type()).(ast.BType)
 	} else {
 		panic("type cast param node type is not present")
 	}
@@ -3282,39 +3288,34 @@ func (n *NodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *st.Ty
 	return typeConversionNode
 }
 
-func (n *NodeBuilder) TransformTypeCastParam(typeCastParamNode *st.TypeCastParamNode) BLangNode {
+func (n *nodeBuilder) TransformTypeCastParam(typeCastParamNode *st.TypeCastParamNode) ast.BLangNode {
 	panic("TransformTypeCastParam unimplemented")
 }
 
-func (n *NodeBuilder) TransformUnionTypeDescriptor(unionTypeDescriptorNode *st.UnionTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformUnionTypeDescriptor(unionTypeDescriptorNode *st.UnionTypeDescriptorNode) ast.BLangNode {
 	lhs := unionTypeDescriptorNode.LeftTypeDesc()
 	rhs := unionTypeDescriptorNode.RightTypeDesc()
-	bLUnionType := &BLangUnionTypeNode{
-		lhs: TypeData{
-			TypeDescriptor: n.createTypeNode(lhs),
-		},
-		rhs: TypeData{
-			TypeDescriptor: n.createTypeNode(rhs),
-		},
-	}
-	bLUnionType.pos = n.getPosition(unionTypeDescriptorNode)
+	bLUnionType := &ast.BLangUnionTypeNode{}
+	bLUnionType.SetLhs(ast.TypeData{TypeDescriptor: n.createTypeNode(lhs)})
+	bLUnionType.SetRhs(ast.TypeData{TypeDescriptor: n.createTypeNode(rhs)})
+	bLUnionType.SetPosition(n.getPosition(unionTypeDescriptorNode))
 	return bLUnionType
 }
 
-func (n *NodeBuilder) TransformTableConstructorExpression(tableConstructorBLangExpression *st.TableConstructorExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformTableConstructorExpression(tableConstructorBLangExpression *st.TableConstructorExpressionNode) ast.BLangNode {
 	panic("TransformTableConstructorExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformKeySpecifier(keySpecifierNode *st.KeySpecifierNode) BLangNode {
+func (n *nodeBuilder) TransformKeySpecifier(keySpecifierNode *st.KeySpecifierNode) ast.BLangNode {
 	panic("TransformKeySpecifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *st.StreamTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *st.StreamTypeDescriptorNode) ast.BLangNode {
 	position := n.getPosition(streamTypeDescriptorNode)
 	paramsNode := streamTypeDescriptorNode.StreamTypeParamsNode()
 	if paramsNode == nil {
-		refType := &BLangBuiltInRefTypeNode{
-			TypeKind: TypeKind_STREAM,
+		refType := &ast.BLangBuiltInRefTypeNode{
+			TypeKind: ast.TypeKind_STREAM,
 		}
 		refType.SetPosition(position)
 		return refType
@@ -3330,23 +3331,20 @@ func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *st
 		n.cx.InternalError("stream<...> requires both value and completion type parameters", position)
 		return nil
 	}
-	streamType := NewBLangStreamType(
-		TypeData{TypeDescriptor: n.createTypeNode(valueDesc)},
-		TypeData{TypeDescriptor: n.createTypeNode(completionDesc)},
-	)
+	streamType := ast.NewBLangStreamType(ast.TypeData{TypeDescriptor: n.createTypeNode(valueDesc)}, ast.TypeData{TypeDescriptor: n.createTypeNode(completionDesc)})
 	streamType.SetPosition(position)
 	return streamType
 }
 
-func (n *NodeBuilder) TransformStreamTypeParams(streamTypeParamsNode *st.StreamTypeParamsNode) BLangNode {
+func (n *nodeBuilder) TransformStreamTypeParams(streamTypeParamsNode *st.StreamTypeParamsNode) ast.BLangNode {
 	panic("TransformStreamTypeParams unimplemented")
 }
 
-func (n *NodeBuilder) TransformLetExpression(letBLangExpression *st.LetExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformLetExpression(letBLangExpression *st.LetExpressionNode) ast.BLangNode {
 	panic("TransformLetExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode *st.LetVariableDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode *st.LetVariableDeclarationNode) ast.BLangNode {
 	varDef := n.createBLangVarDef(
 		n.getPosition(letVariableDeclarationNode),
 		letVariableDeclarationNode.TypedBindingPattern(),
@@ -3357,10 +3355,10 @@ func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode
 	if annotations.Size() > 0 {
 		panic("annotations not yet supported")
 	}
-	return varDef.(BLangNode)
+	return varDef.(ast.BLangNode)
 }
 
-func (n *NodeBuilder) TransformTemplateExpression(templateBLangExpression *st.TemplateExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformTemplateExpression(templateBLangExpression *st.TemplateExpressionNode) ast.BLangNode {
 	typeToken := templateBLangExpression.Type()
 	pos := n.getPosition(templateBLangExpression)
 	if typeToken == nil {
@@ -3378,16 +3376,16 @@ func (n *NodeBuilder) TransformTemplateExpression(templateBLangExpression *st.Te
 	}
 }
 
-func (n *NodeBuilder) buildXMLTemplateExpr(templateBLangExpression *st.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
+func (n *nodeBuilder) buildXMLTemplateExpr(templateBLangExpression *st.TemplateExpressionNode, pos diagnostics.Location) ast.BLangNode {
 	if !xmlTemplateHasInterpolation(templateBLangExpression.Content()) {
 		// If we don't have interpolations we build a literal as an optimization
 		return n.buildXMLSequenceLiteral(templateBLangExpression, pos)
 	}
 
-	tpl := &BLangXMLTemplateExpr{}
+	tpl := &ast.BLangXMLTemplateExpr{}
 	tpl.SetPosition(pos)
-	tpl.Kind = TemplateExprKindXML
-	for tok, diag := range n.flattenXMLTemplateContent(templateBLangExpression.Content(), XMLTemplateInsertionKindContent) {
+	tpl.Kind = ast.TemplateExprKindXML
+	for tok, diag := range n.flattenXMLTemplateContent(templateBLangExpression.Content(), ast.XMLTemplateInsertionKindContent) {
 		if diag != nil {
 			n.reportXMLTemplateDiagnostic(diag)
 			continue
@@ -3404,8 +3402,8 @@ func (n *NodeBuilder) buildXMLTemplateExpr(templateBLangExpression *st.TemplateE
 	return tpl
 }
 
-func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *st.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
-	var children []BLangExpression
+func (n *nodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *st.TemplateExpressionNode, pos diagnostics.Location) ast.BLangNode {
+	var children []ast.BLangExpression
 	content := templateBLangExpression.Content()
 	for child := range content.Iterator() {
 		bl := n.TransformSyntaxNode(child)
@@ -3413,7 +3411,7 @@ func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *st.Templa
 			n.cx.InternalError("xml template child did not produce BLangNode", n.getPosition(child))
 			return nil
 		}
-		expr, ok := bl.(BLangExpression)
+		expr, ok := bl.(ast.BLangExpression)
 		if !ok {
 			n.cx.InternalError("xml template child did not produce BLangExpression", n.getPosition(child))
 			return nil
@@ -3423,8 +3421,8 @@ func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *st.Templa
 	if len(children) == 1 {
 		return children[0]
 	}
-	seq := &BLangXMLSequenceLiteral{}
-	seq.pos = pos
+	seq := &ast.BLangXMLSequenceLiteral{}
+	seq.SetPosition(pos)
 	seq.Children = children
 	return seq
 }
@@ -3514,22 +3512,22 @@ const (
 type xmlTemplateToken struct {
 	Kind                xmlTemplateTokenKind
 	Text                string
-	NamespaceInsertions []XMLTemplateNamespaceInsertion
-	Insertion           BLangExpression
-	InsertionKind       XMLTemplateInsertionKind
+	NamespaceInsertions []ast.XMLTemplateNamespaceInsertion
+	Insertion           ast.BLangExpression
+	InsertionKind       ast.XMLTemplateInsertionKind
 }
 
-func newXMLTemplateTextToken(value string, insertions ...XMLTemplateNamespaceInsertion) xmlTemplateToken {
+func newXMLTemplateTextToken(value string, insertions ...ast.XMLTemplateNamespaceInsertion) xmlTemplateToken {
 	return xmlTemplateToken{Kind: xmlTemplateTokenKindText, Text: value, NamespaceInsertions: insertions}
 }
 
-func newXMLTemplateInsertionToken(expr BLangExpression, kind XMLTemplateInsertionKind) xmlTemplateToken {
+func newXMLTemplateInsertionToken(expr ast.BLangExpression, kind ast.XMLTemplateInsertionKind) xmlTemplateToken {
 	return xmlTemplateToken{Kind: xmlTemplateTokenKindInsertion, Insertion: expr, InsertionKind: kind}
 }
 
 type xmlTemplateTextAccumulator struct {
 	text                strings.Builder
-	namespaceInsertions []XMLTemplateNamespaceInsertion
+	namespaceInsertions []ast.XMLTemplateNamespaceInsertion
 }
 
 func appendXMLTemplateText(current *xmlTemplateTextAccumulator, tok xmlTemplateToken) *xmlTemplateTextAccumulator {
@@ -3562,7 +3560,7 @@ type xmlTemplateDiagnostic struct {
 	Internal bool
 }
 
-func (n *NodeBuilder) flattenXMLTemplateContent(content st.NodeList[st.Node], kind XMLTemplateInsertionKind) iter.Seq2[xmlTemplateToken, *xmlTemplateDiagnostic] {
+func (n *nodeBuilder) flattenXMLTemplateContent(content st.NodeList[st.Node], kind ast.XMLTemplateInsertionKind) iter.Seq2[xmlTemplateToken, *xmlTemplateDiagnostic] {
 	return func(yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) {
 		var current *xmlTemplateTextAccumulator
 		rawYield := func(tok xmlTemplateToken, diag *xmlTemplateDiagnostic) bool {
@@ -3596,10 +3594,10 @@ func (n *NodeBuilder) flattenXMLTemplateContent(content st.NodeList[st.Node], ki
 	}
 }
 
-func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
+func (n *nodeBuilder) flattenXMLTemplateNodeWithNamespace(
 	node st.Node,
-	kind XMLTemplateInsertionKind,
-	namespaceInsertion *XMLTemplateNamespaceInsertion,
+	kind ast.XMLTemplateInsertionKind,
+	namespaceInsertion *ast.XMLTemplateNamespaceInsertion,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
 	switch x := node.(type) {
@@ -3607,7 +3605,7 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 		return yield(newXMLTemplateTextToken(x.Text()), nil)
 	case *st.InterpolationNode:
 		expr := n.createActionOrExpression(x.Expression())
-		be, ok := expr.(BLangExpression)
+		be, ok := expr.(ast.BLangExpression)
 		if !ok {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation did not produce BLangExpression",
@@ -3654,9 +3652,9 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 	}
 }
 
-func (n *NodeBuilder) flattenXMLTemplateElement(
+func (n *nodeBuilder) flattenXMLTemplateElement(
 	x *st.XMLElementNode,
-	parentNamespaceInsertion *XMLTemplateNamespaceInsertion,
+	parentNamespaceInsertion *ast.XMLTemplateNamespaceInsertion,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
 	start := x.StartTag()
@@ -3687,16 +3685,16 @@ func (n *NodeBuilder) flattenXMLTemplateElement(
 	}
 	content := x.Content()
 	for child := range content.Iterator() {
-		if !n.flattenXMLTemplateNodeWithNamespace(child, XMLTemplateInsertionKindContent, namespaceInsertion, yield) {
+		if !n.flattenXMLTemplateNodeWithNamespace(child, ast.XMLTemplateInsertionKindContent, namespaceInsertion, yield) {
 			return false
 		}
 	}
 	return yield(newXMLTemplateTextToken("</"+name+">"), nil)
 }
 
-func (n *NodeBuilder) flattenXMLTemplateEmptyElement(
+func (n *nodeBuilder) flattenXMLTemplateEmptyElement(
 	x *st.XMLEmptyElementNode,
-	parentNamespaceInsertion *XMLTemplateNamespaceInsertion,
+	parentNamespaceInsertion *ast.XMLTemplateNamespaceInsertion,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
 	name := n.xmlNameToString(x.Name())
@@ -3720,7 +3718,7 @@ func (n *NodeBuilder) flattenXMLTemplateEmptyElement(
 	return yield(newXMLTemplateTextToken("/>"), nil)
 }
 
-func (n *NodeBuilder) flattenXMLTemplatePI(x *st.XMLProcessingInstruction, yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
+func (n *nodeBuilder) flattenXMLTemplatePI(x *st.XMLProcessingInstruction, yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
 	if !yield(newXMLTemplateTextToken("<?"), nil) {
 		return false
 	}
@@ -3745,7 +3743,7 @@ func (n *NodeBuilder) flattenXMLTemplatePI(x *st.XMLProcessingInstruction, yield
 	return yield(newXMLTemplateTextToken("?>"), nil)
 }
 
-func (n *NodeBuilder) flattenXMLTemplateAttributes(attrs st.NodeList[*st.XMLAttributeNode], yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
+func (n *nodeBuilder) flattenXMLTemplateAttributes(attrs st.NodeList[*st.XMLAttributeNode], yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
 	for attr := range attrs.Iterator() {
 		name := n.xmlNameToString(attr.AttributeName())
 		if !yield(newXMLTemplateTextToken(" "+name+"="), nil) {
@@ -3760,7 +3758,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributes(attrs st.NodeList[*st.XMLAttr
 	return true
 }
 
-func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
+func (n *nodeBuilder) flattenXMLTemplateAttributeValue(
 	name string,
 	value *st.XMLAttributeValue,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
@@ -3789,7 +3787,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
 				}
 				continue
 			}
-			if !n.flattenXMLTemplateNodeWithNamespace(ins, XMLTemplateInsertionKindAttribute, nil, yield) {
+			if !n.flattenXMLTemplateNodeWithNamespace(ins, ast.XMLTemplateInsertionKindAttribute, nil, yield) {
 				return false
 			}
 			continue
@@ -3803,7 +3801,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
 	return yield(newXMLTemplateTextToken(endQuote), nil)
 }
 
-func (n *NodeBuilder) reportXMLTemplateDiagnostic(diag *xmlTemplateDiagnostic) {
+func (n *nodeBuilder) reportXMLTemplateDiagnostic(diag *xmlTemplateDiagnostic) {
 	if diag.Internal {
 		n.cx.InternalError(diag.Message, diag.Position)
 		return
@@ -3811,15 +3809,15 @@ func (n *NodeBuilder) reportXMLTemplateDiagnostic(diag *xmlTemplateDiagnostic) {
 	n.cx.SemanticError(diag.Message, diag.Position)
 }
 
-func (n *NodeBuilder) collectXMLTemplateNamespaceInsertion(node st.Node) XMLTemplateNamespaceInsertion {
-	insn := XMLTemplateNamespaceInsertion{
+func (n *nodeBuilder) collectXMLTemplateNamespaceInsertion(node st.Node) ast.XMLTemplateNamespaceInsertion {
+	insn := ast.XMLTemplateNamespaceInsertion{
 		UsedPrefixes: map[string]struct{}{},
 	}
 	n.collectXMLTemplateNamespaceRefs(node, nil, &insn)
 	return insn
 }
 
-func (n *NodeBuilder) collectXMLTemplateNamespaceRefs(node st.Node, scopes []map[string]struct{}, insn *XMLTemplateNamespaceInsertion) {
+func (n *nodeBuilder) collectXMLTemplateNamespaceRefs(node st.Node, scopes []map[string]struct{}, insn *ast.XMLTemplateNamespaceInsertion) {
 	switch x := node.(type) {
 	case *st.XMLElementNode:
 		start := x.StartTag()
@@ -3840,10 +3838,10 @@ func (n *NodeBuilder) collectXMLTemplateNamespaceRefs(node st.Node, scopes []map
 	}
 }
 
-func (n *NodeBuilder) collectXMLTemplateAttributeNamespaceRefs(
+func (n *nodeBuilder) collectXMLTemplateAttributeNamespaceRefs(
 	attrs st.NodeList[*st.XMLAttributeNode],
 	scopes []map[string]struct{},
-	insn *XMLTemplateNamespaceInsertion,
+	insn *ast.XMLTemplateNamespaceInsertion,
 ) {
 	for attr := range attrs.Iterator() {
 		name := n.xmlNameToString(attr.AttributeName())
@@ -3854,7 +3852,7 @@ func (n *NodeBuilder) collectXMLTemplateAttributeNamespaceRefs(
 	}
 }
 
-func (n *NodeBuilder) recordXMLTemplateNameRef(name string, isElement bool, scopes []map[string]struct{}, insn *XMLTemplateNamespaceInsertion) {
+func (n *nodeBuilder) recordXMLTemplateNameRef(name string, isElement bool, scopes []map[string]struct{}, insn *ast.XMLTemplateNamespaceInsertion) {
 	prefix, _ := splitXMLTemplateName(name)
 	if prefix == "xmlns" {
 		return
@@ -3871,7 +3869,7 @@ func (n *NodeBuilder) recordXMLTemplateNameRef(name string, isElement bool, scop
 	}
 }
 
-func (n *NodeBuilder) collectInlineXMLTemplatePrefixes(attrs st.NodeList[*st.XMLAttributeNode]) map[string]struct{} {
+func (n *nodeBuilder) collectInlineXMLTemplatePrefixes(attrs st.NodeList[*st.XMLAttributeNode]) map[string]struct{} {
 	prefixes := map[string]struct{}{}
 	for attr := range attrs.Iterator() {
 		name := n.xmlNameToString(attr.AttributeName())
@@ -3919,13 +3917,13 @@ func isXMLTemplateXMLNSName(name string) bool {
 	return name == "xmlns" || prefix == "xmlns" && local != ""
 }
 
-func (n *NodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
+func (n *nodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, pos diagnostics.Location) ast.BLangNode {
 	// We maintain fallowing 2 invariants
 	// 1. First and last elements are always strings
 	// 2. Between any two expressions there is a string
 	// For this we will add empty strings. This is meant to reducing the number of branchings needed in runtime
 	var strs []string
-	var insertions []BLangExpression
+	var insertions []ast.BLangExpression
 	content := node.Content()
 	lastStr := false
 	for child := range content.Iterator() {
@@ -3942,7 +3940,7 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, p
 				strs = append(strs, "")
 			}
 			expr := n.createActionOrExpression(c.Expression())
-			be, ok := expr.(BLangExpression)
+			be, ok := expr.(ast.BLangExpression)
 			if !ok {
 				n.cx.InternalError("interpolation did not produce BLangExpression", n.getPosition(c))
 				return nil
@@ -3956,12 +3954,12 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, p
 	if !lastStr {
 		strs = append(strs, "")
 	}
-	tpl := &BLangTemplateExpr{Kind: TemplateExprKindString, Strings: strs, Insertions: insertions}
+	tpl := &ast.BLangTemplateExpr{Kind: ast.TemplateExprKindString, Strings: strs, Insertions: insertions}
 	tpl.SetPosition(pos)
 	return tpl
 }
 
-func (n *NodeBuilder) xmlNameToString(name st.XMLNameNode) string {
+func (n *nodeBuilder) xmlNameToString(name st.XMLNameNode) string {
 	pos := n.getPosition(name)
 	switch name := name.(type) {
 	case *st.XMLSimpleNameNode:
@@ -3991,30 +3989,30 @@ func (n *NodeBuilder) xmlNameToString(name st.XMLNameNode) string {
 	return ""
 }
 
-func (n *NodeBuilder) xmlAttributes(attrs st.NodeList[*st.XMLAttributeNode]) []BLangXMLAttribute {
-	out := make([]BLangXMLAttribute, 0, attrs.Size())
+func (n *nodeBuilder) xmlAttributes(attrs st.NodeList[*st.XMLAttributeNode]) []ast.BLangXMLAttribute {
+	out := make([]ast.BLangXMLAttribute, 0, attrs.Size())
 	for attrNode := range attrs.Iterator() {
-		attr := n.TransformXMLAttribute(attrNode).(*BLangXMLAttribute)
+		attr := n.TransformXMLAttribute(attrNode).(*ast.BLangXMLAttribute)
 		out = append(out, *attr)
 	}
 	return out
 }
 
-func (n *NodeBuilder) TransformXMLElement(xMLElementNode *st.XMLElementNode) BLangNode {
-	elem := &BLangXMLElementLiteral{}
-	elem.pos = n.getPosition(xMLElementNode)
+func (n *nodeBuilder) TransformXMLElement(xMLElementNode *st.XMLElementNode) ast.BLangNode {
+	elem := &ast.BLangXMLElementLiteral{}
+	elem.SetPosition(n.getPosition(xMLElementNode))
 	if start := xMLElementNode.StartTag(); start != nil {
 		elem.Name = n.xmlNameToString(start.Name())
 		elem.Attrs = n.xmlAttributes(start.Attributes())
 	}
-	var children []BLangExpression
+	var children []ast.BLangExpression
 	content := xMLElementNode.Content()
 	for child := range content.Iterator() {
 		bl := n.TransformSyntaxNode(child)
 		if bl == nil {
 			continue
 		}
-		expr, ok := bl.(BLangExpression)
+		expr, ok := bl.(ast.BLangExpression)
 		if !ok {
 			n.cx.InternalError("xml element child did not produce BLangExpression", n.getPosition(child))
 			continue
@@ -4026,59 +4024,59 @@ func (n *NodeBuilder) TransformXMLElement(xMLElementNode *st.XMLElementNode) BLa
 	case 1:
 		elem.Content = children[0]
 	default:
-		seq := &BLangXMLSequenceLiteral{}
-		seq.pos = elem.pos
+		seq := &ast.BLangXMLSequenceLiteral{}
+		seq.SetPosition(elem.GetPosition())
 		seq.Children = children
 		elem.Content = seq
 	}
 	return elem
 }
 
-func (n *NodeBuilder) TransformXMLStartTag(xMLStartTagNode *st.XMLStartTagNode) BLangNode {
+func (n *nodeBuilder) TransformXMLStartTag(xMLStartTagNode *st.XMLStartTagNode) ast.BLangNode {
 	panic("TransformXMLStartTag unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLEndTag(xMLEndTagNode *st.XMLEndTagNode) BLangNode {
+func (n *nodeBuilder) TransformXMLEndTag(xMLEndTagNode *st.XMLEndTagNode) ast.BLangNode {
 	panic("TransformXMLEndTag unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLSimpleName(xMLSimpleNameNode *st.XMLSimpleNameNode) BLangNode {
+func (n *nodeBuilder) TransformXMLSimpleName(xMLSimpleNameNode *st.XMLSimpleNameNode) ast.BLangNode {
 	panic("TransformXMLSimpleName unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLQualifiedName(xMLQualifiedNameNode *st.XMLQualifiedNameNode) BLangNode {
+func (n *nodeBuilder) TransformXMLQualifiedName(xMLQualifiedNameNode *st.XMLQualifiedNameNode) ast.BLangNode {
 	panic("TransformXMLQualifiedName unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLEmptyElement(xMLEmptyElementNode *st.XMLEmptyElementNode) BLangNode {
-	elem := &BLangXMLElementLiteral{}
-	elem.pos = n.getPosition(xMLEmptyElementNode)
+func (n *nodeBuilder) TransformXMLEmptyElement(xMLEmptyElementNode *st.XMLEmptyElementNode) ast.BLangNode {
+	elem := &ast.BLangXMLElementLiteral{}
+	elem.SetPosition(n.getPosition(xMLEmptyElementNode))
 	elem.Name = n.xmlNameToString(xMLEmptyElementNode.Name())
 	elem.Attrs = n.xmlAttributes(xMLEmptyElementNode.Attributes())
 	return elem
 }
 
-func (n *NodeBuilder) TransformInterpolation(interpolationNode *st.InterpolationNode) BLangNode {
+func (n *nodeBuilder) TransformInterpolation(interpolationNode *st.InterpolationNode) ast.BLangNode {
 	n.cx.Unimplemented("xml interpolation not yet supported", n.getPosition(interpolationNode))
 	return nil
 }
 
-func (n *NodeBuilder) TransformXMLText(xMLTextNode *st.XMLTextNode) BLangNode {
-	text := &BLangXMLTextLiteral{}
-	text.pos = n.getPosition(xMLTextNode)
+func (n *nodeBuilder) TransformXMLText(xMLTextNode *st.XMLTextNode) ast.BLangNode {
+	text := &ast.BLangXMLTextLiteral{}
+	text.SetPosition(n.getPosition(xMLTextNode))
 	if c := xMLTextNode.Content(); c != nil {
 		text.Body = c.Text()
 	}
 	return text
 }
 
-func (n *NodeBuilder) TransformXMLAttribute(xMLAttributeNode *st.XMLAttributeNode) BLangNode {
-	attr := &BLangXMLAttribute{}
-	attr.pos = n.getPosition(xMLAttributeNode)
+func (n *nodeBuilder) TransformXMLAttribute(xMLAttributeNode *st.XMLAttributeNode) ast.BLangNode {
+	attr := &ast.BLangXMLAttribute{}
+	attr.SetPosition(n.getPosition(xMLAttributeNode))
 	attr.Name = n.xmlNameToString(xMLAttributeNode.AttributeName())
 	if valueNode := xMLAttributeNode.Value(); valueNode != nil {
 		if transformed := n.TransformXMLAttributeValue(valueNode); transformed != nil {
-			if expr, ok := transformed.(BLangExpression); ok {
+			if expr, ok := transformed.(ast.BLangExpression); ok {
 				attr.Value = expr
 			}
 		}
@@ -4086,7 +4084,7 @@ func (n *NodeBuilder) TransformXMLAttribute(xMLAttributeNode *st.XMLAttributeNod
 	return attr
 }
 
-func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *st.XMLAttributeValue) BLangNode {
+func (n *nodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *st.XMLAttributeValue) ast.BLangNode {
 	var b strings.Builder
 	items := xMLAttributeValue.Value()
 	for child := range items.Iterator() {
@@ -4098,17 +4096,17 @@ func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *st.XMLAttrib
 		b.WriteString(tok.Text())
 	}
 	text := b.String()
-	lit := &BLangLiteral{}
-	lit.pos = n.getPosition(xMLAttributeValue)
-	lit.SetValueType(n.types.getTypeFromTag(TypeTags_STRING).(BType))
+	lit := &ast.BLangLiteral{}
+	lit.SetPosition(n.getPosition(xMLAttributeValue))
+	lit.SetValueType(n.types.getTypeFromTag(ast.TypeTags_STRING).(ast.BType))
 	lit.Value = text
 	lit.OriginalValue = text
 	return lit
 }
 
-func (n *NodeBuilder) TransformXMLComment(xMLComment *st.XMLComment) BLangNode {
-	c := &BLangXMLCommentLiteral{}
-	c.pos = n.getPosition(xMLComment)
+func (n *nodeBuilder) TransformXMLComment(xMLComment *st.XMLComment) ast.BLangNode {
+	c := &ast.BLangXMLCommentLiteral{}
+	c.SetPosition(n.getPosition(xMLComment))
 	var b strings.Builder
 	content := xMLComment.Content()
 	for child := range content.Iterator() {
@@ -4123,14 +4121,14 @@ func (n *NodeBuilder) TransformXMLComment(xMLComment *st.XMLComment) BLangNode {
 	return c
 }
 
-func (n *NodeBuilder) TransformXMLCDATA(xMLCDATANode *st.XMLCDATANode) BLangNode {
+func (n *nodeBuilder) TransformXMLCDATA(xMLCDATANode *st.XMLCDATANode) ast.BLangNode {
 	n.cx.Unimplemented("xml CDATA not yet supported", n.getPosition(xMLCDATANode))
 	return nil
 }
 
-func (n *NodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction *st.XMLProcessingInstruction) BLangNode {
-	pi := &BLangXMLPILiteral{}
-	pi.pos = n.getPosition(xMLProcessingInstruction)
+func (n *nodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction *st.XMLProcessingInstruction) ast.BLangNode {
+	pi := &ast.BLangXMLPILiteral{}
+	pi.SetPosition(n.getPosition(xMLProcessingInstruction))
 	pi.Target = n.xmlNameToString(xMLProcessingInstruction.Target())
 	var b strings.Builder
 	data := xMLProcessingInstruction.Data()
@@ -4146,21 +4144,21 @@ func (n *NodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction
 	return pi
 }
 
-func (n *NodeBuilder) TransformTableTypeDescriptor(tableTypeDescriptorNode *st.TableTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformTableTypeDescriptor(tableTypeDescriptorNode *st.TableTypeDescriptorNode) ast.BLangNode {
 	panic("TransformTableTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypeParameter(typeParameterNode *st.TypeParameterNode) BLangNode {
-	return n.createTypeNode(typeParameterNode.TypeNode()).(BLangNode)
+func (n *nodeBuilder) TransformTypeParameter(typeParameterNode *st.TypeParameterNode) ast.BLangNode {
+	return n.createTypeNode(typeParameterNode.TypeNode()).(ast.BLangNode)
 }
 
-func (n *NodeBuilder) TransformKeyTypeConstraint(keyTypeConstraintNode *st.KeyTypeConstraintNode) BLangNode {
+func (n *nodeBuilder) TransformKeyTypeConstraint(keyTypeConstraintNode *st.KeyTypeConstraintNode) ast.BLangNode {
 	panic("TransformKeyTypeConstraint unimplemented")
 }
 
-func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode *st.FunctionTypeDescriptorNode) BLangNode {
-	funcType := &BLangFunctionType{}
-	funcType.pos = n.getPosition(functionTypeDescriptorNode)
+func (n *nodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode *st.FunctionTypeDescriptorNode) ast.BLangNode {
+	funcType := &ast.BLangFunctionType{}
+	funcType.SetPosition(n.getPosition(functionTypeDescriptorNode))
 
 	if funcSignature := functionTypeDescriptorNode.FunctionSignature(); funcSignature != nil {
 		funcType.ParamListPos = diagnostics.NewBuiltinLocation()
@@ -4187,10 +4185,10 @@ func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode
 			if returnsKeyword != nil && !returnsKeyword.IsMissing() {
 				funcType.SetExplicitReturnTypeDescriptor()
 			}
-			funcType.ReturnTypeDescriptor = n.createTypeNode(retNode.Type()).(BType)
+			funcType.ReturnTypeDescriptor = n.createTypeNode(retNode.Type()).(ast.BType)
 		} else {
-			retType := &BLangValueType{TypeKind: TypeKind_NIL}
-			retType.pos = diagnostics.NewBuiltinLocation()
+			retType := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+			retType.SetPosition(diagnostics.NewBuiltinLocation())
 			funcType.ReturnTypeDescriptor = retType
 		}
 	} else {
@@ -4217,7 +4215,7 @@ type typedParameterNode interface {
 	Annotations() st.NodeList[*st.AnnotationNode]
 }
 
-func (n *NodeBuilder) createFunctionTypeParam(param st.ParameterNode) BLangFunctionTypeParam {
+func (n *nodeBuilder) createFunctionTypeParam(param st.ParameterNode) ast.BLangFunctionTypeParam {
 	typedParam, ok := param.(typedParameterNode)
 	if !ok {
 		panic("createFunctionTypeParam: unsupported parameter type")
@@ -4226,16 +4224,16 @@ func (n *NodeBuilder) createFunctionTypeParam(param st.ParameterNode) BLangFunct
 	typeName := typedParam.TypeName()
 	annotations := typedParam.Annotations()
 
-	ftParam := BLangFunctionTypeParam{}
-	ftParam.pos = n.getPosition(param)
+	ftParam := ast.BLangFunctionTypeParam{}
+	ftParam.SetPosition(n.getPosition(param))
 
 	if paramName != nil {
 		name := createIdentifierFromToken(n.getPosition(paramName), paramName)
-		name.pos = n.getPosition(paramName)
+		name.SetPosition(n.getPosition(paramName))
 		ftParam.Name = &name
 	}
 
-	ftParam.TypeDesc = n.createTypeNode(typeName).(BType)
+	ftParam.TypeDesc = n.createTypeNode(typeName).(ast.BType)
 
 	if dp, ok := param.(*st.DefaultableParameterNode); ok {
 		defaultExpr := dp.Expression()
@@ -4249,37 +4247,37 @@ func (n *NodeBuilder) createFunctionTypeParam(param st.ParameterNode) BLangFunct
 	return ftParam
 }
 
-func (n *NodeBuilder) TransformFunctionSignature(functionSignatureNode *st.FunctionSignatureNode) BLangNode {
+func (n *nodeBuilder) TransformFunctionSignature(functionSignatureNode *st.FunctionSignatureNode) ast.BLangNode {
 	panic("TransformFunctionSignature unimplemented")
 }
 
-func (n *NodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprNode *st.ExplicitAnonymousFunctionExpressionNode) BLangNode {
-	bLFunction := &BLangFunction{}
+func (n *nodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprNode *st.ExplicitAnonymousFunctionExpressionNode) ast.BLangNode {
+	bLFunction := &ast.BLangFunction{}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
 	bLFunction.Name = &ident
 	n.populateFuncSignature(bLFunction, anonFuncExprNode.FunctionSignature())
-	body := n.TransformSyntaxNode(anonFuncExprNode.FunctionBody()).(FunctionBodyNode)
+	body := n.TransformSyntaxNode(anonFuncExprNode.FunctionBody()).(ast.FunctionBodyNode)
 	bLFunction.Body = body
-	bLFunction.pos = n.getPosition(anonFuncExprNode)
+	bLFunction.SetPosition(n.getPosition(anonFuncExprNode))
 	bLFunction.SetAnonymous()
 	setFunctionQualifiers(bLFunction, anonFuncExprNode.QualifierList())
 
-	lambdaFunc := &BLangLambdaFunction{Function: bLFunction}
-	lambdaFunc.pos = bLFunction.pos
+	lambdaFunc := &ast.BLangLambdaFunction{Function: bLFunction}
+	lambdaFunc.SetPosition(bLFunction.GetPosition())
 	return lambdaFunc
 }
 
-func (n *NodeBuilder) TransformExpressionFunctionBody(expressionFunctionBodyNode *st.ExpressionFunctionBodyNode) BLangNode {
-	exprBody := &BLangExprFunctionBody{}
+func (n *nodeBuilder) TransformExpressionFunctionBody(expressionFunctionBodyNode *st.ExpressionFunctionBodyNode) ast.BLangNode {
+	exprBody := &ast.BLangExprFunctionBody{}
 	exprBody.Expr = n.createExpression(expressionFunctionBodyNode.Expression())
-	exprBody.pos = n.getPosition(expressionFunctionBodyNode)
+	exprBody.SetPosition(n.getPosition(expressionFunctionBodyNode))
 	return exprBody
 }
 
-func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *st.TupleTypeDescriptorNode) BLangNode {
-	tupleTypeNode := &BLangTupleTypeNode{
-		Members: make([]BLangMemberTypeDesc, 0),
+func (n *nodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *st.TupleTypeDescriptorNode) ast.BLangNode {
+	tupleTypeNode := &ast.BLangTupleTypeNode{
+		Members: make([]ast.BLangMemberTypeDesc, 0),
 	}
 
 	types := tupleTypeDescriptorNode.MemberTypeDesc()
@@ -4287,28 +4285,28 @@ func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *st.T
 		node := types.Get(i)
 		if node.Kind() == st.REST_TYPE {
 			restDescriptor := node.(*st.RestDescriptorNode)
-			tupleTypeNode.Rest = n.createTypeNode(restDescriptor.TypeDescriptor()).(BType)
+			tupleTypeNode.Rest = n.createTypeNode(restDescriptor.TypeDescriptor()).(ast.BType)
 		} else {
 			memberNode := node.(*st.MemberTypeDescriptorNode)
-			member := BLangMemberTypeDesc{
+			member := ast.BLangMemberTypeDesc{
 				TypeDesc: n.createTypeNode(memberNode.TypeDescriptor()),
 			}
-			member.pos = n.getPosition(memberNode)
+			member.SetPosition(n.getPosition(memberNode))
 			tupleTypeNode.Members = append(tupleTypeNode.Members, member)
 		}
 	}
-	tupleTypeNode.pos = n.getPosition(tupleTypeDescriptorNode)
+	tupleTypeNode.SetPosition(n.getPosition(tupleTypeDescriptorNode))
 	return tupleTypeNode
 }
 
-func (n *NodeBuilder) TransformParenthesisedTypeDescriptor(parenthesisedTypeDescriptorNode *st.ParenthesisedTypeDescriptorNode) BLangNode {
-	return n.createTypeNode(parenthesisedTypeDescriptorNode.Typedesc()).(BLangNode)
+func (n *nodeBuilder) TransformParenthesisedTypeDescriptor(parenthesisedTypeDescriptorNode *st.ParenthesisedTypeDescriptorNode) ast.BLangNode {
+	return n.createTypeNode(parenthesisedTypeDescriptorNode.Typedesc()).(ast.BLangNode)
 }
 
-func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression *st.ExplicitNewExpressionNode) BLangNode {
-	typeInit := &BLangNewExpression{}
-	typeInit.pos = n.getPosition(explicitNewBLangExpression)
-	typeInit.TypeDescriptor = n.createTypeNode(explicitNewBLangExpression.TypeDescriptor()).(BType)
+func (n *nodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression *st.ExplicitNewExpressionNode) ast.BLangNode {
+	typeInit := &ast.BLangNewExpression{}
+	typeInit.SetPosition(n.getPosition(explicitNewBLangExpression))
+	typeInit.TypeDescriptor = n.createTypeNode(explicitNewBLangExpression.TypeDescriptor()).(ast.BType)
 	if argList := explicitNewBLangExpression.ParenthesizedArgList(); argList != nil {
 		args := argList.Arguments()
 		for arg := range args.Iterator() {
@@ -4318,9 +4316,9 @@ func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression 
 	return typeInit
 }
 
-func (n *NodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression *st.ImplicitNewExpressionNode) BLangNode {
-	typeInit := &BLangNewExpression{}
-	typeInit.pos = n.getPosition(implicitNewBLangExpression)
+func (n *nodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression *st.ImplicitNewExpressionNode) ast.BLangNode {
+	typeInit := &ast.BLangNewExpression{}
+	typeInit.SetPosition(n.getPosition(implicitNewBLangExpression))
 	if argList := implicitNewBLangExpression.ParenthesizedArgList(); argList != nil {
 		args := argList.Arguments()
 		for arg := range args.Iterator() {
@@ -4330,23 +4328,20 @@ func (n *NodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression 
 	return typeInit
 }
 
-func (n *NodeBuilder) TransformParenthesizedArgList(parenthesizedArgList *st.ParenthesizedArgList) BLangNode {
+func (n *nodeBuilder) TransformParenthesizedArgList(parenthesizedArgList *st.ParenthesizedArgList) ast.BLangNode {
 	panic("TransformParenthesizedArgList unimplemented")
 }
 
-func (n *NodeBuilder) TransformQueryConstructType(queryConstructTypeNode *st.QueryConstructTypeNode) BLangNode {
+func (n *nodeBuilder) TransformQueryConstructType(queryConstructTypeNode *st.QueryConstructTypeNode) ast.BLangNode {
 	keyword := queryConstructTypeNode.Keyword()
-	return &BLangIdentifier{
-		Value: keyword.Text(),
-		bLangNodeBase: bLangNodeBase{
-			pos: n.getPosition(queryConstructTypeNode),
-		},
-	}
+	identifier := &ast.BLangIdentifier{Value: keyword.Text()}
+	identifier.SetPosition(n.getPosition(queryConstructTypeNode))
+	return identifier
 }
 
-func (n *NodeBuilder) TransformFromClause(fromClauseNode *st.FromClauseNode) BLangNode {
-	fromClause := &BLangFromClause{}
-	fromClause.pos = n.getPosition(fromClauseNode)
+func (n *nodeBuilder) TransformFromClause(fromClauseNode *st.FromClauseNode) ast.BLangNode {
+	fromClause := &ast.BLangFromClause{}
+	fromClause.SetPosition(n.getPosition(fromClauseNode))
 	fromClause.SetCollection(n.createExpression(fromClauseNode.Expression()))
 	bindingPatternNode := fromClauseNode.TypedBindingPattern()
 	fromClause.SetVariableDefinitionNode(n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode,
@@ -4355,28 +4350,28 @@ func (n *NodeBuilder) TransformFromClause(fromClauseNode *st.FromClauseNode) BLa
 	return fromClause
 }
 
-func (n *NodeBuilder) TransformWhereClause(whereClauseNode *st.WhereClauseNode) BLangNode {
-	whereClause := &BLangWhereClause{}
-	whereClause.pos = n.getPosition(whereClauseNode)
+func (n *nodeBuilder) TransformWhereClause(whereClauseNode *st.WhereClauseNode) ast.BLangNode {
+	whereClause := &ast.BLangWhereClause{}
+	whereClause.SetPosition(n.getPosition(whereClauseNode))
 	whereClause.Expression = n.createExpression(whereClauseNode.Expression())
 	return whereClause
 }
 
-func (n *NodeBuilder) TransformLetClause(letClauseNode *st.LetClauseNode) BLangNode {
-	letClause := &BLangLetClause{}
-	letClause.pos = n.getPosition(letClauseNode)
+func (n *nodeBuilder) TransformLetClause(letClauseNode *st.LetClauseNode) ast.BLangNode {
+	letClause := &ast.BLangLetClause{}
+	letClause.SetPosition(n.getPosition(letClauseNode))
 	letVarDeclarations := letClauseNode.LetVarDeclarations()
-	letClause.LetVarDeclarations = make([]BLangSimpleVariableDef, 0, letVarDeclarations.Size())
+	letClause.LetVarDeclarations = make([]ast.BLangSimpleVariableDef, 0, letVarDeclarations.Size())
 	for letVar := range letVarDeclarations.Iterator() {
-		varDef := n.TransformLetVariableDeclaration(letVar).(*BLangSimpleVariableDef)
+		varDef := n.TransformLetVariableDeclaration(letVar).(*ast.BLangSimpleVariableDef)
 		letClause.LetVarDeclarations = append(letClause.LetVarDeclarations, *varDef)
 	}
 	return letClause
 }
 
-func (n *NodeBuilder) TransformJoinClause(joinClauseNode *st.JoinClauseNode) BLangNode {
-	joinClause := &BLangJoinClause{}
-	joinClause.pos = n.getPosition(joinClauseNode)
+func (n *nodeBuilder) TransformJoinClause(joinClauseNode *st.JoinClauseNode) ast.BLangNode {
+	joinClause := &ast.BLangJoinClause{}
+	joinClause.SetPosition(n.getPosition(joinClauseNode))
 	joinClause.SetCollection(n.createExpression(joinClauseNode.Expression()))
 	bindingPatternNode := joinClauseNode.TypedBindingPattern()
 	joinClause.SetVariableDefinitionNode(
@@ -4385,61 +4380,61 @@ func (n *NodeBuilder) TransformJoinClause(joinClauseNode *st.JoinClauseNode) BLa
 	joinClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	joinClause.IsOuterJoinFlag = joinClauseNode.OuterKeyword() != nil
 	if onClauseNode := joinClauseNode.JoinOnCondition(); onClauseNode != nil {
-		joinClause.OnClause = *n.TransformOnClause(onClauseNode).(*BLangOnClause)
+		joinClause.OnClause = *n.TransformOnClause(onClauseNode).(*ast.BLangOnClause)
 	}
 	return joinClause
 }
 
-func (n *NodeBuilder) TransformOnClause(onClauseNode *st.OnClauseNode) BLangNode {
-	onClause := &BLangOnClause{}
-	onClause.pos = n.getPosition(onClauseNode)
+func (n *nodeBuilder) TransformOnClause(onClauseNode *st.OnClauseNode) ast.BLangNode {
+	onClause := &ast.BLangOnClause{}
+	onClause.SetPosition(n.getPosition(onClauseNode))
 	onClause.SetOnExpression(n.createExpression(onClauseNode.OnExpression()))
 	onClause.SetEqualsExpression(n.createExpression(onClauseNode.EqualsExpression()))
 	return onClause
 }
 
-func (n *NodeBuilder) TransformLimitClause(limitClauseNode *st.LimitClauseNode) BLangNode {
-	limitClause := &BLangLimitClause{}
-	limitClause.pos = n.getPosition(limitClauseNode)
+func (n *nodeBuilder) TransformLimitClause(limitClauseNode *st.LimitClauseNode) ast.BLangNode {
+	limitClause := &ast.BLangLimitClause{}
+	limitClause.SetPosition(n.getPosition(limitClauseNode))
 	limitClause.SetExpression(n.createExpression(limitClauseNode.Expression()))
 	return limitClause
 }
 
-func (n *NodeBuilder) TransformOnConflictClause(onConflictClauseNode *st.OnConflictClauseNode) BLangNode {
-	onConflictClause := &BLangOnConflictClause{}
-	onConflictClause.pos = n.getPosition(onConflictClauseNode)
+func (n *nodeBuilder) TransformOnConflictClause(onConflictClauseNode *st.OnConflictClauseNode) ast.BLangNode {
+	onConflictClause := &ast.BLangOnConflictClause{}
+	onConflictClause.SetPosition(n.getPosition(onConflictClauseNode))
 	onConflictClause.SetExpression(n.createExpression(onConflictClauseNode.Expression()))
 	return onConflictClause
 }
 
-func (n *NodeBuilder) TransformQueryPipeline(queryPipelineNode *st.QueryPipelineNode) BLangNode {
+func (n *nodeBuilder) TransformQueryPipeline(queryPipelineNode *st.QueryPipelineNode) ast.BLangNode {
 	panic("TransformQueryPipeline unimplemented")
 }
 
-func (n *NodeBuilder) TransformSelectClause(selectClauseNode *st.SelectClauseNode) BLangNode {
-	selectClause := &BLangSelectClause{}
-	selectClause.pos = n.getPosition(selectClauseNode)
+func (n *nodeBuilder) TransformSelectClause(selectClauseNode *st.SelectClauseNode) ast.BLangNode {
+	selectClause := &ast.BLangSelectClause{}
+	selectClause.SetPosition(n.getPosition(selectClauseNode))
 	selectClause.SetExpression(n.createExpression(selectClauseNode.Expression()))
 	return selectClause
 }
 
-func (n *NodeBuilder) TransformCollectClause(collectClauseNode *st.CollectClauseNode) BLangNode {
-	collectClause := &BLangCollectClause{
+func (n *nodeBuilder) TransformCollectClause(collectClauseNode *st.CollectClauseNode) ast.BLangNode {
+	collectClause := &ast.BLangCollectClause{
 		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
 	}
-	collectClause.pos = n.getPosition(collectClauseNode)
+	collectClause.SetPosition(n.getPosition(collectClauseNode))
 	collectClause.SetExpression(n.createExpression(collectClauseNode.Expression()))
 	return collectClause
 }
 
-func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *st.QueryExpressionNode) BLangNode {
-	queryExpr := &BLangQueryExpr{}
-	queryExpr.pos = n.getPosition(queryBLangExpression)
+func (n *nodeBuilder) TransformQueryExpression(queryBLangExpression *st.QueryExpressionNode) ast.BLangNode {
+	queryExpr := &ast.BLangQueryExpr{}
+	queryExpr.SetPosition(n.getPosition(queryBLangExpression))
 
 	if constructType := queryBLangExpression.QueryConstructType(); constructType != nil {
 		switch constructType.Keyword().Text() {
-		case string(TypeKind_MAP):
-			queryExpr.QueryConstructType = TypeKind_MAP
+		case string(ast.TypeKind_MAP):
+			queryExpr.QueryConstructType = ast.TypeKind_MAP
 		default:
 			n.cx.Unimplemented("only map query construct type is supported for now", n.getPosition(constructType))
 		}
@@ -4479,35 +4474,30 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *st.QueryExp
 	return queryExpr
 }
 
-func (n *NodeBuilder) TransformQueryAction(queryActionNode *st.QueryActionNode) BLangNode {
+func (n *nodeBuilder) TransformQueryAction(queryActionNode *st.QueryActionNode) ast.BLangNode {
 	panic("TransformQueryAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *st.IntersectionTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *st.IntersectionTypeDescriptorNode) ast.BLangNode {
 	lhs := intersectionTypeDescriptorNode.LeftTypeDesc()
 	rhs := intersectionTypeDescriptorNode.RightTypeDesc()
-	bLIntersectionType := &BLangIntersectionTypeNode{
-		lhs: TypeData{
-			TypeDescriptor: n.createTypeNode(lhs),
-		},
-		rhs: TypeData{
-			TypeDescriptor: n.createTypeNode(rhs),
-		},
-	}
-	bLIntersectionType.pos = n.getPosition(intersectionTypeDescriptorNode)
+	bLIntersectionType := &ast.BLangIntersectionTypeNode{}
+	bLIntersectionType.SetLhs(ast.TypeData{TypeDescriptor: n.createTypeNode(lhs)})
+	bLIntersectionType.SetRhs(ast.TypeData{TypeDescriptor: n.createTypeNode(rhs)})
+	bLIntersectionType.SetPosition(n.getPosition(intersectionTypeDescriptorNode))
 	return bLIntersectionType
 }
 
-func (n *NodeBuilder) TransformImplicitAnonymousFunctionParameters(implicitAnonymousFunctionParameters *st.ImplicitAnonymousFunctionParameters) BLangNode {
+func (n *nodeBuilder) TransformImplicitAnonymousFunctionParameters(implicitAnonymousFunctionParameters *st.ImplicitAnonymousFunctionParameters) ast.BLangNode {
 	panic("TransformImplicitAnonymousFunctionParameters unimplemented")
 }
 
-func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *st.ImplicitAnonymousFunctionExpressionNode) BLangNode {
-	fn := &BLangFunction{}
+func (n *nodeBuilder) TransformImplicitAnonymousFunctionExpression(node *st.ImplicitAnonymousFunctionExpressionNode) ast.BLangNode {
+	fn := &ast.BLangFunction{}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
 	fn.Name = &ident
-	fn.pos = n.getPosition(node)
+	fn.SetPosition(n.getPosition(node))
 	fn.SetAnonymous()
 
 	var paramNodes []*st.SimpleNameReferenceNode
@@ -4522,7 +4512,7 @@ func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *st.Impl
 	default:
 		n.cx.SyntaxError("invalid parameter list in inferred anonymous function expression", n.getPosition(node.Params()))
 	}
-	fn.RequiredParams = make([]BLangSimpleVariable, len(paramNodes))
+	fn.RequiredParams = make([]ast.BLangSimpleVariable, len(paramNodes))
 	for i, param := range paramNodes {
 		paramName := param.Name()
 		paramPos := n.getPosition(paramName)
@@ -4535,126 +4525,126 @@ func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *st.Impl
 			ident = createIdentifier(paramPos, &paramValue, &paramValue)
 		}
 		fn.RequiredParams[i].Name = &ident
-		fn.RequiredParams[i].pos = n.getPosition(param)
+		fn.RequiredParams[i].SetPosition(n.getPosition(param))
 		fn.RequiredParams[i].SetRequiredParam()
 	}
-	fn.Body = &BLangExprFunctionBody{
+	fn.Body = &ast.BLangExprFunctionBody{
 		Expr: n.createExpression(node.Expression()),
 	}
-	fn.Body.(*BLangExprFunctionBody).pos = n.getPosition(node.Expression())
+	fn.Body.(*ast.BLangExprFunctionBody).SetPosition(n.getPosition(node.Expression()))
 
-	lambda := &BLangLambdaFunction{Function: fn, InferredParams: true}
-	lambda.pos = fn.pos
+	lambda := &ast.BLangLambdaFunction{Function: fn, InferredParams: true}
+	lambda.SetPosition(fn.GetPosition())
 	return lambda
 }
 
-func (n *NodeBuilder) TransformStartAction(startActionNode *st.StartActionNode) BLangNode {
+func (n *nodeBuilder) TransformStartAction(startActionNode *st.StartActionNode) ast.BLangNode {
 	panic("TransformStartAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformFlushAction(flushActionNode *st.FlushActionNode) BLangNode {
+func (n *nodeBuilder) TransformFlushAction(flushActionNode *st.FlushActionNode) ast.BLangNode {
 	panic("TransformFlushAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformSingletonTypeDescriptor(singletonTypeDescriptorNode *st.SingletonTypeDescriptorNode) BLangNode {
-	bLFiniteTypeNode := &BLangFiniteTypeNode{}
-	bLFiniteTypeNode.pos = n.getPosition(singletonTypeDescriptorNode)
+func (n *nodeBuilder) TransformSingletonTypeDescriptor(singletonTypeDescriptorNode *st.SingletonTypeDescriptorNode) ast.BLangNode {
+	bLFiniteTypeNode := &ast.BLangFiniteTypeNode{}
+	bLFiniteTypeNode.SetPosition(n.getPosition(singletonTypeDescriptorNode))
 	bLFiniteTypeNode.ValueSpace = append(bLFiniteTypeNode.ValueSpace, n.createExpression(singletonTypeDescriptorNode.SimpleContExprNode()))
 	return bLFiniteTypeNode
 }
 
-func (n *NodeBuilder) TransformMethodDeclaration(methodDeclarationNode *st.MethodDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformMethodDeclaration(methodDeclarationNode *st.MethodDeclarationNode) ast.BLangNode {
 	panic("TransformMethodDeclaration unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypedBindingPattern(typedBindingPatternNode *st.TypedBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformTypedBindingPattern(typedBindingPatternNode *st.TypedBindingPatternNode) ast.BLangNode {
 	panic("TransformTypedBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformCaptureBindingPattern(captureBindingPatternNode *st.CaptureBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformCaptureBindingPattern(captureBindingPatternNode *st.CaptureBindingPatternNode) ast.BLangNode {
 	panic("TransformCaptureBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformWildcardBindingPattern(wildcardBindingPatternNode *st.WildcardBindingPatternNode) BLangNode {
-	bLWildCardBindingPattern := &BLangWildCardBindingPattern{}
-	bLWildCardBindingPattern.pos = n.getPosition(wildcardBindingPatternNode)
+func (n *nodeBuilder) TransformWildcardBindingPattern(wildcardBindingPatternNode *st.WildcardBindingPatternNode) ast.BLangNode {
+	bLWildCardBindingPattern := &ast.BLangWildCardBindingPattern{}
+	bLWildCardBindingPattern.SetPosition(n.getPosition(wildcardBindingPatternNode))
 	return bLWildCardBindingPattern
 }
 
-func (n *NodeBuilder) TransformListBindingPattern(listBindingPatternNode *st.ListBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformListBindingPattern(listBindingPatternNode *st.ListBindingPatternNode) ast.BLangNode {
 	panic("TransformListBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformMappingBindingPattern(mappingBindingPatternNode *st.MappingBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformMappingBindingPattern(mappingBindingPatternNode *st.MappingBindingPatternNode) ast.BLangNode {
 	panic("TransformMappingBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformFieldBindingPatternFull(fieldBindingPatternFullNode *st.FieldBindingPatternFullNode) BLangNode {
+func (n *nodeBuilder) TransformFieldBindingPatternFull(fieldBindingPatternFullNode *st.FieldBindingPatternFullNode) ast.BLangNode {
 	panic("TransformFieldBindingPatternFull unimplemented")
 }
 
-func (n *NodeBuilder) TransformFieldBindingPatternVarname(fieldBindingPatternVarnameNode *st.FieldBindingPatternVarnameNode) BLangNode {
+func (n *nodeBuilder) TransformFieldBindingPatternVarname(fieldBindingPatternVarnameNode *st.FieldBindingPatternVarnameNode) ast.BLangNode {
 	panic("TransformFieldBindingPatternVarname unimplemented")
 }
 
-func (n *NodeBuilder) TransformRestBindingPattern(restBindingPatternNode *st.RestBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformRestBindingPattern(restBindingPatternNode *st.RestBindingPatternNode) ast.BLangNode {
 	panic("TransformRestBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformErrorBindingPattern(errorBindingPatternNode *st.ErrorBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformErrorBindingPattern(errorBindingPatternNode *st.ErrorBindingPatternNode) ast.BLangNode {
 	panic("TransformErrorBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedArgBindingPattern(namedArgBindingPatternNode *st.NamedArgBindingPatternNode) BLangNode {
+func (n *nodeBuilder) TransformNamedArgBindingPattern(namedArgBindingPatternNode *st.NamedArgBindingPatternNode) ast.BLangNode {
 	panic("TransformNamedArgBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformAsyncSendAction(asyncSendActionNode *st.AsyncSendActionNode) BLangNode {
+func (n *nodeBuilder) TransformAsyncSendAction(asyncSendActionNode *st.AsyncSendActionNode) ast.BLangNode {
 	panic("TransformAsyncSendAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformSyncSendAction(syncSendActionNode *st.SyncSendActionNode) BLangNode {
+func (n *nodeBuilder) TransformSyncSendAction(syncSendActionNode *st.SyncSendActionNode) ast.BLangNode {
 	panic("TransformSyncSendAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformReceiveAction(receiveActionNode *st.ReceiveActionNode) BLangNode {
+func (n *nodeBuilder) TransformReceiveAction(receiveActionNode *st.ReceiveActionNode) ast.BLangNode {
 	panic("TransformReceiveAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformReceiveFields(receiveFieldsNode *st.ReceiveFieldsNode) BLangNode {
+func (n *nodeBuilder) TransformReceiveFields(receiveFieldsNode *st.ReceiveFieldsNode) ast.BLangNode {
 	panic("TransformReceiveFields unimplemented")
 }
 
-func (n *NodeBuilder) TransformAlternateReceive(alternateReceiveNode *st.AlternateReceiveNode) BLangNode {
+func (n *nodeBuilder) TransformAlternateReceive(alternateReceiveNode *st.AlternateReceiveNode) ast.BLangNode {
 	panic("TransformAlternateReceive unimplemented")
 }
 
-func (n *NodeBuilder) TransformRestDescriptor(restDescriptorNode *st.RestDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformRestDescriptor(restDescriptorNode *st.RestDescriptorNode) ast.BLangNode {
 	panic("TransformRestDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformDoubleGTToken(doubleGTTokenNode *st.DoubleGTTokenNode) BLangNode {
+func (n *nodeBuilder) TransformDoubleGTToken(doubleGTTokenNode *st.DoubleGTTokenNode) ast.BLangNode {
 	panic("TransformDoubleGTToken unimplemented")
 }
 
-func (n *NodeBuilder) TransformTrippleGTToken(trippleGTTokenNode *st.TrippleGTTokenNode) BLangNode {
+func (n *nodeBuilder) TransformTrippleGTToken(trippleGTTokenNode *st.TrippleGTTokenNode) ast.BLangNode {
 	panic("TransformTrippleGTToken unimplemented")
 }
 
-func (n *NodeBuilder) TransformWaitAction(waitActionNode *st.WaitActionNode) BLangNode {
+func (n *nodeBuilder) TransformWaitAction(waitActionNode *st.WaitActionNode) ast.BLangNode {
 	panic("TransformWaitAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformWaitFieldsList(waitFieldsListNode *st.WaitFieldsListNode) BLangNode {
+func (n *nodeBuilder) TransformWaitFieldsList(waitFieldsListNode *st.WaitFieldsListNode) ast.BLangNode {
 	panic("TransformWaitFieldsList unimplemented")
 }
 
-func (n *NodeBuilder) TransformWaitField(waitFieldNode *st.WaitFieldNode) BLangNode {
+func (n *nodeBuilder) TransformWaitField(waitFieldNode *st.WaitFieldNode) ast.BLangNode {
 	panic("TransformWaitField unimplemented")
 }
 
-func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression *st.AnnotAccessExpressionNode) BLangNode {
-	expr := &BLangAnnotAccessExpr{}
+func (n *nodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression *st.AnnotAccessExpressionNode) ast.BLangNode {
+	expr := &ast.BLangAnnotAccessExpr{}
 	expr.Expr = n.createExpression(annotAccessBLangExpression.Expression())
 	nameReference := n.createBLangNameReference(annotAccessBLangExpression.AnnotTagReference())
 	expr.PkgAlias = nameReference[0]
@@ -4663,7 +4653,7 @@ func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression 
 	return expr
 }
 
-func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *st.OptionalFieldAccessExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *st.OptionalFieldAccessExpressionNode) ast.BLangNode {
 	fieldName := optionalFieldAccessBLangExpression.FieldName()
 	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		// @cleanup we should replace all these panics with proper internal errors. Need to problem is with return value
@@ -4671,7 +4661,7 @@ func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccess
 		panic("TransformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE expected")
 	}
 
-	bLFieldBasedAccess := &BLangFieldBaseAccess{}
+	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
 	bLFieldBasedAccess.SetOptionalAccess()
 	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
 	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(optionalFieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
@@ -4684,15 +4674,15 @@ func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccess
 		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
 	}
 
-	bLFieldBasedAccess.pos = n.getPosition(optionalFieldAccessBLangExpression)
+	bLFieldBasedAccess.SetPosition(n.getPosition(optionalFieldAccessBLangExpression))
 	return bLFieldBasedAccess
 }
 
-func (n *NodeBuilder) TransformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) ast.BLangNode {
 	panic("TransformConditionalExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *st.EnumDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformEnumDeclaration(enumDeclarationNode *st.EnumDeclarationNode) ast.BLangNode {
 	publicQualifier := false
 	qualifier := enumDeclarationNode.Qualifier()
 	if qualifier != nil && qualifier.Kind() == st.PUBLIC_KEYWORD {
@@ -4700,7 +4690,7 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 	}
 
 	memberNodes := enumDeclarationNode.EnumMemberList()
-	memberTypeNodes := make([]TypeDescriptor, 0)
+	memberTypeNodes := make([]ast.TypeDescriptor, 0)
 	for memberNode := range memberNodes.Iterator() {
 		if memberNode.Kind() != st.ENUM_MEMBER {
 			continue
@@ -4719,8 +4709,8 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 		memberTypeNodes = append(memberTypeNodes, n.createTypeNode(enumMember.Identifier()))
 	}
 
-	typeDef := NewBLangTypeDefinition()
-	typeDef.pos = n.getPositionWithoutMetadata(enumDeclarationNode)
+	typeDef := ast.NewBLangTypeDefinition()
+	typeDef.SetPosition(n.getPositionWithoutMetadata(enumDeclarationNode))
 	if publicQualifier {
 		typeDef.SetPublic()
 	}
@@ -4732,37 +4722,36 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 	if len(memberTypeNodes) > 0 {
 		current := memberTypeNodes[0]
 		for i := 1; i < len(memberTypeNodes); i++ {
-			unionType := &BLangUnionTypeNode{
-				lhs: TypeData{TypeDescriptor: current},
-				rhs: TypeData{TypeDescriptor: memberTypeNodes[i]},
-			}
-			unionType.pos = typeDef.pos
+			unionType := &ast.BLangUnionTypeNode{}
+			unionType.SetLhs(ast.TypeData{TypeDescriptor: current})
+			unionType.SetRhs(ast.TypeData{TypeDescriptor: memberTypeNodes[i]})
+			unionType.SetPosition(typeDef.GetPosition())
 			current = unionType
 		}
-		typeDef.SetTypeData(TypeData{TypeDescriptor: current})
+		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: current})
 	} else {
-		neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
-		neverType.pos = diagnostics.NewBuiltinLocation()
-		typeDef.SetTypeData(TypeData{TypeDescriptor: neverType})
+		neverType := &ast.BLangValueType{TypeKind: ast.TypeKind_NEVER}
+		neverType.SetPosition(diagnostics.NewBuiltinLocation())
+		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
 		n.cx.SyntaxError("missing enum member", typeDef.Name.GetPosition())
 	}
 
 	metadata := enumDeclarationNode.Metadata()
 	if metadata != nil && !metadata.IsMissing() {
 		docString := getDocumentationString(metadata)
-		typeDef.markdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(docString)
+		typeDef.SetMarkdownDocumentationAttachment(n.createMarkdownDocumentationAttachment(docString))
 	}
 
 	return typeDef
 }
 
-func (n *NodeBuilder) TransformEnumMember(enumMemberNode *st.EnumMemberNode) BLangNode {
+func (n *nodeBuilder) TransformEnumMember(enumMemberNode *st.EnumMemberNode) ast.BLangNode {
 	return n.transformEnumMember(enumMemberNode, false)
 }
 
-func (n *NodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode, publicQualifier bool) *BLangConstant {
-	constantNode := createConstantNode()
-	constantNode.pos = n.getPositionWithoutMetadata(enumMemberNode)
+func (n *nodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode, publicQualifier bool) *ast.BLangConstant {
+	constantNode := ast.NewBLangConstant()
+	constantNode.SetPosition(n.getPositionWithoutMetadata(enumMemberNode))
 	if publicQualifier {
 		constantNode.SetPublic()
 	}
@@ -4774,11 +4763,11 @@ func (n *NodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode, pub
 	if exprNode := enumMemberNode.ConstExprNode(); exprNode != nil {
 		constantNode.Expr = n.createExpression(exprNode)
 	} else {
-		constantNode.Expr = n.createSimpleLiteral(enumMemberNode.Identifier()).(BLangExpression)
+		constantNode.Expr = n.createSimpleLiteral(enumMemberNode.Identifier()).(ast.BLangExpression)
 	}
 
-	stringType := &BLangValueType{TypeKind: TypeKind_STRING}
-	stringType.pos = diagnostics.NewBuiltinLocation()
+	stringType := &ast.BLangValueType{TypeKind: ast.TypeKind_STRING}
+	stringType.SetPosition(diagnostics.NewBuiltinLocation())
 	constantNode.SetTypeNode(stringType)
 
 	metadata := enumMemberNode.Metadata()
@@ -4790,11 +4779,11 @@ func (n *NodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode, pub
 	return constantNode
 }
 
-func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *st.ArrayTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *st.ArrayTypeDescriptorNode) ast.BLangNode {
 	position := n.getPosition(arrayTypeDescriptorNode)
 	dimensionNodes := arrayTypeDescriptorNode.Dimensions()
 	dimensionSize := dimensionNodes.Size()
-	var sizes []BLangExpression
+	var sizes []ast.BLangExpression
 
 	for i := 0; i < dimensionSize; i++ {
 		dimensionNode := dimensionNodes.Get(i)
@@ -4806,9 +4795,9 @@ func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *st.A
 	}
 	dimensionSize = len(sizes)
 
-	arrayTypeNode := &BLangArrayType{}
-	arrayTypeNode.pos = position
-	arrayTypeNode.Elemtype = TypeData{
+	arrayTypeNode := &ast.BLangArrayType{}
+	arrayTypeNode.SetPosition(position)
+	arrayTypeNode.Elemtype = ast.TypeData{
 		TypeDescriptor: n.createTypeNode(arrayTypeDescriptorNode.MemberTypeDesc()),
 	}
 	arrayTypeNode.Dimensions = dimensionSize
@@ -4816,71 +4805,71 @@ func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *st.A
 	return arrayTypeNode
 }
 
-func (n *NodeBuilder) TransformArrayDimension(arrayDimensionNode *st.ArrayDimensionNode) BLangNode {
+func (n *nodeBuilder) TransformArrayDimension(arrayDimensionNode *st.ArrayDimensionNode) ast.BLangNode {
 	panic("TransformArrayDimension unimplemented")
 }
 
-func (n *NodeBuilder) TransformTransactionStatement(transactionStatementNode *st.TransactionStatementNode) BLangNode {
+func (n *nodeBuilder) TransformTransactionStatement(transactionStatementNode *st.TransactionStatementNode) ast.BLangNode {
 	panic("TransformTransactionStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformRollbackStatement(rollbackStatementNode *st.RollbackStatementNode) BLangNode {
+func (n *nodeBuilder) TransformRollbackStatement(rollbackStatementNode *st.RollbackStatementNode) ast.BLangNode {
 	panic("TransformRollbackStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformRetryStatement(retryStatementNode *st.RetryStatementNode) BLangNode {
+func (n *nodeBuilder) TransformRetryStatement(retryStatementNode *st.RetryStatementNode) ast.BLangNode {
 	panic("TransformRetryStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformCommitAction(commitActionNode *st.CommitActionNode) BLangNode {
+func (n *nodeBuilder) TransformCommitAction(commitActionNode *st.CommitActionNode) ast.BLangNode {
 	panic("TransformCommitAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformTransactionalExpression(transactionalBLangExpression *st.TransactionalExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformTransactionalExpression(transactionalBLangExpression *st.TransactionalExpressionNode) ast.BLangNode {
 	panic("TransformTransactionalExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformByteArrayLiteral(byteArrayLiteralNode *st.ByteArrayLiteralNode) BLangNode {
+func (n *nodeBuilder) TransformByteArrayLiteral(byteArrayLiteralNode *st.ByteArrayLiteralNode) ast.BLangNode {
 	panic("TransformByteArrayLiteral unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLFilterExpression(xMLFilterBLangExpression *st.XMLFilterExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformXMLFilterExpression(xMLFilterBLangExpression *st.XMLFilterExpressionNode) ast.BLangNode {
 	panic("TransformXMLFilterExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLStepExpression(xMLStepBLangExpression *st.XMLStepExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformXMLStepExpression(xMLStepBLangExpression *st.XMLStepExpressionNode) ast.BLangNode {
 	panic("TransformXMLStepExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLNamePatternChaining(xMLNamePatternChainingNode *st.XMLNamePatternChainingNode) BLangNode {
+func (n *nodeBuilder) TransformXMLNamePatternChaining(xMLNamePatternChainingNode *st.XMLNamePatternChainingNode) ast.BLangNode {
 	panic("TransformXMLNamePatternChaining unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLStepIndexedExtend(xMLStepIndexedExtendNode *st.XMLStepIndexedExtendNode) BLangNode {
+func (n *nodeBuilder) TransformXMLStepIndexedExtend(xMLStepIndexedExtendNode *st.XMLStepIndexedExtendNode) ast.BLangNode {
 	panic("TransformXMLStepIndexedExtend unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLStepMethodCallExtend(xMLStepMethodCallExtendNode *st.XMLStepMethodCallExtendNode) BLangNode {
+func (n *nodeBuilder) TransformXMLStepMethodCallExtend(xMLStepMethodCallExtendNode *st.XMLStepMethodCallExtendNode) ast.BLangNode {
 	panic("TransformXMLStepMethodCallExtend unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLAtomicNamePattern(xMLAtomicNamePatternNode *st.XMLAtomicNamePatternNode) BLangNode {
+func (n *nodeBuilder) TransformXMLAtomicNamePattern(xMLAtomicNamePatternNode *st.XMLAtomicNamePatternNode) ast.BLangNode {
 	panic("TransformXMLAtomicNamePattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypeReferenceTypeDesc(typeReferenceTypeDescNode *st.TypeReferenceTypeDescNode) BLangNode {
+func (n *nodeBuilder) TransformTypeReferenceTypeDesc(typeReferenceTypeDescNode *st.TypeReferenceTypeDescNode) ast.BLangNode {
 	panic("TransformTypeReferenceTypeDesc unimplemented")
 }
 
-func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *st.MatchStatementNode) BLangNode {
-	matchStatement := &BLangMatchStatement{}
+func (n *nodeBuilder) TransformMatchStatement(matchStatementNode *st.MatchStatementNode) ast.BLangNode {
+	matchStatement := &ast.BLangMatchStatement{}
 	matchStmtExpr := n.createExpression(matchStatementNode.Condition())
 	matchStatement.Expr = matchStmtExpr
 
 	matchClauses := matchStatementNode.MatchClauses()
 	for matchClauseNode := range matchClauses.Iterator() {
-		bLangMatchClause := &BLangMatchClause{}
-		bLangMatchClause.pos = n.getPosition(matchClauseNode)
+		bLangMatchClause := &ast.BLangMatchClause{}
+		bLangMatchClause.SetPosition(n.getPosition(matchClauseNode))
 
 		// Handle match guard
 		if matchClauseNode.MatchGuard() != nil {
@@ -4898,16 +4887,16 @@ func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *st.MatchStatem
 		}
 
 		// Handle block statement
-		bLangMatchClause.Body = *n.TransformBlockStatement(matchClauseNode.BlockStatement()).(*BLangBlockStmt)
+		bLangMatchClause.Body = *n.TransformBlockStatement(matchClauseNode.BlockStatement()).(*ast.BLangBlockStmt)
 
 		matchStatement.MatchClauses = append(matchStatement.MatchClauses, *bLangMatchClause)
 	}
 
-	matchStatement.pos = n.getPosition(matchStatementNode)
+	matchStatement.SetPosition(n.getPosition(matchStatementNode))
 	return matchStatement
 }
 
-func (n *NodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr BLangExpression) BLangMatchPattern {
+func (n *nodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr ast.BLangExpression) ast.BLangMatchPattern {
 	matchPatternPos := n.getPosition(matchPattern)
 	kind := matchPattern.Kind()
 
@@ -4915,25 +4904,25 @@ func (n *NodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr 
 	case st.SIMPLE_NAME_REFERENCE:
 		nameRef := matchPattern.(*st.SimpleNameReferenceNode)
 		if nameRef.Name().Text() == "_" {
-			bLangWildCard := &BLangWildCardMatchPattern{}
-			bLangWildCard.pos = matchPatternPos
+			bLangWildCard := &ast.BLangWildCardMatchPattern{}
+			bLangWildCard.SetPosition(matchPatternPos)
 			return bLangWildCard
 		}
-		bLangConstPattern := &BLangConstPattern{}
+		bLangConstPattern := &ast.BLangConstPattern{}
 		bLangConstPattern.Expr = n.createExpression(matchPattern)
-		bLangConstPattern.pos = matchPatternPos
+		bLangConstPattern.SetPosition(matchPatternPos)
 		return bLangConstPattern
 
 	case st.IDENTIFIER_TOKEN:
 		idToken := matchPattern.(st.Token)
 		if idToken.Text() == "_" {
-			bLangWildCard := &BLangWildCardMatchPattern{}
-			bLangWildCard.pos = matchPatternPos
+			bLangWildCard := &ast.BLangWildCardMatchPattern{}
+			bLangWildCard.SetPosition(matchPatternPos)
 			return bLangWildCard
 		}
-		bLangConstPattern := &BLangConstPattern{}
+		bLangConstPattern := &ast.BLangConstPattern{}
 		bLangConstPattern.Expr = n.createExpression(matchPattern)
-		bLangConstPattern.pos = matchPatternPos
+		bLangConstPattern.SetPosition(matchPatternPos)
 		return bLangConstPattern
 
 	case st.NUMERIC_LITERAL,
@@ -4943,9 +4932,9 @@ func (n *NodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr 
 		st.NIL_LITERAL,
 		st.BOOLEAN_LITERAL,
 		st.UNARY_EXPRESSION:
-		bLangConstPattern := &BLangConstPattern{}
+		bLangConstPattern := &ast.BLangConstPattern{}
 		bLangConstPattern.Expr = n.createExpression(matchPattern)
-		bLangConstPattern.pos = matchPatternPos
+		bLangConstPattern.SetPosition(matchPatternPos)
 		return bLangConstPattern
 
 	case st.PIPE_TOKEN, st.COMMA_TOKEN:
@@ -4958,56 +4947,56 @@ func (n *NodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr 
 	}
 }
 
-func (n *NodeBuilder) TransformMatchClause(matchClauseNode *st.MatchClauseNode) BLangNode {
+func (n *nodeBuilder) TransformMatchClause(matchClauseNode *st.MatchClauseNode) ast.BLangNode {
 	panic("TransformMatchClause unimplemented")
 }
 
-func (n *NodeBuilder) TransformMatchGuard(matchGuardNode *st.MatchGuardNode) BLangNode {
+func (n *nodeBuilder) TransformMatchGuard(matchGuardNode *st.MatchGuardNode) ast.BLangNode {
 	panic("TransformMatchGuard unimplemented")
 }
 
-func (n *NodeBuilder) TransformDistinctTypeDescriptor(distinctTypeDescriptorNode *st.DistinctTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformDistinctTypeDescriptor(distinctTypeDescriptorNode *st.DistinctTypeDescriptorNode) ast.BLangNode {
 	n.cx.Unimplemented("anonymous distinct types not supported", n.getPosition(distinctTypeDescriptorNode))
-	neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
-	neverType.pos = n.getPosition(distinctTypeDescriptorNode)
+	neverType := &ast.BLangValueType{TypeKind: ast.TypeKind_NEVER}
+	neverType.SetPosition(n.getPosition(distinctTypeDescriptorNode))
 	return neverType
 }
 
-func (n *NodeBuilder) TransformListMatchPattern(listMatchPatternNode *st.ListMatchPatternNode) BLangNode {
+func (n *nodeBuilder) TransformListMatchPattern(listMatchPatternNode *st.ListMatchPatternNode) ast.BLangNode {
 	panic("TransformListMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformRestMatchPattern(restMatchPatternNode *st.RestMatchPatternNode) BLangNode {
+func (n *nodeBuilder) TransformRestMatchPattern(restMatchPatternNode *st.RestMatchPatternNode) ast.BLangNode {
 	panic("TransformRestMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformMappingMatchPattern(mappingMatchPatternNode *st.MappingMatchPatternNode) BLangNode {
+func (n *nodeBuilder) TransformMappingMatchPattern(mappingMatchPatternNode *st.MappingMatchPatternNode) ast.BLangNode {
 	panic("TransformMappingMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformFieldMatchPattern(fieldMatchPatternNode *st.FieldMatchPatternNode) BLangNode {
+func (n *nodeBuilder) TransformFieldMatchPattern(fieldMatchPatternNode *st.FieldMatchPatternNode) ast.BLangNode {
 	panic("TransformFieldMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformErrorMatchPattern(errorMatchPatternNode *st.ErrorMatchPatternNode) BLangNode {
+func (n *nodeBuilder) TransformErrorMatchPattern(errorMatchPatternNode *st.ErrorMatchPatternNode) ast.BLangNode {
 	panic("TransformErrorMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedArgMatchPattern(namedArgMatchPatternNode *st.NamedArgMatchPatternNode) BLangNode {
+func (n *nodeBuilder) TransformNamedArgMatchPattern(namedArgMatchPatternNode *st.NamedArgMatchPatternNode) ast.BLangNode {
 	panic("TransformNamedArgMatchPattern unimplemented")
 }
 
 // Helper functions for markdown documentation transformation
 
-func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLangMarkdownReferenceDocumentation, docElements st.NodeList[st.Node]) string {
+func (n *nodeBuilder) addReferencesAndReturnDocumentationText(references *[]ast.BLangMarkdownReferenceDocumentation, docElements st.NodeList[st.Node]) string {
 	var docText strings.Builder
 	for i := 0; i < docElements.Size(); i++ {
 		element := docElements.Get(i)
 		if element.Kind() == st.BALLERINA_NAME_REFERENCE {
-			bLangRefDoc := &BLangMarkdownReferenceDocumentation{}
+			bLangRefDoc := &ast.BLangMarkdownReferenceDocumentation{}
 			balNameRefNode := element.(*st.BallerinaNameReferenceNode)
 
-			bLangRefDoc.pos = n.getPosition(balNameRefNode)
+			bLangRefDoc.SetPosition(n.getPosition(balNameRefNode))
 
 			startBacktick := balNameRefNode.StartBacktick()
 			backtickContent := balNameRefNode.NameReference()
@@ -5019,7 +5008,7 @@ func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLan
 				contentString = st.ToSourceCode(backtickContent.InternalNode())
 			}
 			bLangRefDoc.ReferenceName = contentString
-			bLangRefDoc.Type = DocumentationReferenceType("BACKTICK_CONTENT")
+			bLangRefDoc.Type = ast.DocumentationReferenceType("BACKTICK_CONTENT")
 
 			referenceType := balNameRefNode.ReferenceType()
 			if referenceType != nil && !referenceType.IsMissing() {
@@ -5059,7 +5048,7 @@ func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLan
 	return n.trimLeftAtMostOne(docText.String())
 }
 
-func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent st.Node, bLangRefDoc *BLangMarkdownReferenceDocumentation) {
+func (n *nodeBuilder) transformDocumentationBacktickContent(backtickContent st.Node, bLangRefDoc *ast.BLangMarkdownReferenceDocumentation) {
 	switch backtickContent.Kind() {
 	case st.CODE_CONTENT:
 		// reaching here means ballerina name reference is syntactically invalid.
@@ -5148,8 +5137,8 @@ func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent st.N
 	}
 }
 
-func (n *NodeBuilder) transformCodeBlock(documentationLines *[]BLangMarkdownDocumentationLine, codeBlockNode *st.MarkdownCodeBlockNode) {
-	bLangDocLine := BLangMarkdownDocumentationLine{}
+func (n *nodeBuilder) transformCodeBlock(documentationLines *[]ast.BLangMarkdownDocumentationLine, codeBlockNode *st.MarkdownCodeBlockNode) {
+	bLangDocLine := ast.BLangMarkdownDocumentationLine{}
 
 	var docText strings.Builder
 
@@ -5181,40 +5170,40 @@ func (n *NodeBuilder) transformCodeBlock(documentationLines *[]BLangMarkdownDocu
 	}
 
 	bLangDocLine.Text = docText.String()
-	bLangDocLine.pos = n.getPosition(codeBlockNode.StartLineHashToken())
+	bLangDocLine.SetPosition(n.getPosition(codeBlockNode.StartLineHashToken()))
 	*documentationLines = append(*documentationLines, bLangDocLine)
 }
 
-func (n *NodeBuilder) stringToRefType(refTypeName string) DocumentationReferenceType {
+func (n *nodeBuilder) stringToRefType(refTypeName string) ast.DocumentationReferenceType {
 	switch refTypeName {
 	case "type":
-		return DocumentationReferenceType("TYPE")
+		return ast.DocumentationReferenceType("TYPE")
 	case "service":
-		return DocumentationReferenceType("SERVICE")
+		return ast.DocumentationReferenceType("SERVICE")
 	case "variable":
-		return DocumentationReferenceType("VARIABLE")
+		return ast.DocumentationReferenceType("VARIABLE")
 	case "var":
-		return DocumentationReferenceType("VAR")
+		return ast.DocumentationReferenceType("VAR")
 	case "annotation":
-		return DocumentationReferenceType("ANNOTATION")
+		return ast.DocumentationReferenceType("ANNOTATION")
 	case "module":
-		return DocumentationReferenceType("MODULE")
+		return ast.DocumentationReferenceType("MODULE")
 	case "function":
-		return DocumentationReferenceType("FUNCTION")
+		return ast.DocumentationReferenceType("FUNCTION")
 	case "parameter":
-		return DocumentationReferenceType("PARAMETER")
+		return ast.DocumentationReferenceType("PARAMETER")
 	case "const":
-		return DocumentationReferenceType("CONST")
+		return ast.DocumentationReferenceType("CONST")
 	default:
-		return DocumentationReferenceType("BACKTICK_CONTENT")
+		return ast.DocumentationReferenceType("BACKTICK_CONTENT")
 	}
 }
 
-func (n *NodeBuilder) stringStartsWithSingleQuote(s string) bool {
+func (n *nodeBuilder) stringStartsWithSingleQuote(s string) bool {
 	return len(s) > 0 && s[0] == '\''
 }
 
-func (n *NodeBuilder) trimLeftAtMostOne(text string) string {
+func (n *nodeBuilder) trimLeftAtMostOne(text string) string {
 	countToStrip := 0
 	if len(text) > 0 && (text[0] == ' ' || text[0] == '\t' || text[0] == '\n' || text[0] == '\r') {
 		countToStrip = 1
@@ -5225,14 +5214,14 @@ func (n *NodeBuilder) trimLeftAtMostOne(text string) string {
 	return text
 }
 
-func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *st.OrderByClauseNode) BLangNode {
-	orderByClause := &BLangOrderByClause{}
-	orderByClause.pos = n.getPosition(orderByClauseNode)
+func (n *nodeBuilder) TransformOrderByClause(orderByClauseNode *st.OrderByClauseNode) ast.BLangNode {
+	orderByClause := &ast.BLangOrderByClause{}
+	orderByClause.SetPosition(n.getPosition(orderByClauseNode))
 
 	orderKeys := orderByClauseNode.OrderKey()
-	orderByClause.OrderByKeyList = make([]BLangOrderKey, 0, orderKeys.Size())
+	orderByClause.OrderByKeyList = make([]ast.BLangOrderKey, 0, orderKeys.Size())
 	for orderKey := range orderKeys.Iterator() {
-		keyNode, ok := n.TransformOrderKey(orderKey).(*BLangOrderKey)
+		keyNode, ok := n.TransformOrderKey(orderKey).(*ast.BLangOrderKey)
 		if !ok {
 			panic("expected BLangOrderKey")
 		}
@@ -5241,9 +5230,9 @@ func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *st.OrderByClause
 	return orderByClause
 }
 
-func (n *NodeBuilder) TransformOrderKey(orderKeyNode *st.OrderKeyNode) BLangNode {
-	orderKey := &BLangOrderKey{}
-	orderKey.pos = n.getPosition(orderKeyNode)
+func (n *nodeBuilder) TransformOrderKey(orderKeyNode *st.OrderKeyNode) ast.BLangNode {
+	orderKey := &ast.BLangOrderKey{}
+	orderKey.SetPosition(n.getPosition(orderKeyNode))
 	orderKey.Expression = n.createExpression(orderKeyNode.Expression())
 	if dir := orderKeyNode.OrderDirection(); dir != nil && dir.Kind() == st.DESCENDING_KEYWORD {
 		orderKey.IsDescending = true
@@ -5253,27 +5242,27 @@ func (n *NodeBuilder) TransformOrderKey(orderKeyNode *st.OrderKeyNode) BLangNode
 	return orderKey
 }
 
-func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *st.GroupByClauseNode) BLangNode {
-	groupByClause := &BLangGroupByClause{
+func (n *nodeBuilder) TransformGroupByClause(groupByClauseNode *st.GroupByClauseNode) ast.BLangNode {
+	groupByClause := &ast.BLangGroupByClause{
 		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
 	}
-	groupByClause.pos = n.getPosition(groupByClauseNode)
+	groupByClause.SetPosition(n.getPosition(groupByClauseNode))
 
 	groupingKeys := groupByClauseNode.GroupingKey()
 	for node := range groupingKeys.Iterator() {
 		if node.Kind() == st.COMMA_TOKEN {
 			continue
 		}
-		groupingKey := &BLangGroupingKey{}
-		groupingKey.pos = n.getPosition(node)
+		groupingKey := &ast.BLangGroupingKey{}
+		groupingKey.SetPosition(n.getPosition(node))
 		if node.Kind() == st.SIMPLE_NAME_REFERENCE || node.Kind() == st.IDENTIFIER_TOKEN {
-			varRef, ok := n.createExpression(node).(*BLangSimpleVarRef)
+			varRef, ok := n.createExpression(node).(*ast.BLangSimpleVarRef)
 			if !ok {
 				panic("expected grouping key variable reference to be a simple variable reference")
 			}
 			groupingKey.SetGroupingKey(varRef)
 		} else {
-			keyNode, ok := n.TransformGroupingKeyVarDeclaration(node.(*st.GroupingKeyVarDeclarationNode)).(*BLangGroupingKey)
+			keyNode, ok := n.TransformGroupingKeyVarDeclaration(node.(*st.GroupingKeyVarDeclarationNode)).(*ast.BLangGroupingKey)
 			if !ok {
 				panic("expected grouping key declaration to produce a BLangGroupingKey")
 			}
@@ -5284,13 +5273,13 @@ func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *st.GroupByClause
 	return groupByClause
 }
 
-func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarationNode *st.GroupingKeyVarDeclarationNode) BLangNode {
+func (n *nodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarationNode *st.GroupingKeyVarDeclarationNode) ast.BLangNode {
 	pos := n.getPosition(groupingKeyVarDeclarationNode)
-	groupingKey := &BLangGroupingKey{}
-	groupingKey.pos = pos
+	groupingKey := &ast.BLangGroupingKey{}
+	groupingKey.SetPosition(pos)
 
 	variableNode := n.getBLangVariableNode(groupingKeyVarDeclarationNode.SimpleBindingPattern(), pos)
-	simpleVar, ok := variableNode.(*BLangSimpleVariable)
+	simpleVar, ok := variableNode.(*ast.BLangSimpleVariable)
 	if !ok {
 		panic("expected grouping key declaration to create a simple variable reference")
 	}
@@ -5301,27 +5290,27 @@ func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarati
 	if isDeclaredWithVar(typeDesc) {
 		simpleVar.SetIsDeclaredWithVar(true)
 	} else {
-		simpleVar.SetTypeNode(n.createTypeNode(typeDesc).(BType))
+		simpleVar.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
 	}
 
-	varDef := &BLangSimpleVariableDef{}
-	varDef.pos = pos
+	varDef := &ast.BLangSimpleVariableDef{}
+	varDef.SetPosition(pos)
 	varDef.SetVariable(simpleVar)
 	groupingKey.SetGroupingKey(varDef)
 	return groupingKey
 }
 
-func (n *NodeBuilder) TransformOnFailClause(onFailClauseNode *st.OnFailClauseNode) BLangNode {
+func (n *nodeBuilder) TransformOnFailClause(onFailClauseNode *st.OnFailClauseNode) ast.BLangNode {
 	panic("TransformOnFailClause unimplemented")
 }
 
-func (n *NodeBuilder) TransformDoStatement(doStatementNode *st.DoStatementNode) BLangNode {
+func (n *nodeBuilder) TransformDoStatement(doStatementNode *st.DoStatementNode) ast.BLangNode {
 	panic("TransformDoStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *st.ClassDefinitionNode) BLangNode {
-	blangClass := NewBLangClassDefinition()
-	blangClass.pos = n.getPositionWithoutMetadata(classDefinitionNode)
+func (n *nodeBuilder) TransformClassDefinition(classDefinitionNode *st.ClassDefinitionNode) ast.BLangNode {
+	blangClass := ast.NewBLangClassDefinition()
+	blangClass.SetPosition(n.getPositionWithoutMetadata(classDefinitionNode))
 
 	n.populateMetadata(classDefinitionNode.Metadata(), &blangClass)
 
@@ -5344,12 +5333,14 @@ func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *st.ClassDefi
 	blangClass.Methods = members.Methods
 	blangClass.InitFunction = members.InitFunction
 	blangClass.ResourceMethods = members.ResourceMethods
-	blangClass.unresolvedInclusions = members.UnresolvedInclusions
+	for _, inclusion := range members.UnresolvedInclusions {
+		blangClass.AddUnresolvedInclusion(inclusion)
+	}
 
 	return &blangClass
 }
 
-func (n *NodeBuilder) setClassQualifiers(blangClass *BLangClassDefinition, qualifiers st.NodeList[st.Token]) {
+func (n *nodeBuilder) setClassQualifiers(blangClass *ast.BLangClassDefinition, qualifiers st.NodeList[st.Token]) {
 	for qualifier := range qualifiers.Iterator() {
 		switch qualifier.Kind() {
 		case st.DISTINCT_KEYWORD:
@@ -5366,12 +5357,12 @@ func (n *NodeBuilder) setClassQualifiers(blangClass *BLangClassDefinition, quali
 	}
 }
 
-func (n *NodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *BLangSimpleVariable {
-	bLSimpleVar := createSimpleVariableNode()
+func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *ast.BLangSimpleVariable {
+	bLSimpleVar := &ast.BLangSimpleVariable{}
 	identifier := createIdentifierFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
 	bLSimpleVar.SetName(&identifier)
-	bLSimpleVar.pos = n.getPosition(objectField)
-	bLSimpleVar.SetTypeNode(n.createTypeNode(objectField.TypeName()).(BType))
+	bLSimpleVar.SetPosition(n.getPosition(objectField))
+	bLSimpleVar.SetTypeNode(n.createTypeNode(objectField.TypeName()).(ast.BType))
 
 	if vis := objectField.VisibilityQualifier(); vis != nil {
 		if vis.Kind() == st.PUBLIC_KEYWORD {
@@ -5396,44 +5387,44 @@ func (n *NodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *BLan
 	return bLSimpleVar
 }
 
-func (n *NodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *st.ResourcePathParameterNode) BLangNode {
-	seg := &BLangResourcePathSegment{}
+func (n *nodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *st.ResourcePathParameterNode) ast.BLangNode {
+	seg := &ast.BLangResourcePathSegment{}
 	switch resourcePathParameterNode.Kind() {
 	case st.RESOURCE_PATH_SEGMENT_PARAM:
-		seg.Kind = ResourcePathSegmentParam
+		seg.Kind = ast.ResourcePathSegmentParam
 	case st.RESOURCE_PATH_REST_PARAM:
-		seg.Kind = ResourcePathSegmentParamRest
+		seg.Kind = ast.ResourcePathSegmentParamRest
 	default:
 		n.cx.InternalError(fmt.Sprintf("unexpected resource path parameter node kind: %v", resourcePathParameterNode.Kind()), n.getPosition(resourcePathParameterNode))
 	}
-	seg.pos = n.getPosition(resourcePathParameterNode)
+	seg.SetPosition(n.getPosition(resourcePathParameterNode))
 	nameTok := resourcePathParameterNode.ParamName()
 	if nameTok != nil && !nameTok.IsMissing() {
 		seg.Name = createIdentifierFromToken(n.getPosition(nameTok), nameTok).Value
 	}
 	if td := resourcePathParameterNode.TypeDescriptor(); td != nil {
-		seg.ParamType = n.createTypeNode(td).(BType)
+		seg.ParamType = n.createTypeNode(td).(ast.BType)
 	}
 	return seg
 }
 
-func (n *NodeBuilder) createResourceMethodNode(funcDef *st.FunctionDefinition) *BLangResourceMethod {
-	rm := &BLangResourceMethod{}
-	rm.pos = n.getPositionWithoutMetadata(funcDef)
+func (n *nodeBuilder) createResourceMethodNode(funcDef *st.FunctionDefinition) *ast.BLangResourceMethod {
+	rm := &ast.BLangResourceMethod{}
+	rm.SetPosition(n.getPositionWithoutMetadata(funcDef))
 	rm.Name = n.createIdentifierNodeFromToken(n.getPosition(funcDef.FunctionName()), funcDef.FunctionName())
-	setFunctionQualifiersOnBase(&rm.bLangInvokableNodeBase, funcDef.QualifierList())
+	setFunctionQualifiers(rm, funcDef.QualifierList())
 	rm.SetAttached()
 	rm.SetResource()
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, rm.Name.GetValue())
-	n.populateFuncSignatureOnBase(&rm.bLangInvokableNodeBase, funcDef.FunctionSignature())
+	n.populateFuncSignature(rm, funcDef.FunctionSignature())
 	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 	body := funcDef.FunctionBody()
 	if body == nil {
 		rm.SetInterface()
 	} else {
-		bodyNode := n.TransformSyntaxNode(body).(FunctionBodyNode)
+		bodyNode := n.TransformSyntaxNode(body).(ast.FunctionBodyNode)
 		rm.Body = bodyNode
-		if _, ok := bodyNode.(*BLangExternFunctionBody); ok {
+		if _, ok := bodyNode.(*ast.BLangExternFunctionBody); ok {
 			rm.SetNative()
 		}
 	}
@@ -5442,8 +5433,8 @@ func (n *NodeBuilder) createResourceMethodNode(funcDef *st.FunctionDefinition) *
 	return rm
 }
 
-func (n *NodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node]) []BLangResourcePathSegment {
-	var segments []BLangResourcePathSegment
+func (n *nodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node]) []ast.BLangResourcePathSegment {
+	var segments []ast.BLangResourcePathSegment
 	for node := range pathNodes.Iterator() {
 		switch node.Kind() {
 		case st.SLASH_TOKEN:
@@ -5452,12 +5443,12 @@ func (n *NodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node])
 			continue
 		case st.IDENTIFIER_TOKEN:
 			tok := node.(st.Token)
-			seg := BLangResourcePathSegment{Kind: ResourcePathSegmentName, Name: tok.Text()}
-			seg.pos = n.getPosition(node)
+			seg := ast.BLangResourcePathSegment{Kind: ast.ResourcePathSegmentName, Name: tok.Text()}
+			seg.SetPosition(n.getPosition(node))
 			segments = append(segments, seg)
 		case st.RESOURCE_PATH_SEGMENT_PARAM, st.RESOURCE_PATH_REST_PARAM:
 			param := node.(*st.ResourcePathParameterNode)
-			segments = append(segments, *n.TransformResourcePathParameter(param).(*BLangResourcePathSegment))
+			segments = append(segments, *n.TransformResourcePathParameter(param).(*ast.BLangResourcePathSegment))
 		default:
 			n.cx.InternalError(fmt.Sprintf("unexpected resource path node kind: %v", node.Kind()), n.getPosition(node))
 		}
@@ -5465,27 +5456,27 @@ func (n *NodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node])
 	return segments
 }
 
-func (n *NodeBuilder) TransformRequiredExpression(requiredBLangExpression *st.RequiredExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformRequiredExpression(requiredBLangExpression *st.RequiredExpressionNode) ast.BLangNode {
 	panic("TransformRequiredExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangExpression *st.ErrorConstructorExpressionNode) BLangNode {
-	result := &BLangErrorConstructorExpr{}
-	result.pos = n.getPosition(errorConstructorBLangExpression)
+func (n *nodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangExpression *st.ErrorConstructorExpressionNode) ast.BLangNode {
+	result := &ast.BLangErrorConstructorExpr{}
+	result.SetPosition(n.getPosition(errorConstructorBLangExpression))
 
 	typeRefNode := errorConstructorBLangExpression.TypeReference()
 	if typeRefNode != nil {
 		typeDesc := n.createTypeNode(typeRefNode)
-		if userDefinedType, ok := typeDesc.(*BLangUserDefinedType); ok {
+		if userDefinedType, ok := typeDesc.(*ast.BLangUserDefinedType); ok {
 			result.ErrorTypeRef = userDefinedType
 		} else {
-			n.cx.InternalError("error type reference must be a user-defined type", result.pos)
+			n.cx.InternalError("error type reference must be a user-defined type", result.GetPosition())
 		}
 	}
 
 	arguments := errorConstructorBLangExpression.Arguments()
-	positionalArgs := make([]BLangExpression, 0)
-	namedArgs := make([]BLangNamedArgsExpression, 0)
+	positionalArgs := make([]ast.BLangExpression, 0)
+	namedArgs := make([]ast.BLangNamedArgsExpression, 0)
 
 	for arg := range arguments.Iterator() {
 		switch arg.Kind() {
@@ -5496,7 +5487,7 @@ func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangE
 
 		case st.NAMED_ARG:
 			namedArgNode := arg.(*st.NamedArgumentNode)
-			namedArg := n.TransformNamedArgument(namedArgNode).(*BLangNamedArgsExpression)
+			namedArg := n.TransformNamedArgument(namedArgNode).(*ast.BLangNamedArgsExpression)
 			namedArgs = append(namedArgs, *namedArg)
 		case st.REST_ARG:
 			n.cx.InternalError("rest arguments not supported in error constructor", n.getPosition(arg))
@@ -5511,7 +5502,7 @@ func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangE
 	return result
 }
 
-func (n *NodeBuilder) TransformParameterizedTypeDescriptor(parameterizedTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformParameterizedTypeDescriptor(parameterizedTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
 	switch parameterizedTypeDescriptorNode.Kind() {
 	case st.ERROR_TYPE_DESC:
 		return n.transformErrorTypeDescriptor(parameterizedTypeDescriptorNode)
@@ -5523,59 +5514,59 @@ func (n *NodeBuilder) TransformParameterizedTypeDescriptor(parameterizedTypeDesc
 	panic("TransformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors")
 }
 
-func (n *NodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
 	typeParamNode := node.TypeParamNode()
 	if typeParamNode == nil {
-		valueType := &BLangValueType{}
-		valueType.pos = n.getPosition(node)
-		valueType.TypeKind = TypeKind_TYPEDESC
+		valueType := &ast.BLangValueType{}
+		valueType.SetPosition(n.getPosition(node))
+		valueType.TypeKind = ast.TypeKind_TYPEDESC
 		return valueType
 	}
-	constrainedType := &BLangConstrainedType{}
-	constrainedType.pos = n.getPosition(node)
-	base := &BLangValueType{}
-	base.pos = n.getPosition(node)
-	base.TypeKind = TypeKind_TYPEDESC
-	constrainedType.Type = TypeData{TypeDescriptor: base}
+	constrainedType := &ast.BLangConstrainedType{}
+	constrainedType.SetPosition(n.getPosition(node))
+	base := &ast.BLangValueType{}
+	base.SetPosition(n.getPosition(node))
+	base.TypeKind = ast.TypeKind_TYPEDESC
+	constrainedType.Type = ast.TypeData{TypeDescriptor: base}
 	constraint := typeParamNode.TypeNode()
 	if constraint == nil {
-		constrainedType.Constraint = TypeData{TypeDescriptor: n.createTypeNode(typeParamNode)}
+		constrainedType.Constraint = ast.TypeData{TypeDescriptor: n.createTypeNode(typeParamNode)}
 	} else {
-		constrainedType.Constraint = TypeData{TypeDescriptor: n.createTypeNode(constraint)}
+		constrainedType.Constraint = ast.TypeData{TypeDescriptor: n.createTypeNode(constraint)}
 	}
 	return constrainedType
 }
 
-func (n *NodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
 	pos := n.getPosition(parameterizedTypeDescriptorNode)
 	typeParamNode := parameterizedTypeDescriptorNode.TypeParamNode()
 	if typeParamNode == nil {
-		valueType := &BLangValueType{}
-		valueType.pos = pos
-		valueType.TypeKind = TypeKind_XML
+		valueType := &ast.BLangValueType{}
+		valueType.SetPosition(pos)
+		valueType.TypeKind = ast.TypeKind_XML
 		return valueType
 	}
-	refType := &BLangBuiltInRefTypeNode{
-		TypeKind: TypeKind_XML,
+	refType := &ast.BLangBuiltInRefTypeNode{
+		TypeKind: ast.TypeKind_XML,
 	}
 	refType.SetPosition(pos)
 	constraint := n.createTypeNode(typeParamNode.TypeNode())
-	constrainedType := &BLangConstrainedType{
-		Type:       TypeData{TypeDescriptor: refType},
-		Constraint: TypeData{TypeDescriptor: constraint},
+	constrainedType := &ast.BLangConstrainedType{
+		Type:       ast.TypeData{TypeDescriptor: refType},
+		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(pos)
 	return constrainedType
 }
 
-func (n *NodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) BLangNode {
-	errorType := &BLangErrorTypeNode{}
-	errorType.pos = n.getPosition(errorTypeDescriptorNode)
+func (n *nodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
+	errorType := &ast.BLangErrorTypeNode{}
+	errorType.SetPosition(n.getPosition(errorTypeDescriptorNode))
 
 	// Handle optional type parameter
 	typeParamNode := errorTypeDescriptorNode.TypeParamNode()
 	if typeParamNode != nil {
-		errorType.DetailType = TypeData{
+		errorType.DetailType = ast.TypeData{
 			TypeDescriptor: n.createTypeNode(typeParamNode),
 		}
 	}
@@ -5589,29 +5580,29 @@ func (n *NodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *st.P
 	return errorType
 }
 
-func (n *NodeBuilder) TransformSpreadMember(spreadMemberNode *st.SpreadMemberNode) BLangNode {
-	return n.createExpression(spreadMemberNode.Expression()).(BLangNode)
+func (n *nodeBuilder) TransformSpreadMember(spreadMemberNode *st.SpreadMemberNode) ast.BLangNode {
+	return n.createExpression(spreadMemberNode.Expression()).(ast.BLangNode)
 }
 
-func (n *NodeBuilder) TransformClientResourceAccessAction(node *st.ClientResourceAccessActionNode) BLangNode {
-	action := &BLangClientResourceAccessAction{}
-	action.pos = n.getPosition(node)
+func (n *nodeBuilder) TransformClientResourceAccessAction(node *st.ClientResourceAccessActionNode) ast.BLangNode {
+	action := &ast.BLangClientResourceAccessAction{}
+	action.SetPosition(n.getPosition(node))
 	action.Expr = n.createExpression(node.Expression())
 	action.MethodName = "get"
 	if methodName := node.MethodName(); methodName != nil {
 		nameTok := methodName.Name()
 		if nameTok == nil || nameTok.IsMissing() {
-			n.cx.InternalError("missing method name token in resource access action", action.pos)
+			n.cx.InternalError("missing method name token in resource access action", action.GetPosition())
 		} else {
 			action.MethodName = nameTok.Text()
 		}
 	}
-	nameID := &BLangIdentifier{Value: action.MethodName}
-	nameID.SetPosition(action.pos)
+	nameID := &ast.BLangIdentifier{Value: action.MethodName}
+	nameID.SetPosition(action.GetPosition())
 	action.Name = nameID
 	action.Path = n.createResourceAccessSegments(node.ResourceAccessPath())
 	if args := node.Arguments(); args != nil {
-		var argExprs []BLangExpression
+		var argExprs []ast.BLangExpression
 		argList := args.Arguments()
 		for arg := range argList.Iterator() {
 			argExprs = append(argExprs, n.createExpression(arg))
@@ -5621,20 +5612,20 @@ func (n *NodeBuilder) TransformClientResourceAccessAction(node *st.ClientResourc
 	return action
 }
 
-func (n *NodeBuilder) createResourceAccessSegments(pathNodes st.NodeList[st.Node]) []BLangResourceAccessSegment {
-	var segments []BLangResourceAccessSegment
+func (n *nodeBuilder) createResourceAccessSegments(pathNodes st.NodeList[st.Node]) []ast.BLangResourceAccessSegment {
+	var segments []ast.BLangResourceAccessSegment
 	for node := range pathNodes.Iterator() {
 		switch node.Kind() {
 		case st.SLASH_TOKEN, st.DOT_TOKEN:
 			continue
 		case st.IDENTIFIER_TOKEN:
 			tok := node.(st.Token)
-			seg := BLangResourceAccessSegment{Kind: ResourceAccessSegmentName, Name: tok.Text()}
-			seg.pos = n.getPosition(node)
+			seg := ast.BLangResourceAccessSegment{Kind: ast.ResourceAccessSegmentName, Name: tok.Text()}
+			seg.SetPosition(n.getPosition(node))
 			segments = append(segments, seg)
 		case st.COMPUTED_RESOURCE_ACCESS_SEGMENT:
 			computed := node.(*st.ComputedResourceAccessSegmentNode)
-			segments = append(segments, *n.TransformComputedResourceAccessSegment(computed).(*BLangResourceAccessSegment))
+			segments = append(segments, *n.TransformComputedResourceAccessSegment(computed).(*ast.BLangResourceAccessSegment))
 		case st.RESOURCE_ACCESS_REST_SEGMENT:
 			n.cx.Unimplemented("resource access rest segments are not yet supported", n.getPosition(node))
 		default:
@@ -5644,190 +5635,190 @@ func (n *NodeBuilder) createResourceAccessSegments(pathNodes st.NodeList[st.Node
 	return segments
 }
 
-func (n *NodeBuilder) TransformComputedResourceAccessSegment(node *st.ComputedResourceAccessSegmentNode) BLangNode {
-	seg := &BLangResourceAccessSegment{Kind: ResourceAccessSegmentComputed}
-	seg.pos = n.getPosition(node)
+func (n *nodeBuilder) TransformComputedResourceAccessSegment(node *st.ComputedResourceAccessSegmentNode) ast.BLangNode {
+	seg := &ast.BLangResourceAccessSegment{Kind: ast.ResourceAccessSegmentComputed}
+	seg.SetPosition(n.getPosition(node))
 	seg.Expr = n.createExpression(node.Expression())
 	return seg
 }
 
-func (n *NodeBuilder) TransformResourceAccessRestSegment(resourceAccessRestSegmentNode *st.ResourceAccessRestSegmentNode) BLangNode {
+func (n *nodeBuilder) TransformResourceAccessRestSegment(resourceAccessRestSegmentNode *st.ResourceAccessRestSegmentNode) ast.BLangNode {
 	panic("TransformResourceAccessRestSegment unimplemented")
 }
 
-func (n *NodeBuilder) TransformReSequence(reSequenceNode *st.ReSequenceNode) BLangNode {
+func (n *nodeBuilder) TransformReSequence(reSequenceNode *st.ReSequenceNode) ast.BLangNode {
 	panic("TransformReSequence unimplemented")
 }
 
-func (n *NodeBuilder) TransformReAtomQuantifier(reAtomQuantifierNode *st.ReAtomQuantifierNode) BLangNode {
+func (n *nodeBuilder) TransformReAtomQuantifier(reAtomQuantifierNode *st.ReAtomQuantifierNode) ast.BLangNode {
 	panic("TransformReAtomQuantifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformReAtomCharOrEscape(reAtomCharOrEscapeNode *st.ReAtomCharOrEscapeNode) BLangNode {
+func (n *nodeBuilder) TransformReAtomCharOrEscape(reAtomCharOrEscapeNode *st.ReAtomCharOrEscapeNode) ast.BLangNode {
 	panic("TransformReAtomCharOrEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReQuoteEscape(reQuoteEscapeNode *st.ReQuoteEscapeNode) BLangNode {
+func (n *nodeBuilder) TransformReQuoteEscape(reQuoteEscapeNode *st.ReQuoteEscapeNode) ast.BLangNode {
 	panic("TransformReQuoteEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReSimpleCharClassEscape(reSimpleCharClassEscapeNode *st.ReSimpleCharClassEscapeNode) BLangNode {
+func (n *nodeBuilder) TransformReSimpleCharClassEscape(reSimpleCharClassEscapeNode *st.ReSimpleCharClassEscapeNode) ast.BLangNode {
 	panic("TransformReSimpleCharClassEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReUnicodePropertyEscape(reUnicodePropertyEscapeNode *st.ReUnicodePropertyEscapeNode) BLangNode {
+func (n *nodeBuilder) TransformReUnicodePropertyEscape(reUnicodePropertyEscapeNode *st.ReUnicodePropertyEscapeNode) ast.BLangNode {
 	panic("TransformReUnicodePropertyEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReUnicodeScript(reUnicodeScriptNode *st.ReUnicodeScriptNode) BLangNode {
+func (n *nodeBuilder) TransformReUnicodeScript(reUnicodeScriptNode *st.ReUnicodeScriptNode) ast.BLangNode {
 	panic("TransformReUnicodeScript unimplemented")
 }
 
-func (n *NodeBuilder) TransformReUnicodeGeneralCategory(reUnicodeGeneralCategoryNode *st.ReUnicodeGeneralCategoryNode) BLangNode {
+func (n *nodeBuilder) TransformReUnicodeGeneralCategory(reUnicodeGeneralCategoryNode *st.ReUnicodeGeneralCategoryNode) ast.BLangNode {
 	panic("TransformReUnicodeGeneralCategory unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharacterClass(reCharacterClassNode *st.ReCharacterClassNode) BLangNode {
+func (n *nodeBuilder) TransformReCharacterClass(reCharacterClassNode *st.ReCharacterClassNode) ast.BLangNode {
 	panic("TransformReCharacterClass unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRangeWithReCharSet(reCharSetRangeWithReCharSetNode *st.ReCharSetRangeWithReCharSetNode) BLangNode {
+func (n *nodeBuilder) TransformReCharSetRangeWithReCharSet(reCharSetRangeWithReCharSetNode *st.ReCharSetRangeWithReCharSetNode) ast.BLangNode {
 	panic("TransformReCharSetRangeWithReCharSet unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRange(reCharSetRangeNode *st.ReCharSetRangeNode) BLangNode {
+func (n *nodeBuilder) TransformReCharSetRange(reCharSetRangeNode *st.ReCharSetRangeNode) ast.BLangNode {
 	panic("TransformReCharSetRange unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetAtomWithReCharSetNoDash(reCharSetAtomWithReCharSetNoDashNode *st.ReCharSetAtomWithReCharSetNoDashNode) BLangNode {
+func (n *nodeBuilder) TransformReCharSetAtomWithReCharSetNoDash(reCharSetAtomWithReCharSetNoDashNode *st.ReCharSetAtomWithReCharSetNoDashNode) ast.BLangNode {
 	panic("TransformReCharSetAtomWithReCharSetNoDash unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRangeNoDashWithReCharSet(reCharSetRangeNoDashWithReCharSetNode *st.ReCharSetRangeNoDashWithReCharSetNode) BLangNode {
+func (n *nodeBuilder) TransformReCharSetRangeNoDashWithReCharSet(reCharSetRangeNoDashWithReCharSetNode *st.ReCharSetRangeNoDashWithReCharSetNode) ast.BLangNode {
 	panic("TransformReCharSetRangeNoDashWithReCharSet unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRangeNoDash(reCharSetRangeNoDashNode *st.ReCharSetRangeNoDashNode) BLangNode {
+func (n *nodeBuilder) TransformReCharSetRangeNoDash(reCharSetRangeNoDashNode *st.ReCharSetRangeNoDashNode) ast.BLangNode {
 	panic("TransformReCharSetRangeNoDash unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetAtomNoDashWithReCharSetNoDash(reCharSetAtomNoDashWithReCharSetNoDashNode *st.ReCharSetAtomNoDashWithReCharSetNoDashNode) BLangNode {
+func (n *nodeBuilder) TransformReCharSetAtomNoDashWithReCharSetNoDash(reCharSetAtomNoDashWithReCharSetNoDashNode *st.ReCharSetAtomNoDashWithReCharSetNoDashNode) ast.BLangNode {
 	panic("TransformReCharSetAtomNoDashWithReCharSetNoDash unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCapturingGroups(reCapturingGroupsNode *st.ReCapturingGroupsNode) BLangNode {
+func (n *nodeBuilder) TransformReCapturingGroups(reCapturingGroupsNode *st.ReCapturingGroupsNode) ast.BLangNode {
 	panic("TransformReCapturingGroups unimplemented")
 }
 
-func (n *NodeBuilder) TransformReFlagExpression(reFlagBLangExpression *st.ReFlagExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformReFlagExpression(reFlagBLangExpression *st.ReFlagExpressionNode) ast.BLangNode {
 	panic("TransformReFlagExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformReFlagsOnOff(reFlagsOnOffNode *st.ReFlagsOnOffNode) BLangNode {
+func (n *nodeBuilder) TransformReFlagsOnOff(reFlagsOnOffNode *st.ReFlagsOnOffNode) ast.BLangNode {
 	panic("TransformReFlagsOnOff unimplemented")
 }
 
-func (n *NodeBuilder) TransformReFlags(reFlagsNode *st.ReFlagsNode) BLangNode {
+func (n *nodeBuilder) TransformReFlags(reFlagsNode *st.ReFlagsNode) ast.BLangNode {
 	panic("TransformReFlags unimplemented")
 }
 
-func (n *NodeBuilder) TransformReAssertion(reAssertionNode *st.ReAssertionNode) BLangNode {
+func (n *nodeBuilder) TransformReAssertion(reAssertionNode *st.ReAssertionNode) ast.BLangNode {
 	panic("TransformReAssertion unimplemented")
 }
 
-func (n *NodeBuilder) TransformReQuantifier(reQuantifierNode *st.ReQuantifierNode) BLangNode {
+func (n *nodeBuilder) TransformReQuantifier(reQuantifierNode *st.ReQuantifierNode) ast.BLangNode {
 	panic("TransformReQuantifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformReBracedQuantifier(reBracedQuantifierNode *st.ReBracedQuantifierNode) BLangNode {
+func (n *nodeBuilder) TransformReBracedQuantifier(reBracedQuantifierNode *st.ReBracedQuantifierNode) ast.BLangNode {
 	panic("TransformReBracedQuantifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformMemberTypeDescriptor(memberTypeDescriptorNode *st.MemberTypeDescriptorNode) BLangNode {
+func (n *nodeBuilder) TransformMemberTypeDescriptor(memberTypeDescriptorNode *st.MemberTypeDescriptorNode) ast.BLangNode {
 	panic("TransformMemberTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformReceiveField(receiveFieldNode *st.ReceiveFieldNode) BLangNode {
+func (n *nodeBuilder) TransformReceiveField(receiveFieldNode *st.ReceiveFieldNode) ast.BLangNode {
 	panic("TransformReceiveField unimplemented")
 }
 
-func (n *NodeBuilder) TransformNaturalExpression(naturalBLangExpression *st.NaturalExpressionNode) BLangNode {
+func (n *nodeBuilder) TransformNaturalExpression(naturalBLangExpression *st.NaturalExpressionNode) ast.BLangNode {
 	panic("TransformNaturalExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformToken(token st.Token) BLangNode {
+func (n *nodeBuilder) TransformToken(token st.Token) ast.BLangNode {
 	kind := token.Kind()
 	switch kind {
 	case st.XML_TEXT_CONTENT, st.TEMPLATE_STRING, st.CLOSE_BRACE_TOKEN, st.PROMPT_CONTENT:
-		return n.createSimpleLiteral(token).(BLangNode)
+		return n.createSimpleLiteral(token).(ast.BLangNode)
 	default:
 		if isTokenInRegExp(kind) {
-			return n.createSimpleLiteral(token).(BLangNode)
+			return n.createSimpleLiteral(token).(ast.BLangNode)
 		}
 		panic("TransformToken: Syntax kind is not supported: " + kind.StrValue())
 	}
 }
 
-func (n *NodeBuilder) TransformIdentifierToken(identifier *st.IdentifierToken) BLangNode {
+func (n *nodeBuilder) TransformIdentifierToken(identifier *st.IdentifierToken) ast.BLangNode {
 	panic("TransformIdentifierToken unimplemented")
 }
 
-func stringToTypeKind(typeText string) TypeKind {
+func stringToTypeKind(typeText string) ast.TypeKind {
 	switch typeText {
 	case "int":
-		return TypeKind_INT
+		return ast.TypeKind_INT
 	case "byte":
-		return TypeKind_BYTE
+		return ast.TypeKind_BYTE
 	case "float":
-		return TypeKind_FLOAT
+		return ast.TypeKind_FLOAT
 	case "decimal":
-		return TypeKind_DECIMAL
+		return ast.TypeKind_DECIMAL
 	case "boolean":
-		return TypeKind_BOOLEAN
+		return ast.TypeKind_BOOLEAN
 	case "string":
-		return TypeKind_STRING
+		return ast.TypeKind_STRING
 	case "json":
-		return TypeKind_JSON
+		return ast.TypeKind_JSON
 	case "xml":
-		return TypeKind_XML
+		return ast.TypeKind_XML
 	case "stream":
-		return TypeKind_STREAM
+		return ast.TypeKind_STREAM
 	case "table":
-		return TypeKind_TABLE
+		return ast.TypeKind_TABLE
 	case "any":
-		return TypeKind_ANY
+		return ast.TypeKind_ANY
 	case "anydata":
-		return TypeKind_ANYDATA
+		return ast.TypeKind_ANYDATA
 	case "map":
-		return TypeKind_MAP
+		return ast.TypeKind_MAP
 	case "future":
-		return TypeKind_FUTURE
+		return ast.TypeKind_FUTURE
 	case "typedesc":
-		return TypeKind_TYPEDESC
+		return ast.TypeKind_TYPEDESC
 	case "error":
-		return TypeKind_ERROR
+		return ast.TypeKind_ERROR
 	case "()", "null":
-		return TypeKind_NIL
+		return ast.TypeKind_NIL
 	case "never":
-		return TypeKind_NEVER
+		return ast.TypeKind_NEVER
 	case "channel":
-		return TypeKind_CHANNEL
+		return ast.TypeKind_CHANNEL
 	case "service":
-		return TypeKind_SERVICE
+		return ast.TypeKind_SERVICE
 	case "handle":
-		return TypeKind_HANDLE
+		return ast.TypeKind_HANDLE
 	case "readonly":
-		return TypeKind_READONLY
+		return ast.TypeKind_READONLY
 	case "function":
-		return TypeKind_FUNCTION
+		return ast.TypeKind_FUNCTION
 	default:
 		panic("stringToTypeKind: invalid type name: " + typeText)
 	}
 }
 
-func createUserDefinedType(pos diagnostics.Location, pkgAlias BLangIdentifier, typeName BLangIdentifier) TypeDescriptor {
-	userDefinedType := BLangUserDefinedType{}
-	userDefinedType.pos = pos
+func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifier, typeName ast.BLangIdentifier) ast.TypeDescriptor {
+	userDefinedType := ast.BLangUserDefinedType{}
+	userDefinedType.SetPosition(pos)
 	userDefinedType.PkgAlias = pkgAlias
 	userDefinedType.TypeName = typeName
 	return &userDefinedType
@@ -5837,14 +5828,14 @@ func getNextMissingNodeName(pkgID *model.PackageID) string {
 	panic("getNextMissingNodeName unimplemented")
 }
 
-func (n *NodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) VariableNode {
+func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) ast.VariableNode {
 	var varName st.Token
 	switch bindingPattern.Kind() {
 	case st.WILDCARD_BINDING_PATTERN:
 		ignore := n.createIgnoreIdentifier(bindingPattern)
-		simpleVar := createSimpleVariableNode()
+		simpleVar := &ast.BLangSimpleVariable{}
 		simpleVar.SetName(&ignore)
-		simpleVar.pos = varPos
+		simpleVar.SetPosition(varPos)
 		return simpleVar
 	case st.MAPPING_BINDING_PATTERN, st.LIST_BINDING_PATTERN, st.ERROR_BINDING_PATTERN, st.REST_BINDING_PATTERN:
 		panic("unimplemented")
@@ -5855,26 +5846,26 @@ func (n *NodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode,
 		varName = captureBindingPattern.VariableName()
 	}
 
-	simpleVar := createSimpleVariableNode()
-	simpleVar.pos = varPos
+	simpleVar := &ast.BLangSimpleVariable{}
+	simpleVar.SetPosition(varPos)
 	simpleVar.SetName(n.createIdentifierNodeFromToken(n.getPosition(varName), varName))
 	return simpleVar
 }
 
-func (n *NodeBuilder) badTopLevel(node st.Node) *BLangBadTopLevelNode {
-	bad := &BLangBadTopLevelNode{}
+func (n *nodeBuilder) badTopLevel(node st.Node) *ast.BLangBadTopLevelNode {
+	bad := &ast.BLangBadTopLevelNode{}
 	bad.SetPosition(n.getRecoveryPosition(node))
 	return bad
 }
 
-func (n *NodeBuilder) badStmt(node st.Node) *BLangBadStmt {
-	bad := &BLangBadStmt{}
+func (n *nodeBuilder) badStmt(node st.Node) *ast.BLangBadStmt {
+	bad := &ast.BLangBadStmt{}
 	bad.SetPosition(n.getRecoveryPosition(node))
 	return bad
 }
 
-func (n *NodeBuilder) badExprOrAction(node st.Node) *BLangBadExprOrAction {
-	bad := &BLangBadExprOrAction{}
+func (n *nodeBuilder) badExprOrAction(node st.Node) *ast.BLangBadExprOrAction {
+	bad := &ast.BLangBadExprOrAction{}
 	if node != nil {
 		bad.SetPosition(n.getRecoveryPosition(node))
 	} else {
@@ -5883,8 +5874,8 @@ func (n *NodeBuilder) badExprOrAction(node st.Node) *BLangBadExprOrAction {
 	return bad
 }
 
-func (n *NodeBuilder) badTypeNode(node st.Node) *BLangBadTypeNode {
-	bad := &BLangBadTypeNode{}
+func (n *nodeBuilder) badTypeNode(node st.Node) *ast.BLangBadTypeNode {
+	bad := &ast.BLangBadTypeNode{}
 	if node != nil {
 		bad.SetPosition(n.getRecoveryPosition(node))
 	} else {
@@ -5893,10 +5884,12 @@ func (n *NodeBuilder) badTypeNode(node st.Node) *BLangBadTypeNode {
 	return bad
 }
 
-func (n *NodeBuilder) badIdentifier(token st.Token) *BLangBadIdentifier {
-	bad := &BLangBadIdentifier{}
+func (n *nodeBuilder) badIdentifier(token st.Token) *ast.BLangBadIdentifier {
+	bad := &ast.BLangBadIdentifier{}
 	if token != nil {
-		bad.Value, bad.isLiteral = normalizedIdentifierValue(token.Text())
+		value, isLiteral := normalizedIdentifierValue(token.Text())
+		bad.Value = value
+		bad.SetLiteral(isLiteral)
 		bad.OriginalValue = token.Text()
 		bad.SetPosition(n.getRecoveryPosition(token))
 	} else {
@@ -5905,7 +5898,7 @@ func (n *NodeBuilder) badIdentifier(token st.Token) *BLangBadIdentifier {
 	return bad
 }
 
-func (n *NodeBuilder) syntaxError(node st.Node) {
+func (n *nodeBuilder) syntaxError(node st.Node) {
 	diagnosticNodes := innermostDiagnosticNodes(node)
 	if len(diagnosticNodes) == 0 {
 		return

@@ -30,6 +30,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
+	nodebuilder "github.com/ballerina-nutcracker/ballerina/node-builder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -597,7 +598,7 @@ func compileSingleFileModule(
 	if err != nil {
 		t.Fatalf("parsing %s: %v", balPath, err)
 	}
-	cu := ast.GetCompilationUnit(cx, st)
+	cu := nodebuilder.GetCompilationUnit(cx, st)
 	pkgID := cx.NewPackageID(orgName, nameComps, model.DEFAULT_VERSION)
 	cu.SetPackageID(pkgID)
 	compilationUnits := []*ast.BLangCompilationUnit{cu}
@@ -609,7 +610,7 @@ func compileSingleFileModule(
 	importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, langlibs.ImplicitImports, langlibs.PublicSymbols, defaultOrg)
 	pkgScope, exported := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
 	assertNoDiagnostics(t, cx, "ResolveSymbols")
-	pkg := ast.ToPackageFromCompilationUnits(compilationUnits)
+	pkg := nodebuilder.ToPackageFromCompilationUnits(compilationUnits)
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
 	pkg.Imports = nil

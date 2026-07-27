@@ -13,7 +13,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ast
+package nodebuilder
 
 import (
 	"regexp"

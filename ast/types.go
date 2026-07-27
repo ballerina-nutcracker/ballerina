@@ -388,6 +388,14 @@ func (b *bObjectFieldBase) Name() string {
 	return b.name
 }
 
+func (b *bObjectFieldBase) SetName(name string) {
+	b.name = name
+}
+
+func (b *bObjectFieldBase) SetPublic() {
+	b.flags |= model.FlagPublic
+}
+
 func (b *bObjectFieldBase) IsPublic() bool {
 	return b.flags.Has(model.FlagPublic)
 }
@@ -402,6 +410,10 @@ func (b *BObjectField) MemberKind() ObjectMemberKind {
 
 func (b *BMethodDecl) MemberKind() ObjectMemberKind {
 	return b.memberKind
+}
+
+func (b *BMethodDecl) SetMemberKind(kind ObjectMemberKind) {
+	b.memberKind = kind
 }
 
 func (b *bLangTypeBase) GetTypeData() TypeData {
@@ -704,6 +716,15 @@ func (b *BLangRecordType) GetFields() iter.Seq2[string, Field] {
 	}
 }
 
+func NewBLangObjectType() *BLangObjectType {
+	return &BLangObjectType{
+		Inclusions:           []model.SymbolRef{},
+		InclusionPositions:   []diagnostics.Location{},
+		unresolvedInclusions: []*BLangUserDefinedType{},
+		members:              make(map[string]ObjectMember),
+	}
+}
+
 // AddMember insert a new member. If there was already a member by the same name return true
 func (b *BLangObjectType) AddMember(member ObjectMember) bool {
 	name := member.Name()
@@ -712,6 +733,10 @@ func (b *BLangObjectType) AddMember(member ObjectMember) bool {
 	}
 	b.members[name] = member
 	return false
+}
+
+func (b *BLangObjectType) AddUnresolvedInclusion(inclusion *BLangUserDefinedType) {
+	b.unresolvedInclusions = append(b.unresolvedInclusions, inclusion)
 }
 
 func (b *BLangObjectType) PopUnresolvedInclusions() []*BLangUserDefinedType {

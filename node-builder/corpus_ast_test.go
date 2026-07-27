@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ast_test
+package nodebuilder_test
 
 import (
 	"flag"
