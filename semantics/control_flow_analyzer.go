@@ -345,7 +345,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzeQueryActionsInStatement(curBB bbRef, stmt ast.StatementNode) {
-	collector := &queryActionCollector{}
+	collector := &queryActionCollector{root: stmt}
 	ast.Walk(collector, stmt.(ast.BLangNode))
 	for _, action := range collector.actions {
 		if action.DoClause == nil || action.DoClause.Body == nil {
@@ -362,12 +362,16 @@ func (analyzer *functionControlFlowAnalyzer) analyzeQueryActionsInStatement(curB
 
 type queryActionCollector struct {
 	actions []*ast.BLangQueryAction
+	root    ast.StatementNode
 }
 
 var _ ast.Visitor = &queryActionCollector{}
 
 func (c *queryActionCollector) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
+		return nil
+	}
+	if stmt, ok := node.(ast.StatementNode); ok && stmt != c.root {
 		return nil
 	}
 	if action, ok := node.(*ast.BLangQueryAction); ok {

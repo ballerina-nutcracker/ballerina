@@ -47,7 +47,7 @@ type packageContext struct {
 	addedImplicitImports map[string]bool
 	desugarSymbolCounter int
 	typeContext          semtypes.Context
-	xmlIteratorTypes     *semtypes.SemTypeCache
+	iteratorTypes        *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -59,7 +59,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		importedSymbols:      importedSymbols,
 		addedImplicitImports: make(map[string]bool),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
-		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
+		iteratorTypes:        semtypes.NewSemTypeCache(),
 	}
 }
 
@@ -134,6 +134,7 @@ type functionContext struct {
 	scopeStack           []model.Scope
 	desugarSymbolCounter int
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
+	queryActionControls  []*queryActionControlFlowState
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
@@ -205,6 +206,28 @@ func (ctx *functionContext) currentLoopVar() ast.LExpr {
 		return nil
 	}
 	return ctx.loopVarStack[len(ctx.loopVarStack)-1]
+}
+
+func (ctx *functionContext) pushQueryActionControl(state *queryActionControlFlowState) {
+	ctx.queryActionControls = append(ctx.queryActionControls, state)
+}
+
+func (ctx *functionContext) popQueryActionControl() {
+	if len(ctx.queryActionControls) == 0 {
+		ctx.internalError("cannot pop from empty query action control stack")
+	}
+	ctx.queryActionControls = ctx.queryActionControls[:len(ctx.queryActionControls)-1]
+}
+
+func (ctx *functionContext) currentQueryActionControl() *queryActionControlFlowState {
+	if len(ctx.queryActionControls) == 0 {
+		return nil
+	}
+	state := ctx.queryActionControls[len(ctx.queryActionControls)-1]
+	if len(ctx.loopVarStack) != state.loopDepth {
+		return nil
+	}
+	return state
 }
 
 func (ctx *functionContext) nextDesugarSymbolName() string {

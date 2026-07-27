@@ -79,7 +79,7 @@ type (
 	}
 	BLangSelectClause struct {
 		bLangNodeBase
-		Expression BLangExpression
+		Expression BLangActionOrExpression
 	}
 	BLangOnConflictClause struct {
 		bLangNodeBase
@@ -287,11 +287,11 @@ func (b *BLangLimitClause) SetExpression(expression BLangExpression) {
 	b.Expression = expression
 }
 
-func (b *BLangSelectClause) GetExpression() BLangExpression {
+func (b *BLangSelectClause) GetExpression() BLangActionOrExpression {
 	return b.Expression
 }
 
-func (b *BLangSelectClause) SetExpression(expression BLangExpression) {
+func (b *BLangSelectClause) SetExpression(expression BLangActionOrExpression) {
 	b.Expression = expression
 }
 

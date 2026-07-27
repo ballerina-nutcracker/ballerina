@@ -742,8 +742,8 @@ type GroupingKeyNode interface {
 
 type SelectClauseNode interface {
 	Node
-	GetExpression() BLangExpression
-	SetExpression(expression BLangExpression)
+	GetExpression() BLangActionOrExpression
+	SetExpression(expression BLangActionOrExpression)
 }
 
 type QueryExpressionNode interface {

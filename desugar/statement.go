@@ -50,8 +50,14 @@ func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[as
 	case *ast.BLangPanic:
 		return walkPanic(cx, stmt)
 	case *ast.BLangBreak:
+		if control := cx.currentQueryActionControl(); control != nil {
+			return walkQueryActionLoopControl(control, true, stmt.GetPosition())
+		}
 		return desugaredNode[ast.StatementNode]{replacementNode: stmt}
 	case *ast.BLangContinue:
+		if control := cx.currentQueryActionControl(); control != nil {
+			return walkQueryActionLoopControl(control, false, stmt.GetPosition())
+		}
 		return walkContinue(cx, stmt)
 	case *ast.BLangMatchStatement:
 		return walkMatchStatement(cx, stmt)
@@ -822,14 +828,21 @@ func isRangeExpr(expr ast.BLangActionOrExpression) bool {
 }
 
 func createIteratorInvocation(cx *functionContext, receiver ast.BLangExpression, receiverType semtypes.SemType) *ast.BLangInvocation {
+	if semtypes.IsSubtype(cx.typeCtx(), receiverType, semtypes.STRING) {
+		return createLangLibIteratorInvocation(cx, receiver, "lang.string", semtypes.CHAR)
+	}
 	if semtypes.IsSubtype(cx.typeCtx(), receiverType, semtypes.XML) {
-		return createXMLIteratorInvocation(cx, receiver, receiverType)
+		return createLangLibIteratorInvocation(cx, receiver, "lang.xml", semtypes.XMLItemType(receiverType))
 	}
 	return createMethodInvocation(cx, receiver, "iterator", receiverType, []ast.BLangExpression{})
 }
 
-func createXMLIteratorInvocation(cx *functionContext, receiver ast.BLangExpression, receiverType semtypes.SemType) *ast.BLangInvocation {
-	pkgName := "lang.xml"
+func createLangLibIteratorInvocation(
+	cx *functionContext,
+	receiver ast.BLangExpression,
+	pkgName string,
+	itemTy semtypes.SemType,
+) *ast.BLangInvocation {
 	space, ok := cx.pkgCtx.getImportedSymbolSpace(pkgName)
 	if !ok {
 		cx.pkgCtx.internalError(pkgName + " symbol space not found")
@@ -842,25 +855,25 @@ func createXMLIteratorInvocation(cx *functionContext, receiver ast.BLangExpressi
 	}
 	cx.pkgCtx.addImplicitImport(pkgName, ast.BLangImportPackage{
 		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
-		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "xml"}},
+		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: pkgName[len("lang."):]}},
 		Alias:        &ast.BLangIdentifier{Value: pkgName},
 	})
 	inv := &ast.BLangInvocation{PkgAlias: &ast.BLangIdentifier{Value: pkgName}}
 	inv.Name = &ast.BLangIdentifier{Value: "iterator"}
 	inv.ArgExprs = []ast.BLangExpression{receiver}
 	inv.SetSymbol(iteratorRef)
-	inv.SetDeterminedType(cx.pkgCtx.xmlIteratorType(semtypes.XMLItemType(receiverType)))
+	inv.SetDeterminedType(cx.pkgCtx.iteratorType(itemTy))
 	inv.SetPosition(receiver.GetPosition())
 	return inv
 }
 
-func (ctx *packageContext) xmlIteratorType(itemTy semtypes.SemType) semtypes.SemType {
-	return ctx.xmlIteratorTypes.GetOrBuild(itemTy, func() semtypes.SemType {
-		return buildXMLIteratorType(ctx.typeEnv(), itemTy)
+func (ctx *packageContext) iteratorType(itemTy semtypes.SemType) semtypes.SemType {
+	return ctx.iteratorTypes.GetOrBuild(itemTy, func() semtypes.SemType {
+		return buildIteratorType(ctx.typeEnv(), itemTy)
 	})
 }
 
-func buildXMLIteratorType(env semtypes.Env, itemTy semtypes.SemType) semtypes.SemType {
+func buildIteratorType(env semtypes.Env, itemTy semtypes.SemType) semtypes.SemType {
 	recordDef := semtypes.NewMappingDefinition()
 	recordTy := recordDef.DefineMappingTypeWrapped(env,
 		[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},

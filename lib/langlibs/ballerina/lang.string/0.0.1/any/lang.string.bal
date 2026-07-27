@@ -19,3 +19,11 @@
 # + str - the string
 # + return - the number of characters (code points) in `str`
 public isolated function length(string str) returns int = external;
+
+# Returns an iterator over the Unicode characters in the string.
+#
+# + str - the string to iterate over
+# + return - a new character iterator
+public isolated function iterator(string str) returns object {
+    public isolated function next() returns record {| Char value; |}?;
+} = external;

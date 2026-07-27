@@ -2172,7 +2172,7 @@ func (n *NodeBuilder) TransformBinaryExpression(binaryBLangExpression *tree.Bina
 }
 
 func (n *NodeBuilder) TransformBracedExpression(bracedBLangExpression *tree.BracedExpressionNode) BLangNode {
-	return n.createExpression(bracedBLangExpression.Expression())
+	return n.createActionOrExpression(bracedBLangExpression.Expression()).(BLangNode)
 }
 
 func (n *NodeBuilder) TransformCheckExpression(checkBLangExpression *tree.CheckExpressionNode) BLangNode {
@@ -4152,7 +4152,7 @@ func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQue
 func (n *NodeBuilder) TransformSelectClause(selectClauseNode *tree.SelectClauseNode) BLangNode {
 	selectClause := &BLangSelectClause{}
 	selectClause.pos = getPosition(n.de(), selectClauseNode)
-	selectClause.SetExpression(n.createExpression(selectClauseNode.Expression()))
+	selectClause.SetExpression(n.createActionOrExpression(selectClauseNode.Expression()))
 	return selectClause
 }
 
