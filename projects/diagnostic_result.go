@@ -19,7 +19,7 @@ package projects
 import (
 	"slices"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // DiagnosticResult represents a collection of diagnostics from a project operation.

@@ -18,18 +18,17 @@ package nativerunner
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/fstest"
 
-	"ballerina/cli/internal/nativeexec"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
 )
 
 func TestVersionAtLeast(t *testing.T) {
@@ -160,150 +159,49 @@ func TestWriteNativeFiles_CopiesGoFiles(t *testing.T) {
 	}
 }
 
-func TestWritePatchedGoMod_AppendsRequireReplace(t *testing.T) {
+func TestWriteNativeWorkspace(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	origMod := "module ballerina\n\ngo 1.26\n"
-	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), origMod)
-	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
-
-	tmpDir := t.TempDir()
-	payloads := []nativeexec.NativePayload{
-		&nativeexec.GoSourcePayload{Module: "example.com/mypkg"},
+	for _, dir := range interpreterModuleDirs {
+		mustWriteFile(t, filepath.Join(interpRoot, dir, "go.mod"), "module example.com/interpreter\n\ngo 1.26\n")
 	}
-
-	patchedModFile, err := writePatchedGoMod(tmpDir, interpRoot, payloads, tmpDir)
-	if err != nil {
-		t.Fatalf("writePatchedGoMod: %v", err)
-	}
-
-	content := mustReadFile(t, patchedModFile)
-	if !strings.Contains(content, "require example.com/mypkg v0.0.0") {
-		t.Errorf("patched go.mod missing require directive:\n%s", content)
-	}
-	if !strings.Contains(content, "replace example.com/mypkg =>") {
-		t.Errorf("patched go.mod missing replace directive:\n%s", content)
-	}
-	// Original module declaration must be preserved.
-	if !strings.Contains(content, "module ballerina") {
-		t.Errorf("patched go.mod missing original module declaration:\n%s", content)
-	}
-}
-
-// TestWritePatchedGoMod_QuotesPathsWithSpaces covers a replace target
-// containing a space (e.g. a macOS home directory like "/Users/John Doe"):
-// the generated go.mod must quote it, or "go mod edit" fails to parse the
-// file at all.
-func TestWritePatchedGoMod_QuotesPathsWithSpaces(t *testing.T) {
-	t.Parallel()
-	if _, err := exec.LookPath("go"); err != nil {
-		t.Skip("go toolchain not available")
-	}
-
-	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
-
-	// tmpDir itself contains a space, matching pkgDir (tmpDir/<moduleDirName>).
-	tmpDir := filepath.Join(t.TempDir(), "with space")
-	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
-		t.Fatalf("creating tmpDir with a space: %v", err)
-	}
-	payloads := []nativeexec.NativePayload{
-		&nativeexec.GoSourcePayload{Module: "example.com/mypkg"},
-	}
-
-	patchedModFile, err := writePatchedGoMod(tmpDir, interpRoot, payloads, tmpDir)
-	if err != nil {
-		t.Fatalf("writePatchedGoMod: %v", err)
-	}
-
-	cmd := exec.Command("go", "mod", "edit", "-json", patchedModFile)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("go mod edit -json failed to parse the generated go.mod: %v\n%s", err, out)
-	}
-
-	// Decode rather than substring-match: the JSON encoding escapes
-	// backslashes (Windows paths), so a raw string.Contains against an
-	// unescaped path never matches there even when the parsed value is correct.
-	var modFile struct {
-		Replace []struct {
-			Old struct{ Path string }
-			New struct{ Path string }
-		}
-	}
-	if err := json.Unmarshal(out, &modFile); err != nil {
-		t.Fatalf("parsing go mod edit -json output: %v\n%s", err, out)
-	}
-	var gotPath string
-	for _, r := range modFile.Replace {
-		if r.Old.Path == "example.com/mypkg" {
-			gotPath = r.New.Path
-		}
-	}
-
-	wantPath := filepath.Join(tmpDir, moduleDirName("example.com/mypkg"))
-	if gotPath != wantPath {
-		t.Errorf("expected the parsed replace target to resolve to %q, got %q (full output:\n%s)", wantPath, gotPath, out)
-	}
-}
-
-func TestWritePatchedGoMod_MultiplePayloads(t *testing.T) {
-	t.Parallel()
-	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "")
 
 	tmpDir := t.TempDir()
 	payloads := []nativeexec.NativePayload{
 		&nativeexec.GoSourcePayload{Module: "example.com/pkgA"},
 		&nativeexec.GoSourcePayload{Module: "example.com/pkgB"},
 	}
-
-	patchedModFile, err := writePatchedGoMod(tmpDir, interpRoot, payloads, tmpDir)
-	if err != nil {
-		t.Fatalf("writePatchedGoMod: %v", err)
+	for _, payload := range payloads {
+		mustWriteFile(t, filepath.Join(tmpDir, moduleDirName(payload.GoModuleName()), "go.mod"),
+			"module "+payload.GoModuleName()+"\n\ngo 1.26\n")
 	}
 
-	content := mustReadFile(t, patchedModFile)
-	for _, mod := range []string{"example.com/pkgA", "example.com/pkgB"} {
-		if !strings.Contains(content, "require "+mod) {
-			t.Errorf("patched go.mod missing require for %s:\n%s", mod, content)
+	workspaceFile, err := writeNativeWorkspace(tmpDir, interpRoot, payloads)
+	if err != nil {
+		t.Fatalf("writeNativeWorkspace: %v", err)
+	}
+	content := mustReadFile(t, workspaceFile)
+	for _, dir := range interpreterModuleDirs {
+		if !strings.Contains(content, strconv.Quote(filepath.Join(interpRoot, dir))) {
+			t.Errorf("workspace missing interpreter module %q:\n%s", dir, content)
 		}
-		if !strings.Contains(content, "replace "+mod) {
-			t.Errorf("patched go.mod missing replace for %s:\n%s", mod, content)
+	}
+	for _, payload := range payloads {
+		payloadDir := strconv.Quote(filepath.Join(tmpDir, moduleDirName(payload.GoModuleName())))
+		if !strings.Contains(content, payloadDir) {
+			t.Errorf("workspace missing payload %s:\n%s", payload.GoModuleName(), content)
 		}
+	}
+	if !strings.Contains(content, "github.com/ballerina-nutcracker/ballerina/ast v0.6.0 =>") {
+		t.Errorf("workspace missing versioned interpreter replacement:\n%s", content)
 	}
 }
 
-func TestWritePatchedGoMod_WritesPatchedGoSum(t *testing.T) {
+func TestWriteNativeWorkspace_MissingModule(t *testing.T) {
 	t.Parallel()
-	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "go.mod"), "module ballerina\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.sum"), "github.com/foo/bar v1.0.0 h1:xxx\n")
-
-	tmpDir := t.TempDir()
-	payloads := []nativeexec.NativePayload{
-		&nativeexec.GoSourcePayload{Module: "example.com/pkg"},
-	}
-
-	_, err := writePatchedGoMod(tmpDir, interpRoot, payloads, tmpDir)
-	if err != nil {
-		t.Fatalf("writePatchedGoMod: %v", err)
-	}
-
-	sumContent := mustReadFile(t, filepath.Join(tmpDir, "patched-go.sum"))
-	if !strings.Contains(sumContent, "github.com/foo/bar") {
-		t.Errorf("patched-go.sum must copy interpreter go.sum content:\n%s", sumContent)
-	}
-}
-
-func TestWritePatchedGoMod_MissingGoMod(t *testing.T) {
-	t.Parallel()
-	_, err := writePatchedGoMod(t.TempDir(), "/nonexistent/root", nil, t.TempDir())
+	_, err := writeNativeWorkspace(t.TempDir(), "/nonexistent/root", nil)
 	if err == nil {
-		t.Error("expected error when interpreter go.mod is missing")
+		t.Error("expected error when an interpreter module is missing")
 	}
 }
 
@@ -327,12 +225,15 @@ func TestNewForTarget_SetsTargetPackage(t *testing.T) {
 	}
 }
 
-// newFakeInterpreterRoot creates a minimal go.mod/go.sum, enough for
+// newFakeInterpreterRoot creates minimal workspace manifests, enough for
 // localFingerprint without a real interpreter checkout.
 func newFakeInterpreterRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	mustWriteFile(t, filepath.Join(root, "go.mod"), "module ballerina-lang-go\n\ngo 1.26\n")
+	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.26\n")
+	for _, dir := range interpreterModuleDirs {
+		mustWriteFile(t, filepath.Join(root, dir, "go.mod"), "module example.com/interpreter\n\ngo 1.26\n")
+	}
 	mustWriteFile(t, filepath.Join(root, "go.sum"), "")
 	return root
 }
@@ -679,6 +580,9 @@ func checkFileContent(t *testing.T, path, want string) {
 
 func mustWriteFile(t *testing.T, path, content string) {
 	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("creating parent directory for %s: %v", path, err)
+	}
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatalf("writing %s: %v", path, err)
 	}

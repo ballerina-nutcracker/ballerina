@@ -17,7 +17,7 @@
 package values
 
 import (
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"math"
 	"testing"
 )

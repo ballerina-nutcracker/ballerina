@@ -19,8 +19,8 @@ package tree
 import (
 	"iter"
 
-	"ballerina/parser/common"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 type SyntaxTree struct {

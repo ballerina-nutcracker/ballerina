@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"strings"
 
-	"ballerina/common/tomlparser/internal/parser"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/common/tomlparser/internal/parser"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 type Toml struct {

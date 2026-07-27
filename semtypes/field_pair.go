@@ -19,7 +19,7 @@ package semtypes
 import (
 	"iter"
 
-	"ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/common"
 )
 
 type fieldPair struct {

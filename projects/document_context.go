@@ -21,11 +21,11 @@ import (
 	"sync"
 	"time"
 
-	common "ballerina/common"
-	compilercontext "ballerina/context"
-	"ballerina/parser"
-	"ballerina/parser/tree"
-	"ballerina/tools/text"
+	common "github.com/ballerina-nutcracker/ballerina/common"
+	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/parser"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // documentContext holds internal state for a Document.

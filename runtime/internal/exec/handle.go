@@ -19,10 +19,10 @@ package exec
 import (
 	"fmt"
 
-	"ballerina/bir"
-	"ballerina/runtime/extern"
-	"ballerina/runtime/internal/modules"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/modules"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // InvokableHandle is provides a unified representation that can be used to execute any function/method

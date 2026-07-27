@@ -33,11 +33,11 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina/context"
-	"ballerina/parser"
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/parser"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 var skipDirs = map[string]bool{"tests": true, "build": true, "target": true}

@@ -141,8 +141,8 @@ Update the README row via the **`stdlib-readme-format`** skill:
 
 ### Verify checklist
 
-- [ ] `go build ./...` — no compilation errors.
-- [ ] `go vet ./...` — no vet warnings.
+- [ ] `make build` — no compilation errors in any workspace module.
+- [ ] `make vet` — no vet warnings in any workspace module.
 - [ ] `go test ./corpus/...` — all corpus tests pass.
 - [ ] `go run ./cli/cmd run <test>.bal` for the new corpus test(s) — output matches `@output` markers.
 - [ ] New corpus test files live under `corpus/bal/library/subset<N>/` (the subset confirmed with the developer above), not the generic `corpus/bal/subset1..9/` tree.

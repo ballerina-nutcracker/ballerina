@@ -16,7 +16,7 @@
 package parser
 
 import (
-	"ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
 )
 
 type TokenReader struct {

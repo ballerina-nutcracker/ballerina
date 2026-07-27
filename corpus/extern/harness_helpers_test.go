@@ -23,10 +23,10 @@ import (
 	goruntime "runtime"
 	"testing"
 
-	"ballerina/platform/pal"
-	"ballerina/platform/palnative"
-	"ballerina/test_util"
-	"ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 )
 
 const (

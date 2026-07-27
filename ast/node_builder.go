@@ -23,13 +23,13 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
-	balCommon "ballerina/common"
+	balCommon "github.com/ballerina-nutcracker/ballerina/common"
 )
 
 type typeTable struct {

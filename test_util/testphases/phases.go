@@ -23,16 +23,16 @@ import (
 	"io/fs"
 	"os"
 
-	"ballerina/ast"
-	"ballerina/bir"
-	"ballerina/context"
-	"ballerina/desugar"
-	"ballerina/lib/stdlibs"
-	"ballerina/model"
-	"ballerina/parser"
-	"ballerina/semantics"
-	"ballerina/test_util/langlib"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/desugar"
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/parser"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/test_util/langlib"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // Phase represents a frontend compilation phase

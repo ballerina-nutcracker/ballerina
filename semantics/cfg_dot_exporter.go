@@ -17,10 +17,10 @@
 package semantics
 
 import (
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/model"
 	"fmt"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"html"
 	"sort"
 	"strings"

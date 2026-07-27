@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"ballerina/common/tomlparser"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/common/tomlparser"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // TOML key constants for Ballerina.toml parsing.

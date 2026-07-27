@@ -31,17 +31,60 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+
+	sourceast "github.com/ballerina-nutcracker/ballerina/ast"
+	sourcebir "github.com/ballerina-nutcracker/ballerina/bir"
+	sourcecli "github.com/ballerina-nutcracker/ballerina/cli"
+	sourcecommon "github.com/ballerina-nutcracker/ballerina/common"
+	sourcecontext "github.com/ballerina-nutcracker/ballerina/context"
+	sourcedecimal "github.com/ballerina-nutcracker/ballerina/decimal"
+	sourcedesugar "github.com/ballerina-nutcracker/ballerina/desugar"
+	sourcelib "github.com/ballerina-nutcracker/ballerina/lib"
+	sourcemodel "github.com/ballerina-nutcracker/ballerina/model"
+	sourceparser "github.com/ballerina-nutcracker/ballerina/parser"
+	sourceplatform "github.com/ballerina-nutcracker/ballerina/platform"
+	sourceprojects "github.com/ballerina-nutcracker/ballerina/projects"
+	sourceruntime "github.com/ballerina-nutcracker/ballerina/runtime"
+	sourcesemantics "github.com/ballerina-nutcracker/ballerina/semantics"
+	sourcesemtypes "github.com/ballerina-nutcracker/ballerina/semtypes"
+	sourcetools "github.com/ballerina-nutcracker/ballerina/tools"
+	sourcevalues "github.com/ballerina-nutcracker/ballerina/values"
 )
 
-// The embed includes all Go source packages needed to build the interpreter,
-// plus go.mod and go.sum. parser/testdata (270 MB of test fixtures),
-// corpus/, samples/, and compiler-tools/ are intentionally excluded to keep binary size small.
+// Each workspace module embeds its own source because go:embed cannot cross a
+// Go module boundary. parser/testdata, corpus, test_util, and compiler-tools are
+// intentionally excluded to keep the released binary small.
 
 //go:embed go.mod go.sum interpsrc_stub.go
-//go:embed ast bir cli common context decimal desugar lib model platform projects runtime semantics semtypes tools values
-//go:embed parser/*.go parser/nodes.json parser/common parser/tree
-var src embed.FS
+var rootSource embed.FS
+
+type sourceTree struct {
+	dir string
+	fs  fs.FS
+}
+
+var interpreterSources = []sourceTree{
+	{fs: rootSource},
+	{dir: "ast", fs: sourceast.InterpreterSource()},
+	{dir: "bir", fs: sourcebir.InterpreterSource()},
+	{dir: "cli", fs: sourcecli.InterpreterSource()},
+	{dir: "common", fs: sourcecommon.InterpreterSource()},
+	{dir: "context", fs: sourcecontext.InterpreterSource()},
+	{dir: "decimal", fs: sourcedecimal.InterpreterSource()},
+	{dir: "desugar", fs: sourcedesugar.InterpreterSource()},
+	{dir: "lib", fs: sourcelib.InterpreterSource()},
+	{dir: "model", fs: sourcemodel.InterpreterSource()},
+	{dir: "parser", fs: sourceparser.InterpreterSource()},
+	{dir: "platform", fs: sourceplatform.InterpreterSource()},
+	{dir: "projects", fs: sourceprojects.InterpreterSource()},
+	{dir: "runtime", fs: sourceruntime.InterpreterSource()},
+	{dir: "semantics", fs: sourcesemantics.InterpreterSource()},
+	{dir: "semtypes", fs: sourcesemtypes.InterpreterSource()},
+	{dir: "tools", fs: sourcetools.InterpreterSource()},
+	{dir: "values", fs: sourcevalues.InterpreterSource()},
+}
 
 // devDirName is the fixed cache directory (under the OS temp dir) used for
 // local "dev" builds, where Version is never bumped between builds.
@@ -65,7 +108,7 @@ func ExtractTo(cacheRoot, version string) (string, error) {
 		return extractDev()
 	}
 	dir := filepath.Join(cacheRoot, "interpreter-src", version)
-	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+	if extractedSourceComplete(dir) {
 		return dir, nil
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -91,10 +134,8 @@ func extractDev() (string, error) {
 
 	dir := filepath.Join(os.TempDir(), devDirName)
 	hashFile := dir + ".hash"
-	if existing, err := os.ReadFile(hashFile); err == nil && string(existing) == hash {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
-		}
+	if existing, err := os.ReadFile(hashFile); err == nil && string(existing) == hash && extractedSourceComplete(dir) {
+		return dir, nil
 	}
 
 	if err := os.RemoveAll(dir); err != nil {
@@ -119,38 +160,100 @@ func extractDev() (string, error) {
 // tree changes (e.g. a local rebuild with edited source).
 func contentHash() (string, error) {
 	h := sha256.New()
-	err := fs.WalkDir(src, ".", func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-		data, err := fs.ReadFile(src, p)
+	for _, source := range interpreterSources {
+		err := walkSource(source, func(p string, data []byte) error {
+			h.Write([]byte(p))
+			h.Write([]byte{0})
+			h.Write(data)
+			return nil
+		})
 		if err != nil {
-			return err
+			return "", err
 		}
-		h.Write([]byte(p))
-		h.Write([]byte{0})
-		h.Write(data)
-		return nil
-	})
-	if err != nil {
-		return "", err
 	}
+	h.Write([]byte(nativeWorkspace))
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func extractAll(dst string) error {
-	return fs.WalkDir(src, ".", func(p string, d fs.DirEntry, err error) error {
+	for _, source := range interpreterSources {
+		err := walkSource(source, func(p string, data []byte) error {
+			target := filepath.Join(dst, filepath.FromSlash(p))
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				return err
+			}
+			return os.WriteFile(target, data, 0o644)
+		})
 		if err != nil {
 			return err
 		}
-		target := filepath.Join(dst, filepath.FromSlash(p))
-		if d.IsDir() {
-			return os.MkdirAll(target, 0o755)
+	}
+	return os.WriteFile(filepath.Join(dst, "go.work"), []byte(nativeWorkspace), 0o644)
+}
+
+func walkSource(source sourceTree, visit func(string, []byte) error) error {
+	return fs.WalkDir(source.fs, ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
 		}
-		data, err := fs.ReadFile(src, p)
+		data, err := fs.ReadFile(source.fs, p)
 		if err != nil {
 			return err
 		}
-		return os.WriteFile(target, data, 0o644)
+		return visit(path.Join(source.dir, p), data)
 	})
 }
+
+func extractedSourceComplete(dir string) bool {
+	for _, name := range []string{"go.mod", "go.work", filepath.Join("cli", "go.mod")} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+const nativeWorkspace = `go 1.26
+
+use (
+	.
+	./ast
+	./bir
+	./cli
+	./common
+	./context
+	./decimal
+	./desugar
+	./lib
+	./model
+	./parser
+	./platform
+	./projects
+	./runtime
+	./semantics
+	./semtypes
+	./tools
+	./values
+)
+
+replace (
+	ballerina v0.6.0 => .
+	ballerina/ast v0.6.0 => ./ast
+	ballerina/bir v0.6.0 => ./bir
+	ballerina/cli v0.6.0 => ./cli
+	ballerina/common v0.6.0 => ./common
+	ballerina/context v0.6.0 => ./context
+	ballerina/decimal v0.6.0 => ./decimal
+	ballerina/desugar v0.6.0 => ./desugar
+	ballerina/lib v0.6.0 => ./lib
+	ballerina/model v0.6.0 => ./model
+	ballerina/parser v0.6.0 => ./parser
+	ballerina/platform v0.6.0 => ./platform
+	ballerina/projects v0.6.0 => ./projects
+	ballerina/runtime v0.6.0 => ./runtime
+	ballerina/semantics v0.6.0 => ./semantics
+	ballerina/semtypes v0.6.0 => ./semtypes
+	ballerina/tools v0.6.0 => ./tools
+	ballerina/values v0.6.0 => ./values
+)
+`

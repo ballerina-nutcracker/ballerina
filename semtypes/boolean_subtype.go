@@ -17,7 +17,7 @@
 package semtypes
 
 import (
-	"ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/common"
 )
 
 type booleanSubtype struct {

@@ -17,9 +17,9 @@
 package bir
 
 import (
-	"ballerina/common"
-	"ballerina/model"
-	"ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 )
 
 type BIRTerminator = BIRInstruction

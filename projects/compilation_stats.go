@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/context"
 )
 
 var standaloneStages = []context.CompilationStage{

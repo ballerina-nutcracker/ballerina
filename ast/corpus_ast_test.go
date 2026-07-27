@@ -21,12 +21,12 @@ import (
 	"fmt"
 	"testing"
 
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/semtypes"
-	"ballerina/test_util"
-	"ballerina/test_util/testphases"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )

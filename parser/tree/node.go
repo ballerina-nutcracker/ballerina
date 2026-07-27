@@ -21,8 +21,8 @@ package tree
 import (
 	"iter"
 
-	"ballerina/parser/common"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // This represent red nodes in the syntax tree. Red nodes satisfy fallowing properties:

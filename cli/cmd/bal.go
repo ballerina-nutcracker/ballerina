@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"ballerina/cli/internal/executable"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/executable"
 
 	"github.com/spf13/cobra"
 )

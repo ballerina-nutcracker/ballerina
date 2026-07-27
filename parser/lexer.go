@@ -18,10 +18,10 @@ package parser
 import (
 	"unicode"
 
-	debugcommon "ballerina/common"
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/tools/text"
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // TODO: we have lot of unbounded lookaheads which are implemented by incrementing a lookahead count and repeatedly

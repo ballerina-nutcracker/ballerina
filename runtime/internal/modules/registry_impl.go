@@ -17,10 +17,10 @@
 package modules
 
 import (
-	"ballerina/bir"
-	"ballerina/model"
-	"ballerina/runtime/extern"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // ClassTemplate holds the per-class data that is identical for every instance

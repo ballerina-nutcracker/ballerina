@@ -21,8 +21,8 @@ import (
 	"reflect"
 	"strings"
 
-	"ballerina/parser/common"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // This represent green nodes in the syntax tree. Green nodes satisfy fallowing properties:

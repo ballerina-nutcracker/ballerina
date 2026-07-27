@@ -210,7 +210,7 @@ After the tests pass, add (or extend) the `## [<name>](<jBallerina spec URL>)` s
 
 Targeting **≥80% coverage** of the new Go code under `native/`.
 
-**This is a real CI gate, not a suggestion.** `.github/workflows/native-ci.yml` runs `.github/scripts/run_native_tests.py --with-coverage` and uploads the resulting profiles to Codecov (`flags: native`); `codecov.yml` sets `coverage.status.patch.default.target: 80%`, which fails the PR check if **patch coverage** (coverage of just the lines added/changed in the diff) drops below 80%. For a brand-new stdlib, essentially every line under `native/` is new, so the whole-package coverage number below is a reliable local stand-in for that patch-coverage check.
+**This is a real CI gate, not a suggestion.** `.github/workflows/native-ci.yml` runs `make test-coverage` and uploads the resulting profiles to Codecov (`flags: native`); `codecov.yml` sets `coverage.status.patch.default.target: 80%`, which fails the PR check if **patch coverage** (coverage of just the lines added/changed in the diff) drops below 80%. For a brand-new stdlib, essentially every line under `native/` is new, so the whole-package coverage number below is a reliable local stand-in for that patch-coverage check.
 
 **Measure it locally before declaring done** — this mirrors what CI does, without the full 2h suite:
 ```shell
@@ -236,8 +236,8 @@ Separately, confirm Step 8's `doc/library/subset<N>.md` update is done — it do
 Before declaring done, check every box:
 
 ### Code
-- [ ] `go build ./...` — no compilation errors.
-- [ ] `go vet ./...` — no vet warnings.
+- [ ] `make build` — no compilation errors in any workspace module.
+- [ ] `make vet` — no vet warnings in any workspace module.
 
 ### Tests
 - [ ] `go test ./corpus/...` — all corpus tests pass.

@@ -19,9 +19,9 @@ package parser
 import (
 	"strings"
 
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // DocumentationParser is a parser for Ballerina documentation (markdown).

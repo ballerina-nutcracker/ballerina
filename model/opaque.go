@@ -17,8 +17,8 @@
 package model
 
 import (
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // OpaqueSymbol is a symbol whose definition cannot be written in Ballerina

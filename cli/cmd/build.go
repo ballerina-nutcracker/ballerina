@@ -24,11 +24,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"ballerina/cli/internal/executable"
-	"ballerina/cli/internal/nativeexec"
-	debugcommon "ballerina/common"
-	"ballerina/projects"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/executable"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 )

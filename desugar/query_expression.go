@@ -20,11 +20,11 @@ package desugar
 import (
 	"fmt"
 
-	"ballerina/ast"
-	langinternal "ballerina/lib/langinternal/compile"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	langinternal "github.com/ballerina-nutcracker/ballerina/lib/langinternal/compile"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[ast.BLangActionOrExpression] {

@@ -17,10 +17,10 @@
 package parser
 
 import (
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/tools/diagnostics"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 var deprecatedChars = []rune{'D', 'e', 'p', 'r', 'e', 'c', 'a', 't', 'e', 'd'}

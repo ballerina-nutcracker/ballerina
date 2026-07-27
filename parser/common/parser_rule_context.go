@@ -17,7 +17,7 @@
 package common
 
 import (
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // FIXME: make this private

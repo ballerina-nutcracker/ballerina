@@ -16,7 +16,7 @@
 
 package semtypes
 
-import "ballerina/common"
+import "github.com/ballerina-nutcracker/ballerina/common"
 
 type typeAtom struct {
 	idx        int

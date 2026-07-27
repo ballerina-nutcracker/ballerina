@@ -34,7 +34,7 @@ jobs:
         run: sudo apt-get install -y wrk
 
       - name: Run all modules with race detector
-        run: python3 .github/scripts/run_native_tests.py --race
+        run: make test-race
 
       - name: Notify on failure
         if: failure()

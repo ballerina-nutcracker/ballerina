@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
 // =============================================================================

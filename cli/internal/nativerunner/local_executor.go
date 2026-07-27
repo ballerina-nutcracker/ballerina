@@ -19,7 +19,6 @@
 package nativerunner
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -32,7 +31,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina/cli/internal/nativeexec"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
 )
 
 const (
@@ -210,8 +209,7 @@ func (e *LocalExecutor) buildOrReuse(ctx context.Context, req nativeexec.NativeR
 		if err := writeNativeFiles(pkgDir, payload); err != nil {
 			return "", "", err
 		}
-		modContent := fmt.Sprintf("module %s\n\ngo %s\n\nrequire ballerina v0.0.0\nreplace ballerina => %q\n",
-			payload.GoModuleName(), MinGoVersion, e.interpreterRoot)
+		modContent := fmt.Sprintf("module %s\n\ngo %s\n", payload.GoModuleName(), MinGoVersion)
 		if err := os.WriteFile(filepath.Join(pkgDir, "go.mod"), []byte(modContent), 0o600); err != nil {
 			return "", "", fmt.Errorf("writing go.mod for %s: %w", payload.GoModuleName(), err)
 		}
@@ -242,8 +240,7 @@ func (e *LocalExecutor) buildOrReuse(ctx context.Context, req nativeexec.NativeR
 		return "", "", fmt.Errorf("writing overlay.json: %w", err)
 	}
 
-	// Write patched go.mod + go.sum into dir with all native packages.
-	patchedModFile, err := writePatchedGoMod(dir, e.interpreterRoot, req.Payloads, dir)
+	workspaceFile, err := writeNativeWorkspace(dir, e.interpreterRoot, req.Payloads)
 	if err != nil {
 		return "", "", err
 	}
@@ -266,13 +263,12 @@ func (e *LocalExecutor) buildOrReuse(ctx context.Context, req nativeexec.NativeR
 	}
 	buildCmd := exec.CommandContext(ctx, "go", "build",
 		"-C", e.interpreterRoot,
-		"-modfile", patchedModFile,
 		"-overlay", overlayFile,
 		"-tags", "native_interp",
 		"-o", outBin,
 		"./"+e.targetPackage,
 	)
-	buildCmd.Env = crossCompileEnv(targetOS, targetArch)
+	buildCmd.Env = append(crossCompileEnv(targetOS, targetArch), "GOWORK="+workspaceFile)
 	buildCmd.Stdout = io.Discard
 	buildCmd.Stderr = stderr
 	if err := buildCmd.Run(); err != nil {
@@ -306,22 +302,30 @@ func (e *LocalExecutor) loadCachedBinary(fingerprint string) (string, bool) {
 	return outBin, true
 }
 
-// localFingerprint hashes the interpreter root path, go.mod/go.sum, Go
-// version, target package, target platform, and payload contents — enough
-// to distinguish checkouts with identical dependencies but different source
-// (e.g. two feature branches). It won't catch an in-place edit to a
-// BALLERINA_SRC checkout with no go.mod/go.sum change; that needs a full
-// source-tree hash. targetOS/targetArch must already be resolved (not
-// defaulted here).
+// localFingerprint hashes the interpreter root path, workspace manifests, Go
+// version, target package, target platform, and payload contents. The target
+// platform must already be resolved rather than defaulted here.
 func localFingerprint(interpreterRoot, targetPackage string, payloads []nativeexec.NativePayload, targetOS, targetArch string) (string, error) {
-	seeds := make([][]byte, 0, 5)
+	seeds := make([][]byte, 0, len(interpreterModuleDirs)*2+6)
 	seeds = append(seeds, []byte(interpreterRoot))
-	for _, name := range []string{"go.mod", "go.sum"} {
+	for _, name := range []string{"go.mod", "go.sum", "go.work"} {
 		data, err := os.ReadFile(filepath.Join(interpreterRoot, name))
 		if err != nil {
 			return "", fmt.Errorf("reading interpreter %s: %w", name, err)
 		}
 		seeds = append(seeds, data)
+	}
+	for _, dir := range interpreterModuleDirs[1:] {
+		for _, name := range []string{"go.mod", "go.sum"} {
+			data, err := os.ReadFile(filepath.Join(interpreterRoot, dir, name))
+			if err == nil {
+				seeds = append(seeds, data)
+				continue
+			}
+			if !os.IsNotExist(err) || name == "go.mod" {
+				return "", fmt.Errorf("reading interpreter %s/%s: %w", dir, name, err)
+			}
+		}
 	}
 	if ver, err := installedGoVersion(); err == nil {
 		seeds = append(seeds, []byte(ver))
@@ -379,41 +383,45 @@ func writeNativeFiles(dir string, payload nativeexec.NativePayload) error {
 	})
 }
 
-// writePatchedGoMod appends a require+replace pair per native payload to
-// the interpreter's go.mod, writing patched-go.mod/go.sum into dstDir, and
-// returns the patched go.mod path.
-func writePatchedGoMod(dstDir, interpreterRoot string, payloads []nativeexec.NativePayload, tmpDir string) (string, error) {
-	src := filepath.Join(interpreterRoot, "go.mod")
-	original, err := os.ReadFile(src)
-	if err != nil {
-		return "", fmt.Errorf("reading interpreter go.mod: %w", err)
-	}
+const interpreterModuleVersion = "v0.6.0"
 
-	var patched bytes.Buffer
-	patched.Write(bytes.TrimRight(original, "\n"))
+var interpreterModuleDirs = []string{
+	"", "ast", "bir", "cli", "common", "context", "decimal", "desugar", "lib",
+	"model", "parser", "platform", "projects", "runtime", "semantics", "semtypes",
+	"tools", "values",
+}
+
+// writeNativeWorkspace creates a workspace containing the extracted
+// interpreter modules and generated native payload modules.
+func writeNativeWorkspace(dstDir, interpreterRoot string, payloads []nativeexec.NativePayload) (string, error) {
+	const modulePrefix = "github.com/ballerina-nutcracker/ballerina"
+	var workspace strings.Builder
+	fmt.Fprintf(&workspace, "go %s\n\nuse (\n", MinGoVersion)
+	for _, dir := range interpreterModuleDirs {
+		moduleDir := filepath.Join(interpreterRoot, dir)
+		if _, err := os.Stat(filepath.Join(moduleDir, "go.mod")); err != nil {
+			return "", fmt.Errorf("reading interpreter module %s: %w", dir, err)
+		}
+		fmt.Fprintf(&workspace, "\t%q\n", moduleDir)
+	}
 	for _, payload := range payloads {
-		pkgDir := filepath.Join(tmpDir, moduleDirName(payload.GoModuleName()))
-		fmt.Fprintf(&patched, "\nrequire %s v0.0.0\nreplace %s => %q",
-			payload.GoModuleName(), payload.GoModuleName(), pkgDir)
+		fmt.Fprintf(&workspace, "\t%q\n", filepath.Join(dstDir, moduleDirName(payload.GoModuleName())))
 	}
-	patched.WriteByte('\n')
+	workspace.WriteString(")\n\nreplace (\n")
+	for _, dir := range interpreterModuleDirs {
+		modulePath := modulePrefix
+		if dir != "" {
+			modulePath += "/" + dir
+		}
+		fmt.Fprintf(&workspace, "\t%s %s => %q\n", modulePath, interpreterModuleVersion,
+			filepath.Join(interpreterRoot, dir))
+	}
+	workspace.WriteString(")\n")
 
-	dst := filepath.Join(dstDir, "patched-go.mod")
-	if err := os.WriteFile(dst, patched.Bytes(), 0o600); err != nil {
-		return "", fmt.Errorf("writing patched go.mod: %w", err)
+	dst := filepath.Join(dstDir, "go.work")
+	if err := os.WriteFile(dst, []byte(workspace.String()), 0o600); err != nil {
+		return "", fmt.Errorf("writing native workspace: %w", err)
 	}
-
-	// -modfile expects a matching patched-go.sum alongside patched-go.mod.
-	sumSrc := filepath.Join(interpreterRoot, "go.sum")
-	sumData, err := os.ReadFile(sumSrc)
-	if err != nil {
-		return "", fmt.Errorf("reading interpreter go.sum: %w", err)
-	}
-	sumDst := filepath.Join(dstDir, "patched-go.sum")
-	if err := os.WriteFile(sumDst, sumData, 0o600); err != nil {
-		return "", fmt.Errorf("writing patched go.sum: %w", err)
-	}
-
 	return dst, nil
 }
 

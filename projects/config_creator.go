@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina/common/tomlparser"
+	"github.com/ballerina-nutcracker/ballerina/common/tomlparser"
 )
 
 // balaPackageJSON represents the package.json structure in a .bala package.

@@ -25,14 +25,14 @@ import (
 	"strings"
 	"sync"
 
-	"ballerina/ast"
-	"ballerina/bir"
-	"ballerina/context"
-	"ballerina/desugar"
-	"ballerina/model"
-	"ballerina/parser/tree"
-	"ballerina/semantics"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/desugar"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // moduleContext holds internal state for a Module.

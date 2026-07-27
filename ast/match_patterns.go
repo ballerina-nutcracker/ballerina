@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type BLangMatchPattern interface {

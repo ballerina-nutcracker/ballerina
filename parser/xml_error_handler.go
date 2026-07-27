@@ -19,7 +19,7 @@
 package parser
 
 import (
-	"ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
 )
 
 var (

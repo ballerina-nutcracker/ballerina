@@ -23,9 +23,9 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina/cli/templates"
-	"ballerina/common/tomlparser"
-	"ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/cli/templates"
+	"github.com/ballerina-nutcracker/ballerina/common/tomlparser"
+	"github.com/ballerina-nutcracker/ballerina/projects"
 
 	"github.com/spf13/cobra"
 )

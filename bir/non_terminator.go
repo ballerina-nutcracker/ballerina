@@ -17,8 +17,8 @@
 package bir
 
 import (
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type BIRNonTerminator = BIRInstruction

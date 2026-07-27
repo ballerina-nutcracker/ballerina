@@ -19,9 +19,9 @@ package semantics
 import (
 	"fmt"
 
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 type symbolLookup interface {

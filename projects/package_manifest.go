@@ -19,7 +19,7 @@ package projects
 import (
 	"slices"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // PackageManifest represents parsed Ballerina.toml content.

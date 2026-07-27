@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina/tools/diagnostics"
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // BoolValueNode holds a boolean value.
 type BoolValueNode struct {

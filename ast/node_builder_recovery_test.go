@@ -20,12 +20,12 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/context"
-	"ballerina/parser"
-	"ballerina/parser/tree"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/parser"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 func TestRecoveringNodeBuilderIncludesMinutiaeInNodeRanges(t *testing.T) {

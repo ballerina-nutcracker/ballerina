@@ -20,10 +20,10 @@ import (
 	"slices"
 	"sync"
 
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type basicBlock struct {

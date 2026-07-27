@@ -19,7 +19,7 @@ package projects
 import (
 	"slices"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // WorkspaceManifest represents the parsed [workspace] section from Ballerina.toml.

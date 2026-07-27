@@ -34,10 +34,13 @@ import (
 	"sync"
 	"testing"
 
-	"ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
 
-const cliCoverDirEnv = "BAL_GOCOVERDIR"
+const (
+	cliCoverDirEnv   = "BAL_GOCOVERDIR"
+	cliCoverPackages = "github.com/ballerina-nutcracker/ballerina/..."
+)
 
 var (
 	cliIntegrationBinsOnce    sync.Once
@@ -2185,7 +2188,7 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 	}
 	args = append(args, "-o", outputPath)
 	if coverDir != "" {
-		args = append(args, "-cover", "-coverpkg=./...")
+		args = append(args, "-cover", "-coverpkg="+cliCoverPackages)
 	}
 	args = append(args, "./cli/cmd")
 

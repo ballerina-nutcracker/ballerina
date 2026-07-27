@@ -17,8 +17,8 @@
 package exec
 
 import (
-	"ballerina/runtime/extern"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // StartMethod is the dispatch hook backing Context.StartMethod. It snapshots

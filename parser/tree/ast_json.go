@@ -21,11 +21,11 @@
 package tree
 
 import (
-	"ballerina/parser/common"
-	"ballerina/tools/diagnostics"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"strings"
 )
 

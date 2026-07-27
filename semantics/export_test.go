@@ -16,7 +16,7 @@
 
 package semantics
 
-import "ballerina/model"
+import "github.com/ballerina-nutcracker/ballerina/model"
 
 // CFGInvariantError represents a CFG invariant violation
 type CFGInvariantError struct {

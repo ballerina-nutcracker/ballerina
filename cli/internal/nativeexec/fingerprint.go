@@ -26,8 +26,8 @@ import (
 )
 
 // FingerprintPayloads returns a hex-encoded SHA-256 digest that uniquely
-// identifies a set of native payloads. Any extra seed bytes (e.g. the
-// interpreter's go.mod + go.sum) are mixed in first so that changes outside
+// identifies a set of native payloads. Any extra seed bytes (e.g. interpreter
+// workspace manifests) are mixed in first so that changes outside
 // the payloads themselves also trigger a rebuild.
 func FingerprintPayloads(payloads []NativePayload, seeds ...[]byte) (string, error) {
 	h := sha256.New()

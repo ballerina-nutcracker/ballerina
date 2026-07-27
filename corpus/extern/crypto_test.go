@@ -19,7 +19,7 @@ package extern_test
 import (
 	"testing"
 
-	"ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 )
 
 // TestCryptoKeyStore drives the PKCS#12 keystore/trust-store decode paths

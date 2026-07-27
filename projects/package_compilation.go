@@ -19,8 +19,8 @@ package projects
 import (
 	"sync"
 
-	"ballerina/context"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // PackageCompilation represents compilation at package level by resolving all the dependencies.

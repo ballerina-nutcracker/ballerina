@@ -19,7 +19,7 @@ package model
 import (
 	"testing"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 func TestSymbolConstructorsSetLocation(t *testing.T) {

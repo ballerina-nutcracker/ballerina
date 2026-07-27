@@ -17,11 +17,11 @@
 package compile
 
 import (
-	"ballerina/context"
-	libcommon "ballerina/lib/common"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	libcommon "github.com/ballerina-nutcracker/ballerina/lib/common"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 var PackageID = model.INTERNAL_PKG

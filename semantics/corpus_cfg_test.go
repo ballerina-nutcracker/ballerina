@@ -20,11 +20,11 @@ import (
 	"flag"
 	"testing"
 
-	"ballerina/context"
-	"ballerina/semantics"
-	"ballerina/semtypes"
-	"ballerina/test_util"
-	"ballerina/test_util/testphases"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )

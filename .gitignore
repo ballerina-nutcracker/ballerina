@@ -19,8 +19,7 @@ profile.cov
 # Dependency directories
 # vendor/
 
-# Go workspace file
-go.work
+# Go workspace checksum
 go.work.sum
 
 # env file
@@ -63,6 +62,7 @@ parser/testdata/**/*.json
 # Coverage report and local agent/editor state
 coverage_report.html
 .claude/
+.pi/
 
 # Ephemeral report produced by the validate-stdlib-contract skill
 CONTRACT_VALIDATION.md

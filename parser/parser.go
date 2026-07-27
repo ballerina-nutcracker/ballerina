@@ -19,12 +19,12 @@ import (
 	"slices"
 	"strings"
 
-	debugcommon "ballerina/common"
-	"ballerina/context"
-	"ballerina/parser/common"
-	tree "ballerina/parser/tree"
-	"ballerina/tools/diagnostics"
-	"ballerina/tools/text"
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	tree "github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 type OperatorPrecedence uint8

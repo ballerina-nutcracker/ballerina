@@ -38,14 +38,14 @@ import (
 	"testing"
 	"time"
 
-	"ballerina/bir"
-	"ballerina/platform/pal"
-	"ballerina/platform/palnative"
-	"ballerina/projects"
-	"ballerina/runtime"
-	"ballerina/runtime/extern"
-	"ballerina/test_util"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // TestCase / TestKind / TestSuffix and the suffix constants live in test_util

@@ -20,12 +20,12 @@ import (
 	"flag"
 	"testing"
 
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/test_util"
-	"ballerina/test_util/testphases"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
 )
 
 // typeResolverSkipList is the type-resolver *additional* skip list, on top of

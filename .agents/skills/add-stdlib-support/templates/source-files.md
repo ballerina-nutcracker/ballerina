@@ -41,9 +41,9 @@ isolated function externFn(string arg) returns string|error = external;
 package native
 
 import (
-    "ballerina/runtime"
-    "ballerina/runtime/extern"
-    "ballerina/values"
+    "github.com/ballerina-nutcracker/ballerina/runtime"
+    "github.com/ballerina-nutcracker/ballerina/runtime/extern"
+    "github.com/ballerina-nutcracker/ballerina/values"
 )
 
 const (

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -15,6 +16,7 @@ TIMEOUT = "2h"
 PROFILE_LINE_PATTERN = re.compile(
     r"^(.+):([0-9]+\.[0-9]+,[0-9]+\.[0-9]+\s+[0-9]+\s+[0-9]+)$"
 )
+ROOT_COVER_PACKAGES = "github.com/ballerina-nutcracker/ballerina/..."
 
 
 class ModuleInfo(NamedTuple):
@@ -44,12 +46,9 @@ def run_cmd(args: list[str], cwd: Path | None = None, env: dict[str, str] | None
 
 
 def discover_modules(repo_root: Path) -> list[str]:
-    files = run_cmd(["git", "ls-files", "**/go.mod"], cwd=repo_root).splitlines()
-    modules = ["."] + [
-        file.removesuffix("/go.mod")
-        for file in files
-        if file != "go.mod" and "/vendor/" not in file
-    ]
+    workspace = json.loads(run_cmd(["go", "work", "edit", "-json"], cwd=repo_root))
+    modules = [entry["DiskPath"].removeprefix("./") for entry in workspace["Use"]]
+    modules = ["." if module in ("", ".") else module for module in modules]
     return sorted(set(modules), key=lambda value: (value != ".", value))
 
 
@@ -116,9 +115,11 @@ def run_tests_for_module(
         "-skip",
         SKIP_PATTERN,
     ]
-    if race and module == ".":
+    if race:
         cmd.insert(2, "-race")
     env = os.environ.copy()
+    toolchain_bin = Path(run_cmd(["go", "env", "GOROOT"], cwd=repo_root)) / "bin"
+    env["PATH"] = str(toolchain_bin) + os.pathsep + env.get("PATH", "")
 
     coverage_dir = repo_root / ".cover" / f"{info.safe_name}_codecov"
     profile_dir = repo_root / ".artifacts" / "coverage"
@@ -131,8 +132,9 @@ def run_tests_for_module(
         env["BAL_GOCOVERDIR" if module == "." else "CODECOV_INTEGRATION_COVERDIR"] = str(
             coverage_dir
         )
+        cover_packages = ROOT_COVER_PACKAGES if module == "." else "./..."
         cmd.extend(
-            ["-coverpkg=./...", f"-coverprofile={profile}", "-covermode=atomic"]
+            [f"-coverpkg={cover_packages}", f"-coverprofile={profile}", "-covermode=atomic"]
         )
 
     cmd.append("./...")
@@ -190,7 +192,7 @@ def main() -> int:
     parser.add_argument("--with-coverage", action="store_true")
     parser.add_argument("--race", action="store_true", help="Run root module tests with the race detector")
     args = parser.parse_args()
-    repo_root = Path(run_cmd(["git", "rev-parse", "--show-toplevel"])).resolve()
+    repo_root = Path(__file__).resolve().parents[2]
     os.chdir(repo_root)
     modules = [build_module_info(repo_root, module) for module in discover_modules(repo_root)]
     go_parallel = str(os.cpu_count() or 4)

@@ -19,9 +19,9 @@
 package parser
 
 import (
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // xmlLexer satisfies the Lexer interface.

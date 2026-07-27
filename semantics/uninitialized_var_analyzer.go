@@ -20,9 +20,9 @@ import (
 	"maps"
 	"sync"
 
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
 // varInitState tracks which variables are definitely initialized

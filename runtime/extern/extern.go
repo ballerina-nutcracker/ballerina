@@ -20,10 +20,10 @@ package extern
 import (
 	"sync/atomic"
 
-	"ballerina/platform/pal"
-	"ballerina/runtime/internal/locks"
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/locks"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // NativeFunc is the signature for extern (native) function implementations.

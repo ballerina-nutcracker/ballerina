@@ -23,9 +23,9 @@ import (
 	"slices"
 	"strings"
 
-	"ballerina/model"
-	"ballerina/tools/diagnostics"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // TODO: may be we should rewrite this on top of a visitor.

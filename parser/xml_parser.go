@@ -19,8 +19,8 @@
 package parser
 
 import (
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
 )
 
 type xmlParser struct {

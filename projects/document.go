@@ -17,8 +17,8 @@
 package projects
 
 import (
-	"ballerina/parser/tree"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // Document represents a Ballerina source file (.bal).

@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "ballerina/lib/rt" // register stdlib runtime functions (io.println etc.)
-	"ballerina/lib/stdlibs"
-	"ballerina/projects"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/rt" // register stdlib runtime functions (io.println etc.)
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
 // TestMixedBalaFormat verifies that a user project depending on both a v4 bala

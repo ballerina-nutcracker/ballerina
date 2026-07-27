@@ -1,0 +1,60 @@
+go 1.26
+
+use (
+	.
+	./ast
+	./bir
+	./cli
+	./common
+	./compiler-tools/benchmark
+	./compiler-tools/tree-gen
+	./context
+	./decimal
+	./desugar
+	./lib
+	./model
+	./parser
+	./platform
+	./projects
+	./runtime
+	./semantics
+	./semtypes
+	./tools
+	./values
+)
+
+replace github.com/ballerina-nutcracker/ballerina v0.6.0 => ./
+
+replace github.com/ballerina-nutcracker/ballerina/ast v0.6.0 => ./ast
+
+replace github.com/ballerina-nutcracker/ballerina/bir v0.6.0 => ./bir
+
+replace github.com/ballerina-nutcracker/ballerina/cli v0.6.0 => ./cli
+
+replace github.com/ballerina-nutcracker/ballerina/common v0.6.0 => ./common
+
+replace github.com/ballerina-nutcracker/ballerina/context v0.6.0 => ./context
+
+replace github.com/ballerina-nutcracker/ballerina/decimal v0.6.0 => ./decimal
+
+replace github.com/ballerina-nutcracker/ballerina/desugar v0.6.0 => ./desugar
+
+replace github.com/ballerina-nutcracker/ballerina/lib v0.6.0 => ./lib
+
+replace github.com/ballerina-nutcracker/ballerina/model v0.6.0 => ./model
+
+replace github.com/ballerina-nutcracker/ballerina/parser v0.6.0 => ./parser
+
+replace github.com/ballerina-nutcracker/ballerina/platform v0.6.0 => ./platform
+
+replace github.com/ballerina-nutcracker/ballerina/projects v0.6.0 => ./projects
+
+replace github.com/ballerina-nutcracker/ballerina/runtime v0.6.0 => ./runtime
+
+replace github.com/ballerina-nutcracker/ballerina/semantics v0.6.0 => ./semantics
+
+replace github.com/ballerina-nutcracker/ballerina/semtypes v0.6.0 => ./semtypes
+
+replace github.com/ballerina-nutcracker/ballerina/tools v0.6.0 => ./tools
+
+replace github.com/ballerina-nutcracker/ballerina/values v0.6.0 => ./values

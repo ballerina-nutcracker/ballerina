@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 // refPair identifies an ordered pair of container references being compared.

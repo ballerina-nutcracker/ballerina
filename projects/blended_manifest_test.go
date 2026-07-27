@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // TestBlendedManifest_Dependency exercises blendedManifest.dependency in

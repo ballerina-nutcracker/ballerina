@@ -17,8 +17,8 @@
 package tree
 
 import (
-	"ballerina/parser/common"
 	"fmt"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
 )
 
 // kindNameMap maps SyntaxKind values to their constant name strings

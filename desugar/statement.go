@@ -18,10 +18,10 @@
 package desugar
 
 import (
-	"ballerina/ast"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[ast.StatementNode] {

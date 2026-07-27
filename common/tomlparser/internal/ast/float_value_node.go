@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina/tools/diagnostics"
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // FloatValueNode holds a floating-point value.
 type FloatValueNode struct {

@@ -30,7 +30,7 @@ import (
 	"path"
 	"strings"
 
-	"ballerina/common/bfs"
+	"github.com/ballerina-nutcracker/ballerina/common/bfs"
 
 	"github.com/Masterminds/semver/v3"
 )

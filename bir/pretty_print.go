@@ -21,9 +21,9 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type PrettyPrinter struct {

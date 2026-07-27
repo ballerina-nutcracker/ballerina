@@ -20,7 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
 // loadProject loads a Ballerina project for tests. It always forces

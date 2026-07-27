@@ -22,9 +22,9 @@ import (
 	"os"
 	"path/filepath"
 
-	debugcommon "ballerina/common"
-	"ballerina/projects"
-	"ballerina/tools/diagnostics"
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 )

@@ -17,7 +17,7 @@
 package projects
 
 import (
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // Compile-time interface check.

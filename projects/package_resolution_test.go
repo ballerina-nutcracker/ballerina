@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ballerina/projects"
-	"ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
 
 // TestModuleResolver_ExternalPackage tests that the module resolver can identify external imports.

@@ -16,10 +16,10 @@
 package parser
 
 import (
-	debugcommon "ballerina/common"
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
 	"fmt"
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/tree"
 	"runtime/debug"
 	"slices"
 	"strings"

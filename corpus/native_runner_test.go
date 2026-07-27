@@ -30,17 +30,17 @@ import (
 	"testing"
 	"testing/fstest"
 
-	interpsrc "ballerina"
-	"ballerina/lib/stdlibs"
-	"ballerina/projects"
-	"ballerina/runtime"
-	"ballerina/test_util"
-	"ballerina/test_util/testharness"
+	interpsrc "github.com/ballerina-nutcracker/ballerina"
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 
 	// Blank-import native packages so their init() registers extern
 	// functions before tests run; testdata isn't in ./... builds otherwise.
-	_ "ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
-	_ "ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
 )
 
 const nativeTestDataDir = "extern/testdata"

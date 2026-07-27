@@ -32,12 +32,12 @@ import (
 	goruntime "runtime"
 	"strings"
 
-	"ballerina/bir"
-	bircodec "ballerina/bir/codec"
-	balctx "ballerina/context"
-	"ballerina/platform/palnative"
-	"ballerina/runtime"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
+	balctx "github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 const (

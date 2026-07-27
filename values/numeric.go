@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 // NumericConvertToInt converts a numeric BalValue (int64, float64, or *decimal.Decimal)

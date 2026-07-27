@@ -26,9 +26,9 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/bir"
-	"ballerina/projects"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // compileMinimalPackage compiles a tiny package and returns its BIR

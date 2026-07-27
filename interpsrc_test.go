@@ -51,9 +51,7 @@ func TestExtractTo_DevReusesUnchangedContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first ExtractTo: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir1, "go.mod")); err != nil {
-		t.Fatalf("go.mod must exist after extraction: %v", err)
-	}
+	assertExtractedWorkspace(t, dir1)
 
 	dir2, err := ExtractTo(t.TempDir(), "dev")
 	if err != nil {
@@ -129,5 +127,20 @@ func TestExtractTo_DevRecoversFromMissingGoMod(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir2, "go.mod")); err != nil {
 		t.Errorf("go.mod must be re-extracted when missing despite matching hash: %v", err)
+	}
+}
+
+func assertExtractedWorkspace(t *testing.T, dir string) {
+	t.Helper()
+	for _, name := range []string{"go.mod", "go.work"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Fatalf("%s must exist after extraction: %v", name, err)
+		}
+	}
+	for _, source := range interpreterSources[1:] {
+		name := filepath.Join(source.dir, "go.mod")
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Fatalf("%s must exist after extraction: %v", name, err)
+		}
 	}
 }

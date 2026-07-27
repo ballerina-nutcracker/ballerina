@@ -35,7 +35,7 @@ import (
 	"strings"
 	"time"
 
-	"ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 )
 
 type httpClient struct {

@@ -16,7 +16,7 @@
 
 package tree
 
-import "ballerina/parser/common"
+import "github.com/ballerina-nutcracker/ballerina/parser/common"
 
 type STModulePart struct {
 	STNode

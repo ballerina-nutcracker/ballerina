@@ -21,13 +21,13 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"ballerina/bir"
-	"ballerina/context"
-	"ballerina/decimal"
-	"ballerina/desugar"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/desugar"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type birReader struct {
