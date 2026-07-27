@@ -1,0 +1,538 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition public FailingIterator
+    (variable index (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (union-type
+          (error-type)
+          (value-type null))))
+      (block-function-body
+        (if
+          (binary-expr ==
+            (field-based-access index
+              (simple-var-ref self))
+            (literal 0))
+          (block-stmt
+            (compound-assignment +
+              (field-based-access index
+                (simple-var-ref self))
+              (literal 1))
+            (return
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal 10))))) ())
+        (block-stmt
+          (if
+            (binary-expr ==
+              (field-based-access index
+                (simple-var-ref self))
+              (literal 1))
+            (block-stmt
+              (compound-assignment +
+                (field-based-access index
+                  (simple-var-ref self))
+                (literal 1))
+              (return
+                (mapping-constructor-expr
+                  (key-value
+                    (literal value)
+                    (literal 20))))) ())
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal iterator completion failed)))))))))
+  (class-definition FailingIterable
+    (function iterator () (
+      (user-defined-type FailingIterator))
+      (block-function-body
+        (return
+          (new ())))))
+  (class-definition public CompleteIterator
+    (variable index (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (field-based-access index
+              (simple-var-ref self))
+            (literal 2))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (compound-assignment +
+            (field-based-access index
+              (simple-var-ref self))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (field-based-access index
+                  (simple-var-ref self)))))))))
+  (class-definition CompleteIterable
+    (function iterator () (
+      (user-defined-type CompleteIterator))
+      (block-function-body
+        (return
+          (new ())))))
+  (class-definition public TrackedFailingIterator
+    (variable events (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable marker (type
+      (value-type int)))
+    (function init (
+      (variable events (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access events
+            (simple-var-ref self))
+          (simple-var-ref events))
+        (assignment
+          (field-based-access marker
+            (simple-var-ref self))
+          (simple-var-ref marker))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (union-type
+          (error-type)
+          (value-type null))))
+      (block-function-body
+        (expression-stmt
+          (invocation push expr:
+            (field-based-access events
+              (simple-var-ref self)) (
+            (field-based-access marker
+              (simple-var-ref self)))))
+        (if
+          (binary-expr ==
+            (field-based-access marker
+              (simple-var-ref self))
+            (literal 1))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal first join completion failed))))) ())
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal second join completion failed))))))))
+  (class-definition TrackedFailingIterable
+    (variable events (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable marker (type
+      (value-type int)))
+    (function init (
+      (variable events (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access events
+            (simple-var-ref self))
+          (simple-var-ref events))
+        (assignment
+          (field-based-access marker
+            (simple-var-ref self))
+          (simple-var-ref marker))))
+    (function iterator () (
+      (user-defined-type TrackedFailingIterator))
+      (block-function-body
+        (expression-stmt
+          (invocation push expr:
+            (field-based-access events
+              (simple-var-ref self)) (
+            (binary-expr +
+              (field-based-access marker
+                (simple-var-ref self))
+              (literal 10)))))
+        (return
+          (new (
+            (field-based-access events
+              (simple-var-ref self))
+            (field-based-access marker
+              (simple-var-ref self))))))))
+  (function trackedFailingIterable (
+    (variable events (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable marker (type
+      (value-type int)))) (
+    (user-defined-type TrackedFailingIterable))
+    (block-function-body
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref events) (
+          (binary-expr +
+            (simple-var-ref marker)
+            (literal 20)))))
+      (return
+        (new (
+          (simple-var-ref events)
+          (simple-var-ref marker))))))
+  (function trackedLimit (
+    (variable events (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref events) (
+          (literal 30))))
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (query-action
+            (from-clause
+              (var-def
+                (variable value))
+              (new
+                (user-defined-type FailingIterable) ()))
+            (do-clause
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref total)
+                  (simple-var-ref value))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref result)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref result) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable nestedTotal (type
+            (value-type int)) (expr
+            (literal 0))))
+        (assignment
+          (simple-var-ref result)
+          (query-action
+            (from-clause
+              (var-def
+                (variable factor))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (from-clause
+              (var-def
+                (variable value))
+              (new
+                (user-defined-type FailingIterable) ()))
+            (do-clause
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref nestedTotal)
+                  (binary-expr *
+                    (simple-var-ref factor)
+                    (simple-var-ref value)))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref nestedTotal))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref result)
+              (error-type)))))
+        (var-def
+          (variable orderedTotal (type
+            (value-type int)) (expr
+            (literal 0))))
+        (assignment
+          (simple-var-ref result)
+          (query-action
+            (from-clause
+              (var-def
+                (variable value))
+              (new
+                (user-defined-type FailingIterable) ()))
+            (order-by-clause
+              (order-key descending
+                (simple-var-ref value)))
+            (do-clause
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref orderedTotal)
+                  (simple-var-ref value))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref orderedTotal))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref result)
+              (error-type)))))
+        (var-def
+          (variable joinedTotal (type
+            (value-type int)) (expr
+            (literal 0))))
+        (assignment
+          (simple-var-ref result)
+          (query-action
+            (from-clause
+              (var-def
+                (variable left))
+              (list-constructor-expr
+                (literal 10)
+                (literal 20)))
+            (join-clause
+              (var-def
+                (variable right))
+              (new
+                (user-defined-type FailingIterable) ())
+              (on-clause
+                (simple-var-ref left)
+                (simple-var-ref right)))
+            (do-clause
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref joinedTotal)
+                  (binary-expr +
+                    (simple-var-ref left)
+                    (simple-var-ref right)))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref joinedTotal))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref result)
+              (error-type)))))
+        (var-def
+          (variable secondJoinValues (type
+            (stream-type
+              (value-type int)
+              (union-type
+                (error-type)
+                (value-type null)))) (expr
+            (new (
+              (new
+                (user-defined-type CompleteIterator) ()))))))
+        (var-def
+          (variable multiJoinTotal (type
+            (value-type int)) (expr
+            (literal 0))))
+        (assignment
+          (simple-var-ref result)
+          (query-action
+            (from-clause
+              (var-def
+                (variable left))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (join-clause
+              (var-def
+                (variable first))
+              (new
+                (user-defined-type CompleteIterable) ())
+              (on-clause
+                (simple-var-ref left)
+                (simple-var-ref first)))
+            (join-clause
+              (var-def
+                (variable second))
+              (simple-var-ref secondJoinValues)
+              (on-clause
+                (simple-var-ref first)
+                (simple-var-ref second)))
+            (do-clause
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref multiJoinTotal)
+                  (binary-expr +
+                    (binary-expr +
+                      (simple-var-ref left)
+                      (simple-var-ref first))
+                    (simple-var-ref second)))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref multiJoinTotal))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref result)
+              (value-type null)))))
+        (var-def
+          (variable multiJoinEvents (type
+            (array-type
+              (value-type int) dimensions: 1 ([]))) (expr
+            (list-constructor-expr))))
+        (assignment
+          (simple-var-ref result)
+          (query-action
+            (from-clause
+              (var-def
+                (variable left))
+              (list-constructor-expr
+                (literal 1)))
+            (join-clause
+              (var-def
+                (variable first))
+              (invocation trackedFailingIterable (
+                (simple-var-ref multiJoinEvents)
+                (literal 1)))
+              (on-clause
+                (simple-var-ref left)
+                (simple-var-ref first)))
+            (join-clause
+              (var-def
+                (variable second))
+              (invocation trackedFailingIterable (
+                (simple-var-ref multiJoinEvents)
+                (literal 2)))
+              (on-clause
+                (simple-var-ref first)
+                (simple-var-ref second)))
+            (limit-clause
+              (invocation trackedLimit (
+                (simple-var-ref multiJoinEvents))))
+            (do-clause
+              (block-stmt
+                (expression-stmt
+                  (invocation push expr:
+                    (simple-var-ref multiJoinEvents) (
+                    (literal 100))))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref multiJoinEvents))))
+        (if
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation message expr:
+                  (simple-var-ref result) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable limitedTotal (type
+              (value-type int)) (expr
+              (literal 0))))
+          (assignment
+            (simple-var-ref result)
+            (query-action
+              (from-clause
+                (var-def
+                  (variable value))
+                (new
+                  (user-defined-type FailingIterable) ()))
+              (limit-clause
+                (literal 1))
+              (do-clause
+                (block-stmt
+                  (compound-assignment +
+                    (simple-var-ref limitedTotal)
+                    (simple-var-ref value))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref limitedTotal))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref result)
+                (value-type null)))))
+          (var-def
+            (variable completedTotal (type
+              (value-type int)) (expr
+              (literal 0))))
+          (expression-stmt
+            (query-action
+              (from-clause
+                (var-def
+                  (variable value))
+                (new
+                  (user-defined-type CompleteIterable) ()))
+              (do-clause
+                (block-stmt
+                  (compound-assignment +
+                    (simple-var-ref completedTotal)
+                    (simple-var-ref value))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref completedTotal))))
+          (var-def
+            (variable values (type
+              (stream-type
+                (value-type int)
+                (union-type
+                  (error-type)
+                  (value-type null)))) (expr
+              (new (
+                (new
+                  (user-defined-type FailingIterator) ()))))))
+          (var-def
+            (variable streamTotal (type
+              (value-type int)) (expr
+              (literal 0))))
+          (assignment
+            (simple-var-ref result)
+            (query-action
+              (from-clause
+                (var-def
+                  (variable value))
+                (simple-var-ref values))
+              (do-clause
+                (block-stmt
+                  (compound-assignment +
+                    (simple-var-ref streamTotal)
+                    (simple-var-ref value))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref streamTotal))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref result)
+                (error-type))))))))))

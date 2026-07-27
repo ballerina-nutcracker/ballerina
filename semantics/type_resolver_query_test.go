@@ -79,7 +79,7 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 				newFromClause(newIntLiteral(42), nil, true),
 				newSelectClause(newIntLiteral(1)),
 			),
-			diagSub: "query from clause currently supports only list or map collections",
+			diagSub: "query expression collections currently support only string, xml, list, or map values",
 		},
 		{
 			name: "from binding variable is nil",
@@ -256,7 +256,7 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 				false,
 				newOnClause(newIntLiteral(1), newIntLiteral(1)),
 			),
-			diagSub: "query from clause currently supports only list or map collections",
+			diagSub: "query expression collections currently support only string, xml, list, or map values",
 		},
 		{
 			name: "outer join without var",

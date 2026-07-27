@@ -1,0 +1,16 @@
+-- stdout --
+3
+true
+true
+true
+["a","c"]
+<a/>
+text
+<!--note-->
+x<a/>
+x<b/>
+y<a/>
+y<b/>
+["b","d"]
+<b/>
+-- stderr --

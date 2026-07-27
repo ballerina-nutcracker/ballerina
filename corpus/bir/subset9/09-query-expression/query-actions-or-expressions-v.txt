@@ -1,0 +1,756 @@
+module $anon.. v 0.0.0;
+class NumberClient {
+
+  $remote$checkedFactor() -> int|error{
+    bb0 {
+      %2 = ConstantLoad 3
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$checkedValues() -> error|[int...]{
+    bb0 {
+      %2 = ConstantLoad 4
+      %3 = ConstantLoad 5
+      %4 = ConstantLoad 2
+      %5 = newArray [int...][%4]{%2, %3}
+      %0 = %5;
+      return;
+    }
+  }
+
+  $remote$factor() -> int{
+    bb0 {
+      %2 = ConstantLoad 2
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$fallible(int) -> int|error{
+    bb0 {
+      %4 = value;
+      %5 = ConstantLoad 2
+      %6 = %5;
+      %3 = == %4 %6;
+      %3 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad value two failed
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 4
+      %1 = (1, value);
+      %2 = ConstantLoad 10
+      %3 = %2;
+      %0 = * %1 %3;
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+  }
+
+  $remote$pair(int) -> [string, int, never...]{
+    bb0 {
+      %3 = ConstantLoad three
+      key = %3;
+      %6 = value;
+      %7 = ConstantLoad 1
+      %8 = %7;
+      %5 = == %6 %8;
+      %5 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = ConstantLoad one
+      (1, key) = %0;
+      PopScopeFrame
+      GOTO bb5;
+    }
+    bb2 {
+      %10 = value;
+      %11 = ConstantLoad 2
+      %12 = %11;
+      %9 = == %10 %12;
+      %9 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 1
+      %0 = ConstantLoad two
+      (1, key) = %0;
+      PopScopeFrame
+      GOTO bb4;
+    }
+    bb4 {
+      GOTO bb5;
+    }
+    bb5 {
+      %14 = value;
+      %15 = ConstantLoad 10
+      %16 = %15;
+      %13 = * %14 %16;
+      %17 = ConstantLoad 2
+      %18 = newArray [string, int, never...][%17]{key, %13}
+      %0 = %18;
+      return;
+    }
+  }
+
+  $remote$scale(int,int) -> int{
+    bb0 {
+      %5 = value;
+      %6 = factor;
+      %4 = * %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+
+  $remote$values() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad 2
+      %4 = ConstantLoad 3
+      %5 = ConstantLoad 3
+      %6 = newArray [int...][%5]{%2, %3, %4}
+      %0 = %6;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class NumberResourceClient {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get values NumberResourceClient.$resource$get$0() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad 2
+      %4 = ConstantLoad 3
+      %5 = ConstantLoad 3
+      %6 = newArray [int...][%5]{%2, %3, %4}
+      %0 = %6;
+      return;
+    }
+  }
+
+  resource get factor NumberResourceClient.$resource$get$1() -> int{
+    bb0 {
+      %2 = ConstantLoad 4
+      %0 = %2;
+      return;
+    }
+  }
+
+  resource get scale/[int]/[int] NumberResourceClient.$resource$get$2(int,int) -> int{
+    bb0 {
+      %5 = value;
+      %6 = factor;
+      %4 = * %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+}
+checkedQuery(client object { private remote function $remote$checkedFactor() returns int|error; private remote function $remote$checkedValues() returns error|[int...]; private remote function $remote$factor() returns int; private remote function $remote$fallible(int) returns int|error; private remote function $remote$pair(int) returns [string, int, never...]; private remote function $remote$scale(int, int) returns int; private remote function $remote$values() returns [int...]; public function init() returns nil }) -> error|[int...]{
+  bb0 {
+    %2 = $remote$checkedValues(numbers) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = $desugar$0 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    $desugar$1 = $desugar$0;
+    %6 = length($desugar$1) -> bb4;
+  }
+  bb4 {
+    $desugar$2 = %6;
+    %8 = ConstantLoad 0
+    %9 = newArray list[%8]{}
+    $desugar$3 = %9;
+    %12 = ConstantLoad 0
+    $desugar$4 = %12;
+    GOTO bb5;
+  }
+  bb5 {
+    %16 = $desugar$4;
+    %17 = $desugar$2;
+    %15 = < %16 %17;
+    %15 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 15
+    %0 = (1, $desugar$1)[(1, $desugar$4)];
+    (1, value) = %0;
+    %1 = $remote$checkedFactor((1, numbers)) -> bb8;
+  }
+  bb7 {
+    %0 = $desugar$3;
+    return;
+  }
+  bb8 {
+    $desugar$5 = %1;
+    %3 = $desugar$5 is error
+    %3 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$5);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    (1, factor) = $desugar$5;
+    %4 = (1, value);
+    %5 = (1, factor);
+    %6 = $remote$scale((1, numbers),%4,%5) -> bb11;
+  }
+  bb11 {
+    $desugar$6 = %6;
+    %8 = $desugar$6 is error
+    %8 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$6);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb13 {
+    %9 = $desugar$6;
+    %10 = push((1, $desugar$3),%9) -> bb14;
+  }
+  bb14 {
+    %12 = (1, $desugar$4);
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %11 = + %12 %14;
+    (1, $desugar$4) = %11;
+    PopScopeFrame
+    GOTO bb5;
+  }
+}
+failingCheckedQuery(client object { private remote function $remote$checkedFactor() returns int|error; private remote function $remote$checkedValues() returns error|[int...]; private remote function $remote$factor() returns int; private remote function $remote$fallible(int) returns int|error; private remote function $remote$pair(int) returns [string, int, never...]; private remote function $remote$scale(int, int) returns int; private remote function $remote$values() returns [int...]; public function init() returns nil }) -> error|[int...]{
+  bb0 {
+    %2 = $remote$values(numbers) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = length($desugar$0) -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %4;
+    %6 = ConstantLoad 0
+    %7 = newArray list[%6]{}
+    $desugar$2 = %7;
+    %10 = ConstantLoad 0
+    $desugar$3 = %10;
+    GOTO bb3;
+  }
+  bb3 {
+    %13 = $desugar$3;
+    %14 = $desugar$1;
+    %12 = < %13 %14;
+    %12 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = $remote$fallible((1, numbers),%1) -> bb6;
+  }
+  bb5 {
+    %0 = $desugar$2;
+    return;
+  }
+  bb6 {
+    $desugar$4 = %2;
+    %4 = $desugar$4 is error
+    %4 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$4);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    %5 = push((1, $desugar$2),$desugar$4) -> bb9;
+  }
+  bb9 {
+    %7 = (1, $desugar$3);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$3) = %6;
+    PopScopeFrame
+    GOTO bb3;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:NumberClient
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    numbers = %3;
+    %6 = $remote$values(numbers) -> bb5;
+  }
+  bb5 {
+    $desugar$0 = %6;
+    %8 = length($desugar$0) -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %8;
+    %10 = ConstantLoad 0
+    %11 = newArray list[%10]{}
+    $desugar$2 = %11;
+    %14 = ConstantLoad 0
+    $desugar$3 = %14;
+    GOTO bb7;
+  }
+  bb7 {
+    %18 = $desugar$3;
+    %19 = $desugar$1;
+    %17 = < %18 %19;
+    %17 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 12
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, value) = %0;
+    %1 = $remote$factor((1, numbers)) -> bb10;
+  }
+  bb9 {
+    selected = $desugar$2;
+    %21 = println(selected) -> bb13;
+  }
+  bb10 {
+    (1, factor) = %1;
+    %2 = (1, value);
+    %3 = (1, factor);
+    %4 = $remote$scale((1, numbers),%2,%3) -> bb11;
+  }
+  bb11 {
+    $desugar$4 = %4;
+    %6 = $desugar$4;
+    %7 = push((1, $desugar$2),%6) -> bb12;
+  }
+  bb12 {
+    %9 = (1, $desugar$3);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$3) = %8;
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb13 {
+    %22 = $remote$values(numbers) -> bb14;
+  }
+  bb14 {
+    $desugar$5 = %22;
+    %24 = length($desugar$5) -> bb15;
+  }
+  bb15 {
+    $desugar$6 = %24;
+    %26 = ConstantLoad 0
+    %27 = newArray list[%26]{}
+    $desugar$7 = %27;
+    %30 = ConstantLoad 0
+    $desugar$8 = %30;
+    GOTO bb16;
+  }
+  bb16 {
+    %34 = $desugar$8;
+    %35 = $desugar$6;
+    %33 = < %34 %35;
+    %33 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 12
+    %0 = (1, $desugar$5)[(1, $desugar$8)];
+    (1, value) = %0;
+    %1 = $remote$factor((1, numbers)) -> bb19;
+  }
+  bb18 {
+    selected = $desugar$7;
+    %36 = println(selected) -> bb22;
+  }
+  bb19 {
+    (1, factor) = %1;
+    %2 = (1, value);
+    %3 = (1, factor);
+    %4 = $remote$scale((1, numbers),%2,%3) -> bb20;
+  }
+  bb20 {
+    $desugar$9 = %4;
+    %6 = $desugar$9;
+    %7 = push((1, $desugar$7),%6) -> bb21;
+  }
+  bb21 {
+    %9 = (1, $desugar$8);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$8) = %8;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb22 {
+    %37 = $remote$values(numbers) -> bb23;
+  }
+  bb23 {
+    $desugar$10 = %37;
+    %39 = length($desugar$10) -> bb24;
+  }
+  bb24 {
+    $desugar$11 = %39;
+    %41 = newMap {| int... |}{}
+    $desugar$12 = %41;
+    %44 = ConstantLoad 0
+    $desugar$13 = %44;
+    GOTO bb25;
+  }
+  bb25 {
+    %47 = $desugar$13;
+    %48 = $desugar$11;
+    %46 = < %47 %48;
+    %46 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 13
+    %0 = (1, $desugar$10)[(1, $desugar$13)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = $remote$pair((1, numbers),%1) -> bb28;
+  }
+  bb27 {
+    mapped = $desugar$12;
+    %51 = ConstantLoad one
+    %50 = mapped[%51];
+    %52 = %50;
+    %54 = ConstantLoad two
+    %53 = mapped[%54];
+    %55 = %53;
+    %57 = ConstantLoad three
+    %56 = mapped[%57];
+    %58 = %56;
+    %59 = println(%52,%55,%58) -> bb29;
+  }
+  bb28 {
+    $desugar$14 = %2;
+    $desugar$15 = $desugar$14;
+    %6 = ConstantLoad 1
+    %5 = $desugar$15[%6];
+    %8 = ConstantLoad 0
+    %7 = $desugar$15[%8];
+    (1, $desugar$12)[%7] = %5;
+    %10 = (1, $desugar$13);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$13) = %9;
+    PopScopeFrame
+    GOTO bb25;
+  }
+  bb29 {
+    %60 = checkedQuery(numbers) -> bb30;
+  }
+  bb30 {
+    $desugar$16 = %60;
+    %62 = $desugar$16 is error
+    %62 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$16);
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    %63 = println($desugar$16) -> bb33;
+  }
+  bb33 {
+    %64 = newObject $anon/.:NumberResourceClient
+    %65 = init(%64) -> bb34;
+  }
+  bb34 {
+    %67 = %65 is nil
+    %67 ? bb35 : bb36;
+  }
+  bb35 {
+    %66 = %64;
+    GOTO bb37;
+  }
+  bb36 {
+    %66 = %65;
+    GOTO bb37;
+  }
+  bb37 {
+    resources = %66;
+    %69 = ConstantLoad values
+    %70 = resources->[%69].get() -> bb38;
+  }
+  bb38 {
+    $desugar$17 = %70;
+    %72 = length($desugar$17) -> bb39;
+  }
+  bb39 {
+    $desugar$18 = %72;
+    %74 = ConstantLoad 0
+    %75 = newArray list[%74]{}
+    $desugar$19 = %75;
+    %78 = ConstantLoad 0
+    $desugar$20 = %78;
+    GOTO bb40;
+  }
+  bb40 {
+    %82 = $desugar$20;
+    %83 = $desugar$18;
+    %81 = < %82 %83;
+    %81 ? bb41 : bb42;
+  }
+  bb41 {
+    PushScopeFrame 14
+    %0 = (1, $desugar$17)[(1, $desugar$20)];
+    (1, value) = %0;
+    %1 = ConstantLoad factor
+    %2 = (1, resources)->[%1].get() -> bb43;
+  }
+  bb42 {
+    selected = $desugar$19;
+    %84 = println(selected) -> bb46;
+  }
+  bb43 {
+    (1, factor) = %2;
+    %3 = ConstantLoad scale
+    %4 = (1, value);
+    %5 = (1, factor);
+    %6 = (1, resources)->[%3,%4,%5].get() -> bb44;
+  }
+  bb44 {
+    $desugar$21 = %6;
+    %8 = $desugar$21;
+    %9 = push((1, $desugar$19),%8) -> bb45;
+  }
+  bb45 {
+    %11 = (1, $desugar$20);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$20) = %10;
+    PopScopeFrame
+    GOTO bb40;
+  }
+  bb46 {
+    %85 = ConstantLoad 0
+    nestedTotal = %85;
+    %87 = ConstantLoad 1
+    %88 = ConstantLoad 2
+    %89 = ConstantLoad 2
+    %90 = newArray [int, int, never...][%89]{%87, %88}
+    $desugar$22 = %90;
+    %92 = length($desugar$22) -> bb47;
+  }
+  bb47 {
+    $desugar$23 = %92;
+    %94 = ConstantLoad 0
+    %95 = newArray list[%94]{}
+    $desugar$24 = %95;
+    %98 = ConstantLoad 0
+    $desugar$25 = %98;
+    GOTO bb48;
+  }
+  bb48 {
+    %101 = $desugar$25;
+    %102 = $desugar$23;
+    %100 = < %101 %102;
+    %100 ? bb49 : bb50;
+  }
+  bb49 {
+    PushScopeFrame 24
+    %0 = (1, $desugar$22)[(1, $desugar$25)];
+    (1, value) = %0;
+    %1 = ConstantLoad <nil>
+    $desugar$26 = %1;
+    %5 = (1, value);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    %8 = ConstantLoad 2
+    %9 = newArray [int, int, never...][%8]{(1, value), %4}
+    $desugar$27 = %9;
+    %11 = length($desugar$27) -> bb51;
+  }
+  bb50 {
+    actionResults = $desugar$24;
+    %106 = ConstantLoad 0
+    %105 = actionResults[%106];
+    %107 = %105 is nil
+    %104 = %107;
+    %107 ? bb56 : bb57;
+  }
+  bb51 {
+    $desugar$28 = %11;
+    %13 = ConstantLoad 0
+    $desugar$29 = %13;
+    GOTO bb52;
+  }
+  bb52 {
+    %16 = $desugar$29;
+    %17 = $desugar$28;
+    %15 = < %16 %17;
+    %15 ? bb53 : bb54;
+  }
+  bb53 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$27)[(1, $desugar$29)];
+    (1, nestedValue) = %0;
+    %2 = (2, nestedTotal);
+    %3 = (1, nestedValue);
+    %1 = + %2 %3;
+    (2, nestedTotal) = %1;
+    %5 = (1, $desugar$29);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$29) = %4;
+    PopScopeFrame
+    GOTO bb52;
+  }
+  bb54 {
+    %18 = $desugar$26;
+    %19 = push((1, $desugar$24),%18) -> bb55;
+  }
+  bb55 {
+    %21 = (1, $desugar$25);
+    %22 = ConstantLoad 1
+    %23 = %22;
+    %20 = + %21 %23;
+    (1, $desugar$25) = %20;
+    PopScopeFrame
+    GOTO bb48;
+  }
+  bb56 {
+    %109 = ConstantLoad 1
+    %108 = actionResults[%109];
+    %110 = %108 is nil
+    %104 = %110;
+    GOTO bb57;
+  }
+  bb57 {
+    %111 = %104;
+    %112 = println(%111) -> bb58;
+  }
+  bb58 {
+    %113 = nestedTotal;
+    %114 = println(%113) -> bb59;
+  }
+  bb59 {
+    %115 = $remote$values(numbers) -> bb60;
+  }
+  bb60 {
+    $desugar$30 = %115;
+    %117 = length($desugar$30) -> bb61;
+  }
+  bb61 {
+    $desugar$31 = %117;
+    %119 = ConstantLoad 0
+    %120 = newArray list[%119]{}
+    $desugar$32 = %120;
+    %123 = ConstantLoad 0
+    $desugar$33 = %123;
+    GOTO bb62;
+  }
+  bb62 {
+    %126 = $desugar$33;
+    %127 = $desugar$31;
+    %125 = < %126 %127;
+    %125 ? bb63 : bb64;
+  }
+  bb63 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$30)[(1, $desugar$33)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = $remote$fallible((1, numbers),%1) -> bb65;
+  }
+  bb64 {
+    fallibleValues = $desugar$32;
+    %130 = ConstantLoad 0
+    %129 = fallibleValues[%130];
+    %132 = ConstantLoad 1
+    %131 = fallibleValues[%132];
+    %133 = %131 is error
+    %134 = %133;
+    %136 = ConstantLoad 2
+    %135 = fallibleValues[%136];
+    %137 = println(%129,%134,%135) -> bb67;
+  }
+  bb65 {
+    $desugar$34 = %2;
+    %4 = push((1, $desugar$32),$desugar$34) -> bb66;
+  }
+  bb66 {
+    %6 = (1, $desugar$33);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$33) = %5;
+    PopScopeFrame
+    GOTO bb62;
+  }
+  bb67 {
+    %138 = failingCheckedQuery(numbers) -> bb68;
+  }
+  bb68 {
+    failedResult = %138;
+    %140 = failedResult is error
+    %141 = %140;
+    %142 = println(%141) -> bb69;
+  }
+  bb69 {
+    return;
+  }
+}

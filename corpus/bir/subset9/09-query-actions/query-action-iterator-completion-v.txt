@@ -1,0 +1,2196 @@
+module $anon.. v 0.0.0;
+class FailingIterator {
+  index int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad index
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: int, never... |}{
+    bb0 {
+      %4 = ConstantLoad index
+      %3 = self[%4];
+      %5 = %3;
+      %6 = ConstantLoad 0
+      %7 = %6;
+      %2 = == %5 %7;
+      %2 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 9
+      %0 = ConstantLoad index
+      %1 = (1, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (1, self)[%0] = %5;
+      %6 = ConstantLoad value
+      %7 = ConstantLoad 10
+      %8 = newMap {| value: int, never... |}{%6=%7}
+      (1, %0) = %8;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 6
+      %2 = ConstantLoad index
+      %1 = (1, self)[%2];
+      %3 = %1;
+      %4 = ConstantLoad 1
+      %5 = %4;
+      %0 = == %3 %5;
+      %0 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 9
+      %0 = ConstantLoad index
+      %1 = (2, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (2, self)[%0] = %5;
+      %6 = ConstantLoad value
+      %7 = ConstantLoad 20
+      %8 = newMap {| value: int, never... |}{%6=%7}
+      (2, %0) = %8;
+      PopScopeFrame
+      PopScopeFrame
+      return;
+    }
+    bb4 {
+      PushScopeFrame 2
+      %0 = ConstantLoad iterator completion failed
+      %1 = newError error(%0)
+      (2, %0) = %1;
+      PopScopeFrame
+      PopScopeFrame
+      return;
+    }
+  }
+}
+class FailingIterable {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  iterator() -> object { private int index; public function init() returns nil; public function next() returns nil|error|{| value: int, never... |} }{
+    bb0 {
+      %2 = newObject $anon/.:FailingIterator
+      %3 = init(%2) -> bb1;
+    }
+    bb1 {
+      %5 = %3 is nil
+      %5 ? bb2 : bb3;
+    }
+    bb2 {
+      %4 = %2;
+      GOTO bb4;
+    }
+    bb3 {
+      %4 = %3;
+      GOTO bb4;
+    }
+    bb4 {
+      %0 = %4;
+      return;
+    }
+  }
+}
+class CompleteIterator {
+  index int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad index
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %4 = ConstantLoad index
+      %3 = self[%4];
+      %5 = %3;
+      %6 = ConstantLoad 2
+      %7 = %6;
+      %2 = >= %5 %7;
+      %2 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 10
+      %0 = ConstantLoad index
+      %1 = (1, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (1, self)[%0] = %5;
+      %6 = ConstantLoad value
+      %8 = ConstantLoad index
+      %7 = (1, self)[%8];
+      %9 = newMap {| value: int, never... |}{%6=%7}
+      (1, %0) = %9;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+class CompleteIterable {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  iterator() -> object { private int index; public function init() returns nil; public function next() returns nil|{| value: int, never... |} }{
+    bb0 {
+      %2 = newObject $anon/.:CompleteIterator
+      %3 = init(%2) -> bb1;
+    }
+    bb1 {
+      %5 = %3 is nil
+      %5 ? bb2 : bb3;
+    }
+    bb2 {
+      %4 = %2;
+      GOTO bb4;
+    }
+    bb3 {
+      %4 = %3;
+      GOTO bb4;
+    }
+    bb4 {
+      %0 = %4;
+      return;
+    }
+  }
+}
+class TrackedFailingIterator {
+  events [int...]
+  marker int
+
+  init([int...],int) -> nil{
+    bb0 {
+      %4 = ConstantLoad events
+      self[%4] = events;
+      %5 = ConstantLoad marker
+      self[%5] = marker;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad events
+      %2 = self[%3];
+      %5 = ConstantLoad marker
+      %4 = self[%5];
+      %6 = %4;
+      %7 = push(%2,%6) -> bb1;
+    }
+    bb1 {
+      %10 = ConstantLoad marker
+      %9 = self[%10];
+      %11 = %9;
+      %12 = ConstantLoad 1
+      %13 = %12;
+      %8 = == %11 %13;
+      %8 ? bb2 : bb3;
+    }
+    bb2 {
+      PushScopeFrame 2
+      %0 = ConstantLoad first join completion failed
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 2
+      %0 = ConstantLoad second join completion failed
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+class TrackedFailingIterable {
+  events [int...]
+  marker int
+
+  init([int...],int) -> nil{
+    bb0 {
+      %4 = ConstantLoad events
+      self[%4] = events;
+      %5 = ConstantLoad marker
+      self[%5] = marker;
+      return;
+    }
+  }
+
+  iterator() -> object { private [int...] events; public function init([int...], int) returns nil; private int marker; public function next() returns nil|error|{| value: int, never... |} }{
+    bb0 {
+      %3 = ConstantLoad events
+      %2 = self[%3];
+      %6 = ConstantLoad marker
+      %5 = self[%6];
+      %7 = %5;
+      %8 = ConstantLoad 10
+      %9 = %8;
+      %4 = + %7 %9;
+      %10 = %4;
+      %11 = push(%2,%10) -> bb1;
+    }
+    bb1 {
+      %12 = newObject $anon/.:TrackedFailingIterator
+      %14 = ConstantLoad events
+      %13 = self[%14];
+      %16 = ConstantLoad marker
+      %15 = self[%16];
+      %17 = init(%12,%13,%15) -> bb2;
+    }
+    bb2 {
+      %19 = %17 is nil
+      %19 ? bb3 : bb4;
+    }
+    bb3 {
+      %18 = %12;
+      GOTO bb5;
+    }
+    bb4 {
+      %18 = %17;
+      GOTO bb5;
+    }
+    bb5 {
+      %0 = %18;
+      return;
+    }
+  }
+}
+trackedFailingIterable([int...],int) -> object&object { private [int...] events; public function init([int...], int) returns nil; public function iterator() returns object { private [int...] events; public function init([int...], int) returns nil; private int marker; public function next() returns nil|error|{| value: int, never... |} }; private int marker }{
+  bb0 {
+    %4 = marker;
+    %5 = ConstantLoad 20
+    %6 = %5;
+    %3 = + %4 %6;
+    %7 = %3;
+    %8 = push(events,%7) -> bb1;
+  }
+  bb1 {
+    %9 = newObject $anon/.:TrackedFailingIterable
+    %10 = init(%9,events,marker) -> bb2;
+  }
+  bb2 {
+    %12 = %10 is nil
+    %12 ? bb3 : bb4;
+  }
+  bb3 {
+    %11 = %9;
+    GOTO bb5;
+  }
+  bb4 {
+    %11 = %10;
+    GOTO bb5;
+  }
+  bb5 {
+    %0 = %11;
+    return;
+  }
+}
+trackedLimit([int...]) -> int{
+  bb0 {
+    %2 = ConstantLoad 30
+    %3 = %2;
+    %4 = push(events,%3) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad 1
+    %0 = %5;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    total = %1;
+    %3 = ConstantLoad <nil>
+    $desugar$0 = %3;
+    %6 = ConstantLoad false
+    $desugar$1 = %6;
+    %8 = newObject $anon/.:FailingIterable
+    %9 = init(%8) -> bb1;
+  }
+  bb1 {
+    %11 = %9 is nil
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    %10 = %8;
+    GOTO bb4;
+  }
+  bb3 {
+    %10 = %9;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$2 = %10;
+    %13 = iterator($desugar$2) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %13;
+    %15 = ConstantLoad false
+    $desugar$5 = %15;
+    GOTO bb6;
+  }
+  bb6 {
+    %18 = ! $desugar$5;
+    %17 = %18;
+    %18 ? bb7 : bb8;
+  }
+  bb7 {
+    %19 = ! $desugar$1;
+    %17 = %19;
+    GOTO bb8;
+  }
+  bb8 {
+    %17 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$4)) -> bb11;
+  }
+  bb10 {
+    result = $desugar$0;
+    %21 = total;
+    %22 = println(%21) -> bb20;
+  }
+  bb11 {
+    $desugar$7 = %0;
+    %2 = $desugar$7 is nil
+    %2 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$5) = %0;
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    %3 = $desugar$7 is error
+    %3 ? bb14 : bb17;
+  }
+  bb14 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$1);
+    %0 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 1
+    (3, $desugar$0) = (2, $desugar$7);
+    %0 = ConstantLoad true
+    (3, $desugar$1) = %0;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    %1 = ConstantLoad true
+    (2, $desugar$5) = %1;
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    %4 = $desugar$7 is mapping
+    %4 ? bb18 : bb19;
+  }
+  bb18 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$7)[%1];
+    (2, value) = %0;
+    %3 = (2, total);
+    %4 = (2, value);
+    %2 = + %3 %4;
+    (2, total) = %2;
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb19 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb20 {
+    %23 = result is error
+    %24 = %23;
+    %25 = println(%24) -> bb21;
+  }
+  bb21 {
+    %26 = result is error
+    %26 ? bb22 : bb25;
+  }
+  bb22 {
+    PushScopeFrame 2
+    %0 = message((1, result)) -> bb23;
+  }
+  bb23 {
+    %1 = println(%0) -> bb24;
+  }
+  bb24 {
+    PopScopeFrame
+    GOTO bb25;
+  }
+  bb25 {
+    PushScopeFrame 253
+    %0 = ConstantLoad 0
+    nestedTotal = %0;
+    %2 = ConstantLoad <nil>
+    $desugar$8 = %2;
+    %5 = ConstantLoad false
+    $desugar$9 = %5;
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad 2
+    %9 = ConstantLoad 2
+    %10 = newArray [int, int, never...][%9]{%7, %8}
+    $desugar$10 = %10;
+    %12 = length($desugar$10) -> bb26;
+  }
+  bb26 {
+    $desugar$11 = %12;
+    %15 = ConstantLoad 0
+    $desugar$18 = %15;
+    GOTO bb27;
+  }
+  bb27 {
+    %19 = $desugar$18;
+    %20 = $desugar$11;
+    %18 = < %19 %20;
+    %17 = %18;
+    %18 ? bb28 : bb29;
+  }
+  bb28 {
+    %21 = ! $desugar$9;
+    %17 = %21;
+    GOTO bb29;
+  }
+  bb29 {
+    %17 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 17
+    %0 = (1, $desugar$10)[(1, $desugar$18)];
+    (1, factor) = %0;
+    %1 = newObject $anon/.:FailingIterable
+    %2 = init(%1) -> bb32;
+  }
+  bb31 {
+    (1, result) = $desugar$8;
+    %22 = nestedTotal;
+    %23 = println(%22) -> bb51;
+  }
+  bb32 {
+    %4 = %2 is nil
+    %4 ? bb33 : bb34;
+  }
+  bb33 {
+    %3 = %1;
+    GOTO bb35;
+  }
+  bb34 {
+    %3 = %2;
+    GOTO bb35;
+  }
+  bb35 {
+    $desugar$12 = %3;
+    %6 = iterator($desugar$12) -> bb36;
+  }
+  bb36 {
+    $desugar$14 = %6;
+    %8 = ConstantLoad false
+    $desugar$15 = %8;
+    GOTO bb37;
+  }
+  bb37 {
+    %11 = ! $desugar$15;
+    %10 = %11;
+    %11 ? bb38 : bb39;
+  }
+  bb38 {
+    %12 = ! (1, $desugar$9);
+    %10 = %12;
+    GOTO bb39;
+  }
+  bb39 {
+    %10 ? bb40 : bb41;
+  }
+  bb40 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$14)) -> bb42;
+  }
+  bb41 {
+    %14 = (1, $desugar$18);
+    %15 = ConstantLoad 1
+    %16 = %15;
+    %13 = + %14 %16;
+    (1, $desugar$18) = %13;
+    PopScopeFrame
+    GOTO bb27;
+  }
+  bb42 {
+    $desugar$17 = %0;
+    %2 = $desugar$17 is nil
+    %2 ? bb43 : bb44;
+  }
+  bb43 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$15) = %0;
+    PopScopeFrame
+    GOTO bb44;
+  }
+  bb44 {
+    %3 = $desugar$17 is error
+    %3 ? bb45 : bb48;
+  }
+  bb45 {
+    PushScopeFrame 2
+    %0 = ! (3, $desugar$9);
+    %0 ? bb46 : bb47;
+  }
+  bb46 {
+    PushScopeFrame 1
+    (4, $desugar$8) = (2, $desugar$17);
+    %0 = ConstantLoad true
+    (4, $desugar$9) = %0;
+    PopScopeFrame
+    GOTO bb47;
+  }
+  bb47 {
+    %1 = ConstantLoad true
+    (2, $desugar$15) = %1;
+    PopScopeFrame
+    GOTO bb48;
+  }
+  bb48 {
+    %4 = $desugar$17 is mapping
+    %4 ? bb49 : bb50;
+  }
+  bb49 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$17)[%1];
+    (3, value) = %0;
+    %3 = (3, nestedTotal);
+    %5 = (3, factor);
+    %6 = (3, value);
+    %4 = * %5 %6;
+    %7 = %4;
+    %2 = + %3 %7;
+    (3, nestedTotal) = %2;
+    PopScopeFrame
+    GOTO bb50;
+  }
+  bb50 {
+    PopScopeFrame
+    GOTO bb37;
+  }
+  bb51 {
+    %24 = (1, result) is error
+    %25 = %24;
+    %26 = println(%25) -> bb52;
+  }
+  bb52 {
+    %27 = ConstantLoad 0
+    orderedTotal = %27;
+    %29 = ConstantLoad <nil>
+    $desugar$19 = %29;
+    %32 = ConstantLoad false
+    $desugar$20 = %32;
+    %34 = newObject $anon/.:FailingIterable
+    %35 = init(%34) -> bb53;
+  }
+  bb53 {
+    %37 = %35 is nil
+    %37 ? bb54 : bb55;
+  }
+  bb54 {
+    %36 = %34;
+    GOTO bb56;
+  }
+  bb55 {
+    %36 = %35;
+    GOTO bb56;
+  }
+  bb56 {
+    $desugar$21 = %36;
+    %39 = iterator($desugar$21) -> bb57;
+  }
+  bb57 {
+    $desugar$23 = %39;
+    %41 = ConstantLoad 0
+    %42 = newArray list[%41]{}
+    $desugar$24 = %42;
+    %44 = ConstantLoad false
+    $desugar$25 = %44;
+    GOTO bb58;
+  }
+  bb58 {
+    %47 = ! $desugar$25;
+    %46 = %47;
+    %47 ? bb59 : bb60;
+  }
+  bb59 {
+    %48 = ! $desugar$20;
+    %46 = %48;
+    GOTO bb60;
+  }
+  bb60 {
+    %46 ? bb61 : bb62;
+  }
+  bb61 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$23)) -> bb63;
+  }
+  bb62 {
+    %49 = ConstantLoad 0
+    %50 = newArray list[%49]{}
+    $desugar$28 = %50;
+    %52 = ConstantLoad 0
+    %53 = newArray list[%52]{}
+    $desugar$29 = %53;
+    %55 = ConstantLoad 0
+    %56 = newArray list[%55]{}
+    $desugar$30 = %56;
+    %58 = push($desugar$30,$desugar$24) -> bb73;
+  }
+  bb63 {
+    $desugar$27 = %0;
+    %2 = $desugar$27 is nil
+    %2 ? bb64 : bb65;
+  }
+  bb64 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$25) = %0;
+    PopScopeFrame
+    GOTO bb65;
+  }
+  bb65 {
+    %3 = $desugar$27 is error
+    %3 ? bb66 : bb69;
+  }
+  bb66 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$20);
+    %0 ? bb67 : bb68;
+  }
+  bb67 {
+    PushScopeFrame 1
+    (3, $desugar$19) = (2, $desugar$27);
+    %0 = ConstantLoad true
+    (3, $desugar$20) = %0;
+    PopScopeFrame
+    GOTO bb68;
+  }
+  bb68 {
+    %1 = ConstantLoad true
+    (2, $desugar$25) = %1;
+    PopScopeFrame
+    GOTO bb69;
+  }
+  bb69 {
+    %4 = $desugar$27 is mapping
+    %4 ? bb70 : bb72;
+  }
+  bb70 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$27)[%1];
+    (2, value) = %0;
+    %2 = ConstantLoad 1
+    %3 = newArray list[%2]{(2, value)}
+    %4 = push((2, $desugar$24),%3) -> bb71;
+  }
+  bb71 {
+    PopScopeFrame
+    GOTO bb72;
+  }
+  bb72 {
+    PopScopeFrame
+    GOTO bb58;
+  }
+  bb73 {
+    %59 = length($desugar$24) -> bb74;
+  }
+  bb74 {
+    $desugar$31 = %59;
+    %61 = ConstantLoad 0
+    $desugar$32 = %61;
+    GOTO bb75;
+  }
+  bb75 {
+    %64 = $desugar$32;
+    %65 = $desugar$31;
+    %63 = < %64 %65;
+    %63 ? bb76 : bb77;
+  }
+  bb76 {
+    PushScopeFrame 13
+    %0 = (1, $desugar$24)[(1, $desugar$32)];
+    $desugar$33 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$33[%3];
+    (1, value) = %2;
+    %4 = ConstantLoad 1
+    %5 = newArray list[%4]{(1, value)}
+    %6 = push((1, $desugar$28),%5) -> bb78;
+  }
+  bb77 {
+    %66 = ConstantLoad false
+    %67 = ConstantLoad 1
+    %68 = newArray list[%67]{%66}
+    %69 = querySort($desugar$28,%68,$desugar$29,$desugar$30) -> bb80;
+  }
+  bb78 {
+    %7 = (1, $desugar$32);
+    %8 = push((1, $desugar$29),%7) -> bb79;
+  }
+  bb79 {
+    %10 = (1, $desugar$32);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$32) = %9;
+    PopScopeFrame
+    GOTO bb75;
+  }
+  bb80 {
+    %70 = length($desugar$24) -> bb81;
+  }
+  bb81 {
+    $desugar$34 = %70;
+    %72 = ConstantLoad 0
+    $desugar$35 = %72;
+    GOTO bb82;
+  }
+  bb82 {
+    %76 = $desugar$35;
+    %77 = $desugar$34;
+    %75 = < %76 %77;
+    %74 = %75;
+    %75 ? bb83 : bb84;
+  }
+  bb83 {
+    %78 = ! $desugar$20;
+    %74 = %78;
+    GOTO bb84;
+  }
+  bb84 {
+    %74 ? bb85 : bb86;
+  }
+  bb85 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$24)[(1, $desugar$35)];
+    $desugar$36 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$36[%3];
+    (1, value) = %2;
+    %5 = (1, orderedTotal);
+    %6 = (1, value);
+    %4 = + %5 %6;
+    (1, orderedTotal) = %4;
+    %8 = (1, $desugar$35);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$35) = %7;
+    PopScopeFrame
+    GOTO bb82;
+  }
+  bb86 {
+    (1, result) = $desugar$19;
+    %79 = orderedTotal;
+    %80 = println(%79) -> bb87;
+  }
+  bb87 {
+    %81 = (1, result) is error
+    %82 = %81;
+    %83 = println(%82) -> bb88;
+  }
+  bb88 {
+    %84 = ConstantLoad 0
+    joinedTotal = %84;
+    %86 = ConstantLoad <nil>
+    $desugar$37 = %86;
+    %89 = ConstantLoad false
+    $desugar$38 = %89;
+    %91 = ConstantLoad 10
+    %92 = ConstantLoad 20
+    %93 = ConstantLoad 2
+    %94 = newArray [int, int, never...][%93]{%91, %92}
+    $desugar$39 = %94;
+    %96 = length($desugar$39) -> bb89;
+  }
+  bb89 {
+    $desugar$40 = %96;
+    %99 = ConstantLoad 0
+    %100 = newArray list[%99]{}
+    $desugar$41 = %100;
+    %102 = newObject $anon/.:FailingIterable
+    %103 = init(%102) -> bb90;
+  }
+  bb90 {
+    %105 = %103 is nil
+    %105 ? bb91 : bb92;
+  }
+  bb91 {
+    %104 = %102;
+    GOTO bb93;
+  }
+  bb92 {
+    %104 = %103;
+    GOTO bb93;
+  }
+  bb93 {
+    $desugar$42 = %104;
+    %107 = iterator($desugar$42) -> bb94;
+  }
+  bb94 {
+    $desugar$44 = %107;
+    %109 = ConstantLoad false
+    $desugar$45 = %109;
+    GOTO bb95;
+  }
+  bb95 {
+    %111 = ! $desugar$45;
+    %111 ? bb96 : bb97;
+  }
+  bb96 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$44)) -> bb98;
+  }
+  bb97 {
+    %112 = length($desugar$41) -> bb108;
+  }
+  bb98 {
+    $desugar$47 = %0;
+    %2 = $desugar$47 is nil
+    %2 ? bb99 : bb100;
+  }
+  bb99 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$45) = %0;
+    PopScopeFrame
+    GOTO bb100;
+  }
+  bb100 {
+    %3 = $desugar$47 is error
+    %3 ? bb101 : bb104;
+  }
+  bb101 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$38);
+    %0 ? bb102 : bb103;
+  }
+  bb102 {
+    PushScopeFrame 1
+    (3, $desugar$37) = (2, $desugar$47);
+    %0 = ConstantLoad true
+    (3, $desugar$38) = %0;
+    PopScopeFrame
+    GOTO bb103;
+  }
+  bb103 {
+    %1 = ConstantLoad true
+    (2, $desugar$45) = %1;
+    PopScopeFrame
+    GOTO bb104;
+  }
+  bb104 {
+    %4 = $desugar$47 is mapping
+    %4 ? bb105 : bb107;
+  }
+  bb105 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$47)[%1];
+    (2, right) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, right), (2, right)}
+    %4 = push((2, $desugar$41),%3) -> bb106;
+  }
+  bb106 {
+    PopScopeFrame
+    GOTO bb107;
+  }
+  bb107 {
+    PopScopeFrame
+    GOTO bb95;
+  }
+  bb108 {
+    $desugar$48 = %112;
+    %114 = ConstantLoad 0
+    $desugar$52 = %114;
+    GOTO bb109;
+  }
+  bb109 {
+    %118 = $desugar$52;
+    %119 = $desugar$40;
+    %117 = < %118 %119;
+    %116 = %117;
+    %117 ? bb110 : bb111;
+  }
+  bb110 {
+    %120 = ! $desugar$38;
+    %116 = %120;
+    GOTO bb111;
+  }
+  bb111 {
+    %116 ? bb112 : bb113;
+  }
+  bb112 {
+    PushScopeFrame 13
+    %0 = (1, $desugar$39)[(1, $desugar$52)];
+    (1, left) = %0;
+    $desugar$49 = (1, left);
+    %2 = ConstantLoad 0
+    $desugar$50 = %2;
+    GOTO bb114;
+  }
+  bb113 {
+    (1, result) = $desugar$37;
+    %121 = joinedTotal;
+    %122 = println(%121) -> bb121;
+  }
+  bb114 {
+    %6 = $desugar$50;
+    %7 = (1, $desugar$48);
+    %5 = < %6 %7;
+    %4 = %5;
+    %5 ? bb115 : bb116;
+  }
+  bb115 {
+    %8 = ! (1, $desugar$38);
+    %4 = %8;
+    GOTO bb116;
+  }
+  bb116 {
+    %4 ? bb117 : bb118;
+  }
+  bb117 {
+    PushScopeFrame 13
+    %0 = (2, $desugar$41)[(1, $desugar$50)];
+    $desugar$51 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$51[%3];
+    (2, right) = %2;
+    %5 = (1, $desugar$49);
+    %7 = ConstantLoad 1
+    %6 = $desugar$51[%7];
+    %8 = %6;
+    %4 = == %5 %8;
+    %4 ? bb119 : bb120;
+  }
+  bb118 {
+    %10 = (1, $desugar$52);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$52) = %9;
+    PopScopeFrame
+    GOTO bb109;
+  }
+  bb119 {
+    PushScopeFrame 6
+    %1 = (3, joinedTotal);
+    %3 = (3, left);
+    %4 = (3, right);
+    %2 = + %3 %4;
+    %5 = %2;
+    %0 = + %1 %5;
+    (3, joinedTotal) = %0;
+    PopScopeFrame
+    GOTO bb120;
+  }
+  bb120 {
+    %10 = (1, $desugar$50);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$50) = %9;
+    PopScopeFrame
+    GOTO bb114;
+  }
+  bb121 {
+    %123 = (1, result) is error
+    %124 = %123;
+    %125 = println(%124) -> bb122;
+  }
+  bb122 {
+    %126 = newObject $anon/.:CompleteIterator
+    %127 = init(%126) -> bb123;
+  }
+  bb123 {
+    %129 = %127 is nil
+    %129 ? bb124 : bb125;
+  }
+  bb124 {
+    %128 = %126;
+    GOTO bb126;
+  }
+  bb125 {
+    %128 = %127;
+    GOTO bb126;
+  }
+  bb126 {
+    %130 = newStream stream %128
+    secondJoinValues = %130;
+    %132 = ConstantLoad 0
+    multiJoinTotal = %132;
+    %134 = ConstantLoad <nil>
+    $desugar$53 = %134;
+    %137 = ConstantLoad false
+    $desugar$54 = %137;
+    %139 = ConstantLoad 1
+    %140 = ConstantLoad 2
+    %141 = ConstantLoad 2
+    %142 = newArray [int, int, never...][%141]{%139, %140}
+    $desugar$55 = %142;
+    %144 = length($desugar$55) -> bb127;
+  }
+  bb127 {
+    $desugar$56 = %144;
+    %147 = ConstantLoad 0
+    %148 = newArray list[%147]{}
+    $desugar$57 = %148;
+    %150 = newObject $anon/.:CompleteIterable
+    %151 = init(%150) -> bb128;
+  }
+  bb128 {
+    %153 = %151 is nil
+    %153 ? bb129 : bb130;
+  }
+  bb129 {
+    %152 = %150;
+    GOTO bb131;
+  }
+  bb130 {
+    %152 = %151;
+    GOTO bb131;
+  }
+  bb131 {
+    $desugar$58 = %152;
+    %155 = iterator($desugar$58) -> bb132;
+  }
+  bb132 {
+    $desugar$60 = %155;
+    %157 = ConstantLoad false
+    $desugar$61 = %157;
+    GOTO bb133;
+  }
+  bb133 {
+    %159 = ! $desugar$61;
+    %159 ? bb134 : bb135;
+  }
+  bb134 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$60)) -> bb136;
+  }
+  bb135 {
+    %160 = length($desugar$57) -> bb142;
+  }
+  bb136 {
+    $desugar$63 = %0;
+    %2 = $desugar$63 is nil
+    %2 ? bb137 : bb138;
+  }
+  bb137 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$61) = %0;
+    PopScopeFrame
+    GOTO bb138;
+  }
+  bb138 {
+    %3 = $desugar$63 is mapping
+    %3 ? bb139 : bb141;
+  }
+  bb139 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$63)[%1];
+    (2, first) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, first), (2, first)}
+    %4 = push((2, $desugar$57),%3) -> bb140;
+  }
+  bb140 {
+    PopScopeFrame
+    GOTO bb141;
+  }
+  bb141 {
+    PopScopeFrame
+    GOTO bb133;
+  }
+  bb142 {
+    $desugar$64 = %160;
+    %163 = ConstantLoad 0
+    %164 = newArray list[%163]{}
+    $desugar$65 = %164;
+    $desugar$66 = secondJoinValues;
+    %167 = ConstantLoad false
+    $desugar$67 = %167;
+    GOTO bb143;
+  }
+  bb143 {
+    %169 = ! $desugar$67;
+    %169 ? bb144 : bb145;
+  }
+  bb144 {
+    PushScopeFrame 5
+    %0 = streamNext (1, $desugar$66)
+    $desugar$69 = %0;
+    %2 = $desugar$69 is nil
+    %2 ? bb146 : bb147;
+  }
+  bb145 {
+    %170 = length($desugar$65) -> bb155;
+  }
+  bb146 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$67) = %0;
+    PopScopeFrame
+    GOTO bb147;
+  }
+  bb147 {
+    %3 = $desugar$69 is error
+    %3 ? bb148 : bb151;
+  }
+  bb148 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$54);
+    %0 ? bb149 : bb150;
+  }
+  bb149 {
+    PushScopeFrame 1
+    (3, $desugar$53) = (2, $desugar$69);
+    %0 = ConstantLoad true
+    (3, $desugar$54) = %0;
+    PopScopeFrame
+    GOTO bb150;
+  }
+  bb150 {
+    %1 = ConstantLoad true
+    (2, $desugar$67) = %1;
+    PopScopeFrame
+    GOTO bb151;
+  }
+  bb151 {
+    %4 = $desugar$69 is mapping
+    %4 ? bb152 : bb154;
+  }
+  bb152 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$69)[%1];
+    (2, second) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, second), (2, second)}
+    %4 = push((2, $desugar$65),%3) -> bb153;
+  }
+  bb153 {
+    PopScopeFrame
+    GOTO bb154;
+  }
+  bb154 {
+    PopScopeFrame
+    GOTO bb143;
+  }
+  bb155 {
+    $desugar$70 = %170;
+    %172 = ConstantLoad 0
+    $desugar$77 = %172;
+    GOTO bb156;
+  }
+  bb156 {
+    %176 = $desugar$77;
+    %177 = $desugar$56;
+    %175 = < %176 %177;
+    %174 = %175;
+    %175 ? bb157 : bb158;
+  }
+  bb157 {
+    %178 = ! $desugar$54;
+    %174 = %178;
+    GOTO bb158;
+  }
+  bb158 {
+    %174 ? bb159 : bb160;
+  }
+  bb159 {
+    PushScopeFrame 13
+    %0 = (1, $desugar$55)[(1, $desugar$77)];
+    (1, left) = %0;
+    $desugar$74 = (1, left);
+    %2 = ConstantLoad 0
+    $desugar$75 = %2;
+    GOTO bb161;
+  }
+  bb160 {
+    (1, result) = $desugar$53;
+    %179 = multiJoinTotal;
+    %180 = println(%179) -> bb175;
+  }
+  bb161 {
+    %6 = $desugar$75;
+    %7 = (1, $desugar$64);
+    %5 = < %6 %7;
+    %4 = %5;
+    %5 ? bb162 : bb163;
+  }
+  bb162 {
+    %8 = ! (1, $desugar$54);
+    %4 = %8;
+    GOTO bb163;
+  }
+  bb163 {
+    %4 ? bb164 : bb165;
+  }
+  bb164 {
+    PushScopeFrame 13
+    %0 = (2, $desugar$57)[(1, $desugar$75)];
+    $desugar$76 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$76[%3];
+    (2, first) = %2;
+    %5 = (1, $desugar$74);
+    %7 = ConstantLoad 1
+    %6 = $desugar$76[%7];
+    %8 = %6;
+    %4 = == %5 %8;
+    %4 ? bb166 : bb174;
+  }
+  bb165 {
+    %10 = (1, $desugar$77);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$77) = %9;
+    PopScopeFrame
+    GOTO bb156;
+  }
+  bb166 {
+    PushScopeFrame 8
+    $desugar$71 = (3, first);
+    %1 = ConstantLoad 0
+    $desugar$72 = %1;
+    GOTO bb167;
+  }
+  bb167 {
+    %5 = $desugar$72;
+    %6 = (3, $desugar$70);
+    %4 = < %5 %6;
+    %3 = %4;
+    %4 ? bb168 : bb169;
+  }
+  bb168 {
+    %7 = ! (3, $desugar$54);
+    %3 = %7;
+    GOTO bb169;
+  }
+  bb169 {
+    %3 ? bb170 : bb171;
+  }
+  bb170 {
+    PushScopeFrame 13
+    %0 = (4, $desugar$65)[(1, $desugar$72)];
+    $desugar$73 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$73[%3];
+    (4, second) = %2;
+    %5 = (1, $desugar$71);
+    %7 = ConstantLoad 1
+    %6 = $desugar$73[%7];
+    %8 = %6;
+    %4 = == %5 %8;
+    %4 ? bb172 : bb173;
+  }
+  bb171 {
+    PopScopeFrame
+    GOTO bb174;
+  }
+  bb172 {
+    PushScopeFrame 9
+    %1 = (5, multiJoinTotal);
+    %4 = (5, left);
+    %5 = (5, first);
+    %3 = + %4 %5;
+    %6 = %3;
+    %7 = (5, second);
+    %2 = + %6 %7;
+    %8 = %2;
+    %0 = + %1 %8;
+    (5, multiJoinTotal) = %0;
+    PopScopeFrame
+    GOTO bb173;
+  }
+  bb173 {
+    %10 = (1, $desugar$72);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$72) = %9;
+    PopScopeFrame
+    GOTO bb167;
+  }
+  bb174 {
+    %10 = (1, $desugar$75);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$75) = %9;
+    PopScopeFrame
+    GOTO bb161;
+  }
+  bb175 {
+    %181 = (1, result) is nil
+    %182 = %181;
+    %183 = println(%182) -> bb176;
+  }
+  bb176 {
+    %184 = ConstantLoad 0
+    %185 = newArray [int...][%184]{}
+    multiJoinEvents = %185;
+    %187 = ConstantLoad <nil>
+    $desugar$78 = %187;
+    %190 = ConstantLoad false
+    $desugar$79 = %190;
+    %192 = ConstantLoad 1
+    %193 = ConstantLoad 1
+    %194 = newArray [int, never...][%193]{%192}
+    $desugar$80 = %194;
+    %196 = length($desugar$80) -> bb177;
+  }
+  bb177 {
+    $desugar$81 = %196;
+    %199 = ConstantLoad 0
+    %200 = newArray list[%199]{}
+    $desugar$82 = %200;
+    %202 = ConstantLoad 1
+    %203 = %202;
+    %204 = trackedFailingIterable(multiJoinEvents,%203) -> bb178;
+  }
+  bb178 {
+    $desugar$83 = %204;
+    %206 = iterator($desugar$83) -> bb179;
+  }
+  bb179 {
+    $desugar$85 = %206;
+    %208 = ConstantLoad false
+    $desugar$86 = %208;
+    GOTO bb180;
+  }
+  bb180 {
+    %210 = ! $desugar$86;
+    %210 ? bb181 : bb182;
+  }
+  bb181 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$85)) -> bb183;
+  }
+  bb182 {
+    %211 = length($desugar$82) -> bb193;
+  }
+  bb183 {
+    $desugar$88 = %0;
+    %2 = $desugar$88 is nil
+    %2 ? bb184 : bb185;
+  }
+  bb184 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$86) = %0;
+    PopScopeFrame
+    GOTO bb185;
+  }
+  bb185 {
+    %3 = $desugar$88 is error
+    %3 ? bb186 : bb189;
+  }
+  bb186 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$79);
+    %0 ? bb187 : bb188;
+  }
+  bb187 {
+    PushScopeFrame 1
+    (3, $desugar$78) = (2, $desugar$88);
+    %0 = ConstantLoad true
+    (3, $desugar$79) = %0;
+    PopScopeFrame
+    GOTO bb188;
+  }
+  bb188 {
+    %1 = ConstantLoad true
+    (2, $desugar$86) = %1;
+    PopScopeFrame
+    GOTO bb189;
+  }
+  bb189 {
+    %4 = $desugar$88 is mapping
+    %4 ? bb190 : bb192;
+  }
+  bb190 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$88)[%1];
+    (2, first) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, first), (2, first)}
+    %4 = push((2, $desugar$82),%3) -> bb191;
+  }
+  bb191 {
+    PopScopeFrame
+    GOTO bb192;
+  }
+  bb192 {
+    PopScopeFrame
+    GOTO bb180;
+  }
+  bb193 {
+    $desugar$89 = %211;
+    %214 = ConstantLoad 0
+    %215 = newArray list[%214]{}
+    $desugar$90 = %215;
+    %217 = ConstantLoad 2
+    %218 = %217;
+    %219 = trackedFailingIterable(multiJoinEvents,%218) -> bb194;
+  }
+  bb194 {
+    $desugar$91 = %219;
+    %221 = iterator($desugar$91) -> bb195;
+  }
+  bb195 {
+    $desugar$93 = %221;
+    %223 = ConstantLoad false
+    $desugar$94 = %223;
+    GOTO bb196;
+  }
+  bb196 {
+    %225 = ! $desugar$94;
+    %225 ? bb197 : bb198;
+  }
+  bb197 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$93)) -> bb199;
+  }
+  bb198 {
+    %226 = length($desugar$90) -> bb209;
+  }
+  bb199 {
+    $desugar$96 = %0;
+    %2 = $desugar$96 is nil
+    %2 ? bb200 : bb201;
+  }
+  bb200 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$94) = %0;
+    PopScopeFrame
+    GOTO bb201;
+  }
+  bb201 {
+    %3 = $desugar$96 is error
+    %3 ? bb202 : bb205;
+  }
+  bb202 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$79);
+    %0 ? bb203 : bb204;
+  }
+  bb203 {
+    PushScopeFrame 1
+    (3, $desugar$78) = (2, $desugar$96);
+    %0 = ConstantLoad true
+    (3, $desugar$79) = %0;
+    PopScopeFrame
+    GOTO bb204;
+  }
+  bb204 {
+    %1 = ConstantLoad true
+    (2, $desugar$94) = %1;
+    PopScopeFrame
+    GOTO bb205;
+  }
+  bb205 {
+    %4 = $desugar$96 is mapping
+    %4 ? bb206 : bb208;
+  }
+  bb206 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$96)[%1];
+    (2, second) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, second), (2, second)}
+    %4 = push((2, $desugar$90),%3) -> bb207;
+  }
+  bb207 {
+    PopScopeFrame
+    GOTO bb208;
+  }
+  bb208 {
+    PopScopeFrame
+    GOTO bb196;
+  }
+  bb209 {
+    $desugar$97 = %226;
+    %228 = trackedLimit(multiJoinEvents) -> bb210;
+  }
+  bb210 {
+    $desugar$98 = %228;
+    %231 = $desugar$98;
+    %232 = ConstantLoad 0
+    %233 = %232;
+    %230 = < %231 %233;
+    %230 ? bb211 : bb212;
+  }
+  bb211 {
+    PushScopeFrame 2
+    %0 = ConstantLoad limit cannot be negative
+    %1 = newError error(%0)
+    (2, %27) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    panic %27;
+  }
+  bb212 {
+    %234 = ConstantLoad 0
+    $desugar$99 = %234;
+    %236 = ConstantLoad false
+    $desugar$100 = %236;
+    %239 = $desugar$98;
+    %240 = ConstantLoad 0
+    %241 = %240;
+    %238 = == %239 %241;
+    %238 ? bb213 : bb214;
+  }
+  bb213 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, $desugar$100) = %0;
+    PopScopeFrame
+    GOTO bb214;
+  }
+  bb214 {
+    %242 = ConstantLoad 0
+    $desugar$107 = %242;
+    GOTO bb215;
+  }
+  bb215 {
+    %247 = $desugar$107;
+    %248 = $desugar$81;
+    %246 = < %247 %248;
+    %245 = %246;
+    %246 ? bb216 : bb217;
+  }
+  bb216 {
+    %249 = ! $desugar$100;
+    %245 = %249;
+    GOTO bb217;
+  }
+  bb217 {
+    %244 = %245;
+    %245 ? bb218 : bb219;
+  }
+  bb218 {
+    %250 = ! $desugar$79;
+    %244 = %250;
+    GOTO bb219;
+  }
+  bb219 {
+    %244 ? bb220 : bb221;
+  }
+  bb220 {
+    PushScopeFrame 15
+    %0 = (1, $desugar$80)[(1, $desugar$107)];
+    (1, left) = %0;
+    $desugar$104 = (1, left);
+    %2 = ConstantLoad 0
+    $desugar$105 = %2;
+    GOTO bb222;
+  }
+  bb221 {
+    (1, result) = $desugar$78;
+    %251 = println(multiJoinEvents) -> bb245;
+  }
+  bb222 {
+    %7 = $desugar$105;
+    %8 = (1, $desugar$89);
+    %6 = < %7 %8;
+    %5 = %6;
+    %6 ? bb223 : bb224;
+  }
+  bb223 {
+    %9 = ! (1, $desugar$100);
+    %5 = %9;
+    GOTO bb224;
+  }
+  bb224 {
+    %4 = %5;
+    %5 ? bb225 : bb226;
+  }
+  bb225 {
+    %10 = ! (1, $desugar$79);
+    %4 = %10;
+    GOTO bb226;
+  }
+  bb226 {
+    %4 ? bb227 : bb228;
+  }
+  bb227 {
+    PushScopeFrame 13
+    %0 = (2, $desugar$82)[(1, $desugar$105)];
+    $desugar$106 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$106[%3];
+    (2, first) = %2;
+    %5 = (1, $desugar$104);
+    %7 = ConstantLoad 1
+    %6 = $desugar$106[%7];
+    %8 = %6;
+    %4 = == %5 %8;
+    %4 ? bb229 : bb244;
+  }
+  bb228 {
+    %12 = (1, $desugar$107);
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %11 = + %12 %14;
+    (1, $desugar$107) = %11;
+    PopScopeFrame
+    GOTO bb215;
+  }
+  bb229 {
+    PushScopeFrame 10
+    $desugar$101 = (3, first);
+    %1 = ConstantLoad 0
+    $desugar$102 = %1;
+    GOTO bb230;
+  }
+  bb230 {
+    %6 = $desugar$102;
+    %7 = (3, $desugar$97);
+    %5 = < %6 %7;
+    %4 = %5;
+    %5 ? bb231 : bb232;
+  }
+  bb231 {
+    %8 = ! (3, $desugar$100);
+    %4 = %8;
+    GOTO bb232;
+  }
+  bb232 {
+    %3 = %4;
+    %4 ? bb233 : bb234;
+  }
+  bb233 {
+    %9 = ! (3, $desugar$79);
+    %3 = %9;
+    GOTO bb234;
+  }
+  bb234 {
+    %3 ? bb235 : bb236;
+  }
+  bb235 {
+    PushScopeFrame 13
+    %0 = (4, $desugar$90)[(1, $desugar$102)];
+    $desugar$103 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$103[%3];
+    (4, second) = %2;
+    %5 = (1, $desugar$101);
+    %7 = ConstantLoad 1
+    %6 = $desugar$103[%7];
+    %8 = %6;
+    %4 = == %5 %8;
+    %4 ? bb237 : bb243;
+  }
+  bb236 {
+    PopScopeFrame
+    GOTO bb244;
+  }
+  bb237 {
+    PushScopeFrame 3
+    %1 = (5, $desugar$99);
+    %2 = (5, $desugar$98);
+    %0 = < %1 %2;
+    %0 ? bb238 : bb242;
+  }
+  bb238 {
+    PushScopeFrame 10
+    %1 = (6, $desugar$99);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (6, $desugar$99) = %0;
+    %5 = (6, $desugar$99);
+    %6 = (6, $desugar$98);
+    %4 = >= %5 %6;
+    %4 ? bb239 : bb240;
+  }
+  bb239 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (7, $desugar$100) = %0;
+    PopScopeFrame
+    GOTO bb240;
+  }
+  bb240 {
+    %7 = ConstantLoad 100
+    %8 = %7;
+    %9 = push((6, multiJoinEvents),%8) -> bb241;
+  }
+  bb241 {
+    PopScopeFrame
+    GOTO bb242;
+  }
+  bb242 {
+    PopScopeFrame
+    GOTO bb243;
+  }
+  bb243 {
+    %10 = (1, $desugar$102);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$102) = %9;
+    PopScopeFrame
+    GOTO bb230;
+  }
+  bb244 {
+    %10 = (1, $desugar$105);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$105) = %9;
+    PopScopeFrame
+    GOTO bb222;
+  }
+  bb245 {
+    %252 = (1, result) is error
+    %252 ? bb246 : bb249;
+  }
+  bb246 {
+    PushScopeFrame 2
+    %0 = message((2, result)) -> bb247;
+  }
+  bb247 {
+    %1 = println(%0) -> bb248;
+  }
+  bb248 {
+    PopScopeFrame
+    GOTO bb249;
+  }
+  bb249 {
+    PushScopeFrame 81
+    %0 = ConstantLoad 0
+    limitedTotal = %0;
+    %2 = ConstantLoad <nil>
+    $desugar$108 = %2;
+    %5 = ConstantLoad false
+    $desugar$109 = %5;
+    %7 = newObject $anon/.:FailingIterable
+    %8 = init(%7) -> bb250;
+  }
+  bb250 {
+    %10 = %8 is nil
+    %10 ? bb251 : bb252;
+  }
+  bb251 {
+    %9 = %7;
+    GOTO bb253;
+  }
+  bb252 {
+    %9 = %8;
+    GOTO bb253;
+  }
+  bb253 {
+    $desugar$110 = %9;
+    %12 = iterator($desugar$110) -> bb254;
+  }
+  bb254 {
+    $desugar$112 = %12;
+    %14 = ConstantLoad 1
+    $desugar$113 = %14;
+    %17 = $desugar$113;
+    %18 = ConstantLoad 0
+    %19 = %18;
+    %16 = < %17 %19;
+    %16 ? bb255 : bb256;
+  }
+  bb255 {
+    PushScopeFrame 2
+    %0 = ConstantLoad limit cannot be negative
+    %1 = newError error(%0)
+    (3, %28) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    panic %28;
+  }
+  bb256 {
+    %20 = ConstantLoad 0
+    $desugar$114 = %20;
+    %22 = ConstantLoad false
+    $desugar$115 = %22;
+    %25 = $desugar$113;
+    %26 = ConstantLoad 0
+    %27 = %26;
+    %24 = == %25 %27;
+    %24 ? bb257 : bb258;
+  }
+  bb257 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, $desugar$115) = %0;
+    PopScopeFrame
+    GOTO bb258;
+  }
+  bb258 {
+    %28 = ConstantLoad false
+    $desugar$116 = %28;
+    GOTO bb259;
+  }
+  bb259 {
+    %32 = ! $desugar$116;
+    %31 = %32;
+    %32 ? bb260 : bb261;
+  }
+  bb260 {
+    %33 = ! $desugar$115;
+    %31 = %33;
+    GOTO bb261;
+  }
+  bb261 {
+    %30 = %31;
+    %31 ? bb262 : bb263;
+  }
+  bb262 {
+    %34 = ! $desugar$109;
+    %30 = %34;
+    GOTO bb263;
+  }
+  bb263 {
+    %30 ? bb264 : bb265;
+  }
+  bb264 {
+    PushScopeFrame 5
+    %0 = next((1, $desugar$112)) -> bb266;
+  }
+  bb265 {
+    (2, result) = $desugar$108;
+    %35 = limitedTotal;
+    %36 = println(%35) -> bb279;
+  }
+  bb266 {
+    $desugar$118 = %0;
+    %2 = $desugar$118 is nil
+    %2 ? bb267 : bb268;
+  }
+  bb267 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$116) = %0;
+    PopScopeFrame
+    GOTO bb268;
+  }
+  bb268 {
+    %3 = $desugar$118 is error
+    %3 ? bb269 : bb272;
+  }
+  bb269 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$109);
+    %0 ? bb270 : bb271;
+  }
+  bb270 {
+    PushScopeFrame 1
+    (3, $desugar$108) = (2, $desugar$118);
+    %0 = ConstantLoad true
+    (3, $desugar$109) = %0;
+    PopScopeFrame
+    GOTO bb271;
+  }
+  bb271 {
+    %1 = ConstantLoad true
+    (2, $desugar$116) = %1;
+    PopScopeFrame
+    GOTO bb272;
+  }
+  bb272 {
+    %4 = $desugar$118 is mapping
+    %4 ? bb273 : bb278;
+  }
+  bb273 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$118)[%1];
+    (2, value) = %0;
+    %3 = (2, $desugar$114);
+    %4 = (2, $desugar$113);
+    %2 = < %3 %4;
+    %2 ? bb274 : bb277;
+  }
+  bb274 {
+    PushScopeFrame 10
+    %1 = (3, $desugar$114);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (3, $desugar$114) = %0;
+    %5 = (3, $desugar$114);
+    %6 = (3, $desugar$113);
+    %4 = >= %5 %6;
+    %4 ? bb275 : bb276;
+  }
+  bb275 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (4, $desugar$115) = %0;
+    PopScopeFrame
+    GOTO bb276;
+  }
+  bb276 {
+    %8 = (3, limitedTotal);
+    %9 = (3, value);
+    %7 = + %8 %9;
+    (3, limitedTotal) = %7;
+    PopScopeFrame
+    GOTO bb277;
+  }
+  bb277 {
+    PopScopeFrame
+    GOTO bb278;
+  }
+  bb278 {
+    PopScopeFrame
+    GOTO bb259;
+  }
+  bb279 {
+    %37 = (2, result) is nil
+    %38 = %37;
+    %39 = println(%38) -> bb280;
+  }
+  bb280 {
+    %40 = ConstantLoad 0
+    completedTotal = %40;
+    %42 = ConstantLoad <nil>
+    $desugar$119 = %42;
+    %45 = newObject $anon/.:CompleteIterable
+    %46 = init(%45) -> bb281;
+  }
+  bb281 {
+    %48 = %46 is nil
+    %48 ? bb282 : bb283;
+  }
+  bb282 {
+    %47 = %45;
+    GOTO bb284;
+  }
+  bb283 {
+    %47 = %46;
+    GOTO bb284;
+  }
+  bb284 {
+    $desugar$120 = %47;
+    %50 = iterator($desugar$120) -> bb285;
+  }
+  bb285 {
+    $desugar$122 = %50;
+    %52 = ConstantLoad false
+    $desugar$123 = %52;
+    GOTO bb286;
+  }
+  bb286 {
+    %54 = ! $desugar$123;
+    %54 ? bb287 : bb288;
+  }
+  bb287 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$122)) -> bb289;
+  }
+  bb288 {
+    %55 = completedTotal;
+    %56 = println(%55) -> bb294;
+  }
+  bb289 {
+    $desugar$125 = %0;
+    %2 = $desugar$125 is nil
+    %2 ? bb290 : bb291;
+  }
+  bb290 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$123) = %0;
+    PopScopeFrame
+    GOTO bb291;
+  }
+  bb291 {
+    %3 = $desugar$125 is mapping
+    %3 ? bb292 : bb293;
+  }
+  bb292 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$125)[%1];
+    (2, value) = %0;
+    %3 = (2, completedTotal);
+    %4 = (2, value);
+    %2 = + %3 %4;
+    (2, completedTotal) = %2;
+    PopScopeFrame
+    GOTO bb293;
+  }
+  bb293 {
+    PopScopeFrame
+    GOTO bb286;
+  }
+  bb294 {
+    %57 = newObject $anon/.:FailingIterator
+    %58 = init(%57) -> bb295;
+  }
+  bb295 {
+    %60 = %58 is nil
+    %60 ? bb296 : bb297;
+  }
+  bb296 {
+    %59 = %57;
+    GOTO bb298;
+  }
+  bb297 {
+    %59 = %58;
+    GOTO bb298;
+  }
+  bb298 {
+    %61 = newStream stream %59
+    values = %61;
+    %63 = ConstantLoad 0
+    streamTotal = %63;
+    %65 = ConstantLoad <nil>
+    $desugar$126 = %65;
+    %68 = ConstantLoad false
+    $desugar$127 = %68;
+    $desugar$128 = values;
+    %71 = ConstantLoad false
+    $desugar$129 = %71;
+    GOTO bb299;
+  }
+  bb299 {
+    %74 = ! $desugar$129;
+    %73 = %74;
+    %74 ? bb300 : bb301;
+  }
+  bb300 {
+    %75 = ! $desugar$127;
+    %73 = %75;
+    GOTO bb301;
+  }
+  bb301 {
+    %73 ? bb302 : bb303;
+  }
+  bb302 {
+    PushScopeFrame 5
+    %0 = streamNext (1, $desugar$128)
+    $desugar$131 = %0;
+    %2 = $desugar$131 is nil
+    %2 ? bb304 : bb305;
+  }
+  bb303 {
+    (2, result) = $desugar$126;
+    %76 = streamTotal;
+    %77 = println(%76) -> bb312;
+  }
+  bb304 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$129) = %0;
+    PopScopeFrame
+    GOTO bb305;
+  }
+  bb305 {
+    %3 = $desugar$131 is error
+    %3 ? bb306 : bb309;
+  }
+  bb306 {
+    PushScopeFrame 2
+    %0 = ! (2, $desugar$127);
+    %0 ? bb307 : bb308;
+  }
+  bb307 {
+    PushScopeFrame 1
+    (3, $desugar$126) = (2, $desugar$131);
+    %0 = ConstantLoad true
+    (3, $desugar$127) = %0;
+    PopScopeFrame
+    GOTO bb308;
+  }
+  bb308 {
+    %1 = ConstantLoad true
+    (2, $desugar$129) = %1;
+    PopScopeFrame
+    GOTO bb309;
+  }
+  bb309 {
+    %4 = $desugar$131 is mapping
+    %4 ? bb310 : bb311;
+  }
+  bb310 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$131)[%1];
+    (2, value) = %0;
+    %3 = (2, streamTotal);
+    %4 = (2, value);
+    %2 = + %3 %4;
+    (2, streamTotal) = %2;
+    PopScopeFrame
+    GOTO bb311;
+  }
+  bb311 {
+    PopScopeFrame
+    GOTO bb299;
+  }
+  bb312 {
+    %78 = (2, result) is error
+    %79 = %78;
+    %80 = println(%79) -> bb313;
+  }
+  bb313 {
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

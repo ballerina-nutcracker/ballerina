@@ -1,0 +1,36 @@
+(alwaysFails
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal query action checkpanic))))
+  )
+)
+(main
+  (bb0 (bb1) (bb1)
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable value))
+          (list-constructor-expr
+            (literal 1)))
+        (do-clause
+          (block-stmt
+            (assignment
+              (wildcard-binding-pattern)
+              (simple-var-ref value))
+            (assignment
+              (wildcard-binding-pattern)
+              (check-panicked-expr
+                (invocation alwaysFails ())))))))
+  )
+  (bb1 (bb0) (bb0)
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (assignment
+      (wildcard-binding-pattern)
+      (check-panicked-expr
+        (invocation alwaysFails ())))
+  )
+)

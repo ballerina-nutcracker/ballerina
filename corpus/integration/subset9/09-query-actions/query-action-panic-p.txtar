@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: query action panic
+        at main(query-action-panic-p.bal:21)

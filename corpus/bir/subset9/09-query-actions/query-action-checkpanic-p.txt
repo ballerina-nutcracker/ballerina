@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+alwaysFails() -> int|error{
+  bb0 {
+    %1 = ConstantLoad query action checkpanic
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    $desugar$0 = %1;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 1
+    %6 = newArray [int, never...][%5]{%4}
+    $desugar$1 = %6;
+    %8 = length($desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %8;
+    %10 = ConstantLoad 0
+    $desugar$4 = %10;
+    GOTO bb2;
+  }
+  bb2 {
+    %13 = $desugar$4;
+    %14 = $desugar$2;
+    %12 = < %13 %14;
+    %12 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$1)[(1, $desugar$4)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = alwaysFails() -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (2, %15) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    panic %15;
+  }
+  bb7 {
+    %5 = $desugar$3;
+    %7 = (1, $desugar$4);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$4) = %6;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
