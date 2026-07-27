@@ -18,13 +18,12 @@
 // - SyntaxTreeJSONGenerator.java (ballerina-lang/compiler/ballerina-parser/src/test/java/io/ballerinalang/compiler/parser/test/SyntaxTreeJSONGenerator.java)
 // - ParserTestUtils.java (ballerina-lang/compiler/ballerina-parser/src/test/java/io/ballerinalang/compiler/parser/test/ParserTestUtils.java)
 
-package tree
+package st
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"strings"
 )
@@ -98,8 +97,8 @@ func (oj *orderedJSONObject) MarshalJSON() ([]byte, error) {
 //	    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 //	    return gson.toJson(getJSON(treeNode));
 //	}
-func GenerateJSON(treeNode STNode) string {
-	jsonObj := getJSON(treeNode)
+func GenerateJSON(treeNode STNode, kindName func(SyntaxKind) string) string {
+	jsonObj := getJSON(treeNode, kindName)
 	jsonBytes, err := json.MarshalIndent(jsonObj, "", "  ")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to marshal JSON: %v", err))
@@ -140,7 +139,7 @@ func GenerateJSON(treeNode STNode) string {
 //
 //	    return jsonNode;
 //	}
-func getJSON(treeNode STNode) any {
+func getJSON(treeNode STNode, kindName func(SyntaxKind) string) any {
 	jsonNode := newOrderedJSONObject()
 	nodeKind := treeNode.Kind()
 	jsonNode.addProperty(KIND_FIELD, kindName(nodeKind))
@@ -150,7 +149,7 @@ func getJSON(treeNode STNode) any {
 		addDiagnostics(treeNode, jsonNode)
 		if isToken(treeNode) {
 			token := treeNode.(STToken)
-			addTrivia(token, jsonNode)
+			addTrivia(token, jsonNode, kindName)
 		}
 		return jsonNode
 	}
@@ -161,12 +160,12 @@ func getJSON(treeNode STNode) any {
 		// If the node is a terminal node with a dynamic value (i.e: non-syntax node)
 		// then add the value to the json.
 		if !isKeyword(nodeKind) {
-			jsonNode.addProperty(VALUE_FIELD, getTokenText(token))
+			jsonNode.addProperty(VALUE_FIELD, getTokenText(token, kindName))
 		}
-		addTrivia(token, jsonNode)
+		addTrivia(token, jsonNode, kindName)
 		// else do nothing
 	} else {
-		addChildren(treeNode, jsonNode)
+		addChildren(treeNode, jsonNode, kindName)
 	}
 
 	return jsonNode
@@ -179,8 +178,8 @@ func getJSON(treeNode STNode) any {
 //	private static void addChildren(STNode tree, JsonObject node) {
 //	    addNodeList(tree, node, CHILDREN_FIELD);
 //	}
-func addChildren(tree STNode, node *orderedJSONObject) {
-	addNodeList(tree, node, CHILDREN_FIELD)
+func addChildren(tree STNode, node *orderedJSONObject, kindName func(SyntaxKind) string) {
+	addNodeList(tree, node, CHILDREN_FIELD, kindName)
 }
 
 // Ported from: SyntaxTreeJSONGenerator.java:138-150
@@ -198,16 +197,16 @@ func addChildren(tree STNode, node *orderedJSONObject) {
 //	    }
 //	    node.add(key, children);
 //	}
-func addNodeList(tree STNode, node *orderedJSONObject, key string) {
+func addNodeList(tree STNode, node *orderedJSONObject, key string, kindName func(SyntaxKind) string) {
 	children := make([]any, 0)
 	size := tree.BucketCount()
 	for i := range size {
 		childNode := tree.ChildInBucket(i)
-		if childNode == nil || childNode.Kind() == common.NONE {
+		if childNode == nil || childNode.Kind() == NONE {
 			continue
 		}
 
-		children = append(children, getJSON(childNode))
+		children = append(children, getJSON(childNode, kindName))
 	}
 	node.add(key, children)
 }
@@ -225,12 +224,12 @@ func addNodeList(tree STNode, node *orderedJSONObject, key string) {
 //	        addMinutiaeList((STNodeList) token.trailingMinutiae(), jsonNode, TRAILING_MINUTIAE);
 //	    }
 //	}
-func addTrivia(token STToken, jsonNode *orderedJSONObject) {
+func addTrivia(token STToken, jsonNode *orderedJSONObject, kindName func(SyntaxKind) string) {
 	leadingMinutiae := token.LeadingMinutiae()
 	if leadingMinutiae.BucketCount() != 0 {
 		minutiaeList, ok := leadingMinutiae.(*STNodeList)
 		if ok {
-			addMinutiaeList(minutiaeList, jsonNode, LEADING_MINUTIAE)
+			addMinutiaeList(minutiaeList, jsonNode, LEADING_MINUTIAE, kindName)
 		}
 	}
 
@@ -238,7 +237,7 @@ func addTrivia(token STToken, jsonNode *orderedJSONObject) {
 	if trailingMinutiae.BucketCount() != 0 {
 		minutiaeList, ok := trailingMinutiae.(*STNodeList)
 		if ok {
-			addMinutiaeList(minutiaeList, jsonNode, TRAILING_MINUTIAE)
+			addMinutiaeList(minutiaeList, jsonNode, TRAILING_MINUTIAE, kindName)
 		}
 	}
 }
@@ -261,7 +260,7 @@ func addTrivia(token STToken, jsonNode *orderedJSONObject) {
 //	            case INVALID_NODE_MINUTIAE:
 //	                STInvalidNodeMinutiae invalidNodeMinutiae = (STInvalidNodeMinutiae) minutiae;
 //	                STNode invalidNode = invalidNodeMinutiae.invalidNode();
-//	                minutiaeJson.add(INVALID_NODE_FIELD, getJSON(invalidNode));
+//	                minutiaeJson.add(INVALID_NODE_FIELD, getJSON(invalidNode, kindName));
 //	                break;
 //	            default:
 //	                throw new UnsupportedOperationException("Unsupported minutiae kind: '" + minutiae.kind + "'");
@@ -271,7 +270,7 @@ func addTrivia(token STToken, jsonNode *orderedJSONObject) {
 //	    }
 //	    node.add(key, minutiaeJsonArray);
 //	}
-func addMinutiaeList(minutiaeList *STNodeList, node *orderedJSONObject, key string) {
+func addMinutiaeList(minutiaeList *STNodeList, node *orderedJSONObject, key string, kindName func(SyntaxKind) string) {
 	minutiaeJsonArray := make([]any, 0)
 	size := minutiaeList.Size()
 	for i := range size {
@@ -281,15 +280,15 @@ func addMinutiaeList(minutiaeList *STNodeList, node *orderedJSONObject, key stri
 		minutiaeJson.addProperty(KIND_FIELD, kindName(minutiaeKind))
 
 		switch minutiaeKind {
-		case common.WHITESPACE_MINUTIAE, common.END_OF_LINE_MINUTIAE, common.COMMENT_MINUTIAE:
+		case WHITESPACE_MINUTIAE, END_OF_LINE_MINUTIAE, COMMENT_MINUTIAE:
 			// Cast to STMinutiae to get text
 			if stMinutiae, ok := minutiae.(*STMinutiae); ok {
 				minutiaeJson.addProperty(VALUE_FIELD, stMinutiae.text)
 			}
-		case common.INVALID_NODE_MINUTIAE:
+		case INVALID_NODE_MINUTIAE:
 			if invalidNodeMinutiae, ok := minutiae.(*STInvalidNodeMinutiae); ok {
 				invalidNode := invalidNodeMinutiae.invalidNode
-				minutiaeJson.add(INVALID_NODE_FIELD, getJSON(invalidNode))
+				minutiaeJson.add(INVALID_NODE_FIELD, getJSON(invalidNode, kindName))
 			}
 		default:
 			// panic(fmt.Sprintf("Unsupported minutiae kind: '%v'", minutiaeKind))
@@ -369,8 +368,8 @@ func diagnosticJSONMessage(diagnosticCode diagnostics.DiagnosticCode) string {
 //	public static boolean isKeyword(SyntaxKind syntaxKind) {
 //	    return SyntaxKind.IDENTIFIER_TOKEN.compareTo(syntaxKind) > 0 || syntaxKind == SyntaxKind.EOF_TOKEN;
 //	}
-func isKeyword(syntaxKind common.SyntaxKind) bool {
-	return syntaxKind < common.IDENTIFIER_TOKEN || syntaxKind == common.EOF_TOKEN
+func isKeyword(syntaxKind SyntaxKind) bool {
+	return syntaxKind < IDENTIFIER_TOKEN || syntaxKind == EOF_TOKEN
 }
 
 // Ported from: ParserTestUtils.java:346-385
@@ -415,15 +414,15 @@ func isKeyword(syntaxKind common.SyntaxKind) bool {
 //	            return token.kind.toString();
 //	    }
 //	}
-func getTokenText(token STToken) string {
+func getTokenText(token STToken, kindName func(SyntaxKind) string) string {
 	kind := token.Kind()
 	switch kind {
-	case common.IDENTIFIER_TOKEN:
+	case IDENTIFIER_TOKEN:
 		if identToken, ok := token.(*STIdentifierToken); ok {
 			return identToken.text
 		}
 		return token.Text()
-	case common.STRING_LITERAL_TOKEN:
+	case STRING_LITERAL_TOKEN:
 		val := token.Text()
 		stringLen := len(val)
 		lastCharPosition := stringLen
@@ -434,32 +433,32 @@ func getTokenText(token STToken) string {
 			return val[1:lastCharPosition]
 		}
 		return ""
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.PARAMETER_NAME,
-		common.DEPRECATION_LITERAL,
-		common.INVALID_TOKEN:
+	case DECIMAL_INTEGER_LITERAL_TOKEN,
+		HEX_INTEGER_LITERAL_TOKEN,
+		DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		HEX_FLOATING_POINT_LITERAL_TOKEN,
+		PARAMETER_NAME,
+		DEPRECATION_LITERAL,
+		INVALID_TOKEN:
 		return token.Text()
-	case common.XML_TEXT,
-		common.XML_TEXT_CONTENT,
-		common.TEMPLATE_STRING,
-		common.RE_LITERAL_CHAR,
-		common.RE_NUMERIC_ESCAPE,
-		common.RE_CONTROL_ESCAPE,
-		common.RE_SIMPLE_CHAR_CLASS_CODE,
-		common.RE_PROPERTY,
-		common.RE_UNICODE_SCRIPT_START,
-		common.RE_UNICODE_PROPERTY_VALUE,
-		common.RE_UNICODE_GENERAL_CATEGORY_START,
-		common.RE_UNICODE_GENERAL_CATEGORY_NAME,
-		common.RE_FLAGS_VALUE,
-		common.DIGIT,
-		common.DOCUMENTATION_DESCRIPTION,
-		common.DOCUMENTATION_STRING,
-		common.CODE_CONTENT,
-		common.PROMPT_CONTENT:
+	case XML_TEXT,
+		XML_TEXT_CONTENT,
+		TEMPLATE_STRING,
+		RE_LITERAL_CHAR,
+		RE_NUMERIC_ESCAPE,
+		RE_CONTROL_ESCAPE,
+		RE_SIMPLE_CHAR_CLASS_CODE,
+		RE_PROPERTY,
+		RE_UNICODE_SCRIPT_START,
+		RE_UNICODE_PROPERTY_VALUE,
+		RE_UNICODE_GENERAL_CATEGORY_START,
+		RE_UNICODE_GENERAL_CATEGORY_NAME,
+		RE_FLAGS_VALUE,
+		DIGIT,
+		DOCUMENTATION_DESCRIPTION,
+		DOCUMENTATION_STRING,
+		CODE_CONTENT,
+		PROMPT_CONTENT:
 		return cleanupText(token.Text())
 	default:
 		return kindName(kind)

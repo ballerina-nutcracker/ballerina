@@ -14,9 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package tree
-
-import "github.com/ballerina-nutcracker/ballerina/parser/common"
+package st
 
 {{range .Nodes}}
 {{if .IsAbstract}}
@@ -31,11 +29,11 @@ type ST{{.Name}} struct {
 var _ STNode = &ST{{.Name}}{}
 {{if .Kind}}
 
-func (n *ST{{.Name}}) Kind() common.SyntaxKind {
-    return common.{{.Kind}}
+func (n *ST{{.Name}}) Kind() SyntaxKind {
+    return {{.Kind}}
 }
 {{else}}
-func (n *ST{{.Name}}) Kind() common.SyntaxKind {
+func (n *ST{{.Name}}) Kind() SyntaxKind {
     return n.ST{{.Base}}.Kind()
 }
 {{end}}

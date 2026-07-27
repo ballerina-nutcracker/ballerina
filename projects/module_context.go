@@ -30,8 +30,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -381,11 +381,11 @@ func parseDocumentsParallel(
 	srcDocContextMap map[DocumentID]*documentContext,
 	testDocIDs []DocumentID,
 	testDocContextMap map[DocumentID]*documentContext,
-) []*tree.SyntaxTree {
+) []*st.SyntaxTree {
 	var (
 		mu          sync.Mutex
 		wg          sync.WaitGroup
-		syntaxTrees []*tree.SyntaxTree
+		syntaxTrees []*st.SyntaxTree
 	)
 
 	// Parse source documents - collect syntax trees
@@ -425,7 +425,7 @@ func parseDocumentsParallel(
 	return syntaxTrees
 }
 
-func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*tree.SyntaxTree, compilationOptions CompilationOptions) []*ast.BLangCompilationUnit {
+func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*st.SyntaxTree, compilationOptions CompilationOptions) []*ast.BLangCompilationUnit {
 	dumpRecoveredAST := compilationOptions.DumpRecoveredAST()
 	dumpAST := compilationOptions.DumpAST() || dumpRecoveredAST
 	var prettyPrinter ast.PrettyPrinter

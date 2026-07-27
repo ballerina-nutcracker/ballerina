@@ -17,7 +17,7 @@
 package projects
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
@@ -56,7 +56,7 @@ func (d *Document) Module() *Module {
 
 // SyntaxTree returns the parsed syntax tree for this document.
 // The syntax tree is lazily parsed and cached.
-func (d *Document) SyntaxTree() *tree.SyntaxTree {
+func (d *Document) SyntaxTree() *st.SyntaxTree {
 	return d.documentCtx.parseWithStats(d.module.moduleCtx.compilerCtx)
 }
 

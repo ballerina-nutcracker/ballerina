@@ -15,14 +15,14 @@
 
 //go:build !native_interp
 
-package parser
+package st
 
 import (
 	"embed"
 	"io/fs"
 )
 
-//go:embed *.go common go.mod go.sum
+//go:embed *.go nodes.json go.mod
 var interpreterSource embed.FS
 
 // InterpreterSource returns the source files needed to build the interpreter.

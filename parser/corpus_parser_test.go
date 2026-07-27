@@ -24,7 +24,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 
@@ -177,7 +176,7 @@ func parseFile(t *testing.T, testCase test_util.TestCase) {
 
 	ast := ballerinaParser.Parse()
 
-	actualJSON := tree.GenerateJSON(ast)
+	actualJSON := generateJSON(ast)
 
 	normalizedJSON := normalizeJSON(actualJSON)
 

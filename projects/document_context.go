@@ -24,7 +24,7 @@ import (
 	common "github.com/ballerina-nutcracker/ballerina/common"
 	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
@@ -37,7 +37,7 @@ type documentContext struct {
 	disableSyntaxTree bool
 
 	// Lazy-loaded with sync.Once
-	syntaxTree     *tree.SyntaxTree
+	syntaxTree     *st.SyntaxTree
 	textDocument   text.TextDocument
 	syntaxTreeOnce sync.Once
 	textDocOnce    sync.Once
@@ -78,7 +78,7 @@ func (d *documentContext) registrationKey() string {
 
 // parseContent parses the content string and returns a SyntaxTree.
 // The textDoc parameter is passed to avoid circular dependency with TextDocument().
-func (d *documentContext) parseContent(content string, textDoc text.TextDocument) *tree.SyntaxTree {
+func (d *documentContext) parseContent(content string, textDoc text.TextDocument) *st.SyntaxTree {
 	// Create CharReader from content
 	charReader := text.CharReaderFromText(content)
 
@@ -93,25 +93,25 @@ func (d *documentContext) parseContent(content string, textDoc text.TextDocument
 
 	// Dependency files are not the user's own source — suppress debug dump output
 	// (DUMP_TOKENS, DUMP_ST) so they don't pollute --dump-tokens / --dump-st output.
-	var rawAST tree.STNode
+	var rawAST st.STNode
 	if d.diagKeyPrefix != "" {
 		common.WithSuppressedDebug(func() { rawAST = ballerinaParser.Parse() })
 	} else {
 		rawAST = ballerinaParser.Parse()
 	}
-	rootNode := rawAST.(*tree.STModulePart)
+	rootNode := rawAST.(*st.STModulePart)
 
 	// Create the ModulePart node
-	moduleNode := tree.CreateUnlinkedFacade[*tree.STModulePart, *tree.ModulePart](rootNode)
+	moduleNode := st.CreateUnlinkedFacade[*st.STModulePart, *st.ModulePart](rootNode)
 
-	syntaxTree := tree.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDoc, d.registrationKey(), false)
+	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDoc, d.registrationKey(), false)
 	return &syntaxTree
 }
 
 // parseWithStats parses the document and returns the syntax tree.
 // Uses lazy loading with sync.Once for memoization when disableSyntaxTree is false.
 // When disableSyntaxTree is true, parsing happens on every call (no caching).
-func (d *documentContext) parseWithStats(cx *compilercontext.CompilerContext) *tree.SyntaxTree {
+func (d *documentContext) parseWithStats(cx *compilercontext.CompilerContext) *st.SyntaxTree {
 	if d.disableSyntaxTree {
 		// Parse every time without caching
 		start := time.Now()
@@ -186,7 +186,7 @@ func (d *documentContext) moduleLoadRequests(cx *compilercontext.CompilerContext
 		return nil
 	}
 
-	modulePart, ok := rootNode.(*tree.ModulePart)
+	modulePart, ok := rootNode.(*st.ModulePart)
 	if !ok {
 		return nil
 	}
@@ -203,7 +203,7 @@ func (d *documentContext) moduleLoadRequests(cx *compilercontext.CompilerContext
 	return requests
 }
 
-func extractModuleLoadRequest(importDecl *tree.ImportDeclarationNode) *moduleLoadRequest {
+func extractModuleLoadRequest(importDecl *st.ImportDeclarationNode) *moduleLoadRequest {
 	// Get organization name (optional)
 	var orgName *PackageOrg
 	if importDecl.OrgName() != nil {

@@ -16,12 +16,12 @@
 package parser
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 )
 
 type TokenReader struct {
 	lexer             Lexer
-	currentToken      tree.STToken
+	currentToken      st.STToken
 	tokenBuffer       tokenBuffer
 	currentTokenIndex int
 }
@@ -33,7 +33,7 @@ func CreateTokenReader(lexer Lexer) *TokenReader {
 		currentTokenIndex: 0,
 		tokenBuffer: tokenBuffer{
 			capacity:   BUFFER_SIZE,
-			tokens:     make([]tree.STToken, BUFFER_SIZE),
+			tokens:     make([]st.STToken, BUFFER_SIZE),
 			endIndex:   -1,
 			startIndex: -1,
 			size:       0,
@@ -41,7 +41,7 @@ func CreateTokenReader(lexer Lexer) *TokenReader {
 	}
 }
 
-func (t *TokenReader) Read() tree.STToken {
+func (t *TokenReader) Read() st.STToken {
 	if t.tokenBuffer.size > 0 {
 		t.currentToken = t.tokenBuffer.consume()
 	} else {
@@ -51,7 +51,7 @@ func (t *TokenReader) Read() tree.STToken {
 	return t.currentToken
 }
 
-func (t *TokenReader) Peek() tree.STToken {
+func (t *TokenReader) Peek() st.STToken {
 	if t.tokenBuffer.size > 0 {
 		return t.tokenBuffer.peek()
 	} else {
@@ -61,7 +61,7 @@ func (t *TokenReader) Peek() tree.STToken {
 	}
 }
 
-func (t *TokenReader) PeekN(n int) tree.STToken {
+func (t *TokenReader) PeekN(n int) st.STToken {
 	if n >= BUFFER_SIZE {
 		panic("n is too large")
 	}
@@ -74,7 +74,7 @@ func (t *TokenReader) PeekN(n int) tree.STToken {
 	return t.tokenBuffer.peekN(n)
 }
 
-func (t *TokenReader) Head() tree.STToken {
+func (t *TokenReader) Head() st.STToken {
 	return t.currentToken
 }
 
@@ -102,13 +102,13 @@ const BUFFER_SIZE = 20
 
 type tokenBuffer struct {
 	capacity   int
-	tokens     []tree.STToken
+	tokens     []st.STToken
 	endIndex   int
 	startIndex int
 	size       int
 }
 
-func (t *tokenBuffer) add(token tree.STToken) {
+func (t *tokenBuffer) add(token st.STToken) {
 	if t.size == t.capacity {
 		panic("buffer overflow")
 	}
@@ -127,11 +127,11 @@ func (t *tokenBuffer) add(token tree.STToken) {
 	t.size++
 }
 
-func (t *tokenBuffer) peek() tree.STToken {
+func (t *tokenBuffer) peek() st.STToken {
 	return t.tokens[t.startIndex]
 }
 
-func (t *tokenBuffer) peekN(n int) tree.STToken {
+func (t *tokenBuffer) peekN(n int) st.STToken {
 	if n > t.size {
 		panic("n is too large")
 	}
@@ -144,7 +144,7 @@ func (t *tokenBuffer) peekN(n int) tree.STToken {
 	return t.tokens[index]
 }
 
-func (t *tokenBuffer) consume() tree.STToken {
+func (t *tokenBuffer) consume() st.STToken {
 	token := t.tokens[t.startIndex]
 	t.size--
 	if t.startIndex == t.capacity-1 {

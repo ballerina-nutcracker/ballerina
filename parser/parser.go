@@ -22,7 +22,7 @@ import (
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	tree "github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
@@ -99,14 +99,14 @@ type ParserErrorHandler interface {
 	GetParentContext() common.ParserRuleContext
 	EndContext()
 	StartContext(context common.ParserRuleContext)
-	Recover(currentCtx common.ParserRuleContext, token tree.STToken, isCompletion bool) *Solution
+	Recover(currentCtx common.ParserRuleContext, token st.STToken, isCompletion bool) *Solution
 	GetContextStack() []common.ParserRuleContext
 	GetGrandParentContext() common.ParserRuleContext
-	ConsumeInvalidToken() tree.STToken
+	ConsumeInvalidToken() st.STToken
 }
 
 type invalidNodeInfo struct {
-	node           tree.STNode
+	node           st.STNode
 	diagnosticCode diagnostics.DiagnosticCode
 	args           []any
 }
@@ -115,10 +115,10 @@ type abstractParser struct {
 	errorHandler         ParserErrorHandler
 	tokenReader          *TokenReader
 	invalidNodeInfoStack []invalidNodeInfo
-	insertedToken        tree.STToken
+	insertedToken        st.STToken
 }
 
-func NewInvalidNodeInfoFromInvalidNodeDiagnosticCodeArgs(invalidNode tree.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) invalidNodeInfo {
+func NewInvalidNodeInfoFromInvalidNodeDiagnosticCodeArgs(invalidNode st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) invalidNodeInfo {
 	this := invalidNodeInfo{}
 	this.node = invalidNode
 	this.diagnosticCode = diagnosticCode
@@ -148,14 +148,14 @@ func NewAbstractParserFromTokenReader(tokenReader *TokenReader) abstractParser {
 	return this
 }
 
-func (a *abstractParser) peek() tree.STToken {
+func (a *abstractParser) peek() st.STToken {
 	if a.insertedToken != nil {
 		return a.insertedToken
 	}
 	return a.tokenReader.Peek()
 }
 
-func (a *abstractParser) peekN(n int) tree.STToken {
+func (a *abstractParser) peekN(n int) st.STToken {
 	if a.insertedToken == nil {
 		return a.tokenReader.PeekN(n)
 	}
@@ -168,7 +168,7 @@ func (a *abstractParser) peekN(n int) tree.STToken {
 	return a.tokenReader.PeekN(n)
 }
 
-func (a *abstractParser) consume() tree.STToken {
+func (a *abstractParser) consume() st.STToken {
 	if a.insertedToken != nil {
 		nextToken := a.insertedToken
 		a.insertedToken = nil
@@ -180,37 +180,37 @@ func (a *abstractParser) consume() tree.STToken {
 	return a.consumeWithInvalidNodes()
 }
 
-func (a *abstractParser) consumeWithInvalidNodes() tree.STToken {
+func (a *abstractParser) consumeWithInvalidNodes() st.STToken {
 	token := a.tokenReader.Read()
 	return a.consumeWithInvalidNodesWithToken(token)
 }
 
-func (a *abstractParser) consumeWithInvalidNodesWithToken(token tree.STToken) tree.STToken {
+func (a *abstractParser) consumeWithInvalidNodesWithToken(token st.STToken) st.STToken {
 	newToken := token
 	for len(a.invalidNodeInfoStack) > 0 {
 		invalidNodeInfo := a.invalidNodeInfoStack[len(a.invalidNodeInfoStack)-1]
 		a.invalidNodeInfoStack = a.invalidNodeInfoStack[:len(a.invalidNodeInfoStack)-1]
-		newToken = tree.ToToken(tree.CloneWithLeadingInvalidNodeMinutiae(newToken, invalidNodeInfo.node,
+		newToken = st.ToToken(st.CloneWithLeadingInvalidNodeMinutiae(newToken, invalidNodeInfo.node,
 			invalidNodeInfo.diagnosticCode, invalidNodeInfo.args))
 	}
 	return newToken
 }
 
-func (a *abstractParser) recover(token tree.STToken, currentCtx common.ParserRuleContext, isCompletion bool) *Solution {
-	isCompletion = isCompletion || token.Kind() == common.EOF_TOKEN
+func (a *abstractParser) recover(token st.STToken, currentCtx common.ParserRuleContext, isCompletion bool) *Solution {
+	isCompletion = isCompletion || token.Kind() == st.EOF_TOKEN
 	sol := a.errorHandler.Recover(currentCtx, token, isCompletion)
 	switch sol.Action {
 	case ACTION_REMOVE:
 		a.insertedToken = nil
 		a.addInvalidTokenToNextToken(sol.RemovedToken)
 	case ACTION_INSERT:
-		a.insertedToken = tree.ToToken(sol.RecoveredNode)
+		a.insertedToken = st.ToToken(sol.RecoveredNode)
 	}
 	return sol
 }
 
-func (a *abstractParser) insertToken(kind common.SyntaxKind, context common.ParserRuleContext) {
-	a.insertedToken = tree.CreateMissingTokenWithDiagnosticsFromParserRules(kind, context)
+func (a *abstractParser) insertToken(kind st.SyntaxKind, context common.ParserRuleContext) {
+	a.insertedToken = createMissingTokenWithDiagnosticsFromParserRules(kind, context)
 }
 
 func (a *abstractParser) removeInsertedToken() {
@@ -237,67 +237,67 @@ func (a *abstractParser) switchContext(context common.ParserRuleContext) {
 	a.errorHandler.SwitchContext(context)
 }
 
-func (a *abstractParser) getNextNextToken() tree.STToken {
+func (a *abstractParser) getNextNextToken() st.STToken {
 	return a.peekN(2)
 }
 
-func (a *abstractParser) isNodeListEmpty(node tree.STNode) bool {
-	nodeList, ok := node.(*tree.STNodeList)
+func (a *abstractParser) isNodeListEmpty(node st.STNode) bool {
+	nodeList, ok := node.(*st.STNodeList)
 	if !ok {
 		panic("node is not a STNodeList")
 	}
 	return nodeList.IsEmpty()
 }
 
-func (a *abstractParser) cloneWithDiagnosticIfListEmpty(nodeList tree.STNode, target tree.STNode, diagnosticCode diagnostics.DiagnosticCode) tree.STNode {
+func (a *abstractParser) cloneWithDiagnosticIfListEmpty(nodeList st.STNode, target st.STNode, diagnosticCode diagnostics.DiagnosticCode) st.STNode {
 	if a.isNodeListEmpty(nodeList) {
-		return tree.AddDiagnostic(target, diagnosticCode)
+		return st.AddDiagnostic(target, diagnosticCode)
 	}
 	return target
 }
 
-func (a *abstractParser) updateLastNodeInListWithInvalidNode(nodeList []tree.STNode, invalidParam tree.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []tree.STNode {
+func (a *abstractParser) updateLastNodeInListWithInvalidNode(nodeList []st.STNode, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []st.STNode {
 	prevNode := nodeList[len(nodeList)-1]
 	nodeList = nodeList[:len(nodeList)-1]
-	newNode := tree.CloneWithTrailingInvalidNodeMinutiae(prevNode, invalidParam, diagnosticCode, args)
+	newNode := st.CloneWithTrailingInvalidNodeMinutiae(prevNode, invalidParam, diagnosticCode, args)
 	nodeList = append(nodeList, newNode)
 	return nodeList
 }
 
-func (a *abstractParser) updateFirstNodeInListWithLeadingInvalidNode(nodeList []tree.STNode, invalidParam tree.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []tree.STNode {
+func (a *abstractParser) updateFirstNodeInListWithLeadingInvalidNode(nodeList []st.STNode, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []st.STNode {
 	return a.updateANodeInListWithLeadingInvalidNode(nodeList, 0, invalidParam, diagnosticCode, args)
 }
 
-func (a *abstractParser) updateANodeInListWithLeadingInvalidNode(nodeList []tree.STNode, indexOfTheNode int, invalidParam tree.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []tree.STNode {
+func (a *abstractParser) updateANodeInListWithLeadingInvalidNode(nodeList []st.STNode, indexOfTheNode int, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []st.STNode {
 	node := nodeList[indexOfTheNode]
-	newNode := tree.CloneWithLeadingInvalidNodeMinutiae(node, invalidParam, diagnosticCode, args)
+	newNode := st.CloneWithLeadingInvalidNodeMinutiae(node, invalidParam, diagnosticCode, args)
 	nodeList[indexOfTheNode] = newNode
 	return nodeList
 }
 
-func (a *abstractParser) invalidateRestAndAddToTrailingMinutiae(node tree.STNode) tree.STNode {
+func (a *abstractParser) invalidateRestAndAddToTrailingMinutiae(node st.STNode) st.STNode {
 	node = a.addInvalidNodeStackToTrailingMinutiae(node)
-	for a.peek().Kind() != common.EOF_TOKEN {
+	for a.peek().Kind() != st.EOF_TOKEN {
 		invalidToken := a.consume()
-		node = tree.CloneWithTrailingInvalidNodeMinutiae(node, invalidToken, &common.ERROR_INVALID_TOKEN, invalidToken.Text())
+		node = st.CloneWithTrailingInvalidNodeMinutiae(node, invalidToken, &common.ERROR_INVALID_TOKEN, invalidToken.Text())
 	}
 	return node
 }
 
-func (a *abstractParser) addInvalidNodeStackToTrailingMinutiae(node tree.STNode) tree.STNode {
+func (a *abstractParser) addInvalidNodeStackToTrailingMinutiae(node st.STNode) st.STNode {
 	for len(a.invalidNodeInfoStack) != 0 {
 		invalidNodeInfo := a.invalidNodeInfoStack[len(a.invalidNodeInfoStack)-1]
 		a.invalidNodeInfoStack = a.invalidNodeInfoStack[:len(a.invalidNodeInfoStack)-1]
-		node = tree.CloneWithTrailingInvalidNodeMinutiae(node, invalidNodeInfo.node, invalidNodeInfo.diagnosticCode, invalidNodeInfo.args)
+		node = st.CloneWithTrailingInvalidNodeMinutiae(node, invalidNodeInfo.node, invalidNodeInfo.diagnosticCode, invalidNodeInfo.args)
 	}
 	return node
 }
 
-func (a *abstractParser) addInvalidNodeToNextToken(invalidNode tree.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) {
+func (a *abstractParser) addInvalidNodeToNextToken(invalidNode st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) {
 	a.invalidNodeInfoStack = append(a.invalidNodeInfoStack, invalidNodeInfo{node: invalidNode, diagnosticCode: diagnosticCode, args: args})
 }
 
-func (a *abstractParser) addInvalidTokenToNextToken(invalidNode tree.STToken) {
+func (a *abstractParser) addInvalidTokenToNextToken(invalidNode st.STToken) {
 	a.invalidNodeInfoStack = append(a.invalidNodeInfoStack, invalidNodeInfo{node: invalidNode, diagnosticCode: &common.ERROR_INVALID_TOKEN, args: []any{invalidNode.Text()}})
 }
 
@@ -319,57 +319,57 @@ func NewBallerinaParserFromTokenReader(tokenReader *TokenReader) BallerinaParser
 	return this
 }
 
-func isParameterizedTypeToken(tokenKind common.SyntaxKind) bool {
+func isParameterizedTypeToken(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.TYPEDESC_KEYWORD, common.FUTURE_KEYWORD, common.XML_KEYWORD, common.ERROR_KEYWORD:
+	case st.TYPEDESC_KEYWORD, st.FUTURE_KEYWORD, st.XML_KEYWORD, st.ERROR_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func CreateBuiltinSimpleNameReference(token tree.STNode) tree.STNode {
+func CreateBuiltinSimpleNameReference(token st.STNode) st.STNode {
 	typeKind := getBuiltinTypeSyntaxKind(token.Kind())
-	return tree.CreateBuiltinSimpleNameReferenceNode(typeKind, token)
+	return st.CreateBuiltinSimpleNameReferenceNode(typeKind, token)
 }
 
-func isCompoundBinaryOperator(tokenKind common.SyntaxKind) bool {
+func isCompoundBinaryOperator(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.SLASH_TOKEN,
-		common.ASTERISK_TOKEN,
-		common.BITWISE_AND_TOKEN,
-		common.BITWISE_XOR_TOKEN,
-		common.PIPE_TOKEN,
-		common.DOUBLE_LT_TOKEN,
-		common.DOUBLE_GT_TOKEN,
-		common.TRIPPLE_GT_TOKEN:
+	case st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.SLASH_TOKEN,
+		st.ASTERISK_TOKEN,
+		st.BITWISE_AND_TOKEN,
+		st.BITWISE_XOR_TOKEN,
+		st.PIPE_TOKEN,
+		st.DOUBLE_LT_TOKEN,
+		st.DOUBLE_GT_TOKEN,
+		st.TRIPPLE_GT_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func isTypeStartingToken(nextTokenKind common.SyntaxKind, nextNextToken tree.STToken) bool {
+func isTypeStartingToken(nextTokenKind st.SyntaxKind, nextNextToken st.STToken) bool {
 	switch nextTokenKind {
-	case common.IDENTIFIER_TOKEN,
-		common.SERVICE_KEYWORD,
-		common.RECORD_KEYWORD,
-		common.OBJECT_KEYWORD,
-		common.ABSTRACT_KEYWORD,
-		common.CLIENT_KEYWORD,
-		common.OPEN_PAREN_TOKEN,
-		common.MAP_KEYWORD,
-		common.STREAM_KEYWORD,
-		common.TABLE_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.OPEN_BRACKET_TOKEN,
-		common.DISTINCT_KEYWORD,
-		common.ISOLATED_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD,
-		common.TRANSACTION_KEYWORD,
-		common.NATURAL_KEYWORD:
+	case st.IDENTIFIER_TOKEN,
+		st.SERVICE_KEYWORD,
+		st.RECORD_KEYWORD,
+		st.OBJECT_KEYWORD,
+		st.ABSTRACT_KEYWORD,
+		st.CLIENT_KEYWORD,
+		st.OPEN_PAREN_TOKEN,
+		st.MAP_KEYWORD,
+		st.STREAM_KEYWORD,
+		st.TABLE_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.OPEN_BRACKET_TOKEN,
+		st.DISTINCT_KEYWORD,
+		st.ISOLATED_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD,
+		st.TRANSACTION_KEYWORD,
+		st.NATURAL_KEYWORD:
 		return true
 	default:
 		if isParameterizedTypeToken(nextTokenKind) {
@@ -382,136 +382,136 @@ func isTypeStartingToken(nextTokenKind common.SyntaxKind, nextNextToken tree.STT
 	}
 }
 
-func isSimpleType(nodeKind common.SyntaxKind) bool {
+func isSimpleType(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
-	case common.INT_KEYWORD,
-		common.FLOAT_KEYWORD,
-		common.DECIMAL_KEYWORD,
-		common.BOOLEAN_KEYWORD,
-		common.STRING_KEYWORD,
-		common.BYTE_KEYWORD,
-		common.JSON_KEYWORD,
-		common.HANDLE_KEYWORD,
-		common.ANY_KEYWORD,
-		common.ANYDATA_KEYWORD,
-		common.NEVER_KEYWORD,
-		common.VAR_KEYWORD,
-		common.READONLY_KEYWORD:
+	case st.INT_KEYWORD,
+		st.FLOAT_KEYWORD,
+		st.DECIMAL_KEYWORD,
+		st.BOOLEAN_KEYWORD,
+		st.STRING_KEYWORD,
+		st.BYTE_KEYWORD,
+		st.JSON_KEYWORD,
+		st.HANDLE_KEYWORD,
+		st.ANY_KEYWORD,
+		st.ANYDATA_KEYWORD,
+		st.NEVER_KEYWORD,
+		st.VAR_KEYWORD,
+		st.READONLY_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func isPredeclaredPrefix(nodeKind common.SyntaxKind) bool {
+func isPredeclaredPrefix(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
-	case common.BOOLEAN_KEYWORD,
-		common.DECIMAL_KEYWORD,
-		common.ERROR_KEYWORD,
-		common.FLOAT_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.FUTURE_KEYWORD,
-		common.INT_KEYWORD,
-		common.MAP_KEYWORD,
-		common.NATURAL_KEYWORD,
-		common.OBJECT_KEYWORD,
-		common.STREAM_KEYWORD,
-		common.STRING_KEYWORD,
-		common.TABLE_KEYWORD,
-		common.TRANSACTION_KEYWORD,
-		common.TYPEDESC_KEYWORD,
-		common.XML_KEYWORD:
+	case st.BOOLEAN_KEYWORD,
+		st.DECIMAL_KEYWORD,
+		st.ERROR_KEYWORD,
+		st.FLOAT_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.FUTURE_KEYWORD,
+		st.INT_KEYWORD,
+		st.MAP_KEYWORD,
+		st.NATURAL_KEYWORD,
+		st.OBJECT_KEYWORD,
+		st.STREAM_KEYWORD,
+		st.STRING_KEYWORD,
+		st.TABLE_KEYWORD,
+		st.TRANSACTION_KEYWORD,
+		st.TYPEDESC_KEYWORD,
+		st.XML_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func getBuiltinTypeSyntaxKind(typeKeyword common.SyntaxKind) common.SyntaxKind {
+func getBuiltinTypeSyntaxKind(typeKeyword st.SyntaxKind) st.SyntaxKind {
 	switch typeKeyword {
-	case common.INT_KEYWORD:
-		return common.INT_TYPE_DESC
-	case common.FLOAT_KEYWORD:
-		return common.FLOAT_TYPE_DESC
-	case common.DECIMAL_KEYWORD:
-		return common.DECIMAL_TYPE_DESC
-	case common.BOOLEAN_KEYWORD:
-		return common.BOOLEAN_TYPE_DESC
-	case common.STRING_KEYWORD:
-		return common.STRING_TYPE_DESC
-	case common.BYTE_KEYWORD:
-		return common.BYTE_TYPE_DESC
-	case common.JSON_KEYWORD:
-		return common.JSON_TYPE_DESC
-	case common.HANDLE_KEYWORD:
-		return common.HANDLE_TYPE_DESC
-	case common.ANY_KEYWORD:
-		return common.ANY_TYPE_DESC
-	case common.ANYDATA_KEYWORD:
-		return common.ANYDATA_TYPE_DESC
-	case common.NEVER_KEYWORD:
-		return common.NEVER_TYPE_DESC
-	case common.VAR_KEYWORD:
-		return common.VAR_TYPE_DESC
-	case common.READONLY_KEYWORD:
-		return common.READONLY_TYPE_DESC
+	case st.INT_KEYWORD:
+		return st.INT_TYPE_DESC
+	case st.FLOAT_KEYWORD:
+		return st.FLOAT_TYPE_DESC
+	case st.DECIMAL_KEYWORD:
+		return st.DECIMAL_TYPE_DESC
+	case st.BOOLEAN_KEYWORD:
+		return st.BOOLEAN_TYPE_DESC
+	case st.STRING_KEYWORD:
+		return st.STRING_TYPE_DESC
+	case st.BYTE_KEYWORD:
+		return st.BYTE_TYPE_DESC
+	case st.JSON_KEYWORD:
+		return st.JSON_TYPE_DESC
+	case st.HANDLE_KEYWORD:
+		return st.HANDLE_TYPE_DESC
+	case st.ANY_KEYWORD:
+		return st.ANY_TYPE_DESC
+	case st.ANYDATA_KEYWORD:
+		return st.ANYDATA_TYPE_DESC
+	case st.NEVER_KEYWORD:
+		return st.NEVER_TYPE_DESC
+	case st.VAR_KEYWORD:
+		return st.VAR_TYPE_DESC
+	case st.READONLY_KEYWORD:
+		return st.READONLY_TYPE_DESC
 	default:
 		panic(typeKeyword.StrValue() + "is not a built-in type")
 	}
 }
 
-func isKeyKeyword(token tree.STToken) bool {
-	return ((token.Kind() == common.IDENTIFIER_TOKEN) && KEY == token.Text())
+func isKeyKeyword(token st.STToken) bool {
+	return ((token.Kind() == st.IDENTIFIER_TOKEN) && KEY == token.Text())
 }
 
-func isNaturalKeyword(token tree.STToken) bool {
-	return ((token.Kind() == common.IDENTIFIER_TOKEN) && NATURAL == (token.Text()))
+func isNaturalKeyword(token st.STToken) bool {
+	return ((token.Kind() == st.IDENTIFIER_TOKEN) && NATURAL == (token.Text()))
 }
 
-func isEndOfLetVarDeclarations(nextToken tree.STToken, nextNextToken tree.STToken) bool {
+func isEndOfLetVarDeclarations(nextToken st.STToken, nextNextToken st.STToken) bool {
 	tokenKind := nextToken.Kind()
 	switch tokenKind {
-	case common.COMMA_TOKEN, common.AT_TOKEN:
+	case st.COMMA_TOKEN, st.AT_TOKEN:
 		return false
-	case common.IN_KEYWORD:
+	case st.IN_KEYWORD:
 		return true
 	default:
 		return (isGroupOrCollectKeyword(nextToken) || (!isTypeStartingToken(tokenKind, nextNextToken)))
 	}
 }
 
-func isGroupOrCollectKeyword(nextToken tree.STToken) bool {
-	return (isKeywordMatch(common.COLLECT_KEYWORD, nextToken) || isKeywordMatch(common.GROUP_KEYWORD, nextToken))
+func isGroupOrCollectKeyword(nextToken st.STToken) bool {
+	return (isKeywordMatch(st.COLLECT_KEYWORD, nextToken) || isKeywordMatch(st.GROUP_KEYWORD, nextToken))
 }
 
-func isKeywordMatch(syntaxKind common.SyntaxKind, token tree.STToken) bool {
-	return ((token.Kind() == common.IDENTIFIER_TOKEN) && syntaxKind.StrValue() == (token.Text()))
+func isKeywordMatch(syntaxKind st.SyntaxKind, token st.STToken) bool {
+	return ((token.Kind() == st.IDENTIFIER_TOKEN) && syntaxKind.StrValue() == (token.Text()))
 }
 
-func isSingletonTypeDescStart(tokenKind common.SyntaxKind, nextNextToken tree.STToken) bool {
+func isSingletonTypeDescStart(tokenKind st.SyntaxKind, nextNextToken st.STToken) bool {
 	switch tokenKind {
-	case common.STRING_LITERAL_TOKEN,
-		common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.NULL_KEYWORD:
+	case st.STRING_LITERAL_TOKEN,
+		st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.NULL_KEYWORD:
 		return true
-	case common.PLUS_TOKEN, common.MINUS_TOKEN:
+	case st.PLUS_TOKEN, st.MINUS_TOKEN:
 		return isIntOrFloat(nextNextToken)
 	default:
 		return false
 	}
 }
 
-func isIntOrFloat(token tree.STToken) bool {
+func isIntOrFloat(token st.STToken) bool {
 	switch token.Kind() {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		return true
 	default:
 		return false
@@ -598,19 +598,19 @@ func isDigit(c byte) bool {
 	return (('0' <= c) && (c <= '9'))
 }
 
-func (b *BallerinaParser) Parse() tree.STNode {
+func (b *BallerinaParser) Parse() st.STNode {
 	ast := b.parseCompUnit()
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return tree.GenerateJSON(ast) })
+	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
 	return ast
 }
 
-func (b *BallerinaParser) ParseImports() tree.STNode {
+func (b *BallerinaParser) ParseImports() st.STNode {
 	ast := b.parseCompUnitImports()
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return tree.GenerateJSON(ast) })
+	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
 	return ast
 }
 
-func (b *BallerinaParser) ParseAsStatement() tree.STNode {
+func (b *BallerinaParser) ParseAsStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -620,7 +620,7 @@ func (b *BallerinaParser) ParseAsStatement() tree.STNode {
 		stmt = b.invalidateRestAndAddToTrailingMinutiae(stmt)
 		return stmt
 	}
-	if stmt.Kind() == common.NAMED_WORKER_DECLARATION {
+	if stmt.Kind() == st.NAMED_WORKER_DECLARATION {
 		b.addInvalidNodeToNextToken(stmt, &common.ERROR_NAMED_WORKER_NOT_ALLOWED_HERE)
 		stmt = b.createMissingSimpleVarDecl(false)
 		stmt = b.invalidateRestAndAddToTrailingMinutiae(stmt)
@@ -630,7 +630,7 @@ func (b *BallerinaParser) ParseAsStatement() tree.STNode {
 	return stmt
 }
 
-func (b *BallerinaParser) ParseAsBlockStatement() tree.STNode {
+func (b *BallerinaParser) ParseAsBlockStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -640,19 +640,19 @@ func (b *BallerinaParser) ParseAsBlockStatement() tree.STNode {
 	return blockStmtNode
 }
 
-func (b *BallerinaParser) ParseAsStatements() tree.STNode {
+func (b *BallerinaParser) ParseAsStatements() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
 	stmtsNode := b.parseStatements()
-	stmtNodeList, ok := stmtsNode.(*tree.STNodeList)
+	stmtNodeList, ok := stmtsNode.(*st.STNodeList)
 	if !ok {
 		panic("stmtsNode is not a STNodeList")
 	}
-	var stmts []tree.STNode
+	var stmts []st.STNode
 	for i := 0; i < (stmtNodeList.Size() - 1); i++ {
 		stmts = append(stmts, stmtNodeList.Get(i))
 	}
-	var lastStmt tree.STNode
+	var lastStmt st.STNode
 	if stmtNodeList.Size() == 0 {
 		lastStmt = b.createMissingSimpleVarDecl(false)
 	} else {
@@ -660,10 +660,10 @@ func (b *BallerinaParser) ParseAsStatements() tree.STNode {
 	}
 	lastStmt = b.invalidateRestAndAddToTrailingMinutiae(lastStmt)
 	stmts = append(stmts, lastStmt)
-	return tree.CreateNodeList(stmts...)
+	return st.CreateNodeList(stmts...)
 }
 
-func (b *BallerinaParser) ParseAsExpression() tree.STNode {
+func (b *BallerinaParser) ParseAsExpression() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	expr := b.parseExpression()
@@ -671,7 +671,7 @@ func (b *BallerinaParser) ParseAsExpression() tree.STNode {
 	return expr
 }
 
-func (b *BallerinaParser) ParseAsActionOrExpression() tree.STNode {
+func (b *BallerinaParser) ParseAsActionOrExpression() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -681,29 +681,29 @@ func (b *BallerinaParser) ParseAsActionOrExpression() tree.STNode {
 	return actionOrExpr
 }
 
-func (b *BallerinaParser) ParseAsModuleMemberDeclaration() tree.STNode {
+func (b *BallerinaParser) ParseAsModuleMemberDeclaration() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	topLevelNode := b.parseTopLevelNode()
 	if topLevelNode == nil {
 		topLevelNode = b.createMissingSimpleVarDecl(true)
 	}
-	if topLevelNode.Kind() == common.IMPORT_DECLARATION {
+	if topLevelNode.Kind() == st.IMPORT_DECLARATION {
 		temp := topLevelNode
 		topLevelNode = b.createMissingSimpleVarDecl(true)
-		topLevelNode = tree.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(topLevelNode, temp)
+		topLevelNode = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(topLevelNode, temp)
 	}
 	topLevelNode = b.invalidateRestAndAddToTrailingMinutiae(topLevelNode)
 	return topLevelNode
 }
 
-func (b *BallerinaParser) ParseAsImportDeclaration() tree.STNode {
+func (b *BallerinaParser) ParseAsImportDeclaration() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	importDecl := b.parseImportDecl()
 	importDecl = b.invalidateRestAndAddToTrailingMinutiae(importDecl)
 	return importDecl
 }
 
-func (b *BallerinaParser) ParseAsTypeDescriptor() tree.STNode {
+func (b *BallerinaParser) ParseAsTypeDescriptor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_TYPE_DEFINITION)
 	typeDesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_DEF)
@@ -711,7 +711,7 @@ func (b *BallerinaParser) ParseAsTypeDescriptor() tree.STNode {
 	return typeDesc
 }
 
-func (b *BallerinaParser) ParseAsBindingPattern() tree.STNode {
+func (b *BallerinaParser) ParseAsBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	bindingPattern := b.parseBindingPattern()
@@ -719,7 +719,7 @@ func (b *BallerinaParser) ParseAsBindingPattern() tree.STNode {
 	return bindingPattern
 }
 
-func (b *BallerinaParser) ParseAsFunctionBodyBlock() tree.STNode {
+func (b *BallerinaParser) ParseAsFunctionBodyBlock() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	funcBodyBlock := b.parseFunctionBodyBlock(false)
@@ -727,7 +727,7 @@ func (b *BallerinaParser) ParseAsFunctionBodyBlock() tree.STNode {
 	return funcBodyBlock
 }
 
-func (b *BallerinaParser) ParseAsObjectMember() tree.STNode {
+func (b *BallerinaParser) ParseAsObjectMember() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_SERVICE_DECL)
 	b.startContext(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER)
@@ -739,29 +739,29 @@ func (b *BallerinaParser) ParseAsObjectMember() tree.STNode {
 	return objectMember
 }
 
-func (b *BallerinaParser) ParseAsIntermediateClause(allowActions bool) tree.STNode {
+func (b *BallerinaParser) ParseAsIntermediateClause(allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	b.startContext(common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION)
-	var intermediateClause tree.STNode
+	var intermediateClause st.STNode
 	if !b.isEndOfIntermediateClause(b.peek().Kind()) {
 		intermediateClause = b.parseIntermediateClause(true, allowActions)
 	}
 	if intermediateClause == nil {
 		intermediateClause = b.createMissingWhereClause()
 	}
-	if intermediateClause.Kind() == common.SELECT_CLAUSE {
+	if intermediateClause.Kind() == st.SELECT_CLAUSE {
 		temp := intermediateClause
 		intermediateClause = b.createMissingWhereClause()
-		intermediateClause = tree.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(intermediateClause, temp)
+		intermediateClause = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(intermediateClause, temp)
 	}
 	intermediateClause = b.invalidateRestAndAddToTrailingMinutiae(intermediateClause)
 	return intermediateClause
 }
 
-func (b *BallerinaParser) ParseAsLetVarDeclaration(allowActions bool) tree.STNode {
+func (b *BallerinaParser) ParseAsLetVarDeclaration(allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	b.switchContext(common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION)
@@ -771,7 +771,7 @@ func (b *BallerinaParser) ParseAsLetVarDeclaration(allowActions bool) tree.STNod
 	return letVarDeclaration
 }
 
-func (b *BallerinaParser) ParseAsAnnotation() tree.STNode {
+func (b *BallerinaParser) ParseAsAnnotation() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATIONS)
 	annotation := b.parseAnnotation()
@@ -779,21 +779,21 @@ func (b *BallerinaParser) ParseAsAnnotation() tree.STNode {
 	return annotation
 }
 
-func (b *BallerinaParser) ParseAsMarkdownDocumentation() tree.STNode {
+func (b *BallerinaParser) ParseAsMarkdownDocumentation() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	markdownDoc := b.parseMarkdownDocumentation()
-	if tree.ToSourceCode(markdownDoc) == "" {
-		missingHash := tree.CreateMissingTokenWithDiagnostics(common.HASH_TOKEN,
+	if st.ToSourceCode(markdownDoc) == "" {
+		missingHash := st.CreateMissingTokenWithDiagnostics(st.HASH_TOKEN,
 			&common.WARNING_MISSING_HASH_TOKEN)
-		docLine := tree.CreateMarkdownDocumentationLineNode(common.MARKDOWN_DOCUMENTATION_LINE,
-			missingHash, tree.CreateEmptyNodeList())
-		markdownDoc = tree.CreateMarkdownDocumentationNode(tree.CreateNodeListFromNodes(docLine))
+		docLine := st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_DOCUMENTATION_LINE,
+			missingHash, st.CreateEmptyNodeList())
+		markdownDoc = st.CreateMarkdownDocumentationNode(st.CreateNodeListFromNodes(docLine))
 	}
 	markdownDoc = b.invalidateRestAndAddToTrailingMinutiae(markdownDoc)
 	return markdownDoc
 }
 
-func (b *BallerinaParser) ParseWithContext(context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) ParseWithContext(context common.ParserRuleContext) st.STNode {
 	switch context {
 	case common.PARSER_RULE_CONTEXT_COMP_UNIT:
 		return b.parseCompUnit()
@@ -813,18 +813,18 @@ func (b *BallerinaParser) ParseWithContext(context common.ParserRuleContext) tre
 	}
 }
 
-func (b *BallerinaParser) parseCompUnit() tree.STNode {
+func (b *BallerinaParser) parseCompUnit() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
-	var otherDecls []tree.STNode
-	var importDecls []tree.STNode
+	var otherDecls []st.STNode
+	var importDecls []st.STNode
 	processImports := true
 	token := b.peek()
-	for token.Kind() != common.EOF_TOKEN {
+	for token.Kind() != st.EOF_TOKEN {
 		decl := b.parseTopLevelNode()
 		if decl == nil {
 			break
 		}
-		if decl.Kind() == common.IMPORT_DECLARATION {
+		if decl.Kind() == st.IMPORT_DECLARATION {
 			if processImports {
 				importDecls = append(importDecls, decl)
 			} else {
@@ -841,68 +841,68 @@ func (b *BallerinaParser) parseCompUnit() tree.STNode {
 	}
 	eof := b.consume()
 	b.endContext()
-	return tree.CreateModulePartNode(tree.CreateNodeList(importDecls...), tree.CreateNodeList(otherDecls...), eof)
+	return st.CreateModulePartNode(st.CreateNodeList(importDecls...), st.CreateNodeList(otherDecls...), eof)
 }
 
-func (b *BallerinaParser) parseCompUnitImports() tree.STNode {
+func (b *BallerinaParser) parseCompUnitImports() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
-	var importDecls []tree.STNode
-	for b.peek().Kind() == common.IMPORT_KEYWORD {
+	var importDecls []st.STNode
+	for b.peek().Kind() == st.IMPORT_KEYWORD {
 		importDecls = append(importDecls, b.parseImportDecl())
 	}
 	b.endContext()
-	return tree.CreateModulePartNode(
-		tree.CreateNodeList(importDecls...),
-		tree.CreateEmptyNodeList(),
-		tree.CreateMissingToken(common.EOF_TOKEN, nil),
+	return st.CreateModulePartNode(
+		st.CreateNodeList(importDecls...),
+		st.CreateEmptyNodeList(),
+		st.CreateMissingToken(st.EOF_TOKEN, nil),
 	)
 }
 
-func (b *BallerinaParser) parseTopLevelNode() tree.STNode {
+func (b *BallerinaParser) parseTopLevelNode() st.STNode {
 	nextToken := b.peek()
-	var metadata tree.STNode
+	var metadata st.STNode
 	switch nextToken.Kind() {
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		return nil
-	case common.DOCUMENTATION_STRING, common.AT_TOKEN:
+	case st.DOCUMENTATION_STRING, st.AT_TOKEN:
 		metadata = b.parseMetaData()
 		return b.parseTopLevelNodeWithMetadata(metadata)
-	case common.IMPORT_KEYWORD,
-		common.FINAL_KEYWORD,
-		common.PUBLIC_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.CONST_KEYWORD,
-		common.ANNOTATION_KEYWORD,
-		common.XMLNS_KEYWORD,
-		common.ENUM_KEYWORD,
-		common.CLASS_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD,
-		common.ISOLATED_KEYWORD,
-		common.DISTINCT_KEYWORD,
-		common.CLIENT_KEYWORD,
-		common.READONLY_KEYWORD,
-		common.CONFIGURABLE_KEYWORD,
-		common.SERVICE_KEYWORD:
-		metadata = tree.CreateEmptyNode()
-	case common.RESOURCE_KEYWORD, common.REMOTE_KEYWORD:
+	case st.IMPORT_KEYWORD,
+		st.FINAL_KEYWORD,
+		st.PUBLIC_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.CONST_KEYWORD,
+		st.ANNOTATION_KEYWORD,
+		st.XMLNS_KEYWORD,
+		st.ENUM_KEYWORD,
+		st.CLASS_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD,
+		st.ISOLATED_KEYWORD,
+		st.DISTINCT_KEYWORD,
+		st.CLIENT_KEYWORD,
+		st.READONLY_KEYWORD,
+		st.CONFIGURABLE_KEYWORD,
+		st.SERVICE_KEYWORD:
+		metadata = st.CreateEmptyNode()
+	case st.RESOURCE_KEYWORD, st.REMOTE_KEYWORD:
 		b.reportInvalidQualifier(b.consume())
 		return b.parseTopLevelNode()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		if b.isModuleVarDeclStart(1) || nextToken.IsMissing() {
-			return b.parseModuleVarDecl(tree.CreateEmptyNode())
+			return b.parseModuleVarDecl(st.CreateEmptyNode())
 		}
 		fallthrough
 	default:
-		if isTypeStartingToken(nextToken.Kind(), b.getNextNextToken()) && (nextToken.Kind() != common.IDENTIFIER_TOKEN) {
-			metadata = tree.CreateEmptyNode()
+		if isTypeStartingToken(nextToken.Kind(), b.getNextNextToken()) && (nextToken.Kind() != st.IDENTIFIER_TOKEN) {
+			metadata = st.CreateEmptyNode()
 			break
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE)
 		if solution.Action == ACTION_KEEP {
-			metadata = tree.CreateEmptyNode()
+			metadata = st.CreateEmptyNode()
 			break
 		}
 		return b.parseTopLevelNode()
@@ -910,13 +910,13 @@ func (b *BallerinaParser) parseTopLevelNode() tree.STNode {
 	return b.parseTopLevelNodeWithMetadata(metadata)
 }
 
-func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata st.STNode) st.STNode {
 	nextToken := b.peek()
-	var publicQualifier tree.STNode
+	var publicQualifier st.STNode
 	switch nextToken.Kind() {
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		if metadata != nil {
-			metadaNode, ok := metadata.(*tree.STMetadataNode)
+			metadaNode, ok := metadata.(*st.STMetadataNode)
 			if !ok {
 				panic("metadata is not a STMetadataNode")
 			}
@@ -924,42 +924,42 @@ func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata tree.STNode) tr
 			return b.createMissingSimpleVarDeclInner(metadata, true)
 		}
 		return nil
-	case common.PUBLIC_KEYWORD:
+	case st.PUBLIC_KEYWORD:
 		publicQualifier = b.consume()
-	case common.FUNCTION_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.CONST_KEYWORD,
-		common.FINAL_KEYWORD,
-		common.IMPORT_KEYWORD,
-		common.ANNOTATION_KEYWORD,
-		common.XMLNS_KEYWORD,
-		common.ENUM_KEYWORD,
-		common.CLASS_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD,
-		common.ISOLATED_KEYWORD,
-		common.DISTINCT_KEYWORD,
-		common.CLIENT_KEYWORD,
-		common.READONLY_KEYWORD,
-		common.SERVICE_KEYWORD,
-		common.CONFIGURABLE_KEYWORD:
+	case st.FUNCTION_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.CONST_KEYWORD,
+		st.FINAL_KEYWORD,
+		st.IMPORT_KEYWORD,
+		st.ANNOTATION_KEYWORD,
+		st.XMLNS_KEYWORD,
+		st.ENUM_KEYWORD,
+		st.CLASS_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD,
+		st.ISOLATED_KEYWORD,
+		st.DISTINCT_KEYWORD,
+		st.CLIENT_KEYWORD,
+		st.READONLY_KEYWORD,
+		st.SERVICE_KEYWORD,
+		st.CONFIGURABLE_KEYWORD:
 		break
-	case common.RESOURCE_KEYWORD, common.REMOTE_KEYWORD:
+	case st.RESOURCE_KEYWORD, st.REMOTE_KEYWORD:
 		b.reportInvalidQualifier(b.consume())
 		return b.parseTopLevelNodeWithMetadata(metadata)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		if b.isModuleVarDeclStart(1) {
 			return b.parseModuleVarDecl(metadata)
 		}
 		fallthrough
 	default:
-		if b.isTypeStartingToken(nextToken.Kind()) && (nextToken.Kind() != common.IDENTIFIER_TOKEN) {
+		if b.isTypeStartingToken(nextToken.Kind()) && (nextToken.Kind() != st.IDENTIFIER_TOKEN) {
 			break
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_METADATA)
 		if solution.Action == ACTION_KEEP {
-			publicQualifier = tree.CreateEmptyNode()
+			publicQualifier = st.CreateEmptyNode()
 			break
 		}
 		return b.parseTopLevelNodeWithMetadata(metadata)
@@ -967,56 +967,56 @@ func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata tree.STNode) tr
 	return b.parseTopLevelNodeWithQualifiers(metadata, publicQualifier)
 }
 
-func (b *BallerinaParser) addMetadataNotAttachedDiagnostic(metadata tree.STMetadataNode) tree.STNode {
+func (b *BallerinaParser) addMetadataNotAttachedDiagnostic(metadata st.STMetadataNode) st.STNode {
 	docString := metadata.DocumentationString
 	if docString != nil {
-		docString = tree.AddDiagnostic(docString, &common.ERROR_DOCUMENTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
+		docString = st.AddDiagnostic(docString, &common.ERROR_DOCUMENTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
 	}
-	annotList, ok := metadata.Annotations.(*tree.STNodeList)
+	annotList, ok := metadata.Annotations.(*st.STNodeList)
 	if !ok {
 		panic("annotations is not a STNodeList")
 	}
 	annotations := b.addAnnotNotAttachedDiagnostic(annotList)
-	return tree.CreateMetadataNode(docString, annotations)
+	return st.CreateMetadataNode(docString, annotations)
 }
 
-func (b *BallerinaParser) addAnnotNotAttachedDiagnostic(annotList *tree.STNodeList) tree.STNode {
-	annotations := tree.UpdateAllNodesInNodeListWithDiagnostic(annotList, &common.ERROR_ANNOTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
+func (b *BallerinaParser) addAnnotNotAttachedDiagnostic(annotList *st.STNodeList) st.STNode {
+	annotations := st.UpdateAllNodesInNodeListWithDiagnostic(annotList, &common.ERROR_ANNOTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
 	return annotations
 }
 
 func (b *BallerinaParser) isModuleVarDeclStart(lookahead int) bool {
 	nextToken := b.peekN(lookahead + 1)
 	switch nextToken.Kind() {
-	case common.EQUAL_TOKEN, // Scenario: foo = . Even though this is not valid, consider this as a var-decl and
+	case st.EQUAL_TOKEN, // Scenario: foo = . Even though this is not valid, consider this as a var-decl and
 		// continue;
-		common.OPEN_BRACKET_TOKEN,  // Scenario foo[] (Array type descriptor with custom type)
-		common.QUESTION_MARK_TOKEN, // Scenario foo? (Optional type descriptor with custom type)
-		common.PIPE_TOKEN,          // Scenario foo | (Union type descriptor with custom type)
-		common.BITWISE_AND_TOKEN,   // Scenario foo & (Intersection type descriptor with custom type)
-		common.OPEN_BRACE_TOKEN,    // Scenario foo{} (mapping-binding-pattern)
-		common.ERROR_KEYWORD,       // Scenario foo error (error-binding-pattern)
-		common.EOF_TOKEN:
+		st.OPEN_BRACKET_TOKEN,  // Scenario foo[] (Array type descriptor with custom type)
+		st.QUESTION_MARK_TOKEN, // Scenario foo? (Optional type descriptor with custom type)
+		st.PIPE_TOKEN,          // Scenario foo | (Union type descriptor with custom type)
+		st.BITWISE_AND_TOKEN,   // Scenario foo & (Intersection type descriptor with custom type)
+		st.OPEN_BRACE_TOKEN,    // Scenario foo{} (mapping-binding-pattern)
+		st.ERROR_KEYWORD,       // Scenario foo error (error-binding-pattern)
+		st.EOF_TOKEN:
 		return true
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		switch b.peekN(lookahead + 2).Kind() {
-		case common.EQUAL_TOKEN,
+		case st.EQUAL_TOKEN,
 			// Scenario: foo bar =
-			common.SEMICOLON_TOKEN,
+			st.SEMICOLON_TOKEN,
 			// Scenario: foo bar;
-			common.EOF_TOKEN:
+			st.EOF_TOKEN:
 			return true
 		default:
 			return false
 		}
-	case common.COLON_TOKEN:
+	case st.COLON_TOKEN:
 		if lookahead > 1 {
 			return false
 		}
 		switch b.peekN(lookahead + 2).Kind() {
-		case common.IDENTIFIER_TOKEN:
+		case st.IDENTIFIER_TOKEN:
 			return b.isModuleVarDeclStart(lookahead + 2)
-		case common.EOF_TOKEN:
+		case st.EOF_TOKEN:
 			return true
 		default:
 			return false
@@ -1026,7 +1026,7 @@ func (b *BallerinaParser) isModuleVarDeclStart(lookahead int) bool {
 	}
 }
 
-func (b *BallerinaParser) parseImportDecl() tree.STNode {
+func (b *BallerinaParser) parseImportDecl() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_IMPORT_DECL)
 	b.tokenReader.StartMode(PARSER_MODE_IMPORT_MODE)
 	importKeyword := b.parseImportKeyword()
@@ -1037,9 +1037,9 @@ func (b *BallerinaParser) parseImportDecl() tree.STNode {
 	return importDecl
 }
 
-func (b *BallerinaParser) parseImportKeyword() tree.STNode {
+func (b *BallerinaParser) parseImportKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IMPORT_KEYWORD {
+	if token.Kind() == st.IMPORT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_IMPORT_KEYWORD)
@@ -1047,13 +1047,13 @@ func (b *BallerinaParser) parseImportKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseIdentifier(currentCtx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseIdentifier(currentCtx common.ParserRuleContext) st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
-	} else if token.Kind() == common.MAP_KEYWORD {
+	} else if token.Kind() == st.MAP_KEYWORD {
 		mapKeyword := b.consume()
-		return tree.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(), mapKeyword.LeadingMinutiae(), mapKeyword.TrailingMinutiae(),
+		return st.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(), mapKeyword.LeadingMinutiae(), mapKeyword.TrailingMinutiae(),
 			mapKeyword.Diagnostics())
 	} else {
 		b.recoverWithBlockContext(token, currentCtx)
@@ -1061,36 +1061,36 @@ func (b *BallerinaParser) parseIdentifier(currentCtx common.ParserRuleContext) t
 	}
 }
 
-func (b *BallerinaParser) parseImportDeclWithIdentifier(importKeyword tree.STNode, identifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseImportDeclWithIdentifier(importKeyword st.STNode, identifier st.STNode) st.STNode {
 	nextToken := b.peek()
-	var orgName tree.STNode
-	var moduleName tree.STNode
-	var alias tree.STNode
+	var orgName st.STNode
+	var moduleName st.STNode
+	var alias st.STNode
 	switch nextToken.Kind() {
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		slash := b.parseSlashToken()
-		orgName = tree.CreateImportOrgNameNode(identifier, slash)
+		orgName = st.CreateImportOrgNameNode(identifier, slash)
 		moduleName = b.parseModuleName()
 		alias = b.parseImportPrefixDecl()
-	case common.DOT_TOKEN, common.AS_KEYWORD:
-		orgName = tree.CreateEmptyNode()
+	case st.DOT_TOKEN, st.AS_KEYWORD:
+		orgName = st.CreateEmptyNode()
 		moduleName = b.parseModuleNameInner(identifier)
 		alias = b.parseImportPrefixDecl()
-	case common.SEMICOLON_TOKEN:
-		orgName = tree.CreateEmptyNode()
+	case st.SEMICOLON_TOKEN:
+		orgName = st.CreateEmptyNode()
 		moduleName = b.parseModuleNameInner(identifier)
-		alias = tree.CreateEmptyNode()
+		alias = st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_IMPORT_DECL_ORG_OR_MODULE_NAME_RHS)
 		return b.parseImportDeclWithIdentifier(importKeyword, identifier)
 	}
 	semicolon := b.parseSemicolon()
-	return tree.CreateImportDeclarationNode(importKeyword, orgName, moduleName, alias, semicolon)
+	return st.CreateImportDeclarationNode(importKeyword, orgName, moduleName, alias, semicolon)
 }
 
-func (b *BallerinaParser) parseSlashToken() tree.STToken {
+func (b *BallerinaParser) parseSlashToken() st.STToken {
 	token := b.peek()
-	if token.Kind() == common.SLASH_TOKEN {
+	if token.Kind() == st.SLASH_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SLASH)
@@ -1098,9 +1098,9 @@ func (b *BallerinaParser) parseSlashToken() tree.STToken {
 	}
 }
 
-func (b *BallerinaParser) parseDotToken() tree.STNode {
+func (b *BallerinaParser) parseDotToken() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.DOT_TOKEN {
+	if token.Kind() == st.DOT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_DOT)
@@ -1108,13 +1108,13 @@ func (b *BallerinaParser) parseDotToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseModuleName() tree.STNode {
+func (b *BallerinaParser) parseModuleName() st.STNode {
 	moduleNameStart := b.parseIdentifier(common.PARSER_RULE_CONTEXT_IMPORT_MODULE_NAME)
 	return b.parseModuleNameInner(moduleNameStart)
 }
 
-func (b *BallerinaParser) parseModuleNameInner(moduleNameStart tree.STNode) tree.STNode {
-	var moduleNameParts []tree.STNode
+func (b *BallerinaParser) parseModuleNameInner(moduleNameStart st.STNode) st.STNode {
+	var moduleNameParts []st.STNode
 	moduleNameParts = append(moduleNameParts, moduleNameStart)
 	nextToken := b.peek()
 	for !b.isEndOfImportDecl(nextToken) {
@@ -1127,14 +1127,14 @@ func (b *BallerinaParser) parseModuleNameInner(moduleNameStart tree.STNode) tree
 		moduleNameParts = append(moduleNameParts, b.parseIdentifier(common.PARSER_RULE_CONTEXT_IMPORT_MODULE_NAME))
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(moduleNameParts...)
+	return st.CreateNodeList(moduleNameParts...)
 }
 
-func (b *BallerinaParser) parseModuleNameRhs() tree.STNode {
+func (b *BallerinaParser) parseModuleNameRhs() st.STNode {
 	switch b.peek().Kind() {
-	case common.DOT_TOKEN:
+	case st.DOT_TOKEN:
 		return b.consume()
-	case common.AS_KEYWORD, common.SEMICOLON_TOKEN:
+	case st.AS_KEYWORD, st.SEMICOLON_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_AFTER_IMPORT_MODULE_NAME)
@@ -1142,29 +1142,29 @@ func (b *BallerinaParser) parseModuleNameRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfImportDecl(nextToken tree.STToken) bool {
+func (b *BallerinaParser) isEndOfImportDecl(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
-	case common.SEMICOLON_TOKEN,
-		common.PUBLIC_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.ABSTRACT_KEYWORD,
-		common.CONST_KEYWORD,
-		common.EOF_TOKEN,
-		common.SERVICE_KEYWORD,
-		common.IMPORT_KEYWORD,
-		common.FINAL_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD,
-		common.ISOLATED_KEYWORD:
+	case st.SEMICOLON_TOKEN,
+		st.PUBLIC_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.ABSTRACT_KEYWORD,
+		st.CONST_KEYWORD,
+		st.EOF_TOKEN,
+		st.SERVICE_KEYWORD,
+		st.IMPORT_KEYWORD,
+		st.FINAL_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD,
+		st.ISOLATED_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseDecimalIntLiteral(context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseDecimalIntLiteral(context common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.DECIMAL_INTEGER_LITERAL_TOKEN {
+	if nextToken.Kind() == st.DECIMAL_INTEGER_LITERAL_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), context)
@@ -1172,27 +1172,27 @@ func (b *BallerinaParser) parseDecimalIntLiteral(context common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParser) parseImportPrefixDecl() tree.STNode {
+func (b *BallerinaParser) parseImportPrefixDecl() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.AS_KEYWORD:
+	case st.AS_KEYWORD:
 		asKeyword := b.parseAsKeyword()
 		prefix := b.parseImportPrefix()
-		return tree.CreateImportPrefixNode(asKeyword, prefix)
-	case common.SEMICOLON_TOKEN:
-		return tree.CreateEmptyNode()
+		return st.CreateImportPrefixNode(asKeyword, prefix)
+	case st.SEMICOLON_TOKEN:
+		return st.CreateEmptyNode()
 	default:
 		if b.isEndOfImportDecl(nextToken) {
-			return tree.CreateEmptyNode()
+			return st.CreateEmptyNode()
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_IMPORT_PREFIX_DECL)
 		return b.parseImportPrefixDecl()
 	}
 }
 
-func (b *BallerinaParser) parseAsKeyword() tree.STNode {
+func (b *BallerinaParser) parseAsKeyword() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.AS_KEYWORD {
+	if nextToken.Kind() == st.AS_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_AS_KEYWORD)
@@ -1200,9 +1200,9 @@ func (b *BallerinaParser) parseAsKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseImportPrefix() tree.STNode {
+func (b *BallerinaParser) parseImportPrefix() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.IDENTIFIER_TOKEN {
+	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		identifier := b.consume()
 		if b.isUnderscoreToken(identifier) {
 			return b.getUnderscoreKeyword(identifier)
@@ -1210,7 +1210,7 @@ func (b *BallerinaParser) parseImportPrefix() tree.STNode {
 		return identifier
 	} else if isPredeclaredPrefix(nextToken.Kind()) {
 		preDeclaredPrefix := b.consume()
-		return tree.CreateIdentifierToken(preDeclaredPrefix.Text(), preDeclaredPrefix.LeadingMinutiae(),
+		return st.CreateIdentifierToken(preDeclaredPrefix.Text(), preDeclaredPrefix.LeadingMinutiae(),
 			preDeclaredPrefix.TrailingMinutiae())
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_IMPORT_PREFIX)
@@ -1218,51 +1218,51 @@ func (b *BallerinaParser) parseImportPrefix() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTopLevelNodeWithQualifiers(metadata, publicQualifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTopLevelNodeWithQualifiers(metadata, publicQualifier st.STNode) st.STNode {
 	res, _ := b.parseTopLevelNodeInner(metadata, publicQualifier, nil)
 	return res
 }
 
-func (b *BallerinaParser) parseTopLevelNodeInner(metadata, publicQualifier tree.STNode, qualifiers []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseTopLevelNodeInner(metadata, publicQualifier st.STNode, qualifiers []st.STNode) (st.STNode, []st.STNode) {
 	qualifiers = b.parseTopLevelQualifiers(qualifiers)
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		return b.createMissingSimpleVarDeclInnerWithQualifiers(metadata, publicQualifier, qualifiers, true), qualifiers
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		return b.parseFuncDefOrFuncTypeDesc(metadata, publicQualifier, qualifiers, false, false), qualifiers
-	case common.TYPE_KEYWORD:
+	case st.TYPE_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseModuleTypeDefinition(metadata, publicQualifier), qualifiers
-	case common.CLASS_KEYWORD:
+	case st.CLASS_KEYWORD:
 		return b.parseClassDefinition(metadata, publicQualifier, qualifiers), qualifiers
-	case common.LISTENER_KEYWORD:
+	case st.LISTENER_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseListenerDeclaration(metadata, publicQualifier), qualifiers
-	case common.CONST_KEYWORD:
+	case st.CONST_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseConstantDeclaration(metadata, publicQualifier), qualifiers
-	case common.ANNOTATION_KEYWORD:
+	case st.ANNOTATION_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-		constKeyword := tree.CreateEmptyNode()
+		constKeyword := st.CreateEmptyNode()
 		return b.parseAnnotationDeclaration(metadata, publicQualifier, constKeyword), qualifiers
-	case common.IMPORT_KEYWORD:
+	case st.IMPORT_KEYWORD:
 		b.reportInvalidMetaData(metadata, "import declaration")
 		b.reportInvalidQualifier(publicQualifier)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseImportDecl(), qualifiers
-	case common.XMLNS_KEYWORD:
+	case st.XMLNS_KEYWORD:
 		b.reportInvalidMetaData(metadata, "XML namespace declaration")
 		b.reportInvalidQualifier(publicQualifier)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseXMLNamespaceDeclaration(true), qualifiers
-	case common.ENUM_KEYWORD:
+	case st.ENUM_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseEnumDeclaration(metadata, publicQualifier), qualifiers
-	case common.RESOURCE_KEYWORD, common.REMOTE_KEYWORD:
+	case st.RESOURCE_KEYWORD, st.REMOTE_KEYWORD:
 		b.reportInvalidQualifier(b.consume())
 		return b.parseTopLevelNodeInner(metadata, publicQualifier, qualifiers)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		if b.isModuleVarDeclStart(1) {
 			return b.parseModuleVarDeclInner(metadata, publicQualifier, qualifiers)
 		}
@@ -1271,7 +1271,7 @@ func (b *BallerinaParser) parseTopLevelNodeInner(metadata, publicQualifier tree.
 		if b.isPossibleServiceDecl(qualifiers) {
 			return b.parseServiceDeclOrVarDecl(metadata, publicQualifier, qualifiers), qualifiers
 		}
-		if b.isTypeStartingToken(nextToken.Kind()) && (nextToken.Kind() != common.IDENTIFIER_TOKEN) {
+		if b.isTypeStartingToken(nextToken.Kind()) && (nextToken.Kind() != st.IDENTIFIER_TOKEN) {
 			return b.parseModuleVarDeclInner(metadata, publicQualifier, qualifiers)
 		}
 		token := b.peek()
@@ -1283,21 +1283,21 @@ func (b *BallerinaParser) parseTopLevelNodeInner(metadata, publicQualifier tree.
 	}
 }
 
-func (b *BallerinaParser) parseModuleVarDecl(metadata tree.STNode) tree.STNode {
-	var emptyList []tree.STNode
-	publicQualifier := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseModuleVarDecl(metadata st.STNode) st.STNode {
+	var emptyList []st.STNode
+	publicQualifier := st.CreateEmptyNode()
 	res, _ := b.parseVariableDeclInner(metadata, publicQualifier, emptyList, emptyList, true)
 	return res
 }
 
-func (b *BallerinaParser) parseModuleVarDeclInner(metadata tree.STNode, publicQualifier tree.STNode, topLevelQualifiers []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseModuleVarDeclInner(metadata st.STNode, publicQualifier st.STNode, topLevelQualifiers []st.STNode) (st.STNode, []st.STNode) {
 	varDeclQuals, topLevelQualifiers := b.extractVarDeclQualifiers(topLevelQualifiers, true)
 	res, _ := b.parseVariableDeclInner(metadata, publicQualifier, varDeclQuals, topLevelQualifiers, true)
 	return res, topLevelQualifiers
 }
 
-func (b *BallerinaParser) extractVarDeclQualifiers(qualifiers []tree.STNode, isModuleVar bool) ([]tree.STNode, []tree.STNode) {
-	var varDeclQualList []tree.STNode
+func (b *BallerinaParser) extractVarDeclQualifiers(qualifiers []st.STNode, isModuleVar bool) ([]st.STNode, []st.STNode) {
+	var varDeclQualList []st.STNode
 	initialListSize := len(qualifiers)
 	configurableQualIndex := (-1)
 	i := 0
@@ -1306,7 +1306,7 @@ func (b *BallerinaParser) extractVarDeclQualifiers(qualifiers []tree.STNode, isM
 		if (!b.isSyntaxKindInList(varDeclQualList, qualifierKind)) && b.isModuleVarDeclQualifier(qualifierKind) {
 			varDeclQualList = append(varDeclQualList, qualifiers[0])
 			qualifiers = qualifiers[1:]
-			if qualifierKind == common.CONFIGURABLE_KEYWORD {
+			if qualifierKind == st.CONFIGURABLE_KEYWORD {
 				configurableQualIndex = i
 			}
 			continue
@@ -1318,66 +1318,66 @@ func (b *BallerinaParser) extractVarDeclQualifiers(qualifiers []tree.STNode, isM
 		i := 0
 		for ; i < len(varDeclQualList); i++ {
 			if i < configurableQualIndex {
-				invalidQual := tree.ToToken(varDeclQualList[i])
-				configurableQual = tree.CloneWithLeadingInvalidNodeMinutiae(configurableQual, invalidQual,
+				invalidQual := st.ToToken(varDeclQualList[i])
+				configurableQual = st.CloneWithLeadingInvalidNodeMinutiae(configurableQual, invalidQual,
 					b.getInvalidQualifierError(invalidQual.Kind()), (invalidQual).Text())
 			} else if i > configurableQualIndex {
-				invalidQual := tree.ToToken(varDeclQualList[i])
-				configurableQual = tree.CloneWithTrailingInvalidNodeMinutiae(configurableQual, invalidQual,
+				invalidQual := st.ToToken(varDeclQualList[i])
+				configurableQual = st.CloneWithTrailingInvalidNodeMinutiae(configurableQual, invalidQual,
 					b.getInvalidQualifierError(invalidQual.Kind()), (invalidQual).Text())
 			}
 		}
-		varDeclQualList = []tree.STNode{configurableQual}
+		varDeclQualList = []st.STNode{configurableQual}
 	}
 	return varDeclQualList, qualifiers
 }
 
-func (b *BallerinaParser) getInvalidQualifierError(qualifierKind common.SyntaxKind) *common.DiagnosticErrorCode {
-	if qualifierKind == common.FINAL_KEYWORD {
+func (b *BallerinaParser) getInvalidQualifierError(qualifierKind st.SyntaxKind) *common.DiagnosticErrorCode {
+	if qualifierKind == st.FINAL_KEYWORD {
 		return &common.ERROR_CONFIGURABLE_VAR_IMPLICITLY_FINAL
 	}
 	return &common.ERROR_QUALIFIER_NOT_ALLOWED
 }
 
-func (b *BallerinaParser) isModuleVarDeclQualifier(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isModuleVarDeclQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.FINAL_KEYWORD, common.ISOLATED_KEYWORD, common.CONFIGURABLE_KEYWORD:
+	case st.FINAL_KEYWORD, st.ISOLATED_KEYWORD, st.CONFIGURABLE_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) reportInvalidQualifier(qualifier tree.STNode) {
-	if (qualifier != nil) && (qualifier.Kind() != common.NONE) {
+func (b *BallerinaParser) reportInvalidQualifier(qualifier st.STNode) {
+	if (qualifier != nil) && (qualifier.Kind() != st.NONE) {
 		b.addInvalidNodeToNextToken(qualifier, &common.ERROR_INVALID_QUALIFIER,
-			tree.ToToken(qualifier).Text())
+			st.ToToken(qualifier).Text())
 	}
 }
 
-func (b *BallerinaParser) reportInvalidMetaData(metadata tree.STNode, constructName string) {
-	if (metadata != nil) && (metadata.Kind() != common.NONE) {
+func (b *BallerinaParser) reportInvalidMetaData(metadata st.STNode, constructName string) {
+	if (metadata != nil) && (metadata.Kind() != st.NONE) {
 		b.addInvalidNodeToNextToken(metadata, &common.ERROR_INVALID_METADATA, constructName)
 	}
 }
 
-func (b *BallerinaParser) reportInvalidQualifierList(qualifiers []tree.STNode) {
+func (b *BallerinaParser) reportInvalidQualifierList(qualifiers []st.STNode) {
 	for _, qual := range qualifiers {
-		b.addInvalidNodeToNextToken(qual, &common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qual).Text())
+		b.addInvalidNodeToNextToken(qual, &common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qual).Text())
 	}
 }
 
-func (b *BallerinaParser) reportInvalidStatementAnnots(annots tree.STNode, qualifiers []tree.STNode) {
+func (b *BallerinaParser) reportInvalidStatementAnnots(annots st.STNode, qualifiers []st.STNode) {
 	diagnosticErrorCode := common.ERROR_ANNOTATIONS_ATTACHED_TO_STATEMENT
 	b.reportInvalidAnnotations(annots, qualifiers, diagnosticErrorCode)
 }
 
-func (b *BallerinaParser) reportInvalidExpressionAnnots(annots tree.STNode, qualifiers []tree.STNode) {
+func (b *BallerinaParser) reportInvalidExpressionAnnots(annots st.STNode, qualifiers []st.STNode) {
 	diagnosticErrorCode := common.ERROR_ANNOTATIONS_ATTACHED_TO_EXPRESSION
 	b.reportInvalidAnnotations(annots, qualifiers, diagnosticErrorCode)
 }
 
-func (b *BallerinaParser) reportInvalidAnnotations(annots tree.STNode, qualifiers []tree.STNode, errorCode common.DiagnosticErrorCode) {
+func (b *BallerinaParser) reportInvalidAnnotations(annots st.STNode, qualifiers []st.STNode, errorCode common.DiagnosticErrorCode) {
 	if b.isNodeListEmpty(annots) {
 		return
 	}
@@ -1388,32 +1388,32 @@ func (b *BallerinaParser) reportInvalidAnnotations(annots tree.STNode, qualifier
 	}
 }
 
-func (b *BallerinaParser) isTopLevelQualifier(tokenKind common.SyntaxKind) bool {
-	var nextNextToken tree.STToken
+func (b *BallerinaParser) isTopLevelQualifier(tokenKind st.SyntaxKind) bool {
+	var nextNextToken st.STToken
 	switch tokenKind {
-	case common.FINAL_KEYWORD, // final-qualifier
-		common.CONFIGURABLE_KEYWORD:
+	case st.FINAL_KEYWORD, // final-qualifier
+		st.CONFIGURABLE_KEYWORD:
 		return true
-	case common.READONLY_KEYWORD:
+	case st.READONLY_KEYWORD:
 		nextNextToken = b.getNextNextToken()
 		switch nextNextToken.Kind() {
-		case common.CLIENT_KEYWORD,
-			common.SERVICE_KEYWORD,
-			common.DISTINCT_KEYWORD,
-			common.ISOLATED_KEYWORD,
-			common.CLASS_KEYWORD:
+		case st.CLIENT_KEYWORD,
+			st.SERVICE_KEYWORD,
+			st.DISTINCT_KEYWORD,
+			st.ISOLATED_KEYWORD,
+			st.CLASS_KEYWORD:
 			return true
 		default:
 			return false
 		}
-	case common.DISTINCT_KEYWORD:
+	case st.DISTINCT_KEYWORD:
 		nextNextToken = b.getNextNextToken()
 		switch nextNextToken.Kind() {
-		case common.CLIENT_KEYWORD,
-			common.SERVICE_KEYWORD,
-			common.READONLY_KEYWORD,
-			common.ISOLATED_KEYWORD,
-			common.CLASS_KEYWORD:
+		case st.CLIENT_KEYWORD,
+			st.SERVICE_KEYWORD,
+			st.READONLY_KEYWORD,
+			st.ISOLATED_KEYWORD,
+			st.CLASS_KEYWORD:
 			return true
 		default:
 			return false
@@ -1423,40 +1423,40 @@ func (b *BallerinaParser) isTopLevelQualifier(tokenKind common.SyntaxKind) bool 
 	}
 }
 
-func (b *BallerinaParser) isTypeDescQualifier(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isTypeDescQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.TRANSACTIONAL_KEYWORD, // func-type-dec, func-def
-		common.ISOLATED_KEYWORD, // func-type-dec, object-type-desc, func-def, class-def, isolated-final-qual
-		common.CLIENT_KEYWORD,   // object-type-desc, class-def
-		common.ABSTRACT_KEYWORD, // object-type-desc(outdated)
-		common.SERVICE_KEYWORD:
+	case st.TRANSACTIONAL_KEYWORD, // func-type-dec, func-def
+		st.ISOLATED_KEYWORD, // func-type-dec, object-type-desc, func-def, class-def, isolated-final-qual
+		st.CLIENT_KEYWORD,   // object-type-desc, class-def
+		st.ABSTRACT_KEYWORD, // object-type-desc(outdated)
+		st.SERVICE_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isObjectMemberQualifier(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isObjectMemberQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.REMOTE_KEYWORD, // method-def, method-decl
-		common.RESOURCE_KEYWORD, // resource-method-def
-		common.FINAL_KEYWORD:
+	case st.REMOTE_KEYWORD, // method-def, method-decl
+		st.RESOURCE_KEYWORD, // resource-method-def
+		st.FINAL_KEYWORD:
 		return true
 	default:
 		return b.isTypeDescQualifier(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) isExprQualifier(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isExprQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.TRANSACTIONAL_KEYWORD:
+	case st.TRANSACTIONAL_KEYWORD:
 		nextNextToken := b.getNextNextToken()
 		switch nextNextToken.Kind() {
-		case common.CLIENT_KEYWORD,
-			common.ABSTRACT_KEYWORD,
-			common.ISOLATED_KEYWORD,
-			common.OBJECT_KEYWORD,
-			common.FUNCTION_KEYWORD:
+		case st.CLIENT_KEYWORD,
+			st.ABSTRACT_KEYWORD,
+			st.ISOLATED_KEYWORD,
+			st.OBJECT_KEYWORD,
+			st.FUNCTION_KEYWORD:
 			return true
 		default:
 			return false
@@ -1466,7 +1466,7 @@ func (b *BallerinaParser) isExprQualifier(tokenKind common.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseTopLevelQualifiers(qualifiers []tree.STNode) []tree.STNode {
+func (b *BallerinaParser) parseTopLevelQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isTopLevelQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1474,7 +1474,7 @@ func (b *BallerinaParser) parseTopLevelQualifiers(qualifiers []tree.STNode) []tr
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseTypeDescQualifiers(qualifiers []tree.STNode) []tree.STNode {
+func (b *BallerinaParser) parseTypeDescQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isTypeDescQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1482,7 +1482,7 @@ func (b *BallerinaParser) parseTypeDescQualifiers(qualifiers []tree.STNode) []tr
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseObjectMemberQualifiers(qualifiers []tree.STNode) []tree.STNode {
+func (b *BallerinaParser) parseObjectMemberQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isObjectMemberQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1490,7 +1490,7 @@ func (b *BallerinaParser) parseObjectMemberQualifiers(qualifiers []tree.STNode) 
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseExprQualifiers(qualifiers []tree.STNode) []tree.STNode {
+func (b *BallerinaParser) parseExprQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isExprQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1498,26 +1498,26 @@ func (b *BallerinaParser) parseExprQualifiers(qualifiers []tree.STNode) []tree.S
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseOptionalRelativePath(isObjectMember bool) tree.STNode {
-	var resourcePath tree.STNode
+func (b *BallerinaParser) parseOptionalRelativePath(isObjectMember bool) st.STNode {
+	var resourcePath st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.DOT_TOKEN, common.IDENTIFIER_TOKEN, common.OPEN_BRACKET_TOKEN:
+	case st.DOT_TOKEN, st.IDENTIFIER_TOKEN, st.OPEN_BRACKET_TOKEN:
 		resourcePath = b.parseRelativeResourcePath()
-	case common.OPEN_PAREN_TOKEN:
-		return tree.CreateEmptyNodeList()
+	case st.OPEN_PAREN_TOKEN:
+		return st.CreateEmptyNodeList()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_OPTIONAL_RELATIVE_PATH)
 		return b.parseOptionalRelativePath(isObjectMember)
 	}
 	if !isObjectMember {
 		b.addInvalidNodeToNextToken(resourcePath, &common.ERROR_RESOURCE_PATH_IN_FUNCTION_DEFINITION)
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	return resourcePath
 }
 
-func (b *BallerinaParser) parseFuncDefOrFuncTypeDesc(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, isObjectMember bool, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFuncDefOrFuncTypeDesc(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_FUNC_TYPE)
 	functionKeyword := b.parseFunctionKeyword()
 	funcDefOrType := b.parseFunctionKeywordRhs(metadata, visibilityQualifier, qualifiers, functionKeyword,
@@ -1525,7 +1525,7 @@ func (b *BallerinaParser) parseFuncDefOrFuncTypeDesc(metadata tree.STNode, visib
 	return funcDefOrType
 }
 
-func (b *BallerinaParser) parseFunctionDefinition(metadata tree.STNode, visibilityQualifier tree.STNode, resourcePath tree.STNode, qualifiers []tree.STNode, functionKeyword tree.STNode, name tree.STNode, isObjectMember bool, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFunctionDefinition(metadata st.STNode, visibilityQualifier st.STNode, resourcePath st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, name st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	funcSignature := b.parseFuncSignature(false)
 	funcDef := b.parseFuncDefOrMethodDeclEnd(metadata, visibilityQualifier, qualifiers, functionKeyword, name,
@@ -1534,35 +1534,35 @@ func (b *BallerinaParser) parseFunctionDefinition(metadata tree.STNode, visibili
 	return funcDef
 }
 
-func (b *BallerinaParser) parseFuncDefOrFuncTypeDescRhs(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, functionKeyword tree.STNode, name tree.STNode, isObjectMember bool, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFuncDefOrFuncTypeDescRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, name st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	switch b.peek().Kind() {
-	case common.OPEN_PAREN_TOKEN,
-		common.DOT_TOKEN,
-		common.IDENTIFIER_TOKEN,
-		common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_PAREN_TOKEN,
+		st.DOT_TOKEN,
+		st.IDENTIFIER_TOKEN,
+		st.OPEN_BRACKET_TOKEN:
 		resourcePath := b.parseOptionalRelativePath(isObjectMember)
 		return b.parseFunctionDefinition(metadata, visibilityQualifier, resourcePath, qualifiers, functionKeyword,
 			name, isObjectMember, isObjectTypeDesc)
-	case common.EQUAL_TOKEN,
-		common.SEMICOLON_TOKEN:
+	case st.EQUAL_TOKEN,
+		st.SEMICOLON_TOKEN:
 		b.endContext()
 		extractQualifiersList, qualifiers := b.extractVarDeclOrObjectFieldQualifiers(qualifiers, isObjectMember,
 			isObjectTypeDesc)
 		typeDesc := b.createFunctionTypeDescriptor(qualifiers, functionKeyword,
-			tree.CreateEmptyNode(), false)
+			st.CreateEmptyNode(), false)
 		if isObjectMember {
-			objectFieldQualNodeList := tree.CreateNodeList(extractQualifiersList...)
+			objectFieldQualNodeList := st.CreateNodeList(extractQualifiersList...)
 			return b.parseObjectFieldRhs(metadata, visibilityQualifier, objectFieldQualNodeList, typeDesc, name,
 				isObjectTypeDesc)
 		}
 		b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-		funcTypeName := tree.CreateSimpleNameReferenceNode(name)
-		refNode, ok := funcTypeName.(*tree.STSimpleNameReferenceNode)
+		funcTypeName := st.CreateSimpleNameReferenceNode(name)
+		refNode, ok := funcTypeName.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("expected STSimpleNameReferenceNode")
 		}
 		bindingPattern := b.createCaptureOrWildcardBP(refNode.Name)
-		typedBindingPattern := tree.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
+		typedBindingPattern := st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
 		res, _ := b.parseVarDeclRhsInner(metadata, visibilityQualifier, extractQualifiersList, typedBindingPattern, true)
 		return res
 	default:
@@ -1573,13 +1573,13 @@ func (b *BallerinaParser) parseFuncDefOrFuncTypeDescRhs(metadata tree.STNode, vi
 	}
 }
 
-func (b *BallerinaParser) parseFunctionKeywordRhs(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, functionKeyword tree.STNode, isObjectMember bool, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFunctionKeywordRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	switch b.peek().Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		name := b.consume()
 		return b.parseFuncDefOrFuncTypeDescRhs(metadata, visibilityQualifier, qualifiers, functionKeyword, name,
 			isObjectMember, isObjectTypeDesc)
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		b.startContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)
 		b.startContext(common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC)
@@ -1592,7 +1592,7 @@ func (b *BallerinaParser) parseFunctionKeywordRhs(metadata tree.STNode, visibili
 		token := b.peek()
 		if b.isValidTypeContinuationToken(token) || b.isBindingPatternsStartToken(token.Kind()) {
 			return b.parseVarDeclWithFunctionType(metadata, visibilityQualifier, qualifiers, functionKeyword,
-				tree.CreateEmptyNode(), isObjectMember,
+				st.CreateEmptyNode(), isObjectMember,
 				isObjectTypeDesc, false)
 		}
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD_RHS)
@@ -1601,36 +1601,36 @@ func (b *BallerinaParser) parseFunctionKeywordRhs(metadata tree.STNode, visibili
 	}
 }
 
-func (b *BallerinaParser) isBindingPatternsStartToken(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isBindingPatternsStartToken(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.IDENTIFIER_TOKEN,
-		common.OPEN_BRACKET_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.ERROR_KEYWORD:
+	case st.IDENTIFIER_TOKEN,
+		st.OPEN_BRACKET_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.ERROR_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseFuncDefOrMethodDeclEnd(metadata tree.STNode, visibilityQualifier tree.STNode, qualifierList []tree.STNode, functionKeyword tree.STNode, name tree.STNode, resourcePath tree.STNode, funcSignature tree.STNode, isObjectMember bool, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFuncDefOrMethodDeclEnd(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	if !isObjectMember {
 		return b.createFunctionDefinition(metadata, visibilityQualifier, qualifierList, functionKeyword, name,
 			funcSignature)
 	}
 	hasResourcePath := (!b.isNodeListEmpty(resourcePath))
-	hasResourceQual := b.isSyntaxKindInList(qualifierList, common.RESOURCE_KEYWORD)
+	hasResourceQual := b.isSyntaxKindInList(qualifierList, st.RESOURCE_KEYWORD)
 	if hasResourceQual && (!hasResourcePath) {
-		var relativePath []tree.STNode
-		relativePath = append(relativePath, tree.CreateMissingToken(common.DOT_TOKEN, nil))
-		resourcePath = tree.CreateNodeList(relativePath...)
+		var relativePath []st.STNode
+		relativePath = append(relativePath, st.CreateMissingToken(st.DOT_TOKEN, nil))
+		resourcePath = st.CreateNodeList(relativePath...)
 		var errorCode common.DiagnosticErrorCode
 		if isObjectTypeDesc {
 			errorCode = common.ERROR_MISSING_RESOURCE_PATH_IN_RESOURCE_ACCESSOR_DECLARATION
 		} else {
 			errorCode = common.ERROR_MISSING_RESOURCE_PATH_IN_RESOURCE_ACCESSOR_DEFINITION
 		}
-		name = tree.AddDiagnostic(name, &errorCode)
+		name = st.AddDiagnostic(name, &errorCode)
 		hasResourcePath = true
 	}
 	if hasResourcePath {
@@ -1646,15 +1646,15 @@ func (b *BallerinaParser) parseFuncDefOrMethodDeclEnd(metadata tree.STNode, visi
 	}
 }
 
-func (b *BallerinaParser) createFunctionDefinition(metadata tree.STNode, visibilityQualifier tree.STNode, qualifierList []tree.STNode, functionKeyword tree.STNode, name tree.STNode, funcSignature tree.STNode) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createFunctionDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
 		qualifier := qualifierList[i]
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
 		if b.isRegularFuncQual(qualifier.Kind()) {
@@ -1662,25 +1662,25 @@ func (b *BallerinaParser) createFunctionDefinition(metadata tree.STNode, visibil
 			continue
 		}
 		if len(qualifierList) == nextIndex {
-			functionKeyword = tree.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
 	if visibilityQualifier != nil {
-		validatedList = append([]tree.STNode{visibilityQualifier}, validatedList...)
+		validatedList = append([]st.STNode{visibilityQualifier}, validatedList...)
 	}
-	qualifiers := tree.CreateNodeList(validatedList...)
-	resourcePath := tree.CreateEmptyNodeList()
+	qualifiers := st.CreateNodeList(validatedList...)
+	resourcePath := st.CreateEmptyNodeList()
 	body := b.parseFunctionBody()
-	return tree.CreateFunctionDefinitionNode(common.FUNCTION_DEFINITION, metadata, qualifiers,
+	return st.CreateFunctionDefinitionNode(st.FUNCTION_DEFINITION, metadata, qualifiers,
 		functionKeyword, name, resourcePath, funcSignature, body)
 }
 
-func (b *BallerinaParser) createMethodDefinition(metadata tree.STNode, visibilityQualifier tree.STNode, qualifierList []tree.STNode, functionKeyword tree.STNode, name tree.STNode, funcSignature tree.STNode) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createMethodDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+	var validatedList []st.STNode
 	hasRemoteQual := false
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -1688,10 +1688,10 @@ func (b *BallerinaParser) createMethodDefinition(metadata tree.STNode, visibilit
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
-		if qualifier.Kind() == common.REMOTE_KEYWORD {
+		if qualifier.Kind() == st.REMOTE_KEYWORD {
 			hasRemoteQual = true
 			validatedList = append(validatedList, qualifier)
 			continue
@@ -1701,11 +1701,11 @@ func (b *BallerinaParser) createMethodDefinition(metadata tree.STNode, visibilit
 			continue
 		}
 		if len(qualifierList) == nextIndex {
-			functionKeyword = tree.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
 	if visibilityQualifier != nil {
@@ -1713,18 +1713,18 @@ func (b *BallerinaParser) createMethodDefinition(metadata tree.STNode, visibilit
 			b.updateFirstNodeInListWithLeadingInvalidNode(validatedList, visibilityQualifier,
 				&common.ERROR_REMOTE_METHOD_HAS_A_VISIBILITY_QUALIFIER)
 		} else {
-			validatedList = append([]tree.STNode{visibilityQualifier}, validatedList...)
+			validatedList = append([]st.STNode{visibilityQualifier}, validatedList...)
 		}
 	}
-	qualifiers := tree.CreateNodeList(validatedList...)
-	resourcePath := tree.CreateEmptyNodeList()
+	qualifiers := st.CreateNodeList(validatedList...)
+	resourcePath := st.CreateEmptyNodeList()
 	body := b.parseFunctionBody()
-	return tree.CreateFunctionDefinitionNode(common.OBJECT_METHOD_DEFINITION, metadata, qualifiers,
+	return st.CreateFunctionDefinitionNode(st.OBJECT_METHOD_DEFINITION, metadata, qualifiers,
 		functionKeyword, name, resourcePath, funcSignature, body)
 }
 
-func (b *BallerinaParser) createMethodDeclaration(metadata tree.STNode, visibilityQualifier tree.STNode, qualifierList []tree.STNode, functionKeyword tree.STNode, name tree.STNode, funcSignature tree.STNode) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createMethodDeclaration(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+	var validatedList []st.STNode
 	hasRemoteQual := false
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -1732,10 +1732,10 @@ func (b *BallerinaParser) createMethodDeclaration(metadata tree.STNode, visibili
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
-		if qualifier.Kind() == common.REMOTE_KEYWORD {
+		if qualifier.Kind() == st.REMOTE_KEYWORD {
 			hasRemoteQual = true
 			validatedList = append(validatedList, qualifier)
 			continue
@@ -1745,11 +1745,11 @@ func (b *BallerinaParser) createMethodDeclaration(metadata tree.STNode, visibili
 			continue
 		}
 		if len(qualifierList) == nextIndex {
-			functionKeyword = tree.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
 	if visibilityQualifier != nil {
@@ -1757,18 +1757,18 @@ func (b *BallerinaParser) createMethodDeclaration(metadata tree.STNode, visibili
 			b.updateFirstNodeInListWithLeadingInvalidNode(validatedList, visibilityQualifier,
 				&common.ERROR_REMOTE_METHOD_HAS_A_VISIBILITY_QUALIFIER)
 		} else {
-			validatedList = append([]tree.STNode{visibilityQualifier}, validatedList...)
+			validatedList = append([]st.STNode{visibilityQualifier}, validatedList...)
 		}
 	}
-	qualifiers := tree.CreateNodeList(validatedList...)
-	resourcePath := tree.CreateEmptyNodeList()
+	qualifiers := st.CreateNodeList(validatedList...)
+	resourcePath := st.CreateEmptyNodeList()
 	semicolon := b.parseSemicolon()
-	return tree.CreateMethodDeclarationNode(common.METHOD_DECLARATION, metadata, qualifiers,
+	return st.CreateMethodDeclarationNode(st.METHOD_DECLARATION, metadata, qualifiers,
 		functionKeyword, name, resourcePath, funcSignature, semicolon)
 }
 
-func (b *BallerinaParser) createResourceAccessorDefnOrDecl(metadata tree.STNode, visibilityQualifier tree.STNode, qualifierList []tree.STNode, functionKeyword tree.STNode, name tree.STNode, resourcePath tree.STNode, funcSignature tree.STNode, isObjectTypeDesc bool) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createResourceAccessorDefnOrDecl(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectTypeDesc bool) st.STNode {
+	var validatedList []st.STNode
 	hasResourceQual := false
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -1776,10 +1776,10 @@ func (b *BallerinaParser) createResourceAccessorDefnOrDecl(metadata tree.STNode,
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
-		if qualifier.Kind() == common.RESOURCE_KEYWORD {
+		if qualifier.Kind() == st.RESOURCE_KEYWORD {
 			hasResourceQual = true
 			validatedList = append(validatedList, qualifier)
 			continue
@@ -1789,83 +1789,83 @@ func (b *BallerinaParser) createResourceAccessorDefnOrDecl(metadata tree.STNode,
 			continue
 		}
 		if len(qualifierList) == nextIndex {
-			functionKeyword = tree.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
 	if !hasResourceQual {
-		validatedList = append(validatedList, tree.CreateMissingToken(common.RESOURCE_KEYWORD, nil))
-		functionKeyword = tree.AddDiagnostic(functionKeyword, &common.ERROR_MISSING_RESOURCE_KEYWORD)
+		validatedList = append(validatedList, st.CreateMissingToken(st.RESOURCE_KEYWORD, nil))
+		functionKeyword = st.AddDiagnostic(functionKeyword, &common.ERROR_MISSING_RESOURCE_KEYWORD)
 	}
 	if visibilityQualifier != nil {
 		b.updateFirstNodeInListWithLeadingInvalidNode(validatedList, visibilityQualifier,
-			&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(visibilityQualifier).Text())
+			&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(visibilityQualifier).Text())
 	}
-	qualifiers := tree.CreateNodeList(validatedList...)
+	qualifiers := st.CreateNodeList(validatedList...)
 	if isObjectTypeDesc {
 		semicolon := b.parseSemicolon()
-		return tree.CreateMethodDeclarationNode(common.RESOURCE_ACCESSOR_DECLARATION, metadata,
+		return st.CreateMethodDeclarationNode(st.RESOURCE_ACCESSOR_DECLARATION, metadata,
 			qualifiers, functionKeyword, name, resourcePath, funcSignature, semicolon)
 	} else {
 		body := b.parseFunctionBody()
-		return tree.CreateFunctionDefinitionNode(common.RESOURCE_ACCESSOR_DEFINITION, metadata,
+		return st.CreateFunctionDefinitionNode(st.RESOURCE_ACCESSOR_DEFINITION, metadata,
 			qualifiers, functionKeyword, name, resourcePath, funcSignature, body)
 	}
 }
 
-func (b *BallerinaParser) parseFuncSignature(isParamNameOptional bool) tree.STNode {
+func (b *BallerinaParser) parseFuncSignature(isParamNameOptional bool) st.STNode {
 	openParenthesis := b.parseOpenParenthesis()
 	parameters := b.parseParamList(isParamNameOptional)
 	closeParenthesis := b.parseCloseParenthesis()
 	b.endContext()
 	returnTypeDesc := b.parseFuncReturnTypeDescriptor(isParamNameOptional)
-	return tree.CreateFunctionSignatureNode(openParenthesis, parameters, closeParenthesis, returnTypeDesc)
+	return st.CreateFunctionSignatureNode(openParenthesis, parameters, closeParenthesis, returnTypeDesc)
 }
 
-func (b *BallerinaParser) parseFunctionTypeDescRhs(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, functionKeyword tree.STNode, funcSignature tree.STNode, isObjectMember bool, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFunctionTypeDescRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACE_TOKEN, common.EQUAL_TOKEN:
+	case st.OPEN_BRACE_TOKEN, st.EQUAL_TOKEN:
 		break
-	case common.SEMICOLON_TOKEN, common.IDENTIFIER_TOKEN, common.OPEN_BRACKET_TOKEN:
+	case st.SEMICOLON_TOKEN, st.IDENTIFIER_TOKEN, st.OPEN_BRACKET_TOKEN:
 		fallthrough
 	default:
 		return b.parseVarDeclWithFunctionType(metadata, visibilityQualifier, qualifiers, functionKeyword,
 			funcSignature, isObjectMember, isObjectTypeDesc, true)
 	}
 	b.switchContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
-	name := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+	name := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_FUNCTION_NAME)
-	fnSig, ok := funcSignature.(*tree.STFunctionSignatureNode)
+	fnSig, ok := funcSignature.(*st.STFunctionSignatureNode)
 	if !ok {
 		panic("expected STFunctionSignatureNode")
 	}
 	funcSignature = b.validateAndGetFuncParams(*fnSig)
-	resourcePath := tree.CreateEmptyNodeList()
+	resourcePath := st.CreateEmptyNodeList()
 	funcDef := b.parseFuncDefOrMethodDeclEnd(metadata, visibilityQualifier, qualifiers, functionKeyword,
 		name, resourcePath, funcSignature, isObjectMember, isObjectTypeDesc)
 	b.endContext()
 	return funcDef
 }
 
-func (b *BallerinaParser) extractVarDeclOrObjectFieldQualifiers(qualifierList []tree.STNode, isObjectMember bool, isObjectTypeDesc bool) ([]tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) extractVarDeclOrObjectFieldQualifiers(qualifierList []st.STNode, isObjectMember bool, isObjectTypeDesc bool) ([]st.STNode, []st.STNode) {
 	if isObjectMember {
 		return b.extractObjectFieldQualifiers(qualifierList, isObjectTypeDesc)
 	}
 	return b.extractVarDeclQualifiers(qualifierList, false)
 }
 
-func (b *BallerinaParser) createFunctionTypeDescriptor(qualifierList []tree.STNode, functionKeyword tree.STNode, funcSignature tree.STNode, hasFuncSignature bool) tree.STNode {
+func (b *BallerinaParser) createFunctionTypeDescriptor(qualifierList []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, hasFuncSignature bool) st.STNode {
 	nodes := b.createFuncTypeQualNodeList(qualifierList, functionKeyword, hasFuncSignature)
 	qualifierNodeList := nodes[0]
 	functionKeyword = nodes[1]
-	return tree.CreateFunctionTypeDescriptorNode(qualifierNodeList, functionKeyword, funcSignature)
+	return st.CreateFunctionTypeDescriptorNode(qualifierNodeList, functionKeyword, funcSignature)
 }
 
-func (b *BallerinaParser) parseVarDeclWithFunctionType(metadata tree.STNode, visibilityQualifier tree.STNode, qualifierList []tree.STNode, functionKeyword tree.STNode, funcSignature tree.STNode, isObjectMember bool, isObjectTypeDesc bool, hasFuncSignature bool) tree.STNode {
+func (b *BallerinaParser) parseVarDeclWithFunctionType(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool, hasFuncSignature bool) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	extractQualifiersList, qualifierList := b.extractVarDeclOrObjectFieldQualifiers(qualifierList, isObjectMember,
 		isObjectTypeDesc)
@@ -1874,7 +1874,7 @@ func (b *BallerinaParser) parseVarDeclWithFunctionType(metadata tree.STNode, vis
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 	if isObjectMember {
 		b.endContext()
-		objectFieldQualNodeList := tree.CreateNodeList(extractQualifiersList...)
+		objectFieldQualNodeList := st.CreateNodeList(extractQualifiersList...)
 		fieldName := b.parseVariableName()
 		return b.parseObjectFieldRhs(metadata, visibilityQualifier, objectFieldQualNodeList, typeDesc, fieldName,
 			isObjectTypeDesc)
@@ -1884,15 +1884,15 @@ func (b *BallerinaParser) parseVarDeclWithFunctionType(metadata tree.STNode, vis
 	return res
 }
 
-func (b *BallerinaParser) validateAndGetFuncParams(signature tree.STFunctionSignatureNode) tree.STNode {
+func (b *BallerinaParser) validateAndGetFuncParams(signature st.STFunctionSignatureNode) st.STNode {
 	parameters := signature.Parameters
 	paramCount := parameters.BucketCount()
 	index := 0
 	for ; index < paramCount; index++ {
 		param := parameters.ChildInBucket(index)
 		switch param.Kind() {
-		case common.REQUIRED_PARAM:
-			requiredParam, ok := param.(*tree.STRequiredParameterNode)
+		case st.REQUIRED_PARAM:
+			requiredParam, ok := param.(*st.STRequiredParameterNode)
 			if !ok {
 				panic("expected STRequiredParameterNode")
 			}
@@ -1900,8 +1900,8 @@ func (b *BallerinaParser) validateAndGetFuncParams(signature tree.STFunctionSign
 				break
 			}
 			continue
-		case common.DEFAULTABLE_PARAM:
-			defaultableParam, ok := param.(*tree.STDefaultableParameterNode)
+		case st.DEFAULTABLE_PARAM:
+			defaultableParam, ok := param.(*st.STDefaultableParameterNode)
 			if !ok {
 				panic("expected STDefaultableParameterNode")
 			}
@@ -1909,8 +1909,8 @@ func (b *BallerinaParser) validateAndGetFuncParams(signature tree.STFunctionSign
 				break
 			}
 			continue
-		case common.REST_PARAM:
-			restParam, ok := param.(*tree.STRestParameterNode)
+		case st.REST_PARAM:
+			restParam, ok := param.(*st.STRestParameterNode)
 			if !ok {
 				panic("STRestParameterNode")
 			}
@@ -1927,62 +1927,62 @@ func (b *BallerinaParser) validateAndGetFuncParams(signature tree.STFunctionSign
 		return &signature
 	}
 	updatedParams := b.getUpdatedParamList(parameters, index)
-	return tree.CreateFunctionSignatureNode(signature.OpenParenToken, updatedParams,
+	return st.CreateFunctionSignatureNode(signature.OpenParenToken, updatedParams,
 		signature.CloseParenToken, signature.ReturnTypeDesc)
 }
 
-func (b *BallerinaParser) getUpdatedParamList(parameters tree.STNode, index int) tree.STNode {
+func (b *BallerinaParser) getUpdatedParamList(parameters st.STNode, index int) st.STNode {
 	paramCount := parameters.BucketCount()
 	newIndex := 0
-	var newParams []tree.STNode
+	var newParams []st.STNode
 	for ; newIndex < index; newIndex++ {
 		newParams = append(newParams, parameters.ChildInBucket(index))
 	}
 	for ; newIndex < paramCount; newIndex++ {
 		param := parameters.ChildInBucket(newIndex)
-		paramName := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
+		paramName := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 		switch param.Kind() {
-		case common.REQUIRED_PARAM:
-			requiredParam, ok := param.(*tree.STRequiredParameterNode)
+		case st.REQUIRED_PARAM:
+			requiredParam, ok := param.(*st.STRequiredParameterNode)
 			if !ok {
 				panic("expected STRequiredParameterNode")
 			}
 			if b.isEmpty(requiredParam.ParamName) {
-				param = tree.CreateRequiredParameterNode(requiredParam.Annotations,
+				param = st.CreateRequiredParameterNode(requiredParam.Annotations,
 					requiredParam.TypeName, paramName)
 			}
-		case common.DEFAULTABLE_PARAM:
-			defaultableParam, ok := param.(*tree.STDefaultableParameterNode)
+		case st.DEFAULTABLE_PARAM:
+			defaultableParam, ok := param.(*st.STDefaultableParameterNode)
 			if !ok {
 				panic("expected STDefaultableParameterNode")
 			}
 			if b.isEmpty(defaultableParam.ParamName) {
-				param = tree.CreateDefaultableParameterNode(defaultableParam.Annotations, defaultableParam.TypeName,
+				param = st.CreateDefaultableParameterNode(defaultableParam.Annotations, defaultableParam.TypeName,
 					paramName, defaultableParam.EqualsToken, defaultableParam.Expression)
 			}
-		case common.REST_PARAM:
-			restParam, ok := param.(*tree.STRestParameterNode)
+		case st.REST_PARAM:
+			restParam, ok := param.(*st.STRestParameterNode)
 			if !ok {
 				panic("expected STRestParameterNode")
 			}
 			if b.isEmpty(restParam.ParamName) {
-				param = tree.CreateRestParameterNode(restParam.Annotations, restParam.TypeName,
+				param = st.CreateRestParameterNode(restParam.Annotations, restParam.TypeName,
 					restParam.EllipsisToken, paramName)
 			}
 		default:
 		}
 		newParams = append(newParams, param)
 	}
-	return tree.CreateNodeList(newParams...)
+	return st.CreateNodeList(newParams...)
 }
 
-func (b *BallerinaParser) isEmpty(node tree.STNode) bool {
-	return (!tree.IsSTNodePresent(node))
+func (b *BallerinaParser) isEmpty(node st.STNode) bool {
+	return (!st.IsSTNodePresent(node))
 }
 
-func (b *BallerinaParser) parseFunctionKeyword() tree.STNode {
+func (b *BallerinaParser) parseFunctionKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FUNCTION_KEYWORD {
+	if token.Kind() == st.FUNCTION_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD)
@@ -1990,9 +1990,9 @@ func (b *BallerinaParser) parseFunctionKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionName() tree.STNode {
+func (b *BallerinaParser) parseFunctionName() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FUNC_NAME)
@@ -2000,17 +2000,17 @@ func (b *BallerinaParser) parseFunctionName() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseArgListOpenParenthesis() tree.STNode {
+func (b *BallerinaParser) parseArgListOpenParenthesis() st.STNode {
 	return b.parseOpenParenthesisInner(common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN)
 }
 
-func (b *BallerinaParser) parseOpenParenthesis() tree.STNode {
+func (b *BallerinaParser) parseOpenParenthesis() st.STNode {
 	return b.parseOpenParenthesisInner(common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS)
 }
 
-func (b *BallerinaParser) parseOpenParenthesisInner(ctx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseOpenParenthesisInner(ctx common.ParserRuleContext) st.STNode {
 	token := b.peek()
-	if token.Kind() == common.OPEN_PAREN_TOKEN {
+	if token.Kind() == st.OPEN_PAREN_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, ctx)
@@ -2018,17 +2018,17 @@ func (b *BallerinaParser) parseOpenParenthesisInner(ctx common.ParserRuleContext
 	}
 }
 
-func (b *BallerinaParser) parseArgListCloseParenthesis() tree.STNode {
+func (b *BallerinaParser) parseArgListCloseParenthesis() st.STNode {
 	return b.parseCloseParenthesisInner(common.PARSER_RULE_CONTEXT_ARG_LIST_CLOSE_PAREN)
 }
 
-func (b *BallerinaParser) parseCloseParenthesis() tree.STNode {
+func (b *BallerinaParser) parseCloseParenthesis() st.STNode {
 	return b.parseCloseParenthesisInner(common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS)
 }
 
-func (b *BallerinaParser) parseCloseParenthesisInner(ctx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseCloseParenthesisInner(ctx common.ParserRuleContext) st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CLOSE_PAREN_TOKEN {
+	if token.Kind() == st.CLOSE_PAREN_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, ctx)
@@ -2036,15 +2036,15 @@ func (b *BallerinaParser) parseCloseParenthesisInner(ctx common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParser) parseParamList(isParamNameOptional bool) tree.STNode {
+func (b *BallerinaParser) parseParamList(isParamNameOptional bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_PARAM_LIST)
 	token := b.peek()
 	if b.isEndOfParametersList(token.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
-	var paramsList []tree.STNode
+	var paramsList []st.STNode
 	b.startContext(common.PARSER_RULE_CONTEXT_REQUIRED_PARAM)
-	firstParam := b.parseParameterInner(common.REQUIRED_PARAM, isParamNameOptional)
+	firstParam := b.parseParameterInner(st.REQUIRED_PARAM, isParamNameOptional)
 	prevParamKind := firstParam.Kind()
 	paramsList = append(paramsList, firstParam)
 	paramOrderErrorPresent := false
@@ -2055,7 +2055,7 @@ func (b *BallerinaParser) parseParamList(isParamNameOptional bool) tree.STNode {
 			break
 		}
 		b.endContext()
-		if prevParamKind == common.DEFAULTABLE_PARAM {
+		if prevParamKind == st.DEFAULTABLE_PARAM {
 			b.startContext(common.PARSER_RULE_CONTEXT_DEFAULTABLE_PARAM)
 		} else {
 			b.startContext(common.PARSER_RULE_CONTEXT_REQUIRED_PARAM)
@@ -2079,19 +2079,19 @@ func (b *BallerinaParser) parseParamList(isParamNameOptional bool) tree.STNode {
 		token = b.peek()
 	}
 	b.endContext()
-	return tree.CreateNodeList(paramsList...)
+	return st.CreateNodeList(paramsList...)
 }
 
-func (b *BallerinaParser) validateParamOrder(param tree.STNode, prevParamKind common.SyntaxKind) diagnostics.DiagnosticCode {
-	if prevParamKind == common.REST_PARAM {
+func (b *BallerinaParser) validateParamOrder(param st.STNode, prevParamKind st.SyntaxKind) diagnostics.DiagnosticCode {
+	if prevParamKind == st.REST_PARAM {
 		return &common.ERROR_PARAMETER_AFTER_THE_REST_PARAMETER
-	} else if (prevParamKind == common.DEFAULTABLE_PARAM) && (param.Kind() == common.REQUIRED_PARAM) {
+	} else if (prevParamKind == st.DEFAULTABLE_PARAM) && (param.Kind() == st.REQUIRED_PARAM) {
 		return &common.ERROR_REQUIRED_PARAMETER_AFTER_THE_DEFAULTABLE_PARAMETER
 	}
 	return nil
 }
 
-func (b *BallerinaParser) isSyntaxKindInList(nodeList []tree.STNode, kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isSyntaxKindInList(nodeList []st.STNode, kind st.SyntaxKind) bool {
 	for _, node := range nodeList {
 		if node.Kind() == kind {
 			return true
@@ -2100,30 +2100,30 @@ func (b *BallerinaParser) isSyntaxKindInList(nodeList []tree.STNode, kind common
 	return false
 }
 
-func (b *BallerinaParser) isPossibleServiceDecl(nodeList []tree.STNode) bool {
+func (b *BallerinaParser) isPossibleServiceDecl(nodeList []st.STNode) bool {
 	if len(nodeList) == 0 {
 		return false
 	}
 	firstElement := nodeList[0]
 	switch firstElement.Kind() {
-	case common.SERVICE_KEYWORD:
+	case st.SERVICE_KEYWORD:
 		return true
-	case common.ISOLATED_KEYWORD:
-		return ((len(nodeList) > 1) && (nodeList[1].Kind() == common.SERVICE_KEYWORD))
+	case st.ISOLATED_KEYWORD:
+		return ((len(nodeList) > 1) && (nodeList[1].Kind() == st.SERVICE_KEYWORD))
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseParameterRhs() tree.STNode {
+func (b *BallerinaParser) parseParameterRhs() st.STNode {
 	return b.parseParameterRhsInner(b.peek().Kind())
 }
 
-func (b *BallerinaParser) parseParameterRhsInner(tokenKind common.SyntaxKind) tree.STNode {
+func (b *BallerinaParser) parseParameterRhsInner(tokenKind st.SyntaxKind) st.STNode {
 	switch tokenKind {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.consume()
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_PARAM_END)
@@ -2131,23 +2131,23 @@ func (b *BallerinaParser) parseParameterRhsInner(tokenKind common.SyntaxKind) tr
 	}
 }
 
-func (b *BallerinaParser) parseParameter(annots tree.STNode, prevParamKind common.SyntaxKind, isParamNameOptional bool) tree.STNode {
-	var inclusionSymbol tree.STNode
+func (b *BallerinaParser) parseParameter(annots st.STNode, prevParamKind st.SyntaxKind, isParamNameOptional bool) st.STNode {
+	var inclusionSymbol st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ASTERISK_TOKEN:
+	case st.ASTERISK_TOKEN:
 		inclusionSymbol = b.consume()
-	case common.IDENTIFIER_TOKEN:
-		inclusionSymbol = tree.CreateEmptyNode()
+	case st.IDENTIFIER_TOKEN:
+		inclusionSymbol = st.CreateEmptyNode()
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
-			inclusionSymbol = tree.CreateEmptyNode()
+			inclusionSymbol = st.CreateEmptyNode()
 			break
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PARAMETER_START_WITHOUT_ANNOTATION)
 		if solution.Action == ACTION_KEEP {
-			inclusionSymbol = tree.CreateEmptyNodeList()
+			inclusionSymbol = st.CreateEmptyNodeList()
 			break
 		}
 		return b.parseParameter(annots, prevParamKind, isParamNameOptional)
@@ -2156,23 +2156,23 @@ func (b *BallerinaParser) parseParameter(annots tree.STNode, prevParamKind commo
 	return b.parseAfterParamType(prevParamKind, annots, inclusionSymbol, ty, isParamNameOptional)
 }
 
-func (b *BallerinaParser) parseParameterInner(prevParamKind common.SyntaxKind, isParamNameOptional bool) tree.STNode {
-	var annots tree.STNode
+func (b *BallerinaParser) parseParameterInner(prevParamKind st.SyntaxKind, isParamNameOptional bool) st.STNode {
+	var annots st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.AT_TOKEN:
+	case st.AT_TOKEN:
 		annots = b.parseOptionalAnnotations()
-	case common.ASTERISK_TOKEN, common.IDENTIFIER_TOKEN:
-		annots = tree.CreateEmptyNodeList()
+	case st.ASTERISK_TOKEN, st.IDENTIFIER_TOKEN:
+		annots = st.CreateEmptyNodeList()
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
-			annots = tree.CreateEmptyNodeList()
+			annots = st.CreateEmptyNodeList()
 			break
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PARAMETER_START)
 		if solution.Action == ACTION_KEEP {
-			annots = tree.CreateEmptyNodeList()
+			annots = st.CreateEmptyNodeList()
 			break
 		}
 		return b.parseParameterInner(prevParamKind, isParamNameOptional)
@@ -2180,46 +2180,46 @@ func (b *BallerinaParser) parseParameterInner(prevParamKind common.SyntaxKind, i
 	return b.parseParameter(annots, prevParamKind, isParamNameOptional)
 }
 
-func (b *BallerinaParser) parseAfterParamType(prevParamKind common.SyntaxKind, annots tree.STNode, inclusionSymbol tree.STNode, ty tree.STNode, isParamNameOptional bool) tree.STNode {
-	var paramName tree.STNode
+func (b *BallerinaParser) parseAfterParamType(prevParamKind st.SyntaxKind, annots st.STNode, inclusionSymbol st.STNode, ty st.STNode, isParamNameOptional bool) st.STNode {
+	var paramName st.STNode
 	token := b.peek()
 	switch token.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		if inclusionSymbol != nil {
-			ty = tree.CloneWithLeadingInvalidNodeMinutiae(ty, inclusionSymbol,
+			ty = st.CloneWithLeadingInvalidNodeMinutiae(ty, inclusionSymbol,
 				&common.REST_PARAMETER_CANNOT_BE_INCLUDED_RECORD_PARAMETER)
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_REST_PARAM)
 		ellipsis := b.parseEllipsis()
-		if isParamNameOptional && (b.peek().Kind() != common.IDENTIFIER_TOKEN) {
-			paramName = tree.CreateEmptyNode()
+		if isParamNameOptional && (b.peek().Kind() != st.IDENTIFIER_TOKEN) {
+			paramName = st.CreateEmptyNode()
 		} else {
 			paramName = b.parseVariableName()
 		}
-		return tree.CreateRestParameterNode(annots, ty, ellipsis, paramName)
-	case common.IDENTIFIER_TOKEN:
+		return st.CreateRestParameterNode(annots, ty, ellipsis, paramName)
+	case st.IDENTIFIER_TOKEN:
 		paramName = b.parseVariableName()
 		return b.parseParameterRhsWithAnnots(prevParamKind, annots, inclusionSymbol, ty, paramName)
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		if !isParamNameOptional {
 			break
 		}
-		paramName = tree.CreateEmptyNode()
+		paramName = st.CreateEmptyNode()
 		return b.parseParameterRhsWithAnnots(prevParamKind, annots, inclusionSymbol, ty, paramName)
 	default:
 		if !isParamNameOptional {
 			break
 		}
-		paramName = tree.CreateEmptyNode()
+		paramName = st.CreateEmptyNode()
 		return b.parseParameterRhsWithAnnots(prevParamKind, annots, inclusionSymbol, ty, paramName)
 	}
 	b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_AFTER_PARAMETER_TYPE)
 	return b.parseAfterParamType(prevParamKind, annots, inclusionSymbol, ty, false)
 }
 
-func (b *BallerinaParser) parseEllipsis() tree.STNode {
+func (b *BallerinaParser) parseEllipsis() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ELLIPSIS_TOKEN {
+	if token.Kind() == st.ELLIPSIS_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ELLIPSIS)
@@ -2227,34 +2227,34 @@ func (b *BallerinaParser) parseEllipsis() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseParameterRhsWithAnnots(prevParamKind common.SyntaxKind, annots tree.STNode, inclusionSymbol tree.STNode, ty tree.STNode, paramName tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseParameterRhsWithAnnots(prevParamKind st.SyntaxKind, annots st.STNode, inclusionSymbol st.STNode, ty st.STNode, paramName st.STNode) st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfParameter(nextToken.Kind()) {
 		if inclusionSymbol != nil {
-			return tree.CreateIncludedRecordParameterNode(annots, inclusionSymbol, ty, paramName)
+			return st.CreateIncludedRecordParameterNode(annots, inclusionSymbol, ty, paramName)
 		} else {
-			return tree.CreateRequiredParameterNode(annots, ty, paramName)
+			return st.CreateRequiredParameterNode(annots, ty, paramName)
 		}
-	} else if nextToken.Kind() == common.EQUAL_TOKEN {
-		if prevParamKind == common.REQUIRED_PARAM {
+	} else if nextToken.Kind() == st.EQUAL_TOKEN {
+		if prevParamKind == st.REQUIRED_PARAM {
 			b.switchContext(common.PARSER_RULE_CONTEXT_DEFAULTABLE_PARAM)
 		}
 		equal := b.parseAssignOp()
 		expr := b.parseInferredTypeDescDefaultOrExpression()
 		if inclusionSymbol != nil {
-			ty = tree.CloneWithLeadingInvalidNodeMinutiae(ty, inclusionSymbol,
+			ty = st.CloneWithLeadingInvalidNodeMinutiae(ty, inclusionSymbol,
 				&common.ERROR_DEFAULTABLE_PARAMETER_CANNOT_BE_INCLUDED_RECORD_PARAMETER)
 		}
-		return tree.CreateDefaultableParameterNode(annots, ty, paramName, equal, expr)
+		return st.CreateDefaultableParameterNode(annots, ty, paramName, equal, expr)
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_PARAMETER_NAME_RHS)
 		return b.parseParameterRhsWithAnnots(prevParamKind, annots, inclusionSymbol, ty, paramName)
 	}
 }
 
-func (b *BallerinaParser) parseComma() tree.STNode {
+func (b *BallerinaParser) parseComma() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.COMMA_TOKEN {
+	if token.Kind() == st.COMMA_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_COMMA)
@@ -2262,30 +2262,30 @@ func (b *BallerinaParser) parseComma() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFuncReturnTypeDescriptor(isFuncTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseFuncReturnTypeDescriptor(isFuncTypeDesc bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACE_TOKEN,
-		common.EQUAL_TOKEN:
-		return tree.CreateEmptyNode()
-	case common.RETURNS_KEYWORD:
+	case st.OPEN_BRACE_TOKEN,
+		st.EQUAL_TOKEN:
+		return st.CreateEmptyNode()
+	case st.RETURNS_KEYWORD:
 		break
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		if (!isFuncTypeDesc) || b.isSafeMissingReturnsParse() {
 			break
 		}
 		fallthrough
 	default:
 		nextNextToken := b.getNextNextToken()
-		if nextNextToken.Kind() == common.RETURNS_KEYWORD {
+		if nextNextToken.Kind() == st.RETURNS_KEYWORD {
 			break
 		}
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	}
 	returnsKeyword := b.parseReturnsKeyword()
 	annot := b.parseOptionalAnnotations()
 	ty := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RETURN_TYPE_DESC)
-	return tree.CreateReturnTypeDescriptorNode(returnsKeyword, annot, ty)
+	return st.CreateReturnTypeDescriptorNode(returnsKeyword, annot, ty)
 }
 
 func (b *BallerinaParser) isSafeMissingReturnsParse() bool {
@@ -2314,9 +2314,9 @@ func (b *BallerinaParser) isSafeMissingReturnsParseCtx(ctx common.ParserRuleCont
 	}
 }
 
-func (b *BallerinaParser) parseReturnsKeyword() tree.STNode {
+func (b *BallerinaParser) parseReturnsKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.RETURNS_KEYWORD {
+	if token.Kind() == st.RETURNS_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD)
@@ -2324,28 +2324,28 @@ func (b *BallerinaParser) parseReturnsKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeDescriptor(context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptor(context common.ParserRuleContext) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, context, false, false, TYPE_PRECEDENCE_DEFAULT)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithPrecedence(context common.ParserRuleContext, precedence TypePrecedence) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorWithPrecedence(context common.ParserRuleContext, precedence TypePrecedence) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, context, false, false, precedence)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithQualifier(qualifiers []tree.STNode, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorWithQualifier(qualifiers []st.STNode, context common.ParserRuleContext) st.STNode {
 	return b.parseTypeDescriptorWithinContext(qualifiers, context, false, false, TYPE_PRECEDENCE_DEFAULT)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInExpression(isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorInExpression(isInConditionalExpr bool) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_EXPRESSION, false, isInConditionalExpr,
 		TYPE_PRECEDENCE_DEFAULT)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithoutQualifiers(context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorWithoutQualifiers(context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, context, isTypedBindingPattern, isInConditionalExpr, precedence)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithinContext(qualifiers []tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorWithinContext(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
 	b.startContext(context)
 	typeDesc := b.parseTypeDescriptorInner(qualifiers, context, isTypedBindingPattern, isInConditionalExpr,
 		precedence)
@@ -2353,19 +2353,19 @@ func (b *BallerinaParser) parseTypeDescriptorWithinContext(qualifiers []tree.STN
 	return typeDesc
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInner(qualifiers []tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorInner(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
 	typeDesc := b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
-	if ((typeDesc.Kind() == common.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
-		var missingToken tree.STNode
-		missingToken = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		missingToken = tree.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
+	if ((typeDesc.Kind() == st.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
+		var missingToken st.STNode
+		missingToken = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		missingToken = st.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
 			&common.ERROR_INVALID_USAGE_OF_VAR)
-		typeDesc = tree.CreateSimpleNameReferenceNode(missingToken.(tree.STToken))
+		typeDesc = st.CreateSimpleNameReferenceNode(missingToken.(st.STToken))
 	}
 	return b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern, precedence)
 }
 
-func (b *BallerinaParser) parseComplexTypeDescriptor(typeDesc tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) tree.STNode {
+func (b *BallerinaParser) parseComplexTypeDescriptor(typeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	b.startContext(context)
 	complexTypeDesc := b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern,
 		TYPE_PRECEDENCE_DEFAULT)
@@ -2373,17 +2373,17 @@ func (b *BallerinaParser) parseComplexTypeDescriptor(typeDesc tree.STNode, conte
 	return complexTypeDesc
 }
 
-func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, precedence TypePrecedence) tree.STNode {
+func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, precedence TypePrecedence) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.QUESTION_MARK_TOKEN:
+	case st.QUESTION_MARK_TOKEN:
 		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_ARRAY_OR_OPTIONAL) {
 			return typeDesc
 		}
 		isPossibleOptionalType := true
 		nextNextToken := b.getNextNextToken()
 		if ((context == common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_EXPRESSION) && (!b.isValidTypeContinuationToken(nextNextToken))) && b.isValidExprStart(nextNextToken.Kind()) {
-			if nextNextToken.Kind() == common.OPEN_BRACE_TOKEN {
+			if nextNextToken.Kind() == st.OPEN_BRACE_TOKEN {
 				grandParentCtx := b.errorHandler.GetGrandParentContext()
 				isPossibleOptionalType = ((grandParentCtx == common.PARSER_RULE_CONTEXT_IF_BLOCK) || (grandParentCtx == common.PARSER_RULE_CONTEXT_WHILE_BLOCK))
 			} else {
@@ -2395,7 +2395,7 @@ func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc tree.STNod
 		}
 		optionalTypeDes := b.parseOptionalTypeDescriptor(typeDesc)
 		return b.parseComplexTypeDescriptorInternal(optionalTypeDes, context, isTypedBindingPattern, precedence)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		if isTypedBindingPattern {
 			return typeDesc
 		}
@@ -2404,13 +2404,13 @@ func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc tree.STNod
 		}
 		arrayTypeDesc := b.parseArrayTypeDescriptor(typeDesc)
 		return b.parseComplexTypeDescriptorInternal(arrayTypeDesc, context, false, precedence)
-	case common.PIPE_TOKEN:
+	case st.PIPE_TOKEN:
 		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_UNION) {
 			return typeDesc
 		}
 		newTypeDesc := b.parseUnionTypeDescriptor(typeDesc, context, isTypedBindingPattern)
 		return b.parseComplexTypeDescriptorInternal(newTypeDesc, context, isTypedBindingPattern, precedence)
-	case common.BITWISE_AND_TOKEN:
+	case st.BITWISE_AND_TOKEN:
 		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_INTERSECTION) {
 			return typeDesc
 		}
@@ -2421,64 +2421,64 @@ func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc tree.STNod
 	}
 }
 
-func (b *BallerinaParser) isValidTypeContinuationToken(token tree.STToken) bool {
+func (b *BallerinaParser) isValidTypeContinuationToken(token st.STToken) bool {
 	switch token.Kind() {
-	case common.QUESTION_MARK_TOKEN, common.OPEN_BRACKET_TOKEN, common.PIPE_TOKEN, common.BITWISE_AND_TOKEN:
+	case st.QUESTION_MARK_TOKEN, st.OPEN_BRACKET_TOKEN, st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) validateForUsageOfVar(typeDesc tree.STNode) tree.STNode {
-	if typeDesc.Kind() != common.VAR_TYPE_DESC {
+func (b *BallerinaParser) validateForUsageOfVar(typeDesc st.STNode) st.STNode {
+	if typeDesc.Kind() != st.VAR_TYPE_DESC {
 		return typeDesc
 	}
-	var missingToken tree.STNode
-	missingToken = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-	missingToken = tree.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
+	var missingToken st.STNode
+	missingToken = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+	missingToken = st.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
 		&common.ERROR_INVALID_USAGE_OF_VAR)
-	return tree.CreateSimpleNameReferenceNode(missingToken)
+	return st.CreateSimpleNameReferenceNode(missingToken)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInternal(qualifiers []tree.STNode, context common.ParserRuleContext, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, context common.ParserRuleContext, isInConditionalExpr bool) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	if b.isQualifiedIdentifierPredeclaredPrefix(nextToken.Kind()) {
 		return b.parseQualifiedTypeRefOrTypeDesc(qualifiers, isInConditionalExpr)
 	}
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseTypeReferenceInner(isInConditionalExpr)
-	case common.RECORD_KEYWORD:
+	case st.RECORD_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseRecordTypeDescriptor()
-	case common.OBJECT_KEYWORD:
+	case st.OBJECT_KEYWORD:
 		objectTypeQualifiers := b.createObjectTypeQualNodeList(qualifiers)
 		return b.parseObjectTypeDescriptor(b.consume(), objectTypeQualifiers)
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseNilOrParenthesisedTypeDesc()
-	case common.MAP_KEYWORD:
+	case st.MAP_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMapTypeDescriptor(b.consume())
-	case common.STREAM_KEYWORD:
+	case st.STREAM_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseStreamTypeDescriptor(b.consume())
-	case common.TABLE_KEYWORD:
+	case st.TABLE_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseTableTypeDescriptor(b.consume())
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		return b.parseFunctionTypeDesc(qualifiers)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseTupleTypeDesc()
-	case common.DISTINCT_KEYWORD:
+	case st.DISTINCT_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		distinctKeyword := b.consume()
 		return b.parseDistinctTypeDesc(distinctKeyword, context)
-	case common.TRANSACTION_KEYWORD:
+	case st.TRANSACTION_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseQualifiedIdentWithTransactionPrefix(context)
 	default:
@@ -2504,63 +2504,63 @@ func (b *BallerinaParser) parseTypeDescriptorInternal(qualifiers []tree.STNode, 
 	return b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInternalWithPrecedence(qualifiers []tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) tree.STNode {
+func (b *BallerinaParser) parseTypeDescriptorInternalWithPrecedence(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
 	typeDesc := b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
 
 	// var is parsed as a built-in simple type. However, since var is not allowed everywhere,
 	// validate it here. This is done to give better error messages.
-	if ((typeDesc.Kind() == common.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
-		var missingToken tree.STNode
-		missingToken = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		missingToken = tree.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
+	if ((typeDesc.Kind() == st.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
+		var missingToken st.STNode
+		missingToken = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		missingToken = st.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
 			&common.ERROR_INVALID_USAGE_OF_VAR)
-		typeDesc = tree.CreateSimpleNameReferenceNode(missingToken.(tree.STToken))
+		typeDesc = st.CreateSimpleNameReferenceNode(missingToken.(st.STToken))
 	}
 
 	return b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern, precedence)
 }
 
-func (b *BallerinaParser) getTypeDescRecoveryCtx(qualifiers []tree.STNode) common.ParserRuleContext {
+func (b *BallerinaParser) getTypeDescRecoveryCtx(qualifiers []st.STNode) common.ParserRuleContext {
 	if len(qualifiers) == 0 {
 		return common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR
 	}
 	lastQualifier := b.getLastNodeInList(qualifiers)
 	switch lastQualifier.Kind() {
-	case common.ISOLATED_KEYWORD:
+	case st.ISOLATED_KEYWORD:
 		return common.PARSER_RULE_CONTEXT_TYPE_DESC_WITHOUT_ISOLATED
-	case common.TRANSACTIONAL_KEYWORD:
+	case st.TRANSACTIONAL_KEYWORD:
 		return common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC
 	default:
 		return common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedIdentWithTransactionPrefix(context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseQualifiedIdentWithTransactionPrefix(context common.ParserRuleContext) st.STNode {
 	transactionKeyword := b.consume()
-	identifier := tree.CreateIdentifierToken(transactionKeyword.Text(),
+	identifier := st.CreateIdentifierToken(transactionKeyword.Text(),
 		transactionKeyword.LeadingMinutiae(), transactionKeyword.TrailingMinutiae())
-	colon := tree.CreateMissingTokenWithDiagnostics(common.COLON_TOKEN,
+	colon := st.CreateMissingTokenWithDiagnostics(st.COLON_TOKEN,
 		&common.ERROR_MISSING_COLON_TOKEN)
 	varOrFuncName := b.parseIdentifier(context)
 	return b.createQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
 }
 
-func (b *BallerinaParser) parseQualifiedTypeRefOrTypeDesc(qualifiers []tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseQualifiedTypeRefOrTypeDesc(qualifiers []st.STNode, isInConditionalExpr bool) st.STNode {
 	preDeclaredPrefix := b.consume()
 	nextNextToken := b.getNextNextToken()
-	if (preDeclaredPrefix.Kind() == common.TRANSACTION_KEYWORD) || (nextNextToken.Kind() == common.IDENTIFIER_TOKEN) {
+	if (preDeclaredPrefix.Kind() == st.TRANSACTION_KEYWORD) || (nextNextToken.Kind() == st.IDENTIFIER_TOKEN) {
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
 	}
 	var context common.ParserRuleContext
 	switch preDeclaredPrefix.Kind() {
-	case common.MAP_KEYWORD:
+	case st.MAP_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_MAP_TYPE_OR_TYPE_REF
-	case common.OBJECT_KEYWORD:
+	case st.OBJECT_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_OBJECT_TYPE_OR_TYPE_REF
-	case common.STREAM_KEYWORD:
+	case st.STREAM_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_STREAM_TYPE_OR_TYPE_REF
-	case common.TABLE_KEYWORD:
+	case st.TABLE_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_TABLE_TYPE_OR_TYPE_REF
 	default:
 		if isParameterizedTypeToken(preDeclaredPrefix.Kind()) {
@@ -2577,18 +2577,18 @@ func (b *BallerinaParser) parseQualifiedTypeRefOrTypeDesc(qualifiers []tree.STNo
 	return b.parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix, qualifiers)
 }
 
-func (b *BallerinaParser) parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix tree.STToken, qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix st.STToken, qualifiers []st.STNode) st.STNode {
 	switch preDeclaredPrefix.Kind() {
-	case common.MAP_KEYWORD:
+	case st.MAP_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMapTypeDescriptor(preDeclaredPrefix)
-	case common.OBJECT_KEYWORD:
+	case st.OBJECT_KEYWORD:
 		objectTypeQualifiers := b.createObjectTypeQualNodeList(qualifiers)
 		return b.parseObjectTypeDescriptor(preDeclaredPrefix, objectTypeQualifiers)
-	case common.STREAM_KEYWORD:
+	case st.STREAM_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseStreamTypeDescriptor(preDeclaredPrefix)
-	case common.TABLE_KEYWORD:
+	case st.TABLE_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseTableTypeDescriptor(preDeclaredPrefix)
 	default:
@@ -2600,48 +2600,48 @@ func (b *BallerinaParser) parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix 
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix tree.STToken, isInConditionalExpr bool) tree.STNode {
-	identifier := tree.CreateIdentifierToken(preDeclaredPrefix.Text(),
+func (b *BallerinaParser) parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix st.STToken, isInConditionalExpr bool) st.STNode {
+	identifier := st.CreateIdentifierToken(preDeclaredPrefix.Text(),
 		preDeclaredPrefix.LeadingMinutiae(), preDeclaredPrefix.TrailingMinutiae())
 	return b.parseQualifiedIdentifierNode(identifier, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseDistinctTypeDesc(distinctKeyword tree.STNode, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseDistinctTypeDesc(distinctKeyword st.STNode, context common.ParserRuleContext) st.STNode {
 	typeDesc := b.parseTypeDescriptorWithPrecedence(context, TYPE_PRECEDENCE_DISTINCT)
-	return tree.CreateDistinctTypeDescriptorNode(distinctKeyword, typeDesc)
+	return st.CreateDistinctTypeDescriptorNode(distinctKeyword, typeDesc)
 }
 
-func (b *BallerinaParser) parseNilOrParenthesisedTypeDesc() tree.STNode {
+func (b *BallerinaParser) parseNilOrParenthesisedTypeDesc() st.STNode {
 	openParen := b.parseOpenParenthesis()
 	return b.parseNilOrParenthesisedTypeDescRhs(openParen)
 }
 
-func (b *BallerinaParser) parseNilOrParenthesisedTypeDescRhs(openParen tree.STNode) tree.STNode {
-	var closeParen tree.STNode
+func (b *BallerinaParser) parseNilOrParenthesisedTypeDescRhs(openParen st.STNode) st.STNode {
+	var closeParen st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		closeParen = b.parseCloseParenthesis()
-		return tree.CreateNilTypeDescriptorNode(openParen, closeParen)
+		return st.CreateNilTypeDescriptorNode(openParen, closeParen)
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
 			typedesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PARENTHESIS)
 			closeParen = b.parseCloseParenthesis()
-			return tree.CreateParenthesisedTypeDescriptorNode(openParen, typedesc, closeParen)
+			return st.CreateParenthesisedTypeDescriptorNode(openParen, typedesc, closeParen)
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_NIL_OR_PARENTHESISED_TYPE_DESC_RHS)
 		return b.parseNilOrParenthesisedTypeDescRhs(openParen)
 	}
 }
 
-func (b *BallerinaParser) parseSimpleTypeInTerminalExpr() tree.STNode {
+func (b *BallerinaParser) parseSimpleTypeInTerminalExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_EXPRESSION)
 	simpleTypeDescriptor := b.parseSimpleTypeDescriptor()
 	b.endContext()
 	return simpleTypeDescriptor
 }
 
-func (b *BallerinaParser) parseSimpleTypeDescriptor() tree.STNode {
+func (b *BallerinaParser) parseSimpleTypeDescriptor() st.STNode {
 	nextToken := b.peek()
 	if isSimpleType(nextToken.Kind()) {
 		token := b.consume()
@@ -2652,14 +2652,14 @@ func (b *BallerinaParser) parseSimpleTypeDescriptor() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionBody() tree.STNode {
+func (b *BallerinaParser) parseFunctionBody() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		return b.parseExternalFunctionBody()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseFunctionBodyBlock(false)
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return b.parseExpressionFuncBody(false, false)
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FUNC_BODY)
@@ -2667,13 +2667,13 @@ func (b *BallerinaParser) parseFunctionBody() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) tree.STNode {
+func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
 	openBrace := b.parseOpenBrace()
 	token := b.peek()
-	firstStmtList := make([]tree.STNode, 0)
-	workers := make([]tree.STNode, 0)
-	secondStmtList := make([]tree.STNode, 0)
+	firstStmtList := make([]st.STNode, 0)
+	workers := make([]st.STNode, 0)
+	secondStmtList := make([]st.STNode, 0)
 	currentCtx := common.PARSER_RULE_CONTEXT_DEFAULT_WORKER_INIT
 	hasNamedWorkers := false
 	for !b.isEndOfFuncBodyBlock(token.Kind(), isAnonFunc) {
@@ -2686,7 +2686,7 @@ func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) tree.STNode {
 		}
 		switch currentCtx {
 		case common.PARSER_RULE_CONTEXT_DEFAULT_WORKER_INIT:
-			if stmt.Kind() != common.NAMED_WORKER_DECLARATION {
+			if stmt.Kind() != st.NAMED_WORKER_DECLARATION {
 				firstStmtList = append(firstStmtList, stmt)
 				break
 			}
@@ -2694,7 +2694,7 @@ func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) tree.STNode {
 			hasNamedWorkers = true
 			fallthrough
 		case common.PARSER_RULE_CONTEXT_NAMED_WORKERS:
-			if stmt.Kind() == common.NAMED_WORKER_DECLARATION {
+			if stmt.Kind() == st.NAMED_WORKER_DECLARATION {
 				workers = append(workers, stmt)
 				break
 			}
@@ -2703,7 +2703,7 @@ func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) tree.STNode {
 		case common.PARSER_RULE_CONTEXT_DEFAULT_WORKER:
 			fallthrough
 		default:
-			if stmt.Kind() == common.NAMED_WORKER_DECLARATION {
+			if stmt.Kind() == st.NAMED_WORKER_DECLARATION {
 				b.updateLastNodeInListWithInvalidNode(secondStmtList, stmt,
 					&common.ERROR_NAMED_WORKER_NOT_ALLOWED_HERE)
 				break
@@ -2712,35 +2712,35 @@ func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) tree.STNode {
 		}
 		token = b.peek()
 	}
-	var namedWorkersList tree.STNode
-	var statements tree.STNode
+	var namedWorkersList st.STNode
+	var statements st.STNode
 	if hasNamedWorkers {
-		workerInitStatements := tree.CreateNodeList(firstStmtList...)
-		namedWorkers := tree.CreateNodeList(workers...)
-		namedWorkersList = tree.CreateNamedWorkerDeclarator(workerInitStatements, namedWorkers)
-		statements = tree.CreateNodeList(secondStmtList...)
+		workerInitStatements := st.CreateNodeList(firstStmtList...)
+		namedWorkers := st.CreateNodeList(workers...)
+		namedWorkersList = st.CreateNamedWorkerDeclarator(workerInitStatements, namedWorkers)
+		statements = st.CreateNodeList(secondStmtList...)
 	} else {
-		namedWorkersList = tree.CreateEmptyNode()
-		statements = tree.CreateNodeList(firstStmtList...)
+		namedWorkersList = st.CreateEmptyNode()
+		statements = st.CreateNodeList(firstStmtList...)
 	}
 	closeBrace := b.parseCloseBrace()
-	var semicolon tree.STNode
+	var semicolon st.STNode
 	if isAnonFunc {
-		semicolon = tree.CreateEmptyNode()
+		semicolon = st.CreateEmptyNode()
 	} else {
 		semicolon = b.parseOptionalSemicolon()
 	}
 	b.endContext()
-	return tree.CreateFunctionBodyBlockNode(openBrace, namedWorkersList, statements, closeBrace,
+	return st.CreateFunctionBodyBlockNode(openBrace, namedWorkersList, statements, closeBrace,
 		semicolon)
 }
 
-func (b *BallerinaParser) isEndOfFuncBodyBlock(nextTokenKind common.SyntaxKind, isAnonFunc bool) bool {
+func (b *BallerinaParser) isEndOfFuncBodyBlock(nextTokenKind st.SyntaxKind, isAnonFunc bool) bool {
 	if isAnonFunc {
 		switch nextTokenKind {
-		case common.CLOSE_BRACE_TOKEN, common.CLOSE_PAREN_TOKEN, common.CLOSE_BRACKET_TOKEN,
-			common.OPEN_BRACE_TOKEN, common.SEMICOLON_TOKEN, common.COMMA_TOKEN,
-			common.PUBLIC_KEYWORD, common.EOF_TOKEN, common.EQUAL_TOKEN, common.BACKTICK_TOKEN:
+		case st.CLOSE_BRACE_TOKEN, st.CLOSE_PAREN_TOKEN, st.CLOSE_BRACKET_TOKEN,
+			st.OPEN_BRACE_TOKEN, st.SEMICOLON_TOKEN, st.COMMA_TOKEN,
+			st.PUBLIC_KEYWORD, st.EOF_TOKEN, st.EQUAL_TOKEN, st.BACKTICK_TOKEN:
 			return true
 		default:
 			break
@@ -2749,7 +2749,7 @@ func (b *BallerinaParser) isEndOfFuncBodyBlock(nextTokenKind common.SyntaxKind, 
 	return b.isEndOfStatements()
 }
 
-func (b *BallerinaParser) isEndOfRecordTypeNode(_ common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfRecordTypeNode(_ st.SyntaxKind) bool {
 	return b.isEndOfModuleLevelNode(1)
 }
 
@@ -2759,7 +2759,7 @@ func (b *BallerinaParser) isEndOfObjectTypeNode() bool {
 
 func (b *BallerinaParser) isEndOfStatements() bool {
 	switch b.peek().Kind() {
-	case common.RESOURCE_KEYWORD:
+	case st.RESOURCE_KEYWORD:
 		return true
 	default:
 		return b.isEndOfModuleLevelNode(1)
@@ -2772,69 +2772,69 @@ func (b *BallerinaParser) isEndOfModuleLevelNode(peekIndex int) bool {
 
 func (b *BallerinaParser) isEndOfModuleLevelNodeInner(peekIndex int, isObject bool) bool {
 	switch b.peekN(peekIndex).Kind() {
-	case common.EOF_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_BRACE_PIPE_TOKEN,
-		common.IMPORT_KEYWORD,
-		common.ANNOTATION_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.CLASS_KEYWORD:
+	case st.EOF_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_BRACE_PIPE_TOKEN,
+		st.IMPORT_KEYWORD,
+		st.ANNOTATION_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.CLASS_KEYWORD:
 		return true
-	case common.SERVICE_KEYWORD:
+	case st.SERVICE_KEYWORD:
 		return b.isServiceDeclStart(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER, 1)
-	case common.PUBLIC_KEYWORD:
+	case st.PUBLIC_KEYWORD:
 		return ((!isObject) && b.isEndOfModuleLevelNodeInner(peekIndex+1, false))
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		if isObject {
 			return false
 		}
-		return ((b.peekN(peekIndex+1).Kind() == common.IDENTIFIER_TOKEN) && (b.peekN(peekIndex+2).Kind() == common.OPEN_PAREN_TOKEN))
+		return ((b.peekN(peekIndex+1).Kind() == st.IDENTIFIER_TOKEN) && (b.peekN(peekIndex+2).Kind() == st.OPEN_PAREN_TOKEN))
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isEndOfParameter(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfParameter(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.CLOSE_PAREN_TOKEN,
-		common.CLOSE_BRACKET_TOKEN,
-		common.SEMICOLON_TOKEN,
-		common.COMMA_TOKEN,
-		common.RETURNS_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.IF_KEYWORD,
-		common.WHILE_KEYWORD,
-		common.DO_KEYWORD,
-		common.AT_TOKEN:
+	case st.CLOSE_PAREN_TOKEN,
+		st.CLOSE_BRACKET_TOKEN,
+		st.SEMICOLON_TOKEN,
+		st.COMMA_TOKEN,
+		st.RETURNS_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.IF_KEYWORD,
+		st.WHILE_KEYWORD,
+		st.DO_KEYWORD,
+		st.AT_TOKEN:
 		return true
 	default:
 		return b.isEndOfModuleLevelNode(1)
 	}
 }
 
-func (b *BallerinaParser) isEndOfParametersList(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfParametersList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.CLOSE_PAREN_TOKEN,
-		common.SEMICOLON_TOKEN,
-		common.RETURNS_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.IF_KEYWORD,
-		common.WHILE_KEYWORD,
-		common.DO_KEYWORD,
-		common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.CLOSE_PAREN_TOKEN,
+		st.SEMICOLON_TOKEN,
+		st.RETURNS_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.IF_KEYWORD,
+		st.WHILE_KEYWORD,
+		st.DO_KEYWORD,
+		st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return true
 	default:
 		return b.isEndOfModuleLevelNode(1)
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartIdentifier() tree.STNode {
+func (b *BallerinaParser) parseStatementStartIdentifier() st.STNode {
 	return b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME)
 }
 
-func (b *BallerinaParser) parseVariableName() tree.STNode {
+func (b *BallerinaParser) parseVariableName() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_VARIABLE_NAME)
@@ -2842,9 +2842,9 @@ func (b *BallerinaParser) parseVariableName() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOpenBrace() tree.STNode {
+func (b *BallerinaParser) parseOpenBrace() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.OPEN_BRACE_TOKEN {
+	if token.Kind() == st.OPEN_BRACE_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_OPEN_BRACE)
@@ -2852,9 +2852,9 @@ func (b *BallerinaParser) parseOpenBrace() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCloseBrace() tree.STNode {
+func (b *BallerinaParser) parseCloseBrace() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CLOSE_BRACE_TOKEN {
+	if token.Kind() == st.CLOSE_BRACE_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CLOSE_BRACE)
@@ -2862,20 +2862,20 @@ func (b *BallerinaParser) parseCloseBrace() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseExternalFunctionBody() tree.STNode {
+func (b *BallerinaParser) parseExternalFunctionBody() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY)
 	assign := b.parseAssignOp()
 	return b.parseExternalFuncBodyRhs(assign)
 }
 
-func (b *BallerinaParser) parseExternalFuncBodyRhs(assign tree.STNode) tree.STNode {
-	var annotation tree.STNode
+func (b *BallerinaParser) parseExternalFuncBodyRhs(assign st.STNode) st.STNode {
+	var annotation st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.AT_TOKEN:
+	case st.AT_TOKEN:
 		annotation = b.parseAnnotations()
-	case common.EXTERNAL_KEYWORD:
-		annotation = tree.CreateEmptyNodeList()
+	case st.EXTERNAL_KEYWORD:
+		annotation = st.CreateEmptyNodeList()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY_OPTIONAL_ANNOTS)
 		return b.parseExternalFuncBodyRhs(assign)
@@ -2883,12 +2883,12 @@ func (b *BallerinaParser) parseExternalFuncBodyRhs(assign tree.STNode) tree.STNo
 	externalKeyword := b.parseExternalKeyword()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateExternalFunctionBodyNode(assign, annotation, externalKeyword, semicolon)
+	return st.CreateExternalFunctionBodyNode(assign, annotation, externalKeyword, semicolon)
 }
 
-func (b *BallerinaParser) parseSemicolon() tree.STNode {
+func (b *BallerinaParser) parseSemicolon() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.SEMICOLON_TOKEN {
+	if token.Kind() == st.SEMICOLON_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SEMICOLON)
@@ -2896,17 +2896,17 @@ func (b *BallerinaParser) parseSemicolon() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalSemicolon() tree.STNode {
+func (b *BallerinaParser) parseOptionalSemicolon() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.SEMICOLON_TOKEN {
+	if token.Kind() == st.SEMICOLON_TOKEN {
 		return b.consume()
 	}
-	return tree.CreateEmptyNode()
+	return st.CreateEmptyNode()
 }
 
-func (b *BallerinaParser) parseExternalKeyword() tree.STNode {
+func (b *BallerinaParser) parseExternalKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.EXTERNAL_KEYWORD {
+	if token.Kind() == st.EXTERNAL_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_EXTERNAL_KEYWORD)
@@ -2914,9 +2914,9 @@ func (b *BallerinaParser) parseExternalKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAssignOp() tree.STNode {
+func (b *BallerinaParser) parseAssignOp() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.EQUAL_TOKEN {
+	if token.Kind() == st.EQUAL_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ASSIGN_OP)
@@ -2924,7 +2924,7 @@ func (b *BallerinaParser) parseAssignOp() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBinaryOperator() tree.STNode {
+func (b *BallerinaParser) parseBinaryOperator() st.STNode {
 	token := b.peek()
 	if b.isBinaryOperator(token.Kind()) {
 		return b.consume()
@@ -2934,104 +2934,104 @@ func (b *BallerinaParser) parseBinaryOperator() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isBinaryOperator(kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isBinaryOperator(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.SLASH_TOKEN,
-		common.ASTERISK_TOKEN,
-		common.GT_TOKEN,
-		common.LT_TOKEN,
-		common.DOUBLE_EQUAL_TOKEN,
-		common.TRIPPLE_EQUAL_TOKEN,
-		common.LT_EQUAL_TOKEN,
-		common.GT_EQUAL_TOKEN,
-		common.NOT_EQUAL_TOKEN,
-		common.NOT_DOUBLE_EQUAL_TOKEN,
-		common.BITWISE_AND_TOKEN,
-		common.BITWISE_XOR_TOKEN,
-		common.PIPE_TOKEN,
-		common.LOGICAL_AND_TOKEN,
-		common.LOGICAL_OR_TOKEN,
-		common.PERCENT_TOKEN,
-		common.DOUBLE_LT_TOKEN,
-		common.DOUBLE_GT_TOKEN,
-		common.TRIPPLE_GT_TOKEN,
-		common.ELLIPSIS_TOKEN,
-		common.DOUBLE_DOT_LT_TOKEN,
-		common.ELVIS_TOKEN:
+	case st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.SLASH_TOKEN,
+		st.ASTERISK_TOKEN,
+		st.GT_TOKEN,
+		st.LT_TOKEN,
+		st.DOUBLE_EQUAL_TOKEN,
+		st.TRIPPLE_EQUAL_TOKEN,
+		st.LT_EQUAL_TOKEN,
+		st.GT_EQUAL_TOKEN,
+		st.NOT_EQUAL_TOKEN,
+		st.NOT_DOUBLE_EQUAL_TOKEN,
+		st.BITWISE_AND_TOKEN,
+		st.BITWISE_XOR_TOKEN,
+		st.PIPE_TOKEN,
+		st.LOGICAL_AND_TOKEN,
+		st.LOGICAL_OR_TOKEN,
+		st.PERCENT_TOKEN,
+		st.DOUBLE_LT_TOKEN,
+		st.DOUBLE_GT_TOKEN,
+		st.TRIPPLE_GT_TOKEN,
+		st.ELLIPSIS_TOKEN,
+		st.DOUBLE_DOT_LT_TOKEN,
+		st.ELVIS_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) getOpPrecedence(binaryOpKind common.SyntaxKind) OperatorPrecedence {
+func (b *BallerinaParser) getOpPrecedence(binaryOpKind st.SyntaxKind) OperatorPrecedence {
 	switch binaryOpKind {
-	case common.ASTERISK_TOKEN, // multiplication
-		common.SLASH_TOKEN, // division
-		common.PERCENT_TOKEN:
+	case st.ASTERISK_TOKEN, // multiplication
+		st.SLASH_TOKEN, // division
+		st.PERCENT_TOKEN:
 		return OPERATOR_PRECEDENCE_MULTIPLICATIVE
-	case common.PLUS_TOKEN, common.MINUS_TOKEN:
+	case st.PLUS_TOKEN, st.MINUS_TOKEN:
 		return OPERATOR_PRECEDENCE_ADDITIVE
-	case common.GT_TOKEN,
-		common.LT_TOKEN,
-		common.GT_EQUAL_TOKEN,
-		common.LT_EQUAL_TOKEN,
-		common.IS_KEYWORD,
-		common.NOT_IS_KEYWORD:
+	case st.GT_TOKEN,
+		st.LT_TOKEN,
+		st.GT_EQUAL_TOKEN,
+		st.LT_EQUAL_TOKEN,
+		st.IS_KEYWORD,
+		st.NOT_IS_KEYWORD:
 		return OPERATOR_PRECEDENCE_BINARY_COMPARE
-	case common.DOT_TOKEN,
-		common.OPEN_BRACKET_TOKEN,
-		common.OPEN_PAREN_TOKEN,
-		common.ANNOT_CHAINING_TOKEN,
-		common.OPTIONAL_CHAINING_TOKEN,
-		common.DOT_LT_TOKEN,
-		common.SLASH_LT_TOKEN,
-		common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
-		common.SLASH_ASTERISK_TOKEN:
+	case st.DOT_TOKEN,
+		st.OPEN_BRACKET_TOKEN,
+		st.OPEN_PAREN_TOKEN,
+		st.ANNOT_CHAINING_TOKEN,
+		st.OPTIONAL_CHAINING_TOKEN,
+		st.DOT_LT_TOKEN,
+		st.SLASH_LT_TOKEN,
+		st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
+		st.SLASH_ASTERISK_TOKEN:
 		return OPERATOR_PRECEDENCE_MEMBER_ACCESS
-	case common.DOUBLE_EQUAL_TOKEN,
-		common.TRIPPLE_EQUAL_TOKEN,
-		common.NOT_EQUAL_TOKEN,
-		common.NOT_DOUBLE_EQUAL_TOKEN:
+	case st.DOUBLE_EQUAL_TOKEN,
+		st.TRIPPLE_EQUAL_TOKEN,
+		st.NOT_EQUAL_TOKEN,
+		st.NOT_DOUBLE_EQUAL_TOKEN:
 		return OPERATOR_PRECEDENCE_EQUALITY
-	case common.BITWISE_AND_TOKEN:
+	case st.BITWISE_AND_TOKEN:
 		return OPERATOR_PRECEDENCE_BITWISE_AND
-	case common.BITWISE_XOR_TOKEN:
+	case st.BITWISE_XOR_TOKEN:
 		return OPERATOR_PRECEDENCE_BITWISE_XOR
-	case common.PIPE_TOKEN:
+	case st.PIPE_TOKEN:
 		return OPERATOR_PRECEDENCE_BITWISE_OR
-	case common.LOGICAL_AND_TOKEN:
+	case st.LOGICAL_AND_TOKEN:
 		return OPERATOR_PRECEDENCE_LOGICAL_AND
-	case common.LOGICAL_OR_TOKEN:
+	case st.LOGICAL_OR_TOKEN:
 		return OPERATOR_PRECEDENCE_LOGICAL_OR
-	case common.RIGHT_ARROW_TOKEN:
+	case st.RIGHT_ARROW_TOKEN:
 		return OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET
-	case common.SYNC_SEND_TOKEN:
+	case st.SYNC_SEND_TOKEN:
 		return OPERATOR_PRECEDENCE_ACTION
-	case common.DOUBLE_LT_TOKEN,
-		common.DOUBLE_GT_TOKEN,
-		common.TRIPPLE_GT_TOKEN:
+	case st.DOUBLE_LT_TOKEN,
+		st.DOUBLE_GT_TOKEN,
+		st.TRIPPLE_GT_TOKEN:
 		return OPERATOR_PRECEDENCE_SHIFT
-	case common.ELLIPSIS_TOKEN,
-		common.DOUBLE_DOT_LT_TOKEN:
+	case st.ELLIPSIS_TOKEN,
+		st.DOUBLE_DOT_LT_TOKEN:
 		return OPERATOR_PRECEDENCE_RANGE
-	case common.ELVIS_TOKEN:
+	case st.ELVIS_TOKEN:
 		return OPERATOR_PRECEDENCE_ELVIS_CONDITIONAL
-	case common.QUESTION_MARK_TOKEN, common.COLON_TOKEN:
+	case st.QUESTION_MARK_TOKEN, st.COLON_TOKEN:
 		return OPERATOR_PRECEDENCE_CONDITIONAL
 	default:
 		panic("Unsupported binary operator '" + binaryOpKind.StrValue() + "'")
 	}
 }
 
-func (b *BallerinaParser) getBinaryOperatorKindToInsert(opPrecedenceLevel OperatorPrecedence) common.SyntaxKind {
+func (b *BallerinaParser) getBinaryOperatorKindToInsert(opPrecedenceLevel OperatorPrecedence) st.SyntaxKind {
 	switch opPrecedenceLevel {
 	case OPERATOR_PRECEDENCE_MULTIPLICATIVE:
-		return common.ASTERISK_TOKEN
+		return st.ASTERISK_TOKEN
 	case OPERATOR_PRECEDENCE_DEFAULT,
 		OPERATOR_PRECEDENCE_UNARY,
 		OPERATOR_PRECEDENCE_ACTION,
@@ -3041,27 +3041,27 @@ func (b *BallerinaParser) getBinaryOperatorKindToInsert(opPrecedenceLevel Operat
 		OPERATOR_PRECEDENCE_QUERY,
 		OPERATOR_PRECEDENCE_TRAP,
 		OPERATOR_PRECEDENCE_ADDITIVE:
-		return common.PLUS_TOKEN
+		return st.PLUS_TOKEN
 	case OPERATOR_PRECEDENCE_SHIFT:
-		return common.DOUBLE_LT_TOKEN
+		return st.DOUBLE_LT_TOKEN
 	case OPERATOR_PRECEDENCE_RANGE:
-		return common.ELLIPSIS_TOKEN
+		return st.ELLIPSIS_TOKEN
 	case OPERATOR_PRECEDENCE_BINARY_COMPARE:
-		return common.LT_TOKEN
+		return st.LT_TOKEN
 	case OPERATOR_PRECEDENCE_EQUALITY:
-		return common.DOUBLE_EQUAL_TOKEN
+		return st.DOUBLE_EQUAL_TOKEN
 	case OPERATOR_PRECEDENCE_BITWISE_AND:
-		return common.BITWISE_AND_TOKEN
+		return st.BITWISE_AND_TOKEN
 	case OPERATOR_PRECEDENCE_BITWISE_XOR:
-		return common.BITWISE_XOR_TOKEN
+		return st.BITWISE_XOR_TOKEN
 	case OPERATOR_PRECEDENCE_BITWISE_OR:
-		return common.PIPE_TOKEN
+		return st.PIPE_TOKEN
 	case OPERATOR_PRECEDENCE_LOGICAL_AND:
-		return common.LOGICAL_AND_TOKEN
+		return st.LOGICAL_AND_TOKEN
 	case OPERATOR_PRECEDENCE_LOGICAL_OR:
-		return common.LOGICAL_OR_TOKEN
+		return st.LOGICAL_OR_TOKEN
 	case OPERATOR_PRECEDENCE_ELVIS_CONDITIONAL:
-		return common.ELVIS_TOKEN
+		return st.ELVIS_TOKEN
 	default:
 		panic(
 			"Unsupported operator precedence level")
@@ -3108,18 +3108,18 @@ func (b *BallerinaParser) getMissingBinaryOperatorContext(opPrecedenceLevel Oper
 	}
 }
 
-func (b *BallerinaParser) parseModuleTypeDefinition(metadata tree.STNode, qualifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseModuleTypeDefinition(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_TYPE_DEFINITION)
 	typeKeyword := b.parseTypeKeyword()
 	typeName := b.parseTypeName()
 	typeDescriptor := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_DEF)
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateTypeDefinitionNode(metadata, qualifier, typeKeyword, typeName, typeDescriptor,
+	return st.CreateTypeDefinitionNode(metadata, qualifier, typeKeyword, typeName, typeDescriptor,
 		semicolon)
 }
 
-func (b *BallerinaParser) parseClassDefinition(metadata tree.STNode, qualifier tree.STNode, qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseClassDefinition(metadata st.STNode, qualifier st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_CLASS_DEFINITION)
 	classTypeQualifiers := b.createClassTypeQualNodeList(qualifiers)
 	classKeyword := b.parseClassKeyword()
@@ -3129,39 +3129,39 @@ func (b *BallerinaParser) parseClassDefinition(metadata tree.STNode, qualifier t
 	closeBrace := b.parseCloseBrace()
 	semicolon := b.parseOptionalSemicolon()
 	b.endContext()
-	return tree.CreateClassDefinitionNode(metadata, qualifier, classTypeQualifiers, classKeyword,
+	return st.CreateClassDefinitionNode(metadata, qualifier, classTypeQualifiers, classKeyword,
 		className, openBrace, classMembers, closeBrace, semicolon)
 }
 
-func (b *BallerinaParser) isClassTypeQual(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isClassTypeQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.READONLY_KEYWORD, common.DISTINCT_KEYWORD, common.ISOLATED_KEYWORD:
+	case st.READONLY_KEYWORD, st.DISTINCT_KEYWORD, st.ISOLATED_KEYWORD:
 		return true
 	default:
 		return b.isObjectNetworkQual(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) isObjectTypeQual(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isObjectTypeQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.ISOLATED_KEYWORD:
+	case st.ISOLATED_KEYWORD:
 		return true
 	default:
 		return b.isObjectNetworkQual(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) isObjectNetworkQual(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isObjectNetworkQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.SERVICE_KEYWORD, common.CLIENT_KEYWORD:
+	case st.SERVICE_KEYWORD, st.CLIENT_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) createClassTypeQualNodeList(qualifierList []tree.STNode) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createClassTypeQualNodeList(qualifierList []st.STNode) st.STNode {
+	var validatedList []st.STNode
 	hasNetworkQual := false
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -3169,7 +3169,7 @@ func (b *BallerinaParser) createClassTypeQualNodeList(qualifierList []tree.STNod
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
 		if b.isObjectNetworkQual(qualifier.Kind()) {
@@ -3188,17 +3188,17 @@ func (b *BallerinaParser) createClassTypeQualNodeList(qualifierList []tree.STNod
 		}
 		if len(qualifierList) == nextIndex {
 			b.addInvalidNodeToNextToken(qualifier, &common.ERROR_QUALIFIER_NOT_ALLOWED,
-				tree.ToToken(qualifier).Text())
+				st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
-	return tree.CreateNodeList(validatedList...)
+	return st.CreateNodeList(validatedList...)
 }
 
-func (b *BallerinaParser) createObjectTypeQualNodeList(qualifierList []tree.STNode) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createObjectTypeQualNodeList(qualifierList []st.STNode) st.STNode {
+	var validatedList []st.STNode
 	hasNetworkQual := false
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -3206,7 +3206,7 @@ func (b *BallerinaParser) createObjectTypeQualNodeList(qualifierList []tree.STNo
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
 		if b.isObjectNetworkQual(qualifier.Kind()) {
@@ -3225,18 +3225,18 @@ func (b *BallerinaParser) createObjectTypeQualNodeList(qualifierList []tree.STNo
 		}
 		if len(qualifierList) == nextIndex {
 			b.addInvalidNodeToNextToken(qualifier, &common.ERROR_QUALIFIER_NOT_ALLOWED,
-				tree.ToToken(qualifier).Text())
+				st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
-	return tree.CreateNodeList(validatedList...)
+	return st.CreateNodeList(validatedList...)
 }
 
-func (b *BallerinaParser) parseClassKeyword() tree.STNode {
+func (b *BallerinaParser) parseClassKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CLASS_KEYWORD {
+	if token.Kind() == st.CLASS_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CLASS_KEYWORD)
@@ -3244,9 +3244,9 @@ func (b *BallerinaParser) parseClassKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeKeyword() tree.STNode {
+func (b *BallerinaParser) parseTypeKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.TYPE_KEYWORD {
+	if token.Kind() == st.TYPE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TYPE_KEYWORD)
@@ -3254,9 +3254,9 @@ func (b *BallerinaParser) parseTypeKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeName() tree.STNode {
+func (b *BallerinaParser) parseTypeName() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TYPE_NAME)
@@ -3264,9 +3264,9 @@ func (b *BallerinaParser) parseTypeName() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseClassName() tree.STNode {
+func (b *BallerinaParser) parseClassName() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CLASS_NAME)
@@ -3274,36 +3274,36 @@ func (b *BallerinaParser) parseClassName() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordTypeDescriptor() tree.STNode {
+func (b *BallerinaParser) parseRecordTypeDescriptor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RECORD_TYPE_DESCRIPTOR)
 	recordKeyword := b.parseRecordKeyword()
 	bodyStartDelimiter := b.parseRecordBodyStartDelimiter()
-	var recordFields []tree.STNode
+	var recordFields []st.STNode
 	token := b.peek()
-	recordRestDescriptor := tree.CreateEmptyNode()
+	recordRestDescriptor := st.CreateEmptyNode()
 	for !b.isEndOfRecordTypeNode(token.Kind()) {
 		field := b.parseFieldOrRestDescriptor()
 		if field == nil {
 			break
 		}
 		token = b.peek()
-		if (field.Kind() == common.RECORD_REST_TYPE) && (bodyStartDelimiter.Kind() == common.OPEN_BRACE_TOKEN) {
+		if (field.Kind() == st.RECORD_REST_TYPE) && (bodyStartDelimiter.Kind() == st.OPEN_BRACE_TOKEN) {
 			if len(recordFields) == 0 {
-				bodyStartDelimiter = tree.CloneWithTrailingInvalidNodeMinutiae(bodyStartDelimiter, field,
+				bodyStartDelimiter = st.CloneWithTrailingInvalidNodeMinutiae(bodyStartDelimiter, field,
 					&common.ERROR_INCLUSIVE_RECORD_TYPE_CANNOT_CONTAIN_REST_FIELD)
 			} else {
 				b.updateLastNodeInListWithInvalidNode(recordFields, field,
 					&common.ERROR_INCLUSIVE_RECORD_TYPE_CANNOT_CONTAIN_REST_FIELD)
 			}
 			continue
-		} else if field.Kind() == common.RECORD_REST_TYPE {
+		} else if field.Kind() == st.RECORD_REST_TYPE {
 			recordRestDescriptor = field
 			for !b.isEndOfRecordTypeNode(token.Kind()) {
 				invalidField := b.parseFieldOrRestDescriptor()
 				if invalidField == nil {
 					break
 				}
-				recordRestDescriptor = tree.CloneWithTrailingInvalidNodeMinutiae(recordRestDescriptor,
+				recordRestDescriptor = st.CloneWithTrailingInvalidNodeMinutiae(recordRestDescriptor,
 					invalidField, &common.ERROR_MORE_RECORD_FIELDS_AFTER_REST_FIELD)
 				token = b.peek()
 			}
@@ -3311,19 +3311,19 @@ func (b *BallerinaParser) parseRecordTypeDescriptor() tree.STNode {
 		}
 		recordFields = append(recordFields, field)
 	}
-	fields := tree.CreateNodeList(recordFields...)
+	fields := st.CreateNodeList(recordFields...)
 	bodyEndDelimiter := b.parseRecordBodyCloseDelimiter(bodyStartDelimiter.Kind())
 	b.endContext()
-	return tree.CreateRecordTypeDescriptorNode(recordKeyword, bodyStartDelimiter, fields,
+	return st.CreateRecordTypeDescriptorNode(recordKeyword, bodyStartDelimiter, fields,
 		recordRestDescriptor, bodyEndDelimiter)
 }
 
-func (b *BallerinaParser) parseRecordBodyStartDelimiter() tree.STNode {
+func (b *BallerinaParser) parseRecordBodyStartDelimiter() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACE_PIPE_TOKEN:
+	case st.OPEN_BRACE_PIPE_TOKEN:
 		return b.parseClosedRecordBodyStart()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseOpenBrace()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_RECORD_BODY_START)
@@ -3331,9 +3331,9 @@ func (b *BallerinaParser) parseRecordBodyStartDelimiter() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseClosedRecordBodyStart() tree.STNode {
+func (b *BallerinaParser) parseClosedRecordBodyStart() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.OPEN_BRACE_PIPE_TOKEN {
+	if token.Kind() == st.OPEN_BRACE_PIPE_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_START)
@@ -3341,16 +3341,16 @@ func (b *BallerinaParser) parseClosedRecordBodyStart() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordBodyCloseDelimiter(startingDelimeter common.SyntaxKind) tree.STNode {
-	if startingDelimeter == common.OPEN_BRACE_PIPE_TOKEN {
+func (b *BallerinaParser) parseRecordBodyCloseDelimiter(startingDelimeter st.SyntaxKind) st.STNode {
+	if startingDelimeter == st.OPEN_BRACE_PIPE_TOKEN {
 		return b.parseClosedRecordBodyEnd()
 	}
 	return b.parseCloseBrace()
 }
 
-func (b *BallerinaParser) parseClosedRecordBodyEnd() tree.STNode {
+func (b *BallerinaParser) parseClosedRecordBodyEnd() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CLOSE_BRACE_PIPE_TOKEN {
+	if token.Kind() == st.CLOSE_BRACE_PIPE_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_END)
@@ -3358,9 +3358,9 @@ func (b *BallerinaParser) parseClosedRecordBodyEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordKeyword() tree.STNode {
+func (b *BallerinaParser) parseRecordKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.RECORD_KEYWORD {
+	if token.Kind() == st.RECORD_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_RECORD_KEYWORD)
@@ -3368,21 +3368,21 @@ func (b *BallerinaParser) parseRecordKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldOrRestDescriptor() tree.STNode {
+func (b *BallerinaParser) parseFieldOrRestDescriptor() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_BRACE_PIPE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_BRACE_PIPE_TOKEN:
 		return nil
-	case common.ASTERISK_TOKEN:
+	case st.ASTERISK_TOKEN:
 		b.startContext(common.PARSER_RULE_CONTEXT_RECORD_FIELD)
 		asterisk := b.consume()
 		ty := b.parseTypeReferenceInTypeInclusion()
 		semicolonToken := b.parseSemicolon()
 		b.endContext()
-		return tree.CreateTypeReferenceNode(asterisk, ty, semicolonToken)
-	case common.DOCUMENTATION_STRING,
-		common.AT_TOKEN:
+		return st.CreateTypeReferenceNode(asterisk, ty, semicolonToken)
+	case st.DOCUMENTATION_STRING,
+		st.AT_TOKEN:
 		return b.parseRecordField()
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
@@ -3393,7 +3393,7 @@ func (b *BallerinaParser) parseFieldOrRestDescriptor() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordField() tree.STNode {
+func (b *BallerinaParser) parseRecordField() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RECORD_FIELD)
 	metadata := b.parseMetaData()
 	fieldOrRestDesc := b.parseRecordFieldInner(b.peek(), metadata)
@@ -3401,26 +3401,26 @@ func (b *BallerinaParser) parseRecordField() tree.STNode {
 	return fieldOrRestDesc
 }
 
-func (b *BallerinaParser) parseRecordFieldInner(nextToken tree.STToken, metadata tree.STNode) tree.STNode {
-	if nextToken.Kind() != common.READONLY_KEYWORD {
+func (b *BallerinaParser) parseRecordFieldInner(nextToken st.STToken, metadata st.STNode) st.STNode {
+	if nextToken.Kind() != st.READONLY_KEYWORD {
 		ty := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD)
 		return b.parseFieldOrRestDescriptorRhs(metadata, ty)
 	}
-	var ty tree.STNode
-	var readOnlyQualifier tree.STNode
+	var ty st.STNode
+	var readOnlyQualifier st.STNode
 	readOnlyQualifier = b.parseReadonlyKeyword()
 	nextToken = b.peek()
-	if nextToken.Kind() == common.IDENTIFIER_TOKEN {
+	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		fieldNameOrTypeDesc := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_RECORD_FIELD_NAME_OR_TYPE_NAME)
-		if fieldNameOrTypeDesc.Kind() == common.QUALIFIED_NAME_REFERENCE {
+		if fieldNameOrTypeDesc.Kind() == st.QUALIFIED_NAME_REFERENCE {
 			ty = fieldNameOrTypeDesc
 		} else {
 			nextToken = b.peek()
 			switch nextToken.Kind() {
-			case common.SEMICOLON_TOKEN, common.EQUAL_TOKEN:
+			case st.SEMICOLON_TOKEN, st.EQUAL_TOKEN:
 				ty = CreateBuiltinSimpleNameReference(readOnlyQualifier)
-				readOnlyQualifier = tree.CreateEmptyNode()
-				nameNode, ok := fieldNameOrTypeDesc.(*tree.STSimpleNameReferenceNode)
+				readOnlyQualifier = st.CreateEmptyNode()
+				nameNode, ok := fieldNameOrTypeDesc.(*st.STSimpleNameReferenceNode)
 				if !ok {
 					panic("expected STSimpleNameReferenceNode")
 				}
@@ -3431,7 +3431,7 @@ func (b *BallerinaParser) parseRecordFieldInner(nextToken tree.STToken, metadata
 					common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD, false)
 			}
 		}
-	} else if nextToken.Kind() == common.ELLIPSIS_TOKEN {
+	} else if nextToken.Kind() == st.ELLIPSIS_TOKEN {
 		ty = CreateBuiltinSimpleNameReference(readOnlyQualifier)
 		return b.parseFieldOrRestDescriptorRhs(metadata, ty)
 	} else if b.isTypeStartingToken(nextToken.Kind()) {
@@ -3439,58 +3439,58 @@ func (b *BallerinaParser) parseRecordFieldInner(nextToken tree.STToken, metadata
 	} else {
 		readOnlyQualifier = CreateBuiltinSimpleNameReference(readOnlyQualifier)
 		ty = b.parseComplexTypeDescriptor(readOnlyQualifier, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD, false)
-		readOnlyQualifier = tree.CreateEmptyNode()
+		readOnlyQualifier = st.CreateEmptyNode()
 	}
 	return b.parseIndividualRecordField(metadata, readOnlyQualifier, ty)
 }
 
-func (b *BallerinaParser) parseIndividualRecordField(metadata tree.STNode, readOnlyQualifier tree.STNode, ty tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseIndividualRecordField(metadata st.STNode, readOnlyQualifier st.STNode, ty st.STNode) st.STNode {
 	fieldName := b.parseVariableName()
 	return b.parseFieldDescriptorRhs(metadata, readOnlyQualifier, ty, fieldName)
 }
 
-func (b *BallerinaParser) parseTypeReferenceInTypeInclusion() tree.STNode {
+func (b *BallerinaParser) parseTypeReferenceInTypeInclusion() st.STNode {
 	typeReference := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_REFERENCE_IN_TYPE_INCLUSION)
-	if typeReference.Kind() == common.SIMPLE_NAME_REFERENCE {
+	if typeReference.Kind() == st.SIMPLE_NAME_REFERENCE {
 		if typeReference.HasDiagnostics() {
-			emptyNameReference := tree.CreateSimpleNameReferenceNode(tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN, &common.ERROR_MISSING_IDENTIFIER))
+			emptyNameReference := st.CreateSimpleNameReferenceNode(st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN, &common.ERROR_MISSING_IDENTIFIER))
 			return emptyNameReference
 		}
 		return typeReference
 	}
-	if typeReference.Kind() == common.QUALIFIED_NAME_REFERENCE {
+	if typeReference.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		return typeReference
 	}
-	emptyNameReference := tree.CreateSimpleNameReferenceNode(tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil))
-	emptyNameReference = tree.CloneWithTrailingInvalidNodeMinutiae(emptyNameReference, typeReference,
+	emptyNameReference := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
+	emptyNameReference = st.CloneWithTrailingInvalidNodeMinutiae(emptyNameReference, typeReference,
 		&common.ERROR_ONLY_TYPE_REFERENCE_ALLOWED_AS_TYPE_INCLUSIONS)
 	return emptyNameReference
 }
 
-func (b *BallerinaParser) parseTypeReference() tree.STNode {
+func (b *BallerinaParser) parseTypeReference() st.STNode {
 	return b.parseTypeReferenceInner(false)
 }
 
-func (b *BallerinaParser) parseTypeReferenceInner(isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeReferenceInner(isInConditionalExpr bool) st.STNode {
 	return b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifier(currentCtx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseQualifiedIdentifier(currentCtx common.ParserRuleContext) st.STNode {
 	return b.parseQualifiedIdentifierInner(currentCtx, false)
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierInner(currentCtx common.ParserRuleContext, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseQualifiedIdentifierInner(currentCtx common.ParserRuleContext, isInConditionalExpr bool) st.STNode {
 	token := b.peek()
-	var typeRefOrPkgRef tree.STNode
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	var typeRefOrPkgRef st.STNode
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		typeRefOrPkgRef = b.consume()
 	} else if b.isQualifiedIdentifierPredeclaredPrefix(token.Kind()) {
 		preDeclaredPrefix := b.consume()
-		typeRefOrPkgRef = tree.CreateIdentifierToken(preDeclaredPrefix.Text(),
+		typeRefOrPkgRef = st.CreateIdentifierToken(preDeclaredPrefix.Text(),
 			preDeclaredPrefix.LeadingMinutiae(), preDeclaredPrefix.TrailingMinutiae())
 	} else {
 		b.recover(token, currentCtx, false)
-		if b.peek().Kind() != common.IDENTIFIER_TOKEN {
+		if b.peek().Kind() != st.IDENTIFIER_TOKEN {
 			b.addInvalidTokenToNextToken(b.errorHandler.ConsumeInvalidToken())
 			return b.parseQualifiedIdentifierInner(currentCtx, isInConditionalExpr)
 		}
@@ -3499,59 +3499,59 @@ func (b *BallerinaParser) parseQualifiedIdentifierInner(currentCtx common.Parser
 	return b.parseQualifiedIdentifierNode(typeRefOrPkgRef, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierNode(identifier tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseQualifiedIdentifierNode(identifier st.STNode, isInConditionalExpr bool) st.STNode {
 	nextToken := b.peekN(1)
-	if nextToken.Kind() != common.COLON_TOKEN {
-		return tree.CreateSimpleNameReferenceNode(identifier)
+	if nextToken.Kind() != st.COLON_TOKEN {
+		return st.CreateSimpleNameReferenceNode(identifier)
 	}
 	if isInConditionalExpr && (b.hasTrailingMinutiae(identifier) || b.hasTrailingMinutiae(nextToken)) {
-		return tree.GetSimpleNameRefNode(identifier)
+		return st.GetSimpleNameRefNode(identifier)
 	}
 	nextNextToken := b.peekN(2)
 	switch nextNextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		colon := b.consume()
 		varOrFuncName := b.consume()
 		return b.createQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
-	case common.COLON_TOKEN:
+	case st.COLON_TOKEN:
 		b.addInvalidTokenToNextToken(b.errorHandler.ConsumeInvalidToken())
 		return b.parseQualifiedIdentifierNode(identifier, isInConditionalExpr)
 	default:
-		if (nextNextToken.Kind() == common.MAP_KEYWORD) && (b.peekN(3).Kind() != common.LT_TOKEN) {
+		if (nextNextToken.Kind() == st.MAP_KEYWORD) && (b.peekN(3).Kind() != st.LT_TOKEN) {
 			colon := b.consume()
 			mapKeyword := b.consume()
-			refName := tree.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(),
+			refName := st.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(),
 				mapKeyword.LeadingMinutiae(), mapKeyword.TrailingMinutiae(), mapKeyword.Diagnostics())
 			return b.createQualifiedNameReferenceNode(identifier, colon, refName)
 		}
 		if isInConditionalExpr {
-			return tree.GetSimpleNameRefNode(identifier)
+			return st.GetSimpleNameRefNode(identifier)
 		}
 		colon := b.consume()
-		varOrFuncName := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+		varOrFuncName := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_IDENTIFIER)
 		return b.createQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
 	}
 }
 
-func (b *BallerinaParser) createQualifiedNameReferenceNode(identifier tree.STNode, colon tree.STNode, varOrFuncName tree.STNode) tree.STNode {
+func (b *BallerinaParser) createQualifiedNameReferenceNode(identifier st.STNode, colon st.STNode, varOrFuncName st.STNode) st.STNode {
 	if b.hasTrailingMinutiae(identifier) || b.hasTrailingMinutiae(colon) {
-		colon = tree.AddDiagnostic(colon,
+		colon = st.AddDiagnostic(colon,
 			&common.ERROR_INTERVENING_WHITESPACES_ARE_NOT_ALLOWED)
 	}
-	return tree.CreateQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
+	return st.CreateQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
 }
 
-func (b *BallerinaParser) parseFieldOrRestDescriptorRhs(metadata tree.STNode, ty tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseFieldOrRestDescriptorRhs(metadata st.STNode, ty st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		b.reportInvalidMetaData(metadata, "record rest descriptor")
 		ellipsis := b.parseEllipsis()
 		semicolonToken := b.parseSemicolon()
-		return tree.CreateRecordRestDescriptorNode(ty, ellipsis, semicolonToken)
-	case common.IDENTIFIER_TOKEN:
-		readonlyQualifier := tree.CreateEmptyNode()
+		return st.CreateRecordRestDescriptorNode(ty, ellipsis, semicolonToken)
+	case st.IDENTIFIER_TOKEN:
+		readonlyQualifier := st.CreateEmptyNode()
 		return b.parseIndividualRecordField(metadata, readonlyQualifier, ty)
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_FIELD_OR_REST_DESCIPTOR_RHS)
@@ -3559,24 +3559,24 @@ func (b *BallerinaParser) parseFieldOrRestDescriptorRhs(metadata tree.STNode, ty
 	}
 }
 
-func (b *BallerinaParser) parseFieldDescriptorRhs(metadata tree.STNode, readonlyQualifier tree.STNode, ty tree.STNode, fieldName tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseFieldDescriptorRhs(metadata st.STNode, readonlyQualifier st.STNode, ty st.STNode, fieldName st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.SEMICOLON_TOKEN:
-		questionMarkToken := tree.CreateEmptyNode()
+	case st.SEMICOLON_TOKEN:
+		questionMarkToken := st.CreateEmptyNode()
 		semicolonToken := b.parseSemicolon()
-		return tree.CreateRecordFieldNode(metadata, readonlyQualifier, ty, fieldName,
+		return st.CreateRecordFieldNode(metadata, readonlyQualifier, ty, fieldName,
 			questionMarkToken, semicolonToken)
-	case common.QUESTION_MARK_TOKEN:
+	case st.QUESTION_MARK_TOKEN:
 		questionMarkToken := b.parseQuestionMark()
 		semicolonToken := b.parseSemicolon()
-		return tree.CreateRecordFieldNode(metadata, readonlyQualifier, ty, fieldName,
+		return st.CreateRecordFieldNode(metadata, readonlyQualifier, ty, fieldName,
 			questionMarkToken, semicolonToken)
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		equalsToken := b.parseAssignOp()
 		expression := b.parseExpression()
 		semicolonToken := b.parseSemicolon()
-		return tree.CreateRecordFieldWithDefaultValueNode(metadata, readonlyQualifier, ty, fieldName,
+		return st.CreateRecordFieldWithDefaultValueNode(metadata, readonlyQualifier, ty, fieldName,
 			equalsToken, expression, semicolonToken)
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_FIELD_DESCRIPTOR_RHS)
@@ -3584,9 +3584,9 @@ func (b *BallerinaParser) parseFieldDescriptorRhs(metadata tree.STNode, readonly
 	}
 }
 
-func (b *BallerinaParser) parseQuestionMark() tree.STNode {
+func (b *BallerinaParser) parseQuestionMark() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.QUESTION_MARK_TOKEN {
+	if token.Kind() == st.QUESTION_MARK_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_QUESTION_MARK)
@@ -3594,18 +3594,18 @@ func (b *BallerinaParser) parseQuestionMark() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseStatements() tree.STNode {
+func (b *BallerinaParser) parseStatements() st.STNode {
 	res, _ := b.parseStatementsInner(nil)
 	return res
 }
 
-func (b *BallerinaParser) parseStatementsInner(stmts []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseStatementsInner(stmts []st.STNode) (st.STNode, []st.STNode) {
 	for !b.isEndOfStatements() {
 		stmt := b.parseStatement()
 		if stmt == nil {
 			break
 		}
-		if stmt.Kind() == common.NAMED_WORKER_DECLARATION {
+		if stmt.Kind() == st.NAMED_WORKER_DECLARATION {
 			b.addInvalidNodeToNextToken(stmt, &common.ERROR_NAMED_WORKER_NOT_ALLOWED_HERE)
 			continue
 		}
@@ -3614,19 +3614,19 @@ func (b *BallerinaParser) parseStatementsInner(stmts []tree.STNode) (tree.STNode
 		}
 		stmts = append(stmts, stmt)
 	}
-	return tree.CreateNodeList(stmts...), stmts
+	return st.CreateNodeList(stmts...), stmts
 }
 
-func (b *BallerinaParser) parseStatement() tree.STNode {
+func (b *BallerinaParser) parseStatement() st.STNode {
 	nextToken := b.peek()
-	annots := tree.CreateEmptyNodeList()
+	annots := st.CreateEmptyNodeList()
 	switch nextToken.Kind() {
-	case common.CLOSE_BRACE_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACE_TOKEN, st.EOF_TOKEN:
 		return nil
-	case common.SEMICOLON_TOKEN:
+	case st.SEMICOLON_TOKEN:
 		b.addInvalidTokenToNextToken(b.errorHandler.ConsumeInvalidToken())
 		return b.parseStatement()
-	case common.AT_TOKEN:
+	case st.AT_TOKEN:
 		annots = b.parseOptionalAnnotations()
 	default:
 		if b.isStatementStartingToken(nextToken.Kind()) {
@@ -3642,12 +3642,12 @@ func (b *BallerinaParser) parseStatement() tree.STNode {
 	return b.parseStatementWithAnnotataions(annots)
 }
 
-func (b *BallerinaParser) validateStatement(statement tree.STNode) bool {
+func (b *BallerinaParser) validateStatement(statement st.STNode) bool {
 	switch statement.Kind() {
-	case common.LOCAL_TYPE_DEFINITION_STATEMENT:
+	case st.LOCAL_TYPE_DEFINITION_STATEMENT:
 		b.addInvalidNodeToNextToken(statement, &common.ERROR_LOCAL_TYPE_DEFINITION_NOT_ALLOWED)
 		return true
-	case common.CONST_DECLARATION:
+	case st.CONST_DECLARATION:
 		b.addInvalidNodeToNextToken(statement, &common.ERROR_LOCAL_CONST_DECL_NOT_ALLOWED)
 		return true
 	default:
@@ -3655,138 +3655,138 @@ func (b *BallerinaParser) validateStatement(statement tree.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) getAnnotations(nullbaleAnnot tree.STNode) tree.STNode {
+func (b *BallerinaParser) getAnnotations(nullbaleAnnot st.STNode) st.STNode {
 	if nullbaleAnnot != nil {
 		return nullbaleAnnot
 	}
-	return tree.CreateEmptyNodeList()
+	return st.CreateEmptyNodeList()
 }
 
-func (b *BallerinaParser) parseStatementWithAnnotataions(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStatementWithAnnotataions(annots st.STNode) st.STNode {
 	result, _ := b.parseStatementInner(annots, nil)
 	return result
 }
 
-func (b *BallerinaParser) parseStatementInner(annots tree.STNode, qualifiers []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseStatementInner(annots st.STNode, qualifiers []st.STNode) (st.STNode, []st.STNode) {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
 		return b.parseStmtStartsWithTypeOrExpr(b.getAnnotations(annots), qualifiers), qualifiers
 	}
 	switch nextToken.Kind() {
-	case common.CLOSE_BRACE_TOKEN,
-		common.EOF_TOKEN:
-		publicQualifier := tree.CreateEmptyNode()
+	case st.CLOSE_BRACE_TOKEN,
+		st.EOF_TOKEN:
+		publicQualifier := st.CreateEmptyNode()
 		return b.createMissingSimpleVarDeclInnerWithQualifiers(b.getAnnotations(annots), publicQualifier, qualifiers, false), qualifiers
-	case common.SEMICOLON_TOKEN:
+	case st.SEMICOLON_TOKEN:
 		b.addInvalidTokenToNextToken(b.errorHandler.ConsumeInvalidToken())
 		return b.parseStatementInner(annots, qualifiers)
-	case common.FINAL_KEYWORD:
+	case st.FINAL_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		finalKeyword := b.consume()
 		return b.parseVariableDecl(b.getAnnotations(annots), finalKeyword), qualifiers
-	case common.IF_KEYWORD:
+	case st.IF_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseIfElseBlock(), qualifiers
-	case common.WHILE_KEYWORD:
+	case st.WHILE_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseWhileStatement(), qualifiers
-	case common.DO_KEYWORD:
+	case st.DO_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseDoStatement(), qualifiers
-	case common.PANIC_KEYWORD:
+	case st.PANIC_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parsePanicStatement(), qualifiers
-	case common.CONTINUE_KEYWORD:
+	case st.CONTINUE_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseContinueStatement(), qualifiers
-	case common.BREAK_KEYWORD:
+	case st.BREAK_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseBreakStatement(), qualifiers
-	case common.RETURN_KEYWORD:
+	case st.RETURN_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseReturnStatement(), qualifiers
-	case common.FAIL_KEYWORD:
+	case st.FAIL_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseFailStatement(), qualifiers
-	case common.TYPE_KEYWORD:
+	case st.TYPE_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseLocalTypeDefinitionStatement(b.getAnnotations(annots)), qualifiers
-	case common.CONST_KEYWORD:
+	case st.CONST_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-		return b.parseConstantDeclaration(annots, tree.CreateEmptyNode()), qualifiers
-	case common.LOCK_KEYWORD:
+		return b.parseConstantDeclaration(annots, st.CreateEmptyNode()), qualifiers
+	case st.LOCK_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseLockStatement(), qualifiers
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseStatementStartsWithOpenBrace(), qualifiers
-	case common.WORKER_KEYWORD:
+	case st.WORKER_KEYWORD:
 		return b.parseNamedWorkerDeclaration(b.getAnnotations(annots), qualifiers), qualifiers
-	case common.FORK_KEYWORD:
+	case st.FORK_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseForkStatement(), qualifiers
-	case common.FOREACH_KEYWORD:
+	case st.FOREACH_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseForEachStatement(), qualifiers
-	case common.START_KEYWORD,
-		common.CHECK_KEYWORD,
-		common.CHECKPANIC_KEYWORD,
-		common.TRAP_KEYWORD,
-		common.FLUSH_KEYWORD,
-		common.LEFT_ARROW_TOKEN,
-		common.WAIT_KEYWORD,
-		common.FROM_KEYWORD,
-		common.COMMIT_KEYWORD:
+	case st.START_KEYWORD,
+		st.CHECK_KEYWORD,
+		st.CHECKPANIC_KEYWORD,
+		st.TRAP_KEYWORD,
+		st.FLUSH_KEYWORD,
+		st.LEFT_ARROW_TOKEN,
+		st.WAIT_KEYWORD,
+		st.FROM_KEYWORD,
+		st.COMMIT_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseExpressionStatement(b.getAnnotations(annots)), qualifiers
-	case common.XMLNS_KEYWORD:
+	case st.XMLNS_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseXMLNamespaceDeclaration(false), qualifiers
-	case common.TRANSACTION_KEYWORD:
+	case st.TRANSACTION_KEYWORD:
 		return b.parseTransactionStmtOrVarDecl(annots, qualifiers, b.consume())
-	case common.RETRY_KEYWORD:
+	case st.RETRY_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseRetryStatement(), qualifiers
-	case common.ROLLBACK_KEYWORD:
+	case st.ROLLBACK_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseRollbackStatement(), qualifiers
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseStatementStartsWithOpenBracket(b.getAnnotations(annots), false), qualifiers
-	case common.FUNCTION_KEYWORD,
-		common.OPEN_PAREN_TOKEN,
-		common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.STRING_KEYWORD,
-		common.XML_KEYWORD:
+	case st.FUNCTION_KEYWORD,
+		st.OPEN_PAREN_TOKEN,
+		st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN,
+		st.STRING_KEYWORD,
+		st.XML_KEYWORD:
 		return b.parseStmtStartsWithTypeOrExpr(b.getAnnotations(annots), qualifiers), qualifiers
-	case common.MATCH_KEYWORD:
+	case st.MATCH_KEYWORD:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMatchStatement(), qualifiers
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseErrorTypeDescOrErrorBP(b.getAnnotations(annots)), qualifiers
 	default:
@@ -3795,7 +3795,7 @@ func (b *BallerinaParser) parseStatementInner(annots tree.STNode, qualifiers []t
 			return b.parseStatementStartWithExpr(b.getAnnotations(annots)), qualifiers
 		}
 		if b.isTypeStartingToken(nextToken.Kind()) {
-			publicQualifier := tree.CreateEmptyNode()
+			publicQualifier := st.CreateEmptyNode()
 			res, _ := b.parseVariableDeclInner(b.getAnnotations(annots), publicQualifier, nil, qualifiers,
 				false)
 			return res, qualifiers
@@ -3804,26 +3804,26 @@ func (b *BallerinaParser) parseStatementInner(annots tree.STNode, qualifiers []t
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_STATEMENT_WITHOUT_ANNOTS)
 		if solution.Action == ACTION_KEEP {
 			b.reportInvalidQualifierList(qualifiers)
-			finalKeyword := tree.CreateEmptyNode()
+			finalKeyword := st.CreateEmptyNode()
 			return b.parseVariableDecl(b.getAnnotations(annots), finalKeyword), qualifiers
 		}
 		return b.parseStatementInner(annots, qualifiers)
 	}
 }
 
-func (b *BallerinaParser) parseVariableDecl(annots tree.STNode, finalKeyword tree.STNode) tree.STNode {
-	var typeDescQualifiers []tree.STNode
-	var varDecQualifiers []tree.STNode
+func (b *BallerinaParser) parseVariableDecl(annots st.STNode, finalKeyword st.STNode) st.STNode {
+	var typeDescQualifiers []st.STNode
+	var varDecQualifiers []st.STNode
 	if finalKeyword != nil {
 		varDecQualifiers = append(varDecQualifiers, finalKeyword)
 	}
-	publicQualifier := tree.CreateEmptyNode()
+	publicQualifier := st.CreateEmptyNode()
 	res, _ := b.parseVariableDeclInner(annots, publicQualifier, varDecQualifiers, typeDescQualifiers, false)
 	return res
 }
 
 // Return result, and modified varDeclQuals
-func (b *BallerinaParser) parseVariableDeclInner(annots tree.STNode, publicQualifier tree.STNode, varDeclQuals []tree.STNode, typeDescQualifiers []tree.STNode, isModuleVar bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseVariableDeclInner(annots st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typeDescQualifiers []st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	typeBindingPattern := b.parseTypedBindingPatternInner(typeDescQualifiers,
 		common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
@@ -3831,14 +3831,14 @@ func (b *BallerinaParser) parseVariableDeclInner(annots tree.STNode, publicQuali
 }
 
 // Return result, and modified qualifiers
-func (b *BallerinaParser) parseVarDeclTypeDescRhs(typeDesc tree.STNode, metadata tree.STNode, qualifiers []tree.STNode, isTypedBindingPattern bool, isModuleVar bool) (tree.STNode, []tree.STNode) {
-	publicQualifier := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseVarDeclTypeDescRhs(typeDesc st.STNode, metadata st.STNode, qualifiers []st.STNode, isTypedBindingPattern bool, isModuleVar bool) (st.STNode, []st.STNode) {
+	publicQualifier := st.CreateEmptyNode()
 	return b.parseVarDeclTypeDescRhsInner(typeDesc, metadata, publicQualifier, qualifiers, isTypedBindingPattern,
 		isModuleVar)
 }
 
 // Return result, and modified qualifiers
-func (b *BallerinaParser) parseVarDeclTypeDescRhsInner(typeDesc tree.STNode, metadata tree.STNode, publicQual tree.STNode, qualifiers []tree.STNode, isTypedBindingPattern bool, isModuleVar bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseVarDeclTypeDescRhsInner(typeDesc st.STNode, metadata st.STNode, publicQual st.STNode, qualifiers []st.STNode, isTypedBindingPattern bool, isModuleVar bool) (st.STNode, []st.STNode) {
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	typeDesc = b.parseComplexTypeDescriptor(typeDesc,
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, isTypedBindingPattern)
@@ -3848,22 +3848,22 @@ func (b *BallerinaParser) parseVarDeclTypeDescRhsInner(typeDesc tree.STNode, met
 }
 
 // Return result, and modified varDeclQuals
-func (b *BallerinaParser) parseVarDeclRhs(metadata tree.STNode, varDeclQuals []tree.STNode, typedBindingPattern tree.STNode, isModuleVar bool) (tree.STNode, []tree.STNode) {
-	publicQualifier := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseVarDeclRhs(metadata st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
+	publicQualifier := st.CreateEmptyNode()
 	return b.parseVarDeclRhsInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, isModuleVar)
 }
 
 // Return result, and modified varDeclQuals
-func (b *BallerinaParser) parseVarDeclRhsInner(metadata tree.STNode, publicQualifier tree.STNode, varDeclQuals []tree.STNode, typedBindingPattern tree.STNode, isModuleVar bool) (tree.STNode, []tree.STNode) {
-	var assign tree.STNode
-	var expr tree.STNode
-	var semicolon tree.STNode
+func (b *BallerinaParser) parseVarDeclRhsInner(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
+	var assign st.STNode
+	var expr st.STNode
+	var semicolon st.STNode
 	hasVarInit := false
-	isConfigurable := isModuleVar && b.isSyntaxKindInList(varDeclQuals, common.CONFIGURABLE_KEYWORD)
+	isConfigurable := isModuleVar && b.isSyntaxKindInList(varDeclQuals, st.CONFIGURABLE_KEYWORD)
 
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		assign = b.parseAssignOp()
 		if isModuleVar {
 			if isConfigurable {
@@ -3876,9 +3876,9 @@ func (b *BallerinaParser) parseVarDeclRhsInner(metadata tree.STNode, publicQuali
 		}
 		semicolon = b.parseSemicolon()
 		hasVarInit = true
-	case common.SEMICOLON_TOKEN:
-		assign = tree.CreateEmptyNode()
-		expr = tree.CreateEmptyNode()
+	case st.SEMICOLON_TOKEN:
+		assign = st.CreateEmptyNode()
+		expr = st.CreateEmptyNode()
 		semicolon = b.parseSemicolon()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT_RHS)
@@ -3886,41 +3886,41 @@ func (b *BallerinaParser) parseVarDeclRhsInner(metadata tree.STNode, publicQuali
 	}
 	b.endContext()
 	if !hasVarInit {
-		typedBindingPatternNode, ok := typedBindingPattern.(*tree.STTypedBindingPatternNode)
+		typedBindingPatternNode, ok := typedBindingPattern.(*st.STTypedBindingPatternNode)
 		if !ok {
 			panic("expected STTypedBindingPatternNode")
 		}
 		bindingPatternKind := typedBindingPatternNode.BindingPattern.Kind()
-		if bindingPatternKind != common.CAPTURE_BINDING_PATTERN {
-			assign = tree.CreateMissingTokenWithDiagnostics(common.EQUAL_TOKEN,
+		if bindingPatternKind != st.CAPTURE_BINDING_PATTERN {
+			assign = st.CreateMissingTokenWithDiagnostics(st.EQUAL_TOKEN,
 				&common.ERROR_VARIABLE_DECL_HAVING_BP_MUST_BE_INITIALIZED)
-			identifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-			expr = tree.CreateSimpleNameReferenceNode(identifier)
+			identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+			expr = st.CreateSimpleNameReferenceNode(identifier)
 		}
 	}
 	if isModuleVar {
 		return b.createModuleVarDeclaration(metadata, publicQualifier, varDeclQuals, typedBindingPattern, assign,
 			expr, semicolon, isConfigurable, hasVarInit)
 	}
-	var finalKeyword tree.STNode
+	var finalKeyword st.STNode
 	if len(varDeclQuals) == 0 {
-		finalKeyword = tree.CreateEmptyNode()
+		finalKeyword = st.CreateEmptyNode()
 	} else {
 		finalKeyword = varDeclQuals[0]
 	}
-	if metadata.Kind() != common.LIST {
+	if metadata.Kind() != st.LIST {
 		panic("assertion failed")
 	}
-	return tree.CreateVariableDeclarationNode(metadata, finalKeyword, typedBindingPattern, assign,
+	return st.CreateVariableDeclarationNode(metadata, finalKeyword, typedBindingPattern, assign,
 		expr, semicolon), varDeclQuals
 }
 
-func (b *BallerinaParser) parseConfigurableVarDeclRhs() tree.STNode {
-	var expr tree.STNode
+func (b *BallerinaParser) parseConfigurableVarDeclRhs() st.STNode {
+	var expr st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.QUESTION_MARK_TOKEN:
-		expr = tree.CreateRequiredExpressionNode(b.consume())
+	case st.QUESTION_MARK_TOKEN:
+		expr = st.CreateRequiredExpressionNode(b.consume())
 	default:
 		if b.isValidExprStart(nextToken.Kind()) {
 			expr = b.parseExpression()
@@ -3932,7 +3932,7 @@ func (b *BallerinaParser) parseConfigurableVarDeclRhs() tree.STNode {
 	return expr
 }
 
-func (b *BallerinaParser) createModuleVarDeclaration(metadata tree.STNode, publicQualifier tree.STNode, varDeclQuals []tree.STNode, typedBindingPattern tree.STNode, assign tree.STNode, expr tree.STNode, semicolon tree.STNode, isConfigurable bool, hasVarInit bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) createModuleVarDeclaration(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, assign st.STNode, expr st.STNode, semicolon st.STNode, isConfigurable bool, hasVarInit bool) (st.STNode, []st.STNode) {
 	if hasVarInit || len(varDeclQuals) == 0 {
 		return b.createModuleVarDeclarationInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, assign,
 			expr, semicolon), varDeclQuals
@@ -3942,7 +3942,7 @@ func (b *BallerinaParser) createModuleVarDeclaration(metadata tree.STNode, publi
 			typedBindingPattern, semicolon), varDeclQuals
 	}
 	lastQualifier := b.getLastNodeInList(varDeclQuals)
-	if lastQualifier.Kind() == common.ISOLATED_KEYWORD {
+	if lastQualifier.Kind() == st.ISOLATED_KEYWORD {
 		lastQualifier = varDeclQuals[len(varDeclQuals)-1]
 		varDeclQuals = varDeclQuals[:len(varDeclQuals)-1]
 		typedBindingPattern = b.modifyTypedBindingPatternWithIsolatedQualifier(typedBindingPattern, lastQualifier)
@@ -3951,182 +3951,182 @@ func (b *BallerinaParser) createModuleVarDeclaration(metadata tree.STNode, publi
 		semicolon), varDeclQuals
 }
 
-func (b *BallerinaParser) createConfigurableModuleVarDeclWithMissingInitializer(metadata tree.STNode, publicQualifier tree.STNode, varDeclQuals []tree.STNode, typedBindingPattern tree.STNode, semicolon tree.STNode) tree.STNode {
-	var assign tree.STNode
-	assign = tree.CreateMissingToken(common.EQUAL_TOKEN, nil)
-	assign = tree.AddDiagnostic(assign,
+func (b *BallerinaParser) createConfigurableModuleVarDeclWithMissingInitializer(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, semicolon st.STNode) st.STNode {
+	var assign st.STNode
+	assign = st.CreateMissingToken(st.EQUAL_TOKEN, nil)
+	assign = st.AddDiagnostic(assign,
 		&common.ERROR_CONFIGURABLE_VARIABLE_MUST_BE_INITIALIZED_OR_REQUIRED)
-	questionMarkToken := tree.CreateMissingToken(common.QUESTION_MARK_TOKEN, nil)
-	expr := tree.CreateRequiredExpressionNode(questionMarkToken)
+	questionMarkToken := st.CreateMissingToken(st.QUESTION_MARK_TOKEN, nil)
+	expr := st.CreateRequiredExpressionNode(questionMarkToken)
 	return b.createModuleVarDeclarationInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, assign, expr,
 		semicolon)
 }
 
-func (b *BallerinaParser) createModuleVarDeclarationInner(metadata tree.STNode, publicQualifier tree.STNode, varDeclQuals []tree.STNode, typedBindingPattern tree.STNode, assign tree.STNode, expr tree.STNode, semicolon tree.STNode) tree.STNode {
+func (b *BallerinaParser) createModuleVarDeclarationInner(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, assign st.STNode, expr st.STNode, semicolon st.STNode) st.STNode {
 	if publicQualifier != nil {
-		typedBindingPatternNode, ok := typedBindingPattern.(*tree.STTypedBindingPatternNode)
+		typedBindingPatternNode, ok := typedBindingPattern.(*st.STTypedBindingPatternNode)
 		if !ok {
 			panic("expected STTypedBindingPatternNode")
 		}
-		if typedBindingPatternNode.TypeDescriptor.Kind() == common.VAR_TYPE_DESC {
+		if typedBindingPatternNode.TypeDescriptor.Kind() == st.VAR_TYPE_DESC {
 			if len(varDeclQuals) != 0 {
 				b.updateFirstNodeInListWithLeadingInvalidNode(varDeclQuals, publicQualifier,
 					&common.ERROR_VARIABLE_DECLARED_WITH_VAR_CANNOT_BE_PUBLIC)
 			} else {
-				typedBindingPattern = tree.CloneWithLeadingInvalidNodeMinutiae(typedBindingPattern,
+				typedBindingPattern = st.CloneWithLeadingInvalidNodeMinutiae(typedBindingPattern,
 					publicQualifier, &common.ERROR_VARIABLE_DECLARED_WITH_VAR_CANNOT_BE_PUBLIC)
 			}
-			publicQualifier = tree.CreateEmptyNode()
-		} else if b.isSyntaxKindInList(varDeclQuals, common.ISOLATED_KEYWORD) {
+			publicQualifier = st.CreateEmptyNode()
+		} else if b.isSyntaxKindInList(varDeclQuals, st.ISOLATED_KEYWORD) {
 			b.updateFirstNodeInListWithLeadingInvalidNode(varDeclQuals, publicQualifier,
 				&common.ERROR_ISOLATED_VAR_CANNOT_BE_DECLARED_AS_PUBLIC)
-			publicQualifier = tree.CreateEmptyNode()
+			publicQualifier = st.CreateEmptyNode()
 		}
 	}
-	varDeclQualifiersNode := tree.CreateNodeList(varDeclQuals...)
-	return tree.CreateModuleVariableDeclarationNode(metadata, publicQualifier, varDeclQualifiersNode,
+	varDeclQualifiersNode := st.CreateNodeList(varDeclQuals...)
+	return st.CreateModuleVariableDeclarationNode(metadata, publicQualifier, varDeclQualifiersNode,
 		typedBindingPattern, assign, expr, semicolon)
 }
 
-func (b *BallerinaParser) createMissingSimpleVarDecl(isModuleVar bool) tree.STNode {
-	var metadata tree.STNode
+func (b *BallerinaParser) createMissingSimpleVarDecl(isModuleVar bool) st.STNode {
+	var metadata st.STNode
 	if isModuleVar {
-		metadata = tree.CreateEmptyNode()
+		metadata = st.CreateEmptyNode()
 	} else {
-		metadata = tree.CreateEmptyNodeList()
+		metadata = st.CreateEmptyNodeList()
 	}
 	return b.createMissingSimpleVarDeclInner(metadata, isModuleVar)
 }
 
-func (b *BallerinaParser) createMissingSimpleVarDeclInner(metadata tree.STNode, isModuleVar bool) tree.STNode {
-	publicQualifier := tree.CreateEmptyNode()
+func (b *BallerinaParser) createMissingSimpleVarDeclInner(metadata st.STNode, isModuleVar bool) st.STNode {
+	publicQualifier := st.CreateEmptyNode()
 	return b.createMissingSimpleVarDeclInnerWithQualifiers(metadata, publicQualifier, nil, isModuleVar)
 }
 
-func (b *BallerinaParser) createMissingSimpleVarDeclInnerWithQualifiers(metadata tree.STNode, publicQualifier tree.STNode, qualifiers []tree.STNode, isModuleVar bool) tree.STNode {
-	emptyNode := tree.CreateEmptyNode()
-	simpleTypeDescIdentifier := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+func (b *BallerinaParser) createMissingSimpleVarDeclInnerWithQualifiers(metadata st.STNode, publicQualifier st.STNode, qualifiers []st.STNode, isModuleVar bool) st.STNode {
+	emptyNode := st.CreateEmptyNode()
+	simpleTypeDescIdentifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_TYPE_DESC)
-	identifier := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+	identifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_VARIABLE_NAME)
-	simpleNameRef := tree.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
-	semicolon := tree.CreateMissingTokenWithDiagnostics(common.SEMICOLON_TOKEN,
+	simpleNameRef := st.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
+	semicolon := st.CreateMissingTokenWithDiagnostics(st.SEMICOLON_TOKEN,
 		&common.ERROR_MISSING_SEMICOLON_TOKEN)
-	captureBP := tree.CreateCaptureBindingPatternNode(identifier)
-	typedBindingPattern := tree.CreateTypedBindingPatternNode(simpleNameRef, captureBP)
+	captureBP := st.CreateCaptureBindingPatternNode(identifier)
+	typedBindingPattern := st.CreateTypedBindingPatternNode(simpleNameRef, captureBP)
 	if isModuleVar {
 		varDeclQuals, qualifiers := b.extractVarDeclQualifiers(qualifiers, true)
 		typedBindingPattern = b.modifyNodeWithInvalidTokenList(qualifiers, typedBindingPattern)
-		if b.isSyntaxKindInList(varDeclQuals, common.CONFIGURABLE_KEYWORD) {
+		if b.isSyntaxKindInList(varDeclQuals, st.CONFIGURABLE_KEYWORD) {
 			return b.createConfigurableModuleVarDeclWithMissingInitializer(metadata, publicQualifier, varDeclQuals,
 				typedBindingPattern, semicolon)
 		}
-		varDeclQualNodeList := tree.CreateNodeList(varDeclQuals...)
-		return tree.CreateModuleVariableDeclarationNode(metadata, publicQualifier, varDeclQualNodeList,
+		varDeclQualNodeList := st.CreateNodeList(varDeclQuals...)
+		return st.CreateModuleVariableDeclarationNode(metadata, publicQualifier, varDeclQualNodeList,
 			typedBindingPattern, emptyNode, emptyNode, semicolon)
 	}
 	typedBindingPattern = b.modifyNodeWithInvalidTokenList(qualifiers, typedBindingPattern)
-	return tree.CreateVariableDeclarationNode(metadata, emptyNode, typedBindingPattern, emptyNode,
+	return st.CreateVariableDeclarationNode(metadata, emptyNode, typedBindingPattern, emptyNode,
 		emptyNode, semicolon)
 }
 
-func (b *BallerinaParser) createMissingWhereClause() tree.STNode {
-	whereKeyword := tree.CreateMissingTokenWithDiagnostics(common.WHERE_KEYWORD,
+func (b *BallerinaParser) createMissingWhereClause() st.STNode {
+	whereKeyword := st.CreateMissingTokenWithDiagnostics(st.WHERE_KEYWORD,
 		&common.ERROR_MISSING_WHERE_KEYWORD)
-	missingIdentifier := tree.CreateMissingTokenWithDiagnostics(
-		common.IDENTIFIER_TOKEN, &common.ERROR_MISSING_EXPRESSION)
-	missingExpr := tree.CreateSimpleNameReferenceNode(missingIdentifier)
-	return tree.CreateWhereClauseNode(whereKeyword, missingExpr)
+	missingIdentifier := st.CreateMissingTokenWithDiagnostics(
+		st.IDENTIFIER_TOKEN, &common.ERROR_MISSING_EXPRESSION)
+	missingExpr := st.CreateSimpleNameReferenceNode(missingIdentifier)
+	return st.CreateWhereClauseNode(whereKeyword, missingExpr)
 }
 
-func (b *BallerinaParser) createMissingSimpleObjectFieldInner(metadata tree.STNode, qualifiers []tree.STNode, isObjectTypeDesc bool) (tree.STNode, []tree.STNode) {
-	emptyNode := tree.CreateEmptyNode()
-	simpleTypeDescIdentifier := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+func (b *BallerinaParser) createMissingSimpleObjectFieldInner(metadata st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
+	emptyNode := st.CreateEmptyNode()
+	simpleTypeDescIdentifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_TYPE_DESC)
-	simpleNameRef := tree.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
-	identifier := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+	simpleNameRef := st.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
+	identifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_FIELD_NAME)
-	semicolon := tree.CreateMissingTokenWithDiagnostics(common.SEMICOLON_TOKEN,
+	semicolon := st.CreateMissingTokenWithDiagnostics(st.SEMICOLON_TOKEN,
 		&common.ERROR_MISSING_SEMICOLON_TOKEN)
 	objectFieldQualifiers, qualifiers := b.extractObjectFieldQualifiers(qualifiers, isObjectTypeDesc)
-	objectFieldQualNodeList := tree.CreateNodeList(objectFieldQualifiers...)
+	objectFieldQualNodeList := st.CreateNodeList(objectFieldQualifiers...)
 	simpleNameRef = b.modifyNodeWithInvalidTokenList(qualifiers, simpleNameRef)
-	metadataNode, ok := metadata.(*tree.STMetadataNode)
+	metadataNode, ok := metadata.(*st.STMetadataNode)
 	if !ok {
 		panic("expected STMetadataNode")
 	}
 	if metadata != nil {
 		metadata = b.addMetadataNotAttachedDiagnostic(*metadataNode)
 	}
-	return tree.CreateObjectFieldNode(metadata, emptyNode, objectFieldQualNodeList,
+	return st.CreateObjectFieldNode(metadata, emptyNode, objectFieldQualNodeList,
 		simpleNameRef, identifier, emptyNode, emptyNode, semicolon), qualifiers
 }
 
-func (b *BallerinaParser) createMissingSimpleObjectField() tree.STNode {
-	metadata := tree.CreateEmptyNode()
+func (b *BallerinaParser) createMissingSimpleObjectField() st.STNode {
+	metadata := st.CreateEmptyNode()
 	res, _ := b.createMissingSimpleObjectFieldInner(metadata, nil, false)
 	return res
 }
 
-func (b *BallerinaParser) modifyNodeWithInvalidTokenList(qualifiers []tree.STNode, node tree.STNode) tree.STNode {
+func (b *BallerinaParser) modifyNodeWithInvalidTokenList(qualifiers []st.STNode, node st.STNode) st.STNode {
 	i := (len(qualifiers) - 1)
 	for ; i >= 0; i-- {
 		qualifier := qualifiers[i]
-		node = tree.CloneWithLeadingInvalidNodeMinutiae(node, qualifier, nil)
+		node = st.CloneWithLeadingInvalidNodeMinutiae(node, qualifier, nil)
 	}
 	return node
 }
 
-func (b *BallerinaParser) modifyTypedBindingPatternWithIsolatedQualifier(typedBindingPattern tree.STNode, isolatedQualifier tree.STNode) tree.STNode {
-	typedBindingPatternNode, ok := typedBindingPattern.(*tree.STTypedBindingPatternNode)
+func (b *BallerinaParser) modifyTypedBindingPatternWithIsolatedQualifier(typedBindingPattern st.STNode, isolatedQualifier st.STNode) st.STNode {
+	typedBindingPatternNode, ok := typedBindingPattern.(*st.STTypedBindingPatternNode)
 	if !ok {
 		panic("expected STTypedBindingPatternNode")
 	}
 	typeDescriptor := typedBindingPatternNode.TypeDescriptor
 	bindingPattern := typedBindingPatternNode.BindingPattern
 	switch typeDescriptor.Kind() {
-	case common.OBJECT_TYPE_DESC:
+	case st.OBJECT_TYPE_DESC:
 		typeDescriptor = b.modifyObjectTypeDescWithALeadingQualifier(typeDescriptor, isolatedQualifier)
-	case common.FUNCTION_TYPE_DESC:
+	case st.FUNCTION_TYPE_DESC:
 		typeDescriptor = b.modifyFuncTypeDescWithALeadingQualifier(typeDescriptor, isolatedQualifier)
 	default:
-		typeDescriptor = tree.CloneWithLeadingInvalidNodeMinutiae(typeDescriptor, isolatedQualifier,
-			&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(isolatedQualifier).Text())
+		typeDescriptor = st.CloneWithLeadingInvalidNodeMinutiae(typeDescriptor, isolatedQualifier,
+			&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(isolatedQualifier).Text())
 	}
-	return tree.CreateTypedBindingPatternNode(typeDescriptor, bindingPattern)
+	return st.CreateTypedBindingPatternNode(typeDescriptor, bindingPattern)
 }
 
-func (b *BallerinaParser) modifyObjectTypeDescWithALeadingQualifier(objectTypeDesc tree.STNode, newQualifier tree.STNode) tree.STNode {
-	objectTypeDescriptorNode, ok := objectTypeDesc.(*tree.STObjectTypeDescriptorNode)
+func (b *BallerinaParser) modifyObjectTypeDescWithALeadingQualifier(objectTypeDesc st.STNode, newQualifier st.STNode) st.STNode {
+	objectTypeDescriptorNode, ok := objectTypeDesc.(*st.STObjectTypeDescriptorNode)
 	if !ok {
 		panic("expected STObjectTypeDescriptorNode")
 	}
 
-	qualifierList, ok := objectTypeDescriptorNode.ObjectTypeQualifiers.(*tree.STNodeList)
+	qualifierList, ok := objectTypeDescriptorNode.ObjectTypeQualifiers.(*st.STNodeList)
 	if !ok {
 		panic("expected STNodeList")
 	}
 	newObjectTypeQualifiers := b.modifyNodeListWithALeadingQualifier(qualifierList, newQualifier)
-	return tree.CreateObjectTypeDescriptorNode(newObjectTypeQualifiers, objectTypeDescriptorNode.ObjectKeyword,
+	return st.CreateObjectTypeDescriptorNode(newObjectTypeQualifiers, objectTypeDescriptorNode.ObjectKeyword,
 		objectTypeDescriptorNode.OpenBrace, objectTypeDescriptorNode.Members,
 		objectTypeDescriptorNode.CloseBrace)
 }
 
-func (b *BallerinaParser) modifyFuncTypeDescWithALeadingQualifier(funcTypeDesc tree.STNode, newQualifier tree.STNode) tree.STNode {
-	funcTypeDescriptorNode, ok := funcTypeDesc.(*tree.STFunctionTypeDescriptorNode)
+func (b *BallerinaParser) modifyFuncTypeDescWithALeadingQualifier(funcTypeDesc st.STNode, newQualifier st.STNode) st.STNode {
+	funcTypeDescriptorNode, ok := funcTypeDesc.(*st.STFunctionTypeDescriptorNode)
 	if !ok {
 		panic("expected STFunctionTypeDescriptorNode")
 	}
 	qualifierList := funcTypeDescriptorNode.QualifierList
 	newfuncTypeQualifiers := b.modifyNodeListWithALeadingQualifier(qualifierList, newQualifier)
-	return tree.CreateFunctionTypeDescriptorNode(newfuncTypeQualifiers, funcTypeDescriptorNode.FunctionKeyword,
+	return st.CreateFunctionTypeDescriptorNode(newfuncTypeQualifiers, funcTypeDescriptorNode.FunctionKeyword,
 		funcTypeDescriptorNode.FunctionSignature)
 }
 
-func (b *BallerinaParser) modifyNodeListWithALeadingQualifier(qualifiers tree.STNode, newQualifier tree.STNode) tree.STNode {
-	var newQualifierList []tree.STNode
+func (b *BallerinaParser) modifyNodeListWithALeadingQualifier(qualifiers st.STNode, newQualifier st.STNode) st.STNode {
+	var newQualifierList []st.STNode
 	newQualifierList = append(newQualifierList, newQualifier)
-	qualifierNodeList, ok := qualifiers.(*tree.STNodeList)
+	qualifierNodeList, ok := qualifiers.(*st.STNodeList)
 	if !ok {
 		panic("expected STNodeList")
 	}
@@ -4135,21 +4135,21 @@ func (b *BallerinaParser) modifyNodeListWithALeadingQualifier(qualifiers tree.ST
 		qualifier := qualifierNodeList.Get(i)
 		if qualifier.Kind() == newQualifier.Kind() {
 			b.updateLastNodeInListWithInvalidNode(newQualifierList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(qualifier).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 		} else {
 			newQualifierList = append(newQualifierList, qualifier)
 		}
 	}
-	return tree.CreateNodeList(newQualifierList...)
+	return st.CreateNodeList(newQualifierList...)
 }
 
-func (b *BallerinaParser) parseAssignmentStmtRhs(lvExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
 	assign := b.parseAssignOp()
 	expr := b.parseActionOrExpression()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	if lvExpr.Kind() == common.ERROR_CONSTRUCTOR {
-		errConstructor, ok := lvExpr.(*tree.STErrorConstructorExpressionNode)
+	if lvExpr.Kind() == st.ERROR_CONSTRUCTOR {
+		errConstructor, ok := lvExpr.(*st.STErrorConstructorExpressionNode)
 		if !ok {
 			panic("expected STErrorConstructorExpressionNode")
 		}
@@ -4162,127 +4162,127 @@ func (b *BallerinaParser) parseAssignmentStmtRhs(lvExpr tree.STNode) tree.STNode
 	}
 	lvExprValid := b.isValidLVExpr(lvExpr)
 	if !lvExprValid {
-		identifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		simpleNameRef := tree.CreateSimpleNameReferenceNode(identifier)
-		lvExpr = tree.CloneWithLeadingInvalidNodeMinutiae(simpleNameRef, lvExpr,
+		identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		simpleNameRef := st.CreateSimpleNameReferenceNode(identifier)
+		lvExpr = st.CloneWithLeadingInvalidNodeMinutiae(simpleNameRef, lvExpr,
 			&common.ERROR_INVALID_EXPR_IN_ASSIGNMENT_LHS)
 	}
-	return tree.CreateAssignmentStatementNode(lvExpr, assign, expr, semicolon)
+	return st.CreateAssignmentStatementNode(lvExpr, assign, expr, semicolon)
 }
 
-func (b *BallerinaParser) parseExpression() tree.STNode {
+func (b *BallerinaParser) parseExpression() st.STNode {
 	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, true, false)
 }
 
-func (b *BallerinaParser) parseActionOrExpression() tree.STNode {
+func (b *BallerinaParser) parseActionOrExpression() st.STNode {
 	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, true, true)
 }
 
-func (b *BallerinaParser) parseActionOrExpressionInLhs(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseActionOrExpressionInLhs(annots st.STNode) st.STNode {
 	return b.parseExpressionInner(OPERATOR_PRECEDENCE_DEFAULT, annots, false, true, false)
 }
 
-func (b *BallerinaParser) parseExpressionPossibleRhsExpr(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionPossibleRhsExpr(isRhsExpr bool) st.STNode {
 	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, isRhsExpr, false)
 }
 
-func (b *BallerinaParser) isValidLVExpr(expression tree.STNode) bool {
+func (b *BallerinaParser) isValidLVExpr(expression st.STNode) bool {
 	switch expression.Kind() {
-	case common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE,
-		common.LIST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.ERROR_BINDING_PATTERN,
-		common.WILDCARD_BINDING_PATTERN:
+	case st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE,
+		st.LIST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.ERROR_BINDING_PATTERN,
+		st.WILDCARD_BINDING_PATTERN:
 		return true
-	case common.FIELD_ACCESS:
-		fieldAccessExpressionNode, ok := expression.(*tree.STFieldAccessExpressionNode)
+	case st.FIELD_ACCESS:
+		fieldAccessExpressionNode, ok := expression.(*st.STFieldAccessExpressionNode)
 		if !ok {
 			panic("expected STFieldAccessExpressionNode")
 		}
 		return b.isValidLVMemberExpr(fieldAccessExpressionNode.Expression)
-	case common.INDEXED_EXPRESSION:
-		indexedExpressionNode, ok := expression.(*tree.STIndexedExpressionNode)
+	case st.INDEXED_EXPRESSION:
+		indexedExpressionNode, ok := expression.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("expected STIndexedExpressionNode")
 		}
 		return b.isValidLVMemberExpr(indexedExpressionNode.ContainerExpression)
 	default:
-		_, ok := expression.(*tree.STMissingToken)
+		_, ok := expression.(*st.STMissingToken)
 		return ok
 	}
 }
 
-func (b *BallerinaParser) isValidLVMemberExpr(expression tree.STNode) bool {
+func (b *BallerinaParser) isValidLVMemberExpr(expression st.STNode) bool {
 	switch expression.Kind() {
-	case common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE:
+	case st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE:
 		return true
-	case common.FIELD_ACCESS:
-		fieldAccessExpressionNode, ok := expression.(*tree.STFieldAccessExpressionNode)
+	case st.FIELD_ACCESS:
+		fieldAccessExpressionNode, ok := expression.(*st.STFieldAccessExpressionNode)
 		if !ok {
 			panic("expected STFieldAccessExpressionNode")
 		}
 		return b.isValidLVMemberExpr(fieldAccessExpressionNode.Expression)
-	case common.INDEXED_EXPRESSION:
-		indexedExpressionNode, ok := expression.(*tree.STIndexedExpressionNode)
+	case st.INDEXED_EXPRESSION:
+		indexedExpressionNode, ok := expression.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("expected STIndexedExpressionNode")
 		}
 		return b.isValidLVMemberExpr(indexedExpressionNode.ContainerExpression)
-	case common.BRACED_EXPRESSION:
-		bracedExpressionNode, ok := expression.(*tree.STBracedExpressionNode)
+	case st.BRACED_EXPRESSION:
+		bracedExpressionNode, ok := expression.(*st.STBracedExpressionNode)
 		if !ok {
 			panic("expected STBracedExpressionNode")
 		}
 		return b.isValidLVMemberExpr(bracedExpressionNode.Expression)
 	default:
-		_, ok := expression.(*tree.STMissingToken)
+		_, ok := expression.(*st.STMissingToken)
 		return ok
 	}
 }
 
-func (b *BallerinaParser) parseExpressionWithPrecedence(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionWithPrecedence(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool) st.STNode {
 	return b.parseExpressionWithConditional(precedenceLevel, isRhsExpr, allowActions, false)
 }
 
-func (b *BallerinaParser) parseExpressionWithConditional(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionWithConditional(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	return b.parseExpressionWithMatchGuard(precedenceLevel, isRhsExpr, allowActions, false, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseExpressionWithMatchGuard(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionWithMatchGuard(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	expr := b.parseTerminalExpression(isRhsExpr, allowActions, isInConditionalExpr)
 	return b.parseExpressionRhsInner(precedenceLevel, expr, isRhsExpr, allowActions, isInMatchGuard, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) invalidateActionAndGetMissingExpr(node tree.STNode) tree.STNode {
-	var identifier tree.STNode
-	identifier = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-	identifier = tree.CloneWithTrailingInvalidNodeMinutiae(identifier, node, &common.ERROR_EXPRESSION_EXPECTED_ACTION_FOUND)
-	return tree.CreateSimpleNameReferenceNode(identifier)
+func (b *BallerinaParser) invalidateActionAndGetMissingExpr(node st.STNode) st.STNode {
+	var identifier st.STNode
+	identifier = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+	identifier = st.CloneWithTrailingInvalidNodeMinutiae(identifier, node, &common.ERROR_EXPRESSION_EXPECTED_ACTION_FOUND)
+	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (b *BallerinaParser) parseExpressionInner(precedenceLevel OperatorPrecedence, annots tree.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionInner(precedenceLevel OperatorPrecedence, annots st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	expr := b.parseTerminalExpressionWithAnnotations(annots, isRhsExpr, allowActions, isInConditionalExpr)
 	return b.parseExpressionRhsInner(precedenceLevel, expr, isRhsExpr, allowActions, false, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTerminalExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
-	annots := tree.CreateEmptyNodeList()
-	if b.peek().Kind() == common.AT_TOKEN {
+func (b *BallerinaParser) parseTerminalExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+	annots := st.CreateEmptyNodeList()
+	if b.peek().Kind() == st.AT_TOKEN {
 		annots = b.parseOptionalAnnotations()
 	}
 	return b.parseTerminalExpressionWithAnnotations(annots, isRhsExpr, allowActions, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTerminalExpressionWithAnnotations(annots tree.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTerminalExpressionWithAnnotations(annots st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	return b.parseTerminalExpressionInner(annots, nil, isRhsExpr, allowActions, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTerminalExpressionInner(annots tree.STNode, qualifiers []tree.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTerminalExpressionInner(annots st.STNode, qualifiers []st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	qualifiers = b.parseExprQualifiers(qualifiers)
 	nextToken := b.peek()
-	annotNodeList := annots.(*tree.STNodeList)
+	annotNodeList := annots.(*st.STNodeList)
 	if (!annotNodeList.IsEmpty()) && (!b.isAnnotAllowedExprStart(nextToken)) {
 		annots = b.addAnnotNotAttachedDiagnostic(annotNodeList)
 		qualifierNodeList := b.createObjectTypeQualNodeList(qualifiers)
@@ -4293,79 +4293,79 @@ func (b *BallerinaParser) parseTerminalExpressionInner(annots tree.STNode, quali
 		return b.parseQualifiedIdentifierOrExpression(isInConditionalExpr, isRhsExpr, allowActions)
 	}
 	switch nextToken.Kind() {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		return b.parseBasicLiteral()
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseBracedExpression(isRhsExpr, allowActions)
-	case common.CHECK_KEYWORD,
-		common.CHECKPANIC_KEYWORD:
+	case st.CHECK_KEYWORD,
+		st.CHECKPANIC_KEYWORD:
 		return b.parseCheckExpression(isRhsExpr, allowActions, isInConditionalExpr)
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingConstructorExpr()
-	case common.TYPEOF_KEYWORD:
+	case st.TYPEOF_KEYWORD:
 		return b.parseTypeofExpression(isRhsExpr, isInConditionalExpr)
-	case common.PLUS_TOKEN, common.MINUS_TOKEN, common.NEGATION_TOKEN, common.EXCLAMATION_MARK_TOKEN:
+	case st.PLUS_TOKEN, st.MINUS_TOKEN, st.NEGATION_TOKEN, st.EXCLAMATION_MARK_TOKEN:
 		return b.parseUnaryExpression(isRhsExpr, isInConditionalExpr)
-	case common.TRAP_KEYWORD:
+	case st.TRAP_KEYWORD:
 		return b.parseTrapExpression(isRhsExpr, allowActions, isInConditionalExpr)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseListConstructorExpr()
-	case common.LT_TOKEN:
+	case st.LT_TOKEN:
 		return b.parseTypeCastExpr(isRhsExpr, allowActions, isInConditionalExpr)
-	case common.TABLE_KEYWORD, common.STREAM_KEYWORD, common.FROM_KEYWORD, common.MAP_KEYWORD:
+	case st.TABLE_KEYWORD, st.STREAM_KEYWORD, st.FROM_KEYWORD, st.MAP_KEYWORD:
 		return b.parseTableConstructorOrQuery(isRhsExpr, allowActions)
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		return b.parseErrorConstructorExpr(b.consume())
-	case common.LET_KEYWORD:
+	case st.LET_KEYWORD:
 		return b.parseLetExpression(isRhsExpr, isInConditionalExpr)
-	case common.BACKTICK_TOKEN:
+	case st.BACKTICK_TOKEN:
 		return b.parseTemplateExpression()
-	case common.OBJECT_KEYWORD:
+	case st.OBJECT_KEYWORD:
 		return b.parseObjectConstructorExpression(annots, qualifiers)
-	case common.XML_KEYWORD:
+	case st.XML_KEYWORD:
 		return b.parseXMLTemplateExpression()
-	case common.RE_KEYWORD:
+	case st.RE_KEYWORD:
 		return b.parseRegExpTemplateExpression()
-	case common.STRING_KEYWORD:
+	case st.STRING_KEYWORD:
 		nextNextToken := b.getNextNextToken()
-		if nextNextToken.Kind() == common.BACKTICK_TOKEN {
+		if nextNextToken.Kind() == st.BACKTICK_TOKEN {
 			return b.parseStringTemplateExpression()
 		}
 		return b.parseSimpleTypeInTerminalExpr()
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		return b.parseExplicitFunctionExpression(annots, qualifiers, isRhsExpr)
-	case common.NEW_KEYWORD:
+	case st.NEW_KEYWORD:
 		return b.parseNewExpression()
-	case common.START_KEYWORD:
+	case st.START_KEYWORD:
 		return b.parseStartAction(annots)
-	case common.FLUSH_KEYWORD:
+	case st.FLUSH_KEYWORD:
 		return b.parseFlushAction()
-	case common.LEFT_ARROW_TOKEN:
+	case st.LEFT_ARROW_TOKEN:
 		return b.parseReceiveAction()
-	case common.WAIT_KEYWORD:
+	case st.WAIT_KEYWORD:
 		return b.parseWaitAction()
-	case common.COMMIT_KEYWORD:
+	case st.COMMIT_KEYWORD:
 		return b.parseCommitAction()
-	case common.TRANSACTIONAL_KEYWORD:
+	case st.TRANSACTIONAL_KEYWORD:
 		return b.parseTransactionalExpression()
-	case common.BASE16_KEYWORD,
-		common.BASE64_KEYWORD:
+	case st.BASE16_KEYWORD,
+		st.BASE64_KEYWORD:
 		return b.parseByteArrayLiteral()
-	case common.TRANSACTION_KEYWORD:
+	case st.TRANSACTION_KEYWORD:
 		return b.parseQualifiedIdentWithTransactionPrefix(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
-	case common.IDENTIFIER_TOKEN:
-		if b.isNaturalKeyword(nextToken) && (b.getNextNextToken().Kind() == common.OPEN_BRACE_TOKEN) {
+	case st.IDENTIFIER_TOKEN:
+		if b.isNaturalKeyword(nextToken) && (b.getNextNextToken().Kind() == st.OPEN_BRACE_TOKEN) {
 			return b.parseNaturalExpression()
 		}
 		return b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_VARIABLE_REF, isInConditionalExpr)
-	case common.CONST_KEYWORD:
+	case st.CONST_KEYWORD:
 		if b.isNaturalKeyword(b.getNextNextToken()) {
 			return b.parseNaturalExpression()
 		}
@@ -4379,20 +4379,20 @@ func (b *BallerinaParser) parseTerminalExpressionInner(annots tree.STNode, quali
 	}
 }
 
-func (b *BallerinaParser) parseNaturalExpression() tree.STNode {
+func (b *BallerinaParser) parseNaturalExpression() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION)
-	var optionalConstKeyword tree.STNode
-	if b.peek().Kind() == common.CONST_KEYWORD {
+	var optionalConstKeyword st.STNode
+	if b.peek().Kind() == st.CONST_KEYWORD {
 		optionalConstKeyword = b.consume()
 	} else {
-		optionalConstKeyword = tree.CreateEmptyNode()
+		optionalConstKeyword = st.CreateEmptyNode()
 	}
 	naturalKeyword := b.parseNaturalKeyword()
 	optionalParenthesizedArgList := b.parseOptionalParenthesizedArgList()
 	return b.parseNaturalExprBody(optionalConstKeyword, naturalKeyword, optionalParenthesizedArgList)
 }
 
-func (b *BallerinaParser) parseNaturalExprBody(optionalConstKeyword tree.STNode, naturalKeyword tree.STNode, optionalParenthesizedArgList tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseNaturalExprBody(optionalConstKeyword st.STNode, naturalKeyword st.STNode, optionalParenthesizedArgList st.STNode) st.STNode {
 	openBrace := b.parseOpenBrace()
 	if openBrace.IsMissing() {
 		b.endContext()
@@ -4406,86 +4406,86 @@ func (b *BallerinaParser) parseNaturalExprBody(optionalConstKeyword tree.STNode,
 		b.tokenReader.EndMode()
 	}
 	b.endContext()
-	return tree.CreateNaturalExpressionNode(optionalConstKeyword, naturalKeyword,
+	return st.CreateNaturalExpressionNode(optionalConstKeyword, naturalKeyword,
 		optionalParenthesizedArgList, openBrace, prompt, closeBrace)
 }
 
-func (b *BallerinaParser) createMissingNaturalExpressionNode(optionalConstKeyword tree.STNode, naturalKeyword tree.STNode, optionalParenthesizedArgList tree.STNode) tree.STNode {
-	openBrace := tree.CreateMissingToken(common.OPEN_BRACE_TOKEN, nil)
-	closeBrace := tree.CreateMissingToken(common.CLOSE_BRACE_TOKEN, nil)
-	prompt := tree.CreateEmptyNodeList()
-	naturalExpr := tree.CreateNaturalExpressionNode(optionalConstKeyword, naturalKeyword,
+func (b *BallerinaParser) createMissingNaturalExpressionNode(optionalConstKeyword st.STNode, naturalKeyword st.STNode, optionalParenthesizedArgList st.STNode) st.STNode {
+	openBrace := st.CreateMissingToken(st.OPEN_BRACE_TOKEN, nil)
+	closeBrace := st.CreateMissingToken(st.CLOSE_BRACE_TOKEN, nil)
+	prompt := st.CreateEmptyNodeList()
+	naturalExpr := st.CreateNaturalExpressionNode(optionalConstKeyword, naturalKeyword,
 		optionalParenthesizedArgList, openBrace, prompt, closeBrace)
-	naturalExpr = tree.AddDiagnostic(naturalExpr, &common.ERROR_MISSING_NATURAL_PROMPT_BLOCK)
+	naturalExpr = st.AddDiagnostic(naturalExpr, &common.ERROR_MISSING_NATURAL_PROMPT_BLOCK)
 	return naturalExpr
 }
 
-func (b *BallerinaParser) parseOptionalParenthesizedArgList() tree.STNode {
-	if b.peek().Kind() == common.OPEN_PAREN_TOKEN {
+func (b *BallerinaParser) parseOptionalParenthesizedArgList() st.STNode {
+	if b.peek().Kind() == st.OPEN_PAREN_TOKEN {
 		return b.parseParenthesizedArgList()
 	}
-	return tree.CreateEmptyNode()
+	return st.CreateEmptyNode()
 }
 
-func (b *BallerinaParser) parsePromptContent() tree.STNode {
-	var items []tree.STNode
+func (b *BallerinaParser) parsePromptContent() st.STNode {
+	var items []st.STNode
 	nextToken := b.peek()
 	for !b.isEndOfPromptContent(nextToken.Kind()) {
 		contentItem := b.parsePromptItem()
 		items = append(items, contentItem)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(items...)
+	return st.CreateNodeList(items...)
 }
 
-func (b *BallerinaParser) isEndOfPromptContent(kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfPromptContent(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.EOF_TOKEN, common.CLOSE_BRACE_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parsePromptItem() tree.STNode {
+func (b *BallerinaParser) parsePromptItem() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.INTERPOLATION_START_TOKEN {
+	if nextToken.Kind() == st.INTERPOLATION_START_TOKEN {
 		return b.parseInterpolation()
 	}
-	if nextToken.Kind() != common.PROMPT_CONTENT {
+	if nextToken.Kind() != st.PROMPT_CONTENT {
 		nextToken = b.consume()
-		return tree.CreateLiteralValueTokenWithDiagnostics(common.PROMPT_CONTENT,
+		return st.CreateLiteralValueTokenWithDiagnostics(st.PROMPT_CONTENT,
 			nextToken.Text(), nextToken.LeadingMinutiae(), nextToken.TrailingMinutiae(),
 			nextToken.Diagnostics())
 	}
 	return b.consume()
 }
 
-func (b *BallerinaParser) createMissingObjectConstructor(annots tree.STNode, qualifierNodeList tree.STNode) tree.STNode {
-	objectKeyword := tree.CreateMissingToken(common.OBJECT_KEYWORD, nil)
-	openBrace := tree.CreateMissingToken(common.OPEN_BRACE_TOKEN, nil)
-	closeBrace := tree.CreateMissingToken(common.CLOSE_BRACE_TOKEN, nil)
-	objConstructor := tree.CreateObjectConstructorExpressionNode(annots, qualifierNodeList,
-		objectKeyword, tree.CreateEmptyNode(), openBrace, tree.CreateEmptyNodeList(),
+func (b *BallerinaParser) createMissingObjectConstructor(annots st.STNode, qualifierNodeList st.STNode) st.STNode {
+	objectKeyword := st.CreateMissingToken(st.OBJECT_KEYWORD, nil)
+	openBrace := st.CreateMissingToken(st.OPEN_BRACE_TOKEN, nil)
+	closeBrace := st.CreateMissingToken(st.CLOSE_BRACE_TOKEN, nil)
+	objConstructor := st.CreateObjectConstructorExpressionNode(annots, qualifierNodeList,
+		objectKeyword, st.CreateEmptyNode(), openBrace, st.CreateEmptyNodeList(),
 		closeBrace)
-	objConstructor = tree.AddDiagnostic(objConstructor,
+	objConstructor = st.AddDiagnostic(objConstructor,
 		&common.ERROR_MISSING_OBJECT_CONSTRUCTOR_EXPRESSION)
 	return objConstructor
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalExpr bool, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalExpr bool, isRhsExpr bool, allowActions bool) st.STNode {
 	preDeclaredPrefix := b.consume()
 	nextNextToken := b.getNextNextToken()
-	if (nextNextToken.Kind() == common.IDENTIFIER_TOKEN) && (!isKeyKeyword(nextNextToken)) {
+	if (nextNextToken.Kind() == st.IDENTIFIER_TOKEN) && (!isKeyKeyword(nextNextToken)) {
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
 	}
 	var context common.ParserRuleContext
 	switch preDeclaredPrefix.Kind() {
-	case common.TABLE_KEYWORD:
+	case st.TABLE_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_TABLE_CONS_OR_QUERY_EXPR_OR_VAR_REF
-	case common.STREAM_KEYWORD:
+	case st.STREAM_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_QUERY_EXPR_OR_VAR_REF
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		context = common.PARSER_RULE_CONTEXT_ERROR_CONS_EXPR_OR_VAR_REF
 	default:
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
@@ -4494,12 +4494,12 @@ func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalEx
 	if solution.Action == ACTION_KEEP {
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
 	}
-	if preDeclaredPrefix.Kind() == common.ERROR_KEYWORD {
+	if preDeclaredPrefix.Kind() == st.ERROR_KEYWORD {
 		return b.parseErrorConstructorExpr(preDeclaredPrefix)
 	}
 	b.startContext(common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_EXPRESSION)
-	var tableOrQuery tree.STNode
-	if preDeclaredPrefix.Kind() == common.STREAM_KEYWORD {
+	var tableOrQuery st.STNode
+	if preDeclaredPrefix.Kind() == st.STREAM_KEYWORD {
 		queryConstructType := b.parseQueryConstructType(preDeclaredPrefix, nil)
 		tableOrQuery = b.parseQueryExprRhs(queryConstructType, isRhsExpr, allowActions)
 	} else {
@@ -4509,11 +4509,11 @@ func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalEx
 	return tableOrQuery
 }
 
-func (b *BallerinaParser) validateExprAnnotsAndQualifiers(nextToken tree.STToken, annots tree.STNode, qualifiers []tree.STNode) {
+func (b *BallerinaParser) validateExprAnnotsAndQualifiers(nextToken st.STToken, annots st.STNode, qualifiers []st.STNode) {
 	switch nextToken.Kind() {
-	case common.START_KEYWORD:
+	case st.START_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-	case common.FUNCTION_KEYWORD, common.OBJECT_KEYWORD, common.AT_TOKEN:
+	case st.FUNCTION_KEYWORD, st.OBJECT_KEYWORD, st.AT_TOKEN:
 		break
 	default:
 		if b.isValidExprStart(nextToken.Kind()) {
@@ -4523,63 +4523,63 @@ func (b *BallerinaParser) validateExprAnnotsAndQualifiers(nextToken tree.STToken
 	}
 }
 
-func (b *BallerinaParser) isAnnotAllowedExprStart(nextToken tree.STToken) bool {
+func (b *BallerinaParser) isAnnotAllowedExprStart(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
-	case common.START_KEYWORD, common.FUNCTION_KEYWORD, common.OBJECT_KEYWORD:
+	case st.START_KEYWORD, st.FUNCTION_KEYWORD, st.OBJECT_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isValidExprStart(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isValidExprStart(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.IDENTIFIER_TOKEN,
-		common.OPEN_PAREN_TOKEN,
-		common.CHECK_KEYWORD,
-		common.CHECKPANIC_KEYWORD,
-		common.OPEN_BRACE_TOKEN,
-		common.TYPEOF_KEYWORD,
-		common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.NEGATION_TOKEN,
-		common.EXCLAMATION_MARK_TOKEN,
-		common.TRAP_KEYWORD,
-		common.OPEN_BRACKET_TOKEN,
-		common.LT_TOKEN,
-		common.TABLE_KEYWORD,
-		common.STREAM_KEYWORD,
-		common.FROM_KEYWORD,
-		common.ERROR_KEYWORD,
-		common.LET_KEYWORD,
-		common.BACKTICK_TOKEN,
-		common.XML_KEYWORD,
-		common.RE_KEYWORD,
-		common.STRING_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.AT_TOKEN,
-		common.NEW_KEYWORD,
-		common.START_KEYWORD,
-		common.FLUSH_KEYWORD,
-		common.LEFT_ARROW_TOKEN,
-		common.WAIT_KEYWORD,
-		common.COMMIT_KEYWORD,
-		common.SERVICE_KEYWORD,
-		common.BASE16_KEYWORD,
-		common.BASE64_KEYWORD,
-		common.ISOLATED_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD,
-		common.CLIENT_KEYWORD,
-		common.NATURAL_KEYWORD,
-		common.OBJECT_KEYWORD:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN,
+		st.IDENTIFIER_TOKEN,
+		st.OPEN_PAREN_TOKEN,
+		st.CHECK_KEYWORD,
+		st.CHECKPANIC_KEYWORD,
+		st.OPEN_BRACE_TOKEN,
+		st.TYPEOF_KEYWORD,
+		st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.NEGATION_TOKEN,
+		st.EXCLAMATION_MARK_TOKEN,
+		st.TRAP_KEYWORD,
+		st.OPEN_BRACKET_TOKEN,
+		st.LT_TOKEN,
+		st.TABLE_KEYWORD,
+		st.STREAM_KEYWORD,
+		st.FROM_KEYWORD,
+		st.ERROR_KEYWORD,
+		st.LET_KEYWORD,
+		st.BACKTICK_TOKEN,
+		st.XML_KEYWORD,
+		st.RE_KEYWORD,
+		st.STRING_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.AT_TOKEN,
+		st.NEW_KEYWORD,
+		st.START_KEYWORD,
+		st.FLUSH_KEYWORD,
+		st.LEFT_ARROW_TOKEN,
+		st.WAIT_KEYWORD,
+		st.COMMIT_KEYWORD,
+		st.SERVICE_KEYWORD,
+		st.BASE16_KEYWORD,
+		st.BASE64_KEYWORD,
+		st.ISOLATED_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD,
+		st.CLIENT_KEYWORD,
+		st.NATURAL_KEYWORD,
+		st.OBJECT_KEYWORD:
 		return true
 	default:
 		if isPredeclaredPrefix(tokenKind) {
@@ -4589,14 +4589,14 @@ func (b *BallerinaParser) isValidExprStart(tokenKind common.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseNewExpression() tree.STNode {
+func (b *BallerinaParser) parseNewExpression() st.STNode {
 	newKeyword := b.parseNewKeyword()
 	return b.parseNewKeywordRhs(newKeyword)
 }
 
-func (b *BallerinaParser) parseNewKeyword() tree.STNode {
+func (b *BallerinaParser) parseNewKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.NEW_KEYWORD {
+	if token.Kind() == st.NEW_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_NEW_KEYWORD)
@@ -4604,33 +4604,33 @@ func (b *BallerinaParser) parseNewKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseNewKeywordRhs(newKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseNewKeywordRhs(newKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.OPEN_PAREN_TOKEN {
+	if nextToken.Kind() == st.OPEN_PAREN_TOKEN {
 		return b.parseImplicitNewExpr(newKeyword)
 	}
 	if b.isClassDescriptorStartToken(nextToken.Kind()) {
 		return b.parseExplicitNewExpr(newKeyword)
 	}
-	return b.createImplicitNewExpr(newKeyword, tree.CreateEmptyNode())
+	return b.createImplicitNewExpr(newKeyword, st.CreateEmptyNode())
 }
 
-func (b *BallerinaParser) isClassDescriptorStartToken(tokenKind common.SyntaxKind) bool {
-	return ((tokenKind == common.STREAM_KEYWORD) || b.isPredeclaredIdentifier(tokenKind))
+func (b *BallerinaParser) isClassDescriptorStartToken(tokenKind st.SyntaxKind) bool {
+	return ((tokenKind == st.STREAM_KEYWORD) || b.isPredeclaredIdentifier(tokenKind))
 }
 
-func (b *BallerinaParser) parseExplicitNewExpr(newKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseExplicitNewExpr(newKeyword st.STNode) st.STNode {
 	typeDescriptor := b.parseClassDescriptor()
 	parenthesizedArgsList := b.parseParenthesizedArgList()
-	return tree.CreateExplicitNewExpressionNode(newKeyword, typeDescriptor, parenthesizedArgsList)
+	return st.CreateExplicitNewExpressionNode(newKeyword, typeDescriptor, parenthesizedArgsList)
 }
 
-func (b *BallerinaParser) parseClassDescriptor() tree.STNode {
+func (b *BallerinaParser) parseClassDescriptor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CLASS_DESCRIPTOR_IN_NEW_EXPR)
-	var classDescriptor tree.STNode
+	var classDescriptor st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.STREAM_KEYWORD:
+	case st.STREAM_KEYWORD:
 		classDescriptor = b.parseStreamTypeDescriptor(b.consume())
 	default:
 		if b.isPredeclaredIdentifier(nextToken.Kind()) {
@@ -4644,36 +4644,36 @@ func (b *BallerinaParser) parseClassDescriptor() tree.STNode {
 	return classDescriptor
 }
 
-func (b *BallerinaParser) parseImplicitNewExpr(newKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseImplicitNewExpr(newKeyword st.STNode) st.STNode {
 	parenthesizedArgList := b.parseParenthesizedArgList()
 	return b.createImplicitNewExpr(newKeyword, parenthesizedArgList)
 }
 
-func (b *BallerinaParser) createImplicitNewExpr(newKeyword tree.STNode, parenthesizedArgList tree.STNode) tree.STNode {
-	return tree.CreateImplicitNewExpressionNode(newKeyword, parenthesizedArgList)
+func (b *BallerinaParser) createImplicitNewExpr(newKeyword st.STNode, parenthesizedArgList st.STNode) st.STNode {
+	return st.CreateImplicitNewExpressionNode(newKeyword, parenthesizedArgList)
 }
 
-func (b *BallerinaParser) parseParenthesizedArgList() tree.STNode {
+func (b *BallerinaParser) parseParenthesizedArgList() st.STNode {
 	openParan := b.parseArgListOpenParenthesis()
 	arguments := b.parseArgsList()
 	closeParan := b.parseArgListCloseParenthesis()
-	return tree.CreateParenthesizedArgList(openParan, arguments, closeParan)
+	return st.CreateParenthesizedArgList(openParan, arguments, closeParan)
 }
 
-func (b *BallerinaParser) parseExpressionRhs(precedenceLevel OperatorPrecedence, lhsExpr tree.STNode, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionRhs(precedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	return b.parseExpressionRhsInner(precedenceLevel, lhsExpr, isRhsExpr, allowActions, false, false)
 }
 
-func (b *BallerinaParser) parseExpressionRhsInner(currentPrecedenceLevel OperatorPrecedence, lhsExpr tree.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionRhsInner(currentPrecedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	actionOrExpression := b.parseExpressionRhsInternal(currentPrecedenceLevel, lhsExpr, isRhsExpr, allowActions,
 		isInMatchGuard, isInConditionalExpr)
-	if ((!allowActions) && b.isAction(actionOrExpression)) && (actionOrExpression.Kind() != common.BRACED_ACTION) {
+	if ((!allowActions) && b.isAction(actionOrExpression)) && (actionOrExpression.Kind() != st.BRACED_ACTION) {
 		actionOrExpression = b.invalidateActionAndGetMissingExpr(actionOrExpression)
 	}
 	return actionOrExpression
 }
 
-func (b *BallerinaParser) parseExpressionRhsInternal(currentPrecedenceLevel OperatorPrecedence, lhsExpr tree.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionRhsInternal(currentPrecedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	nextToken := b.peek()
 	if b.isAction(lhsExpr) || b.isEndOfActionOrExpression(nextToken, isRhsExpr, isInMatchGuard) {
 		return lhsExpr
@@ -4683,77 +4683,77 @@ func (b *BallerinaParser) parseExpressionRhsInternal(currentPrecedenceLevel Oper
 		return b.recoverExpressionRhs(currentPrecedenceLevel, lhsExpr, isRhsExpr, allowActions, isInMatchGuard,
 			isInConditionalExpr)
 	}
-	if (nextTokenKind == common.GT_TOKEN) && (b.peekN(2).Kind() == common.GT_TOKEN) {
-		if b.peekN(3).Kind() == common.GT_TOKEN {
-			nextTokenKind = common.TRIPPLE_GT_TOKEN
+	if (nextTokenKind == st.GT_TOKEN) && (b.peekN(2).Kind() == st.GT_TOKEN) {
+		if b.peekN(3).Kind() == st.GT_TOKEN {
+			nextTokenKind = st.TRIPPLE_GT_TOKEN
 		} else {
-			nextTokenKind = common.DOUBLE_GT_TOKEN
+			nextTokenKind = st.DOUBLE_GT_TOKEN
 		}
 	}
 	nextOperatorPrecedence := b.getOpPrecedence(nextTokenKind)
 	if currentPrecedenceLevel.isHigherThanOrEqual(nextOperatorPrecedence, allowActions) {
 		return lhsExpr
 	}
-	var newLhsExpr tree.STNode
-	var operator tree.STNode
+	var newLhsExpr st.STNode
+	var operator st.STNode
 	switch nextTokenKind {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		newLhsExpr = b.parseFuncCallOrNaturalExpr(lhsExpr)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		newLhsExpr = b.parseMemberAccessExpr(lhsExpr, isRhsExpr)
-	case common.DOT_TOKEN:
+	case st.DOT_TOKEN:
 		newLhsExpr = b.parseFieldAccessOrMethodCall(lhsExpr, isInConditionalExpr)
-	case common.IS_KEYWORD,
-		common.NOT_IS_KEYWORD:
+	case st.IS_KEYWORD,
+		st.NOT_IS_KEYWORD:
 		newLhsExpr = b.parseTypeTestExpression(lhsExpr, isInConditionalExpr)
-	case common.RIGHT_ARROW_TOKEN:
+	case st.RIGHT_ARROW_TOKEN:
 		newLhsExpr = b.parseRemoteMethodCallOrClientResourceAccessOrAsyncSendAction(lhsExpr, isRhsExpr,
 			isInMatchGuard)
-	case common.SYNC_SEND_TOKEN:
+	case st.SYNC_SEND_TOKEN:
 		newLhsExpr = b.parseSyncSendAction(lhsExpr)
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
 		newLhsExpr = b.parseImplicitAnonFuncWithParams(lhsExpr, isRhsExpr)
-	case common.ANNOT_CHAINING_TOKEN:
+	case st.ANNOT_CHAINING_TOKEN:
 		newLhsExpr = b.parseAnnotAccessExpression(lhsExpr, isInConditionalExpr)
-	case common.OPTIONAL_CHAINING_TOKEN:
+	case st.OPTIONAL_CHAINING_TOKEN:
 		newLhsExpr = b.parseOptionalFieldAccessExpression(lhsExpr, isInConditionalExpr)
-	case common.QUESTION_MARK_TOKEN:
+	case st.QUESTION_MARK_TOKEN:
 		newLhsExpr = b.parseConditionalExpression(lhsExpr, isInConditionalExpr)
-	case common.DOT_LT_TOKEN:
+	case st.DOT_LT_TOKEN:
 		newLhsExpr = b.parseXMLFilterExpression(lhsExpr)
-	case common.SLASH_LT_TOKEN,
-		common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
-		common.SLASH_ASTERISK_TOKEN:
+	case st.SLASH_LT_TOKEN,
+		st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
+		st.SLASH_ASTERISK_TOKEN:
 		newLhsExpr = b.parseXMLStepExpression(lhsExpr)
 	default:
-		if (nextTokenKind == common.SLASH_TOKEN) && (b.peekN(2).Kind() == common.LT_TOKEN) {
+		if (nextTokenKind == st.SLASH_TOKEN) && (b.peekN(2).Kind() == st.LT_TOKEN) {
 			expectedNodeType := b.getExpectedNodeKind(3)
-			if expectedNodeType == common.XML_STEP_EXPRESSION {
+			if expectedNodeType == st.XML_STEP_EXPRESSION {
 				newLhsExpr = b.createXMLStepExpression(lhsExpr)
 				break
 			}
 		}
 		switch nextTokenKind {
-		case common.DOUBLE_GT_TOKEN:
+		case st.DOUBLE_GT_TOKEN:
 			operator = b.parseSignedRightShiftToken()
-		case common.TRIPPLE_GT_TOKEN:
+		case st.TRIPPLE_GT_TOKEN:
 			operator = b.parseUnsignedRightShiftToken()
 		default:
 			operator = b.parseBinaryOperator()
 		}
 		rhsExpr := b.parseExpressionWithConditional(nextOperatorPrecedence, isRhsExpr, false, isInConditionalExpr)
-		newLhsExpr = tree.CreateBinaryExpressionNode(common.BINARY_EXPRESSION, lhsExpr, operator,
+		newLhsExpr = st.CreateBinaryExpressionNode(st.BINARY_EXPRESSION, lhsExpr, operator,
 			rhsExpr)
 	}
 	return b.parseExpressionRhsInternal(currentPrecedenceLevel, newLhsExpr, isRhsExpr, allowActions, isInMatchGuard,
 		isInConditionalExpr)
 }
 
-func (b *BallerinaParser) recoverExpressionRhs(currentPrecedenceLevel OperatorPrecedence, lhsExpr tree.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) recoverExpressionRhs(currentPrecedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	token := b.peek()
 	lhsExprKind := lhsExpr.Kind()
 	var solution *Solution
-	if (lhsExprKind == common.QUALIFIED_NAME_REFERENCE) || (lhsExprKind == common.SIMPLE_NAME_REFERENCE) {
+	if (lhsExprKind == st.QUALIFIED_NAME_REFERENCE) || (lhsExprKind == st.SIMPLE_NAME_REFERENCE) {
 		solution = b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_VARIABLE_REF_RHS)
 	} else {
 		solution = b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS)
@@ -4771,139 +4771,139 @@ func (b *BallerinaParser) recoverExpressionRhs(currentPrecedenceLevel OperatorPr
 		isInConditionalExpr)
 }
 
-func (b *BallerinaParser) createXMLStepExpression(lhsExpr tree.STNode) tree.STNode {
-	var newLhsExpr tree.STNode
+func (b *BallerinaParser) createXMLStepExpression(lhsExpr st.STNode) st.STNode {
+	var newLhsExpr st.STNode
 	slashToken := b.parseSlashToken()
 	ltToken := b.parseLTToken()
-	var slashLT tree.STNode
+	var slashLT st.STNode
 	if b.hasTrailingMinutiae(slashToken) || b.hasLeadingMinutiae(ltToken) {
-		var diagnostics []tree.STNodeDiagnostic
-		diagnostics = append(diagnostics, tree.CreateDiagnostic(&common.ERROR_INVALID_WHITESPACE_IN_SLASH_LT_TOKEN))
-		slashLT = tree.CreateMissingToken(common.SLASH_LT_TOKEN, diagnostics)
-		slashLT = tree.CloneWithLeadingInvalidNodeMinutiae(slashLT, slashToken, nil)
-		slashLT = tree.CloneWithLeadingInvalidNodeMinutiae(slashLT, ltToken, nil)
+		var diagnostics []st.STNodeDiagnostic
+		diagnostics = append(diagnostics, st.CreateDiagnostic(&common.ERROR_INVALID_WHITESPACE_IN_SLASH_LT_TOKEN))
+		slashLT = st.CreateMissingToken(st.SLASH_LT_TOKEN, diagnostics)
+		slashLT = st.CloneWithLeadingInvalidNodeMinutiae(slashLT, slashToken, nil)
+		slashLT = st.CloneWithLeadingInvalidNodeMinutiae(slashLT, ltToken, nil)
 	} else {
-		slashLT = tree.CreateToken(common.SLASH_LT_TOKEN, slashToken.LeadingMinutiae(),
+		slashLT = st.CreateToken(st.SLASH_LT_TOKEN, slashToken.LeadingMinutiae(),
 			ltToken.TrailingMinutiae())
 	}
 	namePattern := b.parseXMLNamePatternChain(slashLT)
 	xmlStepExtends := b.parseXMLStepExtends()
-	newLhsExpr = tree.CreateXMLStepExpressionNode(lhsExpr, namePattern, xmlStepExtends)
+	newLhsExpr = st.CreateXMLStepExpressionNode(lhsExpr, namePattern, xmlStepExtends)
 	return newLhsExpr
 }
 
-func (b *BallerinaParser) getExpectedNodeKind(lookahead int) common.SyntaxKind {
+func (b *BallerinaParser) getExpectedNodeKind(lookahead int) st.SyntaxKind {
 	nextToken := b.peekN(lookahead)
 	switch nextToken.Kind() {
-	case common.ASTERISK_TOKEN:
-		return common.XML_STEP_EXPRESSION
-	case common.GT_TOKEN:
+	case st.ASTERISK_TOKEN:
+		return st.XML_STEP_EXPRESSION
+	case st.GT_TOKEN:
 		break
-	case common.PIPE_TOKEN:
+	case st.PIPE_TOKEN:
 		return b.getExpectedNodeKind(lookahead + 1)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		nextToken = b.peekN(lookahead + 1)
 		switch nextToken.Kind() {
-		case common.GT_TOKEN:
+		case st.GT_TOKEN:
 			break
-		case common.PIPE_TOKEN:
+		case st.PIPE_TOKEN:
 			return b.getExpectedNodeKind(lookahead + 1)
-		case common.COLON_TOKEN:
+		case st.COLON_TOKEN:
 			nextToken = b.peekN(lookahead + 1)
 			switch nextToken.Kind() {
-			case common.ASTERISK_TOKEN, common.GT_TOKEN:
-				return common.XML_STEP_EXPRESSION
-			case common.IDENTIFIER_TOKEN:
+			case st.ASTERISK_TOKEN, st.GT_TOKEN:
+				return st.XML_STEP_EXPRESSION
+			case st.IDENTIFIER_TOKEN:
 				nextToken = b.peekN(lookahead + 1)
-				if nextToken.Kind() == common.PIPE_TOKEN {
+				if nextToken.Kind() == st.PIPE_TOKEN {
 					return b.getExpectedNodeKind(lookahead + 1)
 				}
 			default:
-				return common.TYPE_CAST_EXPRESSION
+				return st.TYPE_CAST_EXPRESSION
 			}
 		default:
-			return common.TYPE_CAST_EXPRESSION
+			return st.TYPE_CAST_EXPRESSION
 		}
 	default:
-		return common.TYPE_CAST_EXPRESSION
+		return st.TYPE_CAST_EXPRESSION
 	}
 	nextToken = b.peekN(lookahead + 1)
 	switch nextToken.Kind() {
-	case common.OPEN_BRACKET_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.FROM_KEYWORD,
-		common.LET_KEYWORD:
-		return common.XML_STEP_EXPRESSION
+	case st.OPEN_BRACKET_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.FROM_KEYWORD,
+		st.LET_KEYWORD:
+		return st.XML_STEP_EXPRESSION
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), lookahead) {
 			break
 		}
-		return common.XML_STEP_EXPRESSION
+		return st.XML_STEP_EXPRESSION
 	}
-	return common.TYPE_CAST_EXPRESSION
+	return st.TYPE_CAST_EXPRESSION
 }
 
-func (b *BallerinaParser) hasTrailingMinutiae(node tree.STNode) bool {
+func (b *BallerinaParser) hasTrailingMinutiae(node st.STNode) bool {
 	return (node.WidthWithTrailingMinutiae() > node.Width())
 }
 
-func (b *BallerinaParser) hasLeadingMinutiae(node tree.STNode) bool {
+func (b *BallerinaParser) hasLeadingMinutiae(node st.STNode) bool {
 	return (node.WidthWithLeadingMinutiae() > node.Width())
 }
 
-func (b *BallerinaParser) isValidExprRhsStart(tokenKind common.SyntaxKind, precedingNodeKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isValidExprRhsStart(tokenKind st.SyntaxKind, precedingNodeKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.OPEN_PAREN_TOKEN:
-		return ((precedingNodeKind == common.QUALIFIED_NAME_REFERENCE) || (precedingNodeKind == common.SIMPLE_NAME_REFERENCE))
-	case common.DOT_TOKEN,
-		common.OPEN_BRACKET_TOKEN,
-		common.IS_KEYWORD,
-		common.RIGHT_ARROW_TOKEN,
-		common.RIGHT_DOUBLE_ARROW_TOKEN,
-		common.SYNC_SEND_TOKEN,
-		common.ANNOT_CHAINING_TOKEN,
-		common.OPTIONAL_CHAINING_TOKEN,
-		common.COLON_TOKEN,
-		common.DOT_LT_TOKEN,
-		common.SLASH_LT_TOKEN,
-		common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
-		common.SLASH_ASTERISK_TOKEN,
-		common.NOT_IS_KEYWORD:
+	case st.OPEN_PAREN_TOKEN:
+		return ((precedingNodeKind == st.QUALIFIED_NAME_REFERENCE) || (precedingNodeKind == st.SIMPLE_NAME_REFERENCE))
+	case st.DOT_TOKEN,
+		st.OPEN_BRACKET_TOKEN,
+		st.IS_KEYWORD,
+		st.RIGHT_ARROW_TOKEN,
+		st.RIGHT_DOUBLE_ARROW_TOKEN,
+		st.SYNC_SEND_TOKEN,
+		st.ANNOT_CHAINING_TOKEN,
+		st.OPTIONAL_CHAINING_TOKEN,
+		st.COLON_TOKEN,
+		st.DOT_LT_TOKEN,
+		st.SLASH_LT_TOKEN,
+		st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
+		st.SLASH_ASTERISK_TOKEN,
+		st.NOT_IS_KEYWORD:
 		return true
-	case common.QUESTION_MARK_TOKEN:
-		return ((b.getNextNextToken().Kind() != common.EQUAL_TOKEN) && (b.peekN(3).Kind() != common.EQUAL_TOKEN))
+	case st.QUESTION_MARK_TOKEN:
+		return ((b.getNextNextToken().Kind() != st.EQUAL_TOKEN) && (b.peekN(3).Kind() != st.EQUAL_TOKEN))
 	default:
 		return b.isBinaryOperator(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) parseMemberAccessExpr(lhsExpr tree.STNode, isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseMemberAccessExpr(lhsExpr st.STNode, isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR)
 	openBracket := b.parseOpenBracket()
 	keyExpr := b.parseMemberAccessKeyExprs(isRhsExpr)
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
 	if isRhsExpr {
-		listKeyExprNode, ok := keyExpr.(*tree.STNodeList)
+		listKeyExprNode, ok := keyExpr.(*st.STNodeList)
 		if !ok {
 			panic("expected STNodeList")
 		}
 		if listKeyExprNode.IsEmpty() {
-			missingVarRef := tree.CreateSimpleNameReferenceNode(tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil))
-			keyExpr = tree.CreateNodeList(missingVarRef)
-			closeBracket = tree.AddDiagnostic(closeBracket,
+			missingVarRef := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
+			keyExpr = st.CreateNodeList(missingVarRef)
+			closeBracket = st.AddDiagnostic(closeBracket,
 				&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR)
 		}
 	}
-	return tree.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
+	return st.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
 }
 
-func (b *BallerinaParser) parseMemberAccessKeyExprs(isRhsExpr bool) tree.STNode {
-	var exprList []tree.STNode
-	var keyExpr tree.STNode
-	var keyExprEnd tree.STNode
+func (b *BallerinaParser) parseMemberAccessKeyExprs(isRhsExpr bool) st.STNode {
+	var exprList []st.STNode
+	var keyExpr st.STNode
+	var keyExprEnd st.STNode
 	for !b.isEndOfTypeList(b.peek().Kind()) {
 		keyExpr = b.parseKeyExpr(isRhsExpr)
 		exprList = append(exprList, keyExpr)
@@ -4913,21 +4913,21 @@ func (b *BallerinaParser) parseMemberAccessKeyExprs(isRhsExpr bool) tree.STNode 
 		}
 		exprList = append(exprList, keyExprEnd)
 	}
-	return tree.CreateNodeList(exprList...)
+	return st.CreateNodeList(exprList...)
 }
 
-func (b *BallerinaParser) parseKeyExpr(isRhsExpr bool) tree.STNode {
-	if (!isRhsExpr) && (b.peek().Kind() == common.ASTERISK_TOKEN) {
-		return tree.CreateBasicLiteralNode(common.ASTERISK_LITERAL, b.consume())
+func (b *BallerinaParser) parseKeyExpr(isRhsExpr bool) st.STNode {
+	if (!isRhsExpr) && (b.peek().Kind() == st.ASTERISK_TOKEN) {
+		return st.CreateBasicLiteralNode(st.ASTERISK_LITERAL, b.consume())
 	}
 	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, isRhsExpr, false)
 }
 
-func (b *BallerinaParser) parseMemberAccessKeyExprEnd() tree.STNode {
+func (b *BallerinaParser) parseMemberAccessKeyExprEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACKET_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR_END)
@@ -4935,9 +4935,9 @@ func (b *BallerinaParser) parseMemberAccessKeyExprEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCloseBracket() tree.STNode {
+func (b *BallerinaParser) parseCloseBracket() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CLOSE_BRACKET_TOKEN {
+	if token.Kind() == st.CLOSE_BRACKET_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET)
@@ -4945,47 +4945,47 @@ func (b *BallerinaParser) parseCloseBracket() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldAccessOrMethodCall(lhsExpr tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseFieldAccessOrMethodCall(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	dotToken := b.parseDotToken()
 	if b.isSpecialMethodName(b.peek()) {
 		methodName := b.getKeywordAsSimpleNameRef()
 		openParen := b.parseArgListOpenParenthesis()
 		args := b.parseArgsList()
 		closeParen := b.parseArgListCloseParenthesis()
-		return tree.CreateMethodCallExpressionNode(lhsExpr, dotToken, methodName, openParen, args,
+		return st.CreateMethodCallExpressionNode(lhsExpr, dotToken, methodName, openParen, args,
 			closeParen)
 	}
 	fieldOrMethodName := b.parseFieldAccessIdentifier(isInConditionalExpr)
-	if fieldOrMethodName.Kind() == common.QUALIFIED_NAME_REFERENCE {
-		return tree.CreateFieldAccessExpressionNode(lhsExpr, dotToken, fieldOrMethodName)
+	if fieldOrMethodName.Kind() == st.QUALIFIED_NAME_REFERENCE {
+		return st.CreateFieldAccessExpressionNode(lhsExpr, dotToken, fieldOrMethodName)
 	}
 	nextToken := b.peek()
-	if nextToken.Kind() == common.OPEN_PAREN_TOKEN {
+	if nextToken.Kind() == st.OPEN_PAREN_TOKEN {
 		openParen := b.parseArgListOpenParenthesis()
 		args := b.parseArgsList()
 		closeParen := b.parseArgListCloseParenthesis()
-		return tree.CreateMethodCallExpressionNode(lhsExpr, dotToken, fieldOrMethodName, openParen, args,
+		return st.CreateMethodCallExpressionNode(lhsExpr, dotToken, fieldOrMethodName, openParen, args,
 			closeParen)
 	}
-	return tree.CreateFieldAccessExpressionNode(lhsExpr, dotToken, fieldOrMethodName)
+	return st.CreateFieldAccessExpressionNode(lhsExpr, dotToken, fieldOrMethodName)
 }
 
-func (b *BallerinaParser) getKeywordAsSimpleNameRef() tree.STNode {
+func (b *BallerinaParser) getKeywordAsSimpleNameRef() st.STNode {
 	mapKeyword := b.consume()
-	var methodName tree.STNode
-	methodName = tree.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(), mapKeyword.LeadingMinutiae(),
+	var methodName st.STNode
+	methodName = st.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(), mapKeyword.LeadingMinutiae(),
 		mapKeyword.TrailingMinutiae(), mapKeyword.Diagnostics())
-	methodName = tree.CreateSimpleNameReferenceNode(methodName)
+	methodName = st.CreateSimpleNameReferenceNode(methodName)
 	return methodName
 }
 
-func (b *BallerinaParser) parseBracedExpression(isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseBracedExpression(isRhsExpr bool, allowActions bool) st.STNode {
 	openParen := b.parseOpenParenthesis()
-	if b.peek().Kind() == common.CLOSE_PAREN_TOKEN {
-		return tree.CreateNilLiteralNode(openParen, b.consume())
+	if b.peek().Kind() == st.CLOSE_PAREN_TOKEN {
+		return st.CreateNilLiteralNode(openParen, b.consume())
 	}
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACED_EXPR_OR_ANON_FUNC_PARAMS)
-	var expr tree.STNode
+	var expr st.STNode
 	if allowActions {
 		expr = b.parseExpressionWithPrecedence(DEFAULT_OP_PRECEDENCE, isRhsExpr, true)
 	} else {
@@ -4994,13 +4994,13 @@ func (b *BallerinaParser) parseBracedExpression(isRhsExpr bool, allowActions boo
 	return b.parseBracedExprOrAnonFuncParamRhs(openParen, expr, isRhsExpr)
 }
 
-func (b *BallerinaParser) parseBracedExprOrAnonFuncParamRhs(openParen tree.STNode, expr tree.STNode, isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseBracedExprOrAnonFuncParamRhs(openParen st.STNode, expr st.STNode, isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
-	if expr.Kind() == common.SIMPLE_NAME_REFERENCE {
+	if expr.Kind() == st.SIMPLE_NAME_REFERENCE {
 		switch nextToken.Kind() {
-		case common.CLOSE_PAREN_TOKEN:
+		case st.CLOSE_PAREN_TOKEN:
 			break
-		case common.COMMA_TOKEN:
+		case st.COMMA_TOKEN:
 			return b.parseImplicitAnonFuncWithOpenParenAndFirstParam(openParen, expr, isRhsExpr)
 		default:
 			b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_BRACED_EXPR_OR_ANON_FUNC_PARAM_RHS)
@@ -5010,155 +5010,155 @@ func (b *BallerinaParser) parseBracedExprOrAnonFuncParamRhs(openParen tree.STNod
 	closeParen := b.parseCloseParenthesis()
 	b.endContext()
 	if b.isAction(expr) {
-		return tree.CreateBracedExpressionNode(common.BRACED_ACTION, openParen, expr, closeParen)
+		return st.CreateBracedExpressionNode(st.BRACED_ACTION, openParen, expr, closeParen)
 	}
-	return tree.CreateBracedExpressionNode(common.BRACED_EXPRESSION, openParen, expr, closeParen)
+	return st.CreateBracedExpressionNode(st.BRACED_EXPRESSION, openParen, expr, closeParen)
 }
 
-func (b *BallerinaParser) isAction(node tree.STNode) bool {
+func (b *BallerinaParser) isAction(node st.STNode) bool {
 	switch node.Kind() {
-	case common.REMOTE_METHOD_CALL_ACTION,
-		common.BRACED_ACTION,
-		common.CHECK_ACTION,
-		common.START_ACTION,
-		common.TRAP_ACTION,
-		common.FLUSH_ACTION,
-		common.ASYNC_SEND_ACTION,
-		common.SYNC_SEND_ACTION,
-		common.RECEIVE_ACTION,
-		common.WAIT_ACTION,
-		common.QUERY_ACTION,
-		common.COMMIT_ACTION,
-		common.CLIENT_RESOURCE_ACCESS_ACTION:
+	case st.REMOTE_METHOD_CALL_ACTION,
+		st.BRACED_ACTION,
+		st.CHECK_ACTION,
+		st.START_ACTION,
+		st.TRAP_ACTION,
+		st.FLUSH_ACTION,
+		st.ASYNC_SEND_ACTION,
+		st.SYNC_SEND_ACTION,
+		st.RECEIVE_ACTION,
+		st.WAIT_ACTION,
+		st.QUERY_ACTION,
+		st.COMMIT_ACTION,
+		st.CLIENT_RESOURCE_ACCESS_ACTION:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isEndOfActionOrExpression(nextToken tree.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
+func (b *BallerinaParser) isEndOfActionOrExpression(nextToken st.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
 	tokenKind := nextToken.Kind()
 	if !isRhsExpr {
 		if b.isCompoundAssignment(tokenKind) {
 			return true
 		}
-		if isInMatchGuard && (tokenKind == common.RIGHT_DOUBLE_ARROW_TOKEN) {
+		if isInMatchGuard && (tokenKind == st.RIGHT_DOUBLE_ARROW_TOKEN) {
 			return true
 		}
 	}
 	switch tokenKind {
-	case common.EOF_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.CLOSE_BRACKET_TOKEN,
-		common.SEMICOLON_TOKEN,
-		common.COMMA_TOKEN,
-		common.PUBLIC_KEYWORD,
-		common.CONST_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.RESOURCE_KEYWORD,
-		common.EQUAL_TOKEN,
-		common.DOCUMENTATION_STRING,
-		common.AT_TOKEN,
-		common.AS_KEYWORD,
-		common.IN_KEYWORD,
-		common.FROM_KEYWORD,
-		common.WHERE_KEYWORD,
-		common.LET_KEYWORD,
-		common.SELECT_KEYWORD,
-		common.DO_KEYWORD,
-		common.COLON_TOKEN,
-		common.ON_KEYWORD,
-		common.CONFLICT_KEYWORD,
-		common.LIMIT_KEYWORD,
-		common.JOIN_KEYWORD,
-		common.OUTER_KEYWORD,
-		common.ORDER_KEYWORD,
-		common.BY_KEYWORD,
-		common.ASCENDING_KEYWORD,
-		common.DESCENDING_KEYWORD,
-		common.EQUALS_KEYWORD,
-		common.TYPE_KEYWORD:
+	case st.EOF_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.CLOSE_BRACKET_TOKEN,
+		st.SEMICOLON_TOKEN,
+		st.COMMA_TOKEN,
+		st.PUBLIC_KEYWORD,
+		st.CONST_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.RESOURCE_KEYWORD,
+		st.EQUAL_TOKEN,
+		st.DOCUMENTATION_STRING,
+		st.AT_TOKEN,
+		st.AS_KEYWORD,
+		st.IN_KEYWORD,
+		st.FROM_KEYWORD,
+		st.WHERE_KEYWORD,
+		st.LET_KEYWORD,
+		st.SELECT_KEYWORD,
+		st.DO_KEYWORD,
+		st.COLON_TOKEN,
+		st.ON_KEYWORD,
+		st.CONFLICT_KEYWORD,
+		st.LIMIT_KEYWORD,
+		st.JOIN_KEYWORD,
+		st.OUTER_KEYWORD,
+		st.ORDER_KEYWORD,
+		st.BY_KEYWORD,
+		st.ASCENDING_KEYWORD,
+		st.DESCENDING_KEYWORD,
+		st.EQUALS_KEYWORD,
+		st.TYPE_KEYWORD:
 		return true
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return isInMatchGuard
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return isGroupOrCollectKeyword(nextToken)
 	default:
 		return isSimpleType(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) parseBasicLiteral() tree.STNode {
+func (b *BallerinaParser) parseBasicLiteral() st.STNode {
 	literalToken := b.consume()
 	return b.parseBasicLiteralInner(literalToken)
 }
 
-func (b *BallerinaParser) parseBasicLiteralInner(literalToken tree.STNode) tree.STNode {
-	var nodeKind common.SyntaxKind
+func (b *BallerinaParser) parseBasicLiteralInner(literalToken st.STNode) st.STNode {
+	var nodeKind st.SyntaxKind
 	switch literalToken.Kind() {
-	case common.NULL_KEYWORD:
-		nodeKind = common.NULL_LITERAL
-	case common.TRUE_KEYWORD, common.FALSE_KEYWORD:
-		nodeKind = common.BOOLEAN_LITERAL
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
-		nodeKind = common.NUMERIC_LITERAL
-	case common.STRING_LITERAL_TOKEN:
-		nodeKind = common.STRING_LITERAL
-	case common.ASTERISK_TOKEN:
-		nodeKind = common.ASTERISK_LITERAL
+	case st.NULL_KEYWORD:
+		nodeKind = st.NULL_LITERAL
+	case st.TRUE_KEYWORD, st.FALSE_KEYWORD:
+		nodeKind = st.BOOLEAN_LITERAL
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
+		nodeKind = st.NUMERIC_LITERAL
+	case st.STRING_LITERAL_TOKEN:
+		nodeKind = st.STRING_LITERAL
+	case st.ASTERISK_TOKEN:
+		nodeKind = st.ASTERISK_LITERAL
 	default:
 		nodeKind = literalToken.Kind()
 	}
-	return tree.CreateBasicLiteralNode(nodeKind, literalToken)
+	return st.CreateBasicLiteralNode(nodeKind, literalToken)
 }
 
-func (b *BallerinaParser) parseFuncCallOrNaturalExpr(identifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseFuncCallOrNaturalExpr(identifier st.STNode) st.STNode {
 	openParen := b.parseArgListOpenParenthesis()
 	args := b.parseArgsList()
 	closeParen := b.parseArgListCloseParenthesis()
-	if (b.peek().Kind() == common.OPEN_BRACE_TOKEN) && b.isNaturalKeyword(identifier) {
-		nameRef, ok := identifier.(*tree.STSimpleNameReferenceNode)
+	if (b.peek().Kind() == st.OPEN_BRACE_TOKEN) && b.isNaturalKeyword(identifier) {
+		nameRef, ok := identifier.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("expected STSimpleNameReferenceNode")
 		}
 		return b.parseNaturalExpressionInner(*nameRef, openParen, args, closeParen)
 	}
-	return tree.CreateFunctionCallExpressionNode(identifier, openParen, args, closeParen)
+	return st.CreateFunctionCallExpressionNode(identifier, openParen, args, closeParen)
 }
 
-func (b *BallerinaParser) parseNaturalExpressionInner(nameRef tree.STSimpleNameReferenceNode, openParen tree.STNode, args tree.STNode, closeParen tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseNaturalExpressionInner(nameRef st.STSimpleNameReferenceNode, openParen st.STNode, args st.STNode, closeParen st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION)
-	optionalConstKeyword := tree.CreateEmptyNode()
-	naturalKeyword := b.getNaturalKeyword(tree.ToToken(nameRef.Name))
-	parenthesizedArgList := tree.CreateParenthesizedArgList(openParen, args, closeParen)
+	optionalConstKeyword := st.CreateEmptyNode()
+	naturalKeyword := b.getNaturalKeyword(st.ToToken(nameRef.Name))
+	parenthesizedArgList := st.CreateParenthesizedArgList(openParen, args, closeParen)
 	return b.parseNaturalExprBody(optionalConstKeyword, naturalKeyword, parenthesizedArgList)
 }
 
-func (b *BallerinaParser) parseErrorBindingPatternOrErrorConstructor() tree.STNode {
+func (b *BallerinaParser) parseErrorBindingPatternOrErrorConstructor() st.STNode {
 	return b.parseErrorConstructorExprAmbiguous(true)
 }
 
-func (b *BallerinaParser) parseErrorConstructorExpr(errorKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorConstructorExpr(errorKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR)
 	return b.parseErrorConstructorExprInner(errorKeyword, false)
 }
 
-func (b *BallerinaParser) parseErrorConstructorExprAmbiguous(isAmbiguous bool) tree.STNode {
+func (b *BallerinaParser) parseErrorConstructorExprAmbiguous(isAmbiguous bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR)
 	errorKeyword := b.parseErrorKeyword()
 	return b.parseErrorConstructorExprInner(errorKeyword, isAmbiguous)
 }
 
-func (b *BallerinaParser) parseErrorConstructorExprInner(errorKeyword tree.STNode, isAmbiguous bool) tree.STNode {
+func (b *BallerinaParser) parseErrorConstructorExprInner(errorKeyword st.STNode, isAmbiguous bool) st.STNode {
 	typeReference := b.parseErrorTypeReference()
 	openParen := b.parseArgListOpenParenthesis()
 	functionArgs := b.parseArgsList()
-	var errorArgs tree.STNode
+	var errorArgs st.STNode
 	if isAmbiguous {
 		errorArgs = functionArgs
 	} else {
@@ -5168,15 +5168,15 @@ func (b *BallerinaParser) parseErrorConstructorExprInner(errorKeyword tree.STNod
 	b.endContext()
 	openParen = b.cloneWithDiagnosticIfListEmpty(errorArgs, openParen,
 		&common.ERROR_MISSING_ARG_WITHIN_PARENTHESIS)
-	return tree.CreateErrorConstructorExpressionNode(errorKeyword, typeReference, openParen, errorArgs,
+	return st.CreateErrorConstructorExpressionNode(errorKeyword, typeReference, openParen, errorArgs,
 		closeParen)
 }
 
-func (b *BallerinaParser) parseErrorTypeReference() tree.STNode {
+func (b *BallerinaParser) parseErrorTypeReference() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
-		return tree.CreateEmptyNode()
+	case st.OPEN_PAREN_TOKEN:
+		return st.CreateEmptyNode()
 	default:
 		if b.isPredeclaredIdentifier(nextToken.Kind()) {
 			return b.parseTypeReference()
@@ -5186,41 +5186,41 @@ func (b *BallerinaParser) parseErrorTypeReference() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) getErrorArgList(functionArgs tree.STNode) tree.STNode {
-	argList, ok := functionArgs.(*tree.STNodeList)
+func (b *BallerinaParser) getErrorArgList(functionArgs st.STNode) st.STNode {
+	argList, ok := functionArgs.(*st.STNodeList)
 	if !ok {
-		panic("expected *tree.STNodeList")
+		panic("expected *st.STNodeList")
 	}
 	if argList.IsEmpty() {
 		return argList
 	}
-	var errorArgList []tree.STNode
+	var errorArgList []st.STNode
 	arg := argList.Get(0)
 	switch arg.Kind() {
-	case common.POSITIONAL_ARG:
+	case st.POSITIONAL_ARG:
 		errorArgList = append(errorArgList, arg)
-	case common.NAMED_ARG:
-		arg = tree.AddDiagnostic(arg,
+	case st.NAMED_ARG:
+		arg = st.AddDiagnostic(arg,
 			&common.ERROR_MISSING_ERROR_MESSAGE_IN_ERROR_CONSTRUCTOR)
 		errorArgList = append(errorArgList, arg)
 	default:
-		arg = tree.AddDiagnostic(arg,
+		arg = st.AddDiagnostic(arg,
 			&common.ERROR_MISSING_ERROR_MESSAGE_IN_ERROR_CONSTRUCTOR)
-		arg = tree.AddDiagnostic(arg, &common.ERROR_REST_ARG_IN_ERROR_CONSTRUCTOR)
+		arg = st.AddDiagnostic(arg, &common.ERROR_REST_ARG_IN_ERROR_CONSTRUCTOR)
 		errorArgList = append(errorArgList, arg)
 	}
 	diagnosticErrorCode := &common.ERROR_REST_ARG_IN_ERROR_CONSTRUCTOR
 	hasPositionalArg := false
-	var leadingComma tree.STNode
+	var leadingComma st.STNode
 	i := 1
 	for ; i < argList.Size(); i = i + 2 {
 		leadingComma = argList.Get(i)
 		arg = argList.Get(i + 1)
-		if arg.Kind() == common.NAMED_ARG {
+		if arg.Kind() == st.NAMED_ARG {
 			errorArgList = append(errorArgList, leadingComma, arg)
 			continue
 		}
-		if arg.Kind() == common.POSITIONAL_ARG {
+		if arg.Kind() == st.POSITIONAL_ARG {
 			if !hasPositionalArg {
 				errorArgList = append(errorArgList, leadingComma, arg)
 				hasPositionalArg = true
@@ -5231,14 +5231,14 @@ func (b *BallerinaParser) getErrorArgList(functionArgs tree.STNode) tree.STNode 
 		b.updateLastNodeInListWithInvalidNode(errorArgList, leadingComma, nil)
 		b.updateLastNodeInListWithInvalidNode(errorArgList, arg, diagnosticErrorCode)
 	}
-	return tree.CreateNodeList(errorArgList...)
+	return st.CreateNodeList(errorArgList...)
 }
 
-func (b *BallerinaParser) parseArgsList() tree.STNode {
+func (b *BallerinaParser) parseArgsList() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ARG_LIST)
 	token := b.peek()
 	if b.isEndOfParametersList(token.Kind()) {
-		args := tree.CreateEmptyNodeList()
+		args := st.CreateEmptyNodeList()
 		b.endContext()
 		return args
 	}
@@ -5248,8 +5248,8 @@ func (b *BallerinaParser) parseArgsList() tree.STNode {
 	return argsList
 }
 
-func (b *BallerinaParser) parseArgList(firstArg tree.STNode) tree.STNode {
-	var argsList []tree.STNode
+func (b *BallerinaParser) parseArgList(firstArg st.STNode) st.STNode {
+	var argsList []st.STNode
 	argsList = append(argsList, firstArg)
 	lastValidArgKind := firstArg.Kind()
 	nextToken := b.peek()
@@ -5264,16 +5264,16 @@ func (b *BallerinaParser) parseArgList(firstArg tree.STNode) tree.STNode {
 			argsList = append(argsList, argEnd, curArg)
 			lastValidArgKind = curArg.Kind()
 		} else if errorCode == &common.ERROR_NAMED_ARG_FOLLOWED_BY_POSITIONAL_ARG {
-			posArg, ok := curArg.(*tree.STPositionalArgumentNode)
+			posArg, ok := curArg.(*st.STPositionalArgumentNode)
 			if !ok {
 				panic("parseArgList: expected STPositionalArgumentNode")
 			}
-			if posArg.Expression.Kind() == common.SIMPLE_NAME_REFERENCE {
-				missingEqual := tree.CreateMissingToken(common.EQUAL_TOKEN, nil)
-				missingIdentifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-				nameRef := tree.CreateSimpleNameReferenceNode(missingIdentifier)
+			if posArg.Expression.Kind() == st.SIMPLE_NAME_REFERENCE {
+				missingEqual := st.CreateMissingToken(st.EQUAL_TOKEN, nil)
+				missingIdentifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+				nameRef := st.CreateSimpleNameReferenceNode(missingIdentifier)
 				expr := posArg.Expression
-				simpleNameExpr, ok := expr.(*tree.STSimpleNameReferenceNode)
+				simpleNameExpr, ok := expr.(*st.STSimpleNameReferenceNode)
 				if !ok {
 					panic("parseArgList: expected STSimpleNameReferenceNode")
 				}
@@ -5281,8 +5281,8 @@ func (b *BallerinaParser) parseArgList(firstArg tree.STNode) tree.STNode {
 					errorCode = &common.ERROR_MISSING_NAMED_ARG
 					expr = nameRef
 				}
-				curArg = tree.CreateNamedArgumentNode(expr, missingEqual, nameRef)
-				curArg = tree.AddDiagnostic(curArg, errorCode)
+				curArg = st.CreateNamedArgumentNode(expr, missingEqual, nameRef)
+				curArg = st.AddDiagnostic(curArg, errorCode)
 				argsList = append(argsList, argEnd, curArg)
 			} else {
 				argsList = b.updateLastNodeInListWithInvalidNode(argsList, argEnd, nil)
@@ -5294,33 +5294,33 @@ func (b *BallerinaParser) parseArgList(firstArg tree.STNode) tree.STNode {
 		}
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(argsList...)
+	return st.CreateNodeList(argsList...)
 }
 
-func (b *BallerinaParser) validateArgumentOrder(prevArgKind common.SyntaxKind, curArgKind common.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *BallerinaParser) validateArgumentOrder(prevArgKind st.SyntaxKind, curArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	var errorCode *common.DiagnosticErrorCode
 	switch prevArgKind {
-	case common.POSITIONAL_ARG:
+	case st.POSITIONAL_ARG:
 		// Positional args can be followed by any type of arg - no error
 		errorCode = nil
-	case common.NAMED_ARG:
+	case st.NAMED_ARG:
 		// Named args cannot be followed by positional args
-		if curArgKind == common.POSITIONAL_ARG {
+		if curArgKind == st.POSITIONAL_ARG {
 			errorCode = &common.ERROR_NAMED_ARG_FOLLOWED_BY_POSITIONAL_ARG
 		}
-	case common.REST_ARG:
+	case st.REST_ARG:
 		errorCode = &common.ERROR_REST_ARG_FOLLOWED_BY_ANOTHER_ARG
 	default:
-		panic("Invalid common.SyntaxKind in an argument")
+		panic("Invalid st.SyntaxKind in an argument")
 	}
 	return errorCode
 }
 
-func (b *BallerinaParser) parseArgEnd() tree.STNode {
+func (b *BallerinaParser) parseArgEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ARG_END)
@@ -5328,20 +5328,20 @@ func (b *BallerinaParser) parseArgEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseArgument() tree.STNode {
-	var arg tree.STNode
+func (b *BallerinaParser) parseArgument() st.STNode {
+	var arg st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		ellipsis := b.consume()
 		expr := b.parseExpression()
-		arg = tree.CreateRestArgumentNode(ellipsis, expr)
-	case common.IDENTIFIER_TOKEN:
+		arg = st.CreateRestArgumentNode(ellipsis, expr)
+	case st.IDENTIFIER_TOKEN:
 		arg = b.parseNamedOrPositionalArg()
 	default:
 		if b.isValidExprStart(nextToken.Kind()) {
 			expr := b.parseExpression()
-			arg = tree.CreatePositionalArgumentNode(expr)
+			arg = st.CreatePositionalArgumentNode(expr)
 			break
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ARG_START)
@@ -5350,35 +5350,35 @@ func (b *BallerinaParser) parseArgument() tree.STNode {
 	return arg
 }
 
-func (b *BallerinaParser) parseNamedOrPositionalArg() tree.STNode {
+func (b *BallerinaParser) parseNamedOrPositionalArg() st.STNode {
 	argNameOrExpr := b.parseTerminalExpression(true, false, false)
 	secondToken := b.peek()
 	switch secondToken.Kind() {
-	case common.EQUAL_TOKEN:
-		if argNameOrExpr.Kind() != common.SIMPLE_NAME_REFERENCE {
+	case st.EQUAL_TOKEN:
+		if argNameOrExpr.Kind() != st.SIMPLE_NAME_REFERENCE {
 			break
 		}
 		equal := b.parseAssignOp()
 		valExpr := b.parseExpression()
-		return tree.CreateNamedArgumentNode(argNameOrExpr, equal, valExpr)
-	case common.COMMA_TOKEN, common.CLOSE_PAREN_TOKEN:
-		return tree.CreatePositionalArgumentNode(argNameOrExpr)
+		return st.CreateNamedArgumentNode(argNameOrExpr, equal, valExpr)
+	case st.COMMA_TOKEN, st.CLOSE_PAREN_TOKEN:
+		return st.CreatePositionalArgumentNode(argNameOrExpr)
 	}
 	argNameOrExpr = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, argNameOrExpr, true, false)
-	return tree.CreatePositionalArgumentNode(argNameOrExpr)
+	return st.CreatePositionalArgumentNode(argNameOrExpr)
 }
 
-func (b *BallerinaParser) parseObjectTypeDescriptor(objectKeyword tree.STNode, objectTypeQualifiers tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseObjectTypeDescriptor(objectKeyword st.STNode, objectTypeQualifiers st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR)
 	openBrace := b.parseOpenBrace()
 	objectMemberDescriptors := b.parseObjectMembers(common.PARSER_RULE_CONTEXT_OBJECT_TYPE_MEMBER)
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateObjectTypeDescriptorNode(objectTypeQualifiers, objectKeyword, openBrace,
+	return st.CreateObjectTypeDescriptorNode(objectTypeQualifiers, objectKeyword, openBrace,
 		objectMemberDescriptors, closeBrace)
 }
 
-func (b *BallerinaParser) parseObjectConstructorExpression(annots tree.STNode, qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseObjectConstructorExpression(annots st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR)
 	objectTypeQualifier := b.createObjectTypeQualNodeList(qualifiers)
 	objectKeyword := b.parseObjectKeyword()
@@ -5387,15 +5387,15 @@ func (b *BallerinaParser) parseObjectConstructorExpression(annots tree.STNode, q
 	objectMembers := b.parseObjectMembers(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER)
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateObjectConstructorExpressionNode(annots,
+	return st.CreateObjectConstructorExpressionNode(annots,
 		objectTypeQualifier, objectKeyword, typeReference, openBrace, objectMembers, closeBrace)
 }
 
-func (b *BallerinaParser) parseObjectConstructorTypeReference() tree.STNode {
+func (b *BallerinaParser) parseObjectConstructorTypeReference() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACE_TOKEN:
-		return tree.CreateEmptyNode()
+	case st.OPEN_BRACE_TOKEN:
+		return st.CreateEmptyNode()
 	default:
 		if b.isPredeclaredIdentifier(nextToken.Kind()) {
 			return b.parseTypeReference()
@@ -5405,13 +5405,13 @@ func (b *BallerinaParser) parseObjectConstructorTypeReference() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isPredeclaredIdentifier(tokenKind common.SyntaxKind) bool {
-	return ((tokenKind == common.IDENTIFIER_TOKEN) || b.isQualifiedIdentifierPredeclaredPrefix(tokenKind))
+func (b *BallerinaParser) isPredeclaredIdentifier(tokenKind st.SyntaxKind) bool {
+	return ((tokenKind == st.IDENTIFIER_TOKEN) || b.isQualifiedIdentifierPredeclaredPrefix(tokenKind))
 }
 
-func (b *BallerinaParser) parseObjectKeyword() tree.STNode {
+func (b *BallerinaParser) parseObjectKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.OBJECT_KEYWORD {
+	if token.Kind() == st.OBJECT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD)
@@ -5419,8 +5419,8 @@ func (b *BallerinaParser) parseObjectKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseObjectMembers(context common.ParserRuleContext) tree.STNode {
-	var objectMembers []tree.STNode
+func (b *BallerinaParser) parseObjectMembers(context common.ParserRuleContext) st.STNode {
+	var objectMembers []st.STNode
 	for !b.isEndOfObjectTypeNode() {
 		b.startContext(context)
 		member := b.parseObjectMember(context)
@@ -5428,41 +5428,41 @@ func (b *BallerinaParser) parseObjectMembers(context common.ParserRuleContext) t
 		if member == nil {
 			break
 		}
-		if (context == common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER) && (member.Kind() == common.TYPE_REFERENCE) {
+		if (context == common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER) && (member.Kind() == st.TYPE_REFERENCE) {
 			b.addInvalidNodeToNextToken(member, &common.ERROR_TYPE_INCLUSION_IN_OBJECT_CONSTRUCTOR)
 		} else {
 			objectMembers = append(objectMembers, member)
 		}
 	}
-	return tree.CreateNodeList(objectMembers...)
+	return st.CreateNodeList(objectMembers...)
 }
 
-func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) tree.STNode {
-	var metadata tree.STNode
+func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) st.STNode {
+	var metadata st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.EOF_TOKEN,
-		common.CLOSE_BRACE_TOKEN:
+	case st.EOF_TOKEN,
+		st.CLOSE_BRACE_TOKEN:
 		return nil
-	case common.ASTERISK_TOKEN,
-		common.PUBLIC_KEYWORD,
-		common.PRIVATE_KEYWORD,
-		common.FINAL_KEYWORD,
-		common.REMOTE_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD,
-		common.ISOLATED_KEYWORD,
-		common.RESOURCE_KEYWORD:
-		metadata = tree.CreateEmptyNode()
-	case common.DOCUMENTATION_STRING,
-		common.AT_TOKEN:
+	case st.ASTERISK_TOKEN,
+		st.PUBLIC_KEYWORD,
+		st.PRIVATE_KEYWORD,
+		st.FINAL_KEYWORD,
+		st.REMOTE_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD,
+		st.ISOLATED_KEYWORD,
+		st.RESOURCE_KEYWORD:
+		metadata = st.CreateEmptyNode()
+	case st.DOCUMENTATION_STRING,
+		st.AT_TOKEN:
 		metadata = b.parseMetaData()
-	case common.RETURN_KEYWORD:
+	case st.RETURN_KEYWORD:
 		b.addInvalidNodeToNextToken(b.consume(), &common.ERROR_INVALID_TOKEN)
 		return b.parseObjectMember(context)
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
-			metadata = tree.CreateEmptyNode()
+			metadata = st.CreateEmptyNode()
 			break
 		}
 		var recoveryCtx common.ParserRuleContext
@@ -5473,7 +5473,7 @@ func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) tr
 		}
 		solution := b.recoverWithBlockContext(b.peek(), recoveryCtx)
 		if solution.Action == ACTION_KEEP {
-			metadata = tree.CreateEmptyNode()
+			metadata = st.CreateEmptyNode()
 			break
 		}
 		return b.parseObjectMember(context)
@@ -5481,7 +5481,7 @@ func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) tr
 	return b.parseObjectMemberWithoutMeta(metadata, context)
 }
 
-func (b *BallerinaParser) parseObjectMemberWithoutMeta(metadata tree.STNode, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseObjectMemberWithoutMeta(metadata st.STNode, context common.ParserRuleContext) st.STNode {
 	isObjectTypeDesc := (context == common.PARSER_RULE_CONTEXT_OBJECT_TYPE_MEMBER)
 	var recoveryCtx common.ParserRuleContext
 	if context == common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER {
@@ -5493,40 +5493,40 @@ func (b *BallerinaParser) parseObjectMemberWithoutMeta(metadata tree.STNode, con
 	return res
 }
 
-func (b *BallerinaParser) parseObjectMemberWithoutMetaInner(metadata tree.STNode, qualifiers []tree.STNode, recoveryCtx common.ParserRuleContext, isObjectTypeDesc bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseObjectMemberWithoutMetaInner(metadata st.STNode, qualifiers []st.STNode, recoveryCtx common.ParserRuleContext, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	qualifiers = b.parseObjectMemberQualifiers(qualifiers)
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.EOF_TOKEN,
-		common.CLOSE_BRACE_TOKEN:
+	case st.EOF_TOKEN,
+		st.CLOSE_BRACE_TOKEN:
 		if (metadata != nil) || (len(qualifiers) > 0) {
 			return b.createMissingSimpleObjectFieldInner(metadata, qualifiers, isObjectTypeDesc)
 		}
 		return nil, nil
-	case common.PUBLIC_KEYWORD,
-		common.PRIVATE_KEYWORD:
+	case st.PUBLIC_KEYWORD,
+		st.PRIVATE_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-		var visibilityQualifier tree.STNode
+		var visibilityQualifier st.STNode
 		visibilityQualifier = b.consume()
-		if isObjectTypeDesc && (visibilityQualifier.Kind() == common.PRIVATE_KEYWORD) {
+		if isObjectTypeDesc && (visibilityQualifier.Kind() == st.PRIVATE_KEYWORD) {
 			b.addInvalidNodeToNextToken(visibilityQualifier,
 				&common.ERROR_PRIVATE_QUALIFIER_IN_OBJECT_MEMBER_DESCRIPTOR)
-			visibilityQualifier = tree.CreateEmptyNode()
+			visibilityQualifier = st.CreateEmptyNode()
 		}
 		return b.parseObjectMethodOrField(metadata, visibilityQualifier, isObjectTypeDesc), qualifiers
-	case common.FUNCTION_KEYWORD:
-		visibilityQualifier := tree.CreateEmptyNode()
+	case st.FUNCTION_KEYWORD:
+		visibilityQualifier := st.CreateEmptyNode()
 		return b.parseObjectMethodOrFuncTypeDesc(metadata, visibilityQualifier, qualifiers, isObjectTypeDesc), qualifiers
-	case common.ASTERISK_TOKEN:
+	case st.ASTERISK_TOKEN:
 		b.reportInvalidMetaData(metadata, "object ty inclusion")
 		b.reportInvalidQualifierList(qualifiers)
 		asterisk := b.consume()
 		ty := b.parseTypeReferenceInTypeInclusion()
 		semicolonToken := b.parseSemicolon()
-		return tree.CreateTypeReferenceNode(asterisk, ty, semicolonToken), qualifiers
-	case common.IDENTIFIER_TOKEN:
+		return st.CreateTypeReferenceNode(asterisk, ty, semicolonToken), qualifiers
+	case st.IDENTIFIER_TOKEN:
 		if b.isObjectFieldStart() || nextToken.IsMissing() {
-			return b.parseObjectField(metadata, tree.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
+			return b.parseObjectField(metadata, st.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
 		}
 		if b.isObjectMethodStart(b.getNextNextToken()) {
 			b.addInvalidTokenToNextToken(b.errorHandler.ConsumeInvalidToken())
@@ -5534,12 +5534,12 @@ func (b *BallerinaParser) parseObjectMemberWithoutMetaInner(metadata tree.STNode
 		}
 		fallthrough
 	default:
-		if b.isTypeStartingToken(nextToken.Kind()) && (nextToken.Kind() != common.IDENTIFIER_TOKEN) {
-			return b.parseObjectField(metadata, tree.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
+		if b.isTypeStartingToken(nextToken.Kind()) && (nextToken.Kind() != st.IDENTIFIER_TOKEN) {
+			return b.parseObjectField(metadata, st.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
 		}
 		solution := b.recoverWithBlockContext(b.peek(), recoveryCtx)
 		if solution.Action == ACTION_KEEP {
-			return b.parseObjectField(metadata, tree.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
+			return b.parseObjectField(metadata, st.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
 		}
 		return b.parseObjectMemberWithoutMetaInner(metadata, qualifiers, recoveryCtx, isObjectTypeDesc)
 	}
@@ -5548,43 +5548,43 @@ func (b *BallerinaParser) parseObjectMemberWithoutMetaInner(metadata tree.STNode
 func (b *BallerinaParser) isObjectFieldStart() bool {
 	nextNextToken := b.getNextNextToken()
 	switch nextNextToken.Kind() {
-	case common.ERROR_KEYWORD, // error-binding-pattern not allowed in fields
-		common.OPEN_BRACE_TOKEN:
+	case st.ERROR_KEYWORD, // error-binding-pattern not allowed in fields
+		st.OPEN_BRACE_TOKEN:
 		return false
-	case common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN:
 		return true
 	default:
 		return b.isModuleVarDeclStart(1)
 	}
 }
 
-func (b *BallerinaParser) isObjectMethodStart(token tree.STToken) bool {
+func (b *BallerinaParser) isObjectMethodStart(token st.STToken) bool {
 	switch token.Kind() {
-	case common.FUNCTION_KEYWORD,
-		common.REMOTE_KEYWORD,
-		common.RESOURCE_KEYWORD,
-		common.ISOLATED_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD:
+	case st.FUNCTION_KEYWORD,
+		st.REMOTE_KEYWORD,
+		st.RESOURCE_KEYWORD,
+		st.ISOLATED_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseObjectMethodOrField(metadata tree.STNode, visibilityQualifier tree.STNode, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseObjectMethodOrField(metadata st.STNode, visibilityQualifier st.STNode, isObjectTypeDesc bool) st.STNode {
 	result, _ := b.parseObjectMethodOrFieldInner(metadata, visibilityQualifier, nil, isObjectTypeDesc)
 	return result
 }
 
-func (b *BallerinaParser) parseObjectMethodOrFieldInner(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, isObjectTypeDesc bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseObjectMethodOrFieldInner(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	qualifiers = b.parseObjectMemberQualifiers(qualifiers)
 	nextToken := b.peekN(1)
 	nextNextToken := b.peekN(2)
 	switch nextToken.Kind() {
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		return b.parseObjectMethodOrFuncTypeDesc(metadata, visibilityQualifier, qualifiers, isObjectTypeDesc), qualifiers
-	case common.IDENTIFIER_TOKEN:
-		if nextNextToken.Kind() != common.OPEN_PAREN_TOKEN {
+	case st.IDENTIFIER_TOKEN:
+		if nextNextToken.Kind() != st.OPEN_PAREN_TOKEN {
 			return b.parseObjectField(metadata, visibilityQualifier, qualifiers, isObjectTypeDesc)
 		}
 	default:
@@ -5596,20 +5596,20 @@ func (b *BallerinaParser) parseObjectMethodOrFieldInner(metadata tree.STNode, vi
 	return b.parseObjectMethodOrFieldInner(metadata, visibilityQualifier, qualifiers, isObjectTypeDesc)
 }
 
-func (b *BallerinaParser) parseObjectField(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, isObjectTypeDesc bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseObjectField(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	objectFieldQualifiers, qualifiers := b.extractObjectFieldQualifiers(qualifiers, isObjectTypeDesc)
-	objectFieldQualNodeList := tree.CreateNodeList(objectFieldQualifiers...)
+	objectFieldQualNodeList := st.CreateNodeList(objectFieldQualifiers...)
 	ty := b.parseTypeDescriptorWithQualifier(qualifiers, common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER)
 	fieldName := b.parseVariableName()
 	return b.parseObjectFieldRhs(metadata, visibilityQualifier, objectFieldQualNodeList, ty, fieldName,
 		isObjectTypeDesc), qualifiers
 }
 
-func (b *BallerinaParser) extractObjectFieldQualifiers(qualifiers []tree.STNode, isObjectTypeDesc bool) ([]tree.STNode, []tree.STNode) {
-	var objectFieldQualifiers []tree.STNode
+func (b *BallerinaParser) extractObjectFieldQualifiers(qualifiers []st.STNode, isObjectTypeDesc bool) ([]st.STNode, []st.STNode) {
+	var objectFieldQualifiers []st.STNode
 	if len(qualifiers) != 0 && (!isObjectTypeDesc) {
 		firstQualifier := qualifiers[0]
-		if firstQualifier.Kind() == common.FINAL_KEYWORD {
+		if firstQualifier.Kind() == st.FINAL_KEYWORD {
 			objectFieldQualifiers = append(objectFieldQualifiers, qualifiers[0])
 			qualifiers = qualifiers[1:]
 		}
@@ -5617,52 +5617,52 @@ func (b *BallerinaParser) extractObjectFieldQualifiers(qualifiers []tree.STNode,
 	return objectFieldQualifiers, qualifiers
 }
 
-func (b *BallerinaParser) parseObjectFieldRhs(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers tree.STNode, ty tree.STNode, fieldName tree.STNode, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseObjectFieldRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers st.STNode, ty st.STNode, fieldName st.STNode, isObjectTypeDesc bool) st.STNode {
 	nextToken := b.peek()
-	var equalsToken tree.STNode
-	var expression tree.STNode
-	var semicolonToken tree.STNode
+	var equalsToken st.STNode
+	var expression st.STNode
+	var semicolonToken st.STNode
 	switch nextToken.Kind() {
-	case common.SEMICOLON_TOKEN:
-		equalsToken = tree.CreateEmptyNode()
-		expression = tree.CreateEmptyNode()
+	case st.SEMICOLON_TOKEN:
+		equalsToken = st.CreateEmptyNode()
+		expression = st.CreateEmptyNode()
 		semicolonToken = b.parseSemicolon()
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		equalsToken = b.parseAssignOp()
 		expression = b.parseExpression()
 		semicolonToken = b.parseSemicolon()
 		if isObjectTypeDesc {
-			fieldName = tree.CloneWithTrailingInvalidNodeMinutiae(fieldName, equalsToken,
+			fieldName = st.CloneWithTrailingInvalidNodeMinutiae(fieldName, equalsToken,
 				&common.ERROR_FIELD_INITIALIZATION_NOT_ALLOWED_IN_OBJECT_TYPE)
-			fieldName = tree.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(fieldName, expression)
-			equalsToken = tree.CreateEmptyNode()
-			expression = tree.CreateEmptyNode()
+			fieldName = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(fieldName, expression)
+			equalsToken = st.CreateEmptyNode()
+			expression = st.CreateEmptyNode()
 		}
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_OBJECT_FIELD_RHS)
 		return b.parseObjectFieldRhs(metadata, visibilityQualifier, qualifiers, ty, fieldName,
 			isObjectTypeDesc)
 	}
-	return tree.CreateObjectFieldNode(metadata, visibilityQualifier, qualifiers, ty, fieldName,
+	return st.CreateObjectFieldNode(metadata, visibilityQualifier, qualifiers, ty, fieldName,
 		equalsToken, expression, semicolonToken)
 }
 
-func (b *BallerinaParser) parseObjectMethodOrFuncTypeDesc(metadata tree.STNode, visibilityQualifier tree.STNode, qualifiers []tree.STNode, isObjectTypeDesc bool) tree.STNode {
+func (b *BallerinaParser) parseObjectMethodOrFuncTypeDesc(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) st.STNode {
 	return b.parseFuncDefOrFuncTypeDesc(metadata, visibilityQualifier, qualifiers, true, isObjectTypeDesc)
 }
 
-func (b *BallerinaParser) parseRelativeResourcePath() tree.STNode {
+func (b *BallerinaParser) parseRelativeResourcePath() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH)
-	var pathElementList []tree.STNode
+	var pathElementList []st.STNode
 	nextToken := b.peek()
-	if nextToken.Kind() == common.DOT_TOKEN {
+	if nextToken.Kind() == st.DOT_TOKEN {
 		pathElementList = append(pathElementList, b.consume())
 		b.endContext()
-		return tree.CreateNodeList(pathElementList...)
+		return st.CreateNodeList(pathElementList...)
 	}
 	pathSegment := b.parseResourcePathSegment(true)
 	pathElementList = append(pathElementList, pathSegment)
-	var leadingSlash tree.STNode
+	var leadingSlash st.STNode
 	for !b.isEndRelativeResourcePath(nextToken.Kind()) {
 		leadingSlash = b.parseRelativeResourcePathEnd()
 		if leadingSlash == nil {
@@ -5677,23 +5677,23 @@ func (b *BallerinaParser) parseRelativeResourcePath() tree.STNode {
 	return b.createResourcePathNodeList(pathElementList)
 }
 
-func (b *BallerinaParser) isEndRelativeResourcePath(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndRelativeResourcePath(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.EOF_TOKEN, common.OPEN_PAREN_TOKEN:
+	case st.EOF_TOKEN, st.OPEN_PAREN_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) createResourcePathNodeList(pathElementList []tree.STNode) tree.STNode {
+func (b *BallerinaParser) createResourcePathNodeList(pathElementList []st.STNode) st.STNode {
 	if len(pathElementList) == 0 {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
-	var validatedList []tree.STNode
+	var validatedList []st.STNode
 	firstElement := pathElementList[0]
 	validatedList = append(validatedList, firstElement)
-	hasRestPram := (firstElement.Kind() == common.RESOURCE_PATH_REST_PARAM)
+	hasRestPram := (firstElement.Kind() == st.RESOURCE_PATH_REST_PARAM)
 	i := 1
 	for ; i < len(pathElementList); i = i + 2 {
 		leadingSlash := pathElementList[i]
@@ -5704,24 +5704,24 @@ func (b *BallerinaParser) createResourcePathNodeList(pathElementList []tree.STNo
 				&common.ERROR_RESOURCE_PATH_SEGMENT_NOT_ALLOWED_AFTER_REST_PARAM)
 			continue
 		}
-		hasRestPram = (pathSegment.Kind() == common.RESOURCE_PATH_REST_PARAM)
+		hasRestPram = (pathSegment.Kind() == st.RESOURCE_PATH_REST_PARAM)
 		validatedList = append(validatedList, leadingSlash)
 		validatedList = append(validatedList, pathSegment)
 	}
-	return tree.CreateNodeList(validatedList...)
+	return st.CreateNodeList(validatedList...)
 }
 
-func (b *BallerinaParser) parseResourcePathSegment(isFirstSegment bool) tree.STNode {
+func (b *BallerinaParser) parseResourcePathSegment(isFirstSegment bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
-		if ((isFirstSegment && nextToken.IsMissing()) && b.isInvalidNodeStackEmpty()) && (b.getNextNextToken().Kind() == common.SLASH_TOKEN) {
+	case st.IDENTIFIER_TOKEN:
+		if ((isFirstSegment && nextToken.IsMissing()) && b.isInvalidNodeStackEmpty()) && (b.getNextNextToken().Kind() == st.SLASH_TOKEN) {
 			b.removeInsertedToken()
-			return tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+			return st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 				&common.ERROR_RESOURCE_PATH_CANNOT_BEGIN_WITH_SLASH)
 		}
 		return b.consume()
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseResourcePathParameter()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_RESOURCE_PATH_SEGMENT)
@@ -5729,55 +5729,55 @@ func (b *BallerinaParser) parseResourcePathSegment(isFirstSegment bool) tree.STN
 	}
 }
 
-func (b *BallerinaParser) parseResourcePathParameter() tree.STNode {
+func (b *BallerinaParser) parseResourcePathParameter() st.STNode {
 	openBracket := b.parseOpenBracket()
 	annots := b.parseOptionalAnnotations()
 	ty := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PATH_PARAM)
 	ellipsis := b.parseOptionalEllipsis()
 	paramName := b.parseOptionalPathParamName()
 	closeBracket := b.parseCloseBracket()
-	var pathPramKind common.SyntaxKind
+	var pathPramKind st.SyntaxKind
 	if ellipsis == nil {
-		pathPramKind = common.RESOURCE_PATH_SEGMENT_PARAM
+		pathPramKind = st.RESOURCE_PATH_SEGMENT_PARAM
 	} else {
-		pathPramKind = common.RESOURCE_PATH_REST_PARAM
+		pathPramKind = st.RESOURCE_PATH_REST_PARAM
 	}
-	return tree.CreateResourcePathParameterNode(pathPramKind, openBracket, annots, ty, ellipsis,
+	return st.CreateResourcePathParameterNode(pathPramKind, openBracket, annots, ty, ellipsis,
 		paramName, closeBracket)
 }
 
-func (b *BallerinaParser) parseOptionalPathParamName() tree.STNode {
+func (b *BallerinaParser) parseOptionalPathParamName() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.consume()
-	case common.CLOSE_BRACKET_TOKEN:
-		return tree.CreateEmptyNode()
+	case st.CLOSE_BRACKET_TOKEN:
+		return st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_OPTIONAL_PATH_PARAM_NAME)
 		return b.parseOptionalPathParamName()
 	}
 }
 
-func (b *BallerinaParser) parseOptionalEllipsis() tree.STNode {
+func (b *BallerinaParser) parseOptionalEllipsis() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.consume()
-	case common.IDENTIFIER_TOKEN, common.CLOSE_BRACKET_TOKEN:
-		return tree.CreateEmptyNode()
+	case st.IDENTIFIER_TOKEN, st.CLOSE_BRACKET_TOKEN:
+		return st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_PATH_PARAM_ELLIPSIS)
 		return b.parseOptionalEllipsis()
 	}
 }
 
-func (b *BallerinaParser) parseRelativeResourcePathEnd() tree.STNode {
+func (b *BallerinaParser) parseRelativeResourcePathEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN, common.EOF_TOKEN:
+	case st.OPEN_PAREN_TOKEN, st.EOF_TOKEN:
 		return nil
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		return b.consume()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH_END)
@@ -5785,19 +5785,19 @@ func (b *BallerinaParser) parseRelativeResourcePathEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseIfElseBlock() tree.STNode {
+func (b *BallerinaParser) parseIfElseBlock() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_IF_BLOCK)
 	ifKeyword := b.parseIfKeyword()
 	condition := b.parseExpression()
 	ifBody := b.parseBlockNode()
 	b.endContext()
 	elseBody := b.parseElseBlock()
-	return tree.CreateIfElseStatementNode(ifKeyword, condition, ifBody, elseBody)
+	return st.CreateIfElseStatementNode(ifKeyword, condition, ifBody, elseBody)
 }
 
-func (b *BallerinaParser) parseIfKeyword() tree.STNode {
+func (b *BallerinaParser) parseIfKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IF_KEYWORD {
+	if token.Kind() == st.IF_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_IF_KEYWORD)
@@ -5805,9 +5805,9 @@ func (b *BallerinaParser) parseIfKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseElseKeyword() tree.STNode {
+func (b *BallerinaParser) parseElseKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ELSE_KEYWORD {
+	if token.Kind() == st.ELSE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ELSE_KEYWORD)
@@ -5815,31 +5815,31 @@ func (b *BallerinaParser) parseElseKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBlockNode() tree.STNode {
+func (b *BallerinaParser) parseBlockNode() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 	openBrace := b.parseOpenBrace()
 	stmts := b.parseStatements()
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateBlockStatementNode(openBrace, stmts, closeBrace)
+	return st.CreateBlockStatementNode(openBrace, stmts, closeBrace)
 }
 
-func (b *BallerinaParser) parseElseBlock() tree.STNode {
+func (b *BallerinaParser) parseElseBlock() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() != common.ELSE_KEYWORD {
-		return tree.CreateEmptyNode()
+	if nextToken.Kind() != st.ELSE_KEYWORD {
+		return st.CreateEmptyNode()
 	}
 	elseKeyword := b.parseElseKeyword()
 	elseBody := b.parseElseBody()
-	return tree.CreateElseBlockNode(elseKeyword, elseBody)
+	return st.CreateElseBlockNode(elseKeyword, elseBody)
 }
 
-func (b *BallerinaParser) parseElseBody() tree.STNode {
+func (b *BallerinaParser) parseElseBody() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IF_KEYWORD:
+	case st.IF_KEYWORD:
 		return b.parseIfElseBlock()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseBlockNode()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ELSE_BODY)
@@ -5847,28 +5847,28 @@ func (b *BallerinaParser) parseElseBody() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseDoStatement() tree.STNode {
+func (b *BallerinaParser) parseDoStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_DO_BLOCK)
 	doKeyword := b.parseDoKeyword()
 	doBody := b.parseBlockNode()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateDoStatementNode(doKeyword, doBody, onFailClause)
+	return st.CreateDoStatementNode(doKeyword, doBody, onFailClause)
 }
 
-func (b *BallerinaParser) parseWhileStatement() tree.STNode {
+func (b *BallerinaParser) parseWhileStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_WHILE_BLOCK)
 	whileKeyword := b.parseWhileKeyword()
 	condition := b.parseExpression()
 	whileBody := b.parseBlockNode()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateWhileStatementNode(whileKeyword, condition, whileBody, onFailClause)
+	return st.CreateWhileStatementNode(whileKeyword, condition, whileBody, onFailClause)
 }
 
-func (b *BallerinaParser) parseWhileKeyword() tree.STNode {
+func (b *BallerinaParser) parseWhileKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.WHILE_KEYWORD {
+	if token.Kind() == st.WHILE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_WHILE_KEYWORD)
@@ -5876,18 +5876,18 @@ func (b *BallerinaParser) parseWhileKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parsePanicStatement() tree.STNode {
+func (b *BallerinaParser) parsePanicStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_PANIC_STMT)
 	panicKeyword := b.parsePanicKeyword()
 	expression := b.parseExpression()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreatePanicStatementNode(panicKeyword, expression, semicolon)
+	return st.CreatePanicStatementNode(panicKeyword, expression, semicolon)
 }
 
-func (b *BallerinaParser) parsePanicKeyword() tree.STNode {
+func (b *BallerinaParser) parsePanicKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.PANIC_KEYWORD {
+	if token.Kind() == st.PANIC_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PANIC_KEYWORD)
@@ -5895,19 +5895,19 @@ func (b *BallerinaParser) parsePanicKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCheckExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseCheckExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	checkingKeyword := b.parseCheckingKeyword()
 	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_EXPRESSION_ACTION, isRhsExpr, allowActions, isInConditionalExpr)
 	if b.isAction(expr) {
-		return tree.CreateCheckExpressionNode(common.CHECK_ACTION, checkingKeyword, expr)
+		return st.CreateCheckExpressionNode(st.CHECK_ACTION, checkingKeyword, expr)
 	} else {
-		return tree.CreateCheckExpressionNode(common.CHECK_EXPRESSION, checkingKeyword, expr)
+		return st.CreateCheckExpressionNode(st.CHECK_EXPRESSION, checkingKeyword, expr)
 	}
 }
 
-func (b *BallerinaParser) parseCheckingKeyword() tree.STNode {
+func (b *BallerinaParser) parseCheckingKeyword() st.STNode {
 	token := b.peek()
-	if (token.Kind() == common.CHECK_KEYWORD) || (token.Kind() == common.CHECKPANIC_KEYWORD) {
+	if (token.Kind() == st.CHECK_KEYWORD) || (token.Kind() == st.CHECKPANIC_KEYWORD) {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD)
@@ -5915,17 +5915,17 @@ func (b *BallerinaParser) parseCheckingKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseContinueStatement() tree.STNode {
+func (b *BallerinaParser) parseContinueStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONTINUE_STATEMENT)
 	continueKeyword := b.parseContinueKeyword()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateContinueStatementNode(continueKeyword, semicolon)
+	return st.CreateContinueStatementNode(continueKeyword, semicolon)
 }
 
-func (b *BallerinaParser) parseContinueKeyword() tree.STNode {
+func (b *BallerinaParser) parseContinueKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CONTINUE_KEYWORD {
+	if token.Kind() == st.CONTINUE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CONTINUE_KEYWORD)
@@ -5933,18 +5933,18 @@ func (b *BallerinaParser) parseContinueKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFailStatement() tree.STNode {
+func (b *BallerinaParser) parseFailStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FAIL_STATEMENT)
 	failKeyword := b.parseFailKeyword()
 	expr := b.parseExpression()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateFailStatementNode(failKeyword, expr, semicolon)
+	return st.CreateFailStatementNode(failKeyword, expr, semicolon)
 }
 
-func (b *BallerinaParser) parseFailKeyword() tree.STNode {
+func (b *BallerinaParser) parseFailKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FAIL_KEYWORD {
+	if token.Kind() == st.FAIL_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FAIL_KEYWORD)
@@ -5952,7 +5952,7 @@ func (b *BallerinaParser) parseFailKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReturnStatement() tree.STNode {
+func (b *BallerinaParser) parseReturnStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RETURN_STMT)
 	returnKeyword := b.parseReturnKeyword()
 	returnRhs := b.parseReturnStatementRhs(returnKeyword)
@@ -5960,9 +5960,9 @@ func (b *BallerinaParser) parseReturnStatement() tree.STNode {
 	return returnRhs
 }
 
-func (b *BallerinaParser) parseReturnKeyword() tree.STNode {
+func (b *BallerinaParser) parseReturnKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.RETURN_KEYWORD {
+	if token.Kind() == st.RETURN_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_RETURN_KEYWORD)
@@ -5970,17 +5970,17 @@ func (b *BallerinaParser) parseReturnKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBreakStatement() tree.STNode {
+func (b *BallerinaParser) parseBreakStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BREAK_STATEMENT)
 	breakKeyword := b.parseBreakKeyword()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateBreakStatementNode(breakKeyword, semicolon)
+	return st.CreateBreakStatementNode(breakKeyword, semicolon)
 }
 
-func (b *BallerinaParser) parseBreakKeyword() tree.STNode {
+func (b *BallerinaParser) parseBreakKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.BREAK_KEYWORD {
+	if token.Kind() == st.BREAK_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_BREAK_KEYWORD)
@@ -5988,34 +5988,34 @@ func (b *BallerinaParser) parseBreakKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReturnStatementRhs(returnKeyword tree.STNode) tree.STNode {
-	var expr tree.STNode
+func (b *BallerinaParser) parseReturnStatementRhs(returnKeyword st.STNode) st.STNode {
+	var expr st.STNode
 	token := b.peek()
 	switch token.Kind() {
-	case common.SEMICOLON_TOKEN:
-		expr = tree.CreateEmptyNode()
+	case st.SEMICOLON_TOKEN:
+		expr = st.CreateEmptyNode()
 	default:
 		expr = b.parseActionOrExpression()
 	}
 	semicolon := b.parseSemicolon()
-	return tree.CreateReturnStatementNode(returnKeyword, expr, semicolon)
+	return st.CreateReturnStatementNode(returnKeyword, expr, semicolon)
 }
 
-func (b *BallerinaParser) parseMappingConstructorExpr() tree.STNode {
+func (b *BallerinaParser) parseMappingConstructorExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 	openBrace := b.parseOpenBrace()
 	fields := b.parseMappingConstructorFields()
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
+	return st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
 }
 
-func (b *BallerinaParser) parseMappingConstructorFields() tree.STNode {
+func (b *BallerinaParser) parseMappingConstructorFields() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfMappingConstructor(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
-	var fields []tree.STNode
+	var fields []st.STNode
 	field := b.parseMappingField(common.PARSER_RULE_CONTEXT_FIRST_MAPPING_FIELD)
 	if field != nil {
 		fields = append(fields, field)
@@ -6023,9 +6023,9 @@ func (b *BallerinaParser) parseMappingConstructorFields() tree.STNode {
 	return b.finishParseMappingConstructorFields(fields)
 }
 
-func (b *BallerinaParser) finishParseMappingConstructorFields(fields []tree.STNode) tree.STNode {
-	var nextToken tree.STToken
-	var mappingFieldEnd tree.STNode
+func (b *BallerinaParser) finishParseMappingConstructorFields(fields []st.STNode) st.STNode {
+	var nextToken st.STToken
+	var mappingFieldEnd st.STNode
 	nextToken = b.peek()
 	for !b.isEndOfMappingConstructor(nextToken.Kind()) {
 		mappingFieldEnd = b.parseMappingFieldEnd()
@@ -6037,14 +6037,14 @@ func (b *BallerinaParser) finishParseMappingConstructorFields(fields []tree.STNo
 		fields = append(fields, field)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(fields...)
+	return st.CreateNodeList(fields...)
 }
 
-func (b *BallerinaParser) parseMappingFieldEnd() tree.STNode {
+func (b *BallerinaParser) parseMappingFieldEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_MAPPING_FIELD_END)
@@ -6052,50 +6052,50 @@ func (b *BallerinaParser) parseMappingFieldEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfMappingConstructor(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfMappingConstructor(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.IDENTIFIER_TOKEN, common.READONLY_KEYWORD:
+	case st.IDENTIFIER_TOKEN, st.READONLY_KEYWORD:
 		return false
-	case common.EOF_TOKEN,
-		common.DOCUMENTATION_STRING,
-		common.AT_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.SEMICOLON_TOKEN,
-		common.PUBLIC_KEYWORD,
-		common.PRIVATE_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.RETURNS_KEYWORD,
-		common.SERVICE_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.CONST_KEYWORD,
-		common.FINAL_KEYWORD,
-		common.RESOURCE_KEYWORD:
+	case st.EOF_TOKEN,
+		st.DOCUMENTATION_STRING,
+		st.AT_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.SEMICOLON_TOKEN,
+		st.PUBLIC_KEYWORD,
+		st.PRIVATE_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.RETURNS_KEYWORD,
+		st.SERVICE_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.CONST_KEYWORD,
+		st.FINAL_KEYWORD,
+		st.RESOURCE_KEYWORD:
 		return true
 	default:
 		return isSimpleType(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) parseMappingField(fieldContext common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseMappingField(fieldContext common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
-		readonlyKeyword := tree.CreateEmptyNode()
+	case st.IDENTIFIER_TOKEN:
+		readonlyKeyword := st.CreateEmptyNode()
 		return b.parseSpecificFieldWithOptionalValue(readonlyKeyword)
-	case common.STRING_LITERAL_TOKEN:
-		readonlyKeyword := tree.CreateEmptyNode()
+	case st.STRING_LITERAL_TOKEN:
+		readonlyKeyword := st.CreateEmptyNode()
 		return b.parseQualifiedSpecificField(readonlyKeyword)
-	case common.READONLY_KEYWORD:
+	case st.READONLY_KEYWORD:
 		readonlyKeyword := b.parseReadonlyKeyword()
 		return b.parseSpecificField(readonlyKeyword)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseComputedField()
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		ellipsis := b.parseEllipsis()
 		expr := b.parseExpression()
-		return tree.CreateSpreadFieldNode(ellipsis, expr)
-	case common.CLOSE_BRACE_TOKEN:
+		return st.CreateSpreadFieldNode(ellipsis, expr)
+	case st.CLOSE_BRACE_TOKEN:
 		if fieldContext == common.PARSER_RULE_CONTEXT_FIRST_MAPPING_FIELD {
 			return nil
 		}
@@ -6106,12 +6106,12 @@ func (b *BallerinaParser) parseMappingField(fieldContext common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParser) parseSpecificField(readonlyKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseSpecificField(readonlyKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.STRING_LITERAL_TOKEN:
+	case st.STRING_LITERAL_TOKEN:
 		return b.parseQualifiedSpecificField(readonlyKeyword)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.parseSpecificFieldWithOptionalValue(readonlyKeyword)
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD)
@@ -6119,45 +6119,45 @@ func (b *BallerinaParser) parseSpecificField(readonlyKeyword tree.STNode) tree.S
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedSpecificField(readonlyKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseQualifiedSpecificField(readonlyKeyword st.STNode) st.STNode {
 	key := b.parseStringLiteral()
 	colon := b.parseColon()
 	valueExpr := b.parseExpression()
-	return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
+	return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 }
 
-func (b *BallerinaParser) parseSpecificFieldWithOptionalValue(readonlyKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseSpecificFieldWithOptionalValue(readonlyKeyword st.STNode) st.STNode {
 	key := b.parseIdentifier(common.PARSER_RULE_CONTEXT_MAPPING_FIELD_NAME)
 	return b.parseSpecificFieldRhs(readonlyKeyword, key)
 }
 
-func (b *BallerinaParser) parseSpecificFieldRhs(readonlyKeyword tree.STNode, key tree.STNode) tree.STNode {
-	var colon tree.STNode
-	var valueExpr tree.STNode
+func (b *BallerinaParser) parseSpecificFieldRhs(readonlyKeyword st.STNode, key st.STNode) st.STNode {
+	var colon st.STNode
+	var valueExpr st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COLON_TOKEN:
+	case st.COLON_TOKEN:
 		colon = b.parseColon()
 		valueExpr = b.parseExpression()
-	case common.COMMA_TOKEN:
-		colon = tree.CreateEmptyNode()
-		valueExpr = tree.CreateEmptyNode()
+	case st.COMMA_TOKEN:
+		colon = st.CreateEmptyNode()
+		valueExpr = st.CreateEmptyNode()
 	default:
 		if b.isEndOfMappingConstructor(nextToken.Kind()) {
-			colon = tree.CreateEmptyNode()
-			valueExpr = tree.CreateEmptyNode()
+			colon = st.CreateEmptyNode()
+			valueExpr = st.CreateEmptyNode()
 			break
 		}
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD_RHS)
 		return b.parseSpecificFieldRhs(readonlyKeyword, key)
 	}
-	return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
+	return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 }
 
-func (b *BallerinaParser) parseStringLiteral() tree.STNode {
+func (b *BallerinaParser) parseStringLiteral() st.STNode {
 	token := b.peek()
-	var stringLiteral tree.STNode
-	if token.Kind() == common.STRING_LITERAL_TOKEN {
+	var stringLiteral st.STNode
+	if token.Kind() == st.STRING_LITERAL_TOKEN {
 		stringLiteral = b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN)
@@ -6166,9 +6166,9 @@ func (b *BallerinaParser) parseStringLiteral() tree.STNode {
 	return b.parseBasicLiteralInner(stringLiteral)
 }
 
-func (b *BallerinaParser) parseColon() tree.STNode {
+func (b *BallerinaParser) parseColon() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.COLON_TOKEN {
+	if token.Kind() == st.COLON_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_COLON)
@@ -6176,9 +6176,9 @@ func (b *BallerinaParser) parseColon() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReadonlyKeyword() tree.STNode {
+func (b *BallerinaParser) parseReadonlyKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.READONLY_KEYWORD {
+	if token.Kind() == st.READONLY_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_READONLY_KEYWORD)
@@ -6186,7 +6186,7 @@ func (b *BallerinaParser) parseReadonlyKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseComputedField() tree.STNode {
+func (b *BallerinaParser) parseComputedField() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMPUTED_FIELD_NAME)
 	openBracket := b.parseOpenBracket()
 	fieldNameExpr := b.parseExpression()
@@ -6194,12 +6194,12 @@ func (b *BallerinaParser) parseComputedField() tree.STNode {
 	b.endContext()
 	colon := b.parseColon()
 	valueExpr := b.parseExpression()
-	return tree.CreateComputedNameFieldNode(openBracket, fieldNameExpr, closeBracket, colon, valueExpr)
+	return st.CreateComputedNameFieldNode(openBracket, fieldNameExpr, closeBracket, colon, valueExpr)
 }
 
-func (b *BallerinaParser) parseOpenBracket() tree.STNode {
+func (b *BallerinaParser) parseOpenBracket() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.OPEN_BRACKET_TOKEN {
+	if token.Kind() == st.OPEN_BRACKET_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_OPEN_BRACKET)
@@ -6207,7 +6207,7 @@ func (b *BallerinaParser) parseOpenBracket() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCompoundAssignmentStmtRhs(lvExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseCompoundAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
 	binaryOperator := b.parseCompoundBinaryOperator()
 	equalsToken := b.parseAssignOp()
 	expr := b.parseActionOrExpression()
@@ -6215,16 +6215,16 @@ func (b *BallerinaParser) parseCompoundAssignmentStmtRhs(lvExpr tree.STNode) tre
 	b.endContext()
 	lvExprValid := b.isValidLVExpr(lvExpr)
 	if !lvExprValid {
-		identifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		simpleNameRef := tree.CreateSimpleNameReferenceNode(identifier)
-		lvExpr = tree.CloneWithLeadingInvalidNodeMinutiae(simpleNameRef, lvExpr,
+		identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		simpleNameRef := st.CreateSimpleNameReferenceNode(identifier)
+		lvExpr = st.CloneWithLeadingInvalidNodeMinutiae(simpleNameRef, lvExpr,
 			&common.ERROR_INVALID_EXPR_IN_COMPOUND_ASSIGNMENT_LHS)
 	}
-	return tree.CreateCompoundAssignmentStatementNode(lvExpr, binaryOperator, equalsToken, expr,
+	return st.CreateCompoundAssignmentStatementNode(lvExpr, binaryOperator, equalsToken, expr,
 		semicolon)
 }
 
-func (b *BallerinaParser) parseCompoundBinaryOperator() tree.STNode {
+func (b *BallerinaParser) parseCompoundBinaryOperator() st.STNode {
 	token := b.peek()
 	if b.isCompoundAssignment(token.Kind()) {
 		return b.consume()
@@ -6234,12 +6234,12 @@ func (b *BallerinaParser) parseCompoundBinaryOperator() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseServiceDeclOrVarDecl(metadata tree.STNode, publicQualifier tree.STNode, qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseServiceDeclOrVarDecl(metadata st.STNode, publicQualifier st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_SERVICE_DECL)
 	serviceDeclQualList, qualifiers := b.extractServiceDeclQualifiers(qualifiers)
 	serviceKeyword, qualifiers := b.extractServiceKeyword(qualifiers)
 	typeDesc := b.parseServiceDeclTypeDescriptor(qualifiers)
-	if (typeDesc != nil) && (typeDesc.Kind() == common.OBJECT_TYPE_DESC) {
+	if (typeDesc != nil) && (typeDesc.Kind() == st.OBJECT_TYPE_DESC) {
 		return b.finishParseServiceDeclOrVarDecl(metadata, publicQualifier, serviceDeclQualList, serviceKeyword,
 			typeDesc)
 	} else {
@@ -6247,15 +6247,15 @@ func (b *BallerinaParser) parseServiceDeclOrVarDecl(metadata tree.STNode, public
 	}
 }
 
-func (b *BallerinaParser) finishParseServiceDeclOrVarDecl(metadata tree.STNode, publicQualifier tree.STNode, serviceDeclQualList []tree.STNode, serviceKeyword tree.STNode, typeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) finishParseServiceDeclOrVarDecl(metadata st.STNode, publicQualifier st.STNode, serviceDeclQualList []st.STNode, serviceKeyword st.STNode, typeDesc st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.SLASH_TOKEN, common.ON_KEYWORD:
+	case st.SLASH_TOKEN, st.ON_KEYWORD:
 		return b.parseServiceDecl(metadata, publicQualifier, serviceDeclQualList, serviceKeyword, typeDesc)
-	case common.OPEN_BRACKET_TOKEN,
-		common.IDENTIFIER_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.ERROR_KEYWORD:
+	case st.OPEN_BRACKET_TOKEN,
+		st.IDENTIFIER_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.ERROR_KEYWORD:
 		b.endContext()
 		typeDesc = b.modifyObjectTypeDescWithALeadingQualifier(typeDesc, serviceKeyword)
 		if len(serviceDeclQualList) != 0 {
@@ -6271,59 +6271,59 @@ func (b *BallerinaParser) finishParseServiceDeclOrVarDecl(metadata tree.STNode, 
 	}
 }
 
-func (b *BallerinaParser) extractServiceDeclQualifiers(qualifierList []tree.STNode) ([]tree.STNode, []tree.STNode) {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) extractServiceDeclQualifiers(qualifierList []st.STNode) ([]st.STNode, []st.STNode) {
+	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
 		qualifier := qualifierList[i]
 		nextIndex := (i + 1)
-		if qualifier.Kind() == common.SERVICE_KEYWORD {
+		if qualifier.Kind() == st.SERVICE_KEYWORD {
 			qualifierList = qualifierList[i:]
 			break
 		}
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, tree.ToToken(tree.ToToken(qualifier)).Text())
+				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(st.ToToken(qualifier)).Text())
 			continue
 		}
-		if qualifier.Kind() == common.ISOLATED_KEYWORD {
+		if qualifier.Kind() == st.ISOLATED_KEYWORD {
 			validatedList = append(validatedList, qualifier)
 			continue
 		}
 		if len(qualifierList) == nextIndex {
 			b.addInvalidNodeToNextToken(qualifier, &common.ERROR_QUALIFIER_NOT_ALLOWED,
-				tree.ToToken(tree.ToToken(qualifier)).Text())
+				st.ToToken(st.ToToken(qualifier)).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(tree.ToToken(qualifier)).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(st.ToToken(qualifier)).Text())
 		}
 	}
 	return validatedList, qualifierList
 }
 
-func (b *BallerinaParser) extractServiceKeyword(qualifierList []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) extractServiceKeyword(qualifierList []st.STNode) (st.STNode, []st.STNode) {
 	if len(qualifierList) == 0 {
 		panic("assertion failed")
 	}
 	serviceKeyword := qualifierList[0]
 	qualifierList = qualifierList[1:]
-	if serviceKeyword.Kind() != common.SERVICE_KEYWORD {
+	if serviceKeyword.Kind() != st.SERVICE_KEYWORD {
 		panic("assertion failed")
 	}
 	return serviceKeyword, qualifierList
 }
 
-func (b *BallerinaParser) parseServiceDecl(metadata tree.STNode, publicQualifier tree.STNode, qualList []tree.STNode, serviceKeyword tree.STNode, serviceType tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseServiceDecl(metadata st.STNode, publicQualifier st.STNode, qualList []st.STNode, serviceKeyword st.STNode, serviceType st.STNode) st.STNode {
 	if publicQualifier != nil {
 		if len(qualList) != 0 {
 			b.updateFirstNodeInListWithLeadingInvalidNode(qualList, publicQualifier,
 				&common.ERROR_QUALIFIER_NOT_ALLOWED)
 		} else {
-			serviceKeyword = tree.CloneWithLeadingInvalidNodeMinutiae(serviceKeyword, publicQualifier,
+			serviceKeyword = st.CloneWithLeadingInvalidNodeMinutiae(serviceKeyword, publicQualifier,
 				&common.ERROR_QUALIFIER_NOT_ALLOWED)
 		}
 	}
-	qualNodeList := tree.CreateNodeList(qualList...)
+	qualNodeList := st.CreateNodeList(qualList...)
 	resourcePath := b.parseOptionalAbsolutePathOrStringLiteral()
 	onKeyword := b.parseOnKeyword()
 	expressionList := b.parseListeners()
@@ -6333,18 +6333,18 @@ func (b *BallerinaParser) parseServiceDecl(metadata tree.STNode, publicQualifier
 	semicolon := b.parseOptionalSemicolon()
 	onKeyword = b.cloneWithDiagnosticIfListEmpty(expressionList, onKeyword, &common.ERROR_MISSING_EXPRESSION)
 	b.endContext()
-	return tree.CreateServiceDeclarationNode(metadata, qualNodeList, serviceKeyword, serviceType,
+	return st.CreateServiceDeclarationNode(metadata, qualNodeList, serviceKeyword, serviceType,
 		resourcePath, onKeyword, expressionList, openBrace, objectMembers, closeBrace, semicolon)
 }
 
-func (b *BallerinaParser) parseServiceDeclTypeDescriptor(qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseServiceDeclTypeDescriptor(qualifiers []st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.SLASH_TOKEN,
-		common.ON_KEYWORD,
-		common.STRING_LITERAL_TOKEN:
+	case st.SLASH_TOKEN,
+		st.ON_KEYWORD,
+		st.STRING_LITERAL_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
 			return b.parseTypeDescriptorWithQualifier(qualifiers, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_SERVICE)
@@ -6354,28 +6354,28 @@ func (b *BallerinaParser) parseServiceDeclTypeDescriptor(qualifiers []tree.STNod
 	}
 }
 
-func (b *BallerinaParser) parseOptionalAbsolutePathOrStringLiteral() tree.STNode {
+func (b *BallerinaParser) parseOptionalAbsolutePathOrStringLiteral() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		return b.parseAbsoluteResourcePath()
-	case common.STRING_LITERAL_TOKEN:
+	case st.STRING_LITERAL_TOKEN:
 		stringLiteralToken := b.consume()
 		stringLiteralNode := b.parseBasicLiteralInner(stringLiteralToken)
-		return tree.CreateNodeList(stringLiteralNode)
-	case common.ON_KEYWORD:
-		return tree.CreateEmptyNodeList()
+		return st.CreateNodeList(stringLiteralNode)
+	case st.ON_KEYWORD:
+		return st.CreateEmptyNodeList()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_OPTIONAL_ABSOLUTE_PATH)
 		return b.parseOptionalAbsolutePathOrStringLiteral()
 	}
 }
 
-func (b *BallerinaParser) parseAbsoluteResourcePath() tree.STNode {
+func (b *BallerinaParser) parseAbsoluteResourcePath() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ABSOLUTE_RESOURCE_PATH)
-	var identifierList []tree.STNode
+	var identifierList []st.STNode
 	nextToken := b.peek()
-	var leadingSlash tree.STNode
+	var leadingSlash st.STNode
 	isInitialSlash := true
 	for !b.isEndAbsoluteResourcePath(nextToken.Kind()) {
 		leadingSlash = b.parseAbsoluteResourcePathEnd(isInitialSlash)
@@ -6384,7 +6384,7 @@ func (b *BallerinaParser) parseAbsoluteResourcePath() tree.STNode {
 		}
 		identifierList = append(identifierList, leadingSlash)
 		nextToken = b.peek()
-		if isInitialSlash && (nextToken.Kind() == common.ON_KEYWORD) {
+		if isInitialSlash && (nextToken.Kind() == st.ON_KEYWORD) {
 			break
 		}
 		isInitialSlash = false
@@ -6393,24 +6393,24 @@ func (b *BallerinaParser) parseAbsoluteResourcePath() tree.STNode {
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateNodeList(identifierList...)
+	return st.CreateNodeList(identifierList...)
 }
 
-func (b *BallerinaParser) isEndAbsoluteResourcePath(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndAbsoluteResourcePath(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.EOF_TOKEN, common.ON_KEYWORD:
+	case st.EOF_TOKEN, st.ON_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseAbsoluteResourcePathEnd(isInitialSlash bool) tree.STNode {
+func (b *BallerinaParser) parseAbsoluteResourcePathEnd(isInitialSlash bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ON_KEYWORD, common.EOF_TOKEN:
+	case st.ON_KEYWORD, st.EOF_TOKEN:
 		return nil
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		return b.consume()
 	default:
 		var context common.ParserRuleContext
@@ -6425,9 +6425,9 @@ func (b *BallerinaParser) parseAbsoluteResourcePathEnd(isInitialSlash bool) tree
 }
 
 // MIGRATION-NOTE: this is used only recursively in Ballerina parser as well, left as is for now.
-func (b *BallerinaParser) parseServiceKeyword() tree.STNode {
+func (b *BallerinaParser) parseServiceKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.SERVICE_KEYWORD {
+	if token.Kind() == st.SERVICE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SERVICE_KEYWORD)
@@ -6435,13 +6435,13 @@ func (b *BallerinaParser) parseServiceKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isCompoundAssignment(tokenKind common.SyntaxKind) bool {
-	return (isCompoundBinaryOperator(tokenKind) && (b.getNextNextToken().Kind() == common.EQUAL_TOKEN))
+func (b *BallerinaParser) isCompoundAssignment(tokenKind st.SyntaxKind) bool {
+	return (isCompoundBinaryOperator(tokenKind) && (b.getNextNextToken().Kind() == st.EQUAL_TOKEN))
 }
 
-func (b *BallerinaParser) parseOnKeyword() tree.STNode {
+func (b *BallerinaParser) parseOnKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ON_KEYWORD {
+	if token.Kind() == st.ON_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ON_KEYWORD)
@@ -6449,17 +6449,17 @@ func (b *BallerinaParser) parseOnKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseListeners() tree.STNode {
+func (b *BallerinaParser) parseListeners() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LISTENERS_LIST)
-	var listeners []tree.STNode
+	var listeners []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfListeners(nextToken.Kind()) {
 		b.endContext()
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	expr := b.parseExpression()
 	listeners = append(listeners, expr)
-	var listenersMemberEnd tree.STNode
+	var listenersMemberEnd st.STNode
 	for !b.isEndOfListeners(b.peek().Kind()) {
 		listenersMemberEnd = b.parseListenersMemberEnd()
 		if listenersMemberEnd == nil {
@@ -6470,24 +6470,24 @@ func (b *BallerinaParser) parseListeners() tree.STNode {
 		listeners = append(listeners, expr)
 	}
 	b.endContext()
-	return tree.CreateNodeList(listeners...)
+	return st.CreateNodeList(listeners...)
 }
 
-func (b *BallerinaParser) isEndOfListeners(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfListeners(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.OPEN_BRACE_TOKEN, common.EOF_TOKEN:
+	case st.OPEN_BRACE_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseListenersMemberEnd() tree.STNode {
+func (b *BallerinaParser) parseListenersMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_LISTENERS_LIST_END)
@@ -6497,33 +6497,33 @@ func (b *BallerinaParser) parseListenersMemberEnd() tree.STNode {
 
 func (b *BallerinaParser) isServiceDeclStart(currentContext common.ParserRuleContext, lookahead int) bool {
 	switch b.peekN(lookahead + 1).Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		tokenAfterIdentifier := b.peekN(lookahead + 2).Kind()
 		switch tokenAfterIdentifier {
-		case common.ON_KEYWORD,
+		case st.ON_KEYWORD,
 			// service foo on ...
-			common.OPEN_BRACE_TOKEN:
+			st.OPEN_BRACE_TOKEN:
 			return true
-		case common.EQUAL_TOKEN,
+		case st.EQUAL_TOKEN,
 			// service foo = ...
-			common.SEMICOLON_TOKEN,
+			st.SEMICOLON_TOKEN,
 			// service foo;
-			common.QUESTION_MARK_TOKEN:
+			st.QUESTION_MARK_TOKEN:
 			return false
 		default:
 			return false
 		}
-	case common.ON_KEYWORD:
+	case st.ON_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseListenerDeclaration(metadata tree.STNode, qualifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseListenerDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LISTENER_DECL)
 	listenerKeyword := b.parseListenerKeyword()
-	if b.peek().Kind() == common.IDENTIFIER_TOKEN {
+	if b.peek().Kind() == st.IDENTIFIER_TOKEN {
 		listenerDecl := b.parseConstantOrListenerDeclWithOptionalType(metadata, qualifier, listenerKeyword, true)
 		b.endContext()
 		return listenerDecl
@@ -6534,13 +6534,13 @@ func (b *BallerinaParser) parseListenerDeclaration(metadata tree.STNode, qualifi
 	initializer := b.parseExpression()
 	semicolonToken := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateListenerDeclarationNode(metadata, qualifier, listenerKeyword, typeDesc, variableName,
+	return st.CreateListenerDeclarationNode(metadata, qualifier, listenerKeyword, typeDesc, variableName,
 		equalsToken, initializer, semicolonToken)
 }
 
-func (b *BallerinaParser) parseListenerKeyword() tree.STNode {
+func (b *BallerinaParser) parseListenerKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.LISTENER_KEYWORD {
+	if token.Kind() == st.LISTENER_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_LISTENER_KEYWORD)
@@ -6548,19 +6548,19 @@ func (b *BallerinaParser) parseListenerKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseConstantDeclaration(metadata tree.STNode, qualifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseConstantDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONSTANT_DECL)
 	constKeyword := b.parseConstantKeyword()
 	return b.parseConstDecl(metadata, qualifier, constKeyword)
 }
 
-func (b *BallerinaParser) parseConstDecl(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseConstDecl(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ANNOTATION_KEYWORD:
+	case st.ANNOTATION_KEYWORD:
 		b.endContext()
 		return b.parseAnnotationDeclaration(metadata, qualifier, constKeyword)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		constantDecl := b.parseConstantOrListenerDeclWithOptionalType(metadata, qualifier, constKeyword, false)
 		b.endContext()
 		return constantDecl
@@ -6577,34 +6577,34 @@ func (b *BallerinaParser) parseConstDecl(metadata tree.STNode, qualifier tree.ST
 	initializer := b.parseExpression()
 	semicolonToken := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateConstantDeclarationNode(metadata, qualifier, constKeyword, typeDesc, variableName,
+	return st.CreateConstantDeclarationNode(metadata, qualifier, constKeyword, typeDesc, variableName,
 		equalsToken, initializer, semicolonToken)
 }
 
-func (b *BallerinaParser) parseConstantOrListenerDeclWithOptionalType(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode, isListener bool) tree.STNode {
+func (b *BallerinaParser) parseConstantOrListenerDeclWithOptionalType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, isListener bool) st.STNode {
 	varNameOrTypeName := b.parseStatementStartIdentifier()
 	return b.parseConstantOrListenerDeclRhs(metadata, qualifier, constKeyword, varNameOrTypeName, isListener)
 }
 
-func (b *BallerinaParser) parseConstantOrListenerDeclRhs(metadata tree.STNode, qualifier tree.STNode, keyword tree.STNode, typeOrVarName tree.STNode, isListener bool) tree.STNode {
-	if typeOrVarName.Kind() == common.QUALIFIED_NAME_REFERENCE {
+func (b *BallerinaParser) parseConstantOrListenerDeclRhs(metadata st.STNode, qualifier st.STNode, keyword st.STNode, typeOrVarName st.STNode, isListener bool) st.STNode {
+	if typeOrVarName.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		ty := typeOrVarName
 		variableName := b.parseVariableName()
 		return b.parseListenerOrConstRhs(metadata, qualifier, keyword, isListener, ty, variableName)
 	}
-	var ty tree.STNode
-	var variableName tree.STNode
+	var ty st.STNode
+	var variableName st.STNode
 	switch b.peek().Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		ty = typeOrVarName
 		variableName = b.parseVariableName()
-	case common.EQUAL_TOKEN:
-		simpleNameNode, ok := typeOrVarName.(*tree.STSimpleNameReferenceNode)
+	case st.EQUAL_TOKEN:
+		simpleNameNode, ok := typeOrVarName.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("parseConstantOrListenerDeclRhs: expected STSimpleNameReferenceNode")
 		}
 		variableName = simpleNameNode.Name
-		ty = tree.CreateEmptyNode()
+		ty = st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_CONST_DECL_RHS)
 		return b.parseConstantOrListenerDeclRhs(metadata, qualifier, keyword, typeOrVarName, isListener)
@@ -6612,21 +6612,21 @@ func (b *BallerinaParser) parseConstantOrListenerDeclRhs(metadata tree.STNode, q
 	return b.parseListenerOrConstRhs(metadata, qualifier, keyword, isListener, ty, variableName)
 }
 
-func (b *BallerinaParser) parseListenerOrConstRhs(metadata tree.STNode, qualifier tree.STNode, keyword tree.STNode, isListener bool, ty tree.STNode, variableName tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseListenerOrConstRhs(metadata st.STNode, qualifier st.STNode, keyword st.STNode, isListener bool, ty st.STNode, variableName st.STNode) st.STNode {
 	equalsToken := b.parseAssignOp()
 	initializer := b.parseExpression()
 	semicolonToken := b.parseSemicolon()
 	if isListener {
-		return tree.CreateListenerDeclarationNode(metadata, qualifier, keyword, ty, variableName,
+		return st.CreateListenerDeclarationNode(metadata, qualifier, keyword, ty, variableName,
 			equalsToken, initializer, semicolonToken)
 	}
-	return tree.CreateConstantDeclarationNode(metadata, qualifier, keyword, ty, variableName,
+	return st.CreateConstantDeclarationNode(metadata, qualifier, keyword, ty, variableName,
 		equalsToken, initializer, semicolonToken)
 }
 
-func (b *BallerinaParser) parseConstantKeyword() tree.STNode {
+func (b *BallerinaParser) parseConstantKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CONST_KEYWORD {
+	if token.Kind() == st.CONST_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CONST_KEYWORD)
@@ -6634,15 +6634,15 @@ func (b *BallerinaParser) parseConstantKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeofExpression(isRhsExpr bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeofExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
 	typeofKeyword := b.parseTypeofKeyword()
 	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_UNARY, isRhsExpr, false, isInConditionalExpr)
-	return tree.CreateTypeofExpressionNode(typeofKeyword, expr)
+	return st.CreateTypeofExpressionNode(typeofKeyword, expr)
 }
 
-func (b *BallerinaParser) parseTypeofKeyword() tree.STNode {
+func (b *BallerinaParser) parseTypeofKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.TYPEOF_KEYWORD {
+	if token.Kind() == st.TYPEOF_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TYPEOF_KEYWORD)
@@ -6650,43 +6650,43 @@ func (b *BallerinaParser) parseTypeofKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalTypeDescriptor(typeDescriptorNode tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseOptionalTypeDescriptor(typeDescriptorNode st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_DESCRIPTOR)
 	questionMarkToken := b.parseQuestionMark()
 	b.endContext()
 	return b.createOptionalTypeDesc(typeDescriptorNode, questionMarkToken)
 }
 
-func (b *BallerinaParser) createOptionalTypeDesc(typeDescNode tree.STNode, questionMarkToken tree.STNode) tree.STNode {
-	if typeDescNode.Kind() == common.UNION_TYPE_DESC {
-		unionTypeDesc, ok := typeDescNode.(*tree.STUnionTypeDescriptorNode)
+func (b *BallerinaParser) createOptionalTypeDesc(typeDescNode st.STNode, questionMarkToken st.STNode) st.STNode {
+	if typeDescNode.Kind() == st.UNION_TYPE_DESC {
+		unionTypeDesc, ok := typeDescNode.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected tree.STUnionTypeDescriptorNode")
+			panic("expected st.STUnionTypeDescriptorNode")
 		}
 		middleTypeDesc := b.createOptionalTypeDesc(unionTypeDesc.RightTypeDesc, questionMarkToken)
 		typeDescNode = b.mergeTypesWithUnion(unionTypeDesc.LeftTypeDesc, unionTypeDesc.PipeToken, middleTypeDesc)
-	} else if typeDescNode.Kind() == common.INTERSECTION_TYPE_DESC {
-		intersectionTypeDesc, ok := typeDescNode.(*tree.STIntersectionTypeDescriptorNode)
+	} else if typeDescNode.Kind() == st.INTERSECTION_TYPE_DESC {
+		intersectionTypeDesc, ok := typeDescNode.(*st.STIntersectionTypeDescriptorNode)
 		if !ok {
-			panic("expected tree.STIntersectionTypeDescriptorNode")
+			panic("expected st.STIntersectionTypeDescriptorNode")
 		}
 		middleTypeDesc := b.createOptionalTypeDesc(intersectionTypeDesc.RightTypeDesc, questionMarkToken)
 		typeDescNode = b.mergeTypesWithIntersection(intersectionTypeDesc.LeftTypeDesc,
 			intersectionTypeDesc.BitwiseAndToken, middleTypeDesc)
 	} else {
 		typeDescNode = b.validateForUsageOfVar(typeDescNode)
-		typeDescNode = tree.CreateOptionalTypeDescriptorNode(typeDescNode, questionMarkToken)
+		typeDescNode = st.CreateOptionalTypeDescriptorNode(typeDescNode, questionMarkToken)
 	}
 	return typeDescNode
 }
 
-func (b *BallerinaParser) parseUnaryExpression(isRhsExpr bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseUnaryExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
 	unaryOperator := b.parseUnaryOperator()
 	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_UNARY, isRhsExpr, false, isInConditionalExpr)
-	return tree.CreateUnaryExpressionNode(unaryOperator, expr)
+	return st.CreateUnaryExpressionNode(unaryOperator, expr)
 }
 
-func (b *BallerinaParser) parseUnaryOperator() tree.STNode {
+func (b *BallerinaParser) parseUnaryOperator() st.STNode {
 	token := b.peek()
 	if b.isUnaryOperator(token.Kind()) {
 		return b.consume()
@@ -6696,16 +6696,16 @@ func (b *BallerinaParser) parseUnaryOperator() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isUnaryOperator(kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isUnaryOperator(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.PLUS_TOKEN, common.MINUS_TOKEN, common.NEGATION_TOKEN, common.EXCLAMATION_MARK_TOKEN:
+	case st.PLUS_TOKEN, st.MINUS_TOKEN, st.NEGATION_TOKEN, st.EXCLAMATION_MARK_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseArrayTypeDescriptor(memberTypeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseArrayTypeDescriptor(memberTypeDesc st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR)
 	openBracketToken := b.parseOpenBracket()
 	arrayLengthNode := b.parseArrayLength()
@@ -6714,30 +6714,30 @@ func (b *BallerinaParser) parseArrayTypeDescriptor(memberTypeDesc tree.STNode) t
 	return b.createArrayTypeDesc(memberTypeDesc, openBracketToken, arrayLengthNode, closeBracketToken)
 }
 
-func (b *BallerinaParser) createArrayTypeDesc(memberTypeDesc tree.STNode, openBracketToken tree.STNode, arrayLengthNode tree.STNode, closeBracketToken tree.STNode) tree.STNode {
+func (b *BallerinaParser) createArrayTypeDesc(memberTypeDesc st.STNode, openBracketToken st.STNode, arrayLengthNode st.STNode, closeBracketToken st.STNode) st.STNode {
 	memberTypeDesc = b.validateForUsageOfVar(memberTypeDesc)
 	if arrayLengthNode != nil {
 		switch arrayLengthNode.Kind() {
-		case common.ASTERISK_LITERAL,
-			common.SIMPLE_NAME_REFERENCE,
-			common.QUALIFIED_NAME_REFERENCE:
+		case st.ASTERISK_LITERAL,
+			st.SIMPLE_NAME_REFERENCE,
+			st.QUALIFIED_NAME_REFERENCE:
 			break
-		case common.NUMERIC_LITERAL:
+		case st.NUMERIC_LITERAL:
 			numericLiteralKind := arrayLengthNode.ChildInBucket(0).Kind()
-			if (numericLiteralKind == common.DECIMAL_INTEGER_LITERAL_TOKEN) || (numericLiteralKind == common.HEX_INTEGER_LITERAL_TOKEN) {
+			if (numericLiteralKind == st.DECIMAL_INTEGER_LITERAL_TOKEN) || (numericLiteralKind == st.HEX_INTEGER_LITERAL_TOKEN) {
 				break
 			}
 		default:
-			openBracketToken = tree.CloneWithTrailingInvalidNodeMinutiae(openBracketToken,
+			openBracketToken = st.CloneWithTrailingInvalidNodeMinutiae(openBracketToken,
 				arrayLengthNode, &common.ERROR_INVALID_ARRAY_LENGTH)
-			arrayLengthNode = tree.CreateEmptyNode()
+			arrayLengthNode = st.CreateEmptyNode()
 		}
 	}
-	var arrayDimensions []tree.STNode
-	if memberTypeDesc.Kind() == common.ARRAY_TYPE_DESC {
-		innerArrayType, ok := memberTypeDesc.(*tree.STArrayTypeDescriptorNode)
+	var arrayDimensions []st.STNode
+	if memberTypeDesc.Kind() == st.ARRAY_TYPE_DESC {
+		innerArrayType, ok := memberTypeDesc.(*st.STArrayTypeDescriptorNode)
 		if !ok {
-			panic("expected tree.STArrayTypeDescriptorNode")
+			panic("expected st.STArrayTypeDescriptorNode")
 		}
 		innerArrayDimensions := innerArrayType.Dimensions
 		dimensionCount := innerArrayDimensions.BucketCount()
@@ -6747,23 +6747,23 @@ func (b *BallerinaParser) createArrayTypeDesc(memberTypeDesc tree.STNode, openBr
 		}
 		memberTypeDesc = innerArrayType.MemberTypeDesc
 	}
-	arrayDimension := tree.CreateArrayDimensionNode(openBracketToken, arrayLengthNode,
+	arrayDimension := st.CreateArrayDimensionNode(openBracketToken, arrayLengthNode,
 		closeBracketToken)
 	arrayDimensions = append(arrayDimensions, arrayDimension)
-	arrayDimensionNodeList := tree.CreateNodeList(arrayDimensions...)
-	return tree.CreateArrayTypeDescriptorNode(memberTypeDesc, arrayDimensionNodeList)
+	arrayDimensionNodeList := st.CreateNodeList(arrayDimensions...)
+	return st.CreateArrayTypeDescriptorNode(memberTypeDesc, arrayDimensionNodeList)
 }
 
-func (b *BallerinaParser) parseArrayLength() tree.STNode {
+func (b *BallerinaParser) parseArrayLength() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.ASTERISK_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.ASTERISK_TOKEN:
 		return b.parseBasicLiteral()
-	case common.CLOSE_BRACKET_TOKEN:
-		return tree.CreateEmptyNode()
-	case common.IDENTIFIER_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
+		return st.CreateEmptyNode()
+	case st.IDENTIFIER_TOKEN:
 		return b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_ARRAY_LENGTH)
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ARRAY_LENGTH)
@@ -6771,50 +6771,50 @@ func (b *BallerinaParser) parseArrayLength() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalAnnotations() tree.STNode {
+func (b *BallerinaParser) parseOptionalAnnotations() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATIONS)
-	var annotList []tree.STNode
+	var annotList []st.STNode
 	nextToken := b.peek()
-	for nextToken.Kind() == common.AT_TOKEN {
+	for nextToken.Kind() == st.AT_TOKEN {
 		annotList = append(annotList, b.parseAnnotation())
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateNodeList(annotList...)
+	return st.CreateNodeList(annotList...)
 }
 
-func (b *BallerinaParser) parseAnnotations() tree.STNode {
+func (b *BallerinaParser) parseAnnotations() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATIONS)
-	var annotList []tree.STNode
+	var annotList []st.STNode
 	annotList = append(annotList, b.parseAnnotation())
-	for b.peek().Kind() == common.AT_TOKEN {
+	for b.peek().Kind() == st.AT_TOKEN {
 		annotList = append(annotList, b.parseAnnotation())
 	}
 	b.endContext()
-	return tree.CreateNodeList(annotList...)
+	return st.CreateNodeList(annotList...)
 }
 
-func (b *BallerinaParser) parseAnnotation() tree.STNode {
+func (b *BallerinaParser) parseAnnotation() st.STNode {
 	atToken := b.parseAtToken()
-	var annotReference tree.STNode
+	var annotReference st.STNode
 	if b.isPredeclaredIdentifier(b.peek().Kind()) {
 		annotReference = b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_ANNOT_REFERENCE)
 	} else {
-		annotReference = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		annotReference = tree.CreateSimpleNameReferenceNode(annotReference)
+		annotReference = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		annotReference = st.CreateSimpleNameReferenceNode(annotReference)
 	}
-	var annotValue tree.STNode
-	if b.peek().Kind() == common.OPEN_BRACE_TOKEN {
+	var annotValue st.STNode
+	if b.peek().Kind() == st.OPEN_BRACE_TOKEN {
 		annotValue = b.parseMappingConstructorExpr()
 	} else {
-		annotValue = tree.CreateEmptyNode()
+		annotValue = st.CreateEmptyNode()
 	}
-	return tree.CreateAnnotationNode(atToken, annotReference, annotValue)
+	return st.CreateAnnotationNode(atToken, annotReference, annotValue)
 }
 
-func (b *BallerinaParser) parseAtToken() tree.STNode {
+func (b *BallerinaParser) parseAtToken() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.AT_TOKEN {
+	if nextToken.Kind() == st.AT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_AT)
@@ -6822,39 +6822,39 @@ func (b *BallerinaParser) parseAtToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMetaData() tree.STNode {
-	var docString tree.STNode
-	var annotations tree.STNode
+func (b *BallerinaParser) parseMetaData() st.STNode {
+	var docString st.STNode
+	var annotations st.STNode
 	switch b.peek().Kind() {
-	case common.DOCUMENTATION_STRING:
+	case st.DOCUMENTATION_STRING:
 		docString = b.parseMarkdownDocumentation()
 		annotations = b.parseOptionalAnnotations()
-	case common.AT_TOKEN:
-		docString = tree.CreateEmptyNode()
+	case st.AT_TOKEN:
+		docString = st.CreateEmptyNode()
 		annotations = b.parseOptionalAnnotations()
 	default:
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	}
 	return b.createMetadata(docString, annotations)
 }
 
-func (b *BallerinaParser) createMetadata(docString tree.STNode, annotations tree.STNode) tree.STNode {
+func (b *BallerinaParser) createMetadata(docString st.STNode, annotations st.STNode) st.STNode {
 	if (annotations == nil) && (docString == nil) {
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	} else {
-		return tree.CreateMetadataNode(docString, annotations)
+		return st.CreateMetadataNode(docString, annotations)
 	}
 }
 
-func (b *BallerinaParser) parseTypeTestExpression(lhsExpr tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeTestExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	isOrNotIsKeyword := b.parseIsOrNotIsKeyword()
 	typeDescriptor := b.parseTypeDescriptorInExpression(isInConditionalExpr)
-	return tree.CreateTypeTestExpressionNode(lhsExpr, isOrNotIsKeyword, typeDescriptor)
+	return st.CreateTypeTestExpressionNode(lhsExpr, isOrNotIsKeyword, typeDescriptor)
 }
 
-func (b *BallerinaParser) parseIsOrNotIsKeyword() tree.STNode {
+func (b *BallerinaParser) parseIsOrNotIsKeyword() st.STNode {
 	token := b.peek()
-	if (token.Kind() == common.IS_KEYWORD) || (token.Kind() == common.NOT_IS_KEYWORD) {
+	if (token.Kind() == st.IS_KEYWORD) || (token.Kind() == st.NOT_IS_KEYWORD) {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_IS_KEYWORD)
@@ -6862,39 +6862,39 @@ func (b *BallerinaParser) parseIsOrNotIsKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLocalTypeDefinitionStatement(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseLocalTypeDefinitionStatement(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LOCAL_TYPE_DEFINITION_STMT)
 	typeKeyword := b.parseTypeKeyword()
 	typeName := b.parseTypeName()
 	typeDescriptor := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_DEF)
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateLocalTypeDefinitionStatementNode(annots, typeKeyword, typeName, typeDescriptor,
+	return st.CreateLocalTypeDefinitionStatementNode(annots, typeKeyword, typeName, typeDescriptor,
 		semicolon)
 }
 
-func (b *BallerinaParser) parseExpressionStatement(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseExpressionStatement(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 	expression := b.parseActionOrExpressionInLhs(annots)
 	return b.getExpressionAsStatement(expression)
 }
 
-func (b *BallerinaParser) parseStatementStartWithExpr(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStatementStartWithExpr(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	expr := b.parseActionOrExpressionInLhs(annots)
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseStatementStartWithExprRhs(expression tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStatementStartWithExprRhs(expression st.STNode) st.STNode {
 	nextTokenKind := b.peek().Kind()
-	if b.isAction(expression) || (nextTokenKind == common.SEMICOLON_TOKEN) {
+	if b.isAction(expression) || (nextTokenKind == st.SEMICOLON_TOKEN) {
 		return b.getExpressionAsStatement(expression)
 	}
 	switch nextTokenKind {
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 		return b.parseAssignmentStmtRhs(expression)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		fallthrough
 	default:
 		if b.isCompoundAssignment(nextTokenKind) {
@@ -6911,147 +6911,147 @@ func (b *BallerinaParser) parseStatementStartWithExprRhs(expression tree.STNode)
 	}
 }
 
-func (b *BallerinaParser) isPossibleExpressionStatement(expression tree.STNode) bool {
+func (b *BallerinaParser) isPossibleExpressionStatement(expression st.STNode) bool {
 	switch expression.Kind() {
-	case common.METHOD_CALL,
-		common.FUNCTION_CALL,
-		common.CHECK_EXPRESSION,
-		common.REMOTE_METHOD_CALL_ACTION,
-		common.CHECK_ACTION,
-		common.BRACED_ACTION,
-		common.START_ACTION,
-		common.TRAP_ACTION,
-		common.FLUSH_ACTION,
-		common.ASYNC_SEND_ACTION,
-		common.SYNC_SEND_ACTION,
-		common.RECEIVE_ACTION,
-		common.WAIT_ACTION,
-		common.QUERY_ACTION,
-		common.COMMIT_ACTION:
+	case st.METHOD_CALL,
+		st.FUNCTION_CALL,
+		st.CHECK_EXPRESSION,
+		st.REMOTE_METHOD_CALL_ACTION,
+		st.CHECK_ACTION,
+		st.BRACED_ACTION,
+		st.START_ACTION,
+		st.TRAP_ACTION,
+		st.FLUSH_ACTION,
+		st.ASYNC_SEND_ACTION,
+		st.SYNC_SEND_ACTION,
+		st.RECEIVE_ACTION,
+		st.WAIT_ACTION,
+		st.QUERY_ACTION,
+		st.COMMIT_ACTION:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) getExpressionAsStatement(expression tree.STNode) tree.STNode {
+func (b *BallerinaParser) getExpressionAsStatement(expression st.STNode) st.STNode {
 	switch expression.Kind() {
-	case common.METHOD_CALL,
-		common.FUNCTION_CALL:
+	case st.METHOD_CALL,
+		st.FUNCTION_CALL:
 		return b.parseCallStatement(expression)
-	case common.CHECK_EXPRESSION:
+	case st.CHECK_EXPRESSION:
 		return b.parseCheckStatement(expression)
-	case common.REMOTE_METHOD_CALL_ACTION,
-		common.CHECK_ACTION,
-		common.BRACED_ACTION,
-		common.START_ACTION,
-		common.TRAP_ACTION,
-		common.FLUSH_ACTION,
-		common.ASYNC_SEND_ACTION,
-		common.SYNC_SEND_ACTION,
-		common.RECEIVE_ACTION,
-		common.WAIT_ACTION,
-		common.QUERY_ACTION,
-		common.COMMIT_ACTION,
-		common.CLIENT_RESOURCE_ACCESS_ACTION:
+	case st.REMOTE_METHOD_CALL_ACTION,
+		st.CHECK_ACTION,
+		st.BRACED_ACTION,
+		st.START_ACTION,
+		st.TRAP_ACTION,
+		st.FLUSH_ACTION,
+		st.ASYNC_SEND_ACTION,
+		st.SYNC_SEND_ACTION,
+		st.RECEIVE_ACTION,
+		st.WAIT_ACTION,
+		st.QUERY_ACTION,
+		st.COMMIT_ACTION,
+		st.CLIENT_RESOURCE_ACCESS_ACTION:
 		return b.parseActionStatement(expression)
 	default:
 		semicolon := b.parseSemicolon()
 		b.endContext()
 		expression = b.getExpression(expression)
-		exprStmt := tree.CreateExpressionStatementNode(common.INVALID_EXPRESSION_STATEMENT,
+		exprStmt := st.CreateExpressionStatementNode(st.INVALID_EXPRESSION_STATEMENT,
 			expression, semicolon)
-		exprStmt = tree.AddDiagnostic(exprStmt, &common.ERROR_INVALID_EXPRESSION_STATEMENT)
+		exprStmt = st.AddDiagnostic(exprStmt, &common.ERROR_INVALID_EXPRESSION_STATEMENT)
 		return exprStmt
 	}
 }
 
-func (b *BallerinaParser) parseArrayTypeDescriptorNode(indexedExpr tree.STIndexedExpressionNode) tree.STNode {
+func (b *BallerinaParser) parseArrayTypeDescriptorNode(indexedExpr st.STIndexedExpressionNode) st.STNode {
 	memberTypeDesc := b.getTypeDescFromExpr(indexedExpr.ContainerExpression)
-	lengthExprs, ok := indexedExpr.KeyExpression.(*tree.STNodeList)
+	lengthExprs, ok := indexedExpr.KeyExpression.(*st.STNodeList)
 	if !ok {
-		panic("expected tree.STNodeList")
+		panic("expected st.STNodeList")
 	}
 	if lengthExprs.IsEmpty() {
-		return b.createArrayTypeDesc(memberTypeDesc, indexedExpr.OpenBracket, tree.CreateEmptyNode(),
+		return b.createArrayTypeDesc(memberTypeDesc, indexedExpr.OpenBracket, st.CreateEmptyNode(),
 			indexedExpr.CloseBracket)
 	}
 	lengthExpr := lengthExprs.Get(0)
 	switch lengthExpr.Kind() {
-	case common.SIMPLE_NAME_REFERENCE:
-		nameRef, ok := lengthExpr.(*tree.STSimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		nameRef, ok := lengthExpr.(*st.STSimpleNameReferenceNode)
 		if !ok {
-			panic("expected tree.STSimpleNameReferenceNode")
+			panic("expected st.STSimpleNameReferenceNode")
 		}
 		if nameRef.Name.IsMissing() {
-			return b.createArrayTypeDesc(memberTypeDesc, indexedExpr.OpenBracket, tree.CreateEmptyNode(),
+			return b.createArrayTypeDesc(memberTypeDesc, indexedExpr.OpenBracket, st.CreateEmptyNode(),
 				indexedExpr.CloseBracket)
 		}
-	case common.ASTERISK_LITERAL,
-		common.QUALIFIED_NAME_REFERENCE:
+	case st.ASTERISK_LITERAL,
+		st.QUALIFIED_NAME_REFERENCE:
 		break
-	case common.NUMERIC_LITERAL:
+	case st.NUMERIC_LITERAL:
 		innerChildKind := lengthExpr.ChildInBucket(0).Kind()
-		if (innerChildKind == common.DECIMAL_INTEGER_LITERAL_TOKEN) || (innerChildKind == common.HEX_INTEGER_LITERAL_TOKEN) {
+		if (innerChildKind == st.DECIMAL_INTEGER_LITERAL_TOKEN) || (innerChildKind == st.HEX_INTEGER_LITERAL_TOKEN) {
 			break
 		}
 	default:
-		newOpenBracketWithDiagnostics := tree.CloneWithTrailingInvalidNodeMinutiae(
+		newOpenBracketWithDiagnostics := st.CloneWithTrailingInvalidNodeMinutiae(
 			indexedExpr.OpenBracket, lengthExpr, &common.ERROR_INVALID_ARRAY_LENGTH)
-		replacedNode := tree.Replace(&indexedExpr, indexedExpr.OpenBracket, newOpenBracketWithDiagnostics)
-		newIndexedExpr, ok := replacedNode.(*tree.STIndexedExpressionNode)
+		replacedNode := st.Replace(&indexedExpr, indexedExpr.OpenBracket, newOpenBracketWithDiagnostics)
+		newIndexedExpr, ok := replacedNode.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("expected STIndexedExpressionNode")
 		}
 		indexedExpr = *newIndexedExpr
-		lengthExpr = tree.CreateEmptyNode()
+		lengthExpr = st.CreateEmptyNode()
 	}
 	return b.createArrayTypeDesc(memberTypeDesc, indexedExpr.OpenBracket, lengthExpr, indexedExpr.CloseBracket)
 }
 
-func (b *BallerinaParser) parseCallStatement(expression tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseCallStatement(expression st.STNode) st.STNode {
 	return b.parseCallStatementOrCheckStatement(expression)
 }
 
-func (b *BallerinaParser) parseCheckStatement(expression tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseCheckStatement(expression st.STNode) st.STNode {
 	return b.parseCallStatementOrCheckStatement(expression)
 }
 
-func (b *BallerinaParser) parseCallStatementOrCheckStatement(expression tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseCallStatementOrCheckStatement(expression st.STNode) st.STNode {
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateExpressionStatementNode(common.CALL_STATEMENT, expression, semicolon)
+	return st.CreateExpressionStatementNode(st.CALL_STATEMENT, expression, semicolon)
 }
 
-func (b *BallerinaParser) parseActionStatement(action tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseActionStatement(action st.STNode) st.STNode {
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateExpressionStatementNode(common.ACTION_STATEMENT, action, semicolon)
+	return st.CreateExpressionStatementNode(st.ACTION_STATEMENT, action, semicolon)
 }
 
-func (b *BallerinaParser) parseClientResourceAccessAction(expression tree.STNode, rightArrow tree.STNode, slashToken tree.STNode, isRhsExpr bool, isInMatchGuard bool) tree.STNode {
+func (b *BallerinaParser) parseClientResourceAccessAction(expression st.STNode, rightArrow st.STNode, slashToken st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CLIENT_RESOURCE_ACCESS_ACTION)
 	resourceAccessPath := b.parseOptionalResourceAccessPath(isRhsExpr, isInMatchGuard)
 	resourceAccessMethodDot := b.parseOptionalResourceAccessMethodDot(isRhsExpr, isInMatchGuard)
-	resourceAccessMethodName := tree.CreateEmptyNode()
+	resourceAccessMethodName := st.CreateEmptyNode()
 	if resourceAccessMethodDot != nil {
-		resourceAccessMethodName = tree.CreateSimpleNameReferenceNode(b.parseFunctionName())
+		resourceAccessMethodName = st.CreateSimpleNameReferenceNode(b.parseFunctionName())
 	}
 	resourceMethodCallArgList := b.parseOptionalResourceAccessActionArgList(isRhsExpr, isInMatchGuard)
 	b.endContext()
-	return tree.CreateClientResourceAccessActionNode(expression, rightArrow, slashToken,
+	return st.CreateClientResourceAccessActionNode(expression, rightArrow, slashToken,
 		resourceAccessPath, resourceAccessMethodDot, resourceAccessMethodName, resourceMethodCallArgList)
 }
 
-func (b *BallerinaParser) parseOptionalResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) tree.STNode {
-	resourceAccessPath := tree.CreateEmptyNodeList()
+func (b *BallerinaParser) parseOptionalResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+	resourceAccessPath := st.CreateEmptyNodeList()
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN,
-		common.OPEN_BRACKET_TOKEN:
+	case st.IDENTIFIER_TOKEN,
+		st.OPEN_BRACKET_TOKEN:
 		resourceAccessPath = b.parseResourceAccessPath(isRhsExpr, isInMatchGuard)
-	case common.DOT_TOKEN,
-		common.OPEN_PAREN_TOKEN:
+	case st.DOT_TOKEN,
+		st.OPEN_PAREN_TOKEN:
 		break
 	default:
 		if b.isEndOfActionOrExpression(nextToken, isRhsExpr, isInMatchGuard) {
@@ -7063,13 +7063,13 @@ func (b *BallerinaParser) parseOptionalResourceAccessPath(isRhsExpr bool, isInMa
 	return resourceAccessPath
 }
 
-func (b *BallerinaParser) parseOptionalResourceAccessMethodDot(isRhsExpr bool, isInMatchGuard bool) tree.STNode {
-	dotToken := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseOptionalResourceAccessMethodDot(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+	dotToken := st.CreateEmptyNode()
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.DOT_TOKEN:
+	case st.DOT_TOKEN:
 		dotToken = b.consume()
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		break
 	default:
 		if b.isEndOfActionOrExpression(nextToken, isRhsExpr, isInMatchGuard) {
@@ -7081,11 +7081,11 @@ func (b *BallerinaParser) parseOptionalResourceAccessMethodDot(isRhsExpr bool, i
 	return dotToken
 }
 
-func (b *BallerinaParser) parseOptionalResourceAccessActionArgList(isRhsExpr bool, isInMatchGuard bool) tree.STNode {
-	argList := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseOptionalResourceAccessActionArgList(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+	argList := st.CreateEmptyNode()
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		argList = b.parseParenthesizedArgList()
 	default:
 		if b.isEndOfActionOrExpression(nextToken, isRhsExpr, isInMatchGuard) {
@@ -7097,11 +7097,11 @@ func (b *BallerinaParser) parseOptionalResourceAccessActionArgList(isRhsExpr boo
 	return argList
 }
 
-func (b *BallerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) tree.STNode {
-	var pathSegmentList []tree.STNode
+func (b *BallerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+	var pathSegmentList []st.STNode
 	pathSegment := b.parseResourceAccessSegment()
 	pathSegmentList = append(pathSegmentList, pathSegment)
-	var leadingSlash tree.STNode
+	var leadingSlash st.STNode
 	previousPathSegmentNode := pathSegment
 	for !b.isEndOfResourceAccessPathSegments(b.peek(), isRhsExpr, isInMatchGuard) {
 		leadingSlash = b.parseResourceAccessSegmentRhs(isRhsExpr, isInMatchGuard)
@@ -7109,7 +7109,7 @@ func (b *BallerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard
 			break
 		}
 		pathSegment = b.parseResourceAccessSegment()
-		if previousPathSegmentNode.Kind() == common.RESOURCE_ACCESS_REST_SEGMENT {
+		if previousPathSegmentNode.Kind() == st.RESOURCE_ACCESS_REST_SEGMENT {
 			b.updateLastNodeInListWithInvalidNode(pathSegmentList, leadingSlash, nil)
 			b.updateLastNodeInListWithInvalidNode(pathSegmentList, pathSegment,
 				&common.RESOURCE_ACCESS_SEGMENT_IS_NOT_ALLOWED_AFTER_REST_SEGMENT)
@@ -7119,15 +7119,15 @@ func (b *BallerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard
 			previousPathSegmentNode = pathSegment
 		}
 	}
-	return tree.CreateNodeList(pathSegmentList...)
+	return st.CreateNodeList(pathSegmentList...)
 }
 
-func (b *BallerinaParser) parseResourceAccessSegment() tree.STNode {
+func (b *BallerinaParser) parseResourceAccessSegment() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.consume()
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseComputedOrResourceAccessRestSegment(b.consume())
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_RESOURCE_ACCESS_PATH_SEGMENT)
@@ -7135,20 +7135,20 @@ func (b *BallerinaParser) parseResourceAccessSegment() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseComputedOrResourceAccessRestSegment(openBracket tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseComputedOrResourceAccessRestSegment(openBracket st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		ellipsisToken := b.consume()
 		expression := b.parseExpression()
 		closeBracketToken := b.parseCloseBracket()
-		return tree.CreateResourceAccessRestSegmentNode(openBracket, ellipsisToken,
+		return st.CreateResourceAccessRestSegmentNode(openBracket, ellipsisToken,
 			expression, closeBracketToken)
 	default:
 		if b.isValidExprStart(nextToken.Kind()) {
 			expression := b.parseExpression()
 			closeBracketToken := b.parseCloseBracket()
-			return tree.CreateComputedResourceAccessSegmentNode(openBracket, expression,
+			return st.CreateComputedResourceAccessSegmentNode(openBracket, expression,
 				closeBracketToken)
 		}
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_COMPUTED_SEGMENT_OR_REST_SEGMENT)
@@ -7156,10 +7156,10 @@ func (b *BallerinaParser) parseComputedOrResourceAccessRestSegment(openBracket t
 	}
 }
 
-func (b *BallerinaParser) parseResourceAccessSegmentRhs(isRhsExpr bool, isInMatchGuard bool) tree.STNode {
+func (b *BallerinaParser) parseResourceAccessSegmentRhs(isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		return b.consume()
 	default:
 		if b.isEndOfResourceAccessPathSegments(nextToken, isRhsExpr, isInMatchGuard) {
@@ -7170,46 +7170,46 @@ func (b *BallerinaParser) parseResourceAccessSegmentRhs(isRhsExpr bool, isInMatc
 	}
 }
 
-func (b *BallerinaParser) isEndOfResourceAccessPathSegments(nextToken tree.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
+func (b *BallerinaParser) isEndOfResourceAccessPathSegments(nextToken st.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
 	switch nextToken.Kind() {
-	case common.DOT_TOKEN, common.OPEN_PAREN_TOKEN:
+	case st.DOT_TOKEN, st.OPEN_PAREN_TOKEN:
 		return true
 	default:
 		return b.isEndOfActionOrExpression(nextToken, isRhsExpr, isInMatchGuard)
 	}
 }
 
-func (b *BallerinaParser) parseRemoteMethodCallOrClientResourceAccessOrAsyncSendAction(expression tree.STNode, isRhsExpr bool, isInMatchGuard bool) tree.STNode {
+func (b *BallerinaParser) parseRemoteMethodCallOrClientResourceAccessOrAsyncSendAction(expression st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	rightArrow := b.parseRightArrow()
 	return b.parseClientResourceAccessOrAsyncSendActionRhs(expression, rightArrow, isRhsExpr, isInMatchGuard)
 }
 
-func (b *BallerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expression tree.STNode, rightArrow tree.STNode, isRhsExpr bool, isInMatchGuard bool) tree.STNode {
-	var name tree.STNode
+func (b *BallerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expression st.STNode, rightArrow st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
+	var name st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		functionKeyword := b.consume()
-		name = tree.CreateSimpleNameReferenceNode(functionKeyword)
+		name = st.CreateSimpleNameReferenceNode(functionKeyword)
 		return b.parseAsyncSendAction(expression, rightArrow, name)
-	case common.CONTINUE_KEYWORD,
-		common.COMMIT_KEYWORD:
+	case st.CONTINUE_KEYWORD,
+		st.COMMIT_KEYWORD:
 		name = b.getKeywordAsSimpleNameRef()
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		slashToken := b.consume()
 		return b.parseClientResourceAccessAction(expression, rightArrow, slashToken, isRhsExpr, isInMatchGuard)
 	default:
-		if nextToken.Kind() == common.IDENTIFIER_TOKEN {
+		if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 			nextNextToken := b.getNextNextToken()
-			if ((nextNextToken.Kind() == common.OPEN_PAREN_TOKEN) || b.isEndOfActionOrExpression(nextNextToken, isRhsExpr, isInMatchGuard)) || nextToken.IsMissing() {
-				name = tree.CreateSimpleNameReferenceNode(b.parseFunctionName())
+			if ((nextNextToken.Kind() == st.OPEN_PAREN_TOKEN) || b.isEndOfActionOrExpression(nextNextToken, isRhsExpr, isInMatchGuard)) || nextToken.IsMissing() {
+				name = st.CreateSimpleNameReferenceNode(b.parseFunctionName())
 				break
 			}
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_REMOTE_OR_RESOURCE_CALL_OR_ASYNC_SEND_RHS)
 		if solution.Action == ACTION_KEEP {
-			name = tree.CreateSimpleNameReferenceNode(b.parseFunctionName())
+			name = st.CreateSimpleNameReferenceNode(b.parseFunctionName())
 			break
 		}
 		return b.parseClientResourceAccessOrAsyncSendActionRhs(expression, rightArrow, isRhsExpr, isInMatchGuard)
@@ -7217,23 +7217,23 @@ func (b *BallerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expressi
 	return b.parseRemoteCallOrAsyncSendEnd(expression, rightArrow, name)
 }
 
-func (b *BallerinaParser) parseRemoteCallOrAsyncSendEnd(expression tree.STNode, rightArrow tree.STNode, name tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseRemoteCallOrAsyncSendEnd(expression st.STNode, rightArrow st.STNode, name st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseRemoteMethodCallAction(expression, rightArrow, name)
-	case common.SEMICOLON_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.COMMA_TOKEN,
-		common.FROM_KEYWORD,
-		common.JOIN_KEYWORD,
-		common.ON_KEYWORD,
-		common.LET_KEYWORD,
-		common.WHERE_KEYWORD,
-		common.ORDER_KEYWORD,
-		common.LIMIT_KEYWORD,
-		common.SELECT_KEYWORD:
+	case st.SEMICOLON_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.COMMA_TOKEN,
+		st.FROM_KEYWORD,
+		st.JOIN_KEYWORD,
+		st.ON_KEYWORD,
+		st.LET_KEYWORD,
+		st.WHERE_KEYWORD,
+		st.ORDER_KEYWORD,
+		st.LIMIT_KEYWORD,
+		st.SELECT_KEYWORD:
 		return b.parseAsyncSendAction(expression, rightArrow, name)
 	default:
 		if isGroupOrCollectKeyword(nextToken) {
@@ -7244,21 +7244,21 @@ func (b *BallerinaParser) parseRemoteCallOrAsyncSendEnd(expression tree.STNode, 
 	}
 }
 
-func (b *BallerinaParser) parseAsyncSendAction(expression tree.STNode, rightArrow tree.STNode, peerWorker tree.STNode) tree.STNode {
-	return tree.CreateAsyncSendActionNode(expression, rightArrow, peerWorker)
+func (b *BallerinaParser) parseAsyncSendAction(expression st.STNode, rightArrow st.STNode, peerWorker st.STNode) st.STNode {
+	return st.CreateAsyncSendActionNode(expression, rightArrow, peerWorker)
 }
 
-func (b *BallerinaParser) parseRemoteMethodCallAction(expression tree.STNode, rightArrow tree.STNode, name tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseRemoteMethodCallAction(expression st.STNode, rightArrow st.STNode, name st.STNode) st.STNode {
 	openParenToken := b.parseArgListOpenParenthesis()
 	arguments := b.parseArgsList()
 	closeParenToken := b.parseArgListCloseParenthesis()
-	return tree.CreateRemoteMethodCallActionNode(expression, rightArrow, name, openParenToken, arguments,
+	return st.CreateRemoteMethodCallActionNode(expression, rightArrow, name, openParenToken, arguments,
 		closeParenToken)
 }
 
-func (b *BallerinaParser) parseRightArrow() tree.STNode {
+func (b *BallerinaParser) parseRightArrow() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.RIGHT_ARROW_TOKEN {
+	if nextToken.Kind() == st.RIGHT_ARROW_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_RIGHT_ARROW)
@@ -7266,40 +7266,40 @@ func (b *BallerinaParser) parseRightArrow() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMapTypeDescriptor(mapKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseMapTypeDescriptor(mapKeyword st.STNode) st.STNode {
 	typeParameter := b.parseTypeParameter()
-	return tree.CreateMapTypeDescriptorNode(mapKeyword, typeParameter)
+	return st.CreateMapTypeDescriptorNode(mapKeyword, typeParameter)
 }
 
-func (b *BallerinaParser) parseParameterizedTypeDescriptor(keywordToken tree.STNode) tree.STNode {
-	var typeParamNode tree.STNode
+func (b *BallerinaParser) parseParameterizedTypeDescriptor(keywordToken st.STNode) st.STNode {
+	var typeParamNode st.STNode
 	nextToken := b.peek()
-	if nextToken.Kind() == common.LT_TOKEN {
+	if nextToken.Kind() == st.LT_TOKEN {
 		typeParamNode = b.parseTypeParameter()
 	} else {
-		typeParamNode = tree.CreateEmptyNode()
+		typeParamNode = st.CreateEmptyNode()
 	}
 	parameterizedTypeDescKind := b.getParameterizedTypeDescKind(keywordToken)
-	return tree.CreateParameterizedTypeDescriptorNode(parameterizedTypeDescKind, keywordToken,
+	return st.CreateParameterizedTypeDescriptorNode(parameterizedTypeDescKind, keywordToken,
 		typeParamNode)
 }
 
-func (b *BallerinaParser) getParameterizedTypeDescKind(keywordToken tree.STNode) common.SyntaxKind {
+func (b *BallerinaParser) getParameterizedTypeDescKind(keywordToken st.STNode) st.SyntaxKind {
 	switch keywordToken.Kind() {
-	case common.TYPEDESC_KEYWORD:
-		return common.TYPEDESC_TYPE_DESC
-	case common.FUTURE_KEYWORD:
-		return common.FUTURE_TYPE_DESC
-	case common.XML_KEYWORD:
-		return common.XML_TYPE_DESC
+	case st.TYPEDESC_KEYWORD:
+		return st.TYPEDESC_TYPE_DESC
+	case st.FUTURE_KEYWORD:
+		return st.FUTURE_TYPE_DESC
+	case st.XML_KEYWORD:
+		return st.XML_TYPE_DESC
 	default:
-		return common.ERROR_TYPE_DESC
+		return st.ERROR_TYPE_DESC
 	}
 }
 
-func (b *BallerinaParser) parseGTToken() tree.STToken {
+func (b *BallerinaParser) parseGTToken() st.STToken {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.GT_TOKEN {
+	if nextToken.Kind() == st.GT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_GT)
@@ -7307,9 +7307,9 @@ func (b *BallerinaParser) parseGTToken() tree.STToken {
 	}
 }
 
-func (b *BallerinaParser) parseLTToken() tree.STToken {
+func (b *BallerinaParser) parseLTToken() st.STToken {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.LT_TOKEN {
+	if nextToken.Kind() == st.LT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_LT)
@@ -7317,15 +7317,15 @@ func (b *BallerinaParser) parseLTToken() tree.STToken {
 	}
 }
 
-func (b *BallerinaParser) parseNilLiteral() tree.STNode {
+func (b *BallerinaParser) parseNilLiteral() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NIL_LITERAL)
 	openParenthesisToken := b.parseOpenParenthesis()
 	closeParenthesisToken := b.parseCloseParenthesis()
 	b.endContext()
-	return tree.CreateNilLiteralNode(openParenthesisToken, closeParenthesisToken)
+	return st.CreateNilLiteralNode(openParenthesisToken, closeParenthesisToken)
 }
 
-func (b *BallerinaParser) parseAnnotationDeclaration(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnnotationDeclaration(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATION_DECL)
 	annotationKeyword := b.parseAnnotationKeyword()
 	annotDecl := b.parseAnnotationDeclFromType(metadata, qualifier, constKeyword, annotationKeyword)
@@ -7333,9 +7333,9 @@ func (b *BallerinaParser) parseAnnotationDeclaration(metadata tree.STNode, quali
 	return annotDecl
 }
 
-func (b *BallerinaParser) parseAnnotationKeyword() tree.STNode {
+func (b *BallerinaParser) parseAnnotationKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ANNOTATION_KEYWORD {
+	if token.Kind() == st.ANNOTATION_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ANNOTATION_KEYWORD)
@@ -7343,10 +7343,10 @@ func (b *BallerinaParser) parseAnnotationKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAnnotationDeclFromType(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode, annotationKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnnotationDeclFromType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.parseAnnotationDeclWithOptionalType(metadata, qualifier, constKeyword, annotationKeyword)
 	default:
 		if b.isTypeStartingToken(nextToken.Kind()) {
@@ -7361,9 +7361,9 @@ func (b *BallerinaParser) parseAnnotationDeclFromType(metadata tree.STNode, qual
 		annotTag)
 }
 
-func (b *BallerinaParser) parseAnnotationTag() tree.STNode {
+func (b *BallerinaParser) parseAnnotationTag() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IDENTIFIER_TOKEN {
+	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ANNOTATION_TAG)
@@ -7371,22 +7371,22 @@ func (b *BallerinaParser) parseAnnotationTag() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAnnotationDeclWithOptionalType(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode, annotationKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnnotationDeclWithOptionalType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode) st.STNode {
 	typeDescOrAnnotTag := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_ANNOT_DECL_OPTIONAL_TYPE)
-	if typeDescOrAnnotTag.Kind() == common.QUALIFIED_NAME_REFERENCE {
+	if typeDescOrAnnotTag.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		annotTag := b.parseAnnotationTag()
 		return b.parseAnnotationDeclAttachPoints(metadata, qualifier, constKeyword, annotationKeyword,
 			typeDescOrAnnotTag, annotTag)
 	}
 	nextToken := b.peek()
-	if (nextToken.Kind() == common.IDENTIFIER_TOKEN) || b.isValidTypeContinuationToken(nextToken) {
+	if (nextToken.Kind() == st.IDENTIFIER_TOKEN) || b.isValidTypeContinuationToken(nextToken) {
 		typeDesc := b.parseComplexTypeDescriptor(typeDescOrAnnotTag,
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANNOTATION_DECL, false)
 		annotTag := b.parseAnnotationTag()
 		return b.parseAnnotationDeclAttachPoints(metadata, qualifier, constKeyword, annotationKeyword, typeDesc,
 			annotTag)
 	}
-	simplenameNode, ok := typeDescOrAnnotTag.(*tree.STSimpleNameReferenceNode)
+	simplenameNode, ok := typeDescOrAnnotTag.(*st.STSimpleNameReferenceNode)
 	if !ok {
 		panic("parseAnnotationDeclWithOptionalType: expected STSimpleNameReferenceNode")
 	}
@@ -7394,17 +7394,17 @@ func (b *BallerinaParser) parseAnnotationDeclWithOptionalType(metadata tree.STNo
 	return b.parseAnnotationDeclRhs(metadata, qualifier, constKeyword, annotationKeyword, annotTag)
 }
 
-func (b *BallerinaParser) parseAnnotationDeclRhs(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode, annotationKeyword tree.STNode, typeDescOrAnnotTag tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnnotationDeclRhs(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode, typeDescOrAnnotTag st.STNode) st.STNode {
 	nextToken := b.peek()
-	var typeDesc tree.STNode
-	var annotTag tree.STNode
+	var typeDesc st.STNode
+	var annotTag st.STNode
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		typeDesc = typeDescOrAnnotTag
 		annotTag = b.parseAnnotationTag()
-	case common.SEMICOLON_TOKEN,
-		common.ON_KEYWORD:
-		typeDesc = tree.CreateEmptyNode()
+	case st.SEMICOLON_TOKEN,
+		st.ON_KEYWORD:
+		typeDesc = st.CreateEmptyNode()
 		annotTag = typeDescOrAnnotTag
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ANNOT_DECL_RHS)
@@ -7414,15 +7414,15 @@ func (b *BallerinaParser) parseAnnotationDeclRhs(metadata tree.STNode, qualifier
 		annotTag)
 }
 
-func (b *BallerinaParser) parseAnnotationDeclAttachPoints(metadata tree.STNode, qualifier tree.STNode, constKeyword tree.STNode, annotationKeyword tree.STNode, typeDesc tree.STNode, annotTag tree.STNode) tree.STNode {
-	var onKeyword tree.STNode
-	var attachPoints tree.STNode
+func (b *BallerinaParser) parseAnnotationDeclAttachPoints(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode, typeDesc st.STNode, annotTag st.STNode) st.STNode {
+	var onKeyword st.STNode
+	var attachPoints st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.SEMICOLON_TOKEN:
-		onKeyword = tree.CreateEmptyNode()
-		attachPoints = tree.CreateEmptyNodeList()
-	case common.ON_KEYWORD:
+	case st.SEMICOLON_TOKEN:
+		onKeyword = st.CreateEmptyNode()
+		attachPoints = st.CreateEmptyNodeList()
+	case st.ON_KEYWORD:
 		onKeyword = b.parseOnKeyword()
 		attachPoints = b.parseAnnotationAttachPoints()
 		onKeyword = b.cloneWithDiagnosticIfListEmpty(attachPoints, onKeyword,
@@ -7433,22 +7433,22 @@ func (b *BallerinaParser) parseAnnotationDeclAttachPoints(metadata tree.STNode, 
 			annotTag)
 	}
 	semicolonToken := b.parseSemicolon()
-	return tree.CreateAnnotationDeclarationNode(metadata, qualifier, constKeyword, annotationKeyword,
+	return st.CreateAnnotationDeclarationNode(metadata, qualifier, constKeyword, annotationKeyword,
 		typeDesc, annotTag, onKeyword, attachPoints, semicolonToken)
 }
 
-func (b *BallerinaParser) parseAnnotationAttachPoints() tree.STNode {
+func (b *BallerinaParser) parseAnnotationAttachPoints() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOT_ATTACH_POINTS_LIST)
-	var attachPoints []tree.STNode
+	var attachPoints []st.STNode
 	nextToken := b.peek()
 	if b.isEndAnnotAttachPointList(nextToken.Kind()) {
 		b.endContext()
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	attachPoint := b.parseAnnotationAttachPoint()
 	attachPoints = append(attachPoints, attachPoint)
 	nextToken = b.peek()
-	var leadingComma tree.STNode
+	var leadingComma st.STNode
 	for !b.isEndAnnotAttachPointList(nextToken.Kind()) {
 		leadingComma = b.parseAttachPointEnd()
 		if leadingComma == nil {
@@ -7457,10 +7457,10 @@ func (b *BallerinaParser) parseAnnotationAttachPoints() tree.STNode {
 		attachPoints = append(attachPoints, leadingComma)
 		attachPoint = b.parseAnnotationAttachPoint()
 		if attachPoint == nil {
-			missingAttachPointIdent := tree.CreateMissingToken(common.TYPE_KEYWORD, nil)
-			identList := tree.CreateNodeList(missingAttachPointIdent)
-			attachPoint = tree.CreateAnnotationAttachPointNode(tree.CreateEmptyNode(), identList)
-			attachPoint = tree.AddDiagnostic(attachPoint,
+			missingAttachPointIdent := st.CreateMissingToken(st.TYPE_KEYWORD, nil)
+			identList := st.CreateNodeList(missingAttachPointIdent)
+			attachPoint = st.CreateAnnotationAttachPointNode(st.CreateEmptyNode(), identList)
+			attachPoint = st.AddDiagnostic(attachPoint,
 				&common.ERROR_MISSING_ANNOTATION_ATTACH_POINT)
 			attachPoints = append(attachPoints, attachPoint)
 			break
@@ -7468,20 +7468,20 @@ func (b *BallerinaParser) parseAnnotationAttachPoints() tree.STNode {
 		attachPoints = append(attachPoints, attachPoint)
 		nextToken = b.peek()
 	}
-	if (tree.LastToken(attachPoint).IsMissing() && (b.tokenReader.Peek().Kind() == common.IDENTIFIER_TOKEN)) && (!b.tokenReader.Head().HasTrailingNewLine()) {
+	if (st.LastToken(attachPoint).IsMissing() && (b.tokenReader.Peek().Kind() == st.IDENTIFIER_TOKEN)) && (!b.tokenReader.Head().HasTrailingNewLine()) {
 		nextNonVirtualToken := b.tokenReader.Read()
 		b.updateLastNodeInListWithInvalidNode(attachPoints, nextNonVirtualToken,
 			&common.ERROR_INVALID_TOKEN, nextNonVirtualToken.Text())
 	}
 	b.endContext()
-	return tree.CreateNodeList(attachPoints...)
+	return st.CreateNodeList(attachPoints...)
 }
 
-func (b *BallerinaParser) parseAttachPointEnd() tree.STNode {
+func (b *BallerinaParser) parseAttachPointEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.SEMICOLON_TOKEN:
+	case st.SEMICOLON_TOKEN:
 		return nil
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.consume()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ATTACH_POINT_END)
@@ -7489,38 +7489,38 @@ func (b *BallerinaParser) parseAttachPointEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndAnnotAttachPointList(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndAnnotAttachPointList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.EOF_TOKEN, common.SEMICOLON_TOKEN:
+	case st.EOF_TOKEN, st.SEMICOLON_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseAnnotationAttachPoint() tree.STNode {
+func (b *BallerinaParser) parseAnnotationAttachPoint() st.STNode {
 	switch b.peek().Kind() {
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		return nil
-	case common.ANNOTATION_KEYWORD,
-		common.EXTERNAL_KEYWORD,
-		common.VAR_KEYWORD,
-		common.CONST_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.WORKER_KEYWORD,
-		common.SOURCE_KEYWORD:
+	case st.ANNOTATION_KEYWORD,
+		st.EXTERNAL_KEYWORD,
+		st.VAR_KEYWORD,
+		st.CONST_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.WORKER_KEYWORD,
+		st.SOURCE_KEYWORD:
 		sourceKeyword := b.parseSourceKeyword()
 		return b.parseAttachPointIdent(sourceKeyword)
-	case common.OBJECT_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.PARAMETER_KEYWORD,
-		common.RETURN_KEYWORD,
-		common.SERVICE_KEYWORD,
-		common.FIELD_KEYWORD,
-		common.RECORD_KEYWORD,
-		common.CLASS_KEYWORD:
-		sourceKeyword := tree.CreateEmptyNode()
+	case st.OBJECT_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.PARAMETER_KEYWORD,
+		st.RETURN_KEYWORD,
+		st.SERVICE_KEYWORD,
+		st.FIELD_KEYWORD,
+		st.RECORD_KEYWORD,
+		st.CLASS_KEYWORD:
+		sourceKeyword := st.CreateEmptyNode()
 		firstIdent := b.consume()
 		return b.parseDualAttachPointIdent(sourceKeyword, firstIdent)
 	default:
@@ -7529,9 +7529,9 @@ func (b *BallerinaParser) parseAnnotationAttachPoint() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSourceKeyword() tree.STNode {
+func (b *BallerinaParser) parseSourceKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.SOURCE_KEYWORD {
+	if token.Kind() == st.SOURCE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SOURCE_KEYWORD)
@@ -7539,27 +7539,27 @@ func (b *BallerinaParser) parseSourceKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAttachPointIdent(sourceKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAttachPointIdent(sourceKeyword st.STNode) st.STNode {
 	switch b.peek().Kind() {
-	case common.ANNOTATION_KEYWORD,
-		common.EXTERNAL_KEYWORD,
-		common.VAR_KEYWORD,
-		common.CONST_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.WORKER_KEYWORD:
+	case st.ANNOTATION_KEYWORD,
+		st.EXTERNAL_KEYWORD,
+		st.VAR_KEYWORD,
+		st.CONST_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.WORKER_KEYWORD:
 		firstIdent := b.consume()
-		identList := tree.CreateNodeList(firstIdent)
-		return tree.CreateAnnotationAttachPointNode(sourceKeyword, identList)
-	case common.OBJECT_KEYWORD,
-		common.RESOURCE_KEYWORD,
-		common.RECORD_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.PARAMETER_KEYWORD,
-		common.RETURN_KEYWORD,
-		common.SERVICE_KEYWORD,
-		common.FIELD_KEYWORD,
-		common.CLASS_KEYWORD:
+		identList := st.CreateNodeList(firstIdent)
+		return st.CreateAnnotationAttachPointNode(sourceKeyword, identList)
+	case st.OBJECT_KEYWORD,
+		st.RESOURCE_KEYWORD,
+		st.RECORD_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.PARAMETER_KEYWORD,
+		st.RETURN_KEYWORD,
+		st.SERVICE_KEYWORD,
+		st.FIELD_KEYWORD,
+		st.CLASS_KEYWORD:
 		firstIdent := b.consume()
 		return b.parseDualAttachPointIdent(sourceKeyword, firstIdent)
 	default:
@@ -7568,31 +7568,31 @@ func (b *BallerinaParser) parseAttachPointIdent(sourceKeyword tree.STNode) tree.
 	}
 }
 
-func (b *BallerinaParser) parseDualAttachPointIdent(sourceKeyword tree.STNode, firstIdent tree.STNode) tree.STNode {
-	var secondIdent tree.STNode
+func (b *BallerinaParser) parseDualAttachPointIdent(sourceKeyword st.STNode, firstIdent st.STNode) st.STNode {
+	var secondIdent st.STNode
 	switch firstIdent.Kind() {
-	case common.OBJECT_KEYWORD:
+	case st.OBJECT_KEYWORD:
 		secondIdent = b.parseIdentAfterObjectIdent()
-	case common.RESOURCE_KEYWORD:
+	case st.RESOURCE_KEYWORD:
 		secondIdent = b.parseFunctionIdent()
-	case common.RECORD_KEYWORD:
+	case st.RECORD_KEYWORD:
 		secondIdent = b.parseFieldIdent()
-	case common.SERVICE_KEYWORD:
+	case st.SERVICE_KEYWORD:
 		return b.parseServiceAttachPoint(sourceKeyword, firstIdent)
-	case common.TYPE_KEYWORD, common.FUNCTION_KEYWORD, common.PARAMETER_KEYWORD,
-		common.RETURN_KEYWORD, common.FIELD_KEYWORD, common.CLASS_KEYWORD:
+	case st.TYPE_KEYWORD, st.FUNCTION_KEYWORD, st.PARAMETER_KEYWORD,
+		st.RETURN_KEYWORD, st.FIELD_KEYWORD, st.CLASS_KEYWORD:
 		fallthrough
 	default:
-		identList := tree.CreateNodeList(firstIdent)
-		return tree.CreateAnnotationAttachPointNode(sourceKeyword, identList)
+		identList := st.CreateNodeList(firstIdent)
+		return st.CreateAnnotationAttachPointNode(sourceKeyword, identList)
 	}
-	identList := tree.CreateNodeList(firstIdent, secondIdent)
-	return tree.CreateAnnotationAttachPointNode(sourceKeyword, identList)
+	identList := st.CreateNodeList(firstIdent, secondIdent)
+	return st.CreateAnnotationAttachPointNode(sourceKeyword, identList)
 }
 
-func (b *BallerinaParser) parseRemoteIdent() tree.STNode {
+func (b *BallerinaParser) parseRemoteIdent() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.REMOTE_KEYWORD {
+	if token.Kind() == st.REMOTE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_REMOTE_IDENT)
@@ -7600,29 +7600,29 @@ func (b *BallerinaParser) parseRemoteIdent() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseServiceAttachPoint(sourceKeyword tree.STNode, firstIdent tree.STNode) tree.STNode {
-	var identList tree.STNode
+func (b *BallerinaParser) parseServiceAttachPoint(sourceKeyword st.STNode, firstIdent st.STNode) st.STNode {
+	var identList st.STNode
 	token := b.peek()
 	switch token.Kind() {
-	case common.REMOTE_KEYWORD:
+	case st.REMOTE_KEYWORD:
 		secondIdent := b.parseRemoteIdent()
 		thirdIdent := b.parseFunctionIdent()
-		identList = tree.CreateNodeList(firstIdent, secondIdent, thirdIdent)
-		return tree.CreateAnnotationAttachPointNode(sourceKeyword, identList)
-	case common.COMMA_TOKEN,
-		common.SEMICOLON_TOKEN:
-		identList = tree.CreateNodeList(firstIdent)
-		return tree.CreateAnnotationAttachPointNode(sourceKeyword, identList)
+		identList = st.CreateNodeList(firstIdent, secondIdent, thirdIdent)
+		return st.CreateAnnotationAttachPointNode(sourceKeyword, identList)
+	case st.COMMA_TOKEN,
+		st.SEMICOLON_TOKEN:
+		identList = st.CreateNodeList(firstIdent)
+		return st.CreateAnnotationAttachPointNode(sourceKeyword, identList)
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SERVICE_IDENT_RHS)
 		return b.parseServiceAttachPoint(sourceKeyword, firstIdent)
 	}
 }
 
-func (b *BallerinaParser) parseIdentAfterObjectIdent() tree.STNode {
+func (b *BallerinaParser) parseIdentAfterObjectIdent() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.FUNCTION_KEYWORD, common.FIELD_KEYWORD:
+	case st.FUNCTION_KEYWORD, st.FIELD_KEYWORD:
 		return b.consume()
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_IDENT_AFTER_OBJECT_IDENT)
@@ -7630,9 +7630,9 @@ func (b *BallerinaParser) parseIdentAfterObjectIdent() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionIdent() tree.STNode {
+func (b *BallerinaParser) parseFunctionIdent() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FUNCTION_KEYWORD {
+	if token.Kind() == st.FUNCTION_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FUNCTION_IDENT)
@@ -7640,9 +7640,9 @@ func (b *BallerinaParser) parseFunctionIdent() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldIdent() tree.STNode {
+func (b *BallerinaParser) parseFieldIdent() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FIELD_KEYWORD {
+	if token.Kind() == st.FIELD_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FIELD_IDENT)
@@ -7650,12 +7650,12 @@ func (b *BallerinaParser) parseFieldIdent() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLNamespaceDeclaration(isModuleVar bool) tree.STNode {
+func (b *BallerinaParser) parseXMLNamespaceDeclaration(isModuleVar bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION)
 	xmlnsKeyword := b.parseXMLNSKeyword()
 	namespaceUri := b.parseSimpleConstExpr()
 	for !b.isValidXMLNameSpaceURI(namespaceUri) {
-		xmlnsKeyword = tree.CloneWithTrailingInvalidNodeMinutiae(xmlnsKeyword, namespaceUri,
+		xmlnsKeyword = st.CloneWithTrailingInvalidNodeMinutiae(xmlnsKeyword, namespaceUri,
 			&common.ERROR_INVALID_XML_NAMESPACE_URI)
 		namespaceUri = b.parseSimpleConstExpr()
 	}
@@ -7664,9 +7664,9 @@ func (b *BallerinaParser) parseXMLNamespaceDeclaration(isModuleVar bool) tree.ST
 	return xmlnsDecl
 }
 
-func (b *BallerinaParser) parseXMLNSKeyword() tree.STNode {
+func (b *BallerinaParser) parseXMLNSKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.XMLNS_KEYWORD {
+	if token.Kind() == st.XMLNS_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_XMLNS_KEYWORD)
@@ -7674,37 +7674,37 @@ func (b *BallerinaParser) parseXMLNSKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isValidXMLNameSpaceURI(expr tree.STNode) bool {
+func (b *BallerinaParser) isValidXMLNameSpaceURI(expr st.STNode) bool {
 	switch expr.Kind() {
-	case common.STRING_LITERAL, common.QUALIFIED_NAME_REFERENCE, common.SIMPLE_NAME_REFERENCE:
+	case st.STRING_LITERAL, st.QUALIFIED_NAME_REFERENCE, st.SIMPLE_NAME_REFERENCE:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseSimpleConstExpr() tree.STNode {
+func (b *BallerinaParser) parseSimpleConstExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION)
 	expr := b.parseSimpleConstExprInternal()
 	b.endContext()
 	return expr
 }
 
-func (b *BallerinaParser) parseSimpleConstExprInternal() tree.STNode {
+func (b *BallerinaParser) parseSimpleConstExprInternal() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.STRING_LITERAL_TOKEN,
-		common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.NULL_KEYWORD:
+	case st.STRING_LITERAL_TOKEN,
+		st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.NULL_KEYWORD:
 		return b.parseBasicLiteral()
-	case common.PLUS_TOKEN, common.MINUS_TOKEN:
+	case st.PLUS_TOKEN, st.MINUS_TOKEN:
 		return b.parseSignedIntOrFloat()
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseNilLiteral()
 	default:
 		if b.isPredeclaredIdentifier(nextToken.Kind()) {
@@ -7715,14 +7715,14 @@ func (b *BallerinaParser) parseSimpleConstExprInternal() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLDeclRhs(xmlnsKeyword tree.STNode, namespaceUri tree.STNode, isModuleVar bool) tree.STNode {
-	asKeyword := tree.CreateEmptyNode()
-	namespacePrefix := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseXMLDeclRhs(xmlnsKeyword st.STNode, namespaceUri st.STNode, isModuleVar bool) st.STNode {
+	asKeyword := st.CreateEmptyNode()
+	namespacePrefix := st.CreateEmptyNode()
 	switch b.peek().Kind() {
-	case common.AS_KEYWORD:
+	case st.AS_KEYWORD:
 		asKeyword = b.parseAsKeyword()
 		namespacePrefix = b.parseNamespacePrefix()
-	case common.SEMICOLON_TOKEN:
+	case st.SEMICOLON_TOKEN:
 		break
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_XML_NAMESPACE_PREFIX_DECL)
@@ -7730,16 +7730,16 @@ func (b *BallerinaParser) parseXMLDeclRhs(xmlnsKeyword tree.STNode, namespaceUri
 	}
 	semicolon := b.parseSemicolon()
 	if isModuleVar {
-		return tree.CreateModuleXMLNamespaceDeclarationNode(xmlnsKeyword, namespaceUri, asKeyword,
+		return st.CreateModuleXMLNamespaceDeclarationNode(xmlnsKeyword, namespaceUri, asKeyword,
 			namespacePrefix, semicolon)
 	}
-	return tree.CreateXMLNamespaceDeclarationNode(xmlnsKeyword, namespaceUri, asKeyword, namespacePrefix,
+	return st.CreateXMLNamespaceDeclarationNode(xmlnsKeyword, namespaceUri, asKeyword, namespacePrefix,
 		semicolon)
 }
 
-func (b *BallerinaParser) parseNamespacePrefix() tree.STNode {
+func (b *BallerinaParser) parseNamespacePrefix() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.IDENTIFIER_TOKEN {
+	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_NAMESPACE_PREFIX)
@@ -7747,7 +7747,7 @@ func (b *BallerinaParser) parseNamespacePrefix() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseNamedWorkerDeclaration(annots tree.STNode, qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseNamedWorkerDeclaration(annots st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL)
 	transactionalKeyword := b.getTransactionalKeyword(qualifiers)
 	workerKeyword := b.parseWorkerKeyword()
@@ -7756,56 +7756,56 @@ func (b *BallerinaParser) parseNamedWorkerDeclaration(annots tree.STNode, qualif
 	workerBody := b.parseBlockNode()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateNamedWorkerDeclarationNode(annots, transactionalKeyword, workerKeyword, workerName,
+	return st.CreateNamedWorkerDeclarationNode(annots, transactionalKeyword, workerKeyword, workerName,
 		returnTypeDesc, workerBody, onFailClause)
 }
 
-func (b *BallerinaParser) getTransactionalKeyword(qualifierList []tree.STNode) tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) getTransactionalKeyword(qualifierList []st.STNode) st.STNode {
+	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
 		qualifier := qualifierList[i]
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
-			qualifierToken, ok := qualifier.(tree.STToken)
+			qualifierToken, ok := qualifier.(st.STToken)
 			if !ok {
 				panic("expected STToken")
 			}
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
 				&common.ERROR_DUPLICATE_QUALIFIER, qualifierToken.Text())
-		} else if qualifier.Kind() == common.TRANSACTIONAL_KEYWORD {
+		} else if qualifier.Kind() == st.TRANSACTIONAL_KEYWORD {
 			validatedList = append(validatedList, qualifier)
 		} else if len(qualifierList) == nextIndex {
 			b.addInvalidNodeToNextToken(qualifier, &common.ERROR_QUALIFIER_NOT_ALLOWED,
-				tree.ToToken(qualifier).Text())
+				st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
-	var transactionalKeyword tree.STNode
+	var transactionalKeyword st.STNode
 	if len(validatedList) == 0 {
-		transactionalKeyword = tree.CreateEmptyNode()
+		transactionalKeyword = st.CreateEmptyNode()
 	} else {
 		transactionalKeyword = validatedList[0]
 	}
 	return transactionalKeyword
 }
 
-func (b *BallerinaParser) parseReturnTypeDescriptor() tree.STNode {
+func (b *BallerinaParser) parseReturnTypeDescriptor() st.STNode {
 	token := b.peek()
-	if token.Kind() != common.RETURNS_KEYWORD {
-		return tree.CreateEmptyNode()
+	if token.Kind() != st.RETURNS_KEYWORD {
+		return st.CreateEmptyNode()
 	}
 	returnsKeyword := b.consume()
 	annot := b.parseOptionalAnnotations()
 	ty := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RETURN_TYPE_DESC)
-	return tree.CreateReturnTypeDescriptorNode(returnsKeyword, annot, ty)
+	return st.CreateReturnTypeDescriptorNode(returnsKeyword, annot, ty)
 }
 
-func (b *BallerinaParser) parseWorkerKeyword() tree.STNode {
+func (b *BallerinaParser) parseWorkerKeyword() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.WORKER_KEYWORD {
+	if nextToken.Kind() == st.WORKER_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_WORKER_KEYWORD)
@@ -7813,9 +7813,9 @@ func (b *BallerinaParser) parseWorkerKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseWorkerName() tree.STNode {
+func (b *BallerinaParser) parseWorkerName() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.IDENTIFIER_TOKEN {
+	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_WORKER_NAME)
@@ -7823,18 +7823,18 @@ func (b *BallerinaParser) parseWorkerName() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLockStatement() tree.STNode {
+func (b *BallerinaParser) parseLockStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LOCK_STMT)
 	lockKeyword := b.parseLockKeyword()
 	blockStatement := b.parseBlockNode()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateLockStatementNode(lockKeyword, blockStatement, onFailClause)
+	return st.CreateLockStatementNode(lockKeyword, blockStatement, onFailClause)
 }
 
-func (b *BallerinaParser) parseLockKeyword() tree.STNode {
+func (b *BallerinaParser) parseLockKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.LOCK_KEYWORD {
+	if token.Kind() == st.LOCK_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_LOCK_KEYWORD)
@@ -7842,22 +7842,22 @@ func (b *BallerinaParser) parseLockKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseUnionTypeDescriptor(leftTypeDesc tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) tree.STNode {
+func (b *BallerinaParser) parseUnionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	pipeToken := b.consume()
 	rightTypeDesc := b.parseTypeDescriptorInternalWithPrecedence(nil, context, isTypedBindingPattern, false,
 		TYPE_PRECEDENCE_UNION)
 	return b.mergeTypesWithUnion(leftTypeDesc, pipeToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) createUnionTypeDesc(leftTypeDesc tree.STNode, pipeToken tree.STNode, rightTypeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) createUnionTypeDesc(leftTypeDesc st.STNode, pipeToken st.STNode, rightTypeDesc st.STNode) st.STNode {
 	leftTypeDesc = b.validateForUsageOfVar(leftTypeDesc)
 	rightTypeDesc = b.validateForUsageOfVar(rightTypeDesc)
-	return tree.CreateUnionTypeDescriptorNode(leftTypeDesc, pipeToken, rightTypeDesc)
+	return st.CreateUnionTypeDescriptorNode(leftTypeDesc, pipeToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) parsePipeToken() tree.STNode {
+func (b *BallerinaParser) parsePipeToken() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.PIPE_TOKEN {
+	if token.Kind() == st.PIPE_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PIPE)
@@ -7865,26 +7865,26 @@ func (b *BallerinaParser) parsePipeToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isTypeStartingToken(nodeKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isTypeStartingToken(nodeKind st.SyntaxKind) bool {
 	return isTypeStartingToken(nodeKind, b.getNextNextToken())
 }
 
-func (b *BallerinaParser) isSimpleTypeInExpression(nodeKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isSimpleTypeInExpression(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
-	case common.VAR_KEYWORD, common.READONLY_KEYWORD:
+	case st.VAR_KEYWORD, st.READONLY_KEYWORD:
 		return false
 	default:
 		return isSimpleType(nodeKind)
 	}
 }
 
-func (b *BallerinaParser) isQualifiedIdentifierPredeclaredPrefix(nodeKind common.SyntaxKind) bool {
-	return (isPredeclaredPrefix(nodeKind) && (b.getNextNextToken().Kind() == common.COLON_TOKEN))
+func (b *BallerinaParser) isQualifiedIdentifierPredeclaredPrefix(nodeKind st.SyntaxKind) bool {
+	return (isPredeclaredPrefix(nodeKind) && (b.getNextNextToken().Kind() == st.COLON_TOKEN))
 }
 
-func (b *BallerinaParser) parseForkKeyword() tree.STNode {
+func (b *BallerinaParser) parseForkKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FORK_KEYWORD {
+	if token.Kind() == st.FORK_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FORK_KEYWORD)
@@ -7892,11 +7892,11 @@ func (b *BallerinaParser) parseForkKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseForkStatement() tree.STNode {
+func (b *BallerinaParser) parseForkStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FORK_STMT)
 	forkKeyword := b.parseForkKeyword()
 	openBrace := b.parseOpenBrace()
-	var workers []tree.STNode
+	var workers []st.STNode
 	for !b.isEndOfStatements() {
 		stmt := b.parseStatement()
 		if stmt == nil {
@@ -7906,11 +7906,11 @@ func (b *BallerinaParser) parseForkStatement() tree.STNode {
 			continue
 		}
 		switch stmt.Kind() {
-		case common.NAMED_WORKER_DECLARATION:
+		case st.NAMED_WORKER_DECLARATION:
 			workers = append(workers, stmt)
 		default:
 			if len(workers) == 0 {
-				openBrace = tree.CloneWithTrailingInvalidNodeMinutiae(openBrace, stmt,
+				openBrace = st.CloneWithTrailingInvalidNodeMinutiae(openBrace, stmt,
 					&common.ERROR_ONLY_NAMED_WORKERS_ALLOWED_HERE)
 			} else {
 				b.updateLastNodeInListWithInvalidNode(workers, stmt,
@@ -7918,29 +7918,29 @@ func (b *BallerinaParser) parseForkStatement() tree.STNode {
 			}
 		}
 	}
-	namedWorkerDeclarations := tree.CreateNodeList(workers...)
+	namedWorkerDeclarations := st.CreateNodeList(workers...)
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	forkStmt := tree.CreateForkStatementNode(forkKeyword, openBrace, namedWorkerDeclarations, closeBrace)
+	forkStmt := st.CreateForkStatementNode(forkKeyword, openBrace, namedWorkerDeclarations, closeBrace)
 	if b.isNodeListEmpty(namedWorkerDeclarations) {
-		return tree.AddDiagnostic(forkStmt,
+		return st.AddDiagnostic(forkStmt,
 			&common.ERROR_MISSING_NAMED_WORKER_DECLARATION_IN_FORK_STMT)
 	}
 	return forkStmt
 }
 
-func (b *BallerinaParser) parseTrapExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTrapExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	trapKeyword := b.parseTrapKeyword()
 	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_TRAP, isRhsExpr, allowActions, isInConditionalExpr)
 	if b.isAction(expr) {
-		return tree.CreateTrapExpressionNode(common.TRAP_ACTION, trapKeyword, expr)
+		return st.CreateTrapExpressionNode(st.TRAP_ACTION, trapKeyword, expr)
 	}
-	return tree.CreateTrapExpressionNode(common.TRAP_EXPRESSION, trapKeyword, expr)
+	return st.CreateTrapExpressionNode(st.TRAP_EXPRESSION, trapKeyword, expr)
 }
 
-func (b *BallerinaParser) parseTrapKeyword() tree.STNode {
+func (b *BallerinaParser) parseTrapKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.TRAP_KEYWORD {
+	if token.Kind() == st.TRAP_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TRAP_KEYWORD)
@@ -7948,27 +7948,27 @@ func (b *BallerinaParser) parseTrapKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseListConstructorExpr() tree.STNode {
+func (b *BallerinaParser) parseListConstructorExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR)
 	openBracket := b.parseOpenBracket()
 	listMembers := b.parseListMembers()
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
-	return tree.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
+	return st.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
 }
 
-func (b *BallerinaParser) parseListMembers() tree.STNode {
-	var listMembers []tree.STNode
+func (b *BallerinaParser) parseListMembers() st.STNode {
+	var listMembers []st.STNode
 	if b.isEndOfListConstructor(b.peek().Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	listMember := b.parseListMember()
 	listMembers = append(listMembers, listMember)
 	return b.parseListMembersInner(listMembers)
 }
 
-func (b *BallerinaParser) parseListMembersInner(listMembers []tree.STNode) tree.STNode {
-	var listConstructorMemberEnd tree.STNode
+func (b *BallerinaParser) parseListMembersInner(listMembers []st.STNode) st.STNode {
+	var listConstructorMemberEnd st.STNode
 	for !b.isEndOfListConstructor(b.peek().Kind()) {
 		listConstructorMemberEnd = b.parseListConstructorMemberEnd()
 		if listConstructorMemberEnd == nil {
@@ -7978,39 +7978,39 @@ func (b *BallerinaParser) parseListMembersInner(listMembers []tree.STNode) tree.
 		listMember := b.parseListMember()
 		listMembers = append(listMembers, listMember)
 	}
-	return tree.CreateNodeList(listMembers...)
+	return st.CreateNodeList(listMembers...)
 }
 
-func (b *BallerinaParser) parseListMember() tree.STNode {
+func (b *BallerinaParser) parseListMember() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.ELLIPSIS_TOKEN {
+	if nextToken.Kind() == st.ELLIPSIS_TOKEN {
 		return b.parseSpreadMember()
 	} else {
 		return b.parseExpression()
 	}
 }
 
-func (b *BallerinaParser) parseSpreadMember() tree.STNode {
+func (b *BallerinaParser) parseSpreadMember() st.STNode {
 	ellipsis := b.parseEllipsis()
 	expr := b.parseExpression()
-	return tree.CreateSpreadMemberNode(ellipsis, expr)
+	return st.CreateSpreadMemberNode(ellipsis, expr)
 }
 
-func (b *BallerinaParser) isEndOfListConstructor(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfListConstructor(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACKET_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseListConstructorMemberEnd() tree.STNode {
+func (b *BallerinaParser) parseListConstructorMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.consume()
-	case common.CLOSE_BRACKET_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_MEMBER_END)
@@ -8018,7 +8018,7 @@ func (b *BallerinaParser) parseListConstructorMemberEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseForEachStatement() tree.STNode {
+func (b *BallerinaParser) parseForEachStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FOREACH_STMT)
 	forEachKeyword := b.parseForEachKeyword()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_FOREACH_STMT)
@@ -8027,13 +8027,13 @@ func (b *BallerinaParser) parseForEachStatement() tree.STNode {
 	blockStatement := b.parseBlockNode()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateForEachStatementNode(forEachKeyword, typedBindingPattern, inKeyword, actionOrExpr,
+	return st.CreateForEachStatementNode(forEachKeyword, typedBindingPattern, inKeyword, actionOrExpr,
 		blockStatement, onFailClause)
 }
 
-func (b *BallerinaParser) parseForEachKeyword() tree.STNode {
+func (b *BallerinaParser) parseForEachKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FOREACH_KEYWORD {
+	if token.Kind() == st.FOREACH_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FOREACH_KEYWORD)
@@ -8041,9 +8041,9 @@ func (b *BallerinaParser) parseForEachKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseInKeyword() tree.STNode {
+func (b *BallerinaParser) parseInKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.IN_KEYWORD {
+	if token.Kind() == st.IN_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_IN_KEYWORD)
@@ -8051,52 +8051,52 @@ func (b *BallerinaParser) parseInKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeCastExpr(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeCastExpr(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TYPE_CAST)
 	ltToken := b.parseLTToken()
 	return b.parseTypeCastExprInner(ltToken, isRhsExpr, allowActions, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTypeCastExprInner(ltToken tree.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseTypeCastExprInner(ltToken st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	typeCastParam := b.parseTypeCastParam()
 	gtToken := b.parseGTToken()
 	b.endContext()
 	expression := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_EXPRESSION_ACTION, isRhsExpr, allowActions, isInConditionalExpr)
-	return tree.CreateTypeCastExpressionNode(ltToken, typeCastParam, gtToken, expression)
+	return st.CreateTypeCastExpressionNode(ltToken, typeCastParam, gtToken, expression)
 }
 
-func (b *BallerinaParser) parseTypeCastParam() tree.STNode {
-	var annot tree.STNode
-	var ty tree.STNode
+func (b *BallerinaParser) parseTypeCastParam() st.STNode {
+	var annot st.STNode
+	var ty st.STNode
 	token := b.peek()
 	switch token.Kind() {
-	case common.AT_TOKEN:
+	case st.AT_TOKEN:
 		annot = b.parseOptionalAnnotations()
 		token = b.peek()
 		if b.isTypeStartingToken(token.Kind()) {
 			ty = b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS)
 		} else {
-			ty = tree.CreateEmptyNode()
+			ty = st.CreateEmptyNode()
 		}
 	default:
-		annot = tree.CreateEmptyNode()
+		annot = st.CreateEmptyNode()
 		ty = b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS)
 	}
-	return tree.CreateTypeCastParamNode(b.getAnnotations(annot), ty)
+	return st.CreateTypeCastParamNode(b.getAnnotations(annot), ty)
 }
 
-func (b *BallerinaParser) parseTableConstructorExprRhs(tableKeyword tree.STNode, keySpecifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTableConstructorExprRhs(tableKeyword st.STNode, keySpecifier st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR)
 	openBracket := b.parseOpenBracket()
 	rowList := b.parseRowList()
 	closeBracket := b.parseCloseBracket()
-	return tree.CreateTableConstructorExpressionNode(tableKeyword, keySpecifier, openBracket, rowList,
+	return st.CreateTableConstructorExpressionNode(tableKeyword, keySpecifier, openBracket, rowList,
 		closeBracket)
 }
 
-func (b *BallerinaParser) parseTableKeyword() tree.STNode {
+func (b *BallerinaParser) parseTableKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.TABLE_KEYWORD {
+	if token.Kind() == st.TABLE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TABLE_KEYWORD)
@@ -8104,16 +8104,16 @@ func (b *BallerinaParser) parseTableKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRowList() tree.STNode {
+func (b *BallerinaParser) parseRowList() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfTableRowList(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
-	var mappings []tree.STNode
+	var mappings []st.STNode
 	mapExpr := b.parseMappingConstructorExpr()
 	mappings = append(mappings, mapExpr)
 	nextToken = b.peek()
-	var rowEnd tree.STNode
+	var rowEnd st.STNode
 	for !b.isEndOfTableRowList(nextToken.Kind()) {
 		rowEnd = b.parseTableRowEnd()
 		if rowEnd == nil {
@@ -8124,25 +8124,25 @@ func (b *BallerinaParser) parseRowList() tree.STNode {
 		mappings = append(mappings, mapExpr)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(mappings...)
+	return st.CreateNodeList(mappings...)
 }
 
-func (b *BallerinaParser) isEndOfTableRowList(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfTableRowList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACKET_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return true
-	case common.COMMA_TOKEN, common.OPEN_BRACE_TOKEN:
+	case st.COMMA_TOKEN, st.OPEN_BRACE_TOKEN:
 		return false
 	default:
 		return b.isEndOfMappingConstructor(tokenKind)
 	}
 }
 
-func (b *BallerinaParser) parseTableRowEnd() tree.STNode {
+func (b *BallerinaParser) parseTableRowEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACKET_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_TABLE_ROW_END)
@@ -8150,19 +8150,19 @@ func (b *BallerinaParser) parseTableRowEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseKeySpecifier() tree.STNode {
+func (b *BallerinaParser) parseKeySpecifier() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_KEY_SPECIFIER)
 	keyKeyword := b.parseKeyKeyword()
 	openParen := b.parseOpenParenthesis()
 	fieldNames := b.parseFieldNames()
 	closeParen := b.parseCloseParenthesis()
 	b.endContext()
-	return tree.CreateKeySpecifierNode(keyKeyword, openParen, fieldNames, closeParen)
+	return st.CreateKeySpecifierNode(keyKeyword, openParen, fieldNames, closeParen)
 }
 
-func (b *BallerinaParser) parseKeyKeyword() tree.STNode {
+func (b *BallerinaParser) parseKeyKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.KEY_KEYWORD {
+	if token.Kind() == st.KEY_KEYWORD {
 		return b.consume()
 	}
 	if isKeyKeyword(token) {
@@ -8172,19 +8172,19 @@ func (b *BallerinaParser) parseKeyKeyword() tree.STNode {
 	return b.parseKeyKeyword()
 }
 
-func (b *BallerinaParser) getKeyKeyword(token tree.STToken) tree.STNode {
-	return tree.CreateTokenWithDiagnostics(common.KEY_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
+func (b *BallerinaParser) getKeyKeyword(token st.STToken) st.STNode {
+	return st.CreateTokenWithDiagnostics(st.KEY_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) getUnderscoreKeyword(token tree.STToken) tree.STToken {
-	return tree.CreateTokenWithDiagnostics(common.UNDERSCORE_KEYWORD, token.LeadingMinutiae(),
+func (b *BallerinaParser) getUnderscoreKeyword(token st.STToken) st.STToken {
+	return st.CreateTokenWithDiagnostics(st.UNDERSCORE_KEYWORD, token.LeadingMinutiae(),
 		token.TrailingMinutiae(), token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseNaturalKeyword() tree.STNode {
+func (b *BallerinaParser) parseNaturalKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.NATURAL_KEYWORD {
+	if token.Kind() == st.NATURAL_KEYWORD {
 		return b.consume()
 	}
 	if b.isNaturalKeyword(token) {
@@ -8194,40 +8194,40 @@ func (b *BallerinaParser) parseNaturalKeyword() tree.STNode {
 	return b.parseNaturalKeyword()
 }
 
-func (b *BallerinaParser) isNaturalKeyword(node tree.STNode) bool {
-	token, isToken := node.(tree.STToken)
+func (b *BallerinaParser) isNaturalKeyword(node st.STNode) bool {
+	token, isToken := node.(st.STToken)
 	if isToken {
 		return isNaturalKeyword(token)
 	}
-	if node.Kind() != common.SIMPLE_NAME_REFERENCE {
+	if node.Kind() != st.SIMPLE_NAME_REFERENCE {
 		return false
 	}
-	simpleNameNode, ok := node.(*tree.STSimpleNameReferenceNode)
+	simpleNameNode, ok := node.(*st.STSimpleNameReferenceNode)
 	if !ok {
 		panic("isNaturalKeyword: expected STSimpleNameReferenceNode")
 	}
-	nameToken, ok := simpleNameNode.Name.(tree.STToken)
+	nameToken, ok := simpleNameNode.Name.(st.STToken)
 	if !ok {
 		panic("isNaturalKeyword: expected STToken")
 	}
 	return isNaturalKeyword(nameToken)
 }
 
-func (b *BallerinaParser) getNaturalKeyword(token tree.STToken) tree.STNode {
-	return tree.CreateTokenWithDiagnostics(common.NATURAL_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
+func (b *BallerinaParser) getNaturalKeyword(token st.STToken) st.STNode {
+	return st.CreateTokenWithDiagnostics(st.NATURAL_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseFieldNames() tree.STNode {
+func (b *BallerinaParser) parseFieldNames() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfFieldNamesList(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
-	var fieldNames []tree.STNode
+	var fieldNames []st.STNode
 	fieldName := b.parseVariableName()
 	fieldNames = append(fieldNames, fieldName)
 	nextToken = b.peek()
-	var leadingComma tree.STNode
+	var leadingComma st.STNode
 	for !b.isEndOfFieldNamesList(nextToken.Kind()) {
 		leadingComma = b.parseComma()
 		fieldNames = append(fieldNames, leadingComma)
@@ -8235,21 +8235,21 @@ func (b *BallerinaParser) parseFieldNames() tree.STNode {
 		fieldNames = append(fieldNames, fieldName)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(fieldNames...)
+	return st.CreateNodeList(fieldNames...)
 }
 
-func (b *BallerinaParser) isEndOfFieldNamesList(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfFieldNamesList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.COMMA_TOKEN, common.IDENTIFIER_TOKEN:
+	case st.COMMA_TOKEN, st.IDENTIFIER_TOKEN:
 		return false
 	default:
 		return true
 	}
 }
 
-func (b *BallerinaParser) parseErrorKeyword() tree.STNode {
+func (b *BallerinaParser) parseErrorKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ERROR_KEYWORD {
+	if token.Kind() == st.ERROR_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ERROR_KEYWORD)
@@ -8257,18 +8257,18 @@ func (b *BallerinaParser) parseErrorKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseStreamTypeDescriptor(streamKeywordToken tree.STNode) tree.STNode {
-	var streamTypeParamsNode tree.STNode
+func (b *BallerinaParser) parseStreamTypeDescriptor(streamKeywordToken st.STNode) st.STNode {
+	var streamTypeParamsNode st.STNode
 	nextToken := b.peek()
-	if nextToken.Kind() == common.LT_TOKEN {
+	if nextToken.Kind() == st.LT_TOKEN {
 		streamTypeParamsNode = b.parseStreamTypeParamsNode()
 	} else {
-		streamTypeParamsNode = tree.CreateEmptyNode()
+		streamTypeParamsNode = st.CreateEmptyNode()
 	}
-	return tree.CreateStreamTypeDescriptorNode(streamKeywordToken, streamTypeParamsNode)
+	return st.CreateStreamTypeDescriptorNode(streamKeywordToken, streamTypeParamsNode)
 }
 
-func (b *BallerinaParser) parseStreamTypeParamsNode() tree.STNode {
+func (b *BallerinaParser) parseStreamTypeParamsNode() st.STNode {
 	ltToken := b.parseLTToken()
 	b.startContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_STREAM_TYPE_DESC)
 	leftTypeDescNode := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_STREAM_TYPE_DESC)
@@ -8277,26 +8277,26 @@ func (b *BallerinaParser) parseStreamTypeParamsNode() tree.STNode {
 	return streamTypedesc
 }
 
-func (b *BallerinaParser) parseStreamTypeParamsNodeInner(ltToken tree.STNode, leftTypeDescNode tree.STNode) tree.STNode {
-	var commaToken tree.STNode
-	var rightTypeDescNode tree.STNode
+func (b *BallerinaParser) parseStreamTypeParamsNodeInner(ltToken st.STNode, leftTypeDescNode st.STNode) st.STNode {
+	var commaToken st.STNode
+	var rightTypeDescNode st.STNode
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		commaToken = b.parseComma()
 		rightTypeDescNode = b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_STREAM_TYPE_DESC)
-	case common.GT_TOKEN:
-		commaToken = tree.CreateEmptyNode()
-		rightTypeDescNode = tree.CreateEmptyNode()
+	case st.GT_TOKEN:
+		commaToken = st.CreateEmptyNode()
+		rightTypeDescNode = st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_STREAM_TYPE_FIRST_PARAM_RHS)
 		return b.parseStreamTypeParamsNodeInner(ltToken, leftTypeDescNode)
 	}
 	gtToken := b.parseGTToken()
-	return tree.CreateStreamTypeParamsNode(ltToken, leftTypeDescNode, commaToken, rightTypeDescNode,
+	return st.CreateStreamTypeParamsNode(ltToken, leftTypeDescNode, commaToken, rightTypeDescNode,
 		gtToken)
 }
 
-func (b *BallerinaParser) parseLetExpression(isRhsExpr bool, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseLetExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
 	letKeyword := b.parseLetKeyword()
 	letVarDeclarations := b.parseLetVarDeclarations(common.PARSER_RULE_CONTEXT_LET_EXPR_LET_VAR_DECL, isRhsExpr, false)
 	inKeyword := b.parseInKeyword()
@@ -8304,12 +8304,12 @@ func (b *BallerinaParser) parseLetExpression(isRhsExpr bool, isInConditionalExpr
 		&common.ERROR_MISSING_LET_VARIABLE_DECLARATION)
 	expression := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION, isRhsExpr, false,
 		isInConditionalExpr)
-	return tree.CreateLetExpressionNode(letKeyword, letVarDeclarations, inKeyword, expression)
+	return st.CreateLetExpressionNode(letKeyword, letVarDeclarations, inKeyword, expression)
 }
 
-func (b *BallerinaParser) parseLetKeyword() tree.STNode {
+func (b *BallerinaParser) parseLetKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.LET_KEYWORD {
+	if token.Kind() == st.LET_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_LET_KEYWORD)
@@ -8317,18 +8317,18 @@ func (b *BallerinaParser) parseLetKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLetVarDeclarations(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseLetVarDeclarations(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) st.STNode {
 	b.startContext(context)
-	var varDecls []tree.STNode
+	var varDecls []st.STNode
 	nextToken := b.peek()
 	if isEndOfLetVarDeclarations(nextToken, b.getNextNextToken()) {
 		b.endContext()
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	varDec := b.parseLetVarDecl(context, isRhsExpr, allowActions)
 	varDecls = append(varDecls, varDec)
 	nextToken = b.peek()
-	var leadingComma tree.STNode
+	var leadingComma st.STNode
 	for !isEndOfLetVarDeclarations(nextToken, b.getNextNextToken()) {
 		leadingComma = b.parseComma()
 		varDecls = append(varDecls, leadingComma)
@@ -8337,77 +8337,77 @@ func (b *BallerinaParser) parseLetVarDeclarations(context common.ParserRuleConte
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateNodeList(varDecls...)
+	return st.CreateNodeList(varDecls...)
 }
 
-func (b *BallerinaParser) parseLetVarDecl(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseLetVarDecl(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) st.STNode {
 	annot := b.parseOptionalAnnotations()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_LET_EXPR_LET_VAR_DECL)
 	assign := b.parseAssignOp()
-	var expression tree.STNode
+	var expression st.STNode
 	if context == common.PARSER_RULE_CONTEXT_LET_CLAUSE_LET_VAR_DECL {
 		expression = b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, allowActions)
 	} else {
 		expression = b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET, isRhsExpr, false)
 	}
-	return tree.CreateLetVariableDeclarationNode(annot, typedBindingPattern, assign, expression)
+	return st.CreateLetVariableDeclarationNode(annot, typedBindingPattern, assign, expression)
 }
 
-func (b *BallerinaParser) parseTemplateExpression() tree.STNode {
-	ty := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseTemplateExpression() st.STNode {
+	ty := st.CreateEmptyNode()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	content := b.parseTemplateContent()
 	endingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
-	return tree.CreateTemplateExpressionNode(common.RAW_TEMPLATE_EXPRESSION, ty, startingBackTick,
+	return st.CreateTemplateExpressionNode(st.RAW_TEMPLATE_EXPRESSION, ty, startingBackTick,
 		content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseTemplateContent() tree.STNode {
-	var items []tree.STNode
+func (b *BallerinaParser) parseTemplateContent() st.STNode {
+	var items []st.STNode
 	nextToken := b.peek()
 	for !b.isEndOfBacktickContent(nextToken.Kind()) {
 		contentItem := b.parseTemplateItem()
 		items = append(items, contentItem)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(items...)
+	return st.CreateNodeList(items...)
 }
 
-func (b *BallerinaParser) isEndOfBacktickContent(kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfBacktickContent(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.EOF_TOKEN, common.BACKTICK_TOKEN:
+	case st.EOF_TOKEN, st.BACKTICK_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseTemplateItem() tree.STNode {
+func (b *BallerinaParser) parseTemplateItem() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.INTERPOLATION_START_TOKEN {
+	if nextToken.Kind() == st.INTERPOLATION_START_TOKEN {
 		return b.parseInterpolation()
 	}
-	if nextToken.Kind() != common.TEMPLATE_STRING {
+	if nextToken.Kind() != st.TEMPLATE_STRING {
 		nextToken = b.consume()
-		return tree.CreateLiteralValueTokenWithDiagnostics(common.TEMPLATE_STRING,
+		return st.CreateLiteralValueTokenWithDiagnostics(st.TEMPLATE_STRING,
 			nextToken.Text(), nextToken.LeadingMinutiae(), nextToken.TrailingMinutiae(),
 			nextToken.Diagnostics())
 	}
 	return b.consume()
 }
 
-func (b *BallerinaParser) parseStringTemplateExpression() tree.STNode {
+func (b *BallerinaParser) parseStringTemplateExpression() st.STNode {
 	ty := b.parseStringKeyword()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	content := b.parseTemplateContent()
 	endingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_END)
-	return tree.CreateTemplateExpressionNode(common.STRING_TEMPLATE_EXPRESSION, ty, startingBackTick,
+	return st.CreateTemplateExpressionNode(st.STRING_TEMPLATE_EXPRESSION, ty, startingBackTick,
 		content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseStringKeyword() tree.STNode {
+func (b *BallerinaParser) parseStringKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.STRING_KEYWORD {
+	if token.Kind() == st.STRING_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_STRING_KEYWORD)
@@ -8415,21 +8415,21 @@ func (b *BallerinaParser) parseStringKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLTemplateExpression() tree.STNode {
+func (b *BallerinaParser) parseXMLTemplateExpression() st.STNode {
 	xmlKeyword := b.parseXMLKeyword()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	if startingBackTick.IsMissing() {
-		return b.createMissingTemplateExpressionNode(xmlKeyword, common.XML_TEMPLATE_EXPRESSION)
+		return b.createMissingTemplateExpressionNode(xmlKeyword, st.XML_TEMPLATE_EXPRESSION)
 	}
 	content := b.parseTemplateContentAsXML()
 	endingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_END)
-	return tree.CreateTemplateExpressionNode(common.XML_TEMPLATE_EXPRESSION, xmlKeyword,
+	return st.CreateTemplateExpressionNode(st.XML_TEMPLATE_EXPRESSION, xmlKeyword,
 		startingBackTick, content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseXMLKeyword() tree.STNode {
+func (b *BallerinaParser) parseXMLKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.XML_KEYWORD {
+	if token.Kind() == st.XML_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_XML_KEYWORD)
@@ -8437,14 +8437,14 @@ func (b *BallerinaParser) parseXMLKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTemplateContentAsXML() tree.STNode {
-	var expressions []tree.STNode
+func (b *BallerinaParser) parseTemplateContentAsXML() st.STNode {
+	var expressions []st.STNode
 	var xmlStringBuilder strings.Builder
 	nextToken := b.peek()
 	for !b.isEndOfBacktickContent(nextToken.Kind()) {
 		contentItem := b.parseTemplateItem()
-		if contentItem.Kind() == common.TEMPLATE_STRING {
-			contentToken, ok := contentItem.(tree.STToken)
+		if contentItem.Kind() == st.TEMPLATE_STRING {
+			contentToken, ok := contentItem.(st.STToken)
 			if !ok {
 				panic("parseTemplateContentAsXML: expected STToken")
 			}
@@ -8462,28 +8462,28 @@ func (b *BallerinaParser) parseTemplateContentAsXML() tree.STNode {
 	return xp.Parse()
 }
 
-func (b *BallerinaParser) parseRegExpTemplateExpression() tree.STNode {
+func (b *BallerinaParser) parseRegExpTemplateExpression() st.STNode {
 	reKeyword := b.consume()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	if startingBackTick.IsMissing() {
-		return b.createMissingTemplateExpressionNode(reKeyword, common.REGEX_TEMPLATE_EXPRESSION)
+		return b.createMissingTemplateExpressionNode(reKeyword, st.REGEX_TEMPLATE_EXPRESSION)
 	}
 	content := b.parseTemplateContentAsRegExp()
 	endingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_END)
-	return tree.CreateTemplateExpressionNode(common.REGEX_TEMPLATE_EXPRESSION, reKeyword,
+	return st.CreateTemplateExpressionNode(st.REGEX_TEMPLATE_EXPRESSION, reKeyword,
 		startingBackTick, content, endingBackTick)
 }
 
-func (b *BallerinaParser) createMissingTemplateExpressionNode(reKeyword tree.STNode, kind common.SyntaxKind) tree.STNode {
-	startingBackTick := tree.CreateMissingToken(common.BACKTICK_TOKEN, nil)
-	endingBackTick := tree.CreateMissingToken(common.BACKTICK_TOKEN, nil)
-	content := tree.CreateEmptyNodeList()
-	templateExpr := tree.CreateTemplateExpressionNode(kind, reKeyword, startingBackTick, content, endingBackTick)
-	templateExpr = tree.AddDiagnostic(templateExpr, &common.ERROR_MISSING_BACKTICK_STRING)
+func (b *BallerinaParser) createMissingTemplateExpressionNode(reKeyword st.STNode, kind st.SyntaxKind) st.STNode {
+	startingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
+	endingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
+	content := st.CreateEmptyNodeList()
+	templateExpr := st.CreateTemplateExpressionNode(kind, reKeyword, startingBackTick, content, endingBackTick)
+	templateExpr = st.AddDiagnostic(templateExpr, &common.ERROR_MISSING_BACKTICK_STRING)
 	return templateExpr
 }
 
-func (b *BallerinaParser) parseTemplateContentAsRegExp() tree.STNode {
+func (b *BallerinaParser) parseTemplateContentAsRegExp() st.STNode {
 	b.tokenReader.StartMode(PARSER_MODE_REGEXP)
 	panic("Regexp parser not implemented")
 	// expressions := make([]interface{}, 0)
@@ -8491,7 +8491,7 @@ func (b *BallerinaParser) parseTemplateContentAsRegExp() tree.STNode {
 	// nextToken := this.peek()
 	// for !this.isEndOfBacktickContent(nextToken.Kind()) {
 	// 	contentItem := this.parseTemplateItem()
-	// 	if contentItem.Kind() == common.TEMPLATE_STRING {
+	// 	if contentItem.Kind() == st.TEMPLATE_STRING {
 	// 		contentToken, ok := contentItem.(STToken)
 	// 		if !ok {
 	// 			panic("parseTemplateContentAsRegExp: expected STToken")
@@ -8510,34 +8510,34 @@ func (b *BallerinaParser) parseTemplateContentAsRegExp() tree.STNode {
 	// return this.regExpParser.parse()
 }
 
-func (b *BallerinaParser) parseInterpolation() tree.STNode {
+func (b *BallerinaParser) parseInterpolation() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_INTERPOLATION)
 	interpolStart := b.parseInterpolationStart()
 	expr := b.parseExpression()
 	for !b.isEndOfInterpolation() {
 		nextToken := b.consume()
-		expr = tree.CloneWithTrailingInvalidNodeMinutiae(expr, nextToken,
+		expr = st.CloneWithTrailingInvalidNodeMinutiae(expr, nextToken,
 			&common.ERROR_INVALID_TOKEN, nextToken.Text())
 	}
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateInterpolationNode(interpolStart, expr, closeBrace)
+	return st.CreateInterpolationNode(interpolStart, expr, closeBrace)
 }
 
 func (b *BallerinaParser) isEndOfInterpolation() bool {
 	nextTokenKind := b.peek().Kind()
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.BACKTICK_TOKEN:
+	case st.EOF_TOKEN, st.BACKTICK_TOKEN:
 		return true
 	default:
 		currentLexerMode := b.tokenReader.GetCurrentMode()
-		return (((nextTokenKind == common.CLOSE_BRACE_TOKEN) && (currentLexerMode != PARSER_MODE_INTERPOLATION)) && (currentLexerMode != PARSER_MODE_INTERPOLATION_BRACED_CONTENT))
+		return (((nextTokenKind == st.CLOSE_BRACE_TOKEN) && (currentLexerMode != PARSER_MODE_INTERPOLATION)) && (currentLexerMode != PARSER_MODE_INTERPOLATION_BRACED_CONTENT))
 	}
 }
 
-func (b *BallerinaParser) parseInterpolationStart() tree.STNode {
+func (b *BallerinaParser) parseInterpolationStart() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.INTERPOLATION_START_TOKEN {
+	if token.Kind() == st.INTERPOLATION_START_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_INTERPOLATION_START_TOKEN)
@@ -8545,9 +8545,9 @@ func (b *BallerinaParser) parseInterpolationStart() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBacktickToken(ctx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseBacktickToken(ctx common.ParserRuleContext) st.STNode {
 	token := b.peek()
-	if token.Kind() == common.BACKTICK_TOKEN {
+	if token.Kind() == st.BACKTICK_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, ctx)
@@ -8555,38 +8555,38 @@ func (b *BallerinaParser) parseBacktickToken(ctx common.ParserRuleContext) tree.
 	}
 }
 
-func (b *BallerinaParser) parseTableTypeDescriptor(tableKeywordToken tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTableTypeDescriptor(tableKeywordToken st.STNode) st.STNode {
 	rowTypeParameterNode := b.parseRowTypeParameter()
-	var keyConstraintNode tree.STNode
+	var keyConstraintNode st.STNode
 	nextToken := b.peek()
 	if isKeyKeyword(nextToken) {
 		keyKeywordToken := b.getKeyKeyword(b.consume())
 		keyConstraintNode = b.parseKeyConstraint(keyKeywordToken)
 	} else {
-		keyConstraintNode = tree.CreateEmptyNode()
+		keyConstraintNode = st.CreateEmptyNode()
 	}
-	return tree.CreateTableTypeDescriptorNode(tableKeywordToken, rowTypeParameterNode, keyConstraintNode)
+	return st.CreateTableTypeDescriptorNode(tableKeywordToken, rowTypeParameterNode, keyConstraintNode)
 }
 
-func (b *BallerinaParser) parseRowTypeParameter() tree.STNode {
+func (b *BallerinaParser) parseRowTypeParameter() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ROW_TYPE_PARAM)
 	rowTypeParameterNode := b.parseTypeParameter()
 	b.endContext()
 	return rowTypeParameterNode
 }
 
-func (b *BallerinaParser) parseTypeParameter() tree.STNode {
+func (b *BallerinaParser) parseTypeParameter() st.STNode {
 	ltToken := b.parseLTToken()
 	typeNode := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS)
 	gtToken := b.parseGTToken()
-	return tree.CreateTypeParameterNode(ltToken, typeNode, gtToken)
+	return st.CreateTypeParameterNode(ltToken, typeNode, gtToken)
 }
 
-func (b *BallerinaParser) parseKeyConstraint(keyKeywordToken tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseKeyConstraint(keyKeywordToken st.STNode) st.STNode {
 	switch b.peek().Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseKeySpecifierWithKeyKeywordToken(keyKeywordToken)
-	case common.LT_TOKEN:
+	case st.LT_TOKEN:
 		return b.parseKeyTypeConstraint(keyKeywordToken)
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_KEY_CONSTRAINTS_RHS)
@@ -8594,26 +8594,26 @@ func (b *BallerinaParser) parseKeyConstraint(keyKeywordToken tree.STNode) tree.S
 	}
 }
 
-func (b *BallerinaParser) parseKeySpecifierWithKeyKeywordToken(keyKeywordToken tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseKeySpecifierWithKeyKeywordToken(keyKeywordToken st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_KEY_SPECIFIER)
 	openParenToken := b.parseOpenParenthesis()
 	fieldNamesNode := b.parseFieldNames()
 	closeParenToken := b.parseCloseParenthesis()
 	b.endContext()
-	return tree.CreateKeySpecifierNode(keyKeywordToken, openParenToken, fieldNamesNode, closeParenToken)
+	return st.CreateKeySpecifierNode(keyKeywordToken, openParenToken, fieldNamesNode, closeParenToken)
 }
 
-func (b *BallerinaParser) parseKeyTypeConstraint(keyKeywordToken tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseKeyTypeConstraint(keyKeywordToken st.STNode) st.STNode {
 	typeParameterNode := b.parseTypeParameter()
-	return tree.CreateKeyTypeConstraintNode(keyKeywordToken, typeParameterNode)
+	return st.CreateKeyTypeConstraintNode(keyKeywordToken, typeParameterNode)
 }
 
-func (b *BallerinaParser) parseFunctionTypeDesc(qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseFunctionTypeDesc(qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC)
 	functionKeyword := b.parseFunctionKeyword()
 	hasFuncSignature := false
-	signature := tree.CreateEmptyNode()
-	if (b.peek().Kind() == common.OPEN_PAREN_TOKEN) || b.isSyntaxKindInList(qualifiers, common.TRANSACTIONAL_KEYWORD) {
+	signature := st.CreateEmptyNode()
+	if (b.peek().Kind() == st.OPEN_PAREN_TOKEN) || b.isSyntaxKindInList(qualifiers, st.TRANSACTIONAL_KEYWORD) {
 		signature = b.parseFuncSignature(true)
 		hasFuncSignature = true
 	}
@@ -8621,21 +8621,21 @@ func (b *BallerinaParser) parseFunctionTypeDesc(qualifiers []tree.STNode) tree.S
 	qualifierList := nodes[0]
 	functionKeyword = nodes[1]
 	b.endContext()
-	return tree.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword, signature)
+	return st.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword, signature)
 }
 
-func (b *BallerinaParser) getLastNodeInList(nodeList []tree.STNode) tree.STNode {
+func (b *BallerinaParser) getLastNodeInList(nodeList []st.STNode) st.STNode {
 	return nodeList[len(nodeList)-1]
 }
 
-func (b *BallerinaParser) createFuncTypeQualNodeList(qualifierList []tree.STNode, functionKeyword tree.STNode, hasFuncSignature bool) []tree.STNode {
-	var validatedList []tree.STNode
+func (b *BallerinaParser) createFuncTypeQualNodeList(qualifierList []st.STNode, functionKeyword st.STNode, hasFuncSignature bool) []st.STNode {
+	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
 		qualifier := qualifierList[i]
 		nextIndex := (i + 1)
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
-			qualifierToken, ok := qualifier.(tree.STToken)
+			qualifierToken, ok := qualifier.(st.STToken)
 			if !ok {
 				panic("createFuncTypeQualNodeList: expected STToken")
 			}
@@ -8643,30 +8643,30 @@ func (b *BallerinaParser) createFuncTypeQualNodeList(qualifierList []tree.STNode
 				&common.ERROR_DUPLICATE_QUALIFIER, qualifierToken.Text())
 		} else if hasFuncSignature && b.isRegularFuncQual(qualifier.Kind()) {
 			validatedList = append(validatedList, qualifier)
-		} else if qualifier.Kind() == common.ISOLATED_KEYWORD {
+		} else if qualifier.Kind() == st.ISOLATED_KEYWORD {
 			validatedList = append(validatedList, qualifier)
 		} else if len(qualifierList) == nextIndex {
-			functionKeyword = tree.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		} else {
 			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, tree.ToToken(qualifier).Text())
+				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
-	nodeList := tree.CreateNodeList(validatedList...)
-	return []tree.STNode{nodeList, functionKeyword}
+	nodeList := st.CreateNodeList(validatedList...)
+	return []st.STNode{nodeList, functionKeyword}
 }
 
-func (b *BallerinaParser) isRegularFuncQual(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isRegularFuncQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.ISOLATED_KEYWORD, common.TRANSACTIONAL_KEYWORD:
+	case st.ISOLATED_KEYWORD, st.TRANSACTIONAL_KEYWORD:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseExplicitFunctionExpression(annots tree.STNode, qualifiers []tree.STNode, isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExplicitFunctionExpression(annots st.STNode, qualifiers []st.STNode, isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION)
 	funcKeyword := b.parseFunctionKeyword()
 	nodes := b.createFuncTypeQualNodeList(qualifiers, funcKeyword, true)
@@ -8674,18 +8674,18 @@ func (b *BallerinaParser) parseExplicitFunctionExpression(annots tree.STNode, qu
 	funcKeyword = nodes[1]
 	funcSignature := b.parseFuncSignature(false)
 	funcBody := b.parseAnonFuncBody(isRhsExpr)
-	return tree.CreateExplicitAnonymousFunctionExpressionNode(annots, qualifierList, funcKeyword,
+	return st.CreateExplicitAnonymousFunctionExpressionNode(annots, qualifierList, funcKeyword,
 		funcSignature, funcBody)
 }
 
-func (b *BallerinaParser) parseAnonFuncBody(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseAnonFuncBody(isRhsExpr bool) st.STNode {
 	switch b.peek().Kind() {
-	case common.OPEN_BRACE_TOKEN,
-		common.EOF_TOKEN:
+	case st.OPEN_BRACE_TOKEN,
+		st.EOF_TOKEN:
 		body := b.parseFunctionBodyBlock(true)
 		b.endContext()
 		return body
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
 		b.endContext()
 		return b.parseExpressionFuncBody(true, isRhsExpr)
 	default:
@@ -8694,21 +8694,21 @@ func (b *BallerinaParser) parseAnonFuncBody(isRhsExpr bool) tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseExpressionFuncBody(isAnon bool, isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseExpressionFuncBody(isAnon bool, isRhsExpr bool) st.STNode {
 	rightDoubleArrow := b.parseDoubleRightArrow()
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION, isRhsExpr, false)
-	var semiColon tree.STNode
+	var semiColon st.STNode
 	if isAnon {
-		semiColon = tree.CreateEmptyNode()
+		semiColon = st.CreateEmptyNode()
 	} else {
 		semiColon = b.parseSemicolon()
 	}
-	return tree.CreateExpressionFunctionBodyNode(rightDoubleArrow, expression, semiColon)
+	return st.CreateExpressionFunctionBodyNode(rightDoubleArrow, expression, semiColon)
 }
 
-func (b *BallerinaParser) parseDoubleRightArrow() tree.STNode {
+func (b *BallerinaParser) parseDoubleRightArrow() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.RIGHT_DOUBLE_ARROW_TOKEN {
+	if token.Kind() == st.RIGHT_DOUBLE_ARROW_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_EXPR_FUNC_BODY_START)
@@ -8716,55 +8716,55 @@ func (b *BallerinaParser) parseDoubleRightArrow() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseImplicitAnonFuncWithParams(params tree.STNode, isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseImplicitAnonFuncWithParams(params st.STNode, isRhsExpr bool) st.STNode {
 	switch params.Kind() {
-	case common.SIMPLE_NAME_REFERENCE, common.INFER_PARAM_LIST:
+	case st.SIMPLE_NAME_REFERENCE, st.INFER_PARAM_LIST:
 		break
-	case common.BRACED_EXPRESSION:
-		bracedExpr, ok := params.(*tree.STBracedExpressionNode)
+	case st.BRACED_EXPRESSION:
+		bracedExpr, ok := params.(*st.STBracedExpressionNode)
 		if !ok {
 			panic("parseImplicitAnonFunc: expected STBracedExpressionNode")
 		}
 		params = b.getAnonFuncParam(*bracedExpr)
-	case common.NIL_LITERAL:
-		nilLiteralNode, ok := params.(*tree.STNilLiteralNode)
+	case st.NIL_LITERAL:
+		nilLiteralNode, ok := params.(*st.STNilLiteralNode)
 		if !ok {
 			panic("expected STNilLiteralNode")
 		}
-		params = tree.CreateImplicitAnonymousFunctionParameters(nilLiteralNode.OpenParenToken,
-			tree.CreateNodeList(), nilLiteralNode.CloseParenToken)
+		params = st.CreateImplicitAnonymousFunctionParameters(nilLiteralNode.OpenParenToken,
+			st.CreateNodeList(), nilLiteralNode.CloseParenToken)
 	default:
-		var syntheticParam tree.STNode
-		syntheticParam = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		syntheticParam = tree.CloneWithLeadingInvalidNodeMinutiae(syntheticParam, params,
+		var syntheticParam st.STNode
+		syntheticParam = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		syntheticParam = st.CloneWithLeadingInvalidNodeMinutiae(syntheticParam, params,
 			&common.ERROR_INVALID_PARAM_LIST_IN_INFER_ANONYMOUS_FUNCTION_EXPR)
-		params = tree.CreateSimpleNameReferenceNode(syntheticParam)
+		params = st.CreateSimpleNameReferenceNode(syntheticParam)
 	}
 	rightDoubleArrow := b.parseDoubleRightArrow()
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION, isRhsExpr, false)
-	return tree.CreateImplicitAnonymousFunctionExpressionNode(params, rightDoubleArrow, expression)
+	return st.CreateImplicitAnonymousFunctionExpressionNode(params, rightDoubleArrow, expression)
 }
 
-func (b *BallerinaParser) getAnonFuncParam(bracedExpression tree.STBracedExpressionNode) tree.STNode {
-	var paramList []tree.STNode
+func (b *BallerinaParser) getAnonFuncParam(bracedExpression st.STBracedExpressionNode) st.STNode {
+	var paramList []st.STNode
 	innerExpression := bracedExpression.Expression
 	openParen := bracedExpression.OpenParen
-	if innerExpression.Kind() == common.SIMPLE_NAME_REFERENCE {
+	if innerExpression.Kind() == st.SIMPLE_NAME_REFERENCE {
 		paramList = append(paramList, innerExpression)
 	} else {
-		openParen = tree.CloneWithTrailingInvalidNodeMinutiae(openParen, innerExpression,
+		openParen = st.CloneWithTrailingInvalidNodeMinutiae(openParen, innerExpression,
 			&common.ERROR_INVALID_PARAM_LIST_IN_INFER_ANONYMOUS_FUNCTION_EXPR)
 	}
-	return tree.CreateImplicitAnonymousFunctionParameters(openParen,
-		tree.CreateNodeList(paramList...), bracedExpression.CloseParen)
+	return st.CreateImplicitAnonymousFunctionParameters(openParen,
+		st.CreateNodeList(paramList...), bracedExpression.CloseParen)
 }
 
-func (b *BallerinaParser) parseImplicitAnonFuncWithOpenParenAndFirstParam(openParen tree.STNode, firstParam tree.STNode, isRhsExpr bool) tree.STNode {
-	var paramList []tree.STNode
+func (b *BallerinaParser) parseImplicitAnonFuncWithOpenParenAndFirstParam(openParen st.STNode, firstParam st.STNode, isRhsExpr bool) st.STNode {
+	var paramList []st.STNode
 	paramList = append(paramList, firstParam)
 	nextToken := b.peek()
-	var paramEnd tree.STNode
-	var param tree.STNode
+	var paramEnd st.STNode
+	var param st.STNode
 	for !b.isEndOfAnonFuncParametersList(nextToken.Kind()) {
 		paramEnd = b.parseImplicitAnonFuncParamEnd()
 		if paramEnd == nil {
@@ -8772,22 +8772,22 @@ func (b *BallerinaParser) parseImplicitAnonFuncWithOpenParenAndFirstParam(openPa
 		}
 		paramList = append(paramList, paramEnd)
 		param = b.parseIdentifier(common.PARSER_RULE_CONTEXT_IMPLICIT_ANON_FUNC_PARAM)
-		param = tree.CreateSimpleNameReferenceNode(param)
+		param = st.CreateSimpleNameReferenceNode(param)
 		paramList = append(paramList, param)
 		nextToken = b.peek()
 	}
-	params := tree.CreateNodeList(paramList...)
+	params := st.CreateNodeList(paramList...)
 	closeParen := b.parseCloseParenthesis()
 	b.endContext()
-	inferedParams := tree.CreateImplicitAnonymousFunctionParameters(openParen, params, closeParen)
+	inferedParams := st.CreateImplicitAnonymousFunctionParameters(openParen, params, closeParen)
 	return b.parseImplicitAnonFuncWithParams(inferedParams, isRhsExpr)
 }
 
-func (b *BallerinaParser) parseImplicitAnonFuncParamEnd() tree.STNode {
+func (b *BallerinaParser) parseImplicitAnonFuncParamEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ANON_FUNC_PARAM_RHS)
@@ -8795,51 +8795,51 @@ func (b *BallerinaParser) parseImplicitAnonFuncParamEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfAnonFuncParametersList(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfAnonFuncParametersList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.EOF_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.CLOSE_BRACKET_TOKEN,
-		common.SEMICOLON_TOKEN,
-		common.RETURNS_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.IF_KEYWORD,
-		common.WHILE_KEYWORD,
-		common.DO_KEYWORD,
-		common.OPEN_BRACE_TOKEN,
-		common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.EOF_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.CLOSE_BRACKET_TOKEN,
+		st.SEMICOLON_TOKEN,
+		st.RETURNS_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.IF_KEYWORD,
+		st.WHILE_KEYWORD,
+		st.DO_KEYWORD,
+		st.OPEN_BRACE_TOKEN,
+		st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseTupleTypeDesc() tree.STNode {
+func (b *BallerinaParser) parseTupleTypeDesc() st.STNode {
 	openBracket := b.parseOpenBracket()
 	b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
 	memberTypeDesc := b.parseTupleMemberTypeDescList()
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
-	return tree.CreateTupleTypeDescriptorNode(openBracket, memberTypeDesc, closeBracket)
+	return st.CreateTupleTypeDescriptorNode(openBracket, memberTypeDesc, closeBracket)
 }
 
-func (b *BallerinaParser) parseTupleMemberTypeDescList() tree.STNode {
-	var typeDescList []tree.STNode
+func (b *BallerinaParser) parseTupleMemberTypeDescList() st.STNode {
+	var typeDescList []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfTypeList(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	typeDesc := b.parseTupleMember()
 	res, _ := b.parseTupleTypeMembers(typeDesc, typeDescList)
 	return res
 }
 
-func (b *BallerinaParser) parseTupleTypeMembers(firstMember tree.STNode, memberList []tree.STNode) (tree.STNode, []tree.STNode) {
-	var tupleMemberRhs tree.STNode
+func (b *BallerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
+	var tupleMemberRhs st.STNode
 	for !b.isEndOfTypeList(b.peek().Kind()) {
-		if firstMember.Kind() == common.REST_TYPE {
+		if firstMember.Kind() == st.REST_TYPE {
 			firstMember = b.invalidateTypeDescAfterRestDesc(firstMember)
 			break
 		}
@@ -8852,50 +8852,50 @@ func (b *BallerinaParser) parseTupleTypeMembers(firstMember tree.STNode, memberL
 		firstMember = b.parseTupleMember()
 	}
 	memberList = append(memberList, firstMember)
-	return tree.CreateNodeList(memberList...), memberList
+	return st.CreateNodeList(memberList...), memberList
 }
 
-func (b *BallerinaParser) parseTupleMember() tree.STNode {
+func (b *BallerinaParser) parseTupleMember() st.STNode {
 	annot := b.parseOptionalAnnotations()
 	typeDesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 	return b.createMemberOrRestNode(annot, typeDesc)
 }
 
-func (b *BallerinaParser) createMemberOrRestNode(annot tree.STNode, typeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) createMemberOrRestNode(annot st.STNode, typeDesc st.STNode) st.STNode {
 	tupleMemberRhs := b.parseTypeDescInTupleRhs()
 	if tupleMemberRhs != nil {
-		annotList, ok := annot.(*tree.STNodeList)
+		annotList, ok := annot.(*st.STNodeList)
 		if !ok {
-			panic("createMemberOrRestNode: expected tree.STNodeList")
+			panic("createMemberOrRestNode: expected st.STNodeList")
 		}
 		if !annotList.IsEmpty() {
-			typeDesc = tree.CloneWithLeadingInvalidNodeMinutiae(typeDesc, annot,
+			typeDesc = st.CloneWithLeadingInvalidNodeMinutiae(typeDesc, annot,
 				&common.ERROR_ANNOTATIONS_NOT_ALLOWED_FOR_TUPLE_REST_DESCRIPTOR)
 		}
-		return tree.CreateRestDescriptorNode(typeDesc, tupleMemberRhs)
+		return st.CreateRestDescriptorNode(typeDesc, tupleMemberRhs)
 	}
-	return tree.CreateMemberTypeDescriptorNode(annot, typeDesc)
+	return st.CreateMemberTypeDescriptorNode(annot, typeDesc)
 }
 
-func (b *BallerinaParser) invalidateTypeDescAfterRestDesc(restDescriptor tree.STNode) tree.STNode {
+func (b *BallerinaParser) invalidateTypeDescAfterRestDesc(restDescriptor st.STNode) st.STNode {
 	for !b.isEndOfTypeList(b.peek().Kind()) {
 		tupleMemberRhs := b.parseTupleMemberRhs()
 		if tupleMemberRhs == nil {
 			break
 		}
-		restDescriptor = tree.CloneWithTrailingInvalidNodeMinutiae(restDescriptor, tupleMemberRhs, nil)
-		restDescriptor = tree.CloneWithTrailingInvalidNodeMinutiae(restDescriptor, b.parseTupleMember(),
+		restDescriptor = st.CloneWithTrailingInvalidNodeMinutiae(restDescriptor, tupleMemberRhs, nil)
+		restDescriptor = st.CloneWithTrailingInvalidNodeMinutiae(restDescriptor, b.parseTupleMember(),
 			&common.ERROR_TYPE_DESC_AFTER_REST_DESCRIPTOR)
 	}
 	return restDescriptor
 }
 
-func (b *BallerinaParser) parseTupleMemberRhs() tree.STNode {
+func (b *BallerinaParser) parseTupleMemberRhs() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACKET_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_TUPLE_TYPE_MEMBER_RHS)
@@ -8903,12 +8903,12 @@ func (b *BallerinaParser) parseTupleMemberRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeDescInTupleRhs() tree.STNode {
+func (b *BallerinaParser) parseTypeDescInTupleRhs() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN, common.CLOSE_BRACKET_TOKEN:
+	case st.COMMA_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return nil
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseEllipsis()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE_RHS)
@@ -8916,40 +8916,40 @@ func (b *BallerinaParser) parseTypeDescInTupleRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfTypeList(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfTypeList(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.CLOSE_BRACKET_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.EOF_TOKEN,
-		common.EQUAL_TOKEN,
-		common.SEMICOLON_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.EOF_TOKEN,
+		st.EQUAL_TOKEN,
+		st.SEMICOLON_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQuery(isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseTableConstructorOrQuery(isRhsExpr bool, allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_EXPRESSION)
 	tableOrQueryExpr := b.parseTableConstructorOrQueryInner(isRhsExpr, allowActions)
 	b.endContext()
 	return tableOrQueryExpr
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQueryInner(isRhsExpr bool, allowActions bool) tree.STNode {
-	var queryConstructType tree.STNode
+func (b *BallerinaParser) parseTableConstructorOrQueryInner(isRhsExpr bool, allowActions bool) st.STNode {
+	var queryConstructType st.STNode
 	switch b.peek().Kind() {
-	case common.FROM_KEYWORD:
-		queryConstructType = tree.CreateEmptyNode()
+	case st.FROM_KEYWORD:
+		queryConstructType = st.CreateEmptyNode()
 		return b.parseQueryExprRhs(queryConstructType, isRhsExpr, allowActions)
-	case common.TABLE_KEYWORD:
+	case st.TABLE_KEYWORD:
 		tableKeyword := b.parseTableKeyword()
 		return b.parseTableConstructorOrQueryWithKeyword(tableKeyword, isRhsExpr, allowActions)
-	case common.STREAM_KEYWORD,
-		common.MAP_KEYWORD:
+	case st.STREAM_KEYWORD,
+		st.MAP_KEYWORD:
 		streamOrMapKeyword := b.consume()
-		keySpecifier := tree.CreateEmptyNode()
+		keySpecifier := st.CreateEmptyNode()
 		queryConstructType = b.parseQueryConstructType(streamOrMapKeyword, keySpecifier)
 		return b.parseQueryExprRhs(queryConstructType, isRhsExpr, allowActions)
 	default:
@@ -8958,17 +8958,17 @@ func (b *BallerinaParser) parseTableConstructorOrQueryInner(isRhsExpr bool, allo
 	}
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQueryWithKeyword(tableKeyword tree.STNode, isRhsExpr bool, allowActions bool) tree.STNode {
-	var keySpecifier tree.STNode
+func (b *BallerinaParser) parseTableConstructorOrQueryWithKeyword(tableKeyword st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
+	var keySpecifier st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACKET_TOKEN:
-		keySpecifier = tree.CreateEmptyNode()
+	case st.OPEN_BRACKET_TOKEN:
+		keySpecifier = st.CreateEmptyNode()
 		return b.parseTableConstructorExprRhs(tableKeyword, keySpecifier)
-	case common.KEY_KEYWORD:
+	case st.KEY_KEYWORD:
 		keySpecifier = b.parseKeySpecifier()
 		return b.parseTableConstructorOrQueryRhs(tableKeyword, keySpecifier, isRhsExpr, allowActions)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		if isKeyKeyword(nextToken) {
 			keySpecifier = b.parseKeySpecifier()
 			return b.parseTableConstructorOrQueryRhs(tableKeyword, keySpecifier, isRhsExpr, allowActions)
@@ -8980,11 +8980,11 @@ func (b *BallerinaParser) parseTableConstructorOrQueryWithKeyword(tableKeyword t
 	return b.parseTableConstructorOrQueryWithKeyword(tableKeyword, isRhsExpr, allowActions)
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQueryRhs(tableKeyword tree.STNode, keySpecifier tree.STNode, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseTableConstructorOrQueryRhs(tableKeyword st.STNode, keySpecifier st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	switch b.peek().Kind() {
-	case common.FROM_KEYWORD:
+	case st.FROM_KEYWORD:
 		return b.parseQueryExprRhs(b.parseQueryConstructType(tableKeyword, keySpecifier), isRhsExpr, allowActions)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseTableConstructorExprRhs(tableKeyword, keySpecifier)
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_RHS)
@@ -8992,17 +8992,17 @@ func (b *BallerinaParser) parseTableConstructorOrQueryRhs(tableKeyword tree.STNo
 	}
 }
 
-func (b *BallerinaParser) parseQueryConstructType(keyword tree.STNode, keySpecifier tree.STNode) tree.STNode {
-	return tree.CreateQueryConstructTypeNode(keyword, keySpecifier)
+func (b *BallerinaParser) parseQueryConstructType(keyword st.STNode, keySpecifier st.STNode) st.STNode {
+	return st.CreateQueryConstructTypeNode(keyword, keySpecifier)
 }
 
-func (b *BallerinaParser) parseQueryExprRhs(queryConstructType tree.STNode, isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseQueryExprRhs(queryConstructType st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION)
 	fromClause := b.parseFromClause(isRhsExpr, allowActions)
-	var clauses []tree.STNode
-	var intermediateClause tree.STNode
-	var selectClause tree.STNode
-	var collectClause tree.STNode
+	var clauses []st.STNode
+	var intermediateClause st.STNode
+	var selectClause st.STNode
+	var collectClause st.STNode
 	for !b.isEndOfIntermediateClause(b.peek().Kind()) {
 		intermediateClause = b.parseIntermediateClause(isRhsExpr, allowActions)
 		if intermediateClause == nil {
@@ -9011,17 +9011,17 @@ func (b *BallerinaParser) parseQueryExprRhs(queryConstructType tree.STNode, isRh
 
 		// If there are more clauses after select clause they are add as invalid nodes to the select clause
 		if selectClause != nil {
-			selectClause = tree.CloneWithTrailingInvalidNodeMinutiae(selectClause, intermediateClause,
+			selectClause = st.CloneWithTrailingInvalidNodeMinutiae(selectClause, intermediateClause,
 				&common.ERROR_MORE_CLAUSES_AFTER_SELECT_CLAUSE)
 			continue
 		} else if collectClause != nil {
-			collectClause = tree.CloneWithTrailingInvalidNodeMinutiae(collectClause, intermediateClause,
+			collectClause = st.CloneWithTrailingInvalidNodeMinutiae(collectClause, intermediateClause,
 				&common.ERROR_MORE_CLAUSES_AFTER_COLLECT_CLAUSE)
 			continue
 		}
-		if intermediateClause.Kind() == common.SELECT_CLAUSE {
+		if intermediateClause.Kind() == st.SELECT_CLAUSE {
 			selectClause = intermediateClause
-		} else if intermediateClause.Kind() == common.COLLECT_CLAUSE {
+		} else if intermediateClause.Kind() == st.COLLECT_CLAUSE {
 			collectClause = intermediateClause
 		} else {
 			clauses = append(clauses, intermediateClause)
@@ -9034,37 +9034,37 @@ func (b *BallerinaParser) parseQueryExprRhs(queryConstructType tree.STNode, isRh
 			break
 		}
 	}
-	if (b.peek().Kind() == common.DO_KEYWORD) && ((!b.isNestedQueryExpr()) || ((selectClause == nil) && (collectClause == nil))) {
-		intermediateClauses := tree.CreateNodeList(clauses...)
-		queryPipeline := tree.CreateQueryPipelineNode(fromClause, intermediateClauses)
+	if (b.peek().Kind() == st.DO_KEYWORD) && ((!b.isNestedQueryExpr()) || ((selectClause == nil) && (collectClause == nil))) {
+		intermediateClauses := st.CreateNodeList(clauses...)
+		queryPipeline := st.CreateQueryPipelineNode(fromClause, intermediateClauses)
 		return b.parseQueryAction(queryConstructType, queryPipeline, selectClause, collectClause)
 	}
 	if (selectClause == nil) && (collectClause == nil) {
-		selectKeyword := tree.CreateMissingToken(common.SELECT_KEYWORD, nil)
-		expr := tree.CreateSimpleNameReferenceNode(tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil))
-		selectClause = tree.CreateSelectClauseNode(selectKeyword, expr)
+		selectKeyword := st.CreateMissingToken(st.SELECT_KEYWORD, nil)
+		expr := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
+		selectClause = st.CreateSelectClauseNode(selectKeyword, expr)
 
 		// Now we need to attach the diagnostic to the last intermediate clause.
 		// If there are no intermediate clauses, then attach to the from clause.
 		if len(clauses) == 0 {
-			fromClause = tree.AddDiagnostic(fromClause, &common.ERROR_MISSING_SELECT_CLAUSE)
+			fromClause = st.AddDiagnostic(fromClause, &common.ERROR_MISSING_SELECT_CLAUSE)
 		} else {
 			lastIndex := (len(clauses) - 1)
-			intClauseWithDiagnostic := tree.AddDiagnostic(clauses[lastIndex],
+			intClauseWithDiagnostic := st.AddDiagnostic(clauses[lastIndex],
 				&common.ERROR_MISSING_SELECT_CLAUSE)
 			clauses[lastIndex] = intClauseWithDiagnostic
 		}
 	}
-	intermediateClauses := tree.CreateNodeList(clauses...)
-	queryPipeline := tree.CreateQueryPipelineNode(fromClause, intermediateClauses)
+	intermediateClauses := st.CreateNodeList(clauses...)
+	queryPipeline := st.CreateQueryPipelineNode(fromClause, intermediateClauses)
 	onConflictClause := b.parseOnConflictClause(isRhsExpr)
-	var clause tree.STNode
+	var clause st.STNode
 	if selectClause == nil {
 		clause = collectClause
 	} else {
 		clause = selectClause
 	}
-	return tree.CreateQueryExpressionNode(queryConstructType, queryPipeline,
+	return st.CreateQueryExpressionNode(queryConstructType, queryPipeline,
 		clause, onConflictClause)
 }
 
@@ -9082,56 +9082,56 @@ func (b *BallerinaParser) isNestedQueryExpr() bool {
 	return false
 }
 
-func (b *BallerinaParser) isValidIntermediateQueryStart(token tree.STToken) bool {
+func (b *BallerinaParser) isValidIntermediateQueryStart(token st.STToken) bool {
 	switch token.Kind() {
-	case common.FROM_KEYWORD,
-		common.WHERE_KEYWORD,
-		common.LET_KEYWORD,
-		common.SELECT_KEYWORD,
-		common.JOIN_KEYWORD,
-		common.OUTER_KEYWORD,
-		common.ORDER_KEYWORD,
-		common.BY_KEYWORD,
-		common.ASCENDING_KEYWORD,
-		common.DESCENDING_KEYWORD,
-		common.LIMIT_KEYWORD:
+	case st.FROM_KEYWORD,
+		st.WHERE_KEYWORD,
+		st.LET_KEYWORD,
+		st.SELECT_KEYWORD,
+		st.JOIN_KEYWORD,
+		st.OUTER_KEYWORD,
+		st.ORDER_KEYWORD,
+		st.BY_KEYWORD,
+		st.ASCENDING_KEYWORD,
+		st.DESCENDING_KEYWORD,
+		st.LIMIT_KEYWORD:
 		return true
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return isGroupOrCollectKeyword(token)
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseIntermediateClause(isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseIntermediateClause(isRhsExpr bool, allowActions bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.FROM_KEYWORD:
+	case st.FROM_KEYWORD:
 		return b.parseFromClause(isRhsExpr, allowActions)
-	case common.WHERE_KEYWORD:
+	case st.WHERE_KEYWORD:
 		return b.parseWhereClause(isRhsExpr)
-	case common.LET_KEYWORD:
+	case st.LET_KEYWORD:
 		return b.parseLetClause(isRhsExpr, allowActions)
-	case common.SELECT_KEYWORD:
+	case st.SELECT_KEYWORD:
 		return b.parseSelectClause(isRhsExpr, allowActions)
-	case common.JOIN_KEYWORD, common.OUTER_KEYWORD:
+	case st.JOIN_KEYWORD, st.OUTER_KEYWORD:
 		return b.parseJoinClause(isRhsExpr)
-	case common.ORDER_KEYWORD,
-		common.ASCENDING_KEYWORD,
-		common.DESCENDING_KEYWORD:
+	case st.ORDER_KEYWORD,
+		st.ASCENDING_KEYWORD,
+		st.DESCENDING_KEYWORD:
 		return b.parseOrderByClause(isRhsExpr)
-	case common.LIMIT_KEYWORD:
+	case st.LIMIT_KEYWORD:
 		return b.parseLimitClause(isRhsExpr)
-	case common.DO_KEYWORD,
-		common.SEMICOLON_TOKEN,
-		common.ON_KEYWORD,
-		common.CONFLICT_KEYWORD:
+	case st.DO_KEYWORD,
+		st.SEMICOLON_TOKEN,
+		st.ON_KEYWORD,
+		st.CONFLICT_KEYWORD:
 		return nil
 	default:
-		if isKeywordMatch(common.COLLECT_KEYWORD, nextToken) {
+		if isKeywordMatch(st.COLLECT_KEYWORD, nextToken) {
 			return b.parseCollectClause(isRhsExpr)
 		}
-		if isKeywordMatch(common.GROUP_KEYWORD, nextToken) {
+		if isKeywordMatch(st.GROUP_KEYWORD, nextToken) {
 			return b.parseGroupByClause(isRhsExpr)
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_QUERY_PIPELINE_RHS)
@@ -9139,34 +9139,34 @@ func (b *BallerinaParser) parseIntermediateClause(isRhsExpr bool, allowActions b
 	}
 }
 
-func (b *BallerinaParser) parseCollectClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseCollectClause(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COLLECT_CLAUSE)
 	collectKeyword := b.parseCollectKeyword()
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
 	b.endContext()
-	return tree.CreateCollectClauseNode(collectKeyword, expression)
+	return st.CreateCollectClauseNode(collectKeyword, expression)
 }
 
-func (b *BallerinaParser) parseCollectKeyword() tree.STNode {
+func (b *BallerinaParser) parseCollectKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.COLLECT_KEYWORD {
+	if token.Kind() == st.COLLECT_KEYWORD {
 		return b.consume()
 	}
-	if isKeywordMatch(common.COLLECT_KEYWORD, token) {
+	if isKeywordMatch(st.COLLECT_KEYWORD, token) {
 		return b.getCollectKeyword(b.consume())
 	}
 	b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_COLLECT_KEYWORD)
 	return b.parseCollectKeyword()
 }
 
-func (b *BallerinaParser) getCollectKeyword(token tree.STToken) tree.STNode {
-	return tree.CreateTokenWithDiagnostics(common.COLLECT_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
+func (b *BallerinaParser) getCollectKeyword(token st.STToken) st.STNode {
+	return st.CreateTokenWithDiagnostics(st.COLLECT_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseJoinKeyword() tree.STNode {
+func (b *BallerinaParser) parseJoinKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.JOIN_KEYWORD {
+	if token.Kind() == st.JOIN_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_JOIN_KEYWORD)
@@ -9174,9 +9174,9 @@ func (b *BallerinaParser) parseJoinKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseEqualsKeyword() tree.STNode {
+func (b *BallerinaParser) parseEqualsKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.EQUALS_KEYWORD {
+	if token.Kind() == st.EQUALS_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_EQUALS_KEYWORD)
@@ -9184,45 +9184,45 @@ func (b *BallerinaParser) parseEqualsKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfIntermediateClause(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfIntermediateClause(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.CLOSE_BRACKET_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.SEMICOLON_TOKEN,
-		common.PUBLIC_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.EOF_TOKEN,
-		common.RESOURCE_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.DOCUMENTATION_STRING,
-		common.PRIVATE_KEYWORD,
-		common.RETURNS_KEYWORD,
-		common.SERVICE_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.CONST_KEYWORD,
-		common.FINAL_KEYWORD,
-		common.DO_KEYWORD,
-		common.ON_KEYWORD,
-		common.CONFLICT_KEYWORD:
+	case st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.CLOSE_BRACKET_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.SEMICOLON_TOKEN,
+		st.PUBLIC_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.EOF_TOKEN,
+		st.RESOURCE_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.DOCUMENTATION_STRING,
+		st.PRIVATE_KEYWORD,
+		st.RETURNS_KEYWORD,
+		st.SERVICE_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.CONST_KEYWORD,
+		st.FINAL_KEYWORD,
+		st.DO_KEYWORD,
+		st.ON_KEYWORD,
+		st.CONFLICT_KEYWORD:
 		return true
 	default:
-		return b.isValidExprRhsStart(tokenKind, common.NONE)
+		return b.isValidExprRhsStart(tokenKind, st.NONE)
 	}
 }
 
-func (b *BallerinaParser) parseFromClause(isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseFromClause(isRhsExpr bool, allowActions bool) st.STNode {
 	fromKeyword := b.parseFromKeyword()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_FROM_CLAUSE)
 	inKeyword := b.parseInKeyword()
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, allowActions)
-	return tree.CreateFromClauseNode(fromKeyword, typedBindingPattern, inKeyword, expression)
+	return st.CreateFromClauseNode(fromKeyword, typedBindingPattern, inKeyword, expression)
 }
 
-func (b *BallerinaParser) parseFromKeyword() tree.STNode {
+func (b *BallerinaParser) parseFromKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FROM_KEYWORD {
+	if token.Kind() == st.FROM_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FROM_KEYWORD)
@@ -9230,15 +9230,15 @@ func (b *BallerinaParser) parseFromKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseWhereClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseWhereClause(isRhsExpr bool) st.STNode {
 	whereKeyword := b.parseWhereKeyword()
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
-	return tree.CreateWhereClauseNode(whereKeyword, expression)
+	return st.CreateWhereClauseNode(whereKeyword, expression)
 }
 
-func (b *BallerinaParser) parseWhereKeyword() tree.STNode {
+func (b *BallerinaParser) parseWhereKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.WHERE_KEYWORD {
+	if token.Kind() == st.WHERE_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_WHERE_KEYWORD)
@@ -9246,9 +9246,9 @@ func (b *BallerinaParser) parseWhereKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLimitKeyword() tree.STNode {
+func (b *BallerinaParser) parseLimitKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.LIMIT_KEYWORD {
+	if token.Kind() == st.LIMIT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_LIMIT_KEYWORD)
@@ -9256,16 +9256,16 @@ func (b *BallerinaParser) parseLimitKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLetClause(isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseLetClause(isRhsExpr bool, allowActions bool) st.STNode {
 	letKeyword := b.parseLetKeyword()
 	letVarDeclarations := b.parseLetVarDeclarations(common.PARSER_RULE_CONTEXT_LET_CLAUSE_LET_VAR_DECL, isRhsExpr,
 		allowActions)
 	letKeyword = b.cloneWithDiagnosticIfListEmpty(letVarDeclarations, letKeyword,
 		&common.ERROR_MISSING_LET_VARIABLE_DECLARATION)
-	return tree.CreateLetClauseNode(letKeyword, letVarDeclarations)
+	return st.CreateLetClauseNode(letKeyword, letVarDeclarations)
 }
 
-func (b *BallerinaParser) parseGroupByClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseGroupByClause(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_GROUP_BY_CLAUSE)
 	groupKeyword := b.parseGroupKeyword()
 	byKeyword := b.parseByKeyword()
@@ -9273,29 +9273,29 @@ func (b *BallerinaParser) parseGroupByClause(isRhsExpr bool) tree.STNode {
 	byKeyword = b.cloneWithDiagnosticIfListEmpty(groupingKeys, byKeyword,
 		&common.ERROR_MISSING_GROUPING_KEY)
 	b.endContext()
-	return tree.CreateGroupByClauseNode(groupKeyword, byKeyword, groupingKeys)
+	return st.CreateGroupByClauseNode(groupKeyword, byKeyword, groupingKeys)
 }
 
-func (b *BallerinaParser) parseGroupKeyword() tree.STNode {
+func (b *BallerinaParser) parseGroupKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.GROUP_KEYWORD {
+	if token.Kind() == st.GROUP_KEYWORD {
 		return b.consume()
 	}
-	if isKeywordMatch(common.GROUP_KEYWORD, token) {
+	if isKeywordMatch(st.GROUP_KEYWORD, token) {
 		return b.getGroupKeyword(b.consume())
 	}
 	b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_GROUP_KEYWORD)
 	return b.parseGroupKeyword()
 }
 
-func (b *BallerinaParser) getGroupKeyword(token tree.STToken) tree.STNode {
-	return tree.CreateTokenWithDiagnostics(common.GROUP_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
+func (b *BallerinaParser) getGroupKeyword(token st.STToken) st.STNode {
+	return st.CreateTokenWithDiagnostics(st.GROUP_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseOrderKeyword() tree.STNode {
+func (b *BallerinaParser) parseOrderKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ORDER_KEYWORD {
+	if token.Kind() == st.ORDER_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ORDER_KEYWORD)
@@ -9303,9 +9303,9 @@ func (b *BallerinaParser) parseOrderKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseByKeyword() tree.STNode {
+func (b *BallerinaParser) parseByKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.BY_KEYWORD {
+	if token.Kind() == st.BY_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_BY_KEYWORD)
@@ -9313,24 +9313,24 @@ func (b *BallerinaParser) parseByKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOrderByClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseOrderByClause(isRhsExpr bool) st.STNode {
 	orderKeyword := b.parseOrderKeyword()
 	byKeyword := b.parseByKeyword()
 	orderKeys := b.parseOrderKeyList(isRhsExpr)
 	byKeyword = b.cloneWithDiagnosticIfListEmpty(orderKeys, byKeyword, &common.ERROR_MISSING_ORDER_KEY)
-	return tree.CreateOrderByClauseNode(orderKeyword, byKeyword, orderKeys)
+	return st.CreateOrderByClauseNode(orderKeyword, byKeyword, orderKeys)
 }
 
-func (b *BallerinaParser) parseGroupingKeyList(isRhsExpr bool) tree.STNode {
-	var groupingKeys []tree.STNode
+func (b *BallerinaParser) parseGroupingKeyList(isRhsExpr bool) st.STNode {
+	var groupingKeys []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfGroupByKeyListElement(nextToken) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	groupingKey := b.parseGroupingKey(isRhsExpr)
 	groupingKeys = append(groupingKeys, groupingKey)
 	nextToken = b.peek()
-	var groupingKeyListMemberEnd tree.STNode
+	var groupingKeyListMemberEnd st.STNode
 	for !b.isEndOfGroupByKeyListElement(nextToken) {
 		groupingKeyListMemberEnd = b.parseGroupingKeyListMemberEnd()
 		if groupingKeyListMemberEnd == nil {
@@ -9341,21 +9341,21 @@ func (b *BallerinaParser) parseGroupingKeyList(isRhsExpr bool) tree.STNode {
 		groupingKeys = append(groupingKeys, groupingKey)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(groupingKeys...)
+	return st.CreateNodeList(groupingKeys...)
 }
 
-func (b *BallerinaParser) parseOrderKeyList(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseOrderKeyList(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ORDER_KEY_LIST)
-	var orderKeys []tree.STNode
+	var orderKeys []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfOrderKeys(nextToken) {
 		b.endContext()
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	orderKey := b.parseOrderKey(isRhsExpr)
 	orderKeys = append(orderKeys, orderKey)
 	nextToken = b.peek()
-	var orderKeyListMemberEnd tree.STNode
+	var orderKeyListMemberEnd st.STNode
 	for !b.isEndOfOrderKeys(nextToken) {
 		orderKeyListMemberEnd = b.parseOrderKeyListMemberEnd()
 		if orderKeyListMemberEnd == nil {
@@ -9367,58 +9367,58 @@ func (b *BallerinaParser) parseOrderKeyList(isRhsExpr bool) tree.STNode {
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateNodeList(orderKeys...)
+	return st.CreateNodeList(orderKeys...)
 }
 
-func (b *BallerinaParser) isEndOfGroupByKeyListElement(nextToken tree.STToken) bool {
+func (b *BallerinaParser) isEndOfGroupByKeyListElement(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return false
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		return true
 	default:
 		return b.isQueryClauseStartToken(nextToken)
 	}
 }
 
-func (b *BallerinaParser) isEndOfOrderKeys(nextToken tree.STToken) bool {
+func (b *BallerinaParser) isEndOfOrderKeys(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN,
-		common.ASCENDING_KEYWORD,
-		common.DESCENDING_KEYWORD:
+	case st.COMMA_TOKEN,
+		st.ASCENDING_KEYWORD,
+		st.DESCENDING_KEYWORD:
 		return false
-	case common.SEMICOLON_TOKEN, common.EOF_TOKEN:
+	case st.SEMICOLON_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return b.isQueryClauseStartToken(nextToken)
 	}
 }
 
-func (b *BallerinaParser) isQueryClauseStartToken(nextToken tree.STToken) bool {
+func (b *BallerinaParser) isQueryClauseStartToken(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
-	case common.SELECT_KEYWORD,
-		common.LET_KEYWORD,
-		common.WHERE_KEYWORD,
-		common.OUTER_KEYWORD,
-		common.JOIN_KEYWORD,
-		common.ORDER_KEYWORD,
-		common.DO_KEYWORD,
-		common.FROM_KEYWORD,
-		common.LIMIT_KEYWORD:
+	case st.SELECT_KEYWORD,
+		st.LET_KEYWORD,
+		st.WHERE_KEYWORD,
+		st.OUTER_KEYWORD,
+		st.JOIN_KEYWORD,
+		st.ORDER_KEYWORD,
+		st.DO_KEYWORD,
+		st.FROM_KEYWORD,
+		st.LIMIT_KEYWORD:
 		return true
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return isGroupOrCollectKeyword(nextToken)
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseGroupingKeyListMemberEnd() tree.STNode {
+func (b *BallerinaParser) parseGroupingKeyListMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.consume()
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		return nil
 	default:
 		if b.isQueryClauseStartToken(nextToken) {
@@ -9429,12 +9429,12 @@ func (b *BallerinaParser) parseGroupingKeyListMemberEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOrderKeyListMemberEnd() tree.STNode {
+func (b *BallerinaParser) parseOrderKeyListMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.EOF_TOKEN:
+	case st.EOF_TOKEN:
 		return nil
 	default:
 		if b.isQueryClauseStartToken(nextToken) {
@@ -9445,22 +9445,22 @@ func (b *BallerinaParser) parseOrderKeyListMemberEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseGroupingKeyVariableDeclaration(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseGroupingKeyVariableDeclaration(isRhsExpr bool) st.STNode {
 	groupingKeyElementTypeDesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY)
 	b.startContext(common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER)
 	groupingKeySimpleBP := b.createCaptureOrWildcardBP(b.parseVariableName())
 	b.endContext()
 	equalsToken := b.parseAssignOp()
 	groupingKeyExpression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
-	return tree.CreateGroupingKeyVarDeclarationNode(groupingKeyElementTypeDesc, groupingKeySimpleBP,
+	return st.CreateGroupingKeyVarDeclarationNode(groupingKeyElementTypeDesc, groupingKeySimpleBP,
 		equalsToken, groupingKeyExpression)
 }
 
-func (b *BallerinaParser) parseGroupingKey(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseGroupingKey(isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
 	nextTokenKind := nextToken.Kind()
-	if (nextTokenKind == common.IDENTIFIER_TOKEN) && (!b.isPossibleGroupingKeyVarDeclaration()) {
-		return tree.CreateSimpleNameReferenceNode(b.parseVariableName())
+	if (nextTokenKind == st.IDENTIFIER_TOKEN) && (!b.isPossibleGroupingKeyVarDeclaration()) {
+		return st.CreateSimpleNameReferenceNode(b.parseVariableName())
 	} else if isTypeStartingToken(nextTokenKind, nextToken) {
 		return b.parseGroupingKeyVariableDeclaration(isRhsExpr)
 	}
@@ -9470,33 +9470,33 @@ func (b *BallerinaParser) parseGroupingKey(isRhsExpr bool) tree.STNode {
 
 func (b *BallerinaParser) isPossibleGroupingKeyVarDeclaration() bool {
 	nextNextTokenKind := b.getNextNextToken().Kind()
-	return ((nextNextTokenKind == common.EQUAL_TOKEN) || ((nextNextTokenKind == common.IDENTIFIER_TOKEN) && (b.peekN(3).Kind() == common.EQUAL_TOKEN)))
+	return ((nextNextTokenKind == st.EQUAL_TOKEN) || ((nextNextTokenKind == st.IDENTIFIER_TOKEN) && (b.peekN(3).Kind() == st.EQUAL_TOKEN)))
 }
 
-func (b *BallerinaParser) parseOrderKey(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseOrderKey(isRhsExpr bool) st.STNode {
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
-	var orderDirection tree.STNode
+	var orderDirection st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ASCENDING_KEYWORD, common.DESCENDING_KEYWORD:
+	case st.ASCENDING_KEYWORD, st.DESCENDING_KEYWORD:
 		orderDirection = b.consume()
 	default:
-		orderDirection = tree.CreateEmptyNode()
+		orderDirection = st.CreateEmptyNode()
 	}
-	return tree.CreateOrderKeyNode(expression, orderDirection)
+	return st.CreateOrderKeyNode(expression, orderDirection)
 }
 
-func (b *BallerinaParser) parseSelectClause(isRhsExpr bool, allowActions bool) tree.STNode {
+func (b *BallerinaParser) parseSelectClause(isRhsExpr bool, allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_SELECT_CLAUSE)
 	selectKeyword := b.parseSelectKeyword()
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, allowActions)
 	b.endContext()
-	return tree.CreateSelectClauseNode(selectKeyword, expression)
+	return st.CreateSelectClauseNode(selectKeyword, expression)
 }
 
-func (b *BallerinaParser) parseSelectKeyword() tree.STNode {
+func (b *BallerinaParser) parseSelectKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.SELECT_KEYWORD {
+	if token.Kind() == st.SELECT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SELECT_KEYWORD)
@@ -9504,22 +9504,22 @@ func (b *BallerinaParser) parseSelectKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOnConflictClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseOnConflictClause(isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
-	if (nextToken.Kind() != common.ON_KEYWORD) && (nextToken.Kind() != common.CONFLICT_KEYWORD) {
-		return tree.CreateEmptyNode()
+	if (nextToken.Kind() != st.ON_KEYWORD) && (nextToken.Kind() != st.CONFLICT_KEYWORD) {
+		return st.CreateEmptyNode()
 	}
 	b.startContext(common.PARSER_RULE_CONTEXT_ON_CONFLICT_CLAUSE)
 	onKeyword := b.parseOnKeyword()
 	conflictKeyword := b.parseConflictKeyword()
 	b.endContext()
 	expr := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
-	return tree.CreateOnConflictClauseNode(onKeyword, conflictKeyword, expr)
+	return st.CreateOnConflictClauseNode(onKeyword, conflictKeyword, expr)
 }
 
-func (b *BallerinaParser) parseConflictKeyword() tree.STNode {
+func (b *BallerinaParser) parseConflictKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.CONFLICT_KEYWORD {
+	if token.Kind() == st.CONFLICT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_CONFLICT_KEYWORD)
@@ -9527,20 +9527,20 @@ func (b *BallerinaParser) parseConflictKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLimitClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseLimitClause(isRhsExpr bool) st.STNode {
 	limitKeyword := b.parseLimitKeyword()
 	expr := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
-	return tree.CreateLimitClauseNode(limitKeyword, expr)
+	return st.CreateLimitClauseNode(limitKeyword, expr)
 }
 
-func (b *BallerinaParser) parseJoinClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseJoinClause(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_JOIN_CLAUSE)
-	var outerKeyword tree.STNode
+	var outerKeyword st.STNode
 	nextToken := b.peek()
-	if nextToken.Kind() == common.OUTER_KEYWORD {
+	if nextToken.Kind() == st.OUTER_KEYWORD {
 		outerKeyword = b.consume()
 	} else {
-		outerKeyword = tree.CreateEmptyNode()
+		outerKeyword = st.CreateEmptyNode()
 	}
 	joinKeyword := b.parseJoinKeyword()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_JOIN_CLAUSE)
@@ -9548,11 +9548,11 @@ func (b *BallerinaParser) parseJoinClause(isRhsExpr bool) tree.STNode {
 	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
 	b.endContext()
 	onCondition := b.parseOnClause(isRhsExpr)
-	return tree.CreateJoinClauseNode(outerKeyword, joinKeyword, typedBindingPattern, inKeyword, expression,
+	return st.CreateJoinClauseNode(outerKeyword, joinKeyword, typedBindingPattern, inKeyword, expression,
 		onCondition)
 }
 
-func (b *BallerinaParser) parseOnClause(isRhsExpr bool) tree.STNode {
+func (b *BallerinaParser) parseOnClause(isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
 	if b.isQueryClauseStartToken(nextToken) {
 		return b.createMissingOnClauseNode()
@@ -9563,79 +9563,79 @@ func (b *BallerinaParser) parseOnClause(isRhsExpr bool) tree.STNode {
 	equalsKeyword := b.parseEqualsKeyword()
 	b.endContext()
 	equalsExpression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
-	return tree.CreateOnClauseNode(onKeyword, onExpression, equalsKeyword, equalsExpression)
+	return st.CreateOnClauseNode(onKeyword, onExpression, equalsKeyword, equalsExpression)
 }
 
-func (b *BallerinaParser) createMissingOnClauseNode() tree.STNode {
-	onKeyword := tree.CreateMissingTokenWithDiagnostics(common.ON_KEYWORD,
+func (b *BallerinaParser) createMissingOnClauseNode() st.STNode {
+	onKeyword := st.CreateMissingTokenWithDiagnostics(st.ON_KEYWORD,
 		&common.ERROR_MISSING_ON_KEYWORD)
-	identifier := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+	identifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_IDENTIFIER)
-	equalsKeyword := tree.CreateMissingTokenWithDiagnostics(common.EQUALS_KEYWORD,
+	equalsKeyword := st.CreateMissingTokenWithDiagnostics(st.EQUALS_KEYWORD,
 		&common.ERROR_MISSING_EQUALS_KEYWORD)
-	onExpression := tree.CreateSimpleNameReferenceNode(identifier)
-	equalsExpression := tree.CreateSimpleNameReferenceNode(identifier)
-	return tree.CreateOnClauseNode(onKeyword, onExpression, equalsKeyword, equalsExpression)
+	onExpression := st.CreateSimpleNameReferenceNode(identifier)
+	equalsExpression := st.CreateSimpleNameReferenceNode(identifier)
+	return st.CreateOnClauseNode(onKeyword, onExpression, equalsKeyword, equalsExpression)
 }
 
-func (b *BallerinaParser) parseStartAction(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStartAction(annots st.STNode) st.STNode {
 	startKeyword := b.parseStartKeyword()
 	expr := b.parseActionOrExpression()
 	switch expr.Kind() {
-	case common.FUNCTION_CALL,
-		common.METHOD_CALL,
-		common.REMOTE_METHOD_CALL_ACTION:
+	case st.FUNCTION_CALL,
+		st.METHOD_CALL,
+		st.REMOTE_METHOD_CALL_ACTION:
 		break
-	case common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE,
-		common.FIELD_ACCESS,
-		common.ASYNC_SEND_ACTION:
+	case st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE,
+		st.FIELD_ACCESS,
+		st.ASYNC_SEND_ACTION:
 		expr = b.generateValidExprForStartAction(expr)
 	default:
-		startKeyword = tree.CloneWithTrailingInvalidNodeMinutiae(startKeyword, expr,
+		startKeyword = st.CloneWithTrailingInvalidNodeMinutiae(startKeyword, expr,
 			&common.ERROR_INVALID_EXPRESSION_IN_START_ACTION)
-		var funcName tree.STNode
-		funcName = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		funcName = tree.CreateSimpleNameReferenceNode(funcName)
-		openParenToken := tree.CreateMissingToken(common.OPEN_PAREN_TOKEN, nil)
-		closeParenToken := tree.CreateMissingToken(common.CLOSE_PAREN_TOKEN, nil)
-		expr = tree.CreateFunctionCallExpressionNode(funcName, openParenToken,
-			tree.CreateEmptyNodeList(), closeParenToken)
+		var funcName st.STNode
+		funcName = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		funcName = st.CreateSimpleNameReferenceNode(funcName)
+		openParenToken := st.CreateMissingToken(st.OPEN_PAREN_TOKEN, nil)
+		closeParenToken := st.CreateMissingToken(st.CLOSE_PAREN_TOKEN, nil)
+		expr = st.CreateFunctionCallExpressionNode(funcName, openParenToken,
+			st.CreateEmptyNodeList(), closeParenToken)
 	}
-	return tree.CreateStartActionNode(b.getAnnotations(annots), startKeyword, expr)
+	return st.CreateStartActionNode(b.getAnnotations(annots), startKeyword, expr)
 }
 
-func (b *BallerinaParser) generateValidExprForStartAction(expr tree.STNode) tree.STNode {
-	openParenToken := tree.CreateMissingTokenWithDiagnostics(common.OPEN_PAREN_TOKEN,
+func (b *BallerinaParser) generateValidExprForStartAction(expr st.STNode) st.STNode {
+	openParenToken := st.CreateMissingTokenWithDiagnostics(st.OPEN_PAREN_TOKEN,
 		&common.ERROR_MISSING_OPEN_PAREN_TOKEN)
-	arguments := tree.CreateEmptyNodeList()
-	closeParenToken := tree.CreateMissingTokenWithDiagnostics(common.CLOSE_PAREN_TOKEN,
+	arguments := st.CreateEmptyNodeList()
+	closeParenToken := st.CreateMissingTokenWithDiagnostics(st.CLOSE_PAREN_TOKEN,
 		&common.ERROR_MISSING_CLOSE_PAREN_TOKEN)
 	switch expr.Kind() {
-	case common.FIELD_ACCESS:
-		fieldAccessExpr, ok := expr.(*tree.STFieldAccessExpressionNode)
+	case st.FIELD_ACCESS:
+		fieldAccessExpr, ok := expr.(*st.STFieldAccessExpressionNode)
 		if !ok {
 			panic("expected STFieldAccessExpressionNode")
 		}
-		return tree.CreateMethodCallExpressionNode(fieldAccessExpr.Expression,
+		return st.CreateMethodCallExpressionNode(fieldAccessExpr.Expression,
 			fieldAccessExpr.DotToken, fieldAccessExpr.FieldName, openParenToken, arguments,
 			closeParenToken)
-	case common.ASYNC_SEND_ACTION:
-		asyncSendAction, ok := expr.(*tree.STAsyncSendActionNode)
+	case st.ASYNC_SEND_ACTION:
+		asyncSendAction, ok := expr.(*st.STAsyncSendActionNode)
 		if !ok {
 			panic("expected STAsyncSendActionNode")
 		}
-		return tree.CreateRemoteMethodCallActionNode(asyncSendAction.Expression,
+		return st.CreateRemoteMethodCallActionNode(asyncSendAction.Expression,
 			asyncSendAction.RightArrowToken, asyncSendAction.PeerWorker, openParenToken, arguments,
 			closeParenToken)
 	default:
-		return tree.CreateFunctionCallExpressionNode(expr, openParenToken, arguments, closeParenToken)
+		return st.CreateFunctionCallExpressionNode(expr, openParenToken, arguments, closeParenToken)
 	}
 }
 
-func (b *BallerinaParser) parseStartKeyword() tree.STNode {
+func (b *BallerinaParser) parseStartKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.START_KEYWORD {
+	if token.Kind() == st.START_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_START_KEYWORD)
@@ -9643,15 +9643,15 @@ func (b *BallerinaParser) parseStartKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFlushAction() tree.STNode {
+func (b *BallerinaParser) parseFlushAction() st.STNode {
 	flushKeyword := b.parseFlushKeyword()
 	peerWorker := b.parseOptionalPeerWorkerName()
-	return tree.CreateFlushActionNode(flushKeyword, peerWorker)
+	return st.CreateFlushActionNode(flushKeyword, peerWorker)
 }
 
-func (b *BallerinaParser) parseFlushKeyword() tree.STNode {
+func (b *BallerinaParser) parseFlushKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.FLUSH_KEYWORD {
+	if token.Kind() == st.FLUSH_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FLUSH_KEYWORD)
@@ -9659,118 +9659,118 @@ func (b *BallerinaParser) parseFlushKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalPeerWorkerName() tree.STNode {
+func (b *BallerinaParser) parseOptionalPeerWorkerName() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.IDENTIFIER_TOKEN, common.FUNCTION_KEYWORD:
-		return tree.CreateSimpleNameReferenceNode(b.consume())
+	case st.IDENTIFIER_TOKEN, st.FUNCTION_KEYWORD:
+		return st.CreateSimpleNameReferenceNode(b.consume())
 	default:
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	}
 }
 
-func (b *BallerinaParser) parseIntersectionTypeDescriptor(leftTypeDesc tree.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) tree.STNode {
+func (b *BallerinaParser) parseIntersectionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	bitwiseAndToken := b.consume()
 	rightTypeDesc := b.parseTypeDescriptorInternalWithPrecedence(nil, context, isTypedBindingPattern, false,
 		TYPE_PRECEDENCE_INTERSECTION)
 	return b.mergeTypesWithIntersection(leftTypeDesc, bitwiseAndToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) createIntersectionTypeDesc(leftTypeDesc tree.STNode, bitwiseAndToken tree.STNode, rightTypeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) createIntersectionTypeDesc(leftTypeDesc st.STNode, bitwiseAndToken st.STNode, rightTypeDesc st.STNode) st.STNode {
 	leftTypeDesc = b.validateForUsageOfVar(leftTypeDesc)
 	rightTypeDesc = b.validateForUsageOfVar(rightTypeDesc)
-	return tree.CreateIntersectionTypeDescriptorNode(leftTypeDesc, bitwiseAndToken, rightTypeDesc)
+	return st.CreateIntersectionTypeDescriptorNode(leftTypeDesc, bitwiseAndToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) parseSingletonTypeDesc() tree.STNode {
+func (b *BallerinaParser) parseSingletonTypeDesc() st.STNode {
 	simpleContExpr := b.parseSimpleConstExpr()
-	return tree.CreateSingletonTypeDescriptorNode(simpleContExpr)
+	return st.CreateSingletonTypeDescriptorNode(simpleContExpr)
 }
 
-func (b *BallerinaParser) parseSignedIntOrFloat() tree.STNode {
+func (b *BallerinaParser) parseSignedIntOrFloat() st.STNode {
 	operator := b.parseUnaryOperator()
-	var literal tree.STNode
+	var literal st.STNode
 	nextToken := b.peek()
 
 	switch nextToken.Kind() {
 
-	case common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case st.HEX_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		literal = b.parseBasicLiteral()
 	default:
-		literal = tree.CreateBasicLiteralNode(common.NUMERIC_LITERAL,
+		literal = st.CreateBasicLiteralNode(st.NUMERIC_LITERAL,
 			b.parseDecimalIntLiteral(common.PARSER_RULE_CONTEXT_DECIMAL_INTEGER_LITERAL_TOKEN))
 	}
-	return tree.CreateUnaryExpressionNode(operator, literal)
+	return st.CreateUnaryExpressionNode(operator, literal)
 }
 
-func (b *BallerinaParser) isValidExpressionStart(nextTokenKind common.SyntaxKind, nextTokenIndex int) bool {
+func (b *BallerinaParser) isValidExpressionStart(nextTokenKind st.SyntaxKind, nextTokenIndex int) bool {
 	nextTokenIndex++
 	switch nextTokenKind {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		nextNextTokenKind := b.peekN(nextTokenIndex).Kind()
-		if (nextNextTokenKind == common.PIPE_TOKEN) || (nextNextTokenKind == common.BITWISE_AND_TOKEN) {
+		if (nextNextTokenKind == st.PIPE_TOKEN) || (nextNextTokenKind == st.BITWISE_AND_TOKEN) {
 			nextTokenIndex++
 			return b.isValidExpressionStart(b.peekN(nextTokenIndex).Kind(), nextTokenIndex)
 		}
-		return ((((nextNextTokenKind == common.SEMICOLON_TOKEN) || (nextNextTokenKind == common.COMMA_TOKEN)) || (nextNextTokenKind == common.CLOSE_BRACKET_TOKEN)) || b.isValidExprRhsStart(nextNextTokenKind, common.SIMPLE_NAME_REFERENCE))
-	case common.IDENTIFIER_TOKEN:
-		return b.isValidExprRhsStart(b.peekN(nextTokenIndex).Kind(), common.SIMPLE_NAME_REFERENCE)
-	case common.OPEN_PAREN_TOKEN, common.CHECK_KEYWORD, common.CHECKPANIC_KEYWORD, common.OPEN_BRACE_TOKEN,
-		common.TYPEOF_KEYWORD, common.NEGATION_TOKEN, common.EXCLAMATION_MARK_TOKEN, common.TRAP_KEYWORD,
-		common.OPEN_BRACKET_TOKEN, common.LT_TOKEN, common.FROM_KEYWORD, common.LET_KEYWORD,
-		common.BACKTICK_TOKEN, common.NEW_KEYWORD, common.LEFT_ARROW_TOKEN, common.FUNCTION_KEYWORD,
-		common.TRANSACTIONAL_KEYWORD, common.ISOLATED_KEYWORD, common.BASE16_KEYWORD, common.BASE64_KEYWORD,
-		common.NATURAL_KEYWORD:
+		return ((((nextNextTokenKind == st.SEMICOLON_TOKEN) || (nextNextTokenKind == st.COMMA_TOKEN)) || (nextNextTokenKind == st.CLOSE_BRACKET_TOKEN)) || b.isValidExprRhsStart(nextNextTokenKind, st.SIMPLE_NAME_REFERENCE))
+	case st.IDENTIFIER_TOKEN:
+		return b.isValidExprRhsStart(b.peekN(nextTokenIndex).Kind(), st.SIMPLE_NAME_REFERENCE)
+	case st.OPEN_PAREN_TOKEN, st.CHECK_KEYWORD, st.CHECKPANIC_KEYWORD, st.OPEN_BRACE_TOKEN,
+		st.TYPEOF_KEYWORD, st.NEGATION_TOKEN, st.EXCLAMATION_MARK_TOKEN, st.TRAP_KEYWORD,
+		st.OPEN_BRACKET_TOKEN, st.LT_TOKEN, st.FROM_KEYWORD, st.LET_KEYWORD,
+		st.BACKTICK_TOKEN, st.NEW_KEYWORD, st.LEFT_ARROW_TOKEN, st.FUNCTION_KEYWORD,
+		st.TRANSACTIONAL_KEYWORD, st.ISOLATED_KEYWORD, st.BASE16_KEYWORD, st.BASE64_KEYWORD,
+		st.NATURAL_KEYWORD:
 		return true
-	case common.PLUS_TOKEN, common.MINUS_TOKEN:
+	case st.PLUS_TOKEN, st.MINUS_TOKEN:
 		return b.isValidExpressionStart(b.peekN(nextTokenIndex).Kind(), nextTokenIndex)
-	case common.TABLE_KEYWORD, common.MAP_KEYWORD:
-		return (b.peekN(nextTokenIndex).Kind() == common.FROM_KEYWORD)
-	case common.STREAM_KEYWORD:
+	case st.TABLE_KEYWORD, st.MAP_KEYWORD:
+		return (b.peekN(nextTokenIndex).Kind() == st.FROM_KEYWORD)
+	case st.STREAM_KEYWORD:
 		nextNextToken := b.peekN(nextTokenIndex)
-		return (((nextNextToken.Kind() == common.KEY_KEYWORD) || (nextNextToken.Kind() == common.OPEN_BRACKET_TOKEN)) || (nextNextToken.Kind() == common.FROM_KEYWORD))
-	case common.ERROR_KEYWORD:
-		return (b.peekN(nextTokenIndex).Kind() == common.OPEN_PAREN_TOKEN)
-	case common.XML_KEYWORD, common.STRING_KEYWORD, common.RE_KEYWORD:
-		return (b.peekN(nextTokenIndex).Kind() == common.BACKTICK_TOKEN)
-	case common.START_KEYWORD,
-		common.FLUSH_KEYWORD,
-		common.WAIT_KEYWORD:
+		return (((nextNextToken.Kind() == st.KEY_KEYWORD) || (nextNextToken.Kind() == st.OPEN_BRACKET_TOKEN)) || (nextNextToken.Kind() == st.FROM_KEYWORD))
+	case st.ERROR_KEYWORD:
+		return (b.peekN(nextTokenIndex).Kind() == st.OPEN_PAREN_TOKEN)
+	case st.XML_KEYWORD, st.STRING_KEYWORD, st.RE_KEYWORD:
+		return (b.peekN(nextTokenIndex).Kind() == st.BACKTICK_TOKEN)
+	case st.START_KEYWORD,
+		st.FLUSH_KEYWORD,
+		st.WAIT_KEYWORD:
 		fallthrough
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseSyncSendAction(expression tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseSyncSendAction(expression st.STNode) st.STNode {
 	syncSendToken := b.parseSyncSendToken()
 	peerWorker := b.parsePeerWorkerName()
-	return tree.CreateSyncSendActionNode(expression, syncSendToken, peerWorker)
+	return st.CreateSyncSendActionNode(expression, syncSendToken, peerWorker)
 }
 
-func (b *BallerinaParser) parsePeerWorkerName() tree.STNode {
+func (b *BallerinaParser) parsePeerWorkerName() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.IDENTIFIER_TOKEN, common.FUNCTION_KEYWORD:
-		return tree.CreateSimpleNameReferenceNode(b.consume())
+	case st.IDENTIFIER_TOKEN, st.FUNCTION_KEYWORD:
+		return st.CreateSimpleNameReferenceNode(b.consume())
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME)
 		return b.parsePeerWorkerName()
 	}
 }
 
-func (b *BallerinaParser) parseSyncSendToken() tree.STNode {
+func (b *BallerinaParser) parseSyncSendToken() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.SYNC_SEND_TOKEN {
+	if token.Kind() == st.SYNC_SEND_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_SYNC_SEND_TOKEN)
@@ -9778,17 +9778,17 @@ func (b *BallerinaParser) parseSyncSendToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReceiveAction() tree.STNode {
+func (b *BallerinaParser) parseReceiveAction() st.STNode {
 	leftArrow := b.parseLeftArrowToken()
 	receiveWorkers := b.parseReceiveWorkers()
-	return tree.CreateReceiveActionNode(leftArrow, receiveWorkers)
+	return st.CreateReceiveActionNode(leftArrow, receiveWorkers)
 }
 
-func (b *BallerinaParser) parseReceiveWorkers() tree.STNode {
+func (b *BallerinaParser) parseReceiveWorkers() st.STNode {
 	switch b.peek().Kind() {
-	case common.FUNCTION_KEYWORD, common.IDENTIFIER_TOKEN:
+	case st.FUNCTION_KEYWORD, st.IDENTIFIER_TOKEN:
 		return b.parseSingleOrAlternateReceiveWorkers()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseMultipleReceiveWorkers()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_RECEIVE_WORKERS)
@@ -9796,17 +9796,17 @@ func (b *BallerinaParser) parseReceiveWorkers() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSingleOrAlternateReceiveWorkers() tree.STNode {
+func (b *BallerinaParser) parseSingleOrAlternateReceiveWorkers() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER)
-	var workers []tree.STNode
+	var workers []st.STNode
 	peerWorker := b.parsePeerWorkerName()
 	workers = append(workers, peerWorker)
 	nextToken := b.peek()
-	if nextToken.Kind() != common.PIPE_TOKEN {
+	if nextToken.Kind() != st.PIPE_TOKEN {
 		b.endContext()
 		return peerWorker
 	}
-	for nextToken.Kind() == common.PIPE_TOKEN {
+	for nextToken.Kind() == st.PIPE_TOKEN {
 		pipeToken := b.consume()
 		workers = append(workers, pipeToken)
 		peerWorker = b.parsePeerWorkerName()
@@ -9814,10 +9814,10 @@ func (b *BallerinaParser) parseSingleOrAlternateReceiveWorkers() tree.STNode {
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateAlternateReceiveNode(tree.CreateNodeList(workers...))
+	return st.CreateAlternateReceiveNode(st.CreateNodeList(workers...))
 }
 
-func (b *BallerinaParser) parseMultipleReceiveWorkers() tree.STNode {
+func (b *BallerinaParser) parseMultipleReceiveWorkers() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MULTI_RECEIVE_WORKERS)
 	openBrace := b.parseOpenBrace()
 	receiveFields := b.parseReceiveFields()
@@ -9825,19 +9825,19 @@ func (b *BallerinaParser) parseMultipleReceiveWorkers() tree.STNode {
 	b.endContext()
 	openBrace = b.cloneWithDiagnosticIfListEmpty(receiveFields, openBrace,
 		&common.ERROR_MISSING_RECEIVE_FIELD_IN_RECEIVE_ACTION)
-	return tree.CreateReceiveFieldsNode(openBrace, receiveFields, closeBrace)
+	return st.CreateReceiveFieldsNode(openBrace, receiveFields, closeBrace)
 }
 
-func (b *BallerinaParser) parseReceiveFields() tree.STNode {
-	var receiveFields []tree.STNode
+func (b *BallerinaParser) parseReceiveFields() st.STNode {
+	var receiveFields []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfReceiveFields(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	receiveField := b.parseReceiveField()
 	receiveFields = append(receiveFields, receiveField)
 	nextToken = b.peek()
-	var recieveFieldEnd tree.STNode
+	var recieveFieldEnd st.STNode
 	for !b.isEndOfReceiveFields(nextToken.Kind()) {
 		recieveFieldEnd = b.parseReceiveFieldEnd()
 		if recieveFieldEnd == nil {
@@ -9848,23 +9848,23 @@ func (b *BallerinaParser) parseReceiveFields() tree.STNode {
 		receiveFields = append(receiveFields, receiveField)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(receiveFields...)
+	return st.CreateNodeList(receiveFields...)
 }
 
-func (b *BallerinaParser) isEndOfReceiveFields(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfReceiveFields(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACE_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseReceiveFieldEnd() tree.STNode {
+func (b *BallerinaParser) parseReceiveFieldEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_RECEIVE_FIELD_END)
@@ -9872,12 +9872,12 @@ func (b *BallerinaParser) parseReceiveFieldEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReceiveField() tree.STNode {
+func (b *BallerinaParser) parseReceiveField() st.STNode {
 	switch b.peek().Kind() {
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		functionKeyword := b.consume()
-		return tree.CreateSimpleNameReferenceNode(functionKeyword)
-	case common.IDENTIFIER_TOKEN:
+		return st.CreateSimpleNameReferenceNode(functionKeyword)
+	case st.IDENTIFIER_TOKEN:
 		identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_RECEIVE_FIELD_NAME)
 		return b.createReceiveField(identifier)
 	default:
@@ -9886,19 +9886,19 @@ func (b *BallerinaParser) parseReceiveField() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) createReceiveField(identifier tree.STNode) tree.STNode {
-	if b.peek().Kind() != common.COLON_TOKEN {
-		return tree.CreateSimpleNameReferenceNode(identifier)
+func (b *BallerinaParser) createReceiveField(identifier st.STNode) st.STNode {
+	if b.peek().Kind() != st.COLON_TOKEN {
+		return st.CreateSimpleNameReferenceNode(identifier)
 	}
-	identifier = tree.CreateSimpleNameReferenceNode(identifier)
+	identifier = st.CreateSimpleNameReferenceNode(identifier)
 	colon := b.parseColon()
 	peerWorker := b.parsePeerWorkerName()
-	return tree.CreateReceiveFieldNode(identifier, colon, peerWorker)
+	return st.CreateReceiveFieldNode(identifier, colon, peerWorker)
 }
 
-func (b *BallerinaParser) parseLeftArrowToken() tree.STNode {
+func (b *BallerinaParser) parseLeftArrowToken() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.LEFT_ARROW_TOKEN {
+	if token.Kind() == st.LEFT_ARROW_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_LEFT_ARROW_TOKEN)
@@ -9906,53 +9906,53 @@ func (b *BallerinaParser) parseLeftArrowToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSignedRightShiftToken() tree.STNode {
+func (b *BallerinaParser) parseSignedRightShiftToken() st.STNode {
 	firstToken := b.consume()
-	if firstToken.Kind() == common.DOUBLE_GT_TOKEN {
+	if firstToken.Kind() == st.DOUBLE_GT_TOKEN {
 		return firstToken
 	}
 	endLGToken := b.consume()
-	var doubleGTToken tree.STNode
-	doubleGTToken = tree.CreateToken(common.DOUBLE_GT_TOKEN, firstToken.LeadingMinutiae(),
+	var doubleGTToken st.STNode
+	doubleGTToken = st.CreateToken(st.DOUBLE_GT_TOKEN, firstToken.LeadingMinutiae(),
 		endLGToken.TrailingMinutiae())
 	if b.hasTrailingMinutiae(firstToken) {
-		doubleGTToken = tree.AddDiagnostic(doubleGTToken,
+		doubleGTToken = st.AddDiagnostic(doubleGTToken,
 			&common.ERROR_NO_WHITESPACES_ALLOWED_IN_RIGHT_SHIFT_OP)
 	}
 	return doubleGTToken
 }
 
-func (b *BallerinaParser) parseUnsignedRightShiftToken() tree.STNode {
+func (b *BallerinaParser) parseUnsignedRightShiftToken() st.STNode {
 	firstToken := b.consume()
-	if firstToken.Kind() == common.TRIPPLE_GT_TOKEN {
+	if firstToken.Kind() == st.TRIPPLE_GT_TOKEN {
 		return firstToken
 	}
 	middleGTToken := b.consume()
 	endLGToken := b.consume()
-	var unsignedRightShiftToken tree.STNode
-	unsignedRightShiftToken = tree.CreateToken(common.TRIPPLE_GT_TOKEN,
+	var unsignedRightShiftToken st.STNode
+	unsignedRightShiftToken = st.CreateToken(st.TRIPPLE_GT_TOKEN,
 		firstToken.LeadingMinutiae(), endLGToken.TrailingMinutiae())
 	validOpenGTToken := (!b.hasTrailingMinutiae(firstToken))
 	validMiddleGTToken := (!b.hasTrailingMinutiae(middleGTToken))
 	if validOpenGTToken && validMiddleGTToken {
 		return unsignedRightShiftToken
 	}
-	unsignedRightShiftToken = tree.AddDiagnostic(unsignedRightShiftToken,
+	unsignedRightShiftToken = st.AddDiagnostic(unsignedRightShiftToken,
 		&common.ERROR_NO_WHITESPACES_ALLOWED_IN_UNSIGNED_RIGHT_SHIFT_OP)
 	return unsignedRightShiftToken
 }
 
-func (b *BallerinaParser) parseWaitAction() tree.STNode {
+func (b *BallerinaParser) parseWaitAction() st.STNode {
 	waitKeyword := b.parseWaitKeyword()
-	if b.peek().Kind() == common.OPEN_BRACE_TOKEN {
+	if b.peek().Kind() == st.OPEN_BRACE_TOKEN {
 		return b.parseMultiWaitAction(waitKeyword)
 	}
 	return b.parseSingleOrAlternateWaitAction(waitKeyword)
 }
 
-func (b *BallerinaParser) parseWaitKeyword() tree.STNode {
+func (b *BallerinaParser) parseWaitKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.WAIT_KEYWORD {
+	if token.Kind() == st.WAIT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_WAIT_KEYWORD)
@@ -9960,21 +9960,21 @@ func (b *BallerinaParser) parseWaitKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSingleOrAlternateWaitAction(waitKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseSingleOrAlternateWaitAction(waitKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ALTERNATE_WAIT_EXPRS)
 	nextToken := b.peek()
 	if b.isEndOfWaitFutureExprList(nextToken.Kind()) {
 		b.endContext()
-		waitFutureExprs := tree.CreateSimpleNameReferenceNode(tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil))
-		waitFutureExprs = tree.AddDiagnostic(waitFutureExprs,
+		waitFutureExprs := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
+		waitFutureExprs = st.AddDiagnostic(waitFutureExprs,
 			&common.ERROR_MISSING_WAIT_FUTURE_EXPRESSION)
-		return tree.CreateWaitActionNode(waitKeyword, waitFutureExprs)
+		return st.CreateWaitActionNode(waitKeyword, waitFutureExprs)
 	}
-	var waitFutureExprList []tree.STNode
+	var waitFutureExprList []st.STNode
 	waitField := b.parseWaitFutureExpr()
 	waitFutureExprList = append(waitFutureExprList, waitField)
 	nextToken = b.peek()
-	var waitFutureExprEnd tree.STNode
+	var waitFutureExprEnd st.STNode
 	for !b.isEndOfWaitFutureExprList(nextToken.Kind()) {
 		waitFutureExprEnd = b.parseWaitFutureExprEnd()
 		if waitFutureExprEnd == nil {
@@ -9986,33 +9986,33 @@ func (b *BallerinaParser) parseSingleOrAlternateWaitAction(waitKeyword tree.STNo
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateWaitActionNode(waitKeyword, waitFutureExprList[0])
+	return st.CreateWaitActionNode(waitKeyword, waitFutureExprList[0])
 }
 
-func (b *BallerinaParser) isEndOfWaitFutureExprList(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACE_TOKEN, common.SEMICOLON_TOKEN, common.OPEN_BRACE_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN, st.SEMICOLON_TOKEN, st.OPEN_BRACE_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseWaitFutureExpr() tree.STNode {
+func (b *BallerinaParser) parseWaitFutureExpr() st.STNode {
 	waitFutureExpr := b.parseActionOrExpression()
-	if waitFutureExpr.Kind() == common.MAPPING_CONSTRUCTOR {
-		waitFutureExpr = tree.AddDiagnostic(waitFutureExpr,
+	if waitFutureExpr.Kind() == st.MAPPING_CONSTRUCTOR {
+		waitFutureExpr = st.AddDiagnostic(waitFutureExpr,
 			&common.ERROR_MAPPING_CONSTRUCTOR_EXPR_AS_A_WAIT_EXPR)
 	} else if b.isAction(waitFutureExpr) {
-		waitFutureExpr = tree.AddDiagnostic(waitFutureExpr, &common.ERROR_ACTION_AS_A_WAIT_EXPR)
+		waitFutureExpr = st.AddDiagnostic(waitFutureExpr, &common.ERROR_ACTION_AS_A_WAIT_EXPR)
 	}
 	return waitFutureExpr
 }
 
-func (b *BallerinaParser) parseWaitFutureExprEnd() tree.STNode {
+func (b *BallerinaParser) parseWaitFutureExprEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.PIPE_TOKEN:
+	case st.PIPE_TOKEN:
 		return b.parsePipeToken()
 	default:
 		if b.isEndOfWaitFutureExprList(nextToken.Kind()) || (!b.isValidExpressionStart(nextToken.Kind(), 1)) {
@@ -10023,7 +10023,7 @@ func (b *BallerinaParser) parseWaitFutureExprEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMultiWaitAction(waitKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseMultiWaitAction(waitKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MULTI_WAIT_FIELDS)
 	openBrace := b.parseOpenBrace()
 	waitFields := b.parseWaitFields()
@@ -10031,20 +10031,20 @@ func (b *BallerinaParser) parseMultiWaitAction(waitKeyword tree.STNode) tree.STN
 	b.endContext()
 	openBrace = b.cloneWithDiagnosticIfListEmpty(waitFields, openBrace,
 		&common.ERROR_MISSING_WAIT_FIELD_IN_WAIT_ACTION)
-	waitFieldsNode := tree.CreateWaitFieldsListNode(openBrace, waitFields, closeBrace)
-	return tree.CreateWaitActionNode(waitKeyword, waitFieldsNode)
+	waitFieldsNode := st.CreateWaitFieldsListNode(openBrace, waitFields, closeBrace)
+	return st.CreateWaitActionNode(waitKeyword, waitFieldsNode)
 }
 
-func (b *BallerinaParser) parseWaitFields() tree.STNode {
-	var waitFields []tree.STNode
+func (b *BallerinaParser) parseWaitFields() st.STNode {
+	var waitFields []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfWaitFields(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	waitField := b.parseWaitField()
 	waitFields = append(waitFields, waitField)
 	nextToken = b.peek()
-	var waitFieldEnd tree.STNode
+	var waitFieldEnd st.STNode
 	for !b.isEndOfWaitFields(nextToken.Kind()) {
 		waitFieldEnd = b.parseWaitFieldEnd()
 		if waitFieldEnd == nil {
@@ -10055,23 +10055,23 @@ func (b *BallerinaParser) parseWaitFields() tree.STNode {
 		waitFields = append(waitFields, waitField)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(waitFields...)
+	return st.CreateNodeList(waitFields...)
 }
 
-func (b *BallerinaParser) isEndOfWaitFields(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfWaitFields(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACE_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseWaitFieldEnd() tree.STNode {
+func (b *BallerinaParser) parseWaitFieldEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_WAIT_FIELD_END)
@@ -10079,11 +10079,11 @@ func (b *BallerinaParser) parseWaitFieldEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseWaitField() tree.STNode {
+func (b *BallerinaParser) parseWaitField() st.STNode {
 	switch b.peek().Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_WAIT_FIELD_NAME)
-		identifier = tree.CreateSimpleNameReferenceNode(identifier)
+		identifier = st.CreateSimpleNameReferenceNode(identifier)
 		return b.createQualifiedWaitField(identifier)
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_WAIT_FIELD_NAME)
@@ -10091,24 +10091,24 @@ func (b *BallerinaParser) parseWaitField() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) createQualifiedWaitField(identifier tree.STNode) tree.STNode {
-	if b.peek().Kind() != common.COLON_TOKEN {
+func (b *BallerinaParser) createQualifiedWaitField(identifier st.STNode) st.STNode {
+	if b.peek().Kind() != st.COLON_TOKEN {
 		return identifier
 	}
 	colon := b.parseColon()
 	waitFutureExpr := b.parseWaitFutureExpr()
-	return tree.CreateWaitFieldNode(identifier, colon, waitFutureExpr)
+	return st.CreateWaitFieldNode(identifier, colon, waitFutureExpr)
 }
 
-func (b *BallerinaParser) parseAnnotAccessExpression(lhsExpr tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseAnnotAccessExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	annotAccessToken := b.parseAnnotChainingToken()
 	annotTagReference := b.parseFieldAccessIdentifier(isInConditionalExpr)
-	return tree.CreateAnnotAccessExpressionNode(lhsExpr, annotAccessToken, annotTagReference)
+	return st.CreateAnnotAccessExpressionNode(lhsExpr, annotAccessToken, annotTagReference)
 }
 
-func (b *BallerinaParser) parseAnnotChainingToken() tree.STNode {
+func (b *BallerinaParser) parseAnnotChainingToken() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ANNOT_CHAINING_TOKEN {
+	if token.Kind() == st.ANNOT_CHAINING_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ANNOT_CHAINING_TOKEN)
@@ -10116,39 +10116,39 @@ func (b *BallerinaParser) parseAnnotChainingToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldAccessIdentifier(isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseFieldAccessIdentifier(isInConditionalExpr bool) st.STNode {
 	nextToken := b.peek()
 	if !b.isPredeclaredIdentifier(nextToken.Kind()) {
-		var identifier tree.STNode = tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+		var identifier st.STNode = st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_IDENTIFIER)
 		return b.parseQualifiedIdentifierNode(identifier, isInConditionalExpr)
 	}
 	return b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_FIELD_ACCESS_IDENTIFIER, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseQueryAction(queryConstructType tree.STNode, queryPipeline tree.STNode, selectClause tree.STNode, collectClause tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseQueryAction(queryConstructType st.STNode, queryPipeline st.STNode, selectClause st.STNode, collectClause st.STNode) st.STNode {
 	if queryConstructType != nil {
-		queryPipeline = tree.CloneWithLeadingInvalidNodeMinutiae(queryPipeline, queryConstructType,
+		queryPipeline = st.CloneWithLeadingInvalidNodeMinutiae(queryPipeline, queryConstructType,
 			&common.ERROR_QUERY_CONSTRUCT_TYPE_IN_QUERY_ACTION)
 	}
 	if selectClause != nil {
-		queryPipeline = tree.CloneWithTrailingInvalidNodeMinutiae(queryPipeline, selectClause,
+		queryPipeline = st.CloneWithTrailingInvalidNodeMinutiae(queryPipeline, selectClause,
 			&common.ERROR_SELECT_CLAUSE_IN_QUERY_ACTION)
 	}
 	if collectClause != nil {
-		queryPipeline = tree.CloneWithTrailingInvalidNodeMinutiae(queryPipeline, collectClause,
+		queryPipeline = st.CloneWithTrailingInvalidNodeMinutiae(queryPipeline, collectClause,
 			&common.ERROR_COLLECT_CLAUSE_IN_QUERY_ACTION)
 	}
 	b.startContext(common.PARSER_RULE_CONTEXT_DO_CLAUSE)
 	doKeyword := b.parseDoKeyword()
 	blockStmt := b.parseBlockNode()
 	b.endContext()
-	return tree.CreateQueryActionNode(queryPipeline, doKeyword, blockStmt)
+	return st.CreateQueryActionNode(queryPipeline, doKeyword, blockStmt)
 }
 
-func (b *BallerinaParser) parseDoKeyword() tree.STNode {
+func (b *BallerinaParser) parseDoKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.DO_KEYWORD {
+	if token.Kind() == st.DO_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_DO_KEYWORD)
@@ -10156,15 +10156,15 @@ func (b *BallerinaParser) parseDoKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalFieldAccessExpression(lhsExpr tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseOptionalFieldAccessExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	optionalFieldAccessToken := b.parseOptionalChainingToken()
 	fieldName := b.parseFieldAccessIdentifier(isInConditionalExpr)
-	return tree.CreateOptionalFieldAccessExpressionNode(lhsExpr, optionalFieldAccessToken, fieldName)
+	return st.CreateOptionalFieldAccessExpressionNode(lhsExpr, optionalFieldAccessToken, fieldName)
 }
 
-func (b *BallerinaParser) parseOptionalChainingToken() tree.STNode {
+func (b *BallerinaParser) parseOptionalChainingToken() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.OPTIONAL_CHAINING_TOKEN {
+	if token.Kind() == st.OPTIONAL_CHAINING_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_OPTIONAL_CHAINING_TOKEN)
@@ -10172,40 +10172,40 @@ func (b *BallerinaParser) parseOptionalChainingToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseConditionalExpression(lhsExpr tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseConditionalExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONDITIONAL_EXPRESSION)
 	questionMark := b.parseQuestionMark()
 	middleExpr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET, true, false, true)
-	if b.peek().Kind() != common.COLON_TOKEN {
-		if middleExpr.Kind() == common.CONDITIONAL_EXPRESSION {
-			innerConditionalExpr, ok := middleExpr.(*tree.STConditionalExpressionNode)
+	if b.peek().Kind() != st.COLON_TOKEN {
+		if middleExpr.Kind() == st.CONDITIONAL_EXPRESSION {
+			innerConditionalExpr, ok := middleExpr.(*st.STConditionalExpressionNode)
 			if !ok {
 				panic("expected STConditionalExpressionNode")
 			}
 			innerMiddleExpr := innerConditionalExpr.MiddleExpression
-			rightMostQNameRef := tree.GetQualifiedNameRefNode(innerMiddleExpr, false)
+			rightMostQNameRef := st.GetQualifiedNameRefNode(innerMiddleExpr, false)
 			if rightMostQNameRef != nil {
 				middleExpr = b.generateConditionalExprForRightMost(innerConditionalExpr.LhsExpression,
 					innerConditionalExpr.QuestionMarkToken, innerMiddleExpr, rightMostQNameRef)
 				b.endContext()
-				return tree.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr,
+				return st.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr,
 					innerConditionalExpr.ColonToken, innerConditionalExpr.EndExpression)
 			}
-			leftMostQNameRef := tree.GetQualifiedNameRefNode(innerMiddleExpr, true)
+			leftMostQNameRef := st.GetQualifiedNameRefNode(innerMiddleExpr, true)
 			if leftMostQNameRef != nil {
 				middleExpr = b.generateConditionalExprForLeftMost(innerConditionalExpr.LhsExpression,
 					innerConditionalExpr.QuestionMarkToken, innerMiddleExpr, leftMostQNameRef)
 				b.endContext()
-				return tree.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr,
+				return st.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr,
 					innerConditionalExpr.ColonToken, innerConditionalExpr.EndExpression)
 			}
 		}
-		rightMostQNameRef := tree.GetQualifiedNameRefNode(middleExpr, false)
+		rightMostQNameRef := st.GetQualifiedNameRefNode(middleExpr, false)
 		if rightMostQNameRef != nil {
 			b.endContext()
 			return b.generateConditionalExprForRightMost(lhsExpr, questionMark, middleExpr, rightMostQNameRef)
 		}
-		leftMostQNameRef := tree.GetQualifiedNameRefNode(middleExpr, true)
+		leftMostQNameRef := st.GetQualifiedNameRefNode(middleExpr, true)
 		if leftMostQNameRef != nil {
 			b.endContext()
 			return b.generateConditionalExprForLeftMost(lhsExpr, questionMark, middleExpr, leftMostQNameRef)
@@ -10214,39 +10214,39 @@ func (b *BallerinaParser) parseConditionalExpression(lhsExpr tree.STNode, isInCo
 	return b.parseConditionalExprRhs(lhsExpr, questionMark, middleExpr, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) generateConditionalExprForRightMost(lhsExpr tree.STNode, questionMark tree.STNode, middleExpr tree.STNode, rightMostQualifiedNameRef tree.STNode) tree.STNode {
-	qualifiedNameRef, ok := rightMostQualifiedNameRef.(*tree.STQualifiedNameReferenceNode)
+func (b *BallerinaParser) generateConditionalExprForRightMost(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, rightMostQualifiedNameRef st.STNode) st.STNode {
+	qualifiedNameRef, ok := rightMostQualifiedNameRef.(*st.STQualifiedNameReferenceNode)
 	if !ok {
 		panic("expected STQualifiedNameReferenceNode")
 	}
-	endExpr := tree.CreateSimpleNameReferenceNode(qualifiedNameRef.Identifier)
-	simpleNameRef := tree.GetSimpleNameRefNode(qualifiedNameRef.ModulePrefix)
-	middleExpr = tree.Replace(middleExpr, rightMostQualifiedNameRef, simpleNameRef)
-	return tree.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, qualifiedNameRef.Colon,
+	endExpr := st.CreateSimpleNameReferenceNode(qualifiedNameRef.Identifier)
+	simpleNameRef := st.GetSimpleNameRefNode(qualifiedNameRef.ModulePrefix)
+	middleExpr = st.Replace(middleExpr, rightMostQualifiedNameRef, simpleNameRef)
+	return st.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, qualifiedNameRef.Colon,
 		endExpr)
 }
 
-func (b *BallerinaParser) generateConditionalExprForLeftMost(lhsExpr tree.STNode, questionMark tree.STNode, middleExpr tree.STNode, leftMostQualifiedNameRef tree.STNode) tree.STNode {
-	qualifiedNameRef, ok := leftMostQualifiedNameRef.(*tree.STQualifiedNameReferenceNode)
+func (b *BallerinaParser) generateConditionalExprForLeftMost(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, leftMostQualifiedNameRef st.STNode) st.STNode {
+	qualifiedNameRef, ok := leftMostQualifiedNameRef.(*st.STQualifiedNameReferenceNode)
 	if !ok {
 		panic("expected STQualifiedNameReferenceNode")
 	}
-	simpleNameRef := tree.CreateSimpleNameReferenceNode(qualifiedNameRef.Identifier)
-	endExpr := tree.Replace(middleExpr, leftMostQualifiedNameRef, simpleNameRef)
-	middleExpr = tree.GetSimpleNameRefNode(qualifiedNameRef.ModulePrefix)
-	return tree.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, qualifiedNameRef.Colon,
+	simpleNameRef := st.CreateSimpleNameReferenceNode(qualifiedNameRef.Identifier)
+	endExpr := st.Replace(middleExpr, leftMostQualifiedNameRef, simpleNameRef)
+	middleExpr = st.GetSimpleNameRefNode(qualifiedNameRef.ModulePrefix)
+	return st.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, qualifiedNameRef.Colon,
 		endExpr)
 }
 
-func (b *BallerinaParser) parseConditionalExprRhs(lhsExpr tree.STNode, questionMark tree.STNode, middleExpr tree.STNode, isInConditionalExpr bool) tree.STNode {
+func (b *BallerinaParser) parseConditionalExprRhs(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	colon := b.parseColon()
 	b.endContext()
 	endExpr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET, true, false,
 		isInConditionalExpr)
-	return tree.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, colon, endExpr)
+	return st.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, colon, endExpr)
 }
 
-func (b *BallerinaParser) parseEnumDeclaration(metadata tree.STNode, qualifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseEnumDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_ENUM_DECLARATION)
 	enumKeywordToken := b.parseEnumKeyword()
 	identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_MODULE_ENUM_NAME)
@@ -10255,15 +10255,15 @@ func (b *BallerinaParser) parseEnumDeclaration(metadata tree.STNode, qualifier t
 	closeBraceToken := b.parseCloseBrace()
 	semicolon := b.parseOptionalSemicolon()
 	b.endContext()
-	enumDecl := tree.CreateEnumDeclarationNode(metadata, qualifier, enumKeywordToken, identifier,
+	enumDecl := st.CreateEnumDeclarationNode(metadata, qualifier, enumKeywordToken, identifier,
 		openBraceToken, enumMemberList, closeBraceToken, semicolon)
 	return b.cloneWithDiagnosticIfListEmpty(enumMemberList, enumDecl,
 		&common.ERROR_MISSING_ENUM_MEMBER)
 }
 
-func (b *BallerinaParser) parseEnumKeyword() tree.STNode {
+func (b *BallerinaParser) parseEnumKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ENUM_KEYWORD {
+	if token.Kind() == st.ENUM_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ENUM_KEYWORD)
@@ -10271,15 +10271,15 @@ func (b *BallerinaParser) parseEnumKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseEnumMemberList() tree.STNode {
+func (b *BallerinaParser) parseEnumMemberList() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ENUM_MEMBER_LIST)
-	if b.peek().Kind() == common.CLOSE_BRACE_TOKEN {
-		return tree.CreateEmptyNodeList()
+	if b.peek().Kind() == st.CLOSE_BRACE_TOKEN {
+		return st.CreateEmptyNodeList()
 	}
-	var enumMemberList []tree.STNode
+	var enumMemberList []st.STNode
 	enumMember := b.parseEnumMember()
-	var enumMemberRhs tree.STNode
-	for b.peek().Kind() != common.CLOSE_BRACE_TOKEN {
+	var enumMemberRhs st.STNode
+	for b.peek().Kind() != st.CLOSE_BRACE_TOKEN {
 		enumMemberRhs = b.parseEnumMemberEnd()
 		if enumMemberRhs == nil {
 			break
@@ -10290,43 +10290,43 @@ func (b *BallerinaParser) parseEnumMemberList() tree.STNode {
 	}
 	enumMemberList = append(enumMemberList, enumMember)
 	b.endContext()
-	return tree.CreateNodeList(enumMemberList...)
+	return st.CreateNodeList(enumMemberList...)
 }
 
-func (b *BallerinaParser) parseEnumMember() tree.STNode {
-	var metadata tree.STNode
+func (b *BallerinaParser) parseEnumMember() st.STNode {
+	var metadata st.STNode
 	switch b.peek().Kind() {
-	case common.DOCUMENTATION_STRING, common.AT_TOKEN:
+	case st.DOCUMENTATION_STRING, st.AT_TOKEN:
 		metadata = b.parseMetaData()
 	default:
-		metadata = tree.CreateEmptyNode()
+		metadata = st.CreateEmptyNode()
 	}
 	identifierNode := b.parseIdentifier(common.PARSER_RULE_CONTEXT_ENUM_MEMBER_NAME)
 	return b.parseEnumMemberRhs(metadata, identifierNode)
 }
 
-func (b *BallerinaParser) parseEnumMemberRhs(metadata tree.STNode, identifierNode tree.STNode) tree.STNode {
-	var equalToken tree.STNode
-	var constExprNode tree.STNode
+func (b *BallerinaParser) parseEnumMemberRhs(metadata st.STNode, identifierNode st.STNode) st.STNode {
+	var equalToken st.STNode
+	var constExprNode st.STNode
 	switch b.peek().Kind() {
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		equalToken = b.parseAssignOp()
 		constExprNode = b.parseExpression()
-	case common.COMMA_TOKEN, common.CLOSE_BRACE_TOKEN:
-		equalToken = tree.CreateEmptyNode()
-		constExprNode = tree.CreateEmptyNode()
+	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
+		equalToken = st.CreateEmptyNode()
+		constExprNode = st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ENUM_MEMBER_RHS)
 		return b.parseEnumMemberRhs(metadata, identifierNode)
 	}
-	return tree.CreateEnumMemberNode(metadata, identifierNode, equalToken, constExprNode)
+	return st.CreateEnumMemberNode(metadata, identifierNode, equalToken, constExprNode)
 }
 
-func (b *BallerinaParser) parseEnumMemberEnd() tree.STNode {
+func (b *BallerinaParser) parseEnumMemberEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ENUM_MEMBER_END)
@@ -10334,21 +10334,21 @@ func (b *BallerinaParser) parseEnumMemberEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTransactionStmtOrVarDecl(annots tree.STNode, qualifiers []tree.STNode, transactionKeyword tree.STToken) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseTransactionStmtOrVarDecl(annots st.STNode, qualifiers []st.STNode, transactionKeyword st.STToken) (st.STNode, []st.STNode) {
 	switch b.peek().Kind() {
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseTransactionStatement(transactionKeyword), qualifiers
-	case common.COLON_TOKEN:
-		if b.getNextNextToken().Kind() == common.IDENTIFIER_TOKEN {
+	case st.COLON_TOKEN:
+		if b.getNextNextToken().Kind() == st.IDENTIFIER_TOKEN {
 			typeDesc := b.parseQualifiedIdentifierWithPredeclPrefix(transactionKeyword, false)
 			return b.parseVarDeclTypeDescRhs(typeDesc, annots, qualifiers, true, false)
 		}
 		fallthrough
 	default:
 		solution := b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_TRANSACTION_STMT_RHS_OR_TYPE_REF)
-		if (solution.Action == ACTION_KEEP) || ((solution.Action == ACTION_INSERT) && (solution.TokenKind == common.COLON_TOKEN)) {
+		if (solution.Action == ACTION_KEEP) || ((solution.Action == ACTION_INSERT) && (solution.TokenKind == st.COLON_TOKEN)) {
 			typeDesc := b.parseQualifiedIdentifierWithPredeclPrefix(transactionKeyword, false)
 			return b.parseVarDeclTypeDescRhs(typeDesc, annots, qualifiers, true, false)
 		}
@@ -10356,22 +10356,22 @@ func (b *BallerinaParser) parseTransactionStmtOrVarDecl(annots tree.STNode, qual
 	}
 }
 
-func (b *BallerinaParser) parseTransactionStatement(transactionKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTransactionStatement(transactionKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TRANSACTION_STMT)
 	blockStmt := b.parseBlockNode()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateTransactionStatementNode(transactionKeyword, blockStmt, onFailClause)
+	return st.CreateTransactionStatementNode(transactionKeyword, blockStmt, onFailClause)
 }
 
-func (b *BallerinaParser) parseCommitAction() tree.STNode {
+func (b *BallerinaParser) parseCommitAction() st.STNode {
 	commitKeyword := b.parseCommitKeyword()
-	return tree.CreateCommitActionNode(commitKeyword)
+	return st.CreateCommitActionNode(commitKeyword)
 }
 
-func (b *BallerinaParser) parseCommitKeyword() tree.STNode {
+func (b *BallerinaParser) parseCommitKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.COMMIT_KEYWORD {
+	if token.Kind() == st.COMMIT_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_COMMIT_KEYWORD)
@@ -10379,36 +10379,36 @@ func (b *BallerinaParser) parseCommitKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRetryStatement() tree.STNode {
+func (b *BallerinaParser) parseRetryStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RETRY_STMT)
 	retryKeyword := b.parseRetryKeyword()
 	retryStmt := b.parseRetryKeywordRhs(retryKeyword)
 	return retryStmt
 }
 
-func (b *BallerinaParser) parseRetryKeywordRhs(retryKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseRetryKeywordRhs(retryKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.LT_TOKEN:
+	case st.LT_TOKEN:
 		return b.parseRetryTypeParamRhs(retryKeyword, b.parseTypeParameter())
-	case common.OPEN_PAREN_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.TRANSACTION_KEYWORD:
-		return b.parseRetryTypeParamRhs(retryKeyword, tree.CreateEmptyNode())
+	case st.OPEN_PAREN_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.TRANSACTION_KEYWORD:
+		return b.parseRetryTypeParamRhs(retryKeyword, st.CreateEmptyNode())
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_RETRY_KEYWORD_RHS)
 		return b.parseRetryKeywordRhs(retryKeyword)
 	}
 }
 
-func (b *BallerinaParser) parseRetryTypeParamRhs(retryKeyword tree.STNode, typeParam tree.STNode) tree.STNode {
-	var args tree.STNode
+func (b *BallerinaParser) parseRetryTypeParamRhs(retryKeyword st.STNode, typeParam st.STNode) st.STNode {
+	var args st.STNode
 	switch b.peek().Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		args = b.parseParenthesizedArgList()
-	case common.OPEN_BRACE_TOKEN,
-		common.TRANSACTION_KEYWORD:
-		args = tree.CreateEmptyNode()
+	case st.OPEN_BRACE_TOKEN,
+		st.TRANSACTION_KEYWORD:
+		args = st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_RETRY_TYPE_PARAM_RHS)
 		return b.parseRetryTypeParamRhs(retryKeyword, typeParam)
@@ -10416,14 +10416,14 @@ func (b *BallerinaParser) parseRetryTypeParamRhs(retryKeyword tree.STNode, typeP
 	blockStmt := b.parseRetryBody()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateRetryStatementNode(retryKeyword, typeParam, args, blockStmt, onFailClause)
+	return st.CreateRetryStatementNode(retryKeyword, typeParam, args, blockStmt, onFailClause)
 }
 
-func (b *BallerinaParser) parseRetryBody() tree.STNode {
+func (b *BallerinaParser) parseRetryBody() st.STNode {
 	switch b.peek().Kind() {
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseBlockNode()
-	case common.TRANSACTION_KEYWORD:
+	case st.TRANSACTION_KEYWORD:
 		return b.parseTransactionStatement(b.consume())
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_RETRY_BODY)
@@ -10431,37 +10431,37 @@ func (b *BallerinaParser) parseRetryBody() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalOnFailClause() tree.STNode {
+func (b *BallerinaParser) parseOptionalOnFailClause() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.ON_KEYWORD {
+	if nextToken.Kind() == st.ON_KEYWORD {
 		return b.parseOnFailClause()
 	}
 	if b.isEndOfRegularCompoundStmt(nextToken.Kind()) {
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	}
 	b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_REGULAR_COMPOUND_STMT_RHS)
 	return b.parseOptionalOnFailClause()
 }
 
-func (b *BallerinaParser) isEndOfRegularCompoundStmt(nodeKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfRegularCompoundStmt(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
-	case common.CLOSE_BRACE_TOKEN, common.SEMICOLON_TOKEN, common.AT_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACE_TOKEN, st.SEMICOLON_TOKEN, st.AT_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return b.isStatementStartingToken(nodeKind)
 	}
 }
 
-func (b *BallerinaParser) isStatementStartingToken(nodeKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isStatementStartingToken(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
-	case common.FINAL_KEYWORD, common.IF_KEYWORD, common.WHILE_KEYWORD, common.DO_KEYWORD,
-		common.PANIC_KEYWORD, common.CONTINUE_KEYWORD, common.BREAK_KEYWORD, common.RETURN_KEYWORD,
-		common.LOCK_KEYWORD, common.OPEN_BRACE_TOKEN, common.FORK_KEYWORD, common.FOREACH_KEYWORD,
-		common.XMLNS_KEYWORD, common.TRANSACTION_KEYWORD, common.RETRY_KEYWORD, common.ROLLBACK_KEYWORD,
-		common.MATCH_KEYWORD, common.FAIL_KEYWORD, common.CHECK_KEYWORD, common.CHECKPANIC_KEYWORD,
-		common.TRAP_KEYWORD, common.START_KEYWORD, common.FLUSH_KEYWORD, common.LEFT_ARROW_TOKEN,
-		common.WAIT_KEYWORD, common.COMMIT_KEYWORD, common.WORKER_KEYWORD, common.TYPE_KEYWORD,
-		common.CONST_KEYWORD:
+	case st.FINAL_KEYWORD, st.IF_KEYWORD, st.WHILE_KEYWORD, st.DO_KEYWORD,
+		st.PANIC_KEYWORD, st.CONTINUE_KEYWORD, st.BREAK_KEYWORD, st.RETURN_KEYWORD,
+		st.LOCK_KEYWORD, st.OPEN_BRACE_TOKEN, st.FORK_KEYWORD, st.FOREACH_KEYWORD,
+		st.XMLNS_KEYWORD, st.TRANSACTION_KEYWORD, st.RETRY_KEYWORD, st.ROLLBACK_KEYWORD,
+		st.MATCH_KEYWORD, st.FAIL_KEYWORD, st.CHECK_KEYWORD, st.CHECKPANIC_KEYWORD,
+		st.TRAP_KEYWORD, st.START_KEYWORD, st.FLUSH_KEYWORD, st.LEFT_ARROW_TOKEN,
+		st.WAIT_KEYWORD, st.COMMIT_KEYWORD, st.WORKER_KEYWORD, st.TYPE_KEYWORD,
+		st.CONST_KEYWORD:
 		return true
 	default:
 		if b.isTypeStartingToken(nodeKind) {
@@ -10474,21 +10474,21 @@ func (b *BallerinaParser) isStatementStartingToken(nodeKind common.SyntaxKind) b
 	}
 }
 
-func (b *BallerinaParser) parseOnFailClause() tree.STNode {
+func (b *BallerinaParser) parseOnFailClause() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ON_FAIL_CLAUSE)
 	onKeyword := b.parseOnKeyword()
 	failKeyword := b.parseFailKeyword()
 	typedBindingPattern := b.parseOnfailOptionalBP()
 	blockStatement := b.parseBlockNode()
 	b.endContext()
-	return tree.CreateOnFailClauseNode(onKeyword, failKeyword, typedBindingPattern,
+	return st.CreateOnFailClauseNode(onKeyword, failKeyword, typedBindingPattern,
 		blockStatement)
 }
 
-func (b *BallerinaParser) parseOnfailOptionalBP() tree.STNode {
+func (b *BallerinaParser) parseOnfailOptionalBP() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.OPEN_BRACE_TOKEN {
-		return tree.CreateEmptyNode()
+	if nextToken.Kind() == st.OPEN_BRACE_TOKEN {
+		return st.CreateEmptyNode()
 	} else if b.isTypeStartingToken(nextToken.Kind()) {
 		return b.parseTypedBindingPattern()
 	} else {
@@ -10497,15 +10497,15 @@ func (b *BallerinaParser) parseOnfailOptionalBP() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPattern() st.STNode {
 	typeDescriptor := b.parseTypeDescriptorWithoutQualifiers(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true, false, TYPE_PRECEDENCE_DEFAULT)
 	bindingPattern := b.parseBindingPattern()
-	return tree.CreateTypedBindingPatternNode(typeDescriptor, bindingPattern)
+	return st.CreateTypedBindingPatternNode(typeDescriptor, bindingPattern)
 }
 
-func (b *BallerinaParser) parseRetryKeyword() tree.STNode {
+func (b *BallerinaParser) parseRetryKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.RETRY_KEYWORD {
+	if token.Kind() == st.RETRY_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_RETRY_KEYWORD)
@@ -10513,23 +10513,23 @@ func (b *BallerinaParser) parseRetryKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRollbackStatement() tree.STNode {
+func (b *BallerinaParser) parseRollbackStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ROLLBACK_STMT)
 	rollbackKeyword := b.parseRollbackKeyword()
-	var expression tree.STNode
-	if b.peek().Kind() == common.SEMICOLON_TOKEN {
-		expression = tree.CreateEmptyNode()
+	var expression st.STNode
+	if b.peek().Kind() == st.SEMICOLON_TOKEN {
+		expression = st.CreateEmptyNode()
 	} else {
 		expression = b.parseExpression()
 	}
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return tree.CreateRollbackStatementNode(rollbackKeyword, expression, semicolon)
+	return st.CreateRollbackStatementNode(rollbackKeyword, expression, semicolon)
 }
 
-func (b *BallerinaParser) parseRollbackKeyword() tree.STNode {
+func (b *BallerinaParser) parseRollbackKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.ROLLBACK_KEYWORD {
+	if token.Kind() == st.ROLLBACK_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_ROLLBACK_KEYWORD)
@@ -10537,14 +10537,14 @@ func (b *BallerinaParser) parseRollbackKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTransactionalExpression() tree.STNode {
+func (b *BallerinaParser) parseTransactionalExpression() st.STNode {
 	transactionalKeyword := b.parseTransactionalKeyword()
-	return tree.CreateTransactionalExpressionNode(transactionalKeyword)
+	return st.CreateTransactionalExpressionNode(transactionalKeyword)
 }
 
-func (b *BallerinaParser) parseTransactionalKeyword() tree.STNode {
+func (b *BallerinaParser) parseTransactionalKeyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.TRANSACTIONAL_KEYWORD {
+	if token.Kind() == st.TRANSACTIONAL_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD)
@@ -10552,43 +10552,43 @@ func (b *BallerinaParser) parseTransactionalKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseByteArrayLiteral() tree.STNode {
-	var ty tree.STNode
-	if b.peek().Kind() == common.BASE16_KEYWORD {
+func (b *BallerinaParser) parseByteArrayLiteral() st.STNode {
+	var ty st.STNode
+	if b.peek().Kind() == st.BASE16_KEYWORD {
 		ty = b.parseBase16Keyword()
 	} else {
 		ty = b.parseBase64Keyword()
 	}
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	if startingBackTick.IsMissing() {
-		startingBackTick = tree.CreateMissingToken(common.BACKTICK_TOKEN, nil)
-		endingBackTick := tree.CreateMissingToken(common.BACKTICK_TOKEN, nil)
-		content := tree.CreateEmptyNode()
-		byteArrayLiteral := tree.CreateByteArrayLiteralNode(ty, startingBackTick, content, endingBackTick)
-		byteArrayLiteral = tree.AddDiagnostic(byteArrayLiteral, &common.ERROR_MISSING_BYTE_ARRAY_CONTENT)
+		startingBackTick = st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
+		endingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
+		content := st.CreateEmptyNode()
+		byteArrayLiteral := st.CreateByteArrayLiteralNode(ty, startingBackTick, content, endingBackTick)
+		byteArrayLiteral = st.AddDiagnostic(byteArrayLiteral, &common.ERROR_MISSING_BYTE_ARRAY_CONTENT)
 		return byteArrayLiteral
 	}
 	content := b.parseByteArrayContent()
 	return b.parseByteArrayLiteralWithContent(ty, startingBackTick, content)
 }
 
-func (b *BallerinaParser) parseByteArrayLiteralWithContent(typeKeyword tree.STNode, startingBackTick tree.STNode, byteArrayContent tree.STNode) tree.STNode {
-	content := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseByteArrayLiteralWithContent(typeKeyword st.STNode, startingBackTick st.STNode, byteArrayContent st.STNode) st.STNode {
+	content := st.CreateEmptyNode()
 	newStartingBackTick := startingBackTick
-	items, ok := byteArrayContent.(*tree.STNodeList)
+	items, ok := byteArrayContent.(*st.STNodeList)
 	if !ok {
 		panic("byteArrayContent is not a STNodeList")
 	}
 	if items.Size() == 1 {
 		item := items.Get(0)
-		if (typeKeyword.Kind() == common.BASE16_KEYWORD) && (!isValidBase16LiteralContent(tree.ToSourceCode(item))) {
-			newStartingBackTick = tree.CloneWithTrailingInvalidNodeMinutiae(startingBackTick, item,
+		if (typeKeyword.Kind() == st.BASE16_KEYWORD) && (!isValidBase16LiteralContent(st.ToSourceCode(item))) {
+			newStartingBackTick = st.CloneWithTrailingInvalidNodeMinutiae(startingBackTick, item,
 				&common.ERROR_INVALID_BASE16_CONTENT_IN_BYTE_ARRAY_LITERAL)
-		} else if (typeKeyword.Kind() == common.BASE64_KEYWORD) && (!isValidBase64LiteralContent(tree.ToSourceCode(item))) {
-			newStartingBackTick = tree.CloneWithTrailingInvalidNodeMinutiae(startingBackTick, item,
+		} else if (typeKeyword.Kind() == st.BASE64_KEYWORD) && (!isValidBase64LiteralContent(st.ToSourceCode(item))) {
+			newStartingBackTick = st.CloneWithTrailingInvalidNodeMinutiae(startingBackTick, item,
 				&common.ERROR_INVALID_BASE64_CONTENT_IN_BYTE_ARRAY_LITERAL)
-		} else if item.Kind() != common.TEMPLATE_STRING {
-			newStartingBackTick = tree.CloneWithTrailingInvalidNodeMinutiae(startingBackTick, item,
+		} else if item.Kind() != st.TEMPLATE_STRING {
+			newStartingBackTick = st.CloneWithTrailingInvalidNodeMinutiae(startingBackTick, item,
 				&common.ERROR_INVALID_CONTENT_IN_BYTE_ARRAY_LITERAL)
 		} else {
 			content = item
@@ -10597,18 +10597,18 @@ func (b *BallerinaParser) parseByteArrayLiteralWithContent(typeKeyword tree.STNo
 		clonedStartingBackTick := startingBackTick
 		for index := 0; index < items.Size(); index++ {
 			item := items.Get(index)
-			clonedStartingBackTick = tree.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(clonedStartingBackTick, item)
+			clonedStartingBackTick = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(clonedStartingBackTick, item)
 		}
-		newStartingBackTick = tree.AddDiagnostic(clonedStartingBackTick,
+		newStartingBackTick = st.AddDiagnostic(clonedStartingBackTick,
 			&common.ERROR_INVALID_CONTENT_IN_BYTE_ARRAY_LITERAL)
 	}
 	endingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_END)
-	return tree.CreateByteArrayLiteralNode(typeKeyword, newStartingBackTick, content, endingBackTick)
+	return st.CreateByteArrayLiteralNode(typeKeyword, newStartingBackTick, content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseBase16Keyword() tree.STNode {
+func (b *BallerinaParser) parseBase16Keyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.BASE16_KEYWORD {
+	if token.Kind() == st.BASE16_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_BASE16_KEYWORD)
@@ -10616,9 +10616,9 @@ func (b *BallerinaParser) parseBase16Keyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBase64Keyword() tree.STNode {
+func (b *BallerinaParser) parseBase64Keyword() st.STNode {
 	token := b.peek()
-	if token.Kind() == common.BASE64_KEYWORD {
+	if token.Kind() == st.BASE64_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_BASE64_KEYWORD)
@@ -10626,49 +10626,49 @@ func (b *BallerinaParser) parseBase64Keyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseByteArrayContent() tree.STNode {
+func (b *BallerinaParser) parseByteArrayContent() st.STNode {
 	nextToken := b.peek()
-	var items []tree.STNode
+	var items []st.STNode
 	for !b.isEndOfBacktickContent(nextToken.Kind()) {
 		content := b.parseTemplateItem()
 		items = append(items, content)
 		nextToken = b.peek()
 	}
-	return tree.CreateNodeList(items...)
+	return st.CreateNodeList(items...)
 }
 
-func (b *BallerinaParser) parseXMLFilterExpression(lhsExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseXMLFilterExpression(lhsExpr st.STNode) st.STNode {
 	xmlNamePatternChain := b.parseXMLFilterExpressionRhs()
-	return tree.CreateXMLFilterExpressionNode(lhsExpr, xmlNamePatternChain)
+	return st.CreateXMLFilterExpressionNode(lhsExpr, xmlNamePatternChain)
 }
 
-func (b *BallerinaParser) parseXMLFilterExpressionRhs() tree.STNode {
+func (b *BallerinaParser) parseXMLFilterExpressionRhs() st.STNode {
 	dotLTToken := b.parseDotLTToken()
 	return b.parseXMLNamePatternChain(dotLTToken)
 }
 
-func (b *BallerinaParser) parseXMLNamePatternChain(startToken tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseXMLNamePatternChain(startToken st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_NAME_PATTERN)
 	xmlNamePattern := b.parseXMLNamePattern()
 	gtToken := b.parseGTToken()
 	b.endContext()
 	startToken = b.cloneWithDiagnosticIfListEmpty(xmlNamePattern, startToken,
 		&common.ERROR_MISSING_XML_ATOMIC_NAME_PATTERN)
-	return tree.CreateXMLNamePatternChainingNode(startToken, xmlNamePattern, gtToken)
+	return st.CreateXMLNamePatternChainingNode(startToken, xmlNamePattern, gtToken)
 }
 
-func (b *BallerinaParser) parseXMLStepExtends() tree.STNode {
+func (b *BallerinaParser) parseXMLStepExtends() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfXMLStepExtend(nextToken.Kind()) {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
-	var xmlStepExtendList []tree.STNode
+	var xmlStepExtendList []st.STNode
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_STEP_EXTENDS)
-	var stepExtension tree.STNode
+	var stepExtension st.STNode
 	for !b.isEndOfXMLStepExtend(nextToken.Kind()) {
-		if nextToken.Kind() == common.DOT_TOKEN {
+		if nextToken.Kind() == st.DOT_TOKEN {
 			stepExtension = b.parseXMLStepMethodCallExtend()
-		} else if nextToken.Kind() == common.DOT_LT_TOKEN {
+		} else if nextToken.Kind() == st.DOT_LT_TOKEN {
 			stepExtension = b.parseXMLFilterExpressionRhs()
 		} else {
 			stepExtension = b.parseXMLIndexedStepExtend()
@@ -10677,35 +10677,35 @@ func (b *BallerinaParser) parseXMLStepExtends() tree.STNode {
 		nextToken = b.peek()
 	}
 	b.endContext()
-	return tree.CreateNodeList(xmlStepExtendList...)
+	return st.CreateNodeList(xmlStepExtendList...)
 }
 
-func (b *BallerinaParser) parseXMLIndexedStepExtend() tree.STNode {
+func (b *BallerinaParser) parseXMLIndexedStepExtend() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR)
 	openBracket := b.parseOpenBracket()
 	keyExpr := b.parseKeyExpr(true)
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
-	return tree.CreateXMLStepIndexedExtendNode(openBracket, keyExpr, closeBracket)
+	return st.CreateXMLStepIndexedExtendNode(openBracket, keyExpr, closeBracket)
 }
 
-func (b *BallerinaParser) parseXMLStepMethodCallExtend() tree.STNode {
+func (b *BallerinaParser) parseXMLStepMethodCallExtend() st.STNode {
 	dotToken := b.parseDotToken()
 	methodName := b.parseMethodName()
 	parenthesizedArgsList := b.parseParenthesizedArgList()
-	return tree.CreateXMLStepMethodCallExtendNode(dotToken, methodName, parenthesizedArgsList)
+	return st.CreateXMLStepMethodCallExtendNode(dotToken, methodName, parenthesizedArgsList)
 }
 
-func (b *BallerinaParser) parseMethodName() tree.STNode {
+func (b *BallerinaParser) parseMethodName() st.STNode {
 	if b.isSpecialMethodName(b.peek()) {
 		return b.getKeywordAsSimpleNameRef()
 	}
-	return tree.CreateSimpleNameReferenceNode(b.parseIdentifier(common.PARSER_RULE_CONTEXT_IDENTIFIER))
+	return st.CreateSimpleNameReferenceNode(b.parseIdentifier(common.PARSER_RULE_CONTEXT_IDENTIFIER))
 }
 
-func (b *BallerinaParser) parseDotLTToken() tree.STNode {
+func (b *BallerinaParser) parseDotLTToken() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.DOT_LT_TOKEN {
+	if nextToken.Kind() == st.DOT_LT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_DOT_LT_TOKEN)
@@ -10713,15 +10713,15 @@ func (b *BallerinaParser) parseDotLTToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLNamePattern() tree.STNode {
-	var xmlAtomicNamePatternList []tree.STNode
+func (b *BallerinaParser) parseXMLNamePattern() st.STNode {
+	var xmlAtomicNamePatternList []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfXMLNamePattern(nextToken.Kind()) {
-		return tree.CreateNodeList(xmlAtomicNamePatternList...)
+		return st.CreateNodeList(xmlAtomicNamePatternList...)
 	}
 	xmlAtomicNamePattern := b.parseXMLAtomicNamePattern()
 	xmlAtomicNamePatternList = append(xmlAtomicNamePatternList, xmlAtomicNamePattern)
-	var separator tree.STNode
+	var separator st.STNode
 	for !b.isEndOfXMLNamePattern(b.peek().Kind()) {
 		separator = b.parseXMLNamePatternSeparator()
 		if separator == nil {
@@ -10731,35 +10731,35 @@ func (b *BallerinaParser) parseXMLNamePattern() tree.STNode {
 		xmlAtomicNamePattern = b.parseXMLAtomicNamePattern()
 		xmlAtomicNamePatternList = append(xmlAtomicNamePatternList, xmlAtomicNamePattern)
 	}
-	return tree.CreateNodeList(xmlAtomicNamePatternList...)
+	return st.CreateNodeList(xmlAtomicNamePatternList...)
 }
 
-func (b *BallerinaParser) isEndOfXMLNamePattern(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfXMLNamePattern(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.GT_TOKEN, common.EOF_TOKEN:
+	case st.GT_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isEndOfXMLStepExtend(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfXMLStepExtend(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.OPEN_BRACKET_TOKEN, common.DOT_LT_TOKEN:
+	case st.OPEN_BRACKET_TOKEN, st.DOT_LT_TOKEN:
 		return false
-	case common.DOT_TOKEN:
-		return b.peekN(3).Kind() != common.OPEN_PAREN_TOKEN
+	case st.DOT_TOKEN:
+		return b.peekN(3).Kind() != st.OPEN_PAREN_TOKEN
 	default:
 		return true
 	}
 }
 
-func (b *BallerinaParser) parseXMLNamePatternSeparator() tree.STNode {
+func (b *BallerinaParser) parseXMLNamePatternSeparator() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.PIPE_TOKEN:
+	case st.PIPE_TOKEN:
 		return b.consume()
-	case common.GT_TOKEN, common.EOF_TOKEN:
+	case st.GT_TOKEN, st.EOF_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_XML_NAME_PATTERN_RHS)
@@ -10767,20 +10767,20 @@ func (b *BallerinaParser) parseXMLNamePatternSeparator() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLAtomicNamePattern() tree.STNode {
+func (b *BallerinaParser) parseXMLAtomicNamePattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_PATTERN)
 	atomicNamePattern := b.parseXMLAtomicNamePatternBody()
 	b.endContext()
 	return atomicNamePattern
 }
 
-func (b *BallerinaParser) parseXMLAtomicNamePatternBody() tree.STNode {
+func (b *BallerinaParser) parseXMLAtomicNamePatternBody() st.STNode {
 	token := b.peek()
-	var identifier tree.STNode
+	var identifier st.STNode
 	switch token.Kind() {
-	case common.ASTERISK_TOKEN:
+	case st.ASTERISK_TOKEN:
 		return b.consume()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		identifier = b.consume()
 	default:
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_PATTERN_START)
@@ -10789,43 +10789,43 @@ func (b *BallerinaParser) parseXMLAtomicNamePatternBody() tree.STNode {
 	return b.parseXMLAtomicNameIdentifier(identifier)
 }
 
-func (b *BallerinaParser) parseXMLAtomicNameIdentifier(identifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseXMLAtomicNameIdentifier(identifier st.STNode) st.STNode {
 	token := b.peek()
-	if token.Kind() == common.COLON_TOKEN {
+	if token.Kind() == st.COLON_TOKEN {
 		colon := b.consume()
 		nextToken := b.peek()
-		if (nextToken.Kind() == common.IDENTIFIER_TOKEN) || (nextToken.Kind() == common.ASTERISK_TOKEN) {
+		if (nextToken.Kind() == st.IDENTIFIER_TOKEN) || (nextToken.Kind() == st.ASTERISK_TOKEN) {
 			endToken := b.consume()
-			return tree.CreateXMLAtomicNamePatternNode(identifier, colon, endToken)
+			return st.CreateXMLAtomicNamePatternNode(identifier, colon, endToken)
 		}
 	}
-	return tree.CreateSimpleNameReferenceNode(identifier)
+	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (b *BallerinaParser) parseXMLStepExpression(lhsExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseXMLStepExpression(lhsExpr st.STNode) st.STNode {
 	xmlStepStart := b.parseXMLStepStart()
 	xmlStepExtends := b.parseXMLStepExtends()
-	return tree.CreateXMLStepExpressionNode(lhsExpr, xmlStepStart, xmlStepExtends)
+	return st.CreateXMLStepExpressionNode(lhsExpr, xmlStepStart, xmlStepExtends)
 }
 
-func (b *BallerinaParser) parseXMLStepStart() tree.STNode {
+func (b *BallerinaParser) parseXMLStepStart() st.STNode {
 	token := b.peek()
-	var startToken tree.STNode
+	var startToken st.STNode
 	switch token.Kind() {
-	case common.SLASH_ASTERISK_TOKEN:
+	case st.SLASH_ASTERISK_TOKEN:
 		return b.consume()
-	case common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN:
+	case st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN:
 		startToken = b.parseDoubleSlashDoubleAsteriskLTToken()
-	case common.SLASH_LT_TOKEN:
+	case st.SLASH_LT_TOKEN:
 	default:
 		startToken = b.parseSlashLTToken()
 	}
 	return b.parseXMLNamePatternChain(startToken)
 }
 
-func (b *BallerinaParser) parseSlashLTToken() tree.STNode {
+func (b *BallerinaParser) parseSlashLTToken() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.SLASH_LT_TOKEN {
+	if nextToken.Kind() == st.SLASH_LT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_SLASH_LT_TOKEN)
@@ -10833,9 +10833,9 @@ func (b *BallerinaParser) parseSlashLTToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseDoubleSlashDoubleAsteriskLTToken() tree.STNode {
+func (b *BallerinaParser) parseDoubleSlashDoubleAsteriskLTToken() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN {
+	if nextToken.Kind() == st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN)
@@ -10843,33 +10843,33 @@ func (b *BallerinaParser) parseDoubleSlashDoubleAsteriskLTToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMatchStatement() tree.STNode {
+func (b *BallerinaParser) parseMatchStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MATCH_STMT)
 	matchKeyword := b.parseMatchKeyword()
 	actionOrExpr := b.parseActionOrExpression()
 	b.startContext(common.PARSER_RULE_CONTEXT_MATCH_BODY)
 	openBrace := b.parseOpenBrace()
-	var matchClausesList []tree.STNode
+	var matchClausesList []st.STNode
 	for !b.isEndOfMatchClauses(b.peek().Kind()) {
 		clause := b.parseMatchClause()
 		matchClausesList = append(matchClausesList, clause)
 	}
-	matchClauses := tree.CreateNodeList(matchClausesList...)
+	matchClauses := st.CreateNodeList(matchClausesList...)
 	if b.isNodeListEmpty(matchClauses) {
-		openBrace = tree.AddDiagnostic(openBrace,
+		openBrace = st.AddDiagnostic(openBrace,
 			&common.ERROR_MATCH_STATEMENT_SHOULD_HAVE_ONE_OR_MORE_MATCH_CLAUSES)
 	}
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
 	b.endContext()
 	onFailClause := b.parseOptionalOnFailClause()
-	return tree.CreateMatchStatementNode(matchKeyword, actionOrExpr, openBrace, matchClauses, closeBrace,
+	return st.CreateMatchStatementNode(matchKeyword, actionOrExpr, openBrace, matchClauses, closeBrace,
 		onFailClause)
 }
 
-func (b *BallerinaParser) parseMatchKeyword() tree.STNode {
+func (b *BallerinaParser) parseMatchKeyword() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.MATCH_KEYWORD {
+	if nextToken.Kind() == st.MATCH_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_MATCH_KEYWORD)
@@ -10877,52 +10877,52 @@ func (b *BallerinaParser) parseMatchKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfMatchClauses(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfMatchClauses(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACE_TOKEN, common.TYPE_KEYWORD:
+	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN, st.TYPE_KEYWORD:
 		return true
 	default:
 		return b.isEndOfStatements()
 	}
 }
 
-func (b *BallerinaParser) parseMatchClause() tree.STNode {
+func (b *BallerinaParser) parseMatchClause() st.STNode {
 	matchPatterns := b.parseMatchPatternList()
 	matchGuard := b.parseMatchGuard()
 	rightDoubleArrow := b.parseDoubleRightArrow()
 	blockStmt := b.parseBlockNode()
 	if b.isNodeListEmpty(matchPatterns) {
-		identifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		constantPattern := tree.CreateSimpleNameReferenceNode(identifier)
-		matchPatterns = tree.CreateNodeList(constantPattern)
+		identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		constantPattern := st.CreateSimpleNameReferenceNode(identifier)
+		matchPatterns = st.CreateNodeList(constantPattern)
 		errorCode := &common.ERROR_MISSING_MATCH_PATTERN
 		if matchGuard != nil {
-			matchGuard = tree.AddDiagnostic(matchGuard, errorCode)
+			matchGuard = st.AddDiagnostic(matchGuard, errorCode)
 		} else {
-			rightDoubleArrow = tree.AddDiagnostic(rightDoubleArrow, errorCode)
+			rightDoubleArrow = st.AddDiagnostic(rightDoubleArrow, errorCode)
 		}
 	}
-	return tree.CreateMatchClauseNode(matchPatterns, matchGuard, rightDoubleArrow, blockStmt)
+	return st.CreateMatchClauseNode(matchPatterns, matchGuard, rightDoubleArrow, blockStmt)
 }
 
-func (b *BallerinaParser) parseMatchGuard() tree.STNode {
+func (b *BallerinaParser) parseMatchGuard() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IF_KEYWORD:
+	case st.IF_KEYWORD:
 		ifKeyword := b.parseIfKeyword()
 		expr := b.parseExpressionWithMatchGuard(DEFAULT_OP_PRECEDENCE, true, false, true, false)
-		return tree.CreateMatchGuardNode(ifKeyword, expr)
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
-		return tree.CreateEmptyNode()
+		return st.CreateMatchGuardNode(ifKeyword, expr)
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
+		return st.CreateEmptyNode()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_OPTIONAL_MATCH_GUARD)
 		return b.parseMatchGuard()
 	}
 }
 
-func (b *BallerinaParser) parseMatchPatternList() tree.STNode {
+func (b *BallerinaParser) parseMatchPatternList() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MATCH_PATTERN)
-	var matchClauses []tree.STNode
+	var matchClauses []st.STNode
 	for !b.isEndOfMatchPattern(b.peek().Kind()) {
 		clause := b.parseMatchPattern()
 		if clause == nil {
@@ -10936,44 +10936,44 @@ func (b *BallerinaParser) parseMatchPatternList() tree.STNode {
 		matchClauses = append(matchClauses, seperator)
 	}
 	b.endContext()
-	return tree.CreateNodeList(matchClauses...)
+	return st.CreateNodeList(matchClauses...)
 }
 
-func (b *BallerinaParser) isEndOfMatchPattern(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfMatchPattern(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.PIPE_TOKEN, common.IF_KEYWORD, common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.PIPE_TOKEN, st.IF_KEYWORD, st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseMatchPattern() tree.STNode {
+func (b *BallerinaParser) parseMatchPattern() st.STNode {
 	nextToken := b.peek()
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
 		typeRefOrConstExpr := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_MATCH_PATTERN)
 		return b.parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr)
 	}
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN:
+	case st.OPEN_PAREN_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN:
 		return b.parseSimpleConstExpr()
-	case common.VAR_KEYWORD:
+	case st.VAR_KEYWORD:
 		return b.parseVarTypedBindingPattern()
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseListMatchPattern()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingMatchPattern()
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		return b.parseErrorMatchPattern()
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_MATCH_PATTERN_START)
@@ -10981,12 +10981,12 @@ func (b *BallerinaParser) parseMatchPattern() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMatchPatternListMemberRhs() tree.STNode {
+func (b *BallerinaParser) parseMatchPatternListMemberRhs() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.PIPE_TOKEN:
+	case st.PIPE_TOKEN:
 		return b.parsePipeToken()
-	case common.IF_KEYWORD, common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.IF_KEYWORD, st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_MATCH_PATTERN_LIST_MEMBER_RHS)
@@ -10994,16 +10994,16 @@ func (b *BallerinaParser) parseMatchPatternListMemberRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseVarTypedBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseVarTypedBindingPattern() st.STNode {
 	varKeyword := b.parseVarKeyword()
 	varTypeDesc := CreateBuiltinSimpleNameReference(varKeyword)
 	bindingPattern := b.parseBindingPattern()
-	return tree.CreateTypedBindingPatternNode(varTypeDesc, bindingPattern)
+	return st.CreateTypedBindingPatternNode(varTypeDesc, bindingPattern)
 }
 
-func (b *BallerinaParser) parseVarKeyword() tree.STNode {
+func (b *BallerinaParser) parseVarKeyword() st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.VAR_KEYWORD {
+	if nextToken.Kind() == st.VAR_KEYWORD {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_VAR_KEYWORD)
@@ -11011,17 +11011,17 @@ func (b *BallerinaParser) parseVarKeyword() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseListMatchPattern() tree.STNode {
+func (b *BallerinaParser) parseListMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN)
 	openBracketToken := b.parseOpenBracket()
-	var matchPatternList []tree.STNode
-	var listMatchPatternMemberRhs tree.STNode
+	var matchPatternList []st.STNode
+	var listMatchPatternMemberRhs st.STNode
 	isEndOfFields := false
 	for !b.IsEndOfListMatchPattern() {
 		listMatchPatternMember := b.parseListMatchPatternMember()
 		matchPatternList = append(matchPatternList, listMatchPatternMember)
 		listMatchPatternMemberRhs = b.parseListMatchPatternMemberRhs()
-		if listMatchPatternMember.Kind() == common.REST_MATCH_PATTERN {
+		if listMatchPatternMember.Kind() == st.REST_MATCH_PATTERN {
 			isEndOfFields = true
 			break
 		}
@@ -11033,7 +11033,7 @@ func (b *BallerinaParser) parseListMatchPattern() tree.STNode {
 	}
 	for isEndOfFields && (listMatchPatternMemberRhs != nil) {
 		b.updateLastNodeInListWithInvalidNode(matchPatternList, listMatchPatternMemberRhs, nil)
-		if b.peek().Kind() == common.CLOSE_BRACKET_TOKEN {
+		if b.peek().Kind() == st.CLOSE_BRACKET_TOKEN {
 			break
 		}
 		invalidField := b.parseListMatchPatternMember()
@@ -11041,49 +11041,49 @@ func (b *BallerinaParser) parseListMatchPattern() tree.STNode {
 			&common.ERROR_MATCH_PATTERN_AFTER_REST_MATCH_PATTERN)
 		listMatchPatternMemberRhs = b.parseListMatchPatternMemberRhs()
 	}
-	matchPatternListNode := tree.CreateNodeList(matchPatternList...)
+	matchPatternListNode := st.CreateNodeList(matchPatternList...)
 	closeBracketToken := b.parseCloseBracket()
 	b.endContext()
-	return tree.CreateListMatchPatternNode(openBracketToken, matchPatternListNode, closeBracketToken)
+	return st.CreateListMatchPatternNode(openBracketToken, matchPatternListNode, closeBracketToken)
 }
 
 func (b *BallerinaParser) IsEndOfListMatchPattern() bool {
 	switch b.peek().Kind() {
-	case common.CLOSE_BRACKET_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseListMatchPatternMember() tree.STNode {
+func (b *BallerinaParser) parseListMatchPatternMember() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestMatchPattern()
 	default:
 		return b.parseMatchPattern()
 	}
 }
 
-func (b *BallerinaParser) parseRestMatchPattern() tree.STNode {
+func (b *BallerinaParser) parseRestMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN)
 	ellipsisToken := b.parseEllipsis()
 	varKeywordToken := b.parseVarKeyword()
 	variableName := b.parseVariableName()
 	b.endContext()
-	simpleNameReferenceNode, ok := tree.CreateSimpleNameReferenceNode(variableName).(*tree.STSimpleNameReferenceNode)
+	simpleNameReferenceNode, ok := st.CreateSimpleNameReferenceNode(variableName).(*st.STSimpleNameReferenceNode)
 	if !ok {
 		panic("expected STSimpleNameReferenceNode")
 	}
-	return tree.CreateRestMatchPatternNode(ellipsisToken, varKeywordToken, simpleNameReferenceNode)
+	return st.CreateRestMatchPatternNode(ellipsisToken, varKeywordToken, simpleNameReferenceNode)
 }
 
-func (b *BallerinaParser) parseListMatchPatternMemberRhs() tree.STNode {
+func (b *BallerinaParser) parseListMatchPatternMemberRhs() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACKET_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN_MEMBER_RHS)
@@ -11091,30 +11091,30 @@ func (b *BallerinaParser) parseListMatchPatternMemberRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMappingMatchPattern() tree.STNode {
+func (b *BallerinaParser) parseMappingMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_MATCH_PATTERN)
 	openBraceToken := b.parseOpenBrace()
 	fieldMatchPatterns := b.parseFieldMatchPatternList()
 	closeBraceToken := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateMappingMatchPatternNode(openBraceToken, fieldMatchPatterns, closeBraceToken)
+	return st.CreateMappingMatchPatternNode(openBraceToken, fieldMatchPatterns, closeBraceToken)
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternList() tree.STNode {
-	var fieldMatchPatterns []tree.STNode
+func (b *BallerinaParser) parseFieldMatchPatternList() st.STNode {
+	var fieldMatchPatterns []st.STNode
 	fieldMatchPatternMember := b.parseFieldMatchPatternMember()
 	if fieldMatchPatternMember == nil {
-		return tree.CreateEmptyNodeList()
+		return st.CreateEmptyNodeList()
 	}
 	fieldMatchPatterns = append(fieldMatchPatterns, fieldMatchPatternMember)
-	if fieldMatchPatternMember.Kind() == common.REST_MATCH_PATTERN {
+	if fieldMatchPatternMember.Kind() == st.REST_MATCH_PATTERN {
 		b.invalidateExtraFieldMatchPatterns(fieldMatchPatterns)
-		return tree.CreateNodeList(fieldMatchPatterns...)
+		return st.CreateNodeList(fieldMatchPatterns...)
 	}
 	return b.parseFieldMatchPatternListWithPatterns(fieldMatchPatterns)
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternListWithPatterns(fieldMatchPatterns []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseFieldMatchPatternListWithPatterns(fieldMatchPatterns []st.STNode) st.STNode {
 	for !b.IsEndOfMappingMatchPattern() {
 		fieldMatchPatternRhs := b.parseFieldMatchPatternRhs()
 		if fieldMatchPatternRhs == nil {
@@ -11126,26 +11126,26 @@ func (b *BallerinaParser) parseFieldMatchPatternListWithPatterns(fieldMatchPatte
 			fieldMatchPatternMember = b.createMissingFieldMatchPattern()
 		}
 		fieldMatchPatterns = append(fieldMatchPatterns, fieldMatchPatternMember)
-		if fieldMatchPatternMember.Kind() == common.REST_MATCH_PATTERN {
+		if fieldMatchPatternMember.Kind() == st.REST_MATCH_PATTERN {
 			b.invalidateExtraFieldMatchPatterns(fieldMatchPatterns)
 			break
 		}
 	}
-	return tree.CreateNodeList(fieldMatchPatterns...)
+	return st.CreateNodeList(fieldMatchPatterns...)
 }
 
-func (b *BallerinaParser) createMissingFieldMatchPattern() tree.STNode {
-	fieldName := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-	colon := tree.CreateMissingToken(common.COLON_TOKEN, nil)
-	identifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-	matchPattern := tree.CreateSimpleNameReferenceNode(identifier)
-	fieldMatchPatternMember := tree.CreateFieldMatchPatternNode(fieldName, colon, matchPattern)
-	fieldMatchPatternMember = tree.AddDiagnostic(fieldMatchPatternMember,
+func (b *BallerinaParser) createMissingFieldMatchPattern() st.STNode {
+	fieldName := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+	colon := st.CreateMissingToken(st.COLON_TOKEN, nil)
+	identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+	matchPattern := st.CreateSimpleNameReferenceNode(identifier)
+	fieldMatchPatternMember := st.CreateFieldMatchPatternNode(fieldName, colon, matchPattern)
+	fieldMatchPatternMember = st.AddDiagnostic(fieldMatchPatternMember,
 		&common.ERROR_MISSING_FIELD_MATCH_PATTERN_MEMBER)
 	return fieldMatchPatternMember
 }
 
-func (b *BallerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns []tree.STNode) {
+func (b *BallerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns []st.STNode) {
 	for !b.IsEndOfMappingMatchPattern() {
 		fieldMatchPatternRhs := b.parseFieldMatchPatternRhs()
 		if fieldMatchPatternRhs == nil {
@@ -11153,7 +11153,7 @@ func (b *BallerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns [
 		}
 		fieldMatchPatternMember := b.parseFieldMatchPatternMember()
 		if fieldMatchPatternMember == nil {
-			rhsToken, ok := fieldMatchPatternRhs.(tree.STToken)
+			rhsToken, ok := fieldMatchPatternRhs.(st.STToken)
 			if !ok {
 				panic("invalidateExtraFieldMatchPatterns: expected STToken")
 			}
@@ -11167,14 +11167,14 @@ func (b *BallerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns [
 	}
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternMember() tree.STNode {
+func (b *BallerinaParser) parseFieldMatchPatternMember() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.ParseFieldMatchPattern()
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestMatchPattern()
-	case common.CLOSE_BRACE_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACE_TOKEN, st.EOF_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERNS_START)
@@ -11182,27 +11182,27 @@ func (b *BallerinaParser) parseFieldMatchPatternMember() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) ParseFieldMatchPattern() tree.STNode {
+func (b *BallerinaParser) ParseFieldMatchPattern() st.STNode {
 	fieldNameNode := b.parseVariableName()
 	colonToken := b.parseColon()
 	matchPattern := b.parseMatchPattern()
-	return tree.CreateFieldMatchPatternNode(fieldNameNode, colonToken, matchPattern)
+	return st.CreateFieldMatchPatternNode(fieldNameNode, colonToken, matchPattern)
 }
 
 func (b *BallerinaParser) IsEndOfMappingMatchPattern() bool {
 	switch b.peek().Kind() {
-	case common.CLOSE_BRACE_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACE_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternRhs() tree.STNode {
+func (b *BallerinaParser) parseFieldMatchPatternRhs() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACE_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACE_TOKEN, st.EOF_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERN_MEMBER_RHS)
@@ -11210,11 +11210,11 @@ func (b *BallerinaParser) parseFieldMatchPatternRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
-		errorKeyword := tree.CreateMissingTokenWithDiagnostics(common.ERROR_KEYWORD,
+	case st.OPEN_PAREN_TOKEN:
+		errorKeyword := st.CreateMissingTokenWithDiagnostics(st.ERROR_KEYWORD,
 			common.PARSER_RULE_CONTEXT_ERROR_KEYWORD.GetErrorCode())
 		b.startContext(common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN)
 		return b.parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword, typeRefOrConstExpr)
@@ -11227,34 +11227,34 @@ func (b *BallerinaParser) parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr
 	}
 }
 
-func (b *BallerinaParser) isMatchPatternEnd(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isMatchPatternEnd(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.RIGHT_DOUBLE_ARROW_TOKEN,
-		common.COMMA_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_BRACKET_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.PIPE_TOKEN,
-		common.IF_KEYWORD,
-		common.EOF_TOKEN:
+	case st.RIGHT_DOUBLE_ARROW_TOKEN,
+		st.COMMA_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_BRACKET_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.PIPE_TOKEN,
+		st.IF_KEYWORD,
+		st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseErrorMatchPattern() tree.STNode {
+func (b *BallerinaParser) parseErrorMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN)
 	errorKeyword := b.consume()
 	return b.parseErrorMatchPatternWithErrorKeyword(errorKeyword)
 }
 
-func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeyword(errorKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeyword(errorKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
-	var typeRef tree.STNode
+	var typeRef st.STNode
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
-		typeRef = tree.CreateEmptyNode()
+	case st.OPEN_PAREN_TOKEN:
+		typeRef = st.CreateEmptyNode()
 	default:
 		if b.isPredeclaredIdentifier(nextToken.Kind()) {
 			typeRef = b.parseTypeReference()
@@ -11266,19 +11266,19 @@ func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeyword(errorKeyword tr
 	return b.parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword, typeRef)
 }
 
-func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword tree.STNode, typeRef tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword st.STNode, typeRef st.STNode) st.STNode {
 	openParenthesisToken := b.parseOpenParenthesis()
 	argListMatchPatternNode := b.parseErrorArgListMatchPatterns()
 	closeParenthesisToken := b.parseCloseParenthesis()
 	b.endContext()
-	return tree.CreateErrorMatchPatternNode(errorKeyword, typeRef, openParenthesisToken,
+	return st.CreateErrorMatchPatternNode(errorKeyword, typeRef, openParenthesisToken,
 		argListMatchPatternNode, closeParenthesisToken)
 }
 
-func (b *BallerinaParser) parseErrorArgListMatchPatterns() tree.STNode {
-	var argListMatchPatterns []tree.STNode
+func (b *BallerinaParser) parseErrorArgListMatchPatterns() st.STNode {
+	var argListMatchPatterns []st.STNode
 	if b.isEndOfErrorFieldMatchPatterns() {
-		return tree.CreateNodeList(argListMatchPatterns...)
+		return st.CreateNodeList(argListMatchPatterns...)
 	}
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_ARG_LIST_MATCH_PATTERN_FIRST_ARG)
 	firstArg := b.parseErrorArgListMatchPattern(common.PARSER_RULE_CONTEXT_ERROR_ARG_LIST_MATCH_PATTERN_START)
@@ -11298,39 +11298,39 @@ func (b *BallerinaParser) parseErrorArgListMatchPatterns() tree.STNode {
 			}
 		}
 	} else {
-		if (firstArg.Kind() != common.NAMED_ARG_MATCH_PATTERN) && (firstArg.Kind() != common.REST_MATCH_PATTERN) {
+		if (firstArg.Kind() != st.NAMED_ARG_MATCH_PATTERN) && (firstArg.Kind() != st.REST_MATCH_PATTERN) {
 			b.addInvalidNodeToNextToken(firstArg, &common.ERROR_MATCH_PATTERN_NOT_ALLOWED)
 		} else {
 			argListMatchPatterns = append(argListMatchPatterns, firstArg)
 		}
 	}
 	argListMatchPatterns = b.parseErrorFieldMatchPatterns(argListMatchPatterns)
-	return tree.CreateNodeList(argListMatchPatterns...)
+	return st.CreateNodeList(argListMatchPatterns...)
 }
 
-func (b *BallerinaParser) isSimpleMatchPattern(matchPatternKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isSimpleMatchPattern(matchPatternKind st.SyntaxKind) bool {
 	switch matchPatternKind {
-	case common.IDENTIFIER_TOKEN,
-		common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE,
-		common.NUMERIC_LITERAL,
-		common.STRING_LITERAL,
-		common.NULL_LITERAL,
-		common.NIL_LITERAL,
-		common.BOOLEAN_LITERAL,
-		common.TYPED_BINDING_PATTERN,
-		common.UNARY_EXPRESSION:
+	case st.IDENTIFIER_TOKEN,
+		st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE,
+		st.NUMERIC_LITERAL,
+		st.STRING_LITERAL,
+		st.NULL_LITERAL,
+		st.NIL_LITERAL,
+		st.BOOLEAN_LITERAL,
+		st.TYPED_BINDING_PATTERN,
+		st.UNARY_EXPRESSION:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isValidSecondArgMatchPattern(syntaxKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isValidSecondArgMatchPattern(syntaxKind st.SyntaxKind) bool {
 	switch syntaxKind {
-	case common.ERROR_MATCH_PATTERN,
-		common.NAMED_ARG_MATCH_PATTERN,
-		common.REST_MATCH_PATTERN:
+	case st.ERROR_MATCH_PATTERN,
+		st.NAMED_ARG_MATCH_PATTERN,
+		st.REST_MATCH_PATTERN:
 		return true
 	default:
 		return b.isSimpleMatchPattern(syntaxKind)
@@ -11338,8 +11338,8 @@ func (b *BallerinaParser) isValidSecondArgMatchPattern(syntaxKind common.SyntaxK
 }
 
 // Return modified argListMatchPatterns
-func (b *BallerinaParser) parseErrorFieldMatchPatterns(argListMatchPatterns []tree.STNode) []tree.STNode {
-	lastValidArgKind := common.NAMED_ARG_MATCH_PATTERN
+func (b *BallerinaParser) parseErrorFieldMatchPatterns(argListMatchPatterns []st.STNode) []st.STNode {
+	lastValidArgKind := st.NAMED_ARG_MATCH_PATTERN
 	for !b.isEndOfErrorFieldMatchPatterns() {
 		argEnd := b.parseErrorArgListMatchPatternEnd(common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN_RHS)
 		if argEnd == nil {
@@ -11366,11 +11366,11 @@ func (b *BallerinaParser) isEndOfErrorFieldMatchPatterns() bool {
 	return b.isEndOfErrorFieldBindingPatterns()
 }
 
-func (b *BallerinaParser) parseErrorArgListMatchPatternEnd(currentCtx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseErrorArgListMatchPatternEnd(currentCtx common.ParserRuleContext) st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.consume()
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), currentCtx)
@@ -11378,35 +11378,35 @@ func (b *BallerinaParser) parseErrorArgListMatchPatternEnd(currentCtx common.Par
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListMatchPattern(context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseErrorArgListMatchPattern(context common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
 		return b.parseNamedArgOrSimpleMatchPattern()
 	}
 	switch nextToken.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestMatchPattern()
-	case common.OPEN_PAREN_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.OPEN_BRACKET_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.ERROR_KEYWORD:
+	case st.OPEN_PAREN_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.OPEN_BRACKET_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.ERROR_KEYWORD:
 		return b.parseMatchPattern()
-	case common.VAR_KEYWORD:
+	case st.VAR_KEYWORD:
 		varType := CreateBuiltinSimpleNameReference(b.consume())
 		variableName := b.createCaptureOrWildcardBP(b.parseVariableName())
-		return tree.CreateTypedBindingPatternNode(varType, variableName)
-	case common.CLOSE_PAREN_TOKEN:
-		return tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+		return st.CreateTypedBindingPatternNode(varType, variableName)
+	case st.CLOSE_PAREN_TOKEN:
+		return st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_MATCH_PATTERN)
 	default:
 		b.recoverWithBlockContext(nextToken, context)
@@ -11414,31 +11414,31 @@ func (b *BallerinaParser) parseErrorArgListMatchPattern(context common.ParserRul
 	}
 }
 
-func (b *BallerinaParser) parseNamedArgOrSimpleMatchPattern() tree.STNode {
+func (b *BallerinaParser) parseNamedArgOrSimpleMatchPattern() st.STNode {
 	constRefExpr := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_MATCH_PATTERN)
-	if (constRefExpr.Kind() == common.QUALIFIED_NAME_REFERENCE) || (b.peek().Kind() != common.EQUAL_TOKEN) {
+	if (constRefExpr.Kind() == st.QUALIFIED_NAME_REFERENCE) || (b.peek().Kind() != st.EQUAL_TOKEN) {
 		return constRefExpr
 	}
-	simpleNameNode, ok := constRefExpr.(*tree.STSimpleNameReferenceNode)
+	simpleNameNode, ok := constRefExpr.(*st.STSimpleNameReferenceNode)
 	if !ok {
 		panic("parseNamedArgOrSimpleMatchPattern: expected STSimpleNameReferenceNode")
 	}
 	return b.parseNamedArgMatchPattern(simpleNameNode.Name)
 }
 
-func (b *BallerinaParser) parseNamedArgMatchPattern(identifier tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseNamedArgMatchPattern(identifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN)
 	equalToken := b.parseAssignOp()
 	matchPattern := b.parseMatchPattern()
 	b.endContext()
-	return tree.CreateNamedArgMatchPatternNode(identifier, equalToken, matchPattern)
+	return st.CreateNamedArgMatchPatternNode(identifier, equalToken, matchPattern)
 }
 
-func (b *BallerinaParser) validateErrorFieldMatchPatternOrder(prevArgKind common.SyntaxKind, currentArgKind common.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *BallerinaParser) validateErrorFieldMatchPatternOrder(prevArgKind st.SyntaxKind, currentArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	switch currentArgKind {
-	case common.NAMED_ARG_MATCH_PATTERN,
-		common.REST_MATCH_PATTERN:
-		if prevArgKind == common.REST_MATCH_PATTERN {
+	case st.NAMED_ARG_MATCH_PATTERN,
+		st.REST_MATCH_PATTERN:
+		if prevArgKind == st.REST_MATCH_PATTERN {
 			return &common.ERROR_REST_ARG_FOLLOWED_BY_ANOTHER_ARG
 		}
 		return nil
@@ -11447,20 +11447,20 @@ func (b *BallerinaParser) validateErrorFieldMatchPatternOrder(prevArgKind common
 	}
 }
 
-func (b *BallerinaParser) parseMarkdownDocumentation() tree.STNode {
-	markdownDocLineList := make([]tree.STNode, 0)
+func (b *BallerinaParser) parseMarkdownDocumentation() st.STNode {
+	markdownDocLineList := make([]st.STNode, 0)
 	nextToken := b.peek()
-	for nextToken.Kind() == common.DOCUMENTATION_STRING {
+	for nextToken.Kind() == st.DOCUMENTATION_STRING {
 		documentationString := b.consume()
 		parsedDocLines := b.parseDocumentationString(documentationString)
 		markdownDocLineList = b.appendParsedDocumentationLines(markdownDocLineList, parsedDocLines)
 		nextToken = b.peek()
 	}
-	markdownDocLines := tree.CreateNodeList(markdownDocLineList...)
-	return tree.CreateMarkdownDocumentationNode(markdownDocLines)
+	markdownDocLines := st.CreateNodeList(markdownDocLineList...)
+	return st.CreateMarkdownDocumentationNode(markdownDocLines)
 }
 
-func (b *BallerinaParser) parseDocumentationString(documentationStringToken tree.STToken) tree.STNode {
+func (b *BallerinaParser) parseDocumentationString(documentationStringToken st.STToken) st.STNode {
 	leadingTriviaList := b.getLeadingTriviaList(documentationStringToken.LeadingMinutiae())
 	diagnostics := documentationStringToken.Diagnostics()
 
@@ -11472,8 +11472,8 @@ func (b *BallerinaParser) parseDocumentationString(documentationStringToken tree
 	return documentationParser.Parse()
 }
 
-func (b *BallerinaParser) getLeadingTriviaList(leadingMinutiaeNode tree.STNode) []tree.STNode {
-	leadingTriviaList := make([]tree.STNode, 0)
+func (b *BallerinaParser) getLeadingTriviaList(leadingMinutiaeNode st.STNode) []st.STNode {
+	leadingTriviaList := make([]st.STNode, 0)
 	bucketCount := leadingMinutiaeNode.BucketCount()
 	i := 0
 	for ; i < bucketCount; i++ {
@@ -11482,7 +11482,7 @@ func (b *BallerinaParser) getLeadingTriviaList(leadingMinutiaeNode tree.STNode) 
 	return leadingTriviaList
 }
 
-func (b *BallerinaParser) appendParsedDocumentationLines(markdownDocLineList []tree.STNode, parsedDocLines tree.STNode) []tree.STNode {
+func (b *BallerinaParser) appendParsedDocumentationLines(markdownDocLineList []st.STNode, parsedDocLines st.STNode) []st.STNode {
 	bucketCount := parsedDocLines.BucketCount()
 	for i := range bucketCount {
 		markdownDocLine := parsedDocLines.ChildInBucket(i)
@@ -11491,14 +11491,14 @@ func (b *BallerinaParser) appendParsedDocumentationLines(markdownDocLineList []t
 	return markdownDocLineList
 }
 
-func (b *BallerinaParser) parseStmtStartsWithTypeOrExpr(annots tree.STNode, qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStmtStartsWithTypeOrExpr(annots st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	typeOrExpr := b.parseTypedBindingPatternOrExprWithQualifiers(qualifiers, true)
 	return b.parseStmtStartsWithTypedBPOrExprRhs(annots, typeOrExpr)
 }
 
-func (b *BallerinaParser) parseStmtStartsWithTypedBPOrExprRhs(annots tree.STNode, typedBindingPatternOrExpr tree.STNode) tree.STNode {
-	if typedBindingPatternOrExpr.Kind() == common.TYPED_BINDING_PATTERN {
+func (b *BallerinaParser) parseStmtStartsWithTypedBPOrExprRhs(annots st.STNode, typedBindingPatternOrExpr st.STNode) st.STNode {
+	if typedBindingPatternOrExpr.Kind() == st.TYPED_BINDING_PATTERN {
 		b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPatternOrExpr, false)
 		return res
@@ -11508,75 +11508,75 @@ func (b *BallerinaParser) parseStmtStartsWithTypedBPOrExprRhs(annots tree.STNode
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrExpr(allowAssignment bool) tree.STNode {
-	typeDescQualifiers := make([]tree.STNode, 0)
+func (b *BallerinaParser) parseTypedBindingPatternOrExpr(allowAssignment bool) st.STNode {
+	typeDescQualifiers := make([]st.STNode, 0)
 	return b.parseTypedBindingPatternOrExprWithQualifiers(typeDescQualifiers, allowAssignment)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrExprWithQualifiers(qualifiers []tree.STNode, allowAssignment bool) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternOrExprWithQualifiers(qualifiers []st.STNode, allowAssignment bool) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
-	var typeOrExpr tree.STNode
+	var typeOrExpr st.STNode
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
 		b.reportInvalidQualifierList(qualifiers)
 		typeOrExpr = b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME)
 		return b.parseTypedBindingPatternOrExprRhs(typeOrExpr, allowAssignment)
 	}
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseTypedBPOrExprStartsWithOpenParenthesis()
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		return b.parseAnonFuncExprOrTypedBPWithFuncType(qualifiers)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
-		typeOrExpr = b.parseTupleTypeDescOrListConstructor(tree.CreateEmptyNodeList())
+		typeOrExpr = b.parseTupleTypeDescOrListConstructor(st.CreateEmptyNodeList())
 		return b.parseTypedBindingPatternOrExprRhs(typeOrExpr, allowAssignment)
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		basicLiteral := b.parseBasicLiteral()
 		return b.parseTypedBindingPatternOrExprRhs(basicLiteral, allowAssignment)
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
 			b.reportInvalidQualifierList(qualifiers)
-			return b.parseActionOrExpressionInLhs(tree.CreateEmptyNodeList())
+			return b.parseActionOrExpressionInLhs(st.CreateEmptyNodeList())
 		}
 		return b.parseTypedBindingPatternInner(qualifiers, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr tree.STNode, allowAssignment bool) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr st.STNode, allowAssignment bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.PIPE_TOKEN, common.BITWISE_AND_TOKEN:
+	case st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
 		nextNextToken := b.peekN(2)
-		if nextNextToken.Kind() == common.EQUAL_TOKEN {
+		if nextNextToken.Kind() == st.EQUAL_TOKEN {
 			return typeOrExpr
 		}
 		pipeOrAndToken := b.parseBinaryOperator()
 		rhsTypedBPOrExpr := b.parseTypedBindingPatternOrExpr(allowAssignment)
-		if rhsTypedBPOrExpr.Kind() == common.TYPED_BINDING_PATTERN {
-			typedBP, ok := rhsTypedBPOrExpr.(*tree.STTypedBindingPatternNode)
+		if rhsTypedBPOrExpr.Kind() == st.TYPED_BINDING_PATTERN {
+			typedBP, ok := rhsTypedBPOrExpr.(*st.STTypedBindingPatternNode)
 			if !ok {
 				panic("expected STTypedBindingPatternNode")
 			}
 			typeOrExpr = b.getTypeDescFromExpr(typeOrExpr)
 			newTypeDesc := b.mergeTypes(typeOrExpr, pipeOrAndToken, typedBP.TypeDescriptor)
-			return tree.CreateTypedBindingPatternNode(newTypeDesc, typedBP.BindingPattern)
+			return st.CreateTypedBindingPatternNode(newTypeDesc, typedBP.BindingPattern)
 		}
-		if b.peek().Kind() == common.EQUAL_TOKEN {
+		if b.peek().Kind() == st.EQUAL_TOKEN {
 			return b.createCaptureBPWithMissingVarName(typeOrExpr, pipeOrAndToken, rhsTypedBPOrExpr)
 		}
-		return tree.CreateBinaryExpressionNode(common.BINARY_EXPRESSION, typeOrExpr,
+		return st.CreateBinaryExpressionNode(st.BINARY_EXPRESSION, typeOrExpr,
 			pipeOrAndToken, rhsTypedBPOrExpr)
-	case common.SEMICOLON_TOKEN:
+	case st.SEMICOLON_TOKEN:
 		if b.isExpression(typeOrExpr.Kind()) {
 			return typeOrExpr
 		}
@@ -11585,18 +11585,18 @@ func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr tree.STNo
 			return b.parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc)
 		}
 		return typeOrExpr
-	case common.IDENTIFIER_TOKEN, common.QUESTION_MARK_TOKEN:
+	case st.IDENTIFIER_TOKEN, st.QUESTION_MARK_TOKEN:
 		if b.isAmbiguous(typeOrExpr) || b.isDefiniteTypeDesc(typeOrExpr.Kind()) {
 			typeDesc := b.getTypeDescFromExpr(typeOrExpr)
 			return b.parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc)
 		}
 		return typeOrExpr
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		return typeOrExpr
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseTypedBindingPatternOrMemberAccess(typeOrExpr, false, allowAssignment,
 			common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
-	case common.OPEN_BRACE_TOKEN, common.ERROR_KEYWORD:
+	case st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD:
 		typeDesc := b.getTypeDescFromExpr(typeOrExpr)
 		return b.parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc)
 	default:
@@ -11608,7 +11608,7 @@ func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr tree.STNo
 		}
 		token := b.peek()
 		typeOrExprKind := typeOrExpr.Kind()
-		if (typeOrExprKind == common.QUALIFIED_NAME_REFERENCE) || (typeOrExprKind == common.SIMPLE_NAME_REFERENCE) {
+		if (typeOrExprKind == st.QUALIFIED_NAME_REFERENCE) || (typeOrExprKind == st.SIMPLE_NAME_REFERENCE) {
 			b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_BINDING_PATTERN_OR_VAR_REF_RHS)
 		} else {
 			b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_BINDING_PATTERN_OR_EXPR_RHS)
@@ -11617,22 +11617,22 @@ func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr tree.STNo
 	}
 }
 
-func (b *BallerinaParser) createCaptureBPWithMissingVarName(lhsType tree.STNode, separatorToken tree.STNode, rhsType tree.STNode) tree.STNode {
+func (b *BallerinaParser) createCaptureBPWithMissingVarName(lhsType st.STNode, separatorToken st.STNode, rhsType st.STNode) st.STNode {
 	lhsType = b.getTypeDescFromExpr(lhsType)
 	rhsType = b.getTypeDescFromExpr(rhsType)
 	newTypeDesc := b.mergeTypes(lhsType, separatorToken, rhsType)
-	identifier := tree.CreateMissingTokenWithDiagnosticsFromParserRules(common.IDENTIFIER_TOKEN,
+	identifier := createMissingTokenWithDiagnosticsFromParserRules(st.IDENTIFIER_TOKEN,
 		common.PARSER_RULE_CONTEXT_VARIABLE_NAME)
-	captureBP := tree.CreateCaptureBindingPatternNode(identifier)
-	return tree.CreateTypedBindingPatternNode(newTypeDesc, captureBP)
+	captureBP := st.CreateCaptureBindingPatternNode(identifier)
+	return st.CreateTypedBindingPatternNode(newTypeDesc, captureBP)
 }
 
-func (b *BallerinaParser) parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc st.STNode) st.STNode {
 	typeDesc = b.parseComplexTypeDescriptor(typeDesc, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 	return b.parseTypedBindingPatternTypeRhs(typeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 }
 
-func (b *BallerinaParser) parseTypedBPOrExprStartsWithOpenParenthesis() tree.STNode {
+func (b *BallerinaParser) parseTypedBPOrExprStartsWithOpenParenthesis() st.STNode {
 	exprOrTypeDesc := b.parseTypedDescOrExprStartsWithOpenParenthesis()
 	if b.isDefiniteTypeDesc(exprOrTypeDesc.Kind()) {
 		return b.parseTypeBindingPatternStartsWithAmbiguousNode(exprOrTypeDesc)
@@ -11640,32 +11640,32 @@ func (b *BallerinaParser) parseTypedBPOrExprStartsWithOpenParenthesis() tree.STN
 	return b.parseTypedBindingPatternOrExprRhs(exprOrTypeDesc, false)
 }
 
-func (b *BallerinaParser) isDefiniteTypeDesc(kind common.SyntaxKind) bool {
-	return ((kind.CompareTo(common.RECORD_TYPE_DESC) >= 0) && (kind.CompareTo(common.FUTURE_TYPE_DESC) <= 0))
+func (b *BallerinaParser) isDefiniteTypeDesc(kind st.SyntaxKind) bool {
+	return ((kind.CompareTo(st.RECORD_TYPE_DESC) >= 0) && (kind.CompareTo(st.FUTURE_TYPE_DESC) <= 0))
 }
 
-func (b *BallerinaParser) isDefiniteExpr(kind common.SyntaxKind) bool {
-	if (kind == common.QUALIFIED_NAME_REFERENCE) || (kind == common.SIMPLE_NAME_REFERENCE) {
+func (b *BallerinaParser) isDefiniteExpr(kind st.SyntaxKind) bool {
+	if (kind == st.QUALIFIED_NAME_REFERENCE) || (kind == st.SIMPLE_NAME_REFERENCE) {
 		return false
 	}
-	return ((kind.CompareTo(common.BINARY_EXPRESSION) >= 0) && (kind.CompareTo(common.ERROR_CONSTRUCTOR) <= 0))
+	return ((kind.CompareTo(st.BINARY_EXPRESSION) >= 0) && (kind.CompareTo(st.ERROR_CONSTRUCTOR) <= 0))
 }
 
-func (b *BallerinaParser) isDefiniteAction(kind common.SyntaxKind) bool {
-	return ((kind.CompareTo(common.REMOTE_METHOD_CALL_ACTION) >= 0) && (kind.CompareTo(common.CLIENT_RESOURCE_ACCESS_ACTION) <= 0))
+func (b *BallerinaParser) isDefiniteAction(kind st.SyntaxKind) bool {
+	return ((kind.CompareTo(st.REMOTE_METHOD_CALL_ACTION) >= 0) && (kind.CompareTo(st.CLIENT_RESOURCE_ACCESS_ACTION) <= 0))
 }
 
-func (b *BallerinaParser) parseTypedDescOrExprStartsWithOpenParenthesis() tree.STNode {
+func (b *BallerinaParser) parseTypedDescOrExprStartsWithOpenParenthesis() st.STNode {
 	openParen := b.parseOpenParenthesis()
 	nextToken := b.peek()
-	if nextToken.Kind() == common.CLOSE_PAREN_TOKEN {
+	if nextToken.Kind() == st.CLOSE_PAREN_TOKEN {
 		closeParen := b.parseCloseParenthesis()
 		return b.parseTypeOrExprStartWithEmptyParenthesis(openParen, closeParen)
 	}
 	typeOrExpr := b.parseTypeDescOrExpr()
 	if b.isAction(typeOrExpr) {
 		closeParen := b.parseCloseParenthesis()
-		return tree.CreateBracedExpressionNode(common.BRACED_ACTION, openParen, typeOrExpr,
+		return st.CreateBracedExpressionNode(st.BRACED_ACTION, openParen, typeOrExpr,
 			closeParen)
 	}
 	if b.isExpression(typeOrExpr.Kind()) {
@@ -11675,45 +11675,45 @@ func (b *BallerinaParser) parseTypedDescOrExprStartsWithOpenParenthesis() tree.S
 	typeDescNode := b.getTypeDescFromExpr(typeOrExpr)
 	typeDescNode = b.parseComplexTypeDescriptor(typeDescNode, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PARENTHESIS, false)
 	closeParen := b.parseCloseParenthesis()
-	return tree.CreateParenthesisedTypeDescriptorNode(openParen, typeDescNode, closeParen)
+	return st.CreateParenthesisedTypeDescriptorNode(openParen, typeDescNode, closeParen)
 }
 
-func (b *BallerinaParser) parseTypeDescOrExpr() tree.STNode {
+func (b *BallerinaParser) parseTypeDescOrExpr() st.STNode {
 	return b.parseTypeDescOrExprWithQualifiers(nil)
 }
 
-func (b *BallerinaParser) parseTypeDescOrExprWithQualifiers(qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTypeDescOrExprWithQualifiers(qualifiers []st.STNode) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
-	var typeOrExpr tree.STNode
+	var typeOrExpr st.STNode
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		typeOrExpr = b.parseTypedDescOrExprStartsWithOpenParenthesis()
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		typeOrExpr = b.parseAnonFuncExprOrFuncTypeDesc(qualifiers)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		typeOrExpr = b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME)
 		return b.parseTypeDescOrExprRhs(typeOrExpr)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
-		typeOrExpr = b.parseTupleTypeDescOrListConstructor(tree.CreateEmptyNodeList())
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.NULL_KEYWORD,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+		typeOrExpr = b.parseTupleTypeDescOrListConstructor(st.CreateEmptyNodeList())
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.NULL_KEYWORD,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		basicLiteral := b.parseBasicLiteral()
 		return b.parseTypeDescOrExprRhs(basicLiteral)
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
 			b.reportInvalidQualifierList(qualifiers)
-			return b.parseActionOrExpressionInLhs(tree.CreateEmptyNodeList())
+			return b.parseActionOrExpressionInLhs(st.CreateEmptyNodeList())
 		}
 		return b.parseTypeDescriptorWithQualifier(qualifiers, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)
 	}
@@ -11723,32 +11723,32 @@ func (b *BallerinaParser) parseTypeDescOrExprWithQualifiers(qualifiers []tree.ST
 	return b.parseTypeDescOrExprRhs(typeOrExpr)
 }
 
-func (b *BallerinaParser) isExpression(kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isExpression(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.NUMERIC_LITERAL,
-		common.STRING_LITERAL_TOKEN,
-		common.NIL_LITERAL,
-		common.NULL_LITERAL,
-		common.BOOLEAN_LITERAL:
+	case st.NUMERIC_LITERAL,
+		st.STRING_LITERAL_TOKEN,
+		st.NIL_LITERAL,
+		st.NULL_LITERAL,
+		st.BOOLEAN_LITERAL:
 		return true
 	default:
-		return ((kind.CompareTo(common.BINARY_EXPRESSION) >= 0) && (kind.CompareTo(common.ERROR_CONSTRUCTOR) <= 0))
+		return ((kind.CompareTo(st.BINARY_EXPRESSION) >= 0) && (kind.CompareTo(st.ERROR_CONSTRUCTOR) <= 0))
 	}
 }
 
-func (b *BallerinaParser) parseTypeOrExprStartWithEmptyParenthesis(openParen tree.STNode, closeParen tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTypeOrExprStartWithEmptyParenthesis(openParen st.STNode, closeParen st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.RIGHT_DOUBLE_ARROW_TOKEN:
-		params := tree.CreateEmptyNodeList()
-		anonFuncParam := tree.CreateImplicitAnonymousFunctionParameters(openParen, params, closeParen)
+	case st.RIGHT_DOUBLE_ARROW_TOKEN:
+		params := st.CreateEmptyNodeList()
+		anonFuncParam := st.CreateImplicitAnonymousFunctionParameters(openParen, params, closeParen)
 		return b.parseImplicitAnonFuncWithParams(anonFuncParam, false)
 	default:
-		return tree.CreateNilLiteralNode(openParen, closeParen)
+		return st.CreateNilLiteralNode(openParen, closeParen)
 	}
 }
 
-func (b *BallerinaParser) parseAnonFuncExprOrTypedBPWithFuncType(qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnonFuncExprOrTypedBPWithFuncType(qualifiers []st.STNode) st.STNode {
 	exprOrTypeDesc := b.parseAnonFuncExprOrFuncTypeDesc(qualifiers)
 	if b.isAction(exprOrTypeDesc) || b.isExpression(exprOrTypeDesc.Kind()) {
 		return exprOrTypeDesc
@@ -11756,12 +11756,12 @@ func (b *BallerinaParser) parseAnonFuncExprOrTypedBPWithFuncType(qualifiers []tr
 	return b.parseTypedBindingPatternTypeRhs(exprOrTypeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 }
 
-func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_OR_ANON_FUNC)
-	var qualifierList tree.STNode
+	var qualifierList st.STNode
 	functionKeyword := b.parseFunctionKeyword()
-	var funcSignature tree.STNode
-	if b.peek().Kind() == common.OPEN_PAREN_TOKEN {
+	var funcSignature st.STNode
+	if b.peek().Kind() == st.OPEN_PAREN_TOKEN {
 		funcSignature = b.parseFuncSignature(true)
 		nodes := b.createFuncTypeQualNodeList(qualifiers, functionKeyword, true)
 		qualifierList = nodes[0]
@@ -11769,11 +11769,11 @@ func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []tree.STNo
 		b.endContext()
 		return b.parseAnonFuncExprOrFuncTypeDescWithComponents(qualifierList, functionKeyword, funcSignature)
 	}
-	funcSignature = tree.CreateEmptyNode()
+	funcSignature = st.CreateEmptyNode()
 	nodes := b.createFuncTypeQualNodeList(qualifiers, functionKeyword, false)
 	qualifierList = nodes[0]
 	functionKeyword = nodes[1]
-	funcTypeDesc := tree.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword,
+	funcTypeDesc := st.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword,
 		funcSignature)
 	if b.getCurrentContext() != common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST {
 		b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
@@ -11782,28 +11782,28 @@ func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []tree.STNo
 	return b.parseComplexTypeDescriptor(funcTypeDesc, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 }
 
-func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifierList tree.STNode, functionKeyword tree.STNode, funcSignature tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifierList st.STNode, functionKeyword st.STNode, funcSignature st.STNode) st.STNode {
 	currentCtx := b.getCurrentContext()
 	switch b.peek().Kind() {
-	case common.OPEN_BRACE_TOKEN, common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.OPEN_BRACE_TOKEN, st.RIGHT_DOUBLE_ARROW_TOKEN:
 		if currentCtx != common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST {
 			b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 		}
 		b.startContext(common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION)
-		funcSignatureNode, ok := funcSignature.(*tree.STFunctionSignatureNode)
+		funcSignatureNode, ok := funcSignature.(*st.STFunctionSignatureNode)
 		if !ok {
 			panic("parseAnonFuncExprOrFuncTypeDescWithComponents: expected STFunctionSignatureNode")
 		}
 		funcSignature = b.validateAndGetFuncParams(*funcSignatureNode)
 		funcBody := b.parseAnonFuncBody(false)
-		annots := tree.CreateEmptyNodeList()
-		anonFunc := tree.CreateExplicitAnonymousFunctionExpressionNode(annots, qualifierList,
+		annots := st.CreateEmptyNodeList()
+		anonFunc := st.CreateExplicitAnonymousFunctionExpressionNode(annots, qualifierList,
 			functionKeyword, funcSignature, funcBody)
 		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, anonFunc, false, true)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		fallthrough
 	default:
-		funcTypeDesc := tree.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword,
+		funcTypeDesc := st.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword,
 			funcSignature)
 		if currentCtx != common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST {
 			b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
@@ -11814,41 +11814,41 @@ func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifie
 	}
 }
 
-func (b *BallerinaParser) parseTypeDescOrExprRhs(typeOrExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTypeDescOrExprRhs(typeOrExpr st.STNode) st.STNode {
 	nextToken := b.peek()
-	var typeDesc tree.STNode
+	var typeDesc st.STNode
 	switch nextToken.Kind() {
-	case common.PIPE_TOKEN,
-		common.BITWISE_AND_TOKEN:
+	case st.PIPE_TOKEN,
+		st.BITWISE_AND_TOKEN:
 		nextNextToken := b.peekN(2)
-		if nextNextToken.Kind() == common.EQUAL_TOKEN {
+		if nextNextToken.Kind() == st.EQUAL_TOKEN {
 			return typeOrExpr
 		}
 		pipeOrAndToken := b.parseBinaryOperator()
 		rhsTypeDescOrExpr := b.parseTypeDescOrExpr()
 		if b.isExpression(rhsTypeDescOrExpr.Kind()) {
-			return tree.CreateBinaryExpressionNode(common.BINARY_EXPRESSION, typeOrExpr,
+			return st.CreateBinaryExpressionNode(st.BINARY_EXPRESSION, typeOrExpr,
 				pipeOrAndToken, rhsTypeDescOrExpr)
 		}
 		typeDesc = b.getTypeDescFromExpr(typeOrExpr)
 		rhsTypeDescOrExpr = b.getTypeDescFromExpr(rhsTypeDescOrExpr)
 		return b.mergeTypes(typeDesc, pipeOrAndToken, rhsTypeDescOrExpr)
-	case common.IDENTIFIER_TOKEN,
-		common.QUESTION_MARK_TOKEN:
+	case st.IDENTIFIER_TOKEN,
+		st.QUESTION_MARK_TOKEN:
 		typeDesc = b.parseComplexTypeDescriptor(b.getTypeDescFromExpr(typeOrExpr),
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, false)
 		return typeDesc
-	case common.SEMICOLON_TOKEN:
+	case st.SEMICOLON_TOKEN:
 		return b.getTypeDescFromExpr(typeOrExpr)
-	case common.EQUAL_TOKEN, common.CLOSE_PAREN_TOKEN, common.CLOSE_BRACE_TOKEN, common.CLOSE_BRACKET_TOKEN, common.EOF_TOKEN, common.COMMA_TOKEN:
+	case st.EQUAL_TOKEN, st.CLOSE_PAREN_TOKEN, st.CLOSE_BRACE_TOKEN, st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN, st.COMMA_TOKEN:
 		return typeOrExpr
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseTypedBindingPatternOrMemberAccess(typeOrExpr, false, true,
 			common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		ellipsis := b.parseEllipsis()
 		typeOrExpr = b.getTypeDescFromExpr(typeOrExpr)
-		return tree.CreateRestDescriptorNode(typeOrExpr, ellipsis)
+		return st.CreateRestDescriptorNode(typeOrExpr, ellipsis)
 	default:
 		if b.isCompoundAssignment(nextToken.Kind()) {
 			return typeOrExpr
@@ -11861,34 +11861,34 @@ func (b *BallerinaParser) parseTypeDescOrExprRhs(typeOrExpr tree.STNode) tree.ST
 	}
 }
 
-func (b *BallerinaParser) isAmbiguous(node tree.STNode) bool {
+func (b *BallerinaParser) isAmbiguous(node st.STNode) bool {
 	switch node.Kind() {
-	case common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE,
-		common.NIL_LITERAL,
-		common.NULL_LITERAL,
-		common.NUMERIC_LITERAL,
-		common.STRING_LITERAL,
-		common.BOOLEAN_LITERAL,
-		common.BRACKETED_LIST:
+	case st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE,
+		st.NIL_LITERAL,
+		st.NULL_LITERAL,
+		st.NUMERIC_LITERAL,
+		st.STRING_LITERAL,
+		st.BOOLEAN_LITERAL,
+		st.BRACKETED_LIST:
 		return true
-	case common.BINARY_EXPRESSION:
-		binaryExpr, ok := node.(*tree.STBinaryExpressionNode)
+	case st.BINARY_EXPRESSION:
+		binaryExpr, ok := node.(*st.STBinaryExpressionNode)
 		if !ok {
 			panic("expected STBinaryExpressionNode")
 		}
-		if binaryExpr.Operator.Kind() != common.PIPE_TOKEN {
+		if binaryExpr.Operator.Kind() != st.PIPE_TOKEN {
 			return false
 		}
 		return (b.isAmbiguous(binaryExpr.LhsExpr) && b.isAmbiguous(binaryExpr.RhsExpr))
-	case common.BRACED_EXPRESSION:
-		bracedExpr, ok := node.(*tree.STBracedExpressionNode)
+	case st.BRACED_EXPRESSION:
+		bracedExpr, ok := node.(*st.STBracedExpressionNode)
 		if !ok {
 			panic("isAmbiguous: expected STBracedExpressionNode")
 		}
 		return b.isAmbiguous(bracedExpr.Expression)
-	case common.INDEXED_EXPRESSION:
-		indexExpr, ok := node.(*tree.STIndexedExpressionNode)
+	case st.INDEXED_EXPRESSION:
+		indexExpr, ok := node.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("expected STIndexedExpressionNode")
 		}
@@ -11899,7 +11899,7 @@ func (b *BallerinaParser) isAmbiguous(node tree.STNode) bool {
 		i := 0
 		for ; i < keys.BucketCount(); i++ {
 			item := keys.ChildInBucket(i)
-			if item.Kind() == common.COMMA_TOKEN {
+			if item.Kind() == st.COMMA_TOKEN {
 				continue
 			}
 			if !b.isAmbiguous(item) {
@@ -11912,32 +11912,32 @@ func (b *BallerinaParser) isAmbiguous(node tree.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isAllBasicLiterals(node tree.STNode) bool {
+func (b *BallerinaParser) isAllBasicLiterals(node st.STNode) bool {
 	switch node.Kind() {
-	case common.NIL_LITERAL, common.NULL_LITERAL, common.NUMERIC_LITERAL, common.STRING_LITERAL, common.BOOLEAN_LITERAL:
+	case st.NIL_LITERAL, st.NULL_LITERAL, st.NUMERIC_LITERAL, st.STRING_LITERAL, st.BOOLEAN_LITERAL:
 		return true
-	case common.BINARY_EXPRESSION:
-		binaryExpr, ok := node.(*tree.STBinaryExpressionNode)
+	case st.BINARY_EXPRESSION:
+		binaryExpr, ok := node.(*st.STBinaryExpressionNode)
 		if !ok {
 			panic("expected STBinaryExpressionNode")
 		}
-		if binaryExpr.Operator.Kind() != common.PIPE_TOKEN {
+		if binaryExpr.Operator.Kind() != st.PIPE_TOKEN {
 			return false
 		}
 		return (b.isAmbiguous(binaryExpr.LhsExpr) && b.isAmbiguous(binaryExpr.RhsExpr))
-	case common.BRACED_EXPRESSION:
-		bracedExpr, ok := node.(*tree.STBracedExpressionNode)
+	case st.BRACED_EXPRESSION:
+		bracedExpr, ok := node.(*st.STBracedExpressionNode)
 		if !ok {
 			panic("isAllBasicLiterals: expected STBracedExpressionNode")
 		}
 		return b.isAmbiguous(bracedExpr.Expression)
-	case common.BRACKETED_LIST:
-		list, ok := node.(*tree.STAmbiguousCollectionNode)
+	case st.BRACKETED_LIST:
+		list, ok := node.(*st.STAmbiguousCollectionNode)
 		if !ok {
 			panic("expected STAmbiguousCollectionNode")
 		}
 		for _, member := range list.Members {
-			if member.Kind() == common.COMMA_TOKEN {
+			if member.Kind() == st.COMMA_TOKEN {
 				continue
 			}
 			if !b.isAllBasicLiterals(member) {
@@ -11945,12 +11945,12 @@ func (b *BallerinaParser) isAllBasicLiterals(node tree.STNode) bool {
 			}
 		}
 		return true
-	case common.UNARY_EXPRESSION:
-		unaryExpr, ok := node.(*tree.STUnaryExpressionNode)
+	case st.UNARY_EXPRESSION:
+		unaryExpr, ok := node.(*st.STUnaryExpressionNode)
 		if !ok {
 			panic("expected STUnaryExpressionNode")
 		}
-		if (unaryExpr.UnaryOperator.Kind() != common.PLUS_TOKEN) && (unaryExpr.UnaryOperator.Kind() != common.MINUS_TOKEN) {
+		if (unaryExpr.UnaryOperator.Kind() != st.PLUS_TOKEN) && (unaryExpr.UnaryOperator.Kind() != st.MINUS_TOKEN) {
 			return false
 		}
 		return b.isNumericLiteral(unaryExpr.Expression)
@@ -11959,24 +11959,24 @@ func (b *BallerinaParser) isAllBasicLiterals(node tree.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isNumericLiteral(node tree.STNode) bool {
+func (b *BallerinaParser) isNumericLiteral(node st.STNode) bool {
 	switch node.Kind() {
-	case common.NUMERIC_LITERAL:
+	case st.NUMERIC_LITERAL:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseBindingPattern() st.STNode {
 	switch b.peek().Kind() {
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseListBindingPattern()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.parseBindingPatternStartsWithIdentifier()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingBindingPattern()
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		return b.parseErrorBindingPattern()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_BINDING_PATTERN)
@@ -11984,40 +11984,40 @@ func (b *BallerinaParser) parseBindingPattern() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBindingPatternStartsWithIdentifier() tree.STNode {
+func (b *BallerinaParser) parseBindingPatternStartsWithIdentifier() st.STNode {
 	argNameOrBindingPattern := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER)
 	secondToken := b.peek()
-	if secondToken.Kind() == common.OPEN_PAREN_TOKEN {
+	if secondToken.Kind() == st.OPEN_PAREN_TOKEN {
 		b.startContext(common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN)
-		errorKeyword := tree.CreateMissingTokenWithDiagnostics(common.ERROR_KEYWORD,
+		errorKeyword := st.CreateMissingTokenWithDiagnostics(st.ERROR_KEYWORD,
 			common.PARSER_RULE_CONTEXT_ERROR_KEYWORD.GetErrorCode())
 		return b.parseErrorBindingPatternWithTypeRef(errorKeyword, argNameOrBindingPattern)
 	}
-	if argNameOrBindingPattern.Kind() != common.SIMPLE_NAME_REFERENCE {
-		var identifier tree.STNode
-		identifier = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		identifier = tree.CloneWithLeadingInvalidNodeMinutiae(identifier, argNameOrBindingPattern,
+	if argNameOrBindingPattern.Kind() != st.SIMPLE_NAME_REFERENCE {
+		var identifier st.STNode
+		identifier = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		identifier = st.CloneWithLeadingInvalidNodeMinutiae(identifier, argNameOrBindingPattern,
 			&common.ERROR_FIELD_BP_INSIDE_LIST_BP)
-		return tree.CreateCaptureBindingPatternNode(identifier)
+		return st.CreateCaptureBindingPatternNode(identifier)
 	}
-	simpleNameNode, ok := argNameOrBindingPattern.(*tree.STSimpleNameReferenceNode)
+	simpleNameNode, ok := argNameOrBindingPattern.(*st.STSimpleNameReferenceNode)
 	if !ok {
 		panic("parseBindingPatternStartsWithIdentifier: expected STSimpleNameReferenceNode")
 	}
 	return b.createCaptureOrWildcardBP(simpleNameNode.Name)
 }
 
-func (b *BallerinaParser) createCaptureOrWildcardBP(varName tree.STNode) tree.STNode {
-	var bindingPattern tree.STNode
+func (b *BallerinaParser) createCaptureOrWildcardBP(varName st.STNode) st.STNode {
+	var bindingPattern st.STNode
 	if b.isWildcardBP(varName) {
 		bindingPattern = b.getWildcardBindingPattern(varName)
 	} else {
-		bindingPattern = tree.CreateCaptureBindingPatternNode(varName)
+		bindingPattern = st.CreateCaptureBindingPatternNode(varName)
 	}
 	return bindingPattern
 }
 
-func (b *BallerinaParser) parseListBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseListBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN)
 	openBracket := b.parseOpenBracket()
 	listBindingPattern, _ := b.parseListBindingPatternWithOpenBracket(openBracket, nil)
@@ -12025,11 +12025,11 @@ func (b *BallerinaParser) parseListBindingPattern() tree.STNode {
 	return listBindingPattern
 }
 
-func (b *BallerinaParser) parseListBindingPatternWithOpenBracket(openBracket tree.STNode, bindingPatternsList []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseListBindingPatternWithOpenBracket(openBracket st.STNode, bindingPatternsList []st.STNode) (st.STNode, []st.STNode) {
 	if b.isEndOfListBindingPattern(b.peek().Kind()) && len(bindingPatternsList) == 0 {
 		closeBracket := b.parseCloseBracket()
-		bindingPatternsNode := tree.CreateNodeList(bindingPatternsList...)
-		return tree.CreateListBindingPatternNode(openBracket, bindingPatternsNode, closeBracket), bindingPatternsList
+		bindingPatternsNode := st.CreateNodeList(bindingPatternsList...)
+		return st.CreateListBindingPatternNode(openBracket, bindingPatternsNode, closeBracket), bindingPatternsList
 	}
 	listBindingPatternMember := b.parseListBindingPatternMember()
 	bindingPatternsList = append(bindingPatternsList, listBindingPatternMember)
@@ -12037,11 +12037,11 @@ func (b *BallerinaParser) parseListBindingPatternWithOpenBracket(openBracket tre
 	return listBindingPattern, bindingPatternsList
 }
 
-func (b *BallerinaParser) parseListBindingPatternWithFirstMember(openBracket tree.STNode, firstMember tree.STNode, bindingPatterns []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseListBindingPatternWithFirstMember(openBracket st.STNode, firstMember st.STNode, bindingPatterns []st.STNode) (st.STNode, []st.STNode) {
 	member := firstMember
 	token := b.peek()
-	var listBindingPatternRhs tree.STNode
-	for (!b.isEndOfListBindingPattern(token.Kind())) && (member.Kind() != common.REST_BINDING_PATTERN) {
+	var listBindingPatternRhs st.STNode
+	for (!b.isEndOfListBindingPattern(token.Kind())) && (member.Kind() != st.REST_BINDING_PATTERN) {
 		listBindingPatternRhs = b.parseListBindingPatternMemberRhs()
 		if listBindingPatternRhs == nil {
 			break
@@ -12052,15 +12052,15 @@ func (b *BallerinaParser) parseListBindingPatternWithFirstMember(openBracket tre
 		token = b.peek()
 	}
 	closeBracket := b.parseCloseBracket()
-	bindingPatternsNode := tree.CreateNodeList(bindingPatterns...)
-	return tree.CreateListBindingPatternNode(openBracket, bindingPatternsNode, closeBracket), bindingPatterns
+	bindingPatternsNode := st.CreateNodeList(bindingPatterns...)
+	return st.CreateListBindingPatternNode(openBracket, bindingPatternsNode, closeBracket), bindingPatterns
 }
 
-func (b *BallerinaParser) parseListBindingPatternMemberRhs() tree.STNode {
+func (b *BallerinaParser) parseListBindingPatternMemberRhs() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACKET_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER_END)
@@ -12068,23 +12068,23 @@ func (b *BallerinaParser) parseListBindingPatternMemberRhs() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfListBindingPattern(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isEndOfListBindingPattern(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.CLOSE_BRACKET_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseListBindingPatternMember() tree.STNode {
+func (b *BallerinaParser) parseListBindingPatternMember() st.STNode {
 	switch b.peek().Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingPattern()
-	case common.OPEN_BRACKET_TOKEN,
-		common.IDENTIFIER_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.ERROR_KEYWORD:
+	case st.OPEN_BRACKET_TOKEN,
+		st.IDENTIFIER_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.ERROR_KEYWORD:
 		return b.parseBindingPattern()
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER)
@@ -12092,89 +12092,89 @@ func (b *BallerinaParser) parseListBindingPatternMember() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRestBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseRestBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN)
 	ellipsis := b.parseEllipsis()
 	varName := b.parseVariableName()
 	b.endContext()
-	simpleNameReferenceNode, ok := tree.CreateSimpleNameReferenceNode(varName).(*tree.STSimpleNameReferenceNode)
+	simpleNameReferenceNode, ok := st.CreateSimpleNameReferenceNode(varName).(*st.STSimpleNameReferenceNode)
 	if !ok {
 		panic("expected STSimpleNameReferenceNode")
 	}
-	return tree.CreateRestBindingPatternNode(ellipsis, simpleNameReferenceNode)
+	return st.CreateRestBindingPatternNode(ellipsis, simpleNameReferenceNode)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternWithContext(context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternWithContext(context common.ParserRuleContext) st.STNode {
 	return b.parseTypedBindingPatternInner(nil, context)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternInner(qualifiers []tree.STNode, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternInner(qualifiers []st.STNode, context common.ParserRuleContext) st.STNode {
 	typeDesc := b.parseTypeDescriptorWithinContext(qualifiers,
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true, false, TYPE_PRECEDENCE_DEFAULT)
 	typeBindingPattern := b.parseTypedBindingPatternTypeRhs(typeDesc, context)
 	return typeBindingPattern
 }
 
-func (b *BallerinaParser) parseMappingBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseMappingBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN)
 	openBrace := b.parseOpenBrace()
 	token := b.peek()
 	if b.isEndOfMappingBindingPattern(token.Kind()) {
 		closeBrace := b.parseCloseBrace()
-		bindingPatternsNode := tree.CreateEmptyNodeList()
+		bindingPatternsNode := st.CreateEmptyNodeList()
 		b.endContext()
-		return tree.CreateMappingBindingPatternNode(openBrace, bindingPatternsNode, closeBrace)
+		return st.CreateMappingBindingPatternNode(openBrace, bindingPatternsNode, closeBrace)
 	}
-	var bindingPatterns []tree.STNode
+	var bindingPatterns []st.STNode
 	prevMember := b.parseMappingBindingPatternMember()
-	if prevMember.Kind() != common.REST_BINDING_PATTERN {
+	if prevMember.Kind() != st.REST_BINDING_PATTERN {
 		bindingPatterns = append(bindingPatterns, prevMember)
 	}
 	res, _ := b.parseMappingBindingPatternInner(openBrace, bindingPatterns, prevMember)
 	return res
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternInner(openBrace tree.STNode, bindingPatterns []tree.STNode, prevMember tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseMappingBindingPatternInner(openBrace st.STNode, bindingPatterns []st.STNode, prevMember st.STNode) (st.STNode, []st.STNode) {
 	token := b.peek()
-	var mappingBindingPatternRhs tree.STNode
-	for (!b.isEndOfMappingBindingPattern(token.Kind())) && (prevMember.Kind() != common.REST_BINDING_PATTERN) {
+	var mappingBindingPatternRhs st.STNode
+	for (!b.isEndOfMappingBindingPattern(token.Kind())) && (prevMember.Kind() != st.REST_BINDING_PATTERN) {
 		mappingBindingPatternRhs = b.parseMappingBindingPatternEnd()
 		if mappingBindingPatternRhs == nil {
 			break
 		}
 		bindingPatterns = append(bindingPatterns, mappingBindingPatternRhs)
 		prevMember = b.parseMappingBindingPatternMember()
-		if prevMember.Kind() == common.REST_BINDING_PATTERN {
+		if prevMember.Kind() == st.REST_BINDING_PATTERN {
 			break
 		}
 		bindingPatterns = append(bindingPatterns, prevMember)
 		token = b.peek()
 	}
-	if prevMember.Kind() == common.REST_BINDING_PATTERN {
+	if prevMember.Kind() == st.REST_BINDING_PATTERN {
 		bindingPatterns = append(bindingPatterns, prevMember)
 	}
 	closeBrace := b.parseCloseBrace()
-	bindingPatternsNode := tree.CreateNodeList(bindingPatterns...)
+	bindingPatternsNode := st.CreateNodeList(bindingPatterns...)
 	b.endContext()
-	return tree.CreateMappingBindingPatternNode(openBrace, bindingPatternsNode, closeBrace), bindingPatterns
+	return st.CreateMappingBindingPatternNode(openBrace, bindingPatternsNode, closeBrace), bindingPatterns
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternMember() tree.STNode {
+func (b *BallerinaParser) parseMappingBindingPatternMember() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingPattern()
 	default:
 		return b.parseFieldBindingPattern()
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternEnd() tree.STNode {
+func (b *BallerinaParser) parseMappingBindingPatternEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_BRACE_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN_END)
@@ -12182,12 +12182,12 @@ func (b *BallerinaParser) parseMappingBindingPatternEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseFieldBindingPattern() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN_NAME)
-		simpleNameReference := tree.CreateSimpleNameReferenceNode(identifier)
+		simpleNameReference := st.CreateSimpleNameReferenceNode(identifier)
 		return b.parseFieldBindingPatternWithName(simpleNameReference)
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN_NAME)
@@ -12195,35 +12195,35 @@ func (b *BallerinaParser) parseFieldBindingPattern() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldBindingPatternWithName(simpleNameReference tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseFieldBindingPatternWithName(simpleNameReference st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.COMMA_TOKEN, common.CLOSE_BRACE_TOKEN:
-		return tree.CreateFieldBindingPatternVarnameNode(simpleNameReference)
-	case common.COLON_TOKEN:
+	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
+		return st.CreateFieldBindingPatternVarnameNode(simpleNameReference)
+	case st.COLON_TOKEN:
 		colon := b.parseColon()
 		bindingPattern := b.parseBindingPattern()
-		return tree.CreateFieldBindingPatternFullNode(simpleNameReference, colon, bindingPattern)
+		return st.CreateFieldBindingPatternFullNode(simpleNameReference, colon, bindingPattern)
 	default:
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN_END)
 		return b.parseFieldBindingPatternWithName(simpleNameReference)
 	}
 }
 
-func (b *BallerinaParser) isEndOfMappingBindingPattern(nextTokenKind common.SyntaxKind) bool {
-	return ((nextTokenKind == common.CLOSE_BRACE_TOKEN) || b.isEndOfModuleLevelNode(1))
+func (b *BallerinaParser) isEndOfMappingBindingPattern(nextTokenKind st.SyntaxKind) bool {
+	return ((nextTokenKind == st.CLOSE_BRACE_TOKEN) || b.isEndOfModuleLevelNode(1))
 }
 
-func (b *BallerinaParser) parseErrorTypeDescOrErrorBP(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorTypeDescOrErrorBP(annots st.STNode) st.STNode {
 	nextNextToken := b.peekN(2)
 	switch nextNextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseAsErrorBindingPattern()
-	case common.LT_TOKEN:
+	case st.LT_TOKEN:
 		return b.parseAsErrorTypeDesc(annots)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		nextNextNextTokenKind := b.peekN(3).Kind()
-		if (nextNextNextTokenKind == common.COLON_TOKEN) || (nextNextNextTokenKind == common.OPEN_PAREN_TOKEN) {
+		if (nextNextNextTokenKind == st.COLON_TOKEN) || (nextNextNextTokenKind == st.OPEN_PAREN_TOKEN) {
 			return b.parseAsErrorBindingPattern()
 		}
 		fallthrough
@@ -12232,28 +12232,28 @@ func (b *BallerinaParser) parseErrorTypeDescOrErrorBP(annots tree.STNode) tree.S
 	}
 }
 
-func (b *BallerinaParser) parseAsErrorBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseAsErrorBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 	return b.parseAssignmentStmtRhs(b.parseErrorBindingPattern())
 }
 
-func (b *BallerinaParser) parseAsErrorTypeDesc(annots tree.STNode) tree.STNode {
-	finalKeyword := tree.CreateEmptyNode()
+func (b *BallerinaParser) parseAsErrorTypeDesc(annots st.STNode) st.STNode {
+	finalKeyword := st.CreateEmptyNode()
 	return b.parseVariableDecl(b.getAnnotations(annots), finalKeyword)
 }
 
-func (b *BallerinaParser) parseErrorBindingPattern() tree.STNode {
+func (b *BallerinaParser) parseErrorBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN)
 	errorKeyword := b.parseErrorKeyword()
 	return b.parseErrorBindingPatternWithKeyword(errorKeyword)
 }
 
-func (b *BallerinaParser) parseErrorBindingPatternWithKeyword(errorKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorBindingPatternWithKeyword(errorKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
-	var typeRef tree.STNode
+	var typeRef st.STNode
 	switch nextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
-		typeRef = tree.CreateEmptyNode()
+	case st.OPEN_PAREN_TOKEN:
+		typeRef = st.CreateEmptyNode()
 	default:
 		if b.isPredeclaredIdentifier(nextToken.Kind()) {
 			typeRef = b.parseTypeReference()
@@ -12265,44 +12265,44 @@ func (b *BallerinaParser) parseErrorBindingPatternWithKeyword(errorKeyword tree.
 	return b.parseErrorBindingPatternWithTypeRef(errorKeyword, typeRef)
 }
 
-func (b *BallerinaParser) parseErrorBindingPatternWithTypeRef(errorKeyword tree.STNode, typeRef tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorBindingPatternWithTypeRef(errorKeyword st.STNode, typeRef st.STNode) st.STNode {
 	openParenthesis := b.parseOpenParenthesis()
 	argListBindingPatterns := b.parseErrorArgListBindingPatterns()
 	closeParenthesis := b.parseCloseParenthesis()
 	b.endContext()
-	return tree.CreateErrorBindingPatternNode(errorKeyword, typeRef, openParenthesis,
+	return st.CreateErrorBindingPatternNode(errorKeyword, typeRef, openParenthesis,
 		argListBindingPatterns, closeParenthesis)
 }
 
-func (b *BallerinaParser) parseErrorArgListBindingPatterns() tree.STNode {
-	var argListBindingPatterns []tree.STNode
+func (b *BallerinaParser) parseErrorArgListBindingPatterns() st.STNode {
+	var argListBindingPatterns []st.STNode
 	if b.isEndOfErrorFieldBindingPatterns() {
-		return tree.CreateNodeList(argListBindingPatterns...)
+		return st.CreateNodeList(argListBindingPatterns...)
 	}
 	return b.parseErrorArgListBindingPatternsWithList(argListBindingPatterns)
 }
 
-func (b *BallerinaParser) parseErrorArgListBindingPatternsWithList(argListBindingPatterns []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorArgListBindingPatternsWithList(argListBindingPatterns []st.STNode) st.STNode {
 	firstArg := b.parseErrorArgListBindingPattern(common.PARSER_RULE_CONTEXT_ERROR_ARG_LIST_BINDING_PATTERN_START, true)
 	if firstArg == nil {
-		return tree.CreateNodeList(argListBindingPatterns...)
+		return st.CreateNodeList(argListBindingPatterns...)
 	}
 	switch firstArg.Kind() {
-	case common.CAPTURE_BINDING_PATTERN, common.WILDCARD_BINDING_PATTERN:
+	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN:
 		argListBindingPatterns = append(argListBindingPatterns, firstArg)
 		return b.parseErrorArgListBPWithoutErrorMsg(argListBindingPatterns)
-	case common.ERROR_BINDING_PATTERN:
-		missingIdentifier := tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-		missingErrorMsgBP := tree.CreateCaptureBindingPatternNode(missingIdentifier)
-		missingErrorMsgBP = tree.AddDiagnostic(missingErrorMsgBP,
+	case st.ERROR_BINDING_PATTERN:
+		missingIdentifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+		missingErrorMsgBP := st.CreateCaptureBindingPatternNode(missingIdentifier)
+		missingErrorMsgBP = st.AddDiagnostic(missingErrorMsgBP,
 			&common.ERROR_MISSING_ERROR_MESSAGE_BINDING_PATTERN)
-		missingComma := tree.CreateMissingTokenWithDiagnostics(common.COMMA_TOKEN,
+		missingComma := st.CreateMissingTokenWithDiagnostics(st.COMMA_TOKEN,
 			&common.ERROR_MISSING_COMMA_TOKEN)
 		argListBindingPatterns = append(argListBindingPatterns, missingErrorMsgBP)
 		argListBindingPatterns = append(argListBindingPatterns, missingComma)
 		argListBindingPatterns = append(argListBindingPatterns, firstArg)
 		return b.parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns, firstArg.Kind())
-	case common.NAMED_ARG_BINDING_PATTERN, common.REST_BINDING_PATTERN:
+	case st.NAMED_ARG_BINDING_PATTERN, st.REST_BINDING_PATTERN:
 		argListBindingPatterns = append(argListBindingPatterns, firstArg)
 		return b.parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns, firstArg.Kind())
 	default:
@@ -12311,18 +12311,18 @@ func (b *BallerinaParser) parseErrorArgListBindingPatternsWithList(argListBindin
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsg(argListBindingPatterns []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsg(argListBindingPatterns []st.STNode) st.STNode {
 	argEnd := b.parseErrorArgsBindingPatternEnd(common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END)
 	if argEnd == nil {
 		// null marks the end of args
-		return tree.CreateNodeList(argListBindingPatterns...)
+		return st.CreateNodeList(argListBindingPatterns...)
 	}
 	secondArg := b.parseErrorArgListBindingPattern(common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_RHS, false)
 	if secondArg == nil { // depending on the recovery context we will not get null here
 		panic("assertion failed")
 	}
 	switch secondArg.Kind() {
-	case common.CAPTURE_BINDING_PATTERN, common.WILDCARD_BINDING_PATTERN, common.ERROR_BINDING_PATTERN, common.REST_BINDING_PATTERN, common.NAMED_ARG_BINDING_PATTERN:
+	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN, st.ERROR_BINDING_PATTERN, st.REST_BINDING_PATTERN, st.NAMED_ARG_BINDING_PATTERN:
 		argListBindingPatterns = append(argListBindingPatterns, argEnd)
 		argListBindingPatterns = append(argListBindingPatterns, secondArg)
 		return b.parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns, secondArg.Kind())
@@ -12336,7 +12336,7 @@ func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsg(argListBindingPatte
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns []tree.STNode, lastValidArgKind common.SyntaxKind) tree.STNode {
+func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns []st.STNode, lastValidArgKind st.SyntaxKind) st.STNode {
 	for !b.isEndOfErrorFieldBindingPatterns() {
 		argEnd := b.parseErrorArgsBindingPatternEnd(common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN_END)
 		if argEnd == nil {
@@ -12360,24 +12360,24 @@ func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsgAndCause(argListBind
 			b.updateLastNodeInListWithInvalidNode(argListBindingPatterns, currentArg, errorCode)
 		}
 	}
-	return tree.CreateNodeList(argListBindingPatterns...)
+	return st.CreateNodeList(argListBindingPatterns...)
 }
 
 func (b *BallerinaParser) isEndOfErrorFieldBindingPatterns() bool {
 	nextTokenKind := b.peek().Kind()
 	switch nextTokenKind {
-	case common.CLOSE_PAREN_TOKEN, common.EOF_TOKEN:
+	case st.CLOSE_PAREN_TOKEN, st.EOF_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgsBindingPatternEnd(currentCtx common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseErrorArgsBindingPatternEnd(currentCtx common.ParserRuleContext) st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), currentCtx)
@@ -12385,16 +12385,16 @@ func (b *BallerinaParser) parseErrorArgsBindingPatternEnd(currentCtx common.Pars
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListBindingPattern(context common.ParserRuleContext, isFirstArg bool) tree.STNode {
+func (b *BallerinaParser) parseErrorArgListBindingPattern(context common.ParserRuleContext, isFirstArg bool) st.STNode {
 	switch b.peek().Kind() {
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingPattern()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		argNameOrSimpleBindingPattern := b.consume()
 		return b.parseNamedOrSimpleArgBindingPattern(argNameOrSimpleBindingPattern)
-	case common.OPEN_BRACKET_TOKEN, common.OPEN_BRACE_TOKEN, common.ERROR_KEYWORD:
+	case st.OPEN_BRACKET_TOKEN, st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD:
 		return b.parseBindingPattern()
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		if isFirstArg {
 			return nil
 		}
@@ -12405,26 +12405,26 @@ func (b *BallerinaParser) parseErrorArgListBindingPattern(context common.ParserR
 	}
 }
 
-func (b *BallerinaParser) parseNamedOrSimpleArgBindingPattern(argNameOrSimpleBindingPattern tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseNamedOrSimpleArgBindingPattern(argNameOrSimpleBindingPattern st.STNode) st.STNode {
 	secondToken := b.peek()
 	switch secondToken.Kind() {
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		equal := b.consume()
 		bindingPattern := b.parseBindingPattern()
-		return tree.CreateNamedArgBindingPatternNode(argNameOrSimpleBindingPattern,
+		return st.CreateNamedArgBindingPatternNode(argNameOrSimpleBindingPattern,
 			equal, bindingPattern)
-	case common.COMMA_TOKEN, common.CLOSE_PAREN_TOKEN:
+	case st.COMMA_TOKEN, st.CLOSE_PAREN_TOKEN:
 		fallthrough
 	default:
 		return b.createCaptureOrWildcardBP(argNameOrSimpleBindingPattern)
 	}
 }
 
-func (b *BallerinaParser) validateErrorFieldBindingPatternOrder(prevArgKind common.SyntaxKind, currentArgKind common.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *BallerinaParser) validateErrorFieldBindingPatternOrder(prevArgKind st.SyntaxKind, currentArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	switch currentArgKind {
-	case common.NAMED_ARG_BINDING_PATTERN,
-		common.REST_BINDING_PATTERN:
-		if prevArgKind == common.REST_BINDING_PATTERN {
+	case st.NAMED_ARG_BINDING_PATTERN,
+		st.REST_BINDING_PATTERN:
+		if prevArgKind == st.REST_BINDING_PATTERN {
 			return &common.ERROR_REST_ARG_FOLLOWED_BY_ANOTHER_ARG
 		}
 		return nil
@@ -12433,23 +12433,23 @@ func (b *BallerinaParser) validateErrorFieldBindingPatternOrder(prevArgKind comm
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternTypeRhs(typeDesc tree.STNode, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternTypeRhs(typeDesc st.STNode, context common.ParserRuleContext) st.STNode {
 	return b.parseTypedBindingPatternTypeRhsWithRoot(typeDesc, context, true)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternTypeRhsWithRoot(typeDesc tree.STNode, context common.ParserRuleContext, isRoot bool) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternTypeRhsWithRoot(typeDesc st.STNode, context common.ParserRuleContext, isRoot bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN, common.OPEN_BRACE_TOKEN, common.ERROR_KEYWORD:
+	case st.IDENTIFIER_TOKEN, st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD:
 		bindingPattern := b.parseBindingPattern()
-		return tree.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
-	case common.OPEN_BRACKET_TOKEN:
+		return st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
+	case st.OPEN_BRACKET_TOKEN:
 		typedBindingPattern := b.parseTypedBindingPatternOrMemberAccess(typeDesc, true, true, context)
-		if typedBindingPattern.Kind() != common.TYPED_BINDING_PATTERN {
+		if typedBindingPattern.Kind() != st.TYPED_BINDING_PATTERN {
 			panic("assertion failed")
 		}
 		return typedBindingPattern
-	case common.CLOSE_PAREN_TOKEN, common.COMMA_TOKEN, common.CLOSE_BRACKET_TOKEN, common.CLOSE_BRACE_TOKEN:
+	case st.CLOSE_PAREN_TOKEN, st.COMMA_TOKEN, st.CLOSE_BRACKET_TOKEN, st.CLOSE_BRACE_TOKEN:
 		if !isRoot {
 			return typeDesc
 		}
@@ -12460,37 +12460,37 @@ func (b *BallerinaParser) parseTypedBindingPatternTypeRhsWithRoot(typeDesc tree.
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr tree.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr st.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
 	if b.isBracketedListEnd(b.peek().Kind()) {
-		return b.parseAsArrayTypeDesc(typeDescOrExpr, openBracket, tree.CreateEmptyNode(), context)
+		return b.parseAsArrayTypeDesc(typeDescOrExpr, openBracket, st.CreateEmptyNode(), context)
 	}
 	member := b.parseBracketedListMember(isTypedBindingPattern)
 	currentNodeType := b.getBracketedListNodeType(member, isTypedBindingPattern)
 	switch currentNodeType {
-	case common.ARRAY_TYPE_DESC:
+	case st.ARRAY_TYPE_DESC:
 		typedBindingPattern := b.parseAsArrayTypeDesc(typeDescOrExpr, openBracket, member, context)
 		return typedBindingPattern
-	case common.LIST_BINDING_PATTERN:
+	case st.LIST_BINDING_PATTERN:
 		bindingPattern, _ := b.parseAsListBindingPatternWithMemberAndRoot(openBracket, nil, member, false)
 		typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
-		return tree.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
-	case common.INDEXED_EXPRESSION:
+		return st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
+	case st.INDEXED_EXPRESSION:
 		return b.parseAsMemberAccessExpr(typeDescOrExpr, openBracket, member)
-	case common.ARRAY_TYPE_DESC_OR_MEMBER_ACCESS:
+	case st.ARRAY_TYPE_DESC_OR_MEMBER_ACCESS:
 		break
-	case common.NONE:
+	case st.NONE:
 		fallthrough
 	default:
 		memberEnd := b.parseBracketedListMemberEnd()
 		if memberEnd != nil {
-			var memberList []tree.STNode
+			var memberList []st.STNode
 			memberList = append(memberList, b.getBindingPattern(member, true))
 			memberList = append(memberList, memberEnd)
 			bindingPattern, memberList := b.parseAsListBindingPattern(openBracket, memberList) //nolint:staticcheck,ineffassign // memberList will be used when list binding pattern is fully implemented
 			typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
-			return tree.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
+			return st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
 		}
 	}
 	closeBracket := b.parseCloseBracket()
@@ -12499,35 +12499,35 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr 
 		isTypedBindingPattern, allowAssignment, context)
 }
 
-func (b *BallerinaParser) parseAsMemberAccessExpr(typeNameOrExpr tree.STNode, openBracket tree.STNode, member tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseAsMemberAccessExpr(typeNameOrExpr st.STNode, openBracket st.STNode, member st.STNode) st.STNode {
 	member = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, member, false, true)
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
-	keyExpr := tree.CreateNodeList(member)
-	memberAccessExpr := tree.CreateIndexedExpressionNode(typeNameOrExpr, openBracket, keyExpr, closeBracket)
+	keyExpr := st.CreateNodeList(member)
+	memberAccessExpr := st.CreateIndexedExpressionNode(typeNameOrExpr, openBracket, keyExpr, closeBracket)
 	return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, memberAccessExpr, false, false)
 }
 
-func (b *BallerinaParser) isBracketedListEnd(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isBracketedListEnd(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACKET_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseBracketedListMember(isTypedBindingPattern bool) tree.STNode {
+func (b *BallerinaParser) parseBracketedListMember(isTypedBindingPattern bool) st.STNode {
 	nextToken := b.peek()
 
 	switch nextToken.Kind() {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN, common.HEX_INTEGER_LITERAL_TOKEN, common.ASTERISK_TOKEN, common.STRING_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN, st.HEX_INTEGER_LITERAL_TOKEN, st.ASTERISK_TOKEN, st.STRING_LITERAL_TOKEN:
 		return b.parseBasicLiteral()
-	case common.CLOSE_BRACKET_TOKEN:
-		return tree.CreateEmptyNode()
-	case common.OPEN_BRACE_TOKEN, common.ERROR_KEYWORD, common.ELLIPSIS_TOKEN, common.OPEN_BRACKET_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
+		return st.CreateEmptyNode()
+	case st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD, st.ELLIPSIS_TOKEN, st.OPEN_BRACKET_TOKEN:
 		return b.parseStatementStartBracketedListMember()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		if isTypedBindingPattern {
 			return b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
 		}
@@ -12553,7 +12553,7 @@ func (b *BallerinaParser) parseBracketedListMember(isTypedBindingPattern bool) t
 	return expr
 }
 
-func (b *BallerinaParser) parseAsArrayTypeDesc(typeDesc tree.STNode, openBracket tree.STNode, member tree.STNode, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseAsArrayTypeDesc(typeDesc st.STNode, openBracket st.STNode, member st.STNode, context common.ParserRuleContext) st.STNode {
 	typeDesc = b.getTypeDescFromExpr(typeDesc)
 	b.switchContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)
 	b.startContext(common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR)
@@ -12564,11 +12564,11 @@ func (b *BallerinaParser) parseAsArrayTypeDesc(typeDesc tree.STNode, openBracket
 		context)
 }
 
-func (b *BallerinaParser) parseBracketedListMemberEnd() tree.STNode {
+func (b *BallerinaParser) parseBracketedListMemberEnd() st.STNode {
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
+	case st.COMMA_TOKEN:
 		return b.parseComma()
-	case common.CLOSE_BRACKET_TOKEN:
+	case st.CLOSE_BRACKET_TOKEN:
 		return nil
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_BRACKETED_LIST_MEMBER_END)
@@ -12576,42 +12576,42 @@ func (b *BallerinaParser) parseBracketedListMemberEnd() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrExpr tree.STNode, openBracket tree.STNode, member tree.STNode, closeBracket tree.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) tree.STNode {
+func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN, common.OPEN_BRACE_TOKEN, common.ERROR_KEYWORD:
+	case st.IDENTIFIER_TOKEN, st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD:
 		typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
 		arrayTypeDesc := b.getArrayTypeDesc(openBracket, member, closeBracket, typeDesc)
 		return b.parseTypedBindingPatternTypeRhs(arrayTypeDesc, context)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		if isTypedBindingPattern {
 			typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
 			arrayTypeDesc := b.getArrayTypeDesc(openBracket, member, closeBracket, typeDesc)
 			return b.parseTypedBindingPatternTypeRhs(arrayTypeDesc, context)
 		}
 		keyExpr := b.getKeyExpr(member)
-		expr := tree.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
+		expr := st.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
 		return b.parseTypedBindingPatternOrMemberAccess(expr, false, allowAssignment, context)
-	case common.QUESTION_MARK_TOKEN:
+	case st.QUESTION_MARK_TOKEN:
 		typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
 		arrayTypeDesc := b.getArrayTypeDesc(openBracket, member, closeBracket, typeDesc)
 		typeDesc = b.parseComplexTypeDescriptor(arrayTypeDesc,
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 		return b.parseTypedBindingPatternTypeRhs(typeDesc, context)
-	case common.PIPE_TOKEN, common.BITWISE_AND_TOKEN:
-		if (!isTypedBindingPattern) && allowAssignment && (b.peekN(2).Kind() == common.EQUAL_TOKEN) && b.isValidLVExpr(typeDescOrExpr) {
+	case st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
+		if (!isTypedBindingPattern) && allowAssignment && (b.peekN(2).Kind() == st.EQUAL_TOKEN) && b.isValidLVExpr(typeDescOrExpr) {
 			keyExpr := b.getKeyExpr(member)
 			typeDescOrExpr = b.getExpression(typeDescOrExpr)
-			return tree.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
+			return st.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
 		}
 		return b.parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr, openBracket, member, closeBracket,
 			isTypedBindingPattern)
-	case common.IN_KEYWORD:
+	case st.IN_KEYWORD:
 		if ((context != common.PARSER_RULE_CONTEXT_FOREACH_STMT) && (context != common.PARSER_RULE_CONTEXT_FROM_CLAUSE)) && (context != common.PARSER_RULE_CONTEXT_JOIN_CLAUSE) {
 			break
 		}
 		return b.createTypedBindingPattern(typeDescOrExpr, openBracket, member, closeBracket)
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		if (context == common.PARSER_RULE_CONTEXT_FOREACH_STMT) || (context == common.PARSER_RULE_CONTEXT_FROM_CLAUSE) {
 			break
 		}
@@ -12620,16 +12620,16 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrEx
 		}
 		keyExpr := b.getKeyExpr(member)
 		typeDescOrExpr = b.getExpression(typeDescOrExpr)
-		return tree.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
-	case common.SEMICOLON_TOKEN:
+		return st.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr, closeBracket)
+	case st.SEMICOLON_TOKEN:
 		if (context == common.PARSER_RULE_CONTEXT_FOREACH_STMT) || (context == common.PARSER_RULE_CONTEXT_FROM_CLAUSE) {
 			break
 		}
 		return b.createTypedBindingPattern(typeDescOrExpr, openBracket, member, closeBracket)
-	case common.CLOSE_BRACE_TOKEN, common.COMMA_TOKEN:
+	case st.CLOSE_BRACE_TOKEN, st.COMMA_TOKEN:
 		if context == common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT {
 			keyExpr := b.getKeyExpr(member)
-			return tree.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr,
+			return st.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr,
 				closeBracket)
 		}
 		return nil
@@ -12637,7 +12637,7 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrEx
 		if (!isTypedBindingPattern) && b.isValidExprRhsStart(nextToken.Kind(), closeBracket.Kind()) {
 			keyExpr := b.getKeyExpr(member)
 			typeDescOrExpr = b.getExpression(typeDescOrExpr)
-			return tree.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr,
+			return st.CreateIndexedExpressionNode(typeDescOrExpr, openBracket, keyExpr,
 				closeBracket)
 		}
 	}
@@ -12650,49 +12650,49 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrEx
 		isTypedBindingPattern, allowAssignment, context)
 }
 
-func (b *BallerinaParser) getKeyExpr(member tree.STNode) tree.STNode {
+func (b *BallerinaParser) getKeyExpr(member st.STNode) st.STNode {
 	if member == nil {
-		keyIdentifier := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+		keyIdentifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR)
-		missingVarRef := tree.CreateSimpleNameReferenceNode(keyIdentifier)
-		return tree.CreateNodeList(missingVarRef)
+		missingVarRef := st.CreateSimpleNameReferenceNode(keyIdentifier)
+		return st.CreateNodeList(missingVarRef)
 	}
-	return tree.CreateNodeList(member)
+	return st.CreateNodeList(member)
 }
 
-func (b *BallerinaParser) createTypedBindingPattern(typeDescOrExpr tree.STNode, openBracket tree.STNode, member tree.STNode, closeBracket tree.STNode) tree.STNode {
-	bindingPatterns := tree.CreateEmptyNodeList()
+func (b *BallerinaParser) createTypedBindingPattern(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode) st.STNode {
+	bindingPatterns := st.CreateEmptyNodeList()
 	if !b.isEmpty(member) {
 		memberKind := member.Kind()
-		if (memberKind == common.NUMERIC_LITERAL) || (memberKind == common.ASTERISK_LITERAL) {
+		if (memberKind == st.NUMERIC_LITERAL) || (memberKind == st.ASTERISK_LITERAL) {
 			typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
 			arrayTypeDesc := b.getArrayTypeDesc(openBracket, member, closeBracket, typeDesc)
-			identifierToken := tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+			identifierToken := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 				&common.ERROR_MISSING_VARIABLE_NAME)
-			variableName := tree.CreateCaptureBindingPatternNode(identifierToken)
-			return tree.CreateTypedBindingPatternNode(arrayTypeDesc, variableName)
+			variableName := st.CreateCaptureBindingPatternNode(identifierToken)
+			return st.CreateTypedBindingPatternNode(arrayTypeDesc, variableName)
 		}
 		bindingPattern := b.getBindingPattern(member, true)
-		bindingPatterns = tree.CreateNodeList(bindingPattern)
+		bindingPatterns = st.CreateNodeList(bindingPattern)
 	}
-	bindingPattern := tree.CreateListBindingPatternNode(openBracket, bindingPatterns, closeBracket)
+	bindingPattern := st.CreateListBindingPatternNode(openBracket, bindingPatterns, closeBracket)
 	typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
-	return tree.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
+	return st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
 }
 
-func (b *BallerinaParser) parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr tree.STNode, openBracket tree.STNode, member tree.STNode, closeBracket tree.STNode, isTypedBindingPattern bool) tree.STNode {
+func (b *BallerinaParser) parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode, isTypedBindingPattern bool) st.STNode {
 	pipeOrAndToken := b.parseUnionOrIntersectionToken()
 	typedBindingPatternOrExpr := b.parseTypedBindingPatternOrExpr(false)
-	if typedBindingPatternOrExpr.Kind() == common.TYPED_BINDING_PATTERN {
+	if typedBindingPatternOrExpr.Kind() == st.TYPED_BINDING_PATTERN {
 		lhsTypeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
 		lhsTypeDesc = b.getArrayTypeDesc(openBracket, member, closeBracket, lhsTypeDesc)
-		rhsTypedBindingPattern, ok := typedBindingPatternOrExpr.(*tree.STTypedBindingPatternNode)
+		rhsTypedBindingPattern, ok := typedBindingPatternOrExpr.(*st.STTypedBindingPatternNode)
 		if !ok {
-			panic("expected *tree.STTypedBindingPatternNode")
+			panic("expected *st.STTypedBindingPatternNode")
 		}
 		rhsTypeDesc := rhsTypedBindingPattern.TypeDescriptor
 		newTypeDesc := b.mergeTypes(lhsTypeDesc, pipeOrAndToken, rhsTypeDesc)
-		return tree.CreateTypedBindingPatternNode(newTypeDesc, rhsTypedBindingPattern.BindingPattern)
+		return st.CreateTypedBindingPatternNode(newTypeDesc, rhsTypedBindingPattern.BindingPattern)
 	}
 	if isTypedBindingPattern {
 		lhsTypeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
@@ -12701,24 +12701,24 @@ func (b *BallerinaParser) parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr 
 	}
 	keyExpr := b.getExpression(member)
 	containerExpr := b.getExpression(typeDescOrExpr)
-	lhsExpr := tree.CreateIndexedExpressionNode(containerExpr, openBracket, keyExpr, closeBracket)
-	return tree.CreateBinaryExpressionNode(common.BINARY_EXPRESSION, lhsExpr, pipeOrAndToken,
+	lhsExpr := st.CreateIndexedExpressionNode(containerExpr, openBracket, keyExpr, closeBracket)
+	return st.CreateBinaryExpressionNode(st.BINARY_EXPRESSION, lhsExpr, pipeOrAndToken,
 		typedBindingPatternOrExpr)
 }
 
-func (b *BallerinaParser) mergeTypes(lhsTypeDesc tree.STNode, pipeOrAndToken tree.STNode, rhsTypeDesc tree.STNode) tree.STNode {
-	if pipeOrAndToken.Kind() == common.PIPE_TOKEN {
+func (b *BallerinaParser) mergeTypes(lhsTypeDesc st.STNode, pipeOrAndToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
+	if pipeOrAndToken.Kind() == st.PIPE_TOKEN {
 		return b.mergeTypesWithUnion(lhsTypeDesc, pipeOrAndToken, rhsTypeDesc)
 	} else {
 		return b.mergeTypesWithIntersection(lhsTypeDesc, pipeOrAndToken, rhsTypeDesc)
 	}
 }
 
-func (b *BallerinaParser) mergeTypesWithUnion(lhsTypeDesc tree.STNode, pipeToken tree.STNode, rhsTypeDesc tree.STNode) tree.STNode {
-	if rhsTypeDesc.Kind() == common.UNION_TYPE_DESC {
-		rhsUnionTypeDesc, ok := rhsTypeDesc.(*tree.STUnionTypeDescriptorNode)
+func (b *BallerinaParser) mergeTypesWithUnion(lhsTypeDesc st.STNode, pipeToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
+	if rhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
+		rhsUnionTypeDesc, ok := rhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
 		return b.replaceLeftMostUnionWithAUnion(lhsTypeDesc, pipeToken, rhsUnionTypeDesc)
 	} else {
@@ -12726,24 +12726,24 @@ func (b *BallerinaParser) mergeTypesWithUnion(lhsTypeDesc tree.STNode, pipeToken
 	}
 }
 
-func (b *BallerinaParser) mergeTypesWithIntersection(lhsTypeDesc tree.STNode, bitwiseAndToken tree.STNode, rhsTypeDesc tree.STNode) tree.STNode {
-	if lhsTypeDesc.Kind() == common.UNION_TYPE_DESC {
-		lhsUnionTypeDesc, ok := lhsTypeDesc.(*tree.STUnionTypeDescriptorNode)
+func (b *BallerinaParser) mergeTypesWithIntersection(lhsTypeDesc st.STNode, bitwiseAndToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
+	if lhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
+		lhsUnionTypeDesc, ok := lhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
-		if rhsTypeDesc.Kind() == common.INTERSECTION_TYPE_DESC {
-			rhsIntSecTypeDesc, ok := rhsTypeDesc.(*tree.STIntersectionTypeDescriptorNode)
+		if rhsTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
+			rhsIntSecTypeDesc, ok := rhsTypeDesc.(*st.STIntersectionTypeDescriptorNode)
 			if !ok {
-				panic("expected *tree.STIntersectionTypeDescriptorNode")
+				panic("expected *st.STIntersectionTypeDescriptorNode")
 			}
 			rhsTypeDesc = b.replaceLeftMostIntersectionWithAIntersection(lhsUnionTypeDesc.RightTypeDesc,
 				bitwiseAndToken, rhsIntSecTypeDesc)
 			return b.createUnionTypeDesc(lhsUnionTypeDesc.LeftTypeDesc, lhsUnionTypeDesc.PipeToken, rhsTypeDesc)
-		} else if rhsTypeDesc.Kind() == common.UNION_TYPE_DESC {
-			rhsUnionTypeDesc, ok := rhsTypeDesc.(*tree.STUnionTypeDescriptorNode)
+		} else if rhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
+			rhsUnionTypeDesc, ok := rhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 			if !ok {
-				panic("expected *tree.STUnionTypeDescriptorNode")
+				panic("expected *st.STUnionTypeDescriptorNode")
 			}
 			//nolint:staticcheck // rhsTypeDesc reassigned but not yet used in return path
 			rhsTypeDesc = b.replaceLeftMostUnionWithAIntersection(lhsUnionTypeDesc.RightTypeDesc,
@@ -12752,84 +12752,84 @@ func (b *BallerinaParser) mergeTypesWithIntersection(lhsTypeDesc tree.STNode, bi
 				lhsUnionTypeDesc.PipeToken, rhsUnionTypeDesc)
 		}
 	}
-	if rhsTypeDesc.Kind() == common.UNION_TYPE_DESC {
-		rhsUnionTypeDesc, ok := rhsTypeDesc.(*tree.STUnionTypeDescriptorNode)
+	if rhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
+		rhsUnionTypeDesc, ok := rhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
 		return b.replaceLeftMostUnionWithAIntersection(lhsTypeDesc, bitwiseAndToken, rhsUnionTypeDesc)
-	} else if rhsTypeDesc.Kind() == common.INTERSECTION_TYPE_DESC {
-		rhsIntSecTypeDesc, ok := rhsTypeDesc.(*tree.STIntersectionTypeDescriptorNode)
+	} else if rhsTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
+		rhsIntSecTypeDesc, ok := rhsTypeDesc.(*st.STIntersectionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STIntersectionTypeDescriptorNode")
+			panic("expected *st.STIntersectionTypeDescriptorNode")
 		}
 		return b.replaceLeftMostIntersectionWithAIntersection(lhsTypeDesc, bitwiseAndToken, rhsIntSecTypeDesc)
 	}
 	return b.createIntersectionTypeDesc(lhsTypeDesc, bitwiseAndToken, rhsTypeDesc)
 }
 
-func (b *BallerinaParser) replaceLeftMostUnionWithAUnion(typeDesc tree.STNode, pipeToken tree.STNode, unionTypeDesc *tree.STUnionTypeDescriptorNode) tree.STNode {
+func (b *BallerinaParser) replaceLeftMostUnionWithAUnion(typeDesc st.STNode, pipeToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
 	leftTypeDesc := unionTypeDesc.LeftTypeDesc
-	if leftTypeDesc.Kind() == common.UNION_TYPE_DESC {
-		leftUnionTypeDesc, ok := leftTypeDesc.(*tree.STUnionTypeDescriptorNode)
+	if leftTypeDesc.Kind() == st.UNION_TYPE_DESC {
+		leftUnionTypeDesc, ok := leftTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
 		newLeftTypeDesc := b.replaceLeftMostUnionWithAUnion(typeDesc, pipeToken, leftUnionTypeDesc)
-		return tree.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
+		return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
 	}
 	leftTypeDesc = b.createUnionTypeDesc(typeDesc, pipeToken, leftTypeDesc)
-	return tree.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
+	return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
 }
 
-func (b *BallerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc tree.STNode, bitwiseAndToken tree.STNode, unionTypeDesc *tree.STUnionTypeDescriptorNode) tree.STNode {
+func (b *BallerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
 	leftTypeDesc := unionTypeDesc.LeftTypeDesc
-	if leftTypeDesc.Kind() == common.UNION_TYPE_DESC {
-		leftUnionTypeDesc, ok := leftTypeDesc.(*tree.STUnionTypeDescriptorNode)
+	if leftTypeDesc.Kind() == st.UNION_TYPE_DESC {
+		leftUnionTypeDesc, ok := leftTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
 		newLeftTypeDesc := b.replaceLeftMostUnionWithAIntersection(typeDesc, bitwiseAndToken, leftUnionTypeDesc)
-		return tree.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
+		return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
 	}
-	if leftTypeDesc.Kind() == common.INTERSECTION_TYPE_DESC {
-		leftIntersectionTypeDesc, ok := leftTypeDesc.(*tree.STIntersectionTypeDescriptorNode)
+	if leftTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
+		leftIntersectionTypeDesc, ok := leftTypeDesc.(*st.STIntersectionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STIntersectionTypeDescriptorNode")
+			panic("expected *st.STIntersectionTypeDescriptorNode")
 		}
 		newLeftTypeDesc := b.replaceLeftMostIntersectionWithAIntersection(typeDesc, bitwiseAndToken, leftIntersectionTypeDesc)
-		return tree.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
+		return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
 	}
 	leftTypeDesc = b.createIntersectionTypeDesc(typeDesc, bitwiseAndToken, leftTypeDesc)
-	return tree.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
+	return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
 }
 
-func (b *BallerinaParser) replaceLeftMostIntersectionWithAIntersection(typeDesc tree.STNode, bitwiseAndToken tree.STNode, intersectionTypeDesc *tree.STIntersectionTypeDescriptorNode) tree.STNode {
+func (b *BallerinaParser) replaceLeftMostIntersectionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, intersectionTypeDesc *st.STIntersectionTypeDescriptorNode) st.STNode {
 	leftTypeDesc := intersectionTypeDesc.LeftTypeDesc
-	if leftTypeDesc.Kind() == common.INTERSECTION_TYPE_DESC {
-		leftIntersectionTypeDesc, ok := leftTypeDesc.(*tree.STIntersectionTypeDescriptorNode)
+	if leftTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
+		leftIntersectionTypeDesc, ok := leftTypeDesc.(*st.STIntersectionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STIntersectionTypeDescriptorNode")
+			panic("expected *st.STIntersectionTypeDescriptorNode")
 		}
 		newLeftTypeDesc := b.replaceLeftMostIntersectionWithAIntersection(typeDesc, bitwiseAndToken, leftIntersectionTypeDesc)
-		return tree.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
+		return st.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
 	}
 	leftTypeDesc = b.createIntersectionTypeDesc(typeDesc, bitwiseAndToken, leftTypeDesc)
-	return tree.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, leftTypeDesc)
+	return st.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, leftTypeDesc)
 }
 
-func (b *BallerinaParser) getArrayTypeDesc(openBracket tree.STNode, member tree.STNode, closeBracket tree.STNode, lhsTypeDesc tree.STNode) tree.STNode {
-	if lhsTypeDesc.Kind() == common.UNION_TYPE_DESC {
-		unionTypeDesc, ok := lhsTypeDesc.(*tree.STUnionTypeDescriptorNode)
+func (b *BallerinaParser) getArrayTypeDesc(openBracket st.STNode, member st.STNode, closeBracket st.STNode, lhsTypeDesc st.STNode) st.STNode {
+	if lhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
+		unionTypeDesc, ok := lhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
 		middleTypeDesc := b.getArrayTypeDesc(openBracket, member, closeBracket, unionTypeDesc.RightTypeDesc)
 		lhsTypeDesc = b.mergeTypesWithUnion(unionTypeDesc.LeftTypeDesc, unionTypeDesc.PipeToken, middleTypeDesc)
-	} else if lhsTypeDesc.Kind() == common.INTERSECTION_TYPE_DESC {
-		intersectionTypeDesc, ok := lhsTypeDesc.(*tree.STIntersectionTypeDescriptorNode)
+	} else if lhsTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
+		intersectionTypeDesc, ok := lhsTypeDesc.(*st.STIntersectionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STIntersectionTypeDescriptorNode")
+			panic("expected *st.STIntersectionTypeDescriptorNode")
 		}
 		middleTypeDesc := b.getArrayTypeDesc(openBracket, member, closeBracket, intersectionTypeDesc.RightTypeDesc)
 		lhsTypeDesc = b.mergeTypesWithIntersection(intersectionTypeDesc.LeftTypeDesc,
@@ -12840,9 +12840,9 @@ func (b *BallerinaParser) getArrayTypeDesc(openBracket tree.STNode, member tree.
 	return lhsTypeDesc
 }
 
-func (b *BallerinaParser) parseUnionOrIntersectionToken() tree.STNode {
+func (b *BallerinaParser) parseUnionOrIntersectionToken() st.STNode {
 	token := b.peek()
-	if (token.Kind() == common.PIPE_TOKEN) || (token.Kind() == common.BITWISE_AND_TOKEN) {
+	if (token.Kind() == st.PIPE_TOKEN) || (token.Kind() == st.BITWISE_AND_TOKEN) {
 		return b.consume()
 	} else {
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_UNION_OR_INTERSECTION_TOKEN)
@@ -12850,91 +12850,91 @@ func (b *BallerinaParser) parseUnionOrIntersectionToken() tree.STNode {
 	}
 }
 
-func (b *BallerinaParser) getBracketedListNodeType(memberNode tree.STNode, isTypedBindingPattern bool) common.SyntaxKind {
+func (b *BallerinaParser) getBracketedListNodeType(memberNode st.STNode, isTypedBindingPattern bool) st.SyntaxKind {
 	if b.isEmpty(memberNode) {
-		return common.NONE
+		return st.NONE
 	}
 	if b.isDefiniteTypeDesc(memberNode.Kind()) {
-		return common.TUPLE_TYPE_DESC
+		return st.TUPLE_TYPE_DESC
 	}
 	switch memberNode.Kind() {
-	case common.ASTERISK_LITERAL:
-		return common.ARRAY_TYPE_DESC
-	case common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.REST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.WILDCARD_BINDING_PATTERN:
-		return common.LIST_BINDING_PATTERN
-	case common.QUALIFIED_NAME_REFERENCE,
-		common.REST_TYPE:
-		return common.TUPLE_TYPE_DESC
-	case common.NUMERIC_LITERAL:
+	case st.ASTERISK_LITERAL:
+		return st.ARRAY_TYPE_DESC
+	case st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.REST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.WILDCARD_BINDING_PATTERN:
+		return st.LIST_BINDING_PATTERN
+	case st.QUALIFIED_NAME_REFERENCE,
+		st.REST_TYPE:
+		return st.TUPLE_TYPE_DESC
+	case st.NUMERIC_LITERAL:
 		if isTypedBindingPattern {
-			return common.ARRAY_TYPE_DESC
+			return st.ARRAY_TYPE_DESC
 		}
-		return common.ARRAY_TYPE_DESC_OR_MEMBER_ACCESS
-	case common.SIMPLE_NAME_REFERENCE,
-		common.BRACKETED_LIST,
-		common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
-		return common.NONE
-	case common.ERROR_CONSTRUCTOR:
+		return st.ARRAY_TYPE_DESC_OR_MEMBER_ACCESS
+	case st.SIMPLE_NAME_REFERENCE,
+		st.BRACKETED_LIST,
+		st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+		return st.NONE
+	case st.ERROR_CONSTRUCTOR:
 		if isTypedBindingPattern {
-			return common.LIST_BINDING_PATTERN
+			return st.LIST_BINDING_PATTERN
 		}
-		errorCtorNode, ok := memberNode.(*tree.STErrorConstructorExpressionNode)
+		errorCtorNode, ok := memberNode.(*st.STErrorConstructorExpressionNode)
 		if !ok {
 			panic("getBracketedListNodeType: expected STErrorConstructorExpressionNode")
 		}
 		if b.isPossibleErrorBindingPattern(*errorCtorNode) {
-			return common.NONE
+			return st.NONE
 		}
-		return common.INDEXED_EXPRESSION
+		return st.INDEXED_EXPRESSION
 	default:
 		if isTypedBindingPattern {
-			return common.NONE
+			return st.NONE
 		}
-		return common.INDEXED_EXPRESSION
+		return st.INDEXED_EXPRESSION
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartsWithOpenBracket(annots tree.STNode, possibleMappingField bool) tree.STNode {
+func (b *BallerinaParser) parseStatementStartsWithOpenBracket(annots st.STNode, possibleMappingField bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_OR_VAR_DECL_STMT)
 	return b.parseStatementStartsWithOpenBracketWithRoot(annots, true, possibleMappingField)
 }
 
-func (b *BallerinaParser) parseMemberBracketedList() tree.STNode {
-	annots := tree.CreateEmptyNodeList()
+func (b *BallerinaParser) parseMemberBracketedList() st.STNode {
+	annots := st.CreateEmptyNodeList()
 	return b.parseStatementStartsWithOpenBracketWithRoot(annots, false, false)
 }
 
-func (b *BallerinaParser) parseStatementStartsWithOpenBracketWithRoot(annots tree.STNode, isRoot bool, possibleMappingField bool) tree.STNode {
+func (b *BallerinaParser) parseStatementStartsWithOpenBracketWithRoot(annots st.STNode, isRoot bool, possibleMappingField bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
-	var memberList []tree.STNode
+	var memberList []st.STNode
 	for !b.isBracketedListEnd(b.peek().Kind()) {
 		member := b.parseStatementStartBracketedListMember()
 		currentNodeType := b.getStmtStartBracketedListType(member)
 		switch currentNodeType {
-		case common.TUPLE_TYPE_DESC:
+		case st.TUPLE_TYPE_DESC:
 			member = b.parseComplexTypeDescriptor(member, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
-			member = b.createMemberOrRestNode(tree.CreateEmptyNodeList(), member)
+			member = b.createMemberOrRestNode(st.CreateEmptyNodeList(), member)
 			return b.parseAsTupleTypeDesc(annots, openBracket, memberList, member, isRoot)
-		case common.MEMBER_TYPE_DESC, common.REST_TYPE:
+		case st.MEMBER_TYPE_DESC, st.REST_TYPE:
 			return b.parseAsTupleTypeDesc(annots, openBracket, memberList, member, isRoot)
-		case common.LIST_BINDING_PATTERN:
+		case st.LIST_BINDING_PATTERN:
 			res, _ := b.parseAsListBindingPatternWithMemberAndRoot(openBracket, memberList, member, isRoot)
 			return res
-		case common.LIST_CONSTRUCTOR:
+		case st.LIST_CONSTRUCTOR:
 			res, _ := b.parseAsListConstructor(openBracket, memberList, member, isRoot)
 			return res
-		case common.LIST_BP_OR_LIST_CONSTRUCTOR:
+		case st.LIST_BP_OR_LIST_CONSTRUCTOR:
 			res, _ := b.parseAsListBindingPatternOrListConstructor(openBracket, memberList, member, isRoot)
 			return res
-		case common.TUPLE_TYPE_DESC_OR_LIST_CONST:
+		case st.TUPLE_TYPE_DESC_OR_LIST_CONST:
 			res, _ := b.parseAsTupleTypeDescOrListConstructor(annots, openBracket, memberList, member, isRoot)
 			return res
-		case common.NONE:
+		case st.NONE:
 			fallthrough
 		default:
 			memberList = append(memberList, member)
@@ -12951,22 +12951,22 @@ func (b *BallerinaParser) parseStatementStartsWithOpenBracketWithRoot(annots tre
 	return bracketedList
 }
 
-func (b *BallerinaParser) parseStatementStartBracketedListMember() tree.STNode {
+func (b *BallerinaParser) parseStatementStartBracketedListMember() st.STNode {
 	return b.parseStatementStartBracketedListMemberWithQualifiers(nil)
 }
 
-func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(qualifiers []tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(qualifiers []st.STNode) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMemberBracketedList()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		identifier := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
 		if b.isWildcardBP(identifier) {
-			simpleNameNode, ok := identifier.(*tree.STSimpleNameReferenceNode)
+			simpleNameNode, ok := identifier.(*st.STSimpleNameReferenceNode)
 			if !ok {
 				panic("parseStatementStartBracketedListMember: expected STSimpleNameReferenceNode")
 			}
@@ -12974,44 +12974,44 @@ func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 			return b.getWildcardBindingPattern(varName)
 		}
 		nextToken = b.peek()
-		if nextToken.Kind() == common.ELLIPSIS_TOKEN {
+		if nextToken.Kind() == st.ELLIPSIS_TOKEN {
 			ellipsis := b.parseEllipsis()
-			return tree.CreateRestDescriptorNode(identifier, ellipsis)
+			return st.CreateRestDescriptorNode(identifier, ellipsis)
 		}
-		if (nextToken.Kind() != common.OPEN_BRACKET_TOKEN) && b.isValidTypeContinuationToken(nextToken) {
+		if (nextToken.Kind() != st.OPEN_BRACKET_TOKEN) && b.isValidTypeContinuationToken(nextToken) {
 			return b.parseComplexTypeDescriptor(identifier, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 		}
 		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, identifier, false, true)
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMappingBindingPatterOrMappingConstructor()
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		nextNextToken := b.getNextNextToken()
-		if (nextNextToken.Kind() == common.OPEN_PAREN_TOKEN) || (nextNextToken.Kind() == common.IDENTIFIER_TOKEN) {
+		if (nextNextToken.Kind() == st.OPEN_PAREN_TOKEN) || (nextNextToken.Kind() == st.IDENTIFIER_TOKEN) {
 			return b.parseErrorBindingPatternOrErrorConstructor()
 		}
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseRestBindingOrSpreadMember()
-	case common.XML_KEYWORD, common.STRING_KEYWORD:
+	case st.XML_KEYWORD, st.STRING_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-		if b.getNextNextToken().Kind() == common.BACKTICK_TOKEN {
+		if b.getNextNextToken().Kind() == st.BACKTICK_TOKEN {
 			return b.parseExpressionPossibleRhsExpr(false)
 		}
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
-	case common.TABLE_KEYWORD, common.STREAM_KEYWORD:
+	case st.TABLE_KEYWORD, st.STREAM_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-		if b.getNextNextToken().Kind() == common.LT_TOKEN {
+		if b.getNextNextToken().Kind() == st.LT_TOKEN {
 			return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 		}
 		return b.parseExpressionPossibleRhsExpr(false)
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseTypeDescOrExprWithQualifiers(qualifiers)
-	case common.FUNCTION_KEYWORD:
+	case st.FUNCTION_KEYWORD:
 		return b.parseAnonFuncExprOrFuncTypeDesc(qualifiers)
-	case common.AT_TOKEN:
+	case st.AT_TOKEN:
 		return b.parseTupleMember()
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
@@ -13026,21 +13026,21 @@ func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 	}
 }
 
-func (b *BallerinaParser) parseRestBindingOrSpreadMember() tree.STNode {
+func (b *BallerinaParser) parseRestBindingOrSpreadMember() st.STNode {
 	ellipsis := b.parseEllipsis()
 	expr := b.parseExpression()
-	if expr.Kind() == common.SIMPLE_NAME_REFERENCE {
-		return tree.CreateRestBindingPatternNode(ellipsis, expr)
+	if expr.Kind() == st.SIMPLE_NAME_REFERENCE {
+		return st.CreateRestBindingPatternNode(ellipsis, expr)
 	} else {
-		return tree.CreateSpreadMemberNode(ellipsis, expr)
+		return st.CreateSpreadMemberNode(ellipsis, expr)
 	}
 }
 
 // return result and modified memberList
-func (b *BallerinaParser) parseAsTupleTypeDescOrListConstructor(annots tree.STNode, openBracket tree.STNode, memberList []tree.STNode, member tree.STNode, isRoot bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsTupleTypeDescOrListConstructor(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = append(memberList, member)
 	memberEnd := b.parseBracketedListMemberEnd()
-	var tupleTypeDescOrListCons tree.STNode
+	var tupleTypeDescOrListCons st.STNode
 	if memberEnd == nil {
 		closeBracket := b.parseCloseBracket()
 		tupleTypeDescOrListCons = b.parseTupleTypeDescOrListConstructorRhs(openBracket, memberList, closeBracket, isRoot)
@@ -13051,29 +13051,29 @@ func (b *BallerinaParser) parseAsTupleTypeDescOrListConstructor(annots tree.STNo
 	return tupleTypeDescOrListCons, memberList
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructor(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTupleTypeDescOrListConstructor(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
-	var memberList []tree.STNode
+	var memberList []st.STNode
 	result, _ := b.parseTupleTypeDescOrListConstructorWithBracketAndMembers(annots, openBracket, memberList, false)
 	return result
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructorWithBracketAndMembers(annots tree.STNode, openBracket tree.STNode, memberList []tree.STNode, isRoot bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseTupleTypeDescOrListConstructorWithBracketAndMembers(annots st.STNode, openBracket st.STNode, memberList []st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	nextToken := b.peek()
 	for !b.isBracketedListEnd(nextToken.Kind()) {
 		member := b.parseTupleTypeDescOrListConstructorMember(annots)
 		currentNodeType := b.getParsingNodeTypeOfTupleTypeOrListCons(member)
 		switch currentNodeType {
-		case common.LIST_CONSTRUCTOR:
+		case st.LIST_CONSTRUCTOR:
 			return b.parseAsListConstructor(openBracket, memberList, member, isRoot)
-		case common.REST_TYPE, common.MEMBER_TYPE_DESC:
+		case st.REST_TYPE, st.MEMBER_TYPE_DESC:
 			return b.parseAsTupleTypeDesc(annots, openBracket, memberList, member, isRoot), memberList
-		case common.TUPLE_TYPE_DESC:
+		case st.TUPLE_TYPE_DESC:
 			member = b.parseComplexTypeDescriptor(member, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
-			member = b.createMemberOrRestNode(tree.CreateEmptyNodeList(), member)
+			member = b.createMemberOrRestNode(st.CreateEmptyNodeList(), member)
 			return b.parseAsTupleTypeDesc(annots, openBracket, memberList, member, isRoot), memberList
-		case common.TUPLE_TYPE_DESC_OR_LIST_CONST:
+		case st.TUPLE_TYPE_DESC_OR_LIST_CONST:
 			fallthrough
 		default:
 			memberList = append(memberList, member)
@@ -13089,39 +13089,39 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructorWithBracketAndMembe
 	return b.parseTupleTypeDescOrListConstructorRhs(openBracket, memberList, closeBracket, isRoot), memberList
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructorMember(annots tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseTupleTypeDescOrListConstructor(annots)
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		identifier := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
-		if b.peek().Kind() == common.ELLIPSIS_TOKEN {
+		if b.peek().Kind() == st.ELLIPSIS_TOKEN {
 			ellipsis := b.parseEllipsis()
-			return tree.CreateRestDescriptorNode(identifier, ellipsis)
+			return st.CreateRestDescriptorNode(identifier, ellipsis)
 		}
 		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, identifier, false, false)
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingConstructorExpr()
-	case common.ERROR_KEYWORD:
+	case st.ERROR_KEYWORD:
 		nextNextToken := b.getNextNextToken()
-		if (nextNextToken.Kind() == common.OPEN_PAREN_TOKEN) || (nextNextToken.Kind() == common.IDENTIFIER_TOKEN) {
+		if (nextNextToken.Kind() == st.OPEN_PAREN_TOKEN) || (nextNextToken.Kind() == st.IDENTIFIER_TOKEN) {
 			return b.parseErrorConstructorExprAmbiguous(false)
 		}
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
-	case common.XML_KEYWORD, common.STRING_KEYWORD:
-		if b.getNextNextToken().Kind() == common.BACKTICK_TOKEN {
+	case st.XML_KEYWORD, st.STRING_KEYWORD:
+		if b.getNextNextToken().Kind() == st.BACKTICK_TOKEN {
 			return b.parseExpressionPossibleRhsExpr(false)
 		}
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
-	case common.TABLE_KEYWORD, common.STREAM_KEYWORD:
-		if b.getNextNextToken().Kind() == common.LT_TOKEN {
+	case st.TABLE_KEYWORD, st.STREAM_KEYWORD:
+		if b.getNextNextToken().Kind() == st.LT_TOKEN {
 			return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 		}
 		return b.parseExpressionPossibleRhsExpr(false)
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return b.parseTypeDescOrExpr()
-	case common.AT_TOKEN:
+	case st.AT_TOKEN:
 		return b.parseTupleMember()
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
@@ -13135,40 +13135,40 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructorMember(annots tree.
 	}
 }
 
-func (b *BallerinaParser) getParsingNodeTypeOfTupleTypeOrListCons(memberNode tree.STNode) common.SyntaxKind {
+func (b *BallerinaParser) getParsingNodeTypeOfTupleTypeOrListCons(memberNode st.STNode) st.SyntaxKind {
 	return b.getStmtStartBracketedListType(memberNode)
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructorRhs(openBracket tree.STNode, members []tree.STNode, closeBracket tree.STNode, isRoot bool) tree.STNode {
-	var tupleTypeOrListConst tree.STNode
+func (b *BallerinaParser) parseTupleTypeDescOrListConstructorRhs(openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool) st.STNode {
+	var tupleTypeOrListConst st.STNode
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN, common.CLOSE_BRACE_TOKEN, common.CLOSE_BRACKET_TOKEN, common.PIPE_TOKEN, common.BITWISE_AND_TOKEN:
+	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN, st.CLOSE_BRACKET_TOKEN, st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
 		if !isRoot {
 			b.endContext()
-			return tree.CreateAmbiguousCollectionNode(common.TUPLE_TYPE_DESC_OR_LIST_CONST, openBracket, members, closeBracket)
+			return st.CreateAmbiguousCollectionNode(st.TUPLE_TYPE_DESC_OR_LIST_CONST, openBracket, members, closeBracket)
 		}
 	default:
-		if b.isValidExprRhsStart(b.peek().Kind(), closeBracket.Kind()) || (isRoot && (b.peek().Kind() == common.EQUAL_TOKEN)) {
+		if b.isValidExprRhsStart(b.peek().Kind(), closeBracket.Kind()) || (isRoot && (b.peek().Kind() == st.EQUAL_TOKEN)) {
 			members = b.getExpressionList(members, false)
-			memberExpressions := tree.CreateNodeList(members...)
-			tupleTypeOrListConst = tree.CreateListConstructorExpressionNode(openBracket,
+			memberExpressions := st.CreateNodeList(members...)
+			tupleTypeOrListConst = st.CreateListConstructorExpressionNode(openBracket,
 				memberExpressions, closeBracket)
 			break
 		}
-		memberTypeDescs := tree.CreateNodeList(b.getTupleMemberList(members)...)
-		tupleTypeDesc := tree.CreateTupleTypeDescriptorNode(openBracket, memberTypeDescs, closeBracket)
+		memberTypeDescs := st.CreateNodeList(b.getTupleMemberList(members)...)
+		tupleTypeDesc := st.CreateTupleTypeDescriptorNode(openBracket, memberTypeDescs, closeBracket)
 		tupleTypeOrListConst = b.parseComplexTypeDescriptor(tupleTypeDesc, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 	}
 	b.endContext()
 	if !isRoot {
 		return tupleTypeOrListConst
 	}
-	annots := tree.CreateEmptyNodeList()
+	annots := st.CreateEmptyNodeList()
 	return b.parseStmtStartsWithTupleTypeOrExprRhs(annots, tupleTypeOrListConst, true)
 }
 
-func (b *BallerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots tree.STNode, tupleTypeOrListConst tree.STNode, isRoot bool) tree.STNode {
-	if (tupleTypeOrListConst.Kind().CompareTo(common.RECORD_TYPE_DESC) >= 0) && (tupleTypeOrListConst.Kind().CompareTo(common.TYPEDESC_TYPE_DESC) <= 0) {
+func (b *BallerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots st.STNode, tupleTypeOrListConst st.STNode, isRoot bool) st.STNode {
+	if (tupleTypeOrListConst.Kind().CompareTo(st.RECORD_TYPE_DESC) >= 0) && (tupleTypeOrListConst.Kind().CompareTo(st.TYPEDESC_TYPE_DESC) <= 0) {
 		typedBindingPattern := b.parseTypedBindingPatternTypeRhsWithRoot(tupleTypeOrListConst, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, isRoot)
 		if !isRoot {
 			return typedBindingPattern
@@ -13182,13 +13182,13 @@ func (b *BallerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots tree.STNo
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseAsTupleTypeDesc(annots tree.STNode, openBracket tree.STNode, memberList []tree.STNode, member tree.STNode, isRoot bool) tree.STNode {
+func (b *BallerinaParser) parseAsTupleTypeDesc(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) st.STNode {
 	memberList = b.getTupleMemberList(memberList)
 	b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
 	tupleTypeMembers, memberList := b.parseTupleTypeMembers(member, memberList) //nolint:staticcheck,ineffassign // memberList will be used when tuple rest descriptor is fully implemented
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
-	tupleType := tree.CreateTupleTypeDescriptorNode(openBracket, tupleTypeMembers, closeBracket)
+	tupleType := st.CreateTupleTypeDescriptorNode(openBracket, tupleTypeMembers, closeBracket)
 	typeDesc := b.parseComplexTypeDescriptor(tupleType, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 	b.endContext()
 	if !isRoot {
@@ -13200,7 +13200,7 @@ func (b *BallerinaParser) parseAsTupleTypeDesc(annots tree.STNode, openBracket t
 	return res
 }
 
-func (b *BallerinaParser) parseAsListBindingPatternWithMemberAndRoot(openBracket tree.STNode, memberList []tree.STNode, member tree.STNode, isRoot bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsListBindingPatternWithMemberAndRoot(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = b.getBindingPatternsList(memberList, true)
 	memberList = append(memberList, b.getBindingPattern(member, true))
 	b.switchContext(common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN)
@@ -13212,7 +13212,7 @@ func (b *BallerinaParser) parseAsListBindingPatternWithMemberAndRoot(openBracket
 	return b.parseAssignmentStmtRhs(listBindingPattern), memberList
 }
 
-func (b *BallerinaParser) parseAsListBindingPattern(openBracket tree.STNode, memberList []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsListBindingPattern(openBracket st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
 	memberList = b.getBindingPatternsList(memberList, true)
 	b.switchContext(common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN)
 	listBindingPattern, memberList := b.parseListBindingPatternWithOpenBracket(openBracket, memberList)
@@ -13220,10 +13220,10 @@ func (b *BallerinaParser) parseAsListBindingPattern(openBracket tree.STNode, mem
 	return listBindingPattern, memberList
 }
 
-func (b *BallerinaParser) parseAsListBindingPatternOrListConstructor(openBracket tree.STNode, memberList []tree.STNode, member tree.STNode, isRoot bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsListBindingPatternOrListConstructor(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = append(memberList, member)
 	memberEnd := b.parseBracketedListMemberEnd()
-	var listBindingPatternOrListCons tree.STNode
+	var listBindingPatternOrListCons st.STNode
 	if memberEnd == nil {
 		closeBracket := b.parseCloseBracket()
 		listBindingPatternOrListCons = b.parseListBindingPatternOrListConstructorWithCloseBracket(openBracket, memberList, closeBracket, isRoot)
@@ -13234,59 +13234,59 @@ func (b *BallerinaParser) parseAsListBindingPatternOrListConstructor(openBracket
 	return listBindingPatternOrListCons, memberList
 }
 
-func (b *BallerinaParser) getStmtStartBracketedListType(memberNode tree.STNode) common.SyntaxKind {
-	if (memberNode.Kind().CompareTo(common.RECORD_TYPE_DESC) >= 0) && (memberNode.Kind().CompareTo(common.FUTURE_TYPE_DESC) <= 0) {
-		return common.TUPLE_TYPE_DESC
+func (b *BallerinaParser) getStmtStartBracketedListType(memberNode st.STNode) st.SyntaxKind {
+	if (memberNode.Kind().CompareTo(st.RECORD_TYPE_DESC) >= 0) && (memberNode.Kind().CompareTo(st.FUTURE_TYPE_DESC) <= 0) {
+		return st.TUPLE_TYPE_DESC
 	}
 	switch memberNode.Kind() {
-	case common.WILDCARD_BINDING_PATTERN,
-		common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.ERROR_BINDING_PATTERN:
-		return common.LIST_BINDING_PATTERN
-	case common.QUALIFIED_NAME_REFERENCE:
-		return common.TUPLE_TYPE_DESC
-	case common.LIST_CONSTRUCTOR,
-		common.MAPPING_CONSTRUCTOR,
-		common.SPREAD_MEMBER:
-		return common.LIST_CONSTRUCTOR
-	case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR,
-		common.REST_BINDING_PATTERN:
-		return common.LIST_BP_OR_LIST_CONSTRUCTOR
-	case common.SIMPLE_NAME_REFERENCE, // member is a simple type-ref/var-ref
-		common.BRACKETED_LIST:
-		return common.NONE
-	case common.ERROR_CONSTRUCTOR:
-		errorCtorNode, ok := memberNode.(*tree.STErrorConstructorExpressionNode)
+	case st.WILDCARD_BINDING_PATTERN,
+		st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.ERROR_BINDING_PATTERN:
+		return st.LIST_BINDING_PATTERN
+	case st.QUALIFIED_NAME_REFERENCE:
+		return st.TUPLE_TYPE_DESC
+	case st.LIST_CONSTRUCTOR,
+		st.MAPPING_CONSTRUCTOR,
+		st.SPREAD_MEMBER:
+		return st.LIST_CONSTRUCTOR
+	case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR,
+		st.REST_BINDING_PATTERN:
+		return st.LIST_BP_OR_LIST_CONSTRUCTOR
+	case st.SIMPLE_NAME_REFERENCE, // member is a simple type-ref/var-ref
+		st.BRACKETED_LIST:
+		return st.NONE
+	case st.ERROR_CONSTRUCTOR:
+		errorCtorNode, ok := memberNode.(*st.STErrorConstructorExpressionNode)
 		if !ok {
 			panic("getStmtStartBracketedListType: expected STErrorConstructorExpressionNode")
 		}
 		if b.isPossibleErrorBindingPattern(*errorCtorNode) {
-			return common.NONE
+			return st.NONE
 		}
-		return common.LIST_CONSTRUCTOR
-	case common.INDEXED_EXPRESSION:
-		return common.TUPLE_TYPE_DESC_OR_LIST_CONST
-	case common.MEMBER_TYPE_DESC:
-		return common.MEMBER_TYPE_DESC
-	case common.REST_TYPE:
-		return common.REST_TYPE
+		return st.LIST_CONSTRUCTOR
+	case st.INDEXED_EXPRESSION:
+		return st.TUPLE_TYPE_DESC_OR_LIST_CONST
+	case st.MEMBER_TYPE_DESC:
+		return st.MEMBER_TYPE_DESC
+	case st.REST_TYPE:
+		return st.REST_TYPE
 	default:
 		if (b.isExpression(memberNode.Kind()) && (!b.isAllBasicLiterals(memberNode))) && (!b.isAmbiguous(memberNode)) {
-			return common.LIST_CONSTRUCTOR
+			return st.LIST_CONSTRUCTOR
 		}
-		return common.NONE
+		return st.NONE
 	}
 }
 
-func (b *BallerinaParser) isPossibleErrorBindingPattern(errorConstructor tree.STErrorConstructorExpressionNode) bool {
+func (b *BallerinaParser) isPossibleErrorBindingPattern(errorConstructor st.STErrorConstructorExpressionNode) bool {
 	args := errorConstructor.Arguments
 	size := args.BucketCount()
 	i := 0
 	for ; i < size; i++ {
 		arg := args.ChildInBucket(i)
-		if ((arg.Kind() != common.NAMED_ARG) && (arg.Kind() != common.POSITIONAL_ARG)) && (arg.Kind() != common.REST_ARG) {
+		if ((arg.Kind() != st.NAMED_ARG) && (arg.Kind() != st.POSITIONAL_ARG)) && (arg.Kind() != st.REST_ARG) {
 			continue
 		}
 		functionArg := arg
@@ -13297,37 +13297,37 @@ func (b *BallerinaParser) isPossibleErrorBindingPattern(errorConstructor tree.ST
 	return true
 }
 
-func (b *BallerinaParser) isPosibleArgBindingPattern(arg tree.STFunctionArgumentNode) bool {
+func (b *BallerinaParser) isPosibleArgBindingPattern(arg st.STFunctionArgumentNode) bool {
 	switch arg.Kind() {
-	case common.POSITIONAL_ARG:
-		positionalArg, ok := arg.(*tree.STPositionalArgumentNode)
+	case st.POSITIONAL_ARG:
+		positionalArg, ok := arg.(*st.STPositionalArgumentNode)
 		if !ok {
 			panic("isPosibleArgBindingPattern: expected STPositionalArgumentNode")
 		}
 		return b.isPosibleBindingPattern(positionalArg.Expression)
-	case common.NAMED_ARG:
-		namedArg, ok := arg.(*tree.STNamedArgumentNode)
+	case st.NAMED_ARG:
+		namedArg, ok := arg.(*st.STNamedArgumentNode)
 		if !ok {
 			panic("isPosibleArgBindingPattern: expected STNamedArgumentNode")
 		}
 		return b.isPosibleBindingPattern(namedArg.Expression)
-	case common.REST_ARG:
-		restArg, ok := arg.(*tree.STRestArgumentNode)
+	case st.REST_ARG:
+		restArg, ok := arg.(*st.STRestArgumentNode)
 		if !ok {
 			panic("isPosibleArgBindingPattern: expected STRestArgumentNode")
 		}
-		return (restArg.Expression.Kind() == common.SIMPLE_NAME_REFERENCE)
+		return (restArg.Expression.Kind() == st.SIMPLE_NAME_REFERENCE)
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) isPosibleBindingPattern(node tree.STNode) bool {
+func (b *BallerinaParser) isPosibleBindingPattern(node st.STNode) bool {
 	switch node.Kind() {
-	case common.SIMPLE_NAME_REFERENCE:
+	case st.SIMPLE_NAME_REFERENCE:
 		return true
-	case common.LIST_CONSTRUCTOR:
-		listConstructor, ok := node.(*tree.STListConstructorExpressionNode)
+	case st.LIST_CONSTRUCTOR:
+		listConstructor, ok := node.(*st.STListConstructorExpressionNode)
 		if !ok {
 			panic("isPosibleBindingPattern: expected STListConstructorExpressionNode")
 		}
@@ -13339,8 +13339,8 @@ func (b *BallerinaParser) isPosibleBindingPattern(node tree.STNode) bool {
 			}
 		}
 		return true
-	case common.MAPPING_CONSTRUCTOR:
-		mappingConstructor, ok := node.(*tree.STMappingConstructorExpressionNode)
+	case st.MAPPING_CONSTRUCTOR:
+		mappingConstructor, ok := node.(*st.STMappingConstructorExpressionNode)
 		if !ok {
 			panic("isPosibleBindingPattern: expected STMappingConstructorExpressionNode")
 		}
@@ -13352,8 +13352,8 @@ func (b *BallerinaParser) isPosibleBindingPattern(node tree.STNode) bool {
 			}
 		}
 		return true
-	case common.SPECIFIC_FIELD:
-		specificField, ok := node.(*tree.STSpecificFieldNode)
+	case st.SPECIFIC_FIELD:
+		specificField, ok := node.(*st.STSpecificFieldNode)
 		if !ok {
 			panic("isPosibleBindingPattern: expected STSpecificFieldNode")
 		}
@@ -13364,8 +13364,8 @@ func (b *BallerinaParser) isPosibleBindingPattern(node tree.STNode) bool {
 			return true
 		}
 		return b.isPosibleBindingPattern(specificField.ValueExpr)
-	case common.ERROR_CONSTRUCTOR:
-		errorCtorNode, ok := node.(*tree.STErrorConstructorExpressionNode)
+	case st.ERROR_CONSTRUCTOR:
+		errorCtorNode, ok := node.(*st.STErrorConstructorExpressionNode)
 		if !ok {
 			panic("isPosibleBindingPattern: expected STErrorConstructorExpressionNode")
 		}
@@ -13376,61 +13376,61 @@ func (b *BallerinaParser) isPosibleBindingPattern(node tree.STNode) bool {
 }
 
 // return result, and modified memberList
-func (b *BallerinaParser) parseStatementStartBracketedListRhs(annots tree.STNode, openBracket tree.STNode, members []tree.STNode, closeBracket tree.STNode, isRoot bool, possibleMappingField bool) tree.STNode {
+func (b *BallerinaParser) parseStatementStartBracketedListRhs(annots st.STNode, openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool, possibleMappingField bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		if !isRoot {
 			b.endContext()
-			return tree.CreateAmbiguousCollectionNode(common.BRACKETED_LIST, openBracket, members, closeBracket)
+			return st.CreateAmbiguousCollectionNode(st.BRACKETED_LIST, openBracket, members, closeBracket)
 		}
-		memberBindingPatterns := tree.CreateNodeList(b.getBindingPatternsList(members, true)...)
-		listBindingPattern := tree.CreateListBindingPatternNode(openBracket,
+		memberBindingPatterns := st.CreateNodeList(b.getBindingPatternsList(members, true)...)
+		listBindingPattern := st.CreateListBindingPatternNode(openBracket,
 			memberBindingPatterns, closeBracket)
 		b.endContext() // end tuple typ-desc
 		b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 		return b.parseAssignmentStmtRhs(listBindingPattern)
-	case common.IDENTIFIER_TOKEN, common.OPEN_BRACE_TOKEN:
+	case st.IDENTIFIER_TOKEN, st.OPEN_BRACE_TOKEN:
 		if !isRoot {
 			b.endContext()
-			return tree.CreateAmbiguousCollectionNode(common.BRACKETED_LIST, openBracket, members, closeBracket)
+			return st.CreateAmbiguousCollectionNode(st.BRACKETED_LIST, openBracket, members, closeBracket)
 		}
 		if len(members) == 0 {
-			openBracket = tree.AddDiagnostic(openBracket, &common.ERROR_MISSING_TUPLE_MEMBER)
+			openBracket = st.AddDiagnostic(openBracket, &common.ERROR_MISSING_TUPLE_MEMBER)
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)
 		b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
-		memberTypeDescs := tree.CreateNodeList(b.getTupleMemberList(members)...)
-		tupleTypeDesc := tree.CreateTupleTypeDescriptorNode(openBracket, memberTypeDescs, closeBracket)
+		memberTypeDescs := st.CreateNodeList(b.getTupleMemberList(members)...)
+		tupleTypeDesc := st.CreateTupleTypeDescriptorNode(openBracket, memberTypeDescs, closeBracket)
 		b.endContext() // end tuple typ-desc
 		typeDesc := b.parseComplexTypeDescriptor(tupleTypeDesc,
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 		b.endContext() // end binding pattern
 		typedBindingPattern := b.parseTypedBindingPatternTypeRhs(typeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		return b.parseStmtStartsWithTypedBPOrExprRhs(annots, typedBindingPattern)
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		// [a, ..][..
 		// definitely not binding pattern. Can be type-desc or list-constructor
 		if !isRoot {
 			// if this is a member, treat as type-desc.
 			// TODO: handle expression case.
-			memberTypeDescs := tree.CreateNodeList(b.getTupleMemberList(members)...)
-			tupleTypeDesc := tree.CreateTupleTypeDescriptorNode(openBracket, memberTypeDescs, closeBracket)
+			memberTypeDescs := st.CreateNodeList(b.getTupleMemberList(members)...)
+			tupleTypeDesc := st.CreateTupleTypeDescriptorNode(openBracket, memberTypeDescs, closeBracket)
 			b.endContext()
 			typeDesc := b.parseComplexTypeDescriptor(tupleTypeDesc, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 			return typeDesc
 		}
-		list := tree.CreateAmbiguousCollectionNode(common.BRACKETED_LIST, openBracket, members, closeBracket)
+		list := st.CreateAmbiguousCollectionNode(st.BRACKETED_LIST, openBracket, members, closeBracket)
 		b.endContext()
 		tpbOrExpr := b.parseTypedBindingPatternOrExprRhs(list, true)
 		return b.parseStmtStartsWithTypedBPOrExprRhs(annots, tpbOrExpr)
-	case common.COLON_TOKEN: // "{[a]:" could be a computed-name-field in mapping-constructor
+	case st.COLON_TOKEN: // "{[a]:" could be a computed-name-field in mapping-constructor
 		if possibleMappingField && (len(members) == 1) {
 			b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 			colon := b.parseColon()
 			fieldNameExpr := b.getExpression(members[0])
 			valueExpr := b.parseExpression()
-			return tree.CreateComputedNameFieldNode(openBracket, fieldNameExpr, closeBracket, colon,
+			return st.CreateComputedNameFieldNode(openBracket, fieldNameExpr, closeBracket, colon,
 				valueExpr)
 		}
 		// fall through
@@ -13438,28 +13438,28 @@ func (b *BallerinaParser) parseStatementStartBracketedListRhs(annots tree.STNode
 	default:
 		b.endContext()
 		if !isRoot {
-			return tree.CreateAmbiguousCollectionNode(common.BRACKETED_LIST, openBracket, members, closeBracket)
+			return st.CreateAmbiguousCollectionNode(st.BRACKETED_LIST, openBracket, members, closeBracket)
 		}
-		list := tree.CreateAmbiguousCollectionNode(common.BRACKETED_LIST, openBracket, members, closeBracket)
+		list := st.CreateAmbiguousCollectionNode(st.BRACKETED_LIST, openBracket, members, closeBracket)
 		exprOrTPB := b.parseTypedBindingPatternOrExprRhs(list, false)
 		return b.parseStmtStartsWithTypedBPOrExprRhs(annots, exprOrTPB)
 	}
 }
 
-func (b *BallerinaParser) isWildcardBP(node tree.STNode) bool {
+func (b *BallerinaParser) isWildcardBP(node st.STNode) bool {
 	switch node.Kind() {
-	case common.SIMPLE_NAME_REFERENCE:
-		simpleNameNode, ok := node.(*tree.STSimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		simpleNameNode, ok := node.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("isWildcardBP: expected STSimpleNameReferenceNode")
 		}
-		nameToken, ok := simpleNameNode.Name.(tree.STToken)
+		nameToken, ok := simpleNameNode.Name.(st.STToken)
 		if !ok {
 			panic("isWildcardBP: expected STToken")
 		}
 		return b.isUnderscoreToken(nameToken)
-	case common.IDENTIFIER_TOKEN:
-		identifierToken, ok := node.(tree.STToken)
+	case st.IDENTIFIER_TOKEN:
+		identifierToken, ok := node.(st.STToken)
 		if !ok {
 			panic("isWildcardBP: expected STToken")
 		}
@@ -13469,98 +13469,98 @@ func (b *BallerinaParser) isWildcardBP(node tree.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isUnderscoreToken(token tree.STToken) bool {
+func (b *BallerinaParser) isUnderscoreToken(token st.STToken) bool {
 	return token.Text() == "_"
 }
 
-func (b *BallerinaParser) getWildcardBindingPattern(identifier tree.STNode) tree.STNode {
-	var underscore tree.STNode
+func (b *BallerinaParser) getWildcardBindingPattern(identifier st.STNode) st.STNode {
+	var underscore st.STNode
 	switch identifier.Kind() {
-	case common.SIMPLE_NAME_REFERENCE:
-		simpleNameNode, ok := identifier.(*tree.STSimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		simpleNameNode, ok := identifier.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("getWildcardBindingPattern: expected STSimpleNameReferenceNode")
 		}
 		varName := simpleNameNode.Name
-		nameToken, ok := varName.(tree.STToken)
+		nameToken, ok := varName.(st.STToken)
 		if !ok {
 			panic("getWildcardBindingPattern: expected STToken")
 		}
 		underscore = b.getUnderscoreKeyword(nameToken)
-		return tree.CreateWildcardBindingPatternNode(underscore)
-	case common.IDENTIFIER_TOKEN:
-		identifierToken, ok := identifier.(tree.STToken)
+		return st.CreateWildcardBindingPatternNode(underscore)
+	case st.IDENTIFIER_TOKEN:
+		identifierToken, ok := identifier.(st.STToken)
 		if !ok {
 			panic("getWildcardBindingPattern: expected STToken")
 		}
 		underscore = b.getUnderscoreKeyword(identifierToken)
-		return tree.CreateWildcardBindingPatternNode(underscore)
+		return st.CreateWildcardBindingPatternNode(underscore)
 	default:
 		panic("getWildcardBindingPattern: expected SIMPLE_NAME_REFERENCE or IDENTIFIER_TOKEN")
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartsWithOpenBrace() tree.STNode {
+func (b *BallerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	openBrace := b.parseOpenBrace()
-	if b.peek().Kind() == common.CLOSE_BRACE_TOKEN {
+	if b.peek().Kind() == st.CLOSE_BRACE_TOKEN {
 		closeBrace := b.parseCloseBrace()
 		switch b.peek().Kind() {
-		case common.EQUAL_TOKEN:
+		case st.EQUAL_TOKEN:
 			b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
-			fields := tree.CreateEmptyNodeList()
-			bindingPattern := tree.CreateMappingBindingPatternNode(openBrace, fields,
+			fields := st.CreateEmptyNodeList()
+			bindingPattern := st.CreateMappingBindingPatternNode(openBrace, fields,
 				closeBrace)
 			return b.parseAssignmentStmtRhs(bindingPattern)
-		case common.RIGHT_ARROW_TOKEN, common.SYNC_SEND_TOKEN:
+		case st.RIGHT_ARROW_TOKEN, st.SYNC_SEND_TOKEN:
 			b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
-			fields := tree.CreateEmptyNodeList()
-			expr := tree.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
+			fields := st.CreateEmptyNodeList()
+			expr := st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
 			expr = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, false, true)
 			return b.parseStatementStartWithExprRhs(expr)
 		default:
-			statements := tree.CreateEmptyNodeList()
+			statements := st.CreateEmptyNodeList()
 			b.endContext()
-			return tree.CreateBlockStatementNode(openBrace, statements, closeBrace)
+			return st.CreateBlockStatementNode(openBrace, statements, closeBrace)
 		}
 	}
 	member := b.parseStatementStartingBracedListFirstMember(openBrace.IsMissing())
 	nodeType := b.getBracedListType(member)
-	var stmt tree.STNode
+	var stmt st.STNode
 	switch nodeType {
-	case common.MAPPING_BINDING_PATTERN:
+	case st.MAPPING_BINDING_PATTERN:
 		return b.parseStmtAsMappingBindingPatternStart(openBrace, member)
-	case common.MAPPING_CONSTRUCTOR:
+	case st.MAPPING_CONSTRUCTOR:
 		return b.parseStmtAsMappingConstructorStart(openBrace, member)
-	case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+	case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
 		return b.parseStmtAsMappingBPOrMappingConsStart(openBrace, member)
-	case common.BLOCK_STATEMENT:
+	case st.BLOCK_STATEMENT:
 		closeBrace := b.parseCloseBrace()
-		stmt = tree.CreateBlockStatementNode(openBrace, member, closeBrace)
+		stmt = st.CreateBlockStatementNode(openBrace, member, closeBrace)
 		b.endContext()
 		return stmt
 	default:
-		var stmts []tree.STNode
+		var stmts []st.STNode
 		stmts = append(stmts, member)
 		statements, stmts := b.parseStatementsInner(stmts) //nolint:staticcheck,ineffassign // stmts will be used for error recovery
 		closeBrace := b.parseCloseBrace()
 		b.endContext()
-		return tree.CreateBlockStatementNode(openBrace, statements, closeBrace)
+		return st.CreateBlockStatementNode(openBrace, statements, closeBrace)
 	}
 }
 
-func (b *BallerinaParser) parseStmtAsMappingBindingPatternStart(openBrace tree.STNode, firstMappingField tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStmtAsMappingBindingPatternStart(openBrace st.STNode, firstMappingField st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN)
-	var bindingPatterns []tree.STNode
-	if firstMappingField.Kind() != common.REST_BINDING_PATTERN {
+	var bindingPatterns []st.STNode
+	if firstMappingField.Kind() != st.REST_BINDING_PATTERN {
 		bindingPatterns = append(bindingPatterns, b.getBindingPattern(firstMappingField, false))
 	}
 	mappingBP, _ := b.parseMappingBindingPatternInner(openBrace, bindingPatterns, firstMappingField)
 	return b.parseAssignmentStmtRhs(mappingBP)
 }
 
-func (b *BallerinaParser) parseStmtAsMappingConstructorStart(openBrace tree.STNode, firstMember tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStmtAsMappingConstructorStart(openBrace st.STNode, firstMember st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 	mappingCons, _ := b.parseAsMappingConstructor(openBrace, nil, firstMember)
@@ -13568,21 +13568,21 @@ func (b *BallerinaParser) parseStmtAsMappingConstructorStart(openBrace tree.STNo
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseAsMappingConstructor(openBrace tree.STNode, members []tree.STNode, member tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsMappingConstructor(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
 	members = append(members, member)
 	members = b.getExpressionList(members, true)
 	b.switchContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 	fields := b.finishParseMappingConstructorFields(members)
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return tree.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace), members
+	return st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace), members
 }
 
-func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace tree.STNode, member tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.STNode, member st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR)
-	var members []tree.STNode
+	var members []st.STNode
 	members = append(members, member)
-	var bpOrConstructor tree.STNode
+	var bpOrConstructor st.STNode
 	memberEnd := b.parseMappingFieldEnd()
 	if memberEnd == nil {
 		closeBrace := b.parseCloseBrace()
@@ -13592,18 +13592,18 @@ func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace tree.
 		bpOrConstructor, members = b.parseMappingBindingPatternOrMappingConstructor(openBrace, members) //nolint:staticcheck,ineffassign // members will be used when mapping binding pattern is fully implemented
 	}
 	switch bpOrConstructor.Kind() {
-	case common.MAPPING_CONSTRUCTOR:
+	case st.MAPPING_CONSTRUCTOR:
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 		expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, bpOrConstructor, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
-	case common.MAPPING_BINDING_PATTERN:
+	case st.MAPPING_BINDING_PATTERN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 		bindingPattern := b.getBindingPattern(bpOrConstructor, false)
 		return b.parseAssignmentStmtRhs(bindingPattern)
-	case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+	case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
 		fallthrough
 	default:
-		if b.peek().Kind() == common.EQUAL_TOKEN {
+		if b.peek().Kind() == st.EQUAL_TOKEN {
 			b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 			bindingPattern := b.getBindingPattern(bpOrConstructor, false)
 			return b.parseAssignmentStmtRhs(bindingPattern)
@@ -13615,38 +13615,38 @@ func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace tree.
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartingBracedListFirstMember(isOpenBraceMissing bool) tree.STNode {
+func (b *BallerinaParser) parseStatementStartingBracedListFirstMember(isOpenBraceMissing bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.READONLY_KEYWORD:
+	case st.READONLY_KEYWORD:
 		readonlyKeyword := b.parseReadonlyKeyword()
 		return b.bracedListMemberStartsWithReadonly(readonlyKeyword)
-	case common.IDENTIFIER_TOKEN:
-		readonlyKeyword := tree.CreateEmptyNode()
+	case st.IDENTIFIER_TOKEN:
+		readonlyKeyword := st.CreateEmptyNode()
 		return b.parseIdentifierRhsInStmtStartingBrace(readonlyKeyword)
-	case common.STRING_LITERAL_TOKEN:
+	case st.STRING_LITERAL_TOKEN:
 		key := b.parseStringLiteral()
-		if b.peek().Kind() == common.COLON_TOKEN {
-			readonlyKeyword := tree.CreateEmptyNode()
+		if b.peek().Kind() == st.COLON_TOKEN {
+			readonlyKeyword := st.CreateEmptyNode()
 			colon := b.parseColon()
 			valueExpr := b.parseExpression()
-			return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
+			return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 		expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, key, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
-	case common.OPEN_BRACKET_TOKEN:
-		annots := tree.CreateEmptyNodeList()
+	case st.OPEN_BRACKET_TOKEN:
+		annots := st.CreateEmptyNodeList()
 		return b.parseStatementStartsWithOpenBracket(annots, true)
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		return b.parseStatementStartsWithOpenBrace()
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingPattern()
 	default:
 		if isOpenBraceMissing {
-			readonlyKeyword := tree.CreateEmptyNode()
+			readonlyKeyword := st.CreateEmptyNode()
 			return b.parseIdentifierRhsInStmtStartingBrace(readonlyKeyword)
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
@@ -13654,52 +13654,52 @@ func (b *BallerinaParser) parseStatementStartingBracedListFirstMember(isOpenBrac
 	}
 }
 
-func (b *BallerinaParser) bracedListMemberStartsWithReadonly(readonlyKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) bracedListMemberStartsWithReadonly(readonlyKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		return b.parseIdentifierRhsInStmtStartingBrace(readonlyKeyword)
-	case common.STRING_LITERAL_TOKEN:
-		if b.peekN(2).Kind() == common.COLON_TOKEN {
+	case st.STRING_LITERAL_TOKEN:
+		if b.peekN(2).Kind() == st.COLON_TOKEN {
 			key := b.parseStringLiteral()
 			colon := b.parseColon()
 			valueExpr := b.parseExpression()
-			return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
+			return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 		}
 		fallthrough
 	default:
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		typeDesc := CreateBuiltinSimpleNameReference(readonlyKeyword)
-		res, _ := b.parseVarDeclTypeDescRhs(typeDesc, tree.CreateEmptyNodeList(), nil,
+		res, _ := b.parseVarDeclTypeDescRhs(typeDesc, st.CreateEmptyNodeList(), nil,
 			true, false)
 		return res
 	}
 }
 
-func (b *BallerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword st.STNode) st.STNode {
 	identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN, common.CLOSE_BRACE_TOKEN:
-		colon := tree.CreateEmptyNode()
-		value := tree.CreateEmptyNode()
-		return tree.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, value)
-	case common.COLON_TOKEN:
+	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
+		colon := st.CreateEmptyNode()
+		value := st.CreateEmptyNode()
+		return st.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, value)
+	case st.COLON_TOKEN:
 		colon := b.parseColon()
 		if !b.isEmpty(readonlyKeyword) {
 			value := b.parseExpression()
-			return tree.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, value)
+			return st.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, value)
 		}
 		switch b.peek().Kind() {
-		case common.OPEN_BRACKET_TOKEN:
+		case st.OPEN_BRACKET_TOKEN:
 			bindingPatternOrExpr := b.parseListBindingPatternOrListConstructor()
 			return b.getMappingField(identifier, colon, bindingPatternOrExpr)
-		case common.OPEN_BRACE_TOKEN:
+		case st.OPEN_BRACE_TOKEN:
 			bindingPatternOrExpr := b.parseMappingBindingPatterOrMappingConstructor()
 			return b.getMappingField(identifier, colon, bindingPatternOrExpr)
-		case common.ERROR_KEYWORD:
+		case st.ERROR_KEYWORD:
 			bindingPatternOrExpr := b.parseErrorBindingPatternOrErrorConstructor()
 			return b.getMappingField(identifier, colon, bindingPatternOrExpr)
-		case common.IDENTIFIER_TOKEN:
+		case st.IDENTIFIER_TOKEN:
 			return b.parseQualifiedIdentifierRhsInStmtStartBrace(identifier, colon)
 		default:
 			expr := b.parseExpression()
@@ -13709,137 +13709,137 @@ func (b *BallerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword 
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		if !b.isEmpty(readonlyKeyword) {
 			b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-			bindingPattern := tree.CreateCaptureBindingPatternNode(identifier)
-			typedBindingPattern := tree.CreateTypedBindingPatternNode(readonlyKeyword, bindingPattern)
-			annots := tree.CreateEmptyNodeList()
+			bindingPattern := st.CreateCaptureBindingPatternNode(identifier)
+			typedBindingPattern := st.CreateTypedBindingPatternNode(readonlyKeyword, bindingPattern)
+			annots := st.CreateEmptyNodeList()
 			res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPattern, false)
 			return res
 		}
 		b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 		qualifiedIdentifier := b.parseQualifiedIdentifierNode(identifier, false)
 		expr := b.parseTypedBindingPatternOrExprRhs(qualifiedIdentifier, true)
-		annots := tree.CreateEmptyNodeList()
+		annots := st.CreateEmptyNodeList()
 		return b.parseStmtStartsWithTypedBPOrExprRhs(annots, expr)
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier tree.STNode, colon tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier st.STNode, colon st.STNode) st.STNode {
 	secondIdentifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
-	secondNameRef := tree.CreateSimpleNameReferenceNode(secondIdentifier)
+	secondNameRef := st.CreateSimpleNameReferenceNode(secondIdentifier)
 	if b.isWildcardBP(secondIdentifier) {
 		wildcardBP := b.getWildcardBindingPattern(secondIdentifier)
-		nameRef := tree.CreateSimpleNameReferenceNode(identifier)
-		return tree.CreateFieldBindingPatternFullNode(nameRef, colon, wildcardBP)
+		nameRef := st.CreateSimpleNameReferenceNode(identifier)
+		return st.CreateFieldBindingPatternFullNode(nameRef, colon, wildcardBP)
 	}
 	qualifiedNameRef := b.createQualifiedNameReferenceNode(identifier, colon, secondIdentifier)
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN:
-		return tree.CreateSpecificFieldNode(tree.CreateEmptyNode(), identifier, colon,
+	case st.COMMA_TOKEN:
+		return st.CreateSpecificFieldNode(st.CreateEmptyNode(), identifier, colon,
 			secondNameRef)
-	case common.OPEN_BRACE_TOKEN, common.IDENTIFIER_TOKEN:
+	case st.OPEN_BRACE_TOKEN, st.IDENTIFIER_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		typeBindingPattern := b.parseTypedBindingPatternTypeRhs(qualifiedNameRef, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-		annots := tree.CreateEmptyNodeList()
+		annots := st.CreateEmptyNodeList()
 		res, _ := b.parseVarDeclRhs(annots, nil, typeBindingPattern, false)
 		return res
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseMemberRhsInStmtStartWithBrace(identifier, colon, secondIdentifier, secondNameRef)
-	case common.QUESTION_MARK_TOKEN:
+	case st.QUESTION_MARK_TOKEN:
 		typeDesc := b.parseComplexTypeDescriptor(qualifiedNameRef,
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 		typeBindingPattern := b.parseTypedBindingPatternTypeRhs(typeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-		annots := tree.CreateEmptyNodeList()
+		annots := st.CreateEmptyNodeList()
 		res, _ := b.parseVarDeclRhs(annots, nil, typeBindingPattern, false)
 		return res
-	case common.EQUAL_TOKEN, common.SEMICOLON_TOKEN:
+	case st.EQUAL_TOKEN, st.SEMICOLON_TOKEN:
 		return b.parseStatementStartWithExprRhs(qualifiedNameRef)
-	case common.PIPE_TOKEN, common.BITWISE_AND_TOKEN:
+	case st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
 		fallthrough
 	default:
 		return b.parseMemberWithExprInRhs(identifier, colon, secondIdentifier, secondNameRef)
 	}
 }
 
-func (b *BallerinaParser) getBracedListType(member tree.STNode) common.SyntaxKind {
+func (b *BallerinaParser) getBracedListType(member st.STNode) st.SyntaxKind {
 	switch member.Kind() {
-	case common.FIELD_BINDING_PATTERN,
-		common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.WILDCARD_BINDING_PATTERN:
-		return common.MAPPING_BINDING_PATTERN
-	case common.SPECIFIC_FIELD:
-		specificFieldNode, ok := member.(*tree.STSpecificFieldNode)
+	case st.FIELD_BINDING_PATTERN,
+		st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.WILDCARD_BINDING_PATTERN:
+		return st.MAPPING_BINDING_PATTERN
+	case st.SPECIFIC_FIELD:
+		specificFieldNode, ok := member.(*st.STSpecificFieldNode)
 		if !ok {
 			panic("getBracedListType: expected STSpecificFieldNode")
 		}
 		expr := specificFieldNode.ValueExpr
 		if expr == nil {
-			return common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
+			return st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
 		}
 		switch expr.Kind() {
-		case common.SIMPLE_NAME_REFERENCE,
-			common.LIST_BP_OR_LIST_CONSTRUCTOR,
-			common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
-			return common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
-		case common.ERROR_BINDING_PATTERN:
-			return common.MAPPING_BINDING_PATTERN
-		case common.ERROR_CONSTRUCTOR:
-			errorCtorNode, ok := expr.(*tree.STErrorConstructorExpressionNode)
+		case st.SIMPLE_NAME_REFERENCE,
+			st.LIST_BP_OR_LIST_CONSTRUCTOR,
+			st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+			return st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
+		case st.ERROR_BINDING_PATTERN:
+			return st.MAPPING_BINDING_PATTERN
+		case st.ERROR_CONSTRUCTOR:
+			errorCtorNode, ok := expr.(*st.STErrorConstructorExpressionNode)
 			if !ok {
 				panic("getBracedListType: expected STErrorConstructorExpressionNode")
 			}
 			if b.isPossibleErrorBindingPattern(*errorCtorNode) {
-				return common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
+				return st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
 			}
-			return common.MAPPING_CONSTRUCTOR
+			return st.MAPPING_CONSTRUCTOR
 		default:
-			return common.MAPPING_CONSTRUCTOR
+			return st.MAPPING_CONSTRUCTOR
 		}
-	case common.SPREAD_FIELD,
-		common.COMPUTED_NAME_FIELD:
-		return common.MAPPING_CONSTRUCTOR
-	case common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE,
-		common.LIST_BP_OR_LIST_CONSTRUCTOR,
-		common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR,
-		common.REST_BINDING_PATTERN:
-		return common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
-	case common.LIST:
-		return common.BLOCK_STATEMENT
+	case st.SPREAD_FIELD,
+		st.COMPUTED_NAME_FIELD:
+		return st.MAPPING_CONSTRUCTOR
+	case st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE,
+		st.LIST_BP_OR_LIST_CONSTRUCTOR,
+		st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR,
+		st.REST_BINDING_PATTERN:
+		return st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
+	case st.LIST:
+		return st.BLOCK_STATEMENT
 	default:
-		return common.NONE
+		return st.NONE
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructor() tree.STNode {
+func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR)
 	openBrace := b.parseOpenBrace()
 	res, _ := b.parseMappingBindingPatternOrMappingConstructor(openBrace, nil)
 	return res
 }
 
-func (b *BallerinaParser) isBracedListEnd(nextTokenKind common.SyntaxKind) bool {
+func (b *BallerinaParser) isBracedListEnd(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
-	case common.EOF_TOKEN, common.CLOSE_BRACE_TOKEN:
+	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructor(openBrace tree.STNode, memberList []tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructor(openBrace st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
 	nextToken := b.peek()
 	for !b.isBracedListEnd(nextToken.Kind()) {
 		member := b.parseMappingBindingPatterOrMappingConstructorMember()
 		currentNodeType := b.getTypeOfMappingBPOrMappingCons(member)
 		switch currentNodeType {
-		case common.MAPPING_CONSTRUCTOR:
+		case st.MAPPING_CONSTRUCTOR:
 			return b.parseAsMappingConstructor(openBrace, memberList, member)
-		case common.MAPPING_BINDING_PATTERN:
+		case st.MAPPING_BINDING_PATTERN:
 			return b.parseAsMappingBindingPattern(openBrace, memberList, member)
-		case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+		case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
 			fallthrough
 		default:
 			memberList = append(memberList, member)
@@ -13855,126 +13855,126 @@ func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructor(openBra
 	return b.parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace, memberList, closeBrace), memberList
 }
 
-func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructorMember() tree.STNode {
+func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructorMember() st.STNode {
 	switch b.peek().Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		key := b.parseIdentifier(common.PARSER_RULE_CONTEXT_MAPPING_FIELD_NAME)
 		return b.parseMappingFieldRhs(key)
-	case common.STRING_LITERAL_TOKEN:
-		readonlyKeyword := tree.CreateEmptyNode()
+	case st.STRING_LITERAL_TOKEN:
+		readonlyKeyword := st.CreateEmptyNode()
 		key := b.parseStringLiteral()
 		colon := b.parseColon()
 		valueExpr := b.parseExpression()
-		return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
-	case common.OPEN_BRACKET_TOKEN:
+		return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseComputedField()
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		ellipsis := b.parseEllipsis()
 		expr := b.parseExpression()
-		if expr.Kind() == common.SIMPLE_NAME_REFERENCE {
-			return tree.CreateRestBindingPatternNode(ellipsis, expr)
+		if expr.Kind() == st.SIMPLE_NAME_REFERENCE {
+			return st.CreateRestBindingPatternNode(ellipsis, expr)
 		}
-		return tree.CreateSpreadFieldNode(ellipsis, expr)
+		return st.CreateSpreadFieldNode(ellipsis, expr)
 	default:
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR_MEMBER)
 		return b.parseMappingBindingPatterOrMappingConstructorMember()
 	}
 }
 
-func (b *BallerinaParser) parseMappingFieldRhs(key tree.STNode) tree.STNode {
-	var colon tree.STNode
-	var valueExpr tree.STNode
+func (b *BallerinaParser) parseMappingFieldRhs(key st.STNode) st.STNode {
+	var colon st.STNode
+	var valueExpr st.STNode
 	switch b.peek().Kind() {
-	case common.COLON_TOKEN:
+	case st.COLON_TOKEN:
 		colon = b.parseColon()
 		return b.parseMappingFieldValue(key, colon)
-	case common.COMMA_TOKEN, common.CLOSE_BRACE_TOKEN:
-		readonlyKeyword := tree.CreateEmptyNode()
-		colon = tree.CreateEmptyNode()
-		valueExpr = tree.CreateEmptyNode()
-		return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
+	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
+		readonlyKeyword := st.CreateEmptyNode()
+		colon = st.CreateEmptyNode()
+		valueExpr = st.CreateEmptyNode()
+		return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 	default:
 		token := b.peek()
 		b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN_END)
-		readonlyKeyword := tree.CreateEmptyNode()
+		readonlyKeyword := st.CreateEmptyNode()
 		return b.parseSpecificFieldRhs(readonlyKeyword, key)
 	}
 }
 
-func (b *BallerinaParser) parseMappingFieldValue(key tree.STNode, colon tree.STNode) tree.STNode {
-	var expr tree.STNode
+func (b *BallerinaParser) parseMappingFieldValue(key st.STNode, colon st.STNode) st.STNode {
+	var expr st.STNode
 	switch b.peek().Kind() {
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		expr = b.parseExpression()
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		expr = b.parseListBindingPatternOrListConstructor()
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		expr = b.parseMappingBindingPatterOrMappingConstructor()
 	default:
 		expr = b.parseExpression()
 	}
 	if b.isBindingPattern(expr.Kind()) {
-		key = tree.CreateSimpleNameReferenceNode(key)
-		return tree.CreateFieldBindingPatternFullNode(key, colon, expr)
+		key = st.CreateSimpleNameReferenceNode(key)
+		return st.CreateFieldBindingPatternFullNode(key, colon, expr)
 	}
-	readonlyKeyword := tree.CreateEmptyNode()
-	return tree.CreateSpecificFieldNode(readonlyKeyword, key, colon, expr)
+	readonlyKeyword := st.CreateEmptyNode()
+	return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, expr)
 }
 
-func (b *BallerinaParser) isBindingPattern(kind common.SyntaxKind) bool {
+func (b *BallerinaParser) isBindingPattern(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.FIELD_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.WILDCARD_BINDING_PATTERN:
+	case st.FIELD_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.WILDCARD_BINDING_PATTERN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParser) getTypeOfMappingBPOrMappingCons(memberNode tree.STNode) common.SyntaxKind {
+func (b *BallerinaParser) getTypeOfMappingBPOrMappingCons(memberNode st.STNode) st.SyntaxKind {
 	switch memberNode.Kind() {
-	case common.FIELD_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.WILDCARD_BINDING_PATTERN:
-		return common.MAPPING_BINDING_PATTERN
-	case common.SPECIFIC_FIELD:
-		specificFieldNode, ok := memberNode.(*tree.STSpecificFieldNode)
+	case st.FIELD_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.WILDCARD_BINDING_PATTERN:
+		return st.MAPPING_BINDING_PATTERN
+	case st.SPECIFIC_FIELD:
+		specificFieldNode, ok := memberNode.(*st.STSpecificFieldNode)
 		if !ok {
 			panic("getTypeOfMappingBPOrMappingCons: expected STSpecificFieldNode")
 		}
 		expr := specificFieldNode.ValueExpr
-		if (((expr == nil) || (expr.Kind() == common.SIMPLE_NAME_REFERENCE)) || (expr.Kind() == common.LIST_BP_OR_LIST_CONSTRUCTOR)) || (expr.Kind() == common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR) {
-			return common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
+		if (((expr == nil) || (expr.Kind() == st.SIMPLE_NAME_REFERENCE)) || (expr.Kind() == st.LIST_BP_OR_LIST_CONSTRUCTOR)) || (expr.Kind() == st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR) {
+			return st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
 		}
-		return common.MAPPING_CONSTRUCTOR
-	case common.SPREAD_FIELD,
-		common.COMPUTED_NAME_FIELD:
-		return common.MAPPING_CONSTRUCTOR
-	case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR, common.SIMPLE_NAME_REFERENCE, common.QUALIFIED_NAME_REFERENCE, common.LIST_BP_OR_LIST_CONSTRUCTOR, common.REST_BINDING_PATTERN:
+		return st.MAPPING_CONSTRUCTOR
+	case st.SPREAD_FIELD,
+		st.COMPUTED_NAME_FIELD:
+		return st.MAPPING_CONSTRUCTOR
+	case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR, st.SIMPLE_NAME_REFERENCE, st.QUALIFIED_NAME_REFERENCE, st.LIST_BP_OR_LIST_CONSTRUCTOR, st.REST_BINDING_PATTERN:
 		fallthrough
 	default:
-		return common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
+		return st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace tree.STNode, members []tree.STNode, closeBrace tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace st.STNode, members []st.STNode, closeBrace st.STNode) st.STNode {
 	b.endContext()
-	return tree.CreateAmbiguousCollectionNode(common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR, openBrace, members, closeBrace)
+	return st.CreateAmbiguousCollectionNode(st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR, openBrace, members, closeBrace)
 }
 
-func (b *BallerinaParser) parseAsMappingBindingPattern(openBrace tree.STNode, members []tree.STNode, member tree.STNode) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsMappingBindingPattern(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
 	members = append(members, member)
 	members = b.getBindingPatternsList(members, false)
 	b.switchContext(common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN)
 	return b.parseMappingBindingPatternInner(openBrace, members, member)
 }
 
-func (b *BallerinaParser) parseListBindingPatternOrListConstructor() tree.STNode {
+func (b *BallerinaParser) parseListBindingPatternOrListConstructor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
 	res, _ := b.parseListBindingPatternOrListConstructorInner(openBracket, nil, false)
@@ -13982,17 +13982,17 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructor() tree.STNode
 }
 
 // return result, and modified memberList
-func (b *BallerinaParser) parseListBindingPatternOrListConstructorInner(openBracket tree.STNode, memberList []tree.STNode, isRoot bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseListBindingPatternOrListConstructorInner(openBracket st.STNode, memberList []st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	nextToken := b.peek()
 	for !b.isBracketedListEnd(nextToken.Kind()) {
 		member := b.parseListBindingPatternOrListConstructorMember()
 		currentNodeType := b.getParsingNodeTypeOfListBPOrListCons(member)
 		switch currentNodeType {
-		case common.LIST_CONSTRUCTOR:
+		case st.LIST_CONSTRUCTOR:
 			return b.parseAsListConstructor(openBracket, memberList, member, isRoot)
-		case common.LIST_BINDING_PATTERN:
+		case st.LIST_BINDING_PATTERN:
 			return b.parseAsListBindingPatternWithMemberAndRoot(openBracket, memberList, member, isRoot)
-		case common.LIST_BP_OR_LIST_CONSTRUCTOR:
+		case st.LIST_BP_OR_LIST_CONSTRUCTOR:
 			fallthrough
 		default:
 			memberList = append(memberList, member)
@@ -14008,20 +14008,20 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorInner(openBrac
 	return b.parseListBindingPatternOrListConstructorWithCloseBracket(openBracket, memberList, closeBracket, isRoot), memberList
 }
 
-func (b *BallerinaParser) parseListBindingPatternOrListConstructorMember() tree.STNode {
+func (b *BallerinaParser) parseListBindingPatternOrListConstructorMember() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		return b.parseListBindingPatternOrListConstructor()
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		identifier := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
 		if b.isWildcardBP(identifier) {
 			return b.getWildcardBindingPattern(identifier)
 		}
 		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, identifier, false, false)
-	case common.OPEN_BRACE_TOKEN:
+	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingBindingPatterOrMappingConstructor()
-	case common.ELLIPSIS_TOKEN:
+	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingOrSpreadMember()
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
@@ -14032,31 +14032,31 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorMember() tree.
 	}
 }
 
-func (b *BallerinaParser) getParsingNodeTypeOfListBPOrListCons(memberNode tree.STNode) common.SyntaxKind {
+func (b *BallerinaParser) getParsingNodeTypeOfListBPOrListCons(memberNode st.STNode) st.SyntaxKind {
 	switch memberNode.Kind() {
-	case common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.WILDCARD_BINDING_PATTERN:
-		return common.LIST_BINDING_PATTERN
-	case common.SIMPLE_NAME_REFERENCE, // member is a simple type-ref/var-ref
-		common.LIST_BP_OR_LIST_CONSTRUCTOR, // member is again ambiguous
-		common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR,
-		common.REST_BINDING_PATTERN:
-		return common.LIST_BP_OR_LIST_CONSTRUCTOR
+	case st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.WILDCARD_BINDING_PATTERN:
+		return st.LIST_BINDING_PATTERN
+	case st.SIMPLE_NAME_REFERENCE, // member is a simple type-ref/var-ref
+		st.LIST_BP_OR_LIST_CONSTRUCTOR, // member is again ambiguous
+		st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR,
+		st.REST_BINDING_PATTERN:
+		return st.LIST_BP_OR_LIST_CONSTRUCTOR
 	default:
-		return common.LIST_CONSTRUCTOR
+		return st.LIST_CONSTRUCTOR
 	}
 }
 
 // Return res and modified memberList
-func (b *BallerinaParser) parseAsListConstructor(openBracket tree.STNode, memberList []tree.STNode, member tree.STNode, isRoot bool) (tree.STNode, []tree.STNode) {
+func (b *BallerinaParser) parseAsListConstructor(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = append(memberList, member)
 	memberList = b.getExpressionList(memberList, false)
 	b.switchContext(common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR)
 	listMembers := b.parseListMembersInner(memberList)
 	closeBracket := b.parseCloseBracket()
-	listConstructor := tree.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
+	listConstructor := st.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
 	b.endContext()
 	expr := b.parseExpressionRhs(OPERATOR_PRECEDENCE_DEFAULT, listConstructor, false, true)
 	if !isRoot {
@@ -14065,72 +14065,72 @@ func (b *BallerinaParser) parseAsListConstructor(openBracket tree.STNode, member
 	return b.parseStatementStartWithExprRhs(expr), memberList
 }
 
-func (b *BallerinaParser) parseListBindingPatternOrListConstructorWithCloseBracket(openBracket tree.STNode, members []tree.STNode, closeBracket tree.STNode, isRoot bool) tree.STNode {
-	var lbpOrListCons tree.STNode
+func (b *BallerinaParser) parseListBindingPatternOrListConstructorWithCloseBracket(openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool) st.STNode {
+	var lbpOrListCons st.STNode
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.CLOSE_BRACKET_TOKEN:
+	case st.COMMA_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.CLOSE_BRACKET_TOKEN:
 		if !isRoot {
 			b.endContext()
-			return tree.CreateAmbiguousCollectionNode(common.LIST_BP_OR_LIST_CONSTRUCTOR, openBracket, members, closeBracket)
+			return st.CreateAmbiguousCollectionNode(st.LIST_BP_OR_LIST_CONSTRUCTOR, openBracket, members, closeBracket)
 		}
 		fallthrough
 	default:
 		nextTokenKind := b.peek().Kind()
-		if b.isValidExprRhsStart(nextTokenKind, closeBracket.Kind()) || ((nextTokenKind == common.SEMICOLON_TOKEN) && isRoot) {
+		if b.isValidExprRhsStart(nextTokenKind, closeBracket.Kind()) || ((nextTokenKind == st.SEMICOLON_TOKEN) && isRoot) {
 			members = b.getExpressionList(members, false)
-			memberExpressions := tree.CreateNodeList(members...)
-			lbpOrListCons = tree.CreateListConstructorExpressionNode(openBracket, memberExpressions,
+			memberExpressions := st.CreateNodeList(members...)
+			lbpOrListCons = st.CreateListConstructorExpressionNode(openBracket, memberExpressions,
 				closeBracket)
 			lbpOrListCons = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, lbpOrListCons, false, true)
 			break
 		}
 		members = b.getBindingPatternsList(members, true)
-		bindingPatternsNode := tree.CreateNodeList(members...)
-		lbpOrListCons = tree.CreateListBindingPatternNode(openBracket, bindingPatternsNode,
+		bindingPatternsNode := st.CreateNodeList(members...)
+		lbpOrListCons = st.CreateListBindingPatternNode(openBracket, bindingPatternsNode,
 			closeBracket)
 	}
 	b.endContext()
 	if !isRoot {
 		return lbpOrListCons
 	}
-	if lbpOrListCons.Kind() == common.LIST_BINDING_PATTERN {
+	if lbpOrListCons.Kind() == st.LIST_BINDING_PATTERN {
 		return b.parseAssignmentStmtRhs(lbpOrListCons)
 	} else {
 		return b.parseStatementStartWithExprRhs(lbpOrListCons)
 	}
 }
 
-func (b *BallerinaParser) parseMemberRhsInStmtStartWithBrace(identifier tree.STNode, colon tree.STNode, secondIdentifier tree.STNode, secondNameRef tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseMemberRhsInStmtStartWithBrace(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, secondNameRef st.STNode) st.STNode {
 	typedBPOrExpr := b.parseTypedBindingPatternOrMemberAccess(secondNameRef, false, true, common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	if b.isExpression(typedBPOrExpr.Kind()) {
 		return b.parseMemberWithExprInRhs(identifier, colon, secondIdentifier, typedBPOrExpr)
 	}
 	b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-	varDeclQualifiers := []tree.STNode{}
-	annots := tree.CreateEmptyNodeList()
-	typedBP, ok := typedBPOrExpr.(*tree.STTypedBindingPatternNode)
+	varDeclQualifiers := []st.STNode{}
+	annots := st.CreateEmptyNodeList()
+	typedBP, ok := typedBPOrExpr.(*st.STTypedBindingPatternNode)
 	if !ok {
 		panic("expected STTypedBindingPatternNode")
 	}
 	qualifiedNameRef := b.createQualifiedNameReferenceNode(identifier, colon, secondIdentifier)
 	newTypeDesc := b.mergeQualifiedNameWithTypeDesc(qualifiedNameRef, typedBP.TypeDescriptor)
-	newTypeBP := tree.CreateTypedBindingPatternNode(newTypeDesc, typedBP.BindingPattern)
-	publicQualifier := tree.CreateEmptyNode()
+	newTypeBP := st.CreateTypedBindingPatternNode(newTypeDesc, typedBP.BindingPattern)
+	publicQualifier := st.CreateEmptyNode()
 	res, _ := b.parseVarDeclRhsInner(annots, publicQualifier, varDeclQualifiers, newTypeBP, false)
 	return res
 }
 
-func (b *BallerinaParser) parseMemberWithExprInRhs(identifier tree.STNode, colon tree.STNode, secondIdentifier tree.STNode, memberAccessExpr tree.STNode) tree.STNode {
+func (b *BallerinaParser) parseMemberWithExprInRhs(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, memberAccessExpr st.STNode) st.STNode {
 	expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, memberAccessExpr, false, true)
 	switch b.peek().Kind() {
-	case common.COMMA_TOKEN, common.CLOSE_BRACE_TOKEN:
+	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
-		readonlyKeyword := tree.CreateEmptyNode()
-		return tree.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, expr)
-	case common.EQUAL_TOKEN, common.SEMICOLON_TOKEN:
+		readonlyKeyword := st.CreateEmptyNode()
+		return st.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, expr)
+	case st.EQUAL_TOKEN, st.SEMICOLON_TOKEN:
 		fallthrough
 	default:
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
@@ -14141,10 +14141,10 @@ func (b *BallerinaParser) parseMemberWithExprInRhs(identifier tree.STNode, colon
 	}
 }
 
-func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpression() tree.STNode {
+func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpression() st.STNode {
 	nextToken := b.peek()
 	nextTokenKind := nextToken.Kind()
-	if nextTokenKind == common.LT_TOKEN {
+	if nextTokenKind == st.LT_TOKEN {
 		return b.parseInferredTypeDescDefaultOrExpressionInner(b.consume())
 	}
 	if b.isValidExprStart(nextTokenKind) {
@@ -14154,12 +14154,12 @@ func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpression() tree.STNode
 	return b.parseInferredTypeDescDefaultOrExpression()
 }
 
-func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken tree.STToken) tree.STNode {
+func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken st.STToken) st.STNode {
 	nextToken := b.peek()
-	if nextToken.Kind() == common.GT_TOKEN {
-		return tree.CreateInferredTypedescDefaultNode(ltToken, b.consume())
+	if nextToken.Kind() == st.GT_TOKEN {
+		return st.CreateInferredTypedescDefaultNode(ltToken, b.consume())
 	}
-	if b.isTypeStartingToken(nextToken.Kind()) || (nextToken.Kind() == common.AT_TOKEN) {
+	if b.isTypeStartingToken(nextToken.Kind()) || (nextToken.Kind() == st.AT_TOKEN) {
 		b.startContext(common.PARSER_RULE_CONTEXT_TYPE_CAST)
 		expr := b.parseTypeCastExprInner(ltToken, true, false, false)
 		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, true, false)
@@ -14168,209 +14168,209 @@ func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken 
 	return b.parseInferredTypeDescDefaultOrExpressionInner(ltToken)
 }
 
-func (b *BallerinaParser) mergeQualifiedNameWithExpr(qualifiedName tree.STNode, exprOrAction tree.STNode) tree.STNode {
+func (b *BallerinaParser) mergeQualifiedNameWithExpr(qualifiedName st.STNode, exprOrAction st.STNode) st.STNode {
 	switch exprOrAction.Kind() {
-	case common.SIMPLE_NAME_REFERENCE:
+	case st.SIMPLE_NAME_REFERENCE:
 		return qualifiedName
-	case common.BINARY_EXPRESSION:
-		binaryExpr, ok := exprOrAction.(*tree.STBinaryExpressionNode)
+	case st.BINARY_EXPRESSION:
+		binaryExpr, ok := exprOrAction.(*st.STBinaryExpressionNode)
 		if !ok {
 			panic("expected STBinaryExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, binaryExpr.LhsExpr)
-		return tree.CreateBinaryExpressionNode(binaryExpr.Kind(), newLhsExpr, binaryExpr.Operator,
+		return st.CreateBinaryExpressionNode(binaryExpr.Kind(), newLhsExpr, binaryExpr.Operator,
 			binaryExpr.RhsExpr)
-	case common.FIELD_ACCESS:
-		fieldAccess, ok := exprOrAction.(*tree.STFieldAccessExpressionNode)
+	case st.FIELD_ACCESS:
+		fieldAccess, ok := exprOrAction.(*st.STFieldAccessExpressionNode)
 		if !ok {
 			panic("expected STFieldAccessExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, fieldAccess.Expression)
-		return tree.CreateFieldAccessExpressionNode(newLhsExpr, fieldAccess.DotToken,
+		return st.CreateFieldAccessExpressionNode(newLhsExpr, fieldAccess.DotToken,
 			fieldAccess.FieldName)
-	case common.INDEXED_EXPRESSION:
-		memberAccess, ok := exprOrAction.(*tree.STIndexedExpressionNode)
+	case st.INDEXED_EXPRESSION:
+		memberAccess, ok := exprOrAction.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("expected STIndexedExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, memberAccess.ContainerExpression)
-		return tree.CreateIndexedExpressionNode(newLhsExpr, memberAccess.OpenBracket,
+		return st.CreateIndexedExpressionNode(newLhsExpr, memberAccess.OpenBracket,
 			memberAccess.KeyExpression, memberAccess.CloseBracket)
-	case common.TYPE_TEST_EXPRESSION:
-		typeTest, ok := exprOrAction.(*tree.STTypeTestExpressionNode)
+	case st.TYPE_TEST_EXPRESSION:
+		typeTest, ok := exprOrAction.(*st.STTypeTestExpressionNode)
 		if !ok {
 			panic("expected STTypeTestExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, typeTest.Expression)
-		return tree.CreateTypeTestExpressionNode(newLhsExpr, typeTest.IsKeyword,
+		return st.CreateTypeTestExpressionNode(newLhsExpr, typeTest.IsKeyword,
 			typeTest.TypeDescriptor)
-	case common.ANNOT_ACCESS:
-		annotAccess, ok := exprOrAction.(*tree.STAnnotAccessExpressionNode)
+	case st.ANNOT_ACCESS:
+		annotAccess, ok := exprOrAction.(*st.STAnnotAccessExpressionNode)
 		if !ok {
 			panic("expected STAnnotAccessExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, annotAccess.Expression)
-		return tree.CreateFieldAccessExpressionNode(newLhsExpr, annotAccess.AnnotChainingToken,
+		return st.CreateFieldAccessExpressionNode(newLhsExpr, annotAccess.AnnotChainingToken,
 			annotAccess.AnnotTagReference)
-	case common.OPTIONAL_FIELD_ACCESS:
-		optionalFieldAccess, ok := exprOrAction.(*tree.STOptionalFieldAccessExpressionNode)
+	case st.OPTIONAL_FIELD_ACCESS:
+		optionalFieldAccess, ok := exprOrAction.(*st.STOptionalFieldAccessExpressionNode)
 		if !ok {
 			panic("expected STOptionalFieldAccessExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, optionalFieldAccess.Expression)
-		return tree.CreateFieldAccessExpressionNode(newLhsExpr,
+		return st.CreateFieldAccessExpressionNode(newLhsExpr,
 			optionalFieldAccess.OptionalChainingToken, optionalFieldAccess.FieldName)
-	case common.CONDITIONAL_EXPRESSION:
-		conditionalExpr, ok := exprOrAction.(*tree.STConditionalExpressionNode)
+	case st.CONDITIONAL_EXPRESSION:
+		conditionalExpr, ok := exprOrAction.(*st.STConditionalExpressionNode)
 		if !ok {
 			panic("expected STConditionalExpressionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, conditionalExpr.LhsExpression)
-		return tree.CreateConditionalExpressionNode(newLhsExpr, conditionalExpr.QuestionMarkToken,
+		return st.CreateConditionalExpressionNode(newLhsExpr, conditionalExpr.QuestionMarkToken,
 			conditionalExpr.MiddleExpression, conditionalExpr.ColonToken, conditionalExpr.EndExpression)
-	case common.REMOTE_METHOD_CALL_ACTION:
-		remoteCall, ok := exprOrAction.(*tree.STRemoteMethodCallActionNode)
+	case st.REMOTE_METHOD_CALL_ACTION:
+		remoteCall, ok := exprOrAction.(*st.STRemoteMethodCallActionNode)
 		if !ok {
 			panic("expected STRemoteMethodCallActionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, remoteCall.Expression)
-		return tree.CreateRemoteMethodCallActionNode(newLhsExpr, remoteCall.RightArrowToken,
+		return st.CreateRemoteMethodCallActionNode(newLhsExpr, remoteCall.RightArrowToken,
 			remoteCall.MethodName, remoteCall.OpenParenToken, remoteCall.Arguments,
 			remoteCall.CloseParenToken)
-	case common.ASYNC_SEND_ACTION:
-		asyncSend, ok := exprOrAction.(*tree.STAsyncSendActionNode)
+	case st.ASYNC_SEND_ACTION:
+		asyncSend, ok := exprOrAction.(*st.STAsyncSendActionNode)
 		if !ok {
 			panic("expected STAsyncSendActionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, asyncSend.Expression)
-		return tree.CreateAsyncSendActionNode(newLhsExpr, asyncSend.RightArrowToken,
+		return st.CreateAsyncSendActionNode(newLhsExpr, asyncSend.RightArrowToken,
 			asyncSend.PeerWorker)
-	case common.SYNC_SEND_ACTION:
-		syncSend, ok := exprOrAction.(*tree.STSyncSendActionNode)
+	case st.SYNC_SEND_ACTION:
+		syncSend, ok := exprOrAction.(*st.STSyncSendActionNode)
 		if !ok {
 			panic("expected STSyncSendActionNode")
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, syncSend.Expression)
-		return tree.CreateAsyncSendActionNode(newLhsExpr, syncSend.SyncSendToken, syncSend.PeerWorker)
-	case common.FUNCTION_CALL:
-		funcCall, ok := exprOrAction.(*tree.STFunctionCallExpressionNode)
+		return st.CreateAsyncSendActionNode(newLhsExpr, syncSend.SyncSendToken, syncSend.PeerWorker)
+	case st.FUNCTION_CALL:
+		funcCall, ok := exprOrAction.(*st.STFunctionCallExpressionNode)
 		if !ok {
 			panic("expected STFunctionCallExpressionNode")
 		}
-		return tree.CreateFunctionCallExpressionNode(qualifiedName, funcCall.OpenParenToken,
+		return st.CreateFunctionCallExpressionNode(qualifiedName, funcCall.OpenParenToken,
 			funcCall.Arguments, funcCall.CloseParenToken)
 	default:
 		return exprOrAction
 	}
 }
 
-func (b *BallerinaParser) mergeQualifiedNameWithTypeDesc(qualifiedName tree.STNode, typeDesc tree.STNode) tree.STNode {
+func (b *BallerinaParser) mergeQualifiedNameWithTypeDesc(qualifiedName st.STNode, typeDesc st.STNode) st.STNode {
 	switch typeDesc.Kind() {
-	case common.SIMPLE_NAME_REFERENCE:
+	case st.SIMPLE_NAME_REFERENCE:
 		return qualifiedName
-	case common.ARRAY_TYPE_DESC:
-		arrayTypeDesc, ok := typeDesc.(*tree.STArrayTypeDescriptorNode)
+	case st.ARRAY_TYPE_DESC:
+		arrayTypeDesc, ok := typeDesc.(*st.STArrayTypeDescriptorNode)
 		if !ok {
 			panic("expected STArrayTypeDescriptorNode")
 		}
 		newMemberType := b.mergeQualifiedNameWithTypeDesc(qualifiedName, arrayTypeDesc.MemberTypeDesc)
-		return tree.CreateArrayTypeDescriptorNode(newMemberType, arrayTypeDesc.Dimensions)
-	case common.UNION_TYPE_DESC:
-		unionTypeDesc, ok := typeDesc.(*tree.STUnionTypeDescriptorNode)
+		return st.CreateArrayTypeDescriptorNode(newMemberType, arrayTypeDesc.Dimensions)
+	case st.UNION_TYPE_DESC:
+		unionTypeDesc, ok := typeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STUnionTypeDescriptorNode")
+			panic("expected *st.STUnionTypeDescriptorNode")
 		}
 		newlhsType := b.mergeQualifiedNameWithTypeDesc(qualifiedName, unionTypeDesc.LeftTypeDesc)
 		return b.mergeTypesWithUnion(newlhsType, unionTypeDesc.PipeToken, unionTypeDesc.RightTypeDesc)
-	case common.INTERSECTION_TYPE_DESC:
-		intersectionTypeDesc, ok := typeDesc.(*tree.STIntersectionTypeDescriptorNode)
+	case st.INTERSECTION_TYPE_DESC:
+		intersectionTypeDesc, ok := typeDesc.(*st.STIntersectionTypeDescriptorNode)
 		if !ok {
-			panic("expected *tree.STIntersectionTypeDescriptorNode")
+			panic("expected *st.STIntersectionTypeDescriptorNode")
 		}
 		newlhsType := b.mergeQualifiedNameWithTypeDesc(qualifiedName, intersectionTypeDesc.LeftTypeDesc)
 		return b.mergeTypesWithIntersection(newlhsType, intersectionTypeDesc.BitwiseAndToken,
 			intersectionTypeDesc.RightTypeDesc)
-	case common.OPTIONAL_TYPE_DESC:
-		optionalType, ok := typeDesc.(*tree.STOptionalTypeDescriptorNode)
+	case st.OPTIONAL_TYPE_DESC:
+		optionalType, ok := typeDesc.(*st.STOptionalTypeDescriptorNode)
 		if !ok {
 			panic("expected STOptionalTypeDescriptorNode")
 		}
 		newMemberType := b.mergeQualifiedNameWithTypeDesc(qualifiedName, optionalType.TypeDescriptor)
-		return tree.CreateOptionalTypeDescriptorNode(newMemberType, optionalType.QuestionMarkToken)
+		return st.CreateOptionalTypeDescriptorNode(newMemberType, optionalType.QuestionMarkToken)
 	default:
 		return typeDesc
 	}
 }
 
-func (b *BallerinaParser) getTupleMemberList(ambiguousList []tree.STNode) []tree.STNode {
-	var tupleMemberList []tree.STNode
+func (b *BallerinaParser) getTupleMemberList(ambiguousList []st.STNode) []st.STNode {
+	var tupleMemberList []st.STNode
 	for _, item := range ambiguousList {
-		if item.Kind() == common.COMMA_TOKEN {
+		if item.Kind() == st.COMMA_TOKEN {
 			tupleMemberList = append(tupleMemberList, item)
 		} else {
 			tupleMemberList = append(tupleMemberList,
-				tree.CreateMemberTypeDescriptorNode(tree.CreateEmptyNodeList(),
+				st.CreateMemberTypeDescriptorNode(st.CreateEmptyNodeList(),
 					b.getTypeDescFromExpr(item)))
 		}
 	}
 	return tupleMemberList
 }
 
-func (b *BallerinaParser) getTypeDescFromExpr(expression tree.STNode) tree.STNode {
-	if b.isDefiniteTypeDesc(expression.Kind()) || (expression.Kind() == common.COMMA_TOKEN) {
+func (b *BallerinaParser) getTypeDescFromExpr(expression st.STNode) st.STNode {
+	if b.isDefiniteTypeDesc(expression.Kind()) || (expression.Kind() == st.COMMA_TOKEN) {
 		return expression
 	}
 	switch expression.Kind() {
-	case common.INDEXED_EXPRESSION:
-		indexedExpr, ok := expression.(*tree.STIndexedExpressionNode)
+	case st.INDEXED_EXPRESSION:
+		indexedExpr, ok := expression.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("getTypeDescFromExpr: expected STIndexedExpressionNode")
 		}
 		return b.parseArrayTypeDescriptorNode(*indexedExpr)
-	case common.NUMERIC_LITERAL,
-		common.BOOLEAN_LITERAL,
-		common.STRING_LITERAL,
-		common.NULL_LITERAL,
-		common.UNARY_EXPRESSION:
-		return tree.CreateSingletonTypeDescriptorNode(expression)
-	case common.TYPE_REFERENCE_TYPE_DESC:
-		typeRefNode, ok := expression.(*tree.STTypeReferenceTypeDescNode)
+	case st.NUMERIC_LITERAL,
+		st.BOOLEAN_LITERAL,
+		st.STRING_LITERAL,
+		st.NULL_LITERAL,
+		st.UNARY_EXPRESSION:
+		return st.CreateSingletonTypeDescriptorNode(expression)
+	case st.TYPE_REFERENCE_TYPE_DESC:
+		typeRefNode, ok := expression.(*st.STTypeReferenceTypeDescNode)
 		if !ok {
 			panic("getTypeDescFromExpr: expected STTypeReferenceTypeDescNode")
 		}
 		return typeRefNode.TypeRef
-	case common.BRACED_EXPRESSION:
-		bracedExpr, ok := expression.(*tree.STBracedExpressionNode)
+	case st.BRACED_EXPRESSION:
+		bracedExpr, ok := expression.(*st.STBracedExpressionNode)
 		if !ok {
 			panic("expected STBracedExpressionNode")
 		}
 		typeDesc := b.getTypeDescFromExpr(bracedExpr.Expression)
-		return tree.CreateParenthesisedTypeDescriptorNode(bracedExpr.OpenParen, typeDesc,
+		return st.CreateParenthesisedTypeDescriptorNode(bracedExpr.OpenParen, typeDesc,
 			bracedExpr.CloseParen)
-	case common.NIL_LITERAL:
-		nilLiteral, ok := expression.(*tree.STNilLiteralNode)
+	case st.NIL_LITERAL:
+		nilLiteral, ok := expression.(*st.STNilLiteralNode)
 		if !ok {
 			panic("expected STNilLiteralNode")
 		}
-		return tree.CreateNilTypeDescriptorNode(nilLiteral.OpenParenToken, nilLiteral.CloseParenToken)
-	case common.BRACKETED_LIST,
-		common.LIST_BP_OR_LIST_CONSTRUCTOR,
-		common.TUPLE_TYPE_DESC_OR_LIST_CONST:
-		innerList, ok := expression.(*tree.STAmbiguousCollectionNode)
+		return st.CreateNilTypeDescriptorNode(nilLiteral.OpenParenToken, nilLiteral.CloseParenToken)
+	case st.BRACKETED_LIST,
+		st.LIST_BP_OR_LIST_CONSTRUCTOR,
+		st.TUPLE_TYPE_DESC_OR_LIST_CONST:
+		innerList, ok := expression.(*st.STAmbiguousCollectionNode)
 		if !ok {
 			panic("expected STAmbiguousCollectionNode")
 		}
-		memberTypeDescs := tree.CreateNodeList(b.getTupleMemberList(innerList.Members)...)
-		return tree.CreateTupleTypeDescriptorNode(innerList.CollectionStartToken, memberTypeDescs,
+		memberTypeDescs := st.CreateNodeList(b.getTupleMemberList(innerList.Members)...)
+		return st.CreateTupleTypeDescriptorNode(innerList.CollectionStartToken, memberTypeDescs,
 			innerList.CollectionEndToken)
-	case common.BINARY_EXPRESSION:
-		binaryExpr, ok := expression.(*tree.STBinaryExpressionNode)
+	case st.BINARY_EXPRESSION:
+		binaryExpr, ok := expression.(*st.STBinaryExpressionNode)
 		if !ok {
 			panic("expected STBinaryExpressionNode")
 		}
 		switch binaryExpr.Operator.Kind() {
-		case common.PIPE_TOKEN,
-			common.BITWISE_AND_TOKEN:
+		case st.PIPE_TOKEN,
+			st.BITWISE_AND_TOKEN:
 			lhsTypeDesc := b.getTypeDescFromExpr(binaryExpr.LhsExpr)
 			rhsTypeDesc := b.getTypeDescFromExpr(binaryExpr.RhsExpr)
 			return b.mergeTypes(lhsTypeDesc, binaryExpr.Operator, rhsTypeDesc)
@@ -14378,242 +14378,242 @@ func (b *BallerinaParser) getTypeDescFromExpr(expression tree.STNode) tree.STNod
 			break
 		}
 		return expression
-	case common.SIMPLE_NAME_REFERENCE,
-		common.QUALIFIED_NAME_REFERENCE:
+	case st.SIMPLE_NAME_REFERENCE,
+		st.QUALIFIED_NAME_REFERENCE:
 		return expression
 	default:
-		var simpleTypeDescIdentifier tree.STNode
-		simpleTypeDescIdentifier = tree.CreateMissingTokenWithDiagnostics(
-			common.IDENTIFIER_TOKEN, &common.ERROR_MISSING_TYPE_DESC)
-		simpleTypeDescIdentifier = tree.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(simpleTypeDescIdentifier,
+		var simpleTypeDescIdentifier st.STNode
+		simpleTypeDescIdentifier = st.CreateMissingTokenWithDiagnostics(
+			st.IDENTIFIER_TOKEN, &common.ERROR_MISSING_TYPE_DESC)
+		simpleTypeDescIdentifier = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(simpleTypeDescIdentifier,
 			expression)
-		return tree.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
+		return st.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
 	}
 }
 
-func (b *BallerinaParser) getBindingPatternsList(ambibuousList []tree.STNode, isListBP bool) []tree.STNode {
-	var bindingPatterns []tree.STNode
+func (b *BallerinaParser) getBindingPatternsList(ambibuousList []st.STNode, isListBP bool) []st.STNode {
+	var bindingPatterns []st.STNode
 	for _, item := range ambibuousList {
 		bindingPatterns = append(bindingPatterns, b.getBindingPattern(item, isListBP))
 	}
 	return bindingPatterns
 }
 
-func (b *BallerinaParser) getBindingPattern(ambiguousNode tree.STNode, isListBP bool) tree.STNode {
+func (b *BallerinaParser) getBindingPattern(ambiguousNode st.STNode, isListBP bool) st.STNode {
 	errorCode := common.ERROR_INVALID_BINDING_PATTERN
 	if b.isEmpty(ambiguousNode) {
 		return nil
 	}
 	switch ambiguousNode.Kind() {
-	case common.WILDCARD_BINDING_PATTERN,
-		common.CAPTURE_BINDING_PATTERN,
-		common.LIST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN,
-		common.ERROR_BINDING_PATTERN,
-		common.REST_BINDING_PATTERN,
-		common.FIELD_BINDING_PATTERN,
-		common.NAMED_ARG_BINDING_PATTERN,
-		common.COMMA_TOKEN:
+	case st.WILDCARD_BINDING_PATTERN,
+		st.CAPTURE_BINDING_PATTERN,
+		st.LIST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN,
+		st.ERROR_BINDING_PATTERN,
+		st.REST_BINDING_PATTERN,
+		st.FIELD_BINDING_PATTERN,
+		st.NAMED_ARG_BINDING_PATTERN,
+		st.COMMA_TOKEN:
 		return ambiguousNode
-	case common.SIMPLE_NAME_REFERENCE:
-		simpleNameNode, ok := ambiguousNode.(*tree.STSimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		simpleNameNode, ok := ambiguousNode.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("getBindingPattern: expected STSimpleNameReferenceNode")
 		}
 		varName := simpleNameNode.Name
 		return b.createCaptureOrWildcardBP(varName)
-	case common.QUALIFIED_NAME_REFERENCE:
+	case st.QUALIFIED_NAME_REFERENCE:
 		if isListBP {
 			errorCode = common.ERROR_FIELD_BP_INSIDE_LIST_BP
 			break
 		}
-		qualifiedName, ok := ambiguousNode.(*tree.STQualifiedNameReferenceNode)
+		qualifiedName, ok := ambiguousNode.(*st.STQualifiedNameReferenceNode)
 		if !ok {
 			panic("expected STQualifiedNameReferenceNode")
 		}
-		fieldName := tree.CreateSimpleNameReferenceNode(qualifiedName.ModulePrefix)
-		return tree.CreateFieldBindingPatternFullNode(fieldName, qualifiedName.Colon,
+		fieldName := st.CreateSimpleNameReferenceNode(qualifiedName.ModulePrefix)
+		return st.CreateFieldBindingPatternFullNode(fieldName, qualifiedName.Colon,
 			b.createCaptureOrWildcardBP(qualifiedName.Identifier))
-	case common.BRACKETED_LIST,
-		common.LIST_BP_OR_LIST_CONSTRUCTOR:
-		innerList, ok := ambiguousNode.(*tree.STAmbiguousCollectionNode)
+	case st.BRACKETED_LIST,
+		st.LIST_BP_OR_LIST_CONSTRUCTOR:
+		innerList, ok := ambiguousNode.(*st.STAmbiguousCollectionNode)
 		if !ok {
 			panic("expected STAmbiguousCollectionNode")
 		}
-		memberBindingPatterns := tree.CreateNodeList(b.getBindingPatternsList(innerList.Members, true)...)
-		return tree.CreateListBindingPatternNode(innerList.CollectionStartToken, memberBindingPatterns,
+		memberBindingPatterns := st.CreateNodeList(b.getBindingPatternsList(innerList.Members, true)...)
+		return st.CreateListBindingPatternNode(innerList.CollectionStartToken, memberBindingPatterns,
 			innerList.CollectionEndToken)
-	case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
-		innerList, ok := ambiguousNode.(*tree.STAmbiguousCollectionNode)
+	case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+		innerList, ok := ambiguousNode.(*st.STAmbiguousCollectionNode)
 		if !ok {
 			panic("expected STAmbiguousCollectionNode")
 		}
-		var bindingPatterns []tree.STNode
+		var bindingPatterns []st.STNode
 		i := 0
 		for ; i < len(innerList.Members); i++ {
 			bp := b.getBindingPattern(innerList.Members[i], false)
 			bindingPatterns = append(bindingPatterns, bp)
-			if bp.Kind() == common.REST_BINDING_PATTERN {
+			if bp.Kind() == st.REST_BINDING_PATTERN {
 				break
 			}
 		}
-		memberBindingPatterns := tree.CreateNodeList(bindingPatterns...)
-		return tree.CreateMappingBindingPatternNode(innerList.CollectionStartToken,
+		memberBindingPatterns := st.CreateNodeList(bindingPatterns...)
+		return st.CreateMappingBindingPatternNode(innerList.CollectionStartToken,
 			memberBindingPatterns, innerList.CollectionEndToken)
-	case common.SPECIFIC_FIELD:
-		field, ok := ambiguousNode.(*tree.STSpecificFieldNode)
+	case st.SPECIFIC_FIELD:
+		field, ok := ambiguousNode.(*st.STSpecificFieldNode)
 		if !ok {
 			panic("expected STSpecificFieldNode")
 		}
-		fieldName := tree.CreateSimpleNameReferenceNode(field.FieldName)
+		fieldName := st.CreateSimpleNameReferenceNode(field.FieldName)
 		if field.ValueExpr == nil {
-			return tree.CreateFieldBindingPatternVarnameNode(fieldName)
+			return st.CreateFieldBindingPatternVarnameNode(fieldName)
 		}
-		return tree.CreateFieldBindingPatternFullNode(fieldName, field.Colon,
+		return st.CreateFieldBindingPatternFullNode(fieldName, field.Colon,
 			b.getBindingPattern(field.ValueExpr, false))
-	case common.ERROR_CONSTRUCTOR:
-		errorCons, ok := ambiguousNode.(*tree.STErrorConstructorExpressionNode)
+	case st.ERROR_CONSTRUCTOR:
+		errorCons, ok := ambiguousNode.(*st.STErrorConstructorExpressionNode)
 		if !ok {
 			panic("expected STErrorConstructorExpressionNode")
 		}
 		args := errorCons.Arguments
 		size := args.BucketCount()
-		var bindingPatterns []tree.STNode
+		var bindingPatterns []st.STNode
 		i := 0
 		for ; i < size; i++ {
 			arg := args.ChildInBucket(i)
 			bindingPatterns = append(bindingPatterns, b.getBindingPattern(arg, false))
 		}
-		argListBindingPatterns := tree.CreateNodeList(bindingPatterns...)
-		return tree.CreateErrorBindingPatternNode(errorCons.ErrorKeyword, errorCons.TypeReference,
+		argListBindingPatterns := st.CreateNodeList(bindingPatterns...)
+		return st.CreateErrorBindingPatternNode(errorCons.ErrorKeyword, errorCons.TypeReference,
 			errorCons.OpenParenToken, argListBindingPatterns, errorCons.CloseParenToken)
-	case common.POSITIONAL_ARG:
-		positionalArg, ok := ambiguousNode.(*tree.STPositionalArgumentNode)
+	case st.POSITIONAL_ARG:
+		positionalArg, ok := ambiguousNode.(*st.STPositionalArgumentNode)
 		if !ok {
 			panic("expected STPositionalArgumentNode")
 		}
 		return b.getBindingPattern(positionalArg.Expression, false)
-	case common.NAMED_ARG:
-		namedArg, nameOk := ambiguousNode.(*tree.STNamedArgumentNode)
+	case st.NAMED_ARG:
+		namedArg, nameOk := ambiguousNode.(*st.STNamedArgumentNode)
 		if !nameOk {
 			panic("exprected STNamedArgumentNode")
 		}
-		argNameNode, ok := namedArg.ArgumentName.(*tree.STSimpleNameReferenceNode)
+		argNameNode, ok := namedArg.ArgumentName.(*st.STSimpleNameReferenceNode)
 		if !ok {
 			panic("getBindingPattern: expected STSimpleNameReferenceNode for named argument")
 		}
 		bindingPatternArgName := argNameNode.Name
-		return tree.CreateNamedArgBindingPatternNode(bindingPatternArgName, namedArg.EqualsToken,
+		return st.CreateNamedArgBindingPatternNode(bindingPatternArgName, namedArg.EqualsToken,
 			b.getBindingPattern(namedArg.Expression, false))
-	case common.REST_ARG:
-		restArg, ok := ambiguousNode.(*tree.STRestArgumentNode)
+	case st.REST_ARG:
+		restArg, ok := ambiguousNode.(*st.STRestArgumentNode)
 		if !ok {
 			panic("expected STRestArgumentNode")
 		}
-		return tree.CreateRestBindingPatternNode(restArg.Ellipsis, restArg.Expression)
+		return st.CreateRestBindingPatternNode(restArg.Ellipsis, restArg.Expression)
 	}
-	var identifier tree.STNode
-	identifier = tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil)
-	identifier = tree.CloneWithLeadingInvalidNodeMinutiae(identifier, ambiguousNode, &errorCode)
-	return tree.CreateCaptureBindingPatternNode(identifier)
+	var identifier st.STNode
+	identifier = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
+	identifier = st.CloneWithLeadingInvalidNodeMinutiae(identifier, ambiguousNode, &errorCode)
+	return st.CreateCaptureBindingPatternNode(identifier)
 }
 
-func (b *BallerinaParser) getExpressionList(ambibuousList []tree.STNode, isMappingConstructor bool) []tree.STNode {
-	var exprList []tree.STNode
+func (b *BallerinaParser) getExpressionList(ambibuousList []st.STNode, isMappingConstructor bool) []st.STNode {
+	var exprList []st.STNode
 	for _, item := range ambibuousList {
 		exprList = append(exprList, b.getExpressionInner(item, isMappingConstructor))
 	}
 	return exprList
 }
 
-func (b *BallerinaParser) getExpression(ambiguousNode tree.STNode) tree.STNode {
+func (b *BallerinaParser) getExpression(ambiguousNode st.STNode) st.STNode {
 	return b.getExpressionInner(ambiguousNode, false)
 }
 
-func (b *BallerinaParser) getExpressionInner(ambiguousNode tree.STNode, isInMappingConstructor bool) tree.STNode {
-	if ((b.isEmpty(ambiguousNode) || (b.isDefiniteExpr(ambiguousNode.Kind()) && (ambiguousNode.Kind() != common.INDEXED_EXPRESSION))) || b.isDefiniteAction(ambiguousNode.Kind())) || (ambiguousNode.Kind() == common.COMMA_TOKEN) {
+func (b *BallerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappingConstructor bool) st.STNode {
+	if ((b.isEmpty(ambiguousNode) || (b.isDefiniteExpr(ambiguousNode.Kind()) && (ambiguousNode.Kind() != st.INDEXED_EXPRESSION))) || b.isDefiniteAction(ambiguousNode.Kind())) || (ambiguousNode.Kind() == st.COMMA_TOKEN) {
 		return ambiguousNode
 	}
 	switch ambiguousNode.Kind() {
-	case common.BRACKETED_LIST, common.LIST_BP_OR_LIST_CONSTRUCTOR, common.TUPLE_TYPE_DESC_OR_LIST_CONST:
-		innerList, ok := ambiguousNode.(*tree.STAmbiguousCollectionNode)
+	case st.BRACKETED_LIST, st.LIST_BP_OR_LIST_CONSTRUCTOR, st.TUPLE_TYPE_DESC_OR_LIST_CONST:
+		innerList, ok := ambiguousNode.(*st.STAmbiguousCollectionNode)
 		if !ok {
 			panic("getExpressionInner: expected STAmbiguousCollectionNode")
 		}
-		memberExprs := tree.CreateNodeList(b.getExpressionList(innerList.Members, false)...)
-		return tree.CreateListConstructorExpressionNode(innerList.CollectionStartToken, memberExprs,
+		memberExprs := st.CreateNodeList(b.getExpressionList(innerList.Members, false)...)
+		return st.CreateListConstructorExpressionNode(innerList.CollectionStartToken, memberExprs,
 			innerList.CollectionEndToken)
 
-	case common.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
-		innerList, ok := ambiguousNode.(*tree.STAmbiguousCollectionNode)
+	case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
+		innerList, ok := ambiguousNode.(*st.STAmbiguousCollectionNode)
 		if !ok {
 			panic("getExpressionInner: expected STAmbiguousCollectionNode")
 		}
-		var fieldList []tree.STNode
+		var fieldList []st.STNode
 		i := 0
 		for ; i < len(innerList.Members); i++ {
 			field := innerList.Members[i]
-			var fieldNode tree.STNode
-			if field.Kind() == common.QUALIFIED_NAME_REFERENCE {
-				qualifiedNameRefNode, ok := field.(*tree.STQualifiedNameReferenceNode)
+			var fieldNode st.STNode
+			if field.Kind() == st.QUALIFIED_NAME_REFERENCE {
+				qualifiedNameRefNode, ok := field.(*st.STQualifiedNameReferenceNode)
 				if !ok {
 					panic("getExpressionInner: expected STQualifiedNameReferenceNode")
 				}
-				readOnlyKeyword := tree.CreateEmptyNode()
+				readOnlyKeyword := st.CreateEmptyNode()
 				fieldName := qualifiedNameRefNode.ModulePrefix
 				colon := qualifiedNameRefNode.Colon
 				valueExpr := b.getExpression(qualifiedNameRefNode.Identifier)
-				fieldNode = tree.CreateSpecificFieldNode(readOnlyKeyword, fieldName, colon, valueExpr)
+				fieldNode = st.CreateSpecificFieldNode(readOnlyKeyword, fieldName, colon, valueExpr)
 			} else {
 				fieldNode = b.getExpressionInner(field, true)
 			}
 			fieldList = append(fieldList, fieldNode)
 		}
-		fields := tree.CreateNodeList(fieldList...)
-		return tree.CreateMappingConstructorExpressionNode(innerList.CollectionStartToken, fields,
+		fields := st.CreateNodeList(fieldList...)
+		return st.CreateMappingConstructorExpressionNode(innerList.CollectionStartToken, fields,
 
 			innerList.CollectionEndToken)
 
-	case common.REST_BINDING_PATTERN:
-		restBindingPattern, ok := ambiguousNode.(*tree.STRestBindingPatternNode)
+	case st.REST_BINDING_PATTERN:
+		restBindingPattern, ok := ambiguousNode.(*st.STRestBindingPatternNode)
 		if !ok {
 			panic("getExpressionInner: expected STRestBindingPatternNode")
 		}
 		if isInMappingConstructor {
-			return tree.CreateSpreadFieldNode(restBindingPattern.EllipsisToken,
+			return st.CreateSpreadFieldNode(restBindingPattern.EllipsisToken,
 				restBindingPattern.VariableName)
 		}
 
-		return tree.CreateSpreadMemberNode(restBindingPattern.EllipsisToken,
+		return st.CreateSpreadMemberNode(restBindingPattern.EllipsisToken,
 
 			restBindingPattern.VariableName)
 
-	case common.SPECIFIC_FIELD:
-		field, ok := ambiguousNode.(*tree.STSpecificFieldNode)
+	case st.SPECIFIC_FIELD:
+		field, ok := ambiguousNode.(*st.STSpecificFieldNode)
 		if !ok {
 			panic("getExpressionInner: expected STSpecificFieldNode")
 		}
-		return tree.CreateSpecificFieldNode(field.ReadonlyKeyword, field.FieldName, field.Colon,
+		return st.CreateSpecificFieldNode(field.ReadonlyKeyword, field.FieldName, field.Colon,
 
 			b.getExpression(field.ValueExpr))
 
-	case common.ERROR_CONSTRUCTOR:
-		errorCons, ok := ambiguousNode.(*tree.STErrorConstructorExpressionNode)
+	case st.ERROR_CONSTRUCTOR:
+		errorCons, ok := ambiguousNode.(*st.STErrorConstructorExpressionNode)
 		if !ok {
 			panic("getExpressionInner: expected STErrorConstructorExpressionNode")
 		}
 		errorArgs := b.getErrorArgList(errorCons.Arguments)
-		return tree.CreateErrorConstructorExpressionNode(errorCons.ErrorKeyword,
+		return st.CreateErrorConstructorExpressionNode(errorCons.ErrorKeyword,
 			errorCons.TypeReference, errorCons.OpenParenToken, errorArgs, errorCons.CloseParenToken)
 
-	case common.IDENTIFIER_TOKEN:
-		return tree.CreateSimpleNameReferenceNode(ambiguousNode)
-	case common.INDEXED_EXPRESSION:
-		indexedExpressionNode, ok := ambiguousNode.(*tree.STIndexedExpressionNode)
+	case st.IDENTIFIER_TOKEN:
+		return st.CreateSimpleNameReferenceNode(ambiguousNode)
+	case st.INDEXED_EXPRESSION:
+		indexedExpressionNode, ok := ambiguousNode.(*st.STIndexedExpressionNode)
 		if !ok {
 			panic("getExpressionInner: expected STIndexedExpressionNode")
 		}
-		keys, ok := indexedExpressionNode.KeyExpression.(*tree.STNodeList)
+		keys, ok := indexedExpressionNode.KeyExpression.(*st.STNodeList)
 		if !ok {
 			panic("getExpressionInner: expected STNodeList")
 		}
@@ -14623,38 +14623,38 @@ func (b *BallerinaParser) getExpressionInner(ambiguousNode tree.STNode, isInMapp
 		lhsExpr := indexedExpressionNode.ContainerExpression
 		openBracket := indexedExpressionNode.OpenBracket
 		closeBracket := indexedExpressionNode.CloseBracket
-		missingVarRef := tree.CreateSimpleNameReferenceNode(tree.CreateMissingToken(common.IDENTIFIER_TOKEN, nil))
-		keyExpr := tree.CreateNodeList(missingVarRef)
-		closeBracket = tree.AddDiagnostic(closeBracket,
+		missingVarRef := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
+		keyExpr := st.CreateNodeList(missingVarRef)
+		closeBracket = st.AddDiagnostic(closeBracket,
 			&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR)
-		return tree.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
-	case common.SIMPLE_NAME_REFERENCE, common.QUALIFIED_NAME_REFERENCE, common.COMPUTED_NAME_FIELD, common.SPREAD_FIELD, common.SPREAD_MEMBER:
+		return st.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
+	case st.SIMPLE_NAME_REFERENCE, st.QUALIFIED_NAME_REFERENCE, st.COMPUTED_NAME_FIELD, st.SPREAD_FIELD, st.SPREAD_MEMBER:
 		return ambiguousNode
 	default:
-		var simpleVarRef tree.STNode
-		simpleVarRef = tree.CreateMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN,
+		var simpleVarRef st.STNode
+		simpleVarRef = st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_EXPRESSION)
-		simpleVarRef = tree.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(simpleVarRef, ambiguousNode)
-		return tree.CreateSimpleNameReferenceNode(simpleVarRef)
+		simpleVarRef = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(simpleVarRef, ambiguousNode)
+		return st.CreateSimpleNameReferenceNode(simpleVarRef)
 	}
 }
 
-func (b *BallerinaParser) getMappingField(identifier tree.STNode, colon tree.STNode, bindingPatternOrExpr tree.STNode) tree.STNode {
-	simpleNameRef := tree.CreateSimpleNameReferenceNode(identifier)
+func (b *BallerinaParser) getMappingField(identifier st.STNode, colon st.STNode, bindingPatternOrExpr st.STNode) st.STNode {
+	simpleNameRef := st.CreateSimpleNameReferenceNode(identifier)
 	switch bindingPatternOrExpr.Kind() {
-	case common.LIST_BINDING_PATTERN,
-		common.MAPPING_BINDING_PATTERN:
-		return tree.CreateFieldBindingPatternFullNode(simpleNameRef, colon, bindingPatternOrExpr)
-	case common.LIST_CONSTRUCTOR, common.MAPPING_CONSTRUCTOR:
-		readonlyKeyword := tree.CreateEmptyNode()
-		return tree.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, bindingPatternOrExpr)
+	case st.LIST_BINDING_PATTERN,
+		st.MAPPING_BINDING_PATTERN:
+		return st.CreateFieldBindingPatternFullNode(simpleNameRef, colon, bindingPatternOrExpr)
+	case st.LIST_CONSTRUCTOR, st.MAPPING_CONSTRUCTOR:
+		readonlyKeyword := st.CreateEmptyNode()
+		return st.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, bindingPatternOrExpr)
 	default:
-		readonlyKeyword := tree.CreateEmptyNode()
-		return tree.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, bindingPatternOrExpr)
+		readonlyKeyword := st.CreateEmptyNode()
+		return st.CreateSpecificFieldNode(readonlyKeyword, identifier, colon, bindingPatternOrExpr)
 	}
 }
 
-func (b *BallerinaParser) recoverWithBlockContext(nextToken tree.STToken, currentCtx common.ParserRuleContext) *Solution {
+func (b *BallerinaParser) recoverWithBlockContext(nextToken st.STToken, currentCtx common.ParserRuleContext) *Solution {
 	if b.isInsideABlock(nextToken) {
 		return b.recover(nextToken, currentCtx, true)
 	} else {
@@ -14662,8 +14662,8 @@ func (b *BallerinaParser) recoverWithBlockContext(nextToken tree.STToken, curren
 	}
 }
 
-func (b *BallerinaParser) isInsideABlock(nextToken tree.STToken) bool {
-	if nextToken.Kind() != common.CLOSE_BRACE_TOKEN {
+func (b *BallerinaParser) isInsideABlock(nextToken st.STToken) bool {
+	if nextToken.Kind() != st.CLOSE_BRACE_TOKEN {
 		return false
 	}
 	return slices.ContainsFunc(b.errorHandler.GetContextStack(), b.isBlockContext)
@@ -14690,33 +14690,33 @@ func (b *BallerinaParser) isBlockContext(ctx common.ParserRuleContext) bool {
 	}
 }
 
-func (b *BallerinaParser) isSpecialMethodName(token tree.STToken) bool {
-	return (((token.Kind() == common.MAP_KEYWORD) || (token.Kind() == common.START_KEYWORD)) || (token.Kind() == common.JOIN_KEYWORD))
+func (b *BallerinaParser) isSpecialMethodName(token st.STToken) bool {
+	return (((token.Kind() == st.MAP_KEYWORD) || (token.Kind() == st.START_KEYWORD)) || (token.Kind() == st.JOIN_KEYWORD))
 }
 
 // GetSyntaxTree parses content into a syntax tree, attributing it to fileName
 // (used for diagnostics and the syntax tree's text document).
-func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*tree.SyntaxTree, error) {
+func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*st.SyntaxTree, error) {
 	return getSyntaxTree(ctx, fileName, content, false)
 }
 
-func GetImportSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*tree.SyntaxTree, error) {
+func GetImportSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*st.SyntaxTree, error) {
 	return getSyntaxTree(ctx, fileName, content, true)
 }
 
-func getSyntaxTree(ctx *context.CompilerContext, fileName string, content string, importsOnly bool) (*tree.SyntaxTree, error) {
+func getSyntaxTree(ctx *context.CompilerContext, fileName string, content string, importsOnly bool) (*st.SyntaxTree, error) {
 	reader := text.CharReaderFromText(content)
 	lexer := NewLexer(reader)
 	tokenReader := CreateTokenReader(lexer)
 	ballerinaParser := NewBallerinaParserFromTokenReader(tokenReader)
-	var rootNode *tree.STModulePart
+	var rootNode *st.STModulePart
 	if importsOnly {
-		rootNode = ballerinaParser.ParseImports().(*tree.STModulePart)
+		rootNode = ballerinaParser.ParseImports().(*st.STModulePart)
 	} else {
-		rootNode = ballerinaParser.Parse().(*tree.STModulePart)
+		rootNode = ballerinaParser.Parse().(*st.STModulePart)
 	}
-	moduleNode := tree.CreateUnlinkedFacade[*tree.STModulePart, *tree.ModulePart](rootNode)
-	syntaxTree := tree.NewSyntaxTreeFromNodeTextDocument(moduleNode, nil, fileName, false)
+	moduleNode := st.CreateUnlinkedFacade[*st.STModulePart, *st.ModulePart](rootNode)
+	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, nil, fileName, false)
 	if syntaxTree.HasDiagnostics() {
 		ctx.SyntaxError("syntax error at", diagnostics.Location{})
 	}

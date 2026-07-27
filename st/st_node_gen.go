@@ -14,9 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package tree
-
-import "github.com/ballerina-nutcracker/ballerina/parser/common"
+package st
 
 type STModulePart struct {
 	STNode
@@ -30,8 +28,8 @@ type STModulePart struct {
 
 var _ STNode = &STModulePart{}
 
-func (n *STModulePart) Kind() common.SyntaxKind {
-	return common.MODULE_PART
+func (n *STModulePart) Kind() SyntaxKind {
+	return MODULE_PART
 }
 
 func (n *STModulePart) BucketCount() int {
@@ -101,7 +99,7 @@ type STFunctionDefinition struct {
 
 var _ STNode = &STFunctionDefinition{}
 
-func (n *STFunctionDefinition) Kind() common.SyntaxKind {
+func (n *STFunctionDefinition) Kind() SyntaxKind {
 	return n.STModuleMemberDeclarationNode.Kind()
 }
 
@@ -186,8 +184,8 @@ type STImportDeclarationNode struct {
 
 var _ STNode = &STImportDeclarationNode{}
 
-func (n *STImportDeclarationNode) Kind() common.SyntaxKind {
-	return common.IMPORT_DECLARATION
+func (n *STImportDeclarationNode) Kind() SyntaxKind {
+	return IMPORT_DECLARATION
 }
 
 func (n *STImportDeclarationNode) BucketCount() int {
@@ -267,8 +265,8 @@ type STListenerDeclarationNode struct {
 
 var _ STNode = &STListenerDeclarationNode{}
 
-func (n *STListenerDeclarationNode) Kind() common.SyntaxKind {
-	return common.LISTENER_DECLARATION
+func (n *STListenerDeclarationNode) Kind() SyntaxKind {
+	return LISTENER_DECLARATION
 }
 
 func (n *STListenerDeclarationNode) BucketCount() int {
@@ -359,8 +357,8 @@ type STTypeDefinitionNode struct {
 
 var _ STNode = &STTypeDefinitionNode{}
 
-func (n *STTypeDefinitionNode) Kind() common.SyntaxKind {
-	return common.TYPE_DEFINITION
+func (n *STTypeDefinitionNode) Kind() SyntaxKind {
+	return TYPE_DEFINITION
 }
 
 func (n *STTypeDefinitionNode) BucketCount() int {
@@ -451,8 +449,8 @@ type STServiceDeclarationNode struct {
 
 var _ STNode = &STServiceDeclarationNode{}
 
-func (n *STServiceDeclarationNode) Kind() common.SyntaxKind {
-	return common.SERVICE_DECLARATION
+func (n *STServiceDeclarationNode) Kind() SyntaxKind {
+	return SERVICE_DECLARATION
 }
 
 func (n *STServiceDeclarationNode) BucketCount() int {
@@ -556,8 +554,8 @@ type STAssignmentStatementNode struct {
 
 var _ STNode = &STAssignmentStatementNode{}
 
-func (n *STAssignmentStatementNode) Kind() common.SyntaxKind {
-	return common.ASSIGNMENT_STATEMENT
+func (n *STAssignmentStatementNode) Kind() SyntaxKind {
+	return ASSIGNMENT_STATEMENT
 }
 
 func (n *STAssignmentStatementNode) BucketCount() int {
@@ -626,8 +624,8 @@ type STCompoundAssignmentStatementNode struct {
 
 var _ STNode = &STCompoundAssignmentStatementNode{}
 
-func (n *STCompoundAssignmentStatementNode) Kind() common.SyntaxKind {
-	return common.COMPOUND_ASSIGNMENT_STATEMENT
+func (n *STCompoundAssignmentStatementNode) Kind() SyntaxKind {
+	return COMPOUND_ASSIGNMENT_STATEMENT
 }
 
 func (n *STCompoundAssignmentStatementNode) BucketCount() int {
@@ -703,8 +701,8 @@ type STVariableDeclarationNode struct {
 
 var _ STNode = &STVariableDeclarationNode{}
 
-func (n *STVariableDeclarationNode) Kind() common.SyntaxKind {
-	return common.LOCAL_VAR_DECL
+func (n *STVariableDeclarationNode) Kind() SyntaxKind {
+	return LOCAL_VAR_DECL
 }
 
 func (n *STVariableDeclarationNode) BucketCount() int {
@@ -779,8 +777,8 @@ type STBlockStatementNode struct {
 
 var _ STNode = &STBlockStatementNode{}
 
-func (n *STBlockStatementNode) Kind() common.SyntaxKind {
-	return common.BLOCK_STATEMENT
+func (n *STBlockStatementNode) Kind() SyntaxKind {
+	return BLOCK_STATEMENT
 }
 
 func (n *STBlockStatementNode) BucketCount() int {
@@ -838,8 +836,8 @@ type STBreakStatementNode struct {
 
 var _ STNode = &STBreakStatementNode{}
 
-func (n *STBreakStatementNode) Kind() common.SyntaxKind {
-	return common.BREAK_STATEMENT
+func (n *STBreakStatementNode) Kind() SyntaxKind {
+	return BREAK_STATEMENT
 }
 
 func (n *STBreakStatementNode) BucketCount() int {
@@ -894,8 +892,8 @@ type STFailStatementNode struct {
 
 var _ STNode = &STFailStatementNode{}
 
-func (n *STFailStatementNode) Kind() common.SyntaxKind {
-	return common.FAIL_STATEMENT
+func (n *STFailStatementNode) Kind() SyntaxKind {
+	return FAIL_STATEMENT
 }
 
 func (n *STFailStatementNode) BucketCount() int {
@@ -953,7 +951,7 @@ type STExpressionStatementNode struct {
 
 var _ STNode = &STExpressionStatementNode{}
 
-func (n *STExpressionStatementNode) Kind() common.SyntaxKind {
+func (n *STExpressionStatementNode) Kind() SyntaxKind {
 	return n.STStatementNode.Kind()
 }
 
@@ -1007,8 +1005,8 @@ type STContinueStatementNode struct {
 
 var _ STNode = &STContinueStatementNode{}
 
-func (n *STContinueStatementNode) Kind() common.SyntaxKind {
-	return common.CONTINUE_STATEMENT
+func (n *STContinueStatementNode) Kind() SyntaxKind {
+	return CONTINUE_STATEMENT
 }
 
 func (n *STContinueStatementNode) BucketCount() int {
@@ -1065,8 +1063,8 @@ type STExternalFunctionBodyNode struct {
 
 var _ STNode = &STExternalFunctionBodyNode{}
 
-func (n *STExternalFunctionBodyNode) Kind() common.SyntaxKind {
-	return common.EXTERNAL_FUNCTION_BODY
+func (n *STExternalFunctionBodyNode) Kind() SyntaxKind {
+	return EXTERNAL_FUNCTION_BODY
 }
 
 func (n *STExternalFunctionBodyNode) BucketCount() int {
@@ -1133,8 +1131,8 @@ type STIfElseStatementNode struct {
 
 var _ STNode = &STIfElseStatementNode{}
 
-func (n *STIfElseStatementNode) Kind() common.SyntaxKind {
-	return common.IF_ELSE_STATEMENT
+func (n *STIfElseStatementNode) Kind() SyntaxKind {
+	return IF_ELSE_STATEMENT
 }
 
 func (n *STIfElseStatementNode) BucketCount() int {
@@ -1197,8 +1195,8 @@ type STElseBlockNode struct {
 
 var _ STNode = &STElseBlockNode{}
 
-func (n *STElseBlockNode) Kind() common.SyntaxKind {
-	return common.ELSE_BLOCK
+func (n *STElseBlockNode) Kind() SyntaxKind {
+	return ELSE_BLOCK
 }
 
 func (n *STElseBlockNode) BucketCount() int {
@@ -1255,8 +1253,8 @@ type STWhileStatementNode struct {
 
 var _ STNode = &STWhileStatementNode{}
 
-func (n *STWhileStatementNode) Kind() common.SyntaxKind {
-	return common.WHILE_STATEMENT
+func (n *STWhileStatementNode) Kind() SyntaxKind {
+	return WHILE_STATEMENT
 }
 
 func (n *STWhileStatementNode) BucketCount() int {
@@ -1321,8 +1319,8 @@ type STPanicStatementNode struct {
 
 var _ STNode = &STPanicStatementNode{}
 
-func (n *STPanicStatementNode) Kind() common.SyntaxKind {
-	return common.PANIC_STATEMENT
+func (n *STPanicStatementNode) Kind() SyntaxKind {
+	return PANIC_STATEMENT
 }
 
 func (n *STPanicStatementNode) BucketCount() int {
@@ -1382,8 +1380,8 @@ type STReturnStatementNode struct {
 
 var _ STNode = &STReturnStatementNode{}
 
-func (n *STReturnStatementNode) Kind() common.SyntaxKind {
-	return common.RETURN_STATEMENT
+func (n *STReturnStatementNode) Kind() SyntaxKind {
+	return RETURN_STATEMENT
 }
 
 func (n *STReturnStatementNode) BucketCount() int {
@@ -1447,8 +1445,8 @@ type STLocalTypeDefinitionStatementNode struct {
 
 var _ STNode = &STLocalTypeDefinitionStatementNode{}
 
-func (n *STLocalTypeDefinitionStatementNode) Kind() common.SyntaxKind {
-	return common.LOCAL_TYPE_DEFINITION_STATEMENT
+func (n *STLocalTypeDefinitionStatementNode) Kind() SyntaxKind {
+	return LOCAL_TYPE_DEFINITION_STATEMENT
 }
 
 func (n *STLocalTypeDefinitionStatementNode) BucketCount() int {
@@ -1518,8 +1516,8 @@ type STLockStatementNode struct {
 
 var _ STNode = &STLockStatementNode{}
 
-func (n *STLockStatementNode) Kind() common.SyntaxKind {
-	return common.LOCK_STATEMENT
+func (n *STLockStatementNode) Kind() SyntaxKind {
+	return LOCK_STATEMENT
 }
 
 func (n *STLockStatementNode) BucketCount() int {
@@ -1581,8 +1579,8 @@ type STForkStatementNode struct {
 
 var _ STNode = &STForkStatementNode{}
 
-func (n *STForkStatementNode) Kind() common.SyntaxKind {
-	return common.FORK_STATEMENT
+func (n *STForkStatementNode) Kind() SyntaxKind {
+	return FORK_STATEMENT
 }
 
 func (n *STForkStatementNode) BucketCount() int {
@@ -1653,8 +1651,8 @@ type STForEachStatementNode struct {
 
 var _ STNode = &STForEachStatementNode{}
 
-func (n *STForEachStatementNode) Kind() common.SyntaxKind {
-	return common.FOREACH_STATEMENT
+func (n *STForEachStatementNode) Kind() SyntaxKind {
+	return FOREACH_STATEMENT
 }
 
 func (n *STForEachStatementNode) BucketCount() int {
@@ -1731,7 +1729,7 @@ type STBinaryExpressionNode struct {
 
 var _ STNode = &STBinaryExpressionNode{}
 
-func (n *STBinaryExpressionNode) Kind() common.SyntaxKind {
+func (n *STBinaryExpressionNode) Kind() SyntaxKind {
 	return n.STExpressionNode.Kind()
 }
 
@@ -1792,7 +1790,7 @@ type STBracedExpressionNode struct {
 
 var _ STNode = &STBracedExpressionNode{}
 
-func (n *STBracedExpressionNode) Kind() common.SyntaxKind {
+func (n *STBracedExpressionNode) Kind() SyntaxKind {
 	return n.STExpressionNode.Kind()
 }
 
@@ -1851,7 +1849,7 @@ type STCheckExpressionNode struct {
 
 var _ STNode = &STCheckExpressionNode{}
 
-func (n *STCheckExpressionNode) Kind() common.SyntaxKind {
+func (n *STCheckExpressionNode) Kind() SyntaxKind {
 	return n.STExpressionNode.Kind()
 }
 
@@ -1907,8 +1905,8 @@ type STFieldAccessExpressionNode struct {
 
 var _ STNode = &STFieldAccessExpressionNode{}
 
-func (n *STFieldAccessExpressionNode) Kind() common.SyntaxKind {
-	return common.FIELD_ACCESS
+func (n *STFieldAccessExpressionNode) Kind() SyntaxKind {
+	return FIELD_ACCESS
 }
 
 func (n *STFieldAccessExpressionNode) BucketCount() int {
@@ -1970,8 +1968,8 @@ type STFunctionCallExpressionNode struct {
 
 var _ STNode = &STFunctionCallExpressionNode{}
 
-func (n *STFunctionCallExpressionNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_CALL
+func (n *STFunctionCallExpressionNode) Kind() SyntaxKind {
+	return FUNCTION_CALL
 }
 
 func (n *STFunctionCallExpressionNode) BucketCount() int {
@@ -2042,8 +2040,8 @@ type STMethodCallExpressionNode struct {
 
 var _ STNode = &STMethodCallExpressionNode{}
 
-func (n *STMethodCallExpressionNode) Kind() common.SyntaxKind {
-	return common.METHOD_CALL
+func (n *STMethodCallExpressionNode) Kind() SyntaxKind {
+	return METHOD_CALL
 }
 
 func (n *STMethodCallExpressionNode) BucketCount() int {
@@ -2118,8 +2116,8 @@ type STMappingConstructorExpressionNode struct {
 
 var _ STNode = &STMappingConstructorExpressionNode{}
 
-func (n *STMappingConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.MAPPING_CONSTRUCTOR
+func (n *STMappingConstructorExpressionNode) Kind() SyntaxKind {
+	return MAPPING_CONSTRUCTOR
 }
 
 func (n *STMappingConstructorExpressionNode) BucketCount() int {
@@ -2181,8 +2179,8 @@ type STIndexedExpressionNode struct {
 
 var _ STNode = &STIndexedExpressionNode{}
 
-func (n *STIndexedExpressionNode) Kind() common.SyntaxKind {
-	return common.INDEXED_EXPRESSION
+func (n *STIndexedExpressionNode) Kind() SyntaxKind {
+	return INDEXED_EXPRESSION
 }
 
 func (n *STIndexedExpressionNode) BucketCount() int {
@@ -2245,8 +2243,8 @@ type STTypeofExpressionNode struct {
 
 var _ STNode = &STTypeofExpressionNode{}
 
-func (n *STTypeofExpressionNode) Kind() common.SyntaxKind {
-	return common.TYPEOF_EXPRESSION
+func (n *STTypeofExpressionNode) Kind() SyntaxKind {
+	return TYPEOF_EXPRESSION
 }
 
 func (n *STTypeofExpressionNode) BucketCount() int {
@@ -2299,8 +2297,8 @@ type STUnaryExpressionNode struct {
 
 var _ STNode = &STUnaryExpressionNode{}
 
-func (n *STUnaryExpressionNode) Kind() common.SyntaxKind {
-	return common.UNARY_EXPRESSION
+func (n *STUnaryExpressionNode) Kind() SyntaxKind {
+	return UNARY_EXPRESSION
 }
 
 func (n *STUnaryExpressionNode) BucketCount() int {
@@ -2359,8 +2357,8 @@ type STComputedNameFieldNode struct {
 
 var _ STNode = &STComputedNameFieldNode{}
 
-func (n *STComputedNameFieldNode) Kind() common.SyntaxKind {
-	return common.COMPUTED_NAME_FIELD
+func (n *STComputedNameFieldNode) Kind() SyntaxKind {
+	return COMPUTED_NAME_FIELD
 }
 
 func (n *STComputedNameFieldNode) BucketCount() int {
@@ -2440,8 +2438,8 @@ type STConstantDeclarationNode struct {
 
 var _ STNode = &STConstantDeclarationNode{}
 
-func (n *STConstantDeclarationNode) Kind() common.SyntaxKind {
-	return common.CONST_DECLARATION
+func (n *STConstantDeclarationNode) Kind() SyntaxKind {
+	return CONST_DECLARATION
 }
 
 func (n *STConstantDeclarationNode) BucketCount() int {
@@ -2532,8 +2530,8 @@ type STDefaultableParameterNode struct {
 
 var _ STNode = &STDefaultableParameterNode{}
 
-func (n *STDefaultableParameterNode) Kind() common.SyntaxKind {
-	return common.DEFAULTABLE_PARAM
+func (n *STDefaultableParameterNode) Kind() SyntaxKind {
+	return DEFAULTABLE_PARAM
 }
 
 func (n *STDefaultableParameterNode) BucketCount() int {
@@ -2603,8 +2601,8 @@ type STRequiredParameterNode struct {
 
 var _ STNode = &STRequiredParameterNode{}
 
-func (n *STRequiredParameterNode) Kind() common.SyntaxKind {
-	return common.REQUIRED_PARAM
+func (n *STRequiredParameterNode) Kind() SyntaxKind {
+	return REQUIRED_PARAM
 }
 
 func (n *STRequiredParameterNode) BucketCount() int {
@@ -2666,8 +2664,8 @@ type STIncludedRecordParameterNode struct {
 
 var _ STNode = &STIncludedRecordParameterNode{}
 
-func (n *STIncludedRecordParameterNode) Kind() common.SyntaxKind {
-	return common.INCLUDED_RECORD_PARAM
+func (n *STIncludedRecordParameterNode) Kind() SyntaxKind {
+	return INCLUDED_RECORD_PARAM
 }
 
 func (n *STIncludedRecordParameterNode) BucketCount() int {
@@ -2734,8 +2732,8 @@ type STRestParameterNode struct {
 
 var _ STNode = &STRestParameterNode{}
 
-func (n *STRestParameterNode) Kind() common.SyntaxKind {
-	return common.REST_PARAM
+func (n *STRestParameterNode) Kind() SyntaxKind {
+	return REST_PARAM
 }
 
 func (n *STRestParameterNode) BucketCount() int {
@@ -2798,8 +2796,8 @@ type STImportOrgNameNode struct {
 
 var _ STNode = &STImportOrgNameNode{}
 
-func (n *STImportOrgNameNode) Kind() common.SyntaxKind {
-	return common.IMPORT_ORG_NAME
+func (n *STImportOrgNameNode) Kind() SyntaxKind {
+	return IMPORT_ORG_NAME
 }
 
 func (n *STImportOrgNameNode) BucketCount() int {
@@ -2852,8 +2850,8 @@ type STImportPrefixNode struct {
 
 var _ STNode = &STImportPrefixNode{}
 
-func (n *STImportPrefixNode) Kind() common.SyntaxKind {
-	return common.IMPORT_PREFIX
+func (n *STImportPrefixNode) Kind() SyntaxKind {
+	return IMPORT_PREFIX
 }
 
 func (n *STImportPrefixNode) BucketCount() int {
@@ -2912,8 +2910,8 @@ type STSpecificFieldNode struct {
 
 var _ STNode = &STSpecificFieldNode{}
 
-func (n *STSpecificFieldNode) Kind() common.SyntaxKind {
-	return common.SPECIFIC_FIELD
+func (n *STSpecificFieldNode) Kind() SyntaxKind {
+	return SPECIFIC_FIELD
 }
 
 func (n *STSpecificFieldNode) BucketCount() int {
@@ -2976,8 +2974,8 @@ type STSpreadFieldNode struct {
 
 var _ STNode = &STSpreadFieldNode{}
 
-func (n *STSpreadFieldNode) Kind() common.SyntaxKind {
-	return common.SPREAD_FIELD
+func (n *STSpreadFieldNode) Kind() SyntaxKind {
+	return SPREAD_FIELD
 }
 
 func (n *STSpreadFieldNode) BucketCount() int {
@@ -3034,8 +3032,8 @@ type STNamedArgumentNode struct {
 
 var _ STNode = &STNamedArgumentNode{}
 
-func (n *STNamedArgumentNode) Kind() common.SyntaxKind {
-	return common.NAMED_ARG
+func (n *STNamedArgumentNode) Kind() SyntaxKind {
+	return NAMED_ARG
 }
 
 func (n *STNamedArgumentNode) BucketCount() int {
@@ -3091,8 +3089,8 @@ type STPositionalArgumentNode struct {
 
 var _ STNode = &STPositionalArgumentNode{}
 
-func (n *STPositionalArgumentNode) Kind() common.SyntaxKind {
-	return common.POSITIONAL_ARG
+func (n *STPositionalArgumentNode) Kind() SyntaxKind {
+	return POSITIONAL_ARG
 }
 
 func (n *STPositionalArgumentNode) BucketCount() int {
@@ -3140,8 +3138,8 @@ type STRestArgumentNode struct {
 
 var _ STNode = &STRestArgumentNode{}
 
-func (n *STRestArgumentNode) Kind() common.SyntaxKind {
-	return common.REST_ARG
+func (n *STRestArgumentNode) Kind() SyntaxKind {
+	return REST_ARG
 }
 
 func (n *STRestArgumentNode) BucketCount() int {
@@ -3194,8 +3192,8 @@ type STInferredTypedescDefaultNode struct {
 
 var _ STNode = &STInferredTypedescDefaultNode{}
 
-func (n *STInferredTypedescDefaultNode) Kind() common.SyntaxKind {
-	return common.INFERRED_TYPEDESC_DEFAULT
+func (n *STInferredTypedescDefaultNode) Kind() SyntaxKind {
+	return INFERRED_TYPEDESC_DEFAULT
 }
 
 func (n *STInferredTypedescDefaultNode) BucketCount() int {
@@ -3254,8 +3252,8 @@ type STObjectTypeDescriptorNode struct {
 
 var _ STNode = &STObjectTypeDescriptorNode{}
 
-func (n *STObjectTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.OBJECT_TYPE_DESC
+func (n *STObjectTypeDescriptorNode) Kind() SyntaxKind {
+	return OBJECT_TYPE_DESC
 }
 
 func (n *STObjectTypeDescriptorNode) BucketCount() int {
@@ -3333,8 +3331,8 @@ type STObjectConstructorExpressionNode struct {
 
 var _ STNode = &STObjectConstructorExpressionNode{}
 
-func (n *STObjectConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.OBJECT_CONSTRUCTOR
+func (n *STObjectConstructorExpressionNode) Kind() SyntaxKind {
+	return OBJECT_CONSTRUCTOR
 }
 
 func (n *STObjectConstructorExpressionNode) BucketCount() int {
@@ -3418,8 +3416,8 @@ type STRecordTypeDescriptorNode struct {
 
 var _ STNode = &STRecordTypeDescriptorNode{}
 
-func (n *STRecordTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.RECORD_TYPE_DESC
+func (n *STRecordTypeDescriptorNode) Kind() SyntaxKind {
+	return RECORD_TYPE_DESC
 }
 
 func (n *STRecordTypeDescriptorNode) BucketCount() int {
@@ -3489,8 +3487,8 @@ type STReturnTypeDescriptorNode struct {
 
 var _ STNode = &STReturnTypeDescriptorNode{}
 
-func (n *STReturnTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.RETURN_TYPE_DESCRIPTOR
+func (n *STReturnTypeDescriptorNode) Kind() SyntaxKind {
+	return RETURN_TYPE_DESCRIPTOR
 }
 
 func (n *STReturnTypeDescriptorNode) BucketCount() int {
@@ -3548,8 +3546,8 @@ type STNilTypeDescriptorNode struct {
 
 var _ STNode = &STNilTypeDescriptorNode{}
 
-func (n *STNilTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.NIL_TYPE_DESC
+func (n *STNilTypeDescriptorNode) Kind() SyntaxKind {
+	return NIL_TYPE_DESC
 }
 
 func (n *STNilTypeDescriptorNode) BucketCount() int {
@@ -3602,8 +3600,8 @@ type STOptionalTypeDescriptorNode struct {
 
 var _ STNode = &STOptionalTypeDescriptorNode{}
 
-func (n *STOptionalTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.OPTIONAL_TYPE_DESC
+func (n *STOptionalTypeDescriptorNode) Kind() SyntaxKind {
+	return OPTIONAL_TYPE_DESC
 }
 
 func (n *STOptionalTypeDescriptorNode) BucketCount() int {
@@ -3668,8 +3666,8 @@ type STObjectFieldNode struct {
 
 var _ STNode = &STObjectFieldNode{}
 
-func (n *STObjectFieldNode) Kind() common.SyntaxKind {
-	return common.OBJECT_FIELD
+func (n *STObjectFieldNode) Kind() SyntaxKind {
+	return OBJECT_FIELD
 }
 
 func (n *STObjectFieldNode) BucketCount() int {
@@ -3760,8 +3758,8 @@ type STRecordFieldNode struct {
 
 var _ STNode = &STRecordFieldNode{}
 
-func (n *STRecordFieldNode) Kind() common.SyntaxKind {
-	return common.RECORD_FIELD
+func (n *STRecordFieldNode) Kind() SyntaxKind {
+	return RECORD_FIELD
 }
 
 func (n *STRecordFieldNode) BucketCount() int {
@@ -3844,8 +3842,8 @@ type STRecordFieldWithDefaultValueNode struct {
 
 var _ STNode = &STRecordFieldWithDefaultValueNode{}
 
-func (n *STRecordFieldWithDefaultValueNode) Kind() common.SyntaxKind {
-	return common.RECORD_FIELD_WITH_DEFAULT_VALUE
+func (n *STRecordFieldWithDefaultValueNode) Kind() SyntaxKind {
+	return RECORD_FIELD_WITH_DEFAULT_VALUE
 }
 
 func (n *STRecordFieldWithDefaultValueNode) BucketCount() int {
@@ -3925,8 +3923,8 @@ type STRecordRestDescriptorNode struct {
 
 var _ STNode = &STRecordRestDescriptorNode{}
 
-func (n *STRecordRestDescriptorNode) Kind() common.SyntaxKind {
-	return common.RECORD_REST_TYPE
+func (n *STRecordRestDescriptorNode) Kind() SyntaxKind {
+	return RECORD_REST_TYPE
 }
 
 func (n *STRecordRestDescriptorNode) BucketCount() int {
@@ -3986,8 +3984,8 @@ type STTypeReferenceNode struct {
 
 var _ STNode = &STTypeReferenceNode{}
 
-func (n *STTypeReferenceNode) Kind() common.SyntaxKind {
-	return common.TYPE_REFERENCE
+func (n *STTypeReferenceNode) Kind() SyntaxKind {
+	return TYPE_REFERENCE
 }
 
 func (n *STTypeReferenceNode) BucketCount() int {
@@ -4047,8 +4045,8 @@ type STAnnotationNode struct {
 
 var _ STNode = &STAnnotationNode{}
 
-func (n *STAnnotationNode) Kind() common.SyntaxKind {
-	return common.ANNOTATION
+func (n *STAnnotationNode) Kind() SyntaxKind {
+	return ANNOTATION
 }
 
 func (n *STAnnotationNode) BucketCount() int {
@@ -4106,8 +4104,8 @@ type STMetadataNode struct {
 
 var _ STNode = &STMetadataNode{}
 
-func (n *STMetadataNode) Kind() common.SyntaxKind {
-	return common.METADATA
+func (n *STMetadataNode) Kind() SyntaxKind {
+	return METADATA
 }
 
 func (n *STMetadataNode) BucketCount() int {
@@ -4170,8 +4168,8 @@ type STModuleVariableDeclarationNode struct {
 
 var _ STNode = &STModuleVariableDeclarationNode{}
 
-func (n *STModuleVariableDeclarationNode) Kind() common.SyntaxKind {
-	return common.MODULE_VAR_DECL
+func (n *STModuleVariableDeclarationNode) Kind() SyntaxKind {
+	return MODULE_VAR_DECL
 }
 
 func (n *STModuleVariableDeclarationNode) BucketCount() int {
@@ -4251,8 +4249,8 @@ type STTypeTestExpressionNode struct {
 
 var _ STNode = &STTypeTestExpressionNode{}
 
-func (n *STTypeTestExpressionNode) Kind() common.SyntaxKind {
-	return common.TYPE_TEST_EXPRESSION
+func (n *STTypeTestExpressionNode) Kind() SyntaxKind {
+	return TYPE_TEST_EXPRESSION
 }
 
 func (n *STTypeTestExpressionNode) BucketCount() int {
@@ -4320,8 +4318,8 @@ type STRemoteMethodCallActionNode struct {
 
 var _ STNode = &STRemoteMethodCallActionNode{}
 
-func (n *STRemoteMethodCallActionNode) Kind() common.SyntaxKind {
-	return common.REMOTE_METHOD_CALL_ACTION
+func (n *STRemoteMethodCallActionNode) Kind() SyntaxKind {
+	return REMOTE_METHOD_CALL_ACTION
 }
 
 func (n *STRemoteMethodCallActionNode) BucketCount() int {
@@ -4394,8 +4392,8 @@ type STMapTypeDescriptorNode struct {
 
 var _ STNode = &STMapTypeDescriptorNode{}
 
-func (n *STMapTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.MAP_TYPE_DESC
+func (n *STMapTypeDescriptorNode) Kind() SyntaxKind {
+	return MAP_TYPE_DESC
 }
 
 func (n *STMapTypeDescriptorNode) BucketCount() int {
@@ -4448,8 +4446,8 @@ type STNilLiteralNode struct {
 
 var _ STNode = &STNilLiteralNode{}
 
-func (n *STNilLiteralNode) Kind() common.SyntaxKind {
-	return common.NIL_LITERAL
+func (n *STNilLiteralNode) Kind() SyntaxKind {
+	return NIL_LITERAL
 }
 
 func (n *STNilLiteralNode) BucketCount() int {
@@ -4516,8 +4514,8 @@ type STAnnotationDeclarationNode struct {
 
 var _ STNode = &STAnnotationDeclarationNode{}
 
-func (n *STAnnotationDeclarationNode) Kind() common.SyntaxKind {
-	return common.ANNOTATION_DECLARATION
+func (n *STAnnotationDeclarationNode) Kind() SyntaxKind {
+	return ANNOTATION_DECLARATION
 }
 
 func (n *STAnnotationDeclarationNode) BucketCount() int {
@@ -4605,8 +4603,8 @@ type STAnnotationAttachPointNode struct {
 
 var _ STNode = &STAnnotationAttachPointNode{}
 
-func (n *STAnnotationAttachPointNode) Kind() common.SyntaxKind {
-	return common.ANNOTATION_ATTACH_POINT
+func (n *STAnnotationAttachPointNode) Kind() SyntaxKind {
+	return ANNOTATION_ATTACH_POINT
 }
 
 func (n *STAnnotationAttachPointNode) BucketCount() int {
@@ -4665,8 +4663,8 @@ type STXMLNamespaceDeclarationNode struct {
 
 var _ STNode = &STXMLNamespaceDeclarationNode{}
 
-func (n *STXMLNamespaceDeclarationNode) Kind() common.SyntaxKind {
-	return common.XML_NAMESPACE_DECLARATION
+func (n *STXMLNamespaceDeclarationNode) Kind() SyntaxKind {
+	return XML_NAMESPACE_DECLARATION
 }
 
 func (n *STXMLNamespaceDeclarationNode) BucketCount() int {
@@ -4740,8 +4738,8 @@ type STModuleXMLNamespaceDeclarationNode struct {
 
 var _ STNode = &STModuleXMLNamespaceDeclarationNode{}
 
-func (n *STModuleXMLNamespaceDeclarationNode) Kind() common.SyntaxKind {
-	return common.MODULE_XML_NAMESPACE_DECLARATION
+func (n *STModuleXMLNamespaceDeclarationNode) Kind() SyntaxKind {
+	return MODULE_XML_NAMESPACE_DECLARATION
 }
 
 func (n *STModuleXMLNamespaceDeclarationNode) BucketCount() int {
@@ -4815,8 +4813,8 @@ type STFunctionBodyBlockNode struct {
 
 var _ STNode = &STFunctionBodyBlockNode{}
 
-func (n *STFunctionBodyBlockNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_BODY_BLOCK
+func (n *STFunctionBodyBlockNode) Kind() SyntaxKind {
+	return FUNCTION_BODY_BLOCK
 }
 
 func (n *STFunctionBodyBlockNode) BucketCount() int {
@@ -4894,8 +4892,8 @@ type STNamedWorkerDeclarationNode struct {
 
 var _ STNode = &STNamedWorkerDeclarationNode{}
 
-func (n *STNamedWorkerDeclarationNode) Kind() common.SyntaxKind {
-	return common.NAMED_WORKER_DECLARATION
+func (n *STNamedWorkerDeclarationNode) Kind() SyntaxKind {
+	return NAMED_WORKER_DECLARATION
 }
 
 func (n *STNamedWorkerDeclarationNode) BucketCount() int {
@@ -4973,8 +4971,8 @@ type STNamedWorkerDeclarator struct {
 
 var _ STNode = &STNamedWorkerDeclarator{}
 
-func (n *STNamedWorkerDeclarator) Kind() common.SyntaxKind {
-	return common.NAMED_WORKER_DECLARATOR
+func (n *STNamedWorkerDeclarator) Kind() SyntaxKind {
+	return NAMED_WORKER_DECLARATOR
 }
 
 func (n *STNamedWorkerDeclarator) BucketCount() int {
@@ -5025,7 +5023,7 @@ type STBasicLiteralNode struct {
 
 var _ STNode = &STBasicLiteralNode{}
 
-func (n *STBasicLiteralNode) Kind() common.SyntaxKind {
+func (n *STBasicLiteralNode) Kind() SyntaxKind {
 	return n.STExpressionNode.Kind()
 }
 
@@ -5076,8 +5074,8 @@ type STSimpleNameReferenceNode struct {
 
 var _ STNode = &STSimpleNameReferenceNode{}
 
-func (n *STSimpleNameReferenceNode) Kind() common.SyntaxKind {
-	return common.SIMPLE_NAME_REFERENCE
+func (n *STSimpleNameReferenceNode) Kind() SyntaxKind {
+	return SIMPLE_NAME_REFERENCE
 }
 
 func (n *STSimpleNameReferenceNode) BucketCount() int {
@@ -5127,8 +5125,8 @@ type STQualifiedNameReferenceNode struct {
 
 var _ STNode = &STQualifiedNameReferenceNode{}
 
-func (n *STQualifiedNameReferenceNode) Kind() common.SyntaxKind {
-	return common.QUALIFIED_NAME_REFERENCE
+func (n *STQualifiedNameReferenceNode) Kind() SyntaxKind {
+	return QUALIFIED_NAME_REFERENCE
 }
 
 func (n *STQualifiedNameReferenceNode) BucketCount() int {
@@ -5184,7 +5182,7 @@ type STBuiltinSimpleNameReferenceNode struct {
 
 var _ STNode = &STBuiltinSimpleNameReferenceNode{}
 
-func (n *STBuiltinSimpleNameReferenceNode) Kind() common.SyntaxKind {
+func (n *STBuiltinSimpleNameReferenceNode) Kind() SyntaxKind {
 	return n.STNameReferenceNode.Kind()
 }
 
@@ -5233,7 +5231,7 @@ type STTrapExpressionNode struct {
 
 var _ STNode = &STTrapExpressionNode{}
 
-func (n *STTrapExpressionNode) Kind() common.SyntaxKind {
+func (n *STTrapExpressionNode) Kind() SyntaxKind {
 	return n.STExpressionNode.Kind()
 }
 
@@ -5289,8 +5287,8 @@ type STListConstructorExpressionNode struct {
 
 var _ STNode = &STListConstructorExpressionNode{}
 
-func (n *STListConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.LIST_CONSTRUCTOR
+func (n *STListConstructorExpressionNode) Kind() SyntaxKind {
+	return LIST_CONSTRUCTOR
 }
 
 func (n *STListConstructorExpressionNode) BucketCount() int {
@@ -5352,8 +5350,8 @@ type STTypeCastExpressionNode struct {
 
 var _ STNode = &STTypeCastExpressionNode{}
 
-func (n *STTypeCastExpressionNode) Kind() common.SyntaxKind {
-	return common.TYPE_CAST_EXPRESSION
+func (n *STTypeCastExpressionNode) Kind() SyntaxKind {
+	return TYPE_CAST_EXPRESSION
 }
 
 func (n *STTypeCastExpressionNode) BucketCount() int {
@@ -5416,8 +5414,8 @@ type STTypeCastParamNode struct {
 
 var _ STNode = &STTypeCastParamNode{}
 
-func (n *STTypeCastParamNode) Kind() common.SyntaxKind {
-	return common.TYPE_CAST_PARAM
+func (n *STTypeCastParamNode) Kind() SyntaxKind {
+	return TYPE_CAST_PARAM
 }
 
 func (n *STTypeCastParamNode) BucketCount() int {
@@ -5472,8 +5470,8 @@ type STUnionTypeDescriptorNode struct {
 
 var _ STNode = &STUnionTypeDescriptorNode{}
 
-func (n *STUnionTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.UNION_TYPE_DESC
+func (n *STUnionTypeDescriptorNode) Kind() SyntaxKind {
+	return UNION_TYPE_DESC
 }
 
 func (n *STUnionTypeDescriptorNode) BucketCount() int {
@@ -5537,8 +5535,8 @@ type STTableConstructorExpressionNode struct {
 
 var _ STNode = &STTableConstructorExpressionNode{}
 
-func (n *STTableConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.TABLE_CONSTRUCTOR
+func (n *STTableConstructorExpressionNode) Kind() SyntaxKind {
+	return TABLE_CONSTRUCTOR
 }
 
 func (n *STTableConstructorExpressionNode) BucketCount() int {
@@ -5610,8 +5608,8 @@ type STKeySpecifierNode struct {
 
 var _ STNode = &STKeySpecifierNode{}
 
-func (n *STKeySpecifierNode) Kind() common.SyntaxKind {
-	return common.KEY_SPECIFIER
+func (n *STKeySpecifierNode) Kind() SyntaxKind {
+	return KEY_SPECIFIER
 }
 
 func (n *STKeySpecifierNode) BucketCount() int {
@@ -5674,8 +5672,8 @@ type STStreamTypeDescriptorNode struct {
 
 var _ STNode = &STStreamTypeDescriptorNode{}
 
-func (n *STStreamTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.STREAM_TYPE_DESC
+func (n *STStreamTypeDescriptorNode) Kind() SyntaxKind {
+	return STREAM_TYPE_DESC
 }
 
 func (n *STStreamTypeDescriptorNode) BucketCount() int {
@@ -5734,8 +5732,8 @@ type STStreamTypeParamsNode struct {
 
 var _ STNode = &STStreamTypeParamsNode{}
 
-func (n *STStreamTypeParamsNode) Kind() common.SyntaxKind {
-	return common.STREAM_TYPE_PARAMS
+func (n *STStreamTypeParamsNode) Kind() SyntaxKind {
+	return STREAM_TYPE_PARAMS
 }
 
 func (n *STStreamTypeParamsNode) BucketCount() int {
@@ -5807,8 +5805,8 @@ type STLetExpressionNode struct {
 
 var _ STNode = &STLetExpressionNode{}
 
-func (n *STLetExpressionNode) Kind() common.SyntaxKind {
-	return common.LET_EXPRESSION
+func (n *STLetExpressionNode) Kind() SyntaxKind {
+	return LET_EXPRESSION
 }
 
 func (n *STLetExpressionNode) BucketCount() int {
@@ -5875,8 +5873,8 @@ type STLetVariableDeclarationNode struct {
 
 var _ STNode = &STLetVariableDeclarationNode{}
 
-func (n *STLetVariableDeclarationNode) Kind() common.SyntaxKind {
-	return common.LET_VAR_DECL
+func (n *STLetVariableDeclarationNode) Kind() SyntaxKind {
+	return LET_VAR_DECL
 }
 
 func (n *STLetVariableDeclarationNode) BucketCount() int {
@@ -5943,7 +5941,7 @@ type STTemplateExpressionNode struct {
 
 var _ STNode = &STTemplateExpressionNode{}
 
-func (n *STTemplateExpressionNode) Kind() common.SyntaxKind {
+func (n *STTemplateExpressionNode) Kind() SyntaxKind {
 	return n.STExpressionNode.Kind()
 }
 
@@ -6011,8 +6009,8 @@ type STXMLElementNode struct {
 
 var _ STNode = &STXMLElementNode{}
 
-func (n *STXMLElementNode) Kind() common.SyntaxKind {
-	return common.XML_ELEMENT
+func (n *STXMLElementNode) Kind() SyntaxKind {
+	return XML_ELEMENT
 }
 
 func (n *STXMLElementNode) BucketCount() int {
@@ -6076,8 +6074,8 @@ type STXMLStartTagNode struct {
 
 var _ STNode = &STXMLStartTagNode{}
 
-func (n *STXMLStartTagNode) Kind() common.SyntaxKind {
-	return common.XML_ELEMENT_START_TAG
+func (n *STXMLStartTagNode) Kind() SyntaxKind {
+	return XML_ELEMENT_START_TAG
 }
 
 func (n *STXMLStartTagNode) BucketCount() int {
@@ -6144,8 +6142,8 @@ type STXMLEndTagNode struct {
 
 var _ STNode = &STXMLEndTagNode{}
 
-func (n *STXMLEndTagNode) Kind() common.SyntaxKind {
-	return common.XML_ELEMENT_END_TAG
+func (n *STXMLEndTagNode) Kind() SyntaxKind {
+	return XML_ELEMENT_END_TAG
 }
 
 func (n *STXMLEndTagNode) BucketCount() int {
@@ -6208,8 +6206,8 @@ type STXMLSimpleNameNode struct {
 
 var _ STNode = &STXMLSimpleNameNode{}
 
-func (n *STXMLSimpleNameNode) Kind() common.SyntaxKind {
-	return common.XML_SIMPLE_NAME
+func (n *STXMLSimpleNameNode) Kind() SyntaxKind {
+	return XML_SIMPLE_NAME
 }
 
 func (n *STXMLSimpleNameNode) BucketCount() int {
@@ -6259,8 +6257,8 @@ type STXMLQualifiedNameNode struct {
 
 var _ STNode = &STXMLQualifiedNameNode{}
 
-func (n *STXMLQualifiedNameNode) Kind() common.SyntaxKind {
-	return common.XML_QUALIFIED_NAME
+func (n *STXMLQualifiedNameNode) Kind() SyntaxKind {
+	return XML_QUALIFIED_NAME
 }
 
 func (n *STXMLQualifiedNameNode) BucketCount() int {
@@ -6324,8 +6322,8 @@ type STXMLEmptyElementNode struct {
 
 var _ STNode = &STXMLEmptyElementNode{}
 
-func (n *STXMLEmptyElementNode) Kind() common.SyntaxKind {
-	return common.XML_EMPTY_ELEMENT
+func (n *STXMLEmptyElementNode) Kind() SyntaxKind {
+	return XML_EMPTY_ELEMENT
 }
 
 func (n *STXMLEmptyElementNode) BucketCount() int {
@@ -6395,8 +6393,8 @@ type STInterpolationNode struct {
 
 var _ STNode = &STInterpolationNode{}
 
-func (n *STInterpolationNode) Kind() common.SyntaxKind {
-	return common.INTERPOLATION
+func (n *STInterpolationNode) Kind() SyntaxKind {
+	return INTERPOLATION
 }
 
 func (n *STInterpolationNode) BucketCount() int {
@@ -6452,8 +6450,8 @@ type STXMLTextNode struct {
 
 var _ STNode = &STXMLTextNode{}
 
-func (n *STXMLTextNode) Kind() common.SyntaxKind {
-	return common.XML_TEXT
+func (n *STXMLTextNode) Kind() SyntaxKind {
+	return XML_TEXT
 }
 
 func (n *STXMLTextNode) BucketCount() int {
@@ -6503,8 +6501,8 @@ type STXMLAttributeNode struct {
 
 var _ STNode = &STXMLAttributeNode{}
 
-func (n *STXMLAttributeNode) Kind() common.SyntaxKind {
-	return common.XML_ATTRIBUTE
+func (n *STXMLAttributeNode) Kind() SyntaxKind {
+	return XML_ATTRIBUTE
 }
 
 func (n *STXMLAttributeNode) BucketCount() int {
@@ -6564,8 +6562,8 @@ type STXMLAttributeValue struct {
 
 var _ STNode = &STXMLAttributeValue{}
 
-func (n *STXMLAttributeValue) Kind() common.SyntaxKind {
-	return common.XML_ATTRIBUTE_VALUE
+func (n *STXMLAttributeValue) Kind() SyntaxKind {
+	return XML_ATTRIBUTE_VALUE
 }
 
 func (n *STXMLAttributeValue) BucketCount() int {
@@ -6625,8 +6623,8 @@ type STXMLComment struct {
 
 var _ STNode = &STXMLComment{}
 
-func (n *STXMLComment) Kind() common.SyntaxKind {
-	return common.XML_COMMENT
+func (n *STXMLComment) Kind() SyntaxKind {
+	return XML_COMMENT
 }
 
 func (n *STXMLComment) BucketCount() int {
@@ -6686,8 +6684,8 @@ type STXMLCDATANode struct {
 
 var _ STNode = &STXMLCDATANode{}
 
-func (n *STXMLCDATANode) Kind() common.SyntaxKind {
-	return common.XML_CDATA
+func (n *STXMLCDATANode) Kind() SyntaxKind {
+	return XML_CDATA
 }
 
 func (n *STXMLCDATANode) BucketCount() int {
@@ -6749,8 +6747,8 @@ type STXMLProcessingInstruction struct {
 
 var _ STNode = &STXMLProcessingInstruction{}
 
-func (n *STXMLProcessingInstruction) Kind() common.SyntaxKind {
-	return common.XML_PI
+func (n *STXMLProcessingInstruction) Kind() SyntaxKind {
+	return XML_PI
 }
 
 func (n *STXMLProcessingInstruction) BucketCount() int {
@@ -6815,8 +6813,8 @@ type STTableTypeDescriptorNode struct {
 
 var _ STNode = &STTableTypeDescriptorNode{}
 
-func (n *STTableTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.TABLE_TYPE_DESC
+func (n *STTableTypeDescriptorNode) Kind() SyntaxKind {
+	return TABLE_TYPE_DESC
 }
 
 func (n *STTableTypeDescriptorNode) BucketCount() int {
@@ -6876,8 +6874,8 @@ type STTypeParameterNode struct {
 
 var _ STNode = &STTypeParameterNode{}
 
-func (n *STTypeParameterNode) Kind() common.SyntaxKind {
-	return common.TYPE_PARAMETER
+func (n *STTypeParameterNode) Kind() SyntaxKind {
+	return TYPE_PARAMETER
 }
 
 func (n *STTypeParameterNode) BucketCount() int {
@@ -6935,8 +6933,8 @@ type STKeyTypeConstraintNode struct {
 
 var _ STNode = &STKeyTypeConstraintNode{}
 
-func (n *STKeyTypeConstraintNode) Kind() common.SyntaxKind {
-	return common.KEY_TYPE_CONSTRAINT
+func (n *STKeyTypeConstraintNode) Kind() SyntaxKind {
+	return KEY_TYPE_CONSTRAINT
 }
 
 func (n *STKeyTypeConstraintNode) BucketCount() int {
@@ -6991,8 +6989,8 @@ type STFunctionTypeDescriptorNode struct {
 
 var _ STNode = &STFunctionTypeDescriptorNode{}
 
-func (n *STFunctionTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_TYPE_DESC
+func (n *STFunctionTypeDescriptorNode) Kind() SyntaxKind {
+	return FUNCTION_TYPE_DESC
 }
 
 func (n *STFunctionTypeDescriptorNode) BucketCount() int {
@@ -7054,8 +7052,8 @@ type STFunctionSignatureNode struct {
 
 var _ STNode = &STFunctionSignatureNode{}
 
-func (n *STFunctionSignatureNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_SIGNATURE
+func (n *STFunctionSignatureNode) Kind() SyntaxKind {
+	return FUNCTION_SIGNATURE
 }
 
 func (n *STFunctionSignatureNode) BucketCount() int {
@@ -7126,8 +7124,8 @@ type STExplicitAnonymousFunctionExpressionNode struct {
 
 var _ STNode = &STExplicitAnonymousFunctionExpressionNode{}
 
-func (n *STExplicitAnonymousFunctionExpressionNode) Kind() common.SyntaxKind {
-	return common.EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
+func (n *STExplicitAnonymousFunctionExpressionNode) Kind() SyntaxKind {
+	return EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
 }
 
 func (n *STExplicitAnonymousFunctionExpressionNode) BucketCount() int {
@@ -7199,8 +7197,8 @@ type STExpressionFunctionBodyNode struct {
 
 var _ STNode = &STExpressionFunctionBodyNode{}
 
-func (n *STExpressionFunctionBodyNode) Kind() common.SyntaxKind {
-	return common.EXPRESSION_FUNCTION_BODY
+func (n *STExpressionFunctionBodyNode) Kind() SyntaxKind {
+	return EXPRESSION_FUNCTION_BODY
 }
 
 func (n *STExpressionFunctionBodyNode) BucketCount() int {
@@ -7260,8 +7258,8 @@ type STTupleTypeDescriptorNode struct {
 
 var _ STNode = &STTupleTypeDescriptorNode{}
 
-func (n *STTupleTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.TUPLE_TYPE_DESC
+func (n *STTupleTypeDescriptorNode) Kind() SyntaxKind {
+	return TUPLE_TYPE_DESC
 }
 
 func (n *STTupleTypeDescriptorNode) BucketCount() int {
@@ -7321,8 +7319,8 @@ type STParenthesisedTypeDescriptorNode struct {
 
 var _ STNode = &STParenthesisedTypeDescriptorNode{}
 
-func (n *STParenthesisedTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.PARENTHESISED_TYPE_DESC
+func (n *STParenthesisedTypeDescriptorNode) Kind() SyntaxKind {
+	return PARENTHESISED_TYPE_DESC
 }
 
 func (n *STParenthesisedTypeDescriptorNode) BucketCount() int {
@@ -7384,8 +7382,8 @@ type STExplicitNewExpressionNode struct {
 
 var _ STNode = &STExplicitNewExpressionNode{}
 
-func (n *STExplicitNewExpressionNode) Kind() common.SyntaxKind {
-	return common.EXPLICIT_NEW_EXPRESSION
+func (n *STExplicitNewExpressionNode) Kind() SyntaxKind {
+	return EXPLICIT_NEW_EXPRESSION
 }
 
 func (n *STExplicitNewExpressionNode) BucketCount() int {
@@ -7443,8 +7441,8 @@ type STImplicitNewExpressionNode struct {
 
 var _ STNode = &STImplicitNewExpressionNode{}
 
-func (n *STImplicitNewExpressionNode) Kind() common.SyntaxKind {
-	return common.IMPLICIT_NEW_EXPRESSION
+func (n *STImplicitNewExpressionNode) Kind() SyntaxKind {
+	return IMPLICIT_NEW_EXPRESSION
 }
 
 func (n *STImplicitNewExpressionNode) BucketCount() int {
@@ -7499,8 +7497,8 @@ type STParenthesizedArgList struct {
 
 var _ STNode = &STParenthesizedArgList{}
 
-func (n *STParenthesizedArgList) Kind() common.SyntaxKind {
-	return common.PARENTHESIZED_ARG_LIST
+func (n *STParenthesizedArgList) Kind() SyntaxKind {
+	return PARENTHESIZED_ARG_LIST
 }
 
 func (n *STParenthesizedArgList) BucketCount() int {
@@ -7562,8 +7560,8 @@ type STQueryConstructTypeNode struct {
 
 var _ STNode = &STQueryConstructTypeNode{}
 
-func (n *STQueryConstructTypeNode) Kind() common.SyntaxKind {
-	return common.QUERY_CONSTRUCT_TYPE
+func (n *STQueryConstructTypeNode) Kind() SyntaxKind {
+	return QUERY_CONSTRUCT_TYPE
 }
 
 func (n *STQueryConstructTypeNode) BucketCount() int {
@@ -7620,8 +7618,8 @@ type STFromClauseNode struct {
 
 var _ STNode = &STFromClauseNode{}
 
-func (n *STFromClauseNode) Kind() common.SyntaxKind {
-	return common.FROM_CLAUSE
+func (n *STFromClauseNode) Kind() SyntaxKind {
+	return FROM_CLAUSE
 }
 
 func (n *STFromClauseNode) BucketCount() int {
@@ -7684,8 +7682,8 @@ type STWhereClauseNode struct {
 
 var _ STNode = &STWhereClauseNode{}
 
-func (n *STWhereClauseNode) Kind() common.SyntaxKind {
-	return common.WHERE_CLAUSE
+func (n *STWhereClauseNode) Kind() SyntaxKind {
+	return WHERE_CLAUSE
 }
 
 func (n *STWhereClauseNode) BucketCount() int {
@@ -7738,8 +7736,8 @@ type STLetClauseNode struct {
 
 var _ STNode = &STLetClauseNode{}
 
-func (n *STLetClauseNode) Kind() common.SyntaxKind {
-	return common.LET_CLAUSE
+func (n *STLetClauseNode) Kind() SyntaxKind {
+	return LET_CLAUSE
 }
 
 func (n *STLetClauseNode) BucketCount() int {
@@ -7800,8 +7798,8 @@ type STJoinClauseNode struct {
 
 var _ STNode = &STJoinClauseNode{}
 
-func (n *STJoinClauseNode) Kind() common.SyntaxKind {
-	return common.JOIN_CLAUSE
+func (n *STJoinClauseNode) Kind() SyntaxKind {
+	return JOIN_CLAUSE
 }
 
 func (n *STJoinClauseNode) BucketCount() int {
@@ -7878,8 +7876,8 @@ type STOnClauseNode struct {
 
 var _ STNode = &STOnClauseNode{}
 
-func (n *STOnClauseNode) Kind() common.SyntaxKind {
-	return common.ON_CLAUSE
+func (n *STOnClauseNode) Kind() SyntaxKind {
+	return ON_CLAUSE
 }
 
 func (n *STOnClauseNode) BucketCount() int {
@@ -7942,8 +7940,8 @@ type STLimitClauseNode struct {
 
 var _ STNode = &STLimitClauseNode{}
 
-func (n *STLimitClauseNode) Kind() common.SyntaxKind {
-	return common.LIMIT_CLAUSE
+func (n *STLimitClauseNode) Kind() SyntaxKind {
+	return LIMIT_CLAUSE
 }
 
 func (n *STLimitClauseNode) BucketCount() int {
@@ -7998,8 +7996,8 @@ type STOnConflictClauseNode struct {
 
 var _ STNode = &STOnConflictClauseNode{}
 
-func (n *STOnConflictClauseNode) Kind() common.SyntaxKind {
-	return common.ON_CONFLICT_CLAUSE
+func (n *STOnConflictClauseNode) Kind() SyntaxKind {
+	return ON_CONFLICT_CLAUSE
 }
 
 func (n *STOnConflictClauseNode) BucketCount() int {
@@ -8057,8 +8055,8 @@ type STQueryPipelineNode struct {
 
 var _ STNode = &STQueryPipelineNode{}
 
-func (n *STQueryPipelineNode) Kind() common.SyntaxKind {
-	return common.QUERY_PIPELINE
+func (n *STQueryPipelineNode) Kind() SyntaxKind {
+	return QUERY_PIPELINE
 }
 
 func (n *STQueryPipelineNode) BucketCount() int {
@@ -8111,8 +8109,8 @@ type STSelectClauseNode struct {
 
 var _ STNode = &STSelectClauseNode{}
 
-func (n *STSelectClauseNode) Kind() common.SyntaxKind {
-	return common.SELECT_CLAUSE
+func (n *STSelectClauseNode) Kind() SyntaxKind {
+	return SELECT_CLAUSE
 }
 
 func (n *STSelectClauseNode) BucketCount() int {
@@ -8165,8 +8163,8 @@ type STCollectClauseNode struct {
 
 var _ STNode = &STCollectClauseNode{}
 
-func (n *STCollectClauseNode) Kind() common.SyntaxKind {
-	return common.COLLECT_CLAUSE
+func (n *STCollectClauseNode) Kind() SyntaxKind {
+	return COLLECT_CLAUSE
 }
 
 func (n *STCollectClauseNode) BucketCount() int {
@@ -8223,8 +8221,8 @@ type STQueryExpressionNode struct {
 
 var _ STNode = &STQueryExpressionNode{}
 
-func (n *STQueryExpressionNode) Kind() common.SyntaxKind {
-	return common.QUERY_EXPRESSION
+func (n *STQueryExpressionNode) Kind() SyntaxKind {
+	return QUERY_EXPRESSION
 }
 
 func (n *STQueryExpressionNode) BucketCount() int {
@@ -8289,8 +8287,8 @@ type STQueryActionNode struct {
 
 var _ STNode = &STQueryActionNode{}
 
-func (n *STQueryActionNode) Kind() common.SyntaxKind {
-	return common.QUERY_ACTION
+func (n *STQueryActionNode) Kind() SyntaxKind {
+	return QUERY_ACTION
 }
 
 func (n *STQueryActionNode) BucketCount() int {
@@ -8350,8 +8348,8 @@ type STIntersectionTypeDescriptorNode struct {
 
 var _ STNode = &STIntersectionTypeDescriptorNode{}
 
-func (n *STIntersectionTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.INTERSECTION_TYPE_DESC
+func (n *STIntersectionTypeDescriptorNode) Kind() SyntaxKind {
+	return INTERSECTION_TYPE_DESC
 }
 
 func (n *STIntersectionTypeDescriptorNode) BucketCount() int {
@@ -8411,8 +8409,8 @@ type STImplicitAnonymousFunctionParameters struct {
 
 var _ STNode = &STImplicitAnonymousFunctionParameters{}
 
-func (n *STImplicitAnonymousFunctionParameters) Kind() common.SyntaxKind {
-	return common.INFER_PARAM_LIST
+func (n *STImplicitAnonymousFunctionParameters) Kind() SyntaxKind {
+	return INFER_PARAM_LIST
 }
 
 func (n *STImplicitAnonymousFunctionParameters) BucketCount() int {
@@ -8472,8 +8470,8 @@ type STImplicitAnonymousFunctionExpressionNode struct {
 
 var _ STNode = &STImplicitAnonymousFunctionExpressionNode{}
 
-func (n *STImplicitAnonymousFunctionExpressionNode) Kind() common.SyntaxKind {
-	return common.IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
+func (n *STImplicitAnonymousFunctionExpressionNode) Kind() SyntaxKind {
+	return IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
 }
 
 func (n *STImplicitAnonymousFunctionExpressionNode) BucketCount() int {
@@ -8533,8 +8531,8 @@ type STStartActionNode struct {
 
 var _ STNode = &STStartActionNode{}
 
-func (n *STStartActionNode) Kind() common.SyntaxKind {
-	return common.START_ACTION
+func (n *STStartActionNode) Kind() SyntaxKind {
+	return START_ACTION
 }
 
 func (n *STStartActionNode) BucketCount() int {
@@ -8592,8 +8590,8 @@ type STFlushActionNode struct {
 
 var _ STNode = &STFlushActionNode{}
 
-func (n *STFlushActionNode) Kind() common.SyntaxKind {
-	return common.FLUSH_ACTION
+func (n *STFlushActionNode) Kind() SyntaxKind {
+	return FLUSH_ACTION
 }
 
 func (n *STFlushActionNode) BucketCount() int {
@@ -8644,8 +8642,8 @@ type STSingletonTypeDescriptorNode struct {
 
 var _ STNode = &STSingletonTypeDescriptorNode{}
 
-func (n *STSingletonTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.SINGLETON_TYPE_DESC
+func (n *STSingletonTypeDescriptorNode) Kind() SyntaxKind {
+	return SINGLETON_TYPE_DESC
 }
 
 func (n *STSingletonTypeDescriptorNode) BucketCount() int {
@@ -8703,7 +8701,7 @@ type STMethodDeclarationNode struct {
 
 var _ STNode = &STMethodDeclarationNode{}
 
-func (n *STMethodDeclarationNode) Kind() common.SyntaxKind {
+func (n *STMethodDeclarationNode) Kind() SyntaxKind {
 	return n.STNode.Kind()
 }
 
@@ -8782,8 +8780,8 @@ type STTypedBindingPatternNode struct {
 
 var _ STNode = &STTypedBindingPatternNode{}
 
-func (n *STTypedBindingPatternNode) Kind() common.SyntaxKind {
-	return common.TYPED_BINDING_PATTERN
+func (n *STTypedBindingPatternNode) Kind() SyntaxKind {
+	return TYPED_BINDING_PATTERN
 }
 
 func (n *STTypedBindingPatternNode) BucketCount() int {
@@ -8836,8 +8834,8 @@ type STCaptureBindingPatternNode struct {
 
 var _ STNode = &STCaptureBindingPatternNode{}
 
-func (n *STCaptureBindingPatternNode) Kind() common.SyntaxKind {
-	return common.CAPTURE_BINDING_PATTERN
+func (n *STCaptureBindingPatternNode) Kind() SyntaxKind {
+	return CAPTURE_BINDING_PATTERN
 }
 
 func (n *STCaptureBindingPatternNode) BucketCount() int {
@@ -8883,8 +8881,8 @@ type STWildcardBindingPatternNode struct {
 
 var _ STNode = &STWildcardBindingPatternNode{}
 
-func (n *STWildcardBindingPatternNode) Kind() common.SyntaxKind {
-	return common.WILDCARD_BINDING_PATTERN
+func (n *STWildcardBindingPatternNode) Kind() SyntaxKind {
+	return WILDCARD_BINDING_PATTERN
 }
 
 func (n *STWildcardBindingPatternNode) BucketCount() int {
@@ -8934,8 +8932,8 @@ type STListBindingPatternNode struct {
 
 var _ STNode = &STListBindingPatternNode{}
 
-func (n *STListBindingPatternNode) Kind() common.SyntaxKind {
-	return common.LIST_BINDING_PATTERN
+func (n *STListBindingPatternNode) Kind() SyntaxKind {
+	return LIST_BINDING_PATTERN
 }
 
 func (n *STListBindingPatternNode) BucketCount() int {
@@ -8995,8 +8993,8 @@ type STMappingBindingPatternNode struct {
 
 var _ STNode = &STMappingBindingPatternNode{}
 
-func (n *STMappingBindingPatternNode) Kind() common.SyntaxKind {
-	return common.MAPPING_BINDING_PATTERN
+func (n *STMappingBindingPatternNode) Kind() SyntaxKind {
+	return MAPPING_BINDING_PATTERN
 }
 
 func (n *STMappingBindingPatternNode) BucketCount() int {
@@ -9058,8 +9056,8 @@ type STFieldBindingPatternFullNode struct {
 
 var _ STNode = &STFieldBindingPatternFullNode{}
 
-func (n *STFieldBindingPatternFullNode) Kind() common.SyntaxKind {
-	return common.FIELD_BINDING_PATTERN
+func (n *STFieldBindingPatternFullNode) Kind() SyntaxKind {
+	return FIELD_BINDING_PATTERN
 }
 
 func (n *STFieldBindingPatternFullNode) BucketCount() int {
@@ -9115,8 +9113,8 @@ type STFieldBindingPatternVarnameNode struct {
 
 var _ STNode = &STFieldBindingPatternVarnameNode{}
 
-func (n *STFieldBindingPatternVarnameNode) Kind() common.SyntaxKind {
-	return common.FIELD_BINDING_PATTERN
+func (n *STFieldBindingPatternVarnameNode) Kind() SyntaxKind {
+	return FIELD_BINDING_PATTERN
 }
 
 func (n *STFieldBindingPatternVarnameNode) BucketCount() int {
@@ -9164,8 +9162,8 @@ type STRestBindingPatternNode struct {
 
 var _ STNode = &STRestBindingPatternNode{}
 
-func (n *STRestBindingPatternNode) Kind() common.SyntaxKind {
-	return common.REST_BINDING_PATTERN
+func (n *STRestBindingPatternNode) Kind() SyntaxKind {
+	return REST_BINDING_PATTERN
 }
 
 func (n *STRestBindingPatternNode) BucketCount() int {
@@ -9224,8 +9222,8 @@ type STErrorBindingPatternNode struct {
 
 var _ STNode = &STErrorBindingPatternNode{}
 
-func (n *STErrorBindingPatternNode) Kind() common.SyntaxKind {
-	return common.ERROR_BINDING_PATTERN
+func (n *STErrorBindingPatternNode) Kind() SyntaxKind {
+	return ERROR_BINDING_PATTERN
 }
 
 func (n *STErrorBindingPatternNode) BucketCount() int {
@@ -9295,8 +9293,8 @@ type STNamedArgBindingPatternNode struct {
 
 var _ STNode = &STNamedArgBindingPatternNode{}
 
-func (n *STNamedArgBindingPatternNode) Kind() common.SyntaxKind {
-	return common.NAMED_ARG_BINDING_PATTERN
+func (n *STNamedArgBindingPatternNode) Kind() SyntaxKind {
+	return NAMED_ARG_BINDING_PATTERN
 }
 
 func (n *STNamedArgBindingPatternNode) BucketCount() int {
@@ -9356,8 +9354,8 @@ type STAsyncSendActionNode struct {
 
 var _ STNode = &STAsyncSendActionNode{}
 
-func (n *STAsyncSendActionNode) Kind() common.SyntaxKind {
-	return common.ASYNC_SEND_ACTION
+func (n *STAsyncSendActionNode) Kind() SyntaxKind {
+	return ASYNC_SEND_ACTION
 }
 
 func (n *STAsyncSendActionNode) BucketCount() int {
@@ -9417,8 +9415,8 @@ type STSyncSendActionNode struct {
 
 var _ STNode = &STSyncSendActionNode{}
 
-func (n *STSyncSendActionNode) Kind() common.SyntaxKind {
-	return common.SYNC_SEND_ACTION
+func (n *STSyncSendActionNode) Kind() SyntaxKind {
+	return SYNC_SEND_ACTION
 }
 
 func (n *STSyncSendActionNode) BucketCount() int {
@@ -9476,8 +9474,8 @@ type STReceiveActionNode struct {
 
 var _ STNode = &STReceiveActionNode{}
 
-func (n *STReceiveActionNode) Kind() common.SyntaxKind {
-	return common.RECEIVE_ACTION
+func (n *STReceiveActionNode) Kind() SyntaxKind {
+	return RECEIVE_ACTION
 }
 
 func (n *STReceiveActionNode) BucketCount() int {
@@ -9532,8 +9530,8 @@ type STReceiveFieldsNode struct {
 
 var _ STNode = &STReceiveFieldsNode{}
 
-func (n *STReceiveFieldsNode) Kind() common.SyntaxKind {
-	return common.RECEIVE_FIELDS
+func (n *STReceiveFieldsNode) Kind() SyntaxKind {
+	return RECEIVE_FIELDS
 }
 
 func (n *STReceiveFieldsNode) BucketCount() int {
@@ -9589,8 +9587,8 @@ type STAlternateReceiveNode struct {
 
 var _ STNode = &STAlternateReceiveNode{}
 
-func (n *STAlternateReceiveNode) Kind() common.SyntaxKind {
-	return common.ALTERNATE_RECEIVE
+func (n *STAlternateReceiveNode) Kind() SyntaxKind {
+	return ALTERNATE_RECEIVE
 }
 
 func (n *STAlternateReceiveNode) BucketCount() int {
@@ -9638,8 +9636,8 @@ type STRestDescriptorNode struct {
 
 var _ STNode = &STRestDescriptorNode{}
 
-func (n *STRestDescriptorNode) Kind() common.SyntaxKind {
-	return common.REST_TYPE
+func (n *STRestDescriptorNode) Kind() SyntaxKind {
+	return REST_TYPE
 }
 
 func (n *STRestDescriptorNode) BucketCount() int {
@@ -9692,8 +9690,8 @@ type STDoubleGTTokenNode struct {
 
 var _ STNode = &STDoubleGTTokenNode{}
 
-func (n *STDoubleGTTokenNode) Kind() common.SyntaxKind {
-	return common.DOUBLE_GT_TOKEN
+func (n *STDoubleGTTokenNode) Kind() SyntaxKind {
+	return DOUBLE_GT_TOKEN
 }
 
 func (n *STDoubleGTTokenNode) BucketCount() int {
@@ -9748,8 +9746,8 @@ type STTrippleGTTokenNode struct {
 
 var _ STNode = &STTrippleGTTokenNode{}
 
-func (n *STTrippleGTTokenNode) Kind() common.SyntaxKind {
-	return common.TRIPPLE_GT_TOKEN
+func (n *STTrippleGTTokenNode) Kind() SyntaxKind {
+	return TRIPPLE_GT_TOKEN
 }
 
 func (n *STTrippleGTTokenNode) BucketCount() int {
@@ -9807,8 +9805,8 @@ type STWaitActionNode struct {
 
 var _ STNode = &STWaitActionNode{}
 
-func (n *STWaitActionNode) Kind() common.SyntaxKind {
-	return common.WAIT_ACTION
+func (n *STWaitActionNode) Kind() SyntaxKind {
+	return WAIT_ACTION
 }
 
 func (n *STWaitActionNode) BucketCount() int {
@@ -9863,8 +9861,8 @@ type STWaitFieldsListNode struct {
 
 var _ STNode = &STWaitFieldsListNode{}
 
-func (n *STWaitFieldsListNode) Kind() common.SyntaxKind {
-	return common.WAIT_FIELDS_LIST
+func (n *STWaitFieldsListNode) Kind() SyntaxKind {
+	return WAIT_FIELDS_LIST
 }
 
 func (n *STWaitFieldsListNode) BucketCount() int {
@@ -9924,8 +9922,8 @@ type STWaitFieldNode struct {
 
 var _ STNode = &STWaitFieldNode{}
 
-func (n *STWaitFieldNode) Kind() common.SyntaxKind {
-	return common.WAIT_FIELD
+func (n *STWaitFieldNode) Kind() SyntaxKind {
+	return WAIT_FIELD
 }
 
 func (n *STWaitFieldNode) BucketCount() int {
@@ -9985,8 +9983,8 @@ type STAnnotAccessExpressionNode struct {
 
 var _ STNode = &STAnnotAccessExpressionNode{}
 
-func (n *STAnnotAccessExpressionNode) Kind() common.SyntaxKind {
-	return common.ANNOT_ACCESS
+func (n *STAnnotAccessExpressionNode) Kind() SyntaxKind {
+	return ANNOT_ACCESS
 }
 
 func (n *STAnnotAccessExpressionNode) BucketCount() int {
@@ -10046,8 +10044,8 @@ type STOptionalFieldAccessExpressionNode struct {
 
 var _ STNode = &STOptionalFieldAccessExpressionNode{}
 
-func (n *STOptionalFieldAccessExpressionNode) Kind() common.SyntaxKind {
-	return common.OPTIONAL_FIELD_ACCESS
+func (n *STOptionalFieldAccessExpressionNode) Kind() SyntaxKind {
+	return OPTIONAL_FIELD_ACCESS
 }
 
 func (n *STOptionalFieldAccessExpressionNode) BucketCount() int {
@@ -10111,8 +10109,8 @@ type STConditionalExpressionNode struct {
 
 var _ STNode = &STConditionalExpressionNode{}
 
-func (n *STConditionalExpressionNode) Kind() common.SyntaxKind {
-	return common.CONDITIONAL_EXPRESSION
+func (n *STConditionalExpressionNode) Kind() SyntaxKind {
+	return CONDITIONAL_EXPRESSION
 }
 
 func (n *STConditionalExpressionNode) BucketCount() int {
@@ -10192,8 +10190,8 @@ type STEnumDeclarationNode struct {
 
 var _ STNode = &STEnumDeclarationNode{}
 
-func (n *STEnumDeclarationNode) Kind() common.SyntaxKind {
-	return common.ENUM_DECLARATION
+func (n *STEnumDeclarationNode) Kind() SyntaxKind {
+	return ENUM_DECLARATION
 }
 
 func (n *STEnumDeclarationNode) BucketCount() int {
@@ -10280,8 +10278,8 @@ type STEnumMemberNode struct {
 
 var _ STNode = &STEnumMemberNode{}
 
-func (n *STEnumMemberNode) Kind() common.SyntaxKind {
-	return common.ENUM_MEMBER
+func (n *STEnumMemberNode) Kind() SyntaxKind {
+	return ENUM_MEMBER
 }
 
 func (n *STEnumMemberNode) BucketCount() int {
@@ -10344,8 +10342,8 @@ type STArrayTypeDescriptorNode struct {
 
 var _ STNode = &STArrayTypeDescriptorNode{}
 
-func (n *STArrayTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.ARRAY_TYPE_DESC
+func (n *STArrayTypeDescriptorNode) Kind() SyntaxKind {
+	return ARRAY_TYPE_DESC
 }
 
 func (n *STArrayTypeDescriptorNode) BucketCount() int {
@@ -10400,8 +10398,8 @@ type STArrayDimensionNode struct {
 
 var _ STNode = &STArrayDimensionNode{}
 
-func (n *STArrayDimensionNode) Kind() common.SyntaxKind {
-	return common.ARRAY_DIMENSION
+func (n *STArrayDimensionNode) Kind() SyntaxKind {
+	return ARRAY_DIMENSION
 }
 
 func (n *STArrayDimensionNode) BucketCount() int {
@@ -10461,8 +10459,8 @@ type STTransactionStatementNode struct {
 
 var _ STNode = &STTransactionStatementNode{}
 
-func (n *STTransactionStatementNode) Kind() common.SyntaxKind {
-	return common.TRANSACTION_STATEMENT
+func (n *STTransactionStatementNode) Kind() SyntaxKind {
+	return TRANSACTION_STATEMENT
 }
 
 func (n *STTransactionStatementNode) BucketCount() int {
@@ -10522,8 +10520,8 @@ type STRollbackStatementNode struct {
 
 var _ STNode = &STRollbackStatementNode{}
 
-func (n *STRollbackStatementNode) Kind() common.SyntaxKind {
-	return common.ROLLBACK_STATEMENT
+func (n *STRollbackStatementNode) Kind() SyntaxKind {
+	return ROLLBACK_STATEMENT
 }
 
 func (n *STRollbackStatementNode) BucketCount() int {
@@ -10587,8 +10585,8 @@ type STRetryStatementNode struct {
 
 var _ STNode = &STRetryStatementNode{}
 
-func (n *STRetryStatementNode) Kind() common.SyntaxKind {
-	return common.RETRY_STATEMENT
+func (n *STRetryStatementNode) Kind() SyntaxKind {
+	return RETRY_STATEMENT
 }
 
 func (n *STRetryStatementNode) BucketCount() int {
@@ -10654,8 +10652,8 @@ type STCommitActionNode struct {
 
 var _ STNode = &STCommitActionNode{}
 
-func (n *STCommitActionNode) Kind() common.SyntaxKind {
-	return common.COMMIT_ACTION
+func (n *STCommitActionNode) Kind() SyntaxKind {
+	return COMMIT_ACTION
 }
 
 func (n *STCommitActionNode) BucketCount() int {
@@ -10701,8 +10699,8 @@ type STTransactionalExpressionNode struct {
 
 var _ STNode = &STTransactionalExpressionNode{}
 
-func (n *STTransactionalExpressionNode) Kind() common.SyntaxKind {
-	return common.TRANSACTIONAL_EXPRESSION
+func (n *STTransactionalExpressionNode) Kind() SyntaxKind {
+	return TRANSACTIONAL_EXPRESSION
 }
 
 func (n *STTransactionalExpressionNode) BucketCount() int {
@@ -10754,8 +10752,8 @@ type STByteArrayLiteralNode struct {
 
 var _ STNode = &STByteArrayLiteralNode{}
 
-func (n *STByteArrayLiteralNode) Kind() common.SyntaxKind {
-	return common.BYTE_ARRAY_LITERAL
+func (n *STByteArrayLiteralNode) Kind() SyntaxKind {
+	return BYTE_ARRAY_LITERAL
 }
 
 func (n *STByteArrayLiteralNode) BucketCount() int {
@@ -10820,8 +10818,8 @@ type STXMLFilterExpressionNode struct {
 
 var _ STNode = &STXMLFilterExpressionNode{}
 
-func (n *STXMLFilterExpressionNode) Kind() common.SyntaxKind {
-	return common.XML_FILTER_EXPRESSION
+func (n *STXMLFilterExpressionNode) Kind() SyntaxKind {
+	return XML_FILTER_EXPRESSION
 }
 
 func (n *STXMLFilterExpressionNode) BucketCount() int {
@@ -10876,8 +10874,8 @@ type STXMLStepExpressionNode struct {
 
 var _ STNode = &STXMLStepExpressionNode{}
 
-func (n *STXMLStepExpressionNode) Kind() common.SyntaxKind {
-	return common.XML_STEP_EXPRESSION
+func (n *STXMLStepExpressionNode) Kind() SyntaxKind {
+	return XML_STEP_EXPRESSION
 }
 
 func (n *STXMLStepExpressionNode) BucketCount() int {
@@ -10937,8 +10935,8 @@ type STXMLNamePatternChainingNode struct {
 
 var _ STNode = &STXMLNamePatternChainingNode{}
 
-func (n *STXMLNamePatternChainingNode) Kind() common.SyntaxKind {
-	return common.XML_NAME_PATTERN_CHAIN
+func (n *STXMLNamePatternChainingNode) Kind() SyntaxKind {
+	return XML_NAME_PATTERN_CHAIN
 }
 
 func (n *STXMLNamePatternChainingNode) BucketCount() int {
@@ -10998,8 +10996,8 @@ type STXMLStepIndexedExtendNode struct {
 
 var _ STNode = &STXMLStepIndexedExtendNode{}
 
-func (n *STXMLStepIndexedExtendNode) Kind() common.SyntaxKind {
-	return common.XML_STEP_INDEXED_EXTEND
+func (n *STXMLStepIndexedExtendNode) Kind() SyntaxKind {
+	return XML_STEP_INDEXED_EXTEND
 }
 
 func (n *STXMLStepIndexedExtendNode) BucketCount() int {
@@ -11059,8 +11057,8 @@ type STXMLStepMethodCallExtendNode struct {
 
 var _ STNode = &STXMLStepMethodCallExtendNode{}
 
-func (n *STXMLStepMethodCallExtendNode) Kind() common.SyntaxKind {
-	return common.XML_STEP_METHOD_CALL_EXTEND
+func (n *STXMLStepMethodCallExtendNode) Kind() SyntaxKind {
+	return XML_STEP_METHOD_CALL_EXTEND
 }
 
 func (n *STXMLStepMethodCallExtendNode) BucketCount() int {
@@ -11120,8 +11118,8 @@ type STXMLAtomicNamePatternNode struct {
 
 var _ STNode = &STXMLAtomicNamePatternNode{}
 
-func (n *STXMLAtomicNamePatternNode) Kind() common.SyntaxKind {
-	return common.XML_ATOMIC_NAME_PATTERN
+func (n *STXMLAtomicNamePatternNode) Kind() SyntaxKind {
+	return XML_ATOMIC_NAME_PATTERN
 }
 
 func (n *STXMLAtomicNamePatternNode) BucketCount() int {
@@ -11177,8 +11175,8 @@ type STTypeReferenceTypeDescNode struct {
 
 var _ STNode = &STTypeReferenceTypeDescNode{}
 
-func (n *STTypeReferenceTypeDescNode) Kind() common.SyntaxKind {
-	return common.TYPE_REFERENCE_TYPE_DESC
+func (n *STTypeReferenceTypeDescNode) Kind() SyntaxKind {
+	return TYPE_REFERENCE_TYPE_DESC
 }
 
 func (n *STTypeReferenceTypeDescNode) BucketCount() int {
@@ -11234,8 +11232,8 @@ type STMatchStatementNode struct {
 
 var _ STNode = &STMatchStatementNode{}
 
-func (n *STMatchStatementNode) Kind() common.SyntaxKind {
-	return common.MATCH_STATEMENT
+func (n *STMatchStatementNode) Kind() SyntaxKind {
+	return MATCH_STATEMENT
 }
 
 func (n *STMatchStatementNode) BucketCount() int {
@@ -11312,8 +11310,8 @@ type STMatchClauseNode struct {
 
 var _ STNode = &STMatchClauseNode{}
 
-func (n *STMatchClauseNode) Kind() common.SyntaxKind {
-	return common.MATCH_CLAUSE
+func (n *STMatchClauseNode) Kind() SyntaxKind {
+	return MATCH_CLAUSE
 }
 
 func (n *STMatchClauseNode) BucketCount() int {
@@ -11376,8 +11374,8 @@ type STMatchGuardNode struct {
 
 var _ STNode = &STMatchGuardNode{}
 
-func (n *STMatchGuardNode) Kind() common.SyntaxKind {
-	return common.MATCH_GUARD
+func (n *STMatchGuardNode) Kind() SyntaxKind {
+	return MATCH_GUARD
 }
 
 func (n *STMatchGuardNode) BucketCount() int {
@@ -11430,8 +11428,8 @@ type STDistinctTypeDescriptorNode struct {
 
 var _ STNode = &STDistinctTypeDescriptorNode{}
 
-func (n *STDistinctTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.DISTINCT_TYPE_DESC
+func (n *STDistinctTypeDescriptorNode) Kind() SyntaxKind {
+	return DISTINCT_TYPE_DESC
 }
 
 func (n *STDistinctTypeDescriptorNode) BucketCount() int {
@@ -11486,8 +11484,8 @@ type STListMatchPatternNode struct {
 
 var _ STNode = &STListMatchPatternNode{}
 
-func (n *STListMatchPatternNode) Kind() common.SyntaxKind {
-	return common.LIST_MATCH_PATTERN
+func (n *STListMatchPatternNode) Kind() SyntaxKind {
+	return LIST_MATCH_PATTERN
 }
 
 func (n *STListMatchPatternNode) BucketCount() int {
@@ -11547,8 +11545,8 @@ type STRestMatchPatternNode struct {
 
 var _ STNode = &STRestMatchPatternNode{}
 
-func (n *STRestMatchPatternNode) Kind() common.SyntaxKind {
-	return common.REST_MATCH_PATTERN
+func (n *STRestMatchPatternNode) Kind() SyntaxKind {
+	return REST_MATCH_PATTERN
 }
 
 func (n *STRestMatchPatternNode) BucketCount() int {
@@ -11608,8 +11606,8 @@ type STMappingMatchPatternNode struct {
 
 var _ STNode = &STMappingMatchPatternNode{}
 
-func (n *STMappingMatchPatternNode) Kind() common.SyntaxKind {
-	return common.MAPPING_MATCH_PATTERN
+func (n *STMappingMatchPatternNode) Kind() SyntaxKind {
+	return MAPPING_MATCH_PATTERN
 }
 
 func (n *STMappingMatchPatternNode) BucketCount() int {
@@ -11669,8 +11667,8 @@ type STFieldMatchPatternNode struct {
 
 var _ STNode = &STFieldMatchPatternNode{}
 
-func (n *STFieldMatchPatternNode) Kind() common.SyntaxKind {
-	return common.FIELD_MATCH_PATTERN
+func (n *STFieldMatchPatternNode) Kind() SyntaxKind {
+	return FIELD_MATCH_PATTERN
 }
 
 func (n *STFieldMatchPatternNode) BucketCount() int {
@@ -11734,8 +11732,8 @@ type STErrorMatchPatternNode struct {
 
 var _ STNode = &STErrorMatchPatternNode{}
 
-func (n *STErrorMatchPatternNode) Kind() common.SyntaxKind {
-	return common.ERROR_MATCH_PATTERN
+func (n *STErrorMatchPatternNode) Kind() SyntaxKind {
+	return ERROR_MATCH_PATTERN
 }
 
 func (n *STErrorMatchPatternNode) BucketCount() int {
@@ -11805,8 +11803,8 @@ type STNamedArgMatchPatternNode struct {
 
 var _ STNode = &STNamedArgMatchPatternNode{}
 
-func (n *STNamedArgMatchPatternNode) Kind() common.SyntaxKind {
-	return common.NAMED_ARG_MATCH_PATTERN
+func (n *STNamedArgMatchPatternNode) Kind() SyntaxKind {
+	return NAMED_ARG_MATCH_PATTERN
 }
 
 func (n *STNamedArgMatchPatternNode) BucketCount() int {
@@ -11864,8 +11862,8 @@ type STMarkdownDocumentationNode struct {
 
 var _ STNode = &STMarkdownDocumentationNode{}
 
-func (n *STMarkdownDocumentationNode) Kind() common.SyntaxKind {
-	return common.MARKDOWN_DOCUMENTATION
+func (n *STMarkdownDocumentationNode) Kind() SyntaxKind {
+	return MARKDOWN_DOCUMENTATION
 }
 
 func (n *STMarkdownDocumentationNode) BucketCount() int {
@@ -11913,7 +11911,7 @@ type STMarkdownDocumentationLineNode struct {
 
 var _ STNode = &STMarkdownDocumentationLineNode{}
 
-func (n *STMarkdownDocumentationLineNode) Kind() common.SyntaxKind {
+func (n *STMarkdownDocumentationLineNode) Kind() SyntaxKind {
 	return n.STDocumentationNode.Kind()
 }
 
@@ -11973,7 +11971,7 @@ type STMarkdownParameterDocumentationLineNode struct {
 
 var _ STNode = &STMarkdownParameterDocumentationLineNode{}
 
-func (n *STMarkdownParameterDocumentationLineNode) Kind() common.SyntaxKind {
+func (n *STMarkdownParameterDocumentationLineNode) Kind() SyntaxKind {
 	return n.STDocumentationNode.Kind()
 }
 
@@ -12046,8 +12044,8 @@ type STBallerinaNameReferenceNode struct {
 
 var _ STNode = &STBallerinaNameReferenceNode{}
 
-func (n *STBallerinaNameReferenceNode) Kind() common.SyntaxKind {
-	return common.BALLERINA_NAME_REFERENCE
+func (n *STBallerinaNameReferenceNode) Kind() SyntaxKind {
+	return BALLERINA_NAME_REFERENCE
 }
 
 func (n *STBallerinaNameReferenceNode) BucketCount() int {
@@ -12112,8 +12110,8 @@ type STInlineCodeReferenceNode struct {
 
 var _ STNode = &STInlineCodeReferenceNode{}
 
-func (n *STInlineCodeReferenceNode) Kind() common.SyntaxKind {
-	return common.INLINE_CODE_REFERENCE
+func (n *STInlineCodeReferenceNode) Kind() SyntaxKind {
+	return INLINE_CODE_REFERENCE
 }
 
 func (n *STInlineCodeReferenceNode) BucketCount() int {
@@ -12179,8 +12177,8 @@ type STMarkdownCodeBlockNode struct {
 
 var _ STNode = &STMarkdownCodeBlockNode{}
 
-func (n *STMarkdownCodeBlockNode) Kind() common.SyntaxKind {
-	return common.MARKDOWN_CODE_BLOCK
+func (n *STMarkdownCodeBlockNode) Kind() SyntaxKind {
+	return MARKDOWN_CODE_BLOCK
 }
 
 func (n *STMarkdownCodeBlockNode) BucketCount() int {
@@ -12253,8 +12251,8 @@ type STMarkdownCodeLineNode struct {
 
 var _ STNode = &STMarkdownCodeLineNode{}
 
-func (n *STMarkdownCodeLineNode) Kind() common.SyntaxKind {
-	return common.MARKDOWN_CODE_LINE
+func (n *STMarkdownCodeLineNode) Kind() SyntaxKind {
+	return MARKDOWN_CODE_LINE
 }
 
 func (n *STMarkdownCodeLineNode) BucketCount() int {
@@ -12309,8 +12307,8 @@ type STOrderByClauseNode struct {
 
 var _ STNode = &STOrderByClauseNode{}
 
-func (n *STOrderByClauseNode) Kind() common.SyntaxKind {
-	return common.ORDER_BY_CLAUSE
+func (n *STOrderByClauseNode) Kind() SyntaxKind {
+	return ORDER_BY_CLAUSE
 }
 
 func (n *STOrderByClauseNode) BucketCount() int {
@@ -12368,8 +12366,8 @@ type STOrderKeyNode struct {
 
 var _ STNode = &STOrderKeyNode{}
 
-func (n *STOrderKeyNode) Kind() common.SyntaxKind {
-	return common.ORDER_KEY
+func (n *STOrderKeyNode) Kind() SyntaxKind {
+	return ORDER_KEY
 }
 
 func (n *STOrderKeyNode) BucketCount() int {
@@ -12424,8 +12422,8 @@ type STGroupByClauseNode struct {
 
 var _ STNode = &STGroupByClauseNode{}
 
-func (n *STGroupByClauseNode) Kind() common.SyntaxKind {
-	return common.GROUP_BY_CLAUSE
+func (n *STGroupByClauseNode) Kind() SyntaxKind {
+	return GROUP_BY_CLAUSE
 }
 
 func (n *STGroupByClauseNode) BucketCount() int {
@@ -12487,8 +12485,8 @@ type STGroupingKeyVarDeclarationNode struct {
 
 var _ STNode = &STGroupingKeyVarDeclarationNode{}
 
-func (n *STGroupingKeyVarDeclarationNode) Kind() common.SyntaxKind {
-	return common.GROUPING_KEY_VAR_DECLARATION
+func (n *STGroupingKeyVarDeclarationNode) Kind() SyntaxKind {
+	return GROUPING_KEY_VAR_DECLARATION
 }
 
 func (n *STGroupingKeyVarDeclarationNode) BucketCount() int {
@@ -12555,8 +12553,8 @@ type STOnFailClauseNode struct {
 
 var _ STNode = &STOnFailClauseNode{}
 
-func (n *STOnFailClauseNode) Kind() common.SyntaxKind {
-	return common.ON_FAIL_CLAUSE
+func (n *STOnFailClauseNode) Kind() SyntaxKind {
+	return ON_FAIL_CLAUSE
 }
 
 func (n *STOnFailClauseNode) BucketCount() int {
@@ -12621,8 +12619,8 @@ type STDoStatementNode struct {
 
 var _ STNode = &STDoStatementNode{}
 
-func (n *STDoStatementNode) Kind() common.SyntaxKind {
-	return common.DO_STATEMENT
+func (n *STDoStatementNode) Kind() SyntaxKind {
+	return DO_STATEMENT
 }
 
 func (n *STDoStatementNode) BucketCount() int {
@@ -12694,8 +12692,8 @@ type STClassDefinitionNode struct {
 
 var _ STNode = &STClassDefinitionNode{}
 
-func (n *STClassDefinitionNode) Kind() common.SyntaxKind {
-	return common.CLASS_DEFINITION
+func (n *STClassDefinitionNode) Kind() SyntaxKind {
+	return CLASS_DEFINITION
 }
 
 func (n *STClassDefinitionNode) BucketCount() int {
@@ -12791,7 +12789,7 @@ type STResourcePathParameterNode struct {
 
 var _ STNode = &STResourcePathParameterNode{}
 
-func (n *STResourcePathParameterNode) Kind() common.SyntaxKind {
+func (n *STResourcePathParameterNode) Kind() SyntaxKind {
 	return n.STNode.Kind()
 }
 
@@ -12863,8 +12861,8 @@ type STRequiredExpressionNode struct {
 
 var _ STNode = &STRequiredExpressionNode{}
 
-func (n *STRequiredExpressionNode) Kind() common.SyntaxKind {
-	return common.REQUIRED_EXPRESSION
+func (n *STRequiredExpressionNode) Kind() SyntaxKind {
+	return REQUIRED_EXPRESSION
 }
 
 func (n *STRequiredExpressionNode) BucketCount() int {
@@ -12918,8 +12916,8 @@ type STErrorConstructorExpressionNode struct {
 
 var _ STNode = &STErrorConstructorExpressionNode{}
 
-func (n *STErrorConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.ERROR_CONSTRUCTOR
+func (n *STErrorConstructorExpressionNode) Kind() SyntaxKind {
+	return ERROR_CONSTRUCTOR
 }
 
 func (n *STErrorConstructorExpressionNode) BucketCount() int {
@@ -12987,7 +12985,7 @@ type STParameterizedTypeDescriptorNode struct {
 
 var _ STNode = &STParameterizedTypeDescriptorNode{}
 
-func (n *STParameterizedTypeDescriptorNode) Kind() common.SyntaxKind {
+func (n *STParameterizedTypeDescriptorNode) Kind() SyntaxKind {
 	return n.STTypeDescriptorNode.Kind()
 }
 
@@ -13041,8 +13039,8 @@ type STSpreadMemberNode struct {
 
 var _ STNode = &STSpreadMemberNode{}
 
-func (n *STSpreadMemberNode) Kind() common.SyntaxKind {
-	return common.SPREAD_MEMBER
+func (n *STSpreadMemberNode) Kind() SyntaxKind {
+	return SPREAD_MEMBER
 }
 
 func (n *STSpreadMemberNode) BucketCount() int {
@@ -13105,8 +13103,8 @@ type STClientResourceAccessActionNode struct {
 
 var _ STNode = &STClientResourceAccessActionNode{}
 
-func (n *STClientResourceAccessActionNode) Kind() common.SyntaxKind {
-	return common.CLIENT_RESOURCE_ACCESS_ACTION
+func (n *STClientResourceAccessActionNode) Kind() SyntaxKind {
+	return CLIENT_RESOURCE_ACCESS_ACTION
 }
 
 func (n *STClientResourceAccessActionNode) BucketCount() int {
@@ -13186,8 +13184,8 @@ type STComputedResourceAccessSegmentNode struct {
 
 var _ STNode = &STComputedResourceAccessSegmentNode{}
 
-func (n *STComputedResourceAccessSegmentNode) Kind() common.SyntaxKind {
-	return common.COMPUTED_RESOURCE_ACCESS_SEGMENT
+func (n *STComputedResourceAccessSegmentNode) Kind() SyntaxKind {
+	return COMPUTED_RESOURCE_ACCESS_SEGMENT
 }
 
 func (n *STComputedResourceAccessSegmentNode) BucketCount() int {
@@ -13249,8 +13247,8 @@ type STResourceAccessRestSegmentNode struct {
 
 var _ STNode = &STResourceAccessRestSegmentNode{}
 
-func (n *STResourceAccessRestSegmentNode) Kind() common.SyntaxKind {
-	return common.RESOURCE_ACCESS_REST_SEGMENT
+func (n *STResourceAccessRestSegmentNode) Kind() SyntaxKind {
+	return RESOURCE_ACCESS_REST_SEGMENT
 }
 
 func (n *STResourceAccessRestSegmentNode) BucketCount() int {
@@ -13311,8 +13309,8 @@ type STReSequenceNode struct {
 
 var _ STNode = &STReSequenceNode{}
 
-func (n *STReSequenceNode) Kind() common.SyntaxKind {
-	return common.RE_SEQUENCE
+func (n *STReSequenceNode) Kind() SyntaxKind {
+	return RE_SEQUENCE
 }
 
 func (n *STReSequenceNode) BucketCount() int {
@@ -13362,8 +13360,8 @@ type STReAtomQuantifierNode struct {
 
 var _ STNode = &STReAtomQuantifierNode{}
 
-func (n *STReAtomQuantifierNode) Kind() common.SyntaxKind {
-	return common.RE_ATOM_QUANTIFIER
+func (n *STReAtomQuantifierNode) Kind() SyntaxKind {
+	return RE_ATOM_QUANTIFIER
 }
 
 func (n *STReAtomQuantifierNode) BucketCount() int {
@@ -13414,8 +13412,8 @@ type STReAtomCharOrEscapeNode struct {
 
 var _ STNode = &STReAtomCharOrEscapeNode{}
 
-func (n *STReAtomCharOrEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_LITERAL_CHAR_DOT_OR_ESCAPE
+func (n *STReAtomCharOrEscapeNode) Kind() SyntaxKind {
+	return RE_LITERAL_CHAR_DOT_OR_ESCAPE
 }
 
 func (n *STReAtomCharOrEscapeNode) BucketCount() int {
@@ -13463,8 +13461,8 @@ type STReQuoteEscapeNode struct {
 
 var _ STNode = &STReQuoteEscapeNode{}
 
-func (n *STReQuoteEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_QUOTE_ESCAPE
+func (n *STReQuoteEscapeNode) Kind() SyntaxKind {
+	return RE_QUOTE_ESCAPE
 }
 
 func (n *STReQuoteEscapeNode) BucketCount() int {
@@ -13517,8 +13515,8 @@ type STReSimpleCharClassEscapeNode struct {
 
 var _ STNode = &STReSimpleCharClassEscapeNode{}
 
-func (n *STReSimpleCharClassEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_SIMPLE_CHAR_CLASS_ESCAPE
+func (n *STReSimpleCharClassEscapeNode) Kind() SyntaxKind {
+	return RE_SIMPLE_CHAR_CLASS_ESCAPE
 }
 
 func (n *STReSimpleCharClassEscapeNode) BucketCount() int {
@@ -13577,8 +13575,8 @@ type STReUnicodePropertyEscapeNode struct {
 
 var _ STNode = &STReUnicodePropertyEscapeNode{}
 
-func (n *STReUnicodePropertyEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_UNICODE_PROPERTY_ESCAPE
+func (n *STReUnicodePropertyEscapeNode) Kind() SyntaxKind {
+	return RE_UNICODE_PROPERTY_ESCAPE
 }
 
 func (n *STReUnicodePropertyEscapeNode) BucketCount() int {
@@ -13648,8 +13646,8 @@ type STReUnicodeScriptNode struct {
 
 var _ STNode = &STReUnicodeScriptNode{}
 
-func (n *STReUnicodeScriptNode) Kind() common.SyntaxKind {
-	return common.RE_UNICODE_SCRIPT
+func (n *STReUnicodeScriptNode) Kind() SyntaxKind {
+	return RE_UNICODE_SCRIPT
 }
 
 func (n *STReUnicodeScriptNode) BucketCount() int {
@@ -13702,8 +13700,8 @@ type STReUnicodeGeneralCategoryNode struct {
 
 var _ STNode = &STReUnicodeGeneralCategoryNode{}
 
-func (n *STReUnicodeGeneralCategoryNode) Kind() common.SyntaxKind {
-	return common.RE_UNICODE_GENERAL_CATEGORY
+func (n *STReUnicodeGeneralCategoryNode) Kind() SyntaxKind {
+	return RE_UNICODE_GENERAL_CATEGORY
 }
 
 func (n *STReUnicodeGeneralCategoryNode) BucketCount() int {
@@ -13760,8 +13758,8 @@ type STReCharacterClassNode struct {
 
 var _ STNode = &STReCharacterClassNode{}
 
-func (n *STReCharacterClassNode) Kind() common.SyntaxKind {
-	return common.RE_CHARACTER_CLASS
+func (n *STReCharacterClassNode) Kind() SyntaxKind {
+	return RE_CHARACTER_CLASS
 }
 
 func (n *STReCharacterClassNode) BucketCount() int {
@@ -13824,8 +13822,8 @@ type STReCharSetRangeWithReCharSetNode struct {
 
 var _ STNode = &STReCharSetRangeWithReCharSetNode{}
 
-func (n *STReCharSetRangeWithReCharSetNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE_WITH_RE_CHAR_SET
+func (n *STReCharSetRangeWithReCharSetNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE_WITH_RE_CHAR_SET
 }
 
 func (n *STReCharSetRangeWithReCharSetNode) BucketCount() int {
@@ -13880,8 +13878,8 @@ type STReCharSetRangeNode struct {
 
 var _ STNode = &STReCharSetRangeNode{}
 
-func (n *STReCharSetRangeNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE
+func (n *STReCharSetRangeNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE
 }
 
 func (n *STReCharSetRangeNode) BucketCount() int {
@@ -13939,8 +13937,8 @@ type STReCharSetAtomWithReCharSetNoDashNode struct {
 
 var _ STNode = &STReCharSetAtomWithReCharSetNoDashNode{}
 
-func (n *STReCharSetAtomWithReCharSetNoDashNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_ATOM_WITH_RE_CHAR_SET_NO_DASH
+func (n *STReCharSetAtomWithReCharSetNoDashNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_ATOM_WITH_RE_CHAR_SET_NO_DASH
 }
 
 func (n *STReCharSetAtomWithReCharSetNoDashNode) BucketCount() int {
@@ -13993,8 +13991,8 @@ type STReCharSetRangeNoDashWithReCharSetNode struct {
 
 var _ STNode = &STReCharSetRangeNoDashWithReCharSetNode{}
 
-func (n *STReCharSetRangeNoDashWithReCharSetNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE_NO_DASH_WITH_RE_CHAR_SET
+func (n *STReCharSetRangeNoDashWithReCharSetNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE_NO_DASH_WITH_RE_CHAR_SET
 }
 
 func (n *STReCharSetRangeNoDashWithReCharSetNode) BucketCount() int {
@@ -14049,8 +14047,8 @@ type STReCharSetRangeNoDashNode struct {
 
 var _ STNode = &STReCharSetRangeNoDashNode{}
 
-func (n *STReCharSetRangeNoDashNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE_NO_DASH
+func (n *STReCharSetRangeNoDashNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE_NO_DASH
 }
 
 func (n *STReCharSetRangeNoDashNode) BucketCount() int {
@@ -14108,8 +14106,8 @@ type STReCharSetAtomNoDashWithReCharSetNoDashNode struct {
 
 var _ STNode = &STReCharSetAtomNoDashWithReCharSetNoDashNode{}
 
-func (n *STReCharSetAtomNoDashWithReCharSetNoDashNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_ATOM_NO_DASH_WITH_RE_CHAR_SET_NO_DASH
+func (n *STReCharSetAtomNoDashWithReCharSetNoDashNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_ATOM_NO_DASH_WITH_RE_CHAR_SET_NO_DASH
 }
 
 func (n *STReCharSetAtomNoDashWithReCharSetNoDashNode) BucketCount() int {
@@ -14166,8 +14164,8 @@ type STReCapturingGroupsNode struct {
 
 var _ STNode = &STReCapturingGroupsNode{}
 
-func (n *STReCapturingGroupsNode) Kind() common.SyntaxKind {
-	return common.RE_CAPTURING_GROUP
+func (n *STReCapturingGroupsNode) Kind() SyntaxKind {
+	return RE_CAPTURING_GROUP
 }
 
 func (n *STReCapturingGroupsNode) BucketCount() int {
@@ -14232,8 +14230,8 @@ type STReFlagExpressionNode struct {
 
 var _ STNode = &STReFlagExpressionNode{}
 
-func (n *STReFlagExpressionNode) Kind() common.SyntaxKind {
-	return common.RE_FLAG_EXPR
+func (n *STReFlagExpressionNode) Kind() SyntaxKind {
+	return RE_FLAG_EXPR
 }
 
 func (n *STReFlagExpressionNode) BucketCount() int {
@@ -14293,8 +14291,8 @@ type STReFlagsOnOffNode struct {
 
 var _ STNode = &STReFlagsOnOffNode{}
 
-func (n *STReFlagsOnOffNode) Kind() common.SyntaxKind {
-	return common.RE_FLAGS_ON_OFF
+func (n *STReFlagsOnOffNode) Kind() SyntaxKind {
+	return RE_FLAGS_ON_OFF
 }
 
 func (n *STReFlagsOnOffNode) BucketCount() int {
@@ -14350,8 +14348,8 @@ type STReFlagsNode struct {
 
 var _ STNode = &STReFlagsNode{}
 
-func (n *STReFlagsNode) Kind() common.SyntaxKind {
-	return common.RE_FLAGS
+func (n *STReFlagsNode) Kind() SyntaxKind {
+	return RE_FLAGS
 }
 
 func (n *STReFlagsNode) BucketCount() int {
@@ -14397,8 +14395,8 @@ type STReAssertionNode struct {
 
 var _ STNode = &STReAssertionNode{}
 
-func (n *STReAssertionNode) Kind() common.SyntaxKind {
-	return common.RE_ASSERTION
+func (n *STReAssertionNode) Kind() SyntaxKind {
+	return RE_ASSERTION
 }
 
 func (n *STReAssertionNode) BucketCount() int {
@@ -14446,8 +14444,8 @@ type STReQuantifierNode struct {
 
 var _ STNode = &STReQuantifierNode{}
 
-func (n *STReQuantifierNode) Kind() common.SyntaxKind {
-	return common.RE_QUANTIFIER
+func (n *STReQuantifierNode) Kind() SyntaxKind {
+	return RE_QUANTIFIER
 }
 
 func (n *STReQuantifierNode) BucketCount() int {
@@ -14506,8 +14504,8 @@ type STReBracedQuantifierNode struct {
 
 var _ STNode = &STReBracedQuantifierNode{}
 
-func (n *STReBracedQuantifierNode) Kind() common.SyntaxKind {
-	return common.RE_BRACED_QUANTIFIER
+func (n *STReBracedQuantifierNode) Kind() SyntaxKind {
+	return RE_BRACED_QUANTIFIER
 }
 
 func (n *STReBracedQuantifierNode) BucketCount() int {
@@ -14575,8 +14573,8 @@ type STMemberTypeDescriptorNode struct {
 
 var _ STNode = &STMemberTypeDescriptorNode{}
 
-func (n *STMemberTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.MEMBER_TYPE_DESC
+func (n *STMemberTypeDescriptorNode) Kind() SyntaxKind {
+	return MEMBER_TYPE_DESC
 }
 
 func (n *STMemberTypeDescriptorNode) BucketCount() int {
@@ -14631,8 +14629,8 @@ type STReceiveFieldNode struct {
 
 var _ STNode = &STReceiveFieldNode{}
 
-func (n *STReceiveFieldNode) Kind() common.SyntaxKind {
-	return common.RECEIVE_FIELD
+func (n *STReceiveFieldNode) Kind() SyntaxKind {
+	return RECEIVE_FIELD
 }
 
 func (n *STReceiveFieldNode) BucketCount() int {
@@ -14698,8 +14696,8 @@ type STNaturalExpressionNode struct {
 
 var _ STNode = &STNaturalExpressionNode{}
 
-func (n *STNaturalExpressionNode) Kind() common.SyntaxKind {
-	return common.NATURAL_EXPRESSION
+func (n *STNaturalExpressionNode) Kind() SyntaxKind {
+	return NATURAL_EXPRESSION
 }
 
 func (n *STNaturalExpressionNode) BucketCount() int {

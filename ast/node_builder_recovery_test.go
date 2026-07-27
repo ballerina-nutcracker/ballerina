@@ -22,8 +22,8 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
@@ -148,7 +148,7 @@ func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
 
 	diagnosticsBeforeBuild := len(cx.Diagnostics())
 	builder := NewRecoveringNodeBuilder(cx)
-	builder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
+	builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	if got := len(cx.Diagnostics()) - diagnosticsBeforeBuild; got != 1 {
 		t.Fatalf("node builder reported %d syntax diagnostics, want 1", got)
 	}
@@ -178,7 +178,7 @@ func TestRecoveringNodeBuilderHandlesMissingIdentifiers(t *testing.T) {
 func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
 	source := "// doc\nfunction foo() {}"
 	_, syntaxTree := buildNodeBuilderCompilationUnit(t, source, true)
-	modulePart := syntaxTree.RootNode.(*tree.ModulePart)
+	modulePart := syntaxTree.RootNode.(*st.ModulePart)
 	members := modulePart.Members()
 	member := members.Get(0)
 
@@ -191,7 +191,7 @@ func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
 	assertLocationOffsets(t, bad.GetPosition(), expected.StartOffset, expected.EndOffset)
 }
 
-func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering bool) (*BLangCompilationUnit, *tree.SyntaxTree) {
+func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering bool) (*BLangCompilationUnit, *st.SyntaxTree) {
 	t.Helper()
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
@@ -205,7 +205,7 @@ func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering boo
 		return GetCompilationUnit(cx, syntaxTree), syntaxTree
 	}
 	builder := NewRecoveringNodeBuilder(cx)
-	return builder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart)).(*BLangCompilationUnit), syntaxTree
+	return builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart)).(*BLangCompilationUnit), syntaxTree
 }
 
 func assertIdentifierValue(t *testing.T, identifier IdentifierNode, value string) {

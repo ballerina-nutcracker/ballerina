@@ -20,7 +20,7 @@ package parser
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
@@ -35,8 +35,8 @@ func newXMLLexer(reader text.CharReader) *xmlLexer {
 	return &xmlLexer{lexer: inner}
 }
 
-func (l *xmlLexer) NextToken() tree.STToken {
-	var token tree.STToken
+func (l *xmlLexer) NextToken() st.STToken {
+	var token st.STToken
 	switch l.context.mode {
 	case PARSER_MODE_XML_CONTENT:
 		token = l.readTokenInXMLContent()
@@ -72,7 +72,7 @@ func (l *xmlLexer) NextToken() tree.STToken {
 	}
 
 	if len(l.context.diagnostics) > 0 {
-		token = tree.AddSyntaxDiagnostics(token, l.context.diagnostics)
+		token = st.AddSyntaxDiagnostics(token, l.context.diagnostics)
 		l.context.diagnostics = nil
 	}
 	return token
@@ -84,13 +84,13 @@ func (l *xmlLexer) processLeadingXMLTrivia() {
 	l.processXMLTrivia(&l.context.leadingTriviaList, true)
 }
 
-func (l *xmlLexer) processTrailingXMLTrivia() tree.STNode {
-	triviaList := make([]tree.STNode, 0, INITIAL_TRIVIA_CAPACITY)
+func (l *xmlLexer) processTrailingXMLTrivia() st.STNode {
+	triviaList := make([]st.STNode, 0, INITIAL_TRIVIA_CAPACITY)
 	l.processXMLTrivia(&triviaList, false)
-	return tree.CreateNodeList(triviaList...)
+	return st.CreateNodeList(triviaList...)
 }
 
-func (l *xmlLexer) processXMLTrivia(triviaList *[]tree.STNode, isLeading bool) {
+func (l *xmlLexer) processXMLTrivia(triviaList *[]st.STNode, isLeading bool) {
 	reader := l.reader
 	for !reader.IsEOF() {
 		reader.Mark()
@@ -110,13 +110,13 @@ func (l *xmlLexer) processXMLTrivia(triviaList *[]tree.STNode, isLeading bool) {
 	}
 }
 
-func (l *xmlLexer) getXMLSyntaxToken(kind common.SyntaxKind) tree.STToken {
+func (l *xmlLexer) getXMLSyntaxToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	trailingTrivia := l.processTrailingXMLTrivia()
-	return tree.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
 }
 
-func (l *xmlLexer) getXMLSyntaxTokenChecked(kind common.SyntaxKind, allowLeadingWS, allowTrailingWS bool) tree.STToken {
+func (l *xmlLexer) getXMLSyntaxTokenChecked(kind st.SyntaxKind, allowLeadingWS, allowTrailingWS bool) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	if !allowLeadingWS && leadingTrivia.BucketCount() != 0 {
 		l.reportLexerError(common.ERROR_INVALID_WHITESPACE_BEFORE, kindStringValue(kind))
@@ -125,48 +125,48 @@ func (l *xmlLexer) getXMLSyntaxTokenChecked(kind common.SyntaxKind, allowLeading
 	if !allowTrailingWS && trailingTrivia.BucketCount() != 0 {
 		l.reportLexerError(common.ERROR_INVALID_WHITESPACE_AFTER, kindStringValue(kind))
 	}
-	return tree.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
 }
 
-func (l *xmlLexer) getXMLSyntaxTokenWithoutTrailingWS(kind common.SyntaxKind) tree.STToken {
+func (l *xmlLexer) getXMLSyntaxTokenWithoutTrailingWS(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
-	trailingTrivia := tree.CreateEmptyNodeList()
-	return tree.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	trailingTrivia := st.CreateEmptyNodeList()
+	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
 }
 
-func (l *xmlLexer) getXMLLiteralValueToken(kind common.SyntaxKind) tree.STToken {
+func (l *xmlLexer) getXMLLiteralValueToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	trailingTrivia := l.processTrailingXMLTrivia()
-	return tree.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
 }
 
-func (l *xmlLexer) getXMLText(kind common.SyntaxKind) tree.STToken {
+func (l *xmlLexer) getXMLText(kind st.SyntaxKind) st.STToken {
 	return l.getXMLLiteralValueToken(kind)
 }
 
-func (l *xmlLexer) getXMLNameToken(allowLeadingWS bool) tree.STToken {
+func (l *xmlLexer) getXMLNameToken(allowLeadingWS bool) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	if !allowLeadingWS && leadingTrivia.BucketCount() != 0 {
 		l.reportLexerError(common.ERROR_INVALID_WHITESPACE_BEFORE, lexeme)
 	}
 	trailingTrivia := l.processTrailingXMLTrivia()
-	return tree.CreateIdentifierToken(lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateIdentifierToken(lexeme, leadingTrivia, trailingTrivia)
 }
 
 // INTERPOLATION mode
 
-func (l *xmlLexer) readTokenInXMLInterpolation() tree.STToken {
+func (l *xmlLexer) readTokenInXMLInterpolation() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 	if reader.Peek() == CLOSE_BRACE {
 		l.EndMode()
 		reader.Advance()
-		return l.getXMLSyntaxTokenWithoutTrailingWS(common.CLOSE_BRACE_TOKEN)
+		return l.getXMLSyntaxTokenWithoutTrailingWS(st.CLOSE_BRACE_TOKEN)
 	}
 	// Interpolation body should be empty (already substituted to `${}`). Fall back.
 	l.EndMode()
@@ -175,11 +175,11 @@ func (l *xmlLexer) readTokenInXMLInterpolation() tree.STToken {
 
 // XML_CONTENT mode
 
-func (l *xmlLexer) readTokenInXMLContent() tree.STToken {
+func (l *xmlLexer) readTokenInXMLContent() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
@@ -195,28 +195,28 @@ func (l *xmlLexer) readTokenInXMLContent() tree.STToken {
 			if reader.PeekN(1) == MINUS && reader.PeekN(2) == MINUS {
 				reader.AdvanceN(3)
 				l.StartMode(PARSER_MODE_XML_COMMENT)
-				return l.getXMLSyntaxTokenWithoutTrailingWS(common.XML_COMMENT_START_TOKEN)
+				return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_COMMENT_START_TOKEN)
 			}
 			if l.isCDATAStart() {
 				reader.AdvanceN(8)
 				l.StartMode(PARSER_MODE_XML_CDATA_SECTION)
-				return l.getXMLSyntaxTokenWithoutTrailingWS(common.XML_CDATA_START_TOKEN)
+				return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_CDATA_START_TOKEN)
 			}
 		case QUESTION_MARK:
 			reader.Advance()
 			l.StartMode(PARSER_MODE_XML_PI)
-			return l.getXMLSyntaxTokenWithoutTrailingWS(common.XML_PI_START_TOKEN)
+			return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_PI_START_TOKEN)
 		case SLASH:
 			l.StartMode(PARSER_MODE_XML_ELEMENT_END_TAG)
-			return l.getXMLSyntaxTokenChecked(common.LT_TOKEN, false, false)
+			return l.getXMLSyntaxTokenChecked(st.LT_TOKEN, false, false)
 		}
 		l.StartMode(PARSER_MODE_XML_ELEMENT_START_TAG)
-		return l.getXMLSyntaxTokenChecked(common.LT_TOKEN, false, false)
+		return l.getXMLSyntaxTokenChecked(st.LT_TOKEN, false, false)
 	case DOLLAR:
 		if reader.PeekN(1) == OPEN_BRACE {
 			l.StartMode(PARSER_MODE_INTERPOLATION)
 			reader.AdvanceN(2)
-			return l.getXMLSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	}
 
@@ -237,11 +237,11 @@ func (l *xmlLexer) isCDATAStart() bool {
 
 // XML_ELEMENT modes
 
-func (l *xmlLexer) readTokenInXMLElement(isStartTag bool) tree.STToken {
+func (l *xmlLexer) readTokenInXMLElement(isStartTag bool) st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	c := reader.Peek()
@@ -259,18 +259,18 @@ func (l *xmlLexer) readTokenInXMLElement(isStartTag bool) tree.STToken {
 			l.StartMode(PARSER_MODE_XML_CONTENT)
 		}
 		reader.Advance()
-		return l.getXMLSyntaxTokenWithoutTrailingWS(common.GT_TOKEN)
+		return l.getXMLSyntaxTokenWithoutTrailingWS(st.GT_TOKEN)
 	case SLASH:
 		reader.Advance()
-		return l.getXMLSyntaxTokenChecked(common.SLASH_TOKEN, isStartTag, false)
+		return l.getXMLSyntaxTokenChecked(st.SLASH_TOKEN, isStartTag, false)
 	case COLON:
 		reader.Advance()
-		return l.getXMLSyntaxTokenChecked(common.COLON_TOKEN, false, false)
+		return l.getXMLSyntaxTokenChecked(st.COLON_TOKEN, false, false)
 	case DOLLAR:
 		if reader.PeekN(1) == OPEN_BRACE {
 			reader.AdvanceN(2)
 			l.StartMode(PARSER_MODE_INTERPOLATION)
-			return l.getXMLSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	case BACKTICK:
 		l.EndMode()
@@ -283,7 +283,7 @@ func (l *xmlLexer) readTokenInXMLElement(isStartTag bool) tree.STToken {
 	return tagName
 }
 
-func (l *xmlLexer) processXMLName(startChar rune, allowLeadingWS bool) tree.STToken {
+func (l *xmlLexer) processXMLName(startChar rune, allowLeadingWS bool) st.STToken {
 	reader := l.reader
 	isValid := isXMLNCNameStart(startChar)
 	for !reader.IsEOF() && isXMLNCName(reader.Peek()) {
@@ -297,11 +297,11 @@ func (l *xmlLexer) processXMLName(startChar rune, allowLeadingWS bool) tree.STTo
 
 // XML_ATTRIBUTES mode
 
-func (l *xmlLexer) readTokenInXMLAttributes(isStartTag bool) tree.STToken {
+func (l *xmlLexer) readTokenInXMLAttributes(isStartTag bool) st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
@@ -311,24 +311,24 @@ func (l *xmlLexer) readTokenInXMLAttributes(isStartTag bool) tree.STToken {
 		return l.readTokenInXMLElement(isStartTag)
 	case COLON:
 		reader.Advance()
-		return l.getXMLSyntaxTokenChecked(common.COLON_TOKEN, false, false)
+		return l.getXMLSyntaxTokenChecked(st.COLON_TOKEN, false, false)
 	case DOLLAR:
 		if reader.PeekN(1) == OPEN_BRACE {
 			reader.AdvanceN(2)
 			l.StartMode(PARSER_MODE_INTERPOLATION)
-			return l.getXMLSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	case EQUAL:
 		reader.Advance()
-		return l.getXMLSyntaxTokenChecked(common.EQUAL_TOKEN, true, true)
+		return l.getXMLSyntaxTokenChecked(st.EQUAL_TOKEN, true, true)
 	case DOUBLE_QUOTE:
 		reader.Advance()
 		l.StartMode(PARSER_MODE_XML_DOUBLE_QUOTED_STRING)
-		return l.getXMLSyntaxTokenChecked(common.DOUBLE_QUOTE_TOKEN, false, false)
+		return l.getXMLSyntaxTokenChecked(st.DOUBLE_QUOTE_TOKEN, false, false)
 	case SINGLE_QUOTE:
 		reader.Advance()
 		l.StartMode(PARSER_MODE_XML_SINGLE_QUOTED_STRING)
-		return l.getXMLSyntaxTokenChecked(common.SINGLE_QUOTE_TOKEN, false, false)
+		return l.getXMLSyntaxTokenChecked(st.SINGLE_QUOTE_TOKEN, false, false)
 	}
 
 	reader.Advance()
@@ -337,19 +337,19 @@ func (l *xmlLexer) readTokenInXMLAttributes(isStartTag bool) tree.STToken {
 
 // XML quoted string modes
 
-func (l *xmlLexer) processXMLDoubleQuotedString() tree.STToken {
-	return l.processXMLQuotedString(DOUBLE_QUOTE, common.DOUBLE_QUOTE_TOKEN)
+func (l *xmlLexer) processXMLDoubleQuotedString() st.STToken {
+	return l.processXMLQuotedString(DOUBLE_QUOTE, st.DOUBLE_QUOTE_TOKEN)
 }
 
-func (l *xmlLexer) processXMLSingleQuotedString() tree.STToken {
-	return l.processXMLQuotedString(SINGLE_QUOTE, common.SINGLE_QUOTE_TOKEN)
+func (l *xmlLexer) processXMLSingleQuotedString() st.STToken {
+	return l.processXMLQuotedString(SINGLE_QUOTE, st.SINGLE_QUOTE_TOKEN)
 }
 
-func (l *xmlLexer) processXMLQuotedString(startingQuote rune, startQuoteKind common.SyntaxKind) tree.STToken {
+func (l *xmlLexer) processXMLQuotedString(startingQuote rune, startQuoteKind st.SyntaxKind) st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
@@ -364,7 +364,7 @@ func (l *xmlLexer) processXMLQuotedString(startingQuote rune, startQuoteKind com
 		if reader.PeekN(1) == OPEN_BRACE {
 			reader.AdvanceN(2)
 			l.StartMode(PARSER_MODE_INTERPOLATION)
-			return l.getXMLSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	}
 
@@ -396,7 +396,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(common.XML_TEXT_CONTENT)
+	return l.getXMLText(st.XML_TEXT_CONTENT)
 }
 
 func (l *xmlLexer) processXMLReferenceInQuotedString(startingQuote rune) {
@@ -460,11 +460,11 @@ func (l *xmlLexer) processXMLEntityRef() {
 
 // XML_TEXT mode
 
-func (l *xmlLexer) readTokenInXMLText() tree.STToken {
+func (l *xmlLexer) readTokenInXMLText() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 scan:
@@ -490,16 +490,16 @@ scan:
 	}
 
 	l.EndMode()
-	return l.getXMLText(common.XML_TEXT_CONTENT)
+	return l.getXMLText(st.XML_TEXT_CONTENT)
 }
 
 // XML_COMMENT and XML_CDATA_SECTION modes
 
-func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) tree.STToken {
+func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	switch reader.Peek() {
@@ -508,7 +508,7 @@ func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) tree.STToken {
 			if reader.PeekN(2) == GT {
 				reader.AdvanceN(3)
 				l.EndMode()
-				return l.getXMLSyntaxTokenWithoutTrailingWS(common.XML_COMMENT_END_TOKEN)
+				return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_COMMENT_END_TOKEN)
 			}
 			reader.Advance()
 			l.reportLexerError(common.ERROR_DOUBLE_HYPHEN_NOT_ALLOWED_WITHIN_XML_COMMENT)
@@ -517,13 +517,13 @@ func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) tree.STToken {
 		if reader.PeekN(1) == OPEN_BRACE {
 			reader.AdvanceN(2)
 			l.StartMode(PARSER_MODE_INTERPOLATION)
-			return l.getXMLSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	case CLOSE_BRACKET:
 		if isCdata && reader.PeekN(1) == CLOSE_BRACKET && reader.PeekN(2) == GT {
 			reader.AdvanceN(3)
 			l.EndMode()
-			return l.getXMLSyntaxTokenWithoutTrailingWS(common.XML_CDATA_END_TOKEN)
+			return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_CDATA_END_TOKEN)
 		}
 	}
 
@@ -558,16 +558,16 @@ scan:
 		}
 	}
 
-	return l.getXMLText(common.XML_TEXT_CONTENT)
+	return l.getXMLText(st.XML_TEXT_CONTENT)
 }
 
 // XML_PI mode
 
-func (l *xmlLexer) readTokenInXMLPI() tree.STToken {
+func (l *xmlLexer) readTokenInXMLPI() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
@@ -576,7 +576,7 @@ func (l *xmlLexer) readTokenInXMLPI() tree.STToken {
 		if reader.PeekN(1) == GT {
 			reader.AdvanceN(2)
 			l.EndMode()
-			return l.getXMLSyntaxToken(common.XML_PI_END_TOKEN)
+			return l.getXMLSyntaxToken(st.XML_PI_END_TOKEN)
 		}
 	case BACKTICK:
 		l.EndMode()
@@ -591,11 +591,11 @@ func (l *xmlLexer) readTokenInXMLPI() tree.STToken {
 
 // XML_PI_DATA mode
 
-func (l *xmlLexer) readTokenInXMLPIData() tree.STToken {
+func (l *xmlLexer) readTokenInXMLPIData() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getXMLSyntaxToken(common.EOF_TOKEN)
+		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
 
 	switch reader.Peek() {
@@ -603,14 +603,14 @@ func (l *xmlLexer) readTokenInXMLPIData() tree.STToken {
 		if reader.PeekN(1) == OPEN_BRACE {
 			reader.AdvanceN(2)
 			l.StartMode(PARSER_MODE_INTERPOLATION)
-			return l.getXMLSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	case QUESTION_MARK:
 		if reader.PeekN(1) == GT {
 			reader.AdvanceN(2)
 			l.EndMode()
 			l.EndMode()
-			return l.getXMLSyntaxToken(common.XML_PI_END_TOKEN)
+			return l.getXMLSyntaxToken(st.XML_PI_END_TOKEN)
 		}
 	}
 
@@ -635,26 +635,26 @@ scan:
 		}
 	}
 
-	return l.getXMLText(common.XML_TEXT_CONTENT)
+	return l.getXMLText(st.XML_TEXT_CONTENT)
 }
 
 // kindStringValue maps a SyntaxKind to its source-text representation for diagnostic messages.
 // Mirrors Java SyntaxKind.stringValue() for the small set of kinds used in XML diagnostic args.
-func kindStringValue(kind common.SyntaxKind) string {
+func kindStringValue(kind st.SyntaxKind) string {
 	switch kind {
-	case common.LT_TOKEN:
+	case st.LT_TOKEN:
 		return "<"
-	case common.GT_TOKEN:
+	case st.GT_TOKEN:
 		return ">"
-	case common.SLASH_TOKEN:
+	case st.SLASH_TOKEN:
 		return "/"
-	case common.COLON_TOKEN:
+	case st.COLON_TOKEN:
 		return ":"
-	case common.EQUAL_TOKEN:
+	case st.EQUAL_TOKEN:
 		return "="
-	case common.DOUBLE_QUOTE_TOKEN:
+	case st.DOUBLE_QUOTE_TOKEN:
 		return "\""
-	case common.SINGLE_QUOTE_TOKEN:
+	case st.SINGLE_QUOTE_TOKEN:
 		return "'"
 	default:
 		return ""

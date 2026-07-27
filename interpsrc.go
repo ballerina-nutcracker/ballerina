@@ -49,6 +49,7 @@ import (
 	sourceruntime "github.com/ballerina-nutcracker/ballerina/runtime"
 	sourcesemantics "github.com/ballerina-nutcracker/ballerina/semantics"
 	sourcesemtypes "github.com/ballerina-nutcracker/ballerina/semtypes"
+	sourcest "github.com/ballerina-nutcracker/ballerina/st"
 	sourcetools "github.com/ballerina-nutcracker/ballerina/tools"
 	sourcevalues "github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -82,6 +83,7 @@ var interpreterSources = []sourceTree{
 	{dir: "runtime", fs: sourceruntime.InterpreterSource()},
 	{dir: "semantics", fs: sourcesemantics.InterpreterSource()},
 	{dir: "semtypes", fs: sourcesemtypes.InterpreterSource()},
+	{dir: "st", fs: sourcest.InterpreterSource()},
 	{dir: "tools", fs: sourcetools.InterpreterSource()},
 	{dir: "values", fs: sourcevalues.InterpreterSource()},
 }
@@ -232,28 +234,30 @@ use (
 	./runtime
 	./semantics
 	./semtypes
+	./st
 	./tools
 	./values
 )
 
 replace (
-	ballerina v0.6.0 => .
-	ballerina/ast v0.6.0 => ./ast
-	ballerina/bir v0.6.0 => ./bir
-	ballerina/cli v0.6.0 => ./cli
-	ballerina/common v0.6.0 => ./common
-	ballerina/context v0.6.0 => ./context
-	ballerina/decimal v0.6.0 => ./decimal
-	ballerina/desugar v0.6.0 => ./desugar
-	ballerina/lib v0.6.0 => ./lib
-	ballerina/model v0.6.0 => ./model
-	ballerina/parser v0.6.0 => ./parser
-	ballerina/platform v0.6.0 => ./platform
-	ballerina/projects v0.6.0 => ./projects
-	ballerina/runtime v0.6.0 => ./runtime
-	ballerina/semantics v0.6.0 => ./semantics
-	ballerina/semtypes v0.6.0 => ./semtypes
-	ballerina/tools v0.6.0 => ./tools
-	ballerina/values v0.6.0 => ./values
+	github.com/ballerina-nutcracker/ballerina v0.6.0 => .
+	github.com/ballerina-nutcracker/ballerina/ast v0.6.0 => ./ast
+	github.com/ballerina-nutcracker/ballerina/bir v0.6.0 => ./bir
+	github.com/ballerina-nutcracker/ballerina/cli v0.6.0 => ./cli
+	github.com/ballerina-nutcracker/ballerina/common v0.6.0 => ./common
+	github.com/ballerina-nutcracker/ballerina/context v0.6.0 => ./context
+	github.com/ballerina-nutcracker/ballerina/decimal v0.6.0 => ./decimal
+	github.com/ballerina-nutcracker/ballerina/desugar v0.6.0 => ./desugar
+	github.com/ballerina-nutcracker/ballerina/lib v0.6.0 => ./lib
+	github.com/ballerina-nutcracker/ballerina/model v0.6.0 => ./model
+	github.com/ballerina-nutcracker/ballerina/parser v0.6.0 => ./parser
+	github.com/ballerina-nutcracker/ballerina/platform v0.6.0 => ./platform
+	github.com/ballerina-nutcracker/ballerina/projects v0.6.0 => ./projects
+	github.com/ballerina-nutcracker/ballerina/runtime v0.6.0 => ./runtime
+	github.com/ballerina-nutcracker/ballerina/semantics v0.6.0 => ./semantics
+	github.com/ballerina-nutcracker/ballerina/semtypes v0.6.0 => ./semtypes
+	github.com/ballerina-nutcracker/ballerina/st v0.6.0 => ./st
+	github.com/ballerina-nutcracker/ballerina/tools v0.6.0 => ./tools
+	github.com/ballerina-nutcracker/ballerina/values v0.6.0 => ./values
 )
 `

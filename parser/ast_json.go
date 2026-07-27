@@ -13,9 +13,11 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-//
 
-package st
+package parser
 
-// This file is intentionally empty for now.
-// Utility functions for regular nodes will be added here when needed.
+import "github.com/ballerina-nutcracker/ballerina/st"
+
+func generateJSON(node st.STNode) string {
+	return st.GenerateJSON(node, kindName)
+}

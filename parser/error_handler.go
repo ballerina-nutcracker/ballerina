@@ -19,7 +19,7 @@ import (
 	"fmt"
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -40,7 +40,7 @@ func formatParserRuleContext(ctx common.ParserRuleContext) string {
 	return ctx.String()
 }
 
-func formatSTToken(token tree.STToken) string {
+func formatSTToken(token st.STToken) string {
 	if token == nil {
 		return "nil"
 	}
@@ -48,19 +48,19 @@ func formatSTToken(token tree.STToken) string {
 	if kindStr == "" {
 		// For tokens without StrValue (like IDENTIFIER_TOKEN), use a descriptive name
 		switch token.Kind() {
-		case common.IDENTIFIER_TOKEN:
+		case st.IDENTIFIER_TOKEN:
 			kindStr = "IDENTIFIER_TOKEN"
-		case common.STRING_LITERAL_TOKEN:
+		case st.STRING_LITERAL_TOKEN:
 			kindStr = "STRING_LITERAL_TOKEN"
-		case common.DECIMAL_INTEGER_LITERAL_TOKEN:
+		case st.DECIMAL_INTEGER_LITERAL_TOKEN:
 			kindStr = "DECIMAL_INTEGER_LITERAL_TOKEN"
-		case common.HEX_INTEGER_LITERAL_TOKEN:
+		case st.HEX_INTEGER_LITERAL_TOKEN:
 			kindStr = "HEX_INTEGER_LITERAL_TOKEN"
-		case common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
+		case st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
 			kindStr = "DECIMAL_FLOATING_POINT_LITERAL_TOKEN"
-		case common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+		case st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 			kindStr = "HEX_FLOATING_POINT_LITERAL_TOKEN"
-		case common.INVALID_TOKEN:
+		case st.INVALID_TOKEN:
 			kindStr = "INVALID_TOKEN"
 		default:
 			kindStr = fmt.Sprintf("TOKEN_%d", token.Kind().Tag())
@@ -69,11 +69,11 @@ func formatSTToken(token tree.STToken) string {
 	return fmt.Sprintf("%s:%s", kindStr, token.Text())
 }
 
-func formatSTNode(node tree.STNode) string {
+func formatSTNode(node st.STNode) string {
 	if node == nil {
 		return "nil"
 	}
-	return tree.ToSexpr(node)
+	return st.ToSexpr(node)
 }
 
 func formatSolution(sol *Solution) string {
@@ -142,17 +142,17 @@ type Solution struct {
 	Ctx           common.ParserRuleContext
 	Action        Action
 	TokenText     string
-	TokenKind     common.SyntaxKind
-	RecoveredNode tree.STNode
-	RemovedToken  tree.STToken
+	TokenKind     st.SyntaxKind
+	RecoveredNode st.STNode
+	RemovedToken  st.STToken
 	Depth         int
 }
 
-func NewSolution(action Action, ctx common.ParserRuleContext, tokenKind common.SyntaxKind, tokenText string) *Solution {
+func NewSolution(action Action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string) *Solution {
 	return NewSolutionWithDepth(action, ctx, tokenKind, tokenText, -1)
 }
 
-func NewSolutionWithDepth(action Action, ctx common.ParserRuleContext, tokenKind common.SyntaxKind, tokenText string, depth int) *Solution {
+func NewSolutionWithDepth(action Action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string, depth int) *Solution {
 	return &Solution{
 		Action:    action,
 		Ctx:       ctx,
@@ -318,12 +318,12 @@ type AbstractParserErrorHandler interface {
 	HasAlternativePaths(context common.ParserRuleContext) bool
 	SeekMatch(context common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) *Result
 	GetNextRule(context common.ParserRuleContext, nextLookahead int) common.ParserRuleContext
-	GetExpectedTokenKind(context common.ParserRuleContext) common.SyntaxKind
+	GetExpectedTokenKind(context common.ParserRuleContext) st.SyntaxKind
 	GetInsertSolution(context common.ParserRuleContext) *Solution
 
 	// Default/concrete methods (implemented in AbstractParserErrorHandlerMethods)
-	Recover(currentCtx common.ParserRuleContext, nextToken tree.STToken, isCompletion bool) *Solution
-	ConsumeInvalidToken() tree.STToken
+	Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) *Solution
+	ConsumeInvalidToken() st.STToken
 	StartContext(context common.ParserRuleContext)
 	EndContext()
 	SwitchContext(context common.ParserRuleContext)
@@ -341,7 +341,7 @@ type AbstractParserErrorHandlerMethods struct {
 	Self AbstractParserErrorHandler
 }
 
-func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken tree.STToken, isCompletion bool) (result *Solution) {
+func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) (result *Solution) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(Recover start %s %s %s)",
 			formatParserRuleContext(currentCtx),
@@ -386,7 +386,7 @@ func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 	return m.getFailSafeSolution(currentCtx, nextToken)
 }
 
-func (m *AbstractParserErrorHandlerMethods) getResolution(currentCtx common.ParserRuleContext, nextToken tree.STToken) *Solution {
+func (m *AbstractParserErrorHandlerMethods) getResolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *Solution {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(getResolution start %s %s)",
 			formatParserRuleContext(currentCtx),
@@ -401,19 +401,19 @@ func (m *AbstractParserErrorHandlerMethods) getResolution(currentCtx common.Pars
 	return sol
 }
 
-func (m *AbstractParserErrorHandlerMethods) getFailSafeSolution(currentCtx common.ParserRuleContext, nextToken tree.STToken) *Solution {
+func (m *AbstractParserErrorHandlerMethods) getFailSafeSolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *Solution {
 	sol := NewSolution(ACTION_REMOVE, currentCtx, nextToken.Kind(), nextToken.Text())
 	sol.RemovedToken = m.Self.ConsumeInvalidToken()
 	return sol
 }
 
-func (m *AbstractParserErrorHandlerMethods) validateSolution(bestMatch *Result, currentCtx common.ParserRuleContext, nextToken tree.STNode) {
+func (m *AbstractParserErrorHandlerMethods) validateSolution(bestMatch *Result, currentCtx common.ParserRuleContext, nextToken st.STNode) {
 	sol := bestMatch.solution
 	if (sol == nil) || (sol.Action == ACTION_REMOVE) {
 		return
 	}
-	if (sol.Action == ACTION_KEEP) && (nextToken.Kind() == common.DOCUMENTATION_STRING) {
-		bestMatch.solution = NewSolution(ACTION_REMOVE, currentCtx, common.DOCUMENTATION_STRING, currentCtx.String())
+	if (sol.Action == ACTION_KEEP) && (nextToken.Kind() == st.DOCUMENTATION_STRING) {
+		bestMatch.solution = NewSolution(ACTION_REMOVE, currentCtx, st.DOCUMENTATION_STRING, currentCtx.String())
 	}
 	if (sol.Action != ACTION_INSERT) || (bestMatch.fixesSize() < 2) {
 		return
@@ -426,7 +426,7 @@ func (m *AbstractParserErrorHandlerMethods) validateSolution(bestMatch *Result, 
 	}
 }
 
-func (m *AbstractParserErrorHandlerMethods) getCompletion(context common.ParserRuleContext, nextToken tree.STToken) *Solution {
+func (m *AbstractParserErrorHandlerMethods) getCompletion(context common.ParserRuleContext, nextToken st.STToken) *Solution {
 	tempCtxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(m.getCtxStackSnapshot())
 	var sol *Solution
@@ -448,7 +448,7 @@ func (m *AbstractParserErrorHandlerMethods) getCompletion(context common.ParserR
 	return sol
 }
 
-func (m *AbstractParserErrorHandlerMethods) ConsumeInvalidToken() (result tree.STToken) {
+func (m *AbstractParserErrorHandlerMethods) ConsumeInvalidToken() (result st.STToken) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -474,8 +474,8 @@ func (m *AbstractParserErrorHandlerMethods) applyFix(currentCtx common.ParserRul
 	}
 }
 
-func (m *AbstractParserErrorHandlerMethods) handleMissingToken(currentCtx common.ParserRuleContext, fix *Solution) tree.STNode {
-	return tree.CreateMissingTokenWithDiagnosticsFromParserRules(fix.TokenKind, fix.Ctx)
+func (m *AbstractParserErrorHandlerMethods) handleMissingToken(currentCtx common.ParserRuleContext, fix *Solution) st.STNode {
+	return createMissingTokenWithDiagnosticsFromParserRules(fix.TokenKind, fix.Ctx)
 }
 
 func (m *AbstractParserErrorHandlerMethods) getCtxStackSnapshot() []common.ParserRuleContext {
@@ -501,7 +501,7 @@ func (m *AbstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 					panic("assertion failed")
 				}
 				bestMatch = NewResult(make([]*Solution, 0), LOOKAHEAD_LIMIT-1)
-				bestMatch.solution = NewSolution(ACTION_REMOVE, currentCtx, common.SyntaxKind(0), currentCtx.String())
+				bestMatch.solution = NewSolution(ACTION_REMOVE, currentCtx, st.SyntaxKind(0), currentCtx.String())
 			}
 		}()
 		bestMatch = m.seekMatchInSubTree(currentCtx, 1, 0, true)
@@ -1047,20 +1047,20 @@ func NewBallerinaParserErrorHandlerFromTokenReader(tokenReader *TokenReader) Bal
 func (b *BallerinaParserErrorHandler) isEndOfObjectTypeNode(nextLookahead int) bool {
 	nextToken := b.tokenReader.PeekN(nextLookahead)
 	switch nextToken.Kind() {
-	case common.CLOSE_BRACE_TOKEN,
-		common.EOF_TOKEN,
-		common.CLOSE_BRACE_PIPE_TOKEN,
-		common.TYPE_KEYWORD,
-		common.SERVICE_KEYWORD:
+	case st.CLOSE_BRACE_TOKEN,
+		st.EOF_TOKEN,
+		st.CLOSE_BRACE_PIPE_TOKEN,
+		st.TYPE_KEYWORD,
+		st.SERVICE_KEYWORD:
 		return true
 	default:
 		nextNextToken := b.tokenReader.PeekN(nextLookahead + 1)
 		switch nextNextToken.Kind() {
-		case common.CLOSE_BRACE_TOKEN,
-			common.EOF_TOKEN,
-			common.CLOSE_BRACE_PIPE_TOKEN,
-			common.TYPE_KEYWORD,
-			common.SERVICE_KEYWORD:
+		case st.CLOSE_BRACE_TOKEN,
+			st.EOF_TOKEN,
+			st.CLOSE_BRACE_PIPE_TOKEN,
+			st.TYPE_KEYWORD,
+			st.SERVICE_KEYWORD:
 			return true
 		default:
 			return false
@@ -1084,7 +1084,7 @@ func (b *BallerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleCont
 		nextToken := b.tokenReader.PeekN(lookahead)
 		switch currentCtx {
 		case common.PARSER_RULE_CONTEXT_EOF:
-			hasMatch = (nextToken.Kind() == common.EOF_TOKEN)
+			hasMatch = (nextToken.Kind() == st.EOF_TOKEN)
 		case common.PARSER_RULE_CONTEXT_FUNC_NAME,
 			common.PARSER_RULE_CONTEXT_CLASS_NAME,
 			common.PARSER_RULE_CONTEXT_VARIABLE_NAME,
@@ -1110,181 +1110,181 @@ func (b *BallerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleCont
 			common.PARSER_RULE_CONTEXT_MODULE_ENUM_NAME,
 			common.PARSER_RULE_CONTEXT_ENUM_MEMBER_NAME,
 			common.PARSER_RULE_CONTEXT_NAMED_ARG_BINDING_PATTERN:
-			hasMatch = (nextToken.Kind() == common.IDENTIFIER_TOKEN)
+			hasMatch = (nextToken.Kind() == st.IDENTIFIER_TOKEN)
 		case common.PARSER_RULE_CONTEXT_IMPORT_PREFIX:
-			hasMatch = ((nextToken.Kind() == common.IDENTIFIER_TOKEN) || isPredeclaredPrefix(nextToken.Kind()))
+			hasMatch = ((nextToken.Kind() == st.IDENTIFIER_TOKEN) || isPredeclaredPrefix(nextToken.Kind()))
 		case common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER_PREDECLARED_PREFIX:
 			hasMatch = isPredeclaredPrefix(nextToken.Kind())
 		case common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS,
 			common.PARSER_RULE_CONTEXT_PARENTHESISED_TYPE_DESC_START,
 			common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN:
-			hasMatch = (nextToken.Kind() == common.OPEN_PAREN_TOKEN)
+			hasMatch = (nextToken.Kind() == st.OPEN_PAREN_TOKEN)
 		case common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS,
 			common.PARSER_RULE_CONTEXT_ARG_LIST_CLOSE_PAREN:
-			hasMatch = (nextToken.Kind() == common.CLOSE_PAREN_TOKEN)
+			hasMatch = (nextToken.Kind() == st.CLOSE_PAREN_TOKEN)
 		case common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESCRIPTOR:
-			hasMatch = (((isSimpleType(nextToken.Kind()) || (nextToken.Kind() == common.ERROR_KEYWORD)) || (nextToken.Kind() == common.STREAM_KEYWORD)) || (nextToken.Kind() == common.TYPEDESC_KEYWORD))
+			hasMatch = (((isSimpleType(nextToken.Kind()) || (nextToken.Kind() == st.ERROR_KEYWORD)) || (nextToken.Kind() == st.STREAM_KEYWORD)) || (nextToken.Kind() == st.TYPEDESC_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_OPEN_BRACE:
-			hasMatch = (nextToken.Kind() == common.OPEN_BRACE_TOKEN)
+			hasMatch = (nextToken.Kind() == st.OPEN_BRACE_TOKEN)
 		case common.PARSER_RULE_CONTEXT_CLOSE_BRACE:
-			hasMatch = (nextToken.Kind() == common.CLOSE_BRACE_TOKEN)
+			hasMatch = (nextToken.Kind() == st.CLOSE_BRACE_TOKEN)
 		case common.PARSER_RULE_CONTEXT_ASSIGN_OP:
-			hasMatch = (nextToken.Kind() == common.EQUAL_TOKEN)
+			hasMatch = (nextToken.Kind() == st.EQUAL_TOKEN)
 		case common.PARSER_RULE_CONTEXT_SEMICOLON:
-			hasMatch = (nextToken.Kind() == common.SEMICOLON_TOKEN)
+			hasMatch = (nextToken.Kind() == st.SEMICOLON_TOKEN)
 		case common.PARSER_RULE_CONTEXT_BINARY_OPERATOR:
 			hasMatch = b.isBinaryOperator(nextToken)
 		case common.PARSER_RULE_CONTEXT_COMMA,
 			common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END_COMMA,
 			common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_MATCH_PATTERN_END_COMMA:
-			hasMatch = (nextToken.Kind() == common.COMMA_TOKEN)
+			hasMatch = (nextToken.Kind() == st.COMMA_TOKEN)
 		case common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_END:
-			hasMatch = (nextToken.Kind() == common.CLOSE_BRACE_PIPE_TOKEN)
+			hasMatch = (nextToken.Kind() == st.CLOSE_BRACE_PIPE_TOKEN)
 		case common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_START:
-			hasMatch = (nextToken.Kind() == common.OPEN_BRACE_PIPE_TOKEN)
+			hasMatch = (nextToken.Kind() == st.OPEN_BRACE_PIPE_TOKEN)
 		case common.PARSER_RULE_CONTEXT_ELLIPSIS:
-			hasMatch = (nextToken.Kind() == common.ELLIPSIS_TOKEN)
+			hasMatch = (nextToken.Kind() == st.ELLIPSIS_TOKEN)
 		case common.PARSER_RULE_CONTEXT_QUESTION_MARK:
-			hasMatch = (nextToken.Kind() == common.QUESTION_MARK_TOKEN)
+			hasMatch = (nextToken.Kind() == st.QUESTION_MARK_TOKEN)
 		case common.PARSER_RULE_CONTEXT_FIRST_OBJECT_CONS_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_SECOND_OBJECT_CONS_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_FIRST_OBJECT_TYPE_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_SECOND_OBJECT_TYPE_QUALIFIER:
-			hasMatch = (((nextToken.Kind() == common.CLIENT_KEYWORD) || (nextToken.Kind() == common.ISOLATED_KEYWORD)) || (nextToken.Kind() == common.SERVICE_KEYWORD))
+			hasMatch = (((nextToken.Kind() == st.CLIENT_KEYWORD) || (nextToken.Kind() == st.ISOLATED_KEYWORD)) || (nextToken.Kind() == st.SERVICE_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_FIRST_CLASS_TYPE_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_SECOND_CLASS_TYPE_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_THIRD_CLASS_TYPE_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_FOURTH_CLASS_TYPE_QUALIFIER:
-			hasMatch = (((((nextToken.Kind() == common.DISTINCT_KEYWORD) || (nextToken.Kind() == common.CLIENT_KEYWORD)) || (nextToken.Kind() == common.READONLY_KEYWORD)) || (nextToken.Kind() == common.ISOLATED_KEYWORD)) || (nextToken.Kind() == common.SERVICE_KEYWORD))
+			hasMatch = (((((nextToken.Kind() == st.DISTINCT_KEYWORD) || (nextToken.Kind() == st.CLIENT_KEYWORD)) || (nextToken.Kind() == st.READONLY_KEYWORD)) || (nextToken.Kind() == st.ISOLATED_KEYWORD)) || (nextToken.Kind() == st.SERVICE_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_OPEN_BRACKET,
 			common.PARSER_RULE_CONTEXT_TUPLE_TYPE_DESC_START:
-			hasMatch = (nextToken.Kind() == common.OPEN_BRACKET_TOKEN)
+			hasMatch = (nextToken.Kind() == st.OPEN_BRACKET_TOKEN)
 		case common.PARSER_RULE_CONTEXT_CLOSE_BRACKET:
-			hasMatch = (nextToken.Kind() == common.CLOSE_BRACKET_TOKEN)
+			hasMatch = (nextToken.Kind() == st.CLOSE_BRACKET_TOKEN)
 		case common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_METHOD_CALL_DOT:
-			hasMatch = (nextToken.Kind() == common.DOT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.DOT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_BOOLEAN_LITERAL:
-			hasMatch = ((nextToken.Kind() == common.TRUE_KEYWORD) || (nextToken.Kind() == common.FALSE_KEYWORD))
+			hasMatch = ((nextToken.Kind() == st.TRUE_KEYWORD) || (nextToken.Kind() == st.FALSE_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_DECIMAL_INTEGER_LITERAL_TOKEN:
-			hasMatch = (nextToken.Kind() == common.DECIMAL_INTEGER_LITERAL_TOKEN)
+			hasMatch = (nextToken.Kind() == st.DECIMAL_INTEGER_LITERAL_TOKEN)
 		case common.PARSER_RULE_CONTEXT_SLASH,
 			common.PARSER_RULE_CONTEXT_ABSOLUTE_PATH_SINGLE_SLASH,
 			common.PARSER_RULE_CONTEXT_RESOURCE_METHOD_CALL_SLASH_TOKEN:
-			hasMatch = (nextToken.Kind() == common.SLASH_TOKEN)
+			hasMatch = (nextToken.Kind() == st.SLASH_TOKEN)
 		case common.PARSER_RULE_CONTEXT_BASIC_LITERAL:
 			hasMatch = b.isBasicLiteral(nextToken.Kind())
 		case common.PARSER_RULE_CONTEXT_COLON,
 			common.PARSER_RULE_CONTEXT_VAR_REF_COLON,
 			common.PARSER_RULE_CONTEXT_TYPE_REF_COLON:
-			hasMatch = (nextToken.Kind() == common.COLON_TOKEN)
+			hasMatch = (nextToken.Kind() == st.COLON_TOKEN)
 		case common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN:
-			hasMatch = (nextToken.Kind() == common.STRING_LITERAL_TOKEN)
+			hasMatch = (nextToken.Kind() == st.STRING_LITERAL_TOKEN)
 		case common.PARSER_RULE_CONTEXT_UNARY_OPERATOR:
 			hasMatch = b.isUnaryOperator(nextToken)
 		case common.PARSER_RULE_CONTEXT_HEX_INTEGER_LITERAL_TOKEN:
-			hasMatch = (nextToken.Kind() == common.HEX_INTEGER_LITERAL_TOKEN)
+			hasMatch = (nextToken.Kind() == st.HEX_INTEGER_LITERAL_TOKEN)
 		case common.PARSER_RULE_CONTEXT_AT:
-			hasMatch = (nextToken.Kind() == common.AT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.AT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_RIGHT_ARROW:
-			hasMatch = (nextToken.Kind() == common.RIGHT_ARROW_TOKEN)
+			hasMatch = (nextToken.Kind() == st.RIGHT_ARROW_TOKEN)
 		case common.PARSER_RULE_CONTEXT_PARAMETERIZED_TYPE:
 			hasMatch = isParameterizedTypeToken(nextToken.Kind())
 		case common.PARSER_RULE_CONTEXT_LT,
 			common.PARSER_RULE_CONTEXT_STREAM_TYPE_PARAM_START_TOKEN,
 			common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_START_LT:
-			hasMatch = (nextToken.Kind() == common.LT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.LT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_GT,
 			common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_END_GT:
-			hasMatch = (nextToken.Kind() == common.GT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.GT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_FIELD_IDENT:
-			hasMatch = (nextToken.Kind() == common.FIELD_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.FIELD_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_FUNCTION_IDENT:
-			hasMatch = (nextToken.Kind() == common.FUNCTION_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.FUNCTION_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_IDENT_AFTER_OBJECT_IDENT:
-			hasMatch = ((nextToken.Kind() == common.FUNCTION_KEYWORD) || (nextToken.Kind() == common.FIELD_KEYWORD))
+			hasMatch = ((nextToken.Kind() == st.FUNCTION_KEYWORD) || (nextToken.Kind() == st.FIELD_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_SINGLE_KEYWORD_ATTACH_POINT_IDENT:
 			hasMatch = b.isSingleKeywordAttachPointIdent(nextToken.Kind())
 		case common.PARSER_RULE_CONTEXT_OBJECT_IDENT:
-			hasMatch = (nextToken.Kind() == common.OBJECT_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.OBJECT_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_RECORD_IDENT:
-			hasMatch = (nextToken.Kind() == common.RECORD_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.RECORD_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_SERVICE_IDENT:
-			hasMatch = (nextToken.Kind() == common.SERVICE_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.SERVICE_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_REMOTE_IDENT:
-			hasMatch = (nextToken.Kind() == common.REMOTE_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.REMOTE_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
-			hasMatch = (nextToken.Kind() == common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
+			hasMatch = (nextToken.Kind() == st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
 		case common.PARSER_RULE_CONTEXT_HEX_FLOATING_POINT_LITERAL_TOKEN:
-			hasMatch = (nextToken.Kind() == common.HEX_FLOATING_POINT_LITERAL_TOKEN)
+			hasMatch = (nextToken.Kind() == st.HEX_FLOATING_POINT_LITERAL_TOKEN)
 		case common.PARSER_RULE_CONTEXT_PIPE:
-			hasMatch = (nextToken.Kind() == common.PIPE_TOKEN)
+			hasMatch = (nextToken.Kind() == st.PIPE_TOKEN)
 		case common.PARSER_RULE_CONTEXT_TEMPLATE_START, common.PARSER_RULE_CONTEXT_TEMPLATE_END:
-			hasMatch = (nextToken.Kind() == common.BACKTICK_TOKEN)
+			hasMatch = (nextToken.Kind() == st.BACKTICK_TOKEN)
 		case common.PARSER_RULE_CONTEXT_ASTERISK:
-			hasMatch = (nextToken.Kind() == common.ASTERISK_TOKEN)
+			hasMatch = (nextToken.Kind() == st.ASTERISK_TOKEN)
 		case common.PARSER_RULE_CONTEXT_BITWISE_AND_OPERATOR:
-			hasMatch = (nextToken.Kind() == common.BITWISE_AND_TOKEN)
+			hasMatch = (nextToken.Kind() == st.BITWISE_AND_TOKEN)
 		case common.PARSER_RULE_CONTEXT_EXPR_FUNC_BODY_START,
 			common.PARSER_RULE_CONTEXT_RIGHT_DOUBLE_ARROW:
-			hasMatch = (nextToken.Kind() == common.RIGHT_DOUBLE_ARROW_TOKEN)
+			hasMatch = (nextToken.Kind() == st.RIGHT_DOUBLE_ARROW_TOKEN)
 		case common.PARSER_RULE_CONTEXT_PLUS_TOKEN:
-			hasMatch = (nextToken.Kind() == common.PLUS_TOKEN)
+			hasMatch = (nextToken.Kind() == st.PLUS_TOKEN)
 		case common.PARSER_RULE_CONTEXT_MINUS_TOKEN:
-			hasMatch = (nextToken.Kind() == common.MINUS_TOKEN)
+			hasMatch = (nextToken.Kind() == st.MINUS_TOKEN)
 		case common.PARSER_RULE_CONTEXT_SIGNED_INT_OR_FLOAT_RHS:
 			hasMatch = isIntOrFloat(nextToken)
 		case common.PARSER_RULE_CONTEXT_SYNC_SEND_TOKEN:
-			hasMatch = (nextToken.Kind() == common.SYNC_SEND_TOKEN)
+			hasMatch = (nextToken.Kind() == st.SYNC_SEND_TOKEN)
 		case common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME:
-			hasMatch = ((nextToken.Kind() == common.FUNCTION_KEYWORD) || (nextToken.Kind() == common.IDENTIFIER_TOKEN))
+			hasMatch = ((nextToken.Kind() == st.FUNCTION_KEYWORD) || (nextToken.Kind() == st.IDENTIFIER_TOKEN))
 		case common.PARSER_RULE_CONTEXT_LEFT_ARROW_TOKEN:
-			hasMatch = (nextToken.Kind() == common.LEFT_ARROW_TOKEN)
+			hasMatch = (nextToken.Kind() == st.LEFT_ARROW_TOKEN)
 		case common.PARSER_RULE_CONTEXT_ANNOT_CHAINING_TOKEN:
-			hasMatch = (nextToken.Kind() == common.ANNOT_CHAINING_TOKEN)
+			hasMatch = (nextToken.Kind() == st.ANNOT_CHAINING_TOKEN)
 		case common.PARSER_RULE_CONTEXT_OPTIONAL_CHAINING_TOKEN:
-			hasMatch = (nextToken.Kind() == common.OPTIONAL_CHAINING_TOKEN)
+			hasMatch = (nextToken.Kind() == st.OPTIONAL_CHAINING_TOKEN)
 		case common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD:
-			hasMatch = (nextToken.Kind() == common.TRANSACTIONAL_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.TRANSACTIONAL_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_SERVICE_DECL_QUALIFIER:
-			hasMatch = (nextToken.Kind() == common.ISOLATED_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.ISOLATED_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_UNION_OR_INTERSECTION_TOKEN:
-			hasMatch = ((nextToken.Kind() == common.PIPE_TOKEN) || (nextToken.Kind() == common.BITWISE_AND_TOKEN))
+			hasMatch = ((nextToken.Kind() == st.PIPE_TOKEN) || (nextToken.Kind() == st.BITWISE_AND_TOKEN))
 		case common.PARSER_RULE_CONTEXT_DOT_LT_TOKEN:
-			hasMatch = (nextToken.Kind() == common.DOT_LT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.DOT_LT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_SLASH_LT_TOKEN:
-			hasMatch = (nextToken.Kind() == common.SLASH_LT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.SLASH_LT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN:
-			hasMatch = (nextToken.Kind() == common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN)
+			hasMatch = (nextToken.Kind() == st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN)
 		case common.PARSER_RULE_CONTEXT_SLASH_ASTERISK_TOKEN:
-			hasMatch = (nextToken.Kind() == common.SLASH_ASTERISK_TOKEN)
+			hasMatch = (nextToken.Kind() == st.SLASH_ASTERISK_TOKEN)
 		case common.PARSER_RULE_CONTEXT_KEY_KEYWORD:
-			hasMatch = ((nextToken.Kind() == common.KEY_KEYWORD) || isKeyKeyword(nextToken))
+			hasMatch = ((nextToken.Kind() == st.KEY_KEYWORD) || isKeyKeyword(nextToken))
 		case common.PARSER_RULE_CONTEXT_NATURAL_KEYWORD:
-			hasMatch = ((nextToken.Kind() == common.NATURAL_KEYWORD) || isNaturalKeyword(nextToken))
+			hasMatch = ((nextToken.Kind() == st.NATURAL_KEYWORD) || isNaturalKeyword(nextToken))
 		case common.PARSER_RULE_CONTEXT_VAR_KEYWORD:
-			hasMatch = (nextToken.Kind() == common.VAR_KEYWORD)
+			hasMatch = (nextToken.Kind() == st.VAR_KEYWORD)
 		case common.PARSER_RULE_CONTEXT_ORDER_DIRECTION:
-			hasMatch = ((nextToken.Kind() == common.ASCENDING_KEYWORD) || (nextToken.Kind() == common.DESCENDING_KEYWORD))
+			hasMatch = ((nextToken.Kind() == st.ASCENDING_KEYWORD) || (nextToken.Kind() == st.DESCENDING_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_OBJECT_MEMBER_VISIBILITY_QUAL:
-			hasMatch = ((nextToken.Kind() == common.PRIVATE_KEYWORD) || (nextToken.Kind() == common.PUBLIC_KEYWORD))
+			hasMatch = ((nextToken.Kind() == st.PRIVATE_KEYWORD) || (nextToken.Kind() == st.PUBLIC_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FIRST_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_OBJECT_METHOD_SECOND_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_OBJECT_METHOD_THIRD_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FOURTH_QUALIFIER:
-			hasMatch = ((((nextToken.Kind() == common.ISOLATED_KEYWORD) || (nextToken.Kind() == common.TRANSACTIONAL_KEYWORD)) || (nextToken.Kind() == common.REMOTE_KEYWORD)) || (nextToken.Kind() == common.RESOURCE_KEYWORD))
+			hasMatch = ((((nextToken.Kind() == st.ISOLATED_KEYWORD) || (nextToken.Kind() == st.TRANSACTIONAL_KEYWORD)) || (nextToken.Kind() == st.REMOTE_KEYWORD)) || (nextToken.Kind() == st.RESOURCE_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_FUNC_DEF_FIRST_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_FUNC_DEF_SECOND_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_FUNC_TYPE_FIRST_QUALIFIER,
 			common.PARSER_RULE_CONTEXT_FUNC_TYPE_SECOND_QUALIFIER:
-			hasMatch = ((nextToken.Kind() == common.ISOLATED_KEYWORD) || (nextToken.Kind() == common.TRANSACTIONAL_KEYWORD))
+			hasMatch = ((nextToken.Kind() == st.ISOLATED_KEYWORD) || (nextToken.Kind() == st.TRANSACTIONAL_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_MODULE_VAR_FIRST_QUAL,
 			common.PARSER_RULE_CONTEXT_MODULE_VAR_SECOND_QUAL,
 			common.PARSER_RULE_CONTEXT_MODULE_VAR_THIRD_QUAL:
-			hasMatch = (((nextToken.Kind() == common.FINAL_KEYWORD) || (nextToken.Kind() == common.ISOLATED_KEYWORD)) || (nextToken.Kind() == common.CONFIGURABLE_KEYWORD))
+			hasMatch = (((nextToken.Kind() == st.FINAL_KEYWORD) || (nextToken.Kind() == st.ISOLATED_KEYWORD)) || (nextToken.Kind() == st.CONFIGURABLE_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR:
 			hasMatch = isCompoundBinaryOperator(nextToken.Kind())
 		case common.PARSER_RULE_CONTEXT_IS_KEYWORD:
-			hasMatch = ((nextToken.Kind() == common.IS_KEYWORD) || (nextToken.Kind() == common.NOT_IS_KEYWORD))
+			hasMatch = ((nextToken.Kind() == st.IS_KEYWORD) || (nextToken.Kind() == st.NOT_IS_KEYWORD))
 		case common.PARSER_RULE_CONTEXT_VARIABLE_REF,
 			common.PARSER_RULE_CONTEXT_TYPE_REFERENCE_IN_TYPE_INCLUSION,
 			common.PARSER_RULE_CONTEXT_TYPE_REFERENCE,
@@ -1331,12 +1331,12 @@ func (b *BallerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleCont
 		currentCtx = b.GetNextRule(currentCtx, lookahead)
 	}
 	result = NewResult(make([]*Solution, 0), matchingRulesCount)
-	result.solution = NewSolution(ACTION_KEEP, currentCtx, common.NONE, currentCtx.String())
+	result.solution = NewSolution(ACTION_KEEP, currentCtx, st.NONE, currentCtx.String())
 	return result
 }
 
 func (b *BallerinaParserErrorHandler) getNextLookahead(lookahead int) int {
-	for b.tokenReader.PeekN(lookahead).Kind() == common.DOCUMENTATION_STRING {
+	for b.tokenReader.PeekN(lookahead).Kind() == st.DOCUMENTATION_STRING {
 		lookahead++
 	}
 	return lookahead
@@ -2711,7 +2711,7 @@ func (b *BallerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(cur
 
 func (b *BallerinaParserErrorHandler) seekInStatements(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, currentMatches int, isEntryPoint bool) Result {
 	nextToken := b.tokenReader.PeekN(lookahead)
-	if nextToken.Kind() == common.SEMICOLON_TOKEN {
+	if nextToken.Kind() == st.SEMICOLON_TOKEN {
 		result := b.seekMatchInSubTree(common.PARSER_RULE_CONTEXT_STATEMENT, lookahead+1, currentDepth+1,
 			isEntryPoint)
 		result.pushFix(NewSolutionWithDepth(ACTION_REMOVE, currentCtx, nextToken.Kind(), nextToken.Text(), currentDepth))
@@ -2723,17 +2723,17 @@ func (b *BallerinaParserErrorHandler) seekInStatements(currentCtx common.ParserR
 func (b *BallerinaParserErrorHandler) seekInAccessExpression(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, currentMatches int, isEntryPoint bool) Result {
 	nextToken := b.tokenReader.PeekN(lookahead)
 	currentDepth++
-	if nextToken.Kind() != common.IDENTIFIER_TOKEN {
+	if nextToken.Kind() != st.IDENTIFIER_TOKEN {
 		return *b.fixAndContinue(currentCtx, lookahead, currentDepth, currentMatches, isEntryPoint)
 	}
 	var nextContext common.ParserRuleContext
 	nextNextToken := b.tokenReader.PeekN(lookahead + 1)
 	switch nextNextToken.Kind() {
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		nextContext = common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS
-	case common.DOT_TOKEN:
+	case st.DOT_TOKEN:
 		nextContext = common.PARSER_RULE_CONTEXT_DOT
-	case common.OPEN_BRACKET_TOKEN:
+	case st.OPEN_BRACKET_TOKEN:
 		nextContext = common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR
 	default:
 		nextContext = b.getNextRuleForExpr()
@@ -2812,7 +2812,7 @@ func (b *BallerinaParserErrorHandler) seekMatchInExpressionRhs(lookahead int, cu
 	} else if (parentCtx == common.PARSER_RULE_CONTEXT_SELECT_CLAUSE) || (parentCtx == common.PARSER_RULE_CONTEXT_COLLECT_CLAUSE) {
 		nextToken := b.tokenReader.PeekN(lookahead)
 		switch nextToken.Kind() {
-		case common.ON_KEYWORD, common.CONFLICT_KEYWORD:
+		case st.ON_KEYWORD, st.CONFLICT_KEYWORD:
 			nextContext = common.PARSER_RULE_CONTEXT_ON_CONFLICT_CLAUSE
 		default:
 			nextContext = common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION_END
@@ -2853,7 +2853,7 @@ func (b *BallerinaParserErrorHandler) modifyAlternativesWithArgListStart(alterna
 func (b *BallerinaParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
 	b.startContextIfRequired(currentCtx)
 	var parentCtx common.ParserRuleContext
-	var nextToken tree.STToken
+	var nextToken st.STToken
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_EOF:
 		return common.PARSER_RULE_CONTEXT_EOF
@@ -2930,7 +2930,7 @@ func (b *BallerinaParserErrorHandler) GetNextRule(currentCtx common.ParserRuleCo
 	case common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_END:
 		b.EndContext()
 		nextToken = b.tokenReader.PeekN(nextLookahead)
-		if nextToken.Kind() == common.EOF_TOKEN {
+		if nextToken.Kind() == st.EOF_TOKEN {
 			return common.PARSER_RULE_CONTEXT_EOF
 		}
 		return common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS
@@ -3092,7 +3092,7 @@ func (b *BallerinaParserErrorHandler) GetNextRule(currentCtx common.ParserRuleCo
 	case common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER_START_IDENTIFIER,
 		common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_IDENTIFIER:
 		nextToken = b.tokenReader.PeekN(nextLookahead)
-		if nextToken.Kind() == common.COLON_TOKEN {
+		if nextToken.Kind() == st.COLON_TOKEN {
 			return common.PARSER_RULE_CONTEXT_COLON
 		}
 		fallthrough
@@ -4411,7 +4411,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForEqualOp() common.ParserRuleC
 
 func (b *BallerinaParserErrorHandler) getNextRuleForCloseBrace(nextLookahead int) common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
-	var nextToken tree.STToken
+	var nextToken st.STToken
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK:
 		b.EndContext()
@@ -4468,7 +4468,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForCloseBrace(nextLookahead int
 			if parentCtx == common.PARSER_RULE_CONTEXT_FORK_STMT {
 				nextToken = b.tokenReader.PeekN(nextLookahead)
 				switch nextToken.Kind() {
-				case common.CLOSE_BRACE_TOKEN:
+				case st.CLOSE_BRACE_TOKEN:
 					return common.PARSER_RULE_CONTEXT_CLOSE_BRACE
 				default:
 					return common.PARSER_RULE_CONTEXT_REGULAR_COMPOUND_STMT_RHS
@@ -4551,7 +4551,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForCloseBraceInFuncBody() commo
 func (b *BallerinaParserErrorHandler) getNextRuleForAnnotationEnd(nextLookahead int) common.ParserRuleContext {
 	var parentCtx common.ParserRuleContext
 	var nextToken = b.tokenReader.PeekN(nextLookahead)
-	if nextToken.Kind() == common.AT_TOKEN {
+	if nextToken.Kind() == st.AT_TOKEN {
 		return common.PARSER_RULE_CONTEXT_AT
 	}
 	b.EndContext()
@@ -4673,7 +4673,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForVarName() common.ParserRuleC
 }
 
 func (b *BallerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int) common.ParserRuleContext {
-	var nextToken tree.STToken
+	var nextToken st.STToken
 	parentCtx := b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY {
 		b.EndContext()
@@ -4727,7 +4727,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int)
 	} else if parentCtx == common.PARSER_RULE_CONTEXT_IMPORT_DECL {
 		b.EndContext()
 		nextToken = b.tokenReader.PeekN(nextLookahead)
-		if nextToken.Kind() == common.EOF_TOKEN {
+		if nextToken.Kind() == st.EOF_TOKEN {
 			return common.PARSER_RULE_CONTEXT_EOF
 		}
 		return common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE
@@ -4735,14 +4735,14 @@ func (b *BallerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int)
 		b.EndContext()
 		b.EndContext()
 		nextToken = b.tokenReader.PeekN(nextLookahead)
-		if nextToken.Kind() == common.EOF_TOKEN {
+		if nextToken.Kind() == st.EOF_TOKEN {
 			return common.PARSER_RULE_CONTEXT_EOF
 		}
 		return common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE
 	} else if (parentCtx == common.PARSER_RULE_CONTEXT_FUNC_DEF) || (parentCtx == common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_FUNC_TYPE) {
 		b.EndContext()
 		nextToken = b.tokenReader.PeekN(nextLookahead)
-		if nextToken.Kind() == common.EOF_TOKEN {
+		if nextToken.Kind() == st.EOF_TOKEN {
 			return common.PARSER_RULE_CONTEXT_EOF
 		}
 		return b.getNextRuleForSemicolon(nextLookahead)
@@ -5226,34 +5226,34 @@ func (b *BallerinaParserErrorHandler) isStatement(parentCtx common.ParserRuleCon
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isBinaryOperator(token tree.STToken) bool {
+func (b *BallerinaParserErrorHandler) isBinaryOperator(token st.STToken) bool {
 	switch token.Kind() {
-	case common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.SLASH_TOKEN,
-		common.ASTERISK_TOKEN,
-		common.GT_TOKEN,
-		common.LT_TOKEN,
-		common.DOUBLE_EQUAL_TOKEN,
-		common.TRIPPLE_EQUAL_TOKEN,
-		common.LT_EQUAL_TOKEN,
-		common.GT_EQUAL_TOKEN,
-		common.NOT_EQUAL_TOKEN,
-		common.NOT_DOUBLE_EQUAL_TOKEN,
-		common.BITWISE_AND_TOKEN,
-		common.BITWISE_XOR_TOKEN,
-		common.PIPE_TOKEN,
-		common.LOGICAL_AND_TOKEN,
-		common.LOGICAL_OR_TOKEN,
-		common.DOUBLE_LT_TOKEN,
-		common.DOUBLE_GT_TOKEN,
-		common.TRIPPLE_GT_TOKEN,
-		common.ELLIPSIS_TOKEN,
-		common.DOUBLE_DOT_LT_TOKEN,
-		common.ELVIS_TOKEN:
+	case st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.SLASH_TOKEN,
+		st.ASTERISK_TOKEN,
+		st.GT_TOKEN,
+		st.LT_TOKEN,
+		st.DOUBLE_EQUAL_TOKEN,
+		st.TRIPPLE_EQUAL_TOKEN,
+		st.LT_EQUAL_TOKEN,
+		st.GT_EQUAL_TOKEN,
+		st.NOT_EQUAL_TOKEN,
+		st.NOT_DOUBLE_EQUAL_TOKEN,
+		st.BITWISE_AND_TOKEN,
+		st.BITWISE_XOR_TOKEN,
+		st.PIPE_TOKEN,
+		st.LOGICAL_AND_TOKEN,
+		st.LOGICAL_OR_TOKEN,
+		st.DOUBLE_LT_TOKEN,
+		st.DOUBLE_GT_TOKEN,
+		st.TRIPPLE_GT_TOKEN,
+		st.ELLIPSIS_TOKEN,
+		st.DOUBLE_DOT_LT_TOKEN,
+		st.ELVIS_TOKEN:
 		return true
-	case common.RIGHT_ARROW_TOKEN,
-		common.RIGHT_DOUBLE_ARROW_TOKEN:
+	case st.RIGHT_ARROW_TOKEN,
+		st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return true
 	default:
 		return false
@@ -5271,7 +5271,7 @@ func (b *BallerinaParserErrorHandler) isParameter(ctx common.ParserRuleContext) 
 
 func (b *BallerinaParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *Solution {
 	kind := b.GetExpectedTokenKind(ctx)
-	if kind != common.NONE {
+	if kind != st.NONE {
 		return NewSolution(ACTION_INSERT, ctx, kind, ctx.String())
 	}
 	if b.HasAlternativePaths(ctx) {
@@ -5282,19 +5282,19 @@ func (b *BallerinaParserErrorHandler) GetInsertSolution(ctx common.ParserRuleCon
 	return b.GetInsertSolution(ctx)
 }
 
-func (b *BallerinaParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) common.SyntaxKind {
+func (b *BallerinaParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY:
-		return common.EQUAL_TOKEN
+		return st.EQUAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK:
-		return common.OPEN_BRACE_TOKEN
+		return st.OPEN_BRACE_TOKEN
 	case common.PARSER_RULE_CONTEXT_FUNC_DEF,
 		common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_FUNC_TYPE,
 		common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC,
 		common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_OR_ANON_FUNC:
-		return common.FUNCTION_KEYWORD
+		return st.FUNCTION_KEYWORD
 	case common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESCRIPTOR:
-		return common.ANY_KEYWORD
+		return st.ANY_KEYWORD
 	case common.PARSER_RULE_CONTEXT_REQUIRED_PARAM,
 		common.PARSER_RULE_CONTEXT_VAR_DECL_STMT,
 		common.PARSER_RULE_CONTEXT_ASSIGNMENT_OR_VAR_DECL_STMT,
@@ -5344,328 +5344,328 @@ func (b *BallerinaParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRule
 		common.PARSER_RULE_CONTEXT_PATH_SEGMENT_IDENT,
 		common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR,
 		common.PARSER_RULE_CONTEXT_NAMED_ARG_BINDING_PATTERN:
-		return common.IDENTIFIER_TOKEN
+		return st.IDENTIFIER_TOKEN
 	case common.PARSER_RULE_CONTEXT_DECIMAL_INTEGER_LITERAL_TOKEN,
 		common.PARSER_RULE_CONTEXT_SIGNED_INT_OR_FLOAT_RHS:
-		return common.DECIMAL_INTEGER_LITERAL_TOKEN
+		return st.DECIMAL_INTEGER_LITERAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN:
-		return common.STRING_LITERAL_TOKEN
+		return st.STRING_LITERAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_DESCRIPTOR:
-		return common.OPTIONAL_TYPE_DESC
+		return st.OPTIONAL_TYPE_DESC
 	case common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR:
-		return common.ARRAY_TYPE_DESC
+		return st.ARRAY_TYPE_DESC
 	case common.PARSER_RULE_CONTEXT_HEX_INTEGER_LITERAL_TOKEN:
-		return common.HEX_INTEGER_LITERAL_TOKEN
+		return st.HEX_INTEGER_LITERAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_OBJECT_FIELD_RHS:
-		return common.SEMICOLON_TOKEN
+		return st.SEMICOLON_TOKEN
 	case common.PARSER_RULE_CONTEXT_DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
-		return common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN
+		return st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_HEX_FLOATING_POINT_LITERAL_TOKEN:
-		return common.HEX_FLOATING_POINT_LITERAL_TOKEN
+		return st.HEX_FLOATING_POINT_LITERAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_STATEMENT, common.PARSER_RULE_CONTEXT_STATEMENT_WITHOUT_ANNOTS:
-		return common.CLOSE_BRACE_TOKEN
+		return st.CLOSE_BRACE_TOKEN
 	case common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_NIL_LITERAL:
-		return common.OPEN_PAREN_TOKEN
+		return st.OPEN_PAREN_TOKEN
 	default:
 		return b.getExpectedSeperatorTokenKind(ctx)
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getExpectedSeperatorTokenKind(ctx common.ParserRuleContext) common.SyntaxKind {
+func (b *BallerinaParserErrorHandler) getExpectedSeperatorTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_BITWISE_AND_OPERATOR:
-		return common.BITWISE_AND_TOKEN
+		return st.BITWISE_AND_TOKEN
 	case common.PARSER_RULE_CONTEXT_EQUAL_OR_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_ASSIGN_OP:
-		return common.EQUAL_TOKEN
+		return st.EQUAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_EOF:
-		return common.EOF_TOKEN
+		return st.EOF_TOKEN
 	case common.PARSER_RULE_CONTEXT_BINARY_OPERATOR:
-		return common.PLUS_TOKEN
+		return st.PLUS_TOKEN
 	case common.PARSER_RULE_CONTEXT_CLOSE_BRACE:
-		return common.CLOSE_BRACE_TOKEN
+		return st.CLOSE_BRACE_TOKEN
 	case common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS,
 		common.PARSER_RULE_CONTEXT_ARG_LIST_CLOSE_PAREN:
-		return common.CLOSE_PAREN_TOKEN
+		return st.CLOSE_PAREN_TOKEN
 	case common.PARSER_RULE_CONTEXT_COMMA,
 		common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END_COMMA,
 		common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_MATCH_PATTERN_END_COMMA:
-		return common.COMMA_TOKEN
+		return st.COMMA_TOKEN
 	case common.PARSER_RULE_CONTEXT_OPEN_BRACE:
-		return common.OPEN_BRACE_TOKEN
+		return st.OPEN_BRACE_TOKEN
 	case common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS,
 		common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN,
 		common.PARSER_RULE_CONTEXT_PARENTHESISED_TYPE_DESC_START:
-		return common.OPEN_PAREN_TOKEN
+		return st.OPEN_PAREN_TOKEN
 	case common.PARSER_RULE_CONTEXT_SEMICOLON:
-		return common.SEMICOLON_TOKEN
+		return st.SEMICOLON_TOKEN
 	case common.PARSER_RULE_CONTEXT_ASTERISK:
-		return common.ASTERISK_TOKEN
+		return st.ASTERISK_TOKEN
 	case common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_END:
-		return common.CLOSE_BRACE_PIPE_TOKEN
+		return st.CLOSE_BRACE_PIPE_TOKEN
 	case common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_START:
-		return common.OPEN_BRACE_PIPE_TOKEN
+		return st.OPEN_BRACE_PIPE_TOKEN
 	case common.PARSER_RULE_CONTEXT_ELLIPSIS:
-		return common.ELLIPSIS_TOKEN
+		return st.ELLIPSIS_TOKEN
 	case common.PARSER_RULE_CONTEXT_QUESTION_MARK:
-		return common.QUESTION_MARK_TOKEN
+		return st.QUESTION_MARK_TOKEN
 	case common.PARSER_RULE_CONTEXT_CLOSE_BRACKET:
-		return common.CLOSE_BRACKET_TOKEN
+		return st.CLOSE_BRACKET_TOKEN
 	case common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_METHOD_CALL_DOT:
-		return common.DOT_TOKEN
+		return st.DOT_TOKEN
 	case common.PARSER_RULE_CONTEXT_OPEN_BRACKET, common.PARSER_RULE_CONTEXT_TUPLE_TYPE_DESC_START:
-		return common.OPEN_BRACKET_TOKEN
+		return st.OPEN_BRACKET_TOKEN
 	case common.PARSER_RULE_CONTEXT_SLASH,
 		common.PARSER_RULE_CONTEXT_ABSOLUTE_PATH_SINGLE_SLASH,
 		common.PARSER_RULE_CONTEXT_RESOURCE_METHOD_CALL_SLASH_TOKEN:
-		return common.SLASH_TOKEN
+		return st.SLASH_TOKEN
 	case common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_TYPE_REF_COLON, common.PARSER_RULE_CONTEXT_VAR_REF_COLON:
-		return common.COLON_TOKEN
+		return st.COLON_TOKEN
 	case common.PARSER_RULE_CONTEXT_UNARY_OPERATOR,
 		common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR,
 		common.PARSER_RULE_CONTEXT_UNARY_EXPRESSION,
 		common.PARSER_RULE_CONTEXT_EXPRESSION_RHS:
-		return common.PLUS_TOKEN
+		return st.PLUS_TOKEN
 	case common.PARSER_RULE_CONTEXT_AT:
-		return common.AT_TOKEN
+		return st.AT_TOKEN
 	case common.PARSER_RULE_CONTEXT_RIGHT_ARROW:
-		return common.RIGHT_ARROW_TOKEN
+		return st.RIGHT_ARROW_TOKEN
 	case common.PARSER_RULE_CONTEXT_GT, common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_END_GT:
-		return common.GT_TOKEN
+		return st.GT_TOKEN
 	case common.PARSER_RULE_CONTEXT_LT,
 		common.PARSER_RULE_CONTEXT_STREAM_TYPE_PARAM_START_TOKEN,
 		common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_START_LT:
-		return common.LT_TOKEN
+		return st.LT_TOKEN
 	case common.PARSER_RULE_CONTEXT_SYNC_SEND_TOKEN:
-		return common.SYNC_SEND_TOKEN
+		return st.SYNC_SEND_TOKEN
 	case common.PARSER_RULE_CONTEXT_ANNOT_CHAINING_TOKEN:
-		return common.ANNOT_CHAINING_TOKEN
+		return st.ANNOT_CHAINING_TOKEN
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_CHAINING_TOKEN:
-		return common.OPTIONAL_CHAINING_TOKEN
+		return st.OPTIONAL_CHAINING_TOKEN
 	case common.PARSER_RULE_CONTEXT_DOT_LT_TOKEN:
-		return common.DOT_LT_TOKEN
+		return st.DOT_LT_TOKEN
 	case common.PARSER_RULE_CONTEXT_SLASH_LT_TOKEN:
-		return common.SLASH_LT_TOKEN
+		return st.SLASH_LT_TOKEN
 	case common.PARSER_RULE_CONTEXT_DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN:
-		return common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN
+		return st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN
 	case common.PARSER_RULE_CONTEXT_SLASH_ASTERISK_TOKEN:
-		return common.SLASH_ASTERISK_TOKEN
+		return st.SLASH_ASTERISK_TOKEN
 	case common.PARSER_RULE_CONTEXT_PLUS_TOKEN:
-		return common.PLUS_TOKEN
+		return st.PLUS_TOKEN
 	case common.PARSER_RULE_CONTEXT_MINUS_TOKEN:
-		return common.MINUS_TOKEN
+		return st.MINUS_TOKEN
 	case common.PARSER_RULE_CONTEXT_LEFT_ARROW_TOKEN:
-		return common.LEFT_ARROW_TOKEN
+		return st.LEFT_ARROW_TOKEN
 	case common.PARSER_RULE_CONTEXT_TEMPLATE_END, common.PARSER_RULE_CONTEXT_TEMPLATE_START:
-		return common.BACKTICK_TOKEN
+		return st.BACKTICK_TOKEN
 	case common.PARSER_RULE_CONTEXT_LT_TOKEN:
-		return common.LT_TOKEN
+		return st.LT_TOKEN
 	case common.PARSER_RULE_CONTEXT_GT_TOKEN:
-		return common.GT_TOKEN
+		return st.GT_TOKEN
 	case common.PARSER_RULE_CONTEXT_INTERPOLATION_START_TOKEN:
-		return common.INTERPOLATION_START_TOKEN
+		return st.INTERPOLATION_START_TOKEN
 	case common.PARSER_RULE_CONTEXT_EXPR_FUNC_BODY_START,
 		common.PARSER_RULE_CONTEXT_RIGHT_DOUBLE_ARROW:
-		return common.RIGHT_DOUBLE_ARROW_TOKEN
+		return st.RIGHT_DOUBLE_ARROW_TOKEN
 	default:
 		return b.getExpectedKeywordKind(ctx)
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getExpectedKeywordKind(ctx common.ParserRuleContext) common.SyntaxKind {
+func (b *BallerinaParserErrorHandler) getExpectedKeywordKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_EXTERNAL_KEYWORD:
-		return common.EXTERNAL_KEYWORD
+		return st.EXTERNAL_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD,
 		common.PARSER_RULE_CONTEXT_IDENT_AFTER_OBJECT_IDENT,
 		common.PARSER_RULE_CONTEXT_FUNCTION_IDENT,
 		common.PARSER_RULE_CONTEXT_OPTIONAL_PEER_WORKER,
 		common.PARSER_RULE_CONTEXT_DEFAULT_WORKER_NAME_IN_ASYNC_SEND:
-		return common.FUNCTION_KEYWORD
+		return st.FUNCTION_KEYWORD
 	case common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD:
-		return common.RETURNS_KEYWORD
+		return st.RETURNS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_PUBLIC_KEYWORD:
-		return common.PUBLIC_KEYWORD
+		return st.PUBLIC_KEYWORD
 	case common.PARSER_RULE_CONTEXT_RECORD_FIELD,
 		common.PARSER_RULE_CONTEXT_RECORD_KEYWORD,
 		common.PARSER_RULE_CONTEXT_RECORD_IDENT:
-		return common.RECORD_KEYWORD
+		return st.RECORD_KEYWORD
 	case common.PARSER_RULE_CONTEXT_TYPE_KEYWORD,
 		common.PARSER_RULE_CONTEXT_SINGLE_KEYWORD_ATTACH_POINT_IDENT:
-		return common.TYPE_KEYWORD
+		return st.TYPE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD,
 		common.PARSER_RULE_CONTEXT_OBJECT_IDENT,
 		common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR:
-		return common.OBJECT_KEYWORD
+		return st.OBJECT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_PRIVATE_KEYWORD:
-		return common.PRIVATE_KEYWORD
+		return st.PRIVATE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_REMOTE_IDENT:
-		return common.REMOTE_KEYWORD
+		return st.REMOTE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ABSTRACT_KEYWORD:
-		return common.ABSTRACT_KEYWORD
+		return st.ABSTRACT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_CLIENT_KEYWORD:
-		return common.CLIENT_KEYWORD
+		return st.CLIENT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_IF_KEYWORD:
-		return common.IF_KEYWORD
+		return st.IF_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ELSE_KEYWORD:
-		return common.ELSE_KEYWORD
+		return st.ELSE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_WHILE_KEYWORD:
-		return common.WHILE_KEYWORD
+		return st.WHILE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD:
-		return common.CHECK_KEYWORD
+		return st.CHECK_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FAIL_KEYWORD:
-		return common.FAIL_KEYWORD
+		return st.FAIL_KEYWORD
 	case common.PARSER_RULE_CONTEXT_AS_KEYWORD:
-		return common.AS_KEYWORD
+		return st.AS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_BOOLEAN_LITERAL:
-		return common.TRUE_KEYWORD
+		return st.TRUE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_IMPORT_KEYWORD:
-		return common.IMPORT_KEYWORD
+		return st.IMPORT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ON_KEYWORD:
-		return common.ON_KEYWORD
+		return st.ON_KEYWORD
 	case common.PARSER_RULE_CONTEXT_PANIC_KEYWORD:
-		return common.PANIC_KEYWORD
+		return st.PANIC_KEYWORD
 	case common.PARSER_RULE_CONTEXT_RETURN_KEYWORD:
-		return common.RETURN_KEYWORD
+		return st.RETURN_KEYWORD
 	case common.PARSER_RULE_CONTEXT_SERVICE_KEYWORD, common.PARSER_RULE_CONTEXT_SERVICE_IDENT:
-		return common.SERVICE_KEYWORD
+		return st.SERVICE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_BREAK_KEYWORD:
-		return common.BREAK_KEYWORD
+		return st.BREAK_KEYWORD
 	case common.PARSER_RULE_CONTEXT_LISTENER_KEYWORD:
-		return common.LISTENER_KEYWORD
+		return st.LISTENER_KEYWORD
 	case common.PARSER_RULE_CONTEXT_CONTINUE_KEYWORD:
-		return common.CONTINUE_KEYWORD
+		return st.CONTINUE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_CONST_KEYWORD:
-		return common.CONST_KEYWORD
+		return st.CONST_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FINAL_KEYWORD:
-		return common.FINAL_KEYWORD
+		return st.FINAL_KEYWORD
 	case common.PARSER_RULE_CONTEXT_IS_KEYWORD:
-		return common.IS_KEYWORD
+		return st.IS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_TYPEOF_KEYWORD:
-		return common.TYPEOF_KEYWORD
+		return st.TYPEOF_KEYWORD
 	case common.PARSER_RULE_CONTEXT_MAP_KEYWORD, common.PARSER_RULE_CONTEXT_MAP_TYPE_DESCRIPTOR:
-		return common.MAP_KEYWORD
+		return st.MAP_KEYWORD
 	case common.PARSER_RULE_CONTEXT_PARAMETERIZED_TYPE,
 		common.PARSER_RULE_CONTEXT_ERROR_KEYWORD,
 		common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN:
-		return common.ERROR_KEYWORD
+		return st.ERROR_KEYWORD
 	case common.PARSER_RULE_CONTEXT_NULL_KEYWORD:
-		return common.NULL_KEYWORD
+		return st.NULL_KEYWORD
 	case common.PARSER_RULE_CONTEXT_LOCK_KEYWORD:
-		return common.LOCK_KEYWORD
+		return st.LOCK_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ANNOTATION_KEYWORD:
-		return common.ANNOTATION_KEYWORD
+		return st.ANNOTATION_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FIELD_IDENT:
-		return common.FIELD_KEYWORD
+		return st.FIELD_KEYWORD
 	case common.PARSER_RULE_CONTEXT_XMLNS_KEYWORD,
 		common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION:
-		return common.XMLNS_KEYWORD
+		return st.XMLNS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_SOURCE_KEYWORD:
-		return common.SOURCE_KEYWORD
+		return st.SOURCE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_START_KEYWORD:
-		return common.START_KEYWORD
+		return st.START_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FLUSH_KEYWORD:
-		return common.FLUSH_KEYWORD
+		return st.FLUSH_KEYWORD
 	case common.PARSER_RULE_CONTEXT_WAIT_KEYWORD:
-		return common.WAIT_KEYWORD
+		return st.WAIT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_TRANSACTION_KEYWORD:
-		return common.TRANSACTION_KEYWORD
+		return st.TRANSACTION_KEYWORD
 	case common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD:
-		return common.TRANSACTIONAL_KEYWORD
+		return st.TRANSACTIONAL_KEYWORD
 	case common.PARSER_RULE_CONTEXT_COMMIT_KEYWORD:
-		return common.COMMIT_KEYWORD
+		return st.COMMIT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_RETRY_KEYWORD:
-		return common.RETRY_KEYWORD
+		return st.RETRY_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ROLLBACK_KEYWORD:
-		return common.ROLLBACK_KEYWORD
+		return st.ROLLBACK_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ENUM_KEYWORD:
-		return common.ENUM_KEYWORD
+		return st.ENUM_KEYWORD
 	case common.PARSER_RULE_CONTEXT_MATCH_KEYWORD:
-		return common.MATCH_KEYWORD
+		return st.MATCH_KEYWORD
 	case common.PARSER_RULE_CONTEXT_NEW_KEYWORD:
-		return common.NEW_KEYWORD
+		return st.NEW_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FORK_KEYWORD:
-		return common.FORK_KEYWORD
+		return st.FORK_KEYWORD
 	case common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL, common.PARSER_RULE_CONTEXT_WORKER_KEYWORD:
-		return common.WORKER_KEYWORD
+		return st.WORKER_KEYWORD
 	case common.PARSER_RULE_CONTEXT_TRAP_KEYWORD:
-		return common.TRAP_KEYWORD
+		return st.TRAP_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FOREACH_KEYWORD:
-		return common.FOREACH_KEYWORD
+		return st.FOREACH_KEYWORD
 	case common.PARSER_RULE_CONTEXT_IN_KEYWORD:
-		return common.IN_KEYWORD
+		return st.IN_KEYWORD
 	case common.PARSER_RULE_CONTEXT_PIPE, common.PARSER_RULE_CONTEXT_UNION_OR_INTERSECTION_TOKEN:
-		return common.PIPE_TOKEN
+		return st.PIPE_TOKEN
 	case common.PARSER_RULE_CONTEXT_TABLE_KEYWORD:
-		return common.TABLE_KEYWORD
+		return st.TABLE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_KEY_KEYWORD:
-		return common.KEY_KEYWORD
+		return st.KEY_KEYWORD
 	case common.PARSER_RULE_CONTEXT_STREAM_KEYWORD:
-		return common.STREAM_KEYWORD
+		return st.STREAM_KEYWORD
 	case common.PARSER_RULE_CONTEXT_LET_KEYWORD:
-		return common.LET_KEYWORD
+		return st.LET_KEYWORD
 	case common.PARSER_RULE_CONTEXT_XML_KEYWORD:
-		return common.XML_KEYWORD
+		return st.XML_KEYWORD
 	case common.PARSER_RULE_CONTEXT_RE_KEYWORD:
-		return common.RE_KEYWORD
+		return st.RE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_STRING_KEYWORD:
-		return common.STRING_KEYWORD
+		return st.STRING_KEYWORD
 	case common.PARSER_RULE_CONTEXT_BASE16_KEYWORD:
-		return common.BASE16_KEYWORD
+		return st.BASE16_KEYWORD
 	case common.PARSER_RULE_CONTEXT_BASE64_KEYWORD:
-		return common.BASE64_KEYWORD
+		return st.BASE64_KEYWORD
 	case common.PARSER_RULE_CONTEXT_SELECT_KEYWORD:
-		return common.SELECT_KEYWORD
+		return st.SELECT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_WHERE_KEYWORD:
-		return common.WHERE_KEYWORD
+		return st.WHERE_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FROM_KEYWORD:
-		return common.FROM_KEYWORD
+		return st.FROM_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ORDER_KEYWORD:
-		return common.ORDER_KEYWORD
+		return st.ORDER_KEYWORD
 	case common.PARSER_RULE_CONTEXT_GROUP_KEYWORD:
-		return common.GROUP_KEYWORD
+		return st.GROUP_KEYWORD
 	case common.PARSER_RULE_CONTEXT_BY_KEYWORD:
-		return common.BY_KEYWORD
+		return st.BY_KEYWORD
 	case common.PARSER_RULE_CONTEXT_ORDER_DIRECTION:
-		return common.ASCENDING_KEYWORD
+		return st.ASCENDING_KEYWORD
 	case common.PARSER_RULE_CONTEXT_DO_KEYWORD:
-		return common.DO_KEYWORD
+		return st.DO_KEYWORD
 	case common.PARSER_RULE_CONTEXT_DISTINCT_KEYWORD:
-		return common.DISTINCT_KEYWORD
+		return st.DISTINCT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_VAR_KEYWORD:
-		return common.VAR_KEYWORD
+		return st.VAR_KEYWORD
 	case common.PARSER_RULE_CONTEXT_CONFLICT_KEYWORD:
-		return common.CONFLICT_KEYWORD
+		return st.CONFLICT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_LIMIT_KEYWORD:
-		return common.LIMIT_KEYWORD
+		return st.LIMIT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_EQUALS_KEYWORD:
-		return common.EQUALS_KEYWORD
+		return st.EQUALS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_JOIN_KEYWORD:
-		return common.JOIN_KEYWORD
+		return st.JOIN_KEYWORD
 	case common.PARSER_RULE_CONTEXT_OUTER_KEYWORD:
-		return common.OUTER_KEYWORD
+		return st.OUTER_KEYWORD
 	case common.PARSER_RULE_CONTEXT_CLASS_KEYWORD:
-		return common.CLASS_KEYWORD
+		return st.CLASS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_COLLECT_KEYWORD:
-		return common.COLLECT_KEYWORD
+		return st.COLLECT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_NATURAL_KEYWORD:
-		return common.NATURAL_KEYWORD
+		return st.NATURAL_KEYWORD
 	default:
 		return b.getExpectedQualifierKind(ctx)
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getExpectedQualifierKind(ctx common.ParserRuleContext) common.SyntaxKind {
+func (b *BallerinaParserErrorHandler) getExpectedQualifierKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_FIRST_OBJECT_CONS_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_SECOND_OBJECT_CONS_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_FIRST_OBJECT_TYPE_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_SECOND_OBJECT_TYPE_QUALIFIER:
-		return common.OBJECT_KEYWORD
+		return st.OBJECT_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FIRST_CLASS_TYPE_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_SECOND_CLASS_TYPE_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_THIRD_CLASS_TYPE_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_FOURTH_CLASS_TYPE_QUALIFIER:
-		return common.CLASS_KEYWORD
+		return st.CLASS_KEYWORD
 	case common.PARSER_RULE_CONTEXT_FUNC_DEF_FIRST_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_FUNC_DEF_SECOND_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_FUNC_TYPE_FIRST_QUALIFIER,
@@ -5674,61 +5674,61 @@ func (b *BallerinaParserErrorHandler) getExpectedQualifierKind(ctx common.Parser
 		common.PARSER_RULE_CONTEXT_OBJECT_METHOD_SECOND_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_OBJECT_METHOD_THIRD_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FOURTH_QUALIFIER:
-		return common.FUNCTION_KEYWORD
+		return st.FUNCTION_KEYWORD
 	case common.PARSER_RULE_CONTEXT_MODULE_VAR_FIRST_QUAL,
 		common.PARSER_RULE_CONTEXT_MODULE_VAR_SECOND_QUAL,
 		common.PARSER_RULE_CONTEXT_MODULE_VAR_THIRD_QUAL,
 		common.PARSER_RULE_CONTEXT_OBJECT_MEMBER_VISIBILITY_QUAL:
-		return common.IDENTIFIER_TOKEN
+		return st.IDENTIFIER_TOKEN
 	case common.PARSER_RULE_CONTEXT_SERVICE_DECL_QUALIFIER:
-		return common.SERVICE_KEYWORD
+		return st.SERVICE_KEYWORD
 	default:
-		return common.NONE
+		return st.NONE
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isBasicLiteral(kind common.SyntaxKind) bool {
+func (b *BallerinaParserErrorHandler) isBasicLiteral(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN,
-		common.HEX_INTEGER_LITERAL_TOKEN,
-		common.STRING_LITERAL_TOKEN,
-		common.TRUE_KEYWORD,
-		common.FALSE_KEYWORD,
-		common.NULL_KEYWORD,
-		common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
-		common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
+		st.HEX_INTEGER_LITERAL_TOKEN,
+		st.STRING_LITERAL_TOKEN,
+		st.TRUE_KEYWORD,
+		st.FALSE_KEYWORD,
+		st.NULL_KEYWORD,
+		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
+		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isUnaryOperator(token tree.STToken) bool {
+func (b *BallerinaParserErrorHandler) isUnaryOperator(token st.STToken) bool {
 	switch token.Kind() {
-	case common.PLUS_TOKEN,
-		common.MINUS_TOKEN,
-		common.NEGATION_TOKEN,
-		common.EXCLAMATION_MARK_TOKEN:
+	case st.PLUS_TOKEN,
+		st.MINUS_TOKEN,
+		st.NEGATION_TOKEN,
+		st.EXCLAMATION_MARK_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isSingleKeywordAttachPointIdent(tokenKind common.SyntaxKind) bool {
+func (b *BallerinaParserErrorHandler) isSingleKeywordAttachPointIdent(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
-	case common.ANNOTATION_KEYWORD,
-		common.EXTERNAL_KEYWORD,
-		common.VAR_KEYWORD,
-		common.CONST_KEYWORD,
-		common.LISTENER_KEYWORD,
-		common.WORKER_KEYWORD,
-		common.TYPE_KEYWORD,
-		common.FUNCTION_KEYWORD,
-		common.PARAMETER_KEYWORD,
-		common.RETURN_KEYWORD,
-		common.FIELD_KEYWORD,
-		common.CLASS_KEYWORD:
+	case st.ANNOTATION_KEYWORD,
+		st.EXTERNAL_KEYWORD,
+		st.VAR_KEYWORD,
+		st.CONST_KEYWORD,
+		st.LISTENER_KEYWORD,
+		st.WORKER_KEYWORD,
+		st.TYPE_KEYWORD,
+		st.FUNCTION_KEYWORD,
+		st.PARAMETER_KEYWORD,
+		st.RETURN_KEYWORD,
+		st.FIELD_KEYWORD,
+		st.CLASS_KEYWORD:
 		return true
 	default:
 		return false

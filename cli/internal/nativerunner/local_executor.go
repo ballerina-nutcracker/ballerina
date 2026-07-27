@@ -388,7 +388,7 @@ const interpreterModuleVersion = "v0.6.0"
 var interpreterModuleDirs = []string{
 	"", "ast", "bir", "cli", "common", "context", "decimal", "desugar", "lib",
 	"model", "parser", "platform", "projects", "runtime", "semantics", "semtypes",
-	"tools", "values",
+	"st", "tools", "values",
 }
 
 // writeNativeWorkspace creates a workspace containing the extracted

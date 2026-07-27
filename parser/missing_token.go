@@ -1,4 +1,4 @@
-// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -10,12 +10,17 @@
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.  See the License for the
+// KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
-//
 
-package st
+package parser
 
-// This file is intentionally empty for now.
-// Utility functions for regular nodes will be added here when needed.
+import (
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/st"
+)
+
+func createMissingTokenWithDiagnosticsFromParserRules(expectedKind st.SyntaxKind, currentCtx common.ParserRuleContext) st.STToken {
+	return st.CreateMissingTokenWithDiagnostics(expectedKind, currentCtx.GetErrorCode())
+}

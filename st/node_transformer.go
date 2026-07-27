@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package tree
+package st
 
 type NodeTransformer[T any] interface {
 	TransformSyntaxNode(node Node) T

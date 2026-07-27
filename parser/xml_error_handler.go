@@ -20,6 +20,7 @@ package parser
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/st"
 )
 
 var (
@@ -90,46 +91,46 @@ func (p *XMLParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, l
 		nextToken := p.tokenReader.PeekN(lookahead)
 
 		// Skip interpolation head + close brace so any underlying token lines up with the rule.
-		if nextToken.Kind() == common.INTERPOLATION_START_TOKEN {
+		if nextToken.Kind() == st.INTERPOLATION_START_TOKEN {
 			lookahead += 2
 			nextToken = p.tokenReader.PeekN(lookahead)
 		}
 
 		switch currentCtx {
 		case common.PARSER_RULE_CONTEXT_EOF:
-			hasMatch = nextToken.Kind() == common.EOF_TOKEN
+			hasMatch = nextToken.Kind() == st.EOF_TOKEN
 		case common.PARSER_RULE_CONTEXT_LT_TOKEN:
-			hasMatch = nextToken.Kind() == common.LT_TOKEN
+			hasMatch = nextToken.Kind() == st.LT_TOKEN
 		case common.PARSER_RULE_CONTEXT_GT_TOKEN:
-			hasMatch = nextToken.Kind() == common.GT_TOKEN
+			hasMatch = nextToken.Kind() == st.GT_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_NAME:
-			hasMatch = nextToken.Kind() == common.IDENTIFIER_TOKEN
+			hasMatch = nextToken.Kind() == st.IDENTIFIER_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_TEXT:
-			hasMatch = nextToken.Kind() == common.XML_TEXT
+			hasMatch = nextToken.Kind() == st.XML_TEXT
 		case common.PARSER_RULE_CONTEXT_SLASH:
-			hasMatch = nextToken.Kind() == common.SLASH_TOKEN
+			hasMatch = nextToken.Kind() == st.SLASH_TOKEN
 		case common.PARSER_RULE_CONTEXT_ASSIGN_OP:
-			hasMatch = nextToken.Kind() == common.EQUAL_TOKEN
+			hasMatch = nextToken.Kind() == st.EQUAL_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_COMMENT_START:
-			hasMatch = nextToken.Kind() == common.XML_COMMENT_START_TOKEN
+			hasMatch = nextToken.Kind() == st.XML_COMMENT_START_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_COMMENT_CONTENT,
 			common.PARSER_RULE_CONTEXT_XML_ATTRIBUTE_VALUE_TEXT,
 			common.PARSER_RULE_CONTEXT_XML_PI_DATA,
 			common.PARSER_RULE_CONTEXT_XML_CDATA_CONTENT:
-			hasMatch = nextToken.Kind() == common.XML_TEXT_CONTENT
+			hasMatch = nextToken.Kind() == st.XML_TEXT_CONTENT
 		case common.PARSER_RULE_CONTEXT_XML_COMMENT_END:
-			hasMatch = nextToken.Kind() == common.XML_COMMENT_END_TOKEN
+			hasMatch = nextToken.Kind() == st.XML_COMMENT_END_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_PI_START:
-			hasMatch = nextToken.Kind() == common.XML_PI_START_TOKEN
+			hasMatch = nextToken.Kind() == st.XML_PI_START_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_PI_END:
-			hasMatch = nextToken.Kind() == common.XML_PI_END_TOKEN
+			hasMatch = nextToken.Kind() == st.XML_PI_END_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_QUOTE_START,
 			common.PARSER_RULE_CONTEXT_XML_QUOTE_END:
-			hasMatch = nextToken.Kind() == common.DOUBLE_QUOTE_TOKEN || nextToken.Kind() == common.SINGLE_QUOTE_TOKEN
+			hasMatch = nextToken.Kind() == st.DOUBLE_QUOTE_TOKEN || nextToken.Kind() == st.SINGLE_QUOTE_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_CDATA_START:
-			hasMatch = nextToken.Kind() == common.XML_CDATA_START_TOKEN
+			hasMatch = nextToken.Kind() == st.XML_CDATA_START_TOKEN
 		case common.PARSER_RULE_CONTEXT_XML_CDATA_END:
-			hasMatch = nextToken.Kind() == common.XML_CDATA_END_TOKEN
+			hasMatch = nextToken.Kind() == st.XML_CDATA_END_TOKEN
 		default:
 			if p.HasAlternativePaths(currentCtx) {
 				result := p.seekMatchInAlternativePaths(currentCtx, lookahead, currentDepth, matchingRulesCount, isEntryPoint)
@@ -265,48 +266,48 @@ func (p *XMLParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) 
 	return NewSolution(ACTION_INSERT, ctx, kind, ctx.String())
 }
 
-func (p *XMLParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) common.SyntaxKind {
+func (p *XMLParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_LT_TOKEN,
 		common.PARSER_RULE_CONTEXT_XML_START_OR_EMPTY_TAG,
 		common.PARSER_RULE_CONTEXT_XML_END_TAG:
-		return common.LT_TOKEN
+		return st.LT_TOKEN
 	case common.PARSER_RULE_CONTEXT_GT_TOKEN:
-		return common.GT_TOKEN
+		return st.GT_TOKEN
 	case common.PARSER_RULE_CONTEXT_SLASH:
-		return common.SLASH_TOKEN
+		return st.SLASH_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_KEYWORD:
-		return common.XML_KEYWORD
+		return st.XML_KEYWORD
 	case common.PARSER_RULE_CONTEXT_XML_NAME:
-		return common.IDENTIFIER_TOKEN
+		return st.IDENTIFIER_TOKEN
 	case common.PARSER_RULE_CONTEXT_ASSIGN_OP:
-		return common.EQUAL_TOKEN
+		return st.EQUAL_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_START_OR_EMPTY_TAG_END,
 		common.PARSER_RULE_CONTEXT_XML_ATTRIBUTES:
-		return common.GT_TOKEN
+		return st.GT_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_CONTENT,
 		common.PARSER_RULE_CONTEXT_XML_TEXT:
-		return common.BACKTICK_TOKEN
+		return st.BACKTICK_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_COMMENT_START:
-		return common.XML_COMMENT_START_TOKEN
+		return st.XML_COMMENT_START_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_COMMENT_CONTENT:
-		return common.XML_TEXT_CONTENT
+		return st.XML_TEXT_CONTENT
 	case common.PARSER_RULE_CONTEXT_XML_COMMENT_END:
-		return common.XML_COMMENT_END_TOKEN
+		return st.XML_COMMENT_END_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_PI,
 		common.PARSER_RULE_CONTEXT_XML_PI_START:
-		return common.XML_PI_START_TOKEN
+		return st.XML_PI_START_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_PI_END:
-		return common.XML_PI_END_TOKEN
+		return st.XML_PI_END_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_PI_DATA:
-		return common.XML_TEXT_CONTENT
+		return st.XML_TEXT_CONTENT
 	case common.PARSER_RULE_CONTEXT_XML_QUOTE_END,
 		common.PARSER_RULE_CONTEXT_XML_QUOTE_START:
-		return common.DOUBLE_QUOTE_TOKEN
+		return st.DOUBLE_QUOTE_TOKEN
 	case common.PARSER_RULE_CONTEXT_XML_CDATA_END:
-		return common.XML_CDATA_END_TOKEN
+		return st.XML_CDATA_END_TOKEN
 	}
-	return common.NONE
+	return st.NONE
 }
 
 var (

@@ -15,11 +15,7 @@
 // under the License.
 //
 
-package tree
-
-import (
-	"github.com/ballerina-nutcracker/ballerina/parser/common"
-)
+package st
 
 {{range .Nodes}}
 {{if .IsAbstract}}
@@ -30,8 +26,8 @@ type {{.Name}} struct {
 }
 {{if .Kind}}
 
-func (n {{.Name}}) Kind() common.SyntaxKind {
-	return common.{{.Kind}}
+func (n {{.Name}}) Kind() SyntaxKind {
+	return {{.Kind}}
 }
 {{end}}
 {{$nodeName := .Name}}

@@ -20,7 +20,7 @@ import (
 
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
@@ -32,7 +32,7 @@ import (
 const INITIAL_TRIVIA_CAPACITY = 1
 
 type Lexer interface {
-	NextToken() tree.STToken
+	NextToken() st.STToken
 	StartMode(mode ParserMode)
 	SwitchMode(mode ParserMode)
 	EndMode()
@@ -48,8 +48,8 @@ type lexer struct {
 type LexerContext struct {
 	mode              ParserMode
 	modeStack         []ParserMode
-	leadingTriviaList []tree.STNode
-	diagnostics       []tree.STNodeDiagnostic
+	leadingTriviaList []st.STNode
+	diagnostics       []st.STNodeDiagnostic
 }
 
 func NewLexer(reader text.CharReader) *lexer {
@@ -86,8 +86,8 @@ func (l *lexer) GetCurrentMode() ParserMode {
 	return l.context.mode
 }
 
-func (l *lexer) NextToken() tree.STToken {
-	var token tree.STToken
+func (l *lexer) NextToken() st.STToken {
+	var token st.STToken
 	switch l.context.mode {
 	case PARSER_MODE_TEMPLATE:
 		token = l.readTemplateToken()
@@ -106,18 +106,18 @@ func (l *lexer) NextToken() tree.STToken {
 		token = l.readToken()
 	}
 	if len(l.context.diagnostics) > 0 {
-		token = tree.AddSyntaxDiagnostics(token, l.context.diagnostics)
+		token = st.AddSyntaxDiagnostics(token, l.context.diagnostics)
 		l.context.diagnostics = nil
 	}
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_TOKENS, func() string { return tree.ToSexpr(token) })
+	debugcommon.DebugWriteLazy(debugcommon.DUMP_TOKENS, func() string { return st.ToSexpr(token) })
 	return token
 }
 
-func (l *lexer) readToken() tree.STToken {
+func (l *lexer) readToken() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getSyntaxToken(common.EOF_TOKEN)
+		return l.getSyntaxToken(st.EOF_TOKEN)
 	}
 	c := reader.Peek()
 	if c == BACKSLASH {
@@ -125,73 +125,73 @@ func (l *lexer) readToken() tree.STToken {
 		return l.getIdentifierToken()
 	}
 	reader.Advance()
-	var token tree.STToken
+	var token st.STToken
 	switch c {
 	case COLON:
-		token = l.getSyntaxToken(common.COLON_TOKEN)
+		token = l.getSyntaxToken(st.COLON_TOKEN)
 	case SEMICOLON:
-		token = l.getSyntaxToken(common.SEMICOLON_TOKEN)
+		token = l.getSyntaxToken(st.SEMICOLON_TOKEN)
 	case DOT:
 		token = l.processDot()
 	case COMMA:
-		token = l.getSyntaxToken(common.COMMA_TOKEN)
+		token = l.getSyntaxToken(st.COMMA_TOKEN)
 	case OPEN_PARANTHESIS:
-		token = l.getSyntaxToken(common.OPEN_PAREN_TOKEN)
+		token = l.getSyntaxToken(st.OPEN_PAREN_TOKEN)
 	case CLOSE_PARANTHESIS:
-		token = l.getSyntaxToken(common.CLOSE_PAREN_TOKEN)
+		token = l.getSyntaxToken(st.CLOSE_PAREN_TOKEN)
 	case OPEN_BRACE:
 		if reader.Peek() == PIPE {
 			reader.Advance()
-			token = l.getSyntaxToken(common.OPEN_BRACE_PIPE_TOKEN)
+			token = l.getSyntaxToken(st.OPEN_BRACE_PIPE_TOKEN)
 		} else {
-			token = l.getSyntaxToken(common.OPEN_BRACE_TOKEN)
+			token = l.getSyntaxToken(st.OPEN_BRACE_TOKEN)
 		}
 	case CLOSE_BRACE:
-		token = l.getSyntaxToken(common.CLOSE_BRACE_TOKEN)
+		token = l.getSyntaxToken(st.CLOSE_BRACE_TOKEN)
 	case OPEN_BRACKET:
-		token = l.getSyntaxToken(common.OPEN_BRACKET_TOKEN)
+		token = l.getSyntaxToken(st.OPEN_BRACKET_TOKEN)
 	case CLOSE_BRACKET:
-		token = l.getSyntaxToken(common.CLOSE_BRACKET_TOKEN)
+		token = l.getSyntaxToken(st.CLOSE_BRACKET_TOKEN)
 	case PIPE:
 		token = l.processPipeOperator()
 	case QUESTION_MARK:
 		if reader.Peek() == DOT && reader.PeekN(1) != DOT {
 			reader.Advance()
-			token = l.getSyntaxToken(common.OPTIONAL_CHAINING_TOKEN)
+			token = l.getSyntaxToken(st.OPTIONAL_CHAINING_TOKEN)
 		} else if reader.Peek() == COLON {
 			reader.Advance()
-			token = l.getSyntaxToken(common.ELVIS_TOKEN)
+			token = l.getSyntaxToken(st.ELVIS_TOKEN)
 		} else {
-			token = l.getSyntaxToken(common.QUESTION_MARK_TOKEN)
+			token = l.getSyntaxToken(st.QUESTION_MARK_TOKEN)
 		}
 	case DOUBLE_QUOTE:
 		token = l.processStringLiteral()
 	case HASH:
 		token = l.processDocumentationString()
 	case AT:
-		token = l.getSyntaxToken(common.AT_TOKEN)
+		token = l.getSyntaxToken(st.AT_TOKEN)
 	case EQUAL:
 		token = l.processEqualOperator()
 	case PLUS:
-		token = l.getSyntaxToken(common.PLUS_TOKEN)
+		token = l.getSyntaxToken(st.PLUS_TOKEN)
 	case MINUS:
 		if reader.Peek() == GT {
 			reader.Advance()
 			if reader.Peek() == GT {
 				reader.Advance()
-				token = l.getSyntaxToken(common.SYNC_SEND_TOKEN)
+				token = l.getSyntaxToken(st.SYNC_SEND_TOKEN)
 			} else {
-				token = l.getSyntaxToken(common.RIGHT_ARROW_TOKEN)
+				token = l.getSyntaxToken(st.RIGHT_ARROW_TOKEN)
 			}
 		} else {
-			token = l.getSyntaxToken(common.MINUS_TOKEN)
+			token = l.getSyntaxToken(st.MINUS_TOKEN)
 		}
 	case ASTERISK:
-		token = l.getSyntaxToken(common.ASTERISK_TOKEN)
+		token = l.getSyntaxToken(st.ASTERISK_TOKEN)
 	case SLASH:
 		token = l.processSlashToken()
 	case PERCENT:
-		token = l.getSyntaxToken(common.PERCENT_TOKEN)
+		token = l.getSyntaxToken(st.PERCENT_TOKEN)
 	case LT:
 		token = l.processTokenStartWithLt()
 	case GT:
@@ -201,14 +201,14 @@ func (l *lexer) readToken() tree.STToken {
 	case BITWISE_AND:
 		if reader.Peek() == BITWISE_AND {
 			reader.Advance()
-			token = l.getSyntaxToken(common.LOGICAL_AND_TOKEN)
+			token = l.getSyntaxToken(st.LOGICAL_AND_TOKEN)
 		} else {
-			token = l.getSyntaxToken(common.BITWISE_AND_TOKEN)
+			token = l.getSyntaxToken(st.BITWISE_AND_TOKEN)
 		}
 	case BITWISE_XOR:
-		token = l.getSyntaxToken(common.BITWISE_XOR_TOKEN)
+		token = l.getSyntaxToken(st.BITWISE_XOR_TOKEN)
 	case NEGATION:
-		token = l.getSyntaxToken(common.NEGATION_TOKEN)
+		token = l.getSyntaxToken(st.NEGATION_TOKEN)
 	case BACKTICK:
 		l.StartMode(PARSER_MODE_TEMPLATE)
 		token = l.getBacktickToken()
@@ -222,21 +222,21 @@ func (l *lexer) readToken() tree.STToken {
 		} else {
 			invalidToken := l.processInvalidToken()
 			token = l.NextToken()
-			f := tree.CreateDiagnostic(&common.ERROR_INVALID_TOKEN, invalidToken)
-			token = tree.AddSyntaxDiagnostic(token, f)
+			f := st.CreateDiagnostic(&common.ERROR_INVALID_TOKEN, invalidToken)
+			token = st.AddSyntaxDiagnostic(token, f)
 		}
 	}
 	return token
 }
 
-func (l *lexer) processInvalidToken() tree.STToken {
+func (l *lexer) processInvalidToken() st.STToken {
 	reader := l.reader
 	for !l.isEndOfInvalidToken() {
 		reader.Advance()
 	}
 	tokenText := l.getLexeme()
-	invalidToken := tree.CreateInvalidToken(tokenText)
-	invalidNodeMinutiae := tree.CreateInvalidNodeMinutiae(invalidToken)
+	invalidToken := st.CreateInvalidToken(tokenText)
+	invalidNodeMinutiae := st.CreateInvalidNodeMinutiae(invalidToken)
 	l.context.leadingTriviaList = append(l.context.leadingTriviaList, invalidNodeMinutiae)
 	return invalidToken
 }
@@ -277,7 +277,7 @@ func isIdentifierInitialChar(c rune) bool {
 	return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || c == '_' || isUnicodeIdentifierChar(c)
 }
 
-// Ported from io.ballerina.compiler.tree.parser.AbstractLexer.java (line 242-255)
+// Ported from io.ballerina.compiler.st.parser.AbstractLexer.java (line 242-255)
 // Check whether a given char is a unicode identifier char.
 //
 // UnicodeIdentifierChar := ^ ( AsciiChar | UnicodeNonIdentifierChar )
@@ -305,7 +305,7 @@ func isUnicodeIdentifierChar(c rune) bool {
 		unicode.Is(unicode.Pc, c)
 }
 
-// Ported from io.ballerina.compiler.tree.parser.AbstractLexer.java (line 265-267)
+// Ported from io.ballerina.compiler.st.parser.AbstractLexer.java (line 265-267)
 func isUnicodePrivateUseChar(c rune) bool {
 	return (0xE000 <= c && c <= 0xF8FF) ||
 		(0xF0000 <= c && c <= 0xFFFFD) ||
@@ -402,207 +402,207 @@ func (l *lexer) processIdentifierEnd() {
 	}
 }
 
-func (l *lexer) processIdentifierOrKeyword() tree.STToken {
+func (l *lexer) processIdentifierOrKeyword() st.STToken {
 	l.processUnquotedIdentifier()
 	tokenText := l.getLexeme()
 	switch tokenText {
 	case INT:
-		return l.getSyntaxToken(common.INT_KEYWORD)
+		return l.getSyntaxToken(st.INT_KEYWORD)
 	case FLOAT:
-		return l.getSyntaxToken(common.FLOAT_KEYWORD)
+		return l.getSyntaxToken(st.FLOAT_KEYWORD)
 	case STRING:
-		return l.getSyntaxToken(common.STRING_KEYWORD)
+		return l.getSyntaxToken(st.STRING_KEYWORD)
 	case BOOLEAN:
-		return l.getSyntaxToken(common.BOOLEAN_KEYWORD)
+		return l.getSyntaxToken(st.BOOLEAN_KEYWORD)
 	case DECIMAL:
-		return l.getSyntaxToken(common.DECIMAL_KEYWORD)
+		return l.getSyntaxToken(st.DECIMAL_KEYWORD)
 	case XML:
-		return l.getSyntaxToken(common.XML_KEYWORD)
+		return l.getSyntaxToken(st.XML_KEYWORD)
 	case JSON:
-		return l.getSyntaxToken(common.JSON_KEYWORD)
+		return l.getSyntaxToken(st.JSON_KEYWORD)
 	case HANDLE:
-		return l.getSyntaxToken(common.HANDLE_KEYWORD)
+		return l.getSyntaxToken(st.HANDLE_KEYWORD)
 	case ANY:
-		return l.getSyntaxToken(common.ANY_KEYWORD)
+		return l.getSyntaxToken(st.ANY_KEYWORD)
 	case ANYDATA:
-		return l.getSyntaxToken(common.ANYDATA_KEYWORD)
+		return l.getSyntaxToken(st.ANYDATA_KEYWORD)
 	case NEVER:
-		return l.getSyntaxToken(common.NEVER_KEYWORD)
+		return l.getSyntaxToken(st.NEVER_KEYWORD)
 	case BYTE:
-		return l.getSyntaxToken(common.BYTE_KEYWORD)
+		return l.getSyntaxToken(st.BYTE_KEYWORD)
 
 	// Keywords
 	case PUBLIC:
-		return l.getSyntaxToken(common.PUBLIC_KEYWORD)
+		return l.getSyntaxToken(st.PUBLIC_KEYWORD)
 	case PRIVATE:
-		return l.getSyntaxToken(common.PRIVATE_KEYWORD)
+		return l.getSyntaxToken(st.PRIVATE_KEYWORD)
 	case FUNCTION:
-		return l.getSyntaxToken(common.FUNCTION_KEYWORD)
+		return l.getSyntaxToken(st.FUNCTION_KEYWORD)
 	case RETURN:
-		return l.getSyntaxToken(common.RETURN_KEYWORD)
+		return l.getSyntaxToken(st.RETURN_KEYWORD)
 	case RETURNS:
-		return l.getSyntaxToken(common.RETURNS_KEYWORD)
+		return l.getSyntaxToken(st.RETURNS_KEYWORD)
 	case EXTERNAL:
-		return l.getSyntaxToken(common.EXTERNAL_KEYWORD)
+		return l.getSyntaxToken(st.EXTERNAL_KEYWORD)
 	case TYPE:
-		return l.getSyntaxToken(common.TYPE_KEYWORD)
+		return l.getSyntaxToken(st.TYPE_KEYWORD)
 	case RECORD:
-		return l.getSyntaxToken(common.RECORD_KEYWORD)
+		return l.getSyntaxToken(st.RECORD_KEYWORD)
 	case OBJECT:
-		return l.getSyntaxToken(common.OBJECT_KEYWORD)
+		return l.getSyntaxToken(st.OBJECT_KEYWORD)
 	case REMOTE:
-		return l.getSyntaxToken(common.REMOTE_KEYWORD)
+		return l.getSyntaxToken(st.REMOTE_KEYWORD)
 	case ABSTRACT:
-		return l.getSyntaxToken(common.ABSTRACT_KEYWORD)
+		return l.getSyntaxToken(st.ABSTRACT_KEYWORD)
 	case CLIENT:
-		return l.getSyntaxToken(common.CLIENT_KEYWORD)
+		return l.getSyntaxToken(st.CLIENT_KEYWORD)
 	case IF:
-		return l.getSyntaxToken(common.IF_KEYWORD)
+		return l.getSyntaxToken(st.IF_KEYWORD)
 	case ELSE:
-		return l.getSyntaxToken(common.ELSE_KEYWORD)
+		return l.getSyntaxToken(st.ELSE_KEYWORD)
 	case WHILE:
-		return l.getSyntaxToken(common.WHILE_KEYWORD)
+		return l.getSyntaxToken(st.WHILE_KEYWORD)
 	case TRUE:
-		return l.getSyntaxToken(common.TRUE_KEYWORD)
+		return l.getSyntaxToken(st.TRUE_KEYWORD)
 	case FALSE:
-		return l.getSyntaxToken(common.FALSE_KEYWORD)
+		return l.getSyntaxToken(st.FALSE_KEYWORD)
 	case CHECK:
-		return l.getSyntaxToken(common.CHECK_KEYWORD)
+		return l.getSyntaxToken(st.CHECK_KEYWORD)
 	case FAIL:
-		return l.getSyntaxToken(common.FAIL_KEYWORD)
+		return l.getSyntaxToken(st.FAIL_KEYWORD)
 	case CHECKPANIC:
-		return l.getSyntaxToken(common.CHECKPANIC_KEYWORD)
+		return l.getSyntaxToken(st.CHECKPANIC_KEYWORD)
 	case CONTINUE:
-		return l.getSyntaxToken(common.CONTINUE_KEYWORD)
+		return l.getSyntaxToken(st.CONTINUE_KEYWORD)
 	case BREAK:
-		return l.getSyntaxToken(common.BREAK_KEYWORD)
+		return l.getSyntaxToken(st.BREAK_KEYWORD)
 	case PANIC:
-		return l.getSyntaxToken(common.PANIC_KEYWORD)
+		return l.getSyntaxToken(st.PANIC_KEYWORD)
 	case IMPORT:
-		return l.getSyntaxToken(common.IMPORT_KEYWORD)
+		return l.getSyntaxToken(st.IMPORT_KEYWORD)
 	case AS:
-		return l.getSyntaxToken(common.AS_KEYWORD)
+		return l.getSyntaxToken(st.AS_KEYWORD)
 	case SERVICE:
-		return l.getSyntaxToken(common.SERVICE_KEYWORD)
+		return l.getSyntaxToken(st.SERVICE_KEYWORD)
 	case ON:
-		return l.getSyntaxToken(common.ON_KEYWORD)
+		return l.getSyntaxToken(st.ON_KEYWORD)
 	case RESOURCE:
-		return l.getSyntaxToken(common.RESOURCE_KEYWORD)
+		return l.getSyntaxToken(st.RESOURCE_KEYWORD)
 	case LISTENER:
-		return l.getSyntaxToken(common.LISTENER_KEYWORD)
+		return l.getSyntaxToken(st.LISTENER_KEYWORD)
 	case CONST:
-		return l.getSyntaxToken(common.CONST_KEYWORD)
+		return l.getSyntaxToken(st.CONST_KEYWORD)
 	case FINAL:
-		return l.getSyntaxToken(common.FINAL_KEYWORD)
+		return l.getSyntaxToken(st.FINAL_KEYWORD)
 	case TYPEOF:
-		return l.getSyntaxToken(common.TYPEOF_KEYWORD)
+		return l.getSyntaxToken(st.TYPEOF_KEYWORD)
 	case IS:
-		return l.getSyntaxToken(common.IS_KEYWORD)
+		return l.getSyntaxToken(st.IS_KEYWORD)
 	case NULL:
-		return l.getSyntaxToken(common.NULL_KEYWORD)
+		return l.getSyntaxToken(st.NULL_KEYWORD)
 	case LOCK:
-		return l.getSyntaxToken(common.LOCK_KEYWORD)
+		return l.getSyntaxToken(st.LOCK_KEYWORD)
 	case ANNOTATION:
-		return l.getSyntaxToken(common.ANNOTATION_KEYWORD)
+		return l.getSyntaxToken(st.ANNOTATION_KEYWORD)
 	case SOURCE:
-		return l.getSyntaxToken(common.SOURCE_KEYWORD)
+		return l.getSyntaxToken(st.SOURCE_KEYWORD)
 	case VAR:
-		return l.getSyntaxToken(common.VAR_KEYWORD)
+		return l.getSyntaxToken(st.VAR_KEYWORD)
 	case WORKER:
-		return l.getSyntaxToken(common.WORKER_KEYWORD)
+		return l.getSyntaxToken(st.WORKER_KEYWORD)
 	case PARAMETER:
-		return l.getSyntaxToken(common.PARAMETER_KEYWORD)
+		return l.getSyntaxToken(st.PARAMETER_KEYWORD)
 	case FIELD:
-		return l.getSyntaxToken(common.FIELD_KEYWORD)
+		return l.getSyntaxToken(st.FIELD_KEYWORD)
 	case ISOLATED:
-		return l.getSyntaxToken(common.ISOLATED_KEYWORD)
+		return l.getSyntaxToken(st.ISOLATED_KEYWORD)
 	case XMLNS:
-		return l.getSyntaxToken(common.XMLNS_KEYWORD)
+		return l.getSyntaxToken(st.XMLNS_KEYWORD)
 	case FORK:
-		return l.getSyntaxToken(common.FORK_KEYWORD)
+		return l.getSyntaxToken(st.FORK_KEYWORD)
 	case MAP:
-		return l.getSyntaxToken(common.MAP_KEYWORD)
+		return l.getSyntaxToken(st.MAP_KEYWORD)
 	case FUTURE:
-		return l.getSyntaxToken(common.FUTURE_KEYWORD)
+		return l.getSyntaxToken(st.FUTURE_KEYWORD)
 	case TYPEDESC:
-		return l.getSyntaxToken(common.TYPEDESC_KEYWORD)
+		return l.getSyntaxToken(st.TYPEDESC_KEYWORD)
 	case TRAP:
-		return l.getSyntaxToken(common.TRAP_KEYWORD)
+		return l.getSyntaxToken(st.TRAP_KEYWORD)
 	case IN:
-		return l.getSyntaxToken(common.IN_KEYWORD)
+		return l.getSyntaxToken(st.IN_KEYWORD)
 	case FOREACH:
-		return l.getSyntaxToken(common.FOREACH_KEYWORD)
+		return l.getSyntaxToken(st.FOREACH_KEYWORD)
 	case TABLE:
-		return l.getSyntaxToken(common.TABLE_KEYWORD)
+		return l.getSyntaxToken(st.TABLE_KEYWORD)
 	case ERROR:
-		return l.getSyntaxToken(common.ERROR_KEYWORD)
+		return l.getSyntaxToken(st.ERROR_KEYWORD)
 	case LET:
-		return l.getSyntaxToken(common.LET_KEYWORD)
+		return l.getSyntaxToken(st.LET_KEYWORD)
 	case STREAM:
-		return l.getSyntaxToken(common.STREAM_KEYWORD)
+		return l.getSyntaxToken(st.STREAM_KEYWORD)
 	case NEW:
-		return l.getSyntaxToken(common.NEW_KEYWORD)
+		return l.getSyntaxToken(st.NEW_KEYWORD)
 	case READONLY:
-		return l.getSyntaxToken(common.READONLY_KEYWORD)
+		return l.getSyntaxToken(st.READONLY_KEYWORD)
 	case DISTINCT:
-		return l.getSyntaxToken(common.DISTINCT_KEYWORD)
+		return l.getSyntaxToken(st.DISTINCT_KEYWORD)
 	case FROM:
-		return l.getSyntaxToken(common.FROM_KEYWORD)
+		return l.getSyntaxToken(st.FROM_KEYWORD)
 	case START:
-		return l.getSyntaxToken(common.START_KEYWORD)
+		return l.getSyntaxToken(st.START_KEYWORD)
 	case FLUSH:
-		return l.getSyntaxToken(common.FLUSH_KEYWORD)
+		return l.getSyntaxToken(st.FLUSH_KEYWORD)
 	case WAIT:
-		return l.getSyntaxToken(common.WAIT_KEYWORD)
+		return l.getSyntaxToken(st.WAIT_KEYWORD)
 	case DO:
-		return l.getSyntaxToken(common.DO_KEYWORD)
+		return l.getSyntaxToken(st.DO_KEYWORD)
 	case TRANSACTION:
-		return l.getSyntaxToken(common.TRANSACTION_KEYWORD)
+		return l.getSyntaxToken(st.TRANSACTION_KEYWORD)
 	case COMMIT:
-		return l.getSyntaxToken(common.COMMIT_KEYWORD)
+		return l.getSyntaxToken(st.COMMIT_KEYWORD)
 	case RETRY:
-		return l.getSyntaxToken(common.RETRY_KEYWORD)
+		return l.getSyntaxToken(st.RETRY_KEYWORD)
 	case ROLLBACK:
-		return l.getSyntaxToken(common.ROLLBACK_KEYWORD)
+		return l.getSyntaxToken(st.ROLLBACK_KEYWORD)
 	case TRANSACTIONAL:
-		return l.getSyntaxToken(common.TRANSACTIONAL_KEYWORD)
+		return l.getSyntaxToken(st.TRANSACTIONAL_KEYWORD)
 	case ENUM:
-		return l.getSyntaxToken(common.ENUM_KEYWORD)
+		return l.getSyntaxToken(st.ENUM_KEYWORD)
 	case BASE16:
-		return l.getSyntaxToken(common.BASE16_KEYWORD)
+		return l.getSyntaxToken(st.BASE16_KEYWORD)
 	case BASE64:
-		return l.getSyntaxToken(common.BASE64_KEYWORD)
+		return l.getSyntaxToken(st.BASE64_KEYWORD)
 	case MATCH:
-		return l.getSyntaxToken(common.MATCH_KEYWORD)
+		return l.getSyntaxToken(st.MATCH_KEYWORD)
 	case CONFLICT:
-		return l.getSyntaxToken(common.CONFLICT_KEYWORD)
+		return l.getSyntaxToken(st.CONFLICT_KEYWORD)
 	case CLASS:
-		return l.getSyntaxToken(common.CLASS_KEYWORD)
+		return l.getSyntaxToken(st.CLASS_KEYWORD)
 	case CONFIGURABLE:
-		return l.getSyntaxToken(common.CONFIGURABLE_KEYWORD)
+		return l.getSyntaxToken(st.CONFIGURABLE_KEYWORD)
 	case WHERE:
-		return l.getSyntaxToken(common.WHERE_KEYWORD)
+		return l.getSyntaxToken(st.WHERE_KEYWORD)
 	case SELECT:
-		return l.getSyntaxToken(common.SELECT_KEYWORD)
+		return l.getSyntaxToken(st.SELECT_KEYWORD)
 	case LIMIT:
-		return l.getSyntaxToken(common.LIMIT_KEYWORD)
+		return l.getSyntaxToken(st.LIMIT_KEYWORD)
 	case OUTER:
-		return l.getSyntaxToken(common.OUTER_KEYWORD)
+		return l.getSyntaxToken(st.OUTER_KEYWORD)
 	case EQUALS:
-		return l.getSyntaxToken(common.EQUALS_KEYWORD)
+		return l.getSyntaxToken(st.EQUALS_KEYWORD)
 	case ORDER:
-		return l.getSyntaxToken(common.ORDER_KEYWORD)
+		return l.getSyntaxToken(st.ORDER_KEYWORD)
 	case BY:
-		return l.getSyntaxToken(common.BY_KEYWORD)
+		return l.getSyntaxToken(st.BY_KEYWORD)
 	case ASCENDING:
-		return l.getSyntaxToken(common.ASCENDING_KEYWORD)
+		return l.getSyntaxToken(st.ASCENDING_KEYWORD)
 	case DESCENDING:
-		return l.getSyntaxToken(common.DESCENDING_KEYWORD)
+		return l.getSyntaxToken(st.DESCENDING_KEYWORD)
 	case JOIN:
-		return l.getSyntaxToken(common.JOIN_KEYWORD)
+		return l.getSyntaxToken(st.JOIN_KEYWORD)
 	case RE:
 		if l.getNextNonWhiteSpaceOrNonCommentChar() == BACKTICK {
-			return l.getSyntaxToken(common.RE_KEYWORD)
+			return l.getSyntaxToken(st.RE_KEYWORD)
 		}
 		return l.getIdentifierToken()
 	default:
@@ -651,7 +651,7 @@ func (l *lexer) skipComment(lookaheadCount int) int {
 	return lookaheadCount
 }
 
-func (l *lexer) processNumericLiteral(startChar rune) tree.STToken {
+func (l *lexer) processNumericLiteral(startChar rune) st.STToken {
 	reader := l.reader
 	nextChar := reader.Peek()
 	if l.isHexIndicator(startChar, nextChar) {
@@ -699,17 +699,17 @@ func (l *lexer) processNumericLiteral(startChar rune) tree.STToken {
 		l.reportLexerError(common.ERROR_LEADING_ZEROS_IN_NUMERIC_LITERALS)
 	}
 
-	return l.getLiteral(common.DECIMAL_INTEGER_LITERAL_TOKEN)
+	return l.getLiteral(st.DECIMAL_INTEGER_LITERAL_TOKEN)
 }
 
-func (l *lexer) getLiteral(kind common.SyntaxKind) tree.STToken {
+func (l *lexer) getLiteral(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	trailingTrivia := l.processTrailingTrivia()
-	return tree.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
 }
 
-func (l *lexer) processDecimalFloatLiteral() tree.STToken {
+func (l *lexer) processDecimalFloatLiteral() st.STToken {
 	reader := l.reader
 	nextChar := reader.Peek()
 
@@ -737,16 +737,16 @@ func (l *lexer) processDecimalFloatLiteral() tree.STToken {
 	case 'f', 'F', 'd', 'D':
 		return l.parseFloatingPointTypeSuffix()
 	default:
-		return l.getLiteral(common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
+		return l.getLiteral(st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
 	}
 }
 
-func (l *lexer) parseFloatingPointTypeSuffix() tree.STToken {
+func (l *lexer) parseFloatingPointTypeSuffix() st.STToken {
 	l.reader.Advance()
-	return l.getLiteral(common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
+	return l.getLiteral(st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
 }
 
-func (l *lexer) processExponent(isHex bool) tree.STToken {
+func (l *lexer) processExponent(isHex bool) st.STToken {
 	// Advance reader as exponent indicator is already validated
 	reader := l.reader
 	reader.Advance()
@@ -769,19 +769,19 @@ func (l *lexer) processExponent(isHex bool) tree.STToken {
 	}
 
 	if isHex {
-		return l.getLiteral(common.HEX_FLOATING_POINT_LITERAL_TOKEN)
+		return l.getLiteral(st.HEX_FLOATING_POINT_LITERAL_TOKEN)
 	}
 
 	switch nextChar {
 	case 'f', 'F', 'd', 'D':
 		return l.parseFloatingPointTypeSuffix()
 	default:
-		return l.getLiteral(common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
+		return l.getLiteral(st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN)
 	}
 }
 
 func (l *lexer) reportLexerError(errorCode common.DiagnosticErrorCode, args ...any) {
-	diagnostic := tree.CreateDiagnostic(&errorCode, args...)
+	diagnostic := st.CreateDiagnostic(&errorCode, args...)
 	l.context.diagnostics = append(l.context.diagnostics, diagnostic)
 }
 
@@ -854,7 +854,7 @@ func (l *lexer) isHexIntFollowedIdentifier() bool {
 	return isIdentifierFollowingChar(lookaheadChar)
 }
 
-func (l *lexer) processHexLiteral() tree.STToken {
+func (l *lexer) processHexLiteral() st.STToken {
 	reader := l.reader
 	reader.Advance() // advance for "x" or "X"
 	containsHexDigit := false
@@ -898,23 +898,23 @@ func (l *lexer) processHexLiteral() tree.STToken {
 		return l.getHexIntegerLiteral()
 	}
 
-	return l.getLiteral(common.HEX_FLOATING_POINT_LITERAL_TOKEN)
+	return l.getLiteral(st.HEX_FLOATING_POINT_LITERAL_TOKEN)
 }
 
-func (l *lexer) getHexIntegerLiteral() tree.STToken {
+func (l *lexer) getHexIntegerLiteral() st.STToken {
 	lexeme := l.getLexeme()
 	if lexeme == "0x" || lexeme == "0X" {
 		l.reportLexerError(common.ERROR_MISSING_HEX_NUMBER_AFTER_HEX_INDICATOR)
 	}
 
-	return l.getLiteral(common.HEX_INTEGER_LITERAL_TOKEN)
+	return l.getLiteral(st.HEX_INTEGER_LITERAL_TOKEN)
 }
 
 func (l *lexer) isHexIndicator(startChar rune, nextChar rune) bool {
 	return startChar == '0' && (nextChar == 'x' || nextChar == 'X')
 }
 
-func (l *lexer) processQuotedIdentifier() tree.STToken {
+func (l *lexer) processQuotedIdentifier() st.STToken {
 	l.processIdentifierEnd()
 	if string(SINGLE_QUOTE) == l.getLexeme() {
 		l.reportLexerError(common.ERROR_INCOMPLETE_QUOTED_IDENTIFIER)
@@ -922,16 +922,16 @@ func (l *lexer) processQuotedIdentifier() tree.STToken {
 	return l.getIdentifierToken()
 }
 
-func (l *lexer) getBacktickToken() tree.STToken {
+func (l *lexer) getBacktickToken() st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	// Trivia after the back-tick including whitespace belongs to the content of the back-tick.
 	// Therefore, do not process trailing trivia for starting back-tick. We reach here only for
 	// starting back-tick. Ending back-tick is processed by the template mode.
-	trailingTrivia := tree.CreateEmptyNodeList()
-	return tree.CreateTokenFrom(common.BACKTICK_TOKEN, leadingTrivia, trailingTrivia)
+	trailingTrivia := st.CreateEmptyNodeList()
+	return st.CreateTokenFrom(st.BACKTICK_TOKEN, leadingTrivia, trailingTrivia)
 }
 
-func (l *lexer) processExclamationMarkOperator() tree.STToken {
+func (l *lexer) processExclamationMarkOperator() st.STToken {
 	reader := l.reader
 	switch reader.Peek() {
 	case EQUAL:
@@ -939,18 +939,18 @@ func (l *lexer) processExclamationMarkOperator() tree.STToken {
 		if reader.Peek() == EQUAL {
 			// this is '!=='
 			reader.Advance()
-			return l.getSyntaxToken(common.NOT_DOUBLE_EQUAL_TOKEN)
+			return l.getSyntaxToken(st.NOT_DOUBLE_EQUAL_TOKEN)
 		}
 		// this is '!='
-		return l.getSyntaxToken(common.NOT_EQUAL_TOKEN)
+		return l.getSyntaxToken(st.NOT_EQUAL_TOKEN)
 	default:
 		// this is '!is'
 		if l.isNotIsToken() {
 			reader.AdvanceN(2)
-			return l.getSyntaxToken(common.NOT_IS_KEYWORD)
+			return l.getSyntaxToken(st.NOT_IS_KEYWORD)
 		}
 		// this is '!'
-		return l.getSyntaxToken(common.EXCLAMATION_MARK_TOKEN)
+		return l.getSyntaxToken(st.EXCLAMATION_MARK_TOKEN)
 	}
 }
 
@@ -960,15 +960,15 @@ func (l *lexer) isNotIsToken() bool {
 		(!isIdentifierFollowingChar(reader.PeekN(2)) && reader.PeekN(2) != BACKSLASH)
 }
 
-func (l *lexer) processTokenStartWithGt() tree.STToken {
+func (l *lexer) processTokenStartWithGt() st.STToken {
 	reader := l.reader
 	if reader.Peek() == EQUAL {
 		reader.Advance()
-		return l.getSyntaxToken(common.GT_EQUAL_TOKEN)
+		return l.getSyntaxToken(st.GT_EQUAL_TOKEN)
 	}
 
 	if reader.Peek() != GT {
-		return l.getSyntaxToken(common.GT_TOKEN)
+		return l.getSyntaxToken(st.GT_TOKEN)
 	}
 
 	nextChar := reader.PeekN(1)
@@ -977,58 +977,58 @@ func (l *lexer) processTokenStartWithGt() tree.STToken {
 		if reader.PeekN(2) == EQUAL {
 			// ">>>="
 			reader.AdvanceN(2)
-			return l.getSyntaxToken(common.TRIPPLE_GT_TOKEN)
+			return l.getSyntaxToken(st.TRIPPLE_GT_TOKEN)
 		}
-		return l.getSyntaxToken(common.GT_TOKEN)
+		return l.getSyntaxToken(st.GT_TOKEN)
 	case EQUAL:
 		// ">>="
 		reader.AdvanceN(1)
-		return l.getSyntaxToken(common.DOUBLE_GT_TOKEN)
+		return l.getSyntaxToken(st.DOUBLE_GT_TOKEN)
 	default:
-		return l.getSyntaxToken(common.GT_TOKEN)
+		return l.getSyntaxToken(st.GT_TOKEN)
 	}
 }
 
-func (l *lexer) processTokenStartWithLt() tree.STToken {
+func (l *lexer) processTokenStartWithLt() st.STToken {
 	reader := l.reader
 	switch reader.Peek() {
 	case EQUAL:
 		reader.Advance()
-		return l.getSyntaxToken(common.LT_EQUAL_TOKEN)
+		return l.getSyntaxToken(st.LT_EQUAL_TOKEN)
 	case MINUS:
 		nextNextChar := reader.PeekN(1)
 		if unicode.IsDigit(nextNextChar) {
-			return l.getSyntaxToken(common.LT_TOKEN)
+			return l.getSyntaxToken(st.LT_TOKEN)
 		}
 		reader.Advance()
-		return l.getSyntaxToken(common.LEFT_ARROW_TOKEN)
+		return l.getSyntaxToken(st.LEFT_ARROW_TOKEN)
 	case LT:
 		reader.Advance()
-		return l.getSyntaxToken(common.DOUBLE_LT_TOKEN)
+		return l.getSyntaxToken(st.DOUBLE_LT_TOKEN)
 	default:
-		return l.getSyntaxToken(common.LT_TOKEN)
+		return l.getSyntaxToken(st.LT_TOKEN)
 	}
 }
 
-func (l *lexer) processSlashToken() tree.STToken {
+func (l *lexer) processSlashToken() st.STToken {
 	// check for the second char
 	reader := l.reader
 	if reader.Peek() != ASTERISK {
-		return l.getSyntaxToken(common.SLASH_TOKEN)
+		return l.getSyntaxToken(st.SLASH_TOKEN)
 	}
 
 	reader.Advance()
 	if reader.Peek() != ASTERISK {
-		return l.getSyntaxToken(common.SLASH_ASTERISK_TOKEN)
+		return l.getSyntaxToken(st.SLASH_ASTERISK_TOKEN)
 	} else if reader.PeekN(1) == SLASH && reader.PeekN(2) == LT {
 		reader.AdvanceN(3)
-		return l.getSyntaxToken(common.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN)
+		return l.getSyntaxToken(st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN)
 	} else {
-		return l.getSyntaxToken(common.SLASH_ASTERISK_TOKEN)
+		return l.getSyntaxToken(st.SLASH_ASTERISK_TOKEN)
 	}
 }
 
-func (l *lexer) processEqualOperator() tree.STToken {
+func (l *lexer) processEqualOperator() st.STToken {
 	reader := l.reader
 	switch reader.Peek() {
 	case EQUAL:
@@ -1036,21 +1036,21 @@ func (l *lexer) processEqualOperator() tree.STToken {
 		if reader.Peek() == EQUAL {
 			// this is '==='
 			reader.Advance()
-			return l.getSyntaxToken(common.TRIPPLE_EQUAL_TOKEN)
+			return l.getSyntaxToken(st.TRIPPLE_EQUAL_TOKEN)
 		}
 		// this is '=='
-		return l.getSyntaxToken(common.DOUBLE_EQUAL_TOKEN)
+		return l.getSyntaxToken(st.DOUBLE_EQUAL_TOKEN)
 	case GT:
 		// this is '=>'
 		reader.Advance()
-		return l.getSyntaxToken(common.RIGHT_DOUBLE_ARROW_TOKEN)
+		return l.getSyntaxToken(st.RIGHT_DOUBLE_ARROW_TOKEN)
 	default:
 		// this is '='
-		return l.getSyntaxToken(common.EQUAL_TOKEN)
+		return l.getSyntaxToken(st.EQUAL_TOKEN)
 	}
 }
 
-func (l *lexer) processDocumentationString() tree.STToken {
+func (l *lexer) processDocumentationString() st.STToken {
 	reader := l.reader
 	nextChar := reader.Peek()
 	for !reader.IsEOF() {
@@ -1091,11 +1091,11 @@ func (l *lexer) processDocumentationString() tree.STToken {
 
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
-	trailingTrivia := tree.CreateEmptyNodeList() // No trailing trivia
-	return tree.CreateLiteralValueToken(common.DOCUMENTATION_STRING, lexeme, leadingTrivia, trailingTrivia)
+	trailingTrivia := st.CreateEmptyNodeList() // No trailing trivia
+	return st.CreateLiteralValueToken(st.DOCUMENTATION_STRING, lexeme, leadingTrivia, trailingTrivia)
 }
 
-func (l *lexer) processStringLiteral() tree.STToken {
+func (l *lexer) processStringLiteral() st.STToken {
 	reader := l.reader
 	var nextChar rune
 	for !reader.IsEOF() {
@@ -1130,24 +1130,24 @@ func (l *lexer) processStringLiteral() tree.STToken {
 		break
 	}
 
-	return l.getLiteral(common.STRING_LITERAL_TOKEN)
+	return l.getLiteral(st.STRING_LITERAL_TOKEN)
 }
 
-func (l *lexer) processPipeOperator() tree.STToken {
+func (l *lexer) processPipeOperator() st.STToken {
 	reader := l.reader
 	switch reader.Peek() {
 	case CLOSE_BRACE:
 		reader.Advance()
-		return l.getSyntaxToken(common.CLOSE_BRACE_PIPE_TOKEN)
+		return l.getSyntaxToken(st.CLOSE_BRACE_PIPE_TOKEN)
 	case PIPE:
 		reader.Advance()
-		return l.getSyntaxToken(common.LOGICAL_OR_TOKEN)
+		return l.getSyntaxToken(st.LOGICAL_OR_TOKEN)
 	default:
-		return l.getSyntaxToken(common.PIPE_TOKEN)
+		return l.getSyntaxToken(st.PIPE_TOKEN)
 	}
 }
 
-func (l *lexer) processDot() tree.STToken {
+func (l *lexer) processDot() st.STToken {
 	reader := l.reader
 	nextChar := reader.Peek()
 	switch nextChar {
@@ -1156,56 +1156,56 @@ func (l *lexer) processDot() tree.STToken {
 		switch nextNextChar {
 		case DOT:
 			reader.AdvanceN(2)
-			return l.getSyntaxToken(common.ELLIPSIS_TOKEN)
+			return l.getSyntaxToken(st.ELLIPSIS_TOKEN)
 		case LT:
 			reader.AdvanceN(2)
-			return l.getSyntaxToken(common.DOUBLE_DOT_LT_TOKEN)
+			return l.getSyntaxToken(st.DOUBLE_DOT_LT_TOKEN)
 		}
 	case AT:
 		reader.Advance()
-		return l.getSyntaxToken(common.ANNOT_CHAINING_TOKEN)
+		return l.getSyntaxToken(st.ANNOT_CHAINING_TOKEN)
 	case LT:
 		reader.Advance()
-		return l.getSyntaxToken(common.DOT_LT_TOKEN)
+		return l.getSyntaxToken(st.DOT_LT_TOKEN)
 	}
 
 	if l.context.mode != PARSER_MODE_IMPORT_MODE && unicode.IsDigit(nextChar) {
 		return l.processDecimalFloatLiteral()
 	}
-	return l.getSyntaxToken(common.DOT_TOKEN)
+	return l.getSyntaxToken(st.DOT_TOKEN)
 }
 
-func (l *lexer) getIdentifierToken() tree.STToken {
+func (l *lexer) getIdentifierToken() st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	trailingTrivia := l.processTrailingTrivia()
-	return tree.CreateIdentifierToken(lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateIdentifierToken(lexeme, leadingTrivia, trailingTrivia)
 }
 
 func (l *lexer) processUnquotedIdentifier() {
 	l.processIdentifierEnd()
 }
 
-func (l *lexer) getSyntaxToken(kind common.SyntaxKind) tree.STToken {
+func (l *lexer) getSyntaxToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	trailingTrivia := l.processTrailingTrivia()
-	return tree.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
 }
 
-func (l *lexer) getLeadingTrivia() tree.STNode {
-	trivia := tree.CreateNodeList(l.context.leadingTriviaList...)
-	l.context.leadingTriviaList = make([]tree.STNode, 0, INITIAL_TRIVIA_CAPACITY)
+func (l *lexer) getLeadingTrivia() st.STNode {
+	trivia := st.CreateNodeList(l.context.leadingTriviaList...)
+	l.context.leadingTriviaList = make([]st.STNode, 0, INITIAL_TRIVIA_CAPACITY)
 	return trivia
 }
 
-func (l *lexer) processTrailingTrivia() tree.STNode {
-	triviaList := make([]tree.STNode, 0, INITIAL_TRIVIA_CAPACITY)
+func (l *lexer) processTrailingTrivia() st.STNode {
+	triviaList := make([]st.STNode, 0, INITIAL_TRIVIA_CAPACITY)
 	l.processSyntaxTrivia(&triviaList, false)
-	result := tree.CreateNodeList(triviaList...)
+	result := st.CreateNodeList(triviaList...)
 	return result
 }
 
-func (l *lexer) processSyntaxTrivia(triviaList *[]tree.STNode, isLeading bool) {
+func (l *lexer) processSyntaxTrivia(triviaList *[]st.STNode, isLeading bool) {
 	reader := l.reader
 	for !reader.IsEOF() {
 		reader.Mark()
@@ -1231,7 +1231,7 @@ func (l *lexer) processSyntaxTrivia(triviaList *[]tree.STNode, isLeading bool) {
 	}
 }
 
-func (l *lexer) processComment() tree.STNode {
+func (l *lexer) processComment() st.STNode {
 	reader := l.reader
 	reader.AdvanceN(2)
 	nextToken := reader.Peek()
@@ -1245,28 +1245,28 @@ func (l *lexer) processComment() tree.STNode {
 		}
 		break
 	}
-	return tree.CreateMinutiae(common.COMMENT_MINUTIAE, l.getLexeme())
+	return st.CreateMinutiae(st.COMMENT_MINUTIAE, l.getLexeme())
 }
 
-func (l *lexer) processEndOfLine() tree.STNode {
+func (l *lexer) processEndOfLine() st.STNode {
 	reader := l.reader
 	c := reader.Peek()
 	switch c {
 	case NEWLINE:
 		reader.Advance()
-		return tree.CreateMinutiae(common.END_OF_LINE_MINUTIAE, l.getLexeme())
+		return st.CreateMinutiae(st.END_OF_LINE_MINUTIAE, l.getLexeme())
 	case CARRIAGE_RETURN:
 		reader.Advance()
 		if reader.Peek() == NEWLINE {
 			reader.Advance()
 		}
-		return tree.CreateMinutiae(common.END_OF_LINE_MINUTIAE, l.getLexeme())
+		return st.CreateMinutiae(st.END_OF_LINE_MINUTIAE, l.getLexeme())
 	default:
 		panic("unreachable")
 	}
 }
 
-func (l *lexer) processWhitespaces() tree.STNode {
+func (l *lexer) processWhitespaces() st.STNode {
 	reader := l.reader
 	for !reader.IsEOF() {
 		c := reader.Peek()
@@ -1278,10 +1278,10 @@ func (l *lexer) processWhitespaces() tree.STNode {
 		}
 		break
 	}
-	return tree.CreateMinutiae(common.WHITESPACE_MINUTIAE, l.getLexeme())
+	return st.CreateMinutiae(st.WHITESPACE_MINUTIAE, l.getLexeme())
 }
 
-func (l *lexer) readTokenInBracedContentInInterpolation() tree.STToken {
+func (l *lexer) readTokenInBracedContentInInterpolation() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	nextChar := reader.Peek()
@@ -1305,7 +1305,7 @@ func (l *lexer) readTokenInBracedContentInInterpolation() tree.STToken {
 	return l.readToken()
 }
 
-func (l *lexer) readTokenInInterpolation() tree.STToken {
+func (l *lexer) readTokenInInterpolation() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	nextChar := reader.Peek()
@@ -1322,7 +1322,7 @@ func (l *lexer) readTokenInInterpolation() tree.STToken {
 		// then end of the interpolation.
 		l.EndMode()
 		reader.Advance()
-		return l.getSyntaxTokenWithoutTrailingTrivia(common.CLOSE_BRACE_TOKEN)
+		return l.getSyntaxTokenWithoutTrailingTrivia(st.CLOSE_BRACE_TOKEN)
 	case BACKTICK:
 		// If we are inside the interpolation, that means its no longer XML
 		// mode, but in the default mode. Hence treat the back-tick in the
@@ -1334,22 +1334,22 @@ func (l *lexer) readTokenInInterpolation() tree.STToken {
 	}
 }
 
-func (l *lexer) getSyntaxTokenWithoutTrailingTrivia(kind common.SyntaxKind) tree.STToken {
+func (l *lexer) getSyntaxTokenWithoutTrailingTrivia(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
-	trailingTrivia := tree.CreateEmptyNodeList()
-	return tree.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	trailingTrivia := st.CreateEmptyNodeList()
+	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
 }
 
 func (l *lexer) processLeadingTrivia() {
 	l.processSyntaxTrivia(&l.context.leadingTriviaList, true)
 }
 
-func (l *lexer) readRegExpTemplateToken() tree.STToken {
+func (l *lexer) readRegExpTemplateToken() st.STToken {
 	reader := l.reader
 	shouldProcessInterpolations := true
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getSyntaxToken(common.EOF_TOKEN)
+		return l.getSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
@@ -1357,14 +1357,14 @@ func (l *lexer) readRegExpTemplateToken() tree.STToken {
 	case BACKTICK:
 		reader.Advance()
 		l.EndMode()
-		return l.getSyntaxToken(common.BACKTICK_TOKEN)
+		return l.getSyntaxToken(st.BACKTICK_TOKEN)
 	case DOLLAR:
 		if reader.PeekN(1) == OPEN_BRACE {
 			// Switch to interpolation mode. Then the next token will be read in that mode.
 			l.StartMode(PARSER_MODE_INTERPOLATION)
 			reader.AdvanceN(2)
 
-			return l.getSyntaxToken(common.INTERPOLATION_START_TOKEN)
+			return l.getSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 		fallthrough
 	default:
@@ -1403,21 +1403,21 @@ func (l *lexer) readRegExpTemplateToken() tree.STToken {
 			break
 		}
 	}
-	return l.getLiteral(common.TEMPLATE_STRING)
+	return l.getLiteral(st.TEMPLATE_STRING)
 }
 
-func (l *lexer) readPromptToken() tree.STToken {
+func (l *lexer) readPromptToken() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getSyntaxToken(common.EOF_TOKEN)
+		return l.getSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
 	if nextChar == CLOSE_BRACE {
 		reader.Advance()
 		l.EndMode()
-		return l.getSyntaxToken(common.CLOSE_BRACE_TOKEN)
+		return l.getSyntaxToken(st.CLOSE_BRACE_TOKEN)
 	}
 
 	if nextChar == DOLLAR && reader.PeekN(1) == OPEN_BRACE {
@@ -1425,7 +1425,7 @@ func (l *lexer) readPromptToken() tree.STToken {
 		l.StartMode(PARSER_MODE_INTERPOLATION)
 		reader.AdvanceN(2)
 
-		return l.getSyntaxToken(common.INTERPOLATION_START_TOKEN)
+		return l.getSyntaxToken(st.INTERPOLATION_START_TOKEN)
 	}
 
 	for !reader.IsEOF() {
@@ -1445,21 +1445,21 @@ func (l *lexer) readPromptToken() tree.STToken {
 		}
 	}
 
-	return l.getLiteral(common.PROMPT_CONTENT)
+	return l.getLiteral(st.PROMPT_CONTENT)
 }
 
-func (l *lexer) readTemplateToken() tree.STToken {
+func (l *lexer) readTemplateToken() st.STToken {
 	reader := l.reader
 	reader.Mark()
 	if reader.IsEOF() {
-		return l.getSyntaxToken(common.EOF_TOKEN)
+		return l.getSyntaxToken(st.EOF_TOKEN)
 	}
 
 	nextChar := reader.Peek()
 	if nextChar == BACKTICK {
 		reader.Advance()
 		l.EndMode()
-		return l.getSyntaxToken(common.BACKTICK_TOKEN)
+		return l.getSyntaxToken(st.BACKTICK_TOKEN)
 	}
 
 	if nextChar == DOLLAR && reader.PeekN(1) == OPEN_BRACE {
@@ -1467,7 +1467,7 @@ func (l *lexer) readTemplateToken() tree.STToken {
 		l.StartMode(PARSER_MODE_INTERPOLATION)
 		reader.AdvanceN(2)
 
-		return l.getSyntaxToken(common.INTERPOLATION_START_TOKEN)
+		return l.getSyntaxToken(st.INTERPOLATION_START_TOKEN)
 	}
 
 	for !reader.IsEOF() {
@@ -1479,7 +1479,7 @@ func (l *lexer) readTemplateToken() tree.STToken {
 		}
 	}
 
-	return l.getLiteral(common.TEMPLATE_STRING)
+	return l.getLiteral(st.TEMPLATE_STRING)
 }
 
 type ParserMode uint8

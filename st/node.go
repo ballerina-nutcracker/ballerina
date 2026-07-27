@@ -14,14 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package tree
+package st
 
-//go:generate ../../tree-gen -config ../nodes.json -type node -template ../../compiler-tools/tree-gen/templates/node.go.tmpl -output node_gen.go
+//go:generate ../tree-gen -config nodes.json -type node -template ../compiler-tools/tree-gen/templates/node.go.tmpl -output node_gen.go
 
 import (
 	"iter"
 
-	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -46,7 +45,7 @@ type Node interface {
 	Ancestors() []*Node
 	TextRange() TextRange
 	TextRangeWithMinutiae() TextRange
-	Kind() common.SyntaxKind
+	Kind() SyntaxKind
 	Location() NodeLocation
 	Diagnostics() iter.Seq[Diagnostic]
 	HasDiagnostics() bool
@@ -164,7 +163,7 @@ func NodeFrom(internalNode STNode, position int, parent NonTerminalNode) Node {
 	}
 }
 
-func (n *NodeBase) Kind() common.SyntaxKind {
+func (n *NodeBase) Kind() SyntaxKind {
 	return n.internalNode.Kind()
 }
 

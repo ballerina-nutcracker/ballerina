@@ -19,6 +19,7 @@ use (
 	./runtime
 	./semantics
 	./semtypes
+	./st
 	./tools
 	./values
 )
@@ -54,6 +55,8 @@ replace github.com/ballerina-nutcracker/ballerina/runtime v0.6.0 => ./runtime
 replace github.com/ballerina-nutcracker/ballerina/semantics v0.6.0 => ./semantics
 
 replace github.com/ballerina-nutcracker/ballerina/semtypes v0.6.0 => ./semtypes
+
+replace github.com/ballerina-nutcracker/ballerina/st v0.6.0 => ./st
 
 replace github.com/ballerina-nutcracker/ballerina/tools v0.6.0 => ./tools
 

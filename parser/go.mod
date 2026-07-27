@@ -6,6 +6,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina v0.6.0
 	github.com/ballerina-nutcracker/ballerina/common v0.6.0
 	github.com/ballerina-nutcracker/ballerina/context v0.6.0
+	github.com/ballerina-nutcracker/ballerina/st v0.6.0
 	github.com/ballerina-nutcracker/ballerina/tools v0.6.0
 	github.com/sergi/go-diff v1.4.0
 )

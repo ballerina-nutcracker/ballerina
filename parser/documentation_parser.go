@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	"github.com/ballerina-nutcracker/ballerina/parser/tree"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -38,40 +38,40 @@ func NewDocumentationParser(tokenReader *TokenReader) *DocumentationParser {
 	return parser
 }
 
-func (p *DocumentationParser) Parse() tree.STNode {
+func (p *DocumentationParser) Parse() st.STNode {
 	return p.parseDocumentationLines()
 }
 
-func (p *DocumentationParser) parseDocumentationLines() tree.STNode {
-	docLines := make([]tree.STNode, 0)
+func (p *DocumentationParser) parseDocumentationLines() st.STNode {
+	docLines := make([]st.STNode, 0)
 	nextToken := p.peek()
-	for nextToken != nil && nextToken.Kind() == common.HASH_TOKEN {
+	for nextToken != nil && nextToken.Kind() == st.HASH_TOKEN {
 		docLines = append(docLines, p.parseSingleDocumentationLine())
 		nextToken = p.peek()
 	}
-	return tree.CreateNodeList(docLines...)
+	return st.CreateNodeList(docLines...)
 }
 
-func (p *DocumentationParser) parseSingleDocumentationLine() tree.STNode {
+func (p *DocumentationParser) parseSingleDocumentationLine() st.STNode {
 	hashToken := p.consume()
 	nextToken := p.peek()
 	if nextToken == nil {
-		return p.createMarkdownDocumentationLineNode(hashToken, tree.CreateEmptyNodeList())
+		return p.createMarkdownDocumentationLineNode(hashToken, st.CreateEmptyNodeList())
 	}
 
 	switch nextToken.Kind() {
-	case common.PLUS_TOKEN:
+	case st.PLUS_TOKEN:
 		return p.parseParameterDocumentationLine(hashToken)
-	case common.DEPRECATION_LITERAL:
+	case st.DEPRECATION_LITERAL:
 		return p.parseDeprecationDocumentationLine(hashToken)
-	case common.TRIPLE_BACKTICK_TOKEN, common.DOUBLE_BACKTICK_TOKEN:
+	case st.TRIPLE_BACKTICK_TOKEN, st.DOUBLE_BACKTICK_TOKEN:
 		return p.parseCodeBlockOrInlineCodeRef(hashToken)
 	default:
 		return p.parseDocumentationLine(hashToken)
 	}
 }
 
-func (p *DocumentationParser) parseCodeBlockOrInlineCodeRef(startLineHash tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseCodeBlockOrInlineCodeRef(startLineHash st.STNode) st.STNode {
 	startBacktick := p.consume()
 	nextToken := p.peek()
 	if nextToken == nil || !p.isInlineCodeRef(nextToken.Kind()) {
@@ -79,38 +79,38 @@ func (p *DocumentationParser) parseCodeBlockOrInlineCodeRef(startLineHash tree.S
 	}
 
 	inlineCodeNode := p.parseInlineCode(startBacktick)
-	docElements := []tree.STNode{inlineCodeNode}
+	docElements := []st.STNode{inlineCodeNode}
 	p.parseDocElements(&docElements)
-	docElementList := tree.CreateNodeList(docElements...)
+	docElementList := st.CreateNodeList(docElements...)
 	return p.createMarkdownReferenceDocumentationLineNode(startLineHash, docElementList)
 }
 
-func (p *DocumentationParser) isInlineCodeRef(nextTokenKind common.SyntaxKind) bool {
+func (p *DocumentationParser) isInlineCodeRef(nextTokenKind st.SyntaxKind) bool {
 	nextNext := p.getNextNextToken()
 	switch nextTokenKind {
-	case common.HASH_TOKEN:
-		return nextNext != nil && nextNext.Kind() == common.DOCUMENTATION_DESCRIPTION
-	case common.CODE_CONTENT:
+	case st.HASH_TOKEN:
+		return nextNext != nil && nextNext.Kind() == st.DOCUMENTATION_DESCRIPTION
+	case st.CODE_CONTENT:
 		if nextNext == nil {
 			return true
 		}
-		return nextNext.Kind() != common.HASH_TOKEN
+		return nextNext.Kind() != st.HASH_TOKEN
 	default:
 		return true
 	}
 }
 
-func (p *DocumentationParser) parseDeprecationDocumentationLine(hashToken tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseDeprecationDocumentationLine(hashToken st.STNode) st.STNode {
 	deprecationLiteral := p.consume()
 	docElements := p.parseDocumentationElements()
-	docElements = append([]tree.STNode{deprecationLiteral}, docElements...)
-	docElementList := tree.CreateNodeList(docElements...)
+	docElements = append([]st.STNode{deprecationLiteral}, docElements...)
+	docElementList := st.CreateNodeList(docElements...)
 	return p.createMarkdownDeprecationDocumentationLineNode(hashToken, docElementList)
 }
 
-func (p *DocumentationParser) parseDocumentationLine(hashToken tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseDocumentationLine(hashToken st.STNode) st.STNode {
 	docElements := p.parseDocumentationElements()
-	docElementList := tree.CreateNodeList(docElements...)
+	docElementList := st.CreateNodeList(docElements...)
 
 	switch len(docElements) {
 	case 0:
@@ -118,7 +118,7 @@ func (p *DocumentationParser) parseDocumentationLine(hashToken tree.STNode) tree
 		return p.createMarkdownDocumentationLineNode(hashToken, docElementList)
 	case 1:
 		docElement := docElements[0]
-		if docElement.Kind() == common.DOCUMENTATION_DESCRIPTION {
+		if docElement.Kind() == st.DOCUMENTATION_DESCRIPTION {
 			return p.createMarkdownDocumentationLineNode(hashToken, docElementList)
 		}
 		fallthrough
@@ -127,28 +127,28 @@ func (p *DocumentationParser) parseDocumentationLine(hashToken tree.STNode) tree
 	}
 }
 
-func (p *DocumentationParser) parseDocumentationElements() []tree.STNode {
-	docElements := make([]tree.STNode, 0)
+func (p *DocumentationParser) parseDocumentationElements() []st.STNode {
+	docElements := make([]st.STNode, 0)
 	p.parseDocElements(&docElements)
 	return docElements
 }
 
-func (p *DocumentationParser) parseDocElements(docElements *[]tree.STNode) {
-	var docElement tree.STNode
-	var referenceType tree.STNode
+func (p *DocumentationParser) parseDocElements(docElements *[]st.STNode) {
+	var docElement st.STNode
+	var referenceType st.STNode
 
 	nextToken := p.peek()
 	for nextToken != nil && !p.isEndOfIntermediateDocumentation(nextToken.Kind()) {
 		switch nextToken.Kind() {
-		case common.DOCUMENTATION_DESCRIPTION:
+		case st.DOCUMENTATION_DESCRIPTION:
 			docElement = p.consume()
-		case common.CODE_CONTENT:
+		case st.CODE_CONTENT:
 			token := p.consume()
 			docElement = p.convertToDocDescriptionToken(token)
-		case common.DOUBLE_BACKTICK_TOKEN, common.TRIPLE_BACKTICK_TOKEN:
+		case st.DOUBLE_BACKTICK_TOKEN, st.TRIPLE_BACKTICK_TOKEN:
 			docElement = p.parseInlineCode(p.consume())
-		case common.BACKTICK_TOKEN:
-			referenceType = tree.CreateEmptyNode()
+		case st.BACKTICK_TOKEN:
+			referenceType = st.CreateEmptyNode()
 			docElement = p.parseBallerinaNameRefOrInlineCodeRef(referenceType)
 		default:
 			if p.isDocumentReferenceType(nextToken.Kind()) {
@@ -167,39 +167,39 @@ func (p *DocumentationParser) parseDocElements(docElements *[]tree.STNode) {
 	}
 }
 
-func (p *DocumentationParser) convertToDocDescriptionToken(token tree.STToken) tree.STNode {
-	return tree.CreateLiteralValueToken(common.DOCUMENTATION_DESCRIPTION, token.Text(),
+func (p *DocumentationParser) convertToDocDescriptionToken(token st.STToken) st.STNode {
+	return st.CreateLiteralValueToken(st.DOCUMENTATION_DESCRIPTION, token.Text(),
 		token.LeadingMinutiae(), token.TrailingMinutiae())
 }
 
-func (p *DocumentationParser) convertToCodeContentToken(token tree.STToken) tree.STNode {
-	return tree.CreateLiteralValueToken(common.CODE_CONTENT, token.Text(),
+func (p *DocumentationParser) convertToCodeContentToken(token st.STToken) st.STNode {
+	return st.CreateLiteralValueToken(st.CODE_CONTENT, token.Text(),
 		token.LeadingMinutiae(), token.TrailingMinutiae())
 }
 
-func (p *DocumentationParser) parseInlineCode(startBacktick tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseInlineCode(startBacktick st.STNode) st.STNode {
 	codeDescription := p.parseInlineCodeContentToken()
 	endBacktick := p.parseCodeEndBacktick(startBacktick.Kind())
 	return p.createInlineCodeReferenceNode(startBacktick, codeDescription, endBacktick)
 }
 
-func (p *DocumentationParser) parseInlineCodeContentToken() tree.STNode {
+func (p *DocumentationParser) parseInlineCodeContentToken() st.STNode {
 	token := p.peek()
 	if token == nil {
-		return p.createMissingTokenWithDiagnostics(common.CODE_CONTENT)
+		return p.createMissingTokenWithDiagnostics(st.CODE_CONTENT)
 	}
 
-	if token.Kind() == common.CODE_CONTENT {
+	if token.Kind() == st.CODE_CONTENT {
 		return p.consume()
-	} else if token.Kind() == common.DOCUMENTATION_DESCRIPTION {
+	} else if token.Kind() == st.DOCUMENTATION_DESCRIPTION {
 		token = p.consume()
 		return p.convertToCodeContentToken(token)
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.CODE_CONTENT)
+		return p.createMissingTokenWithDiagnostics(st.CODE_CONTENT)
 	}
 }
 
-func (p *DocumentationParser) parseCodeBlock(startLineHash tree.STNode, startBacktick tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseCodeBlock(startLineHash st.STNode, startBacktick st.STNode) st.STNode {
 	langAttribute := p.parseOptionalLangAttributeToken()
 	codeLines := p.parseCodeLines()
 	endLineHash := p.parseHashToken()
@@ -208,35 +208,35 @@ func (p *DocumentationParser) parseCodeBlock(startLineHash tree.STNode, startBac
 	// Handle any invalid tokens after the code block
 	for p.peek() != nil && !p.isEndOfIntermediateDocumentation(p.peek().Kind()) {
 		invalidToken := p.consume()
-		endBacktick = tree.CloneWithTrailingInvalidNodeMinutiae(endBacktick, invalidToken,
+		endBacktick = st.CloneWithTrailingInvalidNodeMinutiae(endBacktick, invalidToken,
 			&common.WARNING_CANNOT_HAVE_DOCUMENTATION_INLINE_WITH_A_CODE_REFERENCE_BLOCK)
 	}
 	return p.createMarkdownCodeBlockNode(startLineHash, startBacktick, langAttribute, codeLines, endLineHash, endBacktick)
 }
 
-func (p *DocumentationParser) parseOptionalLangAttributeToken() tree.STNode {
+func (p *DocumentationParser) parseOptionalLangAttributeToken() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.CODE_CONTENT {
+	if token != nil && token.Kind() == st.CODE_CONTENT {
 		return p.consume()
 	} else {
-		return tree.CreateEmptyNode()
+		return st.CreateEmptyNode()
 	}
 }
 
-func (p *DocumentationParser) parseCodeLines() tree.STNode {
-	codeLineList := make([]tree.STNode, 0)
+func (p *DocumentationParser) parseCodeLines() st.STNode {
+	codeLineList := make([]st.STNode, 0)
 	for !p.isEndOfCodeLines() {
 		codeLineNode := p.parseCodeLine()
 		codeLineList = append(codeLineList, codeLineNode)
 	}
-	return tree.CreateNodeList(codeLineList...)
+	return st.CreateNodeList(codeLineList...)
 }
 
-func (p *DocumentationParser) parseCodeLine() tree.STNode {
+func (p *DocumentationParser) parseCodeLine() st.STNode {
 	hash := p.parseHashToken()
-	var codeDescription tree.STNode
+	var codeDescription st.STNode
 	nextToken := p.peek()
-	if nextToken != nil && nextToken.Kind() == common.HASH_TOKEN {
+	if nextToken != nil && nextToken.Kind() == st.HASH_TOKEN {
 		// We reach here, when the code line is empty
 		codeDescription = p.createEmptyCodeContentToken()
 	} else {
@@ -245,21 +245,21 @@ func (p *DocumentationParser) parseCodeLine() tree.STNode {
 	return p.createMarkdownCodeLineNode(hash, codeDescription)
 }
 
-func (p *DocumentationParser) createEmptyCodeContentToken() tree.STNode {
-	emptyMinutiae := tree.CreateEmptyNodeList()
-	return tree.CreateLiteralValueToken(common.CODE_CONTENT, "", emptyMinutiae, emptyMinutiae)
+func (p *DocumentationParser) createEmptyCodeContentToken() st.STNode {
+	emptyMinutiae := st.CreateEmptyNodeList()
+	return st.CreateLiteralValueToken(st.CODE_CONTENT, "", emptyMinutiae, emptyMinutiae)
 }
 
-func (p *DocumentationParser) parseHashToken() tree.STNode {
+func (p *DocumentationParser) parseHashToken() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.HASH_TOKEN {
+	if token != nil && token.Kind() == st.HASH_TOKEN {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.HASH_TOKEN)
+		return p.createMissingTokenWithDiagnostics(st.HASH_TOKEN)
 	}
 }
 
-func (p *DocumentationParser) parseCodeEndBacktick(backtickKind common.SyntaxKind) tree.STNode {
+func (p *DocumentationParser) parseCodeEndBacktick(backtickKind st.SyntaxKind) st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == backtickKind {
 		return p.consume()
@@ -273,13 +273,13 @@ func (p *DocumentationParser) isEndOfCodeLines() bool {
 	if nextToken == nil {
 		return true
 	}
-	if nextToken.Kind() == common.HASH_TOKEN {
+	if nextToken.Kind() == st.HASH_TOKEN {
 		nextNextToken := p.getNextNextToken()
 		if nextNextToken == nil {
 			return true
 		}
 		switch nextNextToken.Kind() {
-		case common.CODE_CONTENT, common.HASH_TOKEN:
+		case st.CODE_CONTENT, st.HASH_TOKEN:
 			return false
 		default:
 			return true
@@ -288,17 +288,17 @@ func (p *DocumentationParser) isEndOfCodeLines() bool {
 	return true
 }
 
-func (p *DocumentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType st.STNode) st.STNode {
 	startBacktick := p.parseBacktickToken()
 	isCodeRef := false
-	var contentToken tree.STNode
+	var contentToken st.STNode
 	referenceGenre := p.getReferenceGenre(referenceType)
 	if p.isBallerinaNameRefTokenSequence(referenceGenre) {
 		contentToken = p.parseNameReferenceContent()
 	} else {
 		contentToken = p.combineAndCreateCodeContentToken()
 		if referenceGenre != ReferenceGenre_NO_KEY {
-			contentToken = tree.AddDiagnostic(contentToken, &common.WARNING_INVALID_BALLERINA_NAME_REFERENCE, contentToken.(tree.STToken).Text())
+			contentToken = st.AddDiagnostic(contentToken, &common.WARNING_INVALID_BALLERINA_NAME_REFERENCE, contentToken.(st.STToken).Text())
 		} else {
 			isCodeRef = true
 		}
@@ -346,7 +346,7 @@ func (p *DocumentationParser) isBallerinaNameRefTokenSequence(refGenre Reference
 	}
 
 	peekToken := p.peekN(lookahead.offset)
-	return peekToken != nil && peekToken.Kind() == common.BACKTICK_TOKEN
+	return peekToken != nil && peekToken.Kind() == st.BACKTICK_TOKEN
 }
 
 func (p *DocumentationParser) hasBacktickExpr(lookahead *Lookahead, isFunctionKey bool) bool {
@@ -359,9 +359,9 @@ func (p *DocumentationParser) hasBacktickExpr(lookahead *Lookahead, isFunctionKe
 		return isFunctionKey
 	}
 
-	if nextToken.Kind() == common.OPEN_PAREN_TOKEN {
+	if nextToken.Kind() == st.OPEN_PAREN_TOKEN {
 		return p.hasFuncSignature(lookahead)
-	} else if nextToken.Kind() == common.DOT_TOKEN {
+	} else if nextToken.Kind() == st.DOT_TOKEN {
 		lookahead.offset++
 		if !p.hasIdentifier(lookahead) {
 			return false
@@ -381,7 +381,7 @@ func (p *DocumentationParser) hasFuncSignature(lookahead *Lookahead) bool {
 
 func (p *DocumentationParser) hasOpenParenthesis(lookahead *Lookahead) bool {
 	nextToken := p.peekN(lookahead.offset)
-	if nextToken != nil && nextToken.Kind() == common.OPEN_PAREN_TOKEN {
+	if nextToken != nil && nextToken.Kind() == st.OPEN_PAREN_TOKEN {
 		lookahead.offset++
 		return true
 	}
@@ -390,7 +390,7 @@ func (p *DocumentationParser) hasOpenParenthesis(lookahead *Lookahead) bool {
 
 func (p *DocumentationParser) hasCloseParenthesis(lookahead *Lookahead) bool {
 	nextToken := p.peekN(lookahead.offset)
-	if nextToken != nil && nextToken.Kind() == common.CLOSE_PAREN_TOKEN {
+	if nextToken != nil && nextToken.Kind() == st.CLOSE_PAREN_TOKEN {
 		lookahead.offset++
 		return true
 	}
@@ -403,7 +403,7 @@ func (p *DocumentationParser) hasQualifiedIdentifier(lookahead *Lookahead) bool 
 	}
 
 	nextToken := p.peekN(lookahead.offset)
-	if nextToken != nil && nextToken.Kind() == common.COLON_TOKEN {
+	if nextToken != nil && nextToken.Kind() == st.COLON_TOKEN {
 		lookahead.offset++
 		return p.hasIdentifier(lookahead)
 	}
@@ -413,113 +413,113 @@ func (p *DocumentationParser) hasQualifiedIdentifier(lookahead *Lookahead) bool 
 
 func (p *DocumentationParser) hasIdentifier(lookahead *Lookahead) bool {
 	nextToken := p.peekN(lookahead.offset)
-	if nextToken != nil && nextToken.Kind() == common.IDENTIFIER_TOKEN {
+	if nextToken != nil && nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		lookahead.offset++
 		return true
 	}
 	return false
 }
 
-func (p *DocumentationParser) isDocumentReferenceType(kind common.SyntaxKind) bool {
+func (p *DocumentationParser) isDocumentReferenceType(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.TYPE_DOC_REFERENCE_TOKEN,
-		common.SERVICE_DOC_REFERENCE_TOKEN,
-		common.VARIABLE_DOC_REFERENCE_TOKEN,
-		common.VAR_DOC_REFERENCE_TOKEN,
-		common.ANNOTATION_DOC_REFERENCE_TOKEN,
-		common.MODULE_DOC_REFERENCE_TOKEN,
-		common.FUNCTION_DOC_REFERENCE_TOKEN,
-		common.PARAMETER_DOC_REFERENCE_TOKEN,
-		common.CONST_DOC_REFERENCE_TOKEN:
+	case st.TYPE_DOC_REFERENCE_TOKEN,
+		st.SERVICE_DOC_REFERENCE_TOKEN,
+		st.VARIABLE_DOC_REFERENCE_TOKEN,
+		st.VAR_DOC_REFERENCE_TOKEN,
+		st.ANNOTATION_DOC_REFERENCE_TOKEN,
+		st.MODULE_DOC_REFERENCE_TOKEN,
+		st.FUNCTION_DOC_REFERENCE_TOKEN,
+		st.PARAMETER_DOC_REFERENCE_TOKEN,
+		st.CONST_DOC_REFERENCE_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *DocumentationParser) parseParameterDocumentationLine(hashToken tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseParameterDocumentationLine(hashToken st.STNode) st.STNode {
 	plusToken := p.consume()
 	parameterName := p.parseParameterName()
 	dashToken := p.parseMinusToken()
 
 	docElements := p.parseDocumentationElements()
-	docElementList := tree.CreateNodeList(docElements...)
+	docElementList := st.CreateNodeList(docElements...)
 
-	var kind common.SyntaxKind
-	if parameterName.Kind() == common.RETURN_KEYWORD {
-		kind = common.MARKDOWN_RETURN_PARAMETER_DOCUMENTATION_LINE
+	var kind st.SyntaxKind
+	if parameterName.Kind() == st.RETURN_KEYWORD {
+		kind = st.MARKDOWN_RETURN_PARAMETER_DOCUMENTATION_LINE
 	} else {
-		kind = common.MARKDOWN_PARAMETER_DOCUMENTATION_LINE
+		kind = st.MARKDOWN_PARAMETER_DOCUMENTATION_LINE
 	}
 	return p.createMarkdownParameterDocumentationLineNode(kind, hashToken, plusToken, parameterName, dashToken, docElementList)
 }
 
-func (p *DocumentationParser) isEndOfIntermediateDocumentation(kind common.SyntaxKind) bool {
+func (p *DocumentationParser) isEndOfIntermediateDocumentation(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.DOCUMENTATION_DESCRIPTION,
-		common.PLUS_TOKEN,
-		common.PARAMETER_NAME,
-		common.MINUS_TOKEN,
-		common.BACKTICK_TOKEN,
-		common.DOUBLE_BACKTICK_TOKEN,
-		common.TRIPLE_BACKTICK_TOKEN,
-		common.CODE_CONTENT,
-		common.RETURN_KEYWORD,
-		common.DEPRECATION_LITERAL:
+	case st.DOCUMENTATION_DESCRIPTION,
+		st.PLUS_TOKEN,
+		st.PARAMETER_NAME,
+		st.MINUS_TOKEN,
+		st.BACKTICK_TOKEN,
+		st.DOUBLE_BACKTICK_TOKEN,
+		st.TRIPLE_BACKTICK_TOKEN,
+		st.CODE_CONTENT,
+		st.RETURN_KEYWORD,
+		st.DEPRECATION_LITERAL:
 		return false
 	default:
 		return !p.isDocumentReferenceType(kind)
 	}
 }
 
-func (p *DocumentationParser) parseParameterName() tree.STNode {
+func (p *DocumentationParser) parseParameterName() st.STNode {
 	token := p.peek()
 	if token == nil {
-		return p.createMissingTokenWithDiagnostics(common.PARAMETER_NAME)
+		return p.createMissingTokenWithDiagnostics(st.PARAMETER_NAME)
 	}
 	tokenKind := token.Kind()
-	if tokenKind == common.PARAMETER_NAME || tokenKind == common.RETURN_KEYWORD {
+	if tokenKind == st.PARAMETER_NAME || tokenKind == st.RETURN_KEYWORD {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.PARAMETER_NAME)
+		return p.createMissingTokenWithDiagnostics(st.PARAMETER_NAME)
 	}
 }
 
-func (p *DocumentationParser) parseMinusToken() tree.STNode {
+func (p *DocumentationParser) parseMinusToken() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.MINUS_TOKEN {
+	if token != nil && token.Kind() == st.MINUS_TOKEN {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.MINUS_TOKEN)
+		return p.createMissingTokenWithDiagnostics(st.MINUS_TOKEN)
 	}
 }
 
-func (p *DocumentationParser) parseBacktickToken() tree.STNode {
+func (p *DocumentationParser) parseBacktickToken() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.BACKTICK_TOKEN {
+	if token != nil && token.Kind() == st.BACKTICK_TOKEN {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.BACKTICK_TOKEN)
+		return p.createMissingTokenWithDiagnostics(st.BACKTICK_TOKEN)
 	}
 }
 
-func (p *DocumentationParser) getReferenceGenre(referenceType tree.STNode) ReferenceGenre {
-	if referenceType == nil || referenceType.Kind() == common.NONE {
+func (p *DocumentationParser) getReferenceGenre(referenceType st.STNode) ReferenceGenre {
+	if referenceType == nil || referenceType.Kind() == st.NONE {
 		return ReferenceGenre_NO_KEY
 	}
-	if referenceType.Kind() == common.FUNCTION_DOC_REFERENCE_TOKEN {
+	if referenceType.Kind() == st.FUNCTION_DOC_REFERENCE_TOKEN {
 		return ReferenceGenre_FUNCTION_KEY
 	}
 	return ReferenceGenre_SPECIAL_KEY
 }
 
-func (p *DocumentationParser) combineAndCreateCodeContentToken() tree.STNode {
+func (p *DocumentationParser) combineAndCreateCodeContentToken() st.STNode {
 	if p.peek() == nil || !p.isBacktickExprToken(p.peek().Kind()) {
-		return p.createMissingTokenWithDiagnostics(common.CODE_CONTENT)
+		return p.createMissingTokenWithDiagnostics(st.CODE_CONTENT)
 	}
 
 	var backtickContent strings.Builder
-	var token tree.STToken
+	var token st.STToken
 	for p.peekN(2) != nil && p.isBacktickExprToken(p.peekN(2).Kind()) {
 		token = p.consume()
 		backtickContent.WriteString(token.Text())
@@ -529,37 +529,37 @@ func (p *DocumentationParser) combineAndCreateCodeContentToken() tree.STNode {
 
 	// We do not capture leading minutiae in DOCUMENTATION_BACKTICK_EXPR lexer mode.
 	// Therefore, set only the trailing minutiae
-	leadingMinutiae := tree.CreateEmptyNodeList()
+	leadingMinutiae := st.CreateEmptyNodeList()
 	trailingMinutiae := token.TrailingMinutiae()
-	return tree.CreateLiteralValueToken(common.CODE_CONTENT, backtickContent.String(),
+	return st.CreateLiteralValueToken(st.CODE_CONTENT, backtickContent.String(),
 		leadingMinutiae, trailingMinutiae)
 }
 
-func (p *DocumentationParser) isBacktickExprToken(kind common.SyntaxKind) bool {
+func (p *DocumentationParser) isBacktickExprToken(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.DOT_TOKEN,
-		common.COLON_TOKEN,
-		common.OPEN_PAREN_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.IDENTIFIER_TOKEN,
-		common.CODE_CONTENT:
+	case st.DOT_TOKEN,
+		st.COLON_TOKEN,
+		st.OPEN_PAREN_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.IDENTIFIER_TOKEN,
+		st.CODE_CONTENT:
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *DocumentationParser) parseNameReferenceContent() tree.STNode {
+func (p *DocumentationParser) parseNameReferenceContent() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.IDENTIFIER_TOKEN {
+	if token != nil && token.Kind() == st.IDENTIFIER_TOKEN {
 		identifier := p.consume()
 		return p.parseBacktickExpr(identifier)
 	}
-	identifier := p.createMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN)
+	identifier := p.createMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN)
 	return p.parseBacktickExpr(identifier)
 }
 
-func (p *DocumentationParser) parseBacktickExpr(identifier tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseBacktickExpr(identifier st.STNode) st.STNode {
 	referenceName := p.parseQualifiedIdentifier(identifier)
 
 	nextToken := p.peek()
@@ -568,104 +568,104 @@ func (p *DocumentationParser) parseBacktickExpr(identifier tree.STNode) tree.STN
 	}
 
 	switch nextToken.Kind() {
-	case common.DOT_TOKEN:
+	case st.DOT_TOKEN:
 		dotToken := p.consume()
 		return p.parseMethodCall(referenceName, dotToken)
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		return p.parseFuncCall(referenceName)
 	default:
 		return referenceName
 	}
 }
 
-func (p *DocumentationParser) parseQualifiedIdentifier(identifier tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseQualifiedIdentifier(identifier st.STNode) st.STNode {
 	nextToken := p.peek()
-	if nextToken != nil && nextToken.Kind() == common.COLON_TOKEN {
+	if nextToken != nil && nextToken.Kind() == st.COLON_TOKEN {
 		colon := p.consume()
 		return p.parseQualifiedIdentifierWithColon(identifier, colon)
 	}
-	return tree.CreateSimpleNameReferenceNode(identifier)
+	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (p *DocumentationParser) parseQualifiedIdentifierWithColon(identifier tree.STNode, colon tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseQualifiedIdentifierWithColon(identifier st.STNode, colon st.STNode) st.STNode {
 	refName := p.parseIdentifier()
-	return tree.CreateQualifiedNameReferenceNode(identifier, colon, refName)
+	return st.CreateQualifiedNameReferenceNode(identifier, colon, refName)
 }
 
-func (p *DocumentationParser) parseIdentifier() tree.STNode {
+func (p *DocumentationParser) parseIdentifier() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.IDENTIFIER_TOKEN {
+	if token != nil && token.Kind() == st.IDENTIFIER_TOKEN {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.IDENTIFIER_TOKEN)
+		return p.createMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN)
 	}
 }
 
-func (p *DocumentationParser) parseFuncCall(referenceName tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseFuncCall(referenceName st.STNode) st.STNode {
 	openParen := p.parseOpenParenthesis()
-	args := tree.CreateEmptyNodeList()
+	args := st.CreateEmptyNodeList()
 	closeParen := p.parseCloseParenthesis()
-	return tree.CreateFunctionCallExpressionNode(referenceName, openParen, args, closeParen)
+	return st.CreateFunctionCallExpressionNode(referenceName, openParen, args, closeParen)
 }
 
-func (p *DocumentationParser) parseMethodCall(referenceName tree.STNode, dotToken tree.STNode) tree.STNode {
+func (p *DocumentationParser) parseMethodCall(referenceName st.STNode, dotToken st.STNode) st.STNode {
 	methodName := p.parseSimpleNameReference()
 	openParen := p.parseOpenParenthesis()
-	args := tree.CreateEmptyNodeList()
+	args := st.CreateEmptyNodeList()
 	closeParen := p.parseCloseParenthesis()
-	return tree.CreateMethodCallExpressionNode(referenceName, dotToken, methodName, openParen, args, closeParen)
+	return st.CreateMethodCallExpressionNode(referenceName, dotToken, methodName, openParen, args, closeParen)
 }
 
-func (p *DocumentationParser) parseSimpleNameReference() tree.STNode {
+func (p *DocumentationParser) parseSimpleNameReference() st.STNode {
 	identifier := p.parseIdentifier()
-	return tree.CreateSimpleNameReferenceNode(identifier)
+	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (p *DocumentationParser) parseOpenParenthesis() tree.STNode {
+func (p *DocumentationParser) parseOpenParenthesis() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.OPEN_PAREN_TOKEN {
+	if token != nil && token.Kind() == st.OPEN_PAREN_TOKEN {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.OPEN_PAREN_TOKEN)
+		return p.createMissingTokenWithDiagnostics(st.OPEN_PAREN_TOKEN)
 	}
 }
 
-func (p *DocumentationParser) parseCloseParenthesis() tree.STNode {
+func (p *DocumentationParser) parseCloseParenthesis() st.STNode {
 	token := p.peek()
-	if token != nil && token.Kind() == common.CLOSE_PAREN_TOKEN {
+	if token != nil && token.Kind() == st.CLOSE_PAREN_TOKEN {
 		return p.consume()
 	} else {
-		return p.createMissingTokenWithDiagnostics(common.CLOSE_PAREN_TOKEN)
+		return p.createMissingTokenWithDiagnostics(st.CLOSE_PAREN_TOKEN)
 	}
 }
 
-func (p *DocumentationParser) createMissingTokenWithDiagnostics(expectedKind common.SyntaxKind) tree.STToken {
+func (p *DocumentationParser) createMissingTokenWithDiagnostics(expectedKind st.SyntaxKind) st.STToken {
 	warningCode := p.getDocWarningCode(expectedKind)
-	return tree.CreateMissingTokenWithDiagnostics(expectedKind, warningCode)
+	return st.CreateMissingTokenWithDiagnostics(expectedKind, warningCode)
 }
 
-func (p *DocumentationParser) getDocWarningCode(expectedKind common.SyntaxKind) diagnostics.DiagnosticCode {
+func (p *DocumentationParser) getDocWarningCode(expectedKind st.SyntaxKind) diagnostics.DiagnosticCode {
 	var code diagnostics.DiagnosticCode
 	switch expectedKind {
-	case common.HASH_TOKEN:
+	case st.HASH_TOKEN:
 		code = &common.WARNING_MISSING_HASH_TOKEN
-	case common.BACKTICK_TOKEN:
+	case st.BACKTICK_TOKEN:
 		code = &common.WARNING_MISSING_SINGLE_BACKTICK_TOKEN
-	case common.DOUBLE_BACKTICK_TOKEN:
+	case st.DOUBLE_BACKTICK_TOKEN:
 		code = &common.WARNING_MISSING_DOUBLE_BACKTICK_TOKEN
-	case common.TRIPLE_BACKTICK_TOKEN:
+	case st.TRIPLE_BACKTICK_TOKEN:
 		code = &common.WARNING_MISSING_TRIPLE_BACKTICK_TOKEN
-	case common.IDENTIFIER_TOKEN:
+	case st.IDENTIFIER_TOKEN:
 		code = &common.WARNING_MISSING_IDENTIFIER_TOKEN
-	case common.OPEN_PAREN_TOKEN:
+	case st.OPEN_PAREN_TOKEN:
 		code = &common.WARNING_MISSING_OPEN_PAREN_TOKEN
-	case common.CLOSE_PAREN_TOKEN:
+	case st.CLOSE_PAREN_TOKEN:
 		code = &common.WARNING_MISSING_CLOSE_PAREN_TOKEN
-	case common.MINUS_TOKEN:
+	case st.MINUS_TOKEN:
 		code = &common.WARNING_MISSING_HYPHEN_TOKEN
-	case common.PARAMETER_NAME:
+	case st.PARAMETER_NAME:
 		code = &common.WARNING_MISSING_PARAMETER_NAME
-	case common.CODE_CONTENT:
+	case st.CODE_CONTENT:
 		code = &common.WARNING_MISSING_CODE_REFERENCE
 	default:
 		code = &common.WARNING_SYNTAX_WARNING
@@ -673,34 +673,34 @@ func (p *DocumentationParser) getDocWarningCode(expectedKind common.SyntaxKind) 
 	return code
 }
 
-func (p *DocumentationParser) createMarkdownDocumentationLineNode(hashToken tree.STNode, documentationElements tree.STNode) tree.STNode {
-	return tree.CreateMarkdownDocumentationLineNode(common.MARKDOWN_DOCUMENTATION_LINE, hashToken, documentationElements)
+func (p *DocumentationParser) createMarkdownDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
+	return st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_DOCUMENTATION_LINE, hashToken, documentationElements)
 }
 
-func (p *DocumentationParser) createMarkdownDeprecationDocumentationLineNode(hashToken tree.STNode, documentationElements tree.STNode) tree.STNode {
-	return tree.CreateMarkdownDocumentationLineNode(common.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE, hashToken, documentationElements)
+func (p *DocumentationParser) createMarkdownDeprecationDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
+	return st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE, hashToken, documentationElements)
 }
 
-func (p *DocumentationParser) createMarkdownReferenceDocumentationLineNode(hashToken tree.STNode, documentationElements tree.STNode) tree.STNode {
-	return tree.CreateMarkdownDocumentationLineNode(common.MARKDOWN_REFERENCE_DOCUMENTATION_LINE, hashToken, documentationElements)
+func (p *DocumentationParser) createMarkdownReferenceDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
+	return st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_REFERENCE_DOCUMENTATION_LINE, hashToken, documentationElements)
 }
 
-func (p *DocumentationParser) createMarkdownParameterDocumentationLineNode(kind common.SyntaxKind, hashToken tree.STNode, plusToken tree.STNode, parameterName tree.STNode, dashToken tree.STNode, docElementList tree.STNode) tree.STNode {
-	return tree.CreateMarkdownParameterDocumentationLineNode(kind, hashToken, plusToken, parameterName, dashToken, docElementList)
+func (p *DocumentationParser) createMarkdownParameterDocumentationLineNode(kind st.SyntaxKind, hashToken st.STNode, plusToken st.STNode, parameterName st.STNode, dashToken st.STNode, docElementList st.STNode) st.STNode {
+	return st.CreateMarkdownParameterDocumentationLineNode(kind, hashToken, plusToken, parameterName, dashToken, docElementList)
 }
 
-func (p *DocumentationParser) createInlineCodeReferenceNode(startBacktick tree.STNode, codeReference tree.STNode, endBacktick tree.STNode) tree.STNode {
-	return tree.CreateInlineCodeReferenceNode(startBacktick, codeReference, endBacktick)
+func (p *DocumentationParser) createInlineCodeReferenceNode(startBacktick st.STNode, codeReference st.STNode, endBacktick st.STNode) st.STNode {
+	return st.CreateInlineCodeReferenceNode(startBacktick, codeReference, endBacktick)
 }
 
-func (p *DocumentationParser) createBallerinaNameReferenceNode(referenceType tree.STNode, startBacktick tree.STNode, nameReference tree.STNode, endBacktick tree.STNode) tree.STNode {
-	return tree.CreateBallerinaNameReferenceNode(referenceType, startBacktick, nameReference, endBacktick)
+func (p *DocumentationParser) createBallerinaNameReferenceNode(referenceType st.STNode, startBacktick st.STNode, nameReference st.STNode, endBacktick st.STNode) st.STNode {
+	return st.CreateBallerinaNameReferenceNode(referenceType, startBacktick, nameReference, endBacktick)
 }
 
-func (p *DocumentationParser) createMarkdownCodeBlockNode(startLineHashToken tree.STNode, startBacktick tree.STNode, langAttribute tree.STNode, codeLines tree.STNode, endLineHashToken tree.STNode, endBacktick tree.STNode) tree.STNode {
-	return tree.CreateMarkdownCodeBlockNode(startLineHashToken, startBacktick, langAttribute, codeLines, endLineHashToken, endBacktick)
+func (p *DocumentationParser) createMarkdownCodeBlockNode(startLineHashToken st.STNode, startBacktick st.STNode, langAttribute st.STNode, codeLines st.STNode, endLineHashToken st.STNode, endBacktick st.STNode) st.STNode {
+	return st.CreateMarkdownCodeBlockNode(startLineHashToken, startBacktick, langAttribute, codeLines, endLineHashToken, endBacktick)
 }
 
-func (p *DocumentationParser) createMarkdownCodeLineNode(hashToken tree.STNode, codeDescription tree.STNode) tree.STNode {
-	return tree.CreateMarkdownCodeLineNode(hashToken, codeDescription)
+func (p *DocumentationParser) createMarkdownCodeLineNode(hashToken st.STNode, codeDescription st.STNode) st.STNode {
+	return st.CreateMarkdownCodeLineNode(hashToken, codeDescription)
 }
