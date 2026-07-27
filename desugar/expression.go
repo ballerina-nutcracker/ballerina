@@ -510,10 +510,7 @@ func createFieldIndexAccess(expr ast.BLangExpression, fieldName string, ty semty
 func createErrorTypeTest(varName *ast.BLangIdentifier, symbol model.SymbolRef, ty semtypes.SemType, pos diagnostics.Location) *ast.BLangTypeTestExpr {
 	ref := createVarRef(varName, symbol, ty)
 	setPositionIfMissing(ref, pos)
-	typeTest := &ast.BLangTypeTestExpr{
-		Expr: ref,
-		Type: ast.TypeData{Type: semtypes.ERROR},
-	}
+	typeTest := ast.NewBLangTypeTestExpr(ref, ast.TypeData{Type: semtypes.ERROR}, false)
 	typeTest.SetDeterminedType(semtypes.BOOLEAN)
 	setPositionIfMissing(typeTest, pos)
 	return typeTest
@@ -1014,9 +1011,11 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 	tempVarRefForTest.SetDeterminedType(innerTy)
 	tempVarRefForTest.SetPosition(basePos)
 
-	typeTestExpr := &ast.BLangTypeTestExpr{}
-	typeTestExpr.Expr = tempVarRefForTest
-	typeTestExpr.Type = ast.TypeData{Type: semtypes.ERROR}
+	typeTestExpr := ast.NewBLangTypeTestExpr(
+		tempVarRefForTest,
+		ast.TypeData{Type: semtypes.ERROR},
+		false,
+	)
 	typeTestExpr.SetDeterminedType(semtypes.BOOLEAN)
 	typeTestExpr.SetPosition(basePos)
 
@@ -1299,10 +1298,7 @@ func createNilResultVar(cx *functionContext, ty semtypes.SemType, pos diagnostic
 
 func createNilTypeTest(varName *ast.BLangIdentifier, symbol model.SymbolRef, ty semtypes.SemType, pos diagnostics.Location) *ast.BLangTypeTestExpr {
 	ref := createVarRef(varName, symbol, ty)
-	typeTest := &ast.BLangTypeTestExpr{
-		Expr: ref,
-		Type: ast.TypeData{Type: semtypes.NIL},
-	}
+	typeTest := ast.NewBLangTypeTestExpr(ref, ast.TypeData{Type: semtypes.NIL}, false)
 	typeTest.SetDeterminedType(semtypes.BOOLEAN)
 	setPositionIfMissing(typeTest, pos)
 	return typeTest

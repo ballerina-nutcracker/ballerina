@@ -1732,9 +1732,11 @@ func appendQuerySelectResultStmts(
 			conflictRef.SetSymbol(conflictSymbol)
 			conflictRef.SetDeterminedType(conflictTy)
 
-			isErrorExpr := &ast.BLangTypeTestExpr{}
-			isErrorExpr.Expr = conflictRef
-			isErrorExpr.Type = ast.TypeData{Type: semtypes.ERROR}
+			isErrorExpr := ast.NewBLangTypeTestExpr(
+				conflictRef,
+				ast.TypeData{Type: semtypes.ERROR},
+				false,
+			)
 			isErrorExpr.SetDeterminedType(semtypes.BOOLEAN)
 
 			assignResult := &ast.BLangAssignment{

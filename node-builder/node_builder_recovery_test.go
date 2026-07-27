@@ -149,7 +149,7 @@ func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
 
 	diagnosticsBeforeBuild := len(cx.Diagnostics())
 	builder := newRecoveringNodeBuilder(cx)
-	builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	if got := len(cx.Diagnostics()) - diagnosticsBeforeBuild; got != 1 {
 		t.Fatalf("node builder reported %d syntax diagnostics, want 1", got)
 	}
@@ -206,7 +206,7 @@ func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering boo
 		return GetCompilationUnit(cx, syntaxTree), syntaxTree
 	}
 	builder := newRecoveringNodeBuilder(cx)
-	return builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart)).(*ast.BLangCompilationUnit), syntaxTree
+	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart)).(*ast.BLangCompilationUnit), syntaxTree
 }
 
 func assertIdentifierValue(t *testing.T, identifier ast.IdentifierNode, value string) {

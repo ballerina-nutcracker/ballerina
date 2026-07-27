@@ -26,14 +26,14 @@ import (
 
 func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
 	builder := newNodeBuilder(cx)
-	compilationUnit := builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*ast.BLangCompilationUnit)
 }
 
 // GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
 func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
 	builder := newRecoveringNodeBuilder(cx)
-	compilationUnit := builder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*ast.BLangCompilationUnit)
 }
 

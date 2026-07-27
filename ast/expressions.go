@@ -1038,12 +1038,16 @@ func (b *BLangErrorConstructorExpr) GetNamedArgs() []NamedArgNode {
 	return result
 }
 
-func (b *BLangTypeTestExpr) IsNegation() bool {
-	return b.isNegation
+func NewBLangTypeTestExpr(expr BLangExpression, ty TypeData, isNegation bool) *BLangTypeTestExpr {
+	return &BLangTypeTestExpr{
+		Expr:       expr,
+		Type:       ty,
+		isNegation: isNegation,
+	}
 }
 
-func (b *BLangTypeTestExpr) SetNegation(isNegation bool) {
-	b.isNegation = isNegation
+func (b *BLangTypeTestExpr) IsNegation() bool {
+	return b.isNegation
 }
 
 func (b *BLangTypeTestExpr) GetExpression() BLangExpression {

@@ -388,14 +388,6 @@ func (b *bObjectFieldBase) Name() string {
 	return b.name
 }
 
-func (b *bObjectFieldBase) SetName(name string) {
-	b.name = name
-}
-
-func (b *bObjectFieldBase) SetPublic() {
-	b.flags |= model.FlagPublic
-}
-
 func (b *bObjectFieldBase) IsPublic() bool {
 	return b.flags.Has(model.FlagPublic)
 }
@@ -404,16 +396,34 @@ func (b *bObjectFieldBase) IsReadonly() bool {
 	return b.flags.Has(model.FlagReadonly)
 }
 
+func NewBObjectField(name string, ty BType, isPublic bool) *BObjectField {
+	field := &BObjectField{
+		bObjectFieldBase: bObjectFieldBase{name: name},
+		Ty:               ty,
+	}
+	if isPublic {
+		field.flags |= model.FlagPublic
+	}
+	return field
+}
+
 func (b *BObjectField) MemberKind() ObjectMemberKind {
 	return ObjectMemberKindField
 }
 
-func (b *BMethodDecl) MemberKind() ObjectMemberKind {
-	return b.memberKind
+func NewBMethodDecl(name string, kind ObjectMemberKind, isPublic bool) *BMethodDecl {
+	method := &BMethodDecl{
+		bObjectFieldBase: bObjectFieldBase{name: name},
+		memberKind:       kind,
+	}
+	if isPublic {
+		method.flags |= model.FlagPublic
+	}
+	return method
 }
 
-func (b *BMethodDecl) SetMemberKind(kind ObjectMemberKind) {
-	b.memberKind = kind
+func (b *BMethodDecl) MemberKind() ObjectMemberKind {
+	return b.memberKind
 }
 
 func (b *bLangTypeBase) GetTypeData() TypeData {
@@ -718,10 +728,7 @@ func (b *BLangRecordType) GetFields() iter.Seq2[string, Field] {
 
 func NewBLangObjectType() *BLangObjectType {
 	return &BLangObjectType{
-		Inclusions:           []model.SymbolRef{},
-		InclusionPositions:   []diagnostics.Location{},
-		unresolvedInclusions: []*BLangUserDefinedType{},
-		members:              make(map[string]ObjectMember),
+		members: make(map[string]ObjectMember),
 	}
 }
 
