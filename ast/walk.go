@@ -915,6 +915,11 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, futureExpr)
 		}
 
+	case *BLangMultipleWaitAction:
+		for _, futureExpr := range node.FutureExprs {
+			Walk(v, futureExpr)
+		}
+
 	case *BLangRemoteMethodCallAction:
 		if node.Name != nil {
 			Walk(v, node.Name)

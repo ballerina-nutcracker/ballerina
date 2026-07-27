@@ -123,6 +123,14 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 			expr.FutureExprs[i] = result.replacementNode.(ast.BLangExpression)
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{initStmts: initStmts, replacementNode: expr}
+	case *ast.BLangMultipleWaitAction:
+		var initStmts []ast.StatementNode
+		for i, futureExpr := range expr.FutureExprs {
+			result := walkExpression(cx, futureExpr)
+			initStmts = append(initStmts, result.initStmts...)
+			expr.FutureExprs[i] = result.replacementNode.(ast.BLangExpression)
+		}
+		return desugaredNode[ast.BLangActionOrExpression]{initStmts: initStmts, replacementNode: expr}
 	case *ast.BLangWildCardBindingPattern:
 		// Wildcard binding pattern can appear in variable references (e.g., _ = expr)
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}

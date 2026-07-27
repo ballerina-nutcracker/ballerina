@@ -1,0 +1,48 @@
+(crash
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal multiple wait panic))))
+  )
+)
+(delayed
+  (bb0 () ()
+    (return
+      (literal 7))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable panicked (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation crash ())))))
+    (var-def
+      (variable delayedResult (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation delayed ())))))
+    (var-def
+      (variable trapped (expr
+        (trap-expr
+          (multiple-wait-action panicked
+            (simple-var-ref panicked) delayedResult
+            (simple-var-ref delayedResult))))))
+    (type-test-expr is
+      (simple-var-ref trapped)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2))
+  (bb2 (bb1 bb0) ()
+    (assignment
+      (wildcard-binding-pattern)
+      (check-panicked-expr
+        (single-wait-action
+          (simple-var-ref delayedResult))))
+  )
+)

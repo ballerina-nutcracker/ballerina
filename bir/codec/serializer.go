@@ -475,6 +475,15 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 		}
 		bw.writeOperand(buf, term.LhsOp)
 		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
+	case *bir.MultipleWaitAction:
+		bw.writeType(buf, term.Type)
+		bw.writeLength(buf, len(term.Futures))
+		for i := range term.Futures {
+			bw.writeStringCPEntry(buf, term.FieldNames[i])
+			bw.writeOperand(buf, &term.Futures[i])
+		}
+		bw.writeOperand(buf, term.LhsOp)
+		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
 	case *bir.ResourceFunctionCall:
 		bw.writeOperand(buf, &term.Receiver)
 		bw.writeStringCPEntry(buf, term.MethodName)

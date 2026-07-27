@@ -423,6 +423,10 @@ func (br *birReader) readFunction() *bir.BIRFunction {
 				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
 					t.ThenBB = target
 				}
+			case *bir.MultipleWaitAction:
+				if target, ok := bbMap[t.ThenBB.ID.Value()]; ok {
+					t.ThenBB = target
+				}
 			case *bir.Panic:
 				// Panic has no ThenBB
 			case *bir.LockStart:
@@ -958,8 +962,20 @@ func (br *birReader) readTerminator(varMap map[int32]*bir.BIRLocalVariableDcl) b
 			futures[i] = *br.readOperand(varMap)
 		}
 		lhsOp := br.readOperand(varMap)
-		thenBBId := br.readStringCPEntry()
-		return bir.NewAlternateWaitAction(futures, &bir.BIRBasicBlock{ID: thenBBId}, lhsOp, pos)
+		thenBBID := br.readStringCPEntry()
+		return bir.NewAlternateWaitAction(futures, &bir.BIRBasicBlock{ID: thenBBID}, lhsOp, pos)
+	case bir.InstructionKindWaitAll:
+		ty := br.readType()
+		futureCount := br.readLength()
+		futures := make([]bir.BIROperand, futureCount)
+		fieldNames := make([]string, futureCount)
+		for i := range futureCount {
+			fieldNames[i] = string(br.readStringCPEntry())
+			futures[i] = *br.readOperand(varMap)
+		}
+		lhsOp := br.readOperand(varMap)
+		thenBBID := br.readStringCPEntry()
+		return bir.NewMultipleWaitAction(futures, fieldNames, ty, &bir.BIRBasicBlock{ID: thenBBID}, lhsOp, pos)
 	case bir.InstructionKindPanic:
 		errorOp := br.readOperand(varMap)
 		return &bir.Panic{

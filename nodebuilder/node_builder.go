@@ -4438,8 +4438,38 @@ func (n *nodeBuilder) transformWaitAction(waitActionNode *st.WaitActionNode) ast
 		action.SetPosition(n.getPosition(waitActionNode))
 		return action
 	case *st.WaitFieldsListNode:
-		n.cx.Unimplemented("multiple wait actions are not yet supported", n.getPosition(futureExpr))
-		return nil
+		fields := futureExpr.WaitFields()
+		futureExprs := make([]ast.BLangExpression, 0, (fields.Size()+1)/2)
+		fieldNames := make([]string, 0, (fields.Size()+1)/2)
+		for field := range fields.Iterator() {
+			var nameRef *st.SimpleNameReferenceNode
+			var exprNode st.ExpressionNode
+			switch field := field.(type) {
+			case *st.SimpleNameReferenceNode:
+				nameRef = field
+				exprNode = field
+			case *st.WaitFieldNode:
+				nameRef = field.FieldName()
+				exprNode = field.WaitFutureExpr()
+			default:
+				if _, ok := field.(st.Token); ok {
+					continue
+				}
+				n.cx.InternalError("unexpected multiple wait field", n.getPosition(field))
+				return nil
+			}
+			expr, ok := n.createActionOrExpression(exprNode).(ast.BLangExpression)
+			if !ok {
+				n.cx.InternalError("multiple wait operand is not an expression", n.getPosition(exprNode))
+				return nil
+			}
+			identifier := createIdentifierFromToken(n.getPosition(nameRef.Name()), nameRef.Name())
+			futureExprs = append(futureExprs, expr)
+			fieldNames = append(fieldNames, identifier.GetValue())
+		}
+		action := &ast.BLangMultipleWaitAction{FutureExprs: futureExprs, FieldNames: fieldNames}
+		action.SetPosition(n.getPosition(waitActionNode))
+		return action
 	default:
 		expr, ok := n.createActionOrExpression(futureExpr.(st.ExpressionNode)).(ast.BLangExpression)
 		if !ok {

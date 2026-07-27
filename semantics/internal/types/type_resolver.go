@@ -3731,6 +3731,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolved(resolveSingleWaitAction(t, chain, e))
 	case *ast.BLangAlternateWaitAction:
 		return resolved(resolveAlternateWaitAction(t, chain, e))
+	case *ast.BLangMultipleWaitAction:
+		return resolved(resolveMultipleWaitAction(t, chain, e, expectedType))
 	case *ast.BLangInferredTypedescDefault:
 		return resolved(resolveInferredTypedescDefault(t, chain, e, expectedType))
 	case *ast.BLangDefaultArg:
@@ -4222,6 +4224,48 @@ func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlte
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		resultTy = semtypes.Union(resultTy, semtypes.FutureEventualType(t.typeContext(), futureTy))
+	}
+	setExpectedType(e, resultTy)
+	return resultTy, defaultExpressionEffect(chain), true
+}
+
+func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMultipleWaitAction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	if len(e.FutureExprs) != len(e.FieldNames) {
+		t.internalError("multiple wait field and expression count mismatch", e.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	fields := make([]semtypes.Field, len(e.FutureExprs))
+	seen := make(map[string]struct{}, len(e.FieldNames))
+	for i, futureExpr := range e.FutureExprs {
+		fieldName := e.FieldNames[i]
+		if _, exists := seen[fieldName]; exists {
+			t.semanticError(fmt.Sprintf("duplicate field name '%s'", fieldName), futureExpr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		seen[fieldName] = struct{}{}
+		futureResult, ok := resolveActionOrExpression(t, chain, futureExpr, semtypes.Future)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		futureTy := futureResult.ty
+		if !semtypes.IsSubtype(t.typeContext(), futureTy, semtypes.Future) {
+			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		fieldTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+		fields[i] = semtypes.FieldFrom(fieldName, fieldTy, false, false)
+	}
+
+	resultTy := createClosedRecordType(t.typeEnv(), fields, semtypes.Never)
+	if !semtypes.IsZero(expectedType) {
+		expectedMappingTy := semtypes.Intersect(expectedType, semtypes.Mapping)
+		if semtypes.IsEmpty(t.typeContext(), expectedMappingTy) || !semtypes.IsSubtype(t.typeContext(), resultTy, expectedMappingTy) {
+			t.semanticError("multiple wait result is incompatible with expected type", e.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		if semtypes.ToMappingAtomicType(t.typeContext(), expectedMappingTy) != nil {
+			resultTy = expectedMappingTy
+		}
 	}
 	setExpectedType(e, resultTy)
 	return resultTy, defaultExpressionEffect(chain), true

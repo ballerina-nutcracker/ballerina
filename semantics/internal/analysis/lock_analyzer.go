@@ -371,6 +371,7 @@ func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 			v.a.semanticErr("not an isolated expression", node.Expr.(ast.BLangNode).GetPosition())
 			v.ok = false
 		}
+		return nil
 	case ast.BLangExpression:
 		if v.containsTransferInRef(node) {
 			if !v.isIsolatedExpression(node) {

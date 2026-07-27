@@ -33,9 +33,8 @@ type futureOutcome struct {
 type futureState uint8
 
 const (
-	pending futureState = iota
-	ready
-	claimed
+	futureReady futureState = 1 << iota
+	futureClaimed
 )
 
 // Future is a single-consumer completion state.
@@ -54,10 +53,14 @@ func NewFuture(ty semtypes.SemType) *Future {
 
 func (f *Future) Complete(result BalValue, panicValue any) {
 	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if f.state&futureReady != 0 {
+		return
+	}
 	f.outcome = futureOutcome{result: result, panic: panicValue}
-	f.state = ready
+	f.state |= futureReady
 	f.ord = futureCompletionOrder.Add(1)
-	f.mu.Unlock()
 	close(f.ready)
 }
 
@@ -66,19 +69,32 @@ func (f *Future) Complete(result BalValue, panicValue any) {
 func (f *Future) IsComplete() bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.state != pending
+	return f.state&futureReady != 0
+}
+
+// Claim marks the future as waited and reports whether this wait claimed it.
+func (f *Future) Claim() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.state&futureClaimed != 0 {
+		return false
+	}
+	f.state |= futureClaimed
+	return true
 }
 
 // Get the completed value. This should be paired with IsComplete; Get blocks the current thread (all the strands on the thread)
 // until future is ready.
 func (f *Future) Get() BalValue {
-	<-f.ready
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if f.state == claimed {
+	if !f.Claim() {
 		return NewErrorWithMessage("multiple waits on the same future is not allowed")
 	}
-	f.state = claimed
+	return f.GetClaimed()
+}
+
+// GetClaimed returns the completed outcome of a future already claimed by this wait.
+func (f *Future) GetClaimed() BalValue {
+	<-f.ready
 	if f.outcome.panic != nil {
 		panic(f.outcome.panic)
 	}

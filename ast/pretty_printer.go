@@ -116,6 +116,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printSingleWaitAction(t)
 	case *BLangAlternateWaitAction:
 		p.printAlternateWaitAction(t)
+	case *BLangMultipleWaitAction:
+		p.printMultipleWaitAction(t)
 	case *BLangNamedArgsExpression:
 		p.printNamedArgsExpression(t)
 	case *BLangDefaultArg:
@@ -864,6 +866,18 @@ func (p *PrettyPrinter) printAlternateWaitAction(node *BLangAlternateWaitAction)
 	p.PrintString("alternate-wait-action")
 	p.indentLevel++
 	for _, futureExpr := range node.FutureExprs {
+		p.PrintInner(futureExpr)
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printMultipleWaitAction(node *BLangMultipleWaitAction) {
+	p.StartNode()
+	p.PrintString("multiple-wait-action")
+	p.indentLevel++
+	for i, futureExpr := range node.FutureExprs {
+		p.PrintString(node.FieldNames[i])
 		p.PrintInner(futureExpr)
 	}
 	p.indentLevel--

@@ -49,6 +49,56 @@ func execAlternateWaitAction(ctx *extern.Context, action *bir.AlternateWaitActio
 	return action.ThenBB
 }
 
+func execMultipleWaitAction(ctx *extern.Context, action *bir.MultipleWaitAction, frame *Frame) *bir.BIRBasicBlock {
+	if len(action.Futures) != len(action.FieldNames) {
+		// I dont' think this can happen at runtime, if so that's a bir gen error
+		panic("multiple wait field and future count mismatch")
+	}
+	futures := make([]*values.Future, len(action.Futures))
+	for i := range action.Futures {
+		futures[i] = getOperandValue(ctx, &action.Futures[i], frame).(*values.Future)
+	}
+	results := waitAllFutures(ctx, futures)
+	entries := make([]values.MapEntry, len(results))
+	for i, result := range results {
+		entries[i] = values.MapEntry{Key: action.FieldNames[i], Value: result}
+	}
+	atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx(), action.Type)
+	if atomic == nil {
+		panic("multiple wait result type has no mapping atomic representation")
+	}
+	setOperandValue(ctx, action.LhsOp, frame, values.NewMap(action.Type, atomic, false, entries))
+	return action.ThenBB
+}
+
+func waitAllFutures(ctx *extern.Context, futures []*values.Future) []values.BalValue {
+	results := make([]values.BalValue, len(futures))
+	completed := make([]bool, len(futures))
+	remaining := len(futures)
+	for i, future := range futures {
+		if future.Claim() {
+			continue
+		}
+		// I am not entirely sure this is the correct behaviour. This means you can multiple wait on a given future any number of
+		// of times as long as you have another fresh future.
+		results[i] = values.NewErrorWithMessage("multiple waits on the same future is not allowed")
+		completed[i] = true
+		remaining--
+	}
+	for remaining > 0 {
+		<-ctx.Yield()
+		for i, future := range futures {
+			if completed[i] || !future.IsComplete() {
+				continue
+			}
+			results[i] = future.GetClaimed()
+			completed[i] = true
+			remaining--
+		}
+	}
+	return results
+}
+
 func waitFuture(ctx *extern.Context, future *values.Future) values.BalValue {
 	for {
 		<-ctx.Yield()

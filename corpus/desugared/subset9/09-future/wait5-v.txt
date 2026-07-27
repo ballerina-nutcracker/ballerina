@@ -1,0 +1,263 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (function number () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function text () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal done))))
+  (function failure () (
+    (error-type))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal failed))))))
+  (function identity (
+    (variable value (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type string))))) (
+    (constrained-type
+      (builtin-ref-type future)
+      (value-type string)))
+    (block-function-body
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable numberFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$1)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (invocation text ()))))))))
+      (var-def
+        (variable textFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))) (expr
+          (start-action
+            (simple-var-ref $desugar$3)))))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $desugar$4 () ()
+              (block-function-body
+                (return
+                  (invocation failure ()))))))))
+      (var-def
+        (variable failureFuture (type
+          (constrained-type
+            (builtin-ref-type future)
+            (error-type))) (expr
+          (start-action
+            (simple-var-ref $desugar$5)))))
+      (var-def
+        (variable result (type
+          (record-type
+            (field numberFuture
+              (union-type
+                (value-type int)
+                (error-type)))
+            (field label
+              (union-type
+                (value-type string)
+                (error-type)))
+            (field failureFuture
+              (error-type)))) (expr
+          (multiple-wait-action numberFuture
+            (simple-var-ref numberFuture) label
+            (invocation identity (
+              (simple-var-ref textFuture))) failureFuture
+            (simple-var-ref failureFuture)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref result)
+            (literal numberFuture)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref result)
+            (literal label)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.error message (
+            (index-based-access
+              (simple-var-ref result)
+              (literal failureFuture)))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $desugar$6 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable repeated (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$7)))))
+      (var-def
+        (variable repeatedResult (expr
+          (multiple-wait-action first
+            (simple-var-ref repeated) second
+            (simple-var-ref repeated)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref repeatedResult)
+            (literal first)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref repeatedResult)
+            (literal second)))))
+      (var-def
+        (variable $desugar$9 (expr
+          (lambda
+            (function $desugar$8 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable inferredNumber (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$9)))))
+      (var-def
+        (variable $desugar$11 (expr
+          (lambda
+            (function $desugar$10 () ()
+              (block-function-body
+                (return
+                  (invocation text ()))))))))
+      (var-def
+        (variable inferredText (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))) (expr
+          (start-action
+            (simple-var-ref $desugar$11)))))
+      (var-def
+        (variable inferred (expr
+          (multiple-wait-action number
+            (simple-var-ref inferredNumber) text
+            (simple-var-ref inferredText)))))
+      (var-def
+        (variable inferredNumberResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (index-based-access
+            (simple-var-ref inferred)
+            (literal number)))))
+      (var-def
+        (variable inferredTextResult (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (index-based-access
+            (simple-var-ref inferred)
+            (literal text)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inferredNumberResult))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inferredTextResult))))
+      (var-def
+        (variable $desugar$13 (expr
+          (lambda
+            (function $desugar$12 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable mapped (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$13)))))
+      (var-def
+        (variable mappedResult (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type int)
+              (error-type)))) (expr
+          (multiple-wait-action value
+            (simple-var-ref mapped)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref mappedResult)
+          (literal extra))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref mappedResult)
+            (literal extra)))))
+      (var-def
+        (variable $desugar$15 (expr
+          (lambda
+            (function $desugar$14 () ()
+              (block-function-body
+                (return
+                  (invocation number ()))))))))
+      (var-def
+        (variable open (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (simple-var-ref $desugar$15)))))
+      (var-def
+        (variable openResult (type
+          (record-type
+            (field value
+              (union-type
+                (value-type int)
+                (error-type)))
+            (rest
+              (union-type
+                (value-type int)
+                (error-type))))) (expr
+          (multiple-wait-action value
+            (simple-var-ref open)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref openResult)
+          (literal extra))
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref openResult)
+            (literal extra))))))))

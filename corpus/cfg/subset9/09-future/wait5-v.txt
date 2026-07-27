@@ -1,0 +1,198 @@
+(failure
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal failed))))
+  )
+)
+(identity
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable numberFuture (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable textFuture (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type string))) (expr
+        (start-action
+          (invocation text ())))))
+    (var-def
+      (variable failureFuture (type
+        (constrained-type
+          (builtin-ref-type future)
+          (error-type))) (expr
+        (start-action
+          (invocation failure ())))))
+    (var-def
+      (variable result (type
+        (record-type
+          (field numberFuture
+            (union-type
+              (value-type int)
+              (error-type)))
+          (field label
+            (union-type
+              (value-type string)
+              (error-type)))
+          (field failureFuture
+            (error-type)))) (expr
+        (multiple-wait-action numberFuture
+          (simple-var-ref numberFuture) label
+          (invocation identity (
+            (simple-var-ref textFuture))) failureFuture
+          (simple-var-ref failureFuture)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access numberFuture
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access label
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (field-based-access failureFuture
+            (simple-var-ref result)))))))
+    (var-def
+      (variable repeated (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable repeatedResult (expr
+        (multiple-wait-action first
+          (simple-var-ref repeated) second
+          (simple-var-ref repeated)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref repeatedResult)
+          (literal first)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref repeatedResult)
+          (literal second)))))
+    (var-def
+      (variable inferredNumber (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable inferredText (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type string))) (expr
+        (start-action
+          (invocation text ())))))
+    (var-def
+      (variable inferred (expr
+        (multiple-wait-action number
+          (simple-var-ref inferredNumber) text
+          (simple-var-ref inferredText)))))
+    (var-def
+      (variable inferredNumberResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (field-based-access number
+          (simple-var-ref inferred)))))
+    (var-def
+      (variable inferredTextResult (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (field-based-access text
+          (simple-var-ref inferred)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inferredNumberResult))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inferredTextResult))))
+    (var-def
+      (variable mapped (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable mappedResult (type
+        (constrained-type
+          (builtin-ref-type map)
+          (union-type
+            (value-type int)
+            (error-type)))) (expr
+        (multiple-wait-action value
+          (simple-var-ref mapped)))))
+    (assignment
+      (index-based-access
+        (simple-var-ref mappedResult)
+        (literal extra))
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref mappedResult)
+          (literal extra)))))
+    (var-def
+      (variable open (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable openResult (type
+        (record-type
+          (field value
+            (union-type
+              (value-type int)
+              (error-type)))
+          (rest
+            (union-type
+              (value-type int)
+              (error-type))))) (expr
+        (multiple-wait-action value
+          (simple-var-ref open)))))
+    (assignment
+      (index-based-access
+        (simple-var-ref openResult)
+        (literal extra))
+      (literal 3))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref openResult)
+          (literal extra)))))
+  )
+)
+(number
+  (bb0 () ()
+    (return
+      (literal 42))
+  )
+)
+(text
+  (bb0 () ()
+    (return
+      (literal done))
+  )
+)

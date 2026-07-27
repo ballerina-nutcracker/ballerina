@@ -302,6 +302,7 @@ const (
 	InstructionKindBitwiseComplement
 	InstructionKindPushScope
 	InstructionKindPopScope
+	InstructionKindWaitAll
 )
 
 func BB(number int) BIRBasicBlock {

@@ -20,6 +20,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type BIRTerminator = BIRInstruction
@@ -100,6 +101,13 @@ type (
 		BIRTerminatorBase
 		Futures []BIROperand
 	}
+
+	MultipleWaitAction struct {
+		BIRTerminatorBase
+		Futures    []BIROperand
+		FieldNames []string
+		Type       semtypes.SemType
+	}
 )
 
 var (
@@ -114,6 +122,7 @@ var (
 	_ BIRAssignInstruction = &StartAction{}
 	_ BIRAssignInstruction = &SingleWaitAction{}
 	_ BIRAssignInstruction = &AlternateWaitAction{}
+	_ BIRAssignInstruction = &MultipleWaitAction{}
 )
 
 func (g *Goto) GetKind() InstructionKind {
@@ -288,6 +297,21 @@ func NewAlternateWaitAction(futures []BIROperand, thenBB *BIRBasicBlock, lhsOp *
 			ThenBB:             thenBB,
 		},
 		Futures: futures,
+	}
+}
+
+func (m *MultipleWaitAction) GetKind() InstructionKind   { return InstructionKindWaitAll }
+func (m *MultipleWaitAction) GetLhsOperand() *BIROperand { return m.LhsOp }
+
+func NewMultipleWaitAction(futures []BIROperand, fieldNames []string, ty semtypes.SemType, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *MultipleWaitAction {
+	return &MultipleWaitAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Futures:    futures,
+		FieldNames: fieldNames,
+		Type:       ty,
 	}
 }
 

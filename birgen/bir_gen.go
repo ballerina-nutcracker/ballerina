@@ -1047,6 +1047,8 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 		return generateSingleWaitAction(ctx, curBB, expr)
 	case *ast.BLangAlternateWaitAction:
 		return generateAlternateWaitAction(ctx, curBB, expr)
+	case *ast.BLangMultipleWaitAction:
+		return generateMultipleWaitAction(ctx, curBB, expr)
 	case *ast.BLangTypedescExpr:
 		return typedescExpression(ctx, curBB, expr)
 	case *ast.BLangXMLSequenceLiteral:
@@ -1094,6 +1096,20 @@ func generateAlternateWaitAction(ctx context, curBB *bir.BIRBasicBlock, action *
 	thenBB := ctx.function().addBB()
 	result := ctx.addTempVar(action.GetDeterminedType())
 	curBB.Terminator = bir.NewAlternateWaitAction(futures, thenBB, result, ctx.function().loc(action.GetPosition()))
+	return expressionEffect{result: result, block: thenBB}
+}
+
+func generateMultipleWaitAction(ctx context, curBB *bir.BIRBasicBlock, action *ast.BLangMultipleWaitAction) expressionEffect {
+	futures := make([]bir.BIROperand, 0, len(action.FutureExprs))
+	for _, futureExpr := range action.FutureExprs {
+		futureEffect := handleActionOrExpression(ctx, curBB, futureExpr)
+		curBB = futureEffect.block
+		futures = append(futures, *futureEffect.result)
+	}
+	thenBB := ctx.function().addBB()
+	ty := action.GetDeterminedType()
+	result := ctx.addTempVar(ty)
+	curBB.Terminator = bir.NewMultipleWaitAction(futures, action.FieldNames, ty, thenBB, result, ctx.function().loc(action.GetPosition()))
 	return expressionEffect{result: result, block: thenBB}
 }
 
