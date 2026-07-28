@@ -1,0 +1,97 @@
+name: PR Benchmark HTTP Prepare
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-http-prepare-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Benchmark HTTP base vs PR head
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Install wrk
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y wrk
+
+      - name: Build HTTP benchmark tool
+        working-directory: compiler-tools/benchmark-http
+        run: go build -o "$GITHUB_WORKSPACE/bin/httpbench" .
+
+      - name: Run HTTP benchmark
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          mkdir -p benchmark-output
+          "$GITHUB_WORKSPACE/bin/httpbench" \
+            --repeats 2 --warmup 30s --duration 330s --conns 50 --threshold 10 \
+            --export-md benchmark-output/report.md \
+            --result-json benchmark-output/result.json \
+            "origin/$BASE_REF" \
+            HEAD > benchmark-output/run.log 2>&1 || true
+
+      - name: Write benchmark metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          jq -n \
+            --argjson pr_number "$PR_NUMBER" \
+            --arg head_sha "$HEAD_SHA" \
+            --arg base_ref "$BASE_REF" \
+            '$ARGS.named' > benchmark-output/benchmark-meta.json
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-http-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            benchmark-output/report.md
+            benchmark-output/result.json
+            benchmark-output/run.log
+            benchmark-output/benchmark-meta.json
+          if-no-files-found: error
+
+      - name: Gate on regression
+        run: |
+          if [ ! -f benchmark-output/result.json ]; then
+            echo "::error::httpbench produced no result.json — see the run log:"
+            cat benchmark-output/run.log || true
+            exit 1
+          fi
+          error=$(jq -r '.error // false' benchmark-output/result.json)
+          regressed=$(jq -r '.regressed // false' benchmark-output/result.json)
+          delta=$(jq -r '.throughputDelta // 0' benchmark-output/result.json)
+          if [ "$error" = "true" ]; then
+            echo "::error::HTTP benchmark failed to run — see the run log:"
+            cat benchmark-output/run.log || true
+            exit 1
+          fi
+          if [ "$regressed" = "true" ]; then
+            echo "::error::HTTP throughput regressed by ${delta}% (beyond the configured threshold)."
+            exit 1
+          fi
+          echo "HTTP throughput delta ${delta}% — within threshold."

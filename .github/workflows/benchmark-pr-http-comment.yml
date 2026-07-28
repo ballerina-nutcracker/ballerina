@@ -1,0 +1,44 @@
+name: PR Benchmark HTTP Comment
+
+on:
+  workflow_run:
+    workflows: [PR Benchmark HTTP Prepare]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: benchmark-http-comment-${{ github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Post HTTP benchmark comment
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Download benchmark artifact
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: benchmark-http-pr-*
+          merge-multiple: true
+          path: benchmark-artifact
+
+      - name: Post or update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('${{ github.workspace }}/.github/scripts/post-http-benchmark-comment.js');
+            await script({ github, context, core });

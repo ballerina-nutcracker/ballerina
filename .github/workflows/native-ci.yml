@@ -26,6 +26,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y hyperfine
 
+      - name: Install wrk
+        run: sudo apt-get install -y wrk
+
       - name: Run all modules (tests + coverage)
         run: python3 .github/scripts/run_native_tests.py --with-coverage
 
