@@ -1,0 +1,9 @@
+-- stdout --
+35
+10
+true
+value-12
+11
+12.0
+2.5
+-- stderr --

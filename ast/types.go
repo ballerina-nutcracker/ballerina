@@ -19,9 +19,9 @@ package ast
 import (
 	"iter"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 type ProjectKind uint8
@@ -111,15 +111,19 @@ type (
 		TypeInclusions []BType
 	}
 
+	bFieldAnnotationBase struct {
+		AnnAttachments []BLangAnnotationAttachment
+	}
+
 	// TODO: think how to align this with BLangMemberTypeDesc. Ideally this should be an inclusion on that
 	BField struct {
 		bLangNodeBase
-		Name           model.Name
-		Type           BType
-		flags          model.Flag
-		DefaultExpr    BLangExpression
-		DefaultFnRef   model.SymbolRef
-		AnnAttachments []BLangAnnotationAttachment
+		bFieldAnnotationBase
+		Name         model.Name
+		Type         BType
+		flags        model.Flag
+		DefaultExpr  BLangExpression
+		DefaultFnRef model.SymbolRef
 	}
 
 	bObjectFieldBase struct {
@@ -130,8 +134,8 @@ type (
 
 	BObjectField struct {
 		bObjectFieldBase
+		bFieldAnnotationBase
 		Ty BType
-		// TODO: add metadata
 	}
 
 	BMethodDecl struct {
@@ -217,6 +221,7 @@ type (
 		RequiredParams       []BLangFunctionTypeParam
 		RestParam            *BLangFunctionTypeParam
 		ReturnTypeDescriptor BType
+		ParamListPos         Location
 	}
 
 	BLangFunctionTypeParam struct {
@@ -327,7 +332,7 @@ func (b *BField) SetPublic()       { b.flags |= model.FlagPublic }
 func (b *BField) SetReadonly()     { b.flags |= model.FlagReadonly }
 func (b *BField) SetOptional()     { b.flags |= model.FlagOptional }
 
-func (b *BField) GetAnnotationAttachments() []AnnotationAttachmentNode {
+func (b *bFieldAnnotationBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
 	result := make([]AnnotationAttachmentNode, len(b.AnnAttachments))
 	for i := range b.AnnAttachments {
 		result[i] = &b.AnnAttachments[i]
@@ -335,7 +340,7 @@ func (b *BField) GetAnnotationAttachments() []AnnotationAttachmentNode {
 	return result
 }
 
-func (b *BField) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
+func (b *bFieldAnnotationBase) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
 	b.AnnAttachments = append(b.AnnAttachments, *annAttachment.(*BLangAnnotationAttachment))
 }
 
@@ -552,6 +557,14 @@ func (b *BLangErrorTypeNode) SetDistinct() {
 func (b *BLangFunctionType) IsAnyFunction() bool {
 	return b.bTypeGetFlags().Has(model.FlagAnyFunction)
 }
+
+func (b *BLangFunctionType) HasExplicitReturnTypeDescriptor() bool {
+	return b.bTypeGetFlags().Has(model.FlagExplicitReturnTypeDescriptor)
+}
+
+func (b *BLangFunctionType) SetExplicitReturnTypeDescriptor() {
+	b.bTypeSetFlags(b.bTypeGetFlags() | model.FlagExplicitReturnTypeDescriptor)
+}
 func (b *BLangFunctionType) IsIsolated() bool { return b.bTypeGetFlags().Has(model.FlagIsolated) }
 func (b *BLangFunctionType) IsTransactional() bool {
 	return b.bTypeGetFlags().Has(model.FlagTransactional)
@@ -647,7 +660,7 @@ func (b *BLangFunctionTypeParam) GetName() *string {
 	if b.Name == nil {
 		return nil
 	}
-	name := b.Name.Value
+	name := b.Name.GetValue()
 	return &name
 }
 

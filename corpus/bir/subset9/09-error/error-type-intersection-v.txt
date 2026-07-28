@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad Numeric input error
+    %2 = ConstantLoad value
+    %3 = ConstantLoad 5
+    %4 = newMap mapping{%2=%3}
+    %5 = newError error<readonly&{| value: int|string, never... |}&{| value: int|float, never... |}>(%1, %4)
+    e1 = %5;
+    %7 = e1 is error<readonly&{| value: int|string, never... |}>
+    %8 = %7;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    %10 = e1 is error<error&readonly&{| value: int|string, never... |}>
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad Distinct numeric input error
+    %14 = ConstantLoad value
+    %15 = ConstantLoad 5
+    %16 = newMap mapping{%14=%15}
+    %17 = newError error<error&error&readonly&{| value: int|string, never... |}&{| value: int|float, never... |}>(%13, %16)
+    e2 = %17;
+    %19 = e2 is error<readonly&{| value: int|string, never... |}>
+    %20 = %19;
+    %21 = println(%20) -> bb3;
+  }
+  bb3 {
+    %22 = e2 is error<error&readonly&{| value: int|string, never... |}>
+    %23 = %22;
+    %24 = println(%23) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

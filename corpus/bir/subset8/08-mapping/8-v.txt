@@ -21,7 +21,7 @@ main() -> nil{
     %14 = ConstantLoad 2
     %15 = ConstantLoad b
     %16 = ConstantLoad 3
-    %17 = newMap {| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%13=%14, %15=%16}
+    %17 = newMap {| a: any, anydata... |}{%13=%14, %15=%16}
     %18 = foo1(%17) -> bb3;
   }
   bb3 {
@@ -29,7 +29,7 @@ main() -> nil{
     %20 = ConstantLoad 2
     %21 = ConstantLoad b
     %22 = ConstantLoad 3
-    %23 = newMap {| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, b: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |}{%19=%20, %21=%22}
+    %23 = newMap {| a: any, b: any, never... |}{%19=%20, %21=%22}
     %24 = foo2(%23) -> bb4;
   }
   bb4 {
@@ -37,7 +37,7 @@ main() -> nil{
     %26 = ConstantLoad 2
     %27 = ConstantLoad b
     %28 = ConstantLoad 3
-    %29 = newMap {| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, b: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |}{%25=%26, %27=%28}
+    %29 = newMap {| a: any, b: any, never... |}{%25=%26, %27=%28}
     %30 = foo2(%29) -> bb5;
   }
   bb5 {
@@ -84,7 +84,7 @@ foo(any) -> nil{
     return;
   }
 }
-foo1({| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}) -> nil{
+foo1({| a: any, anydata... |}) -> nil{
   bb0 {
     %2 = c is {| a: int, b: int, never... |}
     %2 ? bb1 : bb3;
@@ -123,7 +123,7 @@ foo1({| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|
     return;
   }
 }
-foo2({| a: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, b: nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |}) -> nil{
+foo2({| a: any, b: any, never... |}) -> nil{
   bb0 {
     %2 = c is {| a: int, b: int, never... |}
     %2 ? bb1 : bb3;

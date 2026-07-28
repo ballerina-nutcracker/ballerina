@@ -1,33 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const UT_NIL () ())
-  (const UT_BOOLEAN () ())
-  (const UT_LIST_RO () ())
-  (const UT_MAPPING_RO () ())
-  (const UT_TABLE_RO () ())
-  (const UT_XML_RO () ())
-  (const UT_OBJECT_RO () ())
-  (const UT_INT () ())
-  (const UT_FLOAT () ())
-  (const UT_DECIMAL () ())
-  (const UT_STRING () ())
-  (const UT_ERROR () ())
-  (const UT_FUNCTION () ())
-  (const UT_TYPEDESC () ())
-  (const UT_HANDLE () ())
-  (const UT_FUTURE () ())
-  (const UT_STREAM () ())
-  (const UT_LIST_RW () ())
-  (const UT_MAPPING_RW () ())
-  (const UT_TABLE_RW () ())
-  (const UT_XML_RW () ())
-  (const UT_OBJECT_RW () ())
-  (const NEVER () ())
-  (const NIL () ())
-  (const FLOAT () ())
-  (const INT () ())
-  (const STRING () ())
-  (const LIST_RW () ())
   (type-definition UniformTypeBitSet
     (value-type int))
   (type-definition SemType
@@ -154,102 +126,6 @@
           (user-defined-type SemType) dimensions: 1 ([])))
       (field rest
         (user-defined-type SemType))))
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref UT_NIL)
-        (literal 0))
-      (assignment
-        (simple-var-ref UT_BOOLEAN)
-        (literal 1))
-      (assignment
-        (simple-var-ref UT_LIST_RO)
-        (literal 2))
-      (assignment
-        (simple-var-ref UT_MAPPING_RO)
-        (literal 3))
-      (assignment
-        (simple-var-ref UT_TABLE_RO)
-        (literal 4))
-      (assignment
-        (simple-var-ref UT_XML_RO)
-        (literal 5))
-      (assignment
-        (simple-var-ref UT_OBJECT_RO)
-        (literal 6))
-      (assignment
-        (simple-var-ref UT_INT)
-        (literal 7))
-      (assignment
-        (simple-var-ref UT_FLOAT)
-        (literal 8))
-      (assignment
-        (simple-var-ref UT_DECIMAL)
-        (literal 9))
-      (assignment
-        (simple-var-ref UT_STRING)
-        (literal 10))
-      (assignment
-        (simple-var-ref UT_ERROR)
-        (literal 11))
-      (assignment
-        (simple-var-ref UT_FUNCTION)
-        (literal 12))
-      (assignment
-        (simple-var-ref UT_TYPEDESC)
-        (literal 13))
-      (assignment
-        (simple-var-ref UT_HANDLE)
-        (literal 14))
-      (assignment
-        (simple-var-ref UT_FUTURE)
-        (literal 16))
-      (assignment
-        (simple-var-ref UT_STREAM)
-        (literal 17))
-      (assignment
-        (simple-var-ref UT_LIST_RW)
-        (literal 18))
-      (assignment
-        (simple-var-ref UT_MAPPING_RW)
-        (literal 19))
-      (assignment
-        (simple-var-ref UT_TABLE_RW)
-        (literal 20))
-      (assignment
-        (simple-var-ref UT_XML_RW)
-        (literal 21))
-      (assignment
-        (simple-var-ref UT_OBJECT_RW)
-        (literal 22))
-      (assignment
-        (simple-var-ref NEVER)
-        (literal 0))
-      (assignment
-        (simple-var-ref NIL)
-        (binary-expr <<
-          (literal 1)
-          (simple-var-ref UT_NIL)))
-      (assignment
-        (simple-var-ref FLOAT)
-        (binary-expr <<
-          (literal 1)
-          (simple-var-ref UT_FLOAT)))
-      (assignment
-        (simple-var-ref INT)
-        (binary-expr <<
-          (literal 1)
-          (simple-var-ref UT_INT)))
-      (assignment
-        (simple-var-ref STRING)
-        (binary-expr <<
-          (literal 1)
-          (simple-var-ref UT_STRING)))
-      (assignment
-        (simple-var-ref LIST_RW)
-        (binary-expr <<
-          (literal 1)
-          (simple-var-ref UT_LIST_RW)))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -265,11 +141,11 @@
             (key-value
               (literal types)
               (list-constructor-expr
-                (simple-var-ref FLOAT)
-                (simple-var-ref FLOAT)))
+                (numeric-literal 256)
+                (numeric-literal 256)))
             (key-value
               (literal rest)
-              (simple-var-ref NEVER))))))
+              (numeric-literal 0))))))
       (var-def
         (variable bdd (type
           (user-defined-type BddNode)) (expr
@@ -301,7 +177,7 @@
               (literal 0))
             (key-value
               (literal some)
-              (simple-var-ref LIST_RW))
+              (numeric-literal 262144))
             (key-value
               (literal subtypeDataList)
               (list-constructor-expr

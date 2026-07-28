@@ -19,9 +19,9 @@ package ast
 import (
 	"iter"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
 )
 
 // Field represents an annotated type member with a name and type.
@@ -115,8 +115,8 @@ type AnnotationNode interface {
 	AnnotatableNode
 	DocumentableNode
 	TopLevelNode
-	GetName() *BLangIdentifier
-	SetName(name *BLangIdentifier)
+	GetName() IdentifierNode
+	SetName(name IdentifierNode)
 	GetTypeDescriptor() TypeDescriptor
 	SetTypeDescriptor(typeDescriptor TypeDescriptor)
 }
@@ -148,8 +148,8 @@ type SimpleVariableNode interface {
 	AnnotatableNode
 	DocumentableNode
 	TopLevelNode
-	GetName() *BLangIdentifier
-	SetName(name *BLangIdentifier)
+	GetName() IdentifierNode
+	SetName(name IdentifierNode)
 }
 
 type ConstantNode interface {
@@ -165,8 +165,9 @@ type InvokableNode interface {
 	SetName(name IdentifierNode)
 	GetParameters() []SimpleVariableNode
 	AddParameter(param SimpleVariableNode)
-	GetReturnTypeDescriptor() TypeDescriptor
+	GetReturnTypeDescriptor() ReturnTypeDescriptor
 	SetReturnTypeDescriptor(typeDescriptor TypeDescriptor)
+	HasExplicitReturnTypeDescriptor() bool
 	GetBody() FunctionBodyNode
 	SetBody(body FunctionBodyNode)
 	HasBody() bool
@@ -186,7 +187,7 @@ type ClassDefinition interface {
 	AnnotatableNode
 	DocumentableNode
 	TopLevelNode
-	GetName() *BLangIdentifier
+	GetName() IdentifierNode
 	GetMethods() iter.Seq2[string, FunctionNode]
 	GetMethod(name string) FunctionNode
 	GetInitFunction() FunctionNode
@@ -204,6 +205,11 @@ type ServiceNode interface {
 type TypeDescriptor interface {
 	Node
 	IsGrouped() bool
+}
+
+type ReturnTypeDescriptor interface {
+	BType
+	AnnotatableNode
 }
 
 type ArrayTypeNode interface {
@@ -326,7 +332,7 @@ type IndexBasedAccessNode interface {
 type FieldBasedAccessNode interface {
 	BLangExpression
 	GetExpression() BLangExpression
-	GetFieldName() *BLangIdentifier
+	GetFieldName() IdentifierNode
 }
 
 type ListConstructorExprNode interface {
@@ -352,8 +358,8 @@ type CommitExpressionNode interface {
 
 type SimpleVariableReferenceNode interface {
 	VariableReferenceNode
-	GetPackageAlias() *BLangIdentifier
-	GetVariableName() *BLangIdentifier
+	GetPackageAlias() IdentifierNode
+	GetVariableName() IdentifierNode
 }
 
 type LiteralNode interface {
@@ -480,8 +486,8 @@ type TypedescExpressionNode interface {
 
 type NamedArgNode interface {
 	BLangExpression
-	SetName(name *BLangIdentifier)
-	GetName() *BLangIdentifier
+	SetName(name IdentifierNode)
+	GetName() IdentifierNode
 	GetExpression() BLangExpression
 	SetExpression(expr BLangExpression)
 }
@@ -812,18 +818,16 @@ type MarkdownDocumentationNode interface {
 // Other interfaces.
 
 type IdentifierNode interface {
+	BLangNode
 	GetValue() string
-	SetValue(value string)
-	SetOriginalValue(value string)
 	IsLiteral() bool
-	SetLiteral(isLiteral bool)
 }
 
 type AnnotationAttachmentNode interface {
-	GetPackageAlias() *BLangIdentifier
-	SetPackageAlias(pkgAlias *BLangIdentifier)
-	GetAnnotationName() *BLangIdentifier
-	SetAnnotationName(name *BLangIdentifier)
+	GetPackageAlias() IdentifierNode
+	SetPackageAlias(pkgAlias IdentifierNode)
+	GetAnnotationName() IdentifierNode
+	SetAnnotationName(name IdentifierNode)
 	GetExpressionNode() BLangExpression
 	SetExpressionNode(expr BLangExpression)
 }
@@ -840,25 +844,76 @@ type AttachPoint struct {
 	Source bool
 }
 
-type Point string
+// Point identifies an annotation attach point. There are fewer than 20 mutually
+// exclusive values, so it is represented as a byte for cheap equality and
+// storage. Use String for the canonical attach-point key.
+type Point byte
 
 const (
-	Point_TYPE           Point = "type"
-	Point_OBJECT         Point = "object"
-	Point_FUNCTION       Point = "function"
-	Point_OBJECT_METHOD  Point = "objectfunction"
-	Point_SERVICE_REMOTE Point = "serviceremotefunction"
-	Point_PARAMETER      Point = "parameter"
-	Point_RETURN         Point = "return"
-	Point_SERVICE        Point = "service"
-	Point_FIELD          Point = "field"
-	Point_OBJECT_FIELD   Point = "objectfield"
-	Point_RECORD_FIELD   Point = "recordfield"
-	Point_LISTENER       Point = "listener"
-	Point_ANNOTATION     Point = "annotation"
-	Point_EXTERNAL       Point = "external"
-	Point_VAR            Point = "var"
-	Point_CONST          Point = "const"
-	Point_WORKER         Point = "worker"
-	Point_CLASS          Point = "class"
+	Point_TYPE Point = iota
+	Point_OBJECT
+	Point_FUNCTION
+	Point_OBJECT_METHOD
+	Point_SERVICE_REMOTE
+	Point_PARAMETER
+	Point_RETURN
+	Point_SERVICE
+	Point_FIELD
+	Point_OBJECT_FIELD
+	Point_RECORD_FIELD
+	Point_LISTENER
+	Point_ANNOTATION
+	Point_EXTERNAL
+	Point_VAR
+	Point_CONST
+	Point_WORKER
+	Point_CLASS
 )
+
+// String returns the canonical attach-point key (no spaces) — the form used as
+// the key for annotation attach-point matching and for pretty printing. This is
+// distinct from the space-separated source spelling parsed in node_builder.go
+// (e.g. "object function" parses to Point_OBJECT_METHOD whose key is
+// "objectfunction").
+func (p Point) String() string {
+	switch p {
+	case Point_TYPE:
+		return "type"
+	case Point_OBJECT:
+		return "object"
+	case Point_FUNCTION:
+		return "function"
+	case Point_OBJECT_METHOD:
+		return "objectfunction"
+	case Point_SERVICE_REMOTE:
+		return "serviceremotefunction"
+	case Point_PARAMETER:
+		return "parameter"
+	case Point_RETURN:
+		return "return"
+	case Point_SERVICE:
+		return "service"
+	case Point_FIELD:
+		return "field"
+	case Point_OBJECT_FIELD:
+		return "objectfield"
+	case Point_RECORD_FIELD:
+		return "recordfield"
+	case Point_LISTENER:
+		return "listener"
+	case Point_ANNOTATION:
+		return "annotation"
+	case Point_EXTERNAL:
+		return "external"
+	case Point_VAR:
+		return "var"
+	case Point_CONST:
+		return "const"
+	case Point_WORKER:
+		return "worker"
+	case Point_CLASS:
+		return "class"
+	default:
+		panic("unknown annotation attach point")
+	}
+}

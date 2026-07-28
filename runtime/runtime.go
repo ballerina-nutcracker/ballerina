@@ -19,14 +19,14 @@ package runtime
 import (
 	"errors"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/exec"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/model"
+	"ballerina/platform/pal"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/exec"
+	"ballerina/runtime/internal/modules"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 // LookupFunction resolves a top-level Ballerina function (BIR or native)
@@ -96,11 +96,12 @@ func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
 	}
 	registry := modules.NewRegistry(rt.runtimeBuiltins())
 	env := extern.InitEnv(platform, tyEnv, registry, extern.DispatchHandles{
-		LookupObject:   exec.LookupObjectMethod,
-		LookupRemote:   exec.LookupRemoteMethod,
-		LookupResource: exec.LookupResourceMethod,
-		Invoke:         exec.Invoke,
-		Start:          exec.StartMethod,
+		LookupObject:         exec.LookupObjectMethod,
+		LookupRemote:         exec.LookupRemoteMethod,
+		LookupResource:       exec.LookupResourceMethod,
+		LookupResourceByPath: exec.LookupResourceMethodByPath,
+		Invoke:               exec.Invoke,
+		Start:                exec.StartMethod,
 		LookupFunction: func(cx *extern.Context, org, module, name string) (any, bool) {
 			return exec.LookupFunction(cx.Env, org, module, name)
 		},
@@ -126,7 +127,7 @@ func (rt *Runtime) registry() *modules.Registry {
 // fails), call Listen.
 func (rt *Runtime) Init(pkg bir.BIRPackage) error {
 	rt.transition(StateInitializing)
-	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(nil, &pkg))
+	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), &pkg))
 	if err := rt.recordLifecycleHooks(&pkg); err != nil {
 		return rt.abortInitialization(err)
 	}
@@ -189,6 +190,14 @@ func RegisterModuleInitializer(init ModuleInitializer) {
 // GetTypeEnv returns the semantic type environment.
 func (rt *Runtime) GetTypeEnv() semtypes.Env {
 	return rt.env.TypeEnv
+}
+
+// NewExternContext creates a properly initialised extern.Context with a fresh
+// call stack. Use this when dispatching Ballerina code from outside the main
+// interpreter loop, such as from HTTP handler goroutines. Each concurrent
+// execution path must have its own context.
+func (rt *Runtime) NewExternContext() *extern.Context {
+	return exec.CreateContext(rt.env)
 }
 
 // RegisterExternFunction registers a native (extern) function implementation in

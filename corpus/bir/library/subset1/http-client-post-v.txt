@@ -3,7 +3,7 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad https://example.com
     $desugar$0 = %1;
-    %3 = $default$13($desugar$0) -> bb1;
+    %3 = $default$15($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %3;
@@ -39,11 +39,11 @@ main() -> nil|error{
     $desugar$3 = %12;
     %14 = ConstantLoad hello world
     $desugar$4 = %14;
-    %16 = $default$24($desugar$3,$desugar$4) -> bb8;
+    %16 = $default$26($desugar$3,$desugar$4) -> bb8;
   }
   bb8 {
     $desugar$5 = %16;
-    %18 = $default$25($desugar$3,$desugar$4,$desugar$5) -> bb9;
+    %18 = $default$27($desugar$3,$desugar$4,$desugar$5) -> bb9;
   }
   bb9 {
     $desugar$6 = %18;
@@ -100,13 +100,13 @@ main() -> nil|error{
     %44 = ConstantLoad test
     %45 = ConstantLoad count
     %46 = ConstantLoad 1
-    %47 = newMap {| nil|boolean|int|float|decimal|string|...|...... |}{%43=%44, %45=%46}
+    %47 = newMap {| json... |}{%43=%44, %45=%46}
     $desugar$10 = %47;
-    %49 = $default$24($desugar$9,$desugar$10) -> bb18;
+    %49 = $default$26($desugar$9,$desugar$10) -> bb18;
   }
   bb18 {
     $desugar$11 = %49;
-    %51 = $default$25($desugar$9,$desugar$10,$desugar$11) -> bb19;
+    %51 = $default$27($desugar$9,$desugar$10,$desugar$11) -> bb19;
   }
   bb19 {
     $desugar$12 = %51;

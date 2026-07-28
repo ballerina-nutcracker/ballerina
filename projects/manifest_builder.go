@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"ballerina-lang-go/common/tomlparser"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/common/tomlparser"
+	"ballerina/tools/diagnostics"
 )
 
 // TOML key constants for Ballerina.toml parsing.

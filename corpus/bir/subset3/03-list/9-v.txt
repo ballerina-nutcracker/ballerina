@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad 2
     %3 = ConstantLoad false
     %4 = ConstantLoad 3
-    %5 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%4]{%1, %2, %3}
+    %5 = newArray [any...][%4]{%1, %2, %3}
     v = %5;
     %7 = foo(v) -> bb1;
   }
@@ -13,7 +13,7 @@ main() -> nil{
     return;
   }
 }
-foo([nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]) -> nil{
+foo([any...]) -> nil{
   bb0 {
     %2 = println(v) -> bb1;
   }

@@ -1,0 +1,48 @@
+(package
+  (import-package ballerina log (as log))
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal request received))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation log printDebug (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 845315))
+            (key-value
+              (literal path)
+              (literal /api/v1))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal user details))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation log printDebug (
+          (simple-var-ref $desugar$2)
+          (simple-var-ref $desugar$3)
+          (mapping-constructor-expr
+            (key-value
+              (literal username)
+              (literal alice))
+            (key-value
+              (literal active)
+              (literal true))
+            (key-value
+              (literal score)
+              (literal 9.8))))))
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))

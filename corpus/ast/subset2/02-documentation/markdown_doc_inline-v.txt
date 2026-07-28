@@ -4,9 +4,17 @@
     (variable testConst (type
       (value-type string)) (expr
       (literal TestConstantDocumentation)))
-    (function func1 () (
+    (function func1
+      (md-doc
+        (doc-lines
+          (md-doc-line "This is a test function")
+          (md-doc-line "```balPurpose of addingthis documentation isto check backtic documentations```"))) () (
       (value-type null))
       (block-function-body))
-    (function func2 () (
+    (function func2
+      (md-doc
+        (doc-lines
+          (md-doc-line "This is a test function")
+          (md-doc-line "```Purpose of addingthis documentation isto check backtic documentations```"))) () (
       (value-type null))
       (block-function-body))))

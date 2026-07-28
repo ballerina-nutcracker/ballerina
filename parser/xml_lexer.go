@@ -19,9 +19,9 @@
 package parser
 
 import (
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/text"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
+	"ballerina/tools/text"
 )
 
 // xmlLexer satisfies the Lexer interface.

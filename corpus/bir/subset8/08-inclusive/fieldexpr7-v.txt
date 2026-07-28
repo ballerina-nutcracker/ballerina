@@ -12,7 +12,7 @@ main() -> nil{
     return;
   }
 }
-origin() -> {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{
+origin() -> {| x: int, y: int, anydata... |}{
   bb0 {
     %1 = ConstantLoad x
     %2 = ConstantLoad 0
@@ -20,7 +20,7 @@ origin() -> {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[
     %4 = ConstantLoad 0
     %5 = ConstantLoad z
     %6 = ConstantLoad 10
-    %7 = newMap {| x: int, y: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4, %5=%6}
+    %7 = newMap {| x: int, y: int, anydata... |}{%1=%2, %3=%4, %5=%6}
     p = %7;
     %0 = p;
     return;

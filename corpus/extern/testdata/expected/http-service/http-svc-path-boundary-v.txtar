@@ -1,0 +1,6 @@
+-- stdout --
+200
+matched foo/bar
+404
+404
+-- stderr --

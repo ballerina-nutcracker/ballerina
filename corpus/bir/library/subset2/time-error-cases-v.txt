@@ -37,7 +37,7 @@ main() -> nil|error{
     %22 = ConstantLoad 2
     %23 = ConstantLoad day
     %24 = ConstantLoad 30
-    %25 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%19=%20, %21=%22, %23=%24}
+    %25 = newMap {| day: int, hour: int, minute: int, month: int, second: decimal, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, year: int, anydata... |}{%19=%20, %21=%22, %23=%24}
     %26 = dateValidate(%25) -> bb7;
   }
   bb7 {
@@ -75,7 +75,7 @@ main() -> nil|error{
     %52 = ConstantLoad minutes
     %53 = ConstantLoad 30
     %54 = newMap {| hours: int, minutes: int, seconds: decimal, never... |}{%50=%51, %52=%53} defaults{minutes=ballerina/time:$desugar$0}
-    %55 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%37=%38, %39=%40, %41=%42, %43=%44, %45=%46, %47=%48, %49=%54}
+    %55 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%37=%38, %39=%40, %41=%42, %43=%44, %45=%46, %47=%48, %49=%54}
     %56 = utcFromCivil(%55) -> bb11;
   }
   bb11 {
@@ -111,7 +111,7 @@ main() -> nil|error{
     %73 = ConstantLoad 50
     %74 = ConstantLoad timeAbbrev
     %75 = ConstantLoad Z
-    %76 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%62=%63, %64=%65, %66=%67, %68=%69, %70=%71, %72=%73, %74=%75}
+    %76 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%62=%63, %64=%65, %66=%67, %68=%69, %70=%71, %72=%73, %74=%75}
     %77 = utcFromCivil(%76) -> bb16;
   }
   bb16 {
@@ -143,7 +143,7 @@ main() -> nil|error{
     %90 = ConstantLoad 17
     %91 = ConstantLoad minute
     %92 = ConstantLoad 50
-    %93 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%83=%84, %85=%86, %87=%88, %89=%90, %91=%92}
+    %93 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%83=%84, %85=%86, %87=%88, %89=%90, %91=%92}
     %94 = utcFromCivil(%93) -> bb21;
   }
   bb21 {
@@ -163,7 +163,7 @@ main() -> nil|error{
     %106 = ConstantLoad 10
     %107 = ConstantLoad minute
     %108 = ConstantLoad 0
-    %109 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%99=%100, %101=%102, %103=%104, %105=%106, %107=%108}
+    %109 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%99=%100, %101=%102, %103=%104, %105=%106, %107=%108}
     %110 = ConstantLoad hours
     %111 = ConstantLoad 1
     %112 = newMap {| days: int, hours: int, minutes: int, months: int, seconds: decimal, weeks: int, years: int, never... |}{%110=%111} defaults{years=ballerina/time:$desugar$2, months=ballerina/time:$desugar$3, weeks=ballerina/time:$desugar$4, days=ballerina/time:$desugar$5, hours=ballerina/time:$desugar$6, minutes=ballerina/time:$desugar$7, seconds=ballerina/time:$desugar$8}

@@ -103,7 +103,7 @@ main() -> nil|error{
     %40 = ConstantLoad 45.5
     %41 = ConstantLoad timeAbbrev
     %42 = ConstantLoad -08:00
-    %43 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%29=%30, %31=%32, %33=%34, %35=%36, %37=%38, %39=%40, %41=%42}
+    %43 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%29=%30, %31=%32, %33=%34, %35=%36, %37=%38, %39=%40, %41=%42}
     %44 = civilToString(%43) -> bb21;
   }
   bb21 {
@@ -141,7 +141,7 @@ main() -> nil|error{
     %65 = ConstantLoad minutes
     %66 = ConstantLoad 0
     %67 = newMap {| hours: int, minutes: int, seconds: decimal, never... |}{%62=%64, %65=%66} defaults{minutes=ballerina/time:$desugar$0}
-    %68 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%49=%50, %51=%52, %53=%54, %55=%56, %57=%58, %59=%60, %61=%67}
+    %68 = newMap {| day: int, dayOfWeek: 0|1|2|3|4|5|6, hour: int, minute: int, month: int, second: decimal, timeAbbrev: string, utcOffset: {| hours: int, minutes: int, seconds: decimal, never... |}, which: 0|1, year: int, anydata... |}{%49=%50, %51=%52, %53=%54, %55=%56, %57=%58, %59=%60, %61=%67}
     %69 = utcFromCivil(%68) -> bb25;
   }
   bb25 {

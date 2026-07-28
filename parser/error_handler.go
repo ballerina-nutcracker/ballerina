@@ -16,9 +16,9 @@
 package parser
 
 import (
-	debugcommon "ballerina-lang-go/common"
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
+	debugcommon "ballerina/common"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
 	"fmt"
 	"runtime/debug"
 	"slices"

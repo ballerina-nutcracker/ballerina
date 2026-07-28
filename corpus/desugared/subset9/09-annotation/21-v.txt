@@ -1,0 +1,51 @@
+(package
+  (import-package ballerina io (as io))
+  (variable $annotation$0)
+  (variable runtimeCode (type
+    (value-type int)))
+  (annotation codeAnnot
+    (user-defined-type Code)
+    (attach-point type))
+  (type-definition Code
+    (record-type
+      (field value
+        (value-type int))))
+  (type-definition RuntimeAnnotTarget
+    (annotation-attachment codeAnnot
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (simple-var-ref runtimeCode))))
+    (value-type int))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref runtimeCode)
+        (literal 77))
+      (assignment
+        (simple-var-ref $annotation$0)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref runtimeCode))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (union-type
+            (user-defined-type Code)
+            (value-type null))) (expr
+          (annot-access-expr codeAnnot
+            (simple-var-ref RuntimeAnnotTarget)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (user-defined-type Code))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref c)
+                (literal value)))))) ())
+      (block-stmt))))

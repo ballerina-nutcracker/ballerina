@@ -31,7 +31,7 @@ import (
 	"sync"
 	"testing"
 
-	"ballerina-lang-go/test_util"
+	"ballerina/test_util"
 )
 
 const cliCoverDirEnv = "BAL_GOCOVERDIR"
@@ -43,6 +43,7 @@ var (
 	cliIntegrationRepoRoot    string
 	cliIntegrationCoverDir    string
 	cliIntegrationBinsErr     error
+	cliIntegrationCoverMerge  sync.Mutex
 )
 
 func TestBalHelp(t *testing.T) {
@@ -61,17 +62,20 @@ func TestBalRunDumpFlags(t *testing.T) {
 	}
 
 	singleBal := filepath.Join("corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
+	recoveryBal := filepath.Join("corpus", "cli", "testdata", "run", "dump-flags", "recovered-ast.bal")
 
 	tests := []struct {
-		name string
-		flag string
-		file string
+		name   string
+		flag   string
+		file   string
+		source string
 	}{
-		{"dump-bir", "--dump-bir", "dump-bir.txtar"},
-		{"dump-st", "--dump-st", "dump-st.txtar"},
-		{"dump-tokens", "--dump-tokens", "dump-tokens.txtar"},
-		{"dump-ast", "--dump-ast", "dump-ast.txtar"},
-		{"dump-cfg", "--dump-cfg", "dump-cfg.txtar"},
+		{"dump-bir", "--dump-bir", "dump-bir.txtar", singleBal},
+		{"dump-st", "--dump-st", "dump-st.txtar", singleBal},
+		{"dump-tokens", "--dump-tokens", "dump-tokens.txtar", singleBal},
+		{"dump-ast", "--dump-ast", "dump-ast.txtar", singleBal},
+		{"dump-recovered-ast", "--dump-recovered-ast", "dump-recovered-ast.txtar", recoveryBal},
+		{"dump-cfg", "--dump-cfg", "dump-cfg.txtar", singleBal},
 	}
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
 
@@ -79,7 +83,7 @@ func TestBalRunDumpFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assertBalCommandMatchesTxtarFragmentsForBinary(t, balBin, repoRoot, coverDir,
-				[]string{"run", tt.flag, singleBal},
+				[]string{"run", tt.flag, tt.source},
 				"run-dump-flags", tt.file)
 		})
 	}
@@ -307,6 +311,17 @@ func substituteScenarioPlaceholders(t *testing.T, args []string) []string {
 	return out
 }
 
+// normalizePaths replaces the absolute repo root in CLI output with the
+// portable placeholder <ROOT> so txtar fixtures are machine-independent.
+// It is applied to both the --update write path and the comparison path so
+// the txtar content and the actual output are compared on equal footing.
+func normalizePaths(s, repoRoot string) string {
+	if repoRoot == "" {
+		return s
+	}
+	return strings.ReplaceAll(s, repoRoot, "<ROOT>")
+}
+
 // assertBalCommandMatchesTxtarFragmentsLoose is like assertBalCommandMatchesTxtarFragmentsForBinary
 // but uses fragment (substring) matching for both stdout and stderr. This is needed when stderr
 // contains machine-specific absolute paths that cannot be captured exactly in a txtar fixture.
@@ -317,8 +332,8 @@ func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, 
 	}
 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
-	stdout = test_util.NormalizeNewlines(stdout)
-	stderr = test_util.NormalizeNewlines(stderr)
+	stdout = normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	stderr = normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
 
 	expectedStdoutFragments, expectedStderrFragments, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(txtarPath)
 	if err != nil {
@@ -454,8 +469,8 @@ func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRo
 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
 
-	stdout = test_util.NormalizeNewlines(stdout)
-	stderr = test_util.NormalizeNewlines(stderr)
+	stdout = normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	stderr = normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
 	expectedPath := filepath.Join(append([]string{repoRoot, "corpus", "cli", "output"}, txtarPathParts...)...)
 
 	expectedStdoutFragments, expectedStderr, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
@@ -489,7 +504,9 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 	cmd := exec.Command(balBin, args...)
 	cmd.Dir = repoRoot
 	if coverDir != "" {
-		cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
+		commandCoverDir := t.TempDir()
+		cmd.Env = append(os.Environ(), "GOCOVERDIR="+commandCoverDir)
+		defer mergeCLICoverageDir(t, commandCoverDir, coverDir)
 	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
@@ -515,6 +532,34 @@ func runCLICommand(t *testing.T, balBin, repoRoot, coverDir string, args ...stri
 		stderrStr,
 	)
 	return "", "", 0
+}
+
+func mergeCLICoverageDir(t *testing.T, fromDir, toDir string) {
+	t.Helper()
+	entries, err := os.ReadDir(fromDir)
+	if err != nil {
+		t.Fatalf("failed to read CLI coverage dir %q: %v", fromDir, err)
+	}
+	cliIntegrationCoverMerge.Lock()
+	defer cliIntegrationCoverMerge.Unlock()
+	if err := os.MkdirAll(toDir, 0o755); err != nil {
+		t.Fatalf("failed to create CLI coverage dir %q: %v", toDir, err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		src := filepath.Join(fromDir, entry.Name())
+		dst := filepath.Join(toDir, entry.Name())
+		if _, err := os.Stat(dst); err == nil {
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("failed to stat CLI coverage file %q: %v", dst, err)
+		}
+		if err := os.Rename(src, dst); err != nil {
+			t.Fatalf("failed to move CLI coverage file %q to %q: %v", src, dst, err)
+		}
+	}
 }
 
 func sandboxCLICommandArgs(t *testing.T, repoRoot string, args []string) []string {
@@ -661,8 +706,8 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 		t.Parallel()
 		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", runPath)
 		expectedPath := filepath.Join(outputsRoot, outputKey+".txtar")
-		actualOutput := test_util.NormalizeNewlines(stdout)
-		actualError := test_util.NormalizeNewlines(stderr)
+		actualOutput := normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+		actualError := normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
 		actualExitCode := strconv.Itoa(exitCode)
 
 		expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)

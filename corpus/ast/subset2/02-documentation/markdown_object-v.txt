@@ -10,7 +10,15 @@
     (variable abc (type
       (value-type string)) (expr
       (literal )))
-    (function testAction () (
+    (function testAction
+      (md-doc
+        (doc-lines
+          (md-doc-line "Test Connector action testAction"))
+        (return-param
+          (md-return-param-doc
+            (doc-lines
+              "whether successful or not"))
+        )) () (
       (value-type boolean))
       (block-function-body
         (var-def
@@ -19,7 +27,19 @@
             (literal false))))
         (return
           (simple-var-ref value))))
-    (function testSend (
+    (function testSend
+      (md-doc
+        (doc-lines
+          (md-doc-line "Test Connector action testSend"))
+        (params
+          (md-param-doc (param-name ep)
+            (doc-lines
+              "endpoint url")))
+        (return-param
+          (md-return-param-doc
+            (doc-lines
+              "whether successful or not"))
+        )) (
       (variable ep (type
         (value-type string)))) (
       (value-type boolean))
@@ -44,7 +64,15 @@
     (variable abc (type
       (value-type string)) (expr
       (literal )))
-    (function testAction () (
+    (function testAction
+      (md-doc
+        (doc-lines
+          (md-doc-line "Test Connector action testAction"))
+        (return-param
+          (md-return-param-doc
+            (doc-lines
+              "whether successful or not"))
+        )) () (
       (value-type boolean))
       (block-function-body
         (var-def
@@ -53,7 +81,19 @@
             (literal false))))
         (return
           (simple-var-ref value))))
-    (function testSend (
+    (function testSend
+      (md-doc
+        (doc-lines
+          (md-doc-line "Test Connector action testSend"))
+        (params
+          (md-param-doc (param-name ep)
+            (doc-lines
+              "endpoint url")))
+        (return-param
+          (md-return-param-doc
+            (doc-lines
+              "whether successful or not"))
+        )) (
       (variable ep (type
         (value-type string)))) (
       (value-type boolean))

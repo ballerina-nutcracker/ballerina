@@ -126,6 +126,7 @@ type CompilationOptions struct {
 	experimental                  optionalBool
 	observabilityIncluded         optionalBool
 	dumpAST                       optionalBool
+	dumpRecoveredAST              optionalBool
 	dumpBIR                       optionalBool
 	dumpBIRFile                   optionalBool
 	dumpCFG                       optionalBool
@@ -173,6 +174,11 @@ func (c CompilationOptions) ObservabilityIncluded() bool {
 // DumpAST returns whether AST dumping is enabled.
 func (c CompilationOptions) DumpAST() bool {
 	return c.dumpAST.valueOr(false)
+}
+
+// DumpRecoveredAST returns whether recovered AST dumping is enabled.
+func (c CompilationOptions) DumpRecoveredAST() bool {
+	return c.dumpRecoveredAST.valueOr(false)
 }
 
 // DumpBIR returns whether BIR dumping is enabled.
@@ -307,6 +313,7 @@ func (c CompilationOptions) AcceptTheirs(theirs CompilationOptions) CompilationO
 		experimental:                  acceptOptionalBool(c.experimental, theirs.experimental),
 		observabilityIncluded:         acceptOptionalBool(c.observabilityIncluded, theirs.observabilityIncluded),
 		dumpAST:                       acceptOptionalBool(c.dumpAST, theirs.dumpAST),
+		dumpRecoveredAST:              acceptOptionalBool(c.dumpRecoveredAST, theirs.dumpRecoveredAST),
 		dumpBIR:                       acceptOptionalBool(c.dumpBIR, theirs.dumpBIR),
 		dumpBIRFile:                   acceptOptionalBool(c.dumpBIRFile, theirs.dumpBIRFile),
 		dumpCFG:                       acceptOptionalBool(c.dumpCFG, theirs.dumpCFG),
@@ -388,6 +395,12 @@ func (b *CompilationOptionsBuilder) WithObservabilityIncluded(value bool) *Compi
 // WithDumpAST sets AST dumping flag.
 func (b *CompilationOptionsBuilder) WithDumpAST(value bool) *CompilationOptionsBuilder {
 	b.options.dumpAST = optionalBoolOf(value)
+	return b
+}
+
+// WithDumpRecoveredAST sets recovered AST dumping flag.
+func (b *CompilationOptionsBuilder) WithDumpRecoveredAST(value bool) *CompilationOptionsBuilder {
+	b.options.dumpRecoveredAST = optionalBoolOf(value)
 	return b
 }
 

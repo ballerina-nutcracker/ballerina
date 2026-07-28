@@ -13,7 +13,7 @@ main() -> nil{
     %10 = ConstantLoad y
     %11 = ConstantLoad 2
     %12 = newMap mapping{%8=%9, %10=%11}
-    %13 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{%1=%6, %7=%12}
+    %13 = newMap {| any... |}{%1=%6, %7=%12}
     m = %13;
     %15 = println(m) -> bb1;
   }

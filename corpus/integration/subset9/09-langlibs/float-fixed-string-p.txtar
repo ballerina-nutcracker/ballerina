@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: fractionDigits must be non-negative
+        at main(float-fixed-string-p.bal:18)

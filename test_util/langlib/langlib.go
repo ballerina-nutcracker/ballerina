@@ -25,14 +25,14 @@ import (
 	"io/fs"
 	"strings"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/lib/langlibs"
-	"ballerina-lang-go/lib/stdlibs"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/parser"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/tools/text"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/lib/langlibs"
+	"ballerina/lib/stdlibs"
+	"ballerina/model"
+	"ballerina/parser"
+	"ballerina/semantics"
+	"ballerina/tools/text"
 )
 
 type bundledLib struct {
@@ -70,6 +70,14 @@ var migratedLangLibs = []bundledLib{
 		implicitID: "lang.decimal",
 		srcFS:      langlibs.FS,
 		balPath:    "ballerina/lang.decimal/0.0.1/any/lang.decimal.bal",
+		version:    "0.0.1",
+	},
+	{
+		org:        "ballerina",
+		nameComps:  []string{"lang", "float"},
+		implicitID: "lang.float",
+		srcFS:      langlibs.FS,
+		balPath:    "ballerina/lang.float/0.0.1/any/lang.float.bal",
 		version:    "0.0.1",
 	},
 	{
@@ -150,7 +158,7 @@ var bundledStdlibs = []bundledLib{
 		org:       "ballerina",
 		nameComps: []string{"io"},
 		srcFS:     stdlibs.FS,
-		balPath:   "ballerina/io/0.0.1/go1.2/io.bal",
+		balPath:   "ballerina/io/0.0.1/go1.26/io.bal",
 		version:   "0.0.1",
 	},
 }

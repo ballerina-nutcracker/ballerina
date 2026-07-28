@@ -23,10 +23,10 @@ main() -> nil{
     return;
   }
 }
-wrap(any) -> {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{
+wrap(any) -> {| any... |}{
   bb0 {
     %2 = ConstantLoad value
-    %3 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{%2=x}
+    %3 = newMap {| any... |}{%2=x}
     %0 = %3;
     return;
   }

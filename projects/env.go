@@ -19,10 +19,10 @@ package projects
 import (
 	"io/fs"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/semtypes"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/semantics"
+	"ballerina/semtypes"
 )
 
 // Environment represents an environment shared by a set of projects.
@@ -57,14 +57,14 @@ func (e *Environment) compilerEnvironment() *context.CompilerEnvironment {
 	return e.compilerEnv
 }
 
+// CompilerEnvironment returns the underlying compiler environment.
+func (e *Environment) CompilerEnvironment() *context.CompilerEnvironment {
+	return e.compilerEnv
+}
+
 // TypeEnv returns the semantic type environment associated with this environment.
 func (e *Environment) TypeEnv() semtypes.Env {
 	return e.compilerEnv.GetTypeEnv()
-}
-
-// CompilerEnvironment returns the compiler environment associated with this environment.
-func (e *Environment) CompilerEnvironment() *context.CompilerEnvironment {
-	return e.compilerEnv
 }
 
 func (e *Environment) fs() fs.FS {

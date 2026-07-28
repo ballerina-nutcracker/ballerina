@@ -41,51 +41,6 @@
               (simple-var-ref missing)))
             (user-defined-type io Error)))))
       (var-def
-        (variable noParent (type
-          (value-type string)) (expr
-          (literal /bal_io_no_such_dir_xyz/file.txt))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation io fileWriteString (
-              (simple-var-ref noParent)
-              (literal x)))
-            (user-defined-type io Error)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation io fileWriteLines (
-              (simple-var-ref noParent)
-              (list-constructor-expr
-                (literal x))))
-            (user-defined-type io Error)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation io fileWriteBytes (
-              (simple-var-ref noParent)
-              (list-constructor-expr
-                (literal 1)
-                (literal 2))))
-            (user-defined-type io Error)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation io fileWriteJson (
-              (simple-var-ref noParent)
-              (mapping-constructor-expr
-                (key-value
-                  (literal k)
-                  (literal v)))))
-            (user-defined-type io Error)))))
-      (expression-stmt
-        (invocation io println (
-          (type-test-expr is
-            (invocation io fileWriteXml (
-              (simple-var-ref noParent)
-              (xml-element-literal a)))
-            (user-defined-type io Error)))))
-      (var-def
         (variable badJson (type
           (value-type string)) (expr
           (literal /tmp/bal_io_bad_json.json))))

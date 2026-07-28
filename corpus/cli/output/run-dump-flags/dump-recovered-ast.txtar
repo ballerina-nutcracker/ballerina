@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+(compilation-unit (position 1:1 1:1)  regular-source
+(package-id $anon . 0.0.0)
+  (bad-top-level (position 1:1 18:1))
+  (function (position 18:1 22:1) main () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 19:17 22:1)
+      (var-def (position 20:1 21:1)
+        (variable (position 20:1 21:1) x (type
+          (value-type (position 20:1 20:9) int)) (expr
+          (simple-var-ref (position 20:13 20:13) <BAD>)))))))
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-ast.bal:17:4
+   |
+17 | foo;
+   |    
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-ast.bal:20:13
+   |
+20 |     int x = ;
+   |             
+-- exitcode --
+1

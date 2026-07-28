@@ -1,0 +1,150 @@
+module $anon.. v 0.0.0;
+class ParentClass {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class ParentObjectImpl {
+
+  id() -> int{
+    bb0 {
+      %2 = ConstantLoad 0
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class ChildObjectImpl {
+
+  id() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad child
+    %2 = newError error<error&error>(%1)
+    childError = %2;
+    %4 = childError is error<error>
+    %5 = %4;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad parent
+    %8 = newError error<error>(%7)
+    parentError = %8;
+    %10 = parentError is error<error&error>
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = newObject $anon/.:ChildObjectImpl
+    %14 = init(%13) -> bb3;
+  }
+  bb3 {
+    %16 = %14 is nil
+    %16 ? bb4 : bb5;
+  }
+  bb4 {
+    %15 = %13;
+    GOTO bb6;
+  }
+  bb5 {
+    %15 = %14;
+    GOTO bb6;
+  }
+  bb6 {
+    childObject = %15;
+    %18 = childObject is object&object { private function id() returns int }
+    %19 = %18;
+    %20 = println(%19) -> bb7;
+  }
+  bb7 {
+    %21 = newObject $anon/.:ParentObjectImpl
+    %22 = init(%21) -> bb8;
+  }
+  bb8 {
+    %24 = %22 is nil
+    %24 ? bb9 : bb10;
+  }
+  bb9 {
+    %23 = %21;
+    GOTO bb11;
+  }
+  bb10 {
+    %23 = %22;
+    GOTO bb11;
+  }
+  bb11 {
+    parentObject = %23;
+    %26 = parentObject is object&object&object { private function id() returns int }
+    %27 = %26;
+    %28 = println(%27) -> bb12;
+  }
+  bb12 {
+    %29 = newObject $anon/.:ParentClass
+    %30 = init(%29) -> bb13;
+  }
+  bb13 {
+    %32 = %30 is nil
+    %32 ? bb14 : bb15;
+  }
+  bb14 {
+    %31 = %29;
+    GOTO bb16;
+  }
+  bb15 {
+    %31 = %30;
+    GOTO bb16;
+  }
+  bb16 {
+    childClass = %31;
+    %34 = childClass is object { public function init() returns nil }
+    %35 = %34;
+    %36 = println(%35) -> bb17;
+  }
+  bb17 {
+    %37 = newObject $anon/.:ParentClass
+    %38 = init(%37) -> bb18;
+  }
+  bb18 {
+    %40 = %38 is nil
+    %40 ? bb19 : bb20;
+  }
+  bb19 {
+    %39 = %37;
+    GOTO bb21;
+  }
+  bb20 {
+    %39 = %38;
+    GOTO bb21;
+  }
+  bb21 {
+    parentClass = %39;
+    %42 = parentClass is object&object { public function init() returns nil }
+    %43 = %42;
+    %44 = println(%43) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}

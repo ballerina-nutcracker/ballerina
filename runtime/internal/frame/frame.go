@@ -19,7 +19,7 @@ package frame
 import (
 	"sync"
 
-	"ballerina-lang-go/values"
+	"ballerina/values"
 )
 
 var (

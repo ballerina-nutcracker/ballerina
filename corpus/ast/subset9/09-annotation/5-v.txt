@@ -1,0 +1,87 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Info
+    (record-type
+      (field name
+        (value-type string))
+      (field code
+        (value-type int))))
+  (annotation info
+    (user-defined-type Info)
+    (attach-point type))
+  (annotation marker
+    (attach-point type))
+  (type-definition Person
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal person))
+        (key-value
+          (literal code)
+          (literal 23))))
+    (annotation-attachment marker
+      (literal true))
+    (record-type
+      (field name
+        (value-type string))))
+  (function personType () (
+    (constrained-type
+      (value-type typedesc)
+      (user-defined-type Person)))
+    (block-function-body
+      (return
+        (simple-var-ref Person))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable descriptor (type
+          (constrained-type
+            (value-type typedesc)
+            (user-defined-type Person))) (expr
+          (invocation personType ()))))
+      (var-def
+        (variable copied (type
+          (constrained-type
+            (value-type typedesc)
+            (user-defined-type Person))) (expr
+          (simple-var-ref descriptor))))
+      (var-def
+        (variable infoValue (type
+          (union-type
+            (user-defined-type Info)
+            (value-type null))) (expr
+          (annot-access-expr info
+            (simple-var-ref copied)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref infoValue)
+          (user-defined-type Info))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access name
+                (simple-var-ref infoValue)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access code
+                (simple-var-ref infoValue)))))) ())
+      (block-stmt
+        (var-def
+          (variable markerValue (type
+            (union-type
+              (value-type boolean)
+              (value-type null))) (expr
+            (annot-access-expr marker
+              (simple-var-ref copied)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref markerValue)
+            (value-type boolean))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref markerValue))))) ())
+        (block-stmt)))))

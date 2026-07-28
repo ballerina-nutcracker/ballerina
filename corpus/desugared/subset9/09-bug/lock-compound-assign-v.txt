@@ -1,0 +1,58 @@
+(package
+  (import-package ballerina io (as io))
+  (variable count (type
+    (value-type int)))
+  (class-definition Counter
+    (function init () ()
+      (block-function-body))
+    (function $remote$next () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 5)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref count)
+        (literal 0))))
+  (function increment (
+    (variable amount (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref count)
+            (simple-var-ref amount))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref count)
+            (literal 1))))
+      (expression-stmt
+        (invocation increment (
+          (literal 2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref count))))
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (literal 10))))
+      (lock
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref value)
+            (remote-method-call next expr:
+              (simple-var-ref c) ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value)))))))

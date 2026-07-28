@@ -1,0 +1,30 @@
+(main
+  (bb0 () (bb1 bb5)
+    (var-def
+      (variable tagValues (type
+        (union-type
+          (array-type
+            (user-defined-type Tag) dimensions: 1 ([]))
+          (value-type null))) (expr
+        (annot-access-expr tags
+          (simple-var-ref Tagged)))))
+    (type-test-expr is
+      (simple-var-ref tagValues)
+      (array-type
+        (user-defined-type Tag) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) (bb2))
+  (bb2 (bb1 bb3) (bb3 bb4)
+    (simple-var-ref tagValues)
+    (var-def
+      (variable t))
+  )
+  (bb3 (bb2) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref t)))))
+  )
+  (bb4 (bb2) (bb5))
+  (bb5 (bb4 bb0) ())
+)

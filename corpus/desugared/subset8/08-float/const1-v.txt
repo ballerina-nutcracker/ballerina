@@ -1,70 +1,26 @@
 (package
   (import-package ballerina io (as io))
-  (const A () ())
-  (const B () ())
-  (const C () ())
-  (const D () ())
-  (const E () ())
-  (const F () ())
-  (const G () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref A)
-        (binary-expr +
-          (literal 1)
-          (literal 2)))
-      (assignment
-        (simple-var-ref B)
-        (binary-expr -
-          (literal 3)
-          (literal 1)))
-      (assignment
-        (simple-var-ref C)
-        (binary-expr /
-          (literal 10)
-          (literal 2.5)))
-      (assignment
-        (simple-var-ref D)
-        (binary-expr *
-          (literal 2)
-          (literal 4)))
-      (assignment
-        (simple-var-ref E)
-        (binary-expr +
-          (literal 1.5)
-          (literal 2)))
-      (assignment
-        (simple-var-ref F)
-        (binary-expr /
-          (literal 5)
-          (literal 2)))
-      (assignment
-        (simple-var-ref G)
-        (binary-expr *
-          (literal 1.5)
-          (literal 2.5)))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref A))))
+          (numeric-literal 3))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref B))))
+          (numeric-literal 2))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref C))))
+          (numeric-literal 4))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D))))
+          (numeric-literal 8))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref E))))
+          (numeric-literal 3.5))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref F))))
+          (numeric-literal 2.5))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref G)))))))
+          (numeric-literal 3.75)))))))

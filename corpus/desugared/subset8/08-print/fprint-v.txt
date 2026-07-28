@@ -5,32 +5,32 @@
     (block-function-body
       (expression-stmt
         (invocation io fprint (
-          (simple-var-ref io stdout)
+          (numeric-literal 1)
           (literal hello))))
       (expression-stmt
         (invocation io fprint (
-          (simple-var-ref io stdout)
+          (numeric-literal 1)
           (literal  world))))
       (expression-stmt
         (invocation io fprintln (
-          (simple-var-ref io stdout))))
+          (numeric-literal 1))))
       (expression-stmt
         (invocation io fprint (
-          (simple-var-ref io stdout)
+          (numeric-literal 1)
           (literal a)
           (literal b)
           (literal c))))
       (expression-stmt
         (invocation io fprintln (
-          (simple-var-ref io stdout))))
+          (numeric-literal 1))))
       (expression-stmt
         (invocation io fprint (
-          (simple-var-ref io stdout)
+          (numeric-literal 1)
           (literal 1))))
       (expression-stmt
         (invocation io fprint (
-          (simple-var-ref io stdout)
+          (numeric-literal 1)
           (literal 2))))
       (expression-stmt
         (invocation io fprintln (
-          (simple-var-ref io stdout)))))))
+          (numeric-literal 1)))))))

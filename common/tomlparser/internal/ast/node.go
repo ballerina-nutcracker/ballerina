@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 // TomlType enumerates the semantic AST node kinds.
 type TomlType int

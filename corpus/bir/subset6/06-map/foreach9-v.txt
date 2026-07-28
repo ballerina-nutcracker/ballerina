@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad John
     %3 = ConstantLoad age
     %4 = ConstantLoad 30
-    %5 = newMap {| name: string, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}{%1=%2, %3=%4}
+    %5 = newMap {| name: string, anydata... |}{%1=%2, %3=%4}
     r = %5;
     $desugar$0 = r;
     %8 = keys($desugar$0) -> bb1;

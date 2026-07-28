@@ -26,6 +26,7 @@ package pal
 import (
 	"context"
 	"io"
+	"net/http"
 	"time"
 )
 
@@ -78,7 +79,13 @@ type (
 		MonotonicNow func() time.Duration
 	}
 	HTTP struct {
+		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).
 		NewClient func(cfg ClientConfig) HTTPClient
+		// Listen starts serving inbound requests to handler. On native it binds a
+		// TCP socket and runs http.Server.Serve; a WASM/web platform registers the
+		// handler with its JS host instead (no socket). Returns a handle whose
+		// Shutdown/Close control the listener lifecycle.
+		Listen func(cfg ServerConfig, handler http.Handler) (ServerHandle, error)
 	}
 )
 
@@ -174,5 +181,33 @@ type (
 	// It is created once per Ballerina http:Client init and reused across requests.
 	HTTPClient interface {
 		Execute(ctx context.Context, method, url string, body io.Reader, contentLength int64, contentType string, reqHeaders map[string][]string) (statusCode int, respHeaders map[string][]string, respBody io.ReadCloser, err error)
+	}
+
+	// ServerTLSConfig carries TLS settings for an HTTP listener, derived from
+	// Ballerina's http:ListenerSecureSocket. The caller pre-reads all PEM material
+	// (via FS) so the platform never touches the filesystem; the platform assembles
+	// the concrete TLS configuration. WASM/web platforms may ignore this entirely.
+	ServerTLSConfig struct {
+		CertPEM               []byte   // key.certFile contents — server certificate
+		KeyPEM                []byte   // key.keyFile contents  — server private key
+		ClientCACertPEM       []byte   // mutualSsl CA pool; non-empty → require+verify client cert
+		MinVersion            uint16   // TLS min version (e.g. 0x0303 for TLSv1.2); 0 = platform default
+		MaxVersion            uint16   // TLS max version; 0 = unset
+		CipherSuiteNames      []string // IANA cipher names; platform resolves to IDs
+		DisableSessionTickets bool     // shareSession=false → disable TLS session tickets
+	}
+	// ServerConfig bundles the static options for an HTTP listener.
+	ServerConfig struct {
+		Host         string
+		Port         int
+		HTTPVersion  string           // "1.1" or "2.0"
+		WriteTimeout time.Duration    // 0 → platform default
+		TLS          *ServerTLSConfig // nil = plaintext
+	}
+	// ServerHandle is an opaque handle to a started HTTP listener, returned by
+	// HTTP.Listen. It owns the listener lifecycle.
+	ServerHandle interface {
+		Shutdown(ctx context.Context) error // graceful: drain in-flight requests, then close
+		Close() error                       // immediate: close all connections now
 	}
 )

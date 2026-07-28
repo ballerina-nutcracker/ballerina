@@ -16,7 +16,7 @@
 
 package semantics
 
-import "ballerina-lang-go/ast"
+import "ballerina/ast"
 
 // enclosingClassBody captures the subset of a class or service body that
 // semantic analysis (in particular lock validation and isolated-field
@@ -34,7 +34,7 @@ type enclosingClassBody struct {
 
 func enclosingFromClass(c *ast.BLangClassDefinition) *enclosingClassBody {
 	return &enclosingClassBody{
-		name:     c.Name.Value,
+		name:     c.Name.GetValue(),
 		isolated: c.IsIsolated(),
 		fields:   c.Fields,
 		initFn:   c.InitFunction,

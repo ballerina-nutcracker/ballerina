@@ -1,46 +1,14 @@
 (package
   (import-package ballerina io (as io))
-  (const base (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (const a (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (const c (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (const d (
-    (union-type
-      (value-type int)
-      (value-type null))) ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref base)
-        (literal 5))
-      (assignment
-        (simple-var-ref a)
-        (simple-var-ref base))
-      (assignment
-        (simple-var-ref c)
-        (unary-expr -
-          (simple-var-ref base)))
-      (assignment
-        (simple-var-ref d)
-        (unary-expr ~
-          (simple-var-ref base)))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref a))))
+          (numeric-literal 5))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref c))))
+          (numeric-literal -5))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref d)))))))
+          (numeric-literal -6)))))))

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: cannot assign to final variable
+error[SEMANTIC_ERROR]: cannot assign to constant
   --> 5-e.bal:25:9
    |
 25 |         i = 1; // @error

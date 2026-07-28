@@ -21,11 +21,12 @@ import (
 	"fmt"
 	"sync"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type desugaredNode[E ast.Node] struct {
@@ -271,6 +272,7 @@ type desugaredSymbol struct {
 	name     string
 	ty       semtypes.SemType
 	kind     model.SymbolKind
+	location diagnostics.Location
 	isPublic bool
 }
 
@@ -292,6 +294,10 @@ func (s *desugaredSymbol) SetType(_ semtypes.SemType) {
 	panic("SetType is not supported for desugared symbols")
 }
 
+func (s *desugaredSymbol) Location() diagnostics.Location {
+	return s.location
+}
+
 func (s *desugaredSymbol) IsPublic() bool {
 	return s.isPublic
 }
@@ -301,7 +307,7 @@ func (s *desugaredSymbol) Copy() model.Symbol {
 	return &cp
 }
 
-func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, isPublic bool) (string, model.SymbolRef) {
+func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, isPublic bool, pos diagnostics.Location) (string, model.SymbolRef) {
 	if len(ctx.scopeStack) == 0 {
 		ctx.internalError("cannot add desugared symbol when scope stack is empty")
 	}
@@ -310,6 +316,7 @@ func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.Sy
 		name:     name,
 		ty:       ty,
 		kind:     kind,
+		location: pos,
 		isPublic: isPublic,
 	}
 	ctx.currentScope().AddSymbol(name, symbol)
@@ -323,11 +330,15 @@ func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.Sy
 type moduleInitNode struct {
 	sym  model.SymbolRef
 	expr ast.BLangExpression // nil if the declaration has no initializer
-	name *ast.BLangIdentifier
+	name ast.IdentifierNode
 }
 
+// collectModuleInitNodes gathers module-level global variables for the synthetic
+// init function. Constants are not included: a foldable constant is inlined at
+// its use sites and an unfoldable one is a compile-time error, so no constant
+// needs runtime initialization.
 func collectModuleInitNodes(pkg *ast.BLangPackage) []moduleInitNode {
-	nodes := make([]moduleInitNode, 0, len(pkg.GlobalVars)+len(pkg.Constants))
+	nodes := make([]moduleInitNode, 0, len(pkg.GlobalVars))
 	for i := range pkg.GlobalVars {
 		gv := &pkg.GlobalVars[i]
 		var expr ast.BLangExpression
@@ -340,37 +351,23 @@ func collectModuleInitNodes(pkg *ast.BLangPackage) []moduleInitNode {
 			name: gv.Name,
 		})
 	}
-	for i := range pkg.Constants {
-		c := &pkg.Constants[i]
-		var expr ast.BLangExpression
-		if c.Expr != nil {
-			expr = c.Expr.(ast.BLangExpression)
-		}
-		nodes = append(nodes, moduleInitNode{
-			sym:  c.Symbol(),
-			expr: expr,
-			name: c.Name,
-		})
-	}
 	return nodes
 }
 
-// We desugar by moving all these to the init function, so they should no longer be there
+// We desugar module initializers into the init function, so they should no longer be there.
 func clearModuleInitExprs(pkg *ast.BLangPackage) {
 	for i := range pkg.GlobalVars {
 		pkg.GlobalVars[i].Expr = nil
-	}
-	for i := range pkg.Constants {
-		pkg.Constants[i].Expr = nil
 	}
 }
 
 // Accumulate all the nodes referred by a given node. Assume all references to be valid
 // (semantic analysis should have cought any invalid cases) and is agnostic towards the exact expression
 type dependencyVisitor struct {
-	compilerCtx *context.CompilerContext
-	nodeSet     map[model.SymbolRef]int // symbol → index into nodes slice
-	deps        map[int]struct{}
+	compilerCtx    *context.CompilerContext
+	nodeSet        map[model.SymbolRef]int // symbol → index into nodes slice
+	runtimeGlobals map[string]model.SymbolRef
+	deps           map[int]struct{}
 }
 
 // mark current node depnds on on the given
@@ -387,16 +384,40 @@ func (v *dependencyVisitor) Visit(node ast.BLangNode) ast.Visitor {
 		v.depends(n.Symbol())
 	case *ast.BLangSimpleVarRef:
 		v.depends(n.Symbol())
+	case *ast.BLangAnnotAccessExpr:
+		v.dependsOnRuntimeAnnotation(n)
 	}
 	return v
 }
 
 func (v *dependencyVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return v }
 
+func (v *dependencyVisitor) dependsOnRuntimeAnnotation(expr *ast.BLangAnnotAccessExpr) {
+	receiver, ok := expr.Expr.(ast.BNodeWithSymbol)
+	if !ok {
+		v.compilerCtx.InternalError("annotation access receiver has no symbol", expr.GetPosition())
+		return
+	}
+	annotationSymbol := v.compilerCtx.GetSymbol(expr.Symbol())
+	key := model.AnnotationKey(v.compilerCtx.SymbolPackage(expr.Symbol()), annotationSymbol.Name())
+	ref, ok := v.compilerCtx.SymbolAnnotationValues(receiver.Symbol())[key].(*values.RuntimeAnnotationValueRef)
+	if !ok {
+		// Compile-time annotation values and absent annotations do not add module-init dependencies.
+		return
+	}
+	if global, ok := v.runtimeGlobals[ref.GlobalLookupKey()]; ok {
+		v.depends(global)
+	}
+}
+
 func toplogicallySortInits(compilerCtx *context.CompilerContext, nodes []moduleInitNode) ([]int, bool) {
 	nodeSet := make(map[model.SymbolRef]int, len(nodes))
+	runtimeGlobals := make(map[string]model.SymbolRef, len(nodes))
 	for i, n := range nodes {
 		nodeSet[n.sym] = i
+		ref := n.sym
+		pkg := compilerCtx.SymbolPackage(ref)
+		runtimeGlobals[pkg.Organization+"/"+pkg.Package+":"+n.name.GetValue()] = ref
 	}
 
 	deps := make([][]int, len(nodes))
@@ -405,9 +426,10 @@ func toplogicallySortInits(compilerCtx *context.CompilerContext, nodes []moduleI
 			continue
 		}
 		v := &dependencyVisitor{
-			compilerCtx: compilerCtx,
-			nodeSet:     nodeSet,
-			deps:        make(map[int]struct{}),
+			compilerCtx:    compilerCtx,
+			nodeSet:        nodeSet,
+			runtimeGlobals: runtimeGlobals,
+			deps:           make(map[int]struct{}),
 		}
 		ast.Walk(v, nodes[i].expr)
 		for d := range v.deps {
@@ -557,7 +579,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		if node.expr == nil {
 			continue
 		}
-		if vs, ok := compilerCtx.GetSymbol(node.sym).(*model.ValueSymbol); ok && vs.IsListener() {
+		if vs, ok := compilerCtx.GetSymbol(node.sym).(*model.VariableSymbol); ok && vs.IsListener() {
 			initStmts = append(initStmts, buildListnerInit(pkgCtx, node, moduleListenersRef)...)
 		} else {
 			initStmts = append(initStmts, buildInitAssignment(compilerCtx, node))
@@ -606,7 +628,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
 		fnSymName := "$" + methodName + "Method"
-		fnSym := &desugaredSymbol{name: fnSymName, ty: fnTy, kind: model.SymbolKindFunction}
+		fnSym := &desugaredSymbol{name: fnSymName, ty: fnTy, kind: model.SymbolKindFunction, location: initPos}
 		scope.AddSymbol(fnSymName, fnSym)
 		fnSymRef, _ := scope.GetSymbol(fnSymName)
 
@@ -622,7 +644,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 	buildForeach := func(fnScope model.Scope, methodName string) *ast.BLangForeach {
 		foreachScope := compilerCtx.NewBlockScope(fnScope, *pkgID)
 		loopVarName := "$listener"
-		loopSym := &desugaredSymbol{name: loopVarName, ty: elementTy, kind: model.SymbolKindVariable}
+		loopSym := &desugaredSymbol{name: loopVarName, ty: elementTy, kind: model.SymbolKindVariable, location: initPos}
 		foreachScope.AddSymbol(loopVarName, loopSym)
 		loopSymRef, _ := foreachScope.GetSymbol(loopVarName)
 
@@ -643,8 +665,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		loopVarRef.SetPosition(initPos)
 
 		collectionRef := *moduleListenersRef
-		variableName := *moduleListenersRef.VariableName
-		collectionRef.VariableName = &variableName
+		collectionRef.VariableName = moduleListenersRef.VariableName
 		bodyStmt := buildMethodCallStmt(foreachScope, loopVarRef, methodName)
 
 		foreach := &ast.BLangForeach{
@@ -662,13 +683,13 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 
 	buildLifecycleFn := func(fnName string) *ast.BLangFunction {
 		fn := &ast.BLangFunction{}
-		fn.Name = ast.BLangIdentifier{Value: fnName}
+		fn.Name = &ast.BLangIdentifier{Value: fnName}
 		fn.Name.SetDeterminedType(semtypes.NEVER)
 		fn.SetDeterminedType(semtypes.NEVER)
 		fn.SetPosition(initPos)
 
 		signature := model.FunctionSignature{ReturnType: errorOrNil}
-		fnSymbol := model.NewFunctionSymbol(fnName, signature, false)
+		fnSymbol := model.NewFunctionSymbol(fnName, signature, false, initPos)
 		symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 		symbolSpace.AddSymbol(fnName, fnSymbol)
 		symRef, _ := symbolSpace.GetSymbol(fnName)
@@ -715,7 +736,7 @@ func ListenerMethodFor(name string) string {
 
 func hasModuleListenerVar(compilerCtx *context.CompilerContext, nodes []moduleInitNode) bool {
 	for _, n := range nodes {
-		if vs, ok := compilerCtx.GetSymbol(n.sym).(*model.ValueSymbol); ok && vs.IsListener() {
+		if vs, ok := compilerCtx.GetSymbol(n.sym).(*model.VariableSymbol); ok && vs.IsListener() {
 			return true
 		}
 	}
@@ -764,6 +785,9 @@ func pickInitFunctionPosition(nodes []moduleInitNode, pkg *ast.BLangPackage) dia
 	if len(pkg.Services) > 0 {
 		return pkg.Services[0].GetPosition()
 	}
+	if pkg.InitFunction != nil {
+		return pkg.InitFunction.GetPosition()
+	}
 	return diagnostics.Location{}
 }
 
@@ -783,7 +807,7 @@ func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, in
 
 func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, initPos diagnostics.Location) {
 	pkg.InitFunction = &ast.BLangFunction{}
-	pkg.InitFunction.Name = ast.BLangIdentifier{Value: "init"}
+	pkg.InitFunction.Name = &ast.BLangIdentifier{Value: "init"}
 	pkg.InitFunction.Name.SetDeterminedType(semtypes.NEVER)
 	body := &ast.BLangBlockFunctionBody{}
 	body.SetDeterminedType(semtypes.NEVER)
@@ -793,7 +817,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 	pkg.InitFunction.SetPosition(initPos)
 	pkgID := pkg.PackageID
 	signature := model.FunctionSignature{ReturnType: semtypes.NIL}
-	initSymbol := model.NewFunctionSymbol("init", signature, false)
+	initSymbol := model.NewFunctionSymbol("init", signature, false, initPos)
 	symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 	symbolSpace.AddSymbol("init", initSymbol)
 	symRef, _ := symbolSpace.GetSymbol("init")
@@ -805,7 +829,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 // moduleListenersGlobalName is the module-level variable that holds every
 // listener value evaluated during module init (see design.md). Lifecycle
 // methods (`$gracefulStop`, `$immediateStop`) are suppose to use this array.
-// https://github.com/ballerina-platform/ballerina-lang-go/issues/475
+// https://github.com/ballerina-nutcracker/ballerina/issues/475
 const moduleListenersGlobalName = "$moduleListeners"
 
 func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos diagnostics.Location) (*ast.BLangSimpleVarRef, ast.StatementNode) {
@@ -823,7 +847,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 		arrTy = listDefn.DefineListTypeWrapped(env, nil, 0, listnerTop, semtypes.CellMutability_CELL_MUT_LIMITED)
 	}
 
-	sym := model.NewValueSymbol(moduleListenersGlobalName, false, false, false)
+	sym := model.NewVariableSymbol(moduleListenersGlobalName, false, false, false, pos)
 	symRef := pkgCtx.addModuleSymbol(moduleListenersGlobalName, &sym)
 	pkgCtx.setSymbolType(symRef, arrTy)
 
@@ -836,6 +860,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 	pkg.AddGlobalVariable(global)
 
 	ref := &ast.BLangSimpleVarRef{VariableName: &ast.BLangIdentifier{Value: moduleListenersGlobalName}}
+	ref.VariableName.SetPosition(pos)
 	ref.SetSymbol(symRef)
 	ref.SetDeterminedType(arrTy)
 	ref.SetPosition(pos)
@@ -905,7 +930,7 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 			}
 			ty := semtypes.Diff(exprTy, semtypes.ERROR)
 			name := pkgCtx.nextDesugarSymbolName()
-			sym := model.NewValueSymbol(name, false, false, false)
+			sym := model.NewVariableSymbol(name, false, false, false, pos)
 			sym.SetListener()
 			symRef := pkgCtx.addModuleSymbol(name, &sym)
 			pkgCtx.setSymbolType(symRef, ty)
@@ -932,7 +957,7 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 
 func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location) (*ast.BLangSimpleVariableDef, *ast.BLangSimpleVarRef) {
 	name := pkgCtx.nextDesugarSymbolName()
-	sym := &desugaredSymbol{name: name, ty: ty, kind: model.SymbolKindVariable}
+	sym := &desugaredSymbol{name: name, ty: ty, kind: model.SymbolKindVariable, location: pos}
 	scope.AddSymbol(name, sym)
 	symRef, _ := scope.GetSymbol(name)
 
@@ -1084,7 +1109,7 @@ func createDefaultValueFunction(name string, defaultExpr ast.BLangExpression) *a
 	body.SetDeterminedType(semtypes.NEVER)
 
 	fn := &ast.BLangFunction{}
-	fn.Name = ast.BLangIdentifier{Value: name}
+	fn.Name = &ast.BLangIdentifier{Value: name}
 	fn.Name.SetDeterminedType(semtypes.NEVER)
 	fn.Body = body
 	fn.SetDeterminedType(semtypes.NEVER)
@@ -1169,11 +1194,11 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn *ast.BLangFunction) []*
 		symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
 		for k := range fn.RequiredParams[:j] {
 			precedingParam := fn.RequiredParams[k]
-			paramName := precedingParam.Name.Value
+			paramName := precedingParam.Name.GetValue()
 			paramTy := ctx.symbolType(precedingParam.Symbol())
 			newParam := newSimpleVariable(paramName, paramTy)
 			newParam.SetRequiredParam()
-			fnScope.AddSymbol(paramName, new(model.NewValueSymbol(paramName, false, false, true)))
+			fnScope.AddSymbol(paramName, new(model.NewVariableSymbol(paramName, false, false, true, precedingParam.Name.GetPosition())))
 			paramSymRef, _ := fnScope.GetSymbol(paramName)
 			ctx.setSymbolType(paramSymRef, paramTy)
 			newParam.SetSymbol(paramSymRef)
@@ -1331,6 +1356,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		panic(panicErr)
 	}
 
+	pkg.Constants = nil
 	return pkg
 }
 
@@ -1349,14 +1375,14 @@ func desugarServiceDefinition(pkgCtx *packageContext, svc *ast.BLangService) {
 func synthesizeDefaultInitFunction(pkgCtx *packageContext, classScope model.Scope, pos diagnostics.Location) *ast.BLangFunction {
 	fn := ast.BLangFunction{}
 	fn.SetAttached()
-	fn.Name = ast.BLangIdentifier{Value: "init"}
+	fn.Name = &ast.BLangIdentifier{Value: "init"}
 	body := &ast.BLangBlockFunctionBody{}
 	body.SetPosition(pos)
 	fn.Body = body
 	fn.SetDeterminedType(semtypes.NEVER)
 	fn.SetScope(pkgCtx.newFunctionScope(classScope))
 	fn.SetPosition(pos)
-	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false)
+	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false, pos)
 	classScope.AddSymbol("init", initSymbol)
 	symRef, _ := classScope.GetSymbol("init")
 	fn.SetSymbol(symRef)
@@ -1395,7 +1421,7 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 		selfVarRef.SetDeterminedType(classType)
 
 		fieldAccess := &ast.BLangFieldBaseAccess{
-			Field: ast.BLangIdentifier{Value: field.GetName().GetValue()},
+			Field: &ast.BLangIdentifier{Value: field.GetName().GetValue()},
 		}
 		fieldAccess.Field.SetDeterminedType(semtypes.NEVER)
 		fieldAccess.Expr = selfVarRef

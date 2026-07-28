@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'marker' does not allow a value
+  --> 12-e.bal:26:1
+   |
+26 | @marker {} // @error
+   | ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: duplicate annotation 'info' on type
+  --> 12-e.bal:25:1
+   |
+25 | @info {code: 2} // @error
+   | ^^^^^^^^^^^^^^^

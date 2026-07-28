@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad false
     %3 = ConstantLoad <nil>
     %4 = ConstantLoad 3
-    %5 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%4]{%1, %2, %3}
+    %5 = newArray [any...][%4]{%1, %2, %3}
     v = %5;
     %7 = length(v) -> bb1;
   }

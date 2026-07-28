@@ -1,0 +1,10 @@
+-- stdout --
+200
+a
+text/plain
+false
+mutated
+0
+7
+bytes
+-- stderr --

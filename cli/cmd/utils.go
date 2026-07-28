@@ -23,8 +23,8 @@ import (
 	"os"
 	"strings"
 
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/projects"
+	"ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"

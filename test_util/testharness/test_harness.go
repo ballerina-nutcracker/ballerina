@@ -38,14 +38,14 @@ import (
 	"testing"
 	"time"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/platform/pal"
-	"ballerina-lang-go/platform/palnative"
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/bir"
+	"ballerina/platform/pal"
+	"ballerina/platform/palnative"
+	"ballerina/projects"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/test_util"
+	"ballerina/tools/diagnostics"
 )
 
 // TestCase / TestKind / TestSuffix and the suffix constants live in test_util
@@ -213,6 +213,17 @@ func normalizePath(path string) string {
 	return path
 }
 
+// createParentDirs creates any missing ancestor directories for path, mirroring
+// jBallerina's io module, which creates parent directories before opening a
+// file for writing or appending.
+func createParentDirs(path string) error {
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0o755)
+	}
+	return nil
+}
+
 func (p *testPal) Platform() pal.Platform {
 	p.ensureSignalSource()
 	return pal.Platform{
@@ -233,10 +244,18 @@ func (p *testPal) Platform() pal.Platform {
 				return os.ReadFile(normalizePath(path))
 			},
 			WriteFile: func(path string, data []byte) error {
-				return os.WriteFile(normalizePath(path), data, 0o644)
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
+				return os.WriteFile(path, data, 0o644)
 			},
 			AppendFile: func(path string, data []byte) (err error) {
-				f, err := os.OpenFile(normalizePath(path), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
+				f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 				if err != nil {
 					return err
 				}
@@ -405,9 +424,9 @@ func Run(t testing.TB, tc test_util.TestCase, pal TestPal, externs []ExternRegis
 
 	var stderr bytes.Buffer
 	if tc.IsProject {
-		printDiagnostics(fsys, &stderr, result.Diagnostics(), compilation.DiagnosticEnv())
+		PrintDiagnostics(fsys, &stderr, result.Diagnostics(), compilation.DiagnosticEnv())
 	}
-	printDiagnostics(fsys, &stderr, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	PrintDiagnostics(fsys, &stderr, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
 	pal.WriteStderr(stderr.String())
 	pal.SetDiagnostics(resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv()))
 
@@ -975,7 +994,9 @@ func buildDiagnosticLocation(filePath string, startLine, startCol, endLine, endC
 	}
 }
 
-func printDiagnostics(fsys fs.FS, w io.Writer, diagResult projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
+// PrintDiagnostics renders every diagnostic in diagResult to w, in the same
+// "error[CODE]: message" + source-snippet format used by the compiler CLI.
+func PrintDiagnostics(fsys fs.FS, w io.Writer, diagResult projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
 	for _, d := range diagResult.Diagnostics() {
 		printDiagnostic(fsys, w, d, de)
 	}

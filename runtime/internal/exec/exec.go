@@ -18,7 +18,7 @@
 // This is an internal runtime package and only runtime should depend on this package
 package exec
 
-import "ballerina-lang-go/runtime/extern"
+import "ballerina/runtime/extern"
 
 // CreateContext builds an extern.Context wired with a fresh call stack
 // ready to execute BIR functions. Runtime callers must use this rather

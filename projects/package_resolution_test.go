@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/test_util"
+	"ballerina/projects"
+	"ballerina/test_util"
 )
 
 // TestModuleResolver_ExternalPackage tests that the module resolver can identify external imports.
@@ -71,7 +71,8 @@ func TestPackageResolution_PackageNotFound(t *testing.T) {
 	version, err := projects.NewPackageVersionFromString("1.0.0")
 	require.NoError(err)
 
-	resp := env.PackageResolver().ResolvePackages(context.Background(),
+	resp := env.PackageResolver().ResolvePackages(
+		context.Background(),
 		[]projects.ResolutionRequest{
 			projects.NewResolutionRequest(projects.NewPackageDescriptor(
 				projects.NewPackageOrg("missingorg"),

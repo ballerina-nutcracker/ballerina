@@ -1,0 +1,90 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition InvalidIntDetail
+    (record-type
+      (field value
+        (value-type int))))
+  (type-definition InvalidI32Detail
+    (record-type
+      (field value
+        (user-defined-type int Signed32))))
+  (type-definition InvalidIntError
+    (error-type
+      (user-defined-type InvalidIntDetail)))
+  (type-definition InvalidI32Error
+    (error-type
+      (user-defined-type InvalidI32Detail)))
+  (type-definition DistinctIntError
+    (error-type
+      (user-defined-type InvalidIntDetail)))
+  (type-definition AnotherDistinctIntError
+    (error-type
+      (user-defined-type InvalidIntDetail)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (user-defined-type InvalidI32Error)) (expr
+          (invocation createInvalidI32Error (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e1)
+            (user-defined-type InvalidIntError)))))
+      (var-def
+        (variable e2 (type
+          (user-defined-type InvalidIntError)) (expr
+          (invocation createInvalidIntError (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e2)
+            (user-defined-type DistinctIntError)))))
+      (var-def
+        (variable e3 (type
+          (user-defined-type DistinctIntError)) (expr
+          (invocation createDistinctInvalidIntError (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e3)
+            (user-defined-type InvalidIntError)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e3)
+            (user-defined-type AnotherDistinctIntError)))))))
+  (function createInvalidIntError (
+    (variable value (type
+      (value-type int)))) (
+    (user-defined-type InvalidIntError))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal Invalid int)) (
+          (named-arg value
+            (simple-var-ref value)))))))
+  (function createDistinctInvalidIntError (
+    (variable value (type
+      (value-type int)))) (
+    (user-defined-type DistinctIntError))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal Invalid int)) (
+          (named-arg value
+            (simple-var-ref value)))))))
+  (function createInvalidI32Error (
+    (variable value (type
+      (user-defined-type int Signed32)))) (
+    (user-defined-type InvalidI32Error))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal Invalid i32)) (
+          (named-arg value
+            (simple-var-ref value))))))))

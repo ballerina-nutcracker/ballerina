@@ -1,0 +1,42 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable first (type
+        (union-type
+          (user-defined-type MediumInfo)
+          (value-type null))) (expr
+        (annot-access-expr medium
+          (simple-var-ref T1)))))
+    (var-def
+      (variable last (type
+        (union-type
+          (user-defined-type MediumInfo)
+          (value-type null))) (expr
+        (annot-access-expr medium
+          (simple-var-ref T8)))))
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref first)
+        (user-defined-type MediumInfo))
+      (type-test-expr is
+        (simple-var-ref last)
+        (user-defined-type MediumInfo)))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access id
+          (simple-var-ref first)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access id
+          (simple-var-ref last)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access values
+            (simple-var-ref last))
+          (literal 63)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

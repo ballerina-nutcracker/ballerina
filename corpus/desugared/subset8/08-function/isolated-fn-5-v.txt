@@ -1,11 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const val () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref val)
-        (literal 5))))
   (function foo (
     (variable x (type
       (value-type int)) (expr
@@ -40,7 +34,7 @@
   (function $default$0 () ()
     (block-function-body
       (return
-        (simple-var-ref val))))
+        (numeric-literal 5))))
   (function $default$1 (
     (variable x)) ()
     (block-function-body

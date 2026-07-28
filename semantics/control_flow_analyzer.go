@@ -20,10 +20,10 @@ import (
 	"slices"
 	"sync"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/model"
+	"ballerina/semtypes"
 )
 
 type basicBlock struct {

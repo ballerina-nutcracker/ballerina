@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // TestBlendedManifest_Dependency exercises blendedManifest.dependency in

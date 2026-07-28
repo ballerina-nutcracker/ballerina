@@ -1,6 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (const K () ())
   (variable A (type
     (value-type int)))
   (variable B (type
@@ -11,12 +10,9 @@
         (simple-var-ref B)
         (literal 1))
       (assignment
-        (simple-var-ref K)
-        (literal 10))
-      (assignment
         (simple-var-ref A)
         (binary-expr +
-          (simple-var-ref K)
+          (numeric-literal 10)
           (simple-var-ref B)))))
   (function main () (
     (value-type null))

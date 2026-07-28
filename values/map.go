@@ -21,7 +21,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 type mapEntry struct {
@@ -176,6 +176,10 @@ func (m *Map) unlinkEntry(e *mapEntry) {
 
 func (m *Map) Len() int {
 	return len(m.data)
+}
+
+func (m *Map) IsReadonly() bool {
+	return m.isReadonly
 }
 
 func (m *Map) Keys() []string {

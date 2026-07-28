@@ -1,50 +1,17 @@
 (package
   (import-package ballerina io (as io))
-  (const A () ())
-  (const B () ())
-  (const C () ())
-  (const D () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref A)
-        (unary-expr -
-          (literal 3)))
-      (assignment
-        (simple-var-ref B)
-        (unary-expr -
-          (group-expr
-            (binary-expr -
-              (literal 3)
-              (literal 1)))))
-      (assignment
-        (simple-var-ref C)
-        (binary-expr +
-          (literal 3)
-          (binary-expr /
-            (literal 10)
-            (literal 2))))
-      (assignment
-        (simple-var-ref D)
-        (binary-expr +
-          (binary-expr +
-            (binary-expr +
-              (literal 1)
-              (literal 2.5))
-            (literal 0.1))
-          (literal 0.1)))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref A))))
+          (numeric-literal -3))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref B))))
+          (numeric-literal -2))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref C))))
+          (numeric-literal 8))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D)))))))
+          (numeric-literal 3.7)))))))

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: cannot assign to final variable
+error[SEMANTIC_ERROR]: cannot assign to constant
   --> query-action-let-reassign-e.bal:31:13
    |
 31 |             doubledScore = 100; // @error

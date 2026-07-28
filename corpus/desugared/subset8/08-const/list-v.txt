@@ -1,49 +1,20 @@
 (package
   (import-package ballerina io (as io))
-  (const A () ())
-  (const B () ())
-  (const C () ())
-  (const D () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref A)
-        (list-constructor-expr
-          (literal 1)
-          (literal 2)
-          (literal 3)))
-      (assignment
-        (simple-var-ref B)
-        (list-constructor-expr
-          (literal hello)
-          (literal world)))
-      (assignment
-        (simple-var-ref C)
-        (list-constructor-expr
-          (literal 1)
-          (literal two)
-          (literal 3)))
-      (assignment
-        (simple-var-ref D)
-        (list-constructor-expr
-          (list-constructor-expr
-            (literal 1)
-            (literal 2))
-          (list-constructor-expr
-            (literal 3)
-            (literal 4))))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref A))))
+          (literal [1,2,3]))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref B))))
+          (literal ["hello","world"]))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref C))))
+          (literal [1,"two",3]))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D)))))))
+          (literal [[1,2],[3,4]]))))
+      (expression-stmt
+        (invocation io println (
+          (literal [10,11,-3])))))))

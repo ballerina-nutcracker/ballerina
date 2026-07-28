@@ -4,7 +4,7 @@ main() -> nil{
     %1 = ConstantLoad 0
     %2 = newArray [int...][%1]{}
     iv = %2;
-    %4 = iv is [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]
+    %4 = iv is [any...]
     %4 ? bb1 : bb3;
   }
   bb1 {

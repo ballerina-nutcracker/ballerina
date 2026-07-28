@@ -1,4 +1,0 @@
--- stdout --
--- stderr --
-error: bad type cast: cannot cast non-finite value NaN to int
-        at init(21-p.bal:20)

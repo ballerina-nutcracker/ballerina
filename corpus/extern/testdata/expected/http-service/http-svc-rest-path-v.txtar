@@ -1,0 +1,4 @@
+-- stdout --
+200
+rest path matched
+-- stderr --

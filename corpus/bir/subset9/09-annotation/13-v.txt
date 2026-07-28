@@ -1,0 +1,85 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+$annotation$1  any;
+moduleMetadata  nil|{| code: int, never... |};
+code() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = moduleMetadata is {| code: int, never... |}
+    %1 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 4
+    %1 = ConstantLoad code
+    %0 = moduleMetadata[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:info
+    %2 = .@ %0 %1;
+    metadata = %2;
+    %4 = metadata is {| code: int, never... |}
+    %4 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 4
+    %1 = ConstantLoad code
+    %0 = (1, metadata)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:infos
+    %2 = .@ %0 %1;
+    repeatedMetadata = %2;
+    %4 = repeatedMetadata is [{| code: int, never... |}...]
+    %4 ? bb7 : bb10;
+  }
+  bb7 {
+    PushScopeFrame 12
+    %1 = ConstantLoad code
+    %3 = ConstantLoad 0
+    %2 = (1, repeatedMetadata)[%3];
+    %0 = %2[%1];
+    %4 = %0;
+    %5 = println(%4) -> bb8;
+  }
+  bb8 {
+    %7 = ConstantLoad code
+    %9 = ConstantLoad 1
+    %8 = (1, repeatedMetadata)[%9];
+    %6 = %8[%7];
+    %10 = %6;
+    %11 = println(%10) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

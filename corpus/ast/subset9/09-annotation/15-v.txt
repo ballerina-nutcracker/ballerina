@@ -1,0 +1,152 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Meta
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field name optional
+          (value-type string)))))
+  (annotation annotationMeta public const
+    (user-defined-type Meta)
+    (attach-point source annotation))
+  (annotation classMeta
+    (user-defined-type Meta)
+    (attach-point class))
+  (annotation serviceMeta
+    (user-defined-type Meta)
+    (attach-point service))
+  (annotation fieldMeta
+    (user-defined-type Meta)
+    (attach-point objectfield))
+  (annotation methodMeta
+    (user-defined-type Meta)
+    (attach-point objectfunction))
+  (annotation parameterMeta
+    (attach-point parameter))
+  (annotation returnMeta
+    (attach-point return))
+  (annotation recordFieldMeta
+    (attach-point recordfield))
+  (annotation objectFieldMeta
+    (attach-point objectfield))
+  (annotation anyFieldMeta
+    (attach-point field))
+  (annotation typeMeta
+    (annotation-attachment annotationMeta
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal type annotation))))
+    (user-defined-type Meta)
+    (attach-point type))
+  (class-definition Counter
+    (annotation-attachment classMeta
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal counter))))
+    (variable value (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function add (
+      (variable amount (type
+        (value-type int)))) (
+      (annotation-attachment returnMeta
+        (literal true))
+      (value-type int))
+      (block-function-body
+        (compound-assignment +
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref amount))
+        (foreach
+          (var-def
+            (variable extra (type
+              (value-type int))))
+          (simple-var-ref extras)
+          (block-stmt
+            (compound-assignment +
+              (field-based-access value
+                (simple-var-ref self))
+              (simple-var-ref extra))))
+        (return
+          (field-based-access value
+            (simple-var-ref self))))
+      (annotation-attachment methodMeta
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal add))))))
+  (type-definition Result
+    (annotation-attachment typeMeta
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal result))))
+    (value-type int))
+  (type-definition RecordWithMetadata
+    (record-type
+      (field value
+        (annotation-attachment recordFieldMeta
+          (literal true))
+        (annotation-attachment anyFieldMeta
+          (literal true))
+        (value-type int))))
+  (type-definition ObjectWithMetadata
+    (object-type
+      (field value public
+        (annotation-attachment objectFieldMeta
+          (literal true))
+        (annotation-attachment anyFieldMeta
+          (literal true))
+        (value-type int))))
+  (class-definition MetadataClient
+    (resource-function get name:value
+      (annotation-attachment returnMeta
+        (literal true))
+      (value-type int)
+      (block-function-body
+        (return
+          (literal 1)))))
+  (class-definition MetadataService
+    (annotation-attachment serviceMeta
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal service)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable counter (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (var-def
+        (variable result (type
+          (user-defined-type Result)) (expr
+          (invocation add expr:
+            (simple-var-ref counter) (
+            (literal 1)
+            (literal 2)
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result))))
+      (var-def
+        (variable serviceInfo (type
+          (union-type
+            (user-defined-type Meta)
+            (value-type null))) (expr
+          (annot-access-expr serviceMeta
+            (simple-var-ref MetadataService)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref serviceInfo)
+          (user-defined-type Meta))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access name
+                (simple-var-ref serviceInfo)))))) ())
+      (block-stmt))))

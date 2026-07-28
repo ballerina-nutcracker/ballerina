@@ -2,7 +2,7 @@ module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
-    %2 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    %2 = newArray [any...][%1]{}
     v = %2;
     %4 = ConstantLoad 0
     i = %4;

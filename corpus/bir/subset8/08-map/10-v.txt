@@ -9,9 +9,9 @@ main() -> nil{
     %6 = ConstantLoad Saturday
     %7 = ConstantLoad Sunday
     %8 = ConstantLoad 7
-    %9 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%8]{%1, %2, %3, %4, %5, %6, %7}
+    %9 = newArray [any...][%8]{%1, %2, %3, %4, %5, %6, %7}
     days = %9;
-    %11 = newMap {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{}
+    %11 = newMap {| any... |}{}
     dayNumber = %11;
     %13 = ConstantLoad 0
     i = %13;

@@ -1,0 +1,34 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable runtimeValue (type
+        (union-type
+          (user-defined-type Info)
+          (value-type null))) (expr
+        (annot-access-expr runtimeInfo
+          (simple-var-ref Person)))))
+    (type-test-expr is
+      (simple-var-ref runtimeValue)
+      (user-defined-type Info))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access label
+          (simple-var-ref runtimeValue)))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable sourceValue (type
+        (union-type
+          (user-defined-type Info)
+          (value-type null))) (expr
+        (annot-access-expr sourceInfo
+          (simple-var-ref Person)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref sourceValue)
+          (value-type null)))))
+  )
+)

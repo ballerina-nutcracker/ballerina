@@ -1,0 +1,12 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation toFixedString expr:
+          (group-expr
+            (literal 12.456)) (
+          (unary-expr -
+            (literal 1))))))))

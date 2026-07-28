@@ -17,6 +17,9 @@
 package projects
 
 import (
+	"fmt"
+	"io/fs"
+	"path"
 	"path/filepath"
 )
 
@@ -26,6 +29,7 @@ type BalaProject struct {
 	BaseProject
 	platform      string // e.g., "any"
 	schemaVersion int    // bala schema version; < 4 means legacy (v3) module layout
+	fsys          fs.FS  // FS rooted at the repository, used to read native Go sources
 }
 
 // Compile-time check to verify BalaProject implements Project interface
@@ -128,10 +132,20 @@ func (b *BalaProject) Save() {
 func (b *BalaProject) Duplicate() Project {
 	duplicateBuildOptions := NewBuildOptions().AcceptTheirs(b.buildOptions)
 	newProject := newBalaProjectWithEnv(b.sourceRoot, duplicateBuildOptions, b.platform, b.schemaVersion, b.Environment().Duplicate())
+	newProject.fsys = b.fsys
 	ResetPackage(b, newProject)
 	return newProject
 }
 
 func (b *BalaProject) Environment() *Environment {
 	return b.environment
+}
+
+// NativeGoSourceFS returns an fs.FS rooted at the native/ directory of this
+// bala, containing the Go source files that implement native functions.
+func (b *BalaProject) NativeGoSourceFS() (fs.FS, error) {
+	if b.fsys == nil {
+		return nil, fmt.Errorf("native source filesystem not initialized")
+	}
+	return fs.Sub(b.fsys, path.Join(b.sourceRoot, balaGoNativeDir))
 }

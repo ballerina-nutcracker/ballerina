@@ -1,0 +1,54 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition meta
+    (record-type
+      (field label
+        (value-type string))
+      (field code
+        (value-type int))))
+  (const LABEL (
+    (value-type string)) (
+    (literal from-const)))
+  (const CODE (
+    (value-type int)) (
+    (literal 42)))
+  (annotation meta
+    (user-defined-type meta)
+    (attach-point type))
+  (type-definition Target
+    (annotation-attachment meta
+      (mapping-constructor-expr
+        (key-value
+          (literal label)
+          (simple-var-ref LABEL))
+        (key-value
+          (literal code)
+          (simple-var-ref CODE))))
+    (record-type
+      (field id
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (union-type
+            (user-defined-type meta)
+            (value-type null))) (expr
+          (annot-access-expr meta
+            (simple-var-ref Target)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (user-defined-type meta))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access label
+                (simple-var-ref value)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access code
+                (simple-var-ref value)))))) ())
+      (block-stmt))))

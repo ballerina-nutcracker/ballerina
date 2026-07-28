@@ -25,12 +25,24 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"time"
 
-	"ballerina-lang-go/platform/pal"
+	"ballerina/platform/pal"
 )
 
 var processStart = time.Now()
+
+// createParentDirs creates any missing ancestor directories for path, mirroring
+// jBallerina's io module, which creates parent directories before opening a
+// file for writing or appending.
+func createParentDirs(path string) error {
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0o755)
+	}
+	return nil
+}
 
 // NewPlatform returns the native-CLI pal.Platform, wiring os.Stdout/Stderr for
 // IO and NewHTTPClient for HTTP. The returned cleanup function releases signal
@@ -47,9 +59,15 @@ func NewPlatform() (pal.Platform, func()) {
 				return os.ReadFile(path)
 			},
 			WriteFile: func(path string, data []byte) error {
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
 				return os.WriteFile(path, data, 0o644)
 			},
 			AppendFile: func(path string, data []byte) (err error) {
+				if err := createParentDirs(path); err != nil {
+					return err
+				}
 				f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 				if err != nil {
 					return err
@@ -107,13 +125,14 @@ func NewPlatform() (pal.Platform, func()) {
 		},
 		HTTP: pal.HTTP{
 			NewClient: NewHTTPClient,
+			Listen:    Listen,
 		},
 		Signals: signals,
 	}, cleanupSignals
 }
 
-// Exec starts a subprocess and returns a handle to it. It is exported so test
-// harnesses can wire real subprocess execution into an otherwise in-memory PAL.
+// Exec starts a subprocess and returns a handle to it. Exposed at package level
+// so test harnesses can wire real subprocess execution into a pal.Platform.
 func Exec(command string, args []string, envOverride map[string]string) (pal.ProcessHandle, error) {
 	cmd := exec.Command(command, args...) //nolint:gosec
 	if len(envOverride) > 0 {

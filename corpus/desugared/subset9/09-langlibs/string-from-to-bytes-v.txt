@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable bytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 72)
+            (literal 101)
+            (literal 108)
+            (literal 108)
+            (literal 111)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation string fromBytes (
+            (simple-var-ref bytes))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (invocation string toBytes (
+            (literal Hello))))))
+      (var-def
+        (variable bad (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 255)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation string fromBytes (
+            (simple-var-ref bad)))))))))

@@ -1,0 +1,48 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable b64 (type
+        (value-type string)) (expr
+        (literal SGVsbG8=))))
+    (var-def
+      (variable decoded (expr
+        (invocation array fromBase64 (
+          (simple-var-ref b64))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decoded))))
+    (var-def
+      (variable hex (type
+        (value-type string)) (expr
+        (literal 48656c6c6f))))
+    (var-def
+      (variable decodedHex (expr
+        (invocation array fromBase16 (
+          (simple-var-ref hex))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decodedHex))))
+    (var-def
+      (variable badB64 (type
+        (value-type string)) (expr
+        (literal SGVsbG8--))))
+    (var-def
+      (variable decodedBad (expr
+        (invocation array fromBase64 (
+          (simple-var-ref badB64))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decodedBad))))
+    (var-def
+      (variable badHex (type
+        (value-type string)) (expr
+        (literal 48656c6c6f==))))
+    (var-def
+      (variable decodedBadHex (expr
+        (invocation array fromBase16 (
+          (simple-var-ref badHex))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decodedBadHex))))
+  )
+)

@@ -1,15 +1,8 @@
 (package
   (import-package ballerina io (as io))
-  (const MINUS1 () ())
-  (function init () ()
-    (block-function-body
-      (assignment
-        (simple-var-ref MINUS1)
-        (unary-expr -
-          (literal 1)))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation io println (
-          (simple-var-ref MINUS1)))))))
+          (numeric-literal -1)))))))

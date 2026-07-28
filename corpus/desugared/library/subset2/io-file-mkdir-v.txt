@@ -1,0 +1,269 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable stringPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/string/a/b/string.txt))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref stringPath))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal hello))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io fileReadString (
+            (simple-var-ref stringPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable linesPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref linesPath))))
+      (var-def
+        (variable $desugar$6 (expr
+          (list-constructor-expr
+            (literal one)
+            (literal two)))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation io fileWriteLines (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$8))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation io fileReadLines (
+            (simple-var-ref linesPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$9))))
+      (var-def
+        (variable bytesPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat))))
+      (var-def
+        (variable $desugar$10 (expr
+          (simple-var-ref bytesPath))))
+      (var-def
+        (variable $desugar$11 (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$13))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation io fileReadBytes (
+            (simple-var-ref bytesPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$14))))
+      (var-def
+        (variable jsonPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/json/a/b/data.json))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation io fileWriteJson (
+            (simple-var-ref jsonPath)
+            (mapping-constructor-expr
+              (key-value
+                (literal k)
+                (literal v))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$15))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$15))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$15))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation io fileReadJson (
+            (simple-var-ref jsonPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$16))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$16))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$16))))
+      (var-def
+        (variable xmlPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml))))
+      (var-def
+        (variable $desugar$17 (expr
+          (simple-var-ref xmlPath))))
+      (var-def
+        (variable $desugar$18 (expr
+          (xml-element-literal a))))
+      (var-def
+        (variable $desugar$19 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$17)
+            (simple-var-ref $desugar$18))))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation io fileWriteXml (
+            (simple-var-ref $desugar$17)
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$20))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$20))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$20))
+      (var-def
+        (variable $desugar$21 (expr
+          (invocation io fileReadXml (
+            (simple-var-ref xmlPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$21))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$21))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$21))))
+      (var-def
+        (variable appendPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_mkdir_xyz/append/c/d/append.txt))))
+      (var-def
+        (variable $desugar$22 (expr
+          (simple-var-ref appendPath))))
+      (var-def
+        (variable $desugar$23 (expr
+          (literal First))))
+      (var-def
+        (variable $desugar$24 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23))))))
+      (var-def
+        (variable $desugar$25 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23)
+            (simple-var-ref $desugar$24))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$25))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$25))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$25))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation io fileWriteString (
+            (simple-var-ref appendPath)
+            (literal Second)
+            (literal APPEND))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$26))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$26))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$26))
+      (var-def
+        (variable $desugar$27 (expr
+          (invocation io fileReadString (
+            (simple-var-ref appendPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$27))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$27))) ())
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref $desugar$27)))))))

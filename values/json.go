@@ -20,8 +20,8 @@ package values
 import (
 	"encoding/json"
 
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/semtypes"
+	"ballerina/decimal"
+	"ballerina/semtypes"
 )
 
 // ToJSONByteArray serializes a Ballerina JSON value to its JSON byte

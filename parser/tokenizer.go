@@ -16,7 +16,7 @@
 package parser
 
 import (
-	"ballerina-lang-go/parser/tree"
+	"ballerina/parser/tree"
 )
 
 type TokenReader struct {

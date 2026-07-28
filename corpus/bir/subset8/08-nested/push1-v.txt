@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-N  10;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -7,14 +6,15 @@ main() -> nil{
     v = %2;
     %4 = ConstantLoad 0
     _ = %4;
-    $desugar$0 = N;
+    %6 = ConstantLoad 10
+    $desugar$0 = %6;
     GOTO bb1;
   }
   bb1 {
-    %8 = _;
-    %9 = $desugar$0;
-    %7 = < %8 %9;
-    %7 ? bb2 : bb3;
+    %9 = _;
+    %10 = $desugar$0;
+    %8 = < %9 %10;
+    %8 ? bb2 : bb3;
   }
   bb2 {
     PushScopeFrame 10
@@ -26,9 +26,10 @@ main() -> nil{
     %5 = push((1, v),%4) -> bb4;
   }
   bb3 {
-    %10 = ConstantLoad 0
-    i = %10;
-    $desugar$1 = N;
+    %11 = ConstantLoad 0
+    i = %11;
+    %13 = ConstantLoad 10
+    $desugar$1 = %13;
     GOTO bb5;
   }
   bb4 {
@@ -41,10 +42,10 @@ main() -> nil{
     GOTO bb1;
   }
   bb5 {
-    %14 = i;
-    %15 = $desugar$1;
-    %13 = < %14 %15;
-    %13 ? bb6 : bb7;
+    %16 = i;
+    %17 = $desugar$1;
+    %15 = < %16 %17;
+    %15 ? bb6 : bb7;
   }
   bb6 {
     PushScopeFrame 18
@@ -73,20 +74,21 @@ main() -> nil{
     GOTO bb5;
   }
   bb7 {
-    %16 = ConstantLoad 0
-    total1 = %16;
     %18 = ConstantLoad 0
-    total2 = %18;
+    total1 = %18;
     %20 = ConstantLoad 0
-    i = %20;
-    $desugar$2 = N;
+    total2 = %20;
+    %22 = ConstantLoad 0
+    i = %22;
+    %24 = ConstantLoad 10
+    $desugar$2 = %24;
     GOTO bb8;
   }
   bb8 {
-    %24 = i;
-    %25 = $desugar$2;
-    %23 = < %24 %25;
-    %23 ? bb9 : bb10;
+    %27 = i;
+    %28 = $desugar$2;
+    %26 = < %27 %28;
+    %26 ? bb9 : bb10;
   }
   bb9 {
     PushScopeFrame 24
@@ -121,11 +123,11 @@ main() -> nil{
     GOTO bb8;
   }
   bb10 {
-    %27 = total1;
-    %28 = total2;
-    %26 = == %27 %28;
-    %29 = %26;
-    %30 = println(%29) -> bb11;
+    %30 = total1;
+    %31 = total2;
+    %29 = == %30 %31;
+    %32 = %29;
+    %33 = println(%32) -> bb11;
   }
   bb11 {
     return;

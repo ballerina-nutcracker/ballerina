@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-c  10;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad id
@@ -99,7 +98,8 @@ main() -> nil{
 }
 $desugar$0() -> int{
   bb0 {
-    %0 = c;
+    %1 = ConstantLoad 10
+    %0 = %1;
     return;
   }
 }

@@ -18,10 +18,10 @@ package parser
 import (
 	"unicode"
 
-	debugcommon "ballerina-lang-go/common"
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/text"
+	debugcommon "ballerina/common"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
+	"ballerina/tools/text"
 )
 
 // TODO: we have lot of unbounded lookaheads which are implemented by incrementing a lookahead count and repeatedly

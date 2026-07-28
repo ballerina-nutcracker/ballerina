@@ -17,9 +17,9 @@
 package modules
 
 import (
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/runtime/extern"
+	"ballerina/bir"
+	"ballerina/model"
+	"ballerina/runtime/extern"
 )
 
 type Registry struct {
@@ -78,6 +78,10 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 
 func (r *Registry) GetModule(pkgId *model.PackageID) *BIRModule {
 	return r.modules[moduleKey(pkgId)]
+}
+
+func (r *Registry) GetModuleByName(orgName, moduleName string) *BIRModule {
+	return r.modules[orgName+"/"+moduleName]
 }
 
 func (r *Registry) RegisterExternFunction(orgName string, moduleName string, funcName string, impl extern.NativeFunc) {

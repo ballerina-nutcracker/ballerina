@@ -477,12 +477,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     %145 = println(%144) -> bb80;
   }
   bb80 {
-    %146 = encryptRsaEcb(data,rsaPub,OAEPwithMD5andMGF1) -> bb81;
+    %146 = ConstantLoad OAEPwithMD5andMGF1
+    %147 = encryptRsaEcb(data,rsaPub,%146) -> bb81;
   }
   bb81 {
-    $desugar$41 = %146;
-    %148 = $desugar$41 is error
-    %148 ? bb82 : bb83;
+    $desugar$41 = %147;
+    %149 = $desugar$41 is error
+    %149 ? bb82 : bb83;
   }
   bb82 {
     PushScopeFrame 0
@@ -492,12 +493,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb83 {
     oaepMd5 = $desugar$41;
-    %150 = decryptRsaEcb(oaepMd5,rsaPk,OAEPwithMD5andMGF1) -> bb84;
+    %151 = ConstantLoad OAEPwithMD5andMGF1
+    %152 = decryptRsaEcb(oaepMd5,rsaPk,%151) -> bb84;
   }
   bb84 {
-    $desugar$42 = %150;
-    %152 = $desugar$42 is error
-    %152 ? bb85 : bb86;
+    $desugar$42 = %152;
+    %154 = $desugar$42 is error
+    %154 ? bb85 : bb86;
   }
   bb85 {
     PushScopeFrame 0
@@ -506,17 +508,18 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb86 {
-    %153 = == $desugar$42 data;
-    %154 = %153;
-    %155 = println(%154) -> bb87;
+    %155 = == $desugar$42 data;
+    %156 = %155;
+    %157 = println(%156) -> bb87;
   }
   bb87 {
-    %156 = encryptRsaEcb(data,rsaPub,OAEPWithSHA1AndMGF1) -> bb88;
+    %158 = ConstantLoad OAEPWithSHA1AndMGF1
+    %159 = encryptRsaEcb(data,rsaPub,%158) -> bb88;
   }
   bb88 {
-    $desugar$43 = %156;
-    %158 = $desugar$43 is error
-    %158 ? bb89 : bb90;
+    $desugar$43 = %159;
+    %161 = $desugar$43 is error
+    %161 ? bb89 : bb90;
   }
   bb89 {
     PushScopeFrame 0
@@ -526,12 +529,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb90 {
     oaep1 = $desugar$43;
-    %160 = decryptRsaEcb(oaep1,rsaPk,OAEPWithSHA1AndMGF1) -> bb91;
+    %163 = ConstantLoad OAEPWithSHA1AndMGF1
+    %164 = decryptRsaEcb(oaep1,rsaPk,%163) -> bb91;
   }
   bb91 {
-    $desugar$44 = %160;
-    %162 = $desugar$44 is error
-    %162 ? bb92 : bb93;
+    $desugar$44 = %164;
+    %166 = $desugar$44 is error
+    %166 ? bb92 : bb93;
   }
   bb92 {
     PushScopeFrame 0
@@ -540,17 +544,18 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb93 {
-    %163 = == $desugar$44 data;
-    %164 = %163;
-    %165 = println(%164) -> bb94;
+    %167 = == $desugar$44 data;
+    %168 = %167;
+    %169 = println(%168) -> bb94;
   }
   bb94 {
-    %166 = encryptRsaEcb(data,rsaPub,OAEPWithSHA256AndMGF1) -> bb95;
+    %170 = ConstantLoad OAEPWithSHA256AndMGF1
+    %171 = encryptRsaEcb(data,rsaPub,%170) -> bb95;
   }
   bb95 {
-    $desugar$45 = %166;
-    %168 = $desugar$45 is error
-    %168 ? bb96 : bb97;
+    $desugar$45 = %171;
+    %173 = $desugar$45 is error
+    %173 ? bb96 : bb97;
   }
   bb96 {
     PushScopeFrame 0
@@ -560,12 +565,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb97 {
     oaep256 = $desugar$45;
-    %170 = decryptRsaEcb(oaep256,rsaPk,OAEPWithSHA256AndMGF1) -> bb98;
+    %175 = ConstantLoad OAEPWithSHA256AndMGF1
+    %176 = decryptRsaEcb(oaep256,rsaPk,%175) -> bb98;
   }
   bb98 {
-    $desugar$46 = %170;
-    %172 = $desugar$46 is error
-    %172 ? bb99 : bb100;
+    $desugar$46 = %176;
+    %178 = $desugar$46 is error
+    %178 ? bb99 : bb100;
   }
   bb99 {
     PushScopeFrame 0
@@ -574,17 +580,18 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb100 {
-    %173 = == $desugar$46 data;
-    %174 = %173;
-    %175 = println(%174) -> bb101;
+    %179 = == $desugar$46 data;
+    %180 = %179;
+    %181 = println(%180) -> bb101;
   }
   bb101 {
-    %176 = encryptRsaEcb(data,rsaPub,OAEPwithSHA384andMGF1) -> bb102;
+    %182 = ConstantLoad OAEPwithSHA384andMGF1
+    %183 = encryptRsaEcb(data,rsaPub,%182) -> bb102;
   }
   bb102 {
-    $desugar$47 = %176;
-    %178 = $desugar$47 is error
-    %178 ? bb103 : bb104;
+    $desugar$47 = %183;
+    %185 = $desugar$47 is error
+    %185 ? bb103 : bb104;
   }
   bb103 {
     PushScopeFrame 0
@@ -594,12 +601,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb104 {
     oaep384 = $desugar$47;
-    %180 = decryptRsaEcb(oaep384,rsaPk,OAEPwithSHA384andMGF1) -> bb105;
+    %187 = ConstantLoad OAEPwithSHA384andMGF1
+    %188 = decryptRsaEcb(oaep384,rsaPk,%187) -> bb105;
   }
   bb105 {
-    $desugar$48 = %180;
-    %182 = $desugar$48 is error
-    %182 ? bb106 : bb107;
+    $desugar$48 = %188;
+    %190 = $desugar$48 is error
+    %190 ? bb106 : bb107;
   }
   bb106 {
     PushScopeFrame 0
@@ -608,17 +616,18 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb107 {
-    %183 = == $desugar$48 data;
-    %184 = %183;
-    %185 = println(%184) -> bb108;
+    %191 = == $desugar$48 data;
+    %192 = %191;
+    %193 = println(%192) -> bb108;
   }
   bb108 {
-    %186 = encryptRsaEcb(data,rsaPub,OAEPwithSHA512andMGF1) -> bb109;
+    %194 = ConstantLoad OAEPwithSHA512andMGF1
+    %195 = encryptRsaEcb(data,rsaPub,%194) -> bb109;
   }
   bb109 {
-    $desugar$49 = %186;
-    %188 = $desugar$49 is error
-    %188 ? bb110 : bb111;
+    $desugar$49 = %195;
+    %197 = $desugar$49 is error
+    %197 ? bb110 : bb111;
   }
   bb110 {
     PushScopeFrame 0
@@ -628,12 +637,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb111 {
     oaep512 = $desugar$49;
-    %190 = decryptRsaEcb(oaep512,rsaPk,OAEPwithSHA512andMGF1) -> bb112;
+    %199 = ConstantLoad OAEPwithSHA512andMGF1
+    %200 = decryptRsaEcb(oaep512,rsaPk,%199) -> bb112;
   }
   bb112 {
-    $desugar$50 = %190;
-    %192 = $desugar$50 is error
-    %192 ? bb113 : bb114;
+    $desugar$50 = %200;
+    %202 = $desugar$50 is error
+    %202 ? bb113 : bb114;
   }
   bb113 {
     PushScopeFrame 0
@@ -642,23 +652,23 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb114 {
-    %193 = == $desugar$50 data;
-    %194 = %193;
-    %195 = println(%194) -> bb115;
+    %203 = == $desugar$50 data;
+    %204 = %203;
+    %205 = println(%204) -> bb115;
   }
   bb115 {
-    %196 = ConstantLoad /tmp/bal_ec_key.pem
-    $desugar$51 = %196;
-    %198 = $default$2($desugar$51) -> bb116;
+    %206 = ConstantLoad /tmp/bal_ec_key.pem
+    $desugar$51 = %206;
+    %208 = $default$2($desugar$51) -> bb116;
   }
   bb116 {
-    $desugar$52 = %198;
-    %200 = decodeEcPrivateKeyFromKeyFile($desugar$51,$desugar$52) -> bb117;
+    $desugar$52 = %208;
+    %210 = decodeEcPrivateKeyFromKeyFile($desugar$51,$desugar$52) -> bb117;
   }
   bb117 {
-    $desugar$53 = %200;
-    %202 = $desugar$53 is error
-    %202 ? bb118 : bb119;
+    $desugar$53 = %210;
+    %212 = $desugar$53 is error
+    %212 ? bb118 : bb119;
   }
   bb118 {
     PushScopeFrame 0
@@ -668,13 +678,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb119 {
     ecPk = $desugar$53;
-    %204 = ConstantLoad /tmp/bal_ec_cert.pem
-    %205 = decodeEcPublicKeyFromCertFile(%204) -> bb120;
+    %214 = ConstantLoad /tmp/bal_ec_cert.pem
+    %215 = decodeEcPublicKeyFromCertFile(%214) -> bb120;
   }
   bb120 {
-    $desugar$54 = %205;
-    %207 = $desugar$54 is error
-    %207 ? bb121 : bb122;
+    $desugar$54 = %215;
+    %217 = $desugar$54 is error
+    %217 ? bb121 : bb122;
   }
   bb121 {
     PushScopeFrame 0
@@ -684,12 +694,12 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb122 {
     ecPub = $desugar$54;
-    %209 = signSha256withEcdsa(data,ecPk) -> bb123;
+    %219 = signSha256withEcdsa(data,ecPk) -> bb123;
   }
   bb123 {
-    $desugar$55 = %209;
-    %211 = $desugar$55 is error
-    %211 ? bb124 : bb125;
+    $desugar$55 = %219;
+    %221 = $desugar$55 is error
+    %221 ? bb124 : bb125;
   }
   bb124 {
     PushScopeFrame 0
@@ -699,12 +709,12 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb125 {
     e256 = $desugar$55;
-    %213 = verifySha256withEcdsaSignature(data,e256,ecPub) -> bb126;
+    %223 = verifySha256withEcdsaSignature(data,e256,ecPub) -> bb126;
   }
   bb126 {
-    $desugar$56 = %213;
-    %215 = $desugar$56 is error
-    %215 ? bb127 : bb128;
+    $desugar$56 = %223;
+    %225 = $desugar$56 is error
+    %225 ? bb127 : bb128;
   }
   bb127 {
     PushScopeFrame 0
@@ -713,15 +723,15 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb128 {
-    %216 = println($desugar$56) -> bb129;
+    %226 = println($desugar$56) -> bb129;
   }
   bb129 {
-    %217 = signSha384withEcdsa(data,ecPk) -> bb130;
+    %227 = signSha384withEcdsa(data,ecPk) -> bb130;
   }
   bb130 {
-    $desugar$57 = %217;
-    %219 = $desugar$57 is error
-    %219 ? bb131 : bb132;
+    $desugar$57 = %227;
+    %229 = $desugar$57 is error
+    %229 ? bb131 : bb132;
   }
   bb131 {
     PushScopeFrame 0
@@ -731,12 +741,12 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb132 {
     e384 = $desugar$57;
-    %221 = verifySha384withEcdsaSignature(data,e384,ecPub) -> bb133;
+    %231 = verifySha384withEcdsaSignature(data,e384,ecPub) -> bb133;
   }
   bb133 {
-    $desugar$58 = %221;
-    %223 = $desugar$58 is error
-    %223 ? bb134 : bb135;
+    $desugar$58 = %231;
+    %233 = $desugar$58 is error
+    %233 ? bb134 : bb135;
   }
   bb134 {
     PushScopeFrame 0
@@ -745,21 +755,21 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb135 {
-    %224 = println($desugar$58) -> bb136;
+    %234 = println($desugar$58) -> bb136;
   }
   bb136 {
     $desugar$59 = data;
     $desugar$60 = rsaPk;
-    %227 = $default$17($desugar$59,$desugar$60) -> bb137;
+    %237 = $default$17($desugar$59,$desugar$60) -> bb137;
   }
   bb137 {
-    $desugar$61 = %227;
-    %229 = encryptRsaEcb($desugar$59,$desugar$60,$desugar$61) -> bb138;
+    $desugar$61 = %237;
+    %239 = encryptRsaEcb($desugar$59,$desugar$60,$desugar$61) -> bb138;
   }
   bb138 {
-    $desugar$62 = %229;
-    %231 = $desugar$62 is error
-    %231 ? bb139 : bb140;
+    $desugar$62 = %239;
+    %241 = $desugar$62 is error
+    %241 ? bb139 : bb140;
   }
   bb139 {
     PushScopeFrame 0
@@ -771,16 +781,16 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     ctPriv = $desugar$62;
     $desugar$63 = ctPriv;
     $desugar$64 = rsaPk;
-    %235 = $default$22($desugar$63,$desugar$64) -> bb141;
+    %245 = $default$22($desugar$63,$desugar$64) -> bb141;
   }
   bb141 {
-    $desugar$65 = %235;
-    %237 = decryptRsaEcb($desugar$63,$desugar$64,$desugar$65) -> bb142;
+    $desugar$65 = %245;
+    %247 = decryptRsaEcb($desugar$63,$desugar$64,$desugar$65) -> bb142;
   }
   bb142 {
-    $desugar$66 = %237;
-    %239 = $desugar$66 is error
-    %239 ? bb143 : bb144;
+    $desugar$66 = %247;
+    %249 = $desugar$66 is error
+    %249 ? bb143 : bb144;
   }
   bb143 {
     PushScopeFrame 0
@@ -789,52 +799,52 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb144 {
-    %240 = == $desugar$66 data;
-    %241 = %240;
-    %242 = println(%241) -> bb145;
+    %250 = == $desugar$66 data;
+    %251 = %250;
+    %252 = println(%251) -> bb145;
   }
   bb145 {
     $desugar$67 = data;
     $desugar$68 = rsaPk;
-    %245 = $default$22($desugar$67,$desugar$68) -> bb146;
+    %255 = $default$22($desugar$67,$desugar$68) -> bb146;
   }
   bb146 {
-    $desugar$69 = %245;
-    %247 = decryptRsaEcb($desugar$67,$desugar$68,$desugar$69) -> bb147;
+    $desugar$69 = %255;
+    %257 = decryptRsaEcb($desugar$67,$desugar$68,$desugar$69) -> bb147;
   }
   bb147 {
-    decErr = %247;
-    %249 = decErr is error
-    %250 = %249;
-    %251 = println(%250) -> bb148;
+    decErr = %257;
+    %259 = decErr is error
+    %260 = %259;
+    %261 = println(%260) -> bb148;
   }
   bb148 {
     $desugar$70 = ct;
     $desugar$71 = rsaPub;
-    %254 = $default$22($desugar$70,$desugar$71) -> bb149;
+    %264 = $default$22($desugar$70,$desugar$71) -> bb149;
   }
   bb149 {
-    $desugar$72 = %254;
-    %256 = decryptRsaEcb($desugar$70,$desugar$71,$desugar$72) -> bb150;
+    $desugar$72 = %264;
+    %266 = decryptRsaEcb($desugar$70,$desugar$71,$desugar$72) -> bb150;
   }
   bb150 {
-    decPubErr = %256;
-    %258 = decPubErr is error
-    %259 = %258;
-    %260 = println(%259) -> bb151;
+    decPubErr = %266;
+    %268 = decPubErr is error
+    %269 = %268;
+    %270 = println(%269) -> bb151;
   }
   bb151 {
-    %261 = ConstantLoad 9
-    %262 = ConstantLoad 9
-    %263 = ConstantLoad 9
-    %264 = ConstantLoad 3
-    %265 = newArray [int:Unsigned8...][%264]{%261, %262, %263}
-    %266 = verifyRsaSsaPss256Signature(%265,sPss,rsaPub) -> bb152;
+    %271 = ConstantLoad 9
+    %272 = ConstantLoad 9
+    %273 = ConstantLoad 9
+    %274 = ConstantLoad 3
+    %275 = newArray [int:Unsigned8...][%274]{%271, %272, %273}
+    %276 = verifyRsaSsaPss256Signature(%275,sPss,rsaPub) -> bb152;
   }
   bb152 {
-    $desugar$73 = %266;
-    %268 = $desugar$73 is error
-    %268 ? bb153 : bb154;
+    $desugar$73 = %276;
+    %278 = $desugar$73 is error
+    %278 ? bb153 : bb154;
   }
   bb153 {
     PushScopeFrame 0
@@ -843,190 +853,190 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     return;
   }
   bb154 {
-    %269 = println($desugar$73) -> bb155;
+    %279 = println($desugar$73) -> bb155;
   }
   bb155 {
-    %270 = signRsaSha256(data,ecPk) -> bb156;
+    %280 = signRsaSha256(data,ecPk) -> bb156;
   }
   bb156 {
-    rsaSignEc = %270;
-    %272 = rsaSignEc is error
-    %273 = %272;
-    %274 = println(%273) -> bb157;
+    rsaSignEc = %280;
+    %282 = rsaSignEc is error
+    %283 = %282;
+    %284 = println(%283) -> bb157;
   }
   bb157 {
-    %275 = verifyRsaSha256Signature(data,s256,ecPub) -> bb158;
+    %285 = verifyRsaSha256Signature(data,s256,ecPub) -> bb158;
   }
   bb158 {
-    rsaVerifyEc = %275;
-    %277 = rsaVerifyEc is error
-    %278 = %277;
-    %279 = println(%278) -> bb159;
+    rsaVerifyEc = %285;
+    %287 = rsaVerifyEc is error
+    %288 = %287;
+    %289 = println(%288) -> bb159;
   }
   bb159 {
-    %280 = signRsaSsaPss256(data,ecPk) -> bb160;
+    %290 = signRsaSsaPss256(data,ecPk) -> bb160;
   }
   bb160 {
-    pssSignEc = %280;
-    %282 = pssSignEc is error
-    %283 = %282;
-    %284 = println(%283) -> bb161;
+    pssSignEc = %290;
+    %292 = pssSignEc is error
+    %293 = %292;
+    %294 = println(%293) -> bb161;
   }
   bb161 {
-    %285 = verifyRsaSsaPss256Signature(data,sPss,ecPub) -> bb162;
+    %295 = verifyRsaSsaPss256Signature(data,sPss,ecPub) -> bb162;
   }
   bb162 {
-    pssVerifyEc = %285;
-    %287 = pssVerifyEc is error
-    %288 = %287;
-    %289 = println(%288) -> bb163;
+    pssVerifyEc = %295;
+    %297 = pssVerifyEc is error
+    %298 = %297;
+    %299 = println(%298) -> bb163;
   }
   bb163 {
-    %290 = signSha256withEcdsa(data,rsaPk) -> bb164;
+    %300 = signSha256withEcdsa(data,rsaPk) -> bb164;
   }
   bb164 {
-    ecSignRsa = %290;
-    %292 = ecSignRsa is error
-    %293 = %292;
-    %294 = println(%293) -> bb165;
+    ecSignRsa = %300;
+    %302 = ecSignRsa is error
+    %303 = %302;
+    %304 = println(%303) -> bb165;
   }
   bb165 {
-    %295 = verifySha256withEcdsaSignature(data,e256,rsaPub) -> bb166;
+    %305 = verifySha256withEcdsaSignature(data,e256,rsaPub) -> bb166;
   }
   bb166 {
-    ecVerifyRsa = %295;
-    %297 = ecVerifyRsa is error
-    %298 = %297;
-    %299 = println(%298) -> bb167;
+    ecVerifyRsa = %305;
+    %307 = ecVerifyRsa is error
+    %308 = %307;
+    %309 = println(%308) -> bb167;
   }
   bb167 {
-    %300 = ConstantLoad /tmp/bal_no_such.pem
-    $desugar$74 = %300;
-    %302 = $default$0($desugar$74) -> bb168;
+    %310 = ConstantLoad /tmp/bal_no_such.pem
+    $desugar$74 = %310;
+    %312 = $default$0($desugar$74) -> bb168;
   }
   bb168 {
-    $desugar$75 = %302;
-    %304 = decodeRsaPrivateKeyFromKeyFile($desugar$74,$desugar$75) -> bb169;
+    $desugar$75 = %312;
+    %314 = decodeRsaPrivateKeyFromKeyFile($desugar$74,$desugar$75) -> bb169;
   }
   bb169 {
-    rsaKeyMissing = %304;
-    %306 = rsaKeyMissing is error
-    %307 = %306;
-    %308 = println(%307) -> bb170;
+    rsaKeyMissing = %314;
+    %316 = rsaKeyMissing is error
+    %317 = %316;
+    %318 = println(%317) -> bb170;
   }
   bb170 {
-    %309 = ConstantLoad /tmp/bal_no_such.pem
-    $desugar$76 = %309;
-    %311 = $default$2($desugar$76) -> bb171;
+    %319 = ConstantLoad /tmp/bal_no_such.pem
+    $desugar$76 = %319;
+    %321 = $default$2($desugar$76) -> bb171;
   }
   bb171 {
-    $desugar$77 = %311;
-    %313 = decodeEcPrivateKeyFromKeyFile($desugar$76,$desugar$77) -> bb172;
+    $desugar$77 = %321;
+    %323 = decodeEcPrivateKeyFromKeyFile($desugar$76,$desugar$77) -> bb172;
   }
   bb172 {
-    ecKeyMissing = %313;
-    %315 = ecKeyMissing is error
-    %316 = %315;
-    %317 = println(%316) -> bb173;
+    ecKeyMissing = %323;
+    %325 = ecKeyMissing is error
+    %326 = %325;
+    %327 = println(%326) -> bb173;
   }
   bb173 {
-    %318 = ConstantLoad /tmp/bal_no_such.pem
-    %319 = decodeRsaPublicKeyFromCertFile(%318) -> bb174;
+    %328 = ConstantLoad /tmp/bal_no_such.pem
+    %329 = decodeRsaPublicKeyFromCertFile(%328) -> bb174;
   }
   bb174 {
-    rsaCertMissing = %319;
-    %321 = rsaCertMissing is error
-    %322 = %321;
-    %323 = println(%322) -> bb175;
+    rsaCertMissing = %329;
+    %331 = rsaCertMissing is error
+    %332 = %331;
+    %333 = println(%332) -> bb175;
   }
   bb175 {
-    %324 = ConstantLoad /tmp/bal_no_such.pem
-    %325 = decodeEcPublicKeyFromCertFile(%324) -> bb176;
+    %334 = ConstantLoad /tmp/bal_no_such.pem
+    %335 = decodeEcPublicKeyFromCertFile(%334) -> bb176;
   }
   bb176 {
-    ecCertMissing = %325;
-    %327 = ecCertMissing is error
-    %328 = %327;
-    %329 = println(%328) -> bb177;
+    ecCertMissing = %335;
+    %337 = ecCertMissing is error
+    %338 = %337;
+    %339 = println(%338) -> bb177;
   }
   bb177 {
-    %330 = ConstantLoad /tmp/bal_ec_key.pem
-    $desugar$78 = %330;
-    %332 = $default$0($desugar$78) -> bb178;
+    %340 = ConstantLoad /tmp/bal_ec_key.pem
+    $desugar$78 = %340;
+    %342 = $default$0($desugar$78) -> bb178;
   }
   bb178 {
-    $desugar$79 = %332;
-    %334 = decodeRsaPrivateKeyFromKeyFile($desugar$78,$desugar$79) -> bb179;
+    $desugar$79 = %342;
+    %344 = decodeRsaPrivateKeyFromKeyFile($desugar$78,$desugar$79) -> bb179;
   }
   bb179 {
-    ecAsRsaKey = %334;
-    %336 = ecAsRsaKey is error
-    %337 = %336;
-    %338 = println(%337) -> bb180;
+    ecAsRsaKey = %344;
+    %346 = ecAsRsaKey is error
+    %347 = %346;
+    %348 = println(%347) -> bb180;
   }
   bb180 {
-    %339 = ConstantLoad /tmp/bal_rsa_key.pem
-    $desugar$80 = %339;
-    %341 = $default$2($desugar$80) -> bb181;
+    %349 = ConstantLoad /tmp/bal_rsa_key.pem
+    $desugar$80 = %349;
+    %351 = $default$2($desugar$80) -> bb181;
   }
   bb181 {
-    $desugar$81 = %341;
-    %343 = decodeEcPrivateKeyFromKeyFile($desugar$80,$desugar$81) -> bb182;
+    $desugar$81 = %351;
+    %353 = decodeEcPrivateKeyFromKeyFile($desugar$80,$desugar$81) -> bb182;
   }
   bb182 {
-    rsaAsEcKey = %343;
-    %345 = rsaAsEcKey is error
-    %346 = %345;
-    %347 = println(%346) -> bb183;
+    rsaAsEcKey = %353;
+    %355 = rsaAsEcKey is error
+    %356 = %355;
+    %357 = println(%356) -> bb183;
   }
   bb183 {
-    %348 = ConstantLoad /tmp/bal_ec_cert.pem
-    %349 = decodeRsaPublicKeyFromCertFile(%348) -> bb184;
+    %358 = ConstantLoad /tmp/bal_ec_cert.pem
+    %359 = decodeRsaPublicKeyFromCertFile(%358) -> bb184;
   }
   bb184 {
-    ecAsRsaCert = %349;
-    %351 = ecAsRsaCert is error
-    %352 = %351;
-    %353 = println(%352) -> bb185;
+    ecAsRsaCert = %359;
+    %361 = ecAsRsaCert is error
+    %362 = %361;
+    %363 = println(%362) -> bb185;
   }
   bb185 {
-    %354 = ConstantLoad /tmp/bal_rsa_cert.pem
-    %355 = decodeEcPublicKeyFromCertFile(%354) -> bb186;
+    %364 = ConstantLoad /tmp/bal_rsa_cert.pem
+    %365 = decodeEcPublicKeyFromCertFile(%364) -> bb186;
   }
   bb186 {
-    rsaAsEcCert = %355;
-    %357 = rsaAsEcCert is error
-    %358 = %357;
-    %359 = println(%358) -> bb187;
+    rsaAsEcCert = %365;
+    %367 = rsaAsEcCert is error
+    %368 = %367;
+    %369 = println(%368) -> bb187;
   }
   bb187 {
-    %360 = ConstantLoad 1
-    %361 = ConstantLoad 2
-    %362 = ConstantLoad 3
-    %363 = ConstantLoad 3
-    %364 = newArray [int:Unsigned8...][%363]{%360, %361, %362}
-    junk = %364;
+    %370 = ConstantLoad 1
+    %371 = ConstantLoad 2
+    %372 = ConstantLoad 3
+    %373 = ConstantLoad 3
+    %374 = newArray [int:Unsigned8...][%373]{%370, %371, %372}
+    junk = %374;
     $desugar$82 = junk;
-    %367 = $default$1($desugar$82) -> bb188;
+    %377 = $default$1($desugar$82) -> bb188;
   }
   bb188 {
-    $desugar$83 = %367;
-    %369 = decodeRsaPrivateKeyFromContent($desugar$82,$desugar$83) -> bb189;
+    $desugar$83 = %377;
+    %379 = decodeRsaPrivateKeyFromContent($desugar$82,$desugar$83) -> bb189;
   }
   bb189 {
-    junkKey = %369;
-    %371 = junkKey is error
-    %372 = %371;
-    %373 = println(%372) -> bb190;
+    junkKey = %379;
+    %381 = junkKey is error
+    %382 = %381;
+    %383 = println(%382) -> bb190;
   }
   bb190 {
-    %374 = ConstantLoad /tmp/bal_ec_key.pem
-    %375 = fileReadBytes(%374) -> bb191;
+    %384 = ConstantLoad /tmp/bal_ec_key.pem
+    %385 = fileReadBytes(%384) -> bb191;
   }
   bb191 {
-    $desugar$84 = %375;
-    %377 = $desugar$84 is error
-    %377 ? bb192 : bb193;
+    $desugar$84 = %385;
+    %387 = $desugar$84 is error
+    %387 ? bb192 : bb193;
   }
   bb192 {
     PushScopeFrame 0
@@ -1037,26 +1047,26 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   bb193 {
     ecKeyBytes = $desugar$84;
     $desugar$85 = ecKeyBytes;
-    %380 = $default$1($desugar$85) -> bb194;
+    %390 = $default$1($desugar$85) -> bb194;
   }
   bb194 {
-    $desugar$86 = %380;
-    %382 = decodeRsaPrivateKeyFromContent($desugar$85,$desugar$86) -> bb195;
+    $desugar$86 = %390;
+    %392 = decodeRsaPrivateKeyFromContent($desugar$85,$desugar$86) -> bb195;
   }
   bb195 {
-    ecAsRsaContent = %382;
-    %384 = ecAsRsaContent is error
-    %385 = %384;
-    %386 = println(%385) -> bb196;
+    ecAsRsaContent = %392;
+    %394 = ecAsRsaContent is error
+    %395 = %394;
+    %396 = println(%395) -> bb196;
   }
   bb196 {
-    %387 = ConstantLoad /tmp/bal_ec_cert.pem
-    %388 = fileReadBytes(%387) -> bb197;
+    %397 = ConstantLoad /tmp/bal_ec_cert.pem
+    %398 = fileReadBytes(%397) -> bb197;
   }
   bb197 {
-    $desugar$87 = %388;
-    %390 = $desugar$87 is error
-    %390 ? bb198 : bb199;
+    $desugar$87 = %398;
+    %400 = $desugar$87 is error
+    %400 ? bb198 : bb199;
   }
   bb198 {
     PushScopeFrame 0
@@ -1066,13 +1076,13 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
   }
   bb199 {
     ecCertBytes = $desugar$87;
-    %392 = decodeRsaPublicKeyFromContent(ecCertBytes) -> bb200;
+    %402 = decodeRsaPublicKeyFromContent(ecCertBytes) -> bb200;
   }
   bb200 {
-    ecAsRsaCertContent = %392;
-    %394 = ecAsRsaCertContent is error
-    %395 = %394;
-    %396 = println(%395) -> bb201;
+    ecAsRsaCertContent = %402;
+    %404 = ecAsRsaCertContent is error
+    %405 = %404;
+    %406 = println(%405) -> bb201;
   }
   bb201 {
     return;

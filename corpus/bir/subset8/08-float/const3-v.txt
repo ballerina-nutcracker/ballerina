@@ -1,56 +1,74 @@
 module $anon.. v 0.0.0;
-A  float;
-B  float;
-C  float;
-D  float;
-E  -0;
-F  0;
-G  float;
-H  boolean;
-I  boolean;
-J  0;
 main() -> nil{
   bb0 {
-    %1 = eq(A,B) -> bb1;
+    %1 = ConstantLoad NaN
+    %2 = %1;
+    %3 = ConstantLoad NaN
+    %4 = %3;
+    %5 = eq(%2,%4) -> bb1;
   }
   bb1 {
-    %2 = println(%1) -> bb2;
+    %6 = println(%5) -> bb2;
   }
   bb2 {
-    %3 = eq(C,D) -> bb3;
+    %7 = ConstantLoad +Inf
+    %8 = %7;
+    %9 = ConstantLoad -Inf
+    %10 = %9;
+    %11 = eq(%8,%10) -> bb3;
   }
   bb3 {
-    %4 = println(%3) -> bb4;
+    %12 = println(%11) -> bb4;
   }
   bb4 {
-    %5 = eq(E,F) -> bb5;
+    %13 = ConstantLoad -0
+    %14 = %13;
+    %15 = ConstantLoad 0
+    %16 = %15;
+    %17 = eq(%14,%16) -> bb5;
   }
   bb5 {
-    %6 = println(%5) -> bb6;
+    %18 = println(%17) -> bb6;
   }
   bb6 {
-    %7 = eq(A,C) -> bb7;
+    %19 = ConstantLoad NaN
+    %20 = %19;
+    %21 = ConstantLoad +Inf
+    %22 = %21;
+    %23 = eq(%20,%22) -> bb7;
   }
   bb7 {
-    %8 = println(%7) -> bb8;
+    %24 = println(%23) -> bb8;
   }
   bb8 {
-    %9 = eq(B,D) -> bb9;
+    %25 = ConstantLoad NaN
+    %26 = %25;
+    %27 = ConstantLoad -Inf
+    %28 = %27;
+    %29 = eq(%26,%28) -> bb9;
   }
   bb9 {
-    %10 = println(%9) -> bb10;
+    %30 = println(%29) -> bb10;
   }
   bb10 {
-    %11 = println(G) -> bb11;
+    %31 = ConstantLoad 0
+    %32 = %31;
+    %33 = println(%32) -> bb11;
   }
   bb11 {
-    %12 = println(H) -> bb12;
+    %34 = ConstantLoad true
+    %35 = %34;
+    %36 = println(%35) -> bb12;
   }
   bb12 {
-    %13 = println(I) -> bb13;
+    %37 = ConstantLoad false
+    %38 = %37;
+    %39 = println(%38) -> bb13;
   }
   bb13 {
-    %14 = println(J) -> bb14;
+    %40 = ConstantLoad 0
+    %41 = %40;
+    %42 = println(%41) -> bb14;
   }
   bb14 {
     return;

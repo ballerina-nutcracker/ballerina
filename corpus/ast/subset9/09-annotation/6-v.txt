@@ -1,0 +1,142 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Details
+    (record-type
+      (field arithmetic
+        (value-type int))
+      (field bitwise
+        (value-type int))
+      (field logic
+        (value-type boolean))
+      (field label
+        (value-type string))
+      (field numbers
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (field converted
+        (value-type float))
+      (field fraction
+        (value-type decimal))))
+  (const BASE (
+    (value-type int)) (
+    (literal 10)))
+  (annotation details
+    (user-defined-type Details)
+    (attach-point type))
+  (type-definition Target
+    (annotation-attachment details
+      (mapping-constructor-expr
+        (key-value
+          (literal arithmetic)
+          (binary-expr -
+            (binary-expr *
+              (group-expr
+                (binary-expr +
+                  (simple-var-ref BASE)
+                  (literal 2)))
+              (literal 3))
+            (literal 1)))
+        (key-value
+          (literal bitwise)
+          (binary-expr <<
+            (group-expr
+              (binary-expr &
+                (group-expr
+                  (unary-expr ~
+                    (simple-var-ref BASE)))
+                (literal 15)))
+            (literal 1)))
+        (key-value
+          (literal logic)
+          (binary-expr &&
+            (unary-expr !
+              (group-expr
+                (binary-expr <
+                  (simple-var-ref BASE)
+                  (literal 5))))
+            (binary-expr ==
+              (simple-var-ref BASE)
+              (literal 10))))
+        (key-value
+          (literal label)
+          (string-template-literal
+            (template-string "value-")
+            (binary-expr +
+              (simple-var-ref BASE)
+              (literal 2))
+            (template-string "")))
+        (key-value
+          (literal numbers)
+          (list-constructor-expr
+            (simple-var-ref BASE)
+            (list-constructor-expr
+              (binary-expr +
+                (simple-var-ref BASE)
+                (literal 1))
+              (unary-expr -
+                (literal 3)))))
+        (key-value
+          (literal converted)
+          (type-conversion-expr
+            (group-expr
+              (binary-expr +
+                (simple-var-ref BASE)
+                (literal 2)))
+            (value-type float)))
+        (key-value
+          (literal fraction)
+          (binary-expr /
+            (type-conversion-expr
+              (simple-var-ref BASE)
+              (value-type decimal))
+            (literal 4)))))
+    (record-type
+      (field id
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (union-type
+            (user-defined-type Details)
+            (value-type null))) (expr
+          (annot-access-expr details
+            (simple-var-ref Target)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (user-defined-type Details))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access arithmetic
+                (simple-var-ref value)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access bitwise
+                (simple-var-ref value)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access logic
+                (simple-var-ref value)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access label
+                (simple-var-ref value)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (field-based-access numbers
+                  (simple-var-ref value))
+                (literal 1)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access converted
+                (simple-var-ref value)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access fraction
+                (simple-var-ref value)))))) ())
+      (block-stmt))))

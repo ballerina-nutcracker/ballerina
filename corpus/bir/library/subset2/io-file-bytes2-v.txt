@@ -32,12 +32,13 @@ main() -> nil|error{
     %16 = ConstantLoad 5
     %17 = ConstantLoad 2
     %18 = newArray [int:Unsigned8...][%17]{%15, %16}
-    %19 = fileWriteBytes(path,%18,APPEND) -> bb5;
+    %19 = ConstantLoad APPEND
+    %20 = fileWriteBytes(path,%18,%19) -> bb5;
   }
   bb5 {
-    $desugar$4 = %19;
-    %21 = $desugar$4 is error
-    %21 ? bb6 : bb7;
+    $desugar$4 = %20;
+    %22 = $desugar$4 is error
+    %22 ? bb6 : bb7;
   }
   bb6 {
     PushScopeFrame 0
@@ -46,12 +47,12 @@ main() -> nil|error{
     return;
   }
   bb7 {
-    %22 = fileReadBytes(path) -> bb8;
+    %23 = fileReadBytes(path) -> bb8;
   }
   bb8 {
-    $desugar$5 = %22;
-    %24 = $desugar$5 is error
-    %24 ? bb9 : bb10;
+    $desugar$5 = %23;
+    %25 = $desugar$5 is error
+    %25 ? bb9 : bb10;
   }
   bb9 {
     PushScopeFrame 0
@@ -61,11 +62,11 @@ main() -> nil|error{
   }
   bb10 {
     readBack = $desugar$5;
-    %26 = length(readBack) -> bb11;
+    %27 = length(readBack) -> bb11;
   }
   bb11 {
-    %27 = %26;
-    %28 = println(%27) -> bb12;
+    %28 = %27;
+    %29 = println(%28) -> bb12;
   }
   bb12 {
     return;

@@ -19,7 +19,7 @@ package projects
 import (
 	"slices"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // PackageManifest represents parsed Ballerina.toml content.

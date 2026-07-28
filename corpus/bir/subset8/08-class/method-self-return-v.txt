@@ -1,0 +1,47 @@
+module $anon.. v 0.0.0;
+class Box {
+
+  dup() -> object { public function dup() returns ...; public function init() returns nil }{
+    bb0 {
+      %0 = self;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Box
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    b = %3;
+    %6 = dup(b) -> bb5;
+  }
+  bb5 {
+    b2 = %6;
+    %8 = b2;
+    %9 = ConstantLoad ok
+    %10 = println(%9) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

@@ -1,0 +1,131 @@
+(package
+  (import-package ballerina io (as io))
+  (variable $annotation$0)
+  (variable $annotation$1)
+  (variable moduleMetadata (type
+    (union-type
+      (user-defined-type Info)
+      (value-type null))))
+  (annotation info
+    (user-defined-type Info)
+    (attach-point type))
+  (annotation infos
+    (array-type
+      (user-defined-type Info) dimensions: 1 ([]))
+    (attach-point type))
+  (type-definition Info
+    (record-type
+      (field code
+        (value-type int))))
+  (type-definition Target
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (key-value
+          (literal code)
+          (invocation code ()))))
+    (record-type
+      (field id
+        (value-type string))))
+  (type-definition RepeatedTarget
+    (annotation-attachment infos
+      (mapping-constructor-expr
+        (key-value
+          (literal code)
+          (literal 2))))
+    (annotation-attachment infos
+      (mapping-constructor-expr
+        (key-value
+          (literal code)
+          (invocation code ()))))
+    (record-type
+      (field id
+        (value-type string))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref $annotation$0)
+        (mapping-constructor-expr
+          (key-value
+            (literal code)
+            (invocation code ()))))
+      (assignment
+        (simple-var-ref $annotation$1)
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal code)
+              (literal 2)))
+          (mapping-constructor-expr
+            (key-value
+              (literal code)
+              (invocation code ())))))
+      (assignment
+        (simple-var-ref moduleMetadata)
+        (annot-access-expr info
+          (simple-var-ref Target)))))
+  (function code () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref moduleMetadata)
+          (user-defined-type Info))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref moduleMetadata)
+                (literal code)))))) ())
+      (block-stmt
+        (var-def
+          (variable metadata (type
+            (union-type
+              (user-defined-type Info)
+              (value-type null))) (expr
+            (annot-access-expr info
+              (simple-var-ref Target)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref metadata)
+            (user-defined-type Info))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref metadata)
+                  (literal code)))))) ())
+        (block-stmt
+          (var-def
+            (variable repeatedMetadata (type
+              (union-type
+                (array-type
+                  (user-defined-type Info) dimensions: 1 ([]))
+                (value-type null))) (expr
+              (annot-access-expr infos
+                (simple-var-ref RepeatedTarget)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref repeatedMetadata)
+              (array-type
+                (user-defined-type Info) dimensions: 1 ([])))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (index-based-access
+                      (simple-var-ref repeatedMetadata)
+                      (literal 0))
+                    (literal code)))))
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (index-based-access
+                      (simple-var-ref repeatedMetadata)
+                      (literal 1))
+                    (literal code)))))) ())
+          (block-stmt))))))

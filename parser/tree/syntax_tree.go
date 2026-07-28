@@ -19,8 +19,8 @@ package tree
 import (
 	"iter"
 
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/tools/text"
+	"ballerina/parser/common"
+	"ballerina/tools/text"
 )
 
 type SyntaxTree struct {

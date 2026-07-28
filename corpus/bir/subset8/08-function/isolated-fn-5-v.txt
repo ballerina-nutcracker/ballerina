@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-val  5;
 foo(int,int) -> nil{
   bb0 {
     %3 = x;
@@ -34,7 +33,8 @@ main() -> nil{
 }
 $default$0() -> int{
   bb0 {
-    %0 = val;
+    %1 = ConstantLoad 5
+    %0 = %1;
     return;
   }
 }

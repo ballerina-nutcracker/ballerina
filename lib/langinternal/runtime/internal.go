@@ -17,11 +17,11 @@
 package langinternalruntime
 
 import (
-	"ballerina-lang-go/decimal"
-	"ballerina-lang-go/runtime"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/decimal"
+	"ballerina/runtime"
+	"ballerina/runtime/extern"
+	"ballerina/semtypes"
+	"ballerina/values"
 	"math"
 	"reflect"
 	"sort"

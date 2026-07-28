@@ -1,0 +1,4 @@
+-- stdout --
+from-const
+42
+-- stderr --

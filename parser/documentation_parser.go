@@ -19,9 +19,9 @@ package parser
 import (
 	"strings"
 
-	"ballerina-lang-go/parser/common"
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/parser/common"
+	"ballerina/parser/tree"
+	"ballerina/tools/diagnostics"
 )
 
 // DocumentationParser is a parser for Ballerina documentation (markdown).

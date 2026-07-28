@@ -1,12 +1,24 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: symbol 'GREEN' is already initialized with 'G'
+error[SEMANTIC_ERROR]: redeclared symbol 'GREEN'
+  --> 9-e.bal:19:5
+   |
+19 |     GREEN = "G", // @error
+   |     ^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'GREEN'
   --> 9-e.bal:24:21
    |
 24 | public const string GREEN = "green"; // @error
    |                     ^^^^^
 
-error[SEMANTIC_ERROR]: symbol 'RED' is already initialized with 'RED'
+error[SEMANTIC_ERROR]: redeclared symbol 'RED'
+  --> 9-e.bal:18:5
+   |
+18 |     RED, // @error
+   |     ^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'RED'
   --> 9-e.bal:23:21
    |
 23 | public const string RED = "red"; // @error

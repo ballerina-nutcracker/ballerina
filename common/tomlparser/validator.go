@@ -19,7 +19,7 @@ package tomlparser
 import (
 	"fmt"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 type Validator interface {

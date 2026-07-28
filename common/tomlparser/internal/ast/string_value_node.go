@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 // StringValueNode holds a string value (basic or literal, single or multiline).
 type StringValueNode struct {

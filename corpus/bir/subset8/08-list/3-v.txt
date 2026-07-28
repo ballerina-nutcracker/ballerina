@@ -11,10 +11,10 @@ main() -> nil{
     return;
   }
 }
-foo() -> [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]{
+foo() -> [any...]{
   bb0 {
     %1 = ConstantLoad 0
-    %2 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%1]{}
+    %2 = newArray [any...][%1]{}
     %0 = %2;
     return;
   }

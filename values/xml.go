@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 )
 
 type (

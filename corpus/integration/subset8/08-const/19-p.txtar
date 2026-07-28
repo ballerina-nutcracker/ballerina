@@ -1,4 +1,0 @@
--- stdout --
--- stderr --
-error: bad type cast: cannot cast non-finite value +Inf to int
-        at init(19-p.bal:20)

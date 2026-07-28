@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> lock-compound-assign-e.bal:28:18
+   |
+28 |         count += counter->next(); // @error
+   |                  ^^^^^^^^^^^^^^^

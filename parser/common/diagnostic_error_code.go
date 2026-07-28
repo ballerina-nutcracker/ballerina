@@ -15,7 +15,7 @@
 // under the License.
 package common
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 type DiagnosticErrorCode struct {
 	diagnosticId string

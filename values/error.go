@@ -17,7 +17,7 @@
 package values
 
 import (
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 	"strconv"
 	"strings"
 )

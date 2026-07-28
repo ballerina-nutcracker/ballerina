@@ -1,0 +1,12 @@
+(package
+  (import-package ballerina lang float (as lang.float))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.float toFixedString (
+          (group-expr
+            (literal 12.456))
+          (unary-expr -
+            (literal 1))))))))

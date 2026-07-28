@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/common/tomlparser"
+	"ballerina/common/tomlparser"
 )
 
 // balaPackageJSON represents the package.json structure in a .bala package.

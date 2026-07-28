@@ -26,7 +26,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$1))))))
       (var-def
         (variable $desugar$3 (expr
@@ -55,7 +55,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_AUTO))))))))
+                (literal AUTO))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$4))
@@ -71,7 +71,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$6 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$5))))))
       (var-def
         (variable $desugar$7 (expr
@@ -100,7 +100,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_ALWAYS))))))))
+                (literal ALWAYS))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$8))
@@ -116,7 +116,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$10 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$9))))))
       (var-def
         (variable $desugar$11 (expr
@@ -145,7 +145,7 @@
             (mapping-constructor-expr
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_NEVER))))))))
+                (literal NEVER))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$12))
@@ -161,7 +161,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$14 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$13))))))
       (var-def
         (variable $desugar$15 (expr
@@ -193,10 +193,10 @@
                 (literal 15))
               (key-value
                 (literal httpVersion)
-                (simple-var-ref http HTTP_1_1))
+                (literal 1.1))
               (key-value
                 (literal compression)
-                (simple-var-ref http COMPRESSION_NEVER))))))))
+                (literal NEVER))))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$16))
@@ -212,7 +212,7 @@
           (literal /path))))
       (var-def
         (variable $desugar$18 (expr
-          (invocation $default$19 (
+          (invocation $default$21 (
             (simple-var-ref $desugar$17))))))
       (var-def
         (variable $desugar$19 (expr

@@ -17,11 +17,11 @@
 package exec
 
 import (
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/modules"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 func execBranch(ctx *extern.Context, branchTerm *bir.Branch, frame *Frame) *bir.BIRBasicBlock {
@@ -189,7 +189,7 @@ func buildResourceCallArgs(ctx *extern.Context, receiver *values.Object, match *
 	}
 	if !semtypes.IsNever(match.RestSegmentTy) {
 		restVals := pathVals[k:]
-		// FIXME: https://github.com/ballerina-platform/ballerina-lang-go/issues/471
+		// FIXME: https://github.com/ballerina-nutcracker/ballerina/issues/471
 		listDefn := semtypes.NewListDefinition()
 		restListTy := listDefn.DefineListTypeWrapped(ctx.Env.TypeEnv, []semtypes.SemType{}, 0, match.RestSegmentTy, semtypes.CellMutability_CELL_MUT_NONE)
 		atomic := semtypes.ToListAtomicType(ctx.TypeCtx, restListTy)

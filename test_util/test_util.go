@@ -18,17 +18,11 @@
 package test_util
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
-	"time"
-
-	"ballerina-lang-go/platform/pal"
 )
 
 // TestKind represents the type of corpus test
@@ -305,90 +299,4 @@ func computeExpectedPath(inputPath, inputBaseDir, outputBaseDir, outputExt strin
 	relPath, _ := filepath.Rel(inputBaseDir, inputPath)
 	relPath = strings.TrimSuffix(relPath, ".bal") + outputExt
 	return filepath.Join(outputBaseDir, relPath)
-}
-
-// normalizePath maps /tmp/-prefixed paths to os.TempDir() on Windows, where
-// the Unix /tmp directory does not exist.
-func normalizePath(path string) string {
-	if runtime.GOOS == "windows" && strings.HasPrefix(path, "/tmp/") {
-		return filepath.Join(os.TempDir(), path[5:])
-	}
-	return path
-}
-
-type stubHTTPClient struct{}
-
-func (c *stubHTTPClient) Execute(_ context.Context, _, _ string, _ io.Reader, _ int64, _ string, _ map[string][]string) (int, map[string][]string, io.ReadCloser, error) {
-	return 200, map[string][]string{}, io.NopCloser(strings.NewReader("test body")), nil
-}
-
-func TestPal(stdout io.Writer, stderr io.Writer) pal.Platform {
-	return pal.Platform{
-		IO: pal.IO{
-			Stdout: stdout.Write,
-			Stderr: stderr.Write,
-		},
-		FS: pal.FS{
-			ReadFile: func(path string) ([]byte, error) {
-				return os.ReadFile(normalizePath(path))
-			},
-			WriteFile: func(path string, data []byte) error {
-				return os.WriteFile(normalizePath(path), data, 0o644)
-			},
-			AppendFile: func(path string, data []byte) (err error) {
-				f, err := os.OpenFile(normalizePath(path), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-				if err != nil {
-					return err
-				}
-				defer func() {
-					if cerr := f.Close(); cerr != nil && err == nil {
-						err = cerr
-					}
-				}()
-				_, err = f.Write(data)
-				return err
-			},
-		},
-		OS: pal.OS{
-			GetEnv:      os.Getenv,
-			GetUsername: func() string { return "test" },
-			GetUserHome: func() string {
-				home, err := os.UserHomeDir()
-				if err != nil {
-					return ""
-				}
-				return home
-			},
-			SetEnv:   os.Setenv,
-			UnsetEnv: os.Unsetenv,
-			ListEnv: func() map[string]string {
-				result := make(map[string]string)
-				for _, e := range os.Environ() {
-					for i := 0; i < len(e); i++ {
-						if e[i] == '=' {
-							result[e[:i]] = e[i+1:]
-							break
-						}
-					}
-				}
-				return result
-			},
-			Exec: func(command string, args []string, envOverride map[string]string) (pal.ProcessHandle, error) {
-				return nil, nil
-			},
-		},
-		Time: pal.Time{
-			Now:          func() time.Time { return time.Time{} },
-			MonotonicNow: func() time.Duration { return 0 },
-		},
-		HTTP: pal.HTTP{
-			NewClient: func(_ pal.ClientConfig) pal.HTTPClient {
-				return &stubHTTPClient{}
-			},
-		},
-		Signals: func() pal.SignalSource {
-			src, _, _ := NewTestSignalSource(nil, TestSignalTimeout)
-			return src
-		}(),
-	}
 }

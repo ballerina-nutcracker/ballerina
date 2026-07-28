@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/projects"
+	"ballerina/projects"
 )
 
 // TestPack_ReadBala loads and asserts that the .bala archive

@@ -17,7 +17,7 @@
 package parser
 
 import (
-	"ballerina-lang-go/parser/tree"
+	"ballerina/parser/tree"
 )
 
 // GenerateJSONForTesting is a test helper that generates JSON from an AST node

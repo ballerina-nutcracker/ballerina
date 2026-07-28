@@ -12,5 +12,8 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref E))))
   )
 )

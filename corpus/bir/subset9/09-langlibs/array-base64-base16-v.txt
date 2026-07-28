@@ -1,0 +1,26 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 72
+    %2 = ConstantLoad 101
+    %3 = ConstantLoad 108
+    %4 = ConstantLoad 108
+    %5 = ConstantLoad 111
+    %6 = ConstantLoad 5
+    %7 = newArray [int:Unsigned8...][%6]{%1, %2, %3, %4, %5}
+    bytes = %7;
+    %9 = toBase64(bytes) -> bb1;
+  }
+  bb1 {
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = toBase16(bytes) -> bb3;
+  }
+  bb3 {
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

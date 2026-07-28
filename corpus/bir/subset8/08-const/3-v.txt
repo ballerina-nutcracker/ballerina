@@ -1,11 +1,8 @@
 module $anon.. v 0.0.0;
-C  ", ";
-H  "Hello";
-S  "Hello, there";
-T  "there";
 main() -> nil{
   bb0 {
-    %1 = println(S) -> bb1;
+    %1 = ConstantLoad Hello, there
+    %2 = println(%1) -> bb1;
   }
   bb1 {
     return;

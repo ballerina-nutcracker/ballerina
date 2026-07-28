@@ -32,12 +32,12 @@
         (invocation io println (
           (invocation vector vectorNorm (
             (simple-var-ref v)
-            (simple-var-ref vector L1))))))
+            (literal L1))))))
       (expression-stmt
         (invocation io println (
           (invocation vector vectorNorm (
             (simple-var-ref v)
-            (simple-var-ref vector L2))))))
+            (literal L2))))))
       (expression-stmt
         (invocation io println (
           (invocation vector dotProduct (

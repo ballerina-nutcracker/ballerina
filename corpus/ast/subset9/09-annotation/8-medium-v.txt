@@ -1,0 +1,135 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition MediumInfo
+    (record-type
+      (field id
+        (value-type int))
+      (field values
+        (array-type
+          (value-type int) dimensions: 1 ([
+          (literal 64)])))))
+  (annotation medium
+    (user-defined-type MediumInfo)
+    (attach-point type))
+  (type-definition T1
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 1))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T2
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 2))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T3
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 3))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T4
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 4))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T5
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 5))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T6
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 6))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T7
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 7))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (type-definition T8
+    (annotation-attachment medium
+      (mapping-constructor-expr
+        (key-value
+          (literal id)
+          (literal 8))
+        (key-value
+          (literal values)
+          (list-constructor-expr))))
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (union-type
+            (user-defined-type MediumInfo)
+            (value-type null))) (expr
+          (annot-access-expr medium
+            (simple-var-ref T1)))))
+      (var-def
+        (variable last (type
+          (union-type
+            (user-defined-type MediumInfo)
+            (value-type null))) (expr
+          (annot-access-expr medium
+            (simple-var-ref T8)))))
+      (if
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref first)
+            (user-defined-type MediumInfo))
+          (type-test-expr is
+            (simple-var-ref last)
+            (user-defined-type MediumInfo)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access id
+                (simple-var-ref first)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access id
+                (simple-var-ref last)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (field-based-access values
+                  (simple-var-ref last))
+                (literal 63)))))) ())
+      (block-stmt))))

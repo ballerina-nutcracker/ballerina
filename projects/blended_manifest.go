@@ -19,7 +19,7 @@ package projects
 import (
 	"context"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // blendedManifest is the per-resolution view of consumer dependency policy.

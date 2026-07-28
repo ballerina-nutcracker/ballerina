@@ -1,0 +1,5 @@
+-- stdout --
+200
+pong
+-- stderr --
+warning [ballerina/http]: HTTP/1.0 is not supported by the Go HTTP runtime; falling back to HTTP/1.1

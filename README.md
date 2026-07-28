@@ -1,10 +1,10 @@
-## Native Ballerina Interpreter
+## Ballerina Nutcracker
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
 [![stackoverflow](https://img.shields.io/badge/Get%20Support%20on%20Stack%20Overflow-ballerina-52C3C2)](https://stackoverflow.com/questions/tagged/ballerina)
 [![Join the community on Discord](https://img.shields.io/badge/Join%20us%20on%20Discord-Ballerina-52C3C2)](https://discord.gg/ballerinalang)
-[![codecov](https://codecov.io/gh/ballerina-platform/ballerina-lang-go/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/ballerina-lang-go)
+[![codecov](https://codecov.io/gh/ballerina-nutcracker/ballerina/graph/badge.svg)](https://codecov.io/gh/ballerina-nutcracker/ballerina)
 
 [Ballerina](https://ballerina.io) is an open-source, cloud-native programming language optimized for integration. It has built-in support for JSON and XML, first-class constructs for services and concurrency, and structural typing. It is developed and supported by WSO2.
 
@@ -12,9 +12,9 @@
 
 ## Goals
 
-This project implements a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
+Ballerina Nutcracker is a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
 
-- **Progress:** [GitHub Milestones](https://github.com/ballerina-platform/ballerina-lang-go/milestones)
+- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
 - **Subset docs:** [doc/](doc/) (language features and restrictions per subset)
 
 ## Usage
@@ -109,19 +109,19 @@ go test ./...
 
 ## Report issues
 
-> **Tip:** If you are unsure whether you have found a bug, search the [existing issues](https://github.com/ballerina-platform/ballerina-lang-go/issues) in the GitHub repo and open an issue if needed.
+> **Tip:** If you are unsure whether you have found a bug, search the [existing issues](https://github.com/ballerina-nutcracker/ballerina/issues) in the GitHub repo and open an issue if needed.
 
 ### Open an issue
 
-- [Open an issue](https://github.com/ballerina-platform/ballerina-lang-go/issues) for bug reports or feature requests related to the native interpreter.
+- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to the Ballerina Nutcracker.
 
 ### Report security issues
 
 - Send an email to [security@ballerina.io](mailto:security@ballerina.io). For details, see the [security policy](SECURITY.md).
 
-## Contribute to Ballerina
+## Contribute to Ballerina Nutcracker
 
-As an open-source project, ballerina-lang-go welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
+As an open-source project, Ballerina Nutcracker welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 

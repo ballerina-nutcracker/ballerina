@@ -20,9 +20,10 @@ import (
 	"strconv"
 	"sync"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type distinctTypeTracker struct {
@@ -102,8 +103,29 @@ type CompilerEnvironment struct {
 	underlyingSymbol           sync.Map
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
-	statsEnabled               bool
-	diagnosticContext          *diagnostics.DiagnosticEnv
+	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
+	// a field on each symbol — most symbols carry no annotations, so this avoids
+	// a per-symbol word and keeps lookup keyed by reference. Values are written
+	// single-threaded during top-level resolution and read concurrently later.
+	symbolAnnotations sync.Map // model.SymbolRef -> values.AnnotationValues
+	statsEnabled      bool
+	diagnosticContext *diagnostics.DiagnosticEnv
+}
+
+// SetSymbolAnnotationValue records an annotation value for the given symbol.
+func (c *CompilerEnvironment) SetSymbolAnnotationValue(symbol model.SymbolRef, key string, value values.AnnotationValue) {
+	actual, _ := c.symbolAnnotations.LoadOrStore(symbol, values.NewAnnotationValues())
+	actual.(values.AnnotationValues)[key] = value
+}
+
+// SymbolAnnotationValues returns the annotation values for the given symbol, or
+// an empty set if it has none. Callers should treat the returned map as
+// read-only compiler metadata.
+func (c *CompilerEnvironment) SymbolAnnotationValues(symbol model.SymbolRef) values.AnnotationValues {
+	if av, ok := c.symbolAnnotations.Load(symbol); ok {
+		return av.(values.AnnotationValues)
+	}
+	return values.NewAnnotationValues()
 }
 
 func (c *CompilerEnvironment) DiagnosticEnv() *diagnostics.DiagnosticEnv {
@@ -204,7 +226,7 @@ func (c *CompilerEnvironment) CreateNarrowedSymbol(baseRef model.SymbolRef) mode
 }
 
 func (c *CompilerEnvironment) CreateFunctionSymbol(space *model.SymbolSpace, name string, signature model.FunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
-	sym := model.NewFunctionSymbol(name, signature, false)
+	sym := model.NewFunctionSymbol(name, signature, false, diagnostics.NewBuiltinLocation())
 	sym.SetType(fnTy)
 	symbolIndex := space.AppendSymbol(sym)
 	return space.RefAt(symbolIndex)
@@ -225,12 +247,43 @@ func (c *CompilerEnvironment) SymbolType(symbol model.SymbolRef) semtypes.SemTyp
 	return c.GetSymbol(symbol).Type()
 }
 
+func (c *CompilerEnvironment) SymbolLocation(symbol model.SymbolRef) diagnostics.Location {
+	return c.GetSymbol(symbol).Location()
+}
+
 func (c *CompilerEnvironment) SymbolKind(symbol model.SymbolRef) model.SymbolKind {
 	return c.GetSymbol(symbol).Kind()
 }
 
 func (c *CompilerEnvironment) SymbolIsPublic(symbol model.SymbolRef) bool {
 	return c.GetSymbol(symbol).IsPublic()
+}
+
+func (c *CompilerEnvironment) SymbolIsClass(symbol model.SymbolRef) bool {
+	_, ok := c.GetSymbol(symbol).(model.ClassSymbol)
+	return ok
+}
+
+type ValueSymbolMetadata struct {
+	Parameter    bool
+	Final        bool
+	Const        bool
+	Configurable bool
+	Isolated     bool
+}
+
+func (c *CompilerEnvironment) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymbolMetadata, bool) {
+	valueSymbol, ok := c.GetSymbol(symbol).(model.ValueSymbol)
+	if !ok {
+		return ValueSymbolMetadata{}, false
+	}
+	return ValueSymbolMetadata{
+		Parameter:    valueSymbol.IsParameter(),
+		Final:        valueSymbol.IsFinal(),
+		Const:        valueSymbol.IsConst(),
+		Configurable: valueSymbol.IsConfigurable(),
+		Isolated:     valueSymbol.IsIsolated(),
+	}, true
 }
 
 func (c *CompilerEnvironment) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {

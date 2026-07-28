@@ -17,7 +17,7 @@
 package text
 
 import (
-	"ballerina-lang-go/common/errors"
+	"ballerina/common/errors"
 )
 
 // LineMap represents a collection of text lines in the TextDocument.

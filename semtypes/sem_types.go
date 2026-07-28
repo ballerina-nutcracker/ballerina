@@ -19,7 +19,7 @@ package semtypes
 import (
 	"strings"
 
-	"ballerina-lang-go/decimal"
+	"ballerina/decimal"
 )
 
 var SINT8 = intWidthSigned(8)

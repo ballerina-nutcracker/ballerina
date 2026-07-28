@@ -17,7 +17,7 @@
 package values
 
 import (
-	"ballerina-lang-go/semtypes"
+	"ballerina/semtypes"
 	"math"
 	"strings"
 	"unsafe"
@@ -58,6 +58,10 @@ func NewList(ty semtypes.SemType, atomic *semtypes.ListAtomicType, isReadonly bo
 
 func (l *List) Len() int {
 	return len(l.elems)
+}
+
+func (l *List) IsReadonly() bool {
+	return l.isReadonly
 }
 
 func (l *List) Get(idx int) BalValue {

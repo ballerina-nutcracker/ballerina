@@ -21,8 +21,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/model"
+	"ballerina/ast"
+	"ballerina/model"
 )
 
 type CPEntryType uint8

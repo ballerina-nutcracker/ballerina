@@ -115,18 +115,7 @@ func copyBallerinaToml(zw *zip.Writer, pkg *Package) error {
 		return fmt.Errorf("writeBala: package has no Ballerina.toml")
 	}
 
-	manifest := pkg.Manifest()
-	exports := manifest.ExportedModules()
-
-	var b strings.Builder
-	b.WriteString(bt.Content())
-	for _, mod := range pkg.Modules() {
-		modName := mod.ModuleName().String()
-		fmt.Fprintf(&b, "\n[[modules]]\nname   = %q\nexport = %t\n",
-			modName, slices.Contains(exports, modName))
-	}
-
-	return writeZipEntry(zw, BallerinaTomlFile, []byte(b.String()))
+	return writeZipEntry(zw, BallerinaTomlFile, []byte(bt.Content()))
 }
 
 // writeDependenciesToml emits Dependencies.toml into zw: a lock file with one

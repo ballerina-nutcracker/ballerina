@@ -1,0 +1,94 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Service
+    (object-type service))
+  (class-definition public Listener
+    (function attach (
+      (variable svc (type
+        (user-defined-type Service)))
+      (variable name (type
+        (union-type
+          (array-type
+            (value-type string) dimensions: 1 ([]))
+          (union-type
+            (value-type string)
+            (value-type null)))) (expr
+        (literal <nil>)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (if
+          (type-test-expr is
+            (simple-var-ref name)
+            (value-type string))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref name))))) (
+          (if
+            (type-test-expr is
+              (simple-var-ref name)
+              (array-type
+                (value-type string) dimensions: 1 ([])))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref name)
+                    (literal 0)))))
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref name)
+                    (literal 1)))))) (
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal root)))))))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type Service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (service
+    (literal watch)
+    (on
+    (new
+      (user-defined-type Listener) ())))
+  (service
+    (absolute-resource-path foo bar)
+    (on
+    (new
+      (user-defined-type Listener) ())))
+  (service
+    (on
+    (new
+      (user-defined-type Listener) ())))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

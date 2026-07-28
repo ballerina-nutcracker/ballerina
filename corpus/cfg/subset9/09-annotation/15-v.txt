@@ -1,0 +1,71 @@
+(Counter
+  (add
+    (bb0 () (bb1)
+      (compound-assignment +
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref amount))
+    )
+    (bb1 (bb0 bb2) (bb2 bb3)
+      (simple-var-ref extras)
+      (var-def
+        (variable extra (type
+          (value-type int))))
+    )
+    (bb2 (bb1) (bb1)
+      (compound-assignment +
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref extra))
+    )
+    (bb3 (bb1) ()
+      (return
+        (field-based-access value
+          (simple-var-ref self)))
+    )
+  )
+)
+(MetadataClient
+  (MetadataClient.$resource$get$0
+    (bb0 () ()
+      (return
+        (literal 1))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable counter (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (var-def
+      (variable result (type
+        (user-defined-type Result)) (expr
+        (invocation add expr:
+          (simple-var-ref counter) (
+          (literal 1)
+          (literal 2)
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+    (var-def
+      (variable serviceInfo (type
+        (union-type
+          (user-defined-type Meta)
+          (value-type null))) (expr
+        (annot-access-expr serviceMeta
+          (simple-var-ref MetadataService)))))
+    (type-test-expr is
+      (simple-var-ref serviceInfo)
+      (user-defined-type Meta))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access name
+          (simple-var-ref serviceInfo)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

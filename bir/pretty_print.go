@@ -21,9 +21,9 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/values"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/values"
 )
 
 type PrettyPrinter struct {
@@ -513,6 +513,8 @@ func (p *PrettyPrinter) PrintInstructionKind(kind InstructionKind) string {
 		return "!"
 	case INSTRUCTION_KIND_BITWISE_COMPLEMENT:
 		return "~"
+	case INSTRUCTION_KIND_ANNOT_ACCESS:
+		return ".@"
 	}
 	return "unknown"
 }

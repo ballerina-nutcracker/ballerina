@@ -1,0 +1,76 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation info
+    (user-defined-type Meta)
+    (attach-point type))
+  (type-definition Meta
+    (record-type
+      (field name
+        (value-type string))))
+  (type-definition MyInt
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal myInt))))
+    (value-type int))
+  (type-definition Plain
+    (value-type int))
+  (function getIntType () (
+    (constrained-type
+      (value-type typedesc)
+      (value-type int)))
+    (block-function-body
+      (return
+        (typedesc-expr
+          (value-type int)))))
+  (function getPlainType () (
+    (constrained-type
+      (value-type typedesc)
+      (user-defined-type Plain)))
+    (block-function-body
+      (return
+        (simple-var-ref Plain))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable intType (type
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))) (expr
+          (invocation getIntType ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref intType)
+            (value-type typedesc)))))
+      (var-def
+        (variable plainType (type
+          (constrained-type
+            (value-type typedesc)
+            (user-defined-type Plain))) (expr
+          (invocation getPlainType ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref plainType)
+            (value-type typedesc)))))
+      (var-def
+        (variable m (type
+          (union-type
+            (user-defined-type Meta)
+            (value-type null))) (expr
+          (annot-access-expr info
+            (simple-var-ref MyInt)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref m)
+          (user-defined-type Meta))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref m)
+                (literal name)))))) ())
+      (block-stmt))))

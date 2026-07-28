@@ -27,7 +27,7 @@ jobs:
       - name: Run WASM tests (non-corpus)
         run: |
           wasm_exec="$(go env GOROOT)/lib/wasm/go_js_wasm_exec"
-          packages=$(go list ./... | sed '/^ballerina-lang-go\/corpus$/d')
+          packages=$(go list ./... | sed '/^ballerina\/corpus$/d')
           go test -p=1 -skip 'TestParseCorpusFiles|TestJBalUnitTests|TestJBalUnitBIRTests' -timeout 30m $packages -exec="$wasm_exec"
 
       - name: Run WASM corpus light tests

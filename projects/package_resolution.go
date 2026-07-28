@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/tools/diagnostics"
 )
 
 // PackageResolution holds the result of package dependency resolution.
@@ -258,6 +258,7 @@ var bundledLangLibs = []struct{ org, name, version string }{
 	{"ballerina", "lang.boolean", "0.0.1"},
 	{"ballerina", "lang.decimal", "0.0.1"},
 	{"ballerina", "lang.error", "0.0.1"},
+	{"ballerina", "lang.float", "0.0.1"},
 	{"ballerina", "lang.string", "0.0.1"},
 	{"ballerina", "lang.value", "0.0.1"},
 	{"ballerina", "lang.xml", "0.0.1"},

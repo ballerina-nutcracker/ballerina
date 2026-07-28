@@ -30,7 +30,7 @@ import (
 	"path"
 	"strings"
 
-	"ballerina-lang-go/common/bfs"
+	"ballerina/common/bfs"
 
 	"github.com/Masterminds/semver/v3"
 )

@@ -16,7 +16,7 @@
 
 package semantics
 
-import "ballerina-lang-go/model"
+import "ballerina/model"
 
 // CFGInvariantError represents a CFG invariant violation
 type CFGInvariantError struct {

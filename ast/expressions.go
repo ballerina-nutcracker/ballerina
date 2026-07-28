@@ -21,9 +21,10 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina-lang-go/model"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/model"
+	"ballerina/semtypes"
+	"ballerina/tools/diagnostics"
+	"ballerina/values"
 )
 
 type BLangActionOrExpression interface {
@@ -195,7 +196,7 @@ type (
 
 	BLangFieldBaseAccess struct {
 		bLangAccessExpressionBase
-		Field BLangIdentifier
+		Field IdentifierNode
 		// I think this need a symbol to got to the field definition in type but Expr could be non atomic and
 		// this should still work
 	}
@@ -208,8 +209,9 @@ type (
 	BLangAnnotAccessExpr struct {
 		bLangExpressionBase
 		Expr           BLangExpression
-		PkgAlias       *BLangIdentifier
-		AnnotationName *BLangIdentifier
+		PkgAlias       IdentifierNode
+		AnnotationName IdentifierNode
+		symbol         model.SymbolRef
 	}
 
 	BLangArrowFunction struct {
@@ -266,8 +268,8 @@ type (
 
 	BLangSimpleVarRef struct {
 		BLangVariableReferenceBase
-		PkgAlias     *BLangIdentifier
-		VariableName *BLangIdentifier
+		PkgAlias     IdentifierNode
+		VariableName IdentifierNode
 	}
 
 	BLangLocalVarRef struct {
@@ -320,7 +322,7 @@ type (
 	}
 
 	bLangInvocationBase struct {
-		Name *BLangIdentifier
+		Name IdentifierNode
 		// RawSymbol holds either a *model.SymbolRef (resolved) or a *deferredMethodSymbol (unresolved).
 		// Access via Symbol() after type resolution, or directly for deferred-symbol checks.
 		RawSymbol    model.Symbol
@@ -333,7 +335,7 @@ type (
 	BLangInvocation struct {
 		bLangExpressionBase
 		bLangInvocationBase
-		PkgAlias *BLangIdentifier
+		PkgAlias IdentifierNode
 		Async    bool
 	}
 
@@ -367,7 +369,8 @@ type (
 		// Constraint is the semtype of the type this typedesc denotes — the T in
 		// typedesc<T>. BIR lowers the expression to a TypeDesc{Type: Constraint}
 		// constant.
-		Constraint semtypes.SemType
+		Constraint       semtypes.SemType
+		AnnotationValues values.AnnotationValues
 	}
 
 	BLangInferredTypedescDefault struct {
@@ -428,7 +431,7 @@ type (
 
 	BLangNamedArgsExpression struct {
 		bLangExpressionBase
-		Name BLangIdentifier
+		Name IdentifierNode
 		Expr BLangExpression
 		// JBallerina has symbols for these as well. Need to think if we need them as well (for go to definition)
 	}
@@ -590,6 +593,7 @@ var (
 	_ BNodeWithSymbol = &BLangSimpleVarRef{}
 	_ BNodeWithSymbol = &BLangLocalVarRef{}
 	_ BNodeWithSymbol = &BLangConstRef{}
+	_ BNodeWithSymbol = &BLangAnnotAccessExpr{}
 	_ BNodeWithSymbol = &BLangInvocation{}
 )
 
@@ -620,6 +624,14 @@ func (n *BLangInvocation) Symbol() model.SymbolRef {
 
 func (n *BLangInvocation) SetSymbol(symbolRef model.SymbolRef) {
 	n.RawSymbol = &symbolRef
+}
+
+func (n *BLangAnnotAccessExpr) Symbol() model.SymbolRef {
+	return n.symbol
+}
+
+func (n *BLangAnnotAccessExpr) SetSymbol(symbolRef model.SymbolRef) {
+	n.symbol = symbolRef
 }
 
 func (n *BLangRemoteMethodCallAction) MethodSymbol() model.SymbolRef {
@@ -764,11 +776,11 @@ func (b *BLangCheckPanickedExpr) GetOperatorKind() model.OperatorKind {
 	return model.OperatorKind_CHECK_PANIC
 }
 
-func (b *BLangSimpleVarRef) GetPackageAlias() *BLangIdentifier {
+func (b *BLangSimpleVarRef) GetPackageAlias() IdentifierNode {
 	return b.PkgAlias
 }
 
-func (b *BLangSimpleVarRef) GetVariableName() *BLangIdentifier {
+func (b *BLangSimpleVarRef) GetVariableName() IdentifierNode {
 	return b.VariableName
 }
 
@@ -1014,8 +1026,8 @@ func (b *BLangFieldBaseAccess) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangFieldBaseAccess) GetFieldName() *BLangIdentifier {
-	return &b.Field
+func (b *BLangFieldBaseAccess) GetFieldName() IdentifierNode {
+	return b.Field
 }
 
 func (b *BLangListConstructorExpr) GetExpressions() []BLangExpression {
@@ -1089,12 +1101,12 @@ func (b *BLangMappingConstructorExpr) GetFields() []MappingField {
 	return b.Fields
 }
 
-func (b *BLangNamedArgsExpression) SetName(name *BLangIdentifier) {
-	b.Name = *name
+func (b *BLangNamedArgsExpression) SetName(name IdentifierNode) {
+	b.Name = name
 }
 
-func (b *BLangNamedArgsExpression) GetName() *BLangIdentifier {
-	return &b.Name
+func (b *BLangNamedArgsExpression) GetName() IdentifierNode {
+	return b.Name
 }
 
 func (b *BLangNamedArgsExpression) GetExpression() BLangExpression {

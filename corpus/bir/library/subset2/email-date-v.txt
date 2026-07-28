@@ -116,17 +116,18 @@ main() -> nil|error{
   }
   bb24 {
     civil = %47;
-    %49 = civilToEmailString(civil,PREFER_ZONE_OFFSET) -> bb25;
+    %49 = ConstantLoad PREFER_ZONE_OFFSET
+    %50 = civilToEmailString(civil,%49) -> bb25;
   }
   bb25 {
-    emailCivil = %49;
-    %51 = emailCivil is string
-    %52 = %51;
-    %53 = println(%52) -> bb26;
+    emailCivil = %50;
+    %52 = emailCivil is string
+    %53 = %52;
+    %54 = println(%53) -> bb26;
   }
   bb26 {
-    %54 = emailCivil is string
-    %54 ? bb27 : bb29;
+    %55 = emailCivil is string
+    %55 ? bb27 : bb29;
   }
   bb27 {
     PushScopeFrame 1

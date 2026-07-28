@@ -21,7 +21,18 @@
 // sentinel .gitkeep) until a real stdlib lands under ballerina/.
 package stdlibs
 
-import "embed"
+import (
+	"embed"
+	"io/fs"
+	"path"
+)
 
 //go:embed all:ballerina
 var FS embed.FS
+
+// Contains reports whether the package identified by org/name/version is
+// present in the embedded stdlib bundle.
+func Contains(org, name, version string) bool {
+	_, err := fs.Stat(FS, path.Join(org, name, version))
+	return err == nil
+}

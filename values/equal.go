@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"ballerina-lang-go/decimal"
+	"ballerina/decimal"
 )
 
 // refPair identifies an ordered pair of container references being compared.

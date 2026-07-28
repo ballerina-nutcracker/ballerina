@@ -17,7 +17,7 @@
 package semtypes
 
 import (
-	"ballerina-lang-go/decimal"
+	"ballerina/decimal"
 )
 
 // Filler is a marker interface for all filler values.

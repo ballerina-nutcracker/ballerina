@@ -22,8 +22,8 @@ import (
 	"path"
 	"strings"
 
-	"ballerina-lang-go/common/tomlparser"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/common/tomlparser"
+	"ballerina/tools/diagnostics"
 )
 
 // ProjectLoadConfig holds configuration for project loading.
@@ -115,6 +115,7 @@ func (l *ProjectLoader) loadBalaProjectWithEnv(projectPath string, cfg ProjectLo
 	}
 
 	project := newBalaProjectWithEnv(projectPath, buildOpts, result.Platform, result.SchemaVersion, env)
+	project.fsys = l.projectFs
 
 	compilationOptions := buildOpts.CompilationOptions()
 	pkg := NewPackageFromConfig(project, result.PackageConfig, compilationOptions)

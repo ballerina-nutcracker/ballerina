@@ -14,9 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 // @productions module-enum-decl
-import ballerina/io;
-
 public enum Color {
-    RED,
+    RED, // @error
     RED // @error
 }

@@ -19,8 +19,8 @@ package projects
 import (
 	"sync"
 
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/context"
+	"ballerina/tools/diagnostics"
 )
 
 // PackageCompilation represents compilation at package level by resolving all the dependencies.
@@ -117,7 +117,6 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// one shot, but a dependent of an errored module is skipped to avoid cascading
 		// noise (its imports would not resolve).
 		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
-			moduleCtx.compilerCtx.InitModuleStats(moduleCtx.getModuleName().String())
 			if moduleCtx.getCompilationState() != moduleCompilationStateLoadedFromSources {
 				// TODO: Handle LOADED_FROM_CACHE state - load symbols from BIR
 				continue

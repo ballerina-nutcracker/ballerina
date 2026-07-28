@@ -19,7 +19,7 @@
 package parser
 
 import (
-	"ballerina-lang-go/parser/common"
+	"ballerina/parser/common"
 )
 
 var (

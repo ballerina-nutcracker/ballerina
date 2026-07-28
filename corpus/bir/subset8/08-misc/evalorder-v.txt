@@ -208,7 +208,7 @@ main() -> nil{
   }
   bb34 {
     %115 = ConstantLoad 2
-    %116 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%115]{%113, %114}
+    %116 = newArray [any...][%115]{%113, %114}
     arr = %116;
     %118 = arr;
     %119 = one() -> bb35;

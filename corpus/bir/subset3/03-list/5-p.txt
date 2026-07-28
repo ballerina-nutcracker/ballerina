@@ -6,7 +6,7 @@ main() -> nil{
     %3 = ConstantLoad 11
     %4 = unknown %3;
     %5 = ConstantLoad 3
-    %6 = newArray [nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%5]{%1, %2, %4}
+    %6 = newArray [any...][%5]{%1, %2, %4}
     v = %6;
     %8 = ConstantLoad 1
     %9 = unknown %8;

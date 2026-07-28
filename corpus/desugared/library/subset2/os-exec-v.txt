@@ -111,7 +111,7 @@
         (variable $desugar$6 (expr
           (invocation output expr:
             (simple-var-ref p2) (
-            (simple-var-ref io stderr))))))
+            (numeric-literal 2))))))
       (if
         (type-test-expr is
           (simple-var-ref $desugar$6))

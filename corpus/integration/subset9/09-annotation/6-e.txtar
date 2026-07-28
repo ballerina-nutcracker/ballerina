@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: const annotation value must be a constant expression
+  --> 6-e.bal:27:7
+   |
+27 | @info {code: code()} // @error
+   |       ^^^^^^^^^^^^^^

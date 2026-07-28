@@ -25,8 +25,8 @@ import (
 	"slices"
 	"testing"
 
-	"ballerina-lang-go/projects"
-	"ballerina-lang-go/test_util"
+	"ballerina/projects"
+	"ballerina/test_util"
 )
 
 // TestLoadSingleFile tests loading a valid standalone Ballerina file.

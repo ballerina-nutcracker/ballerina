@@ -298,7 +298,7 @@
             (simple-var-ref plaintext)
             (simple-var-ref key)
             (simple-var-ref iv12)
-            (simple-var-ref crypto NONE)
+            (literal NONE)
             (literal 96))))))
       (if
         (type-test-expr is
@@ -317,7 +317,7 @@
             (simple-var-ref gcm96)
             (simple-var-ref key)
             (simple-var-ref iv12)
-            (simple-var-ref crypto NONE)
+            (literal NONE)
             (literal 96))))))
       (if
         (type-test-expr is
@@ -675,7 +675,7 @@
             (simple-var-ref plaintext)
             (simple-var-ref key)
             (simple-var-ref iv12)
-            (simple-var-ref crypto NONE)
+            (literal NONE)
             (literal 48))))))
       (expression-stmt
         (invocation io println (
@@ -692,7 +692,7 @@
             (simple-var-ref gcm)
             (simple-var-ref key)
             (simple-var-ref iv12)
-            (simple-var-ref crypto NONE)
+            (literal NONE)
             (literal 48))))))
       (expression-stmt
         (invocation io println (
@@ -709,7 +709,7 @@
             (simple-var-ref plaintext)
             (simple-var-ref key)
             (simple-var-ref iv)
-            (simple-var-ref crypto NONE)
+            (literal NONE)
             (literal 96))))))
       (expression-stmt
         (invocation io println (
@@ -726,7 +726,7 @@
             (simple-var-ref gcm)
             (simple-var-ref key)
             (simple-var-ref iv)
-            (simple-var-ref crypto NONE)
+            (literal NONE)
             (literal 96))))))
       (expression-stmt
         (invocation io println (

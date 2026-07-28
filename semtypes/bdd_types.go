@@ -341,6 +341,8 @@ func (dc *bddDeserializationContext) deserializeType(poolIndex int) SemType {
 			data = dc.deserializeBddFromDnf(dc.bp.mappingBdds[sde.index], dc.deserializeMappingAtom)
 		case functionBddSubtypeData:
 			data = dc.deserializeBddFromDnf(dc.bp.functionBdds[sde.index], dc.deserializeFunctionAtom)
+		case typedescBddSubtypeData:
+			data = dc.deserializeBddFromDnf(dc.bp.typedescBdds[sde.index], dc.deserializeMappingAtom)
 		case errorBddSubtypeData:
 			data = dc.deserializeBddFromDnf(dc.bp.errorBdds[sde.index], dc.deserializeMappingAtom)
 		case tableBddSubtypeData:

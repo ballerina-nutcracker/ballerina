@@ -109,7 +109,7 @@
         (invocation io println (
           (binary-expr ==
             (simple-var-ref dow)
-            (simple-var-ref time SATURDAY)))))
+            (numeric-literal 6)))))
       (var-def
         (variable civil (type
           (user-defined-type time Civil)) (expr

@@ -20,18 +20,18 @@ import (
 	"flag"
 	"testing"
 
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/context"
-	"ballerina-lang-go/semantics"
-	"ballerina-lang-go/semtypes"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/test_util/testphases"
+	"ballerina/ast"
+	"ballerina/context"
+	"ballerina/semantics"
+	"ballerina/semtypes"
+	"ballerina/test_util"
+	"ballerina/test_util/testphases"
 )
 
 // symbolResolverSkipList is the symbol-resolver *additional* skip list, on
 // top of the shared test_util.UnsupportedTests baseline.
 var symbolResolverSkipList = []string{
-	// https://github.com/ballerina-platform/ballerina-lang-go/issues/417
+	// https://github.com/ballerina-nutcracker/ballerina/issues/417
 	"subset8/08-xml/namespace12-v.bal",
 }
 

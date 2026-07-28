@@ -19,10 +19,10 @@ package exec
 import (
 	"fmt"
 
-	"ballerina-lang-go/bir"
-	"ballerina-lang-go/runtime/extern"
-	"ballerina-lang-go/runtime/internal/modules"
-	"ballerina-lang-go/values"
+	"ballerina/bir"
+	"ballerina/runtime/extern"
+	"ballerina/runtime/internal/modules"
+	"ballerina/values"
 )
 
 // InvokableHandle is provides a unified representation that can be used to execute any function/method

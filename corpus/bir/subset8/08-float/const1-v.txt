@@ -1,32 +1,39 @@
 module $anon.. v 0.0.0;
-A  3;
-B  2;
-C  float;
-D  float;
-E  3.5;
-F  float;
-G  float;
 main() -> nil{
   bb0 {
-    %1 = println(A) -> bb1;
+    %1 = ConstantLoad 3
+    %2 = %1;
+    %3 = println(%2) -> bb1;
   }
   bb1 {
-    %2 = println(B) -> bb2;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %6 = println(%5) -> bb2;
   }
   bb2 {
-    %3 = println(C) -> bb3;
+    %7 = ConstantLoad 4
+    %8 = %7;
+    %9 = println(%8) -> bb3;
   }
   bb3 {
-    %4 = println(D) -> bb4;
+    %10 = ConstantLoad 8
+    %11 = %10;
+    %12 = println(%11) -> bb4;
   }
   bb4 {
-    %5 = println(E) -> bb5;
+    %13 = ConstantLoad 3.5
+    %14 = %13;
+    %15 = println(%14) -> bb5;
   }
   bb5 {
-    %6 = println(F) -> bb6;
+    %16 = ConstantLoad 2.5
+    %17 = %16;
+    %18 = println(%17) -> bb6;
   }
   bb6 {
-    %7 = println(G) -> bb7;
+    %19 = ConstantLoad 3.75
+    %20 = %19;
+    %21 = println(%20) -> bb7;
   }
   bb7 {
     return;

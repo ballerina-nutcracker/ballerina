@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = newMap {| int... |}{}
     im = %1;
-    %3 = im is {| nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}
+    %3 = im is {| any... |}
     %3 ? bb1 : bb3;
   }
   bb1 {

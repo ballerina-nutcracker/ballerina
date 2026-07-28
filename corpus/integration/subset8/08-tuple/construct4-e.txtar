@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: missing required member at index 0: type '{| x: int, nil|boolean|int|float|decimal|string|regexp|xml|[nil|boolean|int|float|decimal|string|regexp|xml|...|...|table...]|{| nil|boolean|int|float|decimal|string|regexp|xml|...|...|table... |}|table... |}' has no filler value
+error[SEMANTIC_ERROR]: missing required member at index 0: type '{| x: int, anydata... |}' has no filler value
   --> construct4-e.bal:20:27
    |
 20 |     [record {int x;}] v = []; // @error

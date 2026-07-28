@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina-lang-go/tools/diagnostics"
+import "ballerina/tools/diagnostics"
 
 // ArrayValueNode holds a TOML array of values.
 type ArrayValueNode struct {

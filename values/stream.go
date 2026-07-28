@@ -16,7 +16,7 @@
 
 package values
 
-import "ballerina-lang-go/semtypes"
+import "ballerina/semtypes"
 
 // Stream is the runtime representation of a stream<T, C> value.
 //

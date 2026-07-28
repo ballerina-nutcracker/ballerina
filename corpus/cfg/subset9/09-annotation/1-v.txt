@@ -1,0 +1,42 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable infoValue (type
+        (union-type
+          (user-defined-type Info)
+          (value-type null))) (expr
+        (annot-access-expr info
+          (simple-var-ref Person)))))
+    (type-test-expr is
+      (simple-var-ref infoValue)
+      (user-defined-type Info))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access name
+          (simple-var-ref infoValue)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access code
+          (simple-var-ref infoValue)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable markerValue (type
+        (union-type
+          (value-type boolean)
+          (value-type null))) (expr
+        (annot-access-expr marker
+          (simple-var-ref Person)))))
+    (type-test-expr is
+      (simple-var-ref markerValue)
+      (value-type boolean))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref markerValue))))
+  )
+  (bb4 (bb3 bb2) ())
+)

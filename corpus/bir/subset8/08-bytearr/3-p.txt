@@ -10,7 +10,7 @@ main() -> nil{
     return;
   }
 }
-f([nil|boolean|int|float|decimal|string|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]) -> nil{
+f([any...]) -> nil{
   bb0 {
     %2 = ConstantLoad 1
     %3 = %2;

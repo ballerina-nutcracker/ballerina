@@ -1,0 +1,5 @@
+-- stdout --
+value=5
+value=5.5
+404
+-- stderr --

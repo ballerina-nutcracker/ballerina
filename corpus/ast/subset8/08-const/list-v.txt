@@ -1,6 +1,8 @@
 (compilation-unit  regular-source
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
+  (const BASE () (
+    (literal 10)))
   (const A () (
     (list-constructor-expr
       (literal 1)
@@ -23,6 +25,15 @@
       (list-constructor-expr
         (literal 3)
         (literal 4)))))
+  (const E () (
+    (list-constructor-expr
+      (simple-var-ref BASE)
+      (list-constructor-expr
+        (binary-expr +
+          (simple-var-ref BASE)
+          (literal 1))
+        (unary-expr -
+          (literal 3))))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -37,4 +48,7 @@
           (simple-var-ref C))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref D)))))))
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref E)))))))

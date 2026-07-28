@@ -1,0 +1,69 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation info
+    (user-defined-type Info)
+    (attach-point type))
+  (annotation marker
+    (attach-point type))
+  (type-definition Info
+    (record-type
+      (field name
+        (value-type string))
+      (field code
+        (value-type int))))
+  (type-definition Person
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (key-value
+          (literal name)
+          (literal person))
+        (key-value
+          (literal code)
+          (literal 7))))
+    (annotation-attachment marker
+      (literal true))
+    (record-type
+      (field name
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable infoValue (type
+          (union-type
+            (user-defined-type Info)
+            (value-type null))) (expr
+          (annot-access-expr info
+            (simple-var-ref Person)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref infoValue)
+          (user-defined-type Info))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref infoValue)
+                (literal name)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref infoValue)
+                (literal code)))))) ())
+      (block-stmt
+        (var-def
+          (variable markerValue (type
+            (union-type
+              (value-type boolean)
+              (value-type null))) (expr
+            (annot-access-expr marker
+              (simple-var-ref Person)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref markerValue)
+            (value-type boolean))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref markerValue))))) ())
+        (block-stmt)))))

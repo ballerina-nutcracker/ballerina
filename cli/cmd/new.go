@@ -23,9 +23,9 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina-lang-go/cli/templates"
-	"ballerina-lang-go/common/tomlparser"
-	"ballerina-lang-go/projects"
+	"ballerina/cli/templates"
+	"ballerina/common/tomlparser"
+	"ballerina/projects"
 
 	"github.com/spf13/cobra"
 )

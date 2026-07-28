@@ -17,8 +17,8 @@
 package desugar
 
 import (
-	"ballerina-lang-go/ast"
-	"ballerina-lang-go/tools/diagnostics"
+	"ballerina/ast"
+	"ballerina/tools/diagnostics"
 )
 
 type posUpdateVisitor struct {

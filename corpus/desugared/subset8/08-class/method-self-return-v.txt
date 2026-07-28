@@ -1,0 +1,28 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition public Box
+    (function init () ()
+      (block-function-body))
+    (function dup () (
+      (user-defined-type Box))
+      (block-function-body
+        (return
+          (simple-var-ref self)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (user-defined-type Box)) (expr
+          (new ()))))
+      (var-def
+        (variable b2 (type
+          (user-defined-type Box)) (expr
+          (invocation dup expr:
+            (simple-var-ref b) ()))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref b2))
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))

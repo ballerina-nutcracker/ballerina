@@ -17,7 +17,7 @@
 package tree
 
 import (
-	"ballerina-lang-go/parser/common"
+	"ballerina/parser/common"
 	"fmt"
 )
 

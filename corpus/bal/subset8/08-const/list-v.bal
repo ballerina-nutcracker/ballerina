@@ -15,14 +15,17 @@
 // under the License.
 import ballerina/io;
 
+const BASE = 10;
 const A = [1, 2, 3];
 const B = ["hello", "world"];
 const C = [1, "two", 3];
 const D = [[1, 2], [3, 4]];
+const E = [BASE, ...[BASE + 1, -3]];
 
 public function main() {
     io:println(A); // @output [1,2,3]
     io:println(B); // @output ["hello","world"]
     io:println(C); // @output [1,"two",3]
     io:println(D); // @output [[1,2],[3,4]]
+    io:println(E); // @output [10,11,-3]
 }

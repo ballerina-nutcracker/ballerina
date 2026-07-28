@@ -24,9 +24,9 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina-lang-go/parser/tree"
-	"ballerina-lang-go/test_util"
-	"ballerina-lang-go/tools/text"
+	"ballerina/parser/tree"
+	"ballerina/test_util"
+	"ballerina/tools/text"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )

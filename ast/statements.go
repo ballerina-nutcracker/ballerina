@@ -16,7 +16,7 @@
 
 package ast
 
-import "ballerina-lang-go/model"
+import "ballerina/model"
 
 type FailureBreakMode uint
 
@@ -52,10 +52,9 @@ type (
 
 	BLangCompoundAssignment struct {
 		bLangStatementBase
-		VarRef       LExpr
-		Expr         BLangActionOrExpression
-		OpKind       model.OperatorKind
-		ModifiedExpr BLangExpression
+		VarRef LExpr
+		Expr   BLangActionOrExpression
+		OpKind model.OperatorKind
 	}
 	BLangContinue struct {
 		bLangStatementBase

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: const annotation type must be readonly
+  --> 4-e.bal:21:18
+   |
+21 | const annotation Info info on type; // @error
+   |                  ^^^^

@@ -1,0 +1,36 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable first (type
+        (union-type
+          (user-defined-type TinyInfo)
+          (value-type null))) (expr
+        (annot-access-expr tiny
+          (simple-var-ref First)))))
+    (var-def
+      (variable second (type
+        (union-type
+          (user-defined-type TinyInfo)
+          (value-type null))) (expr
+        (annot-access-expr tiny
+          (simple-var-ref Second)))))
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref first)
+        (user-defined-type TinyInfo))
+      (type-test-expr is
+        (simple-var-ref second)
+        (user-defined-type TinyInfo)))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref first)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref second)))))
+  )
+  (bb2 (bb1 bb0) ())
+)
