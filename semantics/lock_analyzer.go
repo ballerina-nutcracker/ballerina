@@ -57,7 +57,7 @@ func findRestrictedVariable(a analyzer, body *ast.BLangBlockStmt) (key string, s
 		switch n := inner.(type) {
 		case *ast.BLangLambdaFunction, *ast.BLangFunction:
 			return false
-		case *ast.BLangSimpleVarRef:
+		case *ast.BLangVarRef:
 			unnarrowed := a.ctx().UnnarrowedSymbol(n.Symbol())
 			switch s := a.ctx().GetSymbol(unnarrowed).(type) {
 			case model.ValueSymbol:
@@ -110,8 +110,7 @@ func selfFieldLockEntry(a analyzer, access *ast.BLangFieldBaseAccess) (string, m
 		return "", model.SymbolRef{}, false
 	}
 	fieldName := access.Field.GetValue()
-	for _, f := range cls.fields {
-		field := f.(*ast.BLangSimpleVariable)
+	for _, field := range cls.fields {
 		if field.Name.GetValue() != fieldName {
 			continue
 		}
@@ -312,7 +311,7 @@ func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	switch node := n.(type) {
 	case *ast.BLangLambdaFunction, *ast.BLangFunction:
 		return nil
-	case *ast.BLangSimpleVariableDef:
+	case *ast.BLangVariableDef:
 		v.locals[node.Var.Symbol()] = struct{}{}
 	case *ast.BLangAssignment:
 		v.checkAssignment(node.VarRef, node.Expr, node.GetPosition())
@@ -356,7 +355,7 @@ func (v *lockBodyVisitor) checkAssignment(lhs ast.BLangExpression, rhs ast.BLang
 
 	// LHS must be a plain variable reference, and RHS must be an
 	// isolated expression.
-	if _, ok := lhs.(*ast.BLangSimpleVarRef); !ok {
+	if _, ok := lhs.(*ast.BLangVarRef); !ok {
 		v.a.semanticErr("assignment in a lock statement to a target defined outside the lock must use a plain variable name on the left-hand side", pos)
 		v.ok = false
 		return
@@ -393,7 +392,7 @@ func (v *lockBodyVisitor) assignsRestricted(lhs ast.BLangExpression) bool {
 func (v *lockBodyVisitor) containsTransferInRef(expr ast.BLangExpression) bool {
 	found := false
 	everyNode(v.a, expr, func(_ analyzer, n ast.BLangNode) bool {
-		ref, ok := n.(*ast.BLangSimpleVarRef)
+		ref, ok := n.(*ast.BLangVarRef)
 		if !ok {
 			return true
 		}
@@ -515,7 +514,7 @@ func isIsolatedExpression(a analyzer, expr ast.BLangExpression) bool {
 	return false
 }
 
-func checkIsolatedModuleVarOutsideLock(a analyzer, ref *ast.BLangSimpleVarRef) {
+func checkIsolatedModuleVarOutsideLock(a analyzer, ref *ast.BLangVarRef) {
 	unnarrowed := a.ctx().UnnarrowedSymbol(ref.Symbol())
 	sym, ok := a.ctx().GetSymbol(unnarrowed).(model.ValueSymbol)
 	if !ok || !sym.IsIsolated() {
@@ -698,7 +697,7 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	tyCtx := a.tyCtx()
 	isolatedFn := semtypes.CreateIsolatedFn(tyCtx)
 	switch node := n.(type) {
-	case *ast.BLangSimpleVariableDef:
+	case *ast.BLangVariableDef:
 		v := node.Var
 		visitor.scope.define(v.Symbol(), varDeclMetadata{
 			Type:  v.GetDeterminedType(),
@@ -727,7 +726,7 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	case *ast.BLangLock:
 		visitor.walkLock(node)
 		return nil
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		visitor.checkRead(node)
 		return visitor
 	}
@@ -776,7 +775,7 @@ func (v *captureVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return v
 	}
-	if ref, ok := n.(*ast.BLangSimpleVarRef); ok {
+	if ref, ok := n.(*ast.BLangVarRef); ok {
 		unnarrowed := v.a.ctx().UnnarrowedSymbol(ref.Symbol())
 		if md, found, _ := v.outer.lookup(unnarrowed); found {
 			if !md.Final || !semtypes.IsSubtype(v.a.tyCtx(), md.Type, v.isolated) {
@@ -826,7 +825,7 @@ func checkIsolatedNewWithContext(ctx *context.CompilerContext, tyCtx semtypes.Co
 // Non isolated module level variables can be read under 2 conditions
 // 1. Identifier is declared final or configurable but not isolated
 // 2. Variable is a subtype of isolated
-func (visitor *isolatedFnVisitor) checkRead(ref *ast.BLangSimpleVarRef) {
+func (visitor *isolatedFnVisitor) checkRead(ref *ast.BLangVarRef) {
 	tyCtx := visitor.a.tyCtx()
 	unnarrowed := visitor.a.ctx().UnnarrowedSymbol(ref.Symbol())
 	if _, ok, _ := visitor.scope.lookup(unnarrowed); ok {
@@ -847,22 +846,21 @@ func (visitor *isolatedFnVisitor) checkRead(ref *ast.BLangSimpleVarRef) {
 	}
 }
 
-func (v *lockBodyVisitor) enclosingFields() []ast.SimpleVariableNode {
+func (v *lockBodyVisitor) enclosingFields() []*ast.BLangVariable {
 	if v.enclosingClass == nil {
 		return nil
 	}
 	return v.enclosingClass.fields
 }
 
-func exprRef(enclosingFields []ast.SimpleVariableNode, expr ast.BLangExpression) (model.SymbolRef, bool) {
+func exprRef(enclosingFields []*ast.BLangVariable, expr ast.BLangExpression) (model.SymbolRef, bool) {
 	switch expr := expr.(type) {
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		return expr.Symbol(), true
 	case *ast.BLangFieldBaseAccess:
 		if isSelfFieldAccess(expr) {
 			fieldName := expr.Field.GetValue()
-			for _, f := range enclosingFields {
-				field := f.(*ast.BLangSimpleVariable)
+			for _, field := range enclosingFields {
 				if field.Name.GetValue() != fieldName {
 					continue
 				}

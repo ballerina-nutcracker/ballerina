@@ -112,7 +112,7 @@ func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 		}
 		if semtypes.IsZero(v.ctx.SymbolType(symbol)) {
 			// FIXME: get rid of this
-			if _, ok := node.(*ast.BLangConstant); ok {
+			if variable, ok := node.(*ast.BLangVariable); ok && variable.IsConstant() {
 				// constants will get their type set during semantic analysis
 				return v
 			}

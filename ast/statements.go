@@ -16,14 +16,17 @@
 
 package ast
 
-import "github.com/ballerina-nutcracker/ballerina/model"
+import (
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+)
 
 type FailureBreakMode uint
 
 const (
-	FailureBreakMode_NOT_BREAKABLE FailureBreakMode = iota
-	FailureBreakMode_BREAK_WITHIN_BLOCK
-	FailureBreakMode_BREAK_TO_OUTER_BLOCK
+	FailureBreakModeNotBreakable FailureBreakMode = iota
+	FailureBreakModeBreakWithinBlock
+	FailureBreakModeBreakToOuterBlock
 )
 
 func (*bLangStatementBase) isStatement() {}
@@ -89,16 +92,16 @@ type (
 	BLangForeach struct {
 		bLangStatementBase
 		scope             model.Scope
-		VariableDef       *BLangSimpleVariableDef
+		VariableDef       *BLangVariableDef
 		Collection        BLangActionOrExpression
 		Body              BLangBlockStmt
 		OnFailClause      *BLangOnFailClause
 		IsDeclaredWithVar bool
 	}
 
-	BLangSimpleVariableDef struct {
+	BLangVariableDef struct {
 		bLangStatementBase
-		Var *BLangSimpleVariable
+		Var *BLangVariable
 	}
 
 	BLangReturn struct {
@@ -142,17 +145,8 @@ type (
 
 var (
 	_ AssignmentNode          = &BLangAssignment{}
-	_ CompoundAssignmentNode  = &BLangCompoundAssignment{}
 	_ StatementNode           = &BLangContinue{}
-	_ DoNode                  = &BLangDo{}
-	_ BlockStatementNode      = &BLangBlockStmt{}
 	_ ExpressionStatementNode = &BLangExpressionStmt{}
-	_ IfNode                  = &BLangIf{}
-	_ WhileNode               = &BLangWhile{}
-	_ ForeachNode             = &BLangForeach{}
-	_ VariableDefinitionNode  = &BLangSimpleVariableDef{}
-	_ ReturnNode              = &BLangReturn{}
-	_ PanicNode               = &BLangPanic{}
 )
 
 var (
@@ -160,6 +154,64 @@ var (
 	_ NodeWithScope = &BLangWhile{}
 	_ NodeWithScope = &BLangForeach{}
 )
+
+func NewBLangAssignment(pos Location, variable LExpr, expr BLangActionOrExpression) *BLangAssignment {
+	return &BLangAssignment{
+		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		VarRef:             variable,
+		Expr:               expr,
+	}
+}
+
+func NewBLangCompoundAssignment(pos Location, variable LExpr, expr BLangActionOrExpression, opKind model.OperatorKind) *BLangCompoundAssignment {
+	return &BLangCompoundAssignment{
+		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		VarRef:             variable,
+		Expr:               expr,
+		OpKind:             opKind,
+	}
+}
+
+func NewBLangIf(pos Location, condition BLangExpression, body *BLangBlockStmt, elseStmt StatementNode) *BLangIf {
+	return &BLangIf{
+		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		Expr:               condition,
+		Body:               *body,
+		ElseStmt:           elseStmt,
+	}
+}
+
+func NewBLangWhile(pos Location, condition BLangExpression, body *BLangBlockStmt, onFailClause *BLangOnFailClause) *BLangWhile {
+	stmt := &BLangWhile{
+		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		Expr:               condition,
+		Body:               *body,
+	}
+	if onFailClause != nil {
+		stmt.OnFailClause = *onFailClause
+	} else {
+		stmt.OnFailClause.pos = diagnostics.NewBuiltinLocation()
+	}
+	return stmt
+}
+
+func NewBLangForeach(pos Location, variableDef *BLangVariableDef, collection BLangActionOrExpression, body *BLangBlockStmt, onFailClause *BLangOnFailClause) *BLangForeach {
+	return &BLangForeach{
+		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		VariableDef:        variableDef,
+		Collection:         collection,
+		Body:               *body,
+		OnFailClause:       onFailClause,
+		IsDeclaredWithVar:  variableDef.Var.IsDeclaredWithVar,
+	}
+}
+
+func NewBLangReturn(pos Location, expr BLangActionOrExpression) *BLangReturn {
+	return &BLangReturn{
+		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		Expr:               expr,
+	}
+}
 
 var (
 	_ BLangNode = &BLangAssignment{}
@@ -172,7 +224,7 @@ var (
 	_ BLangNode = &BLangIf{}
 	_ BLangNode = &BLangWhile{}
 	_ BLangNode = &BLangForeach{}
-	_ BLangNode = &BLangSimpleVariableDef{}
+	_ BLangNode = &BLangVariableDef{}
 	_ BLangNode = &BLangReturn{}
 	_ BLangNode = &BLangPanic{}
 	_ BLangNode = &BLangMatchStatement{}
@@ -191,17 +243,6 @@ func (b *BLangAssignment) IsDeclaredWithVar() bool {
 	return false
 }
 
-func (b *BLangAssignment) SetActionOrExpression(actionOrExpression BLangActionOrExpression) {
-	b.Expr = actionOrExpression
-}
-
-func (b *BLangAssignment) SetDeclaredWithVar(isDeclaredWithVar bool) {
-}
-
-func (b *BLangAssignment) SetVariable(variableReferenceNode LExpr) {
-	b.VarRef = variableReferenceNode
-}
-
 func (b *BLangBlockStmt) GetStatements() []StatementNode {
 	return b.Stmts
 }
@@ -212,10 +253,6 @@ func (b *BLangBlockStmt) AddStatement(statement StatementNode) {
 
 func (b *BLangCompoundAssignment) IsDeclaredWithVar() bool {
 	return false
-}
-
-func (b *BLangCompoundAssignment) SetDeclaredWithVar(_ bool) {
-	panic("compound assignemnt can't be declared with var")
 }
 
 func (b *BLangCompoundAssignment) GetOperatorKind() model.OperatorKind {
@@ -230,36 +267,12 @@ func (b *BLangCompoundAssignment) GetExpression() BLangActionOrExpression {
 	return b.Expr
 }
 
-func (b *BLangCompoundAssignment) SetActionOrExpression(actionOrExpression BLangActionOrExpression) {
-	b.Expr = actionOrExpression
-}
-
-func (b *BLangCompoundAssignment) SetVariable(variableReferenceNode LExpr) {
-	b.VarRef = variableReferenceNode
-}
-
-func (b *BLangDo) GetBody() BlockStatementNode {
+func (b *BLangDo) GetBody() *BLangBlockStmt {
 	return &b.Body
 }
 
-func (b *BLangDo) SetBody(body BlockStatementNode) {
-	if blockStmt, ok := body.(*BLangBlockStmt); ok {
-		b.Body = *blockStmt
-		return
-	}
-	panic("body is not a BLangBlockStmt")
-}
-
-func (b *BLangDo) GetOnFailClause() OnFailClauseNode {
+func (b *BLangDo) GetOnFailClause() *BLangOnFailClause {
 	return &b.OnFailClause
-}
-
-func (b *BLangDo) SetOnFailClause(onFailClause OnFailClauseNode) {
-	if onFailClause, ok := onFailClause.(*BLangOnFailClause); ok {
-		b.OnFailClause = *onFailClause
-		return
-	}
-	panic("onFailClause is not a BLangOnFailClause")
 }
 
 func (b *BLangExpressionStmt) GetExpression() BLangActionOrExpression {
@@ -278,28 +291,12 @@ func (b *BLangIf) GetCondition() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangIf) GetBody() BlockStatementNode {
+func (b *BLangIf) GetBody() *BLangBlockStmt {
 	return &b.Body
 }
 
 func (b *BLangIf) GetElseStatement() StatementNode {
 	return b.ElseStmt
-}
-
-func (b *BLangIf) SetCondition(condition BLangExpression) {
-	b.Expr = condition
-}
-
-func (b *BLangIf) SetBody(body BlockStatementNode) {
-	if blockStmt, ok := body.(*BLangBlockStmt); ok {
-		b.Body = *blockStmt
-		return
-	}
-	panic("body is not a BLangBlockStmt")
-}
-
-func (b *BLangIf) SetElseStatement(elseStatement StatementNode) {
-	b.ElseStmt = elseStatement
 }
 
 func (b *BLangWhile) Scope() model.Scope {
@@ -314,32 +311,12 @@ func (b *BLangWhile) GetCondition() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangWhile) SetCondition(condition BLangExpression) {
-	b.Expr = condition
-}
-
-func (b *BLangWhile) GetBody() BlockStatementNode {
+func (b *BLangWhile) GetBody() *BLangBlockStmt {
 	return &b.Body
 }
 
-func (b *BLangWhile) SetBody(body BlockStatementNode) {
-	if blockStmt, ok := body.(*BLangBlockStmt); ok {
-		b.Body = *blockStmt
-		return
-	}
-	panic("body is not a BLangBlockStmt")
-}
-
-func (b *BLangWhile) GetOnFailClause() OnFailClauseNode {
+func (b *BLangWhile) GetOnFailClause() *BLangOnFailClause {
 	return &b.OnFailClause
-}
-
-func (b *BLangWhile) SetOnFailClause(onFailClause OnFailClauseNode) {
-	if onFailClause, ok := onFailClause.(*BLangOnFailClause); ok {
-		b.OnFailClause = *onFailClause
-		return
-	}
-	panic("onFailClause is not a BLangOnFailClause")
 }
 
 func (b *BLangForeach) Scope() model.Scope {
@@ -350,89 +327,45 @@ func (b *BLangForeach) SetScope(scope model.Scope) {
 	b.scope = scope
 }
 
-func (b *BLangForeach) GetVariableDefinitionNode() VariableDefinitionNode {
+func (b *BLangForeach) GetVariableDefinitionNode() *BLangVariableDef {
 	return b.VariableDef
-}
-
-func (b *BLangForeach) SetVariableDefinitionNode(node VariableDefinitionNode) {
-	if node == nil {
-		b.VariableDef = nil
-		return
-	}
-	if varDef, ok := node.(*BLangSimpleVariableDef); ok {
-		b.VariableDef = varDef
-		return
-	}
-	panic("node is not a *BLangSimpleVariableDef")
 }
 
 func (b *BLangForeach) GetCollection() BLangActionOrExpression {
 	return b.Collection
 }
 
-func (b *BLangForeach) SetCollection(collection BLangActionOrExpression) {
-	b.Collection = collection
-}
-
-func (b *BLangForeach) GetBody() BlockStatementNode {
+func (b *BLangForeach) GetBody() *BLangBlockStmt {
 	return &b.Body
-}
-
-func (b *BLangForeach) SetBody(body BlockStatementNode) {
-	if blockStmt, ok := body.(*BLangBlockStmt); ok {
-		b.Body = *blockStmt
-		return
-	}
-	panic("body is not a BLangBlockStmt")
 }
 
 func (b *BLangForeach) GetIsDeclaredWithVar() bool {
 	return b.IsDeclaredWithVar
 }
 
-func (b *BLangForeach) GetOnFailClause() OnFailClauseNode {
+func (b *BLangForeach) GetOnFailClause() *BLangOnFailClause {
 	if b.OnFailClause == nil {
 		return nil
 	}
 	return b.OnFailClause
 }
 
-func (b *BLangForeach) SetOnFailClause(onFailClause OnFailClauseNode) {
-	if onFailClause == nil {
-		b.OnFailClause = nil
-		return
-	}
-	if clause, ok := onFailClause.(*BLangOnFailClause); ok {
-		b.OnFailClause = clause
-		return
-	}
-	panic("onFailClause is not a *BLangOnFailClause")
-}
-
-func (b *BLangSimpleVariableDef) GetVariable() VariableNode {
+func (b *BLangVariableDef) GetVariable() *BLangVariable {
 	return b.Var
 }
 
-func (b *BLangSimpleVariableDef) SetVariable(variable VariableNode) {
-	if v, ok := variable.(*BLangSimpleVariable); ok {
-		b.Var = v
-	} else {
-		panic("variable is not a BLangSimpleVariable")
-	}
+func (b *BLangVariableDef) SetVariable(variable *BLangVariable) {
+	b.Var = variable
 }
 
 func (b *BLangReturn) GetExpression() BLangActionOrExpression {
 	return b.Expr
 }
 
-func (b *BLangReturn) SetActionOrExpression(actionOrExpression BLangActionOrExpression) {
-	b.Expr = actionOrExpression
-}
-
 func (b *BLangPanic) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangLock) GetBody() BlockStatementNode {
+func (b *BLangLock) GetBody() *BLangBlockStmt {
 	return &b.Body
 }

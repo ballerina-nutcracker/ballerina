@@ -27,7 +27,7 @@ import (
 
 // materializeConstantRef replaces a reference to a folded constant with a
 // literal carrying the folded value.
-func materializeConstantRef(cx *functionContext, ref *ast.BLangSimpleVarRef) ast.BLangExpression {
+func materializeConstantRef(cx *functionContext, ref *ast.BLangVarRef) ast.BLangExpression {
 	constSym, ok := cx.getSymbol(ref.Symbol()).(*model.ConstantValueSymbol)
 	if !ok {
 		return nil
@@ -42,54 +42,43 @@ func materializeConstantRef(cx *functionContext, ref *ast.BLangSimpleVarRef) ast
 }
 
 func constantValueLiteral(value values.BalValue, pos diagnostics.Location, ty semtypes.SemType) ast.BLangExpression {
+	info := constantValueLiteralInfo(value)
+	originalValue := values.String(value, make(map[uintptr]bool))
 	var expr ast.BLangExpression
 	var lit *ast.BLangLiteral
-	info := constantValueLiteralInfo(value)
 	if info.numeric {
-		numeric := &ast.BLangNumericLiteral{}
+		numeric := ast.NewBLangNumericLiteral(pos, info.kind, value, originalValue, true)
 		expr = numeric
 		lit = &numeric.BLangLiteral
 	} else {
-		plain := &ast.BLangLiteral{}
-		expr = plain
-		lit = plain
+		lit = ast.NewBLangLiteral(pos, info.kind, value, originalValue, true)
+		expr = lit
 	}
-
-	lit.SetValue(value)
-	lit.SetOriginalValue(values.String(value, make(map[uintptr]bool)))
-	lit.SetIsConstant(true)
 	lit.SetDeterminedType(ty)
-	lit.SetPosition(pos)
-	if info.hasTag {
-		bt := &ast.BTypeBasic{}
-		bt.BTypeSetTag(info.tag)
-		lit.SetValueType(bt)
-	}
 	return expr
 }
 
 type constantLiteralInfo struct {
 	numeric bool
-	tag     ast.TypeTags
-	hasTag  bool
+	kind    ast.LiteralKind
 }
 
 func constantValueLiteralInfo(value values.BalValue) constantLiteralInfo {
 	switch value.(type) {
 	case nil:
-		return constantLiteralInfo{tag: ast.TypeTags_NIL, hasTag: true}
+		return constantLiteralInfo{kind: ast.LiteralKindNil}
 	case bool:
-		return constantLiteralInfo{tag: ast.TypeTags_BOOLEAN, hasTag: true}
+		return constantLiteralInfo{kind: ast.LiteralKindBoolean}
 	case int, int64, int32, int16, int8:
-		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_INT, hasTag: true}
+		return constantLiteralInfo{numeric: true, kind: ast.LiteralKindInt}
 	case byte:
-		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_BYTE, hasTag: true}
+		return constantLiteralInfo{numeric: true, kind: ast.LiteralKindByte}
 	case float64, float32:
-		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_FLOAT, hasTag: true}
+		return constantLiteralInfo{numeric: true, kind: ast.LiteralKindFloat}
 	case *decimal.Decimal:
-		return constantLiteralInfo{numeric: true, tag: ast.TypeTags_DECIMAL, hasTag: true}
+		return constantLiteralInfo{numeric: true, kind: ast.LiteralKindDecimal}
 	case string, *string:
-		return constantLiteralInfo{tag: ast.TypeTags_STRING, hasTag: true}
+		return constantLiteralInfo{kind: ast.LiteralKindString}
 	default:
 		return constantLiteralInfo{}
 	}

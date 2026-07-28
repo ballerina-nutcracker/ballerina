@@ -1,4 +1,4 @@
-(compilation-unit  regular-source
+(compilation-unit 
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
   (type-definition I

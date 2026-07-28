@@ -218,7 +218,7 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	// global variables, not to shadowed locals with the same name.
 	extractor := func(node ast.Node) string {
 		if assignment, ok := node.(*ast.BLangAssignment); ok {
-			if varRef, ok := assignment.VarRef.(*ast.BLangSimpleVarRef); ok {
+			if varRef, ok := assignment.VarRef.(*ast.BLangVarRef); ok {
 				if globalSymbols[varRef.Symbol()] {
 					return varRef.VariableName.GetValue()
 				}

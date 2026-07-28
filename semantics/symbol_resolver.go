@@ -483,11 +483,11 @@ func (ms *moduleSymbolResolver) isTypeRefToTypedesc(ref *ast.BLangUserDefinedTyp
 func (ms *moduleSymbolResolver) isDescriptorTypedesc(desc any, visited map[model.SymbolRef]bool) bool {
 	switch tn := desc.(type) {
 	case *ast.BLangValueType:
-		return tn.TypeKind == ast.TypeKind_TYPEDESC
+		return tn.TypeKind == ast.TypeKindTypeDesc
 	case *ast.BLangBuiltInRefTypeNode:
-		return tn.TypeKind == ast.TypeKind_TYPEDESC
+		return tn.TypeKind == ast.TypeKindTypeDesc
 	case *ast.BLangConstrainedType:
-		return tn.ConstraintKind() == ast.TypeKind_TYPEDESC
+		return tn.ConstraintKind() == ast.TypeKindTypeDesc
 	case *ast.BLangUserDefinedType:
 		return ms.isTypeRefToTypedesc(tn, visited)
 	}
@@ -619,10 +619,12 @@ func (ms *moduleSymbolResolver) allocateTopLevelSymbols(cu *ast.BLangCompilation
 			ms.allocateTypeSymbol(n, make(map[string]struct{}))
 		case *ast.BLangFunction:
 			ms.allocateFunctionSymbol(n)
-		case *ast.BLangConstant:
-			ms.allocateConstantSymbol(n)
-		case *ast.BLangSimpleVariable:
-			ms.allocateGlobalVarSymbol(n)
+		case *ast.BLangVariable:
+			if n.IsConstant() {
+				ms.allocateConstantSymbol(n)
+			} else {
+				ms.allocateGlobalVarSymbol(n)
+			}
 		case *ast.BLangClassDefinition:
 			ms.allocateClassSymbol(n)
 		case *ast.BLangAnnotation:
@@ -740,7 +742,7 @@ func (ms *moduleSymbolResolver) allocateAnnotationSymbol(annotation *ast.BLangAn
 	addTopLevelAnnotationSymbol(ms, name, &symbol, annotation.Name.GetPosition())
 }
 
-func (ms *moduleSymbolResolver) allocateConstantSymbol(constDef *ast.BLangConstant) {
+func (ms *moduleSymbolResolver) allocateConstantSymbol(constDef *ast.BLangVariable) {
 	name := constDef.Name.GetValue()
 	isPublic := constDef.IsPublic()
 	if !addTopLevelSymbol(ms, name, model.NewConstantValueSymbol(name, isPublic, constDef.Name.GetPosition()), constDef.Name.GetPosition()) {
@@ -752,7 +754,7 @@ func (ms *moduleSymbolResolver) allocateConstantSymbol(constDef *ast.BLangConsta
 	}
 }
 
-func (ms *moduleSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.BLangSimpleVariable) {
+func (ms *moduleSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.BLangVariable) {
 	name := globalVar.Name.GetValue()
 	isPublic := globalVar.IsPublic()
 	{
@@ -928,7 +930,7 @@ func resolveFunction(functionResolver *blockSymbolResolver, function *ast.BLangF
 	resolveFunctionInner(functionResolver, function.RequiredParams, function.RestParam, function, function.Body)
 }
 
-func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams []ast.BLangSimpleVariable, restParam ast.SimpleVariableNode, walkNode ast.BLangNode, body ast.FunctionBodyNode) {
+func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams []ast.BLangVariable, restParam *ast.BLangVariable, walkNode ast.BLangNode, body ast.FunctionBodyNode) {
 	trackParams := !isExternalFunctionBody(body)
 	scope := functionResolver.scope.MainSpace()
 	for i := range requiredParams {
@@ -945,7 +947,7 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 		}
 	}
 	if restParam != nil {
-		rest := restParam.(*ast.BLangSimpleVariable)
+		rest := restParam
 		name := rest.Name.GetValue()
 		if _, exists := scope.GetSymbol(name); exists {
 			semanticError(functionResolver, "redeclared symbol '"+name+"'", rest.GetPosition())
@@ -1016,7 +1018,7 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 	}
 
 	if function.RestParam != nil {
-		restParam := function.RestParam.(*ast.BLangSimpleVariable)
+		restParam := function.RestParam
 		name := restParam.Name.GetValue()
 		if isShadowed(parent, name) {
 			semanticError(functionResolver, "Variable already defined: "+name, restParam.GetPosition())
@@ -1143,8 +1145,8 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangBlockStmt, *ast.BLangDo, *ast.BLangLock:
 		return newBlockSymbolResolverWithBlockScope(bs, n)
-	case *ast.BLangSimpleVariableDef:
-		defineVariable(bs, n.GetVariable(), n.GetVariable().(*ast.BLangSimpleVariable).IsFinal())
+	case *ast.BLangVariableDef:
+		defineVariable(bs, n.GetVariable(), n.GetVariable().IsFinal())
 	case *ast.BLangLambdaFunction:
 		fn := n.Function
 		name := fn.Name.GetValue()
@@ -1205,8 +1207,8 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangRemoteMethodCallAction:
 		// We are creating a deferred symbol here since without determining the type of the reciever we can't determine the actual function symbol
 		createDeferredMethodSymbol(resolver, n)
-	case ast.VariableNode:
-		referVariable(resolver, n.(variableNode))
+	case *ast.BLangVariable:
+		referVariable(resolver, n)
 	case ast.SimpleVariableReferenceNode:
 		referSimpleVariableReference(resolver, n)
 	case *ast.BLangUserDefinedType:
@@ -1400,23 +1402,17 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 	return false
 }
 
-func defineVariable(resolver *blockSymbolResolver, variable ast.VariableNode, isFinal bool) {
-	switch variable := variable.(type) {
-	case *ast.BLangSimpleVariable:
-		name := variable.Name.GetValue()
-		if isShadowed(resolver, name) {
-			semanticError(resolver, "Variable already defined: "+name, variable.GetPosition())
-		}
-		symbol := model.NewVariableSymbol(name, false, isFinal, false, symbolLocationForNode(variable))
-		if isFinal {
-			symbol.SetFinal()
-		}
-		addSymbolAndSetOnNode(resolver, name, &symbol, variable)
-		markInit(resolver, name, variable.Symbol(), variable.GetPosition())
-	default:
-		internalError(resolver, "Unsupported variable", variable.GetPosition())
-		return
+func defineVariable(resolver *blockSymbolResolver, variable *ast.BLangVariable, isFinal bool) {
+	name := variable.Name.GetValue()
+	if isShadowed(resolver, name) {
+		semanticError(resolver, "Variable already defined: "+name, variable.GetPosition())
 	}
+	symbol := model.NewVariableSymbol(name, false, isFinal, false, symbolLocationForNode(variable))
+	if isFinal {
+		symbol.SetFinal()
+	}
+	addSymbolAndSetOnNode(resolver, name, &symbol, variable)
+	markInit(resolver, name, variable.Symbol(), variable.GetPosition())
 }
 
 func resolveForeachSymbols(bs *blockSymbolResolver, n *ast.BLangForeach) {
@@ -1487,20 +1483,15 @@ func (ms *moduleSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		resolveFunction(functionResolver, n)
 		allocateDefaultParamSymbols(ms, ms.scope, n)
 		return nil
-	case *ast.BLangConstant:
+	case *ast.BLangVariable:
 		name := n.Name.GetValue()
 		symRef, _, ok := ms.GetSymbol(name)
 		if !ok {
-			internalError(ms, "Module level constant symbol not found: "+name, n.Name.GetPosition())
-		}
-		n.SetSymbol(symRef)
-		// TODO: create a local scope and resolve the body?
-		return ms
-	case *ast.BLangSimpleVariable:
-		name := n.Name.GetValue()
-		symRef, _, ok := ms.GetSymbol(name)
-		if !ok {
-			internalError(ms, "Module level variable symbol not found: "+name, n.Name.GetPosition())
+			kind := "variable"
+			if n.IsConstant() {
+				kind = "constant"
+			}
+			internalError(ms, "Module level "+kind+" symbol not found: "+name, n.Name.GetPosition())
 		}
 		n.SetSymbol(symRef)
 		return ms
@@ -1705,8 +1696,7 @@ func collectTransitiveFieldsFromTypeDefn(ctx *context.CompilerContext, defn *ast
 
 func collectTransitiveFieldsFromClassDefn(ctx *context.CompilerContext, defn *ast.BLangClassDefinition, localTypeDefns map[model.SymbolRef]*ast.BLangTypeDefinition, localClassDefns map[model.SymbolRef]*ast.BLangClassDefinition) []inclusionMemberForSymbolResolution {
 	var directFields []inclusionMemberForSymbolResolution
-	for _, fieldNode := range defn.Fields {
-		field := fieldNode.(*ast.BLangSimpleVariable)
+	for _, field := range defn.Fields {
 		directFields = append(directFields, inclusionMemberForSymbolResolution{
 			name:     field.Name.GetValue(),
 			isPublic: field.IsPublic(),
@@ -1778,7 +1768,7 @@ func resolveClassDefinition(ms *moduleSymbolResolver, classDef *ast.BLangClassDe
 	publishObjectMethodTable(classSym, classDef)
 }
 
-func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbolResolver, fields []ast.SimpleVariableNode, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, initFn *ast.BLangFunction, includedFields []inclusionMemberForSymbolResolution, methodTargetScope methodSymbolTargetScope, methodSymbolName func(string) string, resourceMethodsAreNetworkClass bool) {
+func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbolResolver, fields []*ast.BLangVariable, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, initFn *ast.BLangFunction, includedFields []inclusionMemberForSymbolResolution, methodTargetScope methodSymbolTargetScope, methodSymbolName func(string) string, resourceMethodsAreNetworkClass bool) {
 	for _, field := range fields {
 		name := field.GetName().GetValue()
 		if _, sk, exists := blockRes.GetSymbol(name); exists && sk == blockScopeKind {
@@ -1822,7 +1812,7 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 	blockRes.AddSymbol("self", &selfSymbol)
 
 	for _, field := range fields {
-		ast.Walk(blockRes, field.(ast.BLangNode))
+		ast.Walk(blockRes, field)
 	}
 
 	if initFn != nil {
@@ -1947,7 +1937,7 @@ func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope,
 }
 
 func isSelfFieldAccess(n *ast.BLangFieldBaseAccess) bool {
-	varRef, ok := n.Expr.(*ast.BLangSimpleVarRef)
+	varRef, ok := n.Expr.(*ast.BLangVarRef)
 	if !ok {
 		return false
 	}
@@ -1955,7 +1945,7 @@ func isSelfFieldAccess(n *ast.BLangFieldBaseAccess) bool {
 }
 
 func resolveSelfFieldAccess[T symbolResolver](resolver T, n *ast.BLangFieldBaseAccess, classScope model.BlockLevelScope) {
-	varRef := n.Expr.(*ast.BLangSimpleVarRef)
+	varRef := n.Expr.(*ast.BLangVarRef)
 	referSimpleVariableReference(resolver, varRef)
 	fieldName := n.Field.GetValue()
 	if _, ok := classScope.MainSpace().GetSymbol(fieldName); !ok {

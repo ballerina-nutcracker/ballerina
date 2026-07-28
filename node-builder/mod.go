@@ -56,12 +56,14 @@ func addCompilationUnitNodesToPackage(pkg *ast.BLangPackage, compilationUnit *as
 		switch node := node.(type) {
 		case *ast.BLangImportPackage:
 			pkg.Imports = append(pkg.Imports, *node)
-		case *ast.BLangConstant:
-			pkg.Constants = append(pkg.Constants, *node)
+		case *ast.BLangVariable:
+			if node.IsConstant() {
+				pkg.Constants = append(pkg.Constants, *node)
+			} else {
+				pkg.GlobalVars = append(pkg.GlobalVars, *node)
+			}
 		case *ast.BLangService:
 			pkg.Services = append(pkg.Services, *node)
-		case *ast.BLangSimpleVariable:
-			pkg.GlobalVars = append(pkg.GlobalVars, *node)
 		case *ast.BLangFunction:
 			if node.Name.GetValue() == "init" {
 				pkg.InitFunction = node

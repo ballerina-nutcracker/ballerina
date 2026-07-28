@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// Package ast declares types used to represent Abstract Syntax Tree for Ballerina source
 package ast
 
 import (
@@ -45,13 +46,6 @@ type NodeWithScope interface {
 
 type Location = diagnostics.Location
 
-type SourceKind uint8
-
-const (
-	SourceKind_REGULAR_SOURCE SourceKind = iota
-	SourceKind_TEST_SOURCE
-)
-
 type BLangNode interface {
 	Node
 	SetDeterminedType(ty semtypes.SemType)
@@ -61,7 +55,6 @@ type BLangNode interface {
 type (
 	bLangNodeBase struct {
 		DeterminedType semtypes.SemType
-		parent         BLangNode
 		pos            diagnostics.Location
 	}
 
@@ -113,7 +106,6 @@ type (
 		bLangNodeBase
 		Value         string
 		OriginalValue string
-		isLiteral     bool
 	}
 
 	BLangImportPackage struct {
@@ -132,7 +124,7 @@ type (
 		InitFunction                    *BLangFunction
 		Methods                         map[string]*BLangFunction
 		ResourceMethods                 []*BLangResourceMethod
-		Fields                          []SimpleVariableNode
+		Fields                          []*BLangVariable
 		Inclusions                      []model.SymbolRef       // This needs to be symbol because it could be a class definition as well
 		InclusionPositions              []diagnostics.Location  // Positions of each inclusion, parallel to Inclusions
 		unresolvedInclusions            []*BLangUserDefinedType // we need this because we can't get symbols before the symbol resolution in node_builder. After symbol resolution this field is cleared out
@@ -162,30 +154,22 @@ type (
 		Name          string
 		Scope         model.Scope
 		packageID     *model.PackageID
-		sourceKind    SourceKind
 	}
 
 	BLangPackage struct {
 		bLangNodeBase
 		Imports          []BLangImportPackage
 		XmlnsList        []BLangXMLNS
-		Constants        []BLangConstant
-		GlobalVars       []BLangSimpleVariable
+		Constants        []BLangVariable
+		GlobalVars       []BLangVariable
 		Services         []BLangService
 		Functions        []BLangFunction
 		TypeDefinitions  []BLangTypeDefinition
 		Annotations      []BLangAnnotation
 		InitFunction     *BLangFunction
-		TestablePkgs     []*BLangTestablePackage
 		ClassDefinitions []BLangClassDefinition
 		PackageID        *model.PackageID
 		Scope            model.Scope
-	}
-	BLangTestablePackage struct {
-		BLangPackage
-		Parent               *BLangPackage
-		mockFunctionNamesMap map[string]string
-		isLegacyMockingMap   map[string]bool
 	}
 	BLangXMLNS struct {
 		bLangNodeBase
@@ -211,26 +195,21 @@ type (
 		HasParserWarnings bool
 	}
 
-	BLangVariableBase struct {
+	bLangVariableBase struct {
 		bLangNodeBase
 		// We are using variable for function paramets and record td fields so we need to have
 		// type descriptors here. Not sure this is the best way to do this.
 		typeNode                        BType
-		AnnAttachments                  []AnnotationAttachmentNode
-		MarkdownDocumentationAttachment MarkdownDocumentationNode
+		AnnAttachments                  []BLangAnnotationAttachment
+		MarkdownDocumentationAttachment *BLangMarkdownDocumentation
 		Expr                            BLangActionOrExpression
 		flags                           model.Flag
 		IsDeclaredWithVar               bool
 		symbol                          model.SymbolRef
 	}
 
-	BLangConstant struct {
-		BLangVariableBase
-		Name IdentifierNode
-	}
-
-	BLangSimpleVariable struct {
-		BLangVariableBase
+	BLangVariable struct {
+		bLangVariableBase
 		Name IdentifierNode
 	}
 
@@ -244,8 +223,8 @@ type (
 		symbol                          model.SymbolRef
 		AnnAttachments                  []BLangAnnotationAttachment
 		MarkdownDocumentationAttachment *BLangMarkdownDocumentation
-		RequiredParams                  []BLangSimpleVariable
-		RestParam                       SimpleVariableNode
+		RequiredParams                  []BLangVariable
+		RestParam                       *BLangVariable
 		returnTypeDescriptor            *BLangReturnTypeDescriptor
 		ParamListPos                    Location // range from ( to ) inclusive
 		Body                            FunctionBodyNode
@@ -278,9 +257,6 @@ type (
 		markdownDocumentationAttachment *BLangMarkdownDocumentation
 		flags                           model.Flag
 		CycleDepth                      int
-		isBuiltinTypeDef                bool
-		hasCyclicReference              bool
-		referencedFieldsDefined         bool
 	}
 )
 
@@ -295,14 +271,6 @@ func (b *bLangInvokableNodeBase) IsNative() bool        { return b.flags.Has(mod
 func (b *bLangInvokableNodeBase) IsAnonymous() bool     { return b.flags.Has(model.FlagLambda) }
 func (b *bLangInvokableNodeBase) IsAttached() bool      { return b.flags.Has(model.FlagAttached) }
 
-func (b *bLangInvokableNodeBase) SetPublic()        { b.flags |= model.FlagPublic }
-func (b *bLangInvokableNodeBase) SetRemote()        { b.flags |= model.FlagRemote }
-func (b *bLangInvokableNodeBase) SetTransactional() { b.flags |= model.FlagTransactional }
-func (b *bLangInvokableNodeBase) SetResource()      { b.flags |= model.FlagResource }
-func (b *bLangInvokableNodeBase) SetIsolated()      { b.flags |= model.FlagIsolated }
-func (b *bLangInvokableNodeBase) SetInterface()     { b.flags |= model.FlagInterface }
-func (b *bLangInvokableNodeBase) SetNative()        { b.flags |= model.FlagNative }
-func (b *bLangInvokableNodeBase) SetAnonymous()     { b.flags |= model.FlagLambda | model.FlagAnonymous }
 func (b *bLangInvokableNodeBase) SetAttached()      { b.flags |= model.FlagAttached }
 func (b *bLangInvokableNodeBase) Flags() model.Flag { return b.flags }
 
@@ -310,30 +278,22 @@ func (b *bLangInvokableNodeBase) FuncSymbolFlags() model.FuncSymbolFlags {
 	return model.FuncSymbolFlags(b.flags)
 }
 
-// BLangVariableBase flag methods
-func (b *BLangVariableBase) IsPublic() bool           { return b.flags.Has(model.FlagPublic) }
-func (b *BLangVariableBase) IsFinal() bool            { return b.flags.Has(model.FlagFinal) }
-func (b *BLangVariableBase) IsConfigurable() bool     { return b.flags.Has(model.FlagConfigurable) }
-func (b *BLangVariableBase) IsDefaultableParam() bool { return b.flags.Has(model.FlagDefaultableParam) }
-func (b *BLangVariableBase) IsRequiredParam() bool    { return b.flags.Has(model.FlagRequiredParam) }
-func (b *BLangVariableBase) IsRestParam() bool        { return b.flags.Has(model.FlagRestParam) }
-func (b *BLangVariableBase) IsIncludedRecordParam() bool {
+// bLangVariableBase flag methods
+func (b *bLangVariableBase) IsPublic() bool           { return b.flags.Has(model.FlagPublic) }
+func (b *bLangVariableBase) IsFinal() bool            { return b.flags.Has(model.FlagFinal) }
+func (b *bLangVariableBase) IsConfigurable() bool     { return b.flags.Has(model.FlagConfigurable) }
+func (b *bLangVariableBase) IsDefaultableParam() bool { return b.flags.Has(model.FlagDefaultableParam) }
+func (b *bLangVariableBase) IsRequiredParam() bool    { return b.flags.Has(model.FlagRequiredParam) }
+func (b *bLangVariableBase) IsRestParam() bool        { return b.flags.Has(model.FlagRestParam) }
+func (b *bLangVariableBase) IsIncludedRecordParam() bool {
 	return b.flags.Has(model.FlagIncluded)
 }
 
-func (b *BLangVariableBase) SetPublic()              { b.flags |= model.FlagPublic }
-func (b *BLangVariableBase) SetPrivate()             { b.flags &^= model.FlagPublic }
-func (b *BLangVariableBase) SetFinal()               { b.flags |= model.FlagFinal }
-func (b *BLangVariableBase) SetConfigurable()        { b.flags |= model.FlagConfigurable }
-func (b *BLangVariableBase) SetIsolated()            { b.flags |= model.FlagIsolated }
-func (b *BLangVariableBase) SetDefaultableParam()    { b.flags |= model.FlagDefaultableParam }
-func (b *BLangVariableBase) SetRequiredParam()       { b.flags |= model.FlagRequiredParam }
-func (b *BLangVariableBase) SetRestParam()           { b.flags |= model.FlagRestParam }
-func (b *BLangVariableBase) SetIncludedRecordParam() { b.flags |= model.FlagIncluded }
-func (b *BLangVariableBase) IsReadonly() bool        { return b.flags.Has(model.FlagReadonly) }
-func (b *BLangVariableBase) IsListener() bool        { return b.flags.Has(model.FlagListener) }
-func (b *BLangVariableBase) SetListener()            { b.flags |= model.FlagListener }
-func (b *BLangVariableBase) Flags() model.Flag       { return b.flags }
+func (b *bLangVariableBase) SetRequiredParam() { b.flags |= model.FlagRequiredParam }
+func (b *bLangVariableBase) IsReadonly() bool  { return b.flags.Has(model.FlagReadonly) }
+func (b *bLangVariableBase) IsListener() bool  { return b.flags.Has(model.FlagListener) }
+func (b *bLangVariableBase) IsConstant() bool  { return b.flags.Has(model.FlagConstant) }
+func (b *bLangVariableBase) Flags() model.Flag { return b.flags }
 
 // classDefnBase flag methods (promoted to BLangClassDefinition / BLangService)
 func (b *classDefnBase) IsPublic() bool   { return b.flags.Has(model.FlagPublic) }
@@ -343,27 +303,14 @@ func (b *classDefnBase) IsReadonly() bool { return b.flags.Has(model.FlagReadonl
 func (b *classDefnBase) IsService() bool  { return b.flags.Has(model.FlagService) }
 func (b *classDefnBase) IsIsolated() bool { return b.flags.Has(model.FlagIsolated) }
 
-func (b *classDefnBase) SetPublic()        { b.flags |= model.FlagPublic }
-func (b *classDefnBase) SetDistinct()      { b.flags |= model.FlagDistinct }
-func (b *classDefnBase) SetClient()        { b.flags |= model.FlagClient }
-func (b *classDefnBase) SetReadonly()      { b.flags |= model.FlagReadonly }
-func (b *classDefnBase) SetService()       { b.flags |= model.FlagService }
-func (b *classDefnBase) SetIsolated()      { b.flags |= model.FlagIsolated }
-func (b *classDefnBase) SetClass()         { b.flags |= model.FlagClass }
 func (b *classDefnBase) Flags() model.Flag { return b.flags }
 
 // BLangTypeDefinition flag methods
 func (b *BLangTypeDefinition) IsPublic() bool    { return b.flags.Has(model.FlagPublic) }
 func (b *BLangTypeDefinition) IsAnonymous() bool { return b.flags.Has(model.FlagAnonymous) }
 func (b *BLangTypeDefinition) IsDistinct() bool  { return b.flags.Has(model.FlagDistinct) }
-func (b *BLangTypeDefinition) SetPublic()        { b.flags |= model.FlagPublic }
-func (b *BLangTypeDefinition) SetAnonymous()     { b.flags |= model.FlagAnonymous }
-func (b *BLangTypeDefinition) SetDistinct()      { b.flags |= model.FlagDistinct }
-
-func (b *BLangAnnotation) IsPublic() bool { return b.flags.Has(model.FlagPublic) }
-func (b *BLangAnnotation) IsConst() bool  { return b.flags.Has(model.FlagConstant) }
-func (b *BLangAnnotation) SetPublic()     { b.flags |= model.FlagPublic }
-func (b *BLangAnnotation) SetConst()      { b.flags |= model.FlagConstant }
+func (b *BLangAnnotation) IsPublic() bool        { return b.flags.Has(model.FlagPublic) }
+func (b *BLangAnnotation) IsConst() bool         { return b.flags.Has(model.FlagConstant) }
 
 // Stub IsPublic for types with no flags
 func (b *BLangService) IsPublic() bool        { return false }
@@ -401,20 +348,16 @@ func (n *classDefnBase) SetScope(scope model.Scope) {
 	n.scope = scope
 }
 
-func (n *BLangVariableBase) Symbol() model.SymbolRef {
+func (n *bLangVariableBase) Symbol() model.SymbolRef {
 	return n.symbol
 }
 
-func (n *BLangVariableBase) SetSymbol(symbolRef model.SymbolRef) {
+func (n *bLangVariableBase) SetSymbol(symbolRef model.SymbolRef) {
 	n.symbol = symbolRef
 }
 
-func (n *BLangVariableBase) TypeNode() BType {
+func (n *bLangVariableBase) TypeNode() BType {
 	return n.typeNode
-}
-
-func (n *BLangVariableBase) SetTypeNode(bt BType) {
-	n.typeNode = bt
 }
 
 func (n *bLangInvokableNodeBase) Symbol() model.SymbolRef {
@@ -450,36 +393,20 @@ func (n *BLangAnnotationAttachment) SetSymbol(symbolRef model.SymbolRef) {
 }
 
 var (
-	_ AnnotationAttachmentNode                    = &BLangAnnotationAttachment{}
-	_ BNodeWithSymbol                             = &BLangAnnotation{}
-	_ BNodeWithSymbol                             = &BLangAnnotationAttachment{}
-	_ ImportPackageNode                           = &BLangImportPackage{}
-	_ ClassDefinition                             = &BLangClassDefinition{}
-	_ NodeWithScope                               = &BLangClassDefinition{}
-	_ PackageNode                                 = &BLangPackage{}
-	_ PackageNode                                 = &BLangTestablePackage{}
-	_ AnnotationNode                              = &BLangAnnotation{}
-	_ XMLNSDeclarationNode                        = &BLangXMLNS{}
-	_ ServiceNode                                 = &BLangService{}
-	_ CompilationUnitNode                         = &BLangCompilationUnit{}
-	_ ConstantNode                                = &BLangConstant{}
-	_ SimpleVariableNode                          = &BLangSimpleVariable{}
-	_ MarkdownDocumentationNode                   = &BLangMarkdownDocumentation{}
-	_ MarkdownDocumentationReferenceAttributeNode = &BLangMarkdownReferenceDocumentation{}
-	_ ExprFunctionBodyNode                        = &BLangExprFunctionBody{}
-	_ FunctionNode                                = &BLangFunction{}
-	_ FunctionBodyNode                            = &BLangExternFunctionBody{}
+	_ BNodeWithSymbol  = &BLangAnnotation{}
+	_ BNodeWithSymbol  = &BLangAnnotationAttachment{}
+	_ NodeWithScope    = &BLangClassDefinition{}
+	_ FunctionBodyNode = &BLangExternFunctionBody{}
 )
 
 func (*BLangImportPackage) isTopLevel()   {}
 func (*BLangXMLNS) isTopLevel()           {}
 func (*BLangAnnotation) isTopLevel()      {}
-func (*BLangSimpleVariable) isTopLevel()  {}
+func (*BLangVariable) isTopLevel()        {}
 func (*BLangFunction) isTopLevel()        {}
 func (*BLangClassDefinition) isTopLevel() {}
 func (*BLangService) isTopLevel()         {}
 func (*BLangTypeDefinition) isTopLevel()  {}
-func (*BLangConstant) isTopLevel()        {}
 
 var (
 	_ BLangNode = &BLangAnnotation{}
@@ -492,12 +419,10 @@ var (
 	_ BLangNode = &BLangService{}
 	_ BLangNode = &BLangCompilationUnit{}
 	_ BLangNode = &BLangPackage{}
-	_ BLangNode = &BLangTestablePackage{}
 	_ BLangNode = &BLangXMLNS{}
 	_ BLangNode = &BLangMarkdownDocumentation{}
 	_ BLangNode = &BLangMarkdownReferenceDocumentation{}
-	_ BLangNode = &BLangConstant{}
-	_ BLangNode = &BLangSimpleVariable{}
+	_ BLangNode = &BLangVariable{}
 	_ BLangNode = &BLangFunction{}
 	_ BLangNode = &BLangTypeDefinition{}
 )
@@ -505,42 +430,34 @@ var (
 var (
 	// Assert that concrete types with symbols implement BNodeWithSymbol
 	_ BNodeWithSymbol = &BLangClassDefinition{}
-	_ BNodeWithSymbol = &BLangConstant{}
-	_ BNodeWithSymbol = &BLangSimpleVariable{}
+	_ BNodeWithSymbol = &BLangVariable{}
 	_ BNodeWithSymbol = &BLangFunction{}
 	_ BNodeWithSymbol = &BLangTypeDefinition{}
 )
 
-func (b *BLangAnnotationAttachment) GetPackageAlias() IdentifierNode {
-	return b.PkgAlias
+func NewBLangAnnotation(pos Location, name IdentifierNode, typeDescriptor TypeDescriptor, flags model.Flag) *BLangAnnotation {
+	return &BLangAnnotation{
+		bLangNodeBase:  bLangNodeBase{pos: pos},
+		Name:           name,
+		typeDescriptor: typeDescriptor,
+		flags:          flags,
+	}
 }
 
-func (b *BLangAnnotationAttachment) SetPackageAlias(pkgAlias IdentifierNode) {
-	b.PkgAlias = pkgAlias
+func (b *BLangAnnotationAttachment) GetPackageAlias() IdentifierNode {
+	return b.PkgAlias
 }
 
 func (b *BLangAnnotationAttachment) GetAnnotationName() IdentifierNode {
 	return b.AnnotationName
 }
 
-func (b *BLangAnnotationAttachment) SetAnnotationName(name IdentifierNode) {
-	b.AnnotationName = name
-}
-
 func (b *BLangAnnotationAttachment) GetExpressionNode() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangAnnotationAttachment) SetExpressionNode(expr BLangExpression) {
-	b.Expr = expr
-}
-
 func (b *BLangAnnotation) GetName() IdentifierNode {
 	return b.Name
-}
-
-func (b *BLangAnnotation) SetName(name IdentifierNode) {
-	b.Name = name
 }
 
 func (b *BLangAnnotation) GetTypeDescriptor() TypeDescriptor {
@@ -548,14 +465,6 @@ func (b *BLangAnnotation) GetTypeDescriptor() TypeDescriptor {
 		return nil
 	}
 	return b.typeDescriptor
-}
-
-func (b *BLangAnnotation) SetTypeDescriptor(typeDescriptor TypeDescriptor) {
-	if typeDescriptor == nil {
-		b.typeDescriptor = nil
-		return
-	}
-	b.typeDescriptor = typeDescriptor.(BType)
 }
 
 // AddAttachPoint adds an attachment point and is safe on a zero-value annotation.
@@ -580,56 +489,48 @@ func (b *BLangAnnotation) HasSourceAttachPoint() bool {
 	return false
 }
 
-func (b *BLangAnnotation) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	attachments := make([]AnnotationAttachmentNode, len(b.AnnAttachments))
+func (b *BLangAnnotation) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	attachments := make([]*BLangAnnotationAttachment, len(b.AnnAttachments))
 	for i := range b.AnnAttachments {
 		attachments[i] = &b.AnnAttachments[i]
 	}
 	return attachments
 }
 
-func (b *BLangAnnotation) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
-	if annAttachment, ok := annAttachment.(*BLangAnnotationAttachment); ok {
-		b.AnnAttachments = append(b.AnnAttachments, *annAttachment)
-		return
-	}
-	panic("annAttachment is not a BLangAnnotationAttachment")
+func (b *BLangAnnotation) AddAnnotationAttachment(annAttachment *BLangAnnotationAttachment) {
+	b.AnnAttachments = append(b.AnnAttachments, *annAttachment)
 }
 
-func (b *BLangAnnotation) GetMarkdownDocumentationAttachment() MarkdownDocumentationNode {
+func (b *BLangAnnotation) GetMarkdownDocumentationAttachment() *BLangMarkdownDocumentation {
 	return b.MarkdownDocumentationAttachment
-}
-
-func (b *BLangAnnotation) SetMarkdownDocumentationAttachment(documentationNode MarkdownDocumentationNode) {
-	if documentationNode, ok := documentationNode.(*BLangMarkdownDocumentation); ok {
-		b.MarkdownDocumentationAttachment = documentationNode
-		return
-	}
-	panic("documentationNode is not a BLangMarkdownDocumentation")
 }
 
 func (b *BLangExprFunctionBody) GetExpr() BLangExpression {
 	return b.Expr
 }
 
+func NewBLangIdentifier(pos Location, value, originalValue string) BLangIdentifier {
+	return BLangIdentifier{
+		bLangNodeBase: bLangNodeBase{pos: pos},
+		Value:         value,
+		OriginalValue: originalValue,
+	}
+}
+
+func NewBLangVariable(name IdentifierNode, typeNode BType, expr BLangActionOrExpression, isDeclaredWithVar bool, flags model.Flag) *BLangVariable {
+	return &BLangVariable{
+		bLangVariableBase: bLangVariableBase{
+			typeNode:          typeNode,
+			Expr:              expr,
+			flags:             flags,
+			IsDeclaredWithVar: isDeclaredWithVar,
+		},
+		Name: name,
+	}
+}
+
 func (b *BLangIdentifier) GetValue() string {
 	return b.Value
-}
-
-func (b *BLangIdentifier) SetValue(value string) {
-	b.Value = value
-}
-
-func (b *BLangIdentifier) SetOriginalValue(value string) {
-	b.OriginalValue = value
-}
-
-func (b *BLangIdentifier) IsLiteral() bool {
-	return b.isLiteral
-}
-
-func (b *BLangIdentifier) SetLiteral(isLiteral bool) {
-	b.isLiteral = isLiteral
 }
 
 func (b *BLangImportPackage) GetOrgName() *BLangIdentifier {
@@ -644,27 +545,12 @@ func (b *BLangImportPackage) GetPackageName() []*BLangIdentifier {
 	return result
 }
 
-func (b *BLangImportPackage) SetPackageName(nameParts []*BLangIdentifier) {
-	b.PkgNameComps = make([]BLangIdentifier, 0, len(nameParts))
-	for _, namePart := range nameParts {
-		b.PkgNameComps = append(b.PkgNameComps, *namePart)
-	}
-}
-
 func (b *BLangImportPackage) GetPackageVersion() *BLangIdentifier {
 	return b.Version
 }
 
-func (b *BLangImportPackage) SetPackageVersion(version *BLangIdentifier) {
-	b.Version = version
-}
-
 func (b *BLangImportPackage) GetAlias() *BLangIdentifier {
 	return b.Alias
-}
-
-func (b *BLangImportPackage) SetAlias(alias *BLangIdentifier) {
-	b.Alias = alias
 }
 
 func newClassDefnBase() classDefnBase {
@@ -675,14 +561,22 @@ func newClassDefnBase() classDefnBase {
 }
 
 func NewBLangClassDefinition() BLangClassDefinition {
+	return NewBLangClassDefinitionWithFlags(0)
+}
+
+func NewBLangClassDefinitionWithFlags(flags model.Flag) BLangClassDefinition {
 	b := BLangClassDefinition{classDefnBase: newClassDefnBase()}
-	b.SetClass()
+	b.flags = flags | model.FlagClass
 	return b
 }
 
 func NewBLangService() BLangService {
+	return NewBLangServiceWithFlags(0)
+}
+
+func NewBLangServiceWithFlags(flags model.Flag) BLangService {
 	b := BLangService{classDefnBase: newClassDefnBase()}
-	b.SetService()
+	b.flags = flags | model.FlagService
 	return b
 }
 
@@ -700,12 +594,8 @@ func (b *BLangClassDefinition) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangClassDefinition) SetName(name IdentifierNode) {
-	b.Name = name
-}
-
-func (b *classDefnBase) GetMethods() iter.Seq2[string, FunctionNode] {
-	return func(yield func(string, FunctionNode) bool) {
+func (b *classDefnBase) GetMethods() iter.Seq2[string, *BLangFunction] {
+	return func(yield func(string, *BLangFunction) bool) {
 		for name, method := range b.Methods {
 			if !yield(name, method) {
 				return
@@ -714,7 +604,7 @@ func (b *classDefnBase) GetMethods() iter.Seq2[string, FunctionNode] {
 	}
 }
 
-func (b *classDefnBase) GetMethod(name string) FunctionNode {
+func (b *classDefnBase) GetMethod(name string) *BLangFunction {
 	if method, ok := b.Methods[name]; ok {
 		return method
 	}
@@ -728,50 +618,38 @@ func (b *classDefnBase) AddMethod(name string, function *BLangFunction) {
 	b.Methods[name] = function
 }
 
-func (b *classDefnBase) GetInitFunction() FunctionNode {
+func (b *classDefnBase) GetInitFunction() *BLangFunction {
 	if b.InitFunction == nil {
 		return nil
 	}
 	return b.InitFunction
 }
 
-func (b *classDefnBase) AddField(field VariableNode) {
-	b.Fields = append(b.Fields, field.(*BLangSimpleVariable))
+func (b *classDefnBase) AddField(field *BLangVariable) {
+	b.Fields = append(b.Fields, field)
 }
 
 func (b *classDefnBase) AddInclusion(symbolRef model.SymbolRef) {
 	b.Inclusions = append(b.Inclusions, symbolRef)
 }
 
-func (b *classDefnBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	attachments := make([]AnnotationAttachmentNode, len(b.AnnAttachments))
+func (b *classDefnBase) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	attachments := make([]*BLangAnnotationAttachment, len(b.AnnAttachments))
 	for i := range b.AnnAttachments {
 		attachments[i] = &b.AnnAttachments[i]
 	}
 	return attachments
 }
 
-func (b *classDefnBase) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
-	if annAttachment, ok := annAttachment.(*BLangAnnotationAttachment); ok {
-		b.AnnAttachments = append(b.AnnAttachments, *annAttachment)
-		return
-	}
-	panic("annAttachment is not a BLangAnnotationAttachment")
+func (b *classDefnBase) AddAnnotationAttachment(annAttachment *BLangAnnotationAttachment) {
+	b.AnnAttachments = append(b.AnnAttachments, *annAttachment)
 }
 
-func (b *classDefnBase) GetMarkdownDocumentationAttachment() MarkdownDocumentationNode {
+func (b *classDefnBase) GetMarkdownDocumentationAttachment() *BLangMarkdownDocumentation {
 	if b.MarkdownDocumentationAttachment == nil {
 		return nil
 	}
 	return b.MarkdownDocumentationAttachment
-}
-
-func (b *classDefnBase) SetMarkdownDocumentationAttachment(documentationNode MarkdownDocumentationNode) {
-	if documentationNode, ok := documentationNode.(*BLangMarkdownDocumentation); ok {
-		b.MarkdownDocumentationAttachment = documentationNode
-		return
-	}
-	panic("documentationNode is not a BLangMarkdownDocumentation")
 }
 
 func (b *classDefnBase) GetTypeData() TypeData {
@@ -802,10 +680,6 @@ func (b *BLangCompilationUnit) GetName() string {
 	return b.Name
 }
 
-func (b *BLangCompilationUnit) SetName(name string) {
-	b.Name = name
-}
-
 func (b *BLangCompilationUnit) GetPackageID() *model.PackageID {
 	return b.packageID
 }
@@ -814,118 +688,66 @@ func (b *BLangCompilationUnit) SetPackageID(packageID *model.PackageID) {
 	b.packageID = packageID
 }
 
-func (b *BLangConstant) GetName() IdentifierNode {
+func (b *BLangVariable) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *BLangConstant) SetName(name IdentifierNode) {
-	b.Name = name
+func (b *BLangVariable) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	return b.GetAnnAttachments()
 }
 
-func (b *BLangConstant) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	return b.AnnAttachments
+func (b *BLangVariable) AddAnnotationAttachment(annAttachment *BLangAnnotationAttachment) {
+	b.AnnAttachments = append(b.AnnAttachments, *annAttachment)
 }
 
-func (b *BLangConstant) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
-	if annAttachment, ok := annAttachment.(*BLangAnnotationAttachment); ok {
-		b.AnnAttachments = append(b.AnnAttachments, annAttachment)
-		return
-	}
-	panic("annAttachment is not a BLangAnnotationAttachment")
-}
-
-func (b *BLangConstant) GetMarkdownDocumentationAttachment() MarkdownDocumentationNode {
+func (b *BLangVariable) GetMarkdownDocumentationAttachment() *BLangMarkdownDocumentation {
 	return b.MarkdownDocumentationAttachment
 }
 
-func (b *BLangConstant) SetMarkdownDocumentationAttachment(documentationNode MarkdownDocumentationNode) {
-	if documentationNode, ok := documentationNode.(*BLangMarkdownDocumentation); ok {
-		b.MarkdownDocumentationAttachment = documentationNode
-		return
-	}
-	panic("documentationNode is not a BLangMarkdownDocumentation")
-}
-
-func (b *BLangConstant) GetAssociatedType() semtypes.SemType {
+func (b *BLangVariable) GetAssociatedType() semtypes.SemType {
 	if b.TypeNode() != nil {
 		return b.TypeNode().GetTypeData().Type
 	}
 	return semtypes.SemType{}
 }
 
-func (b *BLangSimpleVariable) GetName() IdentifierNode {
-	return b.Name
-}
-
-func (b *BLangSimpleVariable) SetName(name IdentifierNode) {
+func (b *BLangVariable) SetName(name IdentifierNode) {
 	b.Name = name
 }
 
-func (b *BLangMarkdownDocumentation) GetDocumentationLines() []MarkdownDocumentationTextAttributeNode {
-	result := make([]MarkdownDocumentationTextAttributeNode, len(b.DocumentationLines))
+func (b *BLangMarkdownDocumentation) GetDocumentationLines() []*BLangMarkdownDocumentationLine {
+	result := make([]*BLangMarkdownDocumentationLine, len(b.DocumentationLines))
 	for i := range b.DocumentationLines {
 		result[i] = &b.DocumentationLines[i]
 	}
 	return result
 }
 
-func (b *BLangMarkdownDocumentation) AddDocumentationLine(documentationText MarkdownDocumentationTextAttributeNode) {
-	if line, ok := documentationText.(*BLangMarkdownDocumentationLine); ok {
-		b.DocumentationLines = append(b.DocumentationLines, *line)
-	} else {
-		panic("documentationText is not a BLangMarkdownDocumentationLine")
-	}
+func (b *BLangMarkdownDocumentation) AddDocumentationLine(documentationText *BLangMarkdownDocumentationLine) {
+	b.DocumentationLines = append(b.DocumentationLines, *documentationText)
 }
 
-func (b *BLangMarkdownDocumentation) GetParameters() []MarkdownDocumentationParameterAttributeNode {
-	result := make([]MarkdownDocumentationParameterAttributeNode, len(b.Parameters))
+func (b *BLangMarkdownDocumentation) GetParameters() []*BLangMarkdownParameterDocumentation {
+	result := make([]*BLangMarkdownParameterDocumentation, len(b.Parameters))
 	for i := range b.Parameters {
 		result[i] = &b.Parameters[i]
 	}
 	return result
 }
 
-func (b *BLangMarkdownDocumentation) AddParameter(parameter MarkdownDocumentationParameterAttributeNode) {
-	if param, ok := parameter.(*BLangMarkdownParameterDocumentation); ok {
-		b.Parameters = append(b.Parameters, *param)
-	} else {
-		panic("parameter is not a BLangMarkdownParameterDocumentation")
-	}
+func (b *BLangMarkdownDocumentation) AddParameter(parameter *BLangMarkdownParameterDocumentation) {
+	b.Parameters = append(b.Parameters, *parameter)
 }
 
-func (b *BLangMarkdownDocumentation) GetReturnParameter() MarkdownDocumentationReturnParameterAttributeNode {
+func (b *BLangMarkdownDocumentation) GetReturnParameter() *BLangMarkdownReturnParameterDocumentation {
 	return b.ReturnParameter
 }
 
-func (b *BLangMarkdownDocumentation) GetDeprecationDocumentation() MarkDownDocumentationDeprecationAttributeNode {
+func (b *BLangMarkdownDocumentation) GetDeprecationDocumentation() *BLangMarkDownDeprecationDocumentation {
 	return b.DeprecationDocumentation
 }
 
-func (b *BLangMarkdownDocumentation) SetReturnParameter(returnParameter MarkdownDocumentationReturnParameterAttributeNode) {
-	if param, ok := returnParameter.(*BLangMarkdownReturnParameterDocumentation); ok {
-		b.ReturnParameter = param
-	} else {
-		panic("returnParameter is not a BLangMarkdownReturnParameterDocumentation")
-	}
-}
-
-func (b *BLangMarkdownDocumentation) SetDeprecationDocumentation(deprecationDocumentation MarkDownDocumentationDeprecationAttributeNode) {
-	if doc, ok := deprecationDocumentation.(*BLangMarkDownDeprecationDocumentation); ok {
-		b.DeprecationDocumentation = doc
-	} else {
-		panic("deprecationDocumentation is not a BLangMarkDownDeprecationDocumentation")
-	}
-}
-
-func (b *BLangMarkdownDocumentation) SetDeprecatedParametersDocumentation(deprecatedParametersDocumentation MarkDownDocumentationDeprecatedParametersAttributeNode) {
-	if doc, ok := deprecatedParametersDocumentation.(*BLangMarkDownDeprecatedParametersDocumentation); ok {
-		b.DeprecatedParametersDocumentation = doc
-	} else {
-		panic("deprecatedParametersDocumentation is not a BLangMarkDownDeprecatedParametersDocumentation")
-	}
-}
-
-func (b *BLangMarkdownDocumentation) GetDeprecatedParametersDocumentation() MarkDownDocumentationDeprecatedParametersAttributeNode {
+func (b *BLangMarkdownDocumentation) GetDeprecatedParametersDocumentation() *BLangMarkDownDeprecatedParametersDocumentation {
 	return b.DeprecatedParametersDocumentation
 }
 
@@ -938,8 +760,8 @@ func (b *BLangMarkdownDocumentation) GetDocumentation() string {
 	return strings.ReplaceAll(result, "\r", "")
 }
 
-func (b *BLangMarkdownDocumentation) GetParameterDocumentations() map[string]MarkdownDocumentationParameterAttributeNode {
-	result := make(map[string]MarkdownDocumentationParameterAttributeNode)
+func (b *BLangMarkdownDocumentation) GetParameterDocumentations() map[string]*BLangMarkdownParameterDocumentation {
+	result := make(map[string]*BLangMarkdownParameterDocumentation)
 	for i := range b.Parameters {
 		paramName := b.Parameters[i].GetParameterName()
 		result[paramName.GetValue()] = &b.Parameters[i]
@@ -954,20 +776,16 @@ func (b *BLangMarkdownDocumentation) GetReturnParameterDocumentation() *string {
 	return new(b.ReturnParameter.GetReturnParameterDocumentation())
 }
 
-func (b *BLangMarkdownDocumentation) GetReferences() []MarkdownDocumentationReferenceAttributeNode {
-	result := make([]MarkdownDocumentationReferenceAttributeNode, len(b.References))
+func (b *BLangMarkdownDocumentation) GetReferences() []*BLangMarkdownReferenceDocumentation {
+	result := make([]*BLangMarkdownReferenceDocumentation, len(b.References))
 	for i := range b.References {
 		result[i] = &b.References[i]
 	}
 	return result
 }
 
-func (b *BLangMarkdownDocumentation) AddReference(reference MarkdownDocumentationReferenceAttributeNode) {
-	if ref, ok := reference.(*BLangMarkdownReferenceDocumentation); ok {
-		b.References = append(b.References, *ref)
-	} else {
-		panic("reference is not a BLangMarkdownReferenceDocumentation")
-	}
+func (b *BLangMarkdownDocumentation) AddReference(reference *BLangMarkdownReferenceDocumentation) {
+	b.References = append(b.References, *reference)
 }
 
 func (b *BLangMarkdownReferenceDocumentation) GetType() DocumentationReferenceType {
@@ -1003,14 +821,58 @@ func (b *bLangInvokableNodeBase) SetScope(scope model.Scope) {
 	b.scope = scope
 }
 
-func (b *bLangInvokableNodeBase) SetParamListPosition(pos Location) {
-	b.ParamListPos = pos
-}
-
 var (
 	_ NodeWithScope = &BLangFunction{}
 	_ NodeWithScope = &BLangResourceMethod{}
 )
+
+type InvokableData struct {
+	Position                    Location
+	Name                        IdentifierNode
+	RequiredParams              []BLangVariable
+	RestParam                   *BLangVariable
+	ReturnTypeDescriptor        BType
+	ReturnAnnotationAttachments []BLangAnnotationAttachment
+	ParamListPosition           Location
+	Body                        FunctionBodyNode
+	Flags                       model.Flag
+}
+
+func newBLangInvokableNodeBase(data InvokableData) bLangInvokableNodeBase {
+	var restParam *BLangVariable
+	if data.RestParam != nil {
+		restParam = data.RestParam
+	}
+	var returnTypeDescriptor *BLangReturnTypeDescriptor
+	if data.ReturnTypeDescriptor != nil {
+		returnTypeDescriptor = &BLangReturnTypeDescriptor{
+			bLangNodeBase:  bLangNodeBase{pos: data.ReturnTypeDescriptor.GetPosition()},
+			TypeDescriptor: data.ReturnTypeDescriptor,
+			AnnAttachments: data.ReturnAnnotationAttachments,
+		}
+	}
+	return bLangInvokableNodeBase{
+		bLangNodeBase:        bLangNodeBase{pos: data.Position},
+		Name:                 data.Name,
+		RequiredParams:       data.RequiredParams,
+		RestParam:            restParam,
+		returnTypeDescriptor: returnTypeDescriptor,
+		ParamListPos:         data.ParamListPosition,
+		Body:                 data.Body,
+		flags:                data.Flags,
+	}
+}
+
+func NewBLangFunction(data InvokableData) *BLangFunction {
+	return &BLangFunction{bLangInvokableNodeBase: newBLangInvokableNodeBase(data)}
+}
+
+func NewBLangResourceMethod(data InvokableData, resourcePath []BLangResourcePathSegment) *BLangResourceMethod {
+	return &BLangResourceMethod{
+		bLangInvokableNodeBase: newBLangInvokableNodeBase(data),
+		ResourcePath:           resourcePath,
+	}
+}
 
 type ResourcePathSegmentKind uint8
 
@@ -1024,44 +886,24 @@ func (b *bLangInvokableNodeBase) GetName() IdentifierNode {
 	return b.Name
 }
 
-func (b *bLangInvokableNodeBase) SetName(name IdentifierNode) {
-	b.Name = name
-}
-
-func (b *bLangInvokableNodeBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	result := make([]AnnotationAttachmentNode, len(b.AnnAttachments))
+func (b *bLangInvokableNodeBase) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	result := make([]*BLangAnnotationAttachment, len(b.AnnAttachments))
 	for i := range b.AnnAttachments {
 		result[i] = &b.AnnAttachments[i]
 	}
 	return result
 }
 
-func (b *bLangInvokableNodeBase) GetAnnAttachments() []AnnotationAttachmentNode {
+func (b *bLangInvokableNodeBase) GetAnnAttachments() []*BLangAnnotationAttachment {
 	return b.GetAnnotationAttachments()
 }
 
-func (b *bLangInvokableNodeBase) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
-	b.AnnAttachments = append(b.AnnAttachments, *annAttachment.(*BLangAnnotationAttachment))
+func (b *bLangInvokableNodeBase) AddAnnotationAttachment(annAttachment *BLangAnnotationAttachment) {
+	b.AnnAttachments = append(b.AnnAttachments, *annAttachment)
 }
 
-func (b *bLangInvokableNodeBase) SetAnnAttachments(annAttachments []AnnotationAttachmentNode) {
-	result := make([]BLangAnnotationAttachment, len(annAttachments))
-	for i, attachment := range annAttachments {
-		result[i] = *attachment.(*BLangAnnotationAttachment)
-	}
-	b.AnnAttachments = result
-}
-
-func (b *bLangInvokableNodeBase) GetMarkdownDocumentationAttachment() MarkdownDocumentationNode {
+func (b *bLangInvokableNodeBase) GetMarkdownDocumentationAttachment() *BLangMarkdownDocumentation {
 	return b.MarkdownDocumentationAttachment
-}
-
-func (b *bLangInvokableNodeBase) SetMarkdownDocumentationAttachment(markdownDocumentationAttachment MarkdownDocumentationNode) {
-	if doc, ok := markdownDocumentationAttachment.(*BLangMarkdownDocumentation); ok {
-		b.MarkdownDocumentationAttachment = doc
-	} else {
-		panic("markdownDocumentationAttachment is not a BLangMarkdownDocumentation")
-	}
 }
 
 // BLangReturnTypeDescriptor is the return type descriptor of an invokable node.
@@ -1074,12 +916,12 @@ type BLangReturnTypeDescriptor struct {
 
 func (r *BLangReturnTypeDescriptor) IsPublic() bool { return false }
 
-func (r *BLangReturnTypeDescriptor) AddAnnotationAttachment(ann AnnotationAttachmentNode) {
-	r.AnnAttachments = append(r.AnnAttachments, *ann.(*BLangAnnotationAttachment))
+func (r *BLangReturnTypeDescriptor) AddAnnotationAttachment(ann *BLangAnnotationAttachment) {
+	r.AnnAttachments = append(r.AnnAttachments, *ann)
 }
 
-func (r *BLangReturnTypeDescriptor) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	result := make([]AnnotationAttachmentNode, len(r.AnnAttachments))
+func (r *BLangReturnTypeDescriptor) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	result := make([]*BLangAnnotationAttachment, len(r.AnnAttachments))
 	for i := range r.AnnAttachments {
 		result[i] = &r.AnnAttachments[i]
 	}
@@ -1091,10 +933,6 @@ func (r *BLangReturnTypeDescriptor) IsGrouped() bool { return r.innerType().IsGr
 func (r *BLangReturnTypeDescriptor) SetTypeData(ty TypeData) { r.innerType().SetTypeData(ty) }
 
 func (r *BLangReturnTypeDescriptor) GetTypeData() TypeData { return r.innerType().GetTypeData() }
-
-func (r *BLangReturnTypeDescriptor) BTypeGetTag() TypeTags { return r.innerType().BTypeGetTag() }
-
-func (r *BLangReturnTypeDescriptor) BTypeSetTag(tag TypeTags) { r.innerType().BTypeSetTag(tag) }
 
 func (r *BLangReturnTypeDescriptor) bTypeGetName() model.Name { return r.innerType().bTypeGetName() }
 
@@ -1113,81 +951,45 @@ func (r *BLangReturnTypeDescriptor) innerType() BType {
 	return r.TypeDescriptor
 }
 
-func (b *bLangInvokableNodeBase) GetParameters() []SimpleVariableNode {
-	result := make([]SimpleVariableNode, len(b.RequiredParams))
+func (b *bLangInvokableNodeBase) GetParameters() []*BLangVariable {
+	result := make([]*BLangVariable, len(b.RequiredParams))
 	for i := range b.RequiredParams {
 		result[i] = &b.RequiredParams[i]
 	}
 	return result
 }
 
-func (b *bLangInvokableNodeBase) AddParameter(param SimpleVariableNode) {
-	if blangParam, ok := param.(*BLangSimpleVariable); ok {
-		b.RequiredParams = append(b.RequiredParams, *blangParam)
-	} else {
-		panic("param is not a BLangSimpleVariable")
-	}
+func (b *bLangInvokableNodeBase) AddParameter(param *BLangVariable) {
+	b.RequiredParams = append(b.RequiredParams, *param)
 }
 
 // RequiredParameters returns the concrete required-parameter nodes backing this
 // invokable so callers can take the address of an individual parameter.
-func (b *bLangInvokableNodeBase) RequiredParameters() []BLangSimpleVariable {
+func (b *bLangInvokableNodeBase) RequiredParameters() []BLangVariable {
 	return b.RequiredParams
 }
 
-func (b *bLangInvokableNodeBase) GetRequiredParams() []SimpleVariableNode {
-	result := make([]SimpleVariableNode, len(b.RequiredParams))
+func (b *bLangInvokableNodeBase) GetRequiredParams() []*BLangVariable {
+	result := make([]*BLangVariable, len(b.RequiredParams))
 	for i := range b.RequiredParams {
 		result[i] = &b.RequiredParams[i]
 	}
 	return result
 }
 
-func (b *bLangInvokableNodeBase) SetRequiredParams(requiredParams []SimpleVariableNode) {
-	b.RequiredParams = make([]BLangSimpleVariable, len(requiredParams))
-	for i, param := range requiredParams {
-		if blangParam, ok := param.(*BLangSimpleVariable); ok {
-			b.RequiredParams[i] = *blangParam
-		} else {
-			panic("requiredParams contains element that is not a BLangSimpleVariable")
-		}
-	}
-}
-
-func (b *bLangInvokableNodeBase) GetRestParam() SimpleVariableNode {
+func (b *bLangInvokableNodeBase) GetRestParam() *BLangVariable {
 	return b.RestParam
-}
-
-func (b *bLangInvokableNodeBase) SetRestParameter(restParam SimpleVariableNode) {
-	b.RestParam = restParam.(*BLangSimpleVariable)
-}
-
-func (b *bLangInvokableNodeBase) SetRestParam(restParam SimpleVariableNode) {
-	b.SetRestParameter(restParam)
 }
 
 func (b *bLangInvokableNodeBase) HasBody() bool {
 	return b.Body != nil
 }
 
-func (b *bLangInvokableNodeBase) GetReturnTypeDescriptor() ReturnTypeDescriptor {
+func (b *bLangInvokableNodeBase) GetReturnTypeDescriptor() *BLangReturnTypeDescriptor {
 	if b.returnTypeDescriptor == nil {
 		return nil
 	}
 	return b.returnTypeDescriptor
-}
-
-func (b *bLangInvokableNodeBase) SetReturnTypeDescriptor(typeDescriptor TypeDescriptor) {
-	if typeDescriptor == nil {
-		b.returnTypeDescriptor = nil
-		return
-	}
-	bType := typeDescriptor.(BType)
-	if b.returnTypeDescriptor == nil {
-		b.returnTypeDescriptor = &BLangReturnTypeDescriptor{}
-	}
-	b.returnTypeDescriptor.TypeDescriptor = bType
-	b.returnTypeDescriptor.SetPosition(bType.GetPosition())
 }
 
 // ReturnTypeDescriptorNode returns the return type descriptor node, which carries
@@ -1200,93 +1002,68 @@ func (b *bLangInvokableNodeBase) HasExplicitReturnTypeDescriptor() bool {
 	return b.flags.Has(model.FlagExplicitReturnTypeDescriptor)
 }
 
-func (b *bLangInvokableNodeBase) SetExplicitReturnTypeDescriptor() {
-	b.flags |= model.FlagExplicitReturnTypeDescriptor
-}
-
 func (b *bLangInvokableNodeBase) GetBody() FunctionBodyNode {
 	return b.Body
 }
 
-func (b *bLangInvokableNodeBase) SetBody(body FunctionBodyNode) {
-	b.Body = body
+func (b *bLangVariableBase) GetAnnAttachments() []*BLangAnnotationAttachment {
+	attachments := make([]*BLangAnnotationAttachment, len(b.AnnAttachments))
+	for i := range b.AnnAttachments {
+		attachments[i] = &b.AnnAttachments[i]
+	}
+	return attachments
 }
 
-func (b *BLangVariableBase) GetAnnAttachments() []AnnotationAttachmentNode {
-	return b.AnnAttachments
-}
-
-func (b *BLangVariableBase) SetAnnAttachments(annAttachments []AnnotationAttachmentNode) {
-	b.AnnAttachments = annAttachments
-}
-
-func (b *BLangVariableBase) GetMarkdownDocumentationAttachment() MarkdownDocumentationNode {
+func (b *bLangVariableBase) GetMarkdownDocumentationAttachment() *BLangMarkdownDocumentation {
 	if b.MarkdownDocumentationAttachment == nil {
 		return nil
 	}
 	return b.MarkdownDocumentationAttachment
 }
 
-func (b *BLangVariableBase) SetMarkdownDocumentationAttachment(markdownDocumentationAttachment MarkdownDocumentationNode) {
-	if markdownDocumentationAttachment == nil {
-		b.MarkdownDocumentationAttachment = nil
-		return
-	}
-	b.MarkdownDocumentationAttachment = markdownDocumentationAttachment.(*BLangMarkdownDocumentation)
-}
-
-func (b *BLangVariableBase) GetExpr() BLangActionOrExpression {
+func (b *bLangVariableBase) GetExpr() BLangActionOrExpression {
 	return b.Expr
 }
 
-func (b *BLangVariableBase) SetExpr(expr BLangActionOrExpression) {
-	b.Expr = expr
-}
-
-func (b *BLangVariableBase) GetIsDeclaredWithVar() bool {
+func (b *bLangVariableBase) GetIsDeclaredWithVar() bool {
 	return b.IsDeclaredWithVar
 }
 
-func (b *BLangVariableBase) SetIsDeclaredWithVar(isDeclaredWithVar bool) {
-	b.IsDeclaredWithVar = isDeclaredWithVar
+func (m *bLangVariableBase) AddAnnotationAttachment(annAttachment *BLangAnnotationAttachment) {
+	m.AnnAttachments = append(m.AnnAttachments, *annAttachment)
 }
 
-func (m *BLangVariableBase) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
-	m.AnnAttachments = append(m.AnnAttachments, annAttachment)
+func (m *bLangVariableBase) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	return m.GetAnnAttachments()
 }
 
-func (m *BLangVariableBase) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	return m.AnnAttachments
-}
-
-func (m *BLangVariableBase) GetInitialExpression() BLangActionOrExpression {
+func (m *bLangVariableBase) GetInitialExpression() BLangActionOrExpression {
 	return m.Expr
 }
 
-func (m *BLangVariableBase) SetInitialExpression(expr BLangActionOrExpression) {
+func (m *bLangVariableBase) SetInitialExpression(expr BLangActionOrExpression) {
 	m.Expr = expr
 }
 
 // BLangTypeDefinition methods
 
-func NewBLangConstant() *BLangConstant {
-	return &BLangConstant{BLangVariableBase: BLangVariableBase{flags: model.FlagConstant}}
+func NewBLangTypeDefinition() *BLangTypeDefinition {
+	return NewBLangTypeDefinitionWithData(nil, TypeData{}, nil, 0)
 }
 
-func NewBLangTypeDefinition() *BLangTypeDefinition {
-	b := &BLangTypeDefinition{}
-	b.annAttachments = []BLangAnnotationAttachment{}
-	b.CycleDepth = -1
-	b.hasCyclicReference = false
-	return b
+func NewBLangTypeDefinitionWithData(name IdentifierNode, typeData TypeData, documentation *BLangMarkdownDocumentation, flags model.Flag) *BLangTypeDefinition {
+	return &BLangTypeDefinition{
+		Name:                            name,
+		typeData:                        typeData,
+		annAttachments:                  []BLangAnnotationAttachment{},
+		markdownDocumentationAttachment: documentation,
+		flags:                           flags,
+		CycleDepth:                      -1,
+	}
 }
 
 func (b *BLangTypeDefinition) GetName() IdentifierNode {
 	return b.Name
-}
-
-func (b *BLangTypeDefinition) SetName(name IdentifierNode) {
-	b.Name = name
 }
 
 func (b *BLangTypeDefinition) GetTypeData() TypeData {
@@ -1297,32 +1074,20 @@ func (b *BLangTypeDefinition) SetTypeData(typeData TypeData) {
 	b.typeData = typeData
 }
 
-func (b *BLangTypeDefinition) GetAnnotationAttachments() []AnnotationAttachmentNode {
-	result := make([]AnnotationAttachmentNode, len(b.annAttachments))
+func (b *BLangTypeDefinition) GetAnnotationAttachments() []*BLangAnnotationAttachment {
+	result := make([]*BLangAnnotationAttachment, len(b.annAttachments))
 	for i := range b.annAttachments {
 		result[i] = &b.annAttachments[i]
 	}
 	return result
 }
 
-func (b *BLangTypeDefinition) AddAnnotationAttachment(annAttachment AnnotationAttachmentNode) {
-	if ann, ok := annAttachment.(*BLangAnnotationAttachment); ok {
-		b.annAttachments = append(b.annAttachments, *ann)
-	} else {
-		panic("annAttachment is not a BLangAnnotationAttachment")
-	}
+func (b *BLangTypeDefinition) AddAnnotationAttachment(annAttachment *BLangAnnotationAttachment) {
+	b.annAttachments = append(b.annAttachments, *annAttachment)
 }
 
-func (b *BLangTypeDefinition) GetMarkdownDocumentationAttachment() MarkdownDocumentationNode {
+func (b *BLangTypeDefinition) GetMarkdownDocumentationAttachment() *BLangMarkdownDocumentation {
 	return b.markdownDocumentationAttachment
-}
-
-func (b *BLangTypeDefinition) SetMarkdownDocumentationAttachment(documentationNode MarkdownDocumentationNode) {
-	if doc, ok := documentationNode.(*BLangMarkdownDocumentation); ok {
-		b.markdownDocumentationAttachment = doc
-	} else {
-		panic("documentationNode is not a BLangMarkdownDocumentation")
-	}
 }
 
 func (b *BLangTypeDefinition) GetCycleDepth() int {
@@ -1333,6 +1098,10 @@ func (b *BLangTypeDefinition) SetCycleDepth(depth int) {
 	b.CycleDepth = depth
 }
 
+func NewBLangXMLNS(pos Location, namespaceURI BLangExpression, prefix *BLangIdentifier) *BLangXMLNS {
+	return &BLangXMLNS{bLangNodeBase: bLangNodeBase{pos: pos}, namespaceURI: namespaceURI, prefix: prefix}
+}
+
 func (b *BLangXMLNS) GetNamespaceURI() BLangExpression {
 	return b.namespaceURI
 }
@@ -1341,100 +1110,72 @@ func (b *BLangXMLNS) GetPrefix() *BLangIdentifier {
 	return b.prefix
 }
 
-func (b *BLangXMLNS) SetNamespaceURI(namespaceURI BLangExpression) {
-	b.namespaceURI = namespaceURI
-}
-
-func (b *BLangXMLNS) SetPrefix(prefix *BLangIdentifier) {
-	b.prefix = prefix
-}
-
-func (b *BLangPackage) GetImports() []ImportPackageNode {
-	result := make([]ImportPackageNode, len(b.Imports))
+func (b *BLangPackage) GetImports() []*BLangImportPackage {
+	result := make([]*BLangImportPackage, len(b.Imports))
 	for i := range b.Imports {
 		result[i] = &b.Imports[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) AddImport(importPkg ImportPackageNode) {
-	if imp, ok := importPkg.(*BLangImportPackage); ok {
-		b.Imports = append(b.Imports, *imp)
-	} else {
-		panic("importPkg is not a BLangImportPackage")
-	}
+func (b *BLangPackage) AddImport(importPkg *BLangImportPackage) {
+	b.Imports = append(b.Imports, *importPkg)
 }
 
-func (b *BLangPackage) GetNamespaceDeclarations() []XMLNSDeclarationNode {
-	result := make([]XMLNSDeclarationNode, len(b.XmlnsList))
+func (b *BLangPackage) GetNamespaceDeclarations() []*BLangXMLNS {
+	result := make([]*BLangXMLNS, len(b.XmlnsList))
 	for i := range b.XmlnsList {
 		result[i] = &b.XmlnsList[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) AddNamespaceDeclaration(xmlnsDecl XMLNSDeclarationNode) {
-	if xmlns, ok := xmlnsDecl.(*BLangXMLNS); ok {
-		b.XmlnsList = append(b.XmlnsList, *xmlns)
-	} else {
-		panic("xmlnsDecl is not a BLangXMLNS")
-	}
+func (b *BLangPackage) AddNamespaceDeclaration(xmlnsDecl *BLangXMLNS) {
+	b.XmlnsList = append(b.XmlnsList, *xmlnsDecl)
 }
 
-func (b *BLangPackage) GetConstants() []ConstantNode {
-	result := make([]ConstantNode, len(b.Constants))
+func (b *BLangPackage) GetConstants() []*BLangVariable {
+	result := make([]*BLangVariable, len(b.Constants))
 	for i := range b.Constants {
 		result[i] = &b.Constants[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) GetGlobalVariables() []VariableNode {
-	result := make([]VariableNode, len(b.GlobalVars))
+func (b *BLangPackage) GetGlobalVariables() []*BLangVariable {
+	result := make([]*BLangVariable, len(b.GlobalVars))
 	for i := range b.GlobalVars {
 		result[i] = &b.GlobalVars[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) AddGlobalVariable(globalVar SimpleVariableNode) {
-	if sv, ok := globalVar.(*BLangSimpleVariable); ok {
-		b.GlobalVars = append(b.GlobalVars, *sv)
-	} else {
-		panic("globalVar is not a BLangSimpleVariable")
-	}
+func (b *BLangPackage) AddGlobalVariable(globalVar *BLangVariable) {
+	b.GlobalVars = append(b.GlobalVars, *globalVar)
 }
 
-func (b *BLangPackage) GetServices() []ServiceNode {
-	result := make([]ServiceNode, len(b.Services))
+func (b *BLangPackage) GetServices() []*BLangService {
+	result := make([]*BLangService, len(b.Services))
 	for i := range b.Services {
 		result[i] = &b.Services[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) AddService(service ServiceNode) {
-	if svc, ok := service.(*BLangService); ok {
-		b.Services = append(b.Services, *svc)
-	} else {
-		panic("service is not a BLangService")
-	}
+func (b *BLangPackage) AddService(service *BLangService) {
+	b.Services = append(b.Services, *service)
 }
 
-func (b *BLangPackage) GetFunctions() []FunctionNode {
-	result := make([]FunctionNode, len(b.Functions))
+func (b *BLangPackage) GetFunctions() []*BLangFunction {
+	result := make([]*BLangFunction, len(b.Functions))
 	for i := range b.Functions {
 		result[i] = &b.Functions[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) AddFunction(function FunctionNode) {
-	if fn, ok := function.(*BLangFunction); ok {
-		b.Functions = append(b.Functions, *fn)
-	} else {
-		panic("function is not a BLangFunction")
-	}
+func (b *BLangPackage) AddFunction(function *BLangFunction) {
+	b.Functions = append(b.Functions, *function)
 }
 
 func (b *BLangPackage) GetTypeDefinitions() []*BLangTypeDefinition {
@@ -1449,51 +1190,24 @@ func (b *BLangPackage) AddTypeDefinition(typeDefinition *BLangTypeDefinition) {
 	b.TypeDefinitions = append(b.TypeDefinitions, *typeDefinition)
 }
 
-func (b *BLangPackage) GetAnnotations() []AnnotationNode {
-	result := make([]AnnotationNode, len(b.Annotations))
+func (b *BLangPackage) GetAnnotations() []*BLangAnnotation {
+	result := make([]*BLangAnnotation, len(b.Annotations))
 	for i := range b.Annotations {
 		result[i] = &b.Annotations[i]
 	}
 	return result
 }
 
-func (b *BLangPackage) AddAnnotation(annotation AnnotationNode) {
-	if ann, ok := annotation.(*BLangAnnotation); ok {
-		b.Annotations = append(b.Annotations, *ann)
-	} else {
-		panic("annotation is not a BLangAnnotation")
-	}
+func (b *BLangPackage) AddAnnotation(annotation *BLangAnnotation) {
+	b.Annotations = append(b.Annotations, *annotation)
 }
 
-func (b *BLangPackage) GetClassDefinitions() []ClassDefinition {
-	result := make([]ClassDefinition, len(b.ClassDefinitions))
+func (b *BLangPackage) GetClassDefinitions() []*BLangClassDefinition {
+	result := make([]*BLangClassDefinition, len(b.ClassDefinitions))
 	for i := range b.ClassDefinitions {
 		result[i] = &b.ClassDefinitions[i]
 	}
 	return result
-}
-
-func (b *BLangPackage) AddTestablePkg(testablePkg *BLangTestablePackage) {
-	b.TestablePkgs = append(b.TestablePkgs, testablePkg)
-}
-
-func (b *BLangPackage) GetTestablePkgs() []*BLangTestablePackage {
-	return b.TestablePkgs
-}
-
-func (b *BLangPackage) GetTestablePkg() *BLangTestablePackage {
-	if len(b.TestablePkgs) > 0 {
-		return b.TestablePkgs[0]
-	}
-	return nil
-}
-
-func (b *BLangPackage) ContainsTestablePkg() bool {
-	return len(b.TestablePkgs) > 0
-}
-
-func (b *BLangPackage) HasTestablePackage() bool {
-	return len(b.TestablePkgs) > 0
 }
 
 func (b *BLangPackage) AddClassDefinition(classDefNode *BLangClassDefinition) {
@@ -1504,35 +1218,12 @@ func NewBLangPackage() *BLangPackage {
 	b := &BLangPackage{}
 	b.Imports = []BLangImportPackage{}
 	b.XmlnsList = []BLangXMLNS{}
-	b.Constants = []BLangConstant{}
-	b.GlobalVars = []BLangSimpleVariable{}
+	b.Constants = []BLangVariable{}
+	b.GlobalVars = []BLangVariable{}
 	b.Services = []BLangService{}
 	b.Functions = []BLangFunction{}
 	b.TypeDefinitions = []BLangTypeDefinition{}
 	b.Annotations = []BLangAnnotation{}
-	b.TestablePkgs = []*BLangTestablePackage{}
 	b.ClassDefinitions = []BLangClassDefinition{}
 	return b
-}
-
-func (b *BLangTestablePackage) GetMockFunctionNamesMap() map[string]string {
-	return b.mockFunctionNamesMap
-}
-
-func (b *BLangTestablePackage) AddMockFunction(id string, function string) {
-	if b.mockFunctionNamesMap == nil {
-		b.mockFunctionNamesMap = make(map[string]string)
-	}
-	b.mockFunctionNamesMap[id] = function
-}
-
-func (b *BLangTestablePackage) GetIsLegacyMockingMap() map[string]bool {
-	return b.isLegacyMockingMap
-}
-
-func (b *BLangTestablePackage) AddIsLegacyMockingMap(id string, isLegacy bool) {
-	if b.isLegacyMockingMap == nil {
-		b.isLegacyMockingMap = make(map[string]bool)
-	}
-	b.isLegacyMockingMap[id] = isLegacy
 }

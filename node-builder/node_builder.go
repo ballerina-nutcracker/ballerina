@@ -33,52 +33,6 @@ import (
 	balCommon "github.com/ballerina-nutcracker/ballerina/common"
 )
 
-type typeTable struct {
-	booleanType *ast.BTypeBasic
-	intType     *ast.BTypeBasic
-	nilType     *ast.BTypeBasic
-	stringType  *ast.BTypeBasic
-	floatType   *ast.BTypeBasic
-	decimalType *ast.BTypeBasic
-	byteType    *ast.BTypeBasic
-}
-
-func newTypeTable() typeTable {
-	newBasicType := func(tag ast.TypeTags) *ast.BTypeBasic {
-		return ast.NewBType(tag, model.Name(""), uint64(model.FlagReadonly)).(*ast.BTypeBasic)
-	}
-	return typeTable{
-		booleanType: newBasicType(ast.TypeTags_BOOLEAN),
-		intType:     newBasicType(ast.TypeTags_INT),
-		nilType:     newBasicType(ast.TypeTags_NIL),
-		stringType:  newBasicType(ast.TypeTags_STRING),
-		floatType:   newBasicType(ast.TypeTags_FLOAT),
-		decimalType: newBasicType(ast.TypeTags_DECIMAL),
-		byteType:    newBasicType(ast.TypeTags_BYTE),
-	}
-}
-
-func (t *typeTable) getTypeFromTag(tag ast.TypeTags) ast.TypeDescriptor {
-	switch tag {
-	case ast.TypeTags_BOOLEAN:
-		return t.booleanType
-	case ast.TypeTags_INT:
-		return t.intType
-	case ast.TypeTags_NIL:
-		return t.nilType
-	case ast.TypeTags_STRING:
-		return t.stringType
-	case ast.TypeTags_FLOAT:
-		return t.floatType
-	case ast.TypeTags_DECIMAL:
-		return t.decimalType
-	case ast.TypeTags_BYTE:
-		return t.byteType
-	default:
-		panic("not implemented")
-	}
-}
-
 type nodeBuilderMode uint8
 
 const (
@@ -91,7 +45,6 @@ type nodeBuilder struct {
 	anonTypeNameSuffixes []string // Stack for anonymous type name suffixes
 	currentCompUnit      *ast.BLangCompilationUnit
 	cx                   *context.CompilerContext
-	types                typeTable
 	mode                 nodeBuilderMode
 }
 
@@ -111,7 +64,6 @@ func newNodeBuilderWithMode(cx *context.CompilerContext, mode nodeBuilderMode) *
 	nodeBuilder := &nodeBuilder{
 		cx:        cx,
 		PackageID: cx.GetDefaultPackage(),
-		types:     newTypeTable(),
 		mode:      mode,
 	}
 	return nodeBuilder
@@ -663,10 +615,23 @@ func (n *nodeBuilder) populateMetadata(metadata *st.MetadataNode, target ast.Ann
 	if metadata == nil || metadata.IsMissing() {
 		return
 	}
-	if docTarget, ok := target.(ast.DocumentableNode); ok {
-		docString := getDocumentationString(metadata)
-		if docString != nil && !docString.IsMissing() {
-			docTarget.SetMarkdownDocumentationAttachment(n.createMarkdownDocumentationAttachment(docString))
+	if docString := getDocumentationString(metadata); docString != nil && !docString.IsMissing() {
+		documentation := n.createMarkdownDocumentationAttachment(docString)
+		switch target := target.(type) {
+		case *ast.BLangAnnotation:
+			target.MarkdownDocumentationAttachment = documentation
+		case *ast.BLangClassDefinition:
+			target.MarkdownDocumentationAttachment = documentation
+		case *ast.BLangService:
+			target.MarkdownDocumentationAttachment = documentation
+		case *ast.BLangVariable:
+			target.MarkdownDocumentationAttachment = documentation
+		case *ast.BLangFunction:
+			target.MarkdownDocumentationAttachment = documentation
+		case *ast.BLangResourceMethod:
+			target.MarkdownDocumentationAttachment = documentation
+		case *ast.BLangMemberTypeDesc:
+			target.MarkdownDocumentationAttachment = documentation
 		}
 	}
 	n.addAnnotationAttachments(metadata.Annotations(), target)
@@ -679,12 +644,7 @@ func (n *nodeBuilder) addAnnotationAttachments(annotations st.NodeList[*st.Annot
 }
 
 func (n *nodeBuilder) createTrueLiteral(pos diagnostics.Location) *ast.BLangLiteral {
-	literal := &ast.BLangLiteral{}
-	literal.SetValueType(n.types.booleanType)
-	literal.SetValue(true)
-	literal.SetOriginalValue("true")
-	literal.SetPosition(pos)
-	return literal
+	return ast.NewBLangLiteral(pos, ast.LiteralKindBoolean, true, "true", false)
 }
 
 // createMarkdownDocumentationAttachment creates a BLangMarkdownDocumentation from a documentation string node
@@ -816,16 +776,11 @@ func (n *nodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Nod
 }
 
 func createIdentifier(pos diagnostics.Location, value, originalValue *string) ast.BLangIdentifier {
-	bLIdentifer := ast.BLangIdentifier{}
-	bLIdentifer.SetPosition(pos)
 	if value == nil {
-		return bLIdentifer
+		return ast.NewBLangIdentifier(pos, "", "")
 	}
-	identifierValue, isLiteral := normalizedIdentifierValue(*value)
-	bLIdentifer.SetValue(identifierValue)
-	bLIdentifer.SetLiteral(isLiteral)
-	bLIdentifer.SetOriginalValue(*originalValue)
-	return bLIdentifer
+	identifierValue, _ := normalizedIdentifierValue(*value)
+	return ast.NewBLangIdentifier(pos, identifierValue, *originalValue)
 }
 
 func normalizedIdentifierValue(value string) (string, bool) {
@@ -930,37 +885,27 @@ func isDeclaredWithVar(typeNode st.Node) bool {
 	return false
 }
 
-func (n *nodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, initializer st.Node, visibilityQualifier st.Token, annotations st.NodeList[*st.AnnotationNode]) *ast.BLangSimpleVariable {
-	bLSimpleVar := &ast.BLangSimpleVariable{}
-
+func (n *nodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, initializer st.Node, visibilityQualifier st.Token, annotations st.NodeList[*st.AnnotationNode], flags model.Flag) *ast.BLangVariable {
 	var namePos diagnostics.Location
 	if name != nil {
 		namePos = n.getPosition(name)
 	}
 	identifier := n.createIdentifierNodeFromToken(namePos, name)
-	bLSimpleVar.SetName(identifier)
-
-	if isDeclaredWithVar(typeName) {
-		bLSimpleVar.IsDeclaredWithVar = true
-	} else {
-		bLSimpleVar.SetTypeNode(n.createTypeNode(typeName).(ast.BType))
+	isDeclaredWithVar := isDeclaredWithVar(typeName)
+	var typeNode ast.BType
+	if !isDeclaredWithVar {
+		typeNode = n.createTypeNode(typeName).(ast.BType)
 	}
-
-	if visibilityQualifier != nil {
-		if visibilityQualifier.Kind() == st.PRIVATE_KEYWORD {
-			bLSimpleVar.SetPrivate()
-		} else if visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
-			bLSimpleVar.SetPublic()
-		}
-	}
-
+	var expr ast.BLangActionOrExpression
 	if initializer != nil {
-		bLSimpleVar.SetInitialExpression(n.createExpression(initializer))
+		expr = n.createExpression(initializer)
 	}
-
-	n.addAnnotationAttachments(annotations, bLSimpleVar)
-
-	return bLSimpleVar
+	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
+		flags |= model.FlagPublic
+	}
+	variable := ast.NewBLangVariable(identifier, typeNode, expr, isDeclaredWithVar, flags)
+	n.addAnnotationAttachments(annotations, variable)
+	return variable
 }
 
 func (n *nodeBuilder) createBuiltInTypeNode(typeNode st.Node) ast.TypeDescriptor {
@@ -1014,17 +959,11 @@ func (n *nodeBuilder) createBuiltInTypeNode(typeNode st.Node) ast.TypeDescriptor
 	}
 }
 
-type mutableIdentifier interface {
-	ast.IdentifierNode
-
-	SetValue(string)
-}
-
 func setIdentifierValue(identifier ast.IdentifierNode, value string) {
-	if identifier, ok := any(identifier).(mutableIdentifier); ok {
-		identifier.SetValue(value)
+	if identifier, ok := identifier.(*ast.BLangIdentifier); ok {
+		identifier.Value = value
 	}
-	// We ignore immuatable identifiers such as BadIdentifier (not sure if this can be called for them)
+	// We ignore immutable identifiers such as BLangBadIdentifier.
 }
 
 func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
@@ -1266,9 +1205,8 @@ func isNumericLiteral(kind st.SyntaxKind) bool {
 
 // createSimpleLiteralInner creates a simple literal from a node
 func (n *nodeBuilder) createSimpleLiteralInner(literal st.Node) ast.LiteralNode {
-	var bLiteral ast.LiteralNode
 	kind := literal.Kind()
-	var typeTag ast.TypeTags = -1
+	literalKind := ast.LiteralKindNone
 	var value any = nil
 	var originalValue *string = nil
 
@@ -1287,39 +1225,36 @@ func (n *nodeBuilder) createSimpleLiteralInner(literal st.Node) ast.LiteralNode 
 		literalTokenKind := basicLiteralNode.LiteralToken().Kind()
 		switch literalTokenKind {
 		case st.DECIMAL_INTEGER_LITERAL_TOKEN, st.HEX_INTEGER_LITERAL_TOKEN:
-			typeTag = ast.TypeTags_INT
+			literalKind = ast.LiteralKindInt
 			value = n.getIntegerLiteral(literal, textValue)
 			originalValue = &textValue
 			// TODO: can we fix below?
 			if literalTokenKind == st.HEX_INTEGER_LITERAL_TOKEN && withinByteRange(value) {
-				typeTag = ast.TypeTags_BYTE
+				literalKind = ast.LiteralKindByte
 			}
 		case st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
 			if balCommon.IsDecimalDiscriminated(textValue) {
-				typeTag = ast.TypeTags_DECIMAL
+				literalKind = ast.LiteralKindDecimal
 			} else {
-				typeTag = ast.TypeTags_FLOAT
+				literalKind = ast.LiteralKindFloat
 			}
 			value = textValue
 			originalValue = &textValue
 		default:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
-			typeTag = ast.TypeTags_FLOAT
+			literalKind = ast.LiteralKindFloat
 			value = getHexNodeValue(textValue)
 			originalValue = &textValue
 		}
-		numericLiteral := &ast.BLangNumericLiteral{}
-		numericLiteral.SetPosition(n.getPosition(literal))
-		numericLiteral.SetValueType(n.types.getTypeFromTag(typeTag).(ast.BType))
-		numericLiteral.Value = value
-		numericLiteral.OriginalValue = *originalValue
+		numericLiteral := ast.NewBLangNumericLiteral(
+			n.getPosition(literal), literalKind, value, *originalValue, false,
+		)
 		return &numericLiteral.BLangLiteral
 	} else if kind == st.BOOLEAN_LITERAL {
-		typeTag = ast.TypeTags_BOOLEAN
+		literalKind = ast.LiteralKindBoolean
 		value = strings.ToLower(textValue) == "true"
 		originalValue = &textValue
-		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.STRING_LITERAL || kind == st.XML_TEXT_CONTENT ||
 		kind == st.TEMPLATE_STRING || kind == st.IDENTIFIER_TOKEN ||
 		kind == st.PROMPT_CONTENT || isTokenInRegExp(kind) {
@@ -1349,46 +1284,24 @@ func (n *nodeBuilder) createSimpleLiteralInner(literal st.Node) ast.LiteralNode 
 			text = unescapeBallerinaString(text)
 		}
 
-		typeTag = ast.TypeTags_STRING
+		literalKind = ast.LiteralKindString
 		value = text
 		originalValue = &textValue
-		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.NIL_LITERAL {
-		typeTag = ast.TypeTags_NIL
+		literalKind = ast.LiteralKindNil
 		value = nil
 		originalValue = new(string(model.NIL_VALUE))
-		bLiteral = &ast.BLangLiteral{}
 	} else if kind == st.NULL_LITERAL {
 		originalValue = new("null")
-		typeTag = ast.TypeTags_NIL
-		bLiteral = &ast.BLangLiteral{}
+		literalKind = ast.LiteralKindNil
 	} else if kind == st.BINARY_EXPRESSION { // Should be base16 and base64
-		typeTag = ast.TypeTags_BYTE_ARRAY
+		literalKind = ast.LiteralKindByteArray
 		value = textValue
 		originalValue = &textValue
-
-		// If numeric literal create a numeric literal expression; otherwise create a literal expression
-		if isNumericLiteral(kind) {
-			bLiteral = &ast.BLangNumericLiteral{}
-		} else {
-			bLiteral = &ast.BLangLiteral{}
-		}
 	} else if kind == st.BYTE_ARRAY_LITERAL {
 		return n.transformSyntaxNode(literal).(ast.LiteralNode)
 	}
-	bLangNode := bLiteral.(ast.BLangNode)
-	bLangNode.SetPosition(n.getPosition(literal))
-	bType := n.types.getTypeFromTag(typeTag).(ast.BType)
-	bType.BTypeSetTag(typeTag)
-	switch bl := bLiteral.(type) {
-	case *ast.BLangLiteral:
-		bl.SetValueType(bType)
-	case *ast.BLangNumericLiteral:
-		bl.SetValueType(bType)
-	}
-	bLiteral.SetValue(value)
-	bLiteral.SetOriginalValue(*originalValue)
-	return bLiteral
+	return ast.NewBLangLiteral(n.getPosition(literal), literalKind, value, *originalValue, false)
 }
 
 func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLangNode {
@@ -1456,94 +1369,61 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	return &compilationUnit
 }
 
-type invokableNode interface {
-	SetPublic()
-	SetRemote()
-	SetTransactional()
-	SetResource()
-	SetIsolated()
-	SetParamListPosition(pos ast.Location)
-	SetRestParameter(restParam ast.SimpleVariableNode)
-	AddParameter(param ast.SimpleVariableNode)
-	SetExplicitReturnTypeDescriptor()
-	SetReturnTypeDescriptor(typeDescriptor ast.TypeDescriptor)
-	ReturnTypeDescriptorNode() *ast.BLangReturnTypeDescriptor
-}
-
-func setFunctionQualifiers(base invokableNode, qualifierList st.NodeList[st.Token]) {
+func functionQualifierFlags(qualifierList st.NodeList[st.Token]) model.Flag {
+	var flags model.Flag
 	for qualifier := range qualifierList.Iterator() {
-		kind := qualifier.Kind()
-
-		switch kind {
+		switch qualifier.Kind() {
 		case st.PUBLIC_KEYWORD:
-			base.SetPublic()
-		case st.PRIVATE_KEYWORD:
-			// private is the default
+			flags |= model.FlagPublic
 		case st.REMOTE_KEYWORD:
-			base.SetRemote()
+			flags |= model.FlagRemote
 		case st.TRANSACTIONAL_KEYWORD:
-			base.SetTransactional()
+			flags |= model.FlagTransactional
 		case st.RESOURCE_KEYWORD:
-			base.SetResource()
+			flags |= model.FlagResource
 		case st.ISOLATED_KEYWORD:
-			base.SetIsolated()
-		default:
-			// Skip unknown qualifiers
-			continue
+			flags |= model.FlagIsolated
 		}
 	}
+	return flags
 }
 
-func (n *nodeBuilder) populateFuncSignature(bLFunction invokableNode, funcSignature *st.FunctionSignatureNode) {
-	bLFunction.SetParamListPosition(diagnostics.NewBuiltinLocation())
+func (n *nodeBuilder) populateFuncSignature(data *ast.InvokableData, funcSignature *st.FunctionSignatureNode) {
+	data.ParamListPosition = diagnostics.NewBuiltinLocation()
 	openParen := funcSignature.OpenParenToken()
 	closeParen := funcSignature.CloseParenToken()
 	if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
-		bLFunction.SetParamListPosition(n.getPositionRange(openParen, closeParen))
+		data.ParamListPosition = n.getPositionRange(openParen, closeParen)
 	}
-
-	// Set Parameters
 	parameters := funcSignature.Parameters()
 	for param := range parameters.Iterator() {
-		// Transform parameter using transformSyntaxNode
-		paramNode := n.transformSyntaxNode(param).(ast.SimpleVariableNode)
-
-		// Special handling for rest parameters
+		paramNode := n.transformSyntaxNode(param).(*ast.BLangVariable)
 		if _, isRestParam := param.(*st.RestParameterNode); isRestParam {
-			bLFunction.SetRestParameter(paramNode)
-			continue
+			data.RestParam = paramNode
+		} else {
+			data.RequiredParams = append(data.RequiredParams, *paramNode)
 		}
-
-		// Add to parameters list (all non-rest parameters)
-		bLFunction.AddParameter(paramNode)
 	}
 
-	// Set Return Type
 	retTypeDescNode := funcSignature.ReturnTypeDesc()
-	if retTypeDescNode != nil {
-		returnsKeyword := retTypeDescNode.ReturnsKeyword()
-		if returnsKeyword != nil && !returnsKeyword.IsMissing() {
-			bLFunction.SetExplicitReturnTypeDescriptor()
-		}
-
-		// Get the type child from the return type descriptor
-		typeNode := retTypeDescNode.Type()
-
-		// Push "return" onto the anonymous type name suffixes stack
-		n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, "return")
-
-		// Create the type node from the type child
-		bLFunction.SetReturnTypeDescriptor(n.createTypeNode(typeNode))
-
-		// Pop "return" from the stack
-		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
-		annots := retTypeDescNode.Annotations()
-		n.addAnnotationAttachments(annots, bLFunction.ReturnTypeDescriptorNode())
-	} else {
-		// Default return type is nil when not specified
-		nilReturnType := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+	if retTypeDescNode == nil {
+		nilReturnType := &ast.BLangValueType{TypeKind: ast.TypeKindNil}
 		nilReturnType.SetPosition(diagnostics.NewBuiltinLocation())
-		bLFunction.SetReturnTypeDescriptor(nilReturnType)
+		data.ReturnTypeDescriptor = nilReturnType
+		return
+	}
+	if returnsKeyword := retTypeDescNode.ReturnsKeyword(); returnsKeyword != nil && !returnsKeyword.IsMissing() {
+		data.Flags |= model.FlagExplicitReturnTypeDescriptor
+	}
+	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, "return")
+	data.ReturnTypeDescriptor = n.createTypeNode(retTypeDescNode.Type()).(ast.BType)
+	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
+	annotations := retTypeDescNode.Annotations()
+	for annotation := range annotations.Iterator() {
+		data.ReturnAnnotationAttachments = append(
+			data.ReturnAnnotationAttachments,
+			*n.transformAnnotation(annotation).(*ast.BLangAnnotationAttachment),
+		)
 	}
 }
 
@@ -1566,35 +1446,22 @@ func (n *nodeBuilder) transformFunctionDefinition(funcDefNode *st.FunctionDefini
 }
 
 func (n *nodeBuilder) createFunctionNode(funcName *st.IdentifierToken, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode) *ast.BLangFunction {
-	blFunction := ast.BLangFunction{}
 	name := n.createIdentifierNodeFromToken(n.getPosition(funcName), funcName)
-	n.populateFunctionNode(name, qualifierList, funcSignature, funcBody, &blFunction)
-	return &blFunction
-}
-
-func (n *nodeBuilder) populateFunctionNode(name ast.IdentifierNode, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode, blFunction *ast.BLangFunction) {
-	// Set function name
-	blFunction.Name = name
-	// Set method qualifiers
-	setFunctionQualifiers(blFunction, qualifierList)
-	// Set function signature
+	data := ast.InvokableData{Name: name, Flags: functionQualifierFlags(qualifierList)}
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, name.GetValue())
 	defer func() {
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 	}()
-	n.populateFuncSignature(blFunction, funcSignature)
-
-	// Set the function body
+	n.populateFuncSignature(&data, funcSignature)
 	if funcBody == nil {
-		blFunction.Body = nil
-		blFunction.SetInterface()
+		data.Flags |= model.FlagInterface
 	} else {
-		body := n.transformSyntaxNode(funcBody).(ast.FunctionBodyNode)
-		blFunction.Body = body
-		if _, ok := body.(*ast.BLangExternFunctionBody); ok {
-			blFunction.SetNative()
+		data.Body = n.transformSyntaxNode(funcBody).(ast.FunctionBodyNode)
+		if _, ok := data.Body.(*ast.BLangExternFunctionBody); ok {
+			data.Flags |= model.FlagNative
 		}
 	}
+	return ast.NewBLangFunction(data)
 }
 
 func (n *nodeBuilder) transformImportTopLevel(importDecl *st.ImportDeclarationNode) (ast.TopLevelNode, error) {
@@ -1706,24 +1573,22 @@ func (n *nodeBuilder) transformListenerDeclaration(listenerDeclarationNode *st.L
 	namePos := n.getPosition(nameToken)
 	identifier := createIdentifierFromToken(namePos, nameToken)
 
-	bLSimpleVar := &ast.BLangSimpleVariable{}
-	bLSimpleVar.SetName(&identifier)
-	bLSimpleVar.SetPosition(pos)
-
 	typeDesc := listenerDeclarationNode.TypeDescriptor()
-	if typeDesc != nil && !typeDesc.IsMissing() {
-		bLSimpleVar.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
-	} else {
-		bLSimpleVar.IsDeclaredWithVar = true
+	isDeclaredWithVar := typeDesc == nil || typeDesc.IsMissing()
+	var typeNode ast.BType
+	if !isDeclaredWithVar {
+		typeNode = n.createTypeNode(typeDesc).(ast.BType)
 	}
-
+	var expr ast.BLangActionOrExpression
 	if initializer := listenerDeclarationNode.Initializer(); initializer != nil {
-		bLSimpleVar.SetInitialExpression(n.createExpression(initializer))
+		expr = n.createExpression(initializer)
 	}
-
+	flags := model.FlagFinal | model.FlagListener
 	if visQual := listenerDeclarationNode.VisibilityQualifier(); visQual != nil && visQual.Kind() == st.PUBLIC_KEYWORD {
-		bLSimpleVar.SetPublic()
+		flags |= model.FlagPublic
 	}
+	bLSimpleVar := ast.NewBLangVariable(&identifier, typeNode, expr, isDeclaredWithVar, flags)
+	bLSimpleVar.SetPosition(pos)
 
 	if metadata != nil && !metadata.IsMissing() {
 		if annotations := metadata.Annotations(); annotations.Size() > 0 {
@@ -1732,9 +1597,6 @@ func (n *nodeBuilder) transformListenerDeclaration(listenerDeclarationNode *st.L
 		bLSimpleVar.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(getDocumentationString(metadata))
 	}
 
-	// Listeners are final (the binding cannot be reassigned).
-	bLSimpleVar.SetFinal()
-	bLSimpleVar.SetListener()
 	return bLSimpleVar
 }
 
@@ -1748,26 +1610,33 @@ func isAllowedDistinctTypeDescriptor(kind st.SyntaxKind) bool {
 }
 
 func (n *nodeBuilder) transformTypeDefinition(typeDefinitionNode *st.TypeDefinitionNode) ast.BLangNode {
-	typeDef := ast.NewBLangTypeDefinition()
-
 	identifierNode := createIdentifierFromToken(n.getPosition(typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
-	typeDef.Name = &identifierNode
-
+	var flags model.Flag
+	if visibility := typeDefinitionNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
+		flags |= model.FlagPublic
+	}
+	typeDescriptorNode := typeDefinitionNode.TypeDescriptor()
+	if _, ok := typeDescriptorNode.(*st.DistinctTypeDescriptorNode); ok {
+		flags |= model.FlagDistinct
+	}
+	var documentation *ast.BLangMarkdownDocumentation
+	if metadata := typeDefinitionNode.Metadata(); metadata != nil && !metadata.IsMissing() {
+		documentation = n.createMarkdownDocumentationAttachment(getDocumentationString(metadata))
+	}
+	typeDef := ast.NewBLangTypeDefinitionWithData(&identifierNode, ast.TypeData{}, documentation, flags)
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, typeDef.Name.GetValue())
 
-	typeDescriptorNode := typeDefinitionNode.TypeDescriptor()
 	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*st.DistinctTypeDescriptorNode); ok {
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
 		if innerTypeDescriptorNode == nil || !isAllowedDistinctTypeDescriptor(innerTypeDescriptorNode.Kind()) {
 			n.cx.SyntaxError("only object and error types can be distinct", n.getPosition(distinctTypeDescriptorNode))
-			neverType := &ast.BLangValueType{TypeKind: ast.TypeKind_NEVER}
+			neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
 			neverType.SetPosition(n.getPosition(distinctTypeDescriptorNode))
 			typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
 			n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 			return typeDef
 		}
 		typeDescriptorNode = innerTypeDescriptorNode
-		typeDef.SetDistinct()
 	}
 	typeData := ast.TypeData{
 		TypeDescriptor: n.createTypeNode(typeDescriptorNode),
@@ -1775,11 +1644,6 @@ func (n *nodeBuilder) transformTypeDefinition(typeDefinitionNode *st.TypeDefinit
 	typeDef.SetTypeData(typeData)
 
 	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
-
-	visibilityQualifier := typeDefinitionNode.VisibilityQualifier()
-	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
-		typeDef.SetPublic()
-	}
 
 	typeDef.SetPosition(n.getPositionWithoutMetadata(typeDefinitionNode))
 
@@ -1791,7 +1655,7 @@ func (n *nodeBuilder) transformTypeDefinition(typeDefinitionNode *st.TypeDefinit
 func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.ServiceDeclarationNode) ast.BLangNode {
 	metadata := serviceDeclarationNode.Metadata()
 
-	service := ast.NewBLangService()
+	service := ast.NewBLangServiceWithFlags(serviceQualifierFlags(serviceDeclarationNode))
 	service.SetPosition(n.getPositionWithoutMetadata(serviceDeclarationNode))
 
 	if metadata != nil && !metadata.IsMissing() {
@@ -1805,7 +1669,6 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 		service.SetTypeData(ast.TypeData{TypeDescriptor: n.createTypeNode(typeDesc)})
 	}
 
-	n.populateServiceQualifiers(&service, serviceDeclarationNode)
 	n.populateServiceAttachPoint(&service, serviceDeclarationNode)
 	n.populateServiceAttachedExprs(&service, serviceDeclarationNode)
 
@@ -1824,13 +1687,15 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 
 // populateServiceQualifiers reads the user-controllable qualifiers from the
 // service declaration. The `service` flag is already set by NewBLangService.
-func (n *nodeBuilder) populateServiceQualifiers(service *ast.BLangService, node *st.ServiceDeclarationNode) {
+func serviceQualifierFlags(node *st.ServiceDeclarationNode) model.Flag {
+	var flags model.Flag
 	quals := node.Qualifiers()
 	for qual := range quals.Iterator() {
 		if qual.Kind() == st.ISOLATED_KEYWORD {
-			service.SetIsolated()
+			flags |= model.FlagIsolated
 		}
 	}
+	return flags
 }
 
 func (n *nodeBuilder) populateServiceAttachPoint(service *ast.BLangService, node *st.ServiceDeclarationNode) {
@@ -1869,7 +1734,7 @@ func (n *nodeBuilder) populateServiceAttachedExprs(service *ast.BLangService, no
 }
 
 type classDefnMembers struct {
-	Fields               []ast.SimpleVariableNode
+	Fields               []*ast.BLangVariable
 	Methods              map[string]*ast.BLangFunction
 	InitFunction         *ast.BLangFunction
 	ResourceMethods      []*ast.BLangResourceMethod
@@ -1938,36 +1803,22 @@ func (n *nodeBuilder) transformAssignmentStatement(assignmentStatementNode *st.A
 		break
 	}
 
-	bLAssignment := &ast.BLangAssignment{}
-	lhsExpr := n.createExpression(assignmentStatementNode.VarRef())
-	switch lhsExpr := lhsExpr.(type) {
-	case *ast.BLangFieldBaseAccess:
-		lhsExpr.SetLexpr()
-	case *ast.BLangIndexBasedAccess:
-		lhsExpr.SetLexpr()
-	}
-	bLAssignment.SetActionOrExpression(n.createActionOrExpression(assignmentStatementNode.Expression()))
-	bLAssignment.SetPosition(n.getPosition(assignmentStatementNode))
-	bLAssignment.VarRef = lhsExpr.(ast.LExpr)
-	return bLAssignment
+	lhsExpr := ast.NewBLangAssignmentLExpr(n.createExpression(assignmentStatementNode.VarRef()), false)
+	return ast.NewBLangAssignment(
+		n.getPosition(assignmentStatementNode),
+		lhsExpr,
+		n.createActionOrExpression(assignmentStatementNode.Expression()),
+	)
 }
 
 func (n *nodeBuilder) transformCompoundAssignmentStatement(compoundAssignmentStmtNode *st.CompoundAssignmentStatementNode) ast.BLangNode {
-	bLCompAssignment := &ast.BLangCompoundAssignment{}
-	bLCompAssignment.SetActionOrExpression(n.createActionOrExpression(compoundAssignmentStmtNode.RhsExpression()))
-	lhsExpr := n.createExpression(compoundAssignmentStmtNode.LhsExpression())
-	switch lhsExpr := lhsExpr.(type) {
-	case *ast.BLangFieldBaseAccess:
-		lhsExpr.SetLexpr()
-		lhsExpr.SetCompoundAssignmentLValue()
-	case *ast.BLangIndexBasedAccess:
-		lhsExpr.SetLexpr()
-		lhsExpr.SetCompoundAssignmentLValue()
-	}
-	bLCompAssignment.SetVariable(lhsExpr.(ast.LExpr))
-	ast.BLangNode(bLCompAssignment).SetPosition(n.getPosition(compoundAssignmentStmtNode))
-	bLCompAssignment.OpKind = model.OperatorKindValueFrom(compoundAssignmentStmtNode.BinaryOperator().Text())
-	return bLCompAssignment
+	lhsExpr := ast.NewBLangAssignmentLExpr(n.createExpression(compoundAssignmentStmtNode.LhsExpression()), true)
+	return ast.NewBLangCompoundAssignment(
+		n.getPosition(compoundAssignmentStmtNode),
+		lhsExpr,
+		n.createActionOrExpression(compoundAssignmentStmtNode.RhsExpression()),
+		model.OperatorKindValueFrom(compoundAssignmentStmtNode.BinaryOperator().Text()),
+	)
 }
 
 func (n *nodeBuilder) transformVariableDeclaration(variableDeclarationNode *st.VariableDeclarationNode) ast.BLangNode {
@@ -1978,14 +1829,12 @@ func (n *nodeBuilder) transformVariableDeclaration(variableDeclarationNode *st.V
 		variableDeclarationNode.FinalKeyword(),
 	)
 	annotations := variableDeclarationNode.Annotations()
-	if simpleVarDef, ok := varNode.(*ast.BLangSimpleVariableDef); ok {
-		n.addAnnotationAttachments(annotations, simpleVarDef.Var)
-	}
+	n.addAnnotationAttachments(annotations, varNode.Var)
 
-	return varNode.(ast.BLangNode)
+	return varNode
 }
 
-func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBindingPattern *st.TypedBindingPatternNode, initializer st.ExpressionNode, finalKeyword st.Token) ast.VariableDefinitionNode {
+func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBindingPattern *st.TypedBindingPatternNode, initializer st.ExpressionNode, finalKeyword st.Token) *ast.BLangVariableDef {
 	bindingPattern := typedBindingPattern.BindingPattern()
 
 	variable := n.getBLangVariableNode(bindingPattern, location)
@@ -1998,31 +1847,24 @@ func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 
 	switch bindingPattern.Kind() {
 	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN:
-		variable := variable.(*ast.BLangSimpleVariable)
-		bLVarDef := &ast.BLangSimpleVariableDef{}
-
-		bLVarDef.SetPosition(location)
-		variable.SetPosition(location)
-
 		var expr ast.BLangActionOrExpression
 		if initializer != nil {
 			expr = n.createActionOrExpression(initializer)
 		}
-		variable.SetInitialExpression(expr)
-
-		bLVarDef.SetVariable(variable)
-
-		if finalKeyword != nil {
-			variable.SetFinal()
-		}
-
 		typeDesc := typedBindingPattern.TypeDescriptor()
 		isDeclaredWithVar := isDeclaredWithVar(typeDesc)
-		variable.SetIsDeclaredWithVar(isDeclaredWithVar)
+		var typeNode ast.BType
 		if !isDeclaredWithVar {
-			variable.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
+			typeNode = n.createTypeNode(typeDesc).(ast.BType)
 		}
-
+		var flags model.Flag
+		if finalKeyword != nil {
+			flags |= model.FlagFinal
+		}
+		variable = ast.NewBLangVariable(variable.Name, typeNode, expr, isDeclaredWithVar, flags)
+		variable.SetPosition(location)
+		bLVarDef := &ast.BLangVariableDef{Var: variable}
+		bLVarDef.SetPosition(location)
 		return bLVarDef
 
 	case st.MAPPING_BINDING_PATTERN:
@@ -2144,15 +1986,7 @@ func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) ast.BLan
 	}
 	nameRef := n.createBLangNameReference(fieldName)
 	name := nameRef[1].GetValue()
-	pos := n.getPosition(fieldName)
-	lit := &ast.BLangLiteral{}
-	lit.SetPosition(pos)
-	bType := &ast.BTypeBasic{}
-	bType.BTypeSetTag(ast.TypeTags_STRING)
-	lit.SetValueType(bType)
-	lit.SetValue(name)
-	lit.SetOriginalValue(name)
-	return lit
+	return ast.NewBLangLiteral(n.getPosition(fieldName), ast.LiteralKindString, name, name, false)
 }
 
 func (n *nodeBuilder) createExpression(expressionNode st.Node) ast.BLangExpression {
@@ -2205,7 +2039,7 @@ func (n *nodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) 
 		actionOrExpression.Kind() == st.QUALIFIED_NAME_REFERENCE ||
 		actionOrExpression.Kind() == st.IDENTIFIER_TOKEN {
 		nameReference := n.createBLangNameReference(actionOrExpression)
-		bLVarRef := ast.BLangSimpleVarRef{}
+		bLVarRef := ast.BLangVarRef{}
 		bLVarRef.SetPosition(n.getPosition(actionOrExpression))
 		bLVarRef.PkgAlias = nameReference[0]
 		bLVarRef.VariableName = nameReference[1]
@@ -2222,10 +2056,10 @@ func (n *nodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) 
 		return &group, nil
 	}
 	if isType(actionOrExpression.Kind()) {
-		typeAccessExpr := ast.BLangTypedescExpr{}
-		typeAccessExpr.SetPosition(n.getPosition(actionOrExpression))
-		typeAccessExpr.SetTypeDescriptor(n.createTypeNode(actionOrExpression))
-		return &typeAccessExpr, nil
+		return ast.NewBLangTypedescExpr(
+			n.getPosition(actionOrExpression),
+			n.createTypeNode(actionOrExpression),
+		), nil
 	}
 	transformedNode := n.transformSyntaxNode(actionOrExpression)
 	result, ok := transformedNode.(ast.BLangActionOrExpression)
@@ -2248,15 +2082,17 @@ func (n *nodeBuilder) transformExternalFunctionBody(externalFunctionBodyNode *st
 }
 
 func (n *nodeBuilder) transformIfElseStatement(ifElseStatementNode *st.IfElseStatementNode) ast.BLangNode {
-	bLIf := ast.BLangIf{}
-	bLIf.SetPosition(n.getPosition(ifElseStatementNode))
-	bLIf.SetCondition(n.createExpression(ifElseStatementNode.Condition()))
-	bLIf.SetBody(n.transformBlockStatement(ifElseStatementNode.IfBody()).(*ast.BLangBlockStmt))
+	var elseStmt ast.StatementNode
 	if ifElseStatementNode.ElseBody() != nil {
 		elseNode := ifElseStatementNode.ElseBody().(*st.ElseBlockNode)
-		bLIf.SetElseStatement(n.transformSyntaxNode(elseNode.ElseBody()).(ast.StatementNode))
+		elseStmt = n.transformSyntaxNode(elseNode.ElseBody()).(ast.StatementNode)
 	}
-	return &bLIf
+	return ast.NewBLangIf(
+		n.getPosition(ifElseStatementNode),
+		n.createExpression(ifElseStatementNode.Condition()),
+		n.transformBlockStatement(ifElseStatementNode.IfBody()).(*ast.BLangBlockStmt),
+		elseStmt,
+	)
 }
 
 func (n *nodeBuilder) transformElseBlock(elseBlockNode *st.ElseBlockNode) ast.BLangNode {
@@ -2264,20 +2100,18 @@ func (n *nodeBuilder) transformElseBlock(elseBlockNode *st.ElseBlockNode) ast.BL
 }
 
 func (n *nodeBuilder) transformWhileStatement(whileStatementNode *st.WhileStatementNode) ast.BLangNode {
-	bLWhile := &ast.BLangWhile{}
-	bLWhile.SetCondition(n.createExpression(whileStatementNode.Condition()))
-	bLWhile.SetPosition(n.getPosition(whileStatementNode))
-
-	bLBlockStmt := n.transformBlockStatement(whileStatementNode.WhileBody()).(*ast.BLangBlockStmt)
-	bLBlockStmt.SetPosition(n.getPosition(whileStatementNode.WhileBody()))
-	bLWhile.SetBody(bLBlockStmt)
+	body := n.transformBlockStatement(whileStatementNode.WhileBody()).(*ast.BLangBlockStmt)
+	body.SetPosition(n.getPosition(whileStatementNode.WhileBody()))
+	var onFailClause *ast.BLangOnFailClause
 	if whileStatementNode.OnFailClause() != nil {
-		onFailClauseNode := whileStatementNode.OnFailClause()
-		bLWhile.SetOnFailClause(n.transformOnFailClause(onFailClauseNode).(*ast.BLangOnFailClause))
-	} else {
-		bLWhile.OnFailClause.SetPosition(diagnostics.NewBuiltinLocation())
+		onFailClause = n.transformOnFailClause(whileStatementNode.OnFailClause()).(*ast.BLangOnFailClause)
 	}
-	return bLWhile
+	return ast.NewBLangWhile(
+		n.getPosition(whileStatementNode),
+		n.createExpression(whileStatementNode.Condition()),
+		body,
+		onFailClause,
+	)
 }
 
 func (n *nodeBuilder) transformPanicStatement(panicStatementNode *st.PanicStatementNode) ast.BLangNode {
@@ -2288,19 +2122,14 @@ func (n *nodeBuilder) transformPanicStatement(panicStatementNode *st.PanicStatem
 }
 
 func (n *nodeBuilder) transformReturnStatement(returnStatementNode *st.ReturnStatementNode) ast.BLangNode {
-	bLReturn := &ast.BLangReturn{}
-	bLReturn.SetPosition(n.getPosition(returnStatementNode))
+	pos := n.getPosition(returnStatementNode)
+	var expr ast.BLangActionOrExpression
 	if returnStatementNode.Expression() != nil {
-		bLReturn.SetActionOrExpression(n.createActionOrExpression(returnStatementNode.Expression()))
+		expr = n.createActionOrExpression(returnStatementNode.Expression())
 	} else {
-		nilLiteral := &ast.BLangLiteral{}
-		nilLiteral.SetPosition(n.getPosition(returnStatementNode))
-		nilLiteral.Value = nil
-		nilLiteral.SetValueType(n.types.getTypeFromTag(ast.TypeTags_NIL).(ast.BType))
-		bLReturn.SetActionOrExpression(nilLiteral)
+		expr = ast.NewBLangLiteral(pos, ast.LiteralKindNil, nil, "", false)
 	}
-
-	return bLReturn
+	return ast.NewBLangReturn(pos, expr)
 }
 
 func (n *nodeBuilder) transformLocalTypeDefinitionStatement(localTypeDefinitionStatementNode *st.LocalTypeDefinitionStatementNode) ast.BLangNode {
@@ -2324,30 +2153,25 @@ func (n *nodeBuilder) transformForkStatement(forkStatementNode *st.ForkStatement
 }
 
 func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEachStatementNode) ast.BLangNode {
-	bLForeach := &ast.BLangForeach{}
-	bLForeach.SetPosition(n.getPosition(forEachStatementNode))
-
 	varDef := n.createBLangVarDef(
 		n.getPosition(forEachStatementNode.TypedBindingPattern()),
 		forEachStatementNode.TypedBindingPattern(),
 		nil,
 		nil,
-	).(*ast.BLangSimpleVariableDef)
-	bLForeach.VariableDef = varDef
-	bLForeach.IsDeclaredWithVar = varDef.Var.IsDeclaredWithVar
-
-	bLForeach.Collection = n.createExpression(forEachStatementNode.ActionOrExpressionNode())
-
+	)
 	body := n.transformBlockStatement(forEachStatementNode.BlockStatement()).(*ast.BLangBlockStmt)
 	body.SetPosition(n.getPosition(forEachStatementNode.BlockStatement()))
-	bLForeach.Body = *body
-
+	var onFailClause *ast.BLangOnFailClause
 	if forEachStatementNode.OnFailClause() != nil {
-		bLForeach.SetOnFailClause(
-			n.transformOnFailClause(forEachStatementNode.OnFailClause()).(*ast.BLangOnFailClause),
-		)
+		onFailClause = n.transformOnFailClause(forEachStatementNode.OnFailClause()).(*ast.BLangOnFailClause)
 	}
-	return bLForeach
+	return ast.NewBLangForeach(
+		n.getPosition(forEachStatementNode),
+		varDef,
+		n.createExpression(forEachStatementNode.ActionOrExpressionNode()),
+		body,
+		onFailClause,
+	)
 }
 
 func (n *nodeBuilder) transformBinaryExpression(binaryBLangExpression *st.BinaryExpressionNode) ast.BLangNode {
@@ -2526,7 +2350,7 @@ func (n *nodeBuilder) transformUnaryExpression(unaryBLangExpression *st.UnaryExp
 // float (losing precision) and later coerced back to int, corrupting the
 // value used at runtime (e.g. for `<decimal>-9223372036854775808`).
 func foldNegativeIntLiteral(lit *ast.BLangLiteral) bool {
-	if lit.GetValueType().BTypeGetTag() != ast.TypeTags_INT {
+	if lit.GetLiteralKind() != ast.LiteralKindInt {
 		return false
 	}
 	if _, isFloat := lit.GetValue().(float64); !isFloat {
@@ -2552,32 +2376,27 @@ func (n *nodeBuilder) transformComputedNameField(computedNameFieldNode *st.Compu
 }
 
 func (n *nodeBuilder) transformConstantDeclaration(constantDeclarationNode *st.ConstantDeclarationNode) ast.BLangNode {
-	// Line 940: BLangConstant constantNode = (BLangConstant) TreeBuilder.NewBLangConstant();
-	constantNode := ast.NewBLangConstant()
-
-	pos := n.getPositionWithoutMetadata(constantDeclarationNode)
-
-	identifierPos := n.getPosition(constantDeclarationNode.VariableName())
-
-	nameIdentifier := createIdentifierFromToken(identifierPos, constantDeclarationNode.VariableName())
-	constantNode.Name = &nameIdentifier
-
-	constantNode.Expr = n.createExpression(constantDeclarationNode.Initializer())
-
-	constantNode.SetPosition(pos)
-
-	typeDescriptor := constantDeclarationNode.TypeDescriptor()
-	if typeDescriptor != nil {
-		constantNode.SetTypeNode(n.createTypeNode(typeDescriptor).(ast.BType))
+	nameIdentifier := createIdentifierFromToken(
+		n.getPosition(constantDeclarationNode.VariableName()),
+		constantDeclarationNode.VariableName(),
+	)
+	var typeNode ast.BType
+	if typeDescriptor := constantDeclarationNode.TypeDescriptor(); typeDescriptor != nil {
+		typeNode = n.createTypeNode(typeDescriptor).(ast.BType)
 	}
-
+	var flags model.Flag
+	if visibility := constantDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
+		flags |= model.FlagPublic
+	}
+	constantNode := ast.NewBLangVariable(
+		&nameIdentifier,
+		typeNode,
+		n.createExpression(constantDeclarationNode.Initializer()),
+		false,
+		flags|model.FlagConstant,
+	)
+	constantNode.SetPosition(n.getPositionWithoutMetadata(constantDeclarationNode))
 	n.populateMetadata(constantDeclarationNode.Metadata(), constantNode)
-
-	visibilityQualifier := constantDeclarationNode.VisibilityQualifier()
-	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
-		constantNode.SetPublic()
-	}
-
 	return constantNode
 }
 
@@ -2588,7 +2407,7 @@ func (n *nodeBuilder) transformDefaultableParameter(defaultableParameterNode *st
 		n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, paramName.Text())
 	}
 
-	simpleVar := n.createSimpleVarInner(paramName, defaultableParameterNode.TypeName(), defaultableParameterNode.Expression(), nil, defaultableParameterNode.Annotations())
+	simpleVar := n.createSimpleVarInner(paramName, defaultableParameterNode.TypeName(), defaultableParameterNode.Expression(), nil, defaultableParameterNode.Annotations(), model.FlagDefaultableParam)
 
 	simpleVar.SetPosition(n.getPosition(defaultableParameterNode))
 
@@ -2599,16 +2418,14 @@ func (n *nodeBuilder) transformDefaultableParameter(defaultableParameterNode *st
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
 	}
 
-	simpleVar.SetDefaultableParam()
-
 	return simpleVar
 }
 
-func (n *nodeBuilder) createSimpleVarWithTokenNodeNodeList(name st.Token, typeName st.Node, annotations st.NodeList[*st.AnnotationNode]) *ast.BLangSimpleVariable {
+func (n *nodeBuilder) createSimpleVarWithTokenNodeNodeList(name st.Token, typeName st.Node, annotations st.NodeList[*st.AnnotationNode], flags model.Flag) *ast.BLangVariable {
 	if name != nil {
-		return n.createSimpleVarInner(name, typeName, nil, nil, annotations)
+		return n.createSimpleVarInner(name, typeName, nil, nil, annotations, flags)
 	}
-	return n.createSimpleVarInner(nil, typeName, nil, nil, annotations)
+	return n.createSimpleVarInner(nil, typeName, nil, nil, annotations, flags)
 }
 
 func (n *nodeBuilder) transformRequiredParameter(requiredParameterNode *st.RequiredParameterNode) ast.BLangNode {
@@ -2618,7 +2435,7 @@ func (n *nodeBuilder) transformRequiredParameter(requiredParameterNode *st.Requi
 		n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, paramName.Text())
 	}
 
-	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, requiredParameterNode.TypeName(), requiredParameterNode.Annotations())
+	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, requiredParameterNode.TypeName(), requiredParameterNode.Annotations(), model.FlagRequiredParam)
 
 	simpleVar.SetPosition(n.getPosition(requiredParameterNode))
 
@@ -2631,8 +2448,6 @@ func (n *nodeBuilder) transformRequiredParameter(requiredParameterNode *st.Requi
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
 	}
 
-	simpleVar.SetRequiredParam()
-
 	return simpleVar
 }
 
@@ -2643,7 +2458,7 @@ func (n *nodeBuilder) transformIncludedRecordParameter(includedRecordParameterNo
 		n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, paramName.Text())
 	}
 
-	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, includedRecordParameterNode.TypeName(), includedRecordParameterNode.Annotations())
+	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, includedRecordParameterNode.TypeName(), includedRecordParameterNode.Annotations(), model.FlagRequiredParam|model.FlagIncluded)
 
 	simpleVar.SetPosition(n.getPosition(includedRecordParameterNode))
 
@@ -2653,9 +2468,6 @@ func (n *nodeBuilder) transformIncludedRecordParameter(includedRecordParameterNo
 	} else if diagnostics.IsLocationEmpty(simpleVar.Name.GetPosition()) {
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
 	}
-
-	simpleVar.SetRequiredParam()
-	simpleVar.SetIncludedRecordParam()
 
 	return simpleVar
 }
@@ -2667,7 +2479,7 @@ func (n *nodeBuilder) transformRestParameter(restParameterNode *st.RestParameter
 		n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, paramName.Text())
 	}
 
-	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, restParameterNode.TypeName(), restParameterNode.Annotations())
+	simpleVar := n.createSimpleVarWithTokenNodeNodeList(paramName, restParameterNode.TypeName(), restParameterNode.Annotations(), model.FlagRestParam)
 
 	simpleVar.SetPosition(n.getPosition(restParameterNode))
 
@@ -2677,8 +2489,6 @@ func (n *nodeBuilder) transformRestParameter(restParameterNode *st.RestParameter
 	} else if diagnostics.IsLocationEmpty(simpleVar.Name.GetPosition()) {
 		simpleVar.Name.SetPosition(diagnostics.NewBuiltinLocation())
 	}
-
-	simpleVar.SetRestParam()
 
 	return simpleVar
 }
@@ -2700,12 +2510,12 @@ func (n *nodeBuilder) transformSpreadField(spreadFieldNode *st.SpreadFieldNode) 
 }
 
 func (n *nodeBuilder) transformNamedArgument(namedArgumentNode *st.NamedArgumentNode) ast.BLangNode {
-	namedArg := &ast.BLangNamedArgsExpression{}
-	namedArg.SetPosition(n.getPosition(namedArgumentNode))
 	nameToken := namedArgumentNode.ArgumentName().Name()
-	namedArg.Name = n.createIdentifierNodeFromToken(n.getPosition(nameToken), nameToken)
-	namedArg.Expr = n.createExpression(namedArgumentNode.Expression())
-	return namedArg
+	return ast.NewBLangNamedArgsExpression(
+		n.getPosition(namedArgumentNode),
+		n.createIdentifierNodeFromToken(n.getPosition(nameToken), nameToken),
+		n.createExpression(namedArgumentNode.Expression()),
+	)
 }
 
 func (n *nodeBuilder) transformPositionalArgument(positionalArgumentNode *st.PositionalArgumentNode) ast.BLangNode {
@@ -2786,17 +2596,26 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 				methodName = model.RemoteMethodName(methodName)
 			}
 
-			bMethod := ast.NewBMethodDecl(methodName, methodKind, isPublic)
-			bMethod.SetPosition(n.getPosition(methodDecl))
+			var functionFlags model.Flag
 			if isIsolated {
-				bMethod.SetIsolated()
+				functionFlags |= model.FlagIsolated
 			}
 			if isTransactional {
-				bMethod.SetTransactional()
+				functionFlags |= model.FlagTransactional
 			}
+			funcSig := methodDecl.MethodSignature()
+			if funcSig != nil {
+				if retTypeDesc := funcSig.ReturnTypeDesc(); retTypeDesc != nil {
+					returnsKeyword := retTypeDesc.ReturnsKeyword()
+					if returnsKeyword != nil && !returnsKeyword.IsMissing() {
+						functionFlags |= model.FlagExplicitReturnTypeDescriptor
+					}
+				}
+			}
+			bMethod := ast.NewBMethodDecl(methodName, methodKind, isPublic, functionFlags)
+			bMethod.SetPosition(n.getPosition(methodDecl))
 
 			// Build function type from method signature
-			funcSig := methodDecl.MethodSignature()
 			if funcSig != nil {
 				bMethod.ParamListPos = diagnostics.NewBuiltinLocation()
 				openParen := funcSig.OpenParenToken()
@@ -2818,13 +2637,9 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 
 				// Process return type
 				if retTypeDesc := funcSig.ReturnTypeDesc(); retTypeDesc != nil {
-					returnsKeyword := retTypeDesc.ReturnsKeyword()
-					if returnsKeyword != nil && !returnsKeyword.IsMissing() {
-						bMethod.SetExplicitReturnTypeDescriptor()
-					}
 					bMethod.ReturnTypeDescriptor = n.createTypeNode(retTypeDesc.Type()).(ast.BType)
 				} else {
-					nilRet := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+					nilRet := &ast.BLangValueType{TypeKind: ast.TypeKindNil}
 					nilRet.SetPosition(diagnostics.NewBuiltinLocation())
 					bMethod.ReturnTypeDescriptor = nilRet
 				}
@@ -2858,31 +2673,36 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 		case st.RECORD_FIELD:
 			recordField := field.(*st.RecordFieldNode)
 			fieldName := recordField.FieldName().Text()
-			bField := ast.BField{
-				Name: model.Name(fieldName),
-				Type: n.createTypeNode(recordField.TypeName()).(ast.BType),
-			}
-			bField.SetPosition(n.getPosition(recordField))
+			var flags model.Flag
 			if recordField.ReadonlyKeyword() != nil {
-				bField.SetReadonly()
+				flags |= model.FlagReadonly
 			}
 			if recordField.QuestionMarkToken() != nil {
-				bField.SetOptional()
+				flags |= model.FlagOptional
 			}
+			bField := ast.NewBField(
+				n.getPosition(recordField),
+				model.Name(fieldName),
+				n.createTypeNode(recordField.TypeName()).(ast.BType),
+				nil,
+				flags,
+			)
 			n.populateMetadata(recordField.Metadata(), &bField)
 			recordType.AddField(fieldName, bField)
 		case st.RECORD_FIELD_WITH_DEFAULT_VALUE:
 			recordFieldDV := field.(*st.RecordFieldWithDefaultValueNode)
 			fieldName := recordFieldDV.FieldName().Text()
-			bField := ast.BField{
-				Name:        model.Name(fieldName),
-				Type:        n.createTypeNode(recordFieldDV.TypeName()).(ast.BType),
-				DefaultExpr: n.createExpression(recordFieldDV.Expression()),
-			}
-			bField.SetPosition(n.getPosition(recordFieldDV))
+			var flags model.Flag
 			if recordFieldDV.ReadonlyKeyword() != nil {
-				bField.SetReadonly()
+				flags |= model.FlagReadonly
 			}
+			bField := ast.NewBField(
+				n.getPosition(recordFieldDV),
+				model.Name(fieldName),
+				n.createTypeNode(recordFieldDV.TypeName()).(ast.BType),
+				n.createExpression(recordFieldDV.Expression()),
+				flags,
+			)
 			n.populateMetadata(recordFieldDV.Metadata(), &bField)
 			recordType.AddField(fieldName, bField)
 		case st.TYPE_REFERENCE:
@@ -2909,14 +2729,13 @@ func (n *nodeBuilder) transformNilTypeDescriptor(nilTypeDescriptorNode *st.NilTy
 }
 
 func (n *nodeBuilder) transformOptionalTypeDescriptor(optionalTypeDescriptorNode *st.OptionalTypeDescriptorNode) ast.BLangNode {
-	typeDesc := optionalTypeDescriptorNode.TypeDescriptor()
-	nilType := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
+	nilType := &ast.BLangValueType{TypeKind: ast.TypeKindNil}
 	nilType.SetPosition(n.getPosition(optionalTypeDescriptorNode.QuestionMarkToken()))
-	bLUnionType := &ast.BLangUnionTypeNode{}
-	bLUnionType.SetLhs(ast.TypeData{TypeDescriptor: n.createTypeNode(typeDesc)})
-	bLUnionType.SetRhs(ast.TypeData{TypeDescriptor: nilType})
-	bLUnionType.SetPosition(n.getPosition(optionalTypeDescriptorNode))
-	return bLUnionType
+	return ast.NewBLangUnionTypeNode(
+		n.getPosition(optionalTypeDescriptorNode),
+		ast.TypeData{TypeDescriptor: n.createTypeNode(optionalTypeDescriptorNode.TypeDescriptor())},
+		ast.TypeData{TypeDescriptor: nilType},
+	)
 }
 
 func (n *nodeBuilder) transformObjectField(objectFieldNode *st.ObjectFieldNode) ast.BLangNode {
@@ -2964,56 +2783,48 @@ func (n *nodeBuilder) transformMetadata(metadataNode *st.MetadataNode) ast.BLang
 
 func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarationNode *st.ModuleVariableDeclarationNode) ast.BLangNode {
 	typedBindingPattern := moduleVariableDeclarationNode.TypedBindingPattern()
-	bindingPattern := typedBindingPattern.BindingPattern()
 	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
-
-	variable := n.getBLangVariableNode(bindingPattern, pos)
-	simpleVar := variable.(*ast.BLangSimpleVariable)
+	nameNode := n.getBLangVariableNode(typedBindingPattern.BindingPattern(), pos)
 
 	typeDesc := typedBindingPattern.TypeDescriptor()
-	if typeDesc != nil {
-		if isDeclaredWithVar(typeDesc) {
-			simpleVar.SetIsDeclaredWithVar(true)
-		} else {
-			simpleVar.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
-		}
+	isDeclaredWithVar := typeDesc != nil && isDeclaredWithVar(typeDesc)
+	var typeNode ast.BType
+	if typeDesc != nil && !isDeclaredWithVar {
+		typeNode = n.createTypeNode(typeDesc).(ast.BType)
 	}
-
-	initializer := moduleVariableDeclarationNode.Initializer()
-	if initializer != nil {
-		simpleVar.SetInitialExpression(n.createExpression(initializer))
+	var expr ast.BLangActionOrExpression
+	if initializer := moduleVariableDeclarationNode.Initializer(); initializer != nil {
+		expr = n.createExpression(initializer)
 	}
+	flags := n.moduleVariableFlags(moduleVariableDeclarationNode, pos)
+	simpleVar := ast.NewBLangVariable(nameNode.Name, typeNode, expr, isDeclaredWithVar, flags)
+	simpleVar.SetPosition(pos)
 
 	if simpleVar.IsDeclaredWithVar && simpleVar.TypeNode() == nil && simpleVar.Expr == nil {
 		n.cx.SyntaxError("var-declared module variable must have an initializer expression for type inference", pos)
 		return simpleVar
 	}
-
-	n.populateModuleVariableVisibilityAndQualifiers(moduleVariableDeclarationNode, simpleVar)
 	n.populateMetadata(moduleVariableDeclarationNode.Metadata(), simpleVar)
-
-	simpleVar.SetPosition(pos)
 	return simpleVar
 }
 
-func (n *nodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *st.ModuleVariableDeclarationNode, simpleVar *ast.BLangSimpleVariable) {
-	visibilityQualifier := node.VisibilityQualifier()
-	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
-		simpleVar.SetPublic()
+func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode, pos diagnostics.Location) model.Flag {
+	var flags model.Flag
+	if visibility := node.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
+		flags |= model.FlagPublic
 	}
-
 	qualifiers := node.Qualifiers()
-	for i := 0; i < qualifiers.Size(); i++ {
-		qualifier := qualifiers.Get(i)
+	for qualifier := range qualifiers.Iterator() {
 		switch qualifier.Kind() {
 		case st.FINAL_KEYWORD:
-			simpleVar.SetFinal()
+			flags |= model.FlagFinal
 		case st.ISOLATED_KEYWORD:
-			simpleVar.SetIsolated()
+			flags |= model.FlagIsolated
 		case st.CONFIGURABLE_KEYWORD:
-			n.cx.Unimplemented("configurable module variables are not supported yet", simpleVar.GetPosition())
+			n.cx.Unimplemented("configurable module variables are not supported yet", pos)
 		}
 	}
+	return flags
 }
 
 func (n *nodeBuilder) transformTypeTestExpression(typeTestBLangExpression *st.TypeTestExpressionNode) ast.BLangNode {
@@ -3040,7 +2851,7 @@ func (n *nodeBuilder) transformRemoteMethodCallAction(remoteMethodCallActionNode
 
 func (n *nodeBuilder) transformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTypeDescriptorNode) ast.BLangNode {
 	refType := &ast.BLangBuiltInRefTypeNode{
-		TypeKind: ast.TypeKind_MAP,
+		TypeKind: ast.TypeKindMap,
 	}
 	refType.SetPosition(n.getPosition(mapTypeDescriptorNode))
 
@@ -3063,19 +2874,24 @@ func (n *nodeBuilder) transformNilLiteral(nilLiteralNode *st.NilLiteralNode) ast
 }
 
 func (n *nodeBuilder) transformAnnotationDeclaration(annotationDeclarationNode *st.AnnotationDeclarationNode) ast.BLangNode {
-	annotation := &ast.BLangAnnotation{}
-	annotation.SetPosition(n.getPositionWithoutMetadata(annotationDeclarationNode))
 	name := createIdentifierFromToken(n.getPosition(annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
-	annotation.Name = &name
+	var flags model.Flag
 	if visibility := annotationDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
-		annotation.SetPublic()
+		flags |= model.FlagPublic
 	}
 	if constKeyword := annotationDeclarationNode.ConstKeyword(); constKeyword != nil && !constKeyword.IsMissing() {
-		annotation.SetConst()
+		flags |= model.FlagConstant
 	}
+	var typeDescriptor ast.TypeDescriptor
 	if typeDesc := annotationDeclarationNode.TypeDescriptor(); typeDesc != nil && !typeDesc.IsMissing() {
-		annotation.SetTypeDescriptor(n.createTypeNode(typeDesc))
+		typeDescriptor = n.createTypeNode(typeDesc)
 	}
+	annotation := ast.NewBLangAnnotation(
+		n.getPositionWithoutMetadata(annotationDeclarationNode),
+		&name,
+		typeDescriptor,
+		flags,
+	)
 	attachPoints := annotationDeclarationNode.AttachPoints()
 	for attachPoint := range attachPoints.Iterator() {
 		if attachPoint, ok := attachPoint.(*st.AnnotationAttachPointNode); ok {
@@ -3114,41 +2930,41 @@ func (n *nodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.
 func annotationAttachPointFromParts(parts []string) (ast.Point, bool) {
 	switch strings.Join(parts, " ") {
 	case "type":
-		return ast.Point_TYPE, true
+		return ast.PointType, true
 	case "object":
-		return ast.Point_OBJECT, true
+		return ast.PointObject, true
 	case "function":
-		return ast.Point_FUNCTION, true
+		return ast.PointFunction, true
 	case "object function":
-		return ast.Point_OBJECT_METHOD, true
+		return ast.PointObjectMethod, true
 	case "service remote function":
-		return ast.Point_SERVICE_REMOTE, true
+		return ast.PointServiceRemote, true
 	case "parameter":
-		return ast.Point_PARAMETER, true
+		return ast.PointParameter, true
 	case "return":
-		return ast.Point_RETURN, true
+		return ast.PointReturn, true
 	case "service":
-		return ast.Point_SERVICE, true
+		return ast.PointService, true
 	case "field":
-		return ast.Point_FIELD, true
+		return ast.PointField, true
 	case "object field":
-		return ast.Point_OBJECT_FIELD, true
+		return ast.PointObjectField, true
 	case "record field":
-		return ast.Point_RECORD_FIELD, true
+		return ast.PointRecordField, true
 	case "listener":
-		return ast.Point_LISTENER, true
+		return ast.PointListener, true
 	case "annotation":
-		return ast.Point_ANNOTATION, true
+		return ast.PointAnnotation, true
 	case "external":
-		return ast.Point_EXTERNAL, true
+		return ast.PointExternal, true
 	case "var":
-		return ast.Point_VAR, true
+		return ast.PointVar, true
 	case "const":
-		return ast.Point_CONST, true
+		return ast.PointConst, true
 	case "worker":
-		return ast.Point_WORKER, true
+		return ast.PointWorker, true
 	case "class":
-		return ast.Point_CLASS, true
+		return ast.PointClass, true
 	default:
 		return 0, false
 	}
@@ -3161,11 +2977,16 @@ type xmlNamespaceDeclarationNode interface {
 }
 
 func (n *nodeBuilder) transformXMLNamespaceDeclarationNode(node xmlNamespaceDeclarationNode) ast.BLangNode {
-	pos := n.getPosition(node)
-	xmlns := &ast.BLangXMLNS{}
-	xmlns.SetPosition(pos)
-	n.populateXMLNS(xmlns, pos, node.Namespaceuri(), node.NamespacePrefix())
-	return xmlns
+	var namespaceURI ast.BLangExpression
+	if uriNode := node.Namespaceuri(); uriNode != nil {
+		namespaceURI = n.createExpression(uriNode)
+	}
+	var prefix *ast.BLangIdentifier
+	if prefixTok := node.NamespacePrefix(); prefixTok != nil {
+		identifier := createIdentifierFromToken(n.getPosition(prefixTok), prefixTok)
+		prefix = &identifier
+	}
+	return ast.NewBLangXMLNS(n.getPosition(node), namespaceURI, prefix)
 }
 
 func (n *nodeBuilder) transformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode *st.XMLNamespaceDeclarationNode) ast.BLangNode {
@@ -3174,16 +2995,6 @@ func (n *nodeBuilder) transformXMLNamespaceDeclaration(xMLNamespaceDeclarationNo
 
 func (n *nodeBuilder) transformModuleXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode *st.ModuleXMLNamespaceDeclarationNode) ast.BLangNode {
 	return n.transformXMLNamespaceDeclarationNode(moduleXMLNamespaceDeclarationNode)
-}
-
-func (n *nodeBuilder) populateXMLNS(target *ast.BLangXMLNS, pos diagnostics.Location, uriNode st.ExpressionNode, prefixTok *st.IdentifierToken) {
-	if uriNode != nil {
-		target.SetNamespaceURI(n.createExpression(uriNode))
-	}
-	if prefixTok != nil {
-		prefixIdent := createIdentifierFromToken(n.getPosition(prefixTok), prefixTok)
-		target.SetPrefix(&prefixIdent)
-	}
 }
 
 func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.FunctionBodyBlockNode) ast.BLangNode {
@@ -3224,7 +3035,7 @@ func (n *nodeBuilder) transformSimpleNameReference(simpleNameReferenceNode *st.S
 
 func (n *nodeBuilder) transformQualifiedNameReference(qualifiedNameReferenceNode *st.QualifiedNameReferenceNode) ast.BLangNode {
 	nameReference := n.createBLangNameReference(qualifiedNameReferenceNode)
-	bLVarRef := &ast.BLangSimpleVarRef{}
+	bLVarRef := &ast.BLangVarRef{}
 	bLVarRef.SetPosition(n.getPosition(qualifiedNameReferenceNode))
 	bLVarRef.PkgAlias = nameReference[0]
 	bLVarRef.VariableName = nameReference[1]
@@ -3245,30 +3056,19 @@ func (n *nodeBuilder) transformTrapExpression(trapBLangExpression *st.TrapExpres
 }
 
 func (n *nodeBuilder) transformListConstructorExpression(listConstructorBLangExpression *st.ListConstructorExpressionNode) ast.BLangNode {
-	argExprList := make([]ast.BLangExpression, 0)
-	spreadMemberIndexes := make([]int, 0)
-	listConstructorExpr := &ast.BLangListConstructorExpr{}
-
+	var exprs []ast.BLangExpression
+	var spreadMembers []bool
 	expressions := listConstructorBLangExpression.Expressions()
 	for i := 0; i < expressions.Size(); i += 2 {
 		listMember := expressions.Get(i)
-		var memberExpr ast.BLangExpression
-		if listMember.Kind() == st.SPREAD_MEMBER {
-			spreadMember := listMember.(*st.SpreadMemberNode)
-			memberExpr = n.createExpression(spreadMember.Expression())
-			spreadMemberIndexes = append(spreadMemberIndexes, len(argExprList))
-		} else {
-			memberExpr = n.createExpression(listMember)
+		isSpread := listMember.Kind() == st.SPREAD_MEMBER
+		if isSpread {
+			listMember = listMember.(*st.SpreadMemberNode).Expression()
 		}
-		argExprList = append(argExprList, memberExpr)
+		exprs = append(exprs, n.createExpression(listMember))
+		spreadMembers = append(spreadMembers, isSpread)
 	}
-
-	listConstructorExpr.Exprs = argExprList
-	for _, index := range spreadMemberIndexes {
-		listConstructorExpr.SetSpreadMember(index)
-	}
-	listConstructorExpr.SetPosition(n.getPosition(listConstructorBLangExpression))
-	return listConstructorExpr
+	return ast.NewBLangListConstructorExpr(n.getPosition(listConstructorBLangExpression), exprs, spreadMembers)
 }
 
 func (n *nodeBuilder) transformTypeCastExpression(typeCastBLangExpression *st.TypeCastExpressionNode) ast.BLangNode {
@@ -3293,13 +3093,11 @@ func (n *nodeBuilder) transformTypeCastParam(typeCastParamNode *st.TypeCastParam
 }
 
 func (n *nodeBuilder) transformUnionTypeDescriptor(unionTypeDescriptorNode *st.UnionTypeDescriptorNode) ast.BLangNode {
-	lhs := unionTypeDescriptorNode.LeftTypeDesc()
-	rhs := unionTypeDescriptorNode.RightTypeDesc()
-	bLUnionType := &ast.BLangUnionTypeNode{}
-	bLUnionType.SetLhs(ast.TypeData{TypeDescriptor: n.createTypeNode(lhs)})
-	bLUnionType.SetRhs(ast.TypeData{TypeDescriptor: n.createTypeNode(rhs)})
-	bLUnionType.SetPosition(n.getPosition(unionTypeDescriptorNode))
-	return bLUnionType
+	return ast.NewBLangUnionTypeNode(
+		n.getPosition(unionTypeDescriptorNode),
+		ast.TypeData{TypeDescriptor: n.createTypeNode(unionTypeDescriptorNode.LeftTypeDesc())},
+		ast.TypeData{TypeDescriptor: n.createTypeNode(unionTypeDescriptorNode.RightTypeDesc())},
+	)
 }
 
 func (n *nodeBuilder) transformTableConstructorExpression(tableConstructorBLangExpression *st.TableConstructorExpressionNode) ast.BLangNode {
@@ -3315,7 +3113,7 @@ func (n *nodeBuilder) transformStreamTypeDescriptor(streamTypeDescriptorNode *st
 	paramsNode := streamTypeDescriptorNode.StreamTypeParamsNode()
 	if paramsNode == nil {
 		refType := &ast.BLangBuiltInRefTypeNode{
-			TypeKind: ast.TypeKind_STREAM,
+			TypeKind: ast.TypeKindStream,
 		}
 		refType.SetPosition(position)
 		return refType
@@ -3355,7 +3153,7 @@ func (n *nodeBuilder) transformLetVariableDeclaration(letVariableDeclarationNode
 	if annotations.Size() > 0 {
 		panic("annotations not yet supported")
 	}
-	return varDef.(ast.BLangNode)
+	return varDef
 }
 
 func (n *nodeBuilder) transformTemplateExpression(templateBLangExpression *st.TemplateExpressionNode) ast.BLangNode {
@@ -4096,12 +3894,7 @@ func (n *nodeBuilder) transformXMLAttributeValue(xMLAttributeValue *st.XMLAttrib
 		b.WriteString(tok.Text())
 	}
 	text := b.String()
-	lit := &ast.BLangLiteral{}
-	lit.SetPosition(n.getPosition(xMLAttributeValue))
-	lit.SetValueType(n.types.getTypeFromTag(ast.TypeTags_STRING).(ast.BType))
-	lit.Value = text
-	lit.OriginalValue = text
-	return lit
+	return ast.NewBLangLiteral(n.getPosition(xMLAttributeValue), ast.LiteralKindString, text, text, false)
 }
 
 func (n *nodeBuilder) transformXMLComment(xMLComment *st.XMLComment) ast.BLangNode {
@@ -4157,55 +3950,56 @@ func (n *nodeBuilder) transformKeyTypeConstraint(keyTypeConstraintNode *st.KeyTy
 }
 
 func (n *nodeBuilder) transformFunctionTypeDescriptor(functionTypeDescriptorNode *st.FunctionTypeDescriptorNode) ast.BLangNode {
-	funcType := &ast.BLangFunctionType{}
-	funcType.SetPosition(n.getPosition(functionTypeDescriptorNode))
-
-	if funcSignature := functionTypeDescriptorNode.FunctionSignature(); funcSignature != nil {
-		funcType.ParamListPos = diagnostics.NewBuiltinLocation()
-		openParen := funcSignature.OpenParenToken()
-		closeParen := funcSignature.CloseParenToken()
-		if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
-			funcType.ParamListPos = n.getPositionRange(openParen, closeParen)
-		}
-
-		// Set Parameters
-		parameters := funcSignature.Parameters()
-		for param := range parameters.Iterator() {
-			ftParam := n.createFunctionTypeParam(param)
-			if _, isRestParam := param.(*st.RestParameterNode); isRestParam {
-				funcType.RestParam = &ftParam
-			} else {
-				funcType.RequiredParams = append(funcType.RequiredParams, ftParam)
-			}
-		}
-
-		// Set Return Type
-		if retNode := funcSignature.ReturnTypeDesc(); retNode != nil {
-			returnsKeyword := retNode.ReturnsKeyword()
-			if returnsKeyword != nil && !returnsKeyword.IsMissing() {
-				funcType.SetExplicitReturnTypeDescriptor()
-			}
-			funcType.ReturnTypeDescriptor = n.createTypeNode(retNode.Type()).(ast.BType)
-		} else {
-			retType := &ast.BLangValueType{TypeKind: ast.TypeKind_NIL}
-			retType.SetPosition(diagnostics.NewBuiltinLocation())
-			funcType.ReturnTypeDescriptor = retType
-		}
-	} else {
-		funcType.SetAnyFunction()
-	}
-
+	var flags model.Flag
 	qualifierList := functionTypeDescriptorNode.QualifierList()
 	for token := range qualifierList.Iterator() {
 		switch token.Kind() {
 		case st.ISOLATED_KEYWORD:
-			funcType.SetIsolated()
+			flags |= model.FlagIsolated
 		case st.TRANSACTIONAL_KEYWORD:
-			funcType.SetTransactional()
+			flags |= model.FlagTransactional
 		}
 	}
 
-	return funcType
+	var requiredParams []ast.BLangFunctionTypeParam
+	var restParam *ast.BLangFunctionTypeParam
+	var returnType ast.BType
+	paramListPos := diagnostics.NewBuiltinLocation()
+	if funcSignature := functionTypeDescriptorNode.FunctionSignature(); funcSignature != nil {
+		openParen := funcSignature.OpenParenToken()
+		closeParen := funcSignature.CloseParenToken()
+		if openParen != nil && closeParen != nil && !openParen.IsMissing() && !closeParen.IsMissing() {
+			paramListPos = n.getPositionRange(openParen, closeParen)
+		}
+		parameters := funcSignature.Parameters()
+		for param := range parameters.Iterator() {
+			ftParam := n.createFunctionTypeParam(param)
+			if _, isRestParam := param.(*st.RestParameterNode); isRestParam {
+				restParam = &ftParam
+			} else {
+				requiredParams = append(requiredParams, ftParam)
+			}
+		}
+		if retNode := funcSignature.ReturnTypeDesc(); retNode != nil {
+			if returnsKeyword := retNode.ReturnsKeyword(); returnsKeyword != nil && !returnsKeyword.IsMissing() {
+				flags |= model.FlagExplicitReturnTypeDescriptor
+			}
+			returnType = n.createTypeNode(retNode.Type()).(ast.BType)
+		} else {
+			returnType = &ast.BLangValueType{TypeKind: ast.TypeKindNil}
+			returnType.SetPosition(diagnostics.NewBuiltinLocation())
+		}
+	} else {
+		flags |= model.FlagAnyFunction
+	}
+	return ast.NewBLangFunctionType(
+		n.getPosition(functionTypeDescriptorNode),
+		requiredParams,
+		restParam,
+		returnType,
+		paramListPos,
+		flags,
+	)
 }
 
 type typedParameterNode interface {
@@ -4252,17 +4046,16 @@ func (n *nodeBuilder) transformFunctionSignature(functionSignatureNode *st.Funct
 }
 
 func (n *nodeBuilder) transformExplicitAnonymousFunctionExpression(anonFuncExprNode *st.ExplicitAnonymousFunctionExpressionNode) ast.BLangNode {
-	bLFunction := &ast.BLangFunction{}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
-	bLFunction.Name = &ident
-	n.populateFuncSignature(bLFunction, anonFuncExprNode.FunctionSignature())
-	body := n.transformSyntaxNode(anonFuncExprNode.FunctionBody()).(ast.FunctionBodyNode)
-	bLFunction.Body = body
-	bLFunction.SetPosition(n.getPosition(anonFuncExprNode))
-	bLFunction.SetAnonymous()
-	setFunctionQualifiers(bLFunction, anonFuncExprNode.QualifierList())
-
+	data := ast.InvokableData{
+		Position: n.getPosition(anonFuncExprNode),
+		Name:     &ident,
+		Body:     n.transformSyntaxNode(anonFuncExprNode.FunctionBody()).(ast.FunctionBodyNode),
+		Flags:    model.FlagLambda | model.FlagAnonymous | functionQualifierFlags(anonFuncExprNode.QualifierList()),
+	}
+	n.populateFuncSignature(&data, anonFuncExprNode.FunctionSignature())
+	bLFunction := ast.NewBLangFunction(data)
 	lambdaFunc := &ast.BLangLambdaFunction{Function: bLFunction}
 	lambdaFunc.SetPosition(bLFunction.GetPosition())
 	return lambdaFunc
@@ -4340,14 +4133,13 @@ func (n *nodeBuilder) transformQueryConstructType(queryConstructTypeNode *st.Que
 }
 
 func (n *nodeBuilder) transformFromClause(fromClauseNode *st.FromClauseNode) ast.BLangNode {
-	fromClause := &ast.BLangFromClause{}
-	fromClause.SetPosition(n.getPosition(fromClauseNode))
-	fromClause.SetCollection(n.createExpression(fromClauseNode.Expression()))
 	bindingPatternNode := fromClauseNode.TypedBindingPattern()
-	fromClause.SetVariableDefinitionNode(n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode,
-		nil, nil))
-	fromClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
-	return fromClause
+	return ast.NewBLangFromClause(
+		n.getPosition(fromClauseNode),
+		n.createExpression(fromClauseNode.Expression()),
+		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
+		isDeclaredWithVar(bindingPatternNode.TypeDescriptor()),
+	)
 }
 
 func (n *nodeBuilder) transformWhereClause(whereClauseNode *st.WhereClauseNode) ast.BLangNode {
@@ -4361,50 +4153,44 @@ func (n *nodeBuilder) transformLetClause(letClauseNode *st.LetClauseNode) ast.BL
 	letClause := &ast.BLangLetClause{}
 	letClause.SetPosition(n.getPosition(letClauseNode))
 	letVarDeclarations := letClauseNode.LetVarDeclarations()
-	letClause.LetVarDeclarations = make([]ast.BLangSimpleVariableDef, 0, letVarDeclarations.Size())
+	letClause.LetVarDeclarations = make([]ast.BLangVariableDef, 0, letVarDeclarations.Size())
 	for letVar := range letVarDeclarations.Iterator() {
-		varDef := n.transformLetVariableDeclaration(letVar).(*ast.BLangSimpleVariableDef)
+		varDef := n.transformLetVariableDeclaration(letVar).(*ast.BLangVariableDef)
 		letClause.LetVarDeclarations = append(letClause.LetVarDeclarations, *varDef)
 	}
 	return letClause
 }
 
 func (n *nodeBuilder) transformJoinClause(joinClauseNode *st.JoinClauseNode) ast.BLangNode {
-	joinClause := &ast.BLangJoinClause{}
-	joinClause.SetPosition(n.getPosition(joinClauseNode))
-	joinClause.SetCollection(n.createExpression(joinClauseNode.Expression()))
 	bindingPatternNode := joinClauseNode.TypedBindingPattern()
-	joinClause.SetVariableDefinitionNode(
-		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
-	)
-	joinClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
-	joinClause.IsOuterJoinFlag = joinClauseNode.OuterKeyword() != nil
+	var onClause *ast.BLangOnClause
 	if onClauseNode := joinClauseNode.JoinOnCondition(); onClauseNode != nil {
-		joinClause.OnClause = *n.transformOnClause(onClauseNode).(*ast.BLangOnClause)
+		onClause = n.transformOnClause(onClauseNode).(*ast.BLangOnClause)
 	}
-	return joinClause
+	return ast.NewBLangJoinClause(
+		n.getPosition(joinClauseNode),
+		n.createExpression(joinClauseNode.Expression()),
+		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
+		isDeclaredWithVar(bindingPatternNode.TypeDescriptor()),
+		joinClauseNode.OuterKeyword() != nil,
+		onClause,
+	)
 }
 
 func (n *nodeBuilder) transformOnClause(onClauseNode *st.OnClauseNode) ast.BLangNode {
-	onClause := &ast.BLangOnClause{}
-	onClause.SetPosition(n.getPosition(onClauseNode))
-	onClause.SetOnExpression(n.createExpression(onClauseNode.OnExpression()))
-	onClause.SetEqualsExpression(n.createExpression(onClauseNode.EqualsExpression()))
-	return onClause
+	return ast.NewBLangOnClause(
+		n.getPosition(onClauseNode),
+		n.createExpression(onClauseNode.OnExpression()),
+		n.createExpression(onClauseNode.EqualsExpression()),
+	)
 }
 
 func (n *nodeBuilder) transformLimitClause(limitClauseNode *st.LimitClauseNode) ast.BLangNode {
-	limitClause := &ast.BLangLimitClause{}
-	limitClause.SetPosition(n.getPosition(limitClauseNode))
-	limitClause.SetExpression(n.createExpression(limitClauseNode.Expression()))
-	return limitClause
+	return ast.NewBLangLimitClause(n.getPosition(limitClauseNode), n.createExpression(limitClauseNode.Expression()))
 }
 
 func (n *nodeBuilder) transformOnConflictClause(onConflictClauseNode *st.OnConflictClauseNode) ast.BLangNode {
-	onConflictClause := &ast.BLangOnConflictClause{}
-	onConflictClause.SetPosition(n.getPosition(onConflictClauseNode))
-	onConflictClause.SetExpression(n.createExpression(onConflictClauseNode.Expression()))
-	return onConflictClause
+	return ast.NewBLangOnConflictClause(n.getPosition(onConflictClauseNode), n.createExpression(onConflictClauseNode.Expression()))
 }
 
 func (n *nodeBuilder) transformQueryPipeline(queryPipelineNode *st.QueryPipelineNode) ast.BLangNode {
@@ -4412,19 +4198,15 @@ func (n *nodeBuilder) transformQueryPipeline(queryPipelineNode *st.QueryPipeline
 }
 
 func (n *nodeBuilder) transformSelectClause(selectClauseNode *st.SelectClauseNode) ast.BLangNode {
-	selectClause := &ast.BLangSelectClause{}
-	selectClause.SetPosition(n.getPosition(selectClauseNode))
-	selectClause.SetExpression(n.createExpression(selectClauseNode.Expression()))
-	return selectClause
+	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.createExpression(selectClauseNode.Expression()))
 }
 
 func (n *nodeBuilder) transformCollectClause(collectClauseNode *st.CollectClauseNode) ast.BLangNode {
-	collectClause := &ast.BLangCollectClause{
-		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
-	}
-	collectClause.SetPosition(n.getPosition(collectClauseNode))
-	collectClause.SetExpression(n.createExpression(collectClauseNode.Expression()))
-	return collectClause
+	return ast.NewBLangCollectClause(
+		n.getPosition(collectClauseNode),
+		n.createExpression(collectClauseNode.Expression()),
+		&balCommon.UnorderedSet[string]{},
+	)
 }
 
 func (n *nodeBuilder) transformQueryExpression(queryBLangExpression *st.QueryExpressionNode) ast.BLangNode {
@@ -4433,8 +4215,8 @@ func (n *nodeBuilder) transformQueryExpression(queryBLangExpression *st.QueryExp
 
 	if constructType := queryBLangExpression.QueryConstructType(); constructType != nil {
 		switch constructType.Keyword().Text() {
-		case string(ast.TypeKind_MAP):
-			queryExpr.QueryConstructType = ast.TypeKind_MAP
+		case ast.TypeKindMap.String():
+			queryExpr.QueryConstructType = ast.TypeKindMap
 		default:
 			n.cx.Unimplemented("only map query construct type is supported for now", n.getPosition(constructType))
 		}
@@ -4479,13 +4261,11 @@ func (n *nodeBuilder) transformQueryAction(queryActionNode *st.QueryActionNode) 
 }
 
 func (n *nodeBuilder) transformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *st.IntersectionTypeDescriptorNode) ast.BLangNode {
-	lhs := intersectionTypeDescriptorNode.LeftTypeDesc()
-	rhs := intersectionTypeDescriptorNode.RightTypeDesc()
-	bLIntersectionType := &ast.BLangIntersectionTypeNode{}
-	bLIntersectionType.SetLhs(ast.TypeData{TypeDescriptor: n.createTypeNode(lhs)})
-	bLIntersectionType.SetRhs(ast.TypeData{TypeDescriptor: n.createTypeNode(rhs)})
-	bLIntersectionType.SetPosition(n.getPosition(intersectionTypeDescriptorNode))
-	return bLIntersectionType
+	return ast.NewBLangIntersectionTypeNode(
+		n.getPosition(intersectionTypeDescriptorNode),
+		ast.TypeData{TypeDescriptor: n.createTypeNode(intersectionTypeDescriptorNode.LeftTypeDesc())},
+		ast.TypeData{TypeDescriptor: n.createTypeNode(intersectionTypeDescriptorNode.RightTypeDesc())},
+	)
 }
 
 func (n *nodeBuilder) transformImplicitAnonymousFunctionParameters(implicitAnonymousFunctionParameters *st.ImplicitAnonymousFunctionParameters) ast.BLangNode {
@@ -4493,12 +4273,13 @@ func (n *nodeBuilder) transformImplicitAnonymousFunctionParameters(implicitAnony
 }
 
 func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.ImplicitAnonymousFunctionExpressionNode) ast.BLangNode {
-	fn := &ast.BLangFunction{}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
-	fn.Name = &ident
-	fn.SetPosition(n.getPosition(node))
-	fn.SetAnonymous()
+	fn := ast.NewBLangFunction(ast.InvokableData{
+		Position: n.getPosition(node),
+		Name:     &ident,
+		Flags:    model.FlagLambda | model.FlagAnonymous,
+	})
 
 	var paramNodes []*st.SimpleNameReferenceNode
 	switch params := node.Params().(type) {
@@ -4512,7 +4293,7 @@ func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.Impl
 	default:
 		n.cx.SyntaxError("invalid parameter list in inferred anonymous function expression", n.getPosition(node.Params()))
 	}
-	fn.RequiredParams = make([]ast.BLangSimpleVariable, len(paramNodes))
+	fn.RequiredParams = make([]ast.BLangVariable, len(paramNodes))
 	for i, param := range paramNodes {
 		paramName := param.Name()
 		paramPos := n.getPosition(paramName)
@@ -4656,26 +4437,23 @@ func (n *nodeBuilder) transformAnnotAccessExpression(annotAccessBLangExpression 
 func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *st.OptionalFieldAccessExpressionNode) ast.BLangNode {
 	fieldName := optionalFieldAccessBLangExpression.FieldName()
 	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
-		// @cleanup we should replace all these panics with proper internal errors. Need to problem is with return value
-		// this should be detected by parser
 		panic("transformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE expected")
 	}
 
-	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
-	bLFieldBasedAccess.SetOptionalAccess()
-	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
-	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(optionalFieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
-
 	containerExpr := optionalFieldAccessBLangExpression.Expression()
+	var expr ast.BLangExpression
 	if containerExpr.Kind() == st.BRACED_EXPRESSION {
-		bracedExpr := containerExpr.(*st.BracedExpressionNode)
-		bLFieldBasedAccess.Expr = n.createExpression(bracedExpr.Expression())
+		expr = n.createExpression(containerExpr.(*st.BracedExpressionNode).Expression())
 	} else {
-		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
+		expr = n.createExpression(containerExpr)
 	}
-
-	bLFieldBasedAccess.SetPosition(n.getPosition(optionalFieldAccessBLangExpression))
-	return bLFieldBasedAccess
+	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
+	return ast.NewBLangFieldBaseAccess(
+		n.getPosition(optionalFieldAccessBLangExpression),
+		expr,
+		n.createIdentifierNodeFromToken(n.getPosition(fieldName), simpleNameRef.Name()),
+		true,
+	)
 }
 
 func (n *nodeBuilder) transformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) ast.BLangNode {
@@ -4709,37 +4487,34 @@ func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 		memberTypeNodes = append(memberTypeNodes, n.createTypeNode(enumMember.Identifier()))
 	}
 
-	typeDef := ast.NewBLangTypeDefinition()
-	typeDef.SetPosition(n.getPositionWithoutMetadata(enumDeclarationNode))
-	if publicQualifier {
-		typeDef.SetPublic()
-	}
-
 	identifierPos := n.getPosition(enumDeclarationNode.Identifier())
 	identifier := createIdentifierFromToken(identifierPos, enumDeclarationNode.Identifier())
-	typeDef.Name = &identifier
+	var documentation *ast.BLangMarkdownDocumentation
+	if metadata := enumDeclarationNode.Metadata(); metadata != nil && !metadata.IsMissing() {
+		documentation = n.createMarkdownDocumentationAttachment(getDocumentationString(metadata))
+	}
+	var flags model.Flag
+	if publicQualifier {
+		flags |= model.FlagPublic
+	}
+	typeDef := ast.NewBLangTypeDefinitionWithData(&identifier, ast.TypeData{}, documentation, flags)
+	typeDef.SetPosition(n.getPositionWithoutMetadata(enumDeclarationNode))
 
 	if len(memberTypeNodes) > 0 {
 		current := memberTypeNodes[0]
 		for i := 1; i < len(memberTypeNodes); i++ {
-			unionType := &ast.BLangUnionTypeNode{}
-			unionType.SetLhs(ast.TypeData{TypeDescriptor: current})
-			unionType.SetRhs(ast.TypeData{TypeDescriptor: memberTypeNodes[i]})
-			unionType.SetPosition(typeDef.GetPosition())
-			current = unionType
+			current = ast.NewBLangUnionTypeNode(
+				typeDef.GetPosition(),
+				ast.TypeData{TypeDescriptor: current},
+				ast.TypeData{TypeDescriptor: memberTypeNodes[i]},
+			)
 		}
 		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: current})
 	} else {
-		neverType := &ast.BLangValueType{TypeKind: ast.TypeKind_NEVER}
+		neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
 		neverType.SetPosition(diagnostics.NewBuiltinLocation())
 		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
 		n.cx.SyntaxError("missing enum member", typeDef.Name.GetPosition())
-	}
-
-	metadata := enumDeclarationNode.Metadata()
-	if metadata != nil && !metadata.IsMissing() {
-		docString := getDocumentationString(metadata)
-		typeDef.SetMarkdownDocumentationAttachment(n.createMarkdownDocumentationAttachment(docString))
 	}
 
 	return typeDef
@@ -4749,33 +4524,26 @@ func (n *nodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode) ast
 	return n.transformEnumMemberWithVisibility(enumMemberNode, false)
 }
 
-func (n *nodeBuilder) transformEnumMemberWithVisibility(enumMemberNode *st.EnumMemberNode, publicQualifier bool) *ast.BLangConstant {
-	constantNode := ast.NewBLangConstant()
-	constantNode.SetPosition(n.getPositionWithoutMetadata(enumMemberNode))
-	if publicQualifier {
-		constantNode.SetPublic()
-	}
-
-	identifierPos := n.getPosition(enumMemberNode.Identifier())
-	identifier := createIdentifierFromToken(identifierPos, enumMemberNode.Identifier())
-	constantNode.Name = &identifier
-
+func (n *nodeBuilder) transformEnumMemberWithVisibility(enumMemberNode *st.EnumMemberNode, publicQualifier bool) *ast.BLangVariable {
+	identifier := createIdentifierFromToken(n.getPosition(enumMemberNode.Identifier()), enumMemberNode.Identifier())
+	var expr ast.BLangExpression
 	if exprNode := enumMemberNode.ConstExprNode(); exprNode != nil {
-		constantNode.Expr = n.createExpression(exprNode)
+		expr = n.createExpression(exprNode)
 	} else {
-		constantNode.Expr = n.createSimpleLiteral(enumMemberNode.Identifier()).(ast.BLangExpression)
+		expr = n.createSimpleLiteral(enumMemberNode.Identifier()).(ast.BLangExpression)
 	}
-
-	stringType := &ast.BLangValueType{TypeKind: ast.TypeKind_STRING}
+	stringType := &ast.BLangValueType{TypeKind: ast.TypeKindString}
 	stringType.SetPosition(diagnostics.NewBuiltinLocation())
-	constantNode.SetTypeNode(stringType)
-
+	var flags model.Flag
+	if publicQualifier {
+		flags |= model.FlagPublic
+	}
+	constantNode := ast.NewBLangVariable(&identifier, stringType, expr, false, flags|model.FlagConstant)
+	constantNode.SetPosition(n.getPositionWithoutMetadata(enumMemberNode))
 	metadata := enumMemberNode.Metadata()
 	if metadata != nil && !metadata.IsMissing() {
-		docString := getDocumentationString(metadata)
-		constantNode.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(docString)
+		constantNode.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(getDocumentationString(metadata))
 	}
-
 	return constantNode
 }
 
@@ -4957,7 +4725,7 @@ func (n *nodeBuilder) transformMatchGuard(matchGuardNode *st.MatchGuardNode) ast
 
 func (n *nodeBuilder) transformDistinctTypeDescriptor(distinctTypeDescriptorNode *st.DistinctTypeDescriptorNode) ast.BLangNode {
 	n.cx.Unimplemented("anonymous distinct types not supported", n.getPosition(distinctTypeDescriptorNode))
-	neverType := &ast.BLangValueType{TypeKind: ast.TypeKind_NEVER}
+	neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
 	neverType.SetPosition(n.getPosition(distinctTypeDescriptorNode))
 	return neverType
 }
@@ -5253,14 +5021,13 @@ func (n *nodeBuilder) transformGroupByClause(groupByClauseNode *st.GroupByClause
 		if node.Kind() == st.COMMA_TOKEN {
 			continue
 		}
-		groupingKey := &ast.BLangGroupingKey{}
-		groupingKey.SetPosition(n.getPosition(node))
+		var groupingKey *ast.BLangGroupingKey
 		if node.Kind() == st.SIMPLE_NAME_REFERENCE || node.Kind() == st.IDENTIFIER_TOKEN {
-			varRef, ok := n.createExpression(node).(*ast.BLangSimpleVarRef)
+			varRef, ok := n.createExpression(node).(*ast.BLangVarRef)
 			if !ok {
 				panic("expected grouping key variable reference to be a simple variable reference")
 			}
-			groupingKey.SetGroupingKey(varRef)
+			groupingKey = ast.NewBLangGroupingKey(n.getPosition(node), varRef)
 		} else {
 			keyNode, ok := n.transformGroupingKeyVarDeclaration(node.(*st.GroupingKeyVarDeclarationNode)).(*ast.BLangGroupingKey)
 			if !ok {
@@ -5278,25 +5045,21 @@ func (n *nodeBuilder) transformGroupingKeyVarDeclaration(groupingKeyVarDeclarati
 	groupingKey := &ast.BLangGroupingKey{}
 	groupingKey.SetPosition(pos)
 
-	variableNode := n.getBLangVariableNode(groupingKeyVarDeclarationNode.SimpleBindingPattern(), pos)
-	simpleVar, ok := variableNode.(*ast.BLangSimpleVariable)
-	if !ok {
-		panic("expected grouping key declaration to create a simple variable reference")
-	}
+	simpleVar := n.getBLangVariableNode(groupingKeyVarDeclarationNode.SimpleBindingPattern(), pos)
 	simpleVar.SetPosition(pos)
 	simpleVar.SetInitialExpression(n.createExpression(groupingKeyVarDeclarationNode.Expression()))
 
 	typeDesc := groupingKeyVarDeclarationNode.TypeDescriptor()
-	if isDeclaredWithVar(typeDesc) {
-		simpleVar.SetIsDeclaredWithVar(true)
-	} else {
-		simpleVar.SetTypeNode(n.createTypeNode(typeDesc).(ast.BType))
+	declaredWithVar := isDeclaredWithVar(typeDesc)
+	var typeNode ast.BType
+	if !declaredWithVar {
+		typeNode = n.createTypeNode(typeDesc).(ast.BType)
 	}
-
-	varDef := &ast.BLangSimpleVariableDef{}
+	simpleVar = ast.NewBLangVariable(simpleVar.Name, typeNode, simpleVar.Expr, declaredWithVar, 0)
+	simpleVar.SetPosition(pos)
+	varDef := &ast.BLangVariableDef{Var: simpleVar}
 	varDef.SetPosition(pos)
-	varDef.SetVariable(simpleVar)
-	groupingKey.SetGroupingKey(varDef)
+	groupingKey = ast.NewBLangGroupingKey(pos, varDef)
 	return groupingKey
 }
 
@@ -5309,7 +5072,11 @@ func (n *nodeBuilder) transformDoStatement(doStatementNode *st.DoStatementNode) 
 }
 
 func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefinitionNode) ast.BLangNode {
-	blangClass := ast.NewBLangClassDefinition()
+	flags := classQualifierFlags(classDefinitionNode.ClassTypeQualifiers())
+	if visibility := classDefinitionNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
+		flags |= model.FlagPublic
+	}
+	blangClass := ast.NewBLangClassDefinitionWithFlags(flags)
 	blangClass.SetPosition(n.getPositionWithoutMetadata(classDefinitionNode))
 
 	n.populateMetadata(classDefinitionNode.Metadata(), &blangClass)
@@ -5317,16 +5084,6 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 	// Set name
 	nameIdentifier := createIdentifierFromToken(n.getPosition(classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
 	blangClass.Name = &nameIdentifier
-
-	// Handle visibility qualifier
-	if visQual := classDefinitionNode.VisibilityQualifier(); visQual != nil {
-		if visQual.Kind() == st.PUBLIC_KEYWORD {
-			blangClass.SetPublic()
-		}
-	}
-
-	// Handle class type qualifiers
-	n.setClassQualifiers(&blangClass, classDefinitionNode.ClassTypeQualifiers())
 
 	members := n.collectClassDefnMembers(classDefinitionNode.Members())
 	blangClass.Fields = members.Fields
@@ -5340,51 +5097,51 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 	return &blangClass
 }
 
-func (n *nodeBuilder) setClassQualifiers(blangClass *ast.BLangClassDefinition, qualifiers st.NodeList[st.Token]) {
+func classQualifierFlags(qualifiers st.NodeList[st.Token]) model.Flag {
+	var flags model.Flag
 	for qualifier := range qualifiers.Iterator() {
 		switch qualifier.Kind() {
 		case st.DISTINCT_KEYWORD:
-			blangClass.SetDistinct()
+			flags |= model.FlagDistinct
 		case st.CLIENT_KEYWORD:
-			blangClass.SetClient()
+			flags |= model.FlagClient
 		case st.READONLY_KEYWORD:
-			blangClass.SetReadonly()
+			flags |= model.FlagReadonly
 		case st.SERVICE_KEYWORD:
-			blangClass.SetService()
+			flags |= model.FlagService
 		case st.ISOLATED_KEYWORD:
-			blangClass.SetIsolated()
+			flags |= model.FlagIsolated
 		}
 	}
+	return flags
 }
 
-func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *ast.BLangSimpleVariable {
-	bLSimpleVar := &ast.BLangSimpleVariable{}
+func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *ast.BLangVariable {
 	identifier := createIdentifierFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
-	bLSimpleVar.SetName(&identifier)
-	bLSimpleVar.SetPosition(n.getPosition(objectField))
-	bLSimpleVar.SetTypeNode(n.createTypeNode(objectField.TypeName()).(ast.BType))
-
-	if vis := objectField.VisibilityQualifier(); vis != nil {
-		if vis.Kind() == st.PUBLIC_KEYWORD {
-			bLSimpleVar.SetPublic()
-		} else if vis.Kind() == st.PRIVATE_KEYWORD {
-			bLSimpleVar.SetPrivate()
-		}
+	var flags model.Flag
+	if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
+		flags |= model.FlagPublic
 	}
-
 	qualifiers := objectField.QualifierList()
 	for qualifier := range qualifiers.Iterator() {
 		if qualifier.Kind() == st.FINAL_KEYWORD {
-			bLSimpleVar.SetFinal()
+			flags |= model.FlagFinal
 		}
 	}
-
-	if expr := objectField.Expression(); expr != nil {
-		bLSimpleVar.SetInitialExpression(n.createExpression(expr))
+	var expr ast.BLangActionOrExpression
+	if expression := objectField.Expression(); expression != nil {
+		expr = n.createExpression(expression)
 	}
-
-	n.populateMetadata(objectField.Metadata(), bLSimpleVar)
-	return bLSimpleVar
+	variable := ast.NewBLangVariable(
+		&identifier,
+		n.createTypeNode(objectField.TypeName()).(ast.BType),
+		expr,
+		false,
+		flags,
+	)
+	variable.SetPosition(n.getPosition(objectField))
+	n.populateMetadata(objectField.Metadata(), variable)
+	return variable
 }
 
 func (n *nodeBuilder) transformResourcePathParameter(resourcePathParameterNode *st.ResourcePathParameterNode) ast.BLangNode {
@@ -5409,26 +5166,24 @@ func (n *nodeBuilder) transformResourcePathParameter(resourcePathParameterNode *
 }
 
 func (n *nodeBuilder) createResourceMethodNode(funcDef *st.FunctionDefinition) *ast.BLangResourceMethod {
-	rm := &ast.BLangResourceMethod{}
-	rm.SetPosition(n.getPositionWithoutMetadata(funcDef))
-	rm.Name = n.createIdentifierNodeFromToken(n.getPosition(funcDef.FunctionName()), funcDef.FunctionName())
-	setFunctionQualifiers(rm, funcDef.QualifierList())
-	rm.SetAttached()
-	rm.SetResource()
-	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, rm.Name.GetValue())
-	n.populateFuncSignature(rm, funcDef.FunctionSignature())
+	name := n.createIdentifierNodeFromToken(n.getPosition(funcDef.FunctionName()), funcDef.FunctionName())
+	data := ast.InvokableData{
+		Position: n.getPositionWithoutMetadata(funcDef),
+		Name:     name,
+		Flags:    functionQualifierFlags(funcDef.QualifierList()) | model.FlagAttached | model.FlagResource,
+	}
+	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, name.GetValue())
+	n.populateFuncSignature(&data, funcDef.FunctionSignature())
 	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
-	body := funcDef.FunctionBody()
-	if body == nil {
-		rm.SetInterface()
+	if body := funcDef.FunctionBody(); body == nil {
+		data.Flags |= model.FlagInterface
 	} else {
-		bodyNode := n.transformSyntaxNode(body).(ast.FunctionBodyNode)
-		rm.Body = bodyNode
-		if _, ok := bodyNode.(*ast.BLangExternFunctionBody); ok {
-			rm.SetNative()
+		data.Body = n.transformSyntaxNode(body).(ast.FunctionBodyNode)
+		if _, ok := data.Body.(*ast.BLangExternFunctionBody); ok {
+			data.Flags |= model.FlagNative
 		}
 	}
-	rm.ResourcePath = n.createResourcePathSegments(funcDef.RelativeResourcePath())
+	rm := ast.NewBLangResourceMethod(data, n.createResourcePathSegments(funcDef.RelativeResourcePath()))
 	n.populateMetadata(funcDef.Metadata(), rm)
 	return rm
 }
@@ -5519,14 +5274,14 @@ func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedType
 	if typeParamNode == nil {
 		valueType := &ast.BLangValueType{}
 		valueType.SetPosition(n.getPosition(node))
-		valueType.TypeKind = ast.TypeKind_TYPEDESC
+		valueType.TypeKind = ast.TypeKindTypeDesc
 		return valueType
 	}
 	constrainedType := &ast.BLangConstrainedType{}
 	constrainedType.SetPosition(n.getPosition(node))
 	base := &ast.BLangValueType{}
 	base.SetPosition(n.getPosition(node))
-	base.TypeKind = ast.TypeKind_TYPEDESC
+	base.TypeKind = ast.TypeKindTypeDesc
 	constrainedType.Type = ast.TypeData{TypeDescriptor: base}
 	constraint := typeParamNode.TypeNode()
 	if constraint == nil {
@@ -5543,11 +5298,11 @@ func (n *nodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode
 	if typeParamNode == nil {
 		valueType := &ast.BLangValueType{}
 		valueType.SetPosition(pos)
-		valueType.TypeKind = ast.TypeKind_XML
+		valueType.TypeKind = ast.TypeKindXML
 		return valueType
 	}
 	refType := &ast.BLangBuiltInRefTypeNode{
-		TypeKind: ast.TypeKind_XML,
+		TypeKind: ast.TypeKindXML,
 	}
 	refType.SetPosition(pos)
 	constraint := n.createTypeNode(typeParamNode.TypeNode())
@@ -5560,24 +5315,15 @@ func (n *nodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode
 }
 
 func (n *nodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
-	errorType := &ast.BLangErrorTypeNode{}
-	errorType.SetPosition(n.getPosition(errorTypeDescriptorNode))
-
-	// Handle optional type parameter
-	typeParamNode := errorTypeDescriptorNode.TypeParamNode()
-	if typeParamNode != nil {
-		errorType.DetailType = ast.TypeData{
-			TypeDescriptor: n.createTypeNode(typeParamNode),
-		}
+	var detailType ast.TypeData
+	if typeParamNode := errorTypeDescriptorNode.TypeParamNode(); typeParamNode != nil {
+		detailType.TypeDescriptor = n.createTypeNode(typeParamNode)
 	}
-
-	// Check if this is a distinct error type
-	parent := errorTypeDescriptorNode.Parent()
-	if parent.Kind() == st.DISTINCT_TYPE_DESC {
-		errorType.SetDistinct()
-	}
-
-	return errorType
+	return ast.NewBLangErrorTypeNode(
+		n.getPosition(errorTypeDescriptorNode),
+		detailType,
+		errorTypeDescriptorNode.Parent().Kind() == st.DISTINCT_TYPE_DESC,
+	)
 }
 
 func (n *nodeBuilder) transformSpreadMember(spreadMemberNode *st.SpreadMemberNode) ast.BLangNode {
@@ -5766,51 +5512,51 @@ func (n *nodeBuilder) transformIdentifierToken(identifier *st.IdentifierToken) a
 func stringToTypeKind(typeText string) ast.TypeKind {
 	switch typeText {
 	case "int":
-		return ast.TypeKind_INT
+		return ast.TypeKindInt
 	case "byte":
-		return ast.TypeKind_BYTE
+		return ast.TypeKindByte
 	case "float":
-		return ast.TypeKind_FLOAT
+		return ast.TypeKindFloat
 	case "decimal":
-		return ast.TypeKind_DECIMAL
+		return ast.TypeKindDecimal
 	case "boolean":
-		return ast.TypeKind_BOOLEAN
+		return ast.TypeKindBoolean
 	case "string":
-		return ast.TypeKind_STRING
+		return ast.TypeKindString
 	case "json":
-		return ast.TypeKind_JSON
+		return ast.TypeKindJSON
 	case "xml":
-		return ast.TypeKind_XML
+		return ast.TypeKindXML
 	case "stream":
-		return ast.TypeKind_STREAM
+		return ast.TypeKindStream
 	case "table":
-		return ast.TypeKind_TABLE
+		return ast.TypeKindTable
 	case "any":
-		return ast.TypeKind_ANY
+		return ast.TypeKindAny
 	case "anydata":
-		return ast.TypeKind_ANYDATA
+		return ast.TypeKindAnyData
 	case "map":
-		return ast.TypeKind_MAP
+		return ast.TypeKindMap
 	case "future":
-		return ast.TypeKind_FUTURE
+		return ast.TypeKindFuture
 	case "typedesc":
-		return ast.TypeKind_TYPEDESC
+		return ast.TypeKindTypeDesc
 	case "error":
-		return ast.TypeKind_ERROR
+		return ast.TypeKindError
 	case "()", "null":
-		return ast.TypeKind_NIL
+		return ast.TypeKindNil
 	case "never":
-		return ast.TypeKind_NEVER
+		return ast.TypeKindNever
 	case "channel":
-		return ast.TypeKind_CHANNEL
+		return ast.TypeKindChannel
 	case "service":
-		return ast.TypeKind_SERVICE
+		return ast.TypeKindService
 	case "handle":
-		return ast.TypeKind_HANDLE
+		return ast.TypeKindHandle
 	case "readonly":
-		return ast.TypeKind_READONLY
+		return ast.TypeKindReadOnly
 	case "function":
-		return ast.TypeKind_FUNCTION
+		return ast.TypeKindFunction
 	default:
 		panic("stringToTypeKind: invalid type name: " + typeText)
 	}
@@ -5828,13 +5574,12 @@ func getNextMissingNodeName(pkgID *model.PackageID) string {
 	panic("getNextMissingNodeName unimplemented")
 }
 
-func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) ast.VariableNode {
+func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) *ast.BLangVariable {
 	var varName st.Token
 	switch bindingPattern.Kind() {
 	case st.WILDCARD_BINDING_PATTERN:
 		ignore := n.createIgnoreIdentifier(bindingPattern)
-		simpleVar := &ast.BLangSimpleVariable{}
-		simpleVar.SetName(&ignore)
+		simpleVar := ast.NewBLangVariable(&ignore, nil, nil, false, 0)
 		simpleVar.SetPosition(varPos)
 		return simpleVar
 	case st.MAPPING_BINDING_PATTERN, st.LIST_BINDING_PATTERN, st.ERROR_BINDING_PATTERN, st.REST_BINDING_PATTERN:
@@ -5846,9 +5591,14 @@ func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode,
 		varName = captureBindingPattern.VariableName()
 	}
 
-	simpleVar := &ast.BLangSimpleVariable{}
+	simpleVar := ast.NewBLangVariable(
+		n.createIdentifierNodeFromToken(n.getPosition(varName), varName),
+		nil,
+		nil,
+		false,
+		0,
+	)
 	simpleVar.SetPosition(varPos)
-	simpleVar.SetName(n.createIdentifierNodeFromToken(n.getPosition(varName), varName))
 	return simpleVar
 }
 
@@ -5885,17 +5635,11 @@ func (n *nodeBuilder) badTypeNode(node st.Node) *ast.BLangBadTypeNode {
 }
 
 func (n *nodeBuilder) badIdentifier(token st.Token) *ast.BLangBadIdentifier {
-	bad := &ast.BLangBadIdentifier{}
-	if token != nil {
-		value, isLiteral := normalizedIdentifierValue(token.Text())
-		bad.Value = value
-		bad.SetLiteral(isLiteral)
-		bad.OriginalValue = token.Text()
-		bad.SetPosition(n.getRecoveryPosition(token))
-	} else {
-		bad.SetPosition(diagnostics.NewBuiltinLocation())
+	if token == nil {
+		return ast.NewBLangBadIdentifier(diagnostics.NewBuiltinLocation(), "", "", false)
 	}
-	return bad
+	value, isLiteral := normalizedIdentifierValue(token.Text())
+	return ast.NewBLangBadIdentifier(n.getRecoveryPosition(token), value, token.Text(), isLiteral)
 }
 
 func (n *nodeBuilder) syntaxError(node st.Node) {

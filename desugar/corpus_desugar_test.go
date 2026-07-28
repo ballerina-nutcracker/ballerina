@@ -69,7 +69,7 @@ func (v *walkTestVisitor) Visit(node ast.BLangNode) ast.Visitor {
 	}
 
 	switch n := node.(type) {
-	case *ast.BLangSimpleVariable:
+	case *ast.BLangVariable:
 		v.checkSymbolLocation(n)
 	case *ast.BLangFunction:
 		name := n.Name.GetValue()

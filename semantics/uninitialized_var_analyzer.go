@@ -213,7 +213,7 @@ func (a *uninitVarAnalyzer) analyzeBlock(bb *basicBlock, state *varInitState) *v
 // analyzeNode processes a single node in the CFG
 func (a *uninitVarAnalyzer) analyzeNode(node ast.Node, state *varInitState) {
 	switch n := node.(type) {
-	case *ast.BLangSimpleVariableDef:
+	case *ast.BLangVariableDef:
 		symRef := n.Var.Symbol()
 		if n.Var.Expr != nil {
 			a.checkExpression(n.Var.Expr, state)

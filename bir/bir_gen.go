@@ -423,7 +423,7 @@ func addGlobalVar(birPkg *BIRPackage, dcl BIRGlobalVariableDcl) {
 	birPkg.GlobalVars[dcl.GlobalVarLookupKey] = dcl
 }
 
-func TransformGlobalVariableDcl(ctx *Context, ast *ast.BLangSimpleVariable) BIRGlobalVariableDcl {
+func TransformGlobalVariableDcl(ctx *Context, ast *ast.BLangVariable) BIRGlobalVariableDcl {
 	name := model.Name(ast.GetName().GetValue())
 	dcl := BIRGlobalVariableDcl{}
 	dcl.Pos = birLoc(ctx.CompilerContext.DiagnosticEnv(), ast.GetPosition())
@@ -524,7 +524,7 @@ func handleStatement(ctx context, curBB *BIRBasicBlock, stmt ast.StatementNode) 
 		return blockStatement(ctx, curBB, stmt)
 	case *ast.BLangReturn:
 		return returnStatement(ctx, curBB, stmt)
-	case *ast.BLangSimpleVariableDef:
+	case *ast.BLangVariableDef:
 		return simpleVariableDefinition(ctx, curBB, stmt)
 	case *ast.BLangAssignment:
 		return assignmentStatement(ctx, curBB, stmt)
@@ -673,7 +673,7 @@ func assignmentStatementInner(ctx context, ref ast.BLangExpression, valueEffect 
 		return assignToMemberStatement(ctx, varRef, valueEffect, pos)
 	case *ast.BLangWildCardBindingPattern:
 		return assignToWildcardBindingPattern(ctx, varRef, valueEffect, pos)
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		return assignToSimpleVariable(ctx, varRef, valueEffect, pos)
 	default:
 		panic("unexpected variable reference type")
@@ -690,7 +690,7 @@ func assignToWildcardBindingPattern(ctx context, varRef *ast.BLangWildCardBindin
 	}
 }
 
-func assignToSimpleVariable(ctx context, varRef *ast.BLangSimpleVarRef, valueEffect expressionEffect, pos Location) statementEffect {
+func assignToSimpleVariable(ctx context, varRef *ast.BLangVarRef, valueEffect expressionEffect, pos Location) statementEffect {
 	refEffect := simpleVariableReference(ctx, valueEffect.block, varRef)
 	currBB := refEffect.block
 	mov := NewMove(valueEffect.result, refEffect.result, pos)
@@ -714,7 +714,7 @@ func assignToMemberStatement(ctx context, varRef *ast.BLangIndexBasedAccess, val
 	}
 }
 
-func simpleVariableDefinition(ctx context, bb *BIRBasicBlock, stmt *ast.BLangSimpleVariableDef) statementEffect {
+func simpleVariableDefinition(ctx context, bb *BIRBasicBlock, stmt *ast.BLangVariableDef) statementEffect {
 	ty := ctx.symbolType(stmt.Var.Symbol())
 	varName := model.Name(stmt.Var.GetName().GetValue())
 	if stmt.Var.Expr == nil {
@@ -963,7 +963,7 @@ func handleActionOrExpression(ctx context, curBB *BIRBasicBlock, expr ast.BLangA
 		return literal(ctx, curBB, &expr.BLangLiteral)
 	case *ast.BLangBinaryExpr:
 		return binaryExpression(ctx, curBB, expr)
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		return simpleVariableReference(ctx, curBB, expr)
 	case *ast.BLangUnaryExpr:
 		return unaryExpression(ctx, curBB, expr)
@@ -1213,7 +1213,7 @@ func mappingKeyName(key *ast.BLangMappingKey) string {
 	switch expr := key.Expr.(type) {
 	case *ast.BLangLiteral:
 		return expr.Value.(string)
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		return expr.VariableName.GetValue()
 	default:
 		panic(fmt.Sprintf("unexpected mapping key expression type: %T", key.Expr))
@@ -1704,7 +1704,7 @@ func logicalOrExpression(ctx context, curBB *BIRBasicBlock, expr *ast.BLangBinar
 	}
 }
 
-func simpleVariableReference(ctx context, curBB *BIRBasicBlock, expr *ast.BLangSimpleVarRef) expressionEffect {
+func simpleVariableReference(ctx context, curBB *BIRBasicBlock, expr *ast.BLangVarRef) expressionEffect {
 	varName := expr.VariableName.GetValue()
 	symRef := ctx.unnarrowedSymbol(expr.Symbol())
 
@@ -1817,7 +1817,7 @@ func transformClassBody(
 	classScope model.Scope,
 	classLookupKey string,
 	className model.Name,
-	fields []ast.SimpleVariableNode,
+	fields []*ast.BLangVariable,
 	initFn *ast.BLangFunction,
 	methods map[string]*ast.BLangFunction,
 	resourceMethods []*ast.BLangResourceMethod,

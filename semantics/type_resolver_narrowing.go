@@ -298,9 +298,7 @@ func varRefExpInner(expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
 		return model.SymbolRef{}, false
 	}
 	switch expr := expr.(type) {
-	case *ast.BLangSimpleVarRef:
-		return expr.Symbol(), true
-	case *ast.BLangLocalVarRef:
+	case *ast.BLangVarRef:
 		return expr.Symbol(), true
 	case *ast.BLangConstRef:
 		return expr.Symbol(), true

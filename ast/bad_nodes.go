@@ -61,8 +61,14 @@ func (*BLangBadExprOrAction) isLExpr()            {}
 
 func (*BLangBadTypeNode) badNode() {}
 
+func NewBLangBadIdentifier(pos Location, value, originalValue string, isLiteral bool) *BLangBadIdentifier {
+	return &BLangBadIdentifier{
+		bLangBadNodeBase: bLangBadNodeBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		Value:            value,
+		OriginalValue:    originalValue,
+		isLiteral:        isLiteral,
+	}
+}
+
 func (b *BLangBadIdentifier) GetValue() string { return b.Value }
 func (b *BLangBadIdentifier) IsLiteral() bool  { return b.isLiteral }
-func (b *BLangBadIdentifier) SetLiteral(isLiteral bool) {
-	b.isLiteral = isLiteral
-}

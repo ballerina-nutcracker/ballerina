@@ -84,15 +84,13 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangNumericLiteral:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		if replacement := materializeConstantRef(cx, expr); replacement != nil {
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
-	case *ast.BLangLocalVarRef:
-		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangConstRef:
-		if replacement := materializeConstantRef(cx, &expr.BLangSimpleVarRef); replacement != nil {
+		if replacement := materializeConstantRef(cx, &expr.BLangVarRef); replacement != nil {
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
@@ -807,19 +805,19 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 	return tdExpr
 }
 
-func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangSimpleVarRef) {
+func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
 	ty := initExpr.GetDeterminedType()
 	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
-	tempVar := &ast.BLangSimpleVariable{Name: &ast.BLangIdentifier{Value: tempName}}
+	tempVar := &ast.BLangVariable{Name: &ast.BLangIdentifier{Value: tempName}}
 	tempVar.SetDeterminedType(ty)
 	tempVar.SetInitialExpression(initExpr)
 	tempVar.SetSymbol(tempSymRef)
-	varDef := &ast.BLangSimpleVariableDef{}
+	varDef := &ast.BLangVariableDef{}
 	varDef.SetVariable(tempVar)
 	varDef.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(varDef, pos)
 
-	varRef := &ast.BLangSimpleVarRef{VariableName: tempVar.Name}
+	varRef := &ast.BLangVarRef{VariableName: tempVar.Name}
 	varRef.SetSymbol(tempSymRef)
 	varRef.SetDeterminedType(ty)
 	setPositionIfMissing(varRef, pos)
@@ -883,7 +881,7 @@ func desugarListConstructorWithSpread(
 func appendSpreadListPushStmts(
 	cx *functionContext,
 	initStmts []ast.StatementNode,
-	resultRef *ast.BLangSimpleVarRef,
+	resultRef *ast.BLangVarRef,
 	spreadExpr ast.BLangExpression,
 	pos diagnostics.Location,
 ) []ast.StatementNode {
@@ -996,17 +994,17 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 	tempName, tempSymbol := cx.addDesugardSymbol(innerTy, model.SymbolKindVariable, false, basePos)
 	tempVarName := &ast.BLangIdentifier{Value: tempName}
 	tempVarName.SetPosition(basePos)
-	tempVar := &ast.BLangSimpleVariable{Name: tempVarName}
+	tempVar := &ast.BLangVariable{Name: tempVarName}
 	tempVar.SetDeterminedType(innerTy)
 	tempVar.SetInitialExpression(expr.Expr)
 	tempVar.SetSymbol(tempSymbol)
 	tempVar.SetPosition(basePos)
-	tempVarDef := &ast.BLangSimpleVariableDef{Var: tempVar}
+	tempVarDef := &ast.BLangVariableDef{Var: tempVar}
 	tempVarDef.SetPosition(basePos)
 	initStmts = append(initStmts, tempVarDef)
 
 	// Type test: $desugar$N is error
-	tempVarRefForTest := &ast.BLangSimpleVarRef{VariableName: tempVarName}
+	tempVarRefForTest := &ast.BLangVarRef{VariableName: tempVarName}
 	tempVarRefForTest.SetSymbol(tempSymbol)
 	tempVarRefForTest.SetDeterminedType(innerTy)
 	tempVarRefForTest.SetPosition(basePos)
@@ -1020,7 +1018,7 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 	typeTestExpr.SetPosition(basePos)
 
 	// If body: return or panic
-	tempVarRefForBody := &ast.BLangSimpleVarRef{VariableName: tempVarName}
+	tempVarRefForBody := &ast.BLangVarRef{VariableName: tempVarName}
 	tempVarRefForBody.SetSymbol(tempSymbol)
 	tempVarRefForBody.SetDeterminedType(innerTy)
 	tempVarRefForBody.SetPosition(basePos)
@@ -1048,7 +1046,7 @@ func desugarCheckedExpr(cx *functionContext, expr *ast.BLangCheckedExpr, isPanic
 	initStmts = append(initStmts, ifStmt)
 
 	// Replacement: var ref typed as non-error type
-	replacementVarRef := &ast.BLangSimpleVarRef{VariableName: tempVarName}
+	replacementVarRef := &ast.BLangVarRef{VariableName: tempVarName}
 	replacementVarRef.SetSymbol(tempSymbol)
 	replacementVarRef.SetDeterminedType(resultTy)
 	replacementVarRef.SetPosition(basePos)
@@ -1180,7 +1178,7 @@ func fillNewExprInitDefaults(cx *functionContext, expr *ast.BLangNewExpression) 
 	// multiple default-lambda invocations. Mirrors walkDirectCallArgs behaviour.
 	originalLen := len(expr.ArgsExprs)
 	for j := 0; j < originalLen; j++ {
-		if _, ok := expr.ArgsExprs[j].(*ast.BLangSimpleVarRef); !ok {
+		if _, ok := expr.ArgsExprs[j].(*ast.BLangVarRef); !ok {
 			varDef, varRef := assignToLocal(cx, expr.ArgsExprs[j], pos)
 			initStmts = append(initStmts, varDef)
 			expr.ArgsExprs[j] = varRef
@@ -1221,7 +1219,7 @@ func walkMappingConstructorExpr(cx *functionContext, expr *ast.BLangMappingConst
 		kv := field.(*ast.BLangMappingKeyValueField)
 
 		if kv.Key.Kind != ast.MappingKeyComputed {
-			if varRef, ok := kv.Key.Expr.(*ast.BLangSimpleVarRef); ok {
+			if varRef, ok := kv.Key.Expr.(*ast.BLangVarRef); ok {
 				name := varRef.VariableName.GetValue()
 				lit := &ast.BLangLiteral{
 					Value:         name,
@@ -1269,11 +1267,11 @@ func isNilLiftableUnaryOp(op model.OperatorKind) bool {
 func createOperandTempVar(cx *functionContext, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location, initStmts []ast.StatementNode) (*ast.BLangIdentifier, model.SymbolRef, []ast.StatementNode) {
 	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
 	varName := &ast.BLangIdentifier{Value: name}
-	tempVar := &ast.BLangSimpleVariable{Name: varName}
+	tempVar := &ast.BLangVariable{Name: varName}
 	tempVar.SetDeterminedType(ty)
 	tempVar.SetInitialExpression(initExpr)
 	tempVar.SetSymbol(symbol)
-	varDef := &ast.BLangSimpleVariableDef{Var: tempVar}
+	varDef := &ast.BLangVariableDef{Var: tempVar}
 	varDef.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(varDef, pos)
 	return varName, symbol, append(initStmts, varDef)
@@ -1286,11 +1284,11 @@ func createNilResultVar(cx *functionContext, ty semtypes.SemType, pos diagnostic
 
 	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
 	varName := &ast.BLangIdentifier{Value: name}
-	tempVar := &ast.BLangSimpleVariable{Name: varName}
+	tempVar := &ast.BLangVariable{Name: varName}
 	tempVar.SetDeterminedType(ty)
 	tempVar.SetInitialExpression(nilLit)
 	tempVar.SetSymbol(symbol)
-	varDef := &ast.BLangSimpleVariableDef{Var: tempVar}
+	varDef := &ast.BLangVariableDef{Var: tempVar}
 	varDef.SetDeterminedType(semtypes.NEVER)
 	setPositionIfMissing(varDef, pos)
 	return varName, symbol, append(initStmts, varDef)
@@ -1304,8 +1302,8 @@ func createNilTypeTest(varName *ast.BLangIdentifier, symbol model.SymbolRef, ty 
 	return typeTest
 }
 
-func createVarRef(varName ast.IdentifierNode, symbol model.SymbolRef, ty semtypes.SemType) *ast.BLangSimpleVarRef {
-	ref := &ast.BLangSimpleVarRef{VariableName: varName}
+func createVarRef(varName ast.IdentifierNode, symbol model.SymbolRef, ty semtypes.SemType) *ast.BLangVarRef {
+	ref := &ast.BLangVarRef{VariableName: varName}
 	ref.SetSymbol(symbol)
 	ref.SetDeterminedType(ty)
 	return ref

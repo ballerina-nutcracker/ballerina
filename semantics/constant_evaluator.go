@@ -50,7 +50,7 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 		return expr.Value, nil
 	case *ast.BLangGroupExpr:
 		return e.evaluate(expr.Expression)
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
 	case *ast.BLangConstRef:
 		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
@@ -144,7 +144,7 @@ func constantMappingKey(key *ast.BLangMappingKey) (string, bool) {
 	case *ast.BLangLiteral:
 		value, ok := expr.Value.(string)
 		return value, ok
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		return expr.VariableName.GetValue(), true
 	default:
 		return "", false

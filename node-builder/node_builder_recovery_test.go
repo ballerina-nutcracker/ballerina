@@ -93,7 +93,7 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 			compilationUnit, _ := buildNodeBuilderCompilationUnit(t, testCase.source, true)
 			function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
 			assignment := function.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
-			reference := assignment.GetExpression().(*ast.BLangSimpleVarRef)
+			reference := assignment.GetExpression().(*ast.BLangVarRef)
 
 			assertIdentifierValue(t, reference.PkgAlias, testCase.aliasValue)
 			if testCase.missingName {

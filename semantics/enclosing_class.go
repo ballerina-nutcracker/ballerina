@@ -28,7 +28,7 @@ type enclosingClassBody struct {
 	// service bodies (services have no name).
 	name     string
 	isolated bool
-	fields   []ast.SimpleVariableNode
+	fields   []*ast.BLangVariable
 	initFn   *ast.BLangFunction
 }
 
