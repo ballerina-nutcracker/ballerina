@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package parser
 
 import (
@@ -76,17 +77,17 @@ func formatSTNode(node st.STNode) string {
 	return st.ToSexpr(node)
 }
 
-func formatSolution(sol *Solution) string {
+func formatSolution(sol *solution) string {
 	if sol == nil {
 		return "nil"
 	}
 	actionStr := "UNKNOWN"
 	switch sol.Action {
-	case ACTION_INSERT:
+	case actionInsert:
 		actionStr = "INSERT"
-	case ACTION_REMOVE:
+	case actionRemove:
 		actionStr = "REMOVE"
-	case ACTION_KEEP:
+	case actionKeep:
 		actionStr = "KEEP"
 	}
 	kindStr := sol.TokenKind.StrValue()
@@ -117,7 +118,7 @@ func formatBool(b bool) string {
 	return "false"
 }
 
-func formatResult(result *Result) string {
+func formatResult(result *recoveryResult) string {
 	if result == nil {
 		return "nil"
 	}
@@ -125,7 +126,7 @@ func formatResult(result *Result) string {
 	return fmt.Sprintf("matches:%d removeFixes:%d fixes:%d solution:%s", result.matches, result.removeFixes, len(result.fixes), solutionStr)
 }
 
-func formatResultValue(result Result) string {
+func formatResultValue(result recoveryResult) string {
 	solutionStr := formatSolution(result.solution)
 	return fmt.Sprintf("matches:%d removeFixes:%d fixes:%d solution:%s", result.matches, result.removeFixes, len(result.fixes), solutionStr)
 }
@@ -138,9 +139,9 @@ func traceRecovery(ctx common.ParserRuleContext, messageFn func() string) {
 // Solution struct - represents a fix for a parser error
 // ============================================================================
 
-type Solution struct {
+type solution struct {
 	Ctx           common.ParserRuleContext
-	Action        Action
+	Action        action
 	TokenText     string
 	TokenKind     st.SyntaxKind
 	RecoveredNode st.STNode
@@ -148,12 +149,12 @@ type Solution struct {
 	Depth         int
 }
 
-func NewSolution(action Action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string) *Solution {
-	return NewSolutionWithDepth(action, ctx, tokenKind, tokenText, -1)
+func newSolution(action action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string) *solution {
+	return newSolutionWithDepth(action, ctx, tokenKind, tokenText, -1)
 }
 
-func NewSolutionWithDepth(action Action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string, depth int) *Solution {
-	return &Solution{
+func newSolutionWithDepth(action action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string, depth int) *solution {
+	return &solution{
 		Action:    action,
 		Ctx:       ctx,
 		TokenText: tokenText,
@@ -162,14 +163,14 @@ func NewSolutionWithDepth(action Action, ctx common.ParserRuleContext, tokenKind
 	}
 }
 
-func (s *Solution) ToString() string {
+func (s *solution) ToString() string {
 	actionStr := "UNKNOWN"
 	switch s.Action {
-	case ACTION_INSERT:
+	case actionInsert:
 		actionStr = "INSERT"
-	case ACTION_REMOVE:
+	case actionRemove:
 		actionStr = "REMOVE"
-	case ACTION_KEEP:
+	case actionKeep:
 		actionStr = "KEEP"
 	}
 	return actionStr + "'" + s.TokenText + "'"
@@ -179,28 +180,28 @@ func (s *Solution) ToString() string {
 // Result struct - holds results of error recovery attempts
 // ============================================================================
 
-type Result struct {
+type recoveryResult struct {
 	matches     int
 	removeFixes int
-	fixes       []*Solution
-	solution    *Solution
+	fixes       []*solution
+	solution    *solution
 }
 
-func NewResult(fixes []*Solution, matches int) *Result {
-	return &Result{
+func newResult(fixes []*solution, matches int) *recoveryResult {
+	return &recoveryResult{
 		fixes:   fixes,
 		matches: matches,
 	}
 }
 
-func (r *Result) peekFix() *Solution {
+func (r *recoveryResult) peekFix() *solution {
 	if len(r.fixes) == 0 {
 		return nil
 	}
 	return r.fixes[len(r.fixes)-1]
 }
 
-func (r *Result) popFix() *Solution {
+func (r *recoveryResult) popFix() *solution {
 	if len(r.fixes) == 0 {
 		return nil
 	}
@@ -208,20 +209,20 @@ func (r *Result) popFix() *Solution {
 	sol := r.fixes[len(r.fixes)-1]
 	r.fixes = r.fixes[:len(r.fixes)-1]
 
-	if sol.Action == ACTION_REMOVE {
+	if sol.Action == actionRemove {
 		r.removeFixes--
 	}
 	return sol
 }
 
-func (r *Result) pushFix(sol *Solution) {
-	if sol.Action == ACTION_REMOVE {
+func (r *recoveryResult) pushFix(sol *solution) {
+	if sol.Action == actionRemove {
 		r.removeFixes++
 	}
 	r.fixes = append(r.fixes, sol)
 }
 
-func (r *Result) fixesSize() int {
+func (r *recoveryResult) fixesSize() int {
 	return len(r.fixes)
 }
 
@@ -230,18 +231,18 @@ func (r *Result) fixesSize() int {
 // ============================================================================
 
 var (
-	LOOKAHEAD_LIMIT        = 4
-	RESOLUTION_ITTER_LIMIT = 7
-	COMPLETION_ITTER_LIMIT = 15
+	lookaheadLimit       = 4
+	resolutionItterLimit = 7
+	completionItterLimit = 15
 )
 
 // ============================================================================
 // AbstractParserErrorHandlerData - Field access interface
 // ============================================================================
 
-type AbstractParserErrorHandlerData interface {
-	GetTokenReader() *TokenReader
-	SetTokenReader(*TokenReader)
+type abstractParserErrorHandlerData interface {
+	GetTokenReader() *tokenReader
+	SetTokenReader(*tokenReader)
 	GetCtxStack() []common.ParserRuleContext
 	SetCtxStack([]common.ParserRuleContext)
 	GetPreviousTokenIndex() int
@@ -254,15 +255,15 @@ type AbstractParserErrorHandlerData interface {
 // AbstractParserErrorHandlerBase - Base struct with fields
 // ============================================================================
 
-type AbstractParserErrorHandlerBase struct {
-	tokenReader        *TokenReader
+type abstractParserErrorHandlerBase struct {
+	tokenReader        *tokenReader
 	ctxStack           []common.ParserRuleContext
 	previousTokenIndex int
 	itterCount         int
 }
 
-func NewAbstractParserErrorHandlerBase(tokenReader *TokenReader) *AbstractParserErrorHandlerBase {
-	return &AbstractParserErrorHandlerBase{
+func newAbstractParserErrorHandlerBase(tokenReader *tokenReader) *abstractParserErrorHandlerBase {
+	return &abstractParserErrorHandlerBase{
 		tokenReader:        tokenReader,
 		ctxStack:           make([]common.ParserRuleContext, 0),
 		previousTokenIndex: -1,
@@ -272,35 +273,35 @@ func NewAbstractParserErrorHandlerBase(tokenReader *TokenReader) *AbstractParser
 
 // Getter/setter implementations for AbstractParserErrorHandlerBase
 
-func (b *AbstractParserErrorHandlerBase) GetTokenReader() *TokenReader {
+func (b *abstractParserErrorHandlerBase) GetTokenReader() *tokenReader {
 	return b.tokenReader
 }
 
-func (b *AbstractParserErrorHandlerBase) SetTokenReader(tokenReader *TokenReader) {
+func (b *abstractParserErrorHandlerBase) SetTokenReader(tokenReader *tokenReader) {
 	b.tokenReader = tokenReader
 }
 
-func (b *AbstractParserErrorHandlerBase) GetCtxStack() []common.ParserRuleContext {
+func (b *abstractParserErrorHandlerBase) GetCtxStack() []common.ParserRuleContext {
 	return b.ctxStack
 }
 
-func (b *AbstractParserErrorHandlerBase) SetCtxStack(ctxStack []common.ParserRuleContext) {
+func (b *abstractParserErrorHandlerBase) SetCtxStack(ctxStack []common.ParserRuleContext) {
 	b.ctxStack = ctxStack
 }
 
-func (b *AbstractParserErrorHandlerBase) GetPreviousTokenIndex() int {
+func (b *abstractParserErrorHandlerBase) GetPreviousTokenIndex() int {
 	return b.previousTokenIndex
 }
 
-func (b *AbstractParserErrorHandlerBase) SetPreviousTokenIndex(previousTokenIndex int) {
+func (b *abstractParserErrorHandlerBase) SetPreviousTokenIndex(previousTokenIndex int) {
 	b.previousTokenIndex = previousTokenIndex
 }
 
-func (b *AbstractParserErrorHandlerBase) GetItterCount() int {
+func (b *abstractParserErrorHandlerBase) GetItterCount() int {
 	return b.itterCount
 }
 
-func (b *AbstractParserErrorHandlerBase) SetItterCount(itterCount int) {
+func (b *abstractParserErrorHandlerBase) SetItterCount(itterCount int) {
 	b.itterCount = itterCount
 }
 
@@ -308,21 +309,21 @@ func (b *AbstractParserErrorHandlerBase) SetItterCount(itterCount int) {
 // AbstractParserErrorHandler - Main interface
 // ============================================================================
 
-type AbstractParserTracer any
+type abstractParserTracer any
 
-type AbstractParserErrorHandler interface {
-	AbstractParserErrorHandlerData
-	AbstractParserTracer
+type abstractParserErrorHandler interface {
+	abstractParserErrorHandlerData
+	abstractParserTracer
 
 	// Abstract methods (to be implemented by concrete classes like BallerinaParserErrorHandler)
 	HasAlternativePaths(context common.ParserRuleContext) bool
-	SeekMatch(context common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) *Result
+	SeekMatch(context common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) *recoveryResult
 	GetNextRule(context common.ParserRuleContext, nextLookahead int) common.ParserRuleContext
 	GetExpectedTokenKind(context common.ParserRuleContext) st.SyntaxKind
-	GetInsertSolution(context common.ParserRuleContext) *Solution
+	GetInsertSolution(context common.ParserRuleContext) *solution
 
 	// Default/concrete methods (implemented in AbstractParserErrorHandlerMethods)
-	Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) *Solution
+	Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) *solution
 	ConsumeInvalidToken() st.STToken
 	StartContext(context common.ParserRuleContext)
 	EndContext()
@@ -337,11 +338,11 @@ type AbstractParserErrorHandler interface {
 // AbstractParserErrorHandlerMethods - Default method implementations
 // ============================================================================
 
-type AbstractParserErrorHandlerMethods struct {
-	Self AbstractParserErrorHandler
+type abstractParserErrorHandlerMethods struct {
+	Self abstractParserErrorHandler
 }
 
-func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) (result *Solution) {
+func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) (result *solution) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(Recover start %s %s %s)",
 			formatParserRuleContext(currentCtx),
@@ -359,10 +360,10 @@ func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 		m.Self.SetItterCount(0)
 		m.Self.SetPreviousTokenIndex(currentTokenIndex)
 	}
-	var fix *Solution
-	if isCompletion && (m.Self.GetItterCount() < COMPLETION_ITTER_LIMIT) {
+	var fix *solution
+	if isCompletion && (m.Self.GetItterCount() < completionItterLimit) {
 		fix = m.getCompletion(currentCtx, nextToken)
-	} else if m.Self.GetItterCount() < RESOLUTION_ITTER_LIMIT {
+	} else if m.Self.GetItterCount() < resolutionItterLimit {
 		fix = m.getResolution(currentCtx, nextToken)
 	}
 	if fix != nil {
@@ -371,13 +372,13 @@ func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 	}
 	// Fail safe. This means we can't find a path to recover.
 	if isCompletion {
-		if m.Self.GetItterCount() == COMPLETION_ITTER_LIMIT {
+		if m.Self.GetItterCount() == completionItterLimit {
 			traceRecovery(currentCtx, func() string {
 				return "fail safe reached"
 			})
 		}
 	} else {
-		if m.Self.GetItterCount() == RESOLUTION_ITTER_LIMIT {
+		if m.Self.GetItterCount() == resolutionItterLimit {
 			traceRecovery(currentCtx, func() string {
 				return "fail safe reached"
 			})
@@ -386,7 +387,7 @@ func (m *AbstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 	return m.getFailSafeSolution(currentCtx, nextToken)
 }
 
-func (m *AbstractParserErrorHandlerMethods) getResolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *Solution {
+func (m *abstractParserErrorHandlerMethods) getResolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *solution {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(getResolution start %s %s)",
 			formatParserRuleContext(currentCtx),
@@ -394,42 +395,42 @@ func (m *AbstractParserErrorHandlerMethods) getResolution(currentCtx common.Pars
 	})
 	bestMatch := m.seekMatchStart(currentCtx)
 	m.validateSolution(bestMatch, currentCtx, nextToken)
-	var sol *Solution
+	var sol *solution
 	if bestMatch.matches > 0 {
 		sol = bestMatch.solution
 	}
 	return sol
 }
 
-func (m *AbstractParserErrorHandlerMethods) getFailSafeSolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *Solution {
-	sol := NewSolution(ACTION_REMOVE, currentCtx, nextToken.Kind(), nextToken.Text())
+func (m *abstractParserErrorHandlerMethods) getFailSafeSolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *solution {
+	sol := newSolution(actionRemove, currentCtx, nextToken.Kind(), nextToken.Text())
 	sol.RemovedToken = m.Self.ConsumeInvalidToken()
 	return sol
 }
 
-func (m *AbstractParserErrorHandlerMethods) validateSolution(bestMatch *Result, currentCtx common.ParserRuleContext, nextToken st.STNode) {
+func (m *abstractParserErrorHandlerMethods) validateSolution(bestMatch *recoveryResult, currentCtx common.ParserRuleContext, nextToken st.STNode) {
 	sol := bestMatch.solution
-	if (sol == nil) || (sol.Action == ACTION_REMOVE) {
+	if (sol == nil) || (sol.Action == actionRemove) {
 		return
 	}
-	if (sol.Action == ACTION_KEEP) && (nextToken.Kind() == st.DOCUMENTATION_STRING) {
-		bestMatch.solution = NewSolution(ACTION_REMOVE, currentCtx, st.DOCUMENTATION_STRING, currentCtx.String())
+	if (sol.Action == actionKeep) && (nextToken.Kind() == st.DOCUMENTATION_STRING) {
+		bestMatch.solution = newSolution(actionRemove, currentCtx, st.DOCUMENTATION_STRING, currentCtx.String())
 	}
-	if (sol.Action != ACTION_INSERT) || (bestMatch.fixesSize() < 2) {
+	if (sol.Action != actionInsert) || (bestMatch.fixesSize() < 2) {
 		return
 	}
 	firstFix := bestMatch.popFix()
 	secondFix := bestMatch.peekFix()
 	bestMatch.pushFix(firstFix)
-	if (secondFix.Action == ACTION_REMOVE) && (secondFix.Depth == 1) {
+	if (secondFix.Action == actionRemove) && (secondFix.Depth == 1) {
 		bestMatch.solution = secondFix
 	}
 }
 
-func (m *AbstractParserErrorHandlerMethods) getCompletion(context common.ParserRuleContext, nextToken st.STToken) *Solution {
+func (m *abstractParserErrorHandlerMethods) getCompletion(context common.ParserRuleContext, nextToken st.STToken) *solution {
 	tempCtxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(m.getCtxStackSnapshot())
-	var sol *Solution
+	var sol *solution
 	func() {
 		// TODO: check if we panic inside this method
 		defer func() {
@@ -448,7 +449,7 @@ func (m *AbstractParserErrorHandlerMethods) getCompletion(context common.ParserR
 	return sol
 }
 
-func (m *AbstractParserErrorHandlerMethods) ConsumeInvalidToken() (result st.STToken) {
+func (m *abstractParserErrorHandlerMethods) ConsumeInvalidToken() (result st.STToken) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -463,29 +464,29 @@ func (m *AbstractParserErrorHandlerMethods) ConsumeInvalidToken() (result st.STT
 	return m.Self.GetTokenReader().Read()
 }
 
-func (m *AbstractParserErrorHandlerMethods) applyFix(currentCtx common.ParserRuleContext, fix *Solution) {
+func (m *abstractParserErrorHandlerMethods) applyFix(currentCtx common.ParserRuleContext, fix *solution) {
 	switch fix.Action {
-	case ACTION_REMOVE:
+	case actionRemove:
 		fix.RemovedToken = m.Self.ConsumeInvalidToken()
 		fix.RecoveredNode = m.Self.GetTokenReader().Peek()
 		fix.TokenKind = m.Self.GetTokenReader().Peek().Kind()
-	case ACTION_INSERT:
+	case actionInsert:
 		fix.RecoveredNode = m.handleMissingToken(currentCtx, fix)
 	}
 }
 
-func (m *AbstractParserErrorHandlerMethods) handleMissingToken(currentCtx common.ParserRuleContext, fix *Solution) st.STNode {
+func (m *abstractParserErrorHandlerMethods) handleMissingToken(currentCtx common.ParserRuleContext, fix *solution) st.STNode {
 	return createMissingTokenWithDiagnosticsFromParserRules(fix.TokenKind, fix.Ctx)
 }
 
-func (m *AbstractParserErrorHandlerMethods) getCtxStackSnapshot() []common.ParserRuleContext {
+func (m *abstractParserErrorHandlerMethods) getCtxStackSnapshot() []common.ParserRuleContext {
 	ctxStack := m.Self.GetCtxStack()
 	snapshot := make([]common.ParserRuleContext, len(ctxStack))
 	copy(snapshot, ctxStack)
 	return snapshot
 }
 
-func (m *AbstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.ParserRuleContext) (bestMatch *Result) {
+func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.ParserRuleContext) (bestMatch *recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(seekMatchStart start %s)", formatParserRuleContext(currentCtx))
 	})
@@ -500,8 +501,8 @@ func (m *AbstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 				if false {
 					panic("assertion failed")
 				}
-				bestMatch = NewResult(make([]*Solution, 0), LOOKAHEAD_LIMIT-1)
-				bestMatch.solution = NewSolution(ACTION_REMOVE, currentCtx, st.SyntaxKind(0), currentCtx.String())
+				bestMatch = newResult(make([]*solution, 0), lookaheadLimit-1)
+				bestMatch.solution = newSolution(actionRemove, currentCtx, st.SyntaxKind(0), currentCtx.String())
 			}
 		}()
 		bestMatch = m.seekMatchInSubTree(currentCtx, 1, 0, true)
@@ -511,7 +512,7 @@ func (m *AbstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 	return bestMatch
 }
 
-func (m *AbstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *Result) {
+func (m *abstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(seekMatchInSubTree start %s %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint))
 	})
@@ -525,7 +526,7 @@ func (m *AbstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common
 	return result
 }
 
-func (m *AbstractParserErrorHandlerMethods) StartContext(context common.ParserRuleContext) {
+func (m *abstractParserErrorHandlerMethods) StartContext(context common.ParserRuleContext) {
 	traceRecovery(context, func() string {
 		return fmt.Sprintf("(StartContext start %s)", formatParserRuleContext(context))
 	})
@@ -536,7 +537,7 @@ func (m *AbstractParserErrorHandlerMethods) StartContext(context common.ParserRu
 	})
 }
 
-func (m *AbstractParserErrorHandlerMethods) EndContext() {
+func (m *abstractParserErrorHandlerMethods) EndContext() {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -552,7 +553,7 @@ func (m *AbstractParserErrorHandlerMethods) EndContext() {
 	})
 }
 
-func (m *AbstractParserErrorHandlerMethods) SwitchContext(context common.ParserRuleContext) {
+func (m *abstractParserErrorHandlerMethods) SwitchContext(context common.ParserRuleContext) {
 	traceRecovery(context, func() string {
 		return fmt.Sprintf("(SwitchContext start %s)", formatParserRuleContext(context))
 	})
@@ -564,7 +565,7 @@ func (m *AbstractParserErrorHandlerMethods) SwitchContext(context common.ParserR
 	})
 }
 
-func (m *AbstractParserErrorHandlerMethods) GetParentContext() (result common.ParserRuleContext) {
+func (m *abstractParserErrorHandlerMethods) GetParentContext() (result common.ParserRuleContext) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -580,7 +581,7 @@ func (m *AbstractParserErrorHandlerMethods) GetParentContext() (result common.Pa
 	return ctxStack[len(ctxStack)-1]
 }
 
-func (m *AbstractParserErrorHandlerMethods) GetGrandParentContext() (result common.ParserRuleContext) {
+func (m *abstractParserErrorHandlerMethods) GetGrandParentContext() (result common.ParserRuleContext) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -602,7 +603,7 @@ func (m *AbstractParserErrorHandlerMethods) GetGrandParentContext() (result comm
 	return grandParent
 }
 
-func (m *AbstractParserErrorHandlerMethods) HasAncestorContext(context common.ParserRuleContext) (result bool) {
+func (m *abstractParserErrorHandlerMethods) HasAncestorContext(context common.ParserRuleContext) (result bool) {
 	traceRecovery(context, func() string {
 		return fmt.Sprintf("(HasAncestorContext start %s)", formatParserRuleContext(context))
 	})
@@ -613,7 +614,7 @@ func (m *AbstractParserErrorHandlerMethods) HasAncestorContext(context common.Pa
 	return slices.Contains(ctxStack, context)
 }
 
-func (m *AbstractParserErrorHandlerMethods) GetContextStack() (result []common.ParserRuleContext) {
+func (m *abstractParserErrorHandlerMethods) GetContextStack() (result []common.ParserRuleContext) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -628,7 +629,7 @@ func (m *AbstractParserErrorHandlerMethods) GetContextStack() (result []common.P
 	return m.Self.GetCtxStack()
 }
 
-func (m *AbstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead int, currentDepth int, currentMatches int, alternativeRules []common.ParserRuleContext, isEntryPoint bool) (result *Result) {
+func (m *abstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead int, currentDepth int, currentMatches int, alternativeRules []common.ParserRuleContext, isEntryPoint bool) (result *recoveryResult) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -640,12 +641,12 @@ func (m *AbstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead in
 	defer traceRecovery(ctx, func() string {
 		return fmt.Sprintf("(seekInAlternativesPaths end (%d %d %d %s %s) %s)", lookahead, currentDepth, currentMatches, formatContextStack(alternativeRules), formatBool(isEntryPoint), formatResult(result))
 	})
-	results := make([][]*Result, LOOKAHEAD_LIMIT)
+	results := make([][]*recoveryResult, lookaheadLimit)
 	bestMatchIndex := 0
 
 	for _, rule := range alternativeRules {
 		tempCtxStack := m.Self.GetCtxStack()
-		var result *Result
+		var result *recoveryResult
 		shouldContinue := false
 		func() {
 			defer func() {
@@ -670,7 +671,7 @@ func (m *AbstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead in
 		}
 		similarResults := results[result.matches]
 		if similarResults == nil {
-			similarResults = make([]*Result, 0)
+			similarResults = make([]*recoveryResult, 0)
 			results[result.matches] = similarResults
 			if bestMatchIndex < result.matches {
 				bestMatchIndex = result.matches
@@ -691,7 +692,7 @@ func (m *AbstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead in
 		if currentMatchRemoveFixes == bestMatchRemoveFixes {
 			currentSol := bestMatch.peekFix()
 			foundSol := currentMatch.peekFix()
-			if (currentSol.Action == ACTION_REMOVE) && (foundSol.Action == ACTION_INSERT) {
+			if (currentSol.Action == actionRemove) && (foundSol.Action == actionInsert) {
 				bestMatch = currentMatch
 			}
 		} else if currentMatchRemoveFixes < bestMatchRemoveFixes {
@@ -701,17 +702,17 @@ func (m *AbstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead in
 	return m.getFinalResult(currentMatches, bestMatch)
 }
 
-func (m *AbstractParserErrorHandlerMethods) hasFoundBestAlternative(result *Result) bool {
-	if result.matches < (LOOKAHEAD_LIMIT - 1) {
+func (m *abstractParserErrorHandlerMethods) hasFoundBestAlternative(result *recoveryResult) bool {
+	if result.matches < (lookaheadLimit - 1) {
 		return false
 	}
 	if result.solution == nil {
 		return true
 	}
-	return (result.solution.Action != ACTION_REMOVE)
+	return (result.solution.Action != actionRemove)
 }
 
-func (m *AbstractParserErrorHandlerMethods) getFinalResult(currentMatches int, bestMatch *Result) (result *Result) {
+func (m *abstractParserErrorHandlerMethods) getFinalResult(currentMatches int, bestMatch *recoveryResult) (result *recoveryResult) {
 	ctxStack := m.Self.GetCtxStack()
 	var ctx common.ParserRuleContext
 	if len(ctxStack) > 0 {
@@ -727,7 +728,7 @@ func (m *AbstractParserErrorHandlerMethods) getFinalResult(currentMatches int, b
 	return bestMatch
 }
 
-func (m *AbstractParserErrorHandlerMethods) fixAndContinue(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result *Result) {
+func (m *abstractParserErrorHandlerMethods) fixAndContinue(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result *recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(fixAndContinue start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
@@ -738,12 +739,12 @@ func (m *AbstractParserErrorHandlerMethods) fixAndContinue(currentCtx common.Par
 	if isEntryPoint {
 		fixedPathResult.solution = fixedPathResult.peekFix()
 	} else {
-		fixedPathResult.solution = NewSolution(ACTION_KEEP, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String())
+		fixedPathResult.solution = newSolution(actionKeep, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String())
 	}
 	return m.getFinalResult(matchingRulesCount, fixedPathResult)
 }
 
-func (m *AbstractParserErrorHandlerMethods) fixAndContinueCore(currentCtx common.ParserRuleContext, lookahead int, currentDepth int) (fixedPathResult *Result) {
+func (m *abstractParserErrorHandlerMethods) fixAndContinueCore(currentCtx common.ParserRuleContext, lookahead int, currentDepth int) (fixedPathResult *recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(fixAndContinueCore start %s %d %d)", formatParserRuleContext(currentCtx), lookahead, currentDepth)
 	})
@@ -753,298 +754,297 @@ func (m *AbstractParserErrorHandlerMethods) fixAndContinueCore(currentCtx common
 	deletionResult := m.seekMatchInSubTree(currentCtx, lookahead+1, currentDepth+1, false)
 	nextCtx := m.Self.GetNextRule(currentCtx, lookahead)
 	insertionResult := m.seekMatchInSubTree(nextCtx, lookahead, currentDepth+1, false)
-	var action *Solution
+	var action *solution
 
 	if (insertionResult.matches == 0) && (deletionResult.matches == 0) {
-		action = NewSolutionWithDepth(ACTION_INSERT, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), currentDepth)
+		action = newSolutionWithDepth(actionInsert, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), currentDepth)
 		insertionResult.pushFix(action)
 		fixedPathResult = insertionResult
 	} else if insertionResult.matches == deletionResult.matches {
 		if insertionResult.removeFixes <= (deletionResult.removeFixes + 1) {
-			action = NewSolutionWithDepth(ACTION_INSERT, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), currentDepth)
+			action = newSolutionWithDepth(actionInsert, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), currentDepth)
 			insertionResult.pushFix(action)
 			fixedPathResult = insertionResult
 		} else {
 			token := m.Self.GetTokenReader().PeekN(lookahead)
-			action = NewSolutionWithDepth(ACTION_REMOVE, currentCtx, token.Kind(), token.Text(), currentDepth)
+			action = newSolutionWithDepth(actionRemove, currentCtx, token.Kind(), token.Text(), currentDepth)
 			deletionResult.pushFix(action)
 			fixedPathResult = deletionResult
 		}
 	} else if insertionResult.matches > deletionResult.matches {
-		action = NewSolutionWithDepth(ACTION_INSERT, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), currentDepth)
+		action = newSolutionWithDepth(actionInsert, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), currentDepth)
 		insertionResult.pushFix(action)
 		fixedPathResult = insertionResult
 	} else {
 		token := m.Self.GetTokenReader().PeekN(lookahead)
-		action = NewSolutionWithDepth(ACTION_REMOVE, currentCtx, token.Kind(), token.Text(), currentDepth)
+		action = newSolutionWithDepth(actionRemove, currentCtx, token.Kind(), token.Text(), currentDepth)
 		deletionResult.pushFix(action)
 		fixedPathResult = deletionResult
 	}
 	return fixedPathResult
 }
 
-type BallerinaParserErrorHandler struct {
-	AbstractParserErrorHandlerBase
-	AbstractParserErrorHandlerMethods
+type ballerinaParserErrorHandler struct {
+	abstractParserErrorHandlerBase
+	abstractParserErrorHandlerMethods
 }
 
 var (
-	FUNC_TYPE_OR_DEF_OPTIONAL_RETURNS                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_BODY_OR_TYPE_DESC_RHS}
-	FUNC_BODY_OR_TYPE_DESC_RHS                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_BODY, common.PARSER_RULE_CONTEXT_MODULE_LEVEL_AMBIGUOUS_FUNC_TYPE_DESC_RHS}
-	FUNC_DEF_OPTIONAL_RETURNS                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_BODY}
-	METHOD_DECL_OPTIONAL_RETURNS                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	FUNC_BODY                                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK, common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY}
-	EXTERNAL_FUNC_BODY_OPTIONAL_ANNOTS                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATIONS, common.PARSER_RULE_CONTEXT_EXTERNAL_KEYWORD}
-	ANNON_FUNC_OPTIONAL_RETURNS                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_ANON_FUNC_BODY}
-	ANON_FUNC_BODY                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK, common.PARSER_RULE_CONTEXT_EXPLICIT_ANON_FUNC_EXPR_BODY_START}
-	FUNC_TYPE_OPTIONAL_RETURNS                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_END}
-	FUNC_TYPE_OR_ANON_FUNC_OPTIONAL_RETURNS                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_RHS_OR_ANON_FUNC_BODY}
-	FUNC_TYPE_DESC_RHS_OR_ANON_FUNC_BODY                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANON_FUNC_BODY, common.PARSER_RULE_CONTEXT_STMT_LEVEL_AMBIGUOUS_FUNC_TYPE_DESC_RHS}
-	WORKER_NAME_RHS                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_BLOCK_STMT}
-	STATEMENTS                                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_IF_BLOCK, common.PARSER_RULE_CONTEXT_WHILE_BLOCK, common.PARSER_RULE_CONTEXT_CALL_STMT, common.PARSER_RULE_CONTEXT_PANIC_STMT, common.PARSER_RULE_CONTEXT_CONTINUE_STATEMENT, common.PARSER_RULE_CONTEXT_BREAK_STATEMENT, common.PARSER_RULE_CONTEXT_RETURN_STMT, common.PARSER_RULE_CONTEXT_MATCH_STMT, common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT, common.PARSER_RULE_CONTEXT_LOCK_STMT, common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL, common.PARSER_RULE_CONTEXT_FORK_STMT, common.PARSER_RULE_CONTEXT_FOREACH_STMT, common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION, common.PARSER_RULE_CONTEXT_TRANSACTION_STMT, common.PARSER_RULE_CONTEXT_RETRY_STMT, common.PARSER_RULE_CONTEXT_ROLLBACK_STMT, common.PARSER_RULE_CONTEXT_DO_BLOCK, common.PARSER_RULE_CONTEXT_FAIL_STATEMENT, common.PARSER_RULE_CONTEXT_BLOCK_STMT}
-	ASSIGNMENT_STMT_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR}
-	VAR_DECL_RHS                                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	TOP_LEVEL_NODE                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EOF, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_METADATA, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	TOP_LEVEL_NODE_WITHOUT_METADATA                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EOF, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_MODIFIER, common.PARSER_RULE_CONTEXT_PUBLIC_KEYWORD}
-	TOP_LEVEL_NODE_WITHOUT_MODIFIER                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EOF, common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_MODULE_VAR_DECL, common.PARSER_RULE_CONTEXT_MODULE_CLASS_DEFINITION, common.PARSER_RULE_CONTEXT_SERVICE_DECL, common.PARSER_RULE_CONTEXT_LISTENER_DECL, common.PARSER_RULE_CONTEXT_MODULE_TYPE_DEFINITION, common.PARSER_RULE_CONTEXT_CONSTANT_DECL, common.PARSER_RULE_CONTEXT_ANNOTATION_DECL, common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION, common.PARSER_RULE_CONTEXT_MODULE_ENUM_DECLARATION, common.PARSER_RULE_CONTEXT_IMPORT_DECL}
-	FUNC_DEF_START                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_DEF_FIRST_QUALIFIER}
-	FUNC_DEF_WITHOUT_FIRST_QUALIFIER                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_DEF_SECOND_QUALIFIER}
-	TYPE_OR_VAR_NAME                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN}
-	FIELD_DESCRIPTOR_RHS                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_QUESTION_MARK, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
-	FIELD_OR_REST_DESCIPTOR_RHS                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_ELLIPSIS}
-	RECORD_BODY_START                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_START, common.PARSER_RULE_CONTEXT_OPEN_BRACE}
-	RECORD_BODY_END                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_END, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	TYPE_DESCRIPTORS                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESC_IDENTIFIER, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_RECORD_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_MAP_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_PARAMETERIZED_TYPE, common.PARSER_RULE_CONTEXT_TUPLE_TYPE_DESC_START, common.PARSER_RULE_CONTEXT_STREAM_KEYWORD, common.PARSER_RULE_CONTEXT_TABLE_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC, common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION, common.PARSER_RULE_CONTEXT_PARENTHESISED_TYPE_DESC_START}
-	TYPE_DESCRIPTOR_WITHOUT_ISOLATED                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC, common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR}
-	CLASS_DESCRIPTOR                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, common.PARSER_RULE_CONTEXT_STREAM_KEYWORD}
-	RECORD_FIELD_OR_RECORD_END                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RECORD_BODY_END, common.PARSER_RULE_CONTEXT_RECORD_FIELD}
-	RECORD_FIELD_START                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD, common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	RECORD_FIELD_WITHOUT_METADATA                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD}
-	ARG_START_OR_ARG_LIST_END                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_END, common.PARSER_RULE_CONTEXT_ARG_START}
-	ARG_START                                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_ELLIPSIS, common.PARSER_RULE_CONTEXT_EXPRESSION}
-	ARG_END                                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_END, common.PARSER_RULE_CONTEXT_COMMA}
-	NAMED_OR_POSITIONAL_ARG_RHS                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_END, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
-	OPTIONAL_FIELD_INITIALIZER                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	ON_FAIL_OPTIONAL_BINDING_PATTERN                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BLOCK_STMT, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN}
-	GROUPING_KEY_LIST_ELEMENT                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY}
-	GROUPING_KEY_LIST_ELEMENT_END                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_GROUP_BY_CLAUSE_END, common.PARSER_RULE_CONTEXT_COMMA}
-	CLASS_MEMBER_OR_OBJECT_MEMBER_START                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	OBJECT_CONSTRUCTOR_MEMBER_START                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	CLASS_MEMBER_OR_OBJECT_MEMBER_WITHOUT_META             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	OBJECT_CONS_MEMBER_WITHOUT_META                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	OBJECT_FUNC_OR_FIELD                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD_WITHOUT_VISIBILITY, common.PARSER_RULE_CONTEXT_OBJECT_MEMBER_VISIBILITY_QUAL}
-	OBJECT_FUNC_OR_FIELD_WITHOUT_VISIBILITY                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FIELD_START, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_START}
-	OBJECT_FIELD_QUALIFIER                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER, common.PARSER_RULE_CONTEXT_FINAL_KEYWORD}
-	OBJECT_METHOD_START                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FIRST_QUALIFIER}
-	OBJECT_METHOD_WITHOUT_FIRST_QUALIFIER                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_SECOND_QUALIFIER}
-	OBJECT_METHOD_WITHOUT_SECOND_QUALIFIER                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_THIRD_QUALIFIER}
-	OBJECT_METHOD_WITHOUT_THIRD_QUALIFIER                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FOURTH_QUALIFIER}
-	OBJECT_TYPE_START                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_FIRST_OBJECT_TYPE_QUALIFIER}
-	OBJECT_TYPE_WITHOUT_FIRST_QUALIFIER                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_SECOND_OBJECT_TYPE_QUALIFIER}
-	OBJECT_CONSTRUCTOR_START                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_FIRST_OBJECT_CONS_QUALIFIER}
-	OBJECT_CONS_WITHOUT_FIRST_QUALIFIER                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_SECOND_OBJECT_CONS_QUALIFIER}
-	OBJECT_CONSTRUCTOR_RHS                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_BRACE, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
-	ELSE_BODY                                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_IF_BLOCK, common.PARSER_RULE_CONTEXT_OPEN_BRACE}
-	ELSE_BLOCK                                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ELSE_KEYWORD, common.PARSER_RULE_CONTEXT_STATEMENT}
-	CALL_STATEMENT                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD, common.PARSER_RULE_CONTEXT_VARIABLE_REF, common.PARSER_RULE_CONTEXT_EXPRESSION}
-	IMPORT_PREFIX_DECL                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	IMPORT_DECL_ORG_OR_MODULE_NAME_RHS                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_AFTER_IMPORT_MODULE_NAME}
-	AFTER_IMPORT_MODULE_NAME                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	MAJOR_MINOR_VERSION_END                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	RETURN_RHS                                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_EXPRESSION}
-	EXPRESSION_START                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BASIC_LITERAL, common.PARSER_RULE_CONTEXT_NIL_LITERAL, common.PARSER_RULE_CONTEXT_VARIABLE_REF, common.PARSER_RULE_CONTEXT_ACCESS_EXPRESSION, common.PARSER_RULE_CONTEXT_TYPE_CAST, common.PARSER_RULE_CONTEXT_BRACED_EXPRESSION, common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_EXPRESSION, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_LET_EXPRESSION, common.PARSER_RULE_CONTEXT_TEMPLATE_START, common.PARSER_RULE_CONTEXT_XML_KEYWORD, common.PARSER_RULE_CONTEXT_STRING_KEYWORD, common.PARSER_RULE_CONTEXT_BASE16_KEYWORD, common.PARSER_RULE_CONTEXT_BASE64_KEYWORD, common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION, common.PARSER_RULE_CONTEXT_ERROR_KEYWORD, common.PARSER_RULE_CONTEXT_NEW_KEYWORD, common.PARSER_RULE_CONTEXT_START_KEYWORD, common.PARSER_RULE_CONTEXT_FLUSH_KEYWORD, common.PARSER_RULE_CONTEXT_LEFT_ARROW_TOKEN, common.PARSER_RULE_CONTEXT_WAIT_KEYWORD, common.PARSER_RULE_CONTEXT_COMMIT_KEYWORD, common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD, common.PARSER_RULE_CONTEXT_TYPEOF_EXPRESSION, common.PARSER_RULE_CONTEXT_TRAP_KEYWORD, common.PARSER_RULE_CONTEXT_UNARY_EXPRESSION, common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD, common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_RE_KEYWORD, common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION}
-	FIRST_MAPPING_FIELD_START                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MAPPING_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	MAPPING_FIELD_START                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD, common.PARSER_RULE_CONTEXT_ELLIPSIS, common.PARSER_RULE_CONTEXT_COMPUTED_FIELD_NAME, common.PARSER_RULE_CONTEXT_READONLY_KEYWORD}
-	SPECIFIC_FIELD                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MAPPING_FIELD_NAME, common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN}
-	SPECIFIC_FIELD_RHS                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_MAPPING_FIELD_END}
-	MAPPING_FIELD_END                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_COMMA}
-	CONST_DECL_RHS                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
-	ARRAY_LENGTH                                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_DECIMAL_INTEGER_LITERAL_TOKEN, common.PARSER_RULE_CONTEXT_HEX_INTEGER_LITERAL_TOKEN, common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_VARIABLE_REF}
-	PARAM_LIST                                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_REQUIRED_PARAM}
-	PARAMETER_START                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PARAMETER_START_WITHOUT_ANNOTATION, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	PARAMETER_START_WITHOUT_ANNOTATION                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PARAM, common.PARSER_RULE_CONTEXT_ASTERISK}
-	REQUIRED_PARAM_NAME_RHS                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PARAM_END, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
-	PARAM_END                                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	STMT_START_WITH_EXPR_RHS                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR}
-	EXPR_STMT_RHS                                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR}
-	EXPRESSION_STATEMENT_START                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD, common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_START_KEYWORD, common.PARSER_RULE_CONTEXT_FLUSH_KEYWORD}
-	ANNOT_DECL_OPTIONAL_TYPE                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_TAG, common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER}
-	CONST_DECL_TYPE                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER, common.PARSER_RULE_CONTEXT_VARIABLE_NAME}
-	ANNOT_DECL_RHS                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_TAG, common.PARSER_RULE_CONTEXT_ON_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	ANNOT_OPTIONAL_ATTACH_POINTS                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ON_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	ATTACH_POINT                                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SOURCE_KEYWORD, common.PARSER_RULE_CONTEXT_ATTACH_POINT_IDENT}
-	ATTACH_POINT_IDENT                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SINGLE_KEYWORD_ATTACH_POINT_IDENT, common.PARSER_RULE_CONTEXT_OBJECT_IDENT, common.PARSER_RULE_CONTEXT_SERVICE_IDENT, common.PARSER_RULE_CONTEXT_RECORD_IDENT}
-	SERVICE_IDENT_RHS                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_REMOTE_IDENT, common.PARSER_RULE_CONTEXT_ATTACH_POINT_END}
-	ATTACH_POINT_END                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	XML_NAMESPACE_PREFIX_DECL                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	CONSTANT_EXPRESSION                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BASIC_LITERAL, common.PARSER_RULE_CONTEXT_VARIABLE_REF, common.PARSER_RULE_CONTEXT_PLUS_TOKEN, common.PARSER_RULE_CONTEXT_MINUS_TOKEN, common.PARSER_RULE_CONTEXT_NIL_LITERAL}
-	LIST_CONSTRUCTOR_FIRST_MEMBER                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_MEMBER}
-	LIST_CONSTRUCTOR_MEMBER                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_ELLIPSIS}
-	TYPE_CAST_PARAM                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	TYPE_CAST_PARAM_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS, common.PARSER_RULE_CONTEXT_GT}
-	TABLE_KEYWORD_RHS                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_KEY_SPECIFIER, common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR}
-	ROW_LIST_RHS                                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR}
-	TABLE_ROW_END                                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	KEY_SPECIFIER_RHS                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_VARIABLE_NAME}
-	TABLE_KEY_RHS                                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	LET_VAR_DECL_START                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	STREAM_TYPE_FIRST_PARAM_RHS                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_GT}
-	TEMPLATE_MEMBER                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TEMPLATE_STRING, common.PARSER_RULE_CONTEXT_INTERPOLATION_START_TOKEN, common.PARSER_RULE_CONTEXT_TEMPLATE_END}
-	TEMPLATE_STRING_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_INTERPOLATION_START_TOKEN, common.PARSER_RULE_CONTEXT_TEMPLATE_END}
-	KEY_CONSTRAINTS_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_LT}
-	FUNCTION_KEYWORD_RHS                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_NAME, common.PARSER_RULE_CONTEXT_FUNC_TYPE_FUNC_KEYWORD_RHS}
-	FUNC_TYPE_FUNC_KEYWORD_RHS_START                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_END, common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS}
-	TYPE_DESC_RHS                                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_END_OF_TYPE_DESC, common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_PIPE, common.PARSER_RULE_CONTEXT_BITWISE_AND_OPERATOR}
-	TABLE_TYPE_DESC_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_KEY_KEYWORD, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS}
-	NEW_KEYWORD_RHS                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_CLASS_DESCRIPTOR_IN_NEW_EXPR, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS}
-	TABLE_CONSTRUCTOR_OR_QUERY_START                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TABLE_KEYWORD, common.PARSER_RULE_CONTEXT_STREAM_KEYWORD, common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION, common.PARSER_RULE_CONTEXT_MAP_KEYWORD}
-	TABLE_CONSTRUCTOR_OR_QUERY_RHS                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION}
-	QUERY_PIPELINE_RHS                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION_RHS, common.PARSER_RULE_CONTEXT_INTERMEDIATE_CLAUSE, common.PARSER_RULE_CONTEXT_QUERY_ACTION_RHS}
-	INTERMEDIATE_CLAUSE_START                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_WHERE_CLAUSE, common.PARSER_RULE_CONTEXT_FROM_CLAUSE, common.PARSER_RULE_CONTEXT_LET_CLAUSE, common.PARSER_RULE_CONTEXT_JOIN_CLAUSE, common.PARSER_RULE_CONTEXT_ORDER_BY_CLAUSE, common.PARSER_RULE_CONTEXT_LIMIT_CLAUSE, common.PARSER_RULE_CONTEXT_GROUP_BY_CLAUSE}
-	RESULT_CLAUSE                                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SELECT_CLAUSE, common.PARSER_RULE_CONTEXT_COLLECT_CLAUSE}
-	BRACED_EXPR_OR_ANON_FUNC_PARAM_RHS                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_COMMA}
-	ANNOTATION_REF_RHS                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_END, common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR}
-	INFER_PARAM_END_OR_PARENTHESIS_END                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_EXPR_FUNC_BODY_START}
-	OPTIONAL_PEER_WORKER                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS}
-	TYPE_DESC_IN_TUPLE_RHS                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_ELLIPSIS}
-	TUPLE_TYPE_MEMBER_RHS                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA}
-	LIST_CONSTRUCTOR_MEMBER_END                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA}
-	NIL_OR_PARENTHESISED_TYPE_DESC_RHS                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR}
-	BINDING_PATTERN                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER, common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN}
-	LIST_BINDING_PATTERNS_START                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	LIST_BINDING_PATTERN_CONTENTS                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN}
-	LIST_BINDING_PATTERN_MEMBER_END                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA}
-	MAPPING_BINDING_PATTERN_MEMBER                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN}
-	MAPPING_BINDING_PATTERN_END                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	FIELD_BINDING_PATTERN_END                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	ERROR_BINDING_PATTERN_ERROR_KEYWORD_RHS                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
-	ERROR_ARG_LIST_BINDING_PATTERN_START                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SIMPLE_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	ERROR_MESSAGE_BINDING_PATTERN_END                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	ERROR_MESSAGE_BINDING_PATTERN_RHS                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_CAUSE_SIMPLE_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN}
-	ERROR_FIELD_BINDING_PATTERN                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NAMED_ARG_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN}
-	ERROR_FIELD_BINDING_PATTERN_END                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_COMMA}
-	REMOTE_OR_RESOURCE_CALL_OR_ASYNC_SEND_RHS              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DEFAULT_WORKER_NAME_IN_ASYNC_SEND, common.PARSER_RULE_CONTEXT_RESOURCE_METHOD_CALL_SLASH_TOKEN, common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME, common.PARSER_RULE_CONTEXT_METHOD_NAME}
-	REMOTE_CALL_OR_ASYNC_SEND_END                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	RECEIVE_WORKERS                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER, common.PARSER_RULE_CONTEXT_MULTI_RECEIVE_WORKERS}
-	SINGLE_OR_ALTERNATE_WORKER_SEPARATOR                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER_END, common.PARSER_RULE_CONTEXT_PIPE}
-	RECEIVE_FIELD                                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME, common.PARSER_RULE_CONTEXT_RECEIVE_FIELD_NAME}
-	RECEIVE_FIELD_END                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_COMMA}
-	WAIT_KEYWORD_RHS                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MULTI_WAIT_FIELDS, common.PARSER_RULE_CONTEXT_ALTERNATE_WAIT_EXPRS}
-	WAIT_FIELD_NAME_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_WAIT_FIELD_END}
-	WAIT_FIELD_END                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_COMMA}
-	WAIT_FUTURE_EXPR_END                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ALTERNATE_WAIT_EXPR_LIST_END, common.PARSER_RULE_CONTEXT_PIPE}
-	ENUM_MEMBER_START                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ENUM_MEMBER_NAME, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	ENUM_MEMBER_RHS                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_ENUM_MEMBER_END}
-	ENUM_MEMBER_END                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	MEMBER_ACCESS_KEY_EXPR_END                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	ROLLBACK_RHS                                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_EXPRESSION}
-	RETRY_KEYWORD_RHS                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LT, common.PARSER_RULE_CONTEXT_RETRY_TYPE_PARAM_RHS}
-	RETRY_TYPE_PARAM_RHS                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_RETRY_BODY}
-	RETRY_BODY                                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BLOCK_STMT, common.PARSER_RULE_CONTEXT_TRANSACTION_STMT}
-	LIST_BP_OR_TUPLE_TYPE_MEMBER                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER}
-	LIST_BP_OR_TUPLE_TYPE_DESC_RHS                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_VARIABLE_NAME}
-	BRACKETED_LIST_MEMBER_END                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	BRACKETED_LIST_MEMBER                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_BINDING_PATTERN}
-	LIST_BINDING_MEMBER_OR_ARRAY_LENGTH                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ARRAY_LENGTH_START}
-	BRACKETED_LIST_RHS                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_OR_BP_RHS, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS}
-	BINDING_PATTERN_OR_VAR_REF_RHS                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_REF_RHS, common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_OR_BP_RHS}
-	TYPE_DESC_RHS_OR_BP_RHS                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_IN_TYPED_BP, common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_RHS}
-	XML_NAVIGATE_EXPR                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_XML_FILTER_EXPR, common.PARSER_RULE_CONTEXT_XML_STEP_EXPR}
-	XML_NAME_PATTERN_RHS                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_GT, common.PARSER_RULE_CONTEXT_PIPE}
-	XML_ATOMIC_NAME_PATTERN_START                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_IDENTIFIER}
-	XML_ATOMIC_NAME_IDENTIFIER_RHS                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_IDENTIFIER}
-	XML_STEP_START                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH_ASTERISK_TOKEN, common.PARSER_RULE_CONTEXT_DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN, common.PARSER_RULE_CONTEXT_SLASH_LT_TOKEN}
-	XML_STEP_EXTEND                                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_XML_STEP_EXTEND_END, common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_DOT_LT_TOKEN, common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR}
-	XML_STEP_START_END                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION_RHS, common.PARSER_RULE_CONTEXT_XML_STEP_EXTENDS}
-	MATCH_PATTERN_LIST_MEMBER_RHS                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MATCH_PATTERN_END, common.PARSER_RULE_CONTEXT_PIPE}
-	OPTIONAL_MATCH_GUARD                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RIGHT_DOUBLE_ARROW, common.PARSER_RULE_CONTEXT_IF_KEYWORD}
-	MATCH_PATTERN_START                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION, common.PARSER_RULE_CONTEXT_VAR_KEYWORD, common.PARSER_RULE_CONTEXT_MAPPING_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN}
-	LIST_MATCH_PATTERNS_START                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	LIST_MATCH_PATTERN_MEMBER                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MATCH_PATTERN_START, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
-	LIST_MATCH_PATTERN_MEMBER_RHS                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	FIELD_MATCH_PATTERNS_START                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	FIELD_MATCH_PATTERN_MEMBER                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
-	FIELD_MATCH_PATTERN_MEMBER_RHS                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
-	ERROR_MATCH_PATTERN_OR_CONST_PATTERN                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_MATCH_PATTERN_RHS}
-	ERROR_MATCH_PATTERN_ERROR_KEYWORD_RHS                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
-	ERROR_ARG_LIST_MATCH_PATTERN_START                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION, common.PARSER_RULE_CONTEXT_VAR_KEYWORD, common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	ERROR_MESSAGE_MATCH_PATTERN_END                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_MATCH_PATTERN_END_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	ERROR_MESSAGE_MATCH_PATTERN_RHS                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_CAUSE_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN}
-	ERROR_FIELD_MATCH_PATTERN                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
-	ERROR_FIELD_MATCH_PATTERN_RHS                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
-	NAMED_ARG_MATCH_PATTERN_RHS                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
-	ORDER_KEY_LIST_END                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ORDER_CLAUSE_END, common.PARSER_RULE_CONTEXT_COMMA}
-	LIST_BP_OR_LIST_CONSTRUCTOR_MEMBER                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_FIRST_MEMBER}
-	TUPLE_TYPE_DESC_OR_LIST_CONST_MEMBER                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_FIRST_MEMBER}
-	JOIN_CLAUSE_START                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_JOIN_KEYWORD, common.PARSER_RULE_CONTEXT_OUTER_KEYWORD}
-	MAPPING_BP_OR_MAPPING_CONSTRUCTOR_MEMBER               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_MAPPING_FIELD}
-	LISTENERS_LIST_END                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_BLOCK, common.PARSER_RULE_CONTEXT_COMMA}
-	FUNC_TYPE_DESC_START                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_FIRST_QUALIFIER}
-	FUNC_TYPE_DESC_START_WITHOUT_FIRST_QUAL                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_SECOND_QUALIFIER}
-	MODULE_CLASS_DEFINITION_START                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_FIRST_CLASS_TYPE_QUALIFIER}
-	CLASS_DEF_WITHOUT_FIRST_QUALIFIER                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_SECOND_CLASS_TYPE_QUALIFIER}
-	CLASS_DEF_WITHOUT_SECOND_QUALIFIER                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_THIRD_CLASS_TYPE_QUALIFIER}
-	CLASS_DEF_WITHOUT_THIRD_QUALIFIER                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_FOURTH_CLASS_TYPE_QUALIFIER}
-	REGULAR_COMPOUND_STMT_RHS                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_STATEMENT, common.PARSER_RULE_CONTEXT_ON_FAIL_CLAUSE}
-	NAMED_WORKER_DECL_START                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_WORKER_KEYWORD, common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD}
-	SERVICE_DECL_START                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SERVICE_KEYWORD, common.PARSER_RULE_CONTEXT_SERVICE_DECL_QUALIFIER}
-	OPTIONAL_SERVICE_DECL_TYPE                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_SERVICE, common.PARSER_RULE_CONTEXT_OPTIONAL_ABSOLUTE_PATH}
-	OPTIONAL_ABSOLUTE_PATH                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ABSOLUTE_RESOURCE_PATH, common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN, common.PARSER_RULE_CONTEXT_ON_KEYWORD}
-	ABSOLUTE_RESOURCE_PATH_START                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_ABSOLUTE_PATH_SINGLE_SLASH}
-	ABSOLUTE_RESOURCE_PATH_END                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_SERVICE_DECL_RHS}
-	SERVICE_DECL_OR_VAR_DECL                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPTIONAL_ABSOLUTE_PATH, common.PARSER_RULE_CONTEXT_SERVICE_VAR_DECL_RHS}
-	OPTIONAL_RELATIVE_PATH                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH}
-	FUNC_DEF_OR_TYPE_DESC_RHS                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH, common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
-	RELATIVE_RESOURCE_PATH_START                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_RESOURCE_PATH_SEGMENT}
-	RESOURCE_PATH_SEGMENT                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PATH_SEGMENT_IDENT, common.PARSER_RULE_CONTEXT_RESOURCE_PATH_PARAM}
-	PATH_PARAM_OPTIONAL_ANNOTS                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PATH_PARAM, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	PATH_PARAM_ELLIPSIS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPTIONAL_PATH_PARAM_NAME, common.PARSER_RULE_CONTEXT_ELLIPSIS}
-	OPTIONAL_PATH_PARAM_NAME                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
-	RELATIVE_RESOURCE_PATH_END                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RESOURCE_ACCESSOR_DEF_OR_DECL_RHS, common.PARSER_RULE_CONTEXT_SLASH}
-	CONFIG_VAR_DECL_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_QUESTION_MARK}
-	ERROR_CONSTRUCTOR_RHS                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
-	OPTIONAL_TYPE_PARAMETER                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LT, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS}
-	MAP_TYPE_OR_TYPE_REF                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_LT}
-	OBJECT_TYPE_OR_TYPE_REF                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_OBJECT_TYPE_OBJECT_KEYWORD_RHS}
-	STREAM_TYPE_OR_TYPE_REF                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_LT}
-	TABLE_TYPE_OR_TYPE_REF                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_ROW_TYPE_PARAM}
-	PARAMETERIZED_TYPE_OR_TYPE_REF                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_PARAMETER}
-	TYPE_DESC_RHS_OR_TYPE_REF                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS}
-	TRANSACTION_STMT_RHS_OR_TYPE_REF                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_REF_COLON, common.PARSER_RULE_CONTEXT_TRANSACTION_STMT_TRANSACTION_KEYWORD_RHS}
-	TABLE_CONS_OR_QUERY_EXPR_OR_VAR_REF                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_REF_COLON, common.PARSER_RULE_CONTEXT_EXPRESSION_START_TABLE_KEYWORD_RHS}
-	QUERY_EXPR_OR_VAR_REF                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_REF_COLON, common.PARSER_RULE_CONTEXT_QUERY_CONSTRUCT_TYPE_RHS}
-	ERROR_CONS_EXPR_OR_VAR_REF                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_REF_COLON, common.PARSER_RULE_CONTEXT_ERROR_CONS_ERROR_KEYWORD_RHS}
-	QUALIFIED_IDENTIFIER                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER_START_IDENTIFIER, common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER_PREDECLARED_PREFIX}
-	MODULE_VAR_DECL_START                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_MODULE_VAR_FIRST_QUAL}
-	MODULE_VAR_WITHOUT_FIRST_QUAL                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_MODULE_VAR_SECOND_QUAL}
-	MODULE_VAR_WITHOUT_SECOND_QUAL                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_MODULE_VAR_THIRD_QUAL}
-	EXPR_START_OR_INFERRED_TYPEDESC_DEFAULT_START          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_START_LT}
-	TYPE_CAST_PARAM_START_OR_INFERRED_TYPEDESC_DEFAULT_END = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM_START, common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_END_GT}
-	END_OF_PARAMS_OR_NEXT_PARAM_START                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_COMMA}
-	PARAM_START                                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PARAM, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
-	PARAM_RHS                                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_REST_PARAM_RHS}
-	FUNC_TYPE_PARAM_RHS                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PARAM_END, common.PARSER_RULE_CONTEXT_PARAM_RHS}
-	ANNOTATION_DECL_START                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_KEYWORD, common.PARSER_RULE_CONTEXT_CONST_KEYWORD}
-	OPTIONAL_RESOURCE_ACCESS_PATH                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RESOURCE_ACCESS_PATH_SEGMENT, common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_METHOD}
-	RESOURCE_ACCESS_PATH_SEGMENT                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_IDENTIFIER, common.PARSER_RULE_CONTEXT_OPEN_BRACKET}
-	COMPUTED_SEGMENT_OR_REST_SEGMENT                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_ELLIPSIS}
-	RESOURCE_ACCESS_SEGMENT_RHS                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_METHOD}
-	OPTIONAL_RESOURCE_ACCESS_METHOD                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_ACTION_ARG_LIST}
-	OPTIONAL_RESOURCE_ACCESS_ACTION_ARG_LIST               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_ACTION_END}
-	OPTIONAL_TOP_LEVEL_SEMICOLON                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE, common.PARSER_RULE_CONTEXT_SEMICOLON}
-	TUPLE_MEMBER                                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATIONS, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE}
-	NATURAL_EXPRESSION_START                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NATURAL_KEYWORD, common.PARSER_RULE_CONTEXT_CONST_KEYWORD}
-	OPTIONAL_PARENTHESIZED_ARG_LIST                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_OPEN_BRACE}
+	funcTypeOrDefOptionalReturns                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_BODY_OR_TYPE_DESC_RHS}
+	funcBodyOrTypeDescRhs                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_BODY, common.PARSER_RULE_CONTEXT_MODULE_LEVEL_AMBIGUOUS_FUNC_TYPE_DESC_RHS}
+	funcDefOptionalReturns                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_BODY}
+	methodDeclOptionalReturns                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	funcBody                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK, common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY}
+	externalFuncBodyOptionalAnnots                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATIONS, common.PARSER_RULE_CONTEXT_EXTERNAL_KEYWORD}
+	annonFuncOptionalReturns                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_ANON_FUNC_BODY}
+	anonFuncBody                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK, common.PARSER_RULE_CONTEXT_EXPLICIT_ANON_FUNC_EXPR_BODY_START}
+	funcTypeOptionalReturns                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_END}
+	funcTypeOrAnonFuncOptionalReturns              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_RHS_OR_ANON_FUNC_BODY}
+	funcTypeDescRhsOrAnonFuncBody                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANON_FUNC_BODY, common.PARSER_RULE_CONTEXT_STMT_LEVEL_AMBIGUOUS_FUNC_TYPE_DESC_RHS}
+	workerNameRhs                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RETURNS_KEYWORD, common.PARSER_RULE_CONTEXT_BLOCK_STMT}
+	statements                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_IF_BLOCK, common.PARSER_RULE_CONTEXT_WHILE_BLOCK, common.PARSER_RULE_CONTEXT_CALL_STMT, common.PARSER_RULE_CONTEXT_PANIC_STMT, common.PARSER_RULE_CONTEXT_CONTINUE_STATEMENT, common.PARSER_RULE_CONTEXT_BREAK_STATEMENT, common.PARSER_RULE_CONTEXT_RETURN_STMT, common.PARSER_RULE_CONTEXT_MATCH_STMT, common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT, common.PARSER_RULE_CONTEXT_LOCK_STMT, common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL, common.PARSER_RULE_CONTEXT_FORK_STMT, common.PARSER_RULE_CONTEXT_FOREACH_STMT, common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION, common.PARSER_RULE_CONTEXT_TRANSACTION_STMT, common.PARSER_RULE_CONTEXT_RETRY_STMT, common.PARSER_RULE_CONTEXT_ROLLBACK_STMT, common.PARSER_RULE_CONTEXT_DO_BLOCK, common.PARSER_RULE_CONTEXT_FAIL_STATEMENT, common.PARSER_RULE_CONTEXT_BLOCK_STMT}
+	assignmentStmtRhs                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR}
+	varDeclRhs                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	topLevelNode                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EOF, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_METADATA, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	topLevelNodeWithoutMetadata                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EOF, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_MODIFIER, common.PARSER_RULE_CONTEXT_PUBLIC_KEYWORD}
+	topLevelNodeWithoutModifier                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EOF, common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_MODULE_VAR_DECL, common.PARSER_RULE_CONTEXT_MODULE_CLASS_DEFINITION, common.PARSER_RULE_CONTEXT_SERVICE_DECL, common.PARSER_RULE_CONTEXT_LISTENER_DECL, common.PARSER_RULE_CONTEXT_MODULE_TYPE_DEFINITION, common.PARSER_RULE_CONTEXT_CONSTANT_DECL, common.PARSER_RULE_CONTEXT_ANNOTATION_DECL, common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION, common.PARSER_RULE_CONTEXT_MODULE_ENUM_DECLARATION, common.PARSER_RULE_CONTEXT_IMPORT_DECL}
+	funcDefStart                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_DEF_FIRST_QUALIFIER}
+	funcDefWithoutFirstQualifier                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_DEF_SECOND_QUALIFIER}
+	typeOrVarName                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN}
+	fieldDescriptorRhs                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_QUESTION_MARK, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
+	fieldOrRestDesciptorRhs                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_ELLIPSIS}
+	recordBodyStart                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_START, common.PARSER_RULE_CONTEXT_OPEN_BRACE}
+	recordBodyEnd                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSED_RECORD_BODY_END, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	typeDescriptors                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESC_IDENTIFIER, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_RECORD_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_MAP_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_PARAMETERIZED_TYPE, common.PARSER_RULE_CONTEXT_TUPLE_TYPE_DESC_START, common.PARSER_RULE_CONTEXT_STREAM_KEYWORD, common.PARSER_RULE_CONTEXT_TABLE_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC, common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION, common.PARSER_RULE_CONTEXT_PARENTHESISED_TYPE_DESC_START}
+	typeDescriptorWithoutIsolated                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC, common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR}
+	classDescriptor                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, common.PARSER_RULE_CONTEXT_STREAM_KEYWORD}
+	recordFieldOrRecordEnd                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RECORD_BODY_END, common.PARSER_RULE_CONTEXT_RECORD_FIELD}
+	recordFieldStart                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD, common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	recordFieldWithoutMetadata                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD}
+	argStartOrArgListEnd                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_END, common.PARSER_RULE_CONTEXT_ARG_START}
+	argStart                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_ELLIPSIS, common.PARSER_RULE_CONTEXT_EXPRESSION}
+	argEnd                                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_END, common.PARSER_RULE_CONTEXT_COMMA}
+	namedOrPositionalArgRhs                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_END, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
+	optionalFieldInitializer                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	onFailOptionalBindingPattern                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BLOCK_STMT, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN}
+	groupingKeyListElement                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY}
+	groupingKeyListElementEnd                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_GROUP_BY_CLAUSE_END, common.PARSER_RULE_CONTEXT_COMMA}
+	classMemberOrObjectMemberStart                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	objectConstructorMemberStart                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	classMemberOrObjectMemberWithoutMeta           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	objectConsMemberWithoutMeta                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	objectFuncOrField                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD_WITHOUT_VISIBILITY, common.PARSER_RULE_CONTEXT_OBJECT_MEMBER_VISIBILITY_QUAL}
+	objectFuncOrFieldWithoutVisibility             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_FIELD_START, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_START}
+	objectFieldQualifier                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER, common.PARSER_RULE_CONTEXT_FINAL_KEYWORD}
+	objectMethodStart                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FIRST_QUALIFIER}
+	objectMethodWithoutFirstQualifier              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_SECOND_QUALIFIER}
+	objectMethodWithoutSecondQualifier             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_THIRD_QUALIFIER}
+	objectMethodWithoutThirdQualifier              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_DEF, common.PARSER_RULE_CONTEXT_OBJECT_METHOD_FOURTH_QUALIFIER}
+	objectTypeStart                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_FIRST_OBJECT_TYPE_QUALIFIER}
+	objectTypeWithoutFirstQualifier                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_SECOND_OBJECT_TYPE_QUALIFIER}
+	objectConstructorStart                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_FIRST_OBJECT_CONS_QUALIFIER}
+	objectConsWithoutFirstQualifier                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_KEYWORD, common.PARSER_RULE_CONTEXT_SECOND_OBJECT_CONS_QUALIFIER}
+	objectConstructorRhs                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_BRACE, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
+	elseBody                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_IF_BLOCK, common.PARSER_RULE_CONTEXT_OPEN_BRACE}
+	elseBlock                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ELSE_KEYWORD, common.PARSER_RULE_CONTEXT_STATEMENT}
+	callStatement                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD, common.PARSER_RULE_CONTEXT_VARIABLE_REF, common.PARSER_RULE_CONTEXT_EXPRESSION}
+	importPrefixDecl                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	importDeclOrgOrModuleNameRhs                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_AFTER_IMPORT_MODULE_NAME}
+	afterImportModuleName                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	returnRhs                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_EXPRESSION}
+	expressionStart                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BASIC_LITERAL, common.PARSER_RULE_CONTEXT_NIL_LITERAL, common.PARSER_RULE_CONTEXT_VARIABLE_REF, common.PARSER_RULE_CONTEXT_ACCESS_EXPRESSION, common.PARSER_RULE_CONTEXT_TYPE_CAST, common.PARSER_RULE_CONTEXT_BRACED_EXPRESSION, common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_EXPRESSION, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_LET_EXPRESSION, common.PARSER_RULE_CONTEXT_TEMPLATE_START, common.PARSER_RULE_CONTEXT_XML_KEYWORD, common.PARSER_RULE_CONTEXT_STRING_KEYWORD, common.PARSER_RULE_CONTEXT_BASE16_KEYWORD, common.PARSER_RULE_CONTEXT_BASE64_KEYWORD, common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION, common.PARSER_RULE_CONTEXT_ERROR_KEYWORD, common.PARSER_RULE_CONTEXT_NEW_KEYWORD, common.PARSER_RULE_CONTEXT_START_KEYWORD, common.PARSER_RULE_CONTEXT_FLUSH_KEYWORD, common.PARSER_RULE_CONTEXT_LEFT_ARROW_TOKEN, common.PARSER_RULE_CONTEXT_WAIT_KEYWORD, common.PARSER_RULE_CONTEXT_COMMIT_KEYWORD, common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD, common.PARSER_RULE_CONTEXT_TYPEOF_EXPRESSION, common.PARSER_RULE_CONTEXT_TRAP_KEYWORD, common.PARSER_RULE_CONTEXT_UNARY_EXPRESSION, common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD, common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_RE_KEYWORD, common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION}
+	firstMappingFieldStart                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MAPPING_FIELD, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	mappingFieldStart                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD, common.PARSER_RULE_CONTEXT_ELLIPSIS, common.PARSER_RULE_CONTEXT_COMPUTED_FIELD_NAME, common.PARSER_RULE_CONTEXT_READONLY_KEYWORD}
+	specificField                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MAPPING_FIELD_NAME, common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN}
+	specificFieldRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_MAPPING_FIELD_END}
+	mappingFieldEnd                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_COMMA}
+	constDeclRhs                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
+	arrayLength                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_DECIMAL_INTEGER_LITERAL_TOKEN, common.PARSER_RULE_CONTEXT_HEX_INTEGER_LITERAL_TOKEN, common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_VARIABLE_REF}
+	paramList                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_REQUIRED_PARAM}
+	parameterStart                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PARAMETER_START_WITHOUT_ANNOTATION, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	parameterStartWithoutAnnotation                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PARAM, common.PARSER_RULE_CONTEXT_ASTERISK}
+	requiredParamNameRhs                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PARAM_END, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
+	paramEnd                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	stmtStartWithExprRhs                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR}
+	exprStmtRhs                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_COMPOUND_BINARY_OPERATOR}
+	expressionStatementStart                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CHECKING_KEYWORD, common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_START_KEYWORD, common.PARSER_RULE_CONTEXT_FLUSH_KEYWORD}
+	annotDeclOptionalType                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_TAG, common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER}
+	constDeclType                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER, common.PARSER_RULE_CONTEXT_VARIABLE_NAME}
+	annotDeclRhs                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_TAG, common.PARSER_RULE_CONTEXT_ON_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	annotOptionalAttachPoints                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ON_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	attachPoint                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SOURCE_KEYWORD, common.PARSER_RULE_CONTEXT_ATTACH_POINT_IDENT}
+	attachPointIdent                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SINGLE_KEYWORD_ATTACH_POINT_IDENT, common.PARSER_RULE_CONTEXT_OBJECT_IDENT, common.PARSER_RULE_CONTEXT_SERVICE_IDENT, common.PARSER_RULE_CONTEXT_RECORD_IDENT}
+	serviceIdentRhs                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_REMOTE_IDENT, common.PARSER_RULE_CONTEXT_ATTACH_POINT_END}
+	attachPointEnd                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	xmlNamespacePrefixDecl                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_AS_KEYWORD, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	constantExpression                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BASIC_LITERAL, common.PARSER_RULE_CONTEXT_VARIABLE_REF, common.PARSER_RULE_CONTEXT_PLUS_TOKEN, common.PARSER_RULE_CONTEXT_MINUS_TOKEN, common.PARSER_RULE_CONTEXT_NIL_LITERAL}
+	listConstructorFirstMember                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_MEMBER}
+	listConstructorMember                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_ELLIPSIS}
+	typeCastParam                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	typeCastParamRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS, common.PARSER_RULE_CONTEXT_GT}
+	tableKeywordRhs                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_KEY_SPECIFIER, common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR}
+	rowListRhs                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR}
+	tableRowEnd                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	keySpecifierRhs                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_VARIABLE_NAME}
+	tableKeyRhs                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	letVarDeclStart                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	streamTypeFirstParamRhs                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_GT}
+	templateMember                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TEMPLATE_STRING, common.PARSER_RULE_CONTEXT_INTERPOLATION_START_TOKEN, common.PARSER_RULE_CONTEXT_TEMPLATE_END}
+	templateStringRhs                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_INTERPOLATION_START_TOKEN, common.PARSER_RULE_CONTEXT_TEMPLATE_END}
+	keyConstraintsRhs                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_LT}
+	functionKeywordRhs                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_NAME, common.PARSER_RULE_CONTEXT_FUNC_TYPE_FUNC_KEYWORD_RHS}
+	funcTypeFuncKeywordRhsStart                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_END, common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS}
+	typeDescRhs                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_END_OF_TYPE_DESC, common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_PIPE, common.PARSER_RULE_CONTEXT_BITWISE_AND_OPERATOR}
+	tableTypeDescRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_KEY_KEYWORD, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS}
+	newKeywordRhs                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_CLASS_DESCRIPTOR_IN_NEW_EXPR, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS}
+	tableConstructorOrQueryStart                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TABLE_KEYWORD, common.PARSER_RULE_CONTEXT_STREAM_KEYWORD, common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION, common.PARSER_RULE_CONTEXT_MAP_KEYWORD}
+	tableConstructorOrQueryRhs                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR, common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION}
+	queryPipelineRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION_RHS, common.PARSER_RULE_CONTEXT_INTERMEDIATE_CLAUSE, common.PARSER_RULE_CONTEXT_QUERY_ACTION_RHS}
+	intermediateClauseStart                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_WHERE_CLAUSE, common.PARSER_RULE_CONTEXT_FROM_CLAUSE, common.PARSER_RULE_CONTEXT_LET_CLAUSE, common.PARSER_RULE_CONTEXT_JOIN_CLAUSE, common.PARSER_RULE_CONTEXT_ORDER_BY_CLAUSE, common.PARSER_RULE_CONTEXT_LIMIT_CLAUSE, common.PARSER_RULE_CONTEXT_GROUP_BY_CLAUSE}
+	resultClause                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SELECT_CLAUSE, common.PARSER_RULE_CONTEXT_COLLECT_CLAUSE}
+	bracedExprOrAnonFuncParamRhs                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_COMMA}
+	annotationRefRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_END, common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR}
+	inferParamEndOrParenthesisEnd                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_EXPR_FUNC_BODY_START}
+	optionalPeerWorker                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS}
+	typeDescInTupleRhs                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_ELLIPSIS}
+	tupleTypeMemberRhs                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA}
+	listConstructorMemberEnd                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA}
+	nilOrParenthesisedTypeDescRhs                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR}
+	bindingPattern                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER, common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN}
+	listBindingPatternsStart                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	listBindingPatternContents                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN}
+	listBindingPatternMemberEnd                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_COMMA}
+	mappingBindingPatternMember                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN}
+	mappingBindingPatternEnd                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	fieldBindingPatternEnd                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	errorBindingPatternErrorKeywordRhs             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
+	errorArgListBindingPatternStart                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SIMPLE_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	errorMessageBindingPatternEnd                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	errorMessageBindingPatternRhs                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_CAUSE_SIMPLE_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN}
+	errorFieldBindingPattern                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NAMED_ARG_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN}
+	errorFieldBindingPatternEnd                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_COMMA}
+	remoteOrResourceCallOrAsyncSendRhs             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DEFAULT_WORKER_NAME_IN_ASYNC_SEND, common.PARSER_RULE_CONTEXT_RESOURCE_METHOD_CALL_SLASH_TOKEN, common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME, common.PARSER_RULE_CONTEXT_METHOD_NAME}
+	remoteCallOrAsyncSendEnd                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	receiveWorkers                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER, common.PARSER_RULE_CONTEXT_MULTI_RECEIVE_WORKERS}
+	singleOrAlternateWorkerSeparator               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER_END, common.PARSER_RULE_CONTEXT_PIPE}
+	receiveField                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PEER_WORKER_NAME, common.PARSER_RULE_CONTEXT_RECEIVE_FIELD_NAME}
+	receiveFieldEnd                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_COMMA}
+	waitKeywordRhs                                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MULTI_WAIT_FIELDS, common.PARSER_RULE_CONTEXT_ALTERNATE_WAIT_EXPRS}
+	waitFieldNameRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_WAIT_FIELD_END}
+	waitFieldEnd                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACE, common.PARSER_RULE_CONTEXT_COMMA}
+	waitFutureExprEnd                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ALTERNATE_WAIT_EXPR_LIST_END, common.PARSER_RULE_CONTEXT_PIPE}
+	enumMemberStart                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ENUM_MEMBER_NAME, common.PARSER_RULE_CONTEXT_DOC_STRING, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	enumMemberRhs                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_ENUM_MEMBER_END}
+	enumMemberEnd                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	memberAccessKeyExprEnd                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	rollbackRhs                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_EXPRESSION}
+	retryKeywordRhs                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LT, common.PARSER_RULE_CONTEXT_RETRY_TYPE_PARAM_RHS}
+	retryTypeParamRhs                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_RETRY_BODY}
+	retryBody                                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BLOCK_STMT, common.PARSER_RULE_CONTEXT_TRANSACTION_STMT}
+	listBpOrTupleTypeMember                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER}
+	listBpOrTupleTypeDescRhs                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_VARIABLE_NAME}
+	bracketedListMemberEnd                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	bracketedListMember                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_BINDING_PATTERN}
+	listBindingMemberOrArrayLength                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_BRACKET, common.PARSER_RULE_CONTEXT_BINDING_PATTERN, common.PARSER_RULE_CONTEXT_ARRAY_LENGTH_START}
+	bracketedListRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_OR_BP_RHS, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS}
+	bindingPatternOrVarRefRhs                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_REF_RHS, common.PARSER_RULE_CONTEXT_ASSIGN_OP, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_OR_BP_RHS}
+	typeDescRhsOrBpRhs                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_IN_TYPED_BP, common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_RHS}
+	xmlNavigateExpr                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_XML_FILTER_EXPR, common.PARSER_RULE_CONTEXT_XML_STEP_EXPR}
+	xmlNamePatternRhs                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_GT, common.PARSER_RULE_CONTEXT_PIPE}
+	xmlAtomicNamePatternStart                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_IDENTIFIER}
+	xmlAtomicNameIdentifierRhs                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ASTERISK, common.PARSER_RULE_CONTEXT_IDENTIFIER}
+	xmlStepStart                                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH_ASTERISK_TOKEN, common.PARSER_RULE_CONTEXT_DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN, common.PARSER_RULE_CONTEXT_SLASH_LT_TOKEN}
+	xmlStepExtend                                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_XML_STEP_EXTEND_END, common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_DOT_LT_TOKEN, common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR}
+	xmlStepStartEnd                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION_RHS, common.PARSER_RULE_CONTEXT_XML_STEP_EXTENDS}
+	matchPatternListMemberRhs                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MATCH_PATTERN_END, common.PARSER_RULE_CONTEXT_PIPE}
+	optionalMatchGuard                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RIGHT_DOUBLE_ARROW, common.PARSER_RULE_CONTEXT_IF_KEYWORD}
+	matchPatternStart                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION, common.PARSER_RULE_CONTEXT_VAR_KEYWORD, common.PARSER_RULE_CONTEXT_MAPPING_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN}
+	listMatchPatternsStart                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	listMatchPatternMember                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MATCH_PATTERN_START, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
+	listMatchPatternMemberRhs                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	fieldMatchPatternsStart                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	fieldMatchPatternMember                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
+	fieldMatchPatternMemberRhs                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_BRACE}
+	errorMatchPatternOrConstPattern                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_MATCH_PATTERN_RHS}
+	errorMatchPatternErrorKeywordRhs               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
+	errorArgListMatchPatternStart                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION, common.PARSER_RULE_CONTEXT_VAR_KEYWORD, common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	errorMessageMatchPatternEnd                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_MATCH_PATTERN_END_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	errorMessageMatchPatternRhs                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ERROR_CAUSE_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN}
+	errorFieldMatchPattern                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
+	errorFieldMatchPatternRhs                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COMMA, common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS}
+	namedArgMatchPatternRhs                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN, common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN}
+	orderKeyListEnd                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ORDER_CLAUSE_END, common.PARSER_RULE_CONTEXT_COMMA}
+	listBpOrListConstructorMember                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_FIRST_MEMBER}
+	tupleTypeDescOrListConstMember                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_FIRST_MEMBER}
+	joinClauseStart                                = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_JOIN_KEYWORD, common.PARSER_RULE_CONTEXT_OUTER_KEYWORD}
+	mappingBpOrMappingConstructorMember            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN_MEMBER, common.PARSER_RULE_CONTEXT_MAPPING_FIELD}
+	listenersListEnd                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_BLOCK, common.PARSER_RULE_CONTEXT_COMMA}
+	funcTypeDescStart                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_FIRST_QUALIFIER}
+	funcTypeDescStartWithoutFirstQual              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD, common.PARSER_RULE_CONTEXT_FUNC_TYPE_SECOND_QUALIFIER}
+	moduleClassDefinitionStart                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_FIRST_CLASS_TYPE_QUALIFIER}
+	classDefWithoutFirstQualifier                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_SECOND_CLASS_TYPE_QUALIFIER}
+	classDefWithoutSecondQualifier                 = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_THIRD_CLASS_TYPE_QUALIFIER}
+	classDefWithoutThirdQualifier                  = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLASS_KEYWORD, common.PARSER_RULE_CONTEXT_FOURTH_CLASS_TYPE_QUALIFIER}
+	regularCompoundStmtRhs                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_STATEMENT, common.PARSER_RULE_CONTEXT_ON_FAIL_CLAUSE}
+	namedWorkerDeclStart                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_WORKER_KEYWORD, common.PARSER_RULE_CONTEXT_TRANSACTIONAL_KEYWORD}
+	serviceDeclStart                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SERVICE_KEYWORD, common.PARSER_RULE_CONTEXT_SERVICE_DECL_QUALIFIER}
+	optionalServiceDeclType                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_SERVICE, common.PARSER_RULE_CONTEXT_OPTIONAL_ABSOLUTE_PATH}
+	optionalAbsolutePath                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ABSOLUTE_RESOURCE_PATH, common.PARSER_RULE_CONTEXT_STRING_LITERAL_TOKEN, common.PARSER_RULE_CONTEXT_ON_KEYWORD}
+	absoluteResourcePathStart                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_ABSOLUTE_PATH_SINGLE_SLASH}
+	absoluteResourcePathEnd                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_SERVICE_DECL_RHS}
+	serviceDeclOrVarDecl                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPTIONAL_ABSOLUTE_PATH, common.PARSER_RULE_CONTEXT_SERVICE_VAR_DECL_RHS}
+	optionalRelativePath                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH}
+	funcDefOrTypeDescRhs                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS, common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH, common.PARSER_RULE_CONTEXT_SEMICOLON, common.PARSER_RULE_CONTEXT_ASSIGN_OP}
+	relativeResourcePathStart                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_RESOURCE_PATH_SEGMENT}
+	resourcePathSegment                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PATH_SEGMENT_IDENT, common.PARSER_RULE_CONTEXT_RESOURCE_PATH_PARAM}
+	pathParamOptionalAnnots                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PATH_PARAM, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	pathParamEllipsis                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_OPTIONAL_PATH_PARAM_NAME, common.PARSER_RULE_CONTEXT_ELLIPSIS}
+	optionalPathParamName                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_CLOSE_BRACKET}
+	relativeResourcePathEnd                        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RESOURCE_ACCESSOR_DEF_OR_DECL_RHS, common.PARSER_RULE_CONTEXT_SLASH}
+	configVarDeclRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_QUESTION_MARK}
+	errorConstructorRhs                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_TYPE_REFERENCE}
+	optionalTypeParameter                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_LT, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS}
+	mapTypeOrTypeRef                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_LT}
+	objectTypeOrTypeRef                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_OBJECT_TYPE_OBJECT_KEYWORD_RHS}
+	streamTypeOrTypeRef                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_LT}
+	tableTypeOrTypeRef                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_ROW_TYPE_PARAM}
+	parameterizedTypeOrTypeRef                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_PARAMETER}
+	typeDescRhsOrTypeRef                           = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_COLON, common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS}
+	transactionStmtRhsOrTypeRef                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_REF_COLON, common.PARSER_RULE_CONTEXT_TRANSACTION_STMT_TRANSACTION_KEYWORD_RHS}
+	tableConsOrQueryExprOrVarRef                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_REF_COLON, common.PARSER_RULE_CONTEXT_EXPRESSION_START_TABLE_KEYWORD_RHS}
+	queryExprOrVarRef                              = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_REF_COLON, common.PARSER_RULE_CONTEXT_QUERY_CONSTRUCT_TYPE_RHS}
+	errorConsExprOrVarRef                          = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_REF_COLON, common.PARSER_RULE_CONTEXT_ERROR_CONS_ERROR_KEYWORD_RHS}
+	qualifiedIdentifier                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER_START_IDENTIFIER, common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER_PREDECLARED_PREFIX}
+	moduleVarDeclStart                             = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_MODULE_VAR_FIRST_QUAL}
+	moduleVarWithoutFirstQual                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_MODULE_VAR_SECOND_QUAL}
+	moduleVarWithoutSecondQual                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, common.PARSER_RULE_CONTEXT_MODULE_VAR_THIRD_QUAL}
+	exprStartOrInferredTypedescDefaultStart        = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_START_LT}
+	typeCastParamStartOrInferredTypedescDefaultEnd = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM_START, common.PARSER_RULE_CONTEXT_INFERRED_TYPEDESC_DEFAULT_END_GT}
+	endOfParamsOrNextParamStart                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS, common.PARSER_RULE_CONTEXT_COMMA}
+	paramStart                                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PARAM, common.PARSER_RULE_CONTEXT_ANNOTATIONS}
+	paramRhs                                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_VARIABLE_NAME, common.PARSER_RULE_CONTEXT_REST_PARAM_RHS}
+	funcTypeParamRhs                               = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_PARAM_END, common.PARSER_RULE_CONTEXT_PARAM_RHS}
+	annotationDeclStart                            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATION_KEYWORD, common.PARSER_RULE_CONTEXT_CONST_KEYWORD}
+	optionalResourceAccessPath                     = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_RESOURCE_ACCESS_PATH_SEGMENT, common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_METHOD}
+	resourceAccessPathSegment                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_IDENTIFIER, common.PARSER_RULE_CONTEXT_OPEN_BRACKET}
+	computedSegmentOrRestSegment                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_ELLIPSIS}
+	resourceAccessSegmentRhs                       = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_SLASH, common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_METHOD}
+	optionalResourceAccessMethod                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_ACTION_ARG_LIST}
+	optionalResourceAccessActionArgList            = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_ACTION_END}
+	optionalTopLevelSemicolon                      = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE, common.PARSER_RULE_CONTEXT_SEMICOLON}
+	tupleMember                                    = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ANNOTATIONS, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE}
+	naturalExpressionStart                         = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_NATURAL_KEYWORD, common.PARSER_RULE_CONTEXT_CONST_KEYWORD}
+	optionalParenthesizedArgList                   = []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN, common.PARSER_RULE_CONTEXT_OPEN_BRACE}
 )
 
-func NewBallerinaParserErrorHandlerFromTokenReader(tokenReader *TokenReader) BallerinaParserErrorHandler {
-	this := BallerinaParserErrorHandler{}
-	this.AbstractParserErrorHandlerBase = *NewAbstractParserErrorHandlerBase(tokenReader)
+func newBallerinaParserErrorHandlerFromTokenReader(tokenReader *tokenReader) ballerinaParserErrorHandler {
+	this := ballerinaParserErrorHandler{}
+	this.abstractParserErrorHandlerBase = *newAbstractParserErrorHandlerBase(tokenReader)
 	this.Self = &this
 	return this
 }
 
-func (b *BallerinaParserErrorHandler) isEndOfObjectTypeNode(nextLookahead int) bool {
+func (b *ballerinaParserErrorHandler) isEndOfObjectTypeNode(nextLookahead int) bool {
 	nextToken := b.tokenReader.PeekN(nextLookahead)
 	switch nextToken.Kind() {
 	case st.CLOSE_BRACE_TOKEN,
@@ -1068,7 +1068,7 @@ func (b *BallerinaParserErrorHandler) isEndOfObjectTypeNode(nextLookahead int) b
 	}
 }
 
-func (b *BallerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *Result) {
+func (b *ballerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(SeekMatch start %s %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint))
 	})
@@ -1078,7 +1078,7 @@ func (b *BallerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleCont
 	var hasMatch bool
 	var skipRule bool
 	matchingRulesCount := 0
-	for currentDepth < LOOKAHEAD_LIMIT {
+	for currentDepth < lookaheadLimit {
 		skipRule = false
 		lookahead = b.getNextLookahead(lookahead)
 		nextToken := b.tokenReader.PeekN(lookahead)
@@ -1330,19 +1330,19 @@ func (b *BallerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleCont
 		}
 		currentCtx = b.GetNextRule(currentCtx, lookahead)
 	}
-	result = NewResult(make([]*Solution, 0), matchingRulesCount)
-	result.solution = NewSolution(ACTION_KEEP, currentCtx, st.NONE, currentCtx.String())
+	result = newResult(make([]*solution, 0), matchingRulesCount)
+	result.solution = newSolution(actionKeep, currentCtx, st.NONE, currentCtx.String())
 	return result
 }
 
-func (b *BallerinaParserErrorHandler) getNextLookahead(lookahead int) int {
+func (b *ballerinaParserErrorHandler) getNextLookahead(lookahead int) int {
 	for b.tokenReader.PeekN(lookahead).Kind() == st.DOCUMENTATION_STRING {
 		lookahead++
 	}
 	return lookahead
 }
 
-func (b *BallerinaParserErrorHandler) isKeyword(currentCtx common.ParserRuleContext) bool {
+func (b *ballerinaParserErrorHandler) isKeyword(currentCtx common.ParserRuleContext) bool {
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_EOF,
 		common.PARSER_RULE_CONTEXT_PUBLIC_KEYWORD,
@@ -1429,7 +1429,7 @@ func (b *BallerinaParserErrorHandler) isKeyword(currentCtx common.ParserRuleCont
 	}
 }
 
-func (b *BallerinaParserErrorHandler) HasAlternativePaths(currentCtx common.ParserRuleContext) bool {
+func (b *ballerinaParserErrorHandler) HasAlternativePaths(currentCtx common.ParserRuleContext) bool {
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE,
 		common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_MODIFIER,
@@ -1686,7 +1686,7 @@ func (b *BallerinaParserErrorHandler) HasAlternativePaths(currentCtx common.Pars
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getShortestAlternative(currentCtx common.ParserRuleContext) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getShortestAlternative(currentCtx common.ParserRuleContext) common.ParserRuleContext {
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE,
 		common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_MODIFIER,
@@ -2147,7 +2147,7 @@ func (b *BallerinaParserErrorHandler) getShortestAlternative(currentCtx common.P
 	}
 }
 
-func (b *BallerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result Result) {
+func (b *ballerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(seekMatchInAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
@@ -2157,17 +2157,17 @@ func (b *BallerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx com
 	var alternativeRules []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE:
-		alternativeRules = TOP_LEVEL_NODE
+		alternativeRules = topLevelNode
 	case common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_MODIFIER:
-		alternativeRules = TOP_LEVEL_NODE_WITHOUT_MODIFIER
+		alternativeRules = topLevelNodeWithoutModifier
 	case common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_METADATA:
-		alternativeRules = TOP_LEVEL_NODE_WITHOUT_METADATA
+		alternativeRules = topLevelNodeWithoutMetadata
 	case common.PARSER_RULE_CONTEXT_FUNC_DEF_START:
-		alternativeRules = FUNC_DEF_START
+		alternativeRules = funcDefStart
 	case common.PARSER_RULE_CONTEXT_FUNC_DEF_WITHOUT_FIRST_QUALIFIER:
-		alternativeRules = FUNC_DEF_WITHOUT_FIRST_QUALIFIER
+		alternativeRules = funcDefWithoutFirstQualifier
 	case common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_START_WITHOUT_FIRST_QUAL:
-		alternativeRules = FUNC_TYPE_DESC_START_WITHOUT_FIRST_QUAL
+		alternativeRules = funcTypeDescStartWithoutFirstQual
 	case common.PARSER_RULE_CONTEXT_FUNC_OPTIONAL_RETURNS:
 		parentCtx := b.GetParentContext()
 		var alternatives []common.ParserRuleContext
@@ -2175,222 +2175,222 @@ func (b *BallerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx com
 		case common.PARSER_RULE_CONTEXT_FUNC_DEF:
 			grandParentCtx := b.GetGrandParentContext()
 			if grandParentCtx == common.PARSER_RULE_CONTEXT_OBJECT_TYPE_MEMBER {
-				alternatives = METHOD_DECL_OPTIONAL_RETURNS
+				alternatives = methodDeclOptionalReturns
 			} else {
-				alternatives = FUNC_DEF_OPTIONAL_RETURNS
+				alternatives = funcDefOptionalReturns
 			}
 		case common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION:
-			alternatives = ANNON_FUNC_OPTIONAL_RETURNS
+			alternatives = annonFuncOptionalReturns
 		case common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC:
-			alternatives = FUNC_TYPE_OPTIONAL_RETURNS
+			alternatives = funcTypeOptionalReturns
 		case common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_OR_ANON_FUNC:
-			alternatives = FUNC_TYPE_OR_ANON_FUNC_OPTIONAL_RETURNS
+			alternatives = funcTypeOrAnonFuncOptionalReturns
 		default:
-			alternatives = FUNC_TYPE_OR_DEF_OPTIONAL_RETURNS
+			alternatives = funcTypeOrDefOptionalReturns
 		}
 		alternativeRules = alternatives
 	case common.PARSER_RULE_CONTEXT_FUNC_BODY_OR_TYPE_DESC_RHS:
-		alternativeRules = FUNC_BODY_OR_TYPE_DESC_RHS
+		alternativeRules = funcBodyOrTypeDescRhs
 	case common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_RHS_OR_ANON_FUNC_BODY:
-		alternativeRules = FUNC_TYPE_DESC_RHS_OR_ANON_FUNC_BODY
+		alternativeRules = funcTypeDescRhsOrAnonFuncBody
 	case common.PARSER_RULE_CONTEXT_ANON_FUNC_BODY:
-		alternativeRules = ANON_FUNC_BODY
+		alternativeRules = anonFuncBody
 	case common.PARSER_RULE_CONTEXT_FUNC_BODY:
-		alternativeRules = FUNC_BODY
+		alternativeRules = funcBody
 	case common.PARSER_RULE_CONTEXT_PARAM_LIST:
-		alternativeRules = PARAM_LIST
+		alternativeRules = paramList
 	case common.PARSER_RULE_CONTEXT_REQUIRED_PARAM_NAME_RHS:
-		alternativeRules = REQUIRED_PARAM_NAME_RHS
+		alternativeRules = requiredParamNameRhs
 	case common.PARSER_RULE_CONTEXT_FIELD_DESCRIPTOR_RHS:
-		alternativeRules = FIELD_DESCRIPTOR_RHS
+		alternativeRules = fieldDescriptorRhs
 	case common.PARSER_RULE_CONTEXT_FIELD_OR_REST_DESCIPTOR_RHS:
-		alternativeRules = FIELD_OR_REST_DESCIPTOR_RHS
+		alternativeRules = fieldOrRestDesciptorRhs
 	case common.PARSER_RULE_CONTEXT_RECORD_BODY_END:
-		alternativeRules = RECORD_BODY_END
+		alternativeRules = recordBodyEnd
 	case common.PARSER_RULE_CONTEXT_RECORD_BODY_START:
-		alternativeRules = RECORD_BODY_START
+		alternativeRules = recordBodyStart
 	case common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR:
 		if !b.isInTypeDescContext() {
 			panic("assertion failed")
 		}
-		alternativeRules = TYPE_DESCRIPTORS
+		alternativeRules = typeDescriptors
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_WITHOUT_ISOLATED:
-		alternativeRules = TYPE_DESCRIPTOR_WITHOUT_ISOLATED
+		alternativeRules = typeDescriptorWithoutIsolated
 	case common.PARSER_RULE_CONTEXT_CLASS_DESCRIPTOR:
-		alternativeRules = CLASS_DESCRIPTOR
+		alternativeRules = classDescriptor
 	case common.PARSER_RULE_CONTEXT_RECORD_FIELD_OR_RECORD_END:
-		alternativeRules = RECORD_FIELD_OR_RECORD_END
+		alternativeRules = recordFieldOrRecordEnd
 	case common.PARSER_RULE_CONTEXT_RECORD_FIELD_START:
-		alternativeRules = RECORD_FIELD_START
+		alternativeRules = recordFieldStart
 	case common.PARSER_RULE_CONTEXT_RECORD_FIELD_WITHOUT_METADATA:
-		alternativeRules = RECORD_FIELD_WITHOUT_METADATA
+		alternativeRules = recordFieldWithoutMetadata
 	case common.PARSER_RULE_CONTEXT_CLASS_MEMBER_OR_OBJECT_MEMBER_START:
-		alternativeRules = CLASS_MEMBER_OR_OBJECT_MEMBER_START
+		alternativeRules = classMemberOrObjectMemberStart
 	case common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER_START:
-		alternativeRules = OBJECT_CONSTRUCTOR_MEMBER_START
+		alternativeRules = objectConstructorMemberStart
 	case common.PARSER_RULE_CONTEXT_CLASS_MEMBER_OR_OBJECT_MEMBER_WITHOUT_META:
-		alternativeRules = CLASS_MEMBER_OR_OBJECT_MEMBER_WITHOUT_META
+		alternativeRules = classMemberOrObjectMemberWithoutMeta
 	case common.PARSER_RULE_CONTEXT_OBJECT_CONS_MEMBER_WITHOUT_META:
-		alternativeRules = OBJECT_CONS_MEMBER_WITHOUT_META
+		alternativeRules = objectConsMemberWithoutMeta
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_FIELD_INITIALIZER:
-		alternativeRules = OPTIONAL_FIELD_INITIALIZER
+		alternativeRules = optionalFieldInitializer
 	case common.PARSER_RULE_CONTEXT_ON_FAIL_OPTIONAL_BINDING_PATTERN:
-		alternativeRules = ON_FAIL_OPTIONAL_BINDING_PATTERN
+		alternativeRules = onFailOptionalBindingPattern
 	case common.PARSER_RULE_CONTEXT_OBJECT_METHOD_START:
-		alternativeRules = OBJECT_METHOD_START
+		alternativeRules = objectMethodStart
 	case common.PARSER_RULE_CONTEXT_OBJECT_METHOD_WITHOUT_FIRST_QUALIFIER:
-		alternativeRules = OBJECT_METHOD_WITHOUT_FIRST_QUALIFIER
+		alternativeRules = objectMethodWithoutFirstQualifier
 	case common.PARSER_RULE_CONTEXT_OBJECT_METHOD_WITHOUT_SECOND_QUALIFIER:
-		alternativeRules = OBJECT_METHOD_WITHOUT_SECOND_QUALIFIER
+		alternativeRules = objectMethodWithoutSecondQualifier
 	case common.PARSER_RULE_CONTEXT_OBJECT_METHOD_WITHOUT_THIRD_QUALIFIER:
-		alternativeRules = OBJECT_METHOD_WITHOUT_THIRD_QUALIFIER
+		alternativeRules = objectMethodWithoutThirdQualifier
 	case common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD:
-		alternativeRules = OBJECT_FUNC_OR_FIELD
+		alternativeRules = objectFuncOrField
 	case common.PARSER_RULE_CONTEXT_OBJECT_FUNC_OR_FIELD_WITHOUT_VISIBILITY:
-		alternativeRules = OBJECT_FUNC_OR_FIELD_WITHOUT_VISIBILITY
+		alternativeRules = objectFuncOrFieldWithoutVisibility
 	case common.PARSER_RULE_CONTEXT_OBJECT_TYPE_START:
-		alternativeRules = OBJECT_TYPE_START
+		alternativeRules = objectTypeStart
 	case common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_START:
-		alternativeRules = OBJECT_CONSTRUCTOR_START
+		alternativeRules = objectConstructorStart
 	case common.PARSER_RULE_CONTEXT_IMPORT_PREFIX_DECL:
-		alternativeRules = IMPORT_PREFIX_DECL
+		alternativeRules = importPrefixDecl
 	case common.PARSER_RULE_CONTEXT_IMPORT_DECL_ORG_OR_MODULE_NAME_RHS:
-		alternativeRules = IMPORT_DECL_ORG_OR_MODULE_NAME_RHS
+		alternativeRules = importDeclOrgOrModuleNameRhs
 	case common.PARSER_RULE_CONTEXT_AFTER_IMPORT_MODULE_NAME:
-		alternativeRules = AFTER_IMPORT_MODULE_NAME
+		alternativeRules = afterImportModuleName
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_ABSOLUTE_PATH:
-		alternativeRules = OPTIONAL_ABSOLUTE_PATH
+		alternativeRules = optionalAbsolutePath
 	case common.PARSER_RULE_CONTEXT_CONST_DECL_TYPE:
-		alternativeRules = CONST_DECL_TYPE
+		alternativeRules = constDeclType
 	case common.PARSER_RULE_CONTEXT_CONST_DECL_RHS:
-		alternativeRules = CONST_DECL_RHS
+		alternativeRules = constDeclRhs
 	case common.PARSER_RULE_CONTEXT_PARAMETER_START:
-		alternativeRules = PARAMETER_START
+		alternativeRules = parameterStart
 	case common.PARSER_RULE_CONTEXT_PARAMETER_START_WITHOUT_ANNOTATION:
-		alternativeRules = PARAMETER_START_WITHOUT_ANNOTATION
+		alternativeRules = parameterStartWithoutAnnotation
 	case common.PARSER_RULE_CONTEXT_ANNOT_DECL_OPTIONAL_TYPE:
-		alternativeRules = ANNOT_DECL_OPTIONAL_TYPE
+		alternativeRules = annotDeclOptionalType
 	case common.PARSER_RULE_CONTEXT_ANNOT_DECL_RHS:
-		alternativeRules = ANNOT_DECL_RHS
+		alternativeRules = annotDeclRhs
 	case common.PARSER_RULE_CONTEXT_ANNOT_OPTIONAL_ATTACH_POINTS:
-		alternativeRules = ANNOT_OPTIONAL_ATTACH_POINTS
+		alternativeRules = annotOptionalAttachPoints
 	case common.PARSER_RULE_CONTEXT_ATTACH_POINT:
-		alternativeRules = ATTACH_POINT
+		alternativeRules = attachPoint
 	case common.PARSER_RULE_CONTEXT_ATTACH_POINT_IDENT:
-		alternativeRules = ATTACH_POINT_IDENT
+		alternativeRules = attachPointIdent
 	case common.PARSER_RULE_CONTEXT_ATTACH_POINT_END:
-		alternativeRules = ATTACH_POINT_END
+		alternativeRules = attachPointEnd
 	case common.PARSER_RULE_CONTEXT_XML_NAMESPACE_PREFIX_DECL:
-		alternativeRules = XML_NAMESPACE_PREFIX_DECL
+		alternativeRules = xmlNamespacePrefixDecl
 	case common.PARSER_RULE_CONTEXT_ENUM_MEMBER_START:
-		alternativeRules = ENUM_MEMBER_START
+		alternativeRules = enumMemberStart
 	case common.PARSER_RULE_CONTEXT_ENUM_MEMBER_RHS:
-		alternativeRules = ENUM_MEMBER_RHS
+		alternativeRules = enumMemberRhs
 	case common.PARSER_RULE_CONTEXT_ENUM_MEMBER_END:
-		alternativeRules = ENUM_MEMBER_END
+		alternativeRules = enumMemberEnd
 	case common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY_OPTIONAL_ANNOTS:
-		alternativeRules = EXTERNAL_FUNC_BODY_OPTIONAL_ANNOTS
+		alternativeRules = externalFuncBodyOptionalAnnots
 	case common.PARSER_RULE_CONTEXT_LIST_BP_OR_LIST_CONSTRUCTOR_MEMBER:
-		alternativeRules = LIST_BP_OR_LIST_CONSTRUCTOR_MEMBER
+		alternativeRules = listBpOrListConstructorMember
 	case common.PARSER_RULE_CONTEXT_TUPLE_TYPE_DESC_OR_LIST_CONST_MEMBER:
-		alternativeRules = TUPLE_TYPE_DESC_OR_LIST_CONST_MEMBER
+		alternativeRules = tupleTypeDescOrListConstMember
 	case common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR_MEMBER:
-		alternativeRules = MAPPING_BP_OR_MAPPING_CONSTRUCTOR_MEMBER
+		alternativeRules = mappingBpOrMappingConstructorMember
 	case common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_START,
 		common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION_START:
-		alternativeRules = FUNC_TYPE_DESC_START
+		alternativeRules = funcTypeDescStart
 	case common.PARSER_RULE_CONTEXT_MODULE_CLASS_DEFINITION_START:
-		alternativeRules = MODULE_CLASS_DEFINITION_START
+		alternativeRules = moduleClassDefinitionStart
 	case common.PARSER_RULE_CONTEXT_CLASS_DEF_WITHOUT_FIRST_QUALIFIER:
-		alternativeRules = CLASS_DEF_WITHOUT_FIRST_QUALIFIER
+		alternativeRules = classDefWithoutFirstQualifier
 	case common.PARSER_RULE_CONTEXT_CLASS_DEF_WITHOUT_SECOND_QUALIFIER:
-		alternativeRules = CLASS_DEF_WITHOUT_SECOND_QUALIFIER
+		alternativeRules = classDefWithoutSecondQualifier
 	case common.PARSER_RULE_CONTEXT_CLASS_DEF_WITHOUT_THIRD_QUALIFIER:
-		alternativeRules = CLASS_DEF_WITHOUT_THIRD_QUALIFIER
+		alternativeRules = classDefWithoutThirdQualifier
 	case common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_TYPE_REF:
-		alternativeRules = OBJECT_CONSTRUCTOR_RHS
+		alternativeRules = objectConstructorRhs
 	case common.PARSER_RULE_CONTEXT_OBJECT_FIELD_QUALIFIER:
-		alternativeRules = OBJECT_FIELD_QUALIFIER
+		alternativeRules = objectFieldQualifier
 	case common.PARSER_RULE_CONTEXT_CONFIG_VAR_DECL_RHS:
-		alternativeRules = CONFIG_VAR_DECL_RHS
+		alternativeRules = configVarDeclRhs
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_SERVICE_DECL_TYPE:
-		alternativeRules = OPTIONAL_SERVICE_DECL_TYPE
+		alternativeRules = optionalServiceDeclType
 	case common.PARSER_RULE_CONTEXT_SERVICE_IDENT_RHS:
-		alternativeRules = SERVICE_IDENT_RHS
+		alternativeRules = serviceIdentRhs
 	case common.PARSER_RULE_CONTEXT_ABSOLUTE_RESOURCE_PATH_START:
-		alternativeRules = ABSOLUTE_RESOURCE_PATH_START
+		alternativeRules = absoluteResourcePathStart
 	case common.PARSER_RULE_CONTEXT_ABSOLUTE_RESOURCE_PATH_END:
-		alternativeRules = ABSOLUTE_RESOURCE_PATH_END
+		alternativeRules = absoluteResourcePathEnd
 	case common.PARSER_RULE_CONTEXT_SERVICE_DECL_OR_VAR_DECL:
-		alternativeRules = SERVICE_DECL_OR_VAR_DECL
+		alternativeRules = serviceDeclOrVarDecl
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_RELATIVE_PATH:
-		alternativeRules = OPTIONAL_RELATIVE_PATH
+		alternativeRules = optionalRelativePath
 	case common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH_START:
-		alternativeRules = RELATIVE_RESOURCE_PATH_START
+		alternativeRules = relativeResourcePathStart
 	case common.PARSER_RULE_CONTEXT_RESOURCE_PATH_SEGMENT:
-		alternativeRules = RESOURCE_PATH_SEGMENT
+		alternativeRules = resourcePathSegment
 	case common.PARSER_RULE_CONTEXT_PATH_PARAM_OPTIONAL_ANNOTS:
-		alternativeRules = PATH_PARAM_OPTIONAL_ANNOTS
+		alternativeRules = pathParamOptionalAnnots
 	case common.PARSER_RULE_CONTEXT_PATH_PARAM_ELLIPSIS:
-		alternativeRules = PATH_PARAM_ELLIPSIS
+		alternativeRules = pathParamEllipsis
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_PATH_PARAM_NAME:
-		alternativeRules = OPTIONAL_PATH_PARAM_NAME
+		alternativeRules = optionalPathParamName
 	case common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH_END:
-		alternativeRules = RELATIVE_RESOURCE_PATH_END
+		alternativeRules = relativeResourcePathEnd
 	case common.PARSER_RULE_CONTEXT_SERVICE_DECL_START:
-		alternativeRules = SERVICE_DECL_START
+		alternativeRules = serviceDeclStart
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_PARAMETER:
-		alternativeRules = OPTIONAL_TYPE_PARAMETER
+		alternativeRules = optionalTypeParameter
 	case common.PARSER_RULE_CONTEXT_MAP_TYPE_OR_TYPE_REF:
-		alternativeRules = MAP_TYPE_OR_TYPE_REF
+		alternativeRules = mapTypeOrTypeRef
 	case common.PARSER_RULE_CONTEXT_OBJECT_TYPE_OR_TYPE_REF:
-		alternativeRules = OBJECT_TYPE_OR_TYPE_REF
+		alternativeRules = objectTypeOrTypeRef
 	case common.PARSER_RULE_CONTEXT_STREAM_TYPE_OR_TYPE_REF:
-		alternativeRules = STREAM_TYPE_OR_TYPE_REF
+		alternativeRules = streamTypeOrTypeRef
 	case common.PARSER_RULE_CONTEXT_TABLE_TYPE_OR_TYPE_REF:
-		alternativeRules = TABLE_TYPE_OR_TYPE_REF
+		alternativeRules = tableTypeOrTypeRef
 	case common.PARSER_RULE_CONTEXT_PARAMETERIZED_TYPE_OR_TYPE_REF:
-		alternativeRules = PARAMETERIZED_TYPE_OR_TYPE_REF
+		alternativeRules = parameterizedTypeOrTypeRef
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_OR_TYPE_REF:
-		alternativeRules = TYPE_DESC_RHS_OR_TYPE_REF
+		alternativeRules = typeDescRhsOrTypeRef
 	case common.PARSER_RULE_CONTEXT_TRANSACTION_STMT_RHS_OR_TYPE_REF:
-		alternativeRules = TRANSACTION_STMT_RHS_OR_TYPE_REF
+		alternativeRules = transactionStmtRhsOrTypeRef
 	case common.PARSER_RULE_CONTEXT_TABLE_CONS_OR_QUERY_EXPR_OR_VAR_REF:
-		alternativeRules = TABLE_CONS_OR_QUERY_EXPR_OR_VAR_REF
+		alternativeRules = tableConsOrQueryExprOrVarRef
 	case common.PARSER_RULE_CONTEXT_QUERY_EXPR_OR_VAR_REF:
-		alternativeRules = QUERY_EXPR_OR_VAR_REF
+		alternativeRules = queryExprOrVarRef
 	case common.PARSER_RULE_CONTEXT_ERROR_CONS_EXPR_OR_VAR_REF:
-		alternativeRules = ERROR_CONS_EXPR_OR_VAR_REF
+		alternativeRules = errorConsExprOrVarRef
 	case common.PARSER_RULE_CONTEXT_QUALIFIED_IDENTIFIER:
-		alternativeRules = QUALIFIED_IDENTIFIER
+		alternativeRules = qualifiedIdentifier
 	case common.PARSER_RULE_CONTEXT_MODULE_VAR_DECL_START:
-		alternativeRules = MODULE_VAR_DECL_START
+		alternativeRules = moduleVarDeclStart
 	case common.PARSER_RULE_CONTEXT_MODULE_VAR_WITHOUT_FIRST_QUAL:
-		alternativeRules = MODULE_VAR_WITHOUT_FIRST_QUAL
+		alternativeRules = moduleVarWithoutFirstQual
 	case common.PARSER_RULE_CONTEXT_MODULE_VAR_WITHOUT_SECOND_QUAL:
-		alternativeRules = MODULE_VAR_WITHOUT_SECOND_QUAL
+		alternativeRules = moduleVarWithoutSecondQual
 	case common.PARSER_RULE_CONTEXT_OBJECT_TYPE_WITHOUT_FIRST_QUALIFIER:
-		alternativeRules = OBJECT_TYPE_WITHOUT_FIRST_QUALIFIER
+		alternativeRules = objectTypeWithoutFirstQualifier
 	case common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_TYPE_DESC_RHS:
-		alternativeRules = FUNC_DEF_OR_TYPE_DESC_RHS
+		alternativeRules = funcDefOrTypeDescRhs
 	case common.PARSER_RULE_CONTEXT_EXPR_START_OR_INFERRED_TYPEDESC_DEFAULT_START:
-		alternativeRules = EXPR_START_OR_INFERRED_TYPEDESC_DEFAULT_START
+		alternativeRules = exprStartOrInferredTypedescDefaultStart
 	case common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM_START_OR_INFERRED_TYPEDESC_DEFAULT_END:
-		alternativeRules = TYPE_CAST_PARAM_START_OR_INFERRED_TYPEDESC_DEFAULT_END
+		alternativeRules = typeCastParamStartOrInferredTypedescDefaultEnd
 	case common.PARSER_RULE_CONTEXT_END_OF_PARAMS_OR_NEXT_PARAM_START:
-		alternativeRules = END_OF_PARAMS_OR_NEXT_PARAM_START
+		alternativeRules = endOfParamsOrNextParamStart
 	case common.PARSER_RULE_CONTEXT_PARAM_START:
-		alternativeRules = PARAM_START
+		alternativeRules = paramStart
 	case common.PARSER_RULE_CONTEXT_PARAM_RHS:
-		alternativeRules = PARAM_RHS
+		alternativeRules = paramRhs
 	case common.PARSER_RULE_CONTEXT_FUNC_TYPE_PARAM_RHS:
-		alternativeRules = FUNC_TYPE_PARAM_RHS
+		alternativeRules = funcTypeParamRhs
 	case common.PARSER_RULE_CONTEXT_ANNOTATION_DECL_START:
-		alternativeRules = ANNOTATION_DECL_START
+		alternativeRules = annotationDeclStart
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_TOP_LEVEL_SEMICOLON:
-		alternativeRules = OPTIONAL_TOP_LEVEL_SEMICOLON
+		alternativeRules = optionalTopLevelSemicolon
 	case common.PARSER_RULE_CONTEXT_TUPLE_MEMBER:
-		alternativeRules = TUPLE_MEMBER
+		alternativeRules = tupleMember
 	default:
 		return b.seekMatchInStmtRelatedAlternativePaths(currentCtx, lookahead, currentDepth, matchingRulesCount,
 			isEntryPoint)
@@ -2398,7 +2398,7 @@ func (b *BallerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx com
 	return *b.seekInAlternativesPaths(lookahead, currentDepth, matchingRulesCount, alternativeRules, isEntryPoint)
 }
 
-func (b *BallerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result Result) {
+func (b *ballerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
@@ -2408,178 +2408,178 @@ func (b *BallerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(cur
 	var alternativeRules []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_VAR_DECL_STMT_RHS:
-		alternativeRules = VAR_DECL_RHS
+		alternativeRules = varDeclRhs
 	case common.PARSER_RULE_CONTEXT_STATEMENT, common.PARSER_RULE_CONTEXT_STATEMENT_WITHOUT_ANNOTS:
 		return b.seekInStatements(currentCtx, lookahead, currentDepth, matchingRulesCount, isEntryPoint)
 	case common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME:
-		alternativeRules = TYPE_OR_VAR_NAME
+		alternativeRules = typeOrVarName
 	case common.PARSER_RULE_CONTEXT_ELSE_BLOCK:
-		alternativeRules = ELSE_BLOCK
+		alternativeRules = elseBlock
 	case common.PARSER_RULE_CONTEXT_ELSE_BODY:
-		alternativeRules = ELSE_BODY
+		alternativeRules = elseBody
 	case common.PARSER_RULE_CONTEXT_CALL_STMT_START:
-		alternativeRules = CALL_STATEMENT
+		alternativeRules = callStatement
 	case common.PARSER_RULE_CONTEXT_RETURN_STMT_RHS:
-		alternativeRules = RETURN_RHS
+		alternativeRules = returnRhs
 	case common.PARSER_RULE_CONTEXT_ARRAY_LENGTH:
-		alternativeRules = ARRAY_LENGTH
+		alternativeRules = arrayLength
 	case common.PARSER_RULE_CONTEXT_STMT_START_WITH_EXPR_RHS:
-		alternativeRules = STMT_START_WITH_EXPR_RHS
+		alternativeRules = stmtStartWithExprRhs
 	case common.PARSER_RULE_CONTEXT_EXPR_STMT_RHS:
-		alternativeRules = EXPR_STMT_RHS
+		alternativeRules = exprStmtRhs
 	case common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT_START:
-		alternativeRules = EXPRESSION_STATEMENT_START
+		alternativeRules = expressionStatementStart
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS:
 		if !b.isInTypeDescContext() {
 			panic("assertion failed")
 		}
-		alternativeRules = TYPE_DESC_RHS
+		alternativeRules = typeDescRhs
 	case common.PARSER_RULE_CONTEXT_STREAM_TYPE_FIRST_PARAM_RHS:
-		alternativeRules = STREAM_TYPE_FIRST_PARAM_RHS
+		alternativeRules = streamTypeFirstParamRhs
 	case common.PARSER_RULE_CONTEXT_FUNCTION_KEYWORD_RHS:
-		alternativeRules = FUNCTION_KEYWORD_RHS
+		alternativeRules = functionKeywordRhs
 	case common.PARSER_RULE_CONTEXT_FUNC_TYPE_FUNC_KEYWORD_RHS_START:
-		alternativeRules = FUNC_TYPE_FUNC_KEYWORD_RHS_START
+		alternativeRules = funcTypeFuncKeywordRhsStart
 	case common.PARSER_RULE_CONTEXT_WORKER_NAME_RHS:
-		alternativeRules = WORKER_NAME_RHS
+		alternativeRules = workerNameRhs
 	case common.PARSER_RULE_CONTEXT_BINDING_PATTERN:
-		alternativeRules = BINDING_PATTERN
+		alternativeRules = bindingPattern
 	case common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERNS_START:
-		alternativeRules = LIST_BINDING_PATTERNS_START
+		alternativeRules = listBindingPatternsStart
 	case common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER_END:
-		alternativeRules = LIST_BINDING_PATTERN_MEMBER_END
+		alternativeRules = listBindingPatternMemberEnd
 	case common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN_MEMBER:
-		alternativeRules = LIST_BINDING_PATTERN_CONTENTS
+		alternativeRules = listBindingPatternContents
 	case common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN_END:
-		alternativeRules = MAPPING_BINDING_PATTERN_END
+		alternativeRules = mappingBindingPatternEnd
 	case common.PARSER_RULE_CONTEXT_FIELD_BINDING_PATTERN_END:
-		alternativeRules = FIELD_BINDING_PATTERN_END
+		alternativeRules = fieldBindingPatternEnd
 	case common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN_MEMBER:
-		alternativeRules = MAPPING_BINDING_PATTERN_MEMBER
+		alternativeRules = mappingBindingPatternMember
 	case common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN_ERROR_KEYWORD_RHS:
-		alternativeRules = ERROR_BINDING_PATTERN_ERROR_KEYWORD_RHS
+		alternativeRules = errorBindingPatternErrorKeywordRhs
 	case common.PARSER_RULE_CONTEXT_ERROR_ARG_LIST_BINDING_PATTERN_START:
-		alternativeRules = ERROR_ARG_LIST_BINDING_PATTERN_START
+		alternativeRules = errorArgListBindingPatternStart
 	case common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END:
-		alternativeRules = ERROR_MESSAGE_BINDING_PATTERN_END
+		alternativeRules = errorMessageBindingPatternEnd
 	case common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_RHS:
-		alternativeRules = ERROR_MESSAGE_BINDING_PATTERN_RHS
+		alternativeRules = errorMessageBindingPatternRhs
 	case common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN:
-		alternativeRules = ERROR_FIELD_BINDING_PATTERN
+		alternativeRules = errorFieldBindingPattern
 	case common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN_END:
-		alternativeRules = ERROR_FIELD_BINDING_PATTERN_END
+		alternativeRules = errorFieldBindingPatternEnd
 	case common.PARSER_RULE_CONTEXT_KEY_CONSTRAINTS_RHS:
-		alternativeRules = KEY_CONSTRAINTS_RHS
+		alternativeRules = keyConstraintsRhs
 	case common.PARSER_RULE_CONTEXT_TABLE_TYPE_DESC_RHS:
-		alternativeRules = TABLE_TYPE_DESC_RHS
+		alternativeRules = tableTypeDescRhs
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE_RHS:
-		alternativeRules = TYPE_DESC_IN_TUPLE_RHS
+		alternativeRules = typeDescInTupleRhs
 	case common.PARSER_RULE_CONTEXT_TUPLE_TYPE_MEMBER_RHS:
-		alternativeRules = TUPLE_TYPE_MEMBER_RHS
+		alternativeRules = tupleTypeMemberRhs
 	case common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_MEMBER_END:
-		alternativeRules = LIST_CONSTRUCTOR_MEMBER_END
+		alternativeRules = listConstructorMemberEnd
 	case common.PARSER_RULE_CONTEXT_NIL_OR_PARENTHESISED_TYPE_DESC_RHS:
-		alternativeRules = NIL_OR_PARENTHESISED_TYPE_DESC_RHS
+		alternativeRules = nilOrParenthesisedTypeDescRhs
 	case common.PARSER_RULE_CONTEXT_REMOTE_OR_RESOURCE_CALL_OR_ASYNC_SEND_RHS:
-		alternativeRules = REMOTE_OR_RESOURCE_CALL_OR_ASYNC_SEND_RHS
+		alternativeRules = remoteOrResourceCallOrAsyncSendRhs
 	case common.PARSER_RULE_CONTEXT_REMOTE_CALL_OR_ASYNC_SEND_END:
-		alternativeRules = REMOTE_CALL_OR_ASYNC_SEND_END
+		alternativeRules = remoteCallOrAsyncSendEnd
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_PATH:
-		alternativeRules = OPTIONAL_RESOURCE_ACCESS_PATH
+		alternativeRules = optionalResourceAccessPath
 	case common.PARSER_RULE_CONTEXT_RESOURCE_ACCESS_PATH_SEGMENT:
-		alternativeRules = RESOURCE_ACCESS_PATH_SEGMENT
+		alternativeRules = resourceAccessPathSegment
 	case common.PARSER_RULE_CONTEXT_COMPUTED_SEGMENT_OR_REST_SEGMENT:
-		alternativeRules = COMPUTED_SEGMENT_OR_REST_SEGMENT
+		alternativeRules = computedSegmentOrRestSegment
 	case common.PARSER_RULE_CONTEXT_RESOURCE_ACCESS_SEGMENT_RHS:
-		alternativeRules = RESOURCE_ACCESS_SEGMENT_RHS
+		alternativeRules = resourceAccessSegmentRhs
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_METHOD:
-		alternativeRules = OPTIONAL_RESOURCE_ACCESS_METHOD
+		alternativeRules = optionalResourceAccessMethod
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_RESOURCE_ACCESS_ACTION_ARG_LIST:
-		alternativeRules = OPTIONAL_RESOURCE_ACCESS_ACTION_ARG_LIST
+		alternativeRules = optionalResourceAccessActionArgList
 	case common.PARSER_RULE_CONTEXT_RECEIVE_WORKERS:
-		alternativeRules = RECEIVE_WORKERS
+		alternativeRules = receiveWorkers
 	case common.PARSER_RULE_CONTEXT_RECEIVE_FIELD:
-		alternativeRules = RECEIVE_FIELD
+		alternativeRules = receiveField
 	case common.PARSER_RULE_CONTEXT_RECEIVE_FIELD_END:
-		alternativeRules = RECEIVE_FIELD_END
+		alternativeRules = receiveFieldEnd
 	case common.PARSER_RULE_CONTEXT_WAIT_KEYWORD_RHS:
-		alternativeRules = WAIT_KEYWORD_RHS
+		alternativeRules = waitKeywordRhs
 	case common.PARSER_RULE_CONTEXT_WAIT_FIELD_NAME_RHS:
-		alternativeRules = WAIT_FIELD_NAME_RHS
+		alternativeRules = waitFieldNameRhs
 	case common.PARSER_RULE_CONTEXT_WAIT_FIELD_END:
-		alternativeRules = WAIT_FIELD_END
+		alternativeRules = waitFieldEnd
 	case common.PARSER_RULE_CONTEXT_WAIT_FUTURE_EXPR_END:
-		alternativeRules = WAIT_FUTURE_EXPR_END
+		alternativeRules = waitFutureExprEnd
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_PEER_WORKER:
-		alternativeRules = OPTIONAL_PEER_WORKER
+		alternativeRules = optionalPeerWorker
 	case common.PARSER_RULE_CONTEXT_ROLLBACK_RHS:
-		alternativeRules = ROLLBACK_RHS
+		alternativeRules = rollbackRhs
 	case common.PARSER_RULE_CONTEXT_RETRY_KEYWORD_RHS:
-		alternativeRules = RETRY_KEYWORD_RHS
+		alternativeRules = retryKeywordRhs
 	case common.PARSER_RULE_CONTEXT_RETRY_TYPE_PARAM_RHS:
-		alternativeRules = RETRY_TYPE_PARAM_RHS
+		alternativeRules = retryTypeParamRhs
 	case common.PARSER_RULE_CONTEXT_RETRY_BODY:
-		alternativeRules = RETRY_BODY
+		alternativeRules = retryBody
 	case common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST_MEMBER:
-		alternativeRules = LIST_BP_OR_TUPLE_TYPE_MEMBER
+		alternativeRules = listBpOrTupleTypeMember
 	case common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST_RHS:
-		alternativeRules = LIST_BP_OR_TUPLE_TYPE_DESC_RHS
+		alternativeRules = listBpOrTupleTypeDescRhs
 	case common.PARSER_RULE_CONTEXT_BRACKETED_LIST_MEMBER_END:
-		alternativeRules = BRACKETED_LIST_MEMBER_END
+		alternativeRules = bracketedListMemberEnd
 	case common.PARSER_RULE_CONTEXT_BRACKETED_LIST_MEMBER:
-		alternativeRules = BRACKETED_LIST_MEMBER
+		alternativeRules = bracketedListMember
 	case common.PARSER_RULE_CONTEXT_BRACKETED_LIST_RHS,
 		common.PARSER_RULE_CONTEXT_BINDING_PATTERN_OR_EXPR_RHS,
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_OR_EXPR_RHS:
-		alternativeRules = BRACKETED_LIST_RHS
+		alternativeRules = bracketedListRhs
 	case common.PARSER_RULE_CONTEXT_BINDING_PATTERN_OR_VAR_REF_RHS:
-		alternativeRules = BINDING_PATTERN_OR_VAR_REF_RHS
+		alternativeRules = bindingPatternOrVarRefRhs
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS_OR_BP_RHS:
-		alternativeRules = TYPE_DESC_RHS_OR_BP_RHS
+		alternativeRules = typeDescRhsOrBpRhs
 	case common.PARSER_RULE_CONTEXT_LIST_BINDING_MEMBER_OR_ARRAY_LENGTH:
-		alternativeRules = LIST_BINDING_MEMBER_OR_ARRAY_LENGTH
+		alternativeRules = listBindingMemberOrArrayLength
 	case common.PARSER_RULE_CONTEXT_MATCH_PATTERN_LIST_MEMBER_RHS:
-		alternativeRules = MATCH_PATTERN_LIST_MEMBER_RHS
+		alternativeRules = matchPatternListMemberRhs
 	case common.PARSER_RULE_CONTEXT_MATCH_PATTERN_START:
-		alternativeRules = MATCH_PATTERN_START
+		alternativeRules = matchPatternStart
 	case common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERNS_START:
-		alternativeRules = LIST_MATCH_PATTERNS_START
+		alternativeRules = listMatchPatternsStart
 	case common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN_MEMBER:
-		alternativeRules = LIST_MATCH_PATTERN_MEMBER
+		alternativeRules = listMatchPatternMember
 	case common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN_MEMBER_RHS:
-		alternativeRules = LIST_MATCH_PATTERN_MEMBER_RHS
+		alternativeRules = listMatchPatternMemberRhs
 	case common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERNS_START:
-		alternativeRules = FIELD_MATCH_PATTERNS_START
+		alternativeRules = fieldMatchPatternsStart
 	case common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERN_MEMBER:
-		alternativeRules = FIELD_MATCH_PATTERN_MEMBER
+		alternativeRules = fieldMatchPatternMember
 	case common.PARSER_RULE_CONTEXT_FIELD_MATCH_PATTERN_MEMBER_RHS:
-		alternativeRules = FIELD_MATCH_PATTERN_MEMBER_RHS
+		alternativeRules = fieldMatchPatternMemberRhs
 	case common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN_OR_CONST_PATTERN:
-		alternativeRules = ERROR_MATCH_PATTERN_OR_CONST_PATTERN
+		alternativeRules = errorMatchPatternOrConstPattern
 	case common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN_ERROR_KEYWORD_RHS:
-		alternativeRules = ERROR_MATCH_PATTERN_ERROR_KEYWORD_RHS
+		alternativeRules = errorMatchPatternErrorKeywordRhs
 	case common.PARSER_RULE_CONTEXT_ERROR_ARG_LIST_MATCH_PATTERN_START:
-		alternativeRules = ERROR_ARG_LIST_MATCH_PATTERN_START
+		alternativeRules = errorArgListMatchPatternStart
 	case common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_MATCH_PATTERN_END:
-		alternativeRules = ERROR_MESSAGE_MATCH_PATTERN_END
+		alternativeRules = errorMessageMatchPatternEnd
 	case common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_MATCH_PATTERN_RHS:
-		alternativeRules = ERROR_MESSAGE_MATCH_PATTERN_RHS
+		alternativeRules = errorMessageMatchPatternRhs
 	case common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN:
-		alternativeRules = ERROR_FIELD_MATCH_PATTERN
+		alternativeRules = errorFieldMatchPattern
 	case common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN_RHS:
-		alternativeRules = ERROR_FIELD_MATCH_PATTERN_RHS
+		alternativeRules = errorFieldMatchPatternRhs
 	case common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN_RHS:
-		alternativeRules = NAMED_ARG_MATCH_PATTERN_RHS
+		alternativeRules = namedArgMatchPatternRhs
 	case common.PARSER_RULE_CONTEXT_JOIN_CLAUSE_START:
-		alternativeRules = JOIN_CLAUSE_START
+		alternativeRules = joinClauseStart
 	case common.PARSER_RULE_CONTEXT_INTERMEDIATE_CLAUSE_START:
-		alternativeRules = INTERMEDIATE_CLAUSE_START
+		alternativeRules = intermediateClauseStart
 	case common.PARSER_RULE_CONTEXT_REGULAR_COMPOUND_STMT_RHS:
-		alternativeRules = REGULAR_COMPOUND_STMT_RHS
+		alternativeRules = regularCompoundStmtRhs
 	case common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL_START:
-		alternativeRules = NAMED_WORKER_DECL_START
+		alternativeRules = namedWorkerDeclStart
 	case common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT_RHS:
-		alternativeRules = ASSIGNMENT_STMT_RHS
+		alternativeRules = assignmentStmtRhs
 	default:
 		return b.seekMatchInExprRelatedAlternativePaths(currentCtx, lookahead, currentDepth, matchingRulesCount,
 			isEntryPoint)
@@ -2587,7 +2587,7 @@ func (b *BallerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(cur
 	return *b.seekInAlternativesPaths(lookahead, currentDepth, matchingRulesCount, alternativeRules, isEntryPoint)
 }
 
-func (b *BallerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result Result) {
+func (b *ballerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
 	traceRecovery(currentCtx, func() string {
 		return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
@@ -2597,130 +2597,130 @@ func (b *BallerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(cur
 	var alternativeRules []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_TERMINAL_EXPRESSION:
-		alternativeRules = EXPRESSION_START
+		alternativeRules = expressionStart
 	case common.PARSER_RULE_CONTEXT_ARG_START:
-		alternativeRules = ARG_START
+		alternativeRules = argStart
 	case common.PARSER_RULE_CONTEXT_ARG_START_OR_ARG_LIST_END:
-		alternativeRules = ARG_START_OR_ARG_LIST_END
+		alternativeRules = argStartOrArgListEnd
 	case common.PARSER_RULE_CONTEXT_NAMED_OR_POSITIONAL_ARG_RHS:
-		alternativeRules = NAMED_OR_POSITIONAL_ARG_RHS
+		alternativeRules = namedOrPositionalArgRhs
 	case common.PARSER_RULE_CONTEXT_ARG_END:
-		alternativeRules = ARG_END
+		alternativeRules = argEnd
 	case common.PARSER_RULE_CONTEXT_ACCESS_EXPRESSION:
 		return b.seekInAccessExpression(currentCtx, lookahead, currentDepth, matchingRulesCount, isEntryPoint)
 	case common.PARSER_RULE_CONTEXT_FIRST_MAPPING_FIELD:
-		alternativeRules = FIRST_MAPPING_FIELD_START
+		alternativeRules = firstMappingFieldStart
 	case common.PARSER_RULE_CONTEXT_MAPPING_FIELD:
-		alternativeRules = MAPPING_FIELD_START
+		alternativeRules = mappingFieldStart
 	case common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD:
-		alternativeRules = SPECIFIC_FIELD
+		alternativeRules = specificField
 	case common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD_RHS:
-		alternativeRules = SPECIFIC_FIELD_RHS
+		alternativeRules = specificFieldRhs
 	case common.PARSER_RULE_CONTEXT_MAPPING_FIELD_END:
-		alternativeRules = MAPPING_FIELD_END
+		alternativeRules = mappingFieldEnd
 	case common.PARSER_RULE_CONTEXT_LET_VAR_DECL_START:
-		alternativeRules = LET_VAR_DECL_START
+		alternativeRules = letVarDeclStart
 	case common.PARSER_RULE_CONTEXT_ORDER_KEY_LIST_END:
-		alternativeRules = ORDER_KEY_LIST_END
+		alternativeRules = orderKeyListEnd
 	case common.PARSER_RULE_CONTEXT_GROUPING_KEY_LIST_ELEMENT:
-		alternativeRules = GROUPING_KEY_LIST_ELEMENT
+		alternativeRules = groupingKeyListElement
 	case common.PARSER_RULE_CONTEXT_GROUPING_KEY_LIST_ELEMENT_END:
-		alternativeRules = GROUPING_KEY_LIST_ELEMENT_END
+		alternativeRules = groupingKeyListElementEnd
 	case common.PARSER_RULE_CONTEXT_TEMPLATE_MEMBER:
-		alternativeRules = TEMPLATE_MEMBER
+		alternativeRules = templateMember
 	case common.PARSER_RULE_CONTEXT_TEMPLATE_STRING_RHS:
-		alternativeRules = TEMPLATE_STRING_RHS
+		alternativeRules = templateStringRhs
 	case common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION_START:
-		alternativeRules = CONSTANT_EXPRESSION
+		alternativeRules = constantExpression
 	case common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_FIRST_MEMBER:
-		alternativeRules = LIST_CONSTRUCTOR_FIRST_MEMBER
+		alternativeRules = listConstructorFirstMember
 	case common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR_MEMBER:
-		alternativeRules = LIST_CONSTRUCTOR_MEMBER
+		alternativeRules = listConstructorMember
 	case common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM:
-		alternativeRules = TYPE_CAST_PARAM
+		alternativeRules = typeCastParam
 	case common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM_RHS:
-		alternativeRules = TYPE_CAST_PARAM_RHS
+		alternativeRules = typeCastParamRhs
 	case common.PARSER_RULE_CONTEXT_TABLE_KEYWORD_RHS:
-		alternativeRules = TABLE_KEYWORD_RHS
+		alternativeRules = tableKeywordRhs
 	case common.PARSER_RULE_CONTEXT_ROW_LIST_RHS:
-		alternativeRules = ROW_LIST_RHS
+		alternativeRules = rowListRhs
 	case common.PARSER_RULE_CONTEXT_TABLE_ROW_END:
-		alternativeRules = TABLE_ROW_END
+		alternativeRules = tableRowEnd
 	case common.PARSER_RULE_CONTEXT_KEY_SPECIFIER_RHS:
-		alternativeRules = KEY_SPECIFIER_RHS
+		alternativeRules = keySpecifierRhs
 	case common.PARSER_RULE_CONTEXT_TABLE_KEY_RHS:
-		alternativeRules = TABLE_KEY_RHS
+		alternativeRules = tableKeyRhs
 	case common.PARSER_RULE_CONTEXT_NEW_KEYWORD_RHS:
-		alternativeRules = NEW_KEYWORD_RHS
+		alternativeRules = newKeywordRhs
 	case common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_START:
-		alternativeRules = TABLE_CONSTRUCTOR_OR_QUERY_START
+		alternativeRules = tableConstructorOrQueryStart
 	case common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_RHS:
-		alternativeRules = TABLE_CONSTRUCTOR_OR_QUERY_RHS
+		alternativeRules = tableConstructorOrQueryRhs
 	case common.PARSER_RULE_CONTEXT_QUERY_PIPELINE_RHS:
-		alternativeRules = QUERY_PIPELINE_RHS
+		alternativeRules = queryPipelineRhs
 	case common.PARSER_RULE_CONTEXT_BRACED_EXPR_OR_ANON_FUNC_PARAM_RHS,
 		common.PARSER_RULE_CONTEXT_ANON_FUNC_PARAM_RHS:
-		alternativeRules = BRACED_EXPR_OR_ANON_FUNC_PARAM_RHS
+		alternativeRules = bracedExprOrAnonFuncParamRhs
 	case common.PARSER_RULE_CONTEXT_PARAM_END:
-		alternativeRules = PARAM_END
+		alternativeRules = paramEnd
 	case common.PARSER_RULE_CONTEXT_ANNOTATION_REF_RHS:
-		alternativeRules = ANNOTATION_REF_RHS
+		alternativeRules = annotationRefRhs
 	case common.PARSER_RULE_CONTEXT_INFER_PARAM_END_OR_PARENTHESIS_END:
-		alternativeRules = INFER_PARAM_END_OR_PARENTHESIS_END
+		alternativeRules = inferParamEndOrParenthesisEnd
 	case common.PARSER_RULE_CONTEXT_XML_NAVIGATE_EXPR:
-		alternativeRules = XML_NAVIGATE_EXPR
+		alternativeRules = xmlNavigateExpr
 	case common.PARSER_RULE_CONTEXT_XML_NAME_PATTERN_RHS:
-		alternativeRules = XML_NAME_PATTERN_RHS
+		alternativeRules = xmlNamePatternRhs
 	case common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_PATTERN_START:
-		alternativeRules = XML_ATOMIC_NAME_PATTERN_START
+		alternativeRules = xmlAtomicNamePatternStart
 	case common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_IDENTIFIER_RHS:
-		alternativeRules = XML_ATOMIC_NAME_IDENTIFIER_RHS
+		alternativeRules = xmlAtomicNameIdentifierRhs
 	case common.PARSER_RULE_CONTEXT_XML_STEP_START:
-		alternativeRules = XML_STEP_START
+		alternativeRules = xmlStepStart
 	case common.PARSER_RULE_CONTEXT_XML_STEP_EXTEND:
-		alternativeRules = XML_STEP_EXTEND
+		alternativeRules = xmlStepExtend
 	case common.PARSER_RULE_CONTEXT_XML_STEP_START_END:
-		alternativeRules = XML_STEP_START_END
+		alternativeRules = xmlStepStartEnd
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_MATCH_GUARD:
-		alternativeRules = OPTIONAL_MATCH_GUARD
+		alternativeRules = optionalMatchGuard
 	case common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR_END:
-		alternativeRules = MEMBER_ACCESS_KEY_EXPR_END
+		alternativeRules = memberAccessKeyExprEnd
 	case common.PARSER_RULE_CONTEXT_LISTENERS_LIST_END:
-		alternativeRules = LISTENERS_LIST_END
+		alternativeRules = listenersListEnd
 	case common.PARSER_RULE_CONTEXT_OBJECT_CONS_WITHOUT_FIRST_QUALIFIER:
-		alternativeRules = OBJECT_CONS_WITHOUT_FIRST_QUALIFIER
+		alternativeRules = objectConsWithoutFirstQualifier
 	case common.PARSER_RULE_CONTEXT_RESULT_CLAUSE:
-		alternativeRules = RESULT_CLAUSE
+		alternativeRules = resultClause
 	case common.PARSER_RULE_CONTEXT_EXPRESSION_RHS:
 		return b.seekMatchInExpressionRhs(lookahead, currentDepth, matchingRulesCount, isEntryPoint, false)
 	case common.PARSER_RULE_CONTEXT_VARIABLE_REF_RHS:
 		return b.seekMatchInExpressionRhs(lookahead, currentDepth, matchingRulesCount, isEntryPoint, true)
 	case common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR_RHS:
-		alternativeRules = ERROR_CONSTRUCTOR_RHS
+		alternativeRules = errorConstructorRhs
 	case common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER_SEPARATOR:
-		alternativeRules = SINGLE_OR_ALTERNATE_WORKER_SEPARATOR
+		alternativeRules = singleOrAlternateWorkerSeparator
 	case common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION_START:
-		alternativeRules = NATURAL_EXPRESSION_START
+		alternativeRules = naturalExpressionStart
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_PARENTHESIZED_ARG_LIST:
-		alternativeRules = OPTIONAL_PARENTHESIZED_ARG_LIST
+		alternativeRules = optionalParenthesizedArgList
 	default:
 		panic("seekMatchInExprRelatedAlternativePaths found: " + currentCtx.String())
 	}
 	return *b.seekInAlternativesPaths(lookahead, currentDepth, matchingRulesCount, alternativeRules, isEntryPoint)
 }
 
-func (b *BallerinaParserErrorHandler) seekInStatements(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, currentMatches int, isEntryPoint bool) Result {
+func (b *ballerinaParserErrorHandler) seekInStatements(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, currentMatches int, isEntryPoint bool) recoveryResult {
 	nextToken := b.tokenReader.PeekN(lookahead)
 	if nextToken.Kind() == st.SEMICOLON_TOKEN {
 		result := b.seekMatchInSubTree(common.PARSER_RULE_CONTEXT_STATEMENT, lookahead+1, currentDepth+1,
 			isEntryPoint)
-		result.pushFix(NewSolutionWithDepth(ACTION_REMOVE, currentCtx, nextToken.Kind(), nextToken.Text(), currentDepth))
+		result.pushFix(newSolutionWithDepth(actionRemove, currentCtx, nextToken.Kind(), nextToken.Text(), currentDepth))
 		return *b.getFinalResult(currentMatches, result)
 	}
-	return *b.seekInAlternativesPaths(lookahead, currentDepth, currentMatches, STATEMENTS, isEntryPoint)
+	return *b.seekInAlternativesPaths(lookahead, currentDepth, currentMatches, statements, isEntryPoint)
 }
 
-func (b *BallerinaParserErrorHandler) seekInAccessExpression(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, currentMatches int, isEntryPoint bool) Result {
+func (b *ballerinaParserErrorHandler) seekInAccessExpression(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, currentMatches int, isEntryPoint bool) recoveryResult {
 	nextToken := b.tokenReader.PeekN(lookahead)
 	currentDepth++
 	if nextToken.Kind() != st.IDENTIFIER_TOKEN {
@@ -2744,7 +2744,7 @@ func (b *BallerinaParserErrorHandler) seekInAccessExpression(currentCtx common.P
 	return *b.getFinalResult(currentMatches, result)
 }
 
-func (b *BallerinaParserErrorHandler) seekMatchInExpressionRhs(lookahead int, currentDepth int, currentMatches int, isEntryPoint bool, allowFuncCall bool) Result {
+func (b *ballerinaParserErrorHandler) seekMatchInExpressionRhs(lookahead int, currentDepth int, currentMatches int, isEntryPoint bool, allowFuncCall bool) recoveryResult {
 	parentCtx := b.GetParentContext()
 	var alternatives []common.ParserRuleContext
 	switch parentCtx {
@@ -2833,14 +2833,14 @@ func (b *BallerinaParserErrorHandler) seekMatchInExpressionRhs(lookahead int, cu
 	return *b.seekInAlternativesPaths(lookahead, currentDepth, currentMatches, alternatives, isEntryPoint)
 }
 
-func (b *BallerinaParserErrorHandler) getExpressionRhsAlternatives(nextContext common.ParserRuleContext) []common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getExpressionRhsAlternatives(nextContext common.ParserRuleContext) []common.ParserRuleContext {
 	if ((nextContext == common.PARSER_RULE_CONTEXT_SEMICOLON) || (nextContext == common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION_END)) || (nextContext == common.PARSER_RULE_CONTEXT_MATCH_BODY) {
 		return []common.ParserRuleContext{nextContext, common.PARSER_RULE_CONTEXT_BINARY_OPERATOR, common.PARSER_RULE_CONTEXT_IS_KEYWORD, common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_ANNOT_CHAINING_TOKEN, common.PARSER_RULE_CONTEXT_OPTIONAL_CHAINING_TOKEN, common.PARSER_RULE_CONTEXT_CONDITIONAL_EXPRESSION, common.PARSER_RULE_CONTEXT_XML_NAVIGATE_EXPR, common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR, common.PARSER_RULE_CONTEXT_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_SYNC_SEND_TOKEN}
 	}
 	return []common.ParserRuleContext{common.PARSER_RULE_CONTEXT_BINARY_OPERATOR, common.PARSER_RULE_CONTEXT_IS_KEYWORD, common.PARSER_RULE_CONTEXT_DOT, common.PARSER_RULE_CONTEXT_ANNOT_CHAINING_TOKEN, common.PARSER_RULE_CONTEXT_OPTIONAL_CHAINING_TOKEN, common.PARSER_RULE_CONTEXT_CONDITIONAL_EXPRESSION, common.PARSER_RULE_CONTEXT_XML_NAVIGATE_EXPR, common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR, common.PARSER_RULE_CONTEXT_RIGHT_ARROW, common.PARSER_RULE_CONTEXT_SYNC_SEND_TOKEN, nextContext}
 }
 
-func (b *BallerinaParserErrorHandler) modifyAlternativesWithArgListStart(alternatives []common.ParserRuleContext) []common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) modifyAlternativesWithArgListStart(alternatives []common.ParserRuleContext) []common.ParserRuleContext {
 	// Create new slice with capacity for one additional element
 	newAlternatives := make([]common.ParserRuleContext, len(alternatives)+1)
 	// Copy all existing elements
@@ -2850,7 +2850,7 @@ func (b *BallerinaParserErrorHandler) modifyAlternativesWithArgListStart(alterna
 	return newAlternatives
 }
 
-func (b *BallerinaParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
 	b.startContextIfRequired(currentCtx)
 	var parentCtx common.ParserRuleContext
 	var nextToken st.STToken
@@ -3208,7 +3208,7 @@ func (b *BallerinaParserErrorHandler) GetNextRule(currentCtx common.ParserRuleCo
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleInternal(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleInternal(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
 	var parentCtx common.ParserRuleContext
 	var grandParentCtx common.ParserRuleContext
 	switch currentCtx {
@@ -3597,7 +3597,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleInternal(currentCtx common.Pars
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
 	var parentCtx common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_PUBLIC_KEYWORD:
@@ -3868,7 +3868,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.P
 	}
 }
 
-func (b *BallerinaParserErrorHandler) startContextIfRequired(currentCtx common.ParserRuleContext) {
+func (b *ballerinaParserErrorHandler) startContextIfRequired(currentCtx common.ParserRuleContext) {
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_COMP_UNIT,
 		common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_FUNC_TYPE,
@@ -4013,7 +4013,7 @@ func (b *BallerinaParserErrorHandler) startContextIfRequired(currentCtx common.P
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForCloseParenthesis() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForCloseParenthesis() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_PARAM_LIST {
 		b.EndContext()
@@ -4060,7 +4060,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForCloseParenthesis() common.Pa
 	return common.PARSER_RULE_CONTEXT_EXPRESSION_RHS
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForOpenParenthesis() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForOpenParenthesis() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT {
 		return common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT_START
@@ -4089,7 +4089,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForOpenParenthesis() common.Par
 	return common.PARSER_RULE_CONTEXT_EXPRESSION
 }
 
-func (b *BallerinaParserErrorHandler) isInMatchPatternCtx(context common.ParserRuleContext) bool {
+func (b *ballerinaParserErrorHandler) isInMatchPatternCtx(context common.ParserRuleContext) bool {
 	switch context {
 	case common.PARSER_RULE_CONTEXT_MATCH_PATTERN,
 		common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN,
@@ -4102,7 +4102,7 @@ func (b *BallerinaParserErrorHandler) isInMatchPatternCtx(context common.ParserR
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForOpenBrace() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForOpenBrace() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR:
@@ -4136,7 +4136,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForOpenBrace() common.ParserRul
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isExpressionContext(ctx common.ParserRuleContext) bool {
+func (b *ballerinaParserErrorHandler) isExpressionContext(ctx common.ParserRuleContext) bool {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_LISTENERS_LIST,
 		common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR,
@@ -4161,7 +4161,7 @@ func (b *BallerinaParserErrorHandler) isExpressionContext(ctx common.ParserRuleC
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForParamType() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForParamType() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_REQUIRED_PARAM, common.PARSER_RULE_CONTEXT_DEFAULTABLE_PARAM:
@@ -4176,7 +4176,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForParamType() common.ParserRul
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForComma() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForComma() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_PARAM_LIST,
@@ -4243,7 +4243,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForComma() common.ParserRuleCon
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForTypeDescriptor() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForTypeDescriptor() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANNOTATION_DECL:
@@ -4349,7 +4349,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForTypeDescriptor() common.Pars
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isInTypeDescContext() bool {
+func (b *ballerinaParserErrorHandler) isInTypeDescContext() bool {
 	switch b.GetParentContext() {
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANNOTATION_DECL,
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER,
@@ -4375,7 +4375,7 @@ func (b *BallerinaParserErrorHandler) isInTypeDescContext() bool {
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForEqualOp() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForEqualOp() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY:
@@ -4409,7 +4409,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForEqualOp() common.ParserRuleC
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForCloseBrace(nextLookahead int) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForCloseBrace(nextLookahead int) common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	var nextToken st.STToken
 	switch parentCtx {
@@ -4530,7 +4530,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForCloseBrace(nextLookahead int
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForCloseBraceInFuncBody() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForCloseBraceInFuncBody() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER:
@@ -4548,7 +4548,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForCloseBraceInFuncBody() commo
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForAnnotationEnd(nextLookahead int) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForAnnotationEnd(nextLookahead int) common.ParserRuleContext {
 	var parentCtx common.ParserRuleContext
 	var nextToken = b.tokenReader.PeekN(nextLookahead)
 	if nextToken.Kind() == st.AT_TOKEN {
@@ -4594,7 +4594,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForAnnotationEnd(nextLookahead 
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForVarName() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForVarName() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT:
@@ -4672,7 +4672,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForVarName() common.ParserRuleC
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int) common.ParserRuleContext {
 	var nextToken st.STToken
 	parentCtx := b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY {
@@ -4757,7 +4757,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int)
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForDot() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForDot() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_IMPORT_DECL:
@@ -4773,7 +4773,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForDot() common.ParserRuleConte
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForQuestionMark() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForQuestionMark() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_DESCRIPTOR:
@@ -4786,7 +4786,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForQuestionMark() common.Parser
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForOpenBracket() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForOpenBracket() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR:
@@ -4811,7 +4811,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForOpenBracket() common.ParserR
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForCloseBracket() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForCloseBracket() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR, common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS:
@@ -4858,7 +4858,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForCloseBracket() common.Parser
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForDecimalIntegerLiteral() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForDecimalIntegerLiteral() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION:
@@ -4869,7 +4869,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForDecimalIntegerLiteral() comm
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForExpr() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForExpr() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION {
 		b.EndContext()
@@ -4878,7 +4878,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForExpr() common.ParserRuleCont
 	return common.PARSER_RULE_CONTEXT_EXPRESSION_RHS
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForExprStartsWithVarRef() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForExprStartsWithVarRef() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION:
@@ -4892,7 +4892,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForExprStartsWithVarRef() commo
 	return common.PARSER_RULE_CONTEXT_VARIABLE_REF_RHS
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForConstExpr() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForConstExpr() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION:
@@ -4905,7 +4905,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForConstExpr() common.ParserRul
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForLt() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForLt() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_TYPE_CAST:
@@ -4915,7 +4915,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForLt() common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForGt() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForGt() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_STREAM_TYPE_DESC {
 		b.EndContext()
@@ -4948,11 +4948,11 @@ func (b *BallerinaParserErrorHandler) getNextRuleForGt() common.ParserRuleContex
 	return common.PARSER_RULE_CONTEXT_EXPRESSION
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForBindingPatternDefault() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForBindingPatternDefault() common.ParserRuleContext {
 	return b.getNextRuleForBindingPatternWithCapture(false)
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForBindingPatternWithCapture(isCaptureBP bool) common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForBindingPatternWithCapture(isCaptureBP bool) common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER,
@@ -5015,12 +5015,12 @@ func (b *BallerinaParserErrorHandler) getNextRuleForBindingPatternWithCapture(is
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForWaitExprListEnd() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForWaitExprListEnd() common.ParserRuleContext {
 	b.EndContext()
 	return common.PARSER_RULE_CONTEXT_EXPRESSION_RHS
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForIdentifier() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForIdentifier() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_VARIABLE_REF:
@@ -5070,7 +5070,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForIdentifier() common.ParserRu
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForColon() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForColon() common.ParserRuleContext {
 	var parentCtx = b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR:
@@ -5097,7 +5097,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForColon() common.ParserRuleCon
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForMatchPattern() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForMatchPattern() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN:
@@ -5117,7 +5117,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForMatchPattern() common.Parser
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForTypeReference() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForTypeReference() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR:
@@ -5138,7 +5138,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForTypeReference() common.Parse
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForErrorKeyword() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForErrorKeyword() common.ParserRuleContext {
 	if b.isInTypeDescContext() {
 		return common.PARSER_RULE_CONTEXT_LT
 	}
@@ -5155,7 +5155,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForErrorKeyword() common.Parser
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForFuncTypeFuncKeywordRhs() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForFuncTypeFuncKeywordRhs() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	if parentCtx == common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_FUNC_TYPE {
 		b.EndContext()
@@ -5181,7 +5181,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForFuncTypeFuncKeywordRhs() com
 	return common.PARSER_RULE_CONTEXT_FUNC_TYPE_FUNC_KEYWORD_RHS_START
 }
 
-func (b *BallerinaParserErrorHandler) getNextRuleForAction() common.ParserRuleContext {
+func (b *ballerinaParserErrorHandler) getNextRuleForAction() common.ParserRuleContext {
 	parentCtx := b.GetParentContext()
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_MATCH_STMT:
@@ -5193,7 +5193,7 @@ func (b *BallerinaParserErrorHandler) getNextRuleForAction() common.ParserRuleCo
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isStatement(parentCtx common.ParserRuleContext) bool {
+func (b *ballerinaParserErrorHandler) isStatement(parentCtx common.ParserRuleContext) bool {
 	switch parentCtx {
 	case common.PARSER_RULE_CONTEXT_STATEMENT,
 		common.PARSER_RULE_CONTEXT_STATEMENT_WITHOUT_ANNOTS,
@@ -5226,7 +5226,7 @@ func (b *BallerinaParserErrorHandler) isStatement(parentCtx common.ParserRuleCon
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isBinaryOperator(token st.STToken) bool {
+func (b *ballerinaParserErrorHandler) isBinaryOperator(token st.STToken) bool {
 	switch token.Kind() {
 	case st.PLUS_TOKEN,
 		st.MINUS_TOKEN,
@@ -5260,7 +5260,7 @@ func (b *BallerinaParserErrorHandler) isBinaryOperator(token st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isParameter(ctx common.ParserRuleContext) bool {
+func (b *ballerinaParserErrorHandler) isParameter(ctx common.ParserRuleContext) bool {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_REQUIRED_PARAM, common.PARSER_RULE_CONTEXT_DEFAULTABLE_PARAM, common.PARSER_RULE_CONTEXT_REST_PARAM, common.PARSER_RULE_CONTEXT_PARAM_LIST:
 		return true
@@ -5269,10 +5269,10 @@ func (b *BallerinaParserErrorHandler) isParameter(ctx common.ParserRuleContext) 
 	}
 }
 
-func (b *BallerinaParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *Solution {
+func (b *ballerinaParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *solution {
 	kind := b.GetExpectedTokenKind(ctx)
 	if kind != st.NONE {
-		return NewSolution(ACTION_INSERT, ctx, kind, ctx.String())
+		return newSolution(actionInsert, ctx, kind, ctx.String())
 	}
 	if b.HasAlternativePaths(ctx) {
 		ctx = b.getShortestAlternative(ctx)
@@ -5282,7 +5282,7 @@ func (b *BallerinaParserErrorHandler) GetInsertSolution(ctx common.ParserRuleCon
 	return b.GetInsertSolution(ctx)
 }
 
-func (b *BallerinaParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
+func (b *ballerinaParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY:
 		return st.EQUAL_TOKEN
@@ -5371,7 +5371,7 @@ func (b *BallerinaParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRule
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getExpectedSeperatorTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
+func (b *ballerinaParserErrorHandler) getExpectedSeperatorTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_BITWISE_AND_OPERATOR:
 		return st.BITWISE_AND_TOKEN
@@ -5471,7 +5471,7 @@ func (b *BallerinaParserErrorHandler) getExpectedSeperatorTokenKind(ctx common.P
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getExpectedKeywordKind(ctx common.ParserRuleContext) st.SyntaxKind {
+func (b *ballerinaParserErrorHandler) getExpectedKeywordKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_EXTERNAL_KEYWORD:
 		return st.EXTERNAL_KEYWORD
@@ -5654,7 +5654,7 @@ func (b *BallerinaParserErrorHandler) getExpectedKeywordKind(ctx common.ParserRu
 	}
 }
 
-func (b *BallerinaParserErrorHandler) getExpectedQualifierKind(ctx common.ParserRuleContext) st.SyntaxKind {
+func (b *ballerinaParserErrorHandler) getExpectedQualifierKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_FIRST_OBJECT_CONS_QUALIFIER,
 		common.PARSER_RULE_CONTEXT_SECOND_OBJECT_CONS_QUALIFIER,
@@ -5687,7 +5687,7 @@ func (b *BallerinaParserErrorHandler) getExpectedQualifierKind(ctx common.Parser
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isBasicLiteral(kind st.SyntaxKind) bool {
+func (b *ballerinaParserErrorHandler) isBasicLiteral(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
 		st.HEX_INTEGER_LITERAL_TOKEN,
@@ -5703,7 +5703,7 @@ func (b *BallerinaParserErrorHandler) isBasicLiteral(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isUnaryOperator(token st.STToken) bool {
+func (b *ballerinaParserErrorHandler) isUnaryOperator(token st.STToken) bool {
 	switch token.Kind() {
 	case st.PLUS_TOKEN,
 		st.MINUS_TOKEN,
@@ -5715,7 +5715,7 @@ func (b *BallerinaParserErrorHandler) isUnaryOperator(token st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParserErrorHandler) isSingleKeywordAttachPointIdent(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParserErrorHandler) isSingleKeywordAttachPointIdent(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.ANNOTATION_KEYWORD,
 		st.EXTERNAL_KEYWORD,

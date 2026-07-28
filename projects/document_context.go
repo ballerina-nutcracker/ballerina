@@ -77,35 +77,17 @@ func (d *documentContext) registrationKey() string {
 }
 
 // parseContent parses the content string and returns a SyntaxTree.
-// The textDoc parameter is passed to avoid circular dependency with TextDocument().
-func (d *documentContext) parseContent(content string, textDoc text.TextDocument) *st.SyntaxTree {
-	// Create CharReader from content
-	charReader := text.CharReaderFromText(content)
-
-	// Create Lexer
-	lexer := parser.NewLexer(charReader)
-
-	// Create TokenReader from Lexer
-	tokenReader := parser.CreateTokenReader(lexer)
-
-	// Create Parser from TokenReader
-	ballerinaParser := parser.NewBallerinaParserFromTokenReader(tokenReader)
-
-	// Dependency files are not the user's own source — suppress debug dump output
-	// (DUMP_TOKENS, DUMP_ST) so they don't pollute --dump-tokens / --dump-st output.
-	var rawAST st.STNode
-	if d.diagKeyPrefix != "" {
-		common.WithSuppressedDebug(func() { rawAST = ballerinaParser.Parse() })
-	} else {
-		rawAST = ballerinaParser.Parse()
+func (d *documentContext) parseContent(cx *compilercontext.CompilerContext, content string) *st.SyntaxTree {
+	var syntaxTree *st.SyntaxTree
+	parse := func() {
+		syntaxTree, _ = parser.GetSyntaxTree(cx, d.registrationKey(), content)
 	}
-	rootNode := rawAST.(*st.STModulePart)
-
-	// Create the ModulePart node
-	moduleNode := st.CreateUnlinkedFacade[*st.STModulePart, *st.ModulePart](rootNode)
-
-	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDoc, d.registrationKey(), false)
-	return &syntaxTree
+	if d.diagKeyPrefix != "" {
+		common.WithSuppressedDebug(parse)
+	} else {
+		parse()
+	}
+	return syntaxTree
 }
 
 // parseWithStats parses the document and returns the syntax tree.
@@ -115,16 +97,14 @@ func (d *documentContext) parseWithStats(cx *compilercontext.CompilerContext) *s
 	if d.disableSyntaxTree {
 		// Parse every time without caching
 		start := time.Now()
-		textDoc := d.getTextDocumentInternal()
-		syntaxTree := d.parseContent(d.content(), textDoc)
+		syntaxTree := d.parseContent(cx, d.content())
 		recordParseDuration(cx, time.Since(start))
 		return syntaxTree
 	}
 
 	d.syntaxTreeOnce.Do(func() {
 		start := time.Now()
-		textDoc := d.getTextDocument()
-		d.syntaxTree = d.parseContent(d.content(), textDoc)
+		d.syntaxTree = d.parseContent(cx, d.content())
 		recordParseDuration(cx, time.Since(start))
 	})
 	return d.syntaxTree

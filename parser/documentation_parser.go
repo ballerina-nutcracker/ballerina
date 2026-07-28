@@ -28,21 +28,21 @@ import (
 // Ballerina flavored markdown (BFM) is supported by the documentation.
 // There is no error handler attached to this parser.
 // In case of an error, simply missing token will be inserted.
-type DocumentationParser struct {
+type documentationParser struct {
 	abstractParser
 }
 
-func NewDocumentationParser(tokenReader *TokenReader) *DocumentationParser {
-	parser := &DocumentationParser{}
-	parser.abstractParser = NewAbstractParserFromTokenReader(tokenReader)
+func newDocumentationParser(tokenReader *tokenReader) *documentationParser {
+	parser := &documentationParser{}
+	parser.abstractParser = newAbstractParserFromTokenReader(tokenReader)
 	return parser
 }
 
-func (p *DocumentationParser) Parse() st.STNode {
+func (p *documentationParser) Parse() st.STNode {
 	return p.parseDocumentationLines()
 }
 
-func (p *DocumentationParser) parseDocumentationLines() st.STNode {
+func (p *documentationParser) parseDocumentationLines() st.STNode {
 	docLines := make([]st.STNode, 0)
 	nextToken := p.peek()
 	for nextToken != nil && nextToken.Kind() == st.HASH_TOKEN {
@@ -52,7 +52,7 @@ func (p *DocumentationParser) parseDocumentationLines() st.STNode {
 	return st.CreateNodeList(docLines...)
 }
 
-func (p *DocumentationParser) parseSingleDocumentationLine() st.STNode {
+func (p *documentationParser) parseSingleDocumentationLine() st.STNode {
 	hashToken := p.consume()
 	nextToken := p.peek()
 	if nextToken == nil {
@@ -71,7 +71,7 @@ func (p *DocumentationParser) parseSingleDocumentationLine() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseCodeBlockOrInlineCodeRef(startLineHash st.STNode) st.STNode {
+func (p *documentationParser) parseCodeBlockOrInlineCodeRef(startLineHash st.STNode) st.STNode {
 	startBacktick := p.consume()
 	nextToken := p.peek()
 	if nextToken == nil || !p.isInlineCodeRef(nextToken.Kind()) {
@@ -85,7 +85,7 @@ func (p *DocumentationParser) parseCodeBlockOrInlineCodeRef(startLineHash st.STN
 	return p.createMarkdownReferenceDocumentationLineNode(startLineHash, docElementList)
 }
 
-func (p *DocumentationParser) isInlineCodeRef(nextTokenKind st.SyntaxKind) bool {
+func (p *documentationParser) isInlineCodeRef(nextTokenKind st.SyntaxKind) bool {
 	nextNext := p.getNextNextToken()
 	switch nextTokenKind {
 	case st.HASH_TOKEN:
@@ -100,7 +100,7 @@ func (p *DocumentationParser) isInlineCodeRef(nextTokenKind st.SyntaxKind) bool 
 	}
 }
 
-func (p *DocumentationParser) parseDeprecationDocumentationLine(hashToken st.STNode) st.STNode {
+func (p *documentationParser) parseDeprecationDocumentationLine(hashToken st.STNode) st.STNode {
 	deprecationLiteral := p.consume()
 	docElements := p.parseDocumentationElements()
 	docElements = append([]st.STNode{deprecationLiteral}, docElements...)
@@ -108,7 +108,7 @@ func (p *DocumentationParser) parseDeprecationDocumentationLine(hashToken st.STN
 	return p.createMarkdownDeprecationDocumentationLineNode(hashToken, docElementList)
 }
 
-func (p *DocumentationParser) parseDocumentationLine(hashToken st.STNode) st.STNode {
+func (p *documentationParser) parseDocumentationLine(hashToken st.STNode) st.STNode {
 	docElements := p.parseDocumentationElements()
 	docElementList := st.CreateNodeList(docElements...)
 
@@ -127,13 +127,13 @@ func (p *DocumentationParser) parseDocumentationLine(hashToken st.STNode) st.STN
 	}
 }
 
-func (p *DocumentationParser) parseDocumentationElements() []st.STNode {
+func (p *documentationParser) parseDocumentationElements() []st.STNode {
 	docElements := make([]st.STNode, 0)
 	p.parseDocElements(&docElements)
 	return docElements
 }
 
-func (p *DocumentationParser) parseDocElements(docElements *[]st.STNode) {
+func (p *documentationParser) parseDocElements(docElements *[]st.STNode) {
 	var docElement st.STNode
 	var referenceType st.STNode
 
@@ -167,23 +167,23 @@ func (p *DocumentationParser) parseDocElements(docElements *[]st.STNode) {
 	}
 }
 
-func (p *DocumentationParser) convertToDocDescriptionToken(token st.STToken) st.STNode {
+func (p *documentationParser) convertToDocDescriptionToken(token st.STToken) st.STNode {
 	return st.CreateLiteralValueToken(st.DOCUMENTATION_DESCRIPTION, token.Text(),
 		token.LeadingMinutiae(), token.TrailingMinutiae())
 }
 
-func (p *DocumentationParser) convertToCodeContentToken(token st.STToken) st.STNode {
+func (p *documentationParser) convertToCodeContentToken(token st.STToken) st.STNode {
 	return st.CreateLiteralValueToken(st.CODE_CONTENT, token.Text(),
 		token.LeadingMinutiae(), token.TrailingMinutiae())
 }
 
-func (p *DocumentationParser) parseInlineCode(startBacktick st.STNode) st.STNode {
+func (p *documentationParser) parseInlineCode(startBacktick st.STNode) st.STNode {
 	codeDescription := p.parseInlineCodeContentToken()
 	endBacktick := p.parseCodeEndBacktick(startBacktick.Kind())
 	return p.createInlineCodeReferenceNode(startBacktick, codeDescription, endBacktick)
 }
 
-func (p *DocumentationParser) parseInlineCodeContentToken() st.STNode {
+func (p *documentationParser) parseInlineCodeContentToken() st.STNode {
 	token := p.peek()
 	if token == nil {
 		return p.createMissingTokenWithDiagnostics(st.CODE_CONTENT)
@@ -199,7 +199,7 @@ func (p *DocumentationParser) parseInlineCodeContentToken() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseCodeBlock(startLineHash st.STNode, startBacktick st.STNode) st.STNode {
+func (p *documentationParser) parseCodeBlock(startLineHash st.STNode, startBacktick st.STNode) st.STNode {
 	langAttribute := p.parseOptionalLangAttributeToken()
 	codeLines := p.parseCodeLines()
 	endLineHash := p.parseHashToken()
@@ -214,7 +214,7 @@ func (p *DocumentationParser) parseCodeBlock(startLineHash st.STNode, startBackt
 	return p.createMarkdownCodeBlockNode(startLineHash, startBacktick, langAttribute, codeLines, endLineHash, endBacktick)
 }
 
-func (p *DocumentationParser) parseOptionalLangAttributeToken() st.STNode {
+func (p *documentationParser) parseOptionalLangAttributeToken() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.CODE_CONTENT {
 		return p.consume()
@@ -223,7 +223,7 @@ func (p *DocumentationParser) parseOptionalLangAttributeToken() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseCodeLines() st.STNode {
+func (p *documentationParser) parseCodeLines() st.STNode {
 	codeLineList := make([]st.STNode, 0)
 	for !p.isEndOfCodeLines() {
 		codeLineNode := p.parseCodeLine()
@@ -232,7 +232,7 @@ func (p *DocumentationParser) parseCodeLines() st.STNode {
 	return st.CreateNodeList(codeLineList...)
 }
 
-func (p *DocumentationParser) parseCodeLine() st.STNode {
+func (p *documentationParser) parseCodeLine() st.STNode {
 	hash := p.parseHashToken()
 	var codeDescription st.STNode
 	nextToken := p.peek()
@@ -245,12 +245,12 @@ func (p *DocumentationParser) parseCodeLine() st.STNode {
 	return p.createMarkdownCodeLineNode(hash, codeDescription)
 }
 
-func (p *DocumentationParser) createEmptyCodeContentToken() st.STNode {
+func (p *documentationParser) createEmptyCodeContentToken() st.STNode {
 	emptyMinutiae := st.CreateEmptyNodeList()
 	return st.CreateLiteralValueToken(st.CODE_CONTENT, "", emptyMinutiae, emptyMinutiae)
 }
 
-func (p *DocumentationParser) parseHashToken() st.STNode {
+func (p *documentationParser) parseHashToken() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.HASH_TOKEN {
 		return p.consume()
@@ -259,7 +259,7 @@ func (p *DocumentationParser) parseHashToken() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseCodeEndBacktick(backtickKind st.SyntaxKind) st.STNode {
+func (p *documentationParser) parseCodeEndBacktick(backtickKind st.SyntaxKind) st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == backtickKind {
 		return p.consume()
@@ -268,7 +268,7 @@ func (p *DocumentationParser) parseCodeEndBacktick(backtickKind st.SyntaxKind) s
 	}
 }
 
-func (p *DocumentationParser) isEndOfCodeLines() bool {
+func (p *documentationParser) isEndOfCodeLines() bool {
 	nextToken := p.peek()
 	if nextToken == nil {
 		return true
@@ -288,7 +288,7 @@ func (p *DocumentationParser) isEndOfCodeLines() bool {
 	return true
 }
 
-func (p *DocumentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType st.STNode) st.STNode {
+func (p *documentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType st.STNode) st.STNode {
 	startBacktick := p.parseBacktickToken()
 	isCodeRef := false
 	var contentToken st.STNode
@@ -297,7 +297,7 @@ func (p *DocumentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType
 		contentToken = p.parseNameReferenceContent()
 	} else {
 		contentToken = p.combineAndCreateCodeContentToken()
-		if referenceGenre != ReferenceGenre_NO_KEY {
+		if referenceGenre != referenceGenreNoKey {
 			contentToken = st.AddDiagnostic(contentToken, &common.WARNING_INVALID_BALLERINA_NAME_REFERENCE, contentToken.(st.STToken).Text())
 		} else {
 			isCodeRef = true
@@ -313,30 +313,30 @@ func (p *DocumentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType
 	}
 }
 
-type ReferenceGenre int
+type referenceGenre int
 
 const (
-	ReferenceGenre_NO_KEY ReferenceGenre = iota
-	ReferenceGenre_SPECIAL_KEY
-	ReferenceGenre_FUNCTION_KEY
+	referenceGenreNoKey referenceGenre = iota
+	referenceGenreSpecialKey
+	referenceGenreFunctionKey
 )
 
-type Lookahead struct {
+type lookahead struct {
 	offset int
 }
 
-func (p *DocumentationParser) isBallerinaNameRefTokenSequence(refGenre ReferenceGenre) bool {
+func (p *documentationParser) isBallerinaNameRefTokenSequence(refGenre referenceGenre) bool {
 	hasMatch := false
-	lookahead := &Lookahead{offset: 1}
+	lookahead := &lookahead{offset: 1}
 
 	switch refGenre {
-	case ReferenceGenre_SPECIAL_KEY:
+	case referenceGenreSpecialKey:
 		// Look for x, m:x match
 		hasMatch = p.hasQualifiedIdentifier(lookahead)
-	case ReferenceGenre_FUNCTION_KEY:
+	case referenceGenreFunctionKey:
 		// Look for x, m:x, x(), m:x(), T.y(), m:T.y() match
 		hasMatch = p.hasBacktickExpr(lookahead, true)
-	case ReferenceGenre_NO_KEY:
+	case referenceGenreNoKey:
 		// Look for x(), m:x(), T.y(), m:T.y() match
 		hasMatch = p.hasBacktickExpr(lookahead, false)
 	}
@@ -349,7 +349,7 @@ func (p *DocumentationParser) isBallerinaNameRefTokenSequence(refGenre Reference
 	return peekToken != nil && peekToken.Kind() == st.BACKTICK_TOKEN
 }
 
-func (p *DocumentationParser) hasBacktickExpr(lookahead *Lookahead, isFunctionKey bool) bool {
+func (p *documentationParser) hasBacktickExpr(lookahead *lookahead, isFunctionKey bool) bool {
 	if !p.hasQualifiedIdentifier(lookahead) {
 		return false
 	}
@@ -372,14 +372,14 @@ func (p *DocumentationParser) hasBacktickExpr(lookahead *Lookahead, isFunctionKe
 	return isFunctionKey
 }
 
-func (p *DocumentationParser) hasFuncSignature(lookahead *Lookahead) bool {
+func (p *documentationParser) hasFuncSignature(lookahead *lookahead) bool {
 	if !p.hasOpenParenthesis(lookahead) {
 		return false
 	}
 	return p.hasCloseParenthesis(lookahead)
 }
 
-func (p *DocumentationParser) hasOpenParenthesis(lookahead *Lookahead) bool {
+func (p *documentationParser) hasOpenParenthesis(lookahead *lookahead) bool {
 	nextToken := p.peekN(lookahead.offset)
 	if nextToken != nil && nextToken.Kind() == st.OPEN_PAREN_TOKEN {
 		lookahead.offset++
@@ -388,7 +388,7 @@ func (p *DocumentationParser) hasOpenParenthesis(lookahead *Lookahead) bool {
 	return false
 }
 
-func (p *DocumentationParser) hasCloseParenthesis(lookahead *Lookahead) bool {
+func (p *documentationParser) hasCloseParenthesis(lookahead *lookahead) bool {
 	nextToken := p.peekN(lookahead.offset)
 	if nextToken != nil && nextToken.Kind() == st.CLOSE_PAREN_TOKEN {
 		lookahead.offset++
@@ -397,7 +397,7 @@ func (p *DocumentationParser) hasCloseParenthesis(lookahead *Lookahead) bool {
 	return false
 }
 
-func (p *DocumentationParser) hasQualifiedIdentifier(lookahead *Lookahead) bool {
+func (p *documentationParser) hasQualifiedIdentifier(lookahead *lookahead) bool {
 	if !p.hasIdentifier(lookahead) {
 		return false
 	}
@@ -411,7 +411,7 @@ func (p *DocumentationParser) hasQualifiedIdentifier(lookahead *Lookahead) bool 
 	return true
 }
 
-func (p *DocumentationParser) hasIdentifier(lookahead *Lookahead) bool {
+func (p *documentationParser) hasIdentifier(lookahead *lookahead) bool {
 	nextToken := p.peekN(lookahead.offset)
 	if nextToken != nil && nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		lookahead.offset++
@@ -420,7 +420,7 @@ func (p *DocumentationParser) hasIdentifier(lookahead *Lookahead) bool {
 	return false
 }
 
-func (p *DocumentationParser) isDocumentReferenceType(kind st.SyntaxKind) bool {
+func (p *documentationParser) isDocumentReferenceType(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.TYPE_DOC_REFERENCE_TOKEN,
 		st.SERVICE_DOC_REFERENCE_TOKEN,
@@ -437,7 +437,7 @@ func (p *DocumentationParser) isDocumentReferenceType(kind st.SyntaxKind) bool {
 	}
 }
 
-func (p *DocumentationParser) parseParameterDocumentationLine(hashToken st.STNode) st.STNode {
+func (p *documentationParser) parseParameterDocumentationLine(hashToken st.STNode) st.STNode {
 	plusToken := p.consume()
 	parameterName := p.parseParameterName()
 	dashToken := p.parseMinusToken()
@@ -454,7 +454,7 @@ func (p *DocumentationParser) parseParameterDocumentationLine(hashToken st.STNod
 	return p.createMarkdownParameterDocumentationLineNode(kind, hashToken, plusToken, parameterName, dashToken, docElementList)
 }
 
-func (p *DocumentationParser) isEndOfIntermediateDocumentation(kind st.SyntaxKind) bool {
+func (p *documentationParser) isEndOfIntermediateDocumentation(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.DOCUMENTATION_DESCRIPTION,
 		st.PLUS_TOKEN,
@@ -472,7 +472,7 @@ func (p *DocumentationParser) isEndOfIntermediateDocumentation(kind st.SyntaxKin
 	}
 }
 
-func (p *DocumentationParser) parseParameterName() st.STNode {
+func (p *documentationParser) parseParameterName() st.STNode {
 	token := p.peek()
 	if token == nil {
 		return p.createMissingTokenWithDiagnostics(st.PARAMETER_NAME)
@@ -485,7 +485,7 @@ func (p *DocumentationParser) parseParameterName() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseMinusToken() st.STNode {
+func (p *documentationParser) parseMinusToken() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.MINUS_TOKEN {
 		return p.consume()
@@ -494,7 +494,7 @@ func (p *DocumentationParser) parseMinusToken() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseBacktickToken() st.STNode {
+func (p *documentationParser) parseBacktickToken() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.BACKTICK_TOKEN {
 		return p.consume()
@@ -503,17 +503,17 @@ func (p *DocumentationParser) parseBacktickToken() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) getReferenceGenre(referenceType st.STNode) ReferenceGenre {
+func (p *documentationParser) getReferenceGenre(referenceType st.STNode) referenceGenre {
 	if referenceType == nil || referenceType.Kind() == st.NONE {
-		return ReferenceGenre_NO_KEY
+		return referenceGenreNoKey
 	}
 	if referenceType.Kind() == st.FUNCTION_DOC_REFERENCE_TOKEN {
-		return ReferenceGenre_FUNCTION_KEY
+		return referenceGenreFunctionKey
 	}
-	return ReferenceGenre_SPECIAL_KEY
+	return referenceGenreSpecialKey
 }
 
-func (p *DocumentationParser) combineAndCreateCodeContentToken() st.STNode {
+func (p *documentationParser) combineAndCreateCodeContentToken() st.STNode {
 	if p.peek() == nil || !p.isBacktickExprToken(p.peek().Kind()) {
 		return p.createMissingTokenWithDiagnostics(st.CODE_CONTENT)
 	}
@@ -535,7 +535,7 @@ func (p *DocumentationParser) combineAndCreateCodeContentToken() st.STNode {
 		leadingMinutiae, trailingMinutiae)
 }
 
-func (p *DocumentationParser) isBacktickExprToken(kind st.SyntaxKind) bool {
+func (p *documentationParser) isBacktickExprToken(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.DOT_TOKEN,
 		st.COLON_TOKEN,
@@ -549,7 +549,7 @@ func (p *DocumentationParser) isBacktickExprToken(kind st.SyntaxKind) bool {
 	}
 }
 
-func (p *DocumentationParser) parseNameReferenceContent() st.STNode {
+func (p *documentationParser) parseNameReferenceContent() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.IDENTIFIER_TOKEN {
 		identifier := p.consume()
@@ -559,7 +559,7 @@ func (p *DocumentationParser) parseNameReferenceContent() st.STNode {
 	return p.parseBacktickExpr(identifier)
 }
 
-func (p *DocumentationParser) parseBacktickExpr(identifier st.STNode) st.STNode {
+func (p *documentationParser) parseBacktickExpr(identifier st.STNode) st.STNode {
 	referenceName := p.parseQualifiedIdentifier(identifier)
 
 	nextToken := p.peek()
@@ -578,7 +578,7 @@ func (p *DocumentationParser) parseBacktickExpr(identifier st.STNode) st.STNode 
 	}
 }
 
-func (p *DocumentationParser) parseQualifiedIdentifier(identifier st.STNode) st.STNode {
+func (p *documentationParser) parseQualifiedIdentifier(identifier st.STNode) st.STNode {
 	nextToken := p.peek()
 	if nextToken != nil && nextToken.Kind() == st.COLON_TOKEN {
 		colon := p.consume()
@@ -587,12 +587,12 @@ func (p *DocumentationParser) parseQualifiedIdentifier(identifier st.STNode) st.
 	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (p *DocumentationParser) parseQualifiedIdentifierWithColon(identifier st.STNode, colon st.STNode) st.STNode {
+func (p *documentationParser) parseQualifiedIdentifierWithColon(identifier st.STNode, colon st.STNode) st.STNode {
 	refName := p.parseIdentifier()
 	return st.CreateQualifiedNameReferenceNode(identifier, colon, refName)
 }
 
-func (p *DocumentationParser) parseIdentifier() st.STNode {
+func (p *documentationParser) parseIdentifier() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.IDENTIFIER_TOKEN {
 		return p.consume()
@@ -601,14 +601,14 @@ func (p *DocumentationParser) parseIdentifier() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseFuncCall(referenceName st.STNode) st.STNode {
+func (p *documentationParser) parseFuncCall(referenceName st.STNode) st.STNode {
 	openParen := p.parseOpenParenthesis()
 	args := st.CreateEmptyNodeList()
 	closeParen := p.parseCloseParenthesis()
 	return st.CreateFunctionCallExpressionNode(referenceName, openParen, args, closeParen)
 }
 
-func (p *DocumentationParser) parseMethodCall(referenceName st.STNode, dotToken st.STNode) st.STNode {
+func (p *documentationParser) parseMethodCall(referenceName st.STNode, dotToken st.STNode) st.STNode {
 	methodName := p.parseSimpleNameReference()
 	openParen := p.parseOpenParenthesis()
 	args := st.CreateEmptyNodeList()
@@ -616,12 +616,12 @@ func (p *DocumentationParser) parseMethodCall(referenceName st.STNode, dotToken 
 	return st.CreateMethodCallExpressionNode(referenceName, dotToken, methodName, openParen, args, closeParen)
 }
 
-func (p *DocumentationParser) parseSimpleNameReference() st.STNode {
+func (p *documentationParser) parseSimpleNameReference() st.STNode {
 	identifier := p.parseIdentifier()
 	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (p *DocumentationParser) parseOpenParenthesis() st.STNode {
+func (p *documentationParser) parseOpenParenthesis() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.OPEN_PAREN_TOKEN {
 		return p.consume()
@@ -630,7 +630,7 @@ func (p *DocumentationParser) parseOpenParenthesis() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) parseCloseParenthesis() st.STNode {
+func (p *documentationParser) parseCloseParenthesis() st.STNode {
 	token := p.peek()
 	if token != nil && token.Kind() == st.CLOSE_PAREN_TOKEN {
 		return p.consume()
@@ -639,12 +639,12 @@ func (p *DocumentationParser) parseCloseParenthesis() st.STNode {
 	}
 }
 
-func (p *DocumentationParser) createMissingTokenWithDiagnostics(expectedKind st.SyntaxKind) st.STToken {
+func (p *documentationParser) createMissingTokenWithDiagnostics(expectedKind st.SyntaxKind) st.STToken {
 	warningCode := p.getDocWarningCode(expectedKind)
 	return st.CreateMissingTokenWithDiagnostics(expectedKind, warningCode)
 }
 
-func (p *DocumentationParser) getDocWarningCode(expectedKind st.SyntaxKind) diagnostics.DiagnosticCode {
+func (p *documentationParser) getDocWarningCode(expectedKind st.SyntaxKind) diagnostics.DiagnosticCode {
 	var code diagnostics.DiagnosticCode
 	switch expectedKind {
 	case st.HASH_TOKEN:
@@ -673,34 +673,34 @@ func (p *DocumentationParser) getDocWarningCode(expectedKind st.SyntaxKind) diag
 	return code
 }
 
-func (p *DocumentationParser) createMarkdownDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
+func (p *documentationParser) createMarkdownDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
 	return st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_DOCUMENTATION_LINE, hashToken, documentationElements)
 }
 
-func (p *DocumentationParser) createMarkdownDeprecationDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
+func (p *documentationParser) createMarkdownDeprecationDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
 	return st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE, hashToken, documentationElements)
 }
 
-func (p *DocumentationParser) createMarkdownReferenceDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
+func (p *documentationParser) createMarkdownReferenceDocumentationLineNode(hashToken st.STNode, documentationElements st.STNode) st.STNode {
 	return st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_REFERENCE_DOCUMENTATION_LINE, hashToken, documentationElements)
 }
 
-func (p *DocumentationParser) createMarkdownParameterDocumentationLineNode(kind st.SyntaxKind, hashToken st.STNode, plusToken st.STNode, parameterName st.STNode, dashToken st.STNode, docElementList st.STNode) st.STNode {
+func (p *documentationParser) createMarkdownParameterDocumentationLineNode(kind st.SyntaxKind, hashToken st.STNode, plusToken st.STNode, parameterName st.STNode, dashToken st.STNode, docElementList st.STNode) st.STNode {
 	return st.CreateMarkdownParameterDocumentationLineNode(kind, hashToken, plusToken, parameterName, dashToken, docElementList)
 }
 
-func (p *DocumentationParser) createInlineCodeReferenceNode(startBacktick st.STNode, codeReference st.STNode, endBacktick st.STNode) st.STNode {
+func (p *documentationParser) createInlineCodeReferenceNode(startBacktick st.STNode, codeReference st.STNode, endBacktick st.STNode) st.STNode {
 	return st.CreateInlineCodeReferenceNode(startBacktick, codeReference, endBacktick)
 }
 
-func (p *DocumentationParser) createBallerinaNameReferenceNode(referenceType st.STNode, startBacktick st.STNode, nameReference st.STNode, endBacktick st.STNode) st.STNode {
+func (p *documentationParser) createBallerinaNameReferenceNode(referenceType st.STNode, startBacktick st.STNode, nameReference st.STNode, endBacktick st.STNode) st.STNode {
 	return st.CreateBallerinaNameReferenceNode(referenceType, startBacktick, nameReference, endBacktick)
 }
 
-func (p *DocumentationParser) createMarkdownCodeBlockNode(startLineHashToken st.STNode, startBacktick st.STNode, langAttribute st.STNode, codeLines st.STNode, endLineHashToken st.STNode, endBacktick st.STNode) st.STNode {
+func (p *documentationParser) createMarkdownCodeBlockNode(startLineHashToken st.STNode, startBacktick st.STNode, langAttribute st.STNode, codeLines st.STNode, endLineHashToken st.STNode, endBacktick st.STNode) st.STNode {
 	return st.CreateMarkdownCodeBlockNode(startLineHashToken, startBacktick, langAttribute, codeLines, endLineHashToken, endBacktick)
 }
 
-func (p *DocumentationParser) createMarkdownCodeLineNode(hashToken st.STNode, codeDescription st.STNode) st.STNode {
+func (p *documentationParser) createMarkdownCodeLineNode(hashToken st.STNode, codeDescription st.STNode) st.STNode {
 	return st.CreateMarkdownCodeLineNode(hashToken, codeDescription)
 }

@@ -13,6 +13,8 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+// Package parser parses Ballerina source code into syntax trees.
 package parser
 
 import (
@@ -27,79 +29,79 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
-type OperatorPrecedence uint8
+type operatorPrecedence uint8
 
 const (
-	OPERATOR_PRECEDENCE_MEMBER_ACCESS     OperatorPrecedence = iota //  x.k, x.@a, f(x), x.f(y), x[y], x?.k, x.<y>, x/<y>, x/**/<y>, x/*xml-step-extend
-	OPERATOR_PRECEDENCE_UNARY                                       //  (+x), (-x), (~x), (!x), (<T>x), (typeof x),
-	OPERATOR_PRECEDENCE_EXPRESSION_ACTION                           //  Expression that can also be an action. eg: (check x), (checkpanic x). Same as unary.
-	OPERATOR_PRECEDENCE_MULTIPLICATIVE                              //  (x * y), (x / y), (x % y)
-	OPERATOR_PRECEDENCE_ADDITIVE                                    //  (x + y), (x - y)
-	OPERATOR_PRECEDENCE_SHIFT                                       //  (x << y), (x >> y), (x >>> y)
-	OPERATOR_PRECEDENCE_RANGE                                       //  (x ... y), (x ..< y)
-	OPERATOR_PRECEDENCE_BINARY_COMPARE                              //  (x < y), (x > y), (x <= y), (x >= y), (x is y)
-	OPERATOR_PRECEDENCE_EQUALITY                                    //  (x == y), (x != y), (x == y), (x === y), (x !== y)
-	OPERATOR_PRECEDENCE_BITWISE_AND                                 //  (x & y)
-	OPERATOR_PRECEDENCE_BITWISE_XOR                                 //  (x ^ y)
-	OPERATOR_PRECEDENCE_BITWISE_OR                                  //  (x | y)
-	OPERATOR_PRECEDENCE_LOGICAL_AND                                 //  (x && y)
-	OPERATOR_PRECEDENCE_LOGICAL_OR                                  //  (x || y)
-	OPERATOR_PRECEDENCE_ELVIS_CONDITIONAL                           //  x ?: y
-	OPERATOR_PRECEDENCE_CONDITIONAL                                 //  x ? y : z
+	operatorPrecedenceMemberAccess     operatorPrecedence = iota //  x.k, x.@a, f(x), x.f(y), x[y], x?.k, x.<y>, x/<y>, x/**/<y>, x/*xml-step-extend
+	operatorPrecedenceUnary                                      //  (+x), (-x), (~x), (!x), (<T>x), (typeof x),
+	operatorPrecedenceExpressionAction                           //  Expression that can also be an action. eg: (check x), (checkpanic x). Same as unary.
+	operatorPrecedenceMultiplicative                             //  (x * y), (x / y), (x % y)
+	operatorPrecedenceAdditive                                   //  (x + y), (x - y)
+	operatorPrecedenceShift                                      //  (x << y), (x >> y), (x >>> y)
+	operatorPrecedenceRange                                      //  (x ... y), (x ..< y)
+	operatorPrecedenceBinaryCompare                              //  (x < y), (x > y), (x <= y), (x >= y), (x is y)
+	operatorPrecedenceEquality                                   //  (x == y), (x != y), (x == y), (x === y), (x !== y)
+	operatorPrecedenceBitwiseAnd                                 //  (x & y)
+	operatorPrecedenceBitwiseXor                                 //  (x ^ y)
+	operatorPrecedenceBitwiseOr                                  //  (x | y)
+	operatorPrecedenceLogicalAnd                                 //  (x && y)
+	operatorPrecedenceLogicalOr                                  //  (x || y)
+	operatorPrecedenceElvisConditional                           //  x ?: y
+	operatorPrecedenceConditional                                //  x ? y : z
 
-	OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET //  (x) => y
+	operatorPrecedenceAnonFuncOrLet //  (x) => y
 
 	//  Actions cannot reside inside expressions (excluding query-action-or-expr), hence they have the lowest
 	//  precedence.
-	OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION //  (x -> y()),
-	OPERATOR_PRECEDENCE_ACTION             //  (start x), ...
-	OPERATOR_PRECEDENCE_TRAP               //  (trap x)
+	operatorPrecedenceRemoteCallAction //  (x -> y()),
+	operatorPrecedenceAction           //  (start x), ...
+	operatorPrecedenceTrap             //  (trap x)
 
 	// A query-action-or-expr or a query-action can have actions in certain clauses.
-	OPERATOR_PRECEDENCE_QUERY //  from x, select x, where x
+	operatorPrecedenceQuery //  from x, select x, where x
 
-	OPERATOR_PRECEDENCE_DEFAULT //  (start x), ...
+	operatorPrecedenceDefault //  (start x), ...
 )
 
-const DEFAULT_OP_PRECEDENCE OperatorPrecedence = OPERATOR_PRECEDENCE_DEFAULT
+const defaultOpPrecedence operatorPrecedence = operatorPrecedenceDefault
 
-func (o *OperatorPrecedence) isHigherThanOrEqual(other OperatorPrecedence, allowActions bool) bool {
+func (o *operatorPrecedence) isHigherThanOrEqual(other operatorPrecedence, allowActions bool) bool {
 	if allowActions {
-		if (*o == OPERATOR_PRECEDENCE_EXPRESSION_ACTION) && (other == OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION) {
+		if (*o == operatorPrecedenceExpressionAction) && (other == operatorPrecedenceRemoteCallAction) {
 			return false
 		}
 	}
 	return uint8(*o) <= uint8(other)
 }
 
-type TypePrecedence uint8
+type typePrecedence uint8
 
-func (t *TypePrecedence) isHigherThanOrEqual(other TypePrecedence) bool {
+func (t *typePrecedence) isHigherThanOrEqual(other typePrecedence) bool {
 	return uint8(*t) <= uint8(other)
 }
 
 const (
-	TYPE_PRECEDENCE_DISTINCT          TypePrecedence = iota // distinct T
-	TYPE_PRECEDENCE_ARRAY_OR_OPTIONAL                       // T[], T?
-	TYPE_PRECEDENCE_INTERSECTION                            // T1 & T2
-	TYPE_PRECEDENCE_UNION                                   // T1 | T2
-	TYPE_PRECEDENCE_DEFAULT                                 // function(args) returns T
+	typePrecedenceDistinct        typePrecedence = iota // distinct T
+	typePrecedenceArrayOrOptional                       // T[], T?
+	typePrecedenceIntersection                          // T1 & T2
+	typePrecedenceUnion                                 // T1 | T2
+	typePrecedenceDefault                               // function(args) returns T
 )
 
-type Action uint8
+type action uint8
 
 const (
-	ACTION_INSERT Action = iota
-	ACTION_REMOVE
-	ACTION_KEEP
+	actionInsert action = iota
+	actionRemove
+	actionKeep
 )
 
-type ParserErrorHandler interface {
+type parserErrorHandler interface {
 	SwitchContext(context common.ParserRuleContext)
 	GetParentContext() common.ParserRuleContext
 	EndContext()
 	StartContext(context common.ParserRuleContext)
-	Recover(currentCtx common.ParserRuleContext, token st.STToken, isCompletion bool) *Solution
+	Recover(currentCtx common.ParserRuleContext, token st.STToken, isCompletion bool) *solution
 	GetContextStack() []common.ParserRuleContext
 	GetGrandParentContext() common.ParserRuleContext
 	ConsumeInvalidToken() st.STToken
@@ -112,32 +114,13 @@ type invalidNodeInfo struct {
 }
 
 type abstractParser struct {
-	errorHandler         ParserErrorHandler
-	tokenReader          *TokenReader
+	errorHandler         parserErrorHandler
+	tokenReader          *tokenReader
 	invalidNodeInfoStack []invalidNodeInfo
 	insertedToken        st.STToken
 }
 
-func NewInvalidNodeInfoFromInvalidNodeDiagnosticCodeArgs(invalidNode st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) invalidNodeInfo {
-	this := invalidNodeInfo{}
-	this.node = invalidNode
-	this.diagnosticCode = diagnosticCode
-	this.args = args
-	return this
-}
-
-func NewAbstractParserFromTokenReaderErrorHandler(tokenReader *TokenReader, errorHandler ParserErrorHandler) abstractParser {
-	this := abstractParser{}
-	this.invalidNodeInfoStack = make([]invalidNodeInfo, 0)
-	this.insertedToken = nil
-	// Default field initializations
-
-	this.tokenReader = tokenReader
-	this.errorHandler = errorHandler
-	return this
-}
-
-func NewAbstractParserFromTokenReader(tokenReader *TokenReader) abstractParser {
+func newAbstractParserFromTokenReader(tokenReader *tokenReader) abstractParser {
 	this := abstractParser{}
 	this.invalidNodeInfoStack = make([]invalidNodeInfo, 0)
 	this.insertedToken = nil
@@ -196,14 +179,14 @@ func (a *abstractParser) consumeWithInvalidNodesWithToken(token st.STToken) st.S
 	return newToken
 }
 
-func (a *abstractParser) recover(token st.STToken, currentCtx common.ParserRuleContext, isCompletion bool) *Solution {
+func (a *abstractParser) recover(token st.STToken, currentCtx common.ParserRuleContext, isCompletion bool) *solution {
 	isCompletion = isCompletion || token.Kind() == st.EOF_TOKEN
 	sol := a.errorHandler.Recover(currentCtx, token, isCompletion)
 	switch sol.Action {
-	case ACTION_REMOVE:
+	case actionRemove:
 		a.insertedToken = nil
 		a.addInvalidTokenToNextToken(sol.RemovedToken)
-	case ACTION_INSERT:
+	case actionInsert:
 		a.insertedToken = st.ToToken(sol.RecoveredNode)
 	}
 	return sol
@@ -301,12 +284,12 @@ func (a *abstractParser) addInvalidTokenToNextToken(invalidNode st.STToken) {
 	a.invalidNodeInfoStack = append(a.invalidNodeInfoStack, invalidNodeInfo{node: invalidNode, diagnosticCode: &common.ERROR_INVALID_TOKEN, args: []any{invalidNode.Text()}})
 }
 
-type BallerinaParser struct {
+type ballerinaParser struct {
 	abstractParser
 }
 
-func NewBallerinaParserFromTokenReader(tokenReader *TokenReader) BallerinaParser {
-	this := BallerinaParser{}
+func newBallerinaParserFromTokenReader(tokenReader *tokenReader) ballerinaParser {
+	this := ballerinaParser{}
 	// Default field initializations
 
 	this.abstractParser = abstractParser{
@@ -314,7 +297,7 @@ func NewBallerinaParserFromTokenReader(tokenReader *TokenReader) BallerinaParser
 		invalidNodeInfoStack: make([]invalidNodeInfo, 0),
 		insertedToken:        nil,
 	}
-	errorHandler := NewBallerinaParserErrorHandlerFromTokenReader(this.tokenReader)
+	errorHandler := newBallerinaParserErrorHandlerFromTokenReader(this.tokenReader)
 	this.errorHandler = &errorHandler
 	return this
 }
@@ -328,7 +311,7 @@ func isParameterizedTypeToken(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func CreateBuiltinSimpleNameReference(token st.STNode) st.STNode {
+func createBuiltinSimpleNameReference(token st.STNode) st.STNode {
 	typeKind := getBuiltinTypeSyntaxKind(token.Kind())
 	return st.CreateBuiltinSimpleNameReferenceNode(typeKind, token)
 }
@@ -461,11 +444,11 @@ func getBuiltinTypeSyntaxKind(typeKeyword st.SyntaxKind) st.SyntaxKind {
 }
 
 func isKeyKeyword(token st.STToken) bool {
-	return ((token.Kind() == st.IDENTIFIER_TOKEN) && KEY == token.Text())
+	return ((token.Kind() == st.IDENTIFIER_TOKEN) && key == token.Text())
 }
 
 func isNaturalKeyword(token st.STToken) bool {
-	return ((token.Kind() == st.IDENTIFIER_TOKEN) && NATURAL == (token.Text()))
+	return ((token.Kind() == st.IDENTIFIER_TOKEN) && natural == (token.Text()))
 }
 
 func isEndOfLetVarDeclarations(nextToken st.STToken, nextNextToken st.STToken) bool {
@@ -523,10 +506,10 @@ func isValidBase16LiteralContent(content string) bool {
 	charArray := []byte(content)
 	for _, c := range charArray {
 		switch c {
-		case TAB,
-			NEWLINE,
-			CARRIAGE_RETURN,
-			SPACE:
+		case tab,
+			newline,
+			carriageReturn,
+			space:
 		default:
 			if isHexDigit(c) {
 				hexDigitCount++
@@ -544,11 +527,11 @@ func isValidBase64LiteralContent(content string) bool {
 	paddingCharCount := 0
 	for _, c := range charArray {
 		switch c {
-		case TAB,
-			NEWLINE,
-			CARRIAGE_RETURN,
-			SPACE:
-		case EQUAL:
+		case tab,
+			newline,
+			carriageReturn,
+			space:
+		case equal:
 			paddingCharCount++
 		default:
 			if isBase64Char(c) {
@@ -598,19 +581,19 @@ func isDigit(c byte) bool {
 	return (('0' <= c) && (c <= '9'))
 }
 
-func (b *BallerinaParser) Parse() st.STNode {
+func (b *ballerinaParser) Parse() st.STNode {
 	ast := b.parseCompUnit()
 	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
 	return ast
 }
 
-func (b *BallerinaParser) ParseImports() st.STNode {
+func (b *ballerinaParser) ParseImports() st.STNode {
 	ast := b.parseCompUnitImports()
 	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
 	return ast
 }
 
-func (b *BallerinaParser) ParseAsStatement() st.STNode {
+func (b *ballerinaParser) ParseAsStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -630,7 +613,7 @@ func (b *BallerinaParser) ParseAsStatement() st.STNode {
 	return stmt
 }
 
-func (b *BallerinaParser) ParseAsBlockStatement() st.STNode {
+func (b *ballerinaParser) ParseAsBlockStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -640,7 +623,7 @@ func (b *BallerinaParser) ParseAsBlockStatement() st.STNode {
 	return blockStmtNode
 }
 
-func (b *BallerinaParser) ParseAsStatements() st.STNode {
+func (b *ballerinaParser) ParseAsStatements() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
 	stmtsNode := b.parseStatements()
@@ -663,7 +646,7 @@ func (b *BallerinaParser) ParseAsStatements() st.STNode {
 	return st.CreateNodeList(stmts...)
 }
 
-func (b *BallerinaParser) ParseAsExpression() st.STNode {
+func (b *ballerinaParser) ParseAsExpression() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	expr := b.parseExpression()
@@ -671,7 +654,7 @@ func (b *BallerinaParser) ParseAsExpression() st.STNode {
 	return expr
 }
 
-func (b *BallerinaParser) ParseAsActionOrExpression() st.STNode {
+func (b *ballerinaParser) ParseAsActionOrExpression() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -681,7 +664,7 @@ func (b *BallerinaParser) ParseAsActionOrExpression() st.STNode {
 	return actionOrExpr
 }
 
-func (b *BallerinaParser) ParseAsModuleMemberDeclaration() st.STNode {
+func (b *ballerinaParser) ParseAsModuleMemberDeclaration() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	topLevelNode := b.parseTopLevelNode()
 	if topLevelNode == nil {
@@ -696,14 +679,14 @@ func (b *BallerinaParser) ParseAsModuleMemberDeclaration() st.STNode {
 	return topLevelNode
 }
 
-func (b *BallerinaParser) ParseAsImportDeclaration() st.STNode {
+func (b *ballerinaParser) ParseAsImportDeclaration() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	importDecl := b.parseImportDecl()
 	importDecl = b.invalidateRestAndAddToTrailingMinutiae(importDecl)
 	return importDecl
 }
 
-func (b *BallerinaParser) ParseAsTypeDescriptor() st.STNode {
+func (b *ballerinaParser) ParseAsTypeDescriptor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_TYPE_DEFINITION)
 	typeDesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_DEF)
@@ -711,7 +694,7 @@ func (b *BallerinaParser) ParseAsTypeDescriptor() st.STNode {
 	return typeDesc
 }
 
-func (b *BallerinaParser) ParseAsBindingPattern() st.STNode {
+func (b *ballerinaParser) ParseAsBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	bindingPattern := b.parseBindingPattern()
@@ -719,7 +702,7 @@ func (b *BallerinaParser) ParseAsBindingPattern() st.STNode {
 	return bindingPattern
 }
 
-func (b *BallerinaParser) ParseAsFunctionBodyBlock() st.STNode {
+func (b *ballerinaParser) ParseAsFunctionBodyBlock() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	funcBodyBlock := b.parseFunctionBodyBlock(false)
@@ -727,7 +710,7 @@ func (b *BallerinaParser) ParseAsFunctionBodyBlock() st.STNode {
 	return funcBodyBlock
 }
 
-func (b *BallerinaParser) ParseAsObjectMember() st.STNode {
+func (b *ballerinaParser) ParseAsObjectMember() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_SERVICE_DECL)
 	b.startContext(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER)
@@ -739,7 +722,7 @@ func (b *BallerinaParser) ParseAsObjectMember() st.STNode {
 	return objectMember
 }
 
-func (b *BallerinaParser) ParseAsIntermediateClause(allowActions bool) st.STNode {
+func (b *ballerinaParser) ParseAsIntermediateClause(allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
@@ -761,7 +744,7 @@ func (b *BallerinaParser) ParseAsIntermediateClause(allowActions bool) st.STNode
 	return intermediateClause
 }
 
-func (b *BallerinaParser) ParseAsLetVarDeclaration(allowActions bool) st.STNode {
+func (b *ballerinaParser) ParseAsLetVarDeclaration(allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	b.switchContext(common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION)
@@ -771,7 +754,7 @@ func (b *BallerinaParser) ParseAsLetVarDeclaration(allowActions bool) st.STNode 
 	return letVarDeclaration
 }
 
-func (b *BallerinaParser) ParseAsAnnotation() st.STNode {
+func (b *ballerinaParser) ParseAsAnnotation() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATIONS)
 	annotation := b.parseAnnotation()
@@ -779,7 +762,7 @@ func (b *BallerinaParser) ParseAsAnnotation() st.STNode {
 	return annotation
 }
 
-func (b *BallerinaParser) ParseAsMarkdownDocumentation() st.STNode {
+func (b *ballerinaParser) ParseAsMarkdownDocumentation() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	markdownDoc := b.parseMarkdownDocumentation()
 	if st.ToSourceCode(markdownDoc) == "" {
@@ -793,7 +776,7 @@ func (b *BallerinaParser) ParseAsMarkdownDocumentation() st.STNode {
 	return markdownDoc
 }
 
-func (b *BallerinaParser) ParseWithContext(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) ParseWithContext(context common.ParserRuleContext) st.STNode {
 	switch context {
 	case common.PARSER_RULE_CONTEXT_COMP_UNIT:
 		return b.parseCompUnit()
@@ -813,7 +796,7 @@ func (b *BallerinaParser) ParseWithContext(context common.ParserRuleContext) st.
 	}
 }
 
-func (b *BallerinaParser) parseCompUnit() st.STNode {
+func (b *ballerinaParser) parseCompUnit() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	var otherDecls []st.STNode
 	var importDecls []st.STNode
@@ -844,7 +827,7 @@ func (b *BallerinaParser) parseCompUnit() st.STNode {
 	return st.CreateModulePartNode(st.CreateNodeList(importDecls...), st.CreateNodeList(otherDecls...), eof)
 }
 
-func (b *BallerinaParser) parseCompUnitImports() st.STNode {
+func (b *ballerinaParser) parseCompUnitImports() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMP_UNIT)
 	var importDecls []st.STNode
 	for b.peek().Kind() == st.IMPORT_KEYWORD {
@@ -858,7 +841,7 @@ func (b *BallerinaParser) parseCompUnitImports() st.STNode {
 	)
 }
 
-func (b *BallerinaParser) parseTopLevelNode() st.STNode {
+func (b *ballerinaParser) parseTopLevelNode() st.STNode {
 	nextToken := b.peek()
 	var metadata st.STNode
 	switch nextToken.Kind() {
@@ -901,7 +884,7 @@ func (b *BallerinaParser) parseTopLevelNode() st.STNode {
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			metadata = st.CreateEmptyNode()
 			break
 		}
@@ -910,7 +893,7 @@ func (b *BallerinaParser) parseTopLevelNode() st.STNode {
 	return b.parseTopLevelNodeWithMetadata(metadata)
 }
 
-func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata st.STNode) st.STNode {
+func (b *ballerinaParser) parseTopLevelNodeWithMetadata(metadata st.STNode) st.STNode {
 	nextToken := b.peek()
 	var publicQualifier st.STNode
 	switch nextToken.Kind() {
@@ -958,7 +941,7 @@ func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata st.STNode) st.S
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_METADATA)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			publicQualifier = st.CreateEmptyNode()
 			break
 		}
@@ -967,7 +950,7 @@ func (b *BallerinaParser) parseTopLevelNodeWithMetadata(metadata st.STNode) st.S
 	return b.parseTopLevelNodeWithQualifiers(metadata, publicQualifier)
 }
 
-func (b *BallerinaParser) addMetadataNotAttachedDiagnostic(metadata st.STMetadataNode) st.STNode {
+func (b *ballerinaParser) addMetadataNotAttachedDiagnostic(metadata st.STMetadataNode) st.STNode {
 	docString := metadata.DocumentationString
 	if docString != nil {
 		docString = st.AddDiagnostic(docString, &common.ERROR_DOCUMENTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
@@ -980,12 +963,12 @@ func (b *BallerinaParser) addMetadataNotAttachedDiagnostic(metadata st.STMetadat
 	return st.CreateMetadataNode(docString, annotations)
 }
 
-func (b *BallerinaParser) addAnnotNotAttachedDiagnostic(annotList *st.STNodeList) st.STNode {
+func (b *ballerinaParser) addAnnotNotAttachedDiagnostic(annotList *st.STNodeList) st.STNode {
 	annotations := st.UpdateAllNodesInNodeListWithDiagnostic(annotList, &common.ERROR_ANNOTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
 	return annotations
 }
 
-func (b *BallerinaParser) isModuleVarDeclStart(lookahead int) bool {
+func (b *ballerinaParser) isModuleVarDeclStart(lookahead int) bool {
 	nextToken := b.peekN(lookahead + 1)
 	switch nextToken.Kind() {
 	case st.EQUAL_TOKEN, // Scenario: foo = . Even though this is not valid, consider this as a var-decl and
@@ -1026,9 +1009,9 @@ func (b *BallerinaParser) isModuleVarDeclStart(lookahead int) bool {
 	}
 }
 
-func (b *BallerinaParser) parseImportDecl() st.STNode {
+func (b *ballerinaParser) parseImportDecl() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_IMPORT_DECL)
-	b.tokenReader.StartMode(PARSER_MODE_IMPORT_MODE)
+	b.tokenReader.StartMode(parserModeImportMode)
 	importKeyword := b.parseImportKeyword()
 	identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_IMPORT_ORG_OR_MODULE_NAME)
 	importDecl := b.parseImportDeclWithIdentifier(importKeyword, identifier)
@@ -1037,7 +1020,7 @@ func (b *BallerinaParser) parseImportDecl() st.STNode {
 	return importDecl
 }
 
-func (b *BallerinaParser) parseImportKeyword() st.STNode {
+func (b *ballerinaParser) parseImportKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IMPORT_KEYWORD {
 		return b.consume()
@@ -1047,7 +1030,7 @@ func (b *BallerinaParser) parseImportKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseIdentifier(currentCtx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseIdentifier(currentCtx common.ParserRuleContext) st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -1061,7 +1044,7 @@ func (b *BallerinaParser) parseIdentifier(currentCtx common.ParserRuleContext) s
 	}
 }
 
-func (b *BallerinaParser) parseImportDeclWithIdentifier(importKeyword st.STNode, identifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseImportDeclWithIdentifier(importKeyword st.STNode, identifier st.STNode) st.STNode {
 	nextToken := b.peek()
 	var orgName st.STNode
 	var moduleName st.STNode
@@ -1088,7 +1071,7 @@ func (b *BallerinaParser) parseImportDeclWithIdentifier(importKeyword st.STNode,
 	return st.CreateImportDeclarationNode(importKeyword, orgName, moduleName, alias, semicolon)
 }
 
-func (b *BallerinaParser) parseSlashToken() st.STToken {
+func (b *ballerinaParser) parseSlashToken() st.STToken {
 	token := b.peek()
 	if token.Kind() == st.SLASH_TOKEN {
 		return b.consume()
@@ -1098,7 +1081,7 @@ func (b *BallerinaParser) parseSlashToken() st.STToken {
 	}
 }
 
-func (b *BallerinaParser) parseDotToken() st.STNode {
+func (b *ballerinaParser) parseDotToken() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.DOT_TOKEN {
 		return b.consume()
@@ -1108,12 +1091,12 @@ func (b *BallerinaParser) parseDotToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseModuleName() st.STNode {
+func (b *ballerinaParser) parseModuleName() st.STNode {
 	moduleNameStart := b.parseIdentifier(common.PARSER_RULE_CONTEXT_IMPORT_MODULE_NAME)
 	return b.parseModuleNameInner(moduleNameStart)
 }
 
-func (b *BallerinaParser) parseModuleNameInner(moduleNameStart st.STNode) st.STNode {
+func (b *ballerinaParser) parseModuleNameInner(moduleNameStart st.STNode) st.STNode {
 	var moduleNameParts []st.STNode
 	moduleNameParts = append(moduleNameParts, moduleNameStart)
 	nextToken := b.peek()
@@ -1130,7 +1113,7 @@ func (b *BallerinaParser) parseModuleNameInner(moduleNameStart st.STNode) st.STN
 	return st.CreateNodeList(moduleNameParts...)
 }
 
-func (b *BallerinaParser) parseModuleNameRhs() st.STNode {
+func (b *ballerinaParser) parseModuleNameRhs() st.STNode {
 	switch b.peek().Kind() {
 	case st.DOT_TOKEN:
 		return b.consume()
@@ -1142,7 +1125,7 @@ func (b *BallerinaParser) parseModuleNameRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfImportDecl(nextToken st.STToken) bool {
+func (b *ballerinaParser) isEndOfImportDecl(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
 	case st.SEMICOLON_TOKEN,
 		st.PUBLIC_KEYWORD,
@@ -1162,7 +1145,7 @@ func (b *BallerinaParser) isEndOfImportDecl(nextToken st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) parseDecimalIntLiteral(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseDecimalIntLiteral(context common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.DECIMAL_INTEGER_LITERAL_TOKEN {
 		return b.consume()
@@ -1172,7 +1155,7 @@ func (b *BallerinaParser) parseDecimalIntLiteral(context common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParser) parseImportPrefixDecl() st.STNode {
+func (b *ballerinaParser) parseImportPrefixDecl() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.AS_KEYWORD:
@@ -1190,7 +1173,7 @@ func (b *BallerinaParser) parseImportPrefixDecl() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAsKeyword() st.STNode {
+func (b *ballerinaParser) parseAsKeyword() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.AS_KEYWORD {
 		return b.consume()
@@ -1200,7 +1183,7 @@ func (b *BallerinaParser) parseAsKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseImportPrefix() st.STNode {
+func (b *ballerinaParser) parseImportPrefix() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		identifier := b.consume()
@@ -1218,12 +1201,12 @@ func (b *BallerinaParser) parseImportPrefix() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTopLevelNodeWithQualifiers(metadata, publicQualifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseTopLevelNodeWithQualifiers(metadata, publicQualifier st.STNode) st.STNode {
 	res, _ := b.parseTopLevelNodeInner(metadata, publicQualifier, nil)
 	return res
 }
 
-func (b *BallerinaParser) parseTopLevelNodeInner(metadata, publicQualifier st.STNode, qualifiers []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseTopLevelNodeInner(metadata, publicQualifier st.STNode, qualifiers []st.STNode) (st.STNode, []st.STNode) {
 	qualifiers = b.parseTopLevelQualifiers(qualifiers)
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -1276,27 +1259,27 @@ func (b *BallerinaParser) parseTopLevelNodeInner(metadata, publicQualifier st.ST
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE_WITHOUT_MODIFIER)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			return b.parseModuleVarDeclInner(metadata, publicQualifier, qualifiers)
 		}
 		return b.parseTopLevelNodeInner(metadata, publicQualifier, qualifiers)
 	}
 }
 
-func (b *BallerinaParser) parseModuleVarDecl(metadata st.STNode) st.STNode {
+func (b *ballerinaParser) parseModuleVarDecl(metadata st.STNode) st.STNode {
 	var emptyList []st.STNode
 	publicQualifier := st.CreateEmptyNode()
 	res, _ := b.parseVariableDeclInner(metadata, publicQualifier, emptyList, emptyList, true)
 	return res
 }
 
-func (b *BallerinaParser) parseModuleVarDeclInner(metadata st.STNode, publicQualifier st.STNode, topLevelQualifiers []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseModuleVarDeclInner(metadata st.STNode, publicQualifier st.STNode, topLevelQualifiers []st.STNode) (st.STNode, []st.STNode) {
 	varDeclQuals, topLevelQualifiers := b.extractVarDeclQualifiers(topLevelQualifiers, true)
 	res, _ := b.parseVariableDeclInner(metadata, publicQualifier, varDeclQuals, topLevelQualifiers, true)
 	return res, topLevelQualifiers
 }
 
-func (b *BallerinaParser) extractVarDeclQualifiers(qualifiers []st.STNode, isModuleVar bool) ([]st.STNode, []st.STNode) {
+func (b *ballerinaParser) extractVarDeclQualifiers(qualifiers []st.STNode, isModuleVar bool) ([]st.STNode, []st.STNode) {
 	var varDeclQualList []st.STNode
 	initialListSize := len(qualifiers)
 	configurableQualIndex := (-1)
@@ -1332,14 +1315,14 @@ func (b *BallerinaParser) extractVarDeclQualifiers(qualifiers []st.STNode, isMod
 	return varDeclQualList, qualifiers
 }
 
-func (b *BallerinaParser) getInvalidQualifierError(qualifierKind st.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *ballerinaParser) getInvalidQualifierError(qualifierKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	if qualifierKind == st.FINAL_KEYWORD {
 		return &common.ERROR_CONFIGURABLE_VAR_IMPLICITLY_FINAL
 	}
 	return &common.ERROR_QUALIFIER_NOT_ALLOWED
 }
 
-func (b *BallerinaParser) isModuleVarDeclQualifier(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isModuleVarDeclQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.FINAL_KEYWORD, st.ISOLATED_KEYWORD, st.CONFIGURABLE_KEYWORD:
 		return true
@@ -1348,36 +1331,36 @@ func (b *BallerinaParser) isModuleVarDeclQualifier(tokenKind st.SyntaxKind) bool
 	}
 }
 
-func (b *BallerinaParser) reportInvalidQualifier(qualifier st.STNode) {
+func (b *ballerinaParser) reportInvalidQualifier(qualifier st.STNode) {
 	if (qualifier != nil) && (qualifier.Kind() != st.NONE) {
 		b.addInvalidNodeToNextToken(qualifier, &common.ERROR_INVALID_QUALIFIER,
 			st.ToToken(qualifier).Text())
 	}
 }
 
-func (b *BallerinaParser) reportInvalidMetaData(metadata st.STNode, constructName string) {
+func (b *ballerinaParser) reportInvalidMetaData(metadata st.STNode, constructName string) {
 	if (metadata != nil) && (metadata.Kind() != st.NONE) {
 		b.addInvalidNodeToNextToken(metadata, &common.ERROR_INVALID_METADATA, constructName)
 	}
 }
 
-func (b *BallerinaParser) reportInvalidQualifierList(qualifiers []st.STNode) {
+func (b *ballerinaParser) reportInvalidQualifierList(qualifiers []st.STNode) {
 	for _, qual := range qualifiers {
 		b.addInvalidNodeToNextToken(qual, &common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qual).Text())
 	}
 }
 
-func (b *BallerinaParser) reportInvalidStatementAnnots(annots st.STNode, qualifiers []st.STNode) {
+func (b *ballerinaParser) reportInvalidStatementAnnots(annots st.STNode, qualifiers []st.STNode) {
 	diagnosticErrorCode := common.ERROR_ANNOTATIONS_ATTACHED_TO_STATEMENT
 	b.reportInvalidAnnotations(annots, qualifiers, diagnosticErrorCode)
 }
 
-func (b *BallerinaParser) reportInvalidExpressionAnnots(annots st.STNode, qualifiers []st.STNode) {
+func (b *ballerinaParser) reportInvalidExpressionAnnots(annots st.STNode, qualifiers []st.STNode) {
 	diagnosticErrorCode := common.ERROR_ANNOTATIONS_ATTACHED_TO_EXPRESSION
 	b.reportInvalidAnnotations(annots, qualifiers, diagnosticErrorCode)
 }
 
-func (b *BallerinaParser) reportInvalidAnnotations(annots st.STNode, qualifiers []st.STNode, errorCode common.DiagnosticErrorCode) {
+func (b *ballerinaParser) reportInvalidAnnotations(annots st.STNode, qualifiers []st.STNode, errorCode common.DiagnosticErrorCode) {
 	if b.isNodeListEmpty(annots) {
 		return
 	}
@@ -1388,7 +1371,7 @@ func (b *BallerinaParser) reportInvalidAnnotations(annots st.STNode, qualifiers 
 	}
 }
 
-func (b *BallerinaParser) isTopLevelQualifier(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isTopLevelQualifier(tokenKind st.SyntaxKind) bool {
 	var nextNextToken st.STToken
 	switch tokenKind {
 	case st.FINAL_KEYWORD, // final-qualifier
@@ -1423,7 +1406,7 @@ func (b *BallerinaParser) isTopLevelQualifier(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) isTypeDescQualifier(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isTypeDescQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.TRANSACTIONAL_KEYWORD, // func-type-dec, func-def
 		st.ISOLATED_KEYWORD, // func-type-dec, object-type-desc, func-def, class-def, isolated-final-qual
@@ -1436,7 +1419,7 @@ func (b *BallerinaParser) isTypeDescQualifier(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) isObjectMemberQualifier(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isObjectMemberQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.REMOTE_KEYWORD, // method-def, method-decl
 		st.RESOURCE_KEYWORD, // resource-method-def
@@ -1447,7 +1430,7 @@ func (b *BallerinaParser) isObjectMemberQualifier(tokenKind st.SyntaxKind) bool 
 	}
 }
 
-func (b *BallerinaParser) isExprQualifier(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isExprQualifier(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.TRANSACTIONAL_KEYWORD:
 		nextNextToken := b.getNextNextToken()
@@ -1466,7 +1449,7 @@ func (b *BallerinaParser) isExprQualifier(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseTopLevelQualifiers(qualifiers []st.STNode) []st.STNode {
+func (b *ballerinaParser) parseTopLevelQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isTopLevelQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1474,7 +1457,7 @@ func (b *BallerinaParser) parseTopLevelQualifiers(qualifiers []st.STNode) []st.S
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseTypeDescQualifiers(qualifiers []st.STNode) []st.STNode {
+func (b *ballerinaParser) parseTypeDescQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isTypeDescQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1482,7 +1465,7 @@ func (b *BallerinaParser) parseTypeDescQualifiers(qualifiers []st.STNode) []st.S
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseObjectMemberQualifiers(qualifiers []st.STNode) []st.STNode {
+func (b *ballerinaParser) parseObjectMemberQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isObjectMemberQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1490,7 +1473,7 @@ func (b *BallerinaParser) parseObjectMemberQualifiers(qualifiers []st.STNode) []
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseExprQualifiers(qualifiers []st.STNode) []st.STNode {
+func (b *ballerinaParser) parseExprQualifiers(qualifiers []st.STNode) []st.STNode {
 	for b.isExprQualifier(b.peek().Kind()) {
 		qualifier := b.consume()
 		qualifiers = append(qualifiers, qualifier)
@@ -1498,7 +1481,7 @@ func (b *BallerinaParser) parseExprQualifiers(qualifiers []st.STNode) []st.STNod
 	return qualifiers
 }
 
-func (b *BallerinaParser) parseOptionalRelativePath(isObjectMember bool) st.STNode {
+func (b *ballerinaParser) parseOptionalRelativePath(isObjectMember bool) st.STNode {
 	var resourcePath st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -1517,7 +1500,7 @@ func (b *BallerinaParser) parseOptionalRelativePath(isObjectMember bool) st.STNo
 	return resourcePath
 }
 
-func (b *BallerinaParser) parseFuncDefOrFuncTypeDesc(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFuncDefOrFuncTypeDesc(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_DEF_OR_FUNC_TYPE)
 	functionKeyword := b.parseFunctionKeyword()
 	funcDefOrType := b.parseFunctionKeywordRhs(metadata, visibilityQualifier, qualifiers, functionKeyword,
@@ -1525,7 +1508,7 @@ func (b *BallerinaParser) parseFuncDefOrFuncTypeDesc(metadata st.STNode, visibil
 	return funcDefOrType
 }
 
-func (b *BallerinaParser) parseFunctionDefinition(metadata st.STNode, visibilityQualifier st.STNode, resourcePath st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, name st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFunctionDefinition(metadata st.STNode, visibilityQualifier st.STNode, resourcePath st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, name st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_FUNC_DEF)
 	funcSignature := b.parseFuncSignature(false)
 	funcDef := b.parseFuncDefOrMethodDeclEnd(metadata, visibilityQualifier, qualifiers, functionKeyword, name,
@@ -1534,7 +1517,7 @@ func (b *BallerinaParser) parseFunctionDefinition(metadata st.STNode, visibility
 	return funcDef
 }
 
-func (b *BallerinaParser) parseFuncDefOrFuncTypeDescRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, name st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFuncDefOrFuncTypeDescRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, name st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	switch b.peek().Kind() {
 	case st.OPEN_PAREN_TOKEN,
 		st.DOT_TOKEN,
@@ -1573,7 +1556,7 @@ func (b *BallerinaParser) parseFuncDefOrFuncTypeDescRhs(metadata st.STNode, visi
 	}
 }
 
-func (b *BallerinaParser) parseFunctionKeywordRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFunctionKeywordRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	switch b.peek().Kind() {
 	case st.IDENTIFIER_TOKEN:
 		name := b.consume()
@@ -1601,7 +1584,7 @@ func (b *BallerinaParser) parseFunctionKeywordRhs(metadata st.STNode, visibility
 	}
 }
 
-func (b *BallerinaParser) isBindingPatternsStartToken(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isBindingPatternsStartToken(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.IDENTIFIER_TOKEN,
 		st.OPEN_BRACKET_TOKEN,
@@ -1613,7 +1596,7 @@ func (b *BallerinaParser) isBindingPatternsStartToken(tokenKind st.SyntaxKind) b
 	}
 }
 
-func (b *BallerinaParser) parseFuncDefOrMethodDeclEnd(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFuncDefOrMethodDeclEnd(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	if !isObjectMember {
 		return b.createFunctionDefinition(metadata, visibilityQualifier, qualifierList, functionKeyword, name,
 			funcSignature)
@@ -1646,7 +1629,7 @@ func (b *BallerinaParser) parseFuncDefOrMethodDeclEnd(metadata st.STNode, visibi
 	}
 }
 
-func (b *BallerinaParser) createFunctionDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+func (b *ballerinaParser) createFunctionDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
 	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -1679,7 +1662,7 @@ func (b *BallerinaParser) createFunctionDefinition(metadata st.STNode, visibilit
 		functionKeyword, name, resourcePath, funcSignature, body)
 }
 
-func (b *BallerinaParser) createMethodDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+func (b *ballerinaParser) createMethodDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
 	var validatedList []st.STNode
 	hasRemoteQual := false
 	i := 0
@@ -1723,7 +1706,7 @@ func (b *BallerinaParser) createMethodDefinition(metadata st.STNode, visibilityQ
 		functionKeyword, name, resourcePath, funcSignature, body)
 }
 
-func (b *BallerinaParser) createMethodDeclaration(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+func (b *ballerinaParser) createMethodDeclaration(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
 	var validatedList []st.STNode
 	hasRemoteQual := false
 	i := 0
@@ -1767,7 +1750,7 @@ func (b *BallerinaParser) createMethodDeclaration(metadata st.STNode, visibility
 		functionKeyword, name, resourcePath, funcSignature, semicolon)
 }
 
-func (b *BallerinaParser) createResourceAccessorDefnOrDecl(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) createResourceAccessorDefnOrDecl(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectTypeDesc bool) st.STNode {
 	var validatedList []st.STNode
 	hasResourceQual := false
 	i := 0
@@ -1816,7 +1799,7 @@ func (b *BallerinaParser) createResourceAccessorDefnOrDecl(metadata st.STNode, v
 	}
 }
 
-func (b *BallerinaParser) parseFuncSignature(isParamNameOptional bool) st.STNode {
+func (b *ballerinaParser) parseFuncSignature(isParamNameOptional bool) st.STNode {
 	openParenthesis := b.parseOpenParenthesis()
 	parameters := b.parseParamList(isParamNameOptional)
 	closeParenthesis := b.parseCloseParenthesis()
@@ -1825,7 +1808,7 @@ func (b *BallerinaParser) parseFuncSignature(isParamNameOptional bool) st.STNode
 	return st.CreateFunctionSignatureNode(openParenthesis, parameters, closeParenthesis, returnTypeDesc)
 }
 
-func (b *BallerinaParser) parseFunctionTypeDescRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFunctionTypeDescRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_BRACE_TOKEN, st.EQUAL_TOKEN:
@@ -1851,21 +1834,21 @@ func (b *BallerinaParser) parseFunctionTypeDescRhs(metadata st.STNode, visibilit
 	return funcDef
 }
 
-func (b *BallerinaParser) extractVarDeclOrObjectFieldQualifiers(qualifierList []st.STNode, isObjectMember bool, isObjectTypeDesc bool) ([]st.STNode, []st.STNode) {
+func (b *ballerinaParser) extractVarDeclOrObjectFieldQualifiers(qualifierList []st.STNode, isObjectMember bool, isObjectTypeDesc bool) ([]st.STNode, []st.STNode) {
 	if isObjectMember {
 		return b.extractObjectFieldQualifiers(qualifierList, isObjectTypeDesc)
 	}
 	return b.extractVarDeclQualifiers(qualifierList, false)
 }
 
-func (b *BallerinaParser) createFunctionTypeDescriptor(qualifierList []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, hasFuncSignature bool) st.STNode {
+func (b *ballerinaParser) createFunctionTypeDescriptor(qualifierList []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, hasFuncSignature bool) st.STNode {
 	nodes := b.createFuncTypeQualNodeList(qualifierList, functionKeyword, hasFuncSignature)
 	qualifierNodeList := nodes[0]
 	functionKeyword = nodes[1]
 	return st.CreateFunctionTypeDescriptorNode(qualifierNodeList, functionKeyword, funcSignature)
 }
 
-func (b *BallerinaParser) parseVarDeclWithFunctionType(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool, hasFuncSignature bool) st.STNode {
+func (b *ballerinaParser) parseVarDeclWithFunctionType(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, funcSignature st.STNode, isObjectMember bool, isObjectTypeDesc bool, hasFuncSignature bool) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	extractQualifiersList, qualifierList := b.extractVarDeclOrObjectFieldQualifiers(qualifierList, isObjectMember,
 		isObjectTypeDesc)
@@ -1884,7 +1867,7 @@ func (b *BallerinaParser) parseVarDeclWithFunctionType(metadata st.STNode, visib
 	return res
 }
 
-func (b *BallerinaParser) validateAndGetFuncParams(signature st.STFunctionSignatureNode) st.STNode {
+func (b *ballerinaParser) validateAndGetFuncParams(signature st.STFunctionSignatureNode) st.STNode {
 	parameters := signature.Parameters
 	paramCount := parameters.BucketCount()
 	index := 0
@@ -1931,7 +1914,7 @@ func (b *BallerinaParser) validateAndGetFuncParams(signature st.STFunctionSignat
 		signature.CloseParenToken, signature.ReturnTypeDesc)
 }
 
-func (b *BallerinaParser) getUpdatedParamList(parameters st.STNode, index int) st.STNode {
+func (b *ballerinaParser) getUpdatedParamList(parameters st.STNode, index int) st.STNode {
 	paramCount := parameters.BucketCount()
 	newIndex := 0
 	var newParams []st.STNode
@@ -1976,11 +1959,11 @@ func (b *BallerinaParser) getUpdatedParamList(parameters st.STNode, index int) s
 	return st.CreateNodeList(newParams...)
 }
 
-func (b *BallerinaParser) isEmpty(node st.STNode) bool {
+func (b *ballerinaParser) isEmpty(node st.STNode) bool {
 	return (!st.IsSTNodePresent(node))
 }
 
-func (b *BallerinaParser) parseFunctionKeyword() st.STNode {
+func (b *ballerinaParser) parseFunctionKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FUNCTION_KEYWORD {
 		return b.consume()
@@ -1990,7 +1973,7 @@ func (b *BallerinaParser) parseFunctionKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionName() st.STNode {
+func (b *ballerinaParser) parseFunctionName() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -2000,15 +1983,15 @@ func (b *BallerinaParser) parseFunctionName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseArgListOpenParenthesis() st.STNode {
+func (b *ballerinaParser) parseArgListOpenParenthesis() st.STNode {
 	return b.parseOpenParenthesisInner(common.PARSER_RULE_CONTEXT_ARG_LIST_OPEN_PAREN)
 }
 
-func (b *BallerinaParser) parseOpenParenthesis() st.STNode {
+func (b *ballerinaParser) parseOpenParenthesis() st.STNode {
 	return b.parseOpenParenthesisInner(common.PARSER_RULE_CONTEXT_OPEN_PARENTHESIS)
 }
 
-func (b *BallerinaParser) parseOpenParenthesisInner(ctx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseOpenParenthesisInner(ctx common.ParserRuleContext) st.STNode {
 	token := b.peek()
 	if token.Kind() == st.OPEN_PAREN_TOKEN {
 		return b.consume()
@@ -2018,15 +2001,15 @@ func (b *BallerinaParser) parseOpenParenthesisInner(ctx common.ParserRuleContext
 	}
 }
 
-func (b *BallerinaParser) parseArgListCloseParenthesis() st.STNode {
+func (b *ballerinaParser) parseArgListCloseParenthesis() st.STNode {
 	return b.parseCloseParenthesisInner(common.PARSER_RULE_CONTEXT_ARG_LIST_CLOSE_PAREN)
 }
 
-func (b *BallerinaParser) parseCloseParenthesis() st.STNode {
+func (b *ballerinaParser) parseCloseParenthesis() st.STNode {
 	return b.parseCloseParenthesisInner(common.PARSER_RULE_CONTEXT_CLOSE_PARENTHESIS)
 }
 
-func (b *BallerinaParser) parseCloseParenthesisInner(ctx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseCloseParenthesisInner(ctx common.ParserRuleContext) st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CLOSE_PAREN_TOKEN {
 		return b.consume()
@@ -2036,7 +2019,7 @@ func (b *BallerinaParser) parseCloseParenthesisInner(ctx common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParser) parseParamList(isParamNameOptional bool) st.STNode {
+func (b *ballerinaParser) parseParamList(isParamNameOptional bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_PARAM_LIST)
 	token := b.peek()
 	if b.isEndOfParametersList(token.Kind()) {
@@ -2082,7 +2065,7 @@ func (b *BallerinaParser) parseParamList(isParamNameOptional bool) st.STNode {
 	return st.CreateNodeList(paramsList...)
 }
 
-func (b *BallerinaParser) validateParamOrder(param st.STNode, prevParamKind st.SyntaxKind) diagnostics.DiagnosticCode {
+func (b *ballerinaParser) validateParamOrder(param st.STNode, prevParamKind st.SyntaxKind) diagnostics.DiagnosticCode {
 	if prevParamKind == st.REST_PARAM {
 		return &common.ERROR_PARAMETER_AFTER_THE_REST_PARAMETER
 	} else if (prevParamKind == st.DEFAULTABLE_PARAM) && (param.Kind() == st.REQUIRED_PARAM) {
@@ -2091,7 +2074,7 @@ func (b *BallerinaParser) validateParamOrder(param st.STNode, prevParamKind st.S
 	return nil
 }
 
-func (b *BallerinaParser) isSyntaxKindInList(nodeList []st.STNode, kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isSyntaxKindInList(nodeList []st.STNode, kind st.SyntaxKind) bool {
 	for _, node := range nodeList {
 		if node.Kind() == kind {
 			return true
@@ -2100,7 +2083,7 @@ func (b *BallerinaParser) isSyntaxKindInList(nodeList []st.STNode, kind st.Synta
 	return false
 }
 
-func (b *BallerinaParser) isPossibleServiceDecl(nodeList []st.STNode) bool {
+func (b *ballerinaParser) isPossibleServiceDecl(nodeList []st.STNode) bool {
 	if len(nodeList) == 0 {
 		return false
 	}
@@ -2115,11 +2098,11 @@ func (b *BallerinaParser) isPossibleServiceDecl(nodeList []st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) parseParameterRhs() st.STNode {
+func (b *ballerinaParser) parseParameterRhs() st.STNode {
 	return b.parseParameterRhsInner(b.peek().Kind())
 }
 
-func (b *BallerinaParser) parseParameterRhsInner(tokenKind st.SyntaxKind) st.STNode {
+func (b *ballerinaParser) parseParameterRhsInner(tokenKind st.SyntaxKind) st.STNode {
 	switch tokenKind {
 	case st.COMMA_TOKEN:
 		return b.consume()
@@ -2131,7 +2114,7 @@ func (b *BallerinaParser) parseParameterRhsInner(tokenKind st.SyntaxKind) st.STN
 	}
 }
 
-func (b *BallerinaParser) parseParameter(annots st.STNode, prevParamKind st.SyntaxKind, isParamNameOptional bool) st.STNode {
+func (b *ballerinaParser) parseParameter(annots st.STNode, prevParamKind st.SyntaxKind, isParamNameOptional bool) st.STNode {
 	var inclusionSymbol st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -2146,7 +2129,7 @@ func (b *BallerinaParser) parseParameter(annots st.STNode, prevParamKind st.Synt
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PARAMETER_START_WITHOUT_ANNOTATION)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			inclusionSymbol = st.CreateEmptyNodeList()
 			break
 		}
@@ -2156,7 +2139,7 @@ func (b *BallerinaParser) parseParameter(annots st.STNode, prevParamKind st.Synt
 	return b.parseAfterParamType(prevParamKind, annots, inclusionSymbol, ty, isParamNameOptional)
 }
 
-func (b *BallerinaParser) parseParameterInner(prevParamKind st.SyntaxKind, isParamNameOptional bool) st.STNode {
+func (b *ballerinaParser) parseParameterInner(prevParamKind st.SyntaxKind, isParamNameOptional bool) st.STNode {
 	var annots st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -2171,7 +2154,7 @@ func (b *BallerinaParser) parseParameterInner(prevParamKind st.SyntaxKind, isPar
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_PARAMETER_START)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			annots = st.CreateEmptyNodeList()
 			break
 		}
@@ -2180,7 +2163,7 @@ func (b *BallerinaParser) parseParameterInner(prevParamKind st.SyntaxKind, isPar
 	return b.parseParameter(annots, prevParamKind, isParamNameOptional)
 }
 
-func (b *BallerinaParser) parseAfterParamType(prevParamKind st.SyntaxKind, annots st.STNode, inclusionSymbol st.STNode, ty st.STNode, isParamNameOptional bool) st.STNode {
+func (b *ballerinaParser) parseAfterParamType(prevParamKind st.SyntaxKind, annots st.STNode, inclusionSymbol st.STNode, ty st.STNode, isParamNameOptional bool) st.STNode {
 	var paramName st.STNode
 	token := b.peek()
 	switch token.Kind() {
@@ -2217,7 +2200,7 @@ func (b *BallerinaParser) parseAfterParamType(prevParamKind st.SyntaxKind, annot
 	return b.parseAfterParamType(prevParamKind, annots, inclusionSymbol, ty, false)
 }
 
-func (b *BallerinaParser) parseEllipsis() st.STNode {
+func (b *ballerinaParser) parseEllipsis() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ELLIPSIS_TOKEN {
 		return b.consume()
@@ -2227,7 +2210,7 @@ func (b *BallerinaParser) parseEllipsis() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseParameterRhsWithAnnots(prevParamKind st.SyntaxKind, annots st.STNode, inclusionSymbol st.STNode, ty st.STNode, paramName st.STNode) st.STNode {
+func (b *ballerinaParser) parseParameterRhsWithAnnots(prevParamKind st.SyntaxKind, annots st.STNode, inclusionSymbol st.STNode, ty st.STNode, paramName st.STNode) st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfParameter(nextToken.Kind()) {
 		if inclusionSymbol != nil {
@@ -2252,7 +2235,7 @@ func (b *BallerinaParser) parseParameterRhsWithAnnots(prevParamKind st.SyntaxKin
 	}
 }
 
-func (b *BallerinaParser) parseComma() st.STNode {
+func (b *ballerinaParser) parseComma() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.COMMA_TOKEN {
 		return b.consume()
@@ -2262,7 +2245,7 @@ func (b *BallerinaParser) parseComma() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFuncReturnTypeDescriptor(isFuncTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseFuncReturnTypeDescriptor(isFuncTypeDesc bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_BRACE_TOKEN,
@@ -2288,7 +2271,7 @@ func (b *BallerinaParser) parseFuncReturnTypeDescriptor(isFuncTypeDesc bool) st.
 	return st.CreateReturnTypeDescriptorNode(returnsKeyword, annot, ty)
 }
 
-func (b *BallerinaParser) isSafeMissingReturnsParse() bool {
+func (b *ballerinaParser) isSafeMissingReturnsParse() bool {
 	for _, context := range b.errorHandler.GetContextStack() {
 		if !b.isSafeMissingReturnsParseCtx(context) {
 			return false
@@ -2297,7 +2280,7 @@ func (b *BallerinaParser) isSafeMissingReturnsParse() bool {
 	return true
 }
 
-func (b *BallerinaParser) isSafeMissingReturnsParseCtx(ctx common.ParserRuleContext) bool {
+func (b *ballerinaParser) isSafeMissingReturnsParseCtx(ctx common.ParserRuleContext) bool {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANNOTATION_DECL,
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER,
@@ -2314,7 +2297,7 @@ func (b *BallerinaParser) isSafeMissingReturnsParseCtx(ctx common.ParserRuleCont
 	}
 }
 
-func (b *BallerinaParser) parseReturnsKeyword() st.STNode {
+func (b *ballerinaParser) parseReturnsKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.RETURNS_KEYWORD {
 		return b.consume()
@@ -2324,28 +2307,28 @@ func (b *BallerinaParser) parseReturnsKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeDescriptor(context common.ParserRuleContext) st.STNode {
-	return b.parseTypeDescriptorWithinContext(nil, context, false, false, TYPE_PRECEDENCE_DEFAULT)
+func (b *ballerinaParser) parseTypeDescriptor(context common.ParserRuleContext) st.STNode {
+	return b.parseTypeDescriptorWithinContext(nil, context, false, false, typePrecedenceDefault)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithPrecedence(context common.ParserRuleContext, precedence TypePrecedence) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorWithPrecedence(context common.ParserRuleContext, precedence typePrecedence) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, context, false, false, precedence)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithQualifier(qualifiers []st.STNode, context common.ParserRuleContext) st.STNode {
-	return b.parseTypeDescriptorWithinContext(qualifiers, context, false, false, TYPE_PRECEDENCE_DEFAULT)
+func (b *ballerinaParser) parseTypeDescriptorWithQualifier(qualifiers []st.STNode, context common.ParserRuleContext) st.STNode {
+	return b.parseTypeDescriptorWithinContext(qualifiers, context, false, false, typePrecedenceDefault)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInExpression(isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorInExpression(isInConditionalExpr bool) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_EXPRESSION, false, isInConditionalExpr,
-		TYPE_PRECEDENCE_DEFAULT)
+		typePrecedenceDefault)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithoutQualifiers(context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorWithoutQualifiers(context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence typePrecedence) st.STNode {
 	return b.parseTypeDescriptorWithinContext(nil, context, isTypedBindingPattern, isInConditionalExpr, precedence)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorWithinContext(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorWithinContext(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence typePrecedence) st.STNode {
 	b.startContext(context)
 	typeDesc := b.parseTypeDescriptorInner(qualifiers, context, isTypedBindingPattern, isInConditionalExpr,
 		precedence)
@@ -2353,7 +2336,7 @@ func (b *BallerinaParser) parseTypeDescriptorWithinContext(qualifiers []st.STNod
 	return typeDesc
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInner(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorInner(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence typePrecedence) st.STNode {
 	typeDesc := b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
 	if ((typeDesc.Kind() == st.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
 		var missingToken st.STNode
@@ -2365,19 +2348,19 @@ func (b *BallerinaParser) parseTypeDescriptorInner(qualifiers []st.STNode, conte
 	return b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern, precedence)
 }
 
-func (b *BallerinaParser) parseComplexTypeDescriptor(typeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
+func (b *ballerinaParser) parseComplexTypeDescriptor(typeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	b.startContext(context)
 	complexTypeDesc := b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern,
-		TYPE_PRECEDENCE_DEFAULT)
+		typePrecedenceDefault)
 	b.endContext()
 	return complexTypeDesc
 }
 
-func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, precedence TypePrecedence) st.STNode {
+func (b *ballerinaParser) parseComplexTypeDescriptorInternal(typeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, precedence typePrecedence) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.QUESTION_MARK_TOKEN:
-		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_ARRAY_OR_OPTIONAL) {
+		if precedence.isHigherThanOrEqual(typePrecedenceArrayOrOptional) {
 			return typeDesc
 		}
 		isPossibleOptionalType := true
@@ -2399,19 +2382,19 @@ func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc st.STNode,
 		if isTypedBindingPattern {
 			return typeDesc
 		}
-		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_ARRAY_OR_OPTIONAL) {
+		if precedence.isHigherThanOrEqual(typePrecedenceArrayOrOptional) {
 			return typeDesc
 		}
 		arrayTypeDesc := b.parseArrayTypeDescriptor(typeDesc)
 		return b.parseComplexTypeDescriptorInternal(arrayTypeDesc, context, false, precedence)
 	case st.PIPE_TOKEN:
-		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_UNION) {
+		if precedence.isHigherThanOrEqual(typePrecedenceUnion) {
 			return typeDesc
 		}
 		newTypeDesc := b.parseUnionTypeDescriptor(typeDesc, context, isTypedBindingPattern)
 		return b.parseComplexTypeDescriptorInternal(newTypeDesc, context, isTypedBindingPattern, precedence)
 	case st.BITWISE_AND_TOKEN:
-		if precedence.isHigherThanOrEqual(TYPE_PRECEDENCE_INTERSECTION) {
+		if precedence.isHigherThanOrEqual(typePrecedenceIntersection) {
 			return typeDesc
 		}
 		newTypeDesc := b.parseIntersectionTypeDescriptor(typeDesc, context, isTypedBindingPattern)
@@ -2421,7 +2404,7 @@ func (b *BallerinaParser) parseComplexTypeDescriptorInternal(typeDesc st.STNode,
 	}
 }
 
-func (b *BallerinaParser) isValidTypeContinuationToken(token st.STToken) bool {
+func (b *ballerinaParser) isValidTypeContinuationToken(token st.STToken) bool {
 	switch token.Kind() {
 	case st.QUESTION_MARK_TOKEN, st.OPEN_BRACKET_TOKEN, st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
 		return true
@@ -2430,7 +2413,7 @@ func (b *BallerinaParser) isValidTypeContinuationToken(token st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) validateForUsageOfVar(typeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) validateForUsageOfVar(typeDesc st.STNode) st.STNode {
 	if typeDesc.Kind() != st.VAR_TYPE_DESC {
 		return typeDesc
 	}
@@ -2441,7 +2424,7 @@ func (b *BallerinaParser) validateForUsageOfVar(typeDesc st.STNode) st.STNode {
 	return st.CreateSimpleNameReferenceNode(missingToken)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, context common.ParserRuleContext, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, context common.ParserRuleContext, isInConditionalExpr bool) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	if b.isQualifiedIdentifierPredeclaredPrefix(nextToken.Kind()) {
@@ -2497,14 +2480,14 @@ func (b *BallerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, co
 	}
 	recoveryCtx := b.getTypeDescRecoveryCtx(qualifiers)
 	solution := b.recoverWithBlockContext(b.peek(), recoveryCtx)
-	if solution.Action == ACTION_KEEP {
+	if solution.Action == actionKeep {
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseSingletonTypeDesc()
 	}
 	return b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTypeDescriptorInternalWithPrecedence(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence TypePrecedence) st.STNode {
+func (b *ballerinaParser) parseTypeDescriptorInternalWithPrecedence(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence typePrecedence) st.STNode {
 	typeDesc := b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
 
 	// var is parsed as a built-in simple type. However, since var is not allowed everywhere,
@@ -2520,7 +2503,7 @@ func (b *BallerinaParser) parseTypeDescriptorInternalWithPrecedence(qualifiers [
 	return b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern, precedence)
 }
 
-func (b *BallerinaParser) getTypeDescRecoveryCtx(qualifiers []st.STNode) common.ParserRuleContext {
+func (b *ballerinaParser) getTypeDescRecoveryCtx(qualifiers []st.STNode) common.ParserRuleContext {
 	if len(qualifiers) == 0 {
 		return common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR
 	}
@@ -2535,7 +2518,7 @@ func (b *BallerinaParser) getTypeDescRecoveryCtx(qualifiers []st.STNode) common.
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedIdentWithTransactionPrefix(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentWithTransactionPrefix(context common.ParserRuleContext) st.STNode {
 	transactionKeyword := b.consume()
 	identifier := st.CreateIdentifierToken(transactionKeyword.Text(),
 		transactionKeyword.LeadingMinutiae(), transactionKeyword.TrailingMinutiae())
@@ -2545,7 +2528,7 @@ func (b *BallerinaParser) parseQualifiedIdentWithTransactionPrefix(context commo
 	return b.createQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
 }
 
-func (b *BallerinaParser) parseQualifiedTypeRefOrTypeDesc(qualifiers []st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseQualifiedTypeRefOrTypeDesc(qualifiers []st.STNode, isInConditionalExpr bool) st.STNode {
 	preDeclaredPrefix := b.consume()
 	nextNextToken := b.getNextNextToken()
 	if (preDeclaredPrefix.Kind() == st.TRANSACTION_KEYWORD) || (nextNextToken.Kind() == st.IDENTIFIER_TOKEN) {
@@ -2570,14 +2553,14 @@ func (b *BallerinaParser) parseQualifiedTypeRefOrTypeDesc(qualifiers []st.STNode
 		}
 	}
 	solution := b.recoverWithBlockContext(b.peek(), context)
-	if solution.Action == ACTION_KEEP {
+	if solution.Action == actionKeep {
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
 	}
 	return b.parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix, qualifiers)
 }
 
-func (b *BallerinaParser) parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix st.STToken, qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix st.STToken, qualifiers []st.STNode) st.STNode {
 	switch preDeclaredPrefix.Kind() {
 	case st.MAP_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
@@ -2596,27 +2579,27 @@ func (b *BallerinaParser) parseTypeDescStartWithPredeclPrefix(preDeclaredPrefix 
 			b.reportInvalidQualifierList(qualifiers)
 			return b.parseParameterizedTypeDescriptor(preDeclaredPrefix)
 		}
-		return CreateBuiltinSimpleNameReference(preDeclaredPrefix)
+		return createBuiltinSimpleNameReference(preDeclaredPrefix)
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix st.STToken, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix st.STToken, isInConditionalExpr bool) st.STNode {
 	identifier := st.CreateIdentifierToken(preDeclaredPrefix.Text(),
 		preDeclaredPrefix.LeadingMinutiae(), preDeclaredPrefix.TrailingMinutiae())
 	return b.parseQualifiedIdentifierNode(identifier, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseDistinctTypeDesc(distinctKeyword st.STNode, context common.ParserRuleContext) st.STNode {
-	typeDesc := b.parseTypeDescriptorWithPrecedence(context, TYPE_PRECEDENCE_DISTINCT)
+func (b *ballerinaParser) parseDistinctTypeDesc(distinctKeyword st.STNode, context common.ParserRuleContext) st.STNode {
+	typeDesc := b.parseTypeDescriptorWithPrecedence(context, typePrecedenceDistinct)
 	return st.CreateDistinctTypeDescriptorNode(distinctKeyword, typeDesc)
 }
 
-func (b *BallerinaParser) parseNilOrParenthesisedTypeDesc() st.STNode {
+func (b *ballerinaParser) parseNilOrParenthesisedTypeDesc() st.STNode {
 	openParen := b.parseOpenParenthesis()
 	return b.parseNilOrParenthesisedTypeDescRhs(openParen)
 }
 
-func (b *BallerinaParser) parseNilOrParenthesisedTypeDescRhs(openParen st.STNode) st.STNode {
+func (b *ballerinaParser) parseNilOrParenthesisedTypeDescRhs(openParen st.STNode) st.STNode {
 	var closeParen st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -2634,25 +2617,25 @@ func (b *BallerinaParser) parseNilOrParenthesisedTypeDescRhs(openParen st.STNode
 	}
 }
 
-func (b *BallerinaParser) parseSimpleTypeInTerminalExpr() st.STNode {
+func (b *ballerinaParser) parseSimpleTypeInTerminalExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_EXPRESSION)
 	simpleTypeDescriptor := b.parseSimpleTypeDescriptor()
 	b.endContext()
 	return simpleTypeDescriptor
 }
 
-func (b *BallerinaParser) parseSimpleTypeDescriptor() st.STNode {
+func (b *ballerinaParser) parseSimpleTypeDescriptor() st.STNode {
 	nextToken := b.peek()
 	if isSimpleType(nextToken.Kind()) {
 		token := b.consume()
-		return CreateBuiltinSimpleNameReference(token)
+		return createBuiltinSimpleNameReference(token)
 	} else {
 		b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_SIMPLE_TYPE_DESCRIPTOR)
 		return b.parseSimpleTypeDescriptor()
 	}
 }
 
-func (b *BallerinaParser) parseFunctionBody() st.STNode {
+func (b *ballerinaParser) parseFunctionBody() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.EQUAL_TOKEN:
@@ -2667,7 +2650,7 @@ func (b *BallerinaParser) parseFunctionBody() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) st.STNode {
+func (b *ballerinaParser) parseFunctionBodyBlock(isAnonFunc bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK)
 	openBrace := b.parseOpenBrace()
 	token := b.peek()
@@ -2735,7 +2718,7 @@ func (b *BallerinaParser) parseFunctionBodyBlock(isAnonFunc bool) st.STNode {
 		semicolon)
 }
 
-func (b *BallerinaParser) isEndOfFuncBodyBlock(nextTokenKind st.SyntaxKind, isAnonFunc bool) bool {
+func (b *ballerinaParser) isEndOfFuncBodyBlock(nextTokenKind st.SyntaxKind, isAnonFunc bool) bool {
 	if isAnonFunc {
 		switch nextTokenKind {
 		case st.CLOSE_BRACE_TOKEN, st.CLOSE_PAREN_TOKEN, st.CLOSE_BRACKET_TOKEN,
@@ -2749,15 +2732,15 @@ func (b *BallerinaParser) isEndOfFuncBodyBlock(nextTokenKind st.SyntaxKind, isAn
 	return b.isEndOfStatements()
 }
 
-func (b *BallerinaParser) isEndOfRecordTypeNode(_ st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfRecordTypeNode(_ st.SyntaxKind) bool {
 	return b.isEndOfModuleLevelNode(1)
 }
 
-func (b *BallerinaParser) isEndOfObjectTypeNode() bool {
+func (b *ballerinaParser) isEndOfObjectTypeNode() bool {
 	return b.isEndOfModuleLevelNodeInner(1, true)
 }
 
-func (b *BallerinaParser) isEndOfStatements() bool {
+func (b *ballerinaParser) isEndOfStatements() bool {
 	switch b.peek().Kind() {
 	case st.RESOURCE_KEYWORD:
 		return true
@@ -2766,11 +2749,11 @@ func (b *BallerinaParser) isEndOfStatements() bool {
 	}
 }
 
-func (b *BallerinaParser) isEndOfModuleLevelNode(peekIndex int) bool {
+func (b *ballerinaParser) isEndOfModuleLevelNode(peekIndex int) bool {
 	return b.isEndOfModuleLevelNodeInner(peekIndex, false)
 }
 
-func (b *BallerinaParser) isEndOfModuleLevelNodeInner(peekIndex int, isObject bool) bool {
+func (b *ballerinaParser) isEndOfModuleLevelNodeInner(peekIndex int, isObject bool) bool {
 	switch b.peekN(peekIndex).Kind() {
 	case st.EOF_TOKEN,
 		st.CLOSE_BRACE_TOKEN,
@@ -2794,7 +2777,7 @@ func (b *BallerinaParser) isEndOfModuleLevelNodeInner(peekIndex int, isObject bo
 	}
 }
 
-func (b *BallerinaParser) isEndOfParameter(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfParameter(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.CLOSE_PAREN_TOKEN,
 		st.CLOSE_BRACKET_TOKEN,
@@ -2812,7 +2795,7 @@ func (b *BallerinaParser) isEndOfParameter(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) isEndOfParametersList(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfParametersList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.CLOSE_PAREN_TOKEN,
 		st.SEMICOLON_TOKEN,
@@ -2828,11 +2811,11 @@ func (b *BallerinaParser) isEndOfParametersList(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartIdentifier() st.STNode {
+func (b *ballerinaParser) parseStatementStartIdentifier() st.STNode {
 	return b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_TYPE_NAME_OR_VAR_NAME)
 }
 
-func (b *BallerinaParser) parseVariableName() st.STNode {
+func (b *ballerinaParser) parseVariableName() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -2842,7 +2825,7 @@ func (b *BallerinaParser) parseVariableName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOpenBrace() st.STNode {
+func (b *ballerinaParser) parseOpenBrace() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.OPEN_BRACE_TOKEN {
 		return b.consume()
@@ -2852,7 +2835,7 @@ func (b *BallerinaParser) parseOpenBrace() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCloseBrace() st.STNode {
+func (b *ballerinaParser) parseCloseBrace() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CLOSE_BRACE_TOKEN {
 		return b.consume()
@@ -2862,13 +2845,13 @@ func (b *BallerinaParser) parseCloseBrace() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseExternalFunctionBody() st.STNode {
+func (b *ballerinaParser) parseExternalFunctionBody() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_EXTERNAL_FUNC_BODY)
 	assign := b.parseAssignOp()
 	return b.parseExternalFuncBodyRhs(assign)
 }
 
-func (b *BallerinaParser) parseExternalFuncBodyRhs(assign st.STNode) st.STNode {
+func (b *ballerinaParser) parseExternalFuncBodyRhs(assign st.STNode) st.STNode {
 	var annotation st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -2886,7 +2869,7 @@ func (b *BallerinaParser) parseExternalFuncBodyRhs(assign st.STNode) st.STNode {
 	return st.CreateExternalFunctionBodyNode(assign, annotation, externalKeyword, semicolon)
 }
 
-func (b *BallerinaParser) parseSemicolon() st.STNode {
+func (b *ballerinaParser) parseSemicolon() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.SEMICOLON_TOKEN {
 		return b.consume()
@@ -2896,7 +2879,7 @@ func (b *BallerinaParser) parseSemicolon() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalSemicolon() st.STNode {
+func (b *ballerinaParser) parseOptionalSemicolon() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.SEMICOLON_TOKEN {
 		return b.consume()
@@ -2904,7 +2887,7 @@ func (b *BallerinaParser) parseOptionalSemicolon() st.STNode {
 	return st.CreateEmptyNode()
 }
 
-func (b *BallerinaParser) parseExternalKeyword() st.STNode {
+func (b *ballerinaParser) parseExternalKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.EXTERNAL_KEYWORD {
 		return b.consume()
@@ -2914,7 +2897,7 @@ func (b *BallerinaParser) parseExternalKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAssignOp() st.STNode {
+func (b *ballerinaParser) parseAssignOp() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.EQUAL_TOKEN {
 		return b.consume()
@@ -2924,7 +2907,7 @@ func (b *BallerinaParser) parseAssignOp() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBinaryOperator() st.STNode {
+func (b *ballerinaParser) parseBinaryOperator() st.STNode {
 	token := b.peek()
 	if b.isBinaryOperator(token.Kind()) {
 		return b.consume()
@@ -2934,7 +2917,7 @@ func (b *BallerinaParser) parseBinaryOperator() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isBinaryOperator(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isBinaryOperator(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.PLUS_TOKEN,
 		st.MINUS_TOKEN,
@@ -2966,21 +2949,21 @@ func (b *BallerinaParser) isBinaryOperator(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) getOpPrecedence(binaryOpKind st.SyntaxKind) OperatorPrecedence {
+func (b *ballerinaParser) getOpPrecedence(binaryOpKind st.SyntaxKind) operatorPrecedence {
 	switch binaryOpKind {
 	case st.ASTERISK_TOKEN, // multiplication
 		st.SLASH_TOKEN, // division
 		st.PERCENT_TOKEN:
-		return OPERATOR_PRECEDENCE_MULTIPLICATIVE
+		return operatorPrecedenceMultiplicative
 	case st.PLUS_TOKEN, st.MINUS_TOKEN:
-		return OPERATOR_PRECEDENCE_ADDITIVE
+		return operatorPrecedenceAdditive
 	case st.GT_TOKEN,
 		st.LT_TOKEN,
 		st.GT_EQUAL_TOKEN,
 		st.LT_EQUAL_TOKEN,
 		st.IS_KEYWORD,
 		st.NOT_IS_KEYWORD:
-		return OPERATOR_PRECEDENCE_BINARY_COMPARE
+		return operatorPrecedenceBinaryCompare
 	case st.DOT_TOKEN,
 		st.OPEN_BRACKET_TOKEN,
 		st.OPEN_PAREN_TOKEN,
@@ -2990,77 +2973,77 @@ func (b *BallerinaParser) getOpPrecedence(binaryOpKind st.SyntaxKind) OperatorPr
 		st.SLASH_LT_TOKEN,
 		st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN,
 		st.SLASH_ASTERISK_TOKEN:
-		return OPERATOR_PRECEDENCE_MEMBER_ACCESS
+		return operatorPrecedenceMemberAccess
 	case st.DOUBLE_EQUAL_TOKEN,
 		st.TRIPPLE_EQUAL_TOKEN,
 		st.NOT_EQUAL_TOKEN,
 		st.NOT_DOUBLE_EQUAL_TOKEN:
-		return OPERATOR_PRECEDENCE_EQUALITY
+		return operatorPrecedenceEquality
 	case st.BITWISE_AND_TOKEN:
-		return OPERATOR_PRECEDENCE_BITWISE_AND
+		return operatorPrecedenceBitwiseAnd
 	case st.BITWISE_XOR_TOKEN:
-		return OPERATOR_PRECEDENCE_BITWISE_XOR
+		return operatorPrecedenceBitwiseXor
 	case st.PIPE_TOKEN:
-		return OPERATOR_PRECEDENCE_BITWISE_OR
+		return operatorPrecedenceBitwiseOr
 	case st.LOGICAL_AND_TOKEN:
-		return OPERATOR_PRECEDENCE_LOGICAL_AND
+		return operatorPrecedenceLogicalAnd
 	case st.LOGICAL_OR_TOKEN:
-		return OPERATOR_PRECEDENCE_LOGICAL_OR
+		return operatorPrecedenceLogicalOr
 	case st.RIGHT_ARROW_TOKEN:
-		return OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION
+		return operatorPrecedenceRemoteCallAction
 	case st.RIGHT_DOUBLE_ARROW_TOKEN:
-		return OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET
+		return operatorPrecedenceAnonFuncOrLet
 	case st.SYNC_SEND_TOKEN:
-		return OPERATOR_PRECEDENCE_ACTION
+		return operatorPrecedenceAction
 	case st.DOUBLE_LT_TOKEN,
 		st.DOUBLE_GT_TOKEN,
 		st.TRIPPLE_GT_TOKEN:
-		return OPERATOR_PRECEDENCE_SHIFT
+		return operatorPrecedenceShift
 	case st.ELLIPSIS_TOKEN,
 		st.DOUBLE_DOT_LT_TOKEN:
-		return OPERATOR_PRECEDENCE_RANGE
+		return operatorPrecedenceRange
 	case st.ELVIS_TOKEN:
-		return OPERATOR_PRECEDENCE_ELVIS_CONDITIONAL
+		return operatorPrecedenceElvisConditional
 	case st.QUESTION_MARK_TOKEN, st.COLON_TOKEN:
-		return OPERATOR_PRECEDENCE_CONDITIONAL
+		return operatorPrecedenceConditional
 	default:
 		panic("Unsupported binary operator '" + binaryOpKind.StrValue() + "'")
 	}
 }
 
-func (b *BallerinaParser) getBinaryOperatorKindToInsert(opPrecedenceLevel OperatorPrecedence) st.SyntaxKind {
+func (b *ballerinaParser) getBinaryOperatorKindToInsert(opPrecedenceLevel operatorPrecedence) st.SyntaxKind {
 	switch opPrecedenceLevel {
-	case OPERATOR_PRECEDENCE_MULTIPLICATIVE:
+	case operatorPrecedenceMultiplicative:
 		return st.ASTERISK_TOKEN
-	case OPERATOR_PRECEDENCE_DEFAULT,
-		OPERATOR_PRECEDENCE_UNARY,
-		OPERATOR_PRECEDENCE_ACTION,
-		OPERATOR_PRECEDENCE_EXPRESSION_ACTION,
-		OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION,
-		OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET,
-		OPERATOR_PRECEDENCE_QUERY,
-		OPERATOR_PRECEDENCE_TRAP,
-		OPERATOR_PRECEDENCE_ADDITIVE:
+	case operatorPrecedenceDefault,
+		operatorPrecedenceUnary,
+		operatorPrecedenceAction,
+		operatorPrecedenceExpressionAction,
+		operatorPrecedenceRemoteCallAction,
+		operatorPrecedenceAnonFuncOrLet,
+		operatorPrecedenceQuery,
+		operatorPrecedenceTrap,
+		operatorPrecedenceAdditive:
 		return st.PLUS_TOKEN
-	case OPERATOR_PRECEDENCE_SHIFT:
+	case operatorPrecedenceShift:
 		return st.DOUBLE_LT_TOKEN
-	case OPERATOR_PRECEDENCE_RANGE:
+	case operatorPrecedenceRange:
 		return st.ELLIPSIS_TOKEN
-	case OPERATOR_PRECEDENCE_BINARY_COMPARE:
+	case operatorPrecedenceBinaryCompare:
 		return st.LT_TOKEN
-	case OPERATOR_PRECEDENCE_EQUALITY:
+	case operatorPrecedenceEquality:
 		return st.DOUBLE_EQUAL_TOKEN
-	case OPERATOR_PRECEDENCE_BITWISE_AND:
+	case operatorPrecedenceBitwiseAnd:
 		return st.BITWISE_AND_TOKEN
-	case OPERATOR_PRECEDENCE_BITWISE_XOR:
+	case operatorPrecedenceBitwiseXor:
 		return st.BITWISE_XOR_TOKEN
-	case OPERATOR_PRECEDENCE_BITWISE_OR:
+	case operatorPrecedenceBitwiseOr:
 		return st.PIPE_TOKEN
-	case OPERATOR_PRECEDENCE_LOGICAL_AND:
+	case operatorPrecedenceLogicalAnd:
 		return st.LOGICAL_AND_TOKEN
-	case OPERATOR_PRECEDENCE_LOGICAL_OR:
+	case operatorPrecedenceLogicalOr:
 		return st.LOGICAL_OR_TOKEN
-	case OPERATOR_PRECEDENCE_ELVIS_CONDITIONAL:
+	case operatorPrecedenceElvisConditional:
 		return st.ELVIS_TOKEN
 	default:
 		panic(
@@ -3068,39 +3051,39 @@ func (b *BallerinaParser) getBinaryOperatorKindToInsert(opPrecedenceLevel Operat
 	}
 }
 
-func (b *BallerinaParser) getMissingBinaryOperatorContext(opPrecedenceLevel OperatorPrecedence) common.ParserRuleContext {
+func (b *ballerinaParser) getMissingBinaryOperatorContext(opPrecedenceLevel operatorPrecedence) common.ParserRuleContext {
 	switch opPrecedenceLevel {
-	case OPERATOR_PRECEDENCE_MULTIPLICATIVE:
+	case operatorPrecedenceMultiplicative:
 		return common.PARSER_RULE_CONTEXT_ASTERISK
-	case OPERATOR_PRECEDENCE_DEFAULT,
-		OPERATOR_PRECEDENCE_UNARY,
-		OPERATOR_PRECEDENCE_ACTION,
-		OPERATOR_PRECEDENCE_EXPRESSION_ACTION,
-		OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION,
-		OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET,
-		OPERATOR_PRECEDENCE_QUERY,
-		OPERATOR_PRECEDENCE_TRAP,
-		OPERATOR_PRECEDENCE_ADDITIVE:
+	case operatorPrecedenceDefault,
+		operatorPrecedenceUnary,
+		operatorPrecedenceAction,
+		operatorPrecedenceExpressionAction,
+		operatorPrecedenceRemoteCallAction,
+		operatorPrecedenceAnonFuncOrLet,
+		operatorPrecedenceQuery,
+		operatorPrecedenceTrap,
+		operatorPrecedenceAdditive:
 		return common.PARSER_RULE_CONTEXT_PLUS_TOKEN
-	case OPERATOR_PRECEDENCE_SHIFT:
+	case operatorPrecedenceShift:
 		return common.PARSER_RULE_CONTEXT_DOUBLE_LT
-	case OPERATOR_PRECEDENCE_RANGE:
+	case operatorPrecedenceRange:
 		return common.PARSER_RULE_CONTEXT_ELLIPSIS
-	case OPERATOR_PRECEDENCE_BINARY_COMPARE:
+	case operatorPrecedenceBinaryCompare:
 		return common.PARSER_RULE_CONTEXT_LT_TOKEN
-	case OPERATOR_PRECEDENCE_EQUALITY:
+	case operatorPrecedenceEquality:
 		return common.PARSER_RULE_CONTEXT_DOUBLE_EQUAL
-	case BITWISE_AND:
+	case bitwiseAnd:
 		return common.PARSER_RULE_CONTEXT_BITWISE_AND_OPERATOR
-	case BITWISE_XOR:
+	case bitwiseXor:
 		return common.PARSER_RULE_CONTEXT_BITWISE_XOR
-	case OPERATOR_PRECEDENCE_BITWISE_OR:
+	case operatorPrecedenceBitwiseOr:
 		return common.PARSER_RULE_CONTEXT_PIPE
-	case OPERATOR_PRECEDENCE_LOGICAL_AND:
+	case operatorPrecedenceLogicalAnd:
 		return common.PARSER_RULE_CONTEXT_LOGICAL_AND
-	case OPERATOR_PRECEDENCE_LOGICAL_OR:
+	case operatorPrecedenceLogicalOr:
 		return common.PARSER_RULE_CONTEXT_LOGICAL_OR
-	case OPERATOR_PRECEDENCE_ELVIS_CONDITIONAL:
+	case operatorPrecedenceElvisConditional:
 		return common.PARSER_RULE_CONTEXT_ELVIS
 	default:
 		panic(
@@ -3108,7 +3091,7 @@ func (b *BallerinaParser) getMissingBinaryOperatorContext(opPrecedenceLevel Oper
 	}
 }
 
-func (b *BallerinaParser) parseModuleTypeDefinition(metadata st.STNode, qualifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseModuleTypeDefinition(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_TYPE_DEFINITION)
 	typeKeyword := b.parseTypeKeyword()
 	typeName := b.parseTypeName()
@@ -3119,7 +3102,7 @@ func (b *BallerinaParser) parseModuleTypeDefinition(metadata st.STNode, qualifie
 		semicolon)
 }
 
-func (b *BallerinaParser) parseClassDefinition(metadata st.STNode, qualifier st.STNode, qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseClassDefinition(metadata st.STNode, qualifier st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_CLASS_DEFINITION)
 	classTypeQualifiers := b.createClassTypeQualNodeList(qualifiers)
 	classKeyword := b.parseClassKeyword()
@@ -3133,7 +3116,7 @@ func (b *BallerinaParser) parseClassDefinition(metadata st.STNode, qualifier st.
 		className, openBrace, classMembers, closeBrace, semicolon)
 }
 
-func (b *BallerinaParser) isClassTypeQual(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isClassTypeQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.READONLY_KEYWORD, st.DISTINCT_KEYWORD, st.ISOLATED_KEYWORD:
 		return true
@@ -3142,7 +3125,7 @@ func (b *BallerinaParser) isClassTypeQual(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) isObjectTypeQual(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isObjectTypeQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.ISOLATED_KEYWORD:
 		return true
@@ -3151,7 +3134,7 @@ func (b *BallerinaParser) isObjectTypeQual(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) isObjectNetworkQual(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isObjectNetworkQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.SERVICE_KEYWORD, st.CLIENT_KEYWORD:
 		return true
@@ -3160,7 +3143,7 @@ func (b *BallerinaParser) isObjectNetworkQual(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) createClassTypeQualNodeList(qualifierList []st.STNode) st.STNode {
+func (b *ballerinaParser) createClassTypeQualNodeList(qualifierList []st.STNode) st.STNode {
 	var validatedList []st.STNode
 	hasNetworkQual := false
 	i := 0
@@ -3197,7 +3180,7 @@ func (b *BallerinaParser) createClassTypeQualNodeList(qualifierList []st.STNode)
 	return st.CreateNodeList(validatedList...)
 }
 
-func (b *BallerinaParser) createObjectTypeQualNodeList(qualifierList []st.STNode) st.STNode {
+func (b *ballerinaParser) createObjectTypeQualNodeList(qualifierList []st.STNode) st.STNode {
 	var validatedList []st.STNode
 	hasNetworkQual := false
 	i := 0
@@ -3234,7 +3217,7 @@ func (b *BallerinaParser) createObjectTypeQualNodeList(qualifierList []st.STNode
 	return st.CreateNodeList(validatedList...)
 }
 
-func (b *BallerinaParser) parseClassKeyword() st.STNode {
+func (b *ballerinaParser) parseClassKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CLASS_KEYWORD {
 		return b.consume()
@@ -3244,7 +3227,7 @@ func (b *BallerinaParser) parseClassKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeKeyword() st.STNode {
+func (b *ballerinaParser) parseTypeKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.TYPE_KEYWORD {
 		return b.consume()
@@ -3254,7 +3237,7 @@ func (b *BallerinaParser) parseTypeKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeName() st.STNode {
+func (b *ballerinaParser) parseTypeName() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -3264,7 +3247,7 @@ func (b *BallerinaParser) parseTypeName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseClassName() st.STNode {
+func (b *ballerinaParser) parseClassName() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -3274,7 +3257,7 @@ func (b *BallerinaParser) parseClassName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordTypeDescriptor() st.STNode {
+func (b *ballerinaParser) parseRecordTypeDescriptor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RECORD_TYPE_DESCRIPTOR)
 	recordKeyword := b.parseRecordKeyword()
 	bodyStartDelimiter := b.parseRecordBodyStartDelimiter()
@@ -3318,7 +3301,7 @@ func (b *BallerinaParser) parseRecordTypeDescriptor() st.STNode {
 		recordRestDescriptor, bodyEndDelimiter)
 }
 
-func (b *BallerinaParser) parseRecordBodyStartDelimiter() st.STNode {
+func (b *ballerinaParser) parseRecordBodyStartDelimiter() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_BRACE_PIPE_TOKEN:
@@ -3331,7 +3314,7 @@ func (b *BallerinaParser) parseRecordBodyStartDelimiter() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseClosedRecordBodyStart() st.STNode {
+func (b *ballerinaParser) parseClosedRecordBodyStart() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.OPEN_BRACE_PIPE_TOKEN {
 		return b.consume()
@@ -3341,14 +3324,14 @@ func (b *BallerinaParser) parseClosedRecordBodyStart() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordBodyCloseDelimiter(startingDelimeter st.SyntaxKind) st.STNode {
+func (b *ballerinaParser) parseRecordBodyCloseDelimiter(startingDelimeter st.SyntaxKind) st.STNode {
 	if startingDelimeter == st.OPEN_BRACE_PIPE_TOKEN {
 		return b.parseClosedRecordBodyEnd()
 	}
 	return b.parseCloseBrace()
 }
 
-func (b *BallerinaParser) parseClosedRecordBodyEnd() st.STNode {
+func (b *ballerinaParser) parseClosedRecordBodyEnd() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CLOSE_BRACE_PIPE_TOKEN {
 		return b.consume()
@@ -3358,7 +3341,7 @@ func (b *BallerinaParser) parseClosedRecordBodyEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordKeyword() st.STNode {
+func (b *ballerinaParser) parseRecordKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.RECORD_KEYWORD {
 		return b.consume()
@@ -3368,7 +3351,7 @@ func (b *BallerinaParser) parseRecordKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldOrRestDescriptor() st.STNode {
+func (b *ballerinaParser) parseFieldOrRestDescriptor() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.CLOSE_BRACE_TOKEN,
@@ -3393,7 +3376,7 @@ func (b *BallerinaParser) parseFieldOrRestDescriptor() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRecordField() st.STNode {
+func (b *ballerinaParser) parseRecordField() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RECORD_FIELD)
 	metadata := b.parseMetaData()
 	fieldOrRestDesc := b.parseRecordFieldInner(b.peek(), metadata)
@@ -3401,7 +3384,7 @@ func (b *BallerinaParser) parseRecordField() st.STNode {
 	return fieldOrRestDesc
 }
 
-func (b *BallerinaParser) parseRecordFieldInner(nextToken st.STToken, metadata st.STNode) st.STNode {
+func (b *ballerinaParser) parseRecordFieldInner(nextToken st.STToken, metadata st.STNode) st.STNode {
 	if nextToken.Kind() != st.READONLY_KEYWORD {
 		ty := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD)
 		return b.parseFieldOrRestDescriptorRhs(metadata, ty)
@@ -3418,7 +3401,7 @@ func (b *BallerinaParser) parseRecordFieldInner(nextToken st.STToken, metadata s
 			nextToken = b.peek()
 			switch nextToken.Kind() {
 			case st.SEMICOLON_TOKEN, st.EQUAL_TOKEN:
-				ty = CreateBuiltinSimpleNameReference(readOnlyQualifier)
+				ty = createBuiltinSimpleNameReference(readOnlyQualifier)
 				readOnlyQualifier = st.CreateEmptyNode()
 				nameNode, ok := fieldNameOrTypeDesc.(*st.STSimpleNameReferenceNode)
 				if !ok {
@@ -3432,24 +3415,24 @@ func (b *BallerinaParser) parseRecordFieldInner(nextToken st.STToken, metadata s
 			}
 		}
 	} else if nextToken.Kind() == st.ELLIPSIS_TOKEN {
-		ty = CreateBuiltinSimpleNameReference(readOnlyQualifier)
+		ty = createBuiltinSimpleNameReference(readOnlyQualifier)
 		return b.parseFieldOrRestDescriptorRhs(metadata, ty)
 	} else if b.isTypeStartingToken(nextToken.Kind()) {
 		ty = b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD)
 	} else {
-		readOnlyQualifier = CreateBuiltinSimpleNameReference(readOnlyQualifier)
+		readOnlyQualifier = createBuiltinSimpleNameReference(readOnlyQualifier)
 		ty = b.parseComplexTypeDescriptor(readOnlyQualifier, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_RECORD_FIELD, false)
 		readOnlyQualifier = st.CreateEmptyNode()
 	}
 	return b.parseIndividualRecordField(metadata, readOnlyQualifier, ty)
 }
 
-func (b *BallerinaParser) parseIndividualRecordField(metadata st.STNode, readOnlyQualifier st.STNode, ty st.STNode) st.STNode {
+func (b *ballerinaParser) parseIndividualRecordField(metadata st.STNode, readOnlyQualifier st.STNode, ty st.STNode) st.STNode {
 	fieldName := b.parseVariableName()
 	return b.parseFieldDescriptorRhs(metadata, readOnlyQualifier, ty, fieldName)
 }
 
-func (b *BallerinaParser) parseTypeReferenceInTypeInclusion() st.STNode {
+func (b *ballerinaParser) parseTypeReferenceInTypeInclusion() st.STNode {
 	typeReference := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_REFERENCE_IN_TYPE_INCLUSION)
 	if typeReference.Kind() == st.SIMPLE_NAME_REFERENCE {
 		if typeReference.HasDiagnostics() {
@@ -3467,19 +3450,19 @@ func (b *BallerinaParser) parseTypeReferenceInTypeInclusion() st.STNode {
 	return emptyNameReference
 }
 
-func (b *BallerinaParser) parseTypeReference() st.STNode {
+func (b *ballerinaParser) parseTypeReference() st.STNode {
 	return b.parseTypeReferenceInner(false)
 }
 
-func (b *BallerinaParser) parseTypeReferenceInner(isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeReferenceInner(isInConditionalExpr bool) st.STNode {
 	return b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifier(currentCtx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentifier(currentCtx common.ParserRuleContext) st.STNode {
 	return b.parseQualifiedIdentifierInner(currentCtx, false)
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierInner(currentCtx common.ParserRuleContext, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentifierInner(currentCtx common.ParserRuleContext, isInConditionalExpr bool) st.STNode {
 	token := b.peek()
 	var typeRefOrPkgRef st.STNode
 	if token.Kind() == st.IDENTIFIER_TOKEN {
@@ -3499,7 +3482,7 @@ func (b *BallerinaParser) parseQualifiedIdentifierInner(currentCtx common.Parser
 	return b.parseQualifiedIdentifierNode(typeRefOrPkgRef, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierNode(identifier st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentifierNode(identifier st.STNode, isInConditionalExpr bool) st.STNode {
 	nextToken := b.peekN(1)
 	if nextToken.Kind() != st.COLON_TOKEN {
 		return st.CreateSimpleNameReferenceNode(identifier)
@@ -3534,7 +3517,7 @@ func (b *BallerinaParser) parseQualifiedIdentifierNode(identifier st.STNode, isI
 	}
 }
 
-func (b *BallerinaParser) createQualifiedNameReferenceNode(identifier st.STNode, colon st.STNode, varOrFuncName st.STNode) st.STNode {
+func (b *ballerinaParser) createQualifiedNameReferenceNode(identifier st.STNode, colon st.STNode, varOrFuncName st.STNode) st.STNode {
 	if b.hasTrailingMinutiae(identifier) || b.hasTrailingMinutiae(colon) {
 		colon = st.AddDiagnostic(colon,
 			&common.ERROR_INTERVENING_WHITESPACES_ARE_NOT_ALLOWED)
@@ -3542,7 +3525,7 @@ func (b *BallerinaParser) createQualifiedNameReferenceNode(identifier st.STNode,
 	return st.CreateQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
 }
 
-func (b *BallerinaParser) parseFieldOrRestDescriptorRhs(metadata st.STNode, ty st.STNode) st.STNode {
+func (b *ballerinaParser) parseFieldOrRestDescriptorRhs(metadata st.STNode, ty st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.ELLIPSIS_TOKEN:
@@ -3559,7 +3542,7 @@ func (b *BallerinaParser) parseFieldOrRestDescriptorRhs(metadata st.STNode, ty s
 	}
 }
 
-func (b *BallerinaParser) parseFieldDescriptorRhs(metadata st.STNode, readonlyQualifier st.STNode, ty st.STNode, fieldName st.STNode) st.STNode {
+func (b *ballerinaParser) parseFieldDescriptorRhs(metadata st.STNode, readonlyQualifier st.STNode, ty st.STNode, fieldName st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.SEMICOLON_TOKEN:
@@ -3584,7 +3567,7 @@ func (b *BallerinaParser) parseFieldDescriptorRhs(metadata st.STNode, readonlyQu
 	}
 }
 
-func (b *BallerinaParser) parseQuestionMark() st.STNode {
+func (b *ballerinaParser) parseQuestionMark() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.QUESTION_MARK_TOKEN {
 		return b.consume()
@@ -3594,12 +3577,12 @@ func (b *BallerinaParser) parseQuestionMark() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseStatements() st.STNode {
+func (b *ballerinaParser) parseStatements() st.STNode {
 	res, _ := b.parseStatementsInner(nil)
 	return res
 }
 
-func (b *BallerinaParser) parseStatementsInner(stmts []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseStatementsInner(stmts []st.STNode) (st.STNode, []st.STNode) {
 	for !b.isEndOfStatements() {
 		stmt := b.parseStatement()
 		if stmt == nil {
@@ -3617,7 +3600,7 @@ func (b *BallerinaParser) parseStatementsInner(stmts []st.STNode) (st.STNode, []
 	return st.CreateNodeList(stmts...), stmts
 }
 
-func (b *BallerinaParser) parseStatement() st.STNode {
+func (b *ballerinaParser) parseStatement() st.STNode {
 	nextToken := b.peek()
 	annots := st.CreateEmptyNodeList()
 	switch nextToken.Kind() {
@@ -3634,7 +3617,7 @@ func (b *BallerinaParser) parseStatement() st.STNode {
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_STATEMENT)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			break
 		}
 		return b.parseStatement()
@@ -3642,7 +3625,7 @@ func (b *BallerinaParser) parseStatement() st.STNode {
 	return b.parseStatementWithAnnotataions(annots)
 }
 
-func (b *BallerinaParser) validateStatement(statement st.STNode) bool {
+func (b *ballerinaParser) validateStatement(statement st.STNode) bool {
 	switch statement.Kind() {
 	case st.LOCAL_TYPE_DEFINITION_STATEMENT:
 		b.addInvalidNodeToNextToken(statement, &common.ERROR_LOCAL_TYPE_DEFINITION_NOT_ALLOWED)
@@ -3655,19 +3638,19 @@ func (b *BallerinaParser) validateStatement(statement st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) getAnnotations(nullbaleAnnot st.STNode) st.STNode {
+func (b *ballerinaParser) getAnnotations(nullbaleAnnot st.STNode) st.STNode {
 	if nullbaleAnnot != nil {
 		return nullbaleAnnot
 	}
 	return st.CreateEmptyNodeList()
 }
 
-func (b *BallerinaParser) parseStatementWithAnnotataions(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseStatementWithAnnotataions(annots st.STNode) st.STNode {
 	result, _ := b.parseStatementInner(annots, nil)
 	return result
 }
 
-func (b *BallerinaParser) parseStatementInner(annots st.STNode, qualifiers []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseStatementInner(annots st.STNode, qualifiers []st.STNode) (st.STNode, []st.STNode) {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
@@ -3802,7 +3785,7 @@ func (b *BallerinaParser) parseStatementInner(annots st.STNode, qualifiers []st.
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_STATEMENT_WITHOUT_ANNOTS)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			b.reportInvalidQualifierList(qualifiers)
 			finalKeyword := st.CreateEmptyNode()
 			return b.parseVariableDecl(b.getAnnotations(annots), finalKeyword), qualifiers
@@ -3811,7 +3794,7 @@ func (b *BallerinaParser) parseStatementInner(annots st.STNode, qualifiers []st.
 	}
 }
 
-func (b *BallerinaParser) parseVariableDecl(annots st.STNode, finalKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseVariableDecl(annots st.STNode, finalKeyword st.STNode) st.STNode {
 	var typeDescQualifiers []st.STNode
 	var varDecQualifiers []st.STNode
 	if finalKeyword != nil {
@@ -3823,7 +3806,7 @@ func (b *BallerinaParser) parseVariableDecl(annots st.STNode, finalKeyword st.ST
 }
 
 // Return result, and modified varDeclQuals
-func (b *BallerinaParser) parseVariableDeclInner(annots st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typeDescQualifiers []st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseVariableDeclInner(annots st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typeDescQualifiers []st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	typeBindingPattern := b.parseTypedBindingPatternInner(typeDescQualifiers,
 		common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
@@ -3831,14 +3814,14 @@ func (b *BallerinaParser) parseVariableDeclInner(annots st.STNode, publicQualifi
 }
 
 // Return result, and modified qualifiers
-func (b *BallerinaParser) parseVarDeclTypeDescRhs(typeDesc st.STNode, metadata st.STNode, qualifiers []st.STNode, isTypedBindingPattern bool, isModuleVar bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseVarDeclTypeDescRhs(typeDesc st.STNode, metadata st.STNode, qualifiers []st.STNode, isTypedBindingPattern bool, isModuleVar bool) (st.STNode, []st.STNode) {
 	publicQualifier := st.CreateEmptyNode()
 	return b.parseVarDeclTypeDescRhsInner(typeDesc, metadata, publicQualifier, qualifiers, isTypedBindingPattern,
 		isModuleVar)
 }
 
 // Return result, and modified qualifiers
-func (b *BallerinaParser) parseVarDeclTypeDescRhsInner(typeDesc st.STNode, metadata st.STNode, publicQual st.STNode, qualifiers []st.STNode, isTypedBindingPattern bool, isModuleVar bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseVarDeclTypeDescRhsInner(typeDesc st.STNode, metadata st.STNode, publicQual st.STNode, qualifiers []st.STNode, isTypedBindingPattern bool, isModuleVar bool) (st.STNode, []st.STNode) {
 	b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 	typeDesc = b.parseComplexTypeDescriptor(typeDesc,
 		common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, isTypedBindingPattern)
@@ -3848,13 +3831,13 @@ func (b *BallerinaParser) parseVarDeclTypeDescRhsInner(typeDesc st.STNode, metad
 }
 
 // Return result, and modified varDeclQuals
-func (b *BallerinaParser) parseVarDeclRhs(metadata st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseVarDeclRhs(metadata st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
 	publicQualifier := st.CreateEmptyNode()
 	return b.parseVarDeclRhsInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, isModuleVar)
 }
 
 // Return result, and modified varDeclQuals
-func (b *BallerinaParser) parseVarDeclRhsInner(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseVarDeclRhsInner(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
 	var assign st.STNode
 	var expr st.STNode
 	var semicolon st.STNode
@@ -3915,7 +3898,7 @@ func (b *BallerinaParser) parseVarDeclRhsInner(metadata st.STNode, publicQualifi
 		expr, semicolon), varDeclQuals
 }
 
-func (b *BallerinaParser) parseConfigurableVarDeclRhs() st.STNode {
+func (b *ballerinaParser) parseConfigurableVarDeclRhs() st.STNode {
 	var expr st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -3932,7 +3915,7 @@ func (b *BallerinaParser) parseConfigurableVarDeclRhs() st.STNode {
 	return expr
 }
 
-func (b *BallerinaParser) createModuleVarDeclaration(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, assign st.STNode, expr st.STNode, semicolon st.STNode, isConfigurable bool, hasVarInit bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) createModuleVarDeclaration(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, assign st.STNode, expr st.STNode, semicolon st.STNode, isConfigurable bool, hasVarInit bool) (st.STNode, []st.STNode) {
 	if hasVarInit || len(varDeclQuals) == 0 {
 		return b.createModuleVarDeclarationInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, assign,
 			expr, semicolon), varDeclQuals
@@ -3951,7 +3934,7 @@ func (b *BallerinaParser) createModuleVarDeclaration(metadata st.STNode, publicQ
 		semicolon), varDeclQuals
 }
 
-func (b *BallerinaParser) createConfigurableModuleVarDeclWithMissingInitializer(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, semicolon st.STNode) st.STNode {
+func (b *ballerinaParser) createConfigurableModuleVarDeclWithMissingInitializer(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, semicolon st.STNode) st.STNode {
 	var assign st.STNode
 	assign = st.CreateMissingToken(st.EQUAL_TOKEN, nil)
 	assign = st.AddDiagnostic(assign,
@@ -3962,7 +3945,7 @@ func (b *BallerinaParser) createConfigurableModuleVarDeclWithMissingInitializer(
 		semicolon)
 }
 
-func (b *BallerinaParser) createModuleVarDeclarationInner(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, assign st.STNode, expr st.STNode, semicolon st.STNode) st.STNode {
+func (b *ballerinaParser) createModuleVarDeclarationInner(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, assign st.STNode, expr st.STNode, semicolon st.STNode) st.STNode {
 	if publicQualifier != nil {
 		typedBindingPatternNode, ok := typedBindingPattern.(*st.STTypedBindingPatternNode)
 		if !ok {
@@ -3988,7 +3971,7 @@ func (b *BallerinaParser) createModuleVarDeclarationInner(metadata st.STNode, pu
 		typedBindingPattern, assign, expr, semicolon)
 }
 
-func (b *BallerinaParser) createMissingSimpleVarDecl(isModuleVar bool) st.STNode {
+func (b *ballerinaParser) createMissingSimpleVarDecl(isModuleVar bool) st.STNode {
 	var metadata st.STNode
 	if isModuleVar {
 		metadata = st.CreateEmptyNode()
@@ -3998,12 +3981,12 @@ func (b *BallerinaParser) createMissingSimpleVarDecl(isModuleVar bool) st.STNode
 	return b.createMissingSimpleVarDeclInner(metadata, isModuleVar)
 }
 
-func (b *BallerinaParser) createMissingSimpleVarDeclInner(metadata st.STNode, isModuleVar bool) st.STNode {
+func (b *ballerinaParser) createMissingSimpleVarDeclInner(metadata st.STNode, isModuleVar bool) st.STNode {
 	publicQualifier := st.CreateEmptyNode()
 	return b.createMissingSimpleVarDeclInnerWithQualifiers(metadata, publicQualifier, nil, isModuleVar)
 }
 
-func (b *BallerinaParser) createMissingSimpleVarDeclInnerWithQualifiers(metadata st.STNode, publicQualifier st.STNode, qualifiers []st.STNode, isModuleVar bool) st.STNode {
+func (b *ballerinaParser) createMissingSimpleVarDeclInnerWithQualifiers(metadata st.STNode, publicQualifier st.STNode, qualifiers []st.STNode, isModuleVar bool) st.STNode {
 	emptyNode := st.CreateEmptyNode()
 	simpleTypeDescIdentifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_TYPE_DESC)
@@ -4030,7 +4013,7 @@ func (b *BallerinaParser) createMissingSimpleVarDeclInnerWithQualifiers(metadata
 		emptyNode, semicolon)
 }
 
-func (b *BallerinaParser) createMissingWhereClause() st.STNode {
+func (b *ballerinaParser) createMissingWhereClause() st.STNode {
 	whereKeyword := st.CreateMissingTokenWithDiagnostics(st.WHERE_KEYWORD,
 		&common.ERROR_MISSING_WHERE_KEYWORD)
 	missingIdentifier := st.CreateMissingTokenWithDiagnostics(
@@ -4039,7 +4022,7 @@ func (b *BallerinaParser) createMissingWhereClause() st.STNode {
 	return st.CreateWhereClauseNode(whereKeyword, missingExpr)
 }
 
-func (b *BallerinaParser) createMissingSimpleObjectFieldInner(metadata st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) createMissingSimpleObjectFieldInner(metadata st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	emptyNode := st.CreateEmptyNode()
 	simpleTypeDescIdentifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 		&common.ERROR_MISSING_TYPE_DESC)
@@ -4062,13 +4045,13 @@ func (b *BallerinaParser) createMissingSimpleObjectFieldInner(metadata st.STNode
 		simpleNameRef, identifier, emptyNode, emptyNode, semicolon), qualifiers
 }
 
-func (b *BallerinaParser) createMissingSimpleObjectField() st.STNode {
+func (b *ballerinaParser) createMissingSimpleObjectField() st.STNode {
 	metadata := st.CreateEmptyNode()
 	res, _ := b.createMissingSimpleObjectFieldInner(metadata, nil, false)
 	return res
 }
 
-func (b *BallerinaParser) modifyNodeWithInvalidTokenList(qualifiers []st.STNode, node st.STNode) st.STNode {
+func (b *ballerinaParser) modifyNodeWithInvalidTokenList(qualifiers []st.STNode, node st.STNode) st.STNode {
 	i := (len(qualifiers) - 1)
 	for ; i >= 0; i-- {
 		qualifier := qualifiers[i]
@@ -4077,7 +4060,7 @@ func (b *BallerinaParser) modifyNodeWithInvalidTokenList(qualifiers []st.STNode,
 	return node
 }
 
-func (b *BallerinaParser) modifyTypedBindingPatternWithIsolatedQualifier(typedBindingPattern st.STNode, isolatedQualifier st.STNode) st.STNode {
+func (b *ballerinaParser) modifyTypedBindingPatternWithIsolatedQualifier(typedBindingPattern st.STNode, isolatedQualifier st.STNode) st.STNode {
 	typedBindingPatternNode, ok := typedBindingPattern.(*st.STTypedBindingPatternNode)
 	if !ok {
 		panic("expected STTypedBindingPatternNode")
@@ -4096,7 +4079,7 @@ func (b *BallerinaParser) modifyTypedBindingPatternWithIsolatedQualifier(typedBi
 	return st.CreateTypedBindingPatternNode(typeDescriptor, bindingPattern)
 }
 
-func (b *BallerinaParser) modifyObjectTypeDescWithALeadingQualifier(objectTypeDesc st.STNode, newQualifier st.STNode) st.STNode {
+func (b *ballerinaParser) modifyObjectTypeDescWithALeadingQualifier(objectTypeDesc st.STNode, newQualifier st.STNode) st.STNode {
 	objectTypeDescriptorNode, ok := objectTypeDesc.(*st.STObjectTypeDescriptorNode)
 	if !ok {
 		panic("expected STObjectTypeDescriptorNode")
@@ -4112,7 +4095,7 @@ func (b *BallerinaParser) modifyObjectTypeDescWithALeadingQualifier(objectTypeDe
 		objectTypeDescriptorNode.CloseBrace)
 }
 
-func (b *BallerinaParser) modifyFuncTypeDescWithALeadingQualifier(funcTypeDesc st.STNode, newQualifier st.STNode) st.STNode {
+func (b *ballerinaParser) modifyFuncTypeDescWithALeadingQualifier(funcTypeDesc st.STNode, newQualifier st.STNode) st.STNode {
 	funcTypeDescriptorNode, ok := funcTypeDesc.(*st.STFunctionTypeDescriptorNode)
 	if !ok {
 		panic("expected STFunctionTypeDescriptorNode")
@@ -4123,7 +4106,7 @@ func (b *BallerinaParser) modifyFuncTypeDescWithALeadingQualifier(funcTypeDesc s
 		funcTypeDescriptorNode.FunctionSignature)
 }
 
-func (b *BallerinaParser) modifyNodeListWithALeadingQualifier(qualifiers st.STNode, newQualifier st.STNode) st.STNode {
+func (b *ballerinaParser) modifyNodeListWithALeadingQualifier(qualifiers st.STNode, newQualifier st.STNode) st.STNode {
 	var newQualifierList []st.STNode
 	newQualifierList = append(newQualifierList, newQualifier)
 	qualifierNodeList, ok := qualifiers.(*st.STNodeList)
@@ -4143,7 +4126,7 @@ func (b *BallerinaParser) modifyNodeListWithALeadingQualifier(qualifiers st.STNo
 	return st.CreateNodeList(newQualifierList...)
 }
 
-func (b *BallerinaParser) parseAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
 	assign := b.parseAssignOp()
 	expr := b.parseActionOrExpression()
 	semicolon := b.parseSemicolon()
@@ -4170,23 +4153,23 @@ func (b *BallerinaParser) parseAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
 	return st.CreateAssignmentStatementNode(lvExpr, assign, expr, semicolon)
 }
 
-func (b *BallerinaParser) parseExpression() st.STNode {
-	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, true, false)
+func (b *ballerinaParser) parseExpression() st.STNode {
+	return b.parseExpressionWithPrecedence(operatorPrecedenceDefault, true, false)
 }
 
-func (b *BallerinaParser) parseActionOrExpression() st.STNode {
-	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, true, true)
+func (b *ballerinaParser) parseActionOrExpression() st.STNode {
+	return b.parseExpressionWithPrecedence(operatorPrecedenceDefault, true, true)
 }
 
-func (b *BallerinaParser) parseActionOrExpressionInLhs(annots st.STNode) st.STNode {
-	return b.parseExpressionInner(OPERATOR_PRECEDENCE_DEFAULT, annots, false, true, false)
+func (b *ballerinaParser) parseActionOrExpressionInLhs(annots st.STNode) st.STNode {
+	return b.parseExpressionInner(operatorPrecedenceDefault, annots, false, true, false)
 }
 
-func (b *BallerinaParser) parseExpressionPossibleRhsExpr(isRhsExpr bool) st.STNode {
-	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, isRhsExpr, false)
+func (b *ballerinaParser) parseExpressionPossibleRhsExpr(isRhsExpr bool) st.STNode {
+	return b.parseExpressionWithPrecedence(operatorPrecedenceDefault, isRhsExpr, false)
 }
 
-func (b *BallerinaParser) isValidLVExpr(expression st.STNode) bool {
+func (b *ballerinaParser) isValidLVExpr(expression st.STNode) bool {
 	switch expression.Kind() {
 	case st.SIMPLE_NAME_REFERENCE,
 		st.QUALIFIED_NAME_REFERENCE,
@@ -4213,7 +4196,7 @@ func (b *BallerinaParser) isValidLVExpr(expression st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isValidLVMemberExpr(expression st.STNode) bool {
+func (b *ballerinaParser) isValidLVMemberExpr(expression st.STNode) bool {
 	switch expression.Kind() {
 	case st.SIMPLE_NAME_REFERENCE,
 		st.QUALIFIED_NAME_REFERENCE:
@@ -4242,32 +4225,32 @@ func (b *BallerinaParser) isValidLVMemberExpr(expression st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) parseExpressionWithPrecedence(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseExpressionWithPrecedence(precedenceLevel operatorPrecedence, isRhsExpr bool, allowActions bool) st.STNode {
 	return b.parseExpressionWithConditional(precedenceLevel, isRhsExpr, allowActions, false)
 }
 
-func (b *BallerinaParser) parseExpressionWithConditional(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseExpressionWithConditional(precedenceLevel operatorPrecedence, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	return b.parseExpressionWithMatchGuard(precedenceLevel, isRhsExpr, allowActions, false, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseExpressionWithMatchGuard(precedenceLevel OperatorPrecedence, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseExpressionWithMatchGuard(precedenceLevel operatorPrecedence, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	expr := b.parseTerminalExpression(isRhsExpr, allowActions, isInConditionalExpr)
 	return b.parseExpressionRhsInner(precedenceLevel, expr, isRhsExpr, allowActions, isInMatchGuard, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) invalidateActionAndGetMissingExpr(node st.STNode) st.STNode {
+func (b *ballerinaParser) invalidateActionAndGetMissingExpr(node st.STNode) st.STNode {
 	var identifier st.STNode
 	identifier = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 	identifier = st.CloneWithTrailingInvalidNodeMinutiae(identifier, node, &common.ERROR_EXPRESSION_EXPECTED_ACTION_FOUND)
 	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (b *BallerinaParser) parseExpressionInner(precedenceLevel OperatorPrecedence, annots st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseExpressionInner(precedenceLevel operatorPrecedence, annots st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	expr := b.parseTerminalExpressionWithAnnotations(annots, isRhsExpr, allowActions, isInConditionalExpr)
 	return b.parseExpressionRhsInner(precedenceLevel, expr, isRhsExpr, allowActions, false, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTerminalExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTerminalExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	annots := st.CreateEmptyNodeList()
 	if b.peek().Kind() == st.AT_TOKEN {
 		annots = b.parseOptionalAnnotations()
@@ -4275,11 +4258,11 @@ func (b *BallerinaParser) parseTerminalExpression(isRhsExpr bool, allowActions b
 	return b.parseTerminalExpressionWithAnnotations(annots, isRhsExpr, allowActions, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTerminalExpressionWithAnnotations(annots st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTerminalExpressionWithAnnotations(annots st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	return b.parseTerminalExpressionInner(annots, nil, isRhsExpr, allowActions, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTerminalExpressionInner(annots st.STNode, qualifiers []st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTerminalExpressionInner(annots st.STNode, qualifiers []st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	qualifiers = b.parseExprQualifiers(qualifiers)
 	nextToken := b.peek()
 	annotNodeList := annots.(*st.STNodeList)
@@ -4379,7 +4362,7 @@ func (b *BallerinaParser) parseTerminalExpressionInner(annots st.STNode, qualifi
 	}
 }
 
-func (b *BallerinaParser) parseNaturalExpression() st.STNode {
+func (b *ballerinaParser) parseNaturalExpression() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION)
 	var optionalConstKeyword st.STNode
 	if b.peek().Kind() == st.CONST_KEYWORD {
@@ -4392,17 +4375,17 @@ func (b *BallerinaParser) parseNaturalExpression() st.STNode {
 	return b.parseNaturalExprBody(optionalConstKeyword, naturalKeyword, optionalParenthesizedArgList)
 }
 
-func (b *BallerinaParser) parseNaturalExprBody(optionalConstKeyword st.STNode, naturalKeyword st.STNode, optionalParenthesizedArgList st.STNode) st.STNode {
+func (b *ballerinaParser) parseNaturalExprBody(optionalConstKeyword st.STNode, naturalKeyword st.STNode, optionalParenthesizedArgList st.STNode) st.STNode {
 	openBrace := b.parseOpenBrace()
 	if openBrace.IsMissing() {
 		b.endContext()
 		return b.createMissingNaturalExpressionNode(optionalConstKeyword, naturalKeyword,
 			optionalParenthesizedArgList)
 	}
-	b.tokenReader.StartMode(PARSER_MODE_PROMPT)
+	b.tokenReader.StartMode(parserModePrompt)
 	prompt := b.parsePromptContent()
 	closeBrace := b.parseCloseBrace()
-	if b.tokenReader.GetCurrentMode() == PARSER_MODE_PROMPT {
+	if b.tokenReader.GetCurrentMode() == parserModePrompt {
 		b.tokenReader.EndMode()
 	}
 	b.endContext()
@@ -4410,7 +4393,7 @@ func (b *BallerinaParser) parseNaturalExprBody(optionalConstKeyword st.STNode, n
 		optionalParenthesizedArgList, openBrace, prompt, closeBrace)
 }
 
-func (b *BallerinaParser) createMissingNaturalExpressionNode(optionalConstKeyword st.STNode, naturalKeyword st.STNode, optionalParenthesizedArgList st.STNode) st.STNode {
+func (b *ballerinaParser) createMissingNaturalExpressionNode(optionalConstKeyword st.STNode, naturalKeyword st.STNode, optionalParenthesizedArgList st.STNode) st.STNode {
 	openBrace := st.CreateMissingToken(st.OPEN_BRACE_TOKEN, nil)
 	closeBrace := st.CreateMissingToken(st.CLOSE_BRACE_TOKEN, nil)
 	prompt := st.CreateEmptyNodeList()
@@ -4420,14 +4403,14 @@ func (b *BallerinaParser) createMissingNaturalExpressionNode(optionalConstKeywor
 	return naturalExpr
 }
 
-func (b *BallerinaParser) parseOptionalParenthesizedArgList() st.STNode {
+func (b *ballerinaParser) parseOptionalParenthesizedArgList() st.STNode {
 	if b.peek().Kind() == st.OPEN_PAREN_TOKEN {
 		return b.parseParenthesizedArgList()
 	}
 	return st.CreateEmptyNode()
 }
 
-func (b *BallerinaParser) parsePromptContent() st.STNode {
+func (b *ballerinaParser) parsePromptContent() st.STNode {
 	var items []st.STNode
 	nextToken := b.peek()
 	for !b.isEndOfPromptContent(nextToken.Kind()) {
@@ -4438,7 +4421,7 @@ func (b *BallerinaParser) parsePromptContent() st.STNode {
 	return st.CreateNodeList(items...)
 }
 
-func (b *BallerinaParser) isEndOfPromptContent(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfPromptContent(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
@@ -4447,7 +4430,7 @@ func (b *BallerinaParser) isEndOfPromptContent(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parsePromptItem() st.STNode {
+func (b *ballerinaParser) parsePromptItem() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.INTERPOLATION_START_TOKEN {
 		return b.parseInterpolation()
@@ -4461,7 +4444,7 @@ func (b *BallerinaParser) parsePromptItem() st.STNode {
 	return b.consume()
 }
 
-func (b *BallerinaParser) createMissingObjectConstructor(annots st.STNode, qualifierNodeList st.STNode) st.STNode {
+func (b *ballerinaParser) createMissingObjectConstructor(annots st.STNode, qualifierNodeList st.STNode) st.STNode {
 	objectKeyword := st.CreateMissingToken(st.OBJECT_KEYWORD, nil)
 	openBrace := st.CreateMissingToken(st.OPEN_BRACE_TOKEN, nil)
 	closeBrace := st.CreateMissingToken(st.CLOSE_BRACE_TOKEN, nil)
@@ -4473,7 +4456,7 @@ func (b *BallerinaParser) createMissingObjectConstructor(annots st.STNode, quali
 	return objConstructor
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalExpr bool, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalExpr bool, isRhsExpr bool, allowActions bool) st.STNode {
 	preDeclaredPrefix := b.consume()
 	nextNextToken := b.getNextNextToken()
 	if (nextNextToken.Kind() == st.IDENTIFIER_TOKEN) && (!isKeyKeyword(nextNextToken)) {
@@ -4491,7 +4474,7 @@ func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalEx
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
 	}
 	solution := b.recoverWithBlockContext(b.peek(), context)
-	if solution.Action == ACTION_KEEP {
+	if solution.Action == actionKeep {
 		return b.parseQualifiedIdentifierWithPredeclPrefix(preDeclaredPrefix, isInConditionalExpr)
 	}
 	if preDeclaredPrefix.Kind() == st.ERROR_KEYWORD {
@@ -4509,7 +4492,7 @@ func (b *BallerinaParser) parseQualifiedIdentifierOrExpression(isInConditionalEx
 	return tableOrQuery
 }
 
-func (b *BallerinaParser) validateExprAnnotsAndQualifiers(nextToken st.STToken, annots st.STNode, qualifiers []st.STNode) {
+func (b *ballerinaParser) validateExprAnnotsAndQualifiers(nextToken st.STToken, annots st.STNode, qualifiers []st.STNode) {
 	switch nextToken.Kind() {
 	case st.START_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
@@ -4523,7 +4506,7 @@ func (b *BallerinaParser) validateExprAnnotsAndQualifiers(nextToken st.STToken, 
 	}
 }
 
-func (b *BallerinaParser) isAnnotAllowedExprStart(nextToken st.STToken) bool {
+func (b *ballerinaParser) isAnnotAllowedExprStart(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
 	case st.START_KEYWORD, st.FUNCTION_KEYWORD, st.OBJECT_KEYWORD:
 		return true
@@ -4532,7 +4515,7 @@ func (b *BallerinaParser) isAnnotAllowedExprStart(nextToken st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) isValidExprStart(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isValidExprStart(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
 		st.HEX_INTEGER_LITERAL_TOKEN,
@@ -4589,12 +4572,12 @@ func (b *BallerinaParser) isValidExprStart(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseNewExpression() st.STNode {
-	newKeyword := b.parseNewKeyword()
-	return b.parseNewKeywordRhs(newKeyword)
+func (b *ballerinaParser) parseNewExpression() st.STNode {
+	new := b.parseNewKeyword()
+	return b.parseNewKeywordRhs(new)
 }
 
-func (b *BallerinaParser) parseNewKeyword() st.STNode {
+func (b *ballerinaParser) parseNewKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.NEW_KEYWORD {
 		return b.consume()
@@ -4604,28 +4587,28 @@ func (b *BallerinaParser) parseNewKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseNewKeywordRhs(newKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseNewKeywordRhs(new st.STNode) st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.OPEN_PAREN_TOKEN {
-		return b.parseImplicitNewExpr(newKeyword)
+		return b.parseImplicitNewExpr(new)
 	}
 	if b.isClassDescriptorStartToken(nextToken.Kind()) {
-		return b.parseExplicitNewExpr(newKeyword)
+		return b.parseExplicitNewExpr(new)
 	}
-	return b.createImplicitNewExpr(newKeyword, st.CreateEmptyNode())
+	return b.createImplicitNewExpr(new, st.CreateEmptyNode())
 }
 
-func (b *BallerinaParser) isClassDescriptorStartToken(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isClassDescriptorStartToken(tokenKind st.SyntaxKind) bool {
 	return ((tokenKind == st.STREAM_KEYWORD) || b.isPredeclaredIdentifier(tokenKind))
 }
 
-func (b *BallerinaParser) parseExplicitNewExpr(newKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseExplicitNewExpr(new st.STNode) st.STNode {
 	typeDescriptor := b.parseClassDescriptor()
 	parenthesizedArgsList := b.parseParenthesizedArgList()
-	return st.CreateExplicitNewExpressionNode(newKeyword, typeDescriptor, parenthesizedArgsList)
+	return st.CreateExplicitNewExpressionNode(new, typeDescriptor, parenthesizedArgsList)
 }
 
-func (b *BallerinaParser) parseClassDescriptor() st.STNode {
+func (b *ballerinaParser) parseClassDescriptor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CLASS_DESCRIPTOR_IN_NEW_EXPR)
 	var classDescriptor st.STNode
 	nextToken := b.peek()
@@ -4644,27 +4627,27 @@ func (b *BallerinaParser) parseClassDescriptor() st.STNode {
 	return classDescriptor
 }
 
-func (b *BallerinaParser) parseImplicitNewExpr(newKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseImplicitNewExpr(new st.STNode) st.STNode {
 	parenthesizedArgList := b.parseParenthesizedArgList()
-	return b.createImplicitNewExpr(newKeyword, parenthesizedArgList)
+	return b.createImplicitNewExpr(new, parenthesizedArgList)
 }
 
-func (b *BallerinaParser) createImplicitNewExpr(newKeyword st.STNode, parenthesizedArgList st.STNode) st.STNode {
-	return st.CreateImplicitNewExpressionNode(newKeyword, parenthesizedArgList)
+func (b *ballerinaParser) createImplicitNewExpr(new st.STNode, parenthesizedArgList st.STNode) st.STNode {
+	return st.CreateImplicitNewExpressionNode(new, parenthesizedArgList)
 }
 
-func (b *BallerinaParser) parseParenthesizedArgList() st.STNode {
+func (b *ballerinaParser) parseParenthesizedArgList() st.STNode {
 	openParan := b.parseArgListOpenParenthesis()
 	arguments := b.parseArgsList()
 	closeParan := b.parseArgListCloseParenthesis()
 	return st.CreateParenthesizedArgList(openParan, arguments, closeParan)
 }
 
-func (b *BallerinaParser) parseExpressionRhs(precedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseExpressionRhs(precedenceLevel operatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	return b.parseExpressionRhsInner(precedenceLevel, lhsExpr, isRhsExpr, allowActions, false, false)
 }
 
-func (b *BallerinaParser) parseExpressionRhsInner(currentPrecedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseExpressionRhsInner(currentPrecedenceLevel operatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	actionOrExpression := b.parseExpressionRhsInternal(currentPrecedenceLevel, lhsExpr, isRhsExpr, allowActions,
 		isInMatchGuard, isInConditionalExpr)
 	if ((!allowActions) && b.isAction(actionOrExpression)) && (actionOrExpression.Kind() != st.BRACED_ACTION) {
@@ -4673,7 +4656,7 @@ func (b *BallerinaParser) parseExpressionRhsInner(currentPrecedenceLevel Operato
 	return actionOrExpression
 }
 
-func (b *BallerinaParser) parseExpressionRhsInternal(currentPrecedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseExpressionRhsInternal(currentPrecedenceLevel operatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	nextToken := b.peek()
 	if b.isAction(lhsExpr) || b.isEndOfActionOrExpression(nextToken, isRhsExpr, isInMatchGuard) {
 		return lhsExpr
@@ -4749,16 +4732,16 @@ func (b *BallerinaParser) parseExpressionRhsInternal(currentPrecedenceLevel Oper
 		isInConditionalExpr)
 }
 
-func (b *BallerinaParser) recoverExpressionRhs(currentPrecedenceLevel OperatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) recoverExpressionRhs(currentPrecedenceLevel operatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
 	token := b.peek()
 	lhsExprKind := lhsExpr.Kind()
-	var solution *Solution
+	var solution *solution
 	if (lhsExprKind == st.QUALIFIED_NAME_REFERENCE) || (lhsExprKind == st.SIMPLE_NAME_REFERENCE) {
 		solution = b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_VARIABLE_REF_RHS)
 	} else {
 		solution = b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_EXPRESSION_RHS)
 	}
-	if solution.Action == ACTION_REMOVE {
+	if solution.Action == actionRemove {
 		return b.parseExpressionRhsInner(currentPrecedenceLevel, lhsExpr, isRhsExpr, allowActions, isInMatchGuard,
 			isInConditionalExpr)
 	}
@@ -4771,7 +4754,7 @@ func (b *BallerinaParser) recoverExpressionRhs(currentPrecedenceLevel OperatorPr
 		isInConditionalExpr)
 }
 
-func (b *BallerinaParser) createXMLStepExpression(lhsExpr st.STNode) st.STNode {
+func (b *ballerinaParser) createXMLStepExpression(lhsExpr st.STNode) st.STNode {
 	var newLhsExpr st.STNode
 	slashToken := b.parseSlashToken()
 	ltToken := b.parseLTToken()
@@ -4792,7 +4775,7 @@ func (b *BallerinaParser) createXMLStepExpression(lhsExpr st.STNode) st.STNode {
 	return newLhsExpr
 }
 
-func (b *BallerinaParser) getExpectedNodeKind(lookahead int) st.SyntaxKind {
+func (b *ballerinaParser) getExpectedNodeKind(lookahead int) st.SyntaxKind {
 	nextToken := b.peekN(lookahead)
 	switch nextToken.Kind() {
 	case st.ASTERISK_TOKEN:
@@ -4845,15 +4828,15 @@ func (b *BallerinaParser) getExpectedNodeKind(lookahead int) st.SyntaxKind {
 	return st.TYPE_CAST_EXPRESSION
 }
 
-func (b *BallerinaParser) hasTrailingMinutiae(node st.STNode) bool {
+func (b *ballerinaParser) hasTrailingMinutiae(node st.STNode) bool {
 	return (node.WidthWithTrailingMinutiae() > node.Width())
 }
 
-func (b *BallerinaParser) hasLeadingMinutiae(node st.STNode) bool {
+func (b *ballerinaParser) hasLeadingMinutiae(node st.STNode) bool {
 	return (node.WidthWithLeadingMinutiae() > node.Width())
 }
 
-func (b *BallerinaParser) isValidExprRhsStart(tokenKind st.SyntaxKind, precedingNodeKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isValidExprRhsStart(tokenKind st.SyntaxKind, precedingNodeKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.OPEN_PAREN_TOKEN:
 		return ((precedingNodeKind == st.QUALIFIED_NAME_REFERENCE) || (precedingNodeKind == st.SIMPLE_NAME_REFERENCE))
@@ -4879,7 +4862,7 @@ func (b *BallerinaParser) isValidExprRhsStart(tokenKind st.SyntaxKind, preceding
 	}
 }
 
-func (b *BallerinaParser) parseMemberAccessExpr(lhsExpr st.STNode, isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseMemberAccessExpr(lhsExpr st.STNode, isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR)
 	openBracket := b.parseOpenBracket()
 	keyExpr := b.parseMemberAccessKeyExprs(isRhsExpr)
@@ -4900,7 +4883,7 @@ func (b *BallerinaParser) parseMemberAccessExpr(lhsExpr st.STNode, isRhsExpr boo
 	return st.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
 }
 
-func (b *BallerinaParser) parseMemberAccessKeyExprs(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseMemberAccessKeyExprs(isRhsExpr bool) st.STNode {
 	var exprList []st.STNode
 	var keyExpr st.STNode
 	var keyExprEnd st.STNode
@@ -4916,14 +4899,14 @@ func (b *BallerinaParser) parseMemberAccessKeyExprs(isRhsExpr bool) st.STNode {
 	return st.CreateNodeList(exprList...)
 }
 
-func (b *BallerinaParser) parseKeyExpr(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseKeyExpr(isRhsExpr bool) st.STNode {
 	if (!isRhsExpr) && (b.peek().Kind() == st.ASTERISK_TOKEN) {
 		return st.CreateBasicLiteralNode(st.ASTERISK_LITERAL, b.consume())
 	}
-	return b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_DEFAULT, isRhsExpr, false)
+	return b.parseExpressionWithPrecedence(operatorPrecedenceDefault, isRhsExpr, false)
 }
 
-func (b *BallerinaParser) parseMemberAccessKeyExprEnd() st.STNode {
+func (b *ballerinaParser) parseMemberAccessKeyExprEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -4935,7 +4918,7 @@ func (b *BallerinaParser) parseMemberAccessKeyExprEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCloseBracket() st.STNode {
+func (b *ballerinaParser) parseCloseBracket() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CLOSE_BRACKET_TOKEN {
 		return b.consume()
@@ -4945,7 +4928,7 @@ func (b *BallerinaParser) parseCloseBracket() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldAccessOrMethodCall(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseFieldAccessOrMethodCall(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	dotToken := b.parseDotToken()
 	if b.isSpecialMethodName(b.peek()) {
 		methodName := b.getKeywordAsSimpleNameRef()
@@ -4970,7 +4953,7 @@ func (b *BallerinaParser) parseFieldAccessOrMethodCall(lhsExpr st.STNode, isInCo
 	return st.CreateFieldAccessExpressionNode(lhsExpr, dotToken, fieldOrMethodName)
 }
 
-func (b *BallerinaParser) getKeywordAsSimpleNameRef() st.STNode {
+func (b *ballerinaParser) getKeywordAsSimpleNameRef() st.STNode {
 	mapKeyword := b.consume()
 	var methodName st.STNode
 	methodName = st.CreateIdentifierTokenWithDiagnostics(mapKeyword.Text(), mapKeyword.LeadingMinutiae(),
@@ -4979,7 +4962,7 @@ func (b *BallerinaParser) getKeywordAsSimpleNameRef() st.STNode {
 	return methodName
 }
 
-func (b *BallerinaParser) parseBracedExpression(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseBracedExpression(isRhsExpr bool, allowActions bool) st.STNode {
 	openParen := b.parseOpenParenthesis()
 	if b.peek().Kind() == st.CLOSE_PAREN_TOKEN {
 		return st.CreateNilLiteralNode(openParen, b.consume())
@@ -4987,14 +4970,14 @@ func (b *BallerinaParser) parseBracedExpression(isRhsExpr bool, allowActions boo
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACED_EXPR_OR_ANON_FUNC_PARAMS)
 	var expr st.STNode
 	if allowActions {
-		expr = b.parseExpressionWithPrecedence(DEFAULT_OP_PRECEDENCE, isRhsExpr, true)
+		expr = b.parseExpressionWithPrecedence(defaultOpPrecedence, isRhsExpr, true)
 	} else {
-		expr = b.parseExpressionWithPrecedence(DEFAULT_OP_PRECEDENCE, isRhsExpr, false)
+		expr = b.parseExpressionWithPrecedence(defaultOpPrecedence, isRhsExpr, false)
 	}
 	return b.parseBracedExprOrAnonFuncParamRhs(openParen, expr, isRhsExpr)
 }
 
-func (b *BallerinaParser) parseBracedExprOrAnonFuncParamRhs(openParen st.STNode, expr st.STNode, isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseBracedExprOrAnonFuncParamRhs(openParen st.STNode, expr st.STNode, isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
 	if expr.Kind() == st.SIMPLE_NAME_REFERENCE {
 		switch nextToken.Kind() {
@@ -5015,7 +4998,7 @@ func (b *BallerinaParser) parseBracedExprOrAnonFuncParamRhs(openParen st.STNode,
 	return st.CreateBracedExpressionNode(st.BRACED_EXPRESSION, openParen, expr, closeParen)
 }
 
-func (b *BallerinaParser) isAction(node st.STNode) bool {
+func (b *ballerinaParser) isAction(node st.STNode) bool {
 	switch node.Kind() {
 	case st.REMOTE_METHOD_CALL_ACTION,
 		st.BRACED_ACTION,
@@ -5036,7 +5019,7 @@ func (b *BallerinaParser) isAction(node st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isEndOfActionOrExpression(nextToken st.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
+func (b *ballerinaParser) isEndOfActionOrExpression(nextToken st.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
 	tokenKind := nextToken.Kind()
 	if !isRhsExpr {
 		if b.isCompoundAssignment(tokenKind) {
@@ -5090,12 +5073,12 @@ func (b *BallerinaParser) isEndOfActionOrExpression(nextToken st.STToken, isRhsE
 	}
 }
 
-func (b *BallerinaParser) parseBasicLiteral() st.STNode {
+func (b *ballerinaParser) parseBasicLiteral() st.STNode {
 	literalToken := b.consume()
 	return b.parseBasicLiteralInner(literalToken)
 }
 
-func (b *BallerinaParser) parseBasicLiteralInner(literalToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseBasicLiteralInner(literalToken st.STNode) st.STNode {
 	var nodeKind st.SyntaxKind
 	switch literalToken.Kind() {
 	case st.NULL_KEYWORD:
@@ -5117,7 +5100,7 @@ func (b *BallerinaParser) parseBasicLiteralInner(literalToken st.STNode) st.STNo
 	return st.CreateBasicLiteralNode(nodeKind, literalToken)
 }
 
-func (b *BallerinaParser) parseFuncCallOrNaturalExpr(identifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseFuncCallOrNaturalExpr(identifier st.STNode) st.STNode {
 	openParen := b.parseArgListOpenParenthesis()
 	args := b.parseArgsList()
 	closeParen := b.parseArgListCloseParenthesis()
@@ -5131,7 +5114,7 @@ func (b *BallerinaParser) parseFuncCallOrNaturalExpr(identifier st.STNode) st.ST
 	return st.CreateFunctionCallExpressionNode(identifier, openParen, args, closeParen)
 }
 
-func (b *BallerinaParser) parseNaturalExpressionInner(nameRef st.STSimpleNameReferenceNode, openParen st.STNode, args st.STNode, closeParen st.STNode) st.STNode {
+func (b *ballerinaParser) parseNaturalExpressionInner(nameRef st.STSimpleNameReferenceNode, openParen st.STNode, args st.STNode, closeParen st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION)
 	optionalConstKeyword := st.CreateEmptyNode()
 	naturalKeyword := b.getNaturalKeyword(st.ToToken(nameRef.Name))
@@ -5139,22 +5122,22 @@ func (b *BallerinaParser) parseNaturalExpressionInner(nameRef st.STSimpleNameRef
 	return b.parseNaturalExprBody(optionalConstKeyword, naturalKeyword, parenthesizedArgList)
 }
 
-func (b *BallerinaParser) parseErrorBindingPatternOrErrorConstructor() st.STNode {
+func (b *ballerinaParser) parseErrorBindingPatternOrErrorConstructor() st.STNode {
 	return b.parseErrorConstructorExprAmbiguous(true)
 }
 
-func (b *BallerinaParser) parseErrorConstructorExpr(errorKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorConstructorExpr(error st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR)
-	return b.parseErrorConstructorExprInner(errorKeyword, false)
+	return b.parseErrorConstructorExprInner(error, false)
 }
 
-func (b *BallerinaParser) parseErrorConstructorExprAmbiguous(isAmbiguous bool) st.STNode {
+func (b *ballerinaParser) parseErrorConstructorExprAmbiguous(isAmbiguous bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_CONSTRUCTOR)
-	errorKeyword := b.parseErrorKeyword()
-	return b.parseErrorConstructorExprInner(errorKeyword, isAmbiguous)
+	error := b.parseErrorKeyword()
+	return b.parseErrorConstructorExprInner(error, isAmbiguous)
 }
 
-func (b *BallerinaParser) parseErrorConstructorExprInner(errorKeyword st.STNode, isAmbiguous bool) st.STNode {
+func (b *ballerinaParser) parseErrorConstructorExprInner(error st.STNode, isAmbiguous bool) st.STNode {
 	typeReference := b.parseErrorTypeReference()
 	openParen := b.parseArgListOpenParenthesis()
 	functionArgs := b.parseArgsList()
@@ -5168,11 +5151,11 @@ func (b *BallerinaParser) parseErrorConstructorExprInner(errorKeyword st.STNode,
 	b.endContext()
 	openParen = b.cloneWithDiagnosticIfListEmpty(errorArgs, openParen,
 		&common.ERROR_MISSING_ARG_WITHIN_PARENTHESIS)
-	return st.CreateErrorConstructorExpressionNode(errorKeyword, typeReference, openParen, errorArgs,
+	return st.CreateErrorConstructorExpressionNode(error, typeReference, openParen, errorArgs,
 		closeParen)
 }
 
-func (b *BallerinaParser) parseErrorTypeReference() st.STNode {
+func (b *ballerinaParser) parseErrorTypeReference() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_PAREN_TOKEN:
@@ -5186,7 +5169,7 @@ func (b *BallerinaParser) parseErrorTypeReference() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) getErrorArgList(functionArgs st.STNode) st.STNode {
+func (b *ballerinaParser) getErrorArgList(functionArgs st.STNode) st.STNode {
 	argList, ok := functionArgs.(*st.STNodeList)
 	if !ok {
 		panic("expected *st.STNodeList")
@@ -5234,7 +5217,7 @@ func (b *BallerinaParser) getErrorArgList(functionArgs st.STNode) st.STNode {
 	return st.CreateNodeList(errorArgList...)
 }
 
-func (b *BallerinaParser) parseArgsList() st.STNode {
+func (b *ballerinaParser) parseArgsList() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ARG_LIST)
 	token := b.peek()
 	if b.isEndOfParametersList(token.Kind()) {
@@ -5248,7 +5231,7 @@ func (b *BallerinaParser) parseArgsList() st.STNode {
 	return argsList
 }
 
-func (b *BallerinaParser) parseArgList(firstArg st.STNode) st.STNode {
+func (b *ballerinaParser) parseArgList(firstArg st.STNode) st.STNode {
 	var argsList []st.STNode
 	argsList = append(argsList, firstArg)
 	lastValidArgKind := firstArg.Kind()
@@ -5297,7 +5280,7 @@ func (b *BallerinaParser) parseArgList(firstArg st.STNode) st.STNode {
 	return st.CreateNodeList(argsList...)
 }
 
-func (b *BallerinaParser) validateArgumentOrder(prevArgKind st.SyntaxKind, curArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *ballerinaParser) validateArgumentOrder(prevArgKind st.SyntaxKind, curArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	var errorCode *common.DiagnosticErrorCode
 	switch prevArgKind {
 	case st.POSITIONAL_ARG:
@@ -5316,7 +5299,7 @@ func (b *BallerinaParser) validateArgumentOrder(prevArgKind st.SyntaxKind, curAr
 	return errorCode
 }
 
-func (b *BallerinaParser) parseArgEnd() st.STNode {
+func (b *ballerinaParser) parseArgEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -5328,7 +5311,7 @@ func (b *BallerinaParser) parseArgEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseArgument() st.STNode {
+func (b *ballerinaParser) parseArgument() st.STNode {
 	var arg st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -5350,7 +5333,7 @@ func (b *BallerinaParser) parseArgument() st.STNode {
 	return arg
 }
 
-func (b *BallerinaParser) parseNamedOrPositionalArg() st.STNode {
+func (b *ballerinaParser) parseNamedOrPositionalArg() st.STNode {
 	argNameOrExpr := b.parseTerminalExpression(true, false, false)
 	secondToken := b.peek()
 	switch secondToken.Kind() {
@@ -5364,11 +5347,11 @@ func (b *BallerinaParser) parseNamedOrPositionalArg() st.STNode {
 	case st.COMMA_TOKEN, st.CLOSE_PAREN_TOKEN:
 		return st.CreatePositionalArgumentNode(argNameOrExpr)
 	}
-	argNameOrExpr = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, argNameOrExpr, true, false)
+	argNameOrExpr = b.parseExpressionRhs(defaultOpPrecedence, argNameOrExpr, true, false)
 	return st.CreatePositionalArgumentNode(argNameOrExpr)
 }
 
-func (b *BallerinaParser) parseObjectTypeDescriptor(objectKeyword st.STNode, objectTypeQualifiers st.STNode) st.STNode {
+func (b *ballerinaParser) parseObjectTypeDescriptor(objectKeyword st.STNode, objectTypeQualifiers st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_OBJECT_TYPE_DESCRIPTOR)
 	openBrace := b.parseOpenBrace()
 	objectMemberDescriptors := b.parseObjectMembers(common.PARSER_RULE_CONTEXT_OBJECT_TYPE_MEMBER)
@@ -5378,7 +5361,7 @@ func (b *BallerinaParser) parseObjectTypeDescriptor(objectKeyword st.STNode, obj
 		objectMemberDescriptors, closeBrace)
 }
 
-func (b *BallerinaParser) parseObjectConstructorExpression(annots st.STNode, qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseObjectConstructorExpression(annots st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR)
 	objectTypeQualifier := b.createObjectTypeQualNodeList(qualifiers)
 	objectKeyword := b.parseObjectKeyword()
@@ -5391,7 +5374,7 @@ func (b *BallerinaParser) parseObjectConstructorExpression(annots st.STNode, qua
 		objectTypeQualifier, objectKeyword, typeReference, openBrace, objectMembers, closeBrace)
 }
 
-func (b *BallerinaParser) parseObjectConstructorTypeReference() st.STNode {
+func (b *ballerinaParser) parseObjectConstructorTypeReference() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_BRACE_TOKEN:
@@ -5405,11 +5388,11 @@ func (b *BallerinaParser) parseObjectConstructorTypeReference() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isPredeclaredIdentifier(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isPredeclaredIdentifier(tokenKind st.SyntaxKind) bool {
 	return ((tokenKind == st.IDENTIFIER_TOKEN) || b.isQualifiedIdentifierPredeclaredPrefix(tokenKind))
 }
 
-func (b *BallerinaParser) parseObjectKeyword() st.STNode {
+func (b *ballerinaParser) parseObjectKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.OBJECT_KEYWORD {
 		return b.consume()
@@ -5419,7 +5402,7 @@ func (b *BallerinaParser) parseObjectKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseObjectMembers(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseObjectMembers(context common.ParserRuleContext) st.STNode {
 	var objectMembers []st.STNode
 	for !b.isEndOfObjectTypeNode() {
 		b.startContext(context)
@@ -5437,7 +5420,7 @@ func (b *BallerinaParser) parseObjectMembers(context common.ParserRuleContext) s
 	return st.CreateNodeList(objectMembers...)
 }
 
-func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseObjectMember(context common.ParserRuleContext) st.STNode {
 	var metadata st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -5472,7 +5455,7 @@ func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) st
 			recoveryCtx = common.PARSER_RULE_CONTEXT_CLASS_MEMBER_OR_OBJECT_MEMBER_START
 		}
 		solution := b.recoverWithBlockContext(b.peek(), recoveryCtx)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			metadata = st.CreateEmptyNode()
 			break
 		}
@@ -5481,7 +5464,7 @@ func (b *BallerinaParser) parseObjectMember(context common.ParserRuleContext) st
 	return b.parseObjectMemberWithoutMeta(metadata, context)
 }
 
-func (b *BallerinaParser) parseObjectMemberWithoutMeta(metadata st.STNode, context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseObjectMemberWithoutMeta(metadata st.STNode, context common.ParserRuleContext) st.STNode {
 	isObjectTypeDesc := (context == common.PARSER_RULE_CONTEXT_OBJECT_TYPE_MEMBER)
 	var recoveryCtx common.ParserRuleContext
 	if context == common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER {
@@ -5493,7 +5476,7 @@ func (b *BallerinaParser) parseObjectMemberWithoutMeta(metadata st.STNode, conte
 	return res
 }
 
-func (b *BallerinaParser) parseObjectMemberWithoutMetaInner(metadata st.STNode, qualifiers []st.STNode, recoveryCtx common.ParserRuleContext, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseObjectMemberWithoutMetaInner(metadata st.STNode, qualifiers []st.STNode, recoveryCtx common.ParserRuleContext, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	qualifiers = b.parseObjectMemberQualifiers(qualifiers)
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -5538,14 +5521,14 @@ func (b *BallerinaParser) parseObjectMemberWithoutMetaInner(metadata st.STNode, 
 			return b.parseObjectField(metadata, st.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
 		}
 		solution := b.recoverWithBlockContext(b.peek(), recoveryCtx)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			return b.parseObjectField(metadata, st.CreateEmptyNode(), qualifiers, isObjectTypeDesc)
 		}
 		return b.parseObjectMemberWithoutMetaInner(metadata, qualifiers, recoveryCtx, isObjectTypeDesc)
 	}
 }
 
-func (b *BallerinaParser) isObjectFieldStart() bool {
+func (b *ballerinaParser) isObjectFieldStart() bool {
 	nextNextToken := b.getNextNextToken()
 	switch nextNextToken.Kind() {
 	case st.ERROR_KEYWORD, // error-binding-pattern not allowed in fields
@@ -5558,7 +5541,7 @@ func (b *BallerinaParser) isObjectFieldStart() bool {
 	}
 }
 
-func (b *BallerinaParser) isObjectMethodStart(token st.STToken) bool {
+func (b *ballerinaParser) isObjectMethodStart(token st.STToken) bool {
 	switch token.Kind() {
 	case st.FUNCTION_KEYWORD,
 		st.REMOTE_KEYWORD,
@@ -5571,12 +5554,12 @@ func (b *BallerinaParser) isObjectMethodStart(token st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) parseObjectMethodOrField(metadata st.STNode, visibilityQualifier st.STNode, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseObjectMethodOrField(metadata st.STNode, visibilityQualifier st.STNode, isObjectTypeDesc bool) st.STNode {
 	result, _ := b.parseObjectMethodOrFieldInner(metadata, visibilityQualifier, nil, isObjectTypeDesc)
 	return result
 }
 
-func (b *BallerinaParser) parseObjectMethodOrFieldInner(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseObjectMethodOrFieldInner(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	qualifiers = b.parseObjectMemberQualifiers(qualifiers)
 	nextToken := b.peekN(1)
 	nextNextToken := b.peekN(2)
@@ -5596,7 +5579,7 @@ func (b *BallerinaParser) parseObjectMethodOrFieldInner(metadata st.STNode, visi
 	return b.parseObjectMethodOrFieldInner(metadata, visibilityQualifier, qualifiers, isObjectTypeDesc)
 }
 
-func (b *BallerinaParser) parseObjectField(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseObjectField(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) (st.STNode, []st.STNode) {
 	objectFieldQualifiers, qualifiers := b.extractObjectFieldQualifiers(qualifiers, isObjectTypeDesc)
 	objectFieldQualNodeList := st.CreateNodeList(objectFieldQualifiers...)
 	ty := b.parseTypeDescriptorWithQualifier(qualifiers, common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER)
@@ -5605,7 +5588,7 @@ func (b *BallerinaParser) parseObjectField(metadata st.STNode, visibilityQualifi
 		isObjectTypeDesc), qualifiers
 }
 
-func (b *BallerinaParser) extractObjectFieldQualifiers(qualifiers []st.STNode, isObjectTypeDesc bool) ([]st.STNode, []st.STNode) {
+func (b *ballerinaParser) extractObjectFieldQualifiers(qualifiers []st.STNode, isObjectTypeDesc bool) ([]st.STNode, []st.STNode) {
 	var objectFieldQualifiers []st.STNode
 	if len(qualifiers) != 0 && (!isObjectTypeDesc) {
 		firstQualifier := qualifiers[0]
@@ -5617,7 +5600,7 @@ func (b *BallerinaParser) extractObjectFieldQualifiers(qualifiers []st.STNode, i
 	return objectFieldQualifiers, qualifiers
 }
 
-func (b *BallerinaParser) parseObjectFieldRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers st.STNode, ty st.STNode, fieldName st.STNode, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseObjectFieldRhs(metadata st.STNode, visibilityQualifier st.STNode, qualifiers st.STNode, ty st.STNode, fieldName st.STNode, isObjectTypeDesc bool) st.STNode {
 	nextToken := b.peek()
 	var equalsToken st.STNode
 	var expression st.STNode
@@ -5647,11 +5630,11 @@ func (b *BallerinaParser) parseObjectFieldRhs(metadata st.STNode, visibilityQual
 		equalsToken, expression, semicolonToken)
 }
 
-func (b *BallerinaParser) parseObjectMethodOrFuncTypeDesc(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) st.STNode {
+func (b *ballerinaParser) parseObjectMethodOrFuncTypeDesc(metadata st.STNode, visibilityQualifier st.STNode, qualifiers []st.STNode, isObjectTypeDesc bool) st.STNode {
 	return b.parseFuncDefOrFuncTypeDesc(metadata, visibilityQualifier, qualifiers, true, isObjectTypeDesc)
 }
 
-func (b *BallerinaParser) parseRelativeResourcePath() st.STNode {
+func (b *ballerinaParser) parseRelativeResourcePath() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RELATIVE_RESOURCE_PATH)
 	var pathElementList []st.STNode
 	nextToken := b.peek()
@@ -5677,7 +5660,7 @@ func (b *BallerinaParser) parseRelativeResourcePath() st.STNode {
 	return b.createResourcePathNodeList(pathElementList)
 }
 
-func (b *BallerinaParser) isEndRelativeResourcePath(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndRelativeResourcePath(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.EOF_TOKEN, st.OPEN_PAREN_TOKEN:
 		return true
@@ -5686,7 +5669,7 @@ func (b *BallerinaParser) isEndRelativeResourcePath(tokenKind st.SyntaxKind) boo
 	}
 }
 
-func (b *BallerinaParser) createResourcePathNodeList(pathElementList []st.STNode) st.STNode {
+func (b *ballerinaParser) createResourcePathNodeList(pathElementList []st.STNode) st.STNode {
 	if len(pathElementList) == 0 {
 		return st.CreateEmptyNodeList()
 	}
@@ -5711,7 +5694,7 @@ func (b *BallerinaParser) createResourcePathNodeList(pathElementList []st.STNode
 	return st.CreateNodeList(validatedList...)
 }
 
-func (b *BallerinaParser) parseResourcePathSegment(isFirstSegment bool) st.STNode {
+func (b *ballerinaParser) parseResourcePathSegment(isFirstSegment bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -5729,7 +5712,7 @@ func (b *BallerinaParser) parseResourcePathSegment(isFirstSegment bool) st.STNod
 	}
 }
 
-func (b *BallerinaParser) parseResourcePathParameter() st.STNode {
+func (b *ballerinaParser) parseResourcePathParameter() st.STNode {
 	openBracket := b.parseOpenBracket()
 	annots := b.parseOptionalAnnotations()
 	ty := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_PATH_PARAM)
@@ -5746,7 +5729,7 @@ func (b *BallerinaParser) parseResourcePathParameter() st.STNode {
 		paramName, closeBracket)
 }
 
-func (b *BallerinaParser) parseOptionalPathParamName() st.STNode {
+func (b *ballerinaParser) parseOptionalPathParamName() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -5759,7 +5742,7 @@ func (b *BallerinaParser) parseOptionalPathParamName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalEllipsis() st.STNode {
+func (b *ballerinaParser) parseOptionalEllipsis() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.ELLIPSIS_TOKEN:
@@ -5772,7 +5755,7 @@ func (b *BallerinaParser) parseOptionalEllipsis() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRelativeResourcePathEnd() st.STNode {
+func (b *ballerinaParser) parseRelativeResourcePathEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_PAREN_TOKEN, st.EOF_TOKEN:
@@ -5785,7 +5768,7 @@ func (b *BallerinaParser) parseRelativeResourcePathEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseIfElseBlock() st.STNode {
+func (b *ballerinaParser) parseIfElseBlock() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_IF_BLOCK)
 	ifKeyword := b.parseIfKeyword()
 	condition := b.parseExpression()
@@ -5795,7 +5778,7 @@ func (b *BallerinaParser) parseIfElseBlock() st.STNode {
 	return st.CreateIfElseStatementNode(ifKeyword, condition, ifBody, elseBody)
 }
 
-func (b *BallerinaParser) parseIfKeyword() st.STNode {
+func (b *ballerinaParser) parseIfKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IF_KEYWORD {
 		return b.consume()
@@ -5805,7 +5788,7 @@ func (b *BallerinaParser) parseIfKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseElseKeyword() st.STNode {
+func (b *ballerinaParser) parseElseKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ELSE_KEYWORD {
 		return b.consume()
@@ -5815,7 +5798,7 @@ func (b *BallerinaParser) parseElseKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBlockNode() st.STNode {
+func (b *ballerinaParser) parseBlockNode() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 	openBrace := b.parseOpenBrace()
 	stmts := b.parseStatements()
@@ -5824,7 +5807,7 @@ func (b *BallerinaParser) parseBlockNode() st.STNode {
 	return st.CreateBlockStatementNode(openBrace, stmts, closeBrace)
 }
 
-func (b *BallerinaParser) parseElseBlock() st.STNode {
+func (b *ballerinaParser) parseElseBlock() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() != st.ELSE_KEYWORD {
 		return st.CreateEmptyNode()
@@ -5834,7 +5817,7 @@ func (b *BallerinaParser) parseElseBlock() st.STNode {
 	return st.CreateElseBlockNode(elseKeyword, elseBody)
 }
 
-func (b *BallerinaParser) parseElseBody() st.STNode {
+func (b *ballerinaParser) parseElseBody() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IF_KEYWORD:
@@ -5847,7 +5830,7 @@ func (b *BallerinaParser) parseElseBody() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseDoStatement() st.STNode {
+func (b *ballerinaParser) parseDoStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_DO_BLOCK)
 	doKeyword := b.parseDoKeyword()
 	doBody := b.parseBlockNode()
@@ -5856,7 +5839,7 @@ func (b *BallerinaParser) parseDoStatement() st.STNode {
 	return st.CreateDoStatementNode(doKeyword, doBody, onFailClause)
 }
 
-func (b *BallerinaParser) parseWhileStatement() st.STNode {
+func (b *ballerinaParser) parseWhileStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_WHILE_BLOCK)
 	whileKeyword := b.parseWhileKeyword()
 	condition := b.parseExpression()
@@ -5866,7 +5849,7 @@ func (b *BallerinaParser) parseWhileStatement() st.STNode {
 	return st.CreateWhileStatementNode(whileKeyword, condition, whileBody, onFailClause)
 }
 
-func (b *BallerinaParser) parseWhileKeyword() st.STNode {
+func (b *ballerinaParser) parseWhileKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.WHILE_KEYWORD {
 		return b.consume()
@@ -5876,16 +5859,16 @@ func (b *BallerinaParser) parseWhileKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parsePanicStatement() st.STNode {
+func (b *ballerinaParser) parsePanicStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_PANIC_STMT)
-	panicKeyword := b.parsePanicKeyword()
+	panic := b.parsePanicKeyword()
 	expression := b.parseExpression()
 	semicolon := b.parseSemicolon()
 	b.endContext()
-	return st.CreatePanicStatementNode(panicKeyword, expression, semicolon)
+	return st.CreatePanicStatementNode(panic, expression, semicolon)
 }
 
-func (b *BallerinaParser) parsePanicKeyword() st.STNode {
+func (b *ballerinaParser) parsePanicKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.PANIC_KEYWORD {
 		return b.consume()
@@ -5895,9 +5878,9 @@ func (b *BallerinaParser) parsePanicKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCheckExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseCheckExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	checkingKeyword := b.parseCheckingKeyword()
-	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_EXPRESSION_ACTION, isRhsExpr, allowActions, isInConditionalExpr)
+	expr := b.parseExpressionWithConditional(operatorPrecedenceExpressionAction, isRhsExpr, allowActions, isInConditionalExpr)
 	if b.isAction(expr) {
 		return st.CreateCheckExpressionNode(st.CHECK_ACTION, checkingKeyword, expr)
 	} else {
@@ -5905,7 +5888,7 @@ func (b *BallerinaParser) parseCheckExpression(isRhsExpr bool, allowActions bool
 	}
 }
 
-func (b *BallerinaParser) parseCheckingKeyword() st.STNode {
+func (b *ballerinaParser) parseCheckingKeyword() st.STNode {
 	token := b.peek()
 	if (token.Kind() == st.CHECK_KEYWORD) || (token.Kind() == st.CHECKPANIC_KEYWORD) {
 		return b.consume()
@@ -5915,7 +5898,7 @@ func (b *BallerinaParser) parseCheckingKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseContinueStatement() st.STNode {
+func (b *ballerinaParser) parseContinueStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONTINUE_STATEMENT)
 	continueKeyword := b.parseContinueKeyword()
 	semicolon := b.parseSemicolon()
@@ -5923,7 +5906,7 @@ func (b *BallerinaParser) parseContinueStatement() st.STNode {
 	return st.CreateContinueStatementNode(continueKeyword, semicolon)
 }
 
-func (b *BallerinaParser) parseContinueKeyword() st.STNode {
+func (b *ballerinaParser) parseContinueKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CONTINUE_KEYWORD {
 		return b.consume()
@@ -5933,7 +5916,7 @@ func (b *BallerinaParser) parseContinueKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFailStatement() st.STNode {
+func (b *ballerinaParser) parseFailStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FAIL_STATEMENT)
 	failKeyword := b.parseFailKeyword()
 	expr := b.parseExpression()
@@ -5942,7 +5925,7 @@ func (b *BallerinaParser) parseFailStatement() st.STNode {
 	return st.CreateFailStatementNode(failKeyword, expr, semicolon)
 }
 
-func (b *BallerinaParser) parseFailKeyword() st.STNode {
+func (b *ballerinaParser) parseFailKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FAIL_KEYWORD {
 		return b.consume()
@@ -5952,7 +5935,7 @@ func (b *BallerinaParser) parseFailKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReturnStatement() st.STNode {
+func (b *ballerinaParser) parseReturnStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RETURN_STMT)
 	returnKeyword := b.parseReturnKeyword()
 	returnRhs := b.parseReturnStatementRhs(returnKeyword)
@@ -5960,7 +5943,7 @@ func (b *BallerinaParser) parseReturnStatement() st.STNode {
 	return returnRhs
 }
 
-func (b *BallerinaParser) parseReturnKeyword() st.STNode {
+func (b *ballerinaParser) parseReturnKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.RETURN_KEYWORD {
 		return b.consume()
@@ -5970,7 +5953,7 @@ func (b *BallerinaParser) parseReturnKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBreakStatement() st.STNode {
+func (b *ballerinaParser) parseBreakStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BREAK_STATEMENT)
 	breakKeyword := b.parseBreakKeyword()
 	semicolon := b.parseSemicolon()
@@ -5978,7 +5961,7 @@ func (b *BallerinaParser) parseBreakStatement() st.STNode {
 	return st.CreateBreakStatementNode(breakKeyword, semicolon)
 }
 
-func (b *BallerinaParser) parseBreakKeyword() st.STNode {
+func (b *ballerinaParser) parseBreakKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.BREAK_KEYWORD {
 		return b.consume()
@@ -5988,7 +5971,7 @@ func (b *BallerinaParser) parseBreakKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReturnStatementRhs(returnKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseReturnStatementRhs(returnKeyword st.STNode) st.STNode {
 	var expr st.STNode
 	token := b.peek()
 	switch token.Kind() {
@@ -6001,7 +5984,7 @@ func (b *BallerinaParser) parseReturnStatementRhs(returnKeyword st.STNode) st.ST
 	return st.CreateReturnStatementNode(returnKeyword, expr, semicolon)
 }
 
-func (b *BallerinaParser) parseMappingConstructorExpr() st.STNode {
+func (b *ballerinaParser) parseMappingConstructorExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 	openBrace := b.parseOpenBrace()
 	fields := b.parseMappingConstructorFields()
@@ -6010,7 +5993,7 @@ func (b *BallerinaParser) parseMappingConstructorExpr() st.STNode {
 	return st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
 }
 
-func (b *BallerinaParser) parseMappingConstructorFields() st.STNode {
+func (b *ballerinaParser) parseMappingConstructorFields() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfMappingConstructor(nextToken.Kind()) {
 		return st.CreateEmptyNodeList()
@@ -6023,7 +6006,7 @@ func (b *BallerinaParser) parseMappingConstructorFields() st.STNode {
 	return b.finishParseMappingConstructorFields(fields)
 }
 
-func (b *BallerinaParser) finishParseMappingConstructorFields(fields []st.STNode) st.STNode {
+func (b *ballerinaParser) finishParseMappingConstructorFields(fields []st.STNode) st.STNode {
 	var nextToken st.STToken
 	var mappingFieldEnd st.STNode
 	nextToken = b.peek()
@@ -6040,7 +6023,7 @@ func (b *BallerinaParser) finishParseMappingConstructorFields(fields []st.STNode
 	return st.CreateNodeList(fields...)
 }
 
-func (b *BallerinaParser) parseMappingFieldEnd() st.STNode {
+func (b *ballerinaParser) parseMappingFieldEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -6052,7 +6035,7 @@ func (b *BallerinaParser) parseMappingFieldEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfMappingConstructor(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfMappingConstructor(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.IDENTIFIER_TOKEN, st.READONLY_KEYWORD:
 		return false
@@ -6077,7 +6060,7 @@ func (b *BallerinaParser) isEndOfMappingConstructor(tokenKind st.SyntaxKind) boo
 	}
 }
 
-func (b *BallerinaParser) parseMappingField(fieldContext common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseMappingField(fieldContext common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -6106,7 +6089,7 @@ func (b *BallerinaParser) parseMappingField(fieldContext common.ParserRuleContex
 	}
 }
 
-func (b *BallerinaParser) parseSpecificField(readonlyKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseSpecificField(readonlyKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.STRING_LITERAL_TOKEN:
@@ -6119,19 +6102,19 @@ func (b *BallerinaParser) parseSpecificField(readonlyKeyword st.STNode) st.STNod
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedSpecificField(readonlyKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseQualifiedSpecificField(readonlyKeyword st.STNode) st.STNode {
 	key := b.parseStringLiteral()
 	colon := b.parseColon()
 	valueExpr := b.parseExpression()
 	return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 }
 
-func (b *BallerinaParser) parseSpecificFieldWithOptionalValue(readonlyKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseSpecificFieldWithOptionalValue(readonlyKeyword st.STNode) st.STNode {
 	key := b.parseIdentifier(common.PARSER_RULE_CONTEXT_MAPPING_FIELD_NAME)
 	return b.parseSpecificFieldRhs(readonlyKeyword, key)
 }
 
-func (b *BallerinaParser) parseSpecificFieldRhs(readonlyKeyword st.STNode, key st.STNode) st.STNode {
+func (b *ballerinaParser) parseSpecificFieldRhs(readonlyKeyword st.STNode, key st.STNode) st.STNode {
 	var colon st.STNode
 	var valueExpr st.STNode
 	nextToken := b.peek()
@@ -6154,7 +6137,7 @@ func (b *BallerinaParser) parseSpecificFieldRhs(readonlyKeyword st.STNode, key s
 	return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, valueExpr)
 }
 
-func (b *BallerinaParser) parseStringLiteral() st.STNode {
+func (b *ballerinaParser) parseStringLiteral() st.STNode {
 	token := b.peek()
 	var stringLiteral st.STNode
 	if token.Kind() == st.STRING_LITERAL_TOKEN {
@@ -6166,7 +6149,7 @@ func (b *BallerinaParser) parseStringLiteral() st.STNode {
 	return b.parseBasicLiteralInner(stringLiteral)
 }
 
-func (b *BallerinaParser) parseColon() st.STNode {
+func (b *ballerinaParser) parseColon() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.COLON_TOKEN {
 		return b.consume()
@@ -6176,7 +6159,7 @@ func (b *BallerinaParser) parseColon() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReadonlyKeyword() st.STNode {
+func (b *ballerinaParser) parseReadonlyKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.READONLY_KEYWORD {
 		return b.consume()
@@ -6186,7 +6169,7 @@ func (b *BallerinaParser) parseReadonlyKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseComputedField() st.STNode {
+func (b *ballerinaParser) parseComputedField() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COMPUTED_FIELD_NAME)
 	openBracket := b.parseOpenBracket()
 	fieldNameExpr := b.parseExpression()
@@ -6197,7 +6180,7 @@ func (b *BallerinaParser) parseComputedField() st.STNode {
 	return st.CreateComputedNameFieldNode(openBracket, fieldNameExpr, closeBracket, colon, valueExpr)
 }
 
-func (b *BallerinaParser) parseOpenBracket() st.STNode {
+func (b *ballerinaParser) parseOpenBracket() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.OPEN_BRACKET_TOKEN {
 		return b.consume()
@@ -6207,7 +6190,7 @@ func (b *BallerinaParser) parseOpenBracket() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseCompoundAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseCompoundAssignmentStmtRhs(lvExpr st.STNode) st.STNode {
 	binaryOperator := b.parseCompoundBinaryOperator()
 	equalsToken := b.parseAssignOp()
 	expr := b.parseActionOrExpression()
@@ -6224,7 +6207,7 @@ func (b *BallerinaParser) parseCompoundAssignmentStmtRhs(lvExpr st.STNode) st.ST
 		semicolon)
 }
 
-func (b *BallerinaParser) parseCompoundBinaryOperator() st.STNode {
+func (b *ballerinaParser) parseCompoundBinaryOperator() st.STNode {
 	token := b.peek()
 	if b.isCompoundAssignment(token.Kind()) {
 		return b.consume()
@@ -6234,7 +6217,7 @@ func (b *BallerinaParser) parseCompoundBinaryOperator() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseServiceDeclOrVarDecl(metadata st.STNode, publicQualifier st.STNode, qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseServiceDeclOrVarDecl(metadata st.STNode, publicQualifier st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_SERVICE_DECL)
 	serviceDeclQualList, qualifiers := b.extractServiceDeclQualifiers(qualifiers)
 	serviceKeyword, qualifiers := b.extractServiceKeyword(qualifiers)
@@ -6247,7 +6230,7 @@ func (b *BallerinaParser) parseServiceDeclOrVarDecl(metadata st.STNode, publicQu
 	}
 }
 
-func (b *BallerinaParser) finishParseServiceDeclOrVarDecl(metadata st.STNode, publicQualifier st.STNode, serviceDeclQualList []st.STNode, serviceKeyword st.STNode, typeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) finishParseServiceDeclOrVarDecl(metadata st.STNode, publicQualifier st.STNode, serviceDeclQualList []st.STNode, serviceKeyword st.STNode, typeDesc st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.SLASH_TOKEN, st.ON_KEYWORD:
@@ -6271,7 +6254,7 @@ func (b *BallerinaParser) finishParseServiceDeclOrVarDecl(metadata st.STNode, pu
 	}
 }
 
-func (b *BallerinaParser) extractServiceDeclQualifiers(qualifierList []st.STNode) ([]st.STNode, []st.STNode) {
+func (b *ballerinaParser) extractServiceDeclQualifiers(qualifierList []st.STNode) ([]st.STNode, []st.STNode) {
 	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -6301,7 +6284,7 @@ func (b *BallerinaParser) extractServiceDeclQualifiers(qualifierList []st.STNode
 	return validatedList, qualifierList
 }
 
-func (b *BallerinaParser) extractServiceKeyword(qualifierList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) extractServiceKeyword(qualifierList []st.STNode) (st.STNode, []st.STNode) {
 	if len(qualifierList) == 0 {
 		panic("assertion failed")
 	}
@@ -6313,7 +6296,7 @@ func (b *BallerinaParser) extractServiceKeyword(qualifierList []st.STNode) (st.S
 	return serviceKeyword, qualifierList
 }
 
-func (b *BallerinaParser) parseServiceDecl(metadata st.STNode, publicQualifier st.STNode, qualList []st.STNode, serviceKeyword st.STNode, serviceType st.STNode) st.STNode {
+func (b *ballerinaParser) parseServiceDecl(metadata st.STNode, publicQualifier st.STNode, qualList []st.STNode, serviceKeyword st.STNode, serviceType st.STNode) st.STNode {
 	if publicQualifier != nil {
 		if len(qualList) != 0 {
 			b.updateFirstNodeInListWithLeadingInvalidNode(qualList, publicQualifier,
@@ -6337,7 +6320,7 @@ func (b *BallerinaParser) parseServiceDecl(metadata st.STNode, publicQualifier s
 		resourcePath, onKeyword, expressionList, openBrace, objectMembers, closeBrace, semicolon)
 }
 
-func (b *BallerinaParser) parseServiceDeclTypeDescriptor(qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseServiceDeclTypeDescriptor(qualifiers []st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.SLASH_TOKEN,
@@ -6354,7 +6337,7 @@ func (b *BallerinaParser) parseServiceDeclTypeDescriptor(qualifiers []st.STNode)
 	}
 }
 
-func (b *BallerinaParser) parseOptionalAbsolutePathOrStringLiteral() st.STNode {
+func (b *ballerinaParser) parseOptionalAbsolutePathOrStringLiteral() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.SLASH_TOKEN:
@@ -6371,7 +6354,7 @@ func (b *BallerinaParser) parseOptionalAbsolutePathOrStringLiteral() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAbsoluteResourcePath() st.STNode {
+func (b *ballerinaParser) parseAbsoluteResourcePath() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ABSOLUTE_RESOURCE_PATH)
 	var identifierList []st.STNode
 	nextToken := b.peek()
@@ -6396,7 +6379,7 @@ func (b *BallerinaParser) parseAbsoluteResourcePath() st.STNode {
 	return st.CreateNodeList(identifierList...)
 }
 
-func (b *BallerinaParser) isEndAbsoluteResourcePath(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndAbsoluteResourcePath(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.EOF_TOKEN, st.ON_KEYWORD:
 		return true
@@ -6405,7 +6388,7 @@ func (b *BallerinaParser) isEndAbsoluteResourcePath(tokenKind st.SyntaxKind) boo
 	}
 }
 
-func (b *BallerinaParser) parseAbsoluteResourcePathEnd(isInitialSlash bool) st.STNode {
+func (b *ballerinaParser) parseAbsoluteResourcePathEnd(isInitialSlash bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.ON_KEYWORD, st.EOF_TOKEN:
@@ -6425,7 +6408,7 @@ func (b *BallerinaParser) parseAbsoluteResourcePathEnd(isInitialSlash bool) st.S
 }
 
 // MIGRATION-NOTE: this is used only recursively in Ballerina parser as well, left as is for now.
-func (b *BallerinaParser) parseServiceKeyword() st.STNode {
+func (b *ballerinaParser) parseServiceKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.SERVICE_KEYWORD {
 		return b.consume()
@@ -6435,11 +6418,11 @@ func (b *BallerinaParser) parseServiceKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isCompoundAssignment(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isCompoundAssignment(tokenKind st.SyntaxKind) bool {
 	return (isCompoundBinaryOperator(tokenKind) && (b.getNextNextToken().Kind() == st.EQUAL_TOKEN))
 }
 
-func (b *BallerinaParser) parseOnKeyword() st.STNode {
+func (b *ballerinaParser) parseOnKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ON_KEYWORD {
 		return b.consume()
@@ -6449,7 +6432,7 @@ func (b *BallerinaParser) parseOnKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseListeners() st.STNode {
+func (b *ballerinaParser) parseListeners() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LISTENERS_LIST)
 	var listeners []st.STNode
 	nextToken := b.peek()
@@ -6473,7 +6456,7 @@ func (b *BallerinaParser) parseListeners() st.STNode {
 	return st.CreateNodeList(listeners...)
 }
 
-func (b *BallerinaParser) isEndOfListeners(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfListeners(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.OPEN_BRACE_TOKEN, st.EOF_TOKEN:
 		return true
@@ -6482,7 +6465,7 @@ func (b *BallerinaParser) isEndOfListeners(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseListenersMemberEnd() st.STNode {
+func (b *ballerinaParser) parseListenersMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
@@ -6495,7 +6478,7 @@ func (b *BallerinaParser) parseListenersMemberEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isServiceDeclStart(currentContext common.ParserRuleContext, lookahead int) bool {
+func (b *ballerinaParser) isServiceDeclStart(currentContext common.ParserRuleContext, lookahead int) bool {
 	switch b.peekN(lookahead + 1).Kind() {
 	case st.IDENTIFIER_TOKEN:
 		tokenAfterIdentifier := b.peekN(lookahead + 2).Kind()
@@ -6520,7 +6503,7 @@ func (b *BallerinaParser) isServiceDeclStart(currentContext common.ParserRuleCon
 	}
 }
 
-func (b *BallerinaParser) parseListenerDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseListenerDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LISTENER_DECL)
 	listenerKeyword := b.parseListenerKeyword()
 	if b.peek().Kind() == st.IDENTIFIER_TOKEN {
@@ -6538,7 +6521,7 @@ func (b *BallerinaParser) parseListenerDeclaration(metadata st.STNode, qualifier
 		equalsToken, initializer, semicolonToken)
 }
 
-func (b *BallerinaParser) parseListenerKeyword() st.STNode {
+func (b *ballerinaParser) parseListenerKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.LISTENER_KEYWORD {
 		return b.consume()
@@ -6548,13 +6531,13 @@ func (b *BallerinaParser) parseListenerKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseConstantDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseConstantDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONSTANT_DECL)
 	constKeyword := b.parseConstantKeyword()
 	return b.parseConstDecl(metadata, qualifier, constKeyword)
 }
 
-func (b *BallerinaParser) parseConstDecl(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseConstDecl(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.ANNOTATION_KEYWORD:
@@ -6581,12 +6564,12 @@ func (b *BallerinaParser) parseConstDecl(metadata st.STNode, qualifier st.STNode
 		equalsToken, initializer, semicolonToken)
 }
 
-func (b *BallerinaParser) parseConstantOrListenerDeclWithOptionalType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, isListener bool) st.STNode {
+func (b *ballerinaParser) parseConstantOrListenerDeclWithOptionalType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, isListener bool) st.STNode {
 	varNameOrTypeName := b.parseStatementStartIdentifier()
 	return b.parseConstantOrListenerDeclRhs(metadata, qualifier, constKeyword, varNameOrTypeName, isListener)
 }
 
-func (b *BallerinaParser) parseConstantOrListenerDeclRhs(metadata st.STNode, qualifier st.STNode, keyword st.STNode, typeOrVarName st.STNode, isListener bool) st.STNode {
+func (b *ballerinaParser) parseConstantOrListenerDeclRhs(metadata st.STNode, qualifier st.STNode, keyword st.STNode, typeOrVarName st.STNode, isListener bool) st.STNode {
 	if typeOrVarName.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		ty := typeOrVarName
 		variableName := b.parseVariableName()
@@ -6612,7 +6595,7 @@ func (b *BallerinaParser) parseConstantOrListenerDeclRhs(metadata st.STNode, qua
 	return b.parseListenerOrConstRhs(metadata, qualifier, keyword, isListener, ty, variableName)
 }
 
-func (b *BallerinaParser) parseListenerOrConstRhs(metadata st.STNode, qualifier st.STNode, keyword st.STNode, isListener bool, ty st.STNode, variableName st.STNode) st.STNode {
+func (b *ballerinaParser) parseListenerOrConstRhs(metadata st.STNode, qualifier st.STNode, keyword st.STNode, isListener bool, ty st.STNode, variableName st.STNode) st.STNode {
 	equalsToken := b.parseAssignOp()
 	initializer := b.parseExpression()
 	semicolonToken := b.parseSemicolon()
@@ -6624,7 +6607,7 @@ func (b *BallerinaParser) parseListenerOrConstRhs(metadata st.STNode, qualifier 
 		equalsToken, initializer, semicolonToken)
 }
 
-func (b *BallerinaParser) parseConstantKeyword() st.STNode {
+func (b *ballerinaParser) parseConstantKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CONST_KEYWORD {
 		return b.consume()
@@ -6634,13 +6617,13 @@ func (b *BallerinaParser) parseConstantKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeofExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeofExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
 	typeofKeyword := b.parseTypeofKeyword()
-	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_UNARY, isRhsExpr, false, isInConditionalExpr)
+	expr := b.parseExpressionWithConditional(operatorPrecedenceUnary, isRhsExpr, false, isInConditionalExpr)
 	return st.CreateTypeofExpressionNode(typeofKeyword, expr)
 }
 
-func (b *BallerinaParser) parseTypeofKeyword() st.STNode {
+func (b *ballerinaParser) parseTypeofKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.TYPEOF_KEYWORD {
 		return b.consume()
@@ -6650,14 +6633,14 @@ func (b *BallerinaParser) parseTypeofKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalTypeDescriptor(typeDescriptorNode st.STNode) st.STNode {
+func (b *ballerinaParser) parseOptionalTypeDescriptor(typeDescriptorNode st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_OPTIONAL_TYPE_DESCRIPTOR)
 	questionMarkToken := b.parseQuestionMark()
 	b.endContext()
 	return b.createOptionalTypeDesc(typeDescriptorNode, questionMarkToken)
 }
 
-func (b *BallerinaParser) createOptionalTypeDesc(typeDescNode st.STNode, questionMarkToken st.STNode) st.STNode {
+func (b *ballerinaParser) createOptionalTypeDesc(typeDescNode st.STNode, questionMarkToken st.STNode) st.STNode {
 	if typeDescNode.Kind() == st.UNION_TYPE_DESC {
 		unionTypeDesc, ok := typeDescNode.(*st.STUnionTypeDescriptorNode)
 		if !ok {
@@ -6680,13 +6663,13 @@ func (b *BallerinaParser) createOptionalTypeDesc(typeDescNode st.STNode, questio
 	return typeDescNode
 }
 
-func (b *BallerinaParser) parseUnaryExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseUnaryExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
 	unaryOperator := b.parseUnaryOperator()
-	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_UNARY, isRhsExpr, false, isInConditionalExpr)
+	expr := b.parseExpressionWithConditional(operatorPrecedenceUnary, isRhsExpr, false, isInConditionalExpr)
 	return st.CreateUnaryExpressionNode(unaryOperator, expr)
 }
 
-func (b *BallerinaParser) parseUnaryOperator() st.STNode {
+func (b *ballerinaParser) parseUnaryOperator() st.STNode {
 	token := b.peek()
 	if b.isUnaryOperator(token.Kind()) {
 		return b.consume()
@@ -6696,7 +6679,7 @@ func (b *BallerinaParser) parseUnaryOperator() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isUnaryOperator(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isUnaryOperator(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.PLUS_TOKEN, st.MINUS_TOKEN, st.NEGATION_TOKEN, st.EXCLAMATION_MARK_TOKEN:
 		return true
@@ -6705,7 +6688,7 @@ func (b *BallerinaParser) isUnaryOperator(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseArrayTypeDescriptor(memberTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) parseArrayTypeDescriptor(memberTypeDesc st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR)
 	openBracketToken := b.parseOpenBracket()
 	arrayLengthNode := b.parseArrayLength()
@@ -6714,7 +6697,7 @@ func (b *BallerinaParser) parseArrayTypeDescriptor(memberTypeDesc st.STNode) st.
 	return b.createArrayTypeDesc(memberTypeDesc, openBracketToken, arrayLengthNode, closeBracketToken)
 }
 
-func (b *BallerinaParser) createArrayTypeDesc(memberTypeDesc st.STNode, openBracketToken st.STNode, arrayLengthNode st.STNode, closeBracketToken st.STNode) st.STNode {
+func (b *ballerinaParser) createArrayTypeDesc(memberTypeDesc st.STNode, openBracketToken st.STNode, arrayLengthNode st.STNode, closeBracketToken st.STNode) st.STNode {
 	memberTypeDesc = b.validateForUsageOfVar(memberTypeDesc)
 	if arrayLengthNode != nil {
 		switch arrayLengthNode.Kind() {
@@ -6754,7 +6737,7 @@ func (b *BallerinaParser) createArrayTypeDesc(memberTypeDesc st.STNode, openBrac
 	return st.CreateArrayTypeDescriptorNode(memberTypeDesc, arrayDimensionNodeList)
 }
 
-func (b *BallerinaParser) parseArrayLength() st.STNode {
+func (b *ballerinaParser) parseArrayLength() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
@@ -6771,7 +6754,7 @@ func (b *BallerinaParser) parseArrayLength() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalAnnotations() st.STNode {
+func (b *ballerinaParser) parseOptionalAnnotations() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATIONS)
 	var annotList []st.STNode
 	nextToken := b.peek()
@@ -6783,7 +6766,7 @@ func (b *BallerinaParser) parseOptionalAnnotations() st.STNode {
 	return st.CreateNodeList(annotList...)
 }
 
-func (b *BallerinaParser) parseAnnotations() st.STNode {
+func (b *ballerinaParser) parseAnnotations() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATIONS)
 	var annotList []st.STNode
 	annotList = append(annotList, b.parseAnnotation())
@@ -6794,7 +6777,7 @@ func (b *BallerinaParser) parseAnnotations() st.STNode {
 	return st.CreateNodeList(annotList...)
 }
 
-func (b *BallerinaParser) parseAnnotation() st.STNode {
+func (b *ballerinaParser) parseAnnotation() st.STNode {
 	atToken := b.parseAtToken()
 	var annotReference st.STNode
 	if b.isPredeclaredIdentifier(b.peek().Kind()) {
@@ -6812,7 +6795,7 @@ func (b *BallerinaParser) parseAnnotation() st.STNode {
 	return st.CreateAnnotationNode(atToken, annotReference, annotValue)
 }
 
-func (b *BallerinaParser) parseAtToken() st.STNode {
+func (b *ballerinaParser) parseAtToken() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.AT_TOKEN {
 		return b.consume()
@@ -6822,7 +6805,7 @@ func (b *BallerinaParser) parseAtToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMetaData() st.STNode {
+func (b *ballerinaParser) parseMetaData() st.STNode {
 	var docString st.STNode
 	var annotations st.STNode
 	switch b.peek().Kind() {
@@ -6838,7 +6821,7 @@ func (b *BallerinaParser) parseMetaData() st.STNode {
 	return b.createMetadata(docString, annotations)
 }
 
-func (b *BallerinaParser) createMetadata(docString st.STNode, annotations st.STNode) st.STNode {
+func (b *ballerinaParser) createMetadata(docString st.STNode, annotations st.STNode) st.STNode {
 	if (annotations == nil) && (docString == nil) {
 		return st.CreateEmptyNode()
 	} else {
@@ -6846,13 +6829,13 @@ func (b *BallerinaParser) createMetadata(docString st.STNode, annotations st.STN
 	}
 }
 
-func (b *BallerinaParser) parseTypeTestExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeTestExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	isOrNotIsKeyword := b.parseIsOrNotIsKeyword()
 	typeDescriptor := b.parseTypeDescriptorInExpression(isInConditionalExpr)
 	return st.CreateTypeTestExpressionNode(lhsExpr, isOrNotIsKeyword, typeDescriptor)
 }
 
-func (b *BallerinaParser) parseIsOrNotIsKeyword() st.STNode {
+func (b *ballerinaParser) parseIsOrNotIsKeyword() st.STNode {
 	token := b.peek()
 	if (token.Kind() == st.IS_KEYWORD) || (token.Kind() == st.NOT_IS_KEYWORD) {
 		return b.consume()
@@ -6862,7 +6845,7 @@ func (b *BallerinaParser) parseIsOrNotIsKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLocalTypeDefinitionStatement(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseLocalTypeDefinitionStatement(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LOCAL_TYPE_DEFINITION_STMT)
 	typeKeyword := b.parseTypeKeyword()
 	typeName := b.parseTypeName()
@@ -6873,19 +6856,19 @@ func (b *BallerinaParser) parseLocalTypeDefinitionStatement(annots st.STNode) st
 		semicolon)
 }
 
-func (b *BallerinaParser) parseExpressionStatement(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseExpressionStatement(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 	expression := b.parseActionOrExpressionInLhs(annots)
 	return b.getExpressionAsStatement(expression)
 }
 
-func (b *BallerinaParser) parseStatementStartWithExpr(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseStatementStartWithExpr(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	expr := b.parseActionOrExpressionInLhs(annots)
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseStatementStartWithExprRhs(expression st.STNode) st.STNode {
+func (b *ballerinaParser) parseStatementStartWithExprRhs(expression st.STNode) st.STNode {
 	nextTokenKind := b.peek().Kind()
 	if b.isAction(expression) || (nextTokenKind == st.SEMICOLON_TOKEN) {
 		return b.getExpressionAsStatement(expression)
@@ -6911,7 +6894,7 @@ func (b *BallerinaParser) parseStatementStartWithExprRhs(expression st.STNode) s
 	}
 }
 
-func (b *BallerinaParser) isPossibleExpressionStatement(expression st.STNode) bool {
+func (b *ballerinaParser) isPossibleExpressionStatement(expression st.STNode) bool {
 	switch expression.Kind() {
 	case st.METHOD_CALL,
 		st.FUNCTION_CALL,
@@ -6934,7 +6917,7 @@ func (b *BallerinaParser) isPossibleExpressionStatement(expression st.STNode) bo
 	}
 }
 
-func (b *BallerinaParser) getExpressionAsStatement(expression st.STNode) st.STNode {
+func (b *ballerinaParser) getExpressionAsStatement(expression st.STNode) st.STNode {
 	switch expression.Kind() {
 	case st.METHOD_CALL,
 		st.FUNCTION_CALL:
@@ -6966,7 +6949,7 @@ func (b *BallerinaParser) getExpressionAsStatement(expression st.STNode) st.STNo
 	}
 }
 
-func (b *BallerinaParser) parseArrayTypeDescriptorNode(indexedExpr st.STIndexedExpressionNode) st.STNode {
+func (b *ballerinaParser) parseArrayTypeDescriptorNode(indexedExpr st.STIndexedExpressionNode) st.STNode {
 	memberTypeDesc := b.getTypeDescFromExpr(indexedExpr.ContainerExpression)
 	lengthExprs, ok := indexedExpr.KeyExpression.(*st.STNodeList)
 	if !ok {
@@ -7009,27 +6992,27 @@ func (b *BallerinaParser) parseArrayTypeDescriptorNode(indexedExpr st.STIndexedE
 	return b.createArrayTypeDesc(memberTypeDesc, indexedExpr.OpenBracket, lengthExpr, indexedExpr.CloseBracket)
 }
 
-func (b *BallerinaParser) parseCallStatement(expression st.STNode) st.STNode {
+func (b *ballerinaParser) parseCallStatement(expression st.STNode) st.STNode {
 	return b.parseCallStatementOrCheckStatement(expression)
 }
 
-func (b *BallerinaParser) parseCheckStatement(expression st.STNode) st.STNode {
+func (b *ballerinaParser) parseCheckStatement(expression st.STNode) st.STNode {
 	return b.parseCallStatementOrCheckStatement(expression)
 }
 
-func (b *BallerinaParser) parseCallStatementOrCheckStatement(expression st.STNode) st.STNode {
+func (b *ballerinaParser) parseCallStatementOrCheckStatement(expression st.STNode) st.STNode {
 	semicolon := b.parseSemicolon()
 	b.endContext()
 	return st.CreateExpressionStatementNode(st.CALL_STATEMENT, expression, semicolon)
 }
 
-func (b *BallerinaParser) parseActionStatement(action st.STNode) st.STNode {
+func (b *ballerinaParser) parseActionStatement(action st.STNode) st.STNode {
 	semicolon := b.parseSemicolon()
 	b.endContext()
 	return st.CreateExpressionStatementNode(st.ACTION_STATEMENT, action, semicolon)
 }
 
-func (b *BallerinaParser) parseClientResourceAccessAction(expression st.STNode, rightArrow st.STNode, slashToken st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseClientResourceAccessAction(expression st.STNode, rightArrow st.STNode, slashToken st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CLIENT_RESOURCE_ACCESS_ACTION)
 	resourceAccessPath := b.parseOptionalResourceAccessPath(isRhsExpr, isInMatchGuard)
 	resourceAccessMethodDot := b.parseOptionalResourceAccessMethodDot(isRhsExpr, isInMatchGuard)
@@ -7043,7 +7026,7 @@ func (b *BallerinaParser) parseClientResourceAccessAction(expression st.STNode, 
 		resourceAccessPath, resourceAccessMethodDot, resourceAccessMethodName, resourceMethodCallArgList)
 }
 
-func (b *BallerinaParser) parseOptionalResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseOptionalResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	resourceAccessPath := st.CreateEmptyNodeList()
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -7063,7 +7046,7 @@ func (b *BallerinaParser) parseOptionalResourceAccessPath(isRhsExpr bool, isInMa
 	return resourceAccessPath
 }
 
-func (b *BallerinaParser) parseOptionalResourceAccessMethodDot(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseOptionalResourceAccessMethodDot(isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	dotToken := st.CreateEmptyNode()
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -7081,7 +7064,7 @@ func (b *BallerinaParser) parseOptionalResourceAccessMethodDot(isRhsExpr bool, i
 	return dotToken
 }
 
-func (b *BallerinaParser) parseOptionalResourceAccessActionArgList(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseOptionalResourceAccessActionArgList(isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	argList := st.CreateEmptyNode()
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -7097,7 +7080,7 @@ func (b *BallerinaParser) parseOptionalResourceAccessActionArgList(isRhsExpr boo
 	return argList
 }
 
-func (b *BallerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	var pathSegmentList []st.STNode
 	pathSegment := b.parseResourceAccessSegment()
 	pathSegmentList = append(pathSegmentList, pathSegment)
@@ -7122,7 +7105,7 @@ func (b *BallerinaParser) parseResourceAccessPath(isRhsExpr bool, isInMatchGuard
 	return st.CreateNodeList(pathSegmentList...)
 }
 
-func (b *BallerinaParser) parseResourceAccessSegment() st.STNode {
+func (b *ballerinaParser) parseResourceAccessSegment() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -7135,7 +7118,7 @@ func (b *BallerinaParser) parseResourceAccessSegment() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseComputedOrResourceAccessRestSegment(openBracket st.STNode) st.STNode {
+func (b *ballerinaParser) parseComputedOrResourceAccessRestSegment(openBracket st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.ELLIPSIS_TOKEN:
@@ -7156,7 +7139,7 @@ func (b *BallerinaParser) parseComputedOrResourceAccessRestSegment(openBracket s
 	}
 }
 
-func (b *BallerinaParser) parseResourceAccessSegmentRhs(isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseResourceAccessSegmentRhs(isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.SLASH_TOKEN:
@@ -7170,7 +7153,7 @@ func (b *BallerinaParser) parseResourceAccessSegmentRhs(isRhsExpr bool, isInMatc
 	}
 }
 
-func (b *BallerinaParser) isEndOfResourceAccessPathSegments(nextToken st.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
+func (b *ballerinaParser) isEndOfResourceAccessPathSegments(nextToken st.STToken, isRhsExpr bool, isInMatchGuard bool) bool {
 	switch nextToken.Kind() {
 	case st.DOT_TOKEN, st.OPEN_PAREN_TOKEN:
 		return true
@@ -7179,12 +7162,12 @@ func (b *BallerinaParser) isEndOfResourceAccessPathSegments(nextToken st.STToken
 	}
 }
 
-func (b *BallerinaParser) parseRemoteMethodCallOrClientResourceAccessOrAsyncSendAction(expression st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseRemoteMethodCallOrClientResourceAccessOrAsyncSendAction(expression st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	rightArrow := b.parseRightArrow()
 	return b.parseClientResourceAccessOrAsyncSendActionRhs(expression, rightArrow, isRhsExpr, isInMatchGuard)
 }
 
-func (b *BallerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expression st.STNode, rightArrow st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
+func (b *ballerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expression st.STNode, rightArrow st.STNode, isRhsExpr bool, isInMatchGuard bool) st.STNode {
 	var name st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -7208,7 +7191,7 @@ func (b *BallerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expressi
 		}
 		token := b.peek()
 		solution := b.recoverWithBlockContext(token, common.PARSER_RULE_CONTEXT_REMOTE_OR_RESOURCE_CALL_OR_ASYNC_SEND_RHS)
-		if solution.Action == ACTION_KEEP {
+		if solution.Action == actionKeep {
 			name = st.CreateSimpleNameReferenceNode(b.parseFunctionName())
 			break
 		}
@@ -7217,7 +7200,7 @@ func (b *BallerinaParser) parseClientResourceAccessOrAsyncSendActionRhs(expressi
 	return b.parseRemoteCallOrAsyncSendEnd(expression, rightArrow, name)
 }
 
-func (b *BallerinaParser) parseRemoteCallOrAsyncSendEnd(expression st.STNode, rightArrow st.STNode, name st.STNode) st.STNode {
+func (b *ballerinaParser) parseRemoteCallOrAsyncSendEnd(expression st.STNode, rightArrow st.STNode, name st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_PAREN_TOKEN:
@@ -7244,11 +7227,11 @@ func (b *BallerinaParser) parseRemoteCallOrAsyncSendEnd(expression st.STNode, ri
 	}
 }
 
-func (b *BallerinaParser) parseAsyncSendAction(expression st.STNode, rightArrow st.STNode, peerWorker st.STNode) st.STNode {
+func (b *ballerinaParser) parseAsyncSendAction(expression st.STNode, rightArrow st.STNode, peerWorker st.STNode) st.STNode {
 	return st.CreateAsyncSendActionNode(expression, rightArrow, peerWorker)
 }
 
-func (b *BallerinaParser) parseRemoteMethodCallAction(expression st.STNode, rightArrow st.STNode, name st.STNode) st.STNode {
+func (b *ballerinaParser) parseRemoteMethodCallAction(expression st.STNode, rightArrow st.STNode, name st.STNode) st.STNode {
 	openParenToken := b.parseArgListOpenParenthesis()
 	arguments := b.parseArgsList()
 	closeParenToken := b.parseArgListCloseParenthesis()
@@ -7256,7 +7239,7 @@ func (b *BallerinaParser) parseRemoteMethodCallAction(expression st.STNode, righ
 		closeParenToken)
 }
 
-func (b *BallerinaParser) parseRightArrow() st.STNode {
+func (b *ballerinaParser) parseRightArrow() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.RIGHT_ARROW_TOKEN {
 		return b.consume()
@@ -7266,12 +7249,12 @@ func (b *BallerinaParser) parseRightArrow() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMapTypeDescriptor(mapKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseMapTypeDescriptor(mapKeyword st.STNode) st.STNode {
 	typeParameter := b.parseTypeParameter()
 	return st.CreateMapTypeDescriptorNode(mapKeyword, typeParameter)
 }
 
-func (b *BallerinaParser) parseParameterizedTypeDescriptor(keywordToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseParameterizedTypeDescriptor(keywordToken st.STNode) st.STNode {
 	var typeParamNode st.STNode
 	nextToken := b.peek()
 	if nextToken.Kind() == st.LT_TOKEN {
@@ -7284,7 +7267,7 @@ func (b *BallerinaParser) parseParameterizedTypeDescriptor(keywordToken st.STNod
 		typeParamNode)
 }
 
-func (b *BallerinaParser) getParameterizedTypeDescKind(keywordToken st.STNode) st.SyntaxKind {
+func (b *ballerinaParser) getParameterizedTypeDescKind(keywordToken st.STNode) st.SyntaxKind {
 	switch keywordToken.Kind() {
 	case st.TYPEDESC_KEYWORD:
 		return st.TYPEDESC_TYPE_DESC
@@ -7297,7 +7280,7 @@ func (b *BallerinaParser) getParameterizedTypeDescKind(keywordToken st.STNode) s
 	}
 }
 
-func (b *BallerinaParser) parseGTToken() st.STToken {
+func (b *ballerinaParser) parseGTToken() st.STToken {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.GT_TOKEN {
 		return b.consume()
@@ -7307,7 +7290,7 @@ func (b *BallerinaParser) parseGTToken() st.STToken {
 	}
 }
 
-func (b *BallerinaParser) parseLTToken() st.STToken {
+func (b *ballerinaParser) parseLTToken() st.STToken {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.LT_TOKEN {
 		return b.consume()
@@ -7317,7 +7300,7 @@ func (b *BallerinaParser) parseLTToken() st.STToken {
 	}
 }
 
-func (b *BallerinaParser) parseNilLiteral() st.STNode {
+func (b *ballerinaParser) parseNilLiteral() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NIL_LITERAL)
 	openParenthesisToken := b.parseOpenParenthesis()
 	closeParenthesisToken := b.parseCloseParenthesis()
@@ -7325,7 +7308,7 @@ func (b *BallerinaParser) parseNilLiteral() st.STNode {
 	return st.CreateNilLiteralNode(openParenthesisToken, closeParenthesisToken)
 }
 
-func (b *BallerinaParser) parseAnnotationDeclaration(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnnotationDeclaration(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOTATION_DECL)
 	annotationKeyword := b.parseAnnotationKeyword()
 	annotDecl := b.parseAnnotationDeclFromType(metadata, qualifier, constKeyword, annotationKeyword)
@@ -7333,7 +7316,7 @@ func (b *BallerinaParser) parseAnnotationDeclaration(metadata st.STNode, qualifi
 	return annotDecl
 }
 
-func (b *BallerinaParser) parseAnnotationKeyword() st.STNode {
+func (b *ballerinaParser) parseAnnotationKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ANNOTATION_KEYWORD {
 		return b.consume()
@@ -7343,7 +7326,7 @@ func (b *BallerinaParser) parseAnnotationKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAnnotationDeclFromType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnnotationDeclFromType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -7361,7 +7344,7 @@ func (b *BallerinaParser) parseAnnotationDeclFromType(metadata st.STNode, qualif
 		annotTag)
 }
 
-func (b *BallerinaParser) parseAnnotationTag() st.STNode {
+func (b *ballerinaParser) parseAnnotationTag() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -7371,7 +7354,7 @@ func (b *BallerinaParser) parseAnnotationTag() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAnnotationDeclWithOptionalType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnnotationDeclWithOptionalType(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode) st.STNode {
 	typeDescOrAnnotTag := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_ANNOT_DECL_OPTIONAL_TYPE)
 	if typeDescOrAnnotTag.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		annotTag := b.parseAnnotationTag()
@@ -7394,7 +7377,7 @@ func (b *BallerinaParser) parseAnnotationDeclWithOptionalType(metadata st.STNode
 	return b.parseAnnotationDeclRhs(metadata, qualifier, constKeyword, annotationKeyword, annotTag)
 }
 
-func (b *BallerinaParser) parseAnnotationDeclRhs(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode, typeDescOrAnnotTag st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnnotationDeclRhs(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode, typeDescOrAnnotTag st.STNode) st.STNode {
 	nextToken := b.peek()
 	var typeDesc st.STNode
 	var annotTag st.STNode
@@ -7414,7 +7397,7 @@ func (b *BallerinaParser) parseAnnotationDeclRhs(metadata st.STNode, qualifier s
 		annotTag)
 }
 
-func (b *BallerinaParser) parseAnnotationDeclAttachPoints(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode, typeDesc st.STNode, annotTag st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnnotationDeclAttachPoints(metadata st.STNode, qualifier st.STNode, constKeyword st.STNode, annotationKeyword st.STNode, typeDesc st.STNode, annotTag st.STNode) st.STNode {
 	var onKeyword st.STNode
 	var attachPoints st.STNode
 	nextToken := b.peek()
@@ -7437,7 +7420,7 @@ func (b *BallerinaParser) parseAnnotationDeclAttachPoints(metadata st.STNode, qu
 		typeDesc, annotTag, onKeyword, attachPoints, semicolonToken)
 }
 
-func (b *BallerinaParser) parseAnnotationAttachPoints() st.STNode {
+func (b *ballerinaParser) parseAnnotationAttachPoints() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANNOT_ATTACH_POINTS_LIST)
 	var attachPoints []st.STNode
 	nextToken := b.peek()
@@ -7477,7 +7460,7 @@ func (b *BallerinaParser) parseAnnotationAttachPoints() st.STNode {
 	return st.CreateNodeList(attachPoints...)
 }
 
-func (b *BallerinaParser) parseAttachPointEnd() st.STNode {
+func (b *ballerinaParser) parseAttachPointEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.SEMICOLON_TOKEN:
 		return nil
@@ -7489,7 +7472,7 @@ func (b *BallerinaParser) parseAttachPointEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndAnnotAttachPointList(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndAnnotAttachPointList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.EOF_TOKEN, st.SEMICOLON_TOKEN:
 		return true
@@ -7498,7 +7481,7 @@ func (b *BallerinaParser) isEndAnnotAttachPointList(tokenKind st.SyntaxKind) boo
 	}
 }
 
-func (b *BallerinaParser) parseAnnotationAttachPoint() st.STNode {
+func (b *ballerinaParser) parseAnnotationAttachPoint() st.STNode {
 	switch b.peek().Kind() {
 	case st.EOF_TOKEN:
 		return nil
@@ -7529,7 +7512,7 @@ func (b *BallerinaParser) parseAnnotationAttachPoint() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSourceKeyword() st.STNode {
+func (b *ballerinaParser) parseSourceKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.SOURCE_KEYWORD {
 		return b.consume()
@@ -7539,7 +7522,7 @@ func (b *BallerinaParser) parseSourceKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseAttachPointIdent(sourceKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseAttachPointIdent(sourceKeyword st.STNode) st.STNode {
 	switch b.peek().Kind() {
 	case st.ANNOTATION_KEYWORD,
 		st.EXTERNAL_KEYWORD,
@@ -7568,7 +7551,7 @@ func (b *BallerinaParser) parseAttachPointIdent(sourceKeyword st.STNode) st.STNo
 	}
 }
 
-func (b *BallerinaParser) parseDualAttachPointIdent(sourceKeyword st.STNode, firstIdent st.STNode) st.STNode {
+func (b *ballerinaParser) parseDualAttachPointIdent(sourceKeyword st.STNode, firstIdent st.STNode) st.STNode {
 	var secondIdent st.STNode
 	switch firstIdent.Kind() {
 	case st.OBJECT_KEYWORD:
@@ -7590,7 +7573,7 @@ func (b *BallerinaParser) parseDualAttachPointIdent(sourceKeyword st.STNode, fir
 	return st.CreateAnnotationAttachPointNode(sourceKeyword, identList)
 }
 
-func (b *BallerinaParser) parseRemoteIdent() st.STNode {
+func (b *ballerinaParser) parseRemoteIdent() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.REMOTE_KEYWORD {
 		return b.consume()
@@ -7600,7 +7583,7 @@ func (b *BallerinaParser) parseRemoteIdent() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseServiceAttachPoint(sourceKeyword st.STNode, firstIdent st.STNode) st.STNode {
+func (b *ballerinaParser) parseServiceAttachPoint(sourceKeyword st.STNode, firstIdent st.STNode) st.STNode {
 	var identList st.STNode
 	token := b.peek()
 	switch token.Kind() {
@@ -7619,7 +7602,7 @@ func (b *BallerinaParser) parseServiceAttachPoint(sourceKeyword st.STNode, first
 	}
 }
 
-func (b *BallerinaParser) parseIdentAfterObjectIdent() st.STNode {
+func (b *ballerinaParser) parseIdentAfterObjectIdent() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.FUNCTION_KEYWORD, st.FIELD_KEYWORD:
@@ -7630,7 +7613,7 @@ func (b *BallerinaParser) parseIdentAfterObjectIdent() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFunctionIdent() st.STNode {
+func (b *ballerinaParser) parseFunctionIdent() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FUNCTION_KEYWORD {
 		return b.consume()
@@ -7640,7 +7623,7 @@ func (b *BallerinaParser) parseFunctionIdent() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldIdent() st.STNode {
+func (b *ballerinaParser) parseFieldIdent() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FIELD_KEYWORD {
 		return b.consume()
@@ -7650,7 +7633,7 @@ func (b *BallerinaParser) parseFieldIdent() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLNamespaceDeclaration(isModuleVar bool) st.STNode {
+func (b *ballerinaParser) parseXMLNamespaceDeclaration(isModuleVar bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION)
 	xmlnsKeyword := b.parseXMLNSKeyword()
 	namespaceUri := b.parseSimpleConstExpr()
@@ -7664,7 +7647,7 @@ func (b *BallerinaParser) parseXMLNamespaceDeclaration(isModuleVar bool) st.STNo
 	return xmlnsDecl
 }
 
-func (b *BallerinaParser) parseXMLNSKeyword() st.STNode {
+func (b *ballerinaParser) parseXMLNSKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.XMLNS_KEYWORD {
 		return b.consume()
@@ -7674,7 +7657,7 @@ func (b *BallerinaParser) parseXMLNSKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isValidXMLNameSpaceURI(expr st.STNode) bool {
+func (b *ballerinaParser) isValidXMLNameSpaceURI(expr st.STNode) bool {
 	switch expr.Kind() {
 	case st.STRING_LITERAL, st.QUALIFIED_NAME_REFERENCE, st.SIMPLE_NAME_REFERENCE:
 		return true
@@ -7683,14 +7666,14 @@ func (b *BallerinaParser) isValidXMLNameSpaceURI(expr st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) parseSimpleConstExpr() st.STNode {
+func (b *ballerinaParser) parseSimpleConstExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONSTANT_EXPRESSION)
 	expr := b.parseSimpleConstExprInternal()
 	b.endContext()
 	return expr
 }
 
-func (b *BallerinaParser) parseSimpleConstExprInternal() st.STNode {
+func (b *ballerinaParser) parseSimpleConstExprInternal() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.STRING_LITERAL_TOKEN,
@@ -7715,7 +7698,7 @@ func (b *BallerinaParser) parseSimpleConstExprInternal() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLDeclRhs(xmlnsKeyword st.STNode, namespaceUri st.STNode, isModuleVar bool) st.STNode {
+func (b *ballerinaParser) parseXMLDeclRhs(xmlnsKeyword st.STNode, namespaceUri st.STNode, isModuleVar bool) st.STNode {
 	asKeyword := st.CreateEmptyNode()
 	namespacePrefix := st.CreateEmptyNode()
 	switch b.peek().Kind() {
@@ -7737,7 +7720,7 @@ func (b *BallerinaParser) parseXMLDeclRhs(xmlnsKeyword st.STNode, namespaceUri s
 		semicolon)
 }
 
-func (b *BallerinaParser) parseNamespacePrefix() st.STNode {
+func (b *ballerinaParser) parseNamespacePrefix() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -7747,7 +7730,7 @@ func (b *BallerinaParser) parseNamespacePrefix() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseNamedWorkerDeclaration(annots st.STNode, qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseNamedWorkerDeclaration(annots st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL)
 	transactionalKeyword := b.getTransactionalKeyword(qualifiers)
 	workerKeyword := b.parseWorkerKeyword()
@@ -7760,7 +7743,7 @@ func (b *BallerinaParser) parseNamedWorkerDeclaration(annots st.STNode, qualifie
 		returnTypeDesc, workerBody, onFailClause)
 }
 
-func (b *BallerinaParser) getTransactionalKeyword(qualifierList []st.STNode) st.STNode {
+func (b *ballerinaParser) getTransactionalKeyword(qualifierList []st.STNode) st.STNode {
 	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -7792,7 +7775,7 @@ func (b *BallerinaParser) getTransactionalKeyword(qualifierList []st.STNode) st.
 	return transactionalKeyword
 }
 
-func (b *BallerinaParser) parseReturnTypeDescriptor() st.STNode {
+func (b *ballerinaParser) parseReturnTypeDescriptor() st.STNode {
 	token := b.peek()
 	if token.Kind() != st.RETURNS_KEYWORD {
 		return st.CreateEmptyNode()
@@ -7803,7 +7786,7 @@ func (b *BallerinaParser) parseReturnTypeDescriptor() st.STNode {
 	return st.CreateReturnTypeDescriptorNode(returnsKeyword, annot, ty)
 }
 
-func (b *BallerinaParser) parseWorkerKeyword() st.STNode {
+func (b *ballerinaParser) parseWorkerKeyword() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.WORKER_KEYWORD {
 		return b.consume()
@@ -7813,7 +7796,7 @@ func (b *BallerinaParser) parseWorkerKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseWorkerName() st.STNode {
+func (b *ballerinaParser) parseWorkerName() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.IDENTIFIER_TOKEN {
 		return b.consume()
@@ -7823,7 +7806,7 @@ func (b *BallerinaParser) parseWorkerName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLockStatement() st.STNode {
+func (b *ballerinaParser) parseLockStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LOCK_STMT)
 	lockKeyword := b.parseLockKeyword()
 	blockStatement := b.parseBlockNode()
@@ -7832,7 +7815,7 @@ func (b *BallerinaParser) parseLockStatement() st.STNode {
 	return st.CreateLockStatementNode(lockKeyword, blockStatement, onFailClause)
 }
 
-func (b *BallerinaParser) parseLockKeyword() st.STNode {
+func (b *ballerinaParser) parseLockKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.LOCK_KEYWORD {
 		return b.consume()
@@ -7842,20 +7825,20 @@ func (b *BallerinaParser) parseLockKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseUnionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
+func (b *ballerinaParser) parseUnionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	pipeToken := b.consume()
 	rightTypeDesc := b.parseTypeDescriptorInternalWithPrecedence(nil, context, isTypedBindingPattern, false,
-		TYPE_PRECEDENCE_UNION)
+		typePrecedenceUnion)
 	return b.mergeTypesWithUnion(leftTypeDesc, pipeToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) createUnionTypeDesc(leftTypeDesc st.STNode, pipeToken st.STNode, rightTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) createUnionTypeDesc(leftTypeDesc st.STNode, pipeToken st.STNode, rightTypeDesc st.STNode) st.STNode {
 	leftTypeDesc = b.validateForUsageOfVar(leftTypeDesc)
 	rightTypeDesc = b.validateForUsageOfVar(rightTypeDesc)
 	return st.CreateUnionTypeDescriptorNode(leftTypeDesc, pipeToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) parsePipeToken() st.STNode {
+func (b *ballerinaParser) parsePipeToken() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.PIPE_TOKEN {
 		return b.consume()
@@ -7865,11 +7848,11 @@ func (b *BallerinaParser) parsePipeToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isTypeStartingToken(nodeKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isTypeStartingToken(nodeKind st.SyntaxKind) bool {
 	return isTypeStartingToken(nodeKind, b.getNextNextToken())
 }
 
-func (b *BallerinaParser) isSimpleTypeInExpression(nodeKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isSimpleTypeInExpression(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
 	case st.VAR_KEYWORD, st.READONLY_KEYWORD:
 		return false
@@ -7878,11 +7861,11 @@ func (b *BallerinaParser) isSimpleTypeInExpression(nodeKind st.SyntaxKind) bool 
 	}
 }
 
-func (b *BallerinaParser) isQualifiedIdentifierPredeclaredPrefix(nodeKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isQualifiedIdentifierPredeclaredPrefix(nodeKind st.SyntaxKind) bool {
 	return (isPredeclaredPrefix(nodeKind) && (b.getNextNextToken().Kind() == st.COLON_TOKEN))
 }
 
-func (b *BallerinaParser) parseForkKeyword() st.STNode {
+func (b *ballerinaParser) parseForkKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FORK_KEYWORD {
 		return b.consume()
@@ -7892,7 +7875,7 @@ func (b *BallerinaParser) parseForkKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseForkStatement() st.STNode {
+func (b *ballerinaParser) parseForkStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FORK_STMT)
 	forkKeyword := b.parseForkKeyword()
 	openBrace := b.parseOpenBrace()
@@ -7929,16 +7912,16 @@ func (b *BallerinaParser) parseForkStatement() st.STNode {
 	return forkStmt
 }
 
-func (b *BallerinaParser) parseTrapExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTrapExpression(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	trapKeyword := b.parseTrapKeyword()
-	expr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_TRAP, isRhsExpr, allowActions, isInConditionalExpr)
+	expr := b.parseExpressionWithConditional(operatorPrecedenceTrap, isRhsExpr, allowActions, isInConditionalExpr)
 	if b.isAction(expr) {
 		return st.CreateTrapExpressionNode(st.TRAP_ACTION, trapKeyword, expr)
 	}
 	return st.CreateTrapExpressionNode(st.TRAP_EXPRESSION, trapKeyword, expr)
 }
 
-func (b *BallerinaParser) parseTrapKeyword() st.STNode {
+func (b *ballerinaParser) parseTrapKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.TRAP_KEYWORD {
 		return b.consume()
@@ -7948,7 +7931,7 @@ func (b *BallerinaParser) parseTrapKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseListConstructorExpr() st.STNode {
+func (b *ballerinaParser) parseListConstructorExpr() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR)
 	openBracket := b.parseOpenBracket()
 	listMembers := b.parseListMembers()
@@ -7957,7 +7940,7 @@ func (b *BallerinaParser) parseListConstructorExpr() st.STNode {
 	return st.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
 }
 
-func (b *BallerinaParser) parseListMembers() st.STNode {
+func (b *ballerinaParser) parseListMembers() st.STNode {
 	var listMembers []st.STNode
 	if b.isEndOfListConstructor(b.peek().Kind()) {
 		return st.CreateEmptyNodeList()
@@ -7967,7 +7950,7 @@ func (b *BallerinaParser) parseListMembers() st.STNode {
 	return b.parseListMembersInner(listMembers)
 }
 
-func (b *BallerinaParser) parseListMembersInner(listMembers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseListMembersInner(listMembers []st.STNode) st.STNode {
 	var listConstructorMemberEnd st.STNode
 	for !b.isEndOfListConstructor(b.peek().Kind()) {
 		listConstructorMemberEnd = b.parseListConstructorMemberEnd()
@@ -7981,7 +7964,7 @@ func (b *BallerinaParser) parseListMembersInner(listMembers []st.STNode) st.STNo
 	return st.CreateNodeList(listMembers...)
 }
 
-func (b *BallerinaParser) parseListMember() st.STNode {
+func (b *ballerinaParser) parseListMember() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.ELLIPSIS_TOKEN {
 		return b.parseSpreadMember()
@@ -7990,13 +7973,13 @@ func (b *BallerinaParser) parseListMember() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSpreadMember() st.STNode {
+func (b *ballerinaParser) parseSpreadMember() st.STNode {
 	ellipsis := b.parseEllipsis()
 	expr := b.parseExpression()
 	return st.CreateSpreadMemberNode(ellipsis, expr)
 }
 
-func (b *BallerinaParser) isEndOfListConstructor(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfListConstructor(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return true
@@ -8005,7 +7988,7 @@ func (b *BallerinaParser) isEndOfListConstructor(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseListConstructorMemberEnd() st.STNode {
+func (b *ballerinaParser) parseListConstructorMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
@@ -8018,7 +8001,7 @@ func (b *BallerinaParser) parseListConstructorMemberEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseForEachStatement() st.STNode {
+func (b *ballerinaParser) parseForEachStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FOREACH_STMT)
 	forEachKeyword := b.parseForEachKeyword()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_FOREACH_STMT)
@@ -8031,7 +8014,7 @@ func (b *BallerinaParser) parseForEachStatement() st.STNode {
 		blockStatement, onFailClause)
 }
 
-func (b *BallerinaParser) parseForEachKeyword() st.STNode {
+func (b *ballerinaParser) parseForEachKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FOREACH_KEYWORD {
 		return b.consume()
@@ -8041,7 +8024,7 @@ func (b *BallerinaParser) parseForEachKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseInKeyword() st.STNode {
+func (b *ballerinaParser) parseInKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.IN_KEYWORD {
 		return b.consume()
@@ -8051,21 +8034,21 @@ func (b *BallerinaParser) parseInKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeCastExpr(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeCastExpr(isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TYPE_CAST)
 	ltToken := b.parseLTToken()
 	return b.parseTypeCastExprInner(ltToken, isRhsExpr, allowActions, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseTypeCastExprInner(ltToken st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseTypeCastExprInner(ltToken st.STNode, isRhsExpr bool, allowActions bool, isInConditionalExpr bool) st.STNode {
 	typeCastParam := b.parseTypeCastParam()
 	gtToken := b.parseGTToken()
 	b.endContext()
-	expression := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_EXPRESSION_ACTION, isRhsExpr, allowActions, isInConditionalExpr)
+	expression := b.parseExpressionWithConditional(operatorPrecedenceExpressionAction, isRhsExpr, allowActions, isInConditionalExpr)
 	return st.CreateTypeCastExpressionNode(ltToken, typeCastParam, gtToken, expression)
 }
 
-func (b *BallerinaParser) parseTypeCastParam() st.STNode {
+func (b *ballerinaParser) parseTypeCastParam() st.STNode {
 	var annot st.STNode
 	var ty st.STNode
 	token := b.peek()
@@ -8085,7 +8068,7 @@ func (b *BallerinaParser) parseTypeCastParam() st.STNode {
 	return st.CreateTypeCastParamNode(b.getAnnotations(annot), ty)
 }
 
-func (b *BallerinaParser) parseTableConstructorExprRhs(tableKeyword st.STNode, keySpecifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseTableConstructorExprRhs(tableKeyword st.STNode, keySpecifier st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR)
 	openBracket := b.parseOpenBracket()
 	rowList := b.parseRowList()
@@ -8094,7 +8077,7 @@ func (b *BallerinaParser) parseTableConstructorExprRhs(tableKeyword st.STNode, k
 		closeBracket)
 }
 
-func (b *BallerinaParser) parseTableKeyword() st.STNode {
+func (b *ballerinaParser) parseTableKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.TABLE_KEYWORD {
 		return b.consume()
@@ -8104,7 +8087,7 @@ func (b *BallerinaParser) parseTableKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRowList() st.STNode {
+func (b *ballerinaParser) parseRowList() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfTableRowList(nextToken.Kind()) {
 		return st.CreateEmptyNodeList()
@@ -8127,7 +8110,7 @@ func (b *BallerinaParser) parseRowList() st.STNode {
 	return st.CreateNodeList(mappings...)
 }
 
-func (b *BallerinaParser) isEndOfTableRowList(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfTableRowList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return true
@@ -8138,7 +8121,7 @@ func (b *BallerinaParser) isEndOfTableRowList(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseTableRowEnd() st.STNode {
+func (b *ballerinaParser) parseTableRowEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -8150,7 +8133,7 @@ func (b *BallerinaParser) parseTableRowEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseKeySpecifier() st.STNode {
+func (b *ballerinaParser) parseKeySpecifier() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_KEY_SPECIFIER)
 	keyKeyword := b.parseKeyKeyword()
 	openParen := b.parseOpenParenthesis()
@@ -8160,7 +8143,7 @@ func (b *BallerinaParser) parseKeySpecifier() st.STNode {
 	return st.CreateKeySpecifierNode(keyKeyword, openParen, fieldNames, closeParen)
 }
 
-func (b *BallerinaParser) parseKeyKeyword() st.STNode {
+func (b *ballerinaParser) parseKeyKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.KEY_KEYWORD {
 		return b.consume()
@@ -8172,17 +8155,17 @@ func (b *BallerinaParser) parseKeyKeyword() st.STNode {
 	return b.parseKeyKeyword()
 }
 
-func (b *BallerinaParser) getKeyKeyword(token st.STToken) st.STNode {
+func (b *ballerinaParser) getKeyKeyword(token st.STToken) st.STNode {
 	return st.CreateTokenWithDiagnostics(st.KEY_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) getUnderscoreKeyword(token st.STToken) st.STToken {
+func (b *ballerinaParser) getUnderscoreKeyword(token st.STToken) st.STToken {
 	return st.CreateTokenWithDiagnostics(st.UNDERSCORE_KEYWORD, token.LeadingMinutiae(),
 		token.TrailingMinutiae(), token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseNaturalKeyword() st.STNode {
+func (b *ballerinaParser) parseNaturalKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.NATURAL_KEYWORD {
 		return b.consume()
@@ -8194,7 +8177,7 @@ func (b *BallerinaParser) parseNaturalKeyword() st.STNode {
 	return b.parseNaturalKeyword()
 }
 
-func (b *BallerinaParser) isNaturalKeyword(node st.STNode) bool {
+func (b *ballerinaParser) isNaturalKeyword(node st.STNode) bool {
 	token, isToken := node.(st.STToken)
 	if isToken {
 		return isNaturalKeyword(token)
@@ -8213,12 +8196,12 @@ func (b *BallerinaParser) isNaturalKeyword(node st.STNode) bool {
 	return isNaturalKeyword(nameToken)
 }
 
-func (b *BallerinaParser) getNaturalKeyword(token st.STToken) st.STNode {
+func (b *ballerinaParser) getNaturalKeyword(token st.STToken) st.STNode {
 	return st.CreateTokenWithDiagnostics(st.NATURAL_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseFieldNames() st.STNode {
+func (b *ballerinaParser) parseFieldNames() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfFieldNamesList(nextToken.Kind()) {
 		return st.CreateEmptyNodeList()
@@ -8238,7 +8221,7 @@ func (b *BallerinaParser) parseFieldNames() st.STNode {
 	return st.CreateNodeList(fieldNames...)
 }
 
-func (b *BallerinaParser) isEndOfFieldNamesList(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfFieldNamesList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.COMMA_TOKEN, st.IDENTIFIER_TOKEN:
 		return false
@@ -8247,7 +8230,7 @@ func (b *BallerinaParser) isEndOfFieldNamesList(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseErrorKeyword() st.STNode {
+func (b *ballerinaParser) parseErrorKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ERROR_KEYWORD {
 		return b.consume()
@@ -8257,7 +8240,7 @@ func (b *BallerinaParser) parseErrorKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseStreamTypeDescriptor(streamKeywordToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseStreamTypeDescriptor(streamKeywordToken st.STNode) st.STNode {
 	var streamTypeParamsNode st.STNode
 	nextToken := b.peek()
 	if nextToken.Kind() == st.LT_TOKEN {
@@ -8268,7 +8251,7 @@ func (b *BallerinaParser) parseStreamTypeDescriptor(streamKeywordToken st.STNode
 	return st.CreateStreamTypeDescriptorNode(streamKeywordToken, streamTypeParamsNode)
 }
 
-func (b *BallerinaParser) parseStreamTypeParamsNode() st.STNode {
+func (b *ballerinaParser) parseStreamTypeParamsNode() st.STNode {
 	ltToken := b.parseLTToken()
 	b.startContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_STREAM_TYPE_DESC)
 	leftTypeDescNode := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_STREAM_TYPE_DESC)
@@ -8277,7 +8260,7 @@ func (b *BallerinaParser) parseStreamTypeParamsNode() st.STNode {
 	return streamTypedesc
 }
 
-func (b *BallerinaParser) parseStreamTypeParamsNodeInner(ltToken st.STNode, leftTypeDescNode st.STNode) st.STNode {
+func (b *ballerinaParser) parseStreamTypeParamsNodeInner(ltToken st.STNode, leftTypeDescNode st.STNode) st.STNode {
 	var commaToken st.STNode
 	var rightTypeDescNode st.STNode
 	switch b.peek().Kind() {
@@ -8296,18 +8279,18 @@ func (b *BallerinaParser) parseStreamTypeParamsNodeInner(ltToken st.STNode, left
 		gtToken)
 }
 
-func (b *BallerinaParser) parseLetExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseLetExpression(isRhsExpr bool, isInConditionalExpr bool) st.STNode {
 	letKeyword := b.parseLetKeyword()
 	letVarDeclarations := b.parseLetVarDeclarations(common.PARSER_RULE_CONTEXT_LET_EXPR_LET_VAR_DECL, isRhsExpr, false)
 	inKeyword := b.parseInKeyword()
 	letKeyword = b.cloneWithDiagnosticIfListEmpty(letVarDeclarations, letKeyword,
 		&common.ERROR_MISSING_LET_VARIABLE_DECLARATION)
-	expression := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION, isRhsExpr, false,
+	expression := b.parseExpressionWithConditional(operatorPrecedenceRemoteCallAction, isRhsExpr, false,
 		isInConditionalExpr)
 	return st.CreateLetExpressionNode(letKeyword, letVarDeclarations, inKeyword, expression)
 }
 
-func (b *BallerinaParser) parseLetKeyword() st.STNode {
+func (b *ballerinaParser) parseLetKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.LET_KEYWORD {
 		return b.consume()
@@ -8317,7 +8300,7 @@ func (b *BallerinaParser) parseLetKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLetVarDeclarations(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseLetVarDeclarations(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) st.STNode {
 	b.startContext(context)
 	var varDecls []st.STNode
 	nextToken := b.peek()
@@ -8340,20 +8323,20 @@ func (b *BallerinaParser) parseLetVarDeclarations(context common.ParserRuleConte
 	return st.CreateNodeList(varDecls...)
 }
 
-func (b *BallerinaParser) parseLetVarDecl(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseLetVarDecl(context common.ParserRuleContext, isRhsExpr bool, allowActions bool) st.STNode {
 	annot := b.parseOptionalAnnotations()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_LET_EXPR_LET_VAR_DECL)
 	assign := b.parseAssignOp()
 	var expression st.STNode
 	if context == common.PARSER_RULE_CONTEXT_LET_CLAUSE_LET_VAR_DECL {
-		expression = b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, allowActions)
+		expression = b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, allowActions)
 	} else {
-		expression = b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET, isRhsExpr, false)
+		expression = b.parseExpressionWithPrecedence(operatorPrecedenceAnonFuncOrLet, isRhsExpr, false)
 	}
 	return st.CreateLetVariableDeclarationNode(annot, typedBindingPattern, assign, expression)
 }
 
-func (b *BallerinaParser) parseTemplateExpression() st.STNode {
+func (b *ballerinaParser) parseTemplateExpression() st.STNode {
 	ty := st.CreateEmptyNode()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	content := b.parseTemplateContent()
@@ -8362,7 +8345,7 @@ func (b *BallerinaParser) parseTemplateExpression() st.STNode {
 		content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseTemplateContent() st.STNode {
+func (b *ballerinaParser) parseTemplateContent() st.STNode {
 	var items []st.STNode
 	nextToken := b.peek()
 	for !b.isEndOfBacktickContent(nextToken.Kind()) {
@@ -8373,7 +8356,7 @@ func (b *BallerinaParser) parseTemplateContent() st.STNode {
 	return st.CreateNodeList(items...)
 }
 
-func (b *BallerinaParser) isEndOfBacktickContent(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfBacktickContent(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.EOF_TOKEN, st.BACKTICK_TOKEN:
 		return true
@@ -8382,7 +8365,7 @@ func (b *BallerinaParser) isEndOfBacktickContent(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseTemplateItem() st.STNode {
+func (b *ballerinaParser) parseTemplateItem() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.INTERPOLATION_START_TOKEN {
 		return b.parseInterpolation()
@@ -8396,7 +8379,7 @@ func (b *BallerinaParser) parseTemplateItem() st.STNode {
 	return b.consume()
 }
 
-func (b *BallerinaParser) parseStringTemplateExpression() st.STNode {
+func (b *ballerinaParser) parseStringTemplateExpression() st.STNode {
 	ty := b.parseStringKeyword()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	content := b.parseTemplateContent()
@@ -8405,7 +8388,7 @@ func (b *BallerinaParser) parseStringTemplateExpression() st.STNode {
 		content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseStringKeyword() st.STNode {
+func (b *ballerinaParser) parseStringKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.STRING_KEYWORD {
 		return b.consume()
@@ -8415,7 +8398,7 @@ func (b *BallerinaParser) parseStringKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLTemplateExpression() st.STNode {
+func (b *ballerinaParser) parseXMLTemplateExpression() st.STNode {
 	xmlKeyword := b.parseXMLKeyword()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	if startingBackTick.IsMissing() {
@@ -8427,7 +8410,7 @@ func (b *BallerinaParser) parseXMLTemplateExpression() st.STNode {
 		startingBackTick, content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseXMLKeyword() st.STNode {
+func (b *ballerinaParser) parseXMLKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.XML_KEYWORD {
 		return b.consume()
@@ -8437,7 +8420,7 @@ func (b *BallerinaParser) parseXMLKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTemplateContentAsXML() st.STNode {
+func (b *ballerinaParser) parseTemplateContentAsXML() st.STNode {
 	var expressions []st.STNode
 	var xmlStringBuilder strings.Builder
 	nextToken := b.peek()
@@ -8457,12 +8440,12 @@ func (b *BallerinaParser) parseTemplateContentAsXML() st.STNode {
 	}
 	charReader := text.CharReaderFromText(xmlStringBuilder.String())
 	xl := newXMLLexer(charReader)
-	tr := CreateTokenReader(xl)
+	tr := createTokenReader(xl)
 	xp := newXMLParser(tr, expressions)
 	return xp.Parse()
 }
 
-func (b *BallerinaParser) parseRegExpTemplateExpression() st.STNode {
+func (b *ballerinaParser) parseRegExpTemplateExpression() st.STNode {
 	reKeyword := b.consume()
 	startingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_START)
 	if startingBackTick.IsMissing() {
@@ -8474,7 +8457,7 @@ func (b *BallerinaParser) parseRegExpTemplateExpression() st.STNode {
 		startingBackTick, content, endingBackTick)
 }
 
-func (b *BallerinaParser) createMissingTemplateExpressionNode(reKeyword st.STNode, kind st.SyntaxKind) st.STNode {
+func (b *ballerinaParser) createMissingTemplateExpressionNode(reKeyword st.STNode, kind st.SyntaxKind) st.STNode {
 	startingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
 	endingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
 	content := st.CreateEmptyNodeList()
@@ -8483,8 +8466,8 @@ func (b *BallerinaParser) createMissingTemplateExpressionNode(reKeyword st.STNod
 	return templateExpr
 }
 
-func (b *BallerinaParser) parseTemplateContentAsRegExp() st.STNode {
-	b.tokenReader.StartMode(PARSER_MODE_REGEXP)
+func (b *ballerinaParser) parseTemplateContentAsRegExp() st.STNode {
+	b.tokenReader.StartMode(parserModeRegexp)
 	panic("Regexp parser not implemented")
 	// expressions := make([]interface{}, 0)
 	// regExpStringBuilder := nil
@@ -8510,7 +8493,7 @@ func (b *BallerinaParser) parseTemplateContentAsRegExp() st.STNode {
 	// return this.regExpParser.parse()
 }
 
-func (b *BallerinaParser) parseInterpolation() st.STNode {
+func (b *ballerinaParser) parseInterpolation() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_INTERPOLATION)
 	interpolStart := b.parseInterpolationStart()
 	expr := b.parseExpression()
@@ -8524,18 +8507,18 @@ func (b *BallerinaParser) parseInterpolation() st.STNode {
 	return st.CreateInterpolationNode(interpolStart, expr, closeBrace)
 }
 
-func (b *BallerinaParser) isEndOfInterpolation() bool {
+func (b *ballerinaParser) isEndOfInterpolation() bool {
 	nextTokenKind := b.peek().Kind()
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.BACKTICK_TOKEN:
 		return true
 	default:
 		currentLexerMode := b.tokenReader.GetCurrentMode()
-		return (((nextTokenKind == st.CLOSE_BRACE_TOKEN) && (currentLexerMode != PARSER_MODE_INTERPOLATION)) && (currentLexerMode != PARSER_MODE_INTERPOLATION_BRACED_CONTENT))
+		return (((nextTokenKind == st.CLOSE_BRACE_TOKEN) && (currentLexerMode != parserModeInterpolation)) && (currentLexerMode != parserModeInterpolationBracedContent))
 	}
 }
 
-func (b *BallerinaParser) parseInterpolationStart() st.STNode {
+func (b *ballerinaParser) parseInterpolationStart() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.INTERPOLATION_START_TOKEN {
 		return b.consume()
@@ -8545,7 +8528,7 @@ func (b *BallerinaParser) parseInterpolationStart() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBacktickToken(ctx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseBacktickToken(ctx common.ParserRuleContext) st.STNode {
 	token := b.peek()
 	if token.Kind() == st.BACKTICK_TOKEN {
 		return b.consume()
@@ -8555,7 +8538,7 @@ func (b *BallerinaParser) parseBacktickToken(ctx common.ParserRuleContext) st.ST
 	}
 }
 
-func (b *BallerinaParser) parseTableTypeDescriptor(tableKeywordToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseTableTypeDescriptor(tableKeywordToken st.STNode) st.STNode {
 	rowTypeParameterNode := b.parseRowTypeParameter()
 	var keyConstraintNode st.STNode
 	nextToken := b.peek()
@@ -8568,21 +8551,21 @@ func (b *BallerinaParser) parseTableTypeDescriptor(tableKeywordToken st.STNode) 
 	return st.CreateTableTypeDescriptorNode(tableKeywordToken, rowTypeParameterNode, keyConstraintNode)
 }
 
-func (b *BallerinaParser) parseRowTypeParameter() st.STNode {
+func (b *ballerinaParser) parseRowTypeParameter() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ROW_TYPE_PARAM)
 	rowTypeParameterNode := b.parseTypeParameter()
 	b.endContext()
 	return rowTypeParameterNode
 }
 
-func (b *BallerinaParser) parseTypeParameter() st.STNode {
+func (b *ballerinaParser) parseTypeParameter() st.STNode {
 	ltToken := b.parseLTToken()
 	typeNode := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_ANGLE_BRACKETS)
 	gtToken := b.parseGTToken()
 	return st.CreateTypeParameterNode(ltToken, typeNode, gtToken)
 }
 
-func (b *BallerinaParser) parseKeyConstraint(keyKeywordToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseKeyConstraint(keyKeywordToken st.STNode) st.STNode {
 	switch b.peek().Kind() {
 	case st.OPEN_PAREN_TOKEN:
 		return b.parseKeySpecifierWithKeyKeywordToken(keyKeywordToken)
@@ -8594,7 +8577,7 @@ func (b *BallerinaParser) parseKeyConstraint(keyKeywordToken st.STNode) st.STNod
 	}
 }
 
-func (b *BallerinaParser) parseKeySpecifierWithKeyKeywordToken(keyKeywordToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseKeySpecifierWithKeyKeywordToken(keyKeywordToken st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_KEY_SPECIFIER)
 	openParenToken := b.parseOpenParenthesis()
 	fieldNamesNode := b.parseFieldNames()
@@ -8603,12 +8586,12 @@ func (b *BallerinaParser) parseKeySpecifierWithKeyKeywordToken(keyKeywordToken s
 	return st.CreateKeySpecifierNode(keyKeywordToken, openParenToken, fieldNamesNode, closeParenToken)
 }
 
-func (b *BallerinaParser) parseKeyTypeConstraint(keyKeywordToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseKeyTypeConstraint(keyKeywordToken st.STNode) st.STNode {
 	typeParameterNode := b.parseTypeParameter()
 	return st.CreateKeyTypeConstraintNode(keyKeywordToken, typeParameterNode)
 }
 
-func (b *BallerinaParser) parseFunctionTypeDesc(qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseFunctionTypeDesc(qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC)
 	functionKeyword := b.parseFunctionKeyword()
 	hasFuncSignature := false
@@ -8624,11 +8607,11 @@ func (b *BallerinaParser) parseFunctionTypeDesc(qualifiers []st.STNode) st.STNod
 	return st.CreateFunctionTypeDescriptorNode(qualifierList, functionKeyword, signature)
 }
 
-func (b *BallerinaParser) getLastNodeInList(nodeList []st.STNode) st.STNode {
+func (b *ballerinaParser) getLastNodeInList(nodeList []st.STNode) st.STNode {
 	return nodeList[len(nodeList)-1]
 }
 
-func (b *BallerinaParser) createFuncTypeQualNodeList(qualifierList []st.STNode, functionKeyword st.STNode, hasFuncSignature bool) []st.STNode {
+func (b *ballerinaParser) createFuncTypeQualNodeList(qualifierList []st.STNode, functionKeyword st.STNode, hasFuncSignature bool) []st.STNode {
 	var validatedList []st.STNode
 	i := 0
 	for ; i < len(qualifierList); i++ {
@@ -8657,7 +8640,7 @@ func (b *BallerinaParser) createFuncTypeQualNodeList(qualifierList []st.STNode, 
 	return []st.STNode{nodeList, functionKeyword}
 }
 
-func (b *BallerinaParser) isRegularFuncQual(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isRegularFuncQual(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.ISOLATED_KEYWORD, st.TRANSACTIONAL_KEYWORD:
 		return true
@@ -8666,7 +8649,7 @@ func (b *BallerinaParser) isRegularFuncQual(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseExplicitFunctionExpression(annots st.STNode, qualifiers []st.STNode, isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseExplicitFunctionExpression(annots st.STNode, qualifiers []st.STNode, isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ANON_FUNC_EXPRESSION)
 	funcKeyword := b.parseFunctionKeyword()
 	nodes := b.createFuncTypeQualNodeList(qualifiers, funcKeyword, true)
@@ -8678,7 +8661,7 @@ func (b *BallerinaParser) parseExplicitFunctionExpression(annots st.STNode, qual
 		funcSignature, funcBody)
 }
 
-func (b *BallerinaParser) parseAnonFuncBody(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseAnonFuncBody(isRhsExpr bool) st.STNode {
 	switch b.peek().Kind() {
 	case st.OPEN_BRACE_TOKEN,
 		st.EOF_TOKEN:
@@ -8694,9 +8677,9 @@ func (b *BallerinaParser) parseAnonFuncBody(isRhsExpr bool) st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseExpressionFuncBody(isAnon bool, isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseExpressionFuncBody(isAnon bool, isRhsExpr bool) st.STNode {
 	rightDoubleArrow := b.parseDoubleRightArrow()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION, isRhsExpr, false)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceRemoteCallAction, isRhsExpr, false)
 	var semiColon st.STNode
 	if isAnon {
 		semiColon = st.CreateEmptyNode()
@@ -8706,7 +8689,7 @@ func (b *BallerinaParser) parseExpressionFuncBody(isAnon bool, isRhsExpr bool) s
 	return st.CreateExpressionFunctionBodyNode(rightDoubleArrow, expression, semiColon)
 }
 
-func (b *BallerinaParser) parseDoubleRightArrow() st.STNode {
+func (b *ballerinaParser) parseDoubleRightArrow() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.RIGHT_DOUBLE_ARROW_TOKEN {
 		return b.consume()
@@ -8716,7 +8699,7 @@ func (b *BallerinaParser) parseDoubleRightArrow() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseImplicitAnonFuncWithParams(params st.STNode, isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseImplicitAnonFuncWithParams(params st.STNode, isRhsExpr bool) st.STNode {
 	switch params.Kind() {
 	case st.SIMPLE_NAME_REFERENCE, st.INFER_PARAM_LIST:
 		break
@@ -8741,11 +8724,11 @@ func (b *BallerinaParser) parseImplicitAnonFuncWithParams(params st.STNode, isRh
 		params = st.CreateSimpleNameReferenceNode(syntheticParam)
 	}
 	rightDoubleArrow := b.parseDoubleRightArrow()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_REMOTE_CALL_ACTION, isRhsExpr, false)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceRemoteCallAction, isRhsExpr, false)
 	return st.CreateImplicitAnonymousFunctionExpressionNode(params, rightDoubleArrow, expression)
 }
 
-func (b *BallerinaParser) getAnonFuncParam(bracedExpression st.STBracedExpressionNode) st.STNode {
+func (b *ballerinaParser) getAnonFuncParam(bracedExpression st.STBracedExpressionNode) st.STNode {
 	var paramList []st.STNode
 	innerExpression := bracedExpression.Expression
 	openParen := bracedExpression.OpenParen
@@ -8759,7 +8742,7 @@ func (b *BallerinaParser) getAnonFuncParam(bracedExpression st.STBracedExpressio
 		st.CreateNodeList(paramList...), bracedExpression.CloseParen)
 }
 
-func (b *BallerinaParser) parseImplicitAnonFuncWithOpenParenAndFirstParam(openParen st.STNode, firstParam st.STNode, isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseImplicitAnonFuncWithOpenParenAndFirstParam(openParen st.STNode, firstParam st.STNode, isRhsExpr bool) st.STNode {
 	var paramList []st.STNode
 	paramList = append(paramList, firstParam)
 	nextToken := b.peek()
@@ -8783,7 +8766,7 @@ func (b *BallerinaParser) parseImplicitAnonFuncWithOpenParenAndFirstParam(openPa
 	return b.parseImplicitAnonFuncWithParams(inferedParams, isRhsExpr)
 }
 
-func (b *BallerinaParser) parseImplicitAnonFuncParamEnd() st.STNode {
+func (b *ballerinaParser) parseImplicitAnonFuncParamEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -8795,7 +8778,7 @@ func (b *BallerinaParser) parseImplicitAnonFuncParamEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfAnonFuncParametersList(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfAnonFuncParametersList(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.EOF_TOKEN,
 		st.CLOSE_BRACE_TOKEN,
@@ -8816,7 +8799,7 @@ func (b *BallerinaParser) isEndOfAnonFuncParametersList(tokenKind st.SyntaxKind)
 	}
 }
 
-func (b *BallerinaParser) parseTupleTypeDesc() st.STNode {
+func (b *ballerinaParser) parseTupleTypeDesc() st.STNode {
 	openBracket := b.parseOpenBracket()
 	b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
 	memberTypeDesc := b.parseTupleMemberTypeDescList()
@@ -8825,7 +8808,7 @@ func (b *BallerinaParser) parseTupleTypeDesc() st.STNode {
 	return st.CreateTupleTypeDescriptorNode(openBracket, memberTypeDesc, closeBracket)
 }
 
-func (b *BallerinaParser) parseTupleMemberTypeDescList() st.STNode {
+func (b *ballerinaParser) parseTupleMemberTypeDescList() st.STNode {
 	var typeDescList []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfTypeList(nextToken.Kind()) {
@@ -8836,7 +8819,7 @@ func (b *BallerinaParser) parseTupleMemberTypeDescList() st.STNode {
 	return res
 }
 
-func (b *BallerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
 	var tupleMemberRhs st.STNode
 	for !b.isEndOfTypeList(b.peek().Kind()) {
 		if firstMember.Kind() == st.REST_TYPE {
@@ -8855,13 +8838,13 @@ func (b *BallerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberLis
 	return st.CreateNodeList(memberList...), memberList
 }
 
-func (b *BallerinaParser) parseTupleMember() st.STNode {
+func (b *ballerinaParser) parseTupleMember() st.STNode {
 	annot := b.parseOptionalAnnotations()
 	typeDesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 	return b.createMemberOrRestNode(annot, typeDesc)
 }
 
-func (b *BallerinaParser) createMemberOrRestNode(annot st.STNode, typeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) createMemberOrRestNode(annot st.STNode, typeDesc st.STNode) st.STNode {
 	tupleMemberRhs := b.parseTypeDescInTupleRhs()
 	if tupleMemberRhs != nil {
 		annotList, ok := annot.(*st.STNodeList)
@@ -8877,7 +8860,7 @@ func (b *BallerinaParser) createMemberOrRestNode(annot st.STNode, typeDesc st.ST
 	return st.CreateMemberTypeDescriptorNode(annot, typeDesc)
 }
 
-func (b *BallerinaParser) invalidateTypeDescAfterRestDesc(restDescriptor st.STNode) st.STNode {
+func (b *ballerinaParser) invalidateTypeDescAfterRestDesc(restDescriptor st.STNode) st.STNode {
 	for !b.isEndOfTypeList(b.peek().Kind()) {
 		tupleMemberRhs := b.parseTupleMemberRhs()
 		if tupleMemberRhs == nil {
@@ -8890,7 +8873,7 @@ func (b *BallerinaParser) invalidateTypeDescAfterRestDesc(restDescriptor st.STNo
 	return restDescriptor
 }
 
-func (b *BallerinaParser) parseTupleMemberRhs() st.STNode {
+func (b *ballerinaParser) parseTupleMemberRhs() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
@@ -8903,7 +8886,7 @@ func (b *BallerinaParser) parseTupleMemberRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypeDescInTupleRhs() st.STNode {
+func (b *ballerinaParser) parseTypeDescInTupleRhs() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN, st.CLOSE_BRACKET_TOKEN:
@@ -8916,7 +8899,7 @@ func (b *BallerinaParser) parseTypeDescInTupleRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfTypeList(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfTypeList(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.CLOSE_BRACKET_TOKEN,
 		st.CLOSE_BRACE_TOKEN,
@@ -8930,14 +8913,14 @@ func (b *BallerinaParser) isEndOfTypeList(nextTokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQuery(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseTableConstructorOrQuery(isRhsExpr bool, allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TABLE_CONSTRUCTOR_OR_QUERY_EXPRESSION)
 	tableOrQueryExpr := b.parseTableConstructorOrQueryInner(isRhsExpr, allowActions)
 	b.endContext()
 	return tableOrQueryExpr
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQueryInner(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseTableConstructorOrQueryInner(isRhsExpr bool, allowActions bool) st.STNode {
 	var queryConstructType st.STNode
 	switch b.peek().Kind() {
 	case st.FROM_KEYWORD:
@@ -8958,7 +8941,7 @@ func (b *BallerinaParser) parseTableConstructorOrQueryInner(isRhsExpr bool, allo
 	}
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQueryWithKeyword(tableKeyword st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseTableConstructorOrQueryWithKeyword(tableKeyword st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	var keySpecifier st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -8980,7 +8963,7 @@ func (b *BallerinaParser) parseTableConstructorOrQueryWithKeyword(tableKeyword s
 	return b.parseTableConstructorOrQueryWithKeyword(tableKeyword, isRhsExpr, allowActions)
 }
 
-func (b *BallerinaParser) parseTableConstructorOrQueryRhs(tableKeyword st.STNode, keySpecifier st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseTableConstructorOrQueryRhs(tableKeyword st.STNode, keySpecifier st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	switch b.peek().Kind() {
 	case st.FROM_KEYWORD:
 		return b.parseQueryExprRhs(b.parseQueryConstructType(tableKeyword, keySpecifier), isRhsExpr, allowActions)
@@ -8992,11 +8975,11 @@ func (b *BallerinaParser) parseTableConstructorOrQueryRhs(tableKeyword st.STNode
 	}
 }
 
-func (b *BallerinaParser) parseQueryConstructType(keyword st.STNode, keySpecifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseQueryConstructType(keyword st.STNode, keySpecifier st.STNode) st.STNode {
 	return st.CreateQueryConstructTypeNode(keyword, keySpecifier)
 }
 
-func (b *BallerinaParser) parseQueryExprRhs(queryConstructType st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseQueryExprRhs(queryConstructType st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_QUERY_EXPRESSION)
 	fromClause := b.parseFromClause(isRhsExpr, allowActions)
 	var clauses []st.STNode
@@ -9068,7 +9051,7 @@ func (b *BallerinaParser) parseQueryExprRhs(queryConstructType st.STNode, isRhsE
 		clause, onConflictClause)
 }
 
-func (b *BallerinaParser) isNestedQueryExpr() bool {
+func (b *ballerinaParser) isNestedQueryExpr() bool {
 	contextStack := b.errorHandler.GetContextStack()
 	count := 0
 	for _, ctx := range contextStack {
@@ -9082,7 +9065,7 @@ func (b *BallerinaParser) isNestedQueryExpr() bool {
 	return false
 }
 
-func (b *BallerinaParser) isValidIntermediateQueryStart(token st.STToken) bool {
+func (b *ballerinaParser) isValidIntermediateQueryStart(token st.STToken) bool {
 	switch token.Kind() {
 	case st.FROM_KEYWORD,
 		st.WHERE_KEYWORD,
@@ -9103,7 +9086,7 @@ func (b *BallerinaParser) isValidIntermediateQueryStart(token st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) parseIntermediateClause(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseIntermediateClause(isRhsExpr bool, allowActions bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.FROM_KEYWORD:
@@ -9139,15 +9122,15 @@ func (b *BallerinaParser) parseIntermediateClause(isRhsExpr bool, allowActions b
 	}
 }
 
-func (b *BallerinaParser) parseCollectClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseCollectClause(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_COLLECT_CLAUSE)
 	collectKeyword := b.parseCollectKeyword()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	b.endContext()
 	return st.CreateCollectClauseNode(collectKeyword, expression)
 }
 
-func (b *BallerinaParser) parseCollectKeyword() st.STNode {
+func (b *ballerinaParser) parseCollectKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.COLLECT_KEYWORD {
 		return b.consume()
@@ -9159,12 +9142,12 @@ func (b *BallerinaParser) parseCollectKeyword() st.STNode {
 	return b.parseCollectKeyword()
 }
 
-func (b *BallerinaParser) getCollectKeyword(token st.STToken) st.STNode {
+func (b *ballerinaParser) getCollectKeyword(token st.STToken) st.STNode {
 	return st.CreateTokenWithDiagnostics(st.COLLECT_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseJoinKeyword() st.STNode {
+func (b *ballerinaParser) parseJoinKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.JOIN_KEYWORD {
 		return b.consume()
@@ -9174,7 +9157,7 @@ func (b *BallerinaParser) parseJoinKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseEqualsKeyword() st.STNode {
+func (b *ballerinaParser) parseEqualsKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.EQUALS_KEYWORD {
 		return b.consume()
@@ -9184,7 +9167,7 @@ func (b *BallerinaParser) parseEqualsKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfIntermediateClause(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfIntermediateClause(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.CLOSE_BRACE_TOKEN,
 		st.CLOSE_PAREN_TOKEN,
@@ -9212,15 +9195,15 @@ func (b *BallerinaParser) isEndOfIntermediateClause(tokenKind st.SyntaxKind) boo
 	}
 }
 
-func (b *BallerinaParser) parseFromClause(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseFromClause(isRhsExpr bool, allowActions bool) st.STNode {
 	fromKeyword := b.parseFromKeyword()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_FROM_CLAUSE)
 	inKeyword := b.parseInKeyword()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, allowActions)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, allowActions)
 	return st.CreateFromClauseNode(fromKeyword, typedBindingPattern, inKeyword, expression)
 }
 
-func (b *BallerinaParser) parseFromKeyword() st.STNode {
+func (b *ballerinaParser) parseFromKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FROM_KEYWORD {
 		return b.consume()
@@ -9230,13 +9213,13 @@ func (b *BallerinaParser) parseFromKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseWhereClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseWhereClause(isRhsExpr bool) st.STNode {
 	whereKeyword := b.parseWhereKeyword()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	return st.CreateWhereClauseNode(whereKeyword, expression)
 }
 
-func (b *BallerinaParser) parseWhereKeyword() st.STNode {
+func (b *ballerinaParser) parseWhereKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.WHERE_KEYWORD {
 		return b.consume()
@@ -9246,7 +9229,7 @@ func (b *BallerinaParser) parseWhereKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLimitKeyword() st.STNode {
+func (b *ballerinaParser) parseLimitKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.LIMIT_KEYWORD {
 		return b.consume()
@@ -9256,7 +9239,7 @@ func (b *BallerinaParser) parseLimitKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLetClause(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseLetClause(isRhsExpr bool, allowActions bool) st.STNode {
 	letKeyword := b.parseLetKeyword()
 	letVarDeclarations := b.parseLetVarDeclarations(common.PARSER_RULE_CONTEXT_LET_CLAUSE_LET_VAR_DECL, isRhsExpr,
 		allowActions)
@@ -9265,7 +9248,7 @@ func (b *BallerinaParser) parseLetClause(isRhsExpr bool, allowActions bool) st.S
 	return st.CreateLetClauseNode(letKeyword, letVarDeclarations)
 }
 
-func (b *BallerinaParser) parseGroupByClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseGroupByClause(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_GROUP_BY_CLAUSE)
 	groupKeyword := b.parseGroupKeyword()
 	byKeyword := b.parseByKeyword()
@@ -9276,7 +9259,7 @@ func (b *BallerinaParser) parseGroupByClause(isRhsExpr bool) st.STNode {
 	return st.CreateGroupByClauseNode(groupKeyword, byKeyword, groupingKeys)
 }
 
-func (b *BallerinaParser) parseGroupKeyword() st.STNode {
+func (b *ballerinaParser) parseGroupKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.GROUP_KEYWORD {
 		return b.consume()
@@ -9288,12 +9271,12 @@ func (b *BallerinaParser) parseGroupKeyword() st.STNode {
 	return b.parseGroupKeyword()
 }
 
-func (b *BallerinaParser) getGroupKeyword(token st.STToken) st.STNode {
+func (b *ballerinaParser) getGroupKeyword(token st.STToken) st.STNode {
 	return st.CreateTokenWithDiagnostics(st.GROUP_KEYWORD, token.LeadingMinutiae(), token.TrailingMinutiae(),
 		token.Diagnostics())
 }
 
-func (b *BallerinaParser) parseOrderKeyword() st.STNode {
+func (b *ballerinaParser) parseOrderKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ORDER_KEYWORD {
 		return b.consume()
@@ -9303,7 +9286,7 @@ func (b *BallerinaParser) parseOrderKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseByKeyword() st.STNode {
+func (b *ballerinaParser) parseByKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.BY_KEYWORD {
 		return b.consume()
@@ -9313,7 +9296,7 @@ func (b *BallerinaParser) parseByKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOrderByClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseOrderByClause(isRhsExpr bool) st.STNode {
 	orderKeyword := b.parseOrderKeyword()
 	byKeyword := b.parseByKeyword()
 	orderKeys := b.parseOrderKeyList(isRhsExpr)
@@ -9321,7 +9304,7 @@ func (b *BallerinaParser) parseOrderByClause(isRhsExpr bool) st.STNode {
 	return st.CreateOrderByClauseNode(orderKeyword, byKeyword, orderKeys)
 }
 
-func (b *BallerinaParser) parseGroupingKeyList(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseGroupingKeyList(isRhsExpr bool) st.STNode {
 	var groupingKeys []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfGroupByKeyListElement(nextToken) {
@@ -9344,7 +9327,7 @@ func (b *BallerinaParser) parseGroupingKeyList(isRhsExpr bool) st.STNode {
 	return st.CreateNodeList(groupingKeys...)
 }
 
-func (b *BallerinaParser) parseOrderKeyList(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseOrderKeyList(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ORDER_KEY_LIST)
 	var orderKeys []st.STNode
 	nextToken := b.peek()
@@ -9370,7 +9353,7 @@ func (b *BallerinaParser) parseOrderKeyList(isRhsExpr bool) st.STNode {
 	return st.CreateNodeList(orderKeys...)
 }
 
-func (b *BallerinaParser) isEndOfGroupByKeyListElement(nextToken st.STToken) bool {
+func (b *ballerinaParser) isEndOfGroupByKeyListElement(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
 		return false
@@ -9381,7 +9364,7 @@ func (b *BallerinaParser) isEndOfGroupByKeyListElement(nextToken st.STToken) boo
 	}
 }
 
-func (b *BallerinaParser) isEndOfOrderKeys(nextToken st.STToken) bool {
+func (b *ballerinaParser) isEndOfOrderKeys(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN,
 		st.ASCENDING_KEYWORD,
@@ -9394,7 +9377,7 @@ func (b *BallerinaParser) isEndOfOrderKeys(nextToken st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) isQueryClauseStartToken(nextToken st.STToken) bool {
+func (b *ballerinaParser) isQueryClauseStartToken(nextToken st.STToken) bool {
 	switch nextToken.Kind() {
 	case st.SELECT_KEYWORD,
 		st.LET_KEYWORD,
@@ -9413,7 +9396,7 @@ func (b *BallerinaParser) isQueryClauseStartToken(nextToken st.STToken) bool {
 	}
 }
 
-func (b *BallerinaParser) parseGroupingKeyListMemberEnd() st.STNode {
+func (b *ballerinaParser) parseGroupingKeyListMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
@@ -9429,7 +9412,7 @@ func (b *BallerinaParser) parseGroupingKeyListMemberEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOrderKeyListMemberEnd() st.STNode {
+func (b *ballerinaParser) parseOrderKeyListMemberEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
@@ -9445,18 +9428,18 @@ func (b *BallerinaParser) parseOrderKeyListMemberEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseGroupingKeyVariableDeclaration(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseGroupingKeyVariableDeclaration(isRhsExpr bool) st.STNode {
 	groupingKeyElementTypeDesc := b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY)
 	b.startContext(common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER)
 	groupingKeySimpleBP := b.createCaptureOrWildcardBP(b.parseVariableName())
 	b.endContext()
 	equalsToken := b.parseAssignOp()
-	groupingKeyExpression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	groupingKeyExpression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	return st.CreateGroupingKeyVarDeclarationNode(groupingKeyElementTypeDesc, groupingKeySimpleBP,
 		equalsToken, groupingKeyExpression)
 }
 
-func (b *BallerinaParser) parseGroupingKey(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseGroupingKey(isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
 	nextTokenKind := nextToken.Kind()
 	if (nextTokenKind == st.IDENTIFIER_TOKEN) && (!b.isPossibleGroupingKeyVarDeclaration()) {
@@ -9468,13 +9451,13 @@ func (b *BallerinaParser) parseGroupingKey(isRhsExpr bool) st.STNode {
 	return b.parseGroupingKey(isRhsExpr)
 }
 
-func (b *BallerinaParser) isPossibleGroupingKeyVarDeclaration() bool {
+func (b *ballerinaParser) isPossibleGroupingKeyVarDeclaration() bool {
 	nextNextTokenKind := b.getNextNextToken().Kind()
 	return ((nextNextTokenKind == st.EQUAL_TOKEN) || ((nextNextTokenKind == st.IDENTIFIER_TOKEN) && (b.peekN(3).Kind() == st.EQUAL_TOKEN)))
 }
 
-func (b *BallerinaParser) parseOrderKey(isRhsExpr bool) st.STNode {
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+func (b *ballerinaParser) parseOrderKey(isRhsExpr bool) st.STNode {
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	var orderDirection st.STNode
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -9486,15 +9469,15 @@ func (b *BallerinaParser) parseOrderKey(isRhsExpr bool) st.STNode {
 	return st.CreateOrderKeyNode(expression, orderDirection)
 }
 
-func (b *BallerinaParser) parseSelectClause(isRhsExpr bool, allowActions bool) st.STNode {
+func (b *ballerinaParser) parseSelectClause(isRhsExpr bool, allowActions bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_SELECT_CLAUSE)
 	selectKeyword := b.parseSelectKeyword()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, allowActions)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, allowActions)
 	b.endContext()
 	return st.CreateSelectClauseNode(selectKeyword, expression)
 }
 
-func (b *BallerinaParser) parseSelectKeyword() st.STNode {
+func (b *ballerinaParser) parseSelectKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.SELECT_KEYWORD {
 		return b.consume()
@@ -9504,7 +9487,7 @@ func (b *BallerinaParser) parseSelectKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOnConflictClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseOnConflictClause(isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
 	if (nextToken.Kind() != st.ON_KEYWORD) && (nextToken.Kind() != st.CONFLICT_KEYWORD) {
 		return st.CreateEmptyNode()
@@ -9513,11 +9496,11 @@ func (b *BallerinaParser) parseOnConflictClause(isRhsExpr bool) st.STNode {
 	onKeyword := b.parseOnKeyword()
 	conflictKeyword := b.parseConflictKeyword()
 	b.endContext()
-	expr := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	expr := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	return st.CreateOnConflictClauseNode(onKeyword, conflictKeyword, expr)
 }
 
-func (b *BallerinaParser) parseConflictKeyword() st.STNode {
+func (b *ballerinaParser) parseConflictKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.CONFLICT_KEYWORD {
 		return b.consume()
@@ -9527,13 +9510,13 @@ func (b *BallerinaParser) parseConflictKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseLimitClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseLimitClause(isRhsExpr bool) st.STNode {
 	limitKeyword := b.parseLimitKeyword()
-	expr := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	expr := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	return st.CreateLimitClauseNode(limitKeyword, expr)
 }
 
-func (b *BallerinaParser) parseJoinClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseJoinClause(isRhsExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_JOIN_CLAUSE)
 	var outerKeyword st.STNode
 	nextToken := b.peek()
@@ -9545,28 +9528,28 @@ func (b *BallerinaParser) parseJoinClause(isRhsExpr bool) st.STNode {
 	joinKeyword := b.parseJoinKeyword()
 	typedBindingPattern := b.parseTypedBindingPatternWithContext(common.PARSER_RULE_CONTEXT_JOIN_CLAUSE)
 	inKeyword := b.parseInKeyword()
-	expression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	expression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	b.endContext()
 	onCondition := b.parseOnClause(isRhsExpr)
 	return st.CreateJoinClauseNode(outerKeyword, joinKeyword, typedBindingPattern, inKeyword, expression,
 		onCondition)
 }
 
-func (b *BallerinaParser) parseOnClause(isRhsExpr bool) st.STNode {
+func (b *ballerinaParser) parseOnClause(isRhsExpr bool) st.STNode {
 	nextToken := b.peek()
 	if b.isQueryClauseStartToken(nextToken) {
 		return b.createMissingOnClauseNode()
 	}
 	b.startContext(common.PARSER_RULE_CONTEXT_ON_CLAUSE)
 	onKeyword := b.parseOnKeyword()
-	onExpression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	onExpression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	equalsKeyword := b.parseEqualsKeyword()
 	b.endContext()
-	equalsExpression := b.parseExpressionWithPrecedence(OPERATOR_PRECEDENCE_QUERY, isRhsExpr, false)
+	equalsExpression := b.parseExpressionWithPrecedence(operatorPrecedenceQuery, isRhsExpr, false)
 	return st.CreateOnClauseNode(onKeyword, onExpression, equalsKeyword, equalsExpression)
 }
 
-func (b *BallerinaParser) createMissingOnClauseNode() st.STNode {
+func (b *ballerinaParser) createMissingOnClauseNode() st.STNode {
 	onKeyword := st.CreateMissingTokenWithDiagnostics(st.ON_KEYWORD,
 		&common.ERROR_MISSING_ON_KEYWORD)
 	identifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
@@ -9578,7 +9561,7 @@ func (b *BallerinaParser) createMissingOnClauseNode() st.STNode {
 	return st.CreateOnClauseNode(onKeyword, onExpression, equalsKeyword, equalsExpression)
 }
 
-func (b *BallerinaParser) parseStartAction(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseStartAction(annots st.STNode) st.STNode {
 	startKeyword := b.parseStartKeyword()
 	expr := b.parseActionOrExpression()
 	switch expr.Kind() {
@@ -9605,7 +9588,7 @@ func (b *BallerinaParser) parseStartAction(annots st.STNode) st.STNode {
 	return st.CreateStartActionNode(b.getAnnotations(annots), startKeyword, expr)
 }
 
-func (b *BallerinaParser) generateValidExprForStartAction(expr st.STNode) st.STNode {
+func (b *ballerinaParser) generateValidExprForStartAction(expr st.STNode) st.STNode {
 	openParenToken := st.CreateMissingTokenWithDiagnostics(st.OPEN_PAREN_TOKEN,
 		&common.ERROR_MISSING_OPEN_PAREN_TOKEN)
 	arguments := st.CreateEmptyNodeList()
@@ -9633,7 +9616,7 @@ func (b *BallerinaParser) generateValidExprForStartAction(expr st.STNode) st.STN
 	}
 }
 
-func (b *BallerinaParser) parseStartKeyword() st.STNode {
+func (b *ballerinaParser) parseStartKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.START_KEYWORD {
 		return b.consume()
@@ -9643,13 +9626,13 @@ func (b *BallerinaParser) parseStartKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFlushAction() st.STNode {
+func (b *ballerinaParser) parseFlushAction() st.STNode {
 	flushKeyword := b.parseFlushKeyword()
 	peerWorker := b.parseOptionalPeerWorkerName()
 	return st.CreateFlushActionNode(flushKeyword, peerWorker)
 }
 
-func (b *BallerinaParser) parseFlushKeyword() st.STNode {
+func (b *ballerinaParser) parseFlushKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.FLUSH_KEYWORD {
 		return b.consume()
@@ -9659,7 +9642,7 @@ func (b *BallerinaParser) parseFlushKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalPeerWorkerName() st.STNode {
+func (b *ballerinaParser) parseOptionalPeerWorkerName() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.IDENTIFIER_TOKEN, st.FUNCTION_KEYWORD:
@@ -9669,25 +9652,25 @@ func (b *BallerinaParser) parseOptionalPeerWorkerName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseIntersectionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
+func (b *ballerinaParser) parseIntersectionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	bitwiseAndToken := b.consume()
 	rightTypeDesc := b.parseTypeDescriptorInternalWithPrecedence(nil, context, isTypedBindingPattern, false,
-		TYPE_PRECEDENCE_INTERSECTION)
+		typePrecedenceIntersection)
 	return b.mergeTypesWithIntersection(leftTypeDesc, bitwiseAndToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) createIntersectionTypeDesc(leftTypeDesc st.STNode, bitwiseAndToken st.STNode, rightTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) createIntersectionTypeDesc(leftTypeDesc st.STNode, bitwiseAndToken st.STNode, rightTypeDesc st.STNode) st.STNode {
 	leftTypeDesc = b.validateForUsageOfVar(leftTypeDesc)
 	rightTypeDesc = b.validateForUsageOfVar(rightTypeDesc)
 	return st.CreateIntersectionTypeDescriptorNode(leftTypeDesc, bitwiseAndToken, rightTypeDesc)
 }
 
-func (b *BallerinaParser) parseSingletonTypeDesc() st.STNode {
+func (b *ballerinaParser) parseSingletonTypeDesc() st.STNode {
 	simpleContExpr := b.parseSimpleConstExpr()
 	return st.CreateSingletonTypeDescriptorNode(simpleContExpr)
 }
 
-func (b *BallerinaParser) parseSignedIntOrFloat() st.STNode {
+func (b *ballerinaParser) parseSignedIntOrFloat() st.STNode {
 	operator := b.parseUnaryOperator()
 	var literal st.STNode
 	nextToken := b.peek()
@@ -9705,7 +9688,7 @@ func (b *BallerinaParser) parseSignedIntOrFloat() st.STNode {
 	return st.CreateUnaryExpressionNode(operator, literal)
 }
 
-func (b *BallerinaParser) isValidExpressionStart(nextTokenKind st.SyntaxKind, nextTokenIndex int) bool {
+func (b *ballerinaParser) isValidExpressionStart(nextTokenKind st.SyntaxKind, nextTokenIndex int) bool {
 	nextTokenIndex++
 	switch nextTokenKind {
 	case st.DECIMAL_INTEGER_LITERAL_TOKEN,
@@ -9751,13 +9734,13 @@ func (b *BallerinaParser) isValidExpressionStart(nextTokenKind st.SyntaxKind, ne
 	}
 }
 
-func (b *BallerinaParser) parseSyncSendAction(expression st.STNode) st.STNode {
+func (b *ballerinaParser) parseSyncSendAction(expression st.STNode) st.STNode {
 	syncSendToken := b.parseSyncSendToken()
 	peerWorker := b.parsePeerWorkerName()
 	return st.CreateSyncSendActionNode(expression, syncSendToken, peerWorker)
 }
 
-func (b *BallerinaParser) parsePeerWorkerName() st.STNode {
+func (b *ballerinaParser) parsePeerWorkerName() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.IDENTIFIER_TOKEN, st.FUNCTION_KEYWORD:
@@ -9768,7 +9751,7 @@ func (b *BallerinaParser) parsePeerWorkerName() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSyncSendToken() st.STNode {
+func (b *ballerinaParser) parseSyncSendToken() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.SYNC_SEND_TOKEN {
 		return b.consume()
@@ -9778,13 +9761,13 @@ func (b *BallerinaParser) parseSyncSendToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReceiveAction() st.STNode {
+func (b *ballerinaParser) parseReceiveAction() st.STNode {
 	leftArrow := b.parseLeftArrowToken()
 	receiveWorkers := b.parseReceiveWorkers()
 	return st.CreateReceiveActionNode(leftArrow, receiveWorkers)
 }
 
-func (b *BallerinaParser) parseReceiveWorkers() st.STNode {
+func (b *ballerinaParser) parseReceiveWorkers() st.STNode {
 	switch b.peek().Kind() {
 	case st.FUNCTION_KEYWORD, st.IDENTIFIER_TOKEN:
 		return b.parseSingleOrAlternateReceiveWorkers()
@@ -9796,7 +9779,7 @@ func (b *BallerinaParser) parseReceiveWorkers() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSingleOrAlternateReceiveWorkers() st.STNode {
+func (b *ballerinaParser) parseSingleOrAlternateReceiveWorkers() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_SINGLE_OR_ALTERNATE_WORKER)
 	var workers []st.STNode
 	peerWorker := b.parsePeerWorkerName()
@@ -9817,7 +9800,7 @@ func (b *BallerinaParser) parseSingleOrAlternateReceiveWorkers() st.STNode {
 	return st.CreateAlternateReceiveNode(st.CreateNodeList(workers...))
 }
 
-func (b *BallerinaParser) parseMultipleReceiveWorkers() st.STNode {
+func (b *ballerinaParser) parseMultipleReceiveWorkers() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MULTI_RECEIVE_WORKERS)
 	openBrace := b.parseOpenBrace()
 	receiveFields := b.parseReceiveFields()
@@ -9828,7 +9811,7 @@ func (b *BallerinaParser) parseMultipleReceiveWorkers() st.STNode {
 	return st.CreateReceiveFieldsNode(openBrace, receiveFields, closeBrace)
 }
 
-func (b *BallerinaParser) parseReceiveFields() st.STNode {
+func (b *ballerinaParser) parseReceiveFields() st.STNode {
 	var receiveFields []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfReceiveFields(nextToken.Kind()) {
@@ -9851,7 +9834,7 @@ func (b *BallerinaParser) parseReceiveFields() st.STNode {
 	return st.CreateNodeList(receiveFields...)
 }
 
-func (b *BallerinaParser) isEndOfReceiveFields(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfReceiveFields(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
@@ -9860,7 +9843,7 @@ func (b *BallerinaParser) isEndOfReceiveFields(nextTokenKind st.SyntaxKind) bool
 	}
 }
 
-func (b *BallerinaParser) parseReceiveFieldEnd() st.STNode {
+func (b *ballerinaParser) parseReceiveFieldEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -9872,7 +9855,7 @@ func (b *BallerinaParser) parseReceiveFieldEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseReceiveField() st.STNode {
+func (b *ballerinaParser) parseReceiveField() st.STNode {
 	switch b.peek().Kind() {
 	case st.FUNCTION_KEYWORD:
 		functionKeyword := b.consume()
@@ -9886,7 +9869,7 @@ func (b *BallerinaParser) parseReceiveField() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) createReceiveField(identifier st.STNode) st.STNode {
+func (b *ballerinaParser) createReceiveField(identifier st.STNode) st.STNode {
 	if b.peek().Kind() != st.COLON_TOKEN {
 		return st.CreateSimpleNameReferenceNode(identifier)
 	}
@@ -9896,7 +9879,7 @@ func (b *BallerinaParser) createReceiveField(identifier st.STNode) st.STNode {
 	return st.CreateReceiveFieldNode(identifier, colon, peerWorker)
 }
 
-func (b *BallerinaParser) parseLeftArrowToken() st.STNode {
+func (b *ballerinaParser) parseLeftArrowToken() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.LEFT_ARROW_TOKEN {
 		return b.consume()
@@ -9906,7 +9889,7 @@ func (b *BallerinaParser) parseLeftArrowToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSignedRightShiftToken() st.STNode {
+func (b *ballerinaParser) parseSignedRightShiftToken() st.STNode {
 	firstToken := b.consume()
 	if firstToken.Kind() == st.DOUBLE_GT_TOKEN {
 		return firstToken
@@ -9922,7 +9905,7 @@ func (b *BallerinaParser) parseSignedRightShiftToken() st.STNode {
 	return doubleGTToken
 }
 
-func (b *BallerinaParser) parseUnsignedRightShiftToken() st.STNode {
+func (b *ballerinaParser) parseUnsignedRightShiftToken() st.STNode {
 	firstToken := b.consume()
 	if firstToken.Kind() == st.TRIPPLE_GT_TOKEN {
 		return firstToken
@@ -9942,7 +9925,7 @@ func (b *BallerinaParser) parseUnsignedRightShiftToken() st.STNode {
 	return unsignedRightShiftToken
 }
 
-func (b *BallerinaParser) parseWaitAction() st.STNode {
+func (b *ballerinaParser) parseWaitAction() st.STNode {
 	waitKeyword := b.parseWaitKeyword()
 	if b.peek().Kind() == st.OPEN_BRACE_TOKEN {
 		return b.parseMultiWaitAction(waitKeyword)
@@ -9950,7 +9933,7 @@ func (b *BallerinaParser) parseWaitAction() st.STNode {
 	return b.parseSingleOrAlternateWaitAction(waitKeyword)
 }
 
-func (b *BallerinaParser) parseWaitKeyword() st.STNode {
+func (b *ballerinaParser) parseWaitKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.WAIT_KEYWORD {
 		return b.consume()
@@ -9960,7 +9943,7 @@ func (b *BallerinaParser) parseWaitKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseSingleOrAlternateWaitAction(waitKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseSingleOrAlternateWaitAction(waitKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ALTERNATE_WAIT_EXPRS)
 	nextToken := b.peek()
 	if b.isEndOfWaitFutureExprList(nextToken.Kind()) {
@@ -9989,7 +9972,7 @@ func (b *BallerinaParser) parseSingleOrAlternateWaitAction(waitKeyword st.STNode
 	return st.CreateWaitActionNode(waitKeyword, waitFutureExprList[0])
 }
 
-func (b *BallerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN, st.SEMICOLON_TOKEN, st.OPEN_BRACE_TOKEN:
 		return true
@@ -9998,7 +9981,7 @@ func (b *BallerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind)
 	}
 }
 
-func (b *BallerinaParser) parseWaitFutureExpr() st.STNode {
+func (b *ballerinaParser) parseWaitFutureExpr() st.STNode {
 	waitFutureExpr := b.parseActionOrExpression()
 	if waitFutureExpr.Kind() == st.MAPPING_CONSTRUCTOR {
 		waitFutureExpr = st.AddDiagnostic(waitFutureExpr,
@@ -10009,7 +9992,7 @@ func (b *BallerinaParser) parseWaitFutureExpr() st.STNode {
 	return waitFutureExpr
 }
 
-func (b *BallerinaParser) parseWaitFutureExprEnd() st.STNode {
+func (b *ballerinaParser) parseWaitFutureExprEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.PIPE_TOKEN:
@@ -10023,7 +10006,7 @@ func (b *BallerinaParser) parseWaitFutureExprEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMultiWaitAction(waitKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseMultiWaitAction(waitKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MULTI_WAIT_FIELDS)
 	openBrace := b.parseOpenBrace()
 	waitFields := b.parseWaitFields()
@@ -10035,7 +10018,7 @@ func (b *BallerinaParser) parseMultiWaitAction(waitKeyword st.STNode) st.STNode 
 	return st.CreateWaitActionNode(waitKeyword, waitFieldsNode)
 }
 
-func (b *BallerinaParser) parseWaitFields() st.STNode {
+func (b *ballerinaParser) parseWaitFields() st.STNode {
 	var waitFields []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfWaitFields(nextToken.Kind()) {
@@ -10058,7 +10041,7 @@ func (b *BallerinaParser) parseWaitFields() st.STNode {
 	return st.CreateNodeList(waitFields...)
 }
 
-func (b *BallerinaParser) isEndOfWaitFields(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfWaitFields(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
@@ -10067,7 +10050,7 @@ func (b *BallerinaParser) isEndOfWaitFields(nextTokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseWaitFieldEnd() st.STNode {
+func (b *ballerinaParser) parseWaitFieldEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -10079,7 +10062,7 @@ func (b *BallerinaParser) parseWaitFieldEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseWaitField() st.STNode {
+func (b *ballerinaParser) parseWaitField() st.STNode {
 	switch b.peek().Kind() {
 	case st.IDENTIFIER_TOKEN:
 		identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_WAIT_FIELD_NAME)
@@ -10091,7 +10074,7 @@ func (b *BallerinaParser) parseWaitField() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) createQualifiedWaitField(identifier st.STNode) st.STNode {
+func (b *ballerinaParser) createQualifiedWaitField(identifier st.STNode) st.STNode {
 	if b.peek().Kind() != st.COLON_TOKEN {
 		return identifier
 	}
@@ -10100,13 +10083,13 @@ func (b *BallerinaParser) createQualifiedWaitField(identifier st.STNode) st.STNo
 	return st.CreateWaitFieldNode(identifier, colon, waitFutureExpr)
 }
 
-func (b *BallerinaParser) parseAnnotAccessExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseAnnotAccessExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	annotAccessToken := b.parseAnnotChainingToken()
 	annotTagReference := b.parseFieldAccessIdentifier(isInConditionalExpr)
 	return st.CreateAnnotAccessExpressionNode(lhsExpr, annotAccessToken, annotTagReference)
 }
 
-func (b *BallerinaParser) parseAnnotChainingToken() st.STNode {
+func (b *ballerinaParser) parseAnnotChainingToken() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ANNOT_CHAINING_TOKEN {
 		return b.consume()
@@ -10116,7 +10099,7 @@ func (b *BallerinaParser) parseAnnotChainingToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldAccessIdentifier(isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseFieldAccessIdentifier(isInConditionalExpr bool) st.STNode {
 	nextToken := b.peek()
 	if !b.isPredeclaredIdentifier(nextToken.Kind()) {
 		var identifier st.STNode = st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
@@ -10126,7 +10109,7 @@ func (b *BallerinaParser) parseFieldAccessIdentifier(isInConditionalExpr bool) s
 	return b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_FIELD_ACCESS_IDENTIFIER, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) parseQueryAction(queryConstructType st.STNode, queryPipeline st.STNode, selectClause st.STNode, collectClause st.STNode) st.STNode {
+func (b *ballerinaParser) parseQueryAction(queryConstructType st.STNode, queryPipeline st.STNode, selectClause st.STNode, collectClause st.STNode) st.STNode {
 	if queryConstructType != nil {
 		queryPipeline = st.CloneWithLeadingInvalidNodeMinutiae(queryPipeline, queryConstructType,
 			&common.ERROR_QUERY_CONSTRUCT_TYPE_IN_QUERY_ACTION)
@@ -10146,7 +10129,7 @@ func (b *BallerinaParser) parseQueryAction(queryConstructType st.STNode, queryPi
 	return st.CreateQueryActionNode(queryPipeline, doKeyword, blockStmt)
 }
 
-func (b *BallerinaParser) parseDoKeyword() st.STNode {
+func (b *ballerinaParser) parseDoKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.DO_KEYWORD {
 		return b.consume()
@@ -10156,13 +10139,13 @@ func (b *BallerinaParser) parseDoKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalFieldAccessExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseOptionalFieldAccessExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	optionalFieldAccessToken := b.parseOptionalChainingToken()
 	fieldName := b.parseFieldAccessIdentifier(isInConditionalExpr)
 	return st.CreateOptionalFieldAccessExpressionNode(lhsExpr, optionalFieldAccessToken, fieldName)
 }
 
-func (b *BallerinaParser) parseOptionalChainingToken() st.STNode {
+func (b *ballerinaParser) parseOptionalChainingToken() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.OPTIONAL_CHAINING_TOKEN {
 		return b.consume()
@@ -10172,10 +10155,10 @@ func (b *BallerinaParser) parseOptionalChainingToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseConditionalExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseConditionalExpression(lhsExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_CONDITIONAL_EXPRESSION)
 	questionMark := b.parseQuestionMark()
-	middleExpr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET, true, false, true)
+	middleExpr := b.parseExpressionWithConditional(operatorPrecedenceAnonFuncOrLet, true, false, true)
 	if b.peek().Kind() != st.COLON_TOKEN {
 		if middleExpr.Kind() == st.CONDITIONAL_EXPRESSION {
 			innerConditionalExpr, ok := middleExpr.(*st.STConditionalExpressionNode)
@@ -10214,7 +10197,7 @@ func (b *BallerinaParser) parseConditionalExpression(lhsExpr st.STNode, isInCond
 	return b.parseConditionalExprRhs(lhsExpr, questionMark, middleExpr, isInConditionalExpr)
 }
 
-func (b *BallerinaParser) generateConditionalExprForRightMost(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, rightMostQualifiedNameRef st.STNode) st.STNode {
+func (b *ballerinaParser) generateConditionalExprForRightMost(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, rightMostQualifiedNameRef st.STNode) st.STNode {
 	qualifiedNameRef, ok := rightMostQualifiedNameRef.(*st.STQualifiedNameReferenceNode)
 	if !ok {
 		panic("expected STQualifiedNameReferenceNode")
@@ -10226,7 +10209,7 @@ func (b *BallerinaParser) generateConditionalExprForRightMost(lhsExpr st.STNode,
 		endExpr)
 }
 
-func (b *BallerinaParser) generateConditionalExprForLeftMost(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, leftMostQualifiedNameRef st.STNode) st.STNode {
+func (b *ballerinaParser) generateConditionalExprForLeftMost(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, leftMostQualifiedNameRef st.STNode) st.STNode {
 	qualifiedNameRef, ok := leftMostQualifiedNameRef.(*st.STQualifiedNameReferenceNode)
 	if !ok {
 		panic("expected STQualifiedNameReferenceNode")
@@ -10238,15 +10221,15 @@ func (b *BallerinaParser) generateConditionalExprForLeftMost(lhsExpr st.STNode, 
 		endExpr)
 }
 
-func (b *BallerinaParser) parseConditionalExprRhs(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, isInConditionalExpr bool) st.STNode {
+func (b *ballerinaParser) parseConditionalExprRhs(lhsExpr st.STNode, questionMark st.STNode, middleExpr st.STNode, isInConditionalExpr bool) st.STNode {
 	colon := b.parseColon()
 	b.endContext()
-	endExpr := b.parseExpressionWithConditional(OPERATOR_PRECEDENCE_ANON_FUNC_OR_LET, true, false,
+	endExpr := b.parseExpressionWithConditional(operatorPrecedenceAnonFuncOrLet, true, false,
 		isInConditionalExpr)
 	return st.CreateConditionalExpressionNode(lhsExpr, questionMark, middleExpr, colon, endExpr)
 }
 
-func (b *BallerinaParser) parseEnumDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseEnumDeclaration(metadata st.STNode, qualifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MODULE_ENUM_DECLARATION)
 	enumKeywordToken := b.parseEnumKeyword()
 	identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_MODULE_ENUM_NAME)
@@ -10261,7 +10244,7 @@ func (b *BallerinaParser) parseEnumDeclaration(metadata st.STNode, qualifier st.
 		&common.ERROR_MISSING_ENUM_MEMBER)
 }
 
-func (b *BallerinaParser) parseEnumKeyword() st.STNode {
+func (b *ballerinaParser) parseEnumKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ENUM_KEYWORD {
 		return b.consume()
@@ -10271,7 +10254,7 @@ func (b *BallerinaParser) parseEnumKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseEnumMemberList() st.STNode {
+func (b *ballerinaParser) parseEnumMemberList() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ENUM_MEMBER_LIST)
 	if b.peek().Kind() == st.CLOSE_BRACE_TOKEN {
 		return st.CreateEmptyNodeList()
@@ -10293,7 +10276,7 @@ func (b *BallerinaParser) parseEnumMemberList() st.STNode {
 	return st.CreateNodeList(enumMemberList...)
 }
 
-func (b *BallerinaParser) parseEnumMember() st.STNode {
+func (b *ballerinaParser) parseEnumMember() st.STNode {
 	var metadata st.STNode
 	switch b.peek().Kind() {
 	case st.DOCUMENTATION_STRING, st.AT_TOKEN:
@@ -10305,7 +10288,7 @@ func (b *BallerinaParser) parseEnumMember() st.STNode {
 	return b.parseEnumMemberRhs(metadata, identifierNode)
 }
 
-func (b *BallerinaParser) parseEnumMemberRhs(metadata st.STNode, identifierNode st.STNode) st.STNode {
+func (b *ballerinaParser) parseEnumMemberRhs(metadata st.STNode, identifierNode st.STNode) st.STNode {
 	var equalToken st.STNode
 	var constExprNode st.STNode
 	switch b.peek().Kind() {
@@ -10322,7 +10305,7 @@ func (b *BallerinaParser) parseEnumMemberRhs(metadata st.STNode, identifierNode 
 	return st.CreateEnumMemberNode(metadata, identifierNode, equalToken, constExprNode)
 }
 
-func (b *BallerinaParser) parseEnumMemberEnd() st.STNode {
+func (b *ballerinaParser) parseEnumMemberEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -10334,7 +10317,7 @@ func (b *BallerinaParser) parseEnumMemberEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTransactionStmtOrVarDecl(annots st.STNode, qualifiers []st.STNode, transactionKeyword st.STToken) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseTransactionStmtOrVarDecl(annots st.STNode, qualifiers []st.STNode, transactionKeyword st.STToken) (st.STNode, []st.STNode) {
 	switch b.peek().Kind() {
 	case st.OPEN_BRACE_TOKEN:
 		b.reportInvalidStatementAnnots(annots, qualifiers)
@@ -10348,7 +10331,7 @@ func (b *BallerinaParser) parseTransactionStmtOrVarDecl(annots st.STNode, qualif
 		fallthrough
 	default:
 		solution := b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_TRANSACTION_STMT_RHS_OR_TYPE_REF)
-		if (solution.Action == ACTION_KEEP) || ((solution.Action == ACTION_INSERT) && (solution.TokenKind == st.COLON_TOKEN)) {
+		if (solution.Action == actionKeep) || ((solution.Action == actionInsert) && (solution.TokenKind == st.COLON_TOKEN)) {
 			typeDesc := b.parseQualifiedIdentifierWithPredeclPrefix(transactionKeyword, false)
 			return b.parseVarDeclTypeDescRhs(typeDesc, annots, qualifiers, true, false)
 		}
@@ -10356,7 +10339,7 @@ func (b *BallerinaParser) parseTransactionStmtOrVarDecl(annots st.STNode, qualif
 	}
 }
 
-func (b *BallerinaParser) parseTransactionStatement(transactionKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseTransactionStatement(transactionKeyword st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_TRANSACTION_STMT)
 	blockStmt := b.parseBlockNode()
 	b.endContext()
@@ -10364,12 +10347,12 @@ func (b *BallerinaParser) parseTransactionStatement(transactionKeyword st.STNode
 	return st.CreateTransactionStatementNode(transactionKeyword, blockStmt, onFailClause)
 }
 
-func (b *BallerinaParser) parseCommitAction() st.STNode {
+func (b *ballerinaParser) parseCommitAction() st.STNode {
 	commitKeyword := b.parseCommitKeyword()
 	return st.CreateCommitActionNode(commitKeyword)
 }
 
-func (b *BallerinaParser) parseCommitKeyword() st.STNode {
+func (b *ballerinaParser) parseCommitKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.COMMIT_KEYWORD {
 		return b.consume()
@@ -10379,14 +10362,14 @@ func (b *BallerinaParser) parseCommitKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRetryStatement() st.STNode {
+func (b *ballerinaParser) parseRetryStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_RETRY_STMT)
 	retryKeyword := b.parseRetryKeyword()
 	retryStmt := b.parseRetryKeywordRhs(retryKeyword)
 	return retryStmt
 }
 
-func (b *BallerinaParser) parseRetryKeywordRhs(retryKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseRetryKeywordRhs(retryKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.LT_TOKEN:
@@ -10401,7 +10384,7 @@ func (b *BallerinaParser) parseRetryKeywordRhs(retryKeyword st.STNode) st.STNode
 	}
 }
 
-func (b *BallerinaParser) parseRetryTypeParamRhs(retryKeyword st.STNode, typeParam st.STNode) st.STNode {
+func (b *ballerinaParser) parseRetryTypeParamRhs(retryKeyword st.STNode, typeParam st.STNode) st.STNode {
 	var args st.STNode
 	switch b.peek().Kind() {
 	case st.OPEN_PAREN_TOKEN:
@@ -10419,7 +10402,7 @@ func (b *BallerinaParser) parseRetryTypeParamRhs(retryKeyword st.STNode, typePar
 	return st.CreateRetryStatementNode(retryKeyword, typeParam, args, blockStmt, onFailClause)
 }
 
-func (b *BallerinaParser) parseRetryBody() st.STNode {
+func (b *ballerinaParser) parseRetryBody() st.STNode {
 	switch b.peek().Kind() {
 	case st.OPEN_BRACE_TOKEN:
 		return b.parseBlockNode()
@@ -10431,7 +10414,7 @@ func (b *BallerinaParser) parseRetryBody() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseOptionalOnFailClause() st.STNode {
+func (b *ballerinaParser) parseOptionalOnFailClause() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.ON_KEYWORD {
 		return b.parseOnFailClause()
@@ -10443,7 +10426,7 @@ func (b *BallerinaParser) parseOptionalOnFailClause() st.STNode {
 	return b.parseOptionalOnFailClause()
 }
 
-func (b *BallerinaParser) isEndOfRegularCompoundStmt(nodeKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfRegularCompoundStmt(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
 	case st.CLOSE_BRACE_TOKEN, st.SEMICOLON_TOKEN, st.AT_TOKEN, st.EOF_TOKEN:
 		return true
@@ -10452,7 +10435,7 @@ func (b *BallerinaParser) isEndOfRegularCompoundStmt(nodeKind st.SyntaxKind) boo
 	}
 }
 
-func (b *BallerinaParser) isStatementStartingToken(nodeKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isStatementStartingToken(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
 	case st.FINAL_KEYWORD, st.IF_KEYWORD, st.WHILE_KEYWORD, st.DO_KEYWORD,
 		st.PANIC_KEYWORD, st.CONTINUE_KEYWORD, st.BREAK_KEYWORD, st.RETURN_KEYWORD,
@@ -10474,7 +10457,7 @@ func (b *BallerinaParser) isStatementStartingToken(nodeKind st.SyntaxKind) bool 
 	}
 }
 
-func (b *BallerinaParser) parseOnFailClause() st.STNode {
+func (b *ballerinaParser) parseOnFailClause() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ON_FAIL_CLAUSE)
 	onKeyword := b.parseOnKeyword()
 	failKeyword := b.parseFailKeyword()
@@ -10485,7 +10468,7 @@ func (b *BallerinaParser) parseOnFailClause() st.STNode {
 		blockStatement)
 }
 
-func (b *BallerinaParser) parseOnfailOptionalBP() st.STNode {
+func (b *ballerinaParser) parseOnfailOptionalBP() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.OPEN_BRACE_TOKEN {
 		return st.CreateEmptyNode()
@@ -10497,13 +10480,13 @@ func (b *BallerinaParser) parseOnfailOptionalBP() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPattern() st.STNode {
-	typeDescriptor := b.parseTypeDescriptorWithoutQualifiers(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true, false, TYPE_PRECEDENCE_DEFAULT)
+func (b *ballerinaParser) parseTypedBindingPattern() st.STNode {
+	typeDescriptor := b.parseTypeDescriptorWithoutQualifiers(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true, false, typePrecedenceDefault)
 	bindingPattern := b.parseBindingPattern()
 	return st.CreateTypedBindingPatternNode(typeDescriptor, bindingPattern)
 }
 
-func (b *BallerinaParser) parseRetryKeyword() st.STNode {
+func (b *ballerinaParser) parseRetryKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.RETRY_KEYWORD {
 		return b.consume()
@@ -10513,7 +10496,7 @@ func (b *BallerinaParser) parseRetryKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRollbackStatement() st.STNode {
+func (b *ballerinaParser) parseRollbackStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ROLLBACK_STMT)
 	rollbackKeyword := b.parseRollbackKeyword()
 	var expression st.STNode
@@ -10527,7 +10510,7 @@ func (b *BallerinaParser) parseRollbackStatement() st.STNode {
 	return st.CreateRollbackStatementNode(rollbackKeyword, expression, semicolon)
 }
 
-func (b *BallerinaParser) parseRollbackKeyword() st.STNode {
+func (b *ballerinaParser) parseRollbackKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.ROLLBACK_KEYWORD {
 		return b.consume()
@@ -10537,12 +10520,12 @@ func (b *BallerinaParser) parseRollbackKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTransactionalExpression() st.STNode {
+func (b *ballerinaParser) parseTransactionalExpression() st.STNode {
 	transactionalKeyword := b.parseTransactionalKeyword()
 	return st.CreateTransactionalExpressionNode(transactionalKeyword)
 }
 
-func (b *BallerinaParser) parseTransactionalKeyword() st.STNode {
+func (b *ballerinaParser) parseTransactionalKeyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.TRANSACTIONAL_KEYWORD {
 		return b.consume()
@@ -10552,7 +10535,7 @@ func (b *BallerinaParser) parseTransactionalKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseByteArrayLiteral() st.STNode {
+func (b *ballerinaParser) parseByteArrayLiteral() st.STNode {
 	var ty st.STNode
 	if b.peek().Kind() == st.BASE16_KEYWORD {
 		ty = b.parseBase16Keyword()
@@ -10572,7 +10555,7 @@ func (b *BallerinaParser) parseByteArrayLiteral() st.STNode {
 	return b.parseByteArrayLiteralWithContent(ty, startingBackTick, content)
 }
 
-func (b *BallerinaParser) parseByteArrayLiteralWithContent(typeKeyword st.STNode, startingBackTick st.STNode, byteArrayContent st.STNode) st.STNode {
+func (b *ballerinaParser) parseByteArrayLiteralWithContent(typeKeyword st.STNode, startingBackTick st.STNode, byteArrayContent st.STNode) st.STNode {
 	content := st.CreateEmptyNode()
 	newStartingBackTick := startingBackTick
 	items, ok := byteArrayContent.(*st.STNodeList)
@@ -10606,7 +10589,7 @@ func (b *BallerinaParser) parseByteArrayLiteralWithContent(typeKeyword st.STNode
 	return st.CreateByteArrayLiteralNode(typeKeyword, newStartingBackTick, content, endingBackTick)
 }
 
-func (b *BallerinaParser) parseBase16Keyword() st.STNode {
+func (b *ballerinaParser) parseBase16Keyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.BASE16_KEYWORD {
 		return b.consume()
@@ -10616,7 +10599,7 @@ func (b *BallerinaParser) parseBase16Keyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBase64Keyword() st.STNode {
+func (b *ballerinaParser) parseBase64Keyword() st.STNode {
 	token := b.peek()
 	if token.Kind() == st.BASE64_KEYWORD {
 		return b.consume()
@@ -10626,7 +10609,7 @@ func (b *BallerinaParser) parseBase64Keyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseByteArrayContent() st.STNode {
+func (b *ballerinaParser) parseByteArrayContent() st.STNode {
 	nextToken := b.peek()
 	var items []st.STNode
 	for !b.isEndOfBacktickContent(nextToken.Kind()) {
@@ -10637,17 +10620,17 @@ func (b *BallerinaParser) parseByteArrayContent() st.STNode {
 	return st.CreateNodeList(items...)
 }
 
-func (b *BallerinaParser) parseXMLFilterExpression(lhsExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseXMLFilterExpression(lhsExpr st.STNode) st.STNode {
 	xmlNamePatternChain := b.parseXMLFilterExpressionRhs()
 	return st.CreateXMLFilterExpressionNode(lhsExpr, xmlNamePatternChain)
 }
 
-func (b *BallerinaParser) parseXMLFilterExpressionRhs() st.STNode {
+func (b *ballerinaParser) parseXMLFilterExpressionRhs() st.STNode {
 	dotLTToken := b.parseDotLTToken()
 	return b.parseXMLNamePatternChain(dotLTToken)
 }
 
-func (b *BallerinaParser) parseXMLNamePatternChain(startToken st.STNode) st.STNode {
+func (b *ballerinaParser) parseXMLNamePatternChain(startToken st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_NAME_PATTERN)
 	xmlNamePattern := b.parseXMLNamePattern()
 	gtToken := b.parseGTToken()
@@ -10657,7 +10640,7 @@ func (b *BallerinaParser) parseXMLNamePatternChain(startToken st.STNode) st.STNo
 	return st.CreateXMLNamePatternChainingNode(startToken, xmlNamePattern, gtToken)
 }
 
-func (b *BallerinaParser) parseXMLStepExtends() st.STNode {
+func (b *ballerinaParser) parseXMLStepExtends() st.STNode {
 	nextToken := b.peek()
 	if b.isEndOfXMLStepExtend(nextToken.Kind()) {
 		return st.CreateEmptyNodeList()
@@ -10680,7 +10663,7 @@ func (b *BallerinaParser) parseXMLStepExtends() st.STNode {
 	return st.CreateNodeList(xmlStepExtendList...)
 }
 
-func (b *BallerinaParser) parseXMLIndexedStepExtend() st.STNode {
+func (b *ballerinaParser) parseXMLIndexedStepExtend() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MEMBER_ACCESS_KEY_EXPR)
 	openBracket := b.parseOpenBracket()
 	keyExpr := b.parseKeyExpr(true)
@@ -10689,21 +10672,21 @@ func (b *BallerinaParser) parseXMLIndexedStepExtend() st.STNode {
 	return st.CreateXMLStepIndexedExtendNode(openBracket, keyExpr, closeBracket)
 }
 
-func (b *BallerinaParser) parseXMLStepMethodCallExtend() st.STNode {
+func (b *ballerinaParser) parseXMLStepMethodCallExtend() st.STNode {
 	dotToken := b.parseDotToken()
 	methodName := b.parseMethodName()
 	parenthesizedArgsList := b.parseParenthesizedArgList()
 	return st.CreateXMLStepMethodCallExtendNode(dotToken, methodName, parenthesizedArgsList)
 }
 
-func (b *BallerinaParser) parseMethodName() st.STNode {
+func (b *ballerinaParser) parseMethodName() st.STNode {
 	if b.isSpecialMethodName(b.peek()) {
 		return b.getKeywordAsSimpleNameRef()
 	}
 	return st.CreateSimpleNameReferenceNode(b.parseIdentifier(common.PARSER_RULE_CONTEXT_IDENTIFIER))
 }
 
-func (b *BallerinaParser) parseDotLTToken() st.STNode {
+func (b *ballerinaParser) parseDotLTToken() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.DOT_LT_TOKEN {
 		return b.consume()
@@ -10713,7 +10696,7 @@ func (b *BallerinaParser) parseDotLTToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLNamePattern() st.STNode {
+func (b *ballerinaParser) parseXMLNamePattern() st.STNode {
 	var xmlAtomicNamePatternList []st.STNode
 	nextToken := b.peek()
 	if b.isEndOfXMLNamePattern(nextToken.Kind()) {
@@ -10734,7 +10717,7 @@ func (b *BallerinaParser) parseXMLNamePattern() st.STNode {
 	return st.CreateNodeList(xmlAtomicNamePatternList...)
 }
 
-func (b *BallerinaParser) isEndOfXMLNamePattern(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfXMLNamePattern(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.GT_TOKEN, st.EOF_TOKEN:
 		return true
@@ -10743,7 +10726,7 @@ func (b *BallerinaParser) isEndOfXMLNamePattern(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) isEndOfXMLStepExtend(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfXMLStepExtend(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.OPEN_BRACKET_TOKEN, st.DOT_LT_TOKEN:
 		return false
@@ -10754,7 +10737,7 @@ func (b *BallerinaParser) isEndOfXMLStepExtend(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseXMLNamePatternSeparator() st.STNode {
+func (b *ballerinaParser) parseXMLNamePatternSeparator() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.PIPE_TOKEN:
@@ -10767,14 +10750,14 @@ func (b *BallerinaParser) parseXMLNamePatternSeparator() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseXMLAtomicNamePattern() st.STNode {
+func (b *ballerinaParser) parseXMLAtomicNamePattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_XML_ATOMIC_NAME_PATTERN)
 	atomicNamePattern := b.parseXMLAtomicNamePatternBody()
 	b.endContext()
 	return atomicNamePattern
 }
 
-func (b *BallerinaParser) parseXMLAtomicNamePatternBody() st.STNode {
+func (b *ballerinaParser) parseXMLAtomicNamePatternBody() st.STNode {
 	token := b.peek()
 	var identifier st.STNode
 	switch token.Kind() {
@@ -10789,7 +10772,7 @@ func (b *BallerinaParser) parseXMLAtomicNamePatternBody() st.STNode {
 	return b.parseXMLAtomicNameIdentifier(identifier)
 }
 
-func (b *BallerinaParser) parseXMLAtomicNameIdentifier(identifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseXMLAtomicNameIdentifier(identifier st.STNode) st.STNode {
 	token := b.peek()
 	if token.Kind() == st.COLON_TOKEN {
 		colon := b.consume()
@@ -10802,13 +10785,13 @@ func (b *BallerinaParser) parseXMLAtomicNameIdentifier(identifier st.STNode) st.
 	return st.CreateSimpleNameReferenceNode(identifier)
 }
 
-func (b *BallerinaParser) parseXMLStepExpression(lhsExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseXMLStepExpression(lhsExpr st.STNode) st.STNode {
 	xmlStepStart := b.parseXMLStepStart()
 	xmlStepExtends := b.parseXMLStepExtends()
 	return st.CreateXMLStepExpressionNode(lhsExpr, xmlStepStart, xmlStepExtends)
 }
 
-func (b *BallerinaParser) parseXMLStepStart() st.STNode {
+func (b *ballerinaParser) parseXMLStepStart() st.STNode {
 	token := b.peek()
 	var startToken st.STNode
 	switch token.Kind() {
@@ -10823,7 +10806,7 @@ func (b *BallerinaParser) parseXMLStepStart() st.STNode {
 	return b.parseXMLNamePatternChain(startToken)
 }
 
-func (b *BallerinaParser) parseSlashLTToken() st.STNode {
+func (b *ballerinaParser) parseSlashLTToken() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.SLASH_LT_TOKEN {
 		return b.consume()
@@ -10833,7 +10816,7 @@ func (b *BallerinaParser) parseSlashLTToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseDoubleSlashDoubleAsteriskLTToken() st.STNode {
+func (b *ballerinaParser) parseDoubleSlashDoubleAsteriskLTToken() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN {
 		return b.consume()
@@ -10843,7 +10826,7 @@ func (b *BallerinaParser) parseDoubleSlashDoubleAsteriskLTToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMatchStatement() st.STNode {
+func (b *ballerinaParser) parseMatchStatement() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MATCH_STMT)
 	matchKeyword := b.parseMatchKeyword()
 	actionOrExpr := b.parseActionOrExpression()
@@ -10867,7 +10850,7 @@ func (b *BallerinaParser) parseMatchStatement() st.STNode {
 		onFailClause)
 }
 
-func (b *BallerinaParser) parseMatchKeyword() st.STNode {
+func (b *ballerinaParser) parseMatchKeyword() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.MATCH_KEYWORD {
 		return b.consume()
@@ -10877,7 +10860,7 @@ func (b *BallerinaParser) parseMatchKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfMatchClauses(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfMatchClauses(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN, st.TYPE_KEYWORD:
 		return true
@@ -10886,7 +10869,7 @@ func (b *BallerinaParser) isEndOfMatchClauses(nextTokenKind st.SyntaxKind) bool 
 	}
 }
 
-func (b *BallerinaParser) parseMatchClause() st.STNode {
+func (b *ballerinaParser) parseMatchClause() st.STNode {
 	matchPatterns := b.parseMatchPatternList()
 	matchGuard := b.parseMatchGuard()
 	rightDoubleArrow := b.parseDoubleRightArrow()
@@ -10905,12 +10888,12 @@ func (b *BallerinaParser) parseMatchClause() st.STNode {
 	return st.CreateMatchClauseNode(matchPatterns, matchGuard, rightDoubleArrow, blockStmt)
 }
 
-func (b *BallerinaParser) parseMatchGuard() st.STNode {
+func (b *ballerinaParser) parseMatchGuard() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IF_KEYWORD:
 		ifKeyword := b.parseIfKeyword()
-		expr := b.parseExpressionWithMatchGuard(DEFAULT_OP_PRECEDENCE, true, false, true, false)
+		expr := b.parseExpressionWithMatchGuard(defaultOpPrecedence, true, false, true, false)
 		return st.CreateMatchGuardNode(ifKeyword, expr)
 	case st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return st.CreateEmptyNode()
@@ -10920,7 +10903,7 @@ func (b *BallerinaParser) parseMatchGuard() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMatchPatternList() st.STNode {
+func (b *ballerinaParser) parseMatchPatternList() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MATCH_PATTERN)
 	var matchClauses []st.STNode
 	for !b.isEndOfMatchPattern(b.peek().Kind()) {
@@ -10939,7 +10922,7 @@ func (b *BallerinaParser) parseMatchPatternList() st.STNode {
 	return st.CreateNodeList(matchClauses...)
 }
 
-func (b *BallerinaParser) isEndOfMatchPattern(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfMatchPattern(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.PIPE_TOKEN, st.IF_KEYWORD, st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return true
@@ -10948,7 +10931,7 @@ func (b *BallerinaParser) isEndOfMatchPattern(nextTokenKind st.SyntaxKind) bool 
 	}
 }
 
-func (b *BallerinaParser) parseMatchPattern() st.STNode {
+func (b *ballerinaParser) parseMatchPattern() st.STNode {
 	nextToken := b.peek()
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
 		typeRefOrConstExpr := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_MATCH_PATTERN)
@@ -10981,7 +10964,7 @@ func (b *BallerinaParser) parseMatchPattern() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMatchPatternListMemberRhs() st.STNode {
+func (b *ballerinaParser) parseMatchPatternListMemberRhs() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.PIPE_TOKEN:
@@ -10994,14 +10977,14 @@ func (b *BallerinaParser) parseMatchPatternListMemberRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseVarTypedBindingPattern() st.STNode {
+func (b *ballerinaParser) parseVarTypedBindingPattern() st.STNode {
 	varKeyword := b.parseVarKeyword()
-	varTypeDesc := CreateBuiltinSimpleNameReference(varKeyword)
+	varTypeDesc := createBuiltinSimpleNameReference(varKeyword)
 	bindingPattern := b.parseBindingPattern()
 	return st.CreateTypedBindingPatternNode(varTypeDesc, bindingPattern)
 }
 
-func (b *BallerinaParser) parseVarKeyword() st.STNode {
+func (b *ballerinaParser) parseVarKeyword() st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.VAR_KEYWORD {
 		return b.consume()
@@ -11011,7 +10994,7 @@ func (b *BallerinaParser) parseVarKeyword() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseListMatchPattern() st.STNode {
+func (b *ballerinaParser) parseListMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LIST_MATCH_PATTERN)
 	openBracketToken := b.parseOpenBracket()
 	var matchPatternList []st.STNode
@@ -11047,7 +11030,7 @@ func (b *BallerinaParser) parseListMatchPattern() st.STNode {
 	return st.CreateListMatchPatternNode(openBracketToken, matchPatternListNode, closeBracketToken)
 }
 
-func (b *BallerinaParser) IsEndOfListMatchPattern() bool {
+func (b *ballerinaParser) IsEndOfListMatchPattern() bool {
 	switch b.peek().Kind() {
 	case st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN:
 		return true
@@ -11056,7 +11039,7 @@ func (b *BallerinaParser) IsEndOfListMatchPattern() bool {
 	}
 }
 
-func (b *BallerinaParser) parseListMatchPatternMember() st.STNode {
+func (b *ballerinaParser) parseListMatchPatternMember() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.ELLIPSIS_TOKEN:
@@ -11066,7 +11049,7 @@ func (b *BallerinaParser) parseListMatchPatternMember() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRestMatchPattern() st.STNode {
+func (b *ballerinaParser) parseRestMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_REST_MATCH_PATTERN)
 	ellipsisToken := b.parseEllipsis()
 	varKeywordToken := b.parseVarKeyword()
@@ -11079,7 +11062,7 @@ func (b *BallerinaParser) parseRestMatchPattern() st.STNode {
 	return st.CreateRestMatchPatternNode(ellipsisToken, varKeywordToken, simpleNameReferenceNode)
 }
 
-func (b *BallerinaParser) parseListMatchPatternMemberRhs() st.STNode {
+func (b *ballerinaParser) parseListMatchPatternMemberRhs() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -11091,7 +11074,7 @@ func (b *BallerinaParser) parseListMatchPatternMemberRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMappingMatchPattern() st.STNode {
+func (b *ballerinaParser) parseMappingMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_MATCH_PATTERN)
 	openBraceToken := b.parseOpenBrace()
 	fieldMatchPatterns := b.parseFieldMatchPatternList()
@@ -11100,7 +11083,7 @@ func (b *BallerinaParser) parseMappingMatchPattern() st.STNode {
 	return st.CreateMappingMatchPatternNode(openBraceToken, fieldMatchPatterns, closeBraceToken)
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternList() st.STNode {
+func (b *ballerinaParser) parseFieldMatchPatternList() st.STNode {
 	var fieldMatchPatterns []st.STNode
 	fieldMatchPatternMember := b.parseFieldMatchPatternMember()
 	if fieldMatchPatternMember == nil {
@@ -11114,7 +11097,7 @@ func (b *BallerinaParser) parseFieldMatchPatternList() st.STNode {
 	return b.parseFieldMatchPatternListWithPatterns(fieldMatchPatterns)
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternListWithPatterns(fieldMatchPatterns []st.STNode) st.STNode {
+func (b *ballerinaParser) parseFieldMatchPatternListWithPatterns(fieldMatchPatterns []st.STNode) st.STNode {
 	for !b.IsEndOfMappingMatchPattern() {
 		fieldMatchPatternRhs := b.parseFieldMatchPatternRhs()
 		if fieldMatchPatternRhs == nil {
@@ -11134,7 +11117,7 @@ func (b *BallerinaParser) parseFieldMatchPatternListWithPatterns(fieldMatchPatte
 	return st.CreateNodeList(fieldMatchPatterns...)
 }
 
-func (b *BallerinaParser) createMissingFieldMatchPattern() st.STNode {
+func (b *ballerinaParser) createMissingFieldMatchPattern() st.STNode {
 	fieldName := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 	colon := st.CreateMissingToken(st.COLON_TOKEN, nil)
 	identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
@@ -11145,7 +11128,7 @@ func (b *BallerinaParser) createMissingFieldMatchPattern() st.STNode {
 	return fieldMatchPatternMember
 }
 
-func (b *BallerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns []st.STNode) {
+func (b *ballerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns []st.STNode) {
 	for !b.IsEndOfMappingMatchPattern() {
 		fieldMatchPatternRhs := b.parseFieldMatchPatternRhs()
 		if fieldMatchPatternRhs == nil {
@@ -11167,7 +11150,7 @@ func (b *BallerinaParser) invalidateExtraFieldMatchPatterns(fieldMatchPatterns [
 	}
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternMember() st.STNode {
+func (b *ballerinaParser) parseFieldMatchPatternMember() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -11182,14 +11165,14 @@ func (b *BallerinaParser) parseFieldMatchPatternMember() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) ParseFieldMatchPattern() st.STNode {
+func (b *ballerinaParser) ParseFieldMatchPattern() st.STNode {
 	fieldNameNode := b.parseVariableName()
 	colonToken := b.parseColon()
 	matchPattern := b.parseMatchPattern()
 	return st.CreateFieldMatchPatternNode(fieldNameNode, colonToken, matchPattern)
 }
 
-func (b *BallerinaParser) IsEndOfMappingMatchPattern() bool {
+func (b *ballerinaParser) IsEndOfMappingMatchPattern() bool {
 	switch b.peek().Kind() {
 	case st.CLOSE_BRACE_TOKEN, st.EOF_TOKEN:
 		return true
@@ -11198,7 +11181,7 @@ func (b *BallerinaParser) IsEndOfMappingMatchPattern() bool {
 	}
 }
 
-func (b *BallerinaParser) parseFieldMatchPatternRhs() st.STNode {
+func (b *ballerinaParser) parseFieldMatchPatternRhs() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -11210,14 +11193,14 @@ func (b *BallerinaParser) parseFieldMatchPatternRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_PAREN_TOKEN:
-		errorKeyword := st.CreateMissingTokenWithDiagnostics(st.ERROR_KEYWORD,
+		error := st.CreateMissingTokenWithDiagnostics(st.ERROR_KEYWORD,
 			common.PARSER_RULE_CONTEXT_ERROR_KEYWORD.GetErrorCode())
 		b.startContext(common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN)
-		return b.parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword, typeRefOrConstExpr)
+		return b.parseErrorMatchPatternWithErrorKeywordAndTypeRef(error, typeRefOrConstExpr)
 	default:
 		if b.isMatchPatternEnd(b.peek().Kind()) {
 			return typeRefOrConstExpr
@@ -11227,7 +11210,7 @@ func (b *BallerinaParser) parseErrorMatchPatternOrConsPattern(typeRefOrConstExpr
 	}
 }
 
-func (b *BallerinaParser) isMatchPatternEnd(tokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isMatchPatternEnd(tokenKind st.SyntaxKind) bool {
 	switch tokenKind {
 	case st.RIGHT_DOUBLE_ARROW_TOKEN,
 		st.COMMA_TOKEN,
@@ -11243,13 +11226,13 @@ func (b *BallerinaParser) isMatchPatternEnd(tokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseErrorMatchPattern() st.STNode {
+func (b *ballerinaParser) parseErrorMatchPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN)
-	errorKeyword := b.consume()
-	return b.parseErrorMatchPatternWithErrorKeyword(errorKeyword)
+	error := b.consume()
+	return b.parseErrorMatchPatternWithErrorKeyword(error)
 }
 
-func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeyword(errorKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorMatchPatternWithErrorKeyword(error st.STNode) st.STNode {
 	nextToken := b.peek()
 	var typeRef st.STNode
 	switch nextToken.Kind() {
@@ -11261,21 +11244,21 @@ func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeyword(errorKeyword st
 			break
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ERROR_MATCH_PATTERN_ERROR_KEYWORD_RHS)
-		return b.parseErrorMatchPatternWithErrorKeyword(errorKeyword)
+		return b.parseErrorMatchPatternWithErrorKeyword(error)
 	}
-	return b.parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword, typeRef)
+	return b.parseErrorMatchPatternWithErrorKeywordAndTypeRef(error, typeRef)
 }
 
-func (b *BallerinaParser) parseErrorMatchPatternWithErrorKeywordAndTypeRef(errorKeyword st.STNode, typeRef st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorMatchPatternWithErrorKeywordAndTypeRef(error st.STNode, typeRef st.STNode) st.STNode {
 	openParenthesisToken := b.parseOpenParenthesis()
 	argListMatchPatternNode := b.parseErrorArgListMatchPatterns()
 	closeParenthesisToken := b.parseCloseParenthesis()
 	b.endContext()
-	return st.CreateErrorMatchPatternNode(errorKeyword, typeRef, openParenthesisToken,
+	return st.CreateErrorMatchPatternNode(error, typeRef, openParenthesisToken,
 		argListMatchPatternNode, closeParenthesisToken)
 }
 
-func (b *BallerinaParser) parseErrorArgListMatchPatterns() st.STNode {
+func (b *ballerinaParser) parseErrorArgListMatchPatterns() st.STNode {
 	var argListMatchPatterns []st.STNode
 	if b.isEndOfErrorFieldMatchPatterns() {
 		return st.CreateNodeList(argListMatchPatterns...)
@@ -11308,7 +11291,7 @@ func (b *BallerinaParser) parseErrorArgListMatchPatterns() st.STNode {
 	return st.CreateNodeList(argListMatchPatterns...)
 }
 
-func (b *BallerinaParser) isSimpleMatchPattern(matchPatternKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isSimpleMatchPattern(matchPatternKind st.SyntaxKind) bool {
 	switch matchPatternKind {
 	case st.IDENTIFIER_TOKEN,
 		st.SIMPLE_NAME_REFERENCE,
@@ -11326,7 +11309,7 @@ func (b *BallerinaParser) isSimpleMatchPattern(matchPatternKind st.SyntaxKind) b
 	}
 }
 
-func (b *BallerinaParser) isValidSecondArgMatchPattern(syntaxKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isValidSecondArgMatchPattern(syntaxKind st.SyntaxKind) bool {
 	switch syntaxKind {
 	case st.ERROR_MATCH_PATTERN,
 		st.NAMED_ARG_MATCH_PATTERN,
@@ -11338,7 +11321,7 @@ func (b *BallerinaParser) isValidSecondArgMatchPattern(syntaxKind st.SyntaxKind)
 }
 
 // Return modified argListMatchPatterns
-func (b *BallerinaParser) parseErrorFieldMatchPatterns(argListMatchPatterns []st.STNode) []st.STNode {
+func (b *ballerinaParser) parseErrorFieldMatchPatterns(argListMatchPatterns []st.STNode) []st.STNode {
 	lastValidArgKind := st.NAMED_ARG_MATCH_PATTERN
 	for !b.isEndOfErrorFieldMatchPatterns() {
 		argEnd := b.parseErrorArgListMatchPatternEnd(common.PARSER_RULE_CONTEXT_ERROR_FIELD_MATCH_PATTERN_RHS)
@@ -11362,11 +11345,11 @@ func (b *BallerinaParser) parseErrorFieldMatchPatterns(argListMatchPatterns []st
 	return argListMatchPatterns
 }
 
-func (b *BallerinaParser) isEndOfErrorFieldMatchPatterns() bool {
+func (b *ballerinaParser) isEndOfErrorFieldMatchPatterns() bool {
 	return b.isEndOfErrorFieldBindingPatterns()
 }
 
-func (b *BallerinaParser) parseErrorArgListMatchPatternEnd(currentCtx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseErrorArgListMatchPatternEnd(currentCtx common.ParserRuleContext) st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.consume()
@@ -11378,7 +11361,7 @@ func (b *BallerinaParser) parseErrorArgListMatchPatternEnd(currentCtx common.Par
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListMatchPattern(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseErrorArgListMatchPattern(context common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	if b.isPredeclaredIdentifier(nextToken.Kind()) {
 		return b.parseNamedArgOrSimpleMatchPattern()
@@ -11402,7 +11385,7 @@ func (b *BallerinaParser) parseErrorArgListMatchPattern(context common.ParserRul
 		st.ERROR_KEYWORD:
 		return b.parseMatchPattern()
 	case st.VAR_KEYWORD:
-		varType := CreateBuiltinSimpleNameReference(b.consume())
+		varType := createBuiltinSimpleNameReference(b.consume())
 		variableName := b.createCaptureOrWildcardBP(b.parseVariableName())
 		return st.CreateTypedBindingPatternNode(varType, variableName)
 	case st.CLOSE_PAREN_TOKEN:
@@ -11414,7 +11397,7 @@ func (b *BallerinaParser) parseErrorArgListMatchPattern(context common.ParserRul
 	}
 }
 
-func (b *BallerinaParser) parseNamedArgOrSimpleMatchPattern() st.STNode {
+func (b *ballerinaParser) parseNamedArgOrSimpleMatchPattern() st.STNode {
 	constRefExpr := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_MATCH_PATTERN)
 	if (constRefExpr.Kind() == st.QUALIFIED_NAME_REFERENCE) || (b.peek().Kind() != st.EQUAL_TOKEN) {
 		return constRefExpr
@@ -11426,7 +11409,7 @@ func (b *BallerinaParser) parseNamedArgOrSimpleMatchPattern() st.STNode {
 	return b.parseNamedArgMatchPattern(simpleNameNode.Name)
 }
 
-func (b *BallerinaParser) parseNamedArgMatchPattern(identifier st.STNode) st.STNode {
+func (b *ballerinaParser) parseNamedArgMatchPattern(identifier st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN)
 	equalToken := b.parseAssignOp()
 	matchPattern := b.parseMatchPattern()
@@ -11434,7 +11417,7 @@ func (b *BallerinaParser) parseNamedArgMatchPattern(identifier st.STNode) st.STN
 	return st.CreateNamedArgMatchPatternNode(identifier, equalToken, matchPattern)
 }
 
-func (b *BallerinaParser) validateErrorFieldMatchPatternOrder(prevArgKind st.SyntaxKind, currentArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *ballerinaParser) validateErrorFieldMatchPatternOrder(prevArgKind st.SyntaxKind, currentArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	switch currentArgKind {
 	case st.NAMED_ARG_MATCH_PATTERN,
 		st.REST_MATCH_PATTERN:
@@ -11447,7 +11430,7 @@ func (b *BallerinaParser) validateErrorFieldMatchPatternOrder(prevArgKind st.Syn
 	}
 }
 
-func (b *BallerinaParser) parseMarkdownDocumentation() st.STNode {
+func (b *ballerinaParser) parseMarkdownDocumentation() st.STNode {
 	markdownDocLineList := make([]st.STNode, 0)
 	nextToken := b.peek()
 	for nextToken.Kind() == st.DOCUMENTATION_STRING {
@@ -11460,19 +11443,19 @@ func (b *BallerinaParser) parseMarkdownDocumentation() st.STNode {
 	return st.CreateMarkdownDocumentationNode(markdownDocLines)
 }
 
-func (b *BallerinaParser) parseDocumentationString(documentationStringToken st.STToken) st.STNode {
+func (b *ballerinaParser) parseDocumentationString(documentationStringToken st.STToken) st.STNode {
 	leadingTriviaList := b.getLeadingTriviaList(documentationStringToken.LeadingMinutiae())
 	diagnostics := documentationStringToken.Diagnostics()
 
 	charReader := text.CharReaderFromText(documentationStringToken.Text())
 	documentationLexer := newDocumentationLexer(charReader, leadingTriviaList, diagnostics)
-	tokenReader := CreateTokenReader(documentationLexer)
-	documentationParser := NewDocumentationParser(tokenReader)
+	tokenReader := createTokenReader(documentationLexer)
+	documentationParser := newDocumentationParser(tokenReader)
 
 	return documentationParser.Parse()
 }
 
-func (b *BallerinaParser) getLeadingTriviaList(leadingMinutiaeNode st.STNode) []st.STNode {
+func (b *ballerinaParser) getLeadingTriviaList(leadingMinutiaeNode st.STNode) []st.STNode {
 	leadingTriviaList := make([]st.STNode, 0)
 	bucketCount := leadingMinutiaeNode.BucketCount()
 	i := 0
@@ -11482,7 +11465,7 @@ func (b *BallerinaParser) getLeadingTriviaList(leadingMinutiaeNode st.STNode) []
 	return leadingTriviaList
 }
 
-func (b *BallerinaParser) appendParsedDocumentationLines(markdownDocLineList []st.STNode, parsedDocLines st.STNode) []st.STNode {
+func (b *ballerinaParser) appendParsedDocumentationLines(markdownDocLineList []st.STNode, parsedDocLines st.STNode) []st.STNode {
 	bucketCount := parsedDocLines.BucketCount()
 	for i := range bucketCount {
 		markdownDocLine := parsedDocLines.ChildInBucket(i)
@@ -11491,29 +11474,29 @@ func (b *BallerinaParser) appendParsedDocumentationLines(markdownDocLineList []s
 	return markdownDocLineList
 }
 
-func (b *BallerinaParser) parseStmtStartsWithTypeOrExpr(annots st.STNode, qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseStmtStartsWithTypeOrExpr(annots st.STNode, qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	typeOrExpr := b.parseTypedBindingPatternOrExprWithQualifiers(qualifiers, true)
 	return b.parseStmtStartsWithTypedBPOrExprRhs(annots, typeOrExpr)
 }
 
-func (b *BallerinaParser) parseStmtStartsWithTypedBPOrExprRhs(annots st.STNode, typedBindingPatternOrExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseStmtStartsWithTypedBPOrExprRhs(annots st.STNode, typedBindingPatternOrExpr st.STNode) st.STNode {
 	if typedBindingPatternOrExpr.Kind() == st.TYPED_BINDING_PATTERN {
 		b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPatternOrExpr, false)
 		return res
 	}
 	expr := b.getExpression(typedBindingPatternOrExpr)
-	expr = b.getExpression(b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, false, true))
+	expr = b.getExpression(b.parseExpressionRhs(defaultOpPrecedence, expr, false, true))
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrExpr(allowAssignment bool) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternOrExpr(allowAssignment bool) st.STNode {
 	typeDescQualifiers := make([]st.STNode, 0)
 	return b.parseTypedBindingPatternOrExprWithQualifiers(typeDescQualifiers, allowAssignment)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrExprWithQualifiers(qualifiers []st.STNode, allowAssignment bool) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternOrExprWithQualifiers(qualifiers []st.STNode, allowAssignment bool) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	var typeOrExpr st.STNode
@@ -11552,7 +11535,7 @@ func (b *BallerinaParser) parseTypedBindingPatternOrExprWithQualifiers(qualifier
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr st.STNode, allowAssignment bool) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr st.STNode, allowAssignment bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
@@ -11617,7 +11600,7 @@ func (b *BallerinaParser) parseTypedBindingPatternOrExprRhs(typeOrExpr st.STNode
 	}
 }
 
-func (b *BallerinaParser) createCaptureBPWithMissingVarName(lhsType st.STNode, separatorToken st.STNode, rhsType st.STNode) st.STNode {
+func (b *ballerinaParser) createCaptureBPWithMissingVarName(lhsType st.STNode, separatorToken st.STNode, rhsType st.STNode) st.STNode {
 	lhsType = b.getTypeDescFromExpr(lhsType)
 	rhsType = b.getTypeDescFromExpr(rhsType)
 	newTypeDesc := b.mergeTypes(lhsType, separatorToken, rhsType)
@@ -11627,12 +11610,12 @@ func (b *BallerinaParser) createCaptureBPWithMissingVarName(lhsType st.STNode, s
 	return st.CreateTypedBindingPatternNode(newTypeDesc, captureBP)
 }
 
-func (b *BallerinaParser) parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) parseTypeBindingPatternStartsWithAmbiguousNode(typeDesc st.STNode) st.STNode {
 	typeDesc = b.parseComplexTypeDescriptor(typeDesc, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 	return b.parseTypedBindingPatternTypeRhs(typeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 }
 
-func (b *BallerinaParser) parseTypedBPOrExprStartsWithOpenParenthesis() st.STNode {
+func (b *ballerinaParser) parseTypedBPOrExprStartsWithOpenParenthesis() st.STNode {
 	exprOrTypeDesc := b.parseTypedDescOrExprStartsWithOpenParenthesis()
 	if b.isDefiniteTypeDesc(exprOrTypeDesc.Kind()) {
 		return b.parseTypeBindingPatternStartsWithAmbiguousNode(exprOrTypeDesc)
@@ -11640,22 +11623,22 @@ func (b *BallerinaParser) parseTypedBPOrExprStartsWithOpenParenthesis() st.STNod
 	return b.parseTypedBindingPatternOrExprRhs(exprOrTypeDesc, false)
 }
 
-func (b *BallerinaParser) isDefiniteTypeDesc(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isDefiniteTypeDesc(kind st.SyntaxKind) bool {
 	return ((kind.CompareTo(st.RECORD_TYPE_DESC) >= 0) && (kind.CompareTo(st.FUTURE_TYPE_DESC) <= 0))
 }
 
-func (b *BallerinaParser) isDefiniteExpr(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isDefiniteExpr(kind st.SyntaxKind) bool {
 	if (kind == st.QUALIFIED_NAME_REFERENCE) || (kind == st.SIMPLE_NAME_REFERENCE) {
 		return false
 	}
 	return ((kind.CompareTo(st.BINARY_EXPRESSION) >= 0) && (kind.CompareTo(st.ERROR_CONSTRUCTOR) <= 0))
 }
 
-func (b *BallerinaParser) isDefiniteAction(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isDefiniteAction(kind st.SyntaxKind) bool {
 	return ((kind.CompareTo(st.REMOTE_METHOD_CALL_ACTION) >= 0) && (kind.CompareTo(st.CLIENT_RESOURCE_ACCESS_ACTION) <= 0))
 }
 
-func (b *BallerinaParser) parseTypedDescOrExprStartsWithOpenParenthesis() st.STNode {
+func (b *ballerinaParser) parseTypedDescOrExprStartsWithOpenParenthesis() st.STNode {
 	openParen := b.parseOpenParenthesis()
 	nextToken := b.peek()
 	if nextToken.Kind() == st.CLOSE_PAREN_TOKEN {
@@ -11678,11 +11661,11 @@ func (b *BallerinaParser) parseTypedDescOrExprStartsWithOpenParenthesis() st.STN
 	return st.CreateParenthesisedTypeDescriptorNode(openParen, typeDescNode, closeParen)
 }
 
-func (b *BallerinaParser) parseTypeDescOrExpr() st.STNode {
+func (b *ballerinaParser) parseTypeDescOrExpr() st.STNode {
 	return b.parseTypeDescOrExprWithQualifiers(nil)
 }
 
-func (b *BallerinaParser) parseTypeDescOrExprWithQualifiers(qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseTypeDescOrExprWithQualifiers(qualifiers []st.STNode) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	var typeOrExpr st.STNode
@@ -11723,7 +11706,7 @@ func (b *BallerinaParser) parseTypeDescOrExprWithQualifiers(qualifiers []st.STNo
 	return b.parseTypeDescOrExprRhs(typeOrExpr)
 }
 
-func (b *BallerinaParser) isExpression(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isExpression(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.NUMERIC_LITERAL,
 		st.STRING_LITERAL_TOKEN,
@@ -11736,7 +11719,7 @@ func (b *BallerinaParser) isExpression(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseTypeOrExprStartWithEmptyParenthesis(openParen st.STNode, closeParen st.STNode) st.STNode {
+func (b *ballerinaParser) parseTypeOrExprStartWithEmptyParenthesis(openParen st.STNode, closeParen st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.RIGHT_DOUBLE_ARROW_TOKEN:
@@ -11748,7 +11731,7 @@ func (b *BallerinaParser) parseTypeOrExprStartWithEmptyParenthesis(openParen st.
 	}
 }
 
-func (b *BallerinaParser) parseAnonFuncExprOrTypedBPWithFuncType(qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnonFuncExprOrTypedBPWithFuncType(qualifiers []st.STNode) st.STNode {
 	exprOrTypeDesc := b.parseAnonFuncExprOrFuncTypeDesc(qualifiers)
 	if b.isAction(exprOrTypeDesc) || b.isExpression(exprOrTypeDesc.Kind()) {
 		return exprOrTypeDesc
@@ -11756,7 +11739,7 @@ func (b *BallerinaParser) parseAnonFuncExprOrTypedBPWithFuncType(qualifiers []st
 	return b.parseTypedBindingPatternTypeRhs(exprOrTypeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 }
 
-func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC_OR_ANON_FUNC)
 	var qualifierList st.STNode
 	functionKeyword := b.parseFunctionKeyword()
@@ -11782,7 +11765,7 @@ func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDesc(qualifiers []st.STNode
 	return b.parseComplexTypeDescriptor(funcTypeDesc, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 }
 
-func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifierList st.STNode, functionKeyword st.STNode, funcSignature st.STNode) st.STNode {
+func (b *ballerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifierList st.STNode, functionKeyword st.STNode, funcSignature st.STNode) st.STNode {
 	currentCtx := b.getCurrentContext()
 	switch b.peek().Kind() {
 	case st.OPEN_BRACE_TOKEN, st.RIGHT_DOUBLE_ARROW_TOKEN:
@@ -11799,7 +11782,7 @@ func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifie
 		annots := st.CreateEmptyNodeList()
 		anonFunc := st.CreateExplicitAnonymousFunctionExpressionNode(annots, qualifierList,
 			functionKeyword, funcSignature, funcBody)
-		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, anonFunc, false, true)
+		return b.parseExpressionRhs(defaultOpPrecedence, anonFunc, false, true)
 	case st.IDENTIFIER_TOKEN:
 		fallthrough
 	default:
@@ -11814,7 +11797,7 @@ func (b *BallerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifie
 	}
 }
 
-func (b *BallerinaParser) parseTypeDescOrExprRhs(typeOrExpr st.STNode) st.STNode {
+func (b *ballerinaParser) parseTypeDescOrExprRhs(typeOrExpr st.STNode) st.STNode {
 	nextToken := b.peek()
 	var typeDesc st.STNode
 	switch nextToken.Kind() {
@@ -11854,14 +11837,14 @@ func (b *BallerinaParser) parseTypeDescOrExprRhs(typeOrExpr st.STNode) st.STNode
 			return typeOrExpr
 		}
 		if b.isValidExprRhsStart(nextToken.Kind(), typeOrExpr.Kind()) {
-			return b.parseExpressionRhsInner(DEFAULT_OP_PRECEDENCE, typeOrExpr, false, false, false, false)
+			return b.parseExpressionRhsInner(defaultOpPrecedence, typeOrExpr, false, false, false, false)
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_TYPE_DESC_OR_EXPR_RHS)
 		return b.parseTypeDescOrExprRhs(typeOrExpr)
 	}
 }
 
-func (b *BallerinaParser) isAmbiguous(node st.STNode) bool {
+func (b *ballerinaParser) isAmbiguous(node st.STNode) bool {
 	switch node.Kind() {
 	case st.SIMPLE_NAME_REFERENCE,
 		st.QUALIFIED_NAME_REFERENCE,
@@ -11912,7 +11895,7 @@ func (b *BallerinaParser) isAmbiguous(node st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isAllBasicLiterals(node st.STNode) bool {
+func (b *ballerinaParser) isAllBasicLiterals(node st.STNode) bool {
 	switch node.Kind() {
 	case st.NIL_LITERAL, st.NULL_LITERAL, st.NUMERIC_LITERAL, st.STRING_LITERAL, st.BOOLEAN_LITERAL:
 		return true
@@ -11959,7 +11942,7 @@ func (b *BallerinaParser) isAllBasicLiterals(node st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isNumericLiteral(node st.STNode) bool {
+func (b *ballerinaParser) isNumericLiteral(node st.STNode) bool {
 	switch node.Kind() {
 	case st.NUMERIC_LITERAL:
 		return true
@@ -11968,7 +11951,7 @@ func (b *BallerinaParser) isNumericLiteral(node st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) parseBindingPattern() st.STNode {
+func (b *ballerinaParser) parseBindingPattern() st.STNode {
 	switch b.peek().Kind() {
 	case st.OPEN_BRACKET_TOKEN:
 		return b.parseListBindingPattern()
@@ -11984,14 +11967,14 @@ func (b *BallerinaParser) parseBindingPattern() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseBindingPatternStartsWithIdentifier() st.STNode {
+func (b *ballerinaParser) parseBindingPatternStartsWithIdentifier() st.STNode {
 	argNameOrBindingPattern := b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_BINDING_PATTERN_STARTING_IDENTIFIER)
 	secondToken := b.peek()
 	if secondToken.Kind() == st.OPEN_PAREN_TOKEN {
 		b.startContext(common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN)
-		errorKeyword := st.CreateMissingTokenWithDiagnostics(st.ERROR_KEYWORD,
+		error := st.CreateMissingTokenWithDiagnostics(st.ERROR_KEYWORD,
 			common.PARSER_RULE_CONTEXT_ERROR_KEYWORD.GetErrorCode())
-		return b.parseErrorBindingPatternWithTypeRef(errorKeyword, argNameOrBindingPattern)
+		return b.parseErrorBindingPatternWithTypeRef(error, argNameOrBindingPattern)
 	}
 	if argNameOrBindingPattern.Kind() != st.SIMPLE_NAME_REFERENCE {
 		var identifier st.STNode
@@ -12007,7 +11990,7 @@ func (b *BallerinaParser) parseBindingPatternStartsWithIdentifier() st.STNode {
 	return b.createCaptureOrWildcardBP(simpleNameNode.Name)
 }
 
-func (b *BallerinaParser) createCaptureOrWildcardBP(varName st.STNode) st.STNode {
+func (b *ballerinaParser) createCaptureOrWildcardBP(varName st.STNode) st.STNode {
 	var bindingPattern st.STNode
 	if b.isWildcardBP(varName) {
 		bindingPattern = b.getWildcardBindingPattern(varName)
@@ -12017,7 +12000,7 @@ func (b *BallerinaParser) createCaptureOrWildcardBP(varName st.STNode) st.STNode
 	return bindingPattern
 }
 
-func (b *BallerinaParser) parseListBindingPattern() st.STNode {
+func (b *ballerinaParser) parseListBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN)
 	openBracket := b.parseOpenBracket()
 	listBindingPattern, _ := b.parseListBindingPatternWithOpenBracket(openBracket, nil)
@@ -12025,7 +12008,7 @@ func (b *BallerinaParser) parseListBindingPattern() st.STNode {
 	return listBindingPattern
 }
 
-func (b *BallerinaParser) parseListBindingPatternWithOpenBracket(openBracket st.STNode, bindingPatternsList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseListBindingPatternWithOpenBracket(openBracket st.STNode, bindingPatternsList []st.STNode) (st.STNode, []st.STNode) {
 	if b.isEndOfListBindingPattern(b.peek().Kind()) && len(bindingPatternsList) == 0 {
 		closeBracket := b.parseCloseBracket()
 		bindingPatternsNode := st.CreateNodeList(bindingPatternsList...)
@@ -12037,7 +12020,7 @@ func (b *BallerinaParser) parseListBindingPatternWithOpenBracket(openBracket st.
 	return listBindingPattern, bindingPatternsList
 }
 
-func (b *BallerinaParser) parseListBindingPatternWithFirstMember(openBracket st.STNode, firstMember st.STNode, bindingPatterns []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseListBindingPatternWithFirstMember(openBracket st.STNode, firstMember st.STNode, bindingPatterns []st.STNode) (st.STNode, []st.STNode) {
 	member := firstMember
 	token := b.peek()
 	var listBindingPatternRhs st.STNode
@@ -12056,7 +12039,7 @@ func (b *BallerinaParser) parseListBindingPatternWithFirstMember(openBracket st.
 	return st.CreateListBindingPatternNode(openBracket, bindingPatternsNode, closeBracket), bindingPatterns
 }
 
-func (b *BallerinaParser) parseListBindingPatternMemberRhs() st.STNode {
+func (b *ballerinaParser) parseListBindingPatternMemberRhs() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -12068,7 +12051,7 @@ func (b *BallerinaParser) parseListBindingPatternMemberRhs() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) isEndOfListBindingPattern(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfListBindingPattern(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.CLOSE_BRACKET_TOKEN, st.EOF_TOKEN:
 		return true
@@ -12077,7 +12060,7 @@ func (b *BallerinaParser) isEndOfListBindingPattern(nextTokenKind st.SyntaxKind)
 	}
 }
 
-func (b *BallerinaParser) parseListBindingPatternMember() st.STNode {
+func (b *ballerinaParser) parseListBindingPatternMember() st.STNode {
 	switch b.peek().Kind() {
 	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingPattern()
@@ -12092,7 +12075,7 @@ func (b *BallerinaParser) parseListBindingPatternMember() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseRestBindingPattern() st.STNode {
+func (b *ballerinaParser) parseRestBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_REST_BINDING_PATTERN)
 	ellipsis := b.parseEllipsis()
 	varName := b.parseVariableName()
@@ -12104,18 +12087,18 @@ func (b *BallerinaParser) parseRestBindingPattern() st.STNode {
 	return st.CreateRestBindingPatternNode(ellipsis, simpleNameReferenceNode)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternWithContext(context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternWithContext(context common.ParserRuleContext) st.STNode {
 	return b.parseTypedBindingPatternInner(nil, context)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternInner(qualifiers []st.STNode, context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternInner(qualifiers []st.STNode, context common.ParserRuleContext) st.STNode {
 	typeDesc := b.parseTypeDescriptorWithinContext(qualifiers,
-		common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true, false, TYPE_PRECEDENCE_DEFAULT)
+		common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true, false, typePrecedenceDefault)
 	typeBindingPattern := b.parseTypedBindingPatternTypeRhs(typeDesc, context)
 	return typeBindingPattern
 }
 
-func (b *BallerinaParser) parseMappingBindingPattern() st.STNode {
+func (b *ballerinaParser) parseMappingBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN)
 	openBrace := b.parseOpenBrace()
 	token := b.peek()
@@ -12134,7 +12117,7 @@ func (b *BallerinaParser) parseMappingBindingPattern() st.STNode {
 	return res
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternInner(openBrace st.STNode, bindingPatterns []st.STNode, prevMember st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseMappingBindingPatternInner(openBrace st.STNode, bindingPatterns []st.STNode, prevMember st.STNode) (st.STNode, []st.STNode) {
 	token := b.peek()
 	var mappingBindingPatternRhs st.STNode
 	for (!b.isEndOfMappingBindingPattern(token.Kind())) && (prevMember.Kind() != st.REST_BINDING_PATTERN) {
@@ -12159,7 +12142,7 @@ func (b *BallerinaParser) parseMappingBindingPatternInner(openBrace st.STNode, b
 	return st.CreateMappingBindingPatternNode(openBrace, bindingPatternsNode, closeBrace), bindingPatterns
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternMember() st.STNode {
+func (b *ballerinaParser) parseMappingBindingPatternMember() st.STNode {
 	token := b.peek()
 	switch token.Kind() {
 	case st.ELLIPSIS_TOKEN:
@@ -12169,7 +12152,7 @@ func (b *BallerinaParser) parseMappingBindingPatternMember() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternEnd() st.STNode {
+func (b *ballerinaParser) parseMappingBindingPatternEnd() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN:
@@ -12182,7 +12165,7 @@ func (b *BallerinaParser) parseMappingBindingPatternEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldBindingPattern() st.STNode {
+func (b *ballerinaParser) parseFieldBindingPattern() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -12195,7 +12178,7 @@ func (b *BallerinaParser) parseFieldBindingPattern() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseFieldBindingPatternWithName(simpleNameReference st.STNode) st.STNode {
+func (b *ballerinaParser) parseFieldBindingPatternWithName(simpleNameReference st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
@@ -12210,11 +12193,11 @@ func (b *BallerinaParser) parseFieldBindingPatternWithName(simpleNameReference s
 	}
 }
 
-func (b *BallerinaParser) isEndOfMappingBindingPattern(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isEndOfMappingBindingPattern(nextTokenKind st.SyntaxKind) bool {
 	return ((nextTokenKind == st.CLOSE_BRACE_TOKEN) || b.isEndOfModuleLevelNode(1))
 }
 
-func (b *BallerinaParser) parseErrorTypeDescOrErrorBP(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorTypeDescOrErrorBP(annots st.STNode) st.STNode {
 	nextNextToken := b.peekN(2)
 	switch nextNextToken.Kind() {
 	case st.OPEN_PAREN_TOKEN:
@@ -12232,23 +12215,23 @@ func (b *BallerinaParser) parseErrorTypeDescOrErrorBP(annots st.STNode) st.STNod
 	}
 }
 
-func (b *BallerinaParser) parseAsErrorBindingPattern() st.STNode {
+func (b *ballerinaParser) parseAsErrorBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 	return b.parseAssignmentStmtRhs(b.parseErrorBindingPattern())
 }
 
-func (b *BallerinaParser) parseAsErrorTypeDesc(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseAsErrorTypeDesc(annots st.STNode) st.STNode {
 	finalKeyword := st.CreateEmptyNode()
 	return b.parseVariableDecl(b.getAnnotations(annots), finalKeyword)
 }
 
-func (b *BallerinaParser) parseErrorBindingPattern() st.STNode {
+func (b *ballerinaParser) parseErrorBindingPattern() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN)
-	errorKeyword := b.parseErrorKeyword()
-	return b.parseErrorBindingPatternWithKeyword(errorKeyword)
+	error := b.parseErrorKeyword()
+	return b.parseErrorBindingPatternWithKeyword(error)
 }
 
-func (b *BallerinaParser) parseErrorBindingPatternWithKeyword(errorKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorBindingPatternWithKeyword(error st.STNode) st.STNode {
 	nextToken := b.peek()
 	var typeRef st.STNode
 	switch nextToken.Kind() {
@@ -12260,21 +12243,21 @@ func (b *BallerinaParser) parseErrorBindingPatternWithKeyword(errorKeyword st.ST
 			break
 		}
 		b.recoverWithBlockContext(b.peek(), common.PARSER_RULE_CONTEXT_ERROR_BINDING_PATTERN_ERROR_KEYWORD_RHS)
-		return b.parseErrorBindingPatternWithKeyword(errorKeyword)
+		return b.parseErrorBindingPatternWithKeyword(error)
 	}
-	return b.parseErrorBindingPatternWithTypeRef(errorKeyword, typeRef)
+	return b.parseErrorBindingPatternWithTypeRef(error, typeRef)
 }
 
-func (b *BallerinaParser) parseErrorBindingPatternWithTypeRef(errorKeyword st.STNode, typeRef st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorBindingPatternWithTypeRef(error st.STNode, typeRef st.STNode) st.STNode {
 	openParenthesis := b.parseOpenParenthesis()
 	argListBindingPatterns := b.parseErrorArgListBindingPatterns()
 	closeParenthesis := b.parseCloseParenthesis()
 	b.endContext()
-	return st.CreateErrorBindingPatternNode(errorKeyword, typeRef, openParenthesis,
+	return st.CreateErrorBindingPatternNode(error, typeRef, openParenthesis,
 		argListBindingPatterns, closeParenthesis)
 }
 
-func (b *BallerinaParser) parseErrorArgListBindingPatterns() st.STNode {
+func (b *ballerinaParser) parseErrorArgListBindingPatterns() st.STNode {
 	var argListBindingPatterns []st.STNode
 	if b.isEndOfErrorFieldBindingPatterns() {
 		return st.CreateNodeList(argListBindingPatterns...)
@@ -12282,7 +12265,7 @@ func (b *BallerinaParser) parseErrorArgListBindingPatterns() st.STNode {
 	return b.parseErrorArgListBindingPatternsWithList(argListBindingPatterns)
 }
 
-func (b *BallerinaParser) parseErrorArgListBindingPatternsWithList(argListBindingPatterns []st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorArgListBindingPatternsWithList(argListBindingPatterns []st.STNode) st.STNode {
 	firstArg := b.parseErrorArgListBindingPattern(common.PARSER_RULE_CONTEXT_ERROR_ARG_LIST_BINDING_PATTERN_START, true)
 	if firstArg == nil {
 		return st.CreateNodeList(argListBindingPatterns...)
@@ -12311,7 +12294,7 @@ func (b *BallerinaParser) parseErrorArgListBindingPatternsWithList(argListBindin
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsg(argListBindingPatterns []st.STNode) st.STNode {
+func (b *ballerinaParser) parseErrorArgListBPWithoutErrorMsg(argListBindingPatterns []st.STNode) st.STNode {
 	argEnd := b.parseErrorArgsBindingPatternEnd(common.PARSER_RULE_CONTEXT_ERROR_MESSAGE_BINDING_PATTERN_END)
 	if argEnd == nil {
 		// null marks the end of args
@@ -12336,7 +12319,7 @@ func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsg(argListBindingPatte
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns []st.STNode, lastValidArgKind st.SyntaxKind) st.STNode {
+func (b *ballerinaParser) parseErrorArgListBPWithoutErrorMsgAndCause(argListBindingPatterns []st.STNode, lastValidArgKind st.SyntaxKind) st.STNode {
 	for !b.isEndOfErrorFieldBindingPatterns() {
 		argEnd := b.parseErrorArgsBindingPatternEnd(common.PARSER_RULE_CONTEXT_ERROR_FIELD_BINDING_PATTERN_END)
 		if argEnd == nil {
@@ -12363,7 +12346,7 @@ func (b *BallerinaParser) parseErrorArgListBPWithoutErrorMsgAndCause(argListBind
 	return st.CreateNodeList(argListBindingPatterns...)
 }
 
-func (b *BallerinaParser) isEndOfErrorFieldBindingPatterns() bool {
+func (b *ballerinaParser) isEndOfErrorFieldBindingPatterns() bool {
 	nextTokenKind := b.peek().Kind()
 	switch nextTokenKind {
 	case st.CLOSE_PAREN_TOKEN, st.EOF_TOKEN:
@@ -12373,7 +12356,7 @@ func (b *BallerinaParser) isEndOfErrorFieldBindingPatterns() bool {
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgsBindingPatternEnd(currentCtx common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseErrorArgsBindingPatternEnd(currentCtx common.ParserRuleContext) st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -12385,7 +12368,7 @@ func (b *BallerinaParser) parseErrorArgsBindingPatternEnd(currentCtx common.Pars
 	}
 }
 
-func (b *BallerinaParser) parseErrorArgListBindingPattern(context common.ParserRuleContext, isFirstArg bool) st.STNode {
+func (b *ballerinaParser) parseErrorArgListBindingPattern(context common.ParserRuleContext, isFirstArg bool) st.STNode {
 	switch b.peek().Kind() {
 	case st.ELLIPSIS_TOKEN:
 		return b.parseRestBindingPattern()
@@ -12405,7 +12388,7 @@ func (b *BallerinaParser) parseErrorArgListBindingPattern(context common.ParserR
 	}
 }
 
-func (b *BallerinaParser) parseNamedOrSimpleArgBindingPattern(argNameOrSimpleBindingPattern st.STNode) st.STNode {
+func (b *ballerinaParser) parseNamedOrSimpleArgBindingPattern(argNameOrSimpleBindingPattern st.STNode) st.STNode {
 	secondToken := b.peek()
 	switch secondToken.Kind() {
 	case st.EQUAL_TOKEN:
@@ -12420,7 +12403,7 @@ func (b *BallerinaParser) parseNamedOrSimpleArgBindingPattern(argNameOrSimpleBin
 	}
 }
 
-func (b *BallerinaParser) validateErrorFieldBindingPatternOrder(prevArgKind st.SyntaxKind, currentArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
+func (b *ballerinaParser) validateErrorFieldBindingPatternOrder(prevArgKind st.SyntaxKind, currentArgKind st.SyntaxKind) *common.DiagnosticErrorCode {
 	switch currentArgKind {
 	case st.NAMED_ARG_BINDING_PATTERN,
 		st.REST_BINDING_PATTERN:
@@ -12433,11 +12416,11 @@ func (b *BallerinaParser) validateErrorFieldBindingPatternOrder(prevArgKind st.S
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternTypeRhs(typeDesc st.STNode, context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternTypeRhs(typeDesc st.STNode, context common.ParserRuleContext) st.STNode {
 	return b.parseTypedBindingPatternTypeRhsWithRoot(typeDesc, context, true)
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternTypeRhsWithRoot(typeDesc st.STNode, context common.ParserRuleContext, isRoot bool) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternTypeRhsWithRoot(typeDesc st.STNode, context common.ParserRuleContext, isRoot bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN, st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD:
@@ -12460,7 +12443,7 @@ func (b *BallerinaParser) parseTypedBindingPatternTypeRhsWithRoot(typeDesc st.ST
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr st.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr st.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
 	if b.isBracketedListEnd(b.peek().Kind()) {
@@ -12499,16 +12482,16 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr 
 		isTypedBindingPattern, allowAssignment, context)
 }
 
-func (b *BallerinaParser) parseAsMemberAccessExpr(typeNameOrExpr st.STNode, openBracket st.STNode, member st.STNode) st.STNode {
-	member = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, member, false, true)
+func (b *ballerinaParser) parseAsMemberAccessExpr(typeNameOrExpr st.STNode, openBracket st.STNode, member st.STNode) st.STNode {
+	member = b.parseExpressionRhs(defaultOpPrecedence, member, false, true)
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
 	keyExpr := st.CreateNodeList(member)
 	memberAccessExpr := st.CreateIndexedExpressionNode(typeNameOrExpr, openBracket, keyExpr, closeBracket)
-	return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, memberAccessExpr, false, false)
+	return b.parseExpressionRhs(defaultOpPrecedence, memberAccessExpr, false, false)
 }
 
-func (b *BallerinaParser) isBracketedListEnd(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isBracketedListEnd(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACKET_TOKEN:
 		return true
@@ -12517,7 +12500,7 @@ func (b *BallerinaParser) isBracketedListEnd(nextTokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseBracketedListMember(isTypedBindingPattern bool) st.STNode {
+func (b *ballerinaParser) parseBracketedListMember(isTypedBindingPattern bool) st.STNode {
 	nextToken := b.peek()
 
 	switch nextToken.Kind() {
@@ -12553,7 +12536,7 @@ func (b *BallerinaParser) parseBracketedListMember(isTypedBindingPattern bool) s
 	return expr
 }
 
-func (b *BallerinaParser) parseAsArrayTypeDesc(typeDesc st.STNode, openBracket st.STNode, member st.STNode, context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseAsArrayTypeDesc(typeDesc st.STNode, openBracket st.STNode, member st.STNode, context common.ParserRuleContext) st.STNode {
 	typeDesc = b.getTypeDescFromExpr(typeDesc)
 	b.switchContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)
 	b.startContext(common.PARSER_RULE_CONTEXT_ARRAY_TYPE_DESCRIPTOR)
@@ -12564,7 +12547,7 @@ func (b *BallerinaParser) parseAsArrayTypeDesc(typeDesc st.STNode, openBracket s
 		context)
 }
 
-func (b *BallerinaParser) parseBracketedListMemberEnd() st.STNode {
+func (b *ballerinaParser) parseBracketedListMemberEnd() st.STNode {
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN:
 		return b.parseComma()
@@ -12576,7 +12559,7 @@ func (b *BallerinaParser) parseBracketedListMemberEnd() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) st.STNode {
+func (b *ballerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode, isTypedBindingPattern bool, allowAssignment bool, context common.ParserRuleContext) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN, st.OPEN_BRACE_TOKEN, st.ERROR_KEYWORD:
@@ -12650,7 +12633,7 @@ func (b *BallerinaParser) parseTypedBindingPatternOrMemberAccessRhs(typeDescOrEx
 		isTypedBindingPattern, allowAssignment, context)
 }
 
-func (b *BallerinaParser) getKeyExpr(member st.STNode) st.STNode {
+func (b *ballerinaParser) getKeyExpr(member st.STNode) st.STNode {
 	if member == nil {
 		keyIdentifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR)
@@ -12660,7 +12643,7 @@ func (b *BallerinaParser) getKeyExpr(member st.STNode) st.STNode {
 	return st.CreateNodeList(member)
 }
 
-func (b *BallerinaParser) createTypedBindingPattern(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode) st.STNode {
+func (b *ballerinaParser) createTypedBindingPattern(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode) st.STNode {
 	bindingPatterns := st.CreateEmptyNodeList()
 	if !b.isEmpty(member) {
 		memberKind := member.Kind()
@@ -12680,7 +12663,7 @@ func (b *BallerinaParser) createTypedBindingPattern(typeDescOrExpr st.STNode, op
 	return st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
 }
 
-func (b *BallerinaParser) parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode, isTypedBindingPattern bool) st.STNode {
+func (b *ballerinaParser) parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr st.STNode, openBracket st.STNode, member st.STNode, closeBracket st.STNode, isTypedBindingPattern bool) st.STNode {
 	pipeOrAndToken := b.parseUnionOrIntersectionToken()
 	typedBindingPatternOrExpr := b.parseTypedBindingPatternOrExpr(false)
 	if typedBindingPatternOrExpr.Kind() == st.TYPED_BINDING_PATTERN {
@@ -12706,7 +12689,7 @@ func (b *BallerinaParser) parseComplexTypeDescInTypedBPOrExprRhs(typeDescOrExpr 
 		typedBindingPatternOrExpr)
 }
 
-func (b *BallerinaParser) mergeTypes(lhsTypeDesc st.STNode, pipeOrAndToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) mergeTypes(lhsTypeDesc st.STNode, pipeOrAndToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
 	if pipeOrAndToken.Kind() == st.PIPE_TOKEN {
 		return b.mergeTypesWithUnion(lhsTypeDesc, pipeOrAndToken, rhsTypeDesc)
 	} else {
@@ -12714,7 +12697,7 @@ func (b *BallerinaParser) mergeTypes(lhsTypeDesc st.STNode, pipeOrAndToken st.ST
 	}
 }
 
-func (b *BallerinaParser) mergeTypesWithUnion(lhsTypeDesc st.STNode, pipeToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) mergeTypesWithUnion(lhsTypeDesc st.STNode, pipeToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
 	if rhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
 		rhsUnionTypeDesc, ok := rhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
@@ -12726,7 +12709,7 @@ func (b *BallerinaParser) mergeTypesWithUnion(lhsTypeDesc st.STNode, pipeToken s
 	}
 }
 
-func (b *BallerinaParser) mergeTypesWithIntersection(lhsTypeDesc st.STNode, bitwiseAndToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) mergeTypesWithIntersection(lhsTypeDesc st.STNode, bitwiseAndToken st.STNode, rhsTypeDesc st.STNode) st.STNode {
 	if lhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
 		lhsUnionTypeDesc, ok := lhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
@@ -12768,7 +12751,7 @@ func (b *BallerinaParser) mergeTypesWithIntersection(lhsTypeDesc st.STNode, bitw
 	return b.createIntersectionTypeDesc(lhsTypeDesc, bitwiseAndToken, rhsTypeDesc)
 }
 
-func (b *BallerinaParser) replaceLeftMostUnionWithAUnion(typeDesc st.STNode, pipeToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
+func (b *ballerinaParser) replaceLeftMostUnionWithAUnion(typeDesc st.STNode, pipeToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
 	leftTypeDesc := unionTypeDesc.LeftTypeDesc
 	if leftTypeDesc.Kind() == st.UNION_TYPE_DESC {
 		leftUnionTypeDesc, ok := leftTypeDesc.(*st.STUnionTypeDescriptorNode)
@@ -12782,7 +12765,7 @@ func (b *BallerinaParser) replaceLeftMostUnionWithAUnion(typeDesc st.STNode, pip
 	return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
 }
 
-func (b *BallerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
+func (b *ballerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
 	leftTypeDesc := unionTypeDesc.LeftTypeDesc
 	if leftTypeDesc.Kind() == st.UNION_TYPE_DESC {
 		leftUnionTypeDesc, ok := leftTypeDesc.(*st.STUnionTypeDescriptorNode)
@@ -12804,7 +12787,7 @@ func (b *BallerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc st.STNo
 	return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
 }
 
-func (b *BallerinaParser) replaceLeftMostIntersectionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, intersectionTypeDesc *st.STIntersectionTypeDescriptorNode) st.STNode {
+func (b *ballerinaParser) replaceLeftMostIntersectionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, intersectionTypeDesc *st.STIntersectionTypeDescriptorNode) st.STNode {
 	leftTypeDesc := intersectionTypeDesc.LeftTypeDesc
 	if leftTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
 		leftIntersectionTypeDesc, ok := leftTypeDesc.(*st.STIntersectionTypeDescriptorNode)
@@ -12818,7 +12801,7 @@ func (b *BallerinaParser) replaceLeftMostIntersectionWithAIntersection(typeDesc 
 	return st.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, leftTypeDesc)
 }
 
-func (b *BallerinaParser) getArrayTypeDesc(openBracket st.STNode, member st.STNode, closeBracket st.STNode, lhsTypeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) getArrayTypeDesc(openBracket st.STNode, member st.STNode, closeBracket st.STNode, lhsTypeDesc st.STNode) st.STNode {
 	if lhsTypeDesc.Kind() == st.UNION_TYPE_DESC {
 		unionTypeDesc, ok := lhsTypeDesc.(*st.STUnionTypeDescriptorNode)
 		if !ok {
@@ -12840,7 +12823,7 @@ func (b *BallerinaParser) getArrayTypeDesc(openBracket st.STNode, member st.STNo
 	return lhsTypeDesc
 }
 
-func (b *BallerinaParser) parseUnionOrIntersectionToken() st.STNode {
+func (b *ballerinaParser) parseUnionOrIntersectionToken() st.STNode {
 	token := b.peek()
 	if (token.Kind() == st.PIPE_TOKEN) || (token.Kind() == st.BITWISE_AND_TOKEN) {
 		return b.consume()
@@ -12850,7 +12833,7 @@ func (b *BallerinaParser) parseUnionOrIntersectionToken() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) getBracketedListNodeType(memberNode st.STNode, isTypedBindingPattern bool) st.SyntaxKind {
+func (b *ballerinaParser) getBracketedListNodeType(memberNode st.STNode, isTypedBindingPattern bool) st.SyntaxKind {
 	if b.isEmpty(memberNode) {
 		return st.NONE
 	}
@@ -12898,17 +12881,17 @@ func (b *BallerinaParser) getBracketedListNodeType(memberNode st.STNode, isTyped
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartsWithOpenBracket(annots st.STNode, possibleMappingField bool) st.STNode {
+func (b *ballerinaParser) parseStatementStartsWithOpenBracket(annots st.STNode, possibleMappingField bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_OR_VAR_DECL_STMT)
 	return b.parseStatementStartsWithOpenBracketWithRoot(annots, true, possibleMappingField)
 }
 
-func (b *BallerinaParser) parseMemberBracketedList() st.STNode {
+func (b *ballerinaParser) parseMemberBracketedList() st.STNode {
 	annots := st.CreateEmptyNodeList()
 	return b.parseStatementStartsWithOpenBracketWithRoot(annots, false, false)
 }
 
-func (b *BallerinaParser) parseStatementStartsWithOpenBracketWithRoot(annots st.STNode, isRoot bool, possibleMappingField bool) st.STNode {
+func (b *ballerinaParser) parseStatementStartsWithOpenBracketWithRoot(annots st.STNode, isRoot bool, possibleMappingField bool) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_STMT_START_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
 	var memberList []st.STNode
@@ -12951,11 +12934,11 @@ func (b *BallerinaParser) parseStatementStartsWithOpenBracketWithRoot(annots st.
 	return bracketedList
 }
 
-func (b *BallerinaParser) parseStatementStartBracketedListMember() st.STNode {
+func (b *ballerinaParser) parseStatementStartBracketedListMember() st.STNode {
 	return b.parseStatementStartBracketedListMemberWithQualifiers(nil)
 }
 
-func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(qualifiers []st.STNode) st.STNode {
+func (b *ballerinaParser) parseStatementStartBracketedListMemberWithQualifiers(qualifiers []st.STNode) st.STNode {
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	switch nextToken.Kind() {
@@ -12981,7 +12964,7 @@ func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 		if (nextToken.Kind() != st.OPEN_BRACKET_TOKEN) && b.isValidTypeContinuationToken(nextToken) {
 			return b.parseComplexTypeDescriptor(identifier, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 		}
-		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, identifier, false, true)
+		return b.parseExpressionRhs(defaultOpPrecedence, identifier, false, true)
 	case st.OPEN_BRACE_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMappingBindingPatterOrMappingConstructor()
@@ -13026,7 +13009,7 @@ func (b *BallerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 	}
 }
 
-func (b *BallerinaParser) parseRestBindingOrSpreadMember() st.STNode {
+func (b *ballerinaParser) parseRestBindingOrSpreadMember() st.STNode {
 	ellipsis := b.parseEllipsis()
 	expr := b.parseExpression()
 	if expr.Kind() == st.SIMPLE_NAME_REFERENCE {
@@ -13037,7 +13020,7 @@ func (b *BallerinaParser) parseRestBindingOrSpreadMember() st.STNode {
 }
 
 // return result and modified memberList
-func (b *BallerinaParser) parseAsTupleTypeDescOrListConstructor(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsTupleTypeDescOrListConstructor(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = append(memberList, member)
 	memberEnd := b.parseBracketedListMemberEnd()
 	var tupleTypeDescOrListCons st.STNode
@@ -13051,7 +13034,7 @@ func (b *BallerinaParser) parseAsTupleTypeDescOrListConstructor(annots st.STNode
 	return tupleTypeDescOrListCons, memberList
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructor(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseTupleTypeDescOrListConstructor(annots st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
 	var memberList []st.STNode
@@ -13059,7 +13042,7 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructor(annots st.STNode) 
 	return result
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructorWithBracketAndMembers(annots st.STNode, openBracket st.STNode, memberList []st.STNode, isRoot bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseTupleTypeDescOrListConstructorWithBracketAndMembers(annots st.STNode, openBracket st.STNode, memberList []st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	nextToken := b.peek()
 	for !b.isBracketedListEnd(nextToken.Kind()) {
 		member := b.parseTupleTypeDescOrListConstructorMember(annots)
@@ -13089,7 +13072,7 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructorWithBracketAndMembe
 	return b.parseTupleTypeDescOrListConstructorRhs(openBracket, memberList, closeBracket, isRoot), memberList
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.STNode) st.STNode {
+func (b *ballerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_BRACKET_TOKEN:
@@ -13100,7 +13083,7 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.ST
 			ellipsis := b.parseEllipsis()
 			return st.CreateRestDescriptorNode(identifier, ellipsis)
 		}
-		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, identifier, false, false)
+		return b.parseExpressionRhs(defaultOpPrecedence, identifier, false, false)
 	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingConstructorExpr()
 	case st.ERROR_KEYWORD:
@@ -13135,11 +13118,11 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.ST
 	}
 }
 
-func (b *BallerinaParser) getParsingNodeTypeOfTupleTypeOrListCons(memberNode st.STNode) st.SyntaxKind {
+func (b *ballerinaParser) getParsingNodeTypeOfTupleTypeOrListCons(memberNode st.STNode) st.SyntaxKind {
 	return b.getStmtStartBracketedListType(memberNode)
 }
 
-func (b *BallerinaParser) parseTupleTypeDescOrListConstructorRhs(openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool) st.STNode {
+func (b *ballerinaParser) parseTupleTypeDescOrListConstructorRhs(openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool) st.STNode {
 	var tupleTypeOrListConst st.STNode
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN, st.CLOSE_BRACKET_TOKEN, st.PIPE_TOKEN, st.BITWISE_AND_TOKEN:
@@ -13167,7 +13150,7 @@ func (b *BallerinaParser) parseTupleTypeDescOrListConstructorRhs(openBracket st.
 	return b.parseStmtStartsWithTupleTypeOrExprRhs(annots, tupleTypeOrListConst, true)
 }
 
-func (b *BallerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots st.STNode, tupleTypeOrListConst st.STNode, isRoot bool) st.STNode {
+func (b *ballerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots st.STNode, tupleTypeOrListConst st.STNode, isRoot bool) st.STNode {
 	if (tupleTypeOrListConst.Kind().CompareTo(st.RECORD_TYPE_DESC) >= 0) && (tupleTypeOrListConst.Kind().CompareTo(st.TYPEDESC_TYPE_DESC) <= 0) {
 		typedBindingPattern := b.parseTypedBindingPatternTypeRhsWithRoot(tupleTypeOrListConst, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, isRoot)
 		if !isRoot {
@@ -13178,11 +13161,11 @@ func (b *BallerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots st.STNode
 		return res
 	}
 	expr := b.getExpression(tupleTypeOrListConst)
-	expr = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, false, true)
+	expr = b.parseExpressionRhs(defaultOpPrecedence, expr, false, true)
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseAsTupleTypeDesc(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) st.STNode {
+func (b *ballerinaParser) parseAsTupleTypeDesc(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) st.STNode {
 	memberList = b.getTupleMemberList(memberList)
 	b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
 	tupleTypeMembers, memberList := b.parseTupleTypeMembers(member, memberList) //nolint:staticcheck,ineffassign // memberList will be used when tuple rest descriptor is fully implemented
@@ -13200,7 +13183,7 @@ func (b *BallerinaParser) parseAsTupleTypeDesc(annots st.STNode, openBracket st.
 	return res
 }
 
-func (b *BallerinaParser) parseAsListBindingPatternWithMemberAndRoot(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsListBindingPatternWithMemberAndRoot(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = b.getBindingPatternsList(memberList, true)
 	memberList = append(memberList, b.getBindingPattern(member, true))
 	b.switchContext(common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN)
@@ -13212,7 +13195,7 @@ func (b *BallerinaParser) parseAsListBindingPatternWithMemberAndRoot(openBracket
 	return b.parseAssignmentStmtRhs(listBindingPattern), memberList
 }
 
-func (b *BallerinaParser) parseAsListBindingPattern(openBracket st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsListBindingPattern(openBracket st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
 	memberList = b.getBindingPatternsList(memberList, true)
 	b.switchContext(common.PARSER_RULE_CONTEXT_LIST_BINDING_PATTERN)
 	listBindingPattern, memberList := b.parseListBindingPatternWithOpenBracket(openBracket, memberList)
@@ -13220,7 +13203,7 @@ func (b *BallerinaParser) parseAsListBindingPattern(openBracket st.STNode, membe
 	return listBindingPattern, memberList
 }
 
-func (b *BallerinaParser) parseAsListBindingPatternOrListConstructor(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsListBindingPatternOrListConstructor(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = append(memberList, member)
 	memberEnd := b.parseBracketedListMemberEnd()
 	var listBindingPatternOrListCons st.STNode
@@ -13234,7 +13217,7 @@ func (b *BallerinaParser) parseAsListBindingPatternOrListConstructor(openBracket
 	return listBindingPatternOrListCons, memberList
 }
 
-func (b *BallerinaParser) getStmtStartBracketedListType(memberNode st.STNode) st.SyntaxKind {
+func (b *ballerinaParser) getStmtStartBracketedListType(memberNode st.STNode) st.SyntaxKind {
 	if (memberNode.Kind().CompareTo(st.RECORD_TYPE_DESC) >= 0) && (memberNode.Kind().CompareTo(st.FUTURE_TYPE_DESC) <= 0) {
 		return st.TUPLE_TYPE_DESC
 	}
@@ -13280,7 +13263,7 @@ func (b *BallerinaParser) getStmtStartBracketedListType(memberNode st.STNode) st
 	}
 }
 
-func (b *BallerinaParser) isPossibleErrorBindingPattern(errorConstructor st.STErrorConstructorExpressionNode) bool {
+func (b *ballerinaParser) isPossibleErrorBindingPattern(errorConstructor st.STErrorConstructorExpressionNode) bool {
 	args := errorConstructor.Arguments
 	size := args.BucketCount()
 	i := 0
@@ -13297,7 +13280,7 @@ func (b *BallerinaParser) isPossibleErrorBindingPattern(errorConstructor st.STEr
 	return true
 }
 
-func (b *BallerinaParser) isPosibleArgBindingPattern(arg st.STFunctionArgumentNode) bool {
+func (b *ballerinaParser) isPosibleArgBindingPattern(arg st.STFunctionArgumentNode) bool {
 	switch arg.Kind() {
 	case st.POSITIONAL_ARG:
 		positionalArg, ok := arg.(*st.STPositionalArgumentNode)
@@ -13322,7 +13305,7 @@ func (b *BallerinaParser) isPosibleArgBindingPattern(arg st.STFunctionArgumentNo
 	}
 }
 
-func (b *BallerinaParser) isPosibleBindingPattern(node st.STNode) bool {
+func (b *ballerinaParser) isPosibleBindingPattern(node st.STNode) bool {
 	switch node.Kind() {
 	case st.SIMPLE_NAME_REFERENCE:
 		return true
@@ -13376,7 +13359,7 @@ func (b *BallerinaParser) isPosibleBindingPattern(node st.STNode) bool {
 }
 
 // return result, and modified memberList
-func (b *BallerinaParser) parseStatementStartBracketedListRhs(annots st.STNode, openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool, possibleMappingField bool) st.STNode {
+func (b *ballerinaParser) parseStatementStartBracketedListRhs(annots st.STNode, openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool, possibleMappingField bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.EQUAL_TOKEN:
@@ -13446,7 +13429,7 @@ func (b *BallerinaParser) parseStatementStartBracketedListRhs(annots st.STNode, 
 	}
 }
 
-func (b *BallerinaParser) isWildcardBP(node st.STNode) bool {
+func (b *ballerinaParser) isWildcardBP(node st.STNode) bool {
 	switch node.Kind() {
 	case st.SIMPLE_NAME_REFERENCE:
 		simpleNameNode, ok := node.(*st.STSimpleNameReferenceNode)
@@ -13469,11 +13452,11 @@ func (b *BallerinaParser) isWildcardBP(node st.STNode) bool {
 	}
 }
 
-func (b *BallerinaParser) isUnderscoreToken(token st.STToken) bool {
+func (b *ballerinaParser) isUnderscoreToken(token st.STToken) bool {
 	return token.Text() == "_"
 }
 
-func (b *BallerinaParser) getWildcardBindingPattern(identifier st.STNode) st.STNode {
+func (b *ballerinaParser) getWildcardBindingPattern(identifier st.STNode) st.STNode {
 	var underscore st.STNode
 	switch identifier.Kind() {
 	case st.SIMPLE_NAME_REFERENCE:
@@ -13500,7 +13483,7 @@ func (b *BallerinaParser) getWildcardBindingPattern(identifier st.STNode) st.STN
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
+func (b *ballerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	openBrace := b.parseOpenBrace()
 	if b.peek().Kind() == st.CLOSE_BRACE_TOKEN {
@@ -13516,7 +13499,7 @@ func (b *BallerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
 			b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 			fields := st.CreateEmptyNodeList()
 			expr := st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
-			expr = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, false, true)
+			expr = b.parseExpressionRhs(defaultOpPrecedence, expr, false, true)
 			return b.parseStatementStartWithExprRhs(expr)
 		default:
 			statements := st.CreateEmptyNodeList()
@@ -13549,7 +13532,7 @@ func (b *BallerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseStmtAsMappingBindingPatternStart(openBrace st.STNode, firstMappingField st.STNode) st.STNode {
+func (b *ballerinaParser) parseStmtAsMappingBindingPatternStart(openBrace st.STNode, firstMappingField st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN)
 	var bindingPatterns []st.STNode
@@ -13560,15 +13543,15 @@ func (b *BallerinaParser) parseStmtAsMappingBindingPatternStart(openBrace st.STN
 	return b.parseAssignmentStmtRhs(mappingBP)
 }
 
-func (b *BallerinaParser) parseStmtAsMappingConstructorStart(openBrace st.STNode, firstMember st.STNode) st.STNode {
+func (b *ballerinaParser) parseStmtAsMappingConstructorStart(openBrace st.STNode, firstMember st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 	mappingCons, _ := b.parseAsMappingConstructor(openBrace, nil, firstMember)
-	expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, mappingCons, false, true)
+	expr := b.parseExpressionRhs(defaultOpPrecedence, mappingCons, false, true)
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *BallerinaParser) parseAsMappingConstructor(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsMappingConstructor(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
 	members = append(members, member)
 	members = b.getExpressionList(members, true)
 	b.switchContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
@@ -13578,7 +13561,7 @@ func (b *BallerinaParser) parseAsMappingConstructor(openBrace st.STNode, members
 	return st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace), members
 }
 
-func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.STNode, member st.STNode) st.STNode {
+func (b *ballerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.STNode, member st.STNode) st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR)
 	var members []st.STNode
 	members = append(members, member)
@@ -13594,7 +13577,7 @@ func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.ST
 	switch bpOrConstructor.Kind() {
 	case st.MAPPING_CONSTRUCTOR:
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
-		expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, bpOrConstructor, false, true)
+		expr := b.parseExpressionRhs(defaultOpPrecedence, bpOrConstructor, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
 	case st.MAPPING_BINDING_PATTERN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
@@ -13610,12 +13593,12 @@ func (b *BallerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.ST
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 		expr := b.getExpression(bpOrConstructor)
-		expr = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, false, true)
+		expr = b.parseExpressionRhs(defaultOpPrecedence, expr, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
 	}
 }
 
-func (b *BallerinaParser) parseStatementStartingBracedListFirstMember(isOpenBraceMissing bool) st.STNode {
+func (b *ballerinaParser) parseStatementStartingBracedListFirstMember(isOpenBraceMissing bool) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.READONLY_KEYWORD:
@@ -13634,7 +13617,7 @@ func (b *BallerinaParser) parseStatementStartingBracedListFirstMember(isOpenBrac
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
-		expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, key, false, true)
+		expr := b.parseExpressionRhs(defaultOpPrecedence, key, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
 	case st.OPEN_BRACKET_TOKEN:
 		annots := st.CreateEmptyNodeList()
@@ -13654,7 +13637,7 @@ func (b *BallerinaParser) parseStatementStartingBracedListFirstMember(isOpenBrac
 	}
 }
 
-func (b *BallerinaParser) bracedListMemberStartsWithReadonly(readonlyKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) bracedListMemberStartsWithReadonly(readonlyKeyword st.STNode) st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -13669,14 +13652,14 @@ func (b *BallerinaParser) bracedListMemberStartsWithReadonly(readonlyKeyword st.
 		fallthrough
 	default:
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
-		typeDesc := CreateBuiltinSimpleNameReference(readonlyKeyword)
+		typeDesc := createBuiltinSimpleNameReference(readonlyKeyword)
 		res, _ := b.parseVarDeclTypeDescRhs(typeDesc, st.CreateEmptyNodeList(), nil,
 			true, false)
 		return res
 	}
 }
 
-func (b *BallerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword st.STNode) st.STNode {
+func (b *ballerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword st.STNode) st.STNode {
 	identifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
@@ -13723,7 +13706,7 @@ func (b *BallerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword 
 	}
 }
 
-func (b *BallerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier st.STNode, colon st.STNode) st.STNode {
+func (b *ballerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier st.STNode, colon st.STNode) st.STNode {
 	secondIdentifier := b.parseIdentifier(common.PARSER_RULE_CONTEXT_VARIABLE_REF)
 	secondNameRef := st.CreateSimpleNameReferenceNode(secondIdentifier)
 	if b.isWildcardBP(secondIdentifier) {
@@ -13761,7 +13744,7 @@ func (b *BallerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier
 	}
 }
 
-func (b *BallerinaParser) getBracedListType(member st.STNode) st.SyntaxKind {
+func (b *ballerinaParser) getBracedListType(member st.STNode) st.SyntaxKind {
 	switch member.Kind() {
 	case st.FIELD_BINDING_PATTERN,
 		st.CAPTURE_BINDING_PATTERN,
@@ -13813,14 +13796,14 @@ func (b *BallerinaParser) getBracedListType(member st.STNode) st.SyntaxKind {
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructor() st.STNode {
+func (b *ballerinaParser) parseMappingBindingPatterOrMappingConstructor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR)
 	openBrace := b.parseOpenBrace()
 	res, _ := b.parseMappingBindingPatternOrMappingConstructor(openBrace, nil)
 	return res
 }
 
-func (b *BallerinaParser) isBracedListEnd(nextTokenKind st.SyntaxKind) bool {
+func (b *ballerinaParser) isBracedListEnd(nextTokenKind st.SyntaxKind) bool {
 	switch nextTokenKind {
 	case st.EOF_TOKEN, st.CLOSE_BRACE_TOKEN:
 		return true
@@ -13829,7 +13812,7 @@ func (b *BallerinaParser) isBracedListEnd(nextTokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructor(openBrace st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseMappingBindingPatternOrMappingConstructor(openBrace st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
 	nextToken := b.peek()
 	for !b.isBracedListEnd(nextToken.Kind()) {
 		member := b.parseMappingBindingPatterOrMappingConstructorMember()
@@ -13855,7 +13838,7 @@ func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructor(openBra
 	return b.parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace, memberList, closeBrace), memberList
 }
 
-func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructorMember() st.STNode {
+func (b *ballerinaParser) parseMappingBindingPatterOrMappingConstructorMember() st.STNode {
 	switch b.peek().Kind() {
 	case st.IDENTIFIER_TOKEN:
 		key := b.parseIdentifier(common.PARSER_RULE_CONTEXT_MAPPING_FIELD_NAME)
@@ -13881,7 +13864,7 @@ func (b *BallerinaParser) parseMappingBindingPatterOrMappingConstructorMember() 
 	}
 }
 
-func (b *BallerinaParser) parseMappingFieldRhs(key st.STNode) st.STNode {
+func (b *ballerinaParser) parseMappingFieldRhs(key st.STNode) st.STNode {
 	var colon st.STNode
 	var valueExpr st.STNode
 	switch b.peek().Kind() {
@@ -13901,7 +13884,7 @@ func (b *BallerinaParser) parseMappingFieldRhs(key st.STNode) st.STNode {
 	}
 }
 
-func (b *BallerinaParser) parseMappingFieldValue(key st.STNode, colon st.STNode) st.STNode {
+func (b *ballerinaParser) parseMappingFieldValue(key st.STNode, colon st.STNode) st.STNode {
 	var expr st.STNode
 	switch b.peek().Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -13921,7 +13904,7 @@ func (b *BallerinaParser) parseMappingFieldValue(key st.STNode, colon st.STNode)
 	return st.CreateSpecificFieldNode(readonlyKeyword, key, colon, expr)
 }
 
-func (b *BallerinaParser) isBindingPattern(kind st.SyntaxKind) bool {
+func (b *ballerinaParser) isBindingPattern(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.FIELD_BINDING_PATTERN,
 		st.MAPPING_BINDING_PATTERN,
@@ -13934,7 +13917,7 @@ func (b *BallerinaParser) isBindingPattern(kind st.SyntaxKind) bool {
 	}
 }
 
-func (b *BallerinaParser) getTypeOfMappingBPOrMappingCons(memberNode st.STNode) st.SyntaxKind {
+func (b *ballerinaParser) getTypeOfMappingBPOrMappingCons(memberNode st.STNode) st.SyntaxKind {
 	switch memberNode.Kind() {
 	case st.FIELD_BINDING_PATTERN,
 		st.MAPPING_BINDING_PATTERN,
@@ -13962,19 +13945,19 @@ func (b *BallerinaParser) getTypeOfMappingBPOrMappingCons(memberNode st.STNode) 
 	}
 }
 
-func (b *BallerinaParser) parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace st.STNode, members []st.STNode, closeBrace st.STNode) st.STNode {
+func (b *ballerinaParser) parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace st.STNode, members []st.STNode, closeBrace st.STNode) st.STNode {
 	b.endContext()
 	return st.CreateAmbiguousCollectionNode(st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR, openBrace, members, closeBrace)
 }
 
-func (b *BallerinaParser) parseAsMappingBindingPattern(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsMappingBindingPattern(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
 	members = append(members, member)
 	members = b.getBindingPatternsList(members, false)
 	b.switchContext(common.PARSER_RULE_CONTEXT_MAPPING_BINDING_PATTERN)
 	return b.parseMappingBindingPatternInner(openBrace, members, member)
 }
 
-func (b *BallerinaParser) parseListBindingPatternOrListConstructor() st.STNode {
+func (b *ballerinaParser) parseListBindingPatternOrListConstructor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_BRACKETED_LIST)
 	openBracket := b.parseOpenBracket()
 	res, _ := b.parseListBindingPatternOrListConstructorInner(openBracket, nil, false)
@@ -13982,7 +13965,7 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructor() st.STNode {
 }
 
 // return result, and modified memberList
-func (b *BallerinaParser) parseListBindingPatternOrListConstructorInner(openBracket st.STNode, memberList []st.STNode, isRoot bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseListBindingPatternOrListConstructorInner(openBracket st.STNode, memberList []st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	nextToken := b.peek()
 	for !b.isBracketedListEnd(nextToken.Kind()) {
 		member := b.parseListBindingPatternOrListConstructorMember()
@@ -14008,7 +13991,7 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorInner(openBrac
 	return b.parseListBindingPatternOrListConstructorWithCloseBracket(openBracket, memberList, closeBracket, isRoot), memberList
 }
 
-func (b *BallerinaParser) parseListBindingPatternOrListConstructorMember() st.STNode {
+func (b *ballerinaParser) parseListBindingPatternOrListConstructorMember() st.STNode {
 	nextToken := b.peek()
 	switch nextToken.Kind() {
 	case st.OPEN_BRACKET_TOKEN:
@@ -14018,7 +14001,7 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorMember() st.ST
 		if b.isWildcardBP(identifier) {
 			return b.getWildcardBindingPattern(identifier)
 		}
-		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, identifier, false, false)
+		return b.parseExpressionRhs(defaultOpPrecedence, identifier, false, false)
 	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingBindingPatterOrMappingConstructor()
 	case st.ELLIPSIS_TOKEN:
@@ -14032,7 +14015,7 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorMember() st.ST
 	}
 }
 
-func (b *BallerinaParser) getParsingNodeTypeOfListBPOrListCons(memberNode st.STNode) st.SyntaxKind {
+func (b *ballerinaParser) getParsingNodeTypeOfListBPOrListCons(memberNode st.STNode) st.SyntaxKind {
 	switch memberNode.Kind() {
 	case st.CAPTURE_BINDING_PATTERN,
 		st.LIST_BINDING_PATTERN,
@@ -14050,7 +14033,7 @@ func (b *BallerinaParser) getParsingNodeTypeOfListBPOrListCons(memberNode st.STN
 }
 
 // Return res and modified memberList
-func (b *BallerinaParser) parseAsListConstructor(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsListConstructor(openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) (st.STNode, []st.STNode) {
 	memberList = append(memberList, member)
 	memberList = b.getExpressionList(memberList, false)
 	b.switchContext(common.PARSER_RULE_CONTEXT_LIST_CONSTRUCTOR)
@@ -14058,14 +14041,14 @@ func (b *BallerinaParser) parseAsListConstructor(openBracket st.STNode, memberLi
 	closeBracket := b.parseCloseBracket()
 	listConstructor := st.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
 	b.endContext()
-	expr := b.parseExpressionRhs(OPERATOR_PRECEDENCE_DEFAULT, listConstructor, false, true)
+	expr := b.parseExpressionRhs(operatorPrecedenceDefault, listConstructor, false, true)
 	if !isRoot {
 		return expr, memberList
 	}
 	return b.parseStatementStartWithExprRhs(expr), memberList
 }
 
-func (b *BallerinaParser) parseListBindingPatternOrListConstructorWithCloseBracket(openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool) st.STNode {
+func (b *ballerinaParser) parseListBindingPatternOrListConstructorWithCloseBracket(openBracket st.STNode, members []st.STNode, closeBracket st.STNode, isRoot bool) st.STNode {
 	var lbpOrListCons st.STNode
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN,
@@ -14083,7 +14066,7 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorWithCloseBrack
 			memberExpressions := st.CreateNodeList(members...)
 			lbpOrListCons = st.CreateListConstructorExpressionNode(openBracket, memberExpressions,
 				closeBracket)
-			lbpOrListCons = b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, lbpOrListCons, false, true)
+			lbpOrListCons = b.parseExpressionRhs(defaultOpPrecedence, lbpOrListCons, false, true)
 			break
 		}
 		members = b.getBindingPatternsList(members, true)
@@ -14102,7 +14085,7 @@ func (b *BallerinaParser) parseListBindingPatternOrListConstructorWithCloseBrack
 	}
 }
 
-func (b *BallerinaParser) parseMemberRhsInStmtStartWithBrace(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, secondNameRef st.STNode) st.STNode {
+func (b *ballerinaParser) parseMemberRhsInStmtStartWithBrace(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, secondNameRef st.STNode) st.STNode {
 	typedBPOrExpr := b.parseTypedBindingPatternOrMemberAccess(secondNameRef, false, true, common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
 	if b.isExpression(typedBPOrExpr.Kind()) {
 		return b.parseMemberWithExprInRhs(identifier, colon, secondIdentifier, typedBPOrExpr)
@@ -14123,8 +14106,8 @@ func (b *BallerinaParser) parseMemberRhsInStmtStartWithBrace(identifier st.STNod
 	return res
 }
 
-func (b *BallerinaParser) parseMemberWithExprInRhs(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, memberAccessExpr st.STNode) st.STNode {
-	expr := b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, memberAccessExpr, false, true)
+func (b *ballerinaParser) parseMemberWithExprInRhs(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, memberAccessExpr st.STNode) st.STNode {
+	expr := b.parseExpressionRhs(defaultOpPrecedence, memberAccessExpr, false, true)
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
@@ -14141,7 +14124,7 @@ func (b *BallerinaParser) parseMemberWithExprInRhs(identifier st.STNode, colon s
 	}
 }
 
-func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpression() st.STNode {
+func (b *ballerinaParser) parseInferredTypeDescDefaultOrExpression() st.STNode {
 	nextToken := b.peek()
 	nextTokenKind := nextToken.Kind()
 	if nextTokenKind == st.LT_TOKEN {
@@ -14154,7 +14137,7 @@ func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpression() st.STNode {
 	return b.parseInferredTypeDescDefaultOrExpression()
 }
 
-func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken st.STToken) st.STNode {
+func (b *ballerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken st.STToken) st.STNode {
 	nextToken := b.peek()
 	if nextToken.Kind() == st.GT_TOKEN {
 		return st.CreateInferredTypedescDefaultNode(ltToken, b.consume())
@@ -14162,13 +14145,13 @@ func (b *BallerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken 
 	if b.isTypeStartingToken(nextToken.Kind()) || (nextToken.Kind() == st.AT_TOKEN) {
 		b.startContext(common.PARSER_RULE_CONTEXT_TYPE_CAST)
 		expr := b.parseTypeCastExprInner(ltToken, true, false, false)
-		return b.parseExpressionRhs(DEFAULT_OP_PRECEDENCE, expr, true, false)
+		return b.parseExpressionRhs(defaultOpPrecedence, expr, true, false)
 	}
 	b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM_START_OR_INFERRED_TYPEDESC_DEFAULT_END)
 	return b.parseInferredTypeDescDefaultOrExpressionInner(ltToken)
 }
 
-func (b *BallerinaParser) mergeQualifiedNameWithExpr(qualifiedName st.STNode, exprOrAction st.STNode) st.STNode {
+func (b *ballerinaParser) mergeQualifiedNameWithExpr(qualifiedName st.STNode, exprOrAction st.STNode) st.STNode {
 	switch exprOrAction.Kind() {
 	case st.SIMPLE_NAME_REFERENCE:
 		return qualifiedName
@@ -14264,7 +14247,7 @@ func (b *BallerinaParser) mergeQualifiedNameWithExpr(qualifiedName st.STNode, ex
 	}
 }
 
-func (b *BallerinaParser) mergeQualifiedNameWithTypeDesc(qualifiedName st.STNode, typeDesc st.STNode) st.STNode {
+func (b *ballerinaParser) mergeQualifiedNameWithTypeDesc(qualifiedName st.STNode, typeDesc st.STNode) st.STNode {
 	switch typeDesc.Kind() {
 	case st.SIMPLE_NAME_REFERENCE:
 		return qualifiedName
@@ -14302,7 +14285,7 @@ func (b *BallerinaParser) mergeQualifiedNameWithTypeDesc(qualifiedName st.STNode
 	}
 }
 
-func (b *BallerinaParser) getTupleMemberList(ambiguousList []st.STNode) []st.STNode {
+func (b *ballerinaParser) getTupleMemberList(ambiguousList []st.STNode) []st.STNode {
 	var tupleMemberList []st.STNode
 	for _, item := range ambiguousList {
 		if item.Kind() == st.COMMA_TOKEN {
@@ -14316,7 +14299,7 @@ func (b *BallerinaParser) getTupleMemberList(ambiguousList []st.STNode) []st.STN
 	return tupleMemberList
 }
 
-func (b *BallerinaParser) getTypeDescFromExpr(expression st.STNode) st.STNode {
+func (b *ballerinaParser) getTypeDescFromExpr(expression st.STNode) st.STNode {
 	if b.isDefiniteTypeDesc(expression.Kind()) || (expression.Kind() == st.COMMA_TOKEN) {
 		return expression
 	}
@@ -14391,7 +14374,7 @@ func (b *BallerinaParser) getTypeDescFromExpr(expression st.STNode) st.STNode {
 	}
 }
 
-func (b *BallerinaParser) getBindingPatternsList(ambibuousList []st.STNode, isListBP bool) []st.STNode {
+func (b *ballerinaParser) getBindingPatternsList(ambibuousList []st.STNode, isListBP bool) []st.STNode {
 	var bindingPatterns []st.STNode
 	for _, item := range ambibuousList {
 		bindingPatterns = append(bindingPatterns, b.getBindingPattern(item, isListBP))
@@ -14399,7 +14382,7 @@ func (b *BallerinaParser) getBindingPatternsList(ambibuousList []st.STNode, isLi
 	return bindingPatterns
 }
 
-func (b *BallerinaParser) getBindingPattern(ambiguousNode st.STNode, isListBP bool) st.STNode {
+func (b *ballerinaParser) getBindingPattern(ambiguousNode st.STNode, isListBP bool) st.STNode {
 	errorCode := common.ERROR_INVALID_BINDING_PATTERN
 	if b.isEmpty(ambiguousNode) {
 		return nil
@@ -14518,7 +14501,7 @@ func (b *BallerinaParser) getBindingPattern(ambiguousNode st.STNode, isListBP bo
 	return st.CreateCaptureBindingPatternNode(identifier)
 }
 
-func (b *BallerinaParser) getExpressionList(ambibuousList []st.STNode, isMappingConstructor bool) []st.STNode {
+func (b *ballerinaParser) getExpressionList(ambibuousList []st.STNode, isMappingConstructor bool) []st.STNode {
 	var exprList []st.STNode
 	for _, item := range ambibuousList {
 		exprList = append(exprList, b.getExpressionInner(item, isMappingConstructor))
@@ -14526,11 +14509,11 @@ func (b *BallerinaParser) getExpressionList(ambibuousList []st.STNode, isMapping
 	return exprList
 }
 
-func (b *BallerinaParser) getExpression(ambiguousNode st.STNode) st.STNode {
+func (b *ballerinaParser) getExpression(ambiguousNode st.STNode) st.STNode {
 	return b.getExpressionInner(ambiguousNode, false)
 }
 
-func (b *BallerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappingConstructor bool) st.STNode {
+func (b *ballerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappingConstructor bool) st.STNode {
 	if ((b.isEmpty(ambiguousNode) || (b.isDefiniteExpr(ambiguousNode.Kind()) && (ambiguousNode.Kind() != st.INDEXED_EXPRESSION))) || b.isDefiniteAction(ambiguousNode.Kind())) || (ambiguousNode.Kind() == st.COMMA_TOKEN) {
 		return ambiguousNode
 	}
@@ -14639,7 +14622,7 @@ func (b *BallerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappin
 	}
 }
 
-func (b *BallerinaParser) getMappingField(identifier st.STNode, colon st.STNode, bindingPatternOrExpr st.STNode) st.STNode {
+func (b *ballerinaParser) getMappingField(identifier st.STNode, colon st.STNode, bindingPatternOrExpr st.STNode) st.STNode {
 	simpleNameRef := st.CreateSimpleNameReferenceNode(identifier)
 	switch bindingPatternOrExpr.Kind() {
 	case st.LIST_BINDING_PATTERN,
@@ -14654,7 +14637,7 @@ func (b *BallerinaParser) getMappingField(identifier st.STNode, colon st.STNode,
 	}
 }
 
-func (b *BallerinaParser) recoverWithBlockContext(nextToken st.STToken, currentCtx common.ParserRuleContext) *Solution {
+func (b *ballerinaParser) recoverWithBlockContext(nextToken st.STToken, currentCtx common.ParserRuleContext) *solution {
 	if b.isInsideABlock(nextToken) {
 		return b.recover(nextToken, currentCtx, true)
 	} else {
@@ -14662,14 +14645,14 @@ func (b *BallerinaParser) recoverWithBlockContext(nextToken st.STToken, currentC
 	}
 }
 
-func (b *BallerinaParser) isInsideABlock(nextToken st.STToken) bool {
+func (b *ballerinaParser) isInsideABlock(nextToken st.STToken) bool {
 	if nextToken.Kind() != st.CLOSE_BRACE_TOKEN {
 		return false
 	}
 	return slices.ContainsFunc(b.errorHandler.GetContextStack(), b.isBlockContext)
 }
 
-func (b *BallerinaParser) isBlockContext(ctx common.ParserRuleContext) bool {
+func (b *ballerinaParser) isBlockContext(ctx common.ParserRuleContext) bool {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_FUNC_BODY_BLOCK,
 		common.PARSER_RULE_CONTEXT_CLASS_MEMBER,
@@ -14690,35 +14673,20 @@ func (b *BallerinaParser) isBlockContext(ctx common.ParserRuleContext) bool {
 	}
 }
 
-func (b *BallerinaParser) isSpecialMethodName(token st.STToken) bool {
+func (b *ballerinaParser) isSpecialMethodName(token st.STToken) bool {
 	return (((token.Kind() == st.MAP_KEYWORD) || (token.Kind() == st.START_KEYWORD)) || (token.Kind() == st.JOIN_KEYWORD))
 }
 
 // GetSyntaxTree parses content into a syntax tree, attributing it to fileName
 // (used for diagnostics and the syntax tree's text document).
 func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*st.SyntaxTree, error) {
-	return getSyntaxTree(ctx, fileName, content, false)
-}
-
-func GetImportSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*st.SyntaxTree, error) {
-	return getSyntaxTree(ctx, fileName, content, true)
-}
-
-func getSyntaxTree(ctx *context.CompilerContext, fileName string, content string, importsOnly bool) (*st.SyntaxTree, error) {
 	reader := text.CharReaderFromText(content)
-	lexer := NewLexer(reader)
-	tokenReader := CreateTokenReader(lexer)
-	ballerinaParser := NewBallerinaParserFromTokenReader(tokenReader)
-	var rootNode *st.STModulePart
-	if importsOnly {
-		rootNode = ballerinaParser.ParseImports().(*st.STModulePart)
-	} else {
-		rootNode = ballerinaParser.Parse().(*st.STModulePart)
-	}
+	lexer := newLexer(reader)
+	tokenReader := createTokenReader(lexer)
+	ballerinaParser := newBallerinaParserFromTokenReader(tokenReader)
+	rootNode := ballerinaParser.Parse().(*st.STModulePart)
 	moduleNode := st.CreateUnlinkedFacade[*st.STModulePart, *st.ModulePart](rootNode)
-	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, nil, fileName, false)
-	if syntaxTree.HasDiagnostics() {
-		ctx.SyntaxError("syntax error at", diagnostics.Location{})
-	}
+	textDocument := text.TextDocumentFromText(content)
+	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDocument, fileName, false)
 	return &syntaxTree, nil
 }

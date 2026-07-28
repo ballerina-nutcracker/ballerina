@@ -29,7 +29,7 @@ type xmlParser struct {
 	interpIdx          int
 }
 
-func newXMLParser(tokenReader *TokenReader, interpolationExprs []st.STNode) *xmlParser {
+func newXMLParser(tokenReader *tokenReader, interpolationExprs []st.STNode) *xmlParser {
 	p := &xmlParser{
 		abstractParser: abstractParser{
 			tokenReader:          tokenReader,
@@ -38,7 +38,7 @@ func newXMLParser(tokenReader *TokenReader, interpolationExprs []st.STNode) *xml
 		},
 		interpolationExprs: interpolationExprs,
 	}
-	errorHandler := NewXMLParserErrorHandlerFromTokenReader(tokenReader)
+	errorHandler := newXMLParserErrorHandlerFromTokenReader(tokenReader)
 	p.errorHandler = &errorHandler
 	return p
 }

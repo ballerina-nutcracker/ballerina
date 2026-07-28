@@ -54,19 +54,19 @@ var (
 	}
 )
 
-type XMLParserErrorHandler struct {
-	AbstractParserErrorHandlerBase
-	AbstractParserErrorHandlerMethods
+type xmlParserErrorHandler struct {
+	abstractParserErrorHandlerBase
+	abstractParserErrorHandlerMethods
 }
 
-func NewXMLParserErrorHandlerFromTokenReader(tokenReader *TokenReader) XMLParserErrorHandler {
-	p := XMLParserErrorHandler{}
-	p.AbstractParserErrorHandlerBase = *NewAbstractParserErrorHandlerBase(tokenReader)
+func newXMLParserErrorHandlerFromTokenReader(tokenReader *tokenReader) xmlParserErrorHandler {
+	p := xmlParserErrorHandler{}
+	p.abstractParserErrorHandlerBase = *newAbstractParserErrorHandlerBase(tokenReader)
 	p.Self = &p
 	return p
 }
 
-func (p *XMLParserErrorHandler) HasAlternativePaths(currentCtx common.ParserRuleContext) bool {
+func (p *xmlParserErrorHandler) HasAlternativePaths(currentCtx common.ParserRuleContext) bool {
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_XML_CONTENT,
 		common.PARSER_RULE_CONTEXT_XML_ATTRIBUTES,
@@ -80,12 +80,12 @@ func (p *XMLParserErrorHandler) HasAlternativePaths(currentCtx common.ParserRule
 	}
 }
 
-func (p *XMLParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) *Result {
+func (p *xmlParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) *recoveryResult {
 	var hasMatch bool
 	var skipRule bool
 	matchingRulesCount := 0
 
-	for currentDepth < LOOKAHEAD_LIMIT {
+	for currentDepth < lookaheadLimit {
 		hasMatch = true
 		skipRule = false
 		nextToken := p.tokenReader.PeekN(lookahead)
@@ -152,12 +152,12 @@ func (p *XMLParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, l
 		}
 	}
 
-	result := NewResult(make([]*Solution, 0), matchingRulesCount)
-	result.solution = NewSolution(ACTION_KEEP, currentCtx, p.GetExpectedTokenKind(currentCtx), currentCtx.String())
+	result := newResult(make([]*solution, 0), matchingRulesCount)
+	result.solution = newSolution(actionKeep, currentCtx, p.GetExpectedTokenKind(currentCtx), currentCtx.String())
 	return result
 }
 
-func (p *XMLParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) *Result {
+func (p *xmlParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) *recoveryResult {
 	var alternatives []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_XML_CONTENT:
@@ -178,7 +178,7 @@ func (p *XMLParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.Pa
 	return p.seekInAlternativesPaths(lookahead, currentDepth, matchingRulesCount, alternatives, isEntryPoint)
 }
 
-func (p *XMLParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
+func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext, nextLookahead int) common.ParserRuleContext {
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_XML_START_OR_EMPTY_TAG,
 		common.PARSER_RULE_CONTEXT_XML_END_TAG,
@@ -261,12 +261,12 @@ func (p *XMLParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 	panic("cannot find the next rule for: " + currentCtx.String())
 }
 
-func (p *XMLParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *Solution {
+func (p *xmlParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *solution {
 	kind := p.GetExpectedTokenKind(ctx)
-	return NewSolution(ACTION_INSERT, ctx, kind, ctx.String())
+	return newSolution(actionInsert, ctx, kind, ctx.String())
 }
 
-func (p *XMLParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
+func (p *xmlParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
 	case common.PARSER_RULE_CONTEXT_LT_TOKEN,
 		common.PARSER_RULE_CONTEXT_XML_START_OR_EMPTY_TAG,
@@ -311,6 +311,6 @@ func (p *XMLParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContex
 }
 
 var (
-	_ AbstractParserErrorHandler = (*XMLParserErrorHandler)(nil)
-	_ ParserErrorHandler         = (*XMLParserErrorHandler)(nil)
+	_ abstractParserErrorHandler = (*xmlParserErrorHandler)(nil)
+	_ parserErrorHandler         = (*xmlParserErrorHandler)(nil)
 )

@@ -30,42 +30,42 @@ type xmlLexer struct {
 }
 
 func newXMLLexer(reader text.CharReader) *xmlLexer {
-	inner := NewLexer(reader)
-	inner.StartMode(PARSER_MODE_XML_CONTENT)
+	inner := newLexer(reader)
+	inner.StartMode(parserModeXmlContent)
 	return &xmlLexer{lexer: inner}
 }
 
 func (l *xmlLexer) NextToken() st.STToken {
 	var token st.STToken
 	switch l.context.mode {
-	case PARSER_MODE_XML_CONTENT:
+	case parserModeXmlContent:
 		token = l.readTokenInXMLContent()
-	case PARSER_MODE_XML_ELEMENT_START_TAG:
+	case parserModeXmlElementStartTag:
 		l.processLeadingXMLTrivia()
 		token = l.readTokenInXMLElement(true)
-	case PARSER_MODE_XML_ELEMENT_END_TAG:
+	case parserModeXmlElementEndTag:
 		l.processLeadingXMLTrivia()
 		token = l.readTokenInXMLElement(false)
-	case PARSER_MODE_XML_TEXT:
+	case parserModeXmlText:
 		token = l.readTokenInXMLText()
-	case PARSER_MODE_INTERPOLATION:
+	case parserModeInterpolation:
 		token = l.readTokenInXMLInterpolation()
-	case PARSER_MODE_XML_ATTRIBUTES:
+	case parserModeXmlAttributes:
 		l.processLeadingXMLTrivia()
 		token = l.readTokenInXMLAttributes(true)
-	case PARSER_MODE_XML_COMMENT:
+	case parserModeXmlComment:
 		token = l.readTokenInXMLCommentOrCDATA(false)
-	case PARSER_MODE_XML_PI:
+	case parserModeXmlPi:
 		l.processLeadingXMLTrivia()
 		token = l.readTokenInXMLPI()
-	case PARSER_MODE_XML_PI_DATA:
+	case parserModeXmlPiData:
 		l.processLeadingXMLTrivia()
 		token = l.readTokenInXMLPIData()
-	case PARSER_MODE_XML_SINGLE_QUOTED_STRING:
+	case parserModeXmlSingleQuotedString:
 		token = l.processXMLSingleQuotedString()
-	case PARSER_MODE_XML_DOUBLE_QUOTED_STRING:
+	case parserModeXmlDoubleQuotedString:
 		token = l.processXMLDoubleQuotedString()
-	case PARSER_MODE_XML_CDATA_SECTION:
+	case parserModeXmlCdataSection:
 		token = l.readTokenInXMLCommentOrCDATA(true)
 	default:
 		panic("xmlLexer.NextToken: unexpected parser mode")
@@ -85,7 +85,7 @@ func (l *xmlLexer) processLeadingXMLTrivia() {
 }
 
 func (l *xmlLexer) processTrailingXMLTrivia() st.STNode {
-	triviaList := make([]st.STNode, 0, INITIAL_TRIVIA_CAPACITY)
+	triviaList := make([]st.STNode, 0, initialTriviaCapacity)
 	l.processXMLTrivia(&triviaList, false)
 	return st.CreateNodeList(triviaList...)
 }
@@ -96,9 +96,9 @@ func (l *xmlLexer) processXMLTrivia(triviaList *[]st.STNode, isLeading bool) {
 		reader.Mark()
 		c := reader.Peek()
 		switch c {
-		case SPACE, TAB, FORM_FEED:
+		case space, tab, formFeed:
 			*triviaList = append(*triviaList, l.processWhitespaces())
-		case CARRIAGE_RETURN, NEWLINE:
+		case carriageReturn, newline:
 			*triviaList = append(*triviaList, l.processEndOfLine())
 			if isLeading {
 				continue
@@ -163,7 +163,7 @@ func (l *xmlLexer) readTokenInXMLInterpolation() st.STToken {
 	if reader.IsEOF() {
 		return l.getXMLSyntaxToken(st.EOF_TOKEN)
 	}
-	if reader.Peek() == CLOSE_BRACE {
+	if reader.Peek() == closeBrace {
 		l.EndMode()
 		reader.Advance()
 		return l.getXMLSyntaxTokenWithoutTrailingWS(st.CLOSE_BRACE_TOKEN)
@@ -184,55 +184,55 @@ func (l *xmlLexer) readTokenInXMLContent() st.STToken {
 
 	nextChar := reader.Peek()
 	switch nextChar {
-	case BACKTICK:
+	case backtick:
 		l.EndMode()
 		return l.NextToken()
-	case LT:
+	case lt:
 		reader.Advance()
 		nextChar = reader.Peek()
 		switch nextChar {
-		case EXCLAMATION_MARK:
-			if reader.PeekN(1) == MINUS && reader.PeekN(2) == MINUS {
+		case exclamationMark:
+			if reader.PeekN(1) == minus && reader.PeekN(2) == minus {
 				reader.AdvanceN(3)
-				l.StartMode(PARSER_MODE_XML_COMMENT)
+				l.StartMode(parserModeXmlComment)
 				return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_COMMENT_START_TOKEN)
 			}
 			if l.isCDATAStart() {
 				reader.AdvanceN(8)
-				l.StartMode(PARSER_MODE_XML_CDATA_SECTION)
+				l.StartMode(parserModeXmlCdataSection)
 				return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_CDATA_START_TOKEN)
 			}
-		case QUESTION_MARK:
+		case questionMark:
 			reader.Advance()
-			l.StartMode(PARSER_MODE_XML_PI)
+			l.StartMode(parserModeXmlPi)
 			return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_PI_START_TOKEN)
-		case SLASH:
-			l.StartMode(PARSER_MODE_XML_ELEMENT_END_TAG)
+		case slash:
+			l.StartMode(parserModeXmlElementEndTag)
 			return l.getXMLSyntaxTokenChecked(st.LT_TOKEN, false, false)
 		}
-		l.StartMode(PARSER_MODE_XML_ELEMENT_START_TAG)
+		l.StartMode(parserModeXmlElementStartTag)
 		return l.getXMLSyntaxTokenChecked(st.LT_TOKEN, false, false)
-	case DOLLAR:
-		if reader.PeekN(1) == OPEN_BRACE {
-			l.StartMode(PARSER_MODE_INTERPOLATION)
+	case dollar:
+		if reader.PeekN(1) == openBrace {
+			l.StartMode(parserModeInterpolation)
 			reader.AdvanceN(2)
 			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	}
 
-	l.StartMode(PARSER_MODE_XML_TEXT)
+	l.StartMode(parserModeXmlText)
 	return l.readTokenInXMLText()
 }
 
 func (l *xmlLexer) isCDATAStart() bool {
 	r := l.reader
-	return r.PeekN(1) == OPEN_BRACKET &&
+	return r.PeekN(1) == openBracket &&
 		r.PeekN(2) == 'C' &&
 		r.PeekN(3) == 'D' &&
 		r.PeekN(4) == 'A' &&
 		r.PeekN(5) == 'T' &&
 		r.PeekN(6) == 'A' &&
-		r.PeekN(7) == OPEN_BRACKET
+		r.PeekN(7) == openBracket
 }
 
 // XML_ELEMENT modes
@@ -246,40 +246,40 @@ func (l *xmlLexer) readTokenInXMLElement(isStartTag bool) st.STToken {
 
 	c := reader.Peek()
 	switch c {
-	case LT:
+	case lt:
 		if isStartTag {
-			l.StartMode(PARSER_MODE_XML_CONTENT)
+			l.StartMode(parserModeXmlContent)
 		} else {
 			l.EndMode()
 		}
 		return l.NextToken()
-	case GT:
+	case gt:
 		l.EndMode()
 		if isStartTag {
-			l.StartMode(PARSER_MODE_XML_CONTENT)
+			l.StartMode(parserModeXmlContent)
 		}
 		reader.Advance()
 		return l.getXMLSyntaxTokenWithoutTrailingWS(st.GT_TOKEN)
-	case SLASH:
+	case slash:
 		reader.Advance()
 		return l.getXMLSyntaxTokenChecked(st.SLASH_TOKEN, isStartTag, false)
-	case COLON:
+	case colon:
 		reader.Advance()
 		return l.getXMLSyntaxTokenChecked(st.COLON_TOKEN, false, false)
-	case DOLLAR:
-		if reader.PeekN(1) == OPEN_BRACE {
+	case dollar:
+		if reader.PeekN(1) == openBrace {
 			reader.AdvanceN(2)
-			l.StartMode(PARSER_MODE_INTERPOLATION)
+			l.StartMode(parserModeInterpolation)
 			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
-	case BACKTICK:
+	case backtick:
 		l.EndMode()
 		return l.NextToken()
 	}
 
 	reader.Advance()
 	tagName := l.processXMLName(c, false)
-	l.StartMode(PARSER_MODE_XML_ATTRIBUTES)
+	l.StartMode(parserModeXmlAttributes)
 	return tagName
 }
 
@@ -306,28 +306,28 @@ func (l *xmlLexer) readTokenInXMLAttributes(isStartTag bool) st.STToken {
 
 	nextChar := reader.Peek()
 	switch nextChar {
-	case LT, GT, SLASH, BACKTICK:
+	case lt, gt, slash, backtick:
 		l.EndMode()
 		return l.readTokenInXMLElement(isStartTag)
-	case COLON:
+	case colon:
 		reader.Advance()
 		return l.getXMLSyntaxTokenChecked(st.COLON_TOKEN, false, false)
-	case DOLLAR:
-		if reader.PeekN(1) == OPEN_BRACE {
+	case dollar:
+		if reader.PeekN(1) == openBrace {
 			reader.AdvanceN(2)
-			l.StartMode(PARSER_MODE_INTERPOLATION)
+			l.StartMode(parserModeInterpolation)
 			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
-	case EQUAL:
+	case equal:
 		reader.Advance()
 		return l.getXMLSyntaxTokenChecked(st.EQUAL_TOKEN, true, true)
-	case DOUBLE_QUOTE:
+	case doubleQuote:
 		reader.Advance()
-		l.StartMode(PARSER_MODE_XML_DOUBLE_QUOTED_STRING)
+		l.StartMode(parserModeXmlDoubleQuotedString)
 		return l.getXMLSyntaxTokenChecked(st.DOUBLE_QUOTE_TOKEN, false, false)
-	case SINGLE_QUOTE:
+	case singleQuote:
 		reader.Advance()
-		l.StartMode(PARSER_MODE_XML_SINGLE_QUOTED_STRING)
+		l.StartMode(parserModeXmlSingleQuotedString)
 		return l.getXMLSyntaxTokenChecked(st.SINGLE_QUOTE_TOKEN, false, false)
 	}
 
@@ -338,11 +338,11 @@ func (l *xmlLexer) readTokenInXMLAttributes(isStartTag bool) st.STToken {
 // XML quoted string modes
 
 func (l *xmlLexer) processXMLDoubleQuotedString() st.STToken {
-	return l.processXMLQuotedString(DOUBLE_QUOTE, st.DOUBLE_QUOTE_TOKEN)
+	return l.processXMLQuotedString(doubleQuote, st.DOUBLE_QUOTE_TOKEN)
 }
 
 func (l *xmlLexer) processXMLSingleQuotedString() st.STToken {
-	return l.processXMLQuotedString(SINGLE_QUOTE, st.SINGLE_QUOTE_TOKEN)
+	return l.processXMLQuotedString(singleQuote, st.SINGLE_QUOTE_TOKEN)
 }
 
 func (l *xmlLexer) processXMLQuotedString(startingQuote rune, startQuoteKind st.SyntaxKind) st.STToken {
@@ -354,16 +354,16 @@ func (l *xmlLexer) processXMLQuotedString(startingQuote rune, startQuoteKind st.
 
 	nextChar := reader.Peek()
 	switch nextChar {
-	case DOUBLE_QUOTE, SINGLE_QUOTE:
+	case doubleQuote, singleQuote:
 		if nextChar == startingQuote {
 			reader.Advance()
 			l.EndMode()
 			return l.getXMLSyntaxTokenChecked(startQuoteKind, false, true)
 		}
-	case DOLLAR:
-		if reader.PeekN(1) == OPEN_BRACE {
+	case dollar:
+		if reader.PeekN(1) == openBrace {
 			reader.AdvanceN(2)
-			l.StartMode(PARSER_MODE_INTERPOLATION)
+			l.StartMode(parserModeInterpolation)
 			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
 	}
@@ -372,21 +372,21 @@ scan:
 	for !reader.IsEOF() {
 		nextChar = reader.Peek()
 		switch nextChar {
-		case DOUBLE_QUOTE, SINGLE_QUOTE:
+		case doubleQuote, singleQuote:
 			if nextChar == startingQuote {
 				break scan
 			}
 			reader.Advance()
 			continue
-		case BITWISE_AND:
+		case bitwiseAnd:
 			l.processXMLReferenceInQuotedString(startingQuote)
 			continue
-		case LT:
+		case lt:
 			reader.Advance()
-			l.reportLexerError(common.ERROR_INVALID_CHARACTER_IN_XML_ATTRIBUTE_VALUE, string(LT))
+			l.reportLexerError(common.ERROR_INVALID_CHARACTER_IN_XML_ATTRIBUTE_VALUE, string(lt))
 			continue
-		case DOLLAR:
-			if reader.PeekN(1) == OPEN_BRACE {
+		case dollar:
+			if reader.PeekN(1) == openBrace {
 				break scan
 			}
 			reader.Advance()
@@ -402,7 +402,7 @@ scan:
 func (l *xmlLexer) processXMLReferenceInQuotedString(startingQuote rune) {
 	nextChar := l.reader.Peek()
 	switch nextChar {
-	case DOUBLE_QUOTE, SINGLE_QUOTE:
+	case doubleQuote, singleQuote:
 		if nextChar == startingQuote {
 			return
 		}
@@ -415,16 +415,16 @@ func (l *xmlLexer) processXMLReference() {
 	reader.Advance()
 	nextChar := reader.Peek()
 	switch nextChar {
-	case SEMICOLON:
+	case semicolon:
 		l.reportLexerError(common.ERROR_MISSING_ENTITY_REFERENCE_NAME)
 		reader.Advance()
 		return
-	case HASH:
+	case hash:
 		l.processXMLCharRef()
 	default:
 		l.processXMLEntityRef()
 	}
-	if reader.Peek() == SEMICOLON {
+	if reader.Peek() == semicolon {
 		reader.Advance()
 	} else {
 		l.reportLexerError(common.ERROR_MISSING_SEMICOLON_IN_XML_REFERENCE)
@@ -471,18 +471,18 @@ scan:
 	for !reader.IsEOF() {
 		nextChar := reader.Peek()
 		switch nextChar {
-		case LT:
+		case lt:
 			break scan
-		case DOLLAR:
-			if reader.PeekN(1) == OPEN_BRACE {
+		case dollar:
+			if reader.PeekN(1) == openBrace {
 				break scan
 			}
 			reader.Advance()
 			continue
-		case BITWISE_AND:
+		case bitwiseAnd:
 			l.processXMLReference()
 			continue
-		case BACKTICK:
+		case backtick:
 			break scan
 		default:
 			reader.Advance()
@@ -503,9 +503,9 @@ func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) st.STToken {
 	}
 
 	switch reader.Peek() {
-	case MINUS:
-		if !isCdata && reader.PeekN(1) == MINUS {
-			if reader.PeekN(2) == GT {
+	case minus:
+		if !isCdata && reader.PeekN(1) == minus {
+			if reader.PeekN(2) == gt {
 				reader.AdvanceN(3)
 				l.EndMode()
 				return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_COMMENT_END_TOKEN)
@@ -513,14 +513,14 @@ func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) st.STToken {
 			reader.Advance()
 			l.reportLexerError(common.ERROR_DOUBLE_HYPHEN_NOT_ALLOWED_WITHIN_XML_COMMENT)
 		}
-	case DOLLAR:
-		if reader.PeekN(1) == OPEN_BRACE {
+	case dollar:
+		if reader.PeekN(1) == openBrace {
 			reader.AdvanceN(2)
-			l.StartMode(PARSER_MODE_INTERPOLATION)
+			l.StartMode(parserModeInterpolation)
 			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
-	case CLOSE_BRACKET:
-		if isCdata && reader.PeekN(1) == CLOSE_BRACKET && reader.PeekN(2) == GT {
+	case closeBracket:
+		if isCdata && reader.PeekN(1) == closeBracket && reader.PeekN(2) == gt {
 			reader.AdvanceN(3)
 			l.EndMode()
 			return l.getXMLSyntaxTokenWithoutTrailingWS(st.XML_CDATA_END_TOKEN)
@@ -530,9 +530,9 @@ func (l *xmlLexer) readTokenInXMLCommentOrCDATA(isCdata bool) st.STToken {
 scan:
 	for !reader.IsEOF() {
 		switch reader.Peek() {
-		case MINUS:
-			if !isCdata && reader.PeekN(1) == MINUS {
-				if reader.PeekN(2) == GT {
+		case minus:
+			if !isCdata && reader.PeekN(1) == minus {
+				if reader.PeekN(2) == gt {
 					break scan
 				}
 				reader.AdvanceN(2)
@@ -540,16 +540,16 @@ scan:
 			} else {
 				reader.Advance()
 			}
-		case DOLLAR:
-			if reader.PeekN(1) == OPEN_BRACE {
+		case dollar:
+			if reader.PeekN(1) == openBrace {
 				break scan
 			}
 			reader.Advance()
-		case BACKTICK:
+		case backtick:
 			l.EndMode()
 			break scan
-		case CLOSE_BRACKET:
-			if isCdata && reader.PeekN(1) == CLOSE_BRACKET && reader.PeekN(2) == GT {
+		case closeBracket:
+			if isCdata && reader.PeekN(1) == closeBracket && reader.PeekN(2) == gt {
 				break scan
 			}
 			reader.Advance()
@@ -572,20 +572,20 @@ func (l *xmlLexer) readTokenInXMLPI() st.STToken {
 
 	nextChar := reader.Peek()
 	switch nextChar {
-	case QUESTION_MARK:
-		if reader.PeekN(1) == GT {
+	case questionMark:
+		if reader.PeekN(1) == gt {
 			reader.AdvanceN(2)
 			l.EndMode()
 			return l.getXMLSyntaxToken(st.XML_PI_END_TOKEN)
 		}
-	case BACKTICK:
+	case backtick:
 		l.EndMode()
 		return l.NextToken()
 	}
 
 	reader.Advance()
 	tagName := l.processXMLName(nextChar, false)
-	l.StartMode(PARSER_MODE_XML_PI_DATA)
+	l.StartMode(parserModeXmlPiData)
 	return tagName
 }
 
@@ -599,14 +599,14 @@ func (l *xmlLexer) readTokenInXMLPIData() st.STToken {
 	}
 
 	switch reader.Peek() {
-	case DOLLAR:
-		if reader.PeekN(1) == OPEN_BRACE {
+	case dollar:
+		if reader.PeekN(1) == openBrace {
 			reader.AdvanceN(2)
-			l.StartMode(PARSER_MODE_INTERPOLATION)
+			l.StartMode(parserModeInterpolation)
 			return l.getXMLSyntaxToken(st.INTERPOLATION_START_TOKEN)
 		}
-	case QUESTION_MARK:
-		if reader.PeekN(1) == GT {
+	case questionMark:
+		if reader.PeekN(1) == gt {
 			reader.AdvanceN(2)
 			l.EndMode()
 			l.EndMode()
@@ -617,17 +617,17 @@ func (l *xmlLexer) readTokenInXMLPIData() st.STToken {
 scan:
 	for !reader.IsEOF() {
 		switch reader.Peek() {
-		case QUESTION_MARK:
-			if reader.PeekN(1) == GT {
+		case questionMark:
+			if reader.PeekN(1) == gt {
 				break scan
 			}
 			reader.Advance()
-		case DOLLAR:
-			if reader.PeekN(1) == OPEN_BRACE {
+		case dollar:
+			if reader.PeekN(1) == openBrace {
 				break scan
 			}
 			reader.Advance()
-		case BACKTICK:
+		case backtick:
 			l.EndMode()
 			break scan
 		default:
