@@ -617,9 +617,9 @@ func writeTo(n STNode, builder *strings.Builder) {
 func (n *STNodeBase) setDiagnostics(diagnostics []STNodeDiagnostic) {
 	n.diagnostics = diagnostics
 	if len(diagnostics) > 0 {
-		n.flags = n.flags | HAS_DIAGNOSTIC
+		n.flags = n.flags | hasDiagnosticFlag
 	} else {
-		n.flags = n.flags &^ HAS_DIAGNOSTIC
+		n.flags = n.flags &^ hasDiagnosticFlag
 	}
 }
 
@@ -667,11 +667,11 @@ func (n STNodeBase) Flags() uint8 {
 }
 
 func (n STNodeBase) HasDiagnostics() bool {
-	return isFlagSet(n.flags, HAS_DIAGNOSTIC)
+	return isFlagSet(n.flags, hasDiagnosticFlag)
 }
 
 func (n STNodeBase) IsMissing() bool {
-	return isFlagSet(n.flags, IS_MISSING)
+	return isFlagSet(n.flags, isMissingFlag)
 }
 
 func Tokens(n STNode) []STToken {
@@ -699,7 +699,7 @@ func (n *STNodeBase) updateDiagnostics(children []STNode) {
 			continue
 		}
 		if child.HasDiagnostics() {
-			n.flags = n.flags | HAS_DIAGNOSTIC
+			n.flags = n.flags | hasDiagnosticFlag
 			return
 		}
 	}
@@ -793,7 +793,7 @@ func (n *STTokenBase) updateDiagnostics(children []STNode) {
 			continue
 		}
 		if child.HasDiagnostics() {
-			n.flags = n.flags | HAS_DIAGNOSTIC
+			n.flags = n.flags | hasDiagnosticFlag
 			return
 		}
 	}
@@ -836,7 +836,7 @@ func (n *STTokenBase) ChildBuckets() []STNode {
 }
 
 func (n *STTokenBase) HasDiagnostics() bool {
-	return isFlagSet(n.flags, HAS_DIAGNOSTIC)
+	return isFlagSet(n.flags, hasDiagnosticFlag)
 }
 
 func (n *STTokenBase) ChildInBucket(bucket int) STNode {
@@ -844,7 +844,7 @@ func (n *STTokenBase) ChildInBucket(bucket int) STNode {
 }
 
 func (n *STTokenBase) IsMissing() bool {
-	return isFlagSet(n.flags, IS_MISSING)
+	return isFlagSet(n.flags, isMissingFlag)
 }
 
 func (n *STTokenBase) Tokens() []STToken {
@@ -902,9 +902,9 @@ func (t *STTokenBase) HasTrailingNewLine() bool {
 func (t *STTokenBase) setDiagnostics(diagnostics []STNodeDiagnostic) {
 	t.diagnostics = diagnostics
 	if len(diagnostics) > 0 {
-		t.flags = t.flags | HAS_DIAGNOSTIC
+		t.flags = t.flags | hasDiagnosticFlag
 	} else {
-		t.flags = t.flags &^ HAS_DIAGNOSTIC
+		t.flags = t.flags &^ hasDiagnosticFlag
 	}
 }
 
@@ -1170,8 +1170,8 @@ const (
 
 // Flag constants for STNode
 const (
-	HAS_DIAGNOSTIC uint8 = 1 << 1 // 0x02
-	IS_MISSING     uint8 = 1 << 2 // 0x04
+	hasDiagnosticFlag uint8 = 1 << 1 // 0x02
+	isMissingFlag     uint8 = 1 << 2 // 0x04
 )
 
 // isFlagSet checks whether the given flag is set in the given flags.
@@ -1231,9 +1231,9 @@ func CreateDiagnosticWithArgs(diagnosticCode diagnostics.DiagnosticCode, args ..
 func CreateMissingToken(expectedKind SyntaxKind, diagnosticList []STNodeDiagnostic) STToken {
 	flags := uint8(0)
 	if len(diagnosticList) > 0 {
-		flags = flags | HAS_DIAGNOSTIC
+		flags = flags | hasDiagnosticFlag
 	}
-	flags = flags | IS_MISSING
+	flags = flags | isMissingFlag
 	return &STMissingToken{
 		STTokenBase: STTokenBase{
 			kind:             expectedKind,

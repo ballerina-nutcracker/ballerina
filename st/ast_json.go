@@ -31,15 +31,15 @@ import (
 // ========== Constants (ported from ParserTestConstants.java) ==========
 
 const (
-	KIND_FIELD         = "kind"
-	CHILDREN_FIELD     = "children"
-	DIAGNOSTICS_FIELD  = "diagnostics"
-	VALUE_FIELD        = "value"
-	INVALID_NODE_FIELD = "invalidNode"
-	IS_MISSING_FIELD   = "isMissing"
-	HAS_DIAGNOSTICS    = "hasDiagnostics"
-	LEADING_MINUTIAE   = "leadingMinutiae"
-	TRAILING_MINUTIAE  = "trailingMinutiae"
+	kindField             = "kind"
+	childrenField         = "children"
+	diagnosticsField      = "diagnostics"
+	valueField            = "value"
+	invalidNodeField      = "invalidNode"
+	isMissingField        = "isMissing"
+	hasDiagnosticsField   = "hasDiagnostics"
+	leadingMinutiaeField  = "leadingMinutiae"
+	trailingMinutiaeField = "trailingMinutiae"
 )
 
 // ========== orderedJSONObject for maintaining field order ==========
@@ -142,10 +142,10 @@ func GenerateJSON(treeNode STNode, kindName func(SyntaxKind) string) string {
 func getJSON(treeNode STNode, kindName func(SyntaxKind) string) any {
 	jsonNode := newOrderedJSONObject()
 	nodeKind := treeNode.Kind()
-	jsonNode.addProperty(KIND_FIELD, kindName(nodeKind))
+	jsonNode.addProperty(kindField, kindName(nodeKind))
 
 	if treeNode.IsMissing() {
-		jsonNode.addProperty(IS_MISSING_FIELD, treeNode.IsMissing())
+		jsonNode.addProperty(isMissingField, treeNode.IsMissing())
 		addDiagnostics(treeNode, jsonNode)
 		if isToken(treeNode) {
 			token := treeNode.(STToken)
@@ -160,7 +160,7 @@ func getJSON(treeNode STNode, kindName func(SyntaxKind) string) any {
 		// If the node is a terminal node with a dynamic value (i.e: non-syntax node)
 		// then add the value to the json.
 		if !isKeyword(nodeKind) {
-			jsonNode.addProperty(VALUE_FIELD, getTokenText(token, kindName))
+			jsonNode.addProperty(valueField, getTokenText(token, kindName))
 		}
 		addTrivia(token, jsonNode, kindName)
 		// else do nothing
@@ -179,7 +179,7 @@ func getJSON(treeNode STNode, kindName func(SyntaxKind) string) any {
 //	    addNodeList(tree, node, CHILDREN_FIELD);
 //	}
 func addChildren(tree STNode, node *orderedJSONObject, kindName func(SyntaxKind) string) {
-	addNodeList(tree, node, CHILDREN_FIELD, kindName)
+	addNodeList(tree, node, childrenField, kindName)
 }
 
 // Ported from: SyntaxTreeJSONGenerator.java:138-150
@@ -229,7 +229,7 @@ func addTrivia(token STToken, jsonNode *orderedJSONObject, kindName func(SyntaxK
 	if leadingMinutiae.BucketCount() != 0 {
 		minutiaeList, ok := leadingMinutiae.(*STNodeList)
 		if ok {
-			addMinutiaeList(minutiaeList, jsonNode, LEADING_MINUTIAE, kindName)
+			addMinutiaeList(minutiaeList, jsonNode, leadingMinutiaeField, kindName)
 		}
 	}
 
@@ -237,7 +237,7 @@ func addTrivia(token STToken, jsonNode *orderedJSONObject, kindName func(SyntaxK
 	if trailingMinutiae.BucketCount() != 0 {
 		minutiaeList, ok := trailingMinutiae.(*STNodeList)
 		if ok {
-			addMinutiaeList(minutiaeList, jsonNode, TRAILING_MINUTIAE, kindName)
+			addMinutiaeList(minutiaeList, jsonNode, trailingMinutiaeField, kindName)
 		}
 	}
 }
@@ -277,18 +277,18 @@ func addMinutiaeList(minutiaeList *STNodeList, node *orderedJSONObject, key stri
 		minutiae := minutiaeList.Get(i)
 		minutiaeJson := newOrderedJSONObject()
 		minutiaeKind := minutiae.Kind()
-		minutiaeJson.addProperty(KIND_FIELD, kindName(minutiaeKind))
+		minutiaeJson.addProperty(kindField, kindName(minutiaeKind))
 
 		switch minutiaeKind {
 		case WHITESPACE_MINUTIAE, END_OF_LINE_MINUTIAE, COMMENT_MINUTIAE:
 			// Cast to STMinutiae to get text
 			if stMinutiae, ok := minutiae.(*STMinutiae); ok {
-				minutiaeJson.addProperty(VALUE_FIELD, stMinutiae.text)
+				minutiaeJson.addProperty(valueField, stMinutiae.text)
 			}
 		case INVALID_NODE_MINUTIAE:
 			if invalidNodeMinutiae, ok := minutiae.(*STInvalidNodeMinutiae); ok {
 				invalidNode := invalidNodeMinutiae.invalidNode
-				minutiaeJson.add(INVALID_NODE_FIELD, getJSON(invalidNode, kindName))
+				minutiaeJson.add(invalidNodeField, getJSON(invalidNode, kindName))
 			}
 		default:
 			// panic(fmt.Sprintf("Unsupported minutiae kind: '%v'", minutiaeKind))
@@ -324,7 +324,7 @@ func addDiagnostics(treeNode STNode, jsonNode *orderedJSONObject) {
 		return
 	}
 
-	jsonNode.addProperty(HAS_DIAGNOSTICS, treeNode.HasDiagnostics())
+	jsonNode.addProperty(hasDiagnosticsField, treeNode.HasDiagnostics())
 	diagnostics := treeNode.Diagnostics()
 	if len(diagnostics) == 0 {
 		return
@@ -334,7 +334,7 @@ func addDiagnostics(treeNode STNode, jsonNode *orderedJSONObject) {
 	for _, syntaxDiagnostic := range diagnostics {
 		diagnosticsJsonArray = append(diagnosticsJsonArray, diagnosticJSONMessage(syntaxDiagnostic.code))
 	}
-	jsonNode.add(DIAGNOSTICS_FIELD, diagnosticsJsonArray)
+	jsonNode.add(diagnosticsField, diagnosticsJsonArray)
 }
 
 // TODO: properly implement this
