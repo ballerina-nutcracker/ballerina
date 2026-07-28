@@ -428,9 +428,11 @@ func isIsolatedExpression(a analyzer, expr ast.BLangExpression) bool {
 	case *ast.BLangTypeConversionExpr:
 		return isIsolatedExpression(a, e.Expression)
 	case *ast.BLangCheckedExpr:
-		return isIsolatedExpression(a, e.Expr.(ast.BLangExpression))
+		expr, ok := e.Expr.(ast.BLangExpression)
+		return ok && isIsolatedExpression(a, expr)
 	case *ast.BLangCheckPanickedExpr:
-		return isIsolatedExpression(a, e.Expr.(ast.BLangExpression))
+		expr, ok := e.Expr.(ast.BLangExpression)
+		return ok && isIsolatedExpression(a, expr)
 	case *ast.BLangTrapExpr:
 		expr, ok := e.Expr.(ast.BLangExpression)
 		return ok && isIsolatedExpression(a, expr)

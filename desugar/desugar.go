@@ -216,6 +216,7 @@ func (ctx *functionContext) pushQueryActionControl(state *queryActionControlFlow
 func (ctx *functionContext) popQueryActionControl() {
 	if len(ctx.queryActionControls) == 0 {
 		ctx.internalError("cannot pop from empty query action control stack")
+		return
 	}
 	ctx.queryActionControls = ctx.queryActionControls[:len(ctx.queryActionControls)-1]
 }

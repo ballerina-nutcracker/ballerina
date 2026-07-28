@@ -916,6 +916,13 @@ func buildQueryActionSegmentStmts(
 		return append(letStmts, nextStmts...), outputBindings, stopRefs, ok
 	case *ast.BLangWhereClause:
 		whereResult := walkExpression(cx, clause.Expression)
+		whereStmts := append([]ast.StatementNode{}, whereResult.initStmts...)
+		whereExpr, isExpression := whereResult.replacementNode.(ast.BLangExpression)
+		if !isExpression {
+			whereVarDef, whereRef := assignActionOrExpressionToLocal(cx, whereResult.replacementNode, clause.GetPosition())
+			whereStmts = append(whereStmts, whereVarDef)
+			whereExpr = whereRef
+		}
 		nextStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
 			cx, clauses, clauseIndex+1, endClauseIndex, bindings, terminal, pipelineState, initStmts, pos,
 		)
@@ -923,14 +930,13 @@ func buildQueryActionSegmentStmts(
 			return nil, nil, nil, false
 		}
 		whereIf := &ast.BLangIf{
-			Expr: whereResult.replacementNode.(ast.BLangExpression),
+			Expr: whereExpr,
 			Body: ast.BLangBlockStmt{Stmts: nextStmts},
 		}
 		whereIf.SetScope(cx.currentScope())
 		whereIf.SetDeterminedType(semtypes.NEVER)
 		setPositionIfMissing(whereIf, clause.GetPosition())
-		stmts := append([]ast.StatementNode{}, whereResult.initStmts...)
-		return append(stmts, whereIf), outputBindings, stopRefs, true
+		return append(whereStmts, whereIf), outputBindings, stopRefs, true
 	case *ast.BLangLimitClause:
 		limitState, exists := pipelineState.limits[clause]
 		if !exists {
@@ -1225,7 +1231,7 @@ func buildStreamingQueryActionJoin(
 ) ([]ast.StatementNode, bool) {
 	lhsResult := walkExpression(cx, clause.OnClause.OnExpr)
 	stmts := append([]ast.StatementNode{}, lhsResult.initStmts...)
-	lhsVarDef, lhsRef := assignToLocal(cx, lhsResult.replacementNode.(ast.BLangExpression), pos)
+	lhsVarDef, lhsRef := assignActionOrExpressionToLocal(cx, lhsResult.replacementNode, pos)
 	stmts = append(stmts, lhsVarDef)
 
 	var matchedRef *ast.BLangSimpleVarRef
@@ -1285,6 +1291,7 @@ func buildStreamingQueryActionJoin(
 	matchIf := &ast.BLangIf{Expr: matchCond, Body: ast.BLangBlockStmt{Stmts: markMatch}}
 	matchIf.SetScope(cx.currentScope())
 	matchIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(matchIf, pos)
 	realIterationBody = append(realIterationBody, matchIf)
 
 	notMatched := &ast.BLangUnaryExpr{
@@ -1299,6 +1306,7 @@ func buildStreamingQueryActionJoin(
 	unmatchedIf := &ast.BLangIf{Expr: notMatched, Body: ast.BLangBlockStmt{Stmts: unmatchedBody}}
 	unmatchedIf.SetScope(cx.currentScope())
 	unmatchedIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(unmatchedIf, pos)
 
 	realIterationCond := &ast.BLangBinaryExpr{
 		LhsExpr: createQueryVarRefAt(innerCounterRef, pos),
@@ -1313,6 +1321,7 @@ func buildStreamingQueryActionJoin(
 	}
 	iterationIf.SetScope(cx.currentScope())
 	iterationIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(iterationIf, pos)
 
 	emitIf := &ast.BLangIf{
 		Expr: createQueryVarRefAt(emitRef, pos),
@@ -1320,6 +1329,7 @@ func buildStreamingQueryActionJoin(
 	}
 	emitIf.SetScope(cx.currentScope())
 	emitIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(emitIf, pos)
 
 	innerBody := []ast.StatementNode{emitVarDef, iterationIf, emitIf, createIncrementStmt(innerCounterRef)}
 	innerCond := &ast.BLangBinaryExpr{

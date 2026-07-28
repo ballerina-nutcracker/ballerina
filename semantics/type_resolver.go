@@ -4211,7 +4211,15 @@ func resolveQueryCollectionTypes(
 		}
 		nextReturnTy := semtypes.FunctionReturnType(ctx, nextFnTy, emptyListTy)
 		valueRecordTy := semtypes.Diff(nextReturnTy, semtypes.Union(semtypes.NIL, semtypes.ERROR))
+		if !semtypes.IsSubtype(ctx, valueRecordTy, semtypes.MAPPING) {
+			t.semanticError("query iterator next method must return a record with a value field", pos)
+			return semtypes.SemType{}, semtypes.SemType{}, false
+		}
 		elementTy := semtypes.MappingMemberTypeInnerVal(ctx, valueRecordTy, semtypes.StringConst("value"))
+		if semtypes.IsZero(elementTy) {
+			t.semanticError("query iterator next method must return a record with a value field", pos)
+			return semtypes.SemType{}, semtypes.SemType{}, false
+		}
 		completionErrorTy := semtypes.Intersect(nextReturnTy, semtypes.ERROR)
 		return elementTy, completionErrorTy, true
 	default:

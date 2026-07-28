@@ -782,8 +782,9 @@ func assertDiagnosticContains(t *testing.T, cx *context.CompilerContext, substr 
 }
 
 func newQueryExpr(clauses ...ast.BLangNode) *ast.BLangQueryExpr {
-	query := &ast.BLangQueryExpr{
-		QueryClauseList: clauses,
+	query := &ast.BLangQueryExpr{}
+	for _, clause := range clauses {
+		query.AddQueryClause(clause)
 	}
 	query.SetPosition(queryTestPos)
 	return query

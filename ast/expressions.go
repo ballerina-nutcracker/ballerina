@@ -233,15 +233,18 @@ type (
 		RhsExpr BLangExpression
 		OpKind  model.OperatorKind
 	}
+	bLangQueryClauseListBase struct {
+		QueryClauseList []BLangNode
+	}
 	BLangQueryExpr struct {
 		bLangExpressionBase
-		QueryClauseList    []BLangNode
+		bLangQueryClauseListBase
 		QueryConstructType TypeKind
 	}
 	BLangQueryAction struct {
 		bLangNodeBase
-		QueryClauseList []BLangNode
-		DoClause        *BLangDoClause
+		bLangQueryClauseListBase
+		DoClause *BLangDoClause
 	}
 
 	BLangCheckedExpr struct {
@@ -717,7 +720,7 @@ func (b *BLangBinaryExpr) GetOperatorKind() model.OperatorKind {
 	return b.OpKind
 }
 
-func (b *BLangQueryExpr) GetQueryClauses() []Node {
+func (b *bLangQueryClauseListBase) GetQueryClauses() []Node {
 	result := make([]Node, len(b.QueryClauseList))
 	for i := range b.QueryClauseList {
 		result[i] = b.QueryClauseList[i]
@@ -725,23 +728,7 @@ func (b *BLangQueryExpr) GetQueryClauses() []Node {
 	return result
 }
 
-func (b *BLangQueryExpr) AddQueryClause(queryClause Node) {
-	if node, ok := queryClause.(BLangNode); ok {
-		b.QueryClauseList = append(b.QueryClauseList, node)
-		return
-	}
-	panic("query clause is not a BLangNode")
-}
-
-func (b *BLangQueryAction) GetQueryClauses() []Node {
-	result := make([]Node, len(b.QueryClauseList))
-	for i := range b.QueryClauseList {
-		result[i] = b.QueryClauseList[i]
-	}
-	return result
-}
-
-func (b *BLangQueryAction) AddQueryClause(queryClause Node) {
+func (b *bLangQueryClauseListBase) AddQueryClause(queryClause Node) {
 	if node, ok := queryClause.(BLangNode); ok {
 		b.QueryClauseList = append(b.QueryClauseList, node)
 		return
