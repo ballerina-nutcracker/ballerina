@@ -47,14 +47,18 @@ import (
 
 func TestExternValid(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "$anon", Module: "1-v", FuncName: "foo",
+		{
+			Org: "$anon", Module: "1-v", FuncName: "foo",
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return "$foo", nil
-			}},
-		{Org: "$anon", Module: "1-v", FuncName: "bar",
+			},
+		},
+		{
+			Org: "$anon", Module: "1-v", FuncName: "bar",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return values.String(args[0], nil) + ", " + values.String(args[1], nil), nil
-			}},
+			},
+		},
 	}
 	runExtern(t, fileCase("1-v"), testharness.NewTestPal(), externs)
 }
@@ -258,14 +262,18 @@ func TestDependentlyTypedMethod(t *testing.T) {
 
 func TestExternResourceMethod(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$0",
+		{
+			Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$0",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return "items/" + values.String(args[1], nil), nil
-			}},
-		{Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$1",
+			},
+		},
+		{
+			Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$1",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return args[2].(int64) * 2, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("resource-method-v"), testharness.NewTestPal(), externs)
 }
@@ -275,12 +283,15 @@ func TestListenerDispatch(t *testing.T) {
 	// io:println does at runtime, without requiring a closure over the
 	// *runtime.Runtime (which is built inside testharness.Run).
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.attach",
+		{
+			Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.attach",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				args[0].(*values.Object).Put("svc", args[1].(*values.Object))
 				return nil, nil
-			}},
-		{Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.trigger",
+			},
+		},
+		{
+			Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.trigger",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				receiver := args[0].(*values.Object)
 				svcVal, ok := receiver.Get("svc")
@@ -309,19 +320,23 @@ func TestListenerDispatch(t *testing.T) {
 				}
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(out, nil) + "\n"))
 				return nil, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("listener-dispatch-v"), testharness.NewTestPal(), externs)
 }
 
 func TestStartMethod(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.attach",
+		{
+			Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.attach",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				args[0].(*values.Object).Put("svc", args[1].(*values.Object))
 				return nil, nil
-			}},
-		{Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.trigger",
+			},
+		},
+		{
+			Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.trigger",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				receiver := args[0].(*values.Object)
 				svcVal, ok := receiver.Get("svc")
@@ -351,23 +366,29 @@ func TestStartMethod(t *testing.T) {
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(<-resCh, nil) + "\n"))
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(<-remCh, nil) + "\n"))
 				return nil, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("start-method-v"), testharness.NewTestPal(), externs)
 }
 
 func TestStartMethodError(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.attach",
+		{
+			Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.attach",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				args[0].(*values.Object).Put("svc", args[1].(*values.Object))
 				return nil, nil
-			}},
-		{Org: "testorg", Module: "startmethoderror", FuncName: "$service$0." + model.RemoteMethodName("boom"),
+			},
+		},
+		{
+			Org: "testorg", Module: "startmethoderror", FuncName: "$service$0." + model.RemoteMethodName("boom"),
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return nil, fmt.Errorf("boom")
-			}},
-		{Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.trigger",
+			},
+		},
+		{
+			Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.trigger",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				receiver := args[0].(*values.Object)
 				svcVal, ok := receiver.Get("svc")
@@ -405,7 +426,8 @@ func TestStartMethodError(t *testing.T) {
 				}
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(<-okCh, nil) + "\n"))
 				return nil, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("start-method-error-v"), testharness.NewTestPal(), externs)
 }
@@ -415,14 +437,18 @@ func TestExternHandle(t *testing.T) {
 		data string
 	}
 	externs := []testharness.ExternRegistration{
-		{Org: "$anon", Module: "4-v", FuncName: "createHandle",
+		{
+			Org: "$anon", Module: "4-v", FuncName: "createHandle",
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return &myHandle{data: "handle_value"}, nil
-			}},
-		{Org: "$anon", Module: "4-v", FuncName: "useHandle",
+			},
+		},
+		{
+			Org: "$anon", Module: "4-v", FuncName: "useHandle",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return args[0].(*myHandle).data, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, fileCase("4-v"), testharness.NewTestPal(), externs)
 }
@@ -615,12 +641,11 @@ func compileSingleFileModule(
 	pkg.Scope = pkgScope
 	pkg.Imports = nil
 	importedSymbols := importedByCU[0].Imports
-	semantics.ResolveTopLevelNodes(cx, pkg, importedSymbols)
+	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
 	assertNoDiagnostics(t, cx, "ResolveTopLevelNodes")
-	semantics.ResolveLocalNodes(cx, pkg, importedSymbols)
+	semantics.ResolvePrivateNodesTypes(cx, pkg, importedSymbols)
 	assertNoDiagnostics(t, cx, "ResolveLocalNodes")
-	analyzer := semantics.NewSemanticAnalyzer(cx)
-	analyzer.Analyze(pkg, importedSymbols)
+	semantics.AnalyzeSemantics(cx, pkg, importedSymbols)
 	assertNoDiagnostics(t, cx, "SemanticAnalyzer")
 	cfg := semantics.CreateControlFlowGraph(cx, pkg)
 	assertNoDiagnostics(t, cx, "CreateControlFlowGraph")

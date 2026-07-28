@@ -1032,6 +1032,8 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 	reportUnusedVariables(functionResolver.GetCtx(), functionResolver.getUnused())
 }
 
+// ResolveCompilationUnitImports Used to seed hardcoded import symbols
+// Deprecated: should be removed with https://github.com/ballerina-nutcracker/ballerina/issues/688
 func ResolveCompilationUnitImports(ctx *context.CompilerContext, compilationUnits []*ast.BLangCompilationUnit,
 	implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace, defaultOrg string,
 ) []CompilationUnitImports {
@@ -1045,21 +1047,6 @@ func ResolveCompilationUnitImports(ctx *context.CompilerContext, compilationUnit
 		result[i] = CompilationUnitImports{CompilationUnit: cu, Imports: imports}
 	}
 	return result
-}
-
-// bindIntrinsicImport binds a compiler-intrinsic symbol space under either the
-// import's alias or the given default name.
-func bindIntrinsicImport(
-	imp *ast.BLangImportPackage,
-	defaultName string,
-	symbols model.ExportedSymbolSpace,
-	result map[string]model.ExportedSymbolSpace,
-) {
-	key := defaultName
-	if imp.Alias != nil {
-		key = imp.Alias.Value
-	}
-	result[key] = symbols
 }
 
 // resolveExternalImport looks up the import's exported symbols in publicSymbols
@@ -1110,6 +1097,8 @@ func resolveImportPackageIdentifier(imp *ast.BLangImportPackage, defaultOrg stri
 	return PackageIdentifier{orgName, moduleName}
 }
 
+// GetImplicitImports returns symbols for hardcoded lang libraries
+// Deprecated: should be removed with https://github.com/ballerina-nutcracker/ballerina/issues/688
 func GetImplicitImports(ctx *context.CompilerContext) map[string]model.ExportedSymbolSpace {
 	result := make(map[string]model.ExportedSymbolSpace)
 	result[langinternal.PackageName] = langinternal.GetInternalSymbols(ctx)
@@ -1239,13 +1228,6 @@ type deferredMethodSymbol struct {
 }
 
 var _ model.Symbol = &deferredMethodSymbol{}
-
-// IsDeferredMethodSymbol returns true if the symbol is a deferred method symbol
-// (a placeholder used during symbol resolution that will be resolved later).
-func IsDeferredMethodSymbol(symbol any) bool {
-	_, ok := symbol.(*deferredMethodSymbol)
-	return ok
-}
 
 func (d *deferredMethodSymbol) Name() string {
 	panic("method symbol has not been resolved yet")

@@ -26,6 +26,12 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
+// AnalyzeCFG perform analysis on the control flow graph. This would perform
+// - Rechability analysis: validate there is way to reach a given statement
+// - Explicit return analysis: validate in call code paths functions with non-nil return types do return a value or panic
+// - Unitialized variable analysis: validate all variables are initialized before use in all code paths
+// - Unitialized field analysis: validate object fields are initialized in all code paths in init method (if they don't have inline initializers)
+// - Unitialized global var analysis: validate all module global variables are initialized in module init funciton (if they don't have inline initializers)
 func AnalyzeCFG(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
 	wg.Go(func() { analyzeReachability(ctx, cfg) })

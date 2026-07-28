@@ -297,7 +297,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 
 	// Add type resolution step (this only resolve types of top level nodes)
 	compilerCtx.StartStage(context.StageTopLevelTypeResolution)
-	semantics.ResolveTopLevelNodes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
+	semantics.ResolvePublicNodeTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 }
 
@@ -318,15 +318,14 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 
 	// Resolve types of function bodies and inner nodes
 	compilerCtx.StartStage(context.StageLocalNodeResolution)
-	semantics.ResolveLocalNodes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
+	semantics.ResolvePrivateNodesTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
 
 	compilerCtx.StartStage(context.StageSemanticAnalysis)
-	semanticAnalyzer := semantics.NewSemanticAnalyzer(moduleCtx.compilerCtx)
-	semanticAnalyzer.Analyze(pkgNode, moduleCtx.importedSymbols)
+	semantics.AnalyzeSemantics(moduleCtx.compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return

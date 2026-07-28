@@ -47,7 +47,7 @@ type (
 	analyzerBase struct {
 		parent analyzer
 	}
-	SemanticAnalyzer struct {
+	semanticAnalyzer struct {
 		analyzerBase
 		compilerCtx *context.CompilerContext
 		typeCtx     semtypes.Context
@@ -91,7 +91,7 @@ type (
 
 var (
 	_ analyzer = &constantAnalyzer{}
-	_ analyzer = &SemanticAnalyzer{}
+	_ analyzer = &semanticAnalyzer{}
 	_ analyzer = &functionAnalyzer{}
 	_ analyzer = &loopAnalyzer{}
 	_ analyzer = &lockAnalyzer{}
@@ -175,7 +175,7 @@ func (ab *analyzerBase) moduleVarMetadata(ref model.SymbolRef) (varDeclMetadata,
 	return ab.parentAnalyzer().moduleVarMetadata(ref)
 }
 
-func (sa *SemanticAnalyzer) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
+func (sa *semanticAnalyzer) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	return nil
 }
 
@@ -232,7 +232,7 @@ func (la *loopAnalyzer) loc() diagnostics.Location {
 	return la.loop.GetPosition()
 }
 
-func (sa *SemanticAnalyzer) loc() diagnostics.Location {
+func (sa *semanticAnalyzer) loc() diagnostics.Location {
 	return sa.pkg.GetPosition()
 }
 
@@ -244,15 +244,15 @@ func (ca *constantAnalyzer) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 	return ca
 }
 
-func (sa *SemanticAnalyzer) ctx() *context.CompilerContext {
+func (sa *semanticAnalyzer) ctx() *context.CompilerContext {
 	return sa.compilerCtx
 }
 
-func (sa *SemanticAnalyzer) tyCtx() semtypes.Context {
+func (sa *semanticAnalyzer) tyCtx() semtypes.Context {
 	return sa.typeCtx
 }
 
-func (sa *SemanticAnalyzer) importedPackage(alias string) *ast.BLangImportPackage {
+func (sa *semanticAnalyzer) importedPackage(alias string) *ast.BLangImportPackage {
 	return sa.importedPkgs[alias]
 }
 
@@ -264,23 +264,23 @@ func (la *loopAnalyzer) tyCtx() semtypes.Context {
 	return la.parent.tyCtx()
 }
 
-func (sa *SemanticAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
+func (sa *semanticAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
 	sa.compilerCtx.Unimplemented(message, loc)
 }
 
-func (sa *SemanticAnalyzer) semanticErr(message string, loc diagnostics.Location) {
+func (sa *semanticAnalyzer) semanticErr(message string, loc diagnostics.Location) {
 	sa.compilerCtx.SemanticError(message, loc)
 }
 
-func (sa *SemanticAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
+func (sa *semanticAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
 	sa.compilerCtx.SyntaxError(message, loc)
 }
 
-func (sa *SemanticAnalyzer) internalErr(message string, loc diagnostics.Location) {
+func (sa *semanticAnalyzer) internalErr(message string, loc diagnostics.Location) {
 	sa.compilerCtx.InternalError(message, loc)
 }
 
-func (sa *SemanticAnalyzer) internalError(message string, loc diagnostics.Location) {
+func (sa *semanticAnalyzer) internalError(message string, loc diagnostics.Location) {
 	sa.compilerCtx.InternalError(message, loc)
 }
 
@@ -332,18 +332,23 @@ func (la *loopAnalyzer) internalErr(message string, loc diagnostics.Location) {
 	la.parent.ctx().InternalError(message, loc)
 }
 
-func NewSemanticAnalyzer(ctx *context.CompilerContext) *SemanticAnalyzer {
-	return &SemanticAnalyzer{
-		compilerCtx:     ctx,
-		typeCtx:         semtypes.ContextFrom(ctx.GetTypeEnv()),
-		importedPkgs:    make(map[string]*ast.BLangImportPackage),
-		importedSymbols: make(map[string]model.ExportedSymbolSpace),
+func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
+	return &semanticAnalyzer{
+		compilerCtx:      ctx,
+		typeCtx:          semtypes.ContextFrom(ctx.GetTypeEnv()),
+		importedPkgs:     make(map[string]*ast.BLangImportPackage),
+		importedSymbols:  make(map[string]model.ExportedSymbolSpace),
+		moduleVarMetaMap: make(map[model.SymbolRef]varDeclMetadata),
 	}
 }
 
-func (sa *SemanticAnalyzer) Analyze(pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+func AnalyzeSemantics(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+	analyzer := newSemanticAnalyzer(ctx)
+	analyzer.analyze(pkg, importedSymbols)
+}
+
+func (sa *semanticAnalyzer) analyze(pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	sa.pkg = pkg
-	sa.importedPkgs = make(map[string]*ast.BLangImportPackage)
 	if importedSymbols == nil {
 		importedSymbols = make(map[string]model.ExportedSymbolSpace)
 	}
@@ -351,13 +356,9 @@ func (sa *SemanticAnalyzer) Analyze(pkg *ast.BLangPackage, importedSymbols map[s
 	sa.moduleVarMetaMap = sa.buildModuleVarMetadata()
 	sa.validateModuleLevelIsolatedDecls(pkg)
 	ast.Walk(sa, pkg)
-	sa.pkg = nil
-	sa.importedPkgs = nil
-	sa.importedSymbols = nil
-	sa.moduleVarMetaMap = nil
 }
 
-func (sa *SemanticAnalyzer) moduleVarMetadata(ref model.SymbolRef) (varDeclMetadata, bool) {
+func (sa *semanticAnalyzer) moduleVarMetadata(ref model.SymbolRef) (varDeclMetadata, bool) {
 	md, ok := sa.moduleVarMetaMap[ref]
 	return md, ok
 }
@@ -367,7 +368,7 @@ func createConstantAnalyzer(parent analyzer, constant *ast.BLangVariable) *const
 	return &constantAnalyzer{analyzerBase: analyzerBase{parent: parent}, constant: constant, expectedType: expectedType}
 }
 
-func (sa *SemanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
+func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
 		// Done
 		return nil
@@ -401,7 +402,7 @@ func (sa *SemanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 	}
 }
 
-func (sa *SemanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
+func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
 	alias := importNode.Alias.GetValue()
 
 	// Check for duplicate imports
@@ -461,7 +462,7 @@ func initializeFunctionAnalyzer(parent analyzer, function *ast.BLangFunction) *f
 	}
 	if function.Name.GetValue() == "init" {
 		// this is to seperate class init from module init
-		if _, isTopLevel := parent.(*SemanticAnalyzer); isTopLevel {
+		if _, isTopLevel := parent.(*semanticAnalyzer); isTopLevel {
 			fnSymbol := parent.ctx().GetSymbol(function.Symbol()).(model.FunctionSymbol)
 			validateInitFunction(parent, function, fnSymbol, function.GetPosition())
 		}

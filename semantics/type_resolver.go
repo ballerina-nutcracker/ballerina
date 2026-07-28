@@ -598,10 +598,8 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 	return true
 }
 
-// ResolveTopLevelNodes resolves type definitions, function signatures, and constants.
-// After this (for the given package) all the semtypes are known. This means after resolving types of all the packages
-// it is safe to use the closed world assumption to optimize type checks.
-func ResolveTopLevelNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+// ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
+func ResolvePublicNodeTypes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	t.resolveTopLevelTypes(pkg)
 }
@@ -651,8 +649,8 @@ func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymb
 	}
 }
 
-// ResolveLocalNodes resolves the types of function bodies and remaining inner nodes.
-func ResolveLocalNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+// ResolvePrivateNodesTypes resolves the types private nodes within the package. Then can be executed concurrently
+func ResolvePrivateNodesTypes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	populateClassSymbolByType(p, pkg)
 	populateMappingAtomMaps(p, pkg, importedSymbols)

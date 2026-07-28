@@ -164,11 +164,6 @@ var bundledStdlibs = []bundledLib{
 	},
 }
 
-// ImplicitImports returns the implicit-imports map for a hand-rolled compile
-// driver: the still-intrinsic langlibs from semantics.GetImplicitImports plus
-// the migrated lang libraries compiled into cx. Compilation happens in cx's
-// env so the returned symbol spaces resolve when the driver compiles user code
-// in the same context.
 type Symbols struct {
 	ImplicitImports map[string]model.ExportedSymbolSpace
 	PublicSymbols   map[semantics.PackageIdentifier]model.ExportedSymbolSpace
@@ -272,7 +267,7 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	pkg.Scope = pkgScope
 	pkg.Imports = nil
 	imported := importedByCU[0].Imports
-	semantics.ResolveTopLevelNodes(cx, pkg, imported)
+	semantics.ResolvePublicNodeTypes(cx, pkg, imported)
 	cache[lib.balPath] = exported
 	return exported, nil
 }

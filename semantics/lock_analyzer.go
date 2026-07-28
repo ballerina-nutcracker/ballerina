@@ -419,12 +419,7 @@ type varDeclMetadata struct {
 	Isolated     bool
 }
 
-// buildModuleVarMetadata is invoked once per Analyze call to build the
-// SymbolRef -> varDeclMetadata snapshot used by isolation analysis. Walks
-// the current package's module-level variables and constants, plus the
-// exported value symbols (variables and constants) of every imported
-// package.
-func (sa *SemanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDeclMetadata {
+func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDeclMetadata {
 	out := make(map[model.SymbolRef]varDeclMetadata)
 	for i := range sa.pkg.GlobalVars {
 		v := &sa.pkg.GlobalVars[i]
@@ -570,7 +565,7 @@ func inInitFunction(a analyzer) bool {
 // validateModuleLevelIsolatedDecls enforces that the initializer of
 // every module-level `isolated` declaration is itself an isolated
 // expression.
-func (sa *SemanticAnalyzer) validateModuleLevelIsolatedDecls(pkg *ast.BLangPackage) {
+func (sa *semanticAnalyzer) validateModuleLevelIsolatedDecls(pkg *ast.BLangPackage) {
 	check := func(expr ast.BLangExpression, sym model.SymbolRef) {
 		vs, ok := sa.ctx().GetSymbol(sym).(model.ValueSymbol)
 		if !ok || !vs.IsIsolated() {

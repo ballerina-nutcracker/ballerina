@@ -656,18 +656,17 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		maps.Copy(importedSymbols, cuImports.Imports)
 	}
 
-	semantics.ResolveTopLevelNodes(cx, pkg, importedSymbols)
+	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("top-level type resolution failed")
 	}
 
-	semantics.ResolveLocalNodes(cx, pkg, importedSymbols)
+	semantics.ResolvePrivateNodesTypes(cx, pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("local type resolution failed")
 	}
 
-	analyzer := semantics.NewSemanticAnalyzer(cx)
-	analyzer.Analyze(pkg, importedSymbols)
+	semantics.AnalyzeSemantics(cx, pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("semantic analysis failed")
 	}

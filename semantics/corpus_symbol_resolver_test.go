@@ -22,7 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
-	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
@@ -89,8 +89,8 @@ func (v *symbolResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
 		return nil
 	}
-	if invocation, ok := node.(*ast.BLangInvocation); ok {
-		if semantics.IsDeferredMethodSymbol(invocation.RawSymbol) {
+	if invocation, ok := node.(*ast.BLangInvocation); ok && invocation.RawSymbol != nil {
+		if _, resolved := invocation.RawSymbol.(*model.SymbolRef); !resolved {
 			return nil
 		}
 	}

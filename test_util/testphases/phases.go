@@ -142,7 +142,7 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 		pkg.Scope = pkgScope
 		pkg.Imports = nil
 
-		semantics.ResolveTopLevelNodes(cx, pkg, importedByCU[0].Imports)
+		semantics.ResolvePublicNodeTypes(cx, pkg, importedByCU[0].Imports)
 		if cx.HasErrors() {
 			continue
 		}
@@ -221,20 +221,19 @@ func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.Compil
 	}
 
 	// Phase 4: Type Resolution (top level nodes)
-	semantics.ResolveTopLevelNodes(cx, result.Package, importedSymbols)
+	semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
 	if phase == PhaseTypeResolution || cx.HasDiagnostics() {
 		return result, nil
 	}
 
 	// Phase 5: Type Resolution (inner nodes)
-	semantics.ResolveLocalNodes(cx, result.Package, importedSymbols)
+	semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
 	if phase == PhaseTypeNarrowing || cx.HasDiagnostics() {
 		return result, nil
 	}
 
 	// Phase 6: Semantic Analysis
-	semanticAnalyzer := semantics.NewSemanticAnalyzer(cx)
-	semanticAnalyzer.Analyze(result.Package, importedSymbols)
+	semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)
 	if phase == PhaseSemanticAnalysis || cx.HasDiagnostics() {
 		return result, nil
 	}
