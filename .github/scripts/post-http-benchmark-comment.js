@@ -7,21 +7,32 @@ module.exports = async ({ github, context, core }) => {
   // never from benchmark-meta.json — that file is written by the prepare
   // job while running PR-head code, so a malicious PR could forge it to
   // make this privileged (pull-requests: write) job comment on an
-  // unrelated PR. pull_requests is only populated for same-repo PRs and
-  // can be ambiguous in theory, so require exactly one association.
-  const pulls = context.payload.workflow_run.pull_requests || [];
-  if (pulls.length !== 1) {
-    core.info(`Skipping: workflow_run reports ${pulls.length} associated pull request(s); expected exactly 1.`);
+  // unrelated PR. workflow_run.pull_requests is documented but frequently
+  // empty in practice (always for fork PRs, and unreliably even for
+  // same-repo ones), so look the PR up via the API instead, keyed off the
+  // trusted head_repository/head_branch/head_sha.
+  const headBranch = context.payload.workflow_run.head_branch;
+  const headRepo = context.payload.workflow_run.head_repository?.full_name;
+  const workflowHeadSha = context.payload.workflow_run.head_sha;
+  if (!headBranch || !headRepo) {
+    core.info("Skipping: workflow_run is missing head branch/repository info.");
     return;
   }
-  const issueNumber = pulls[0].number;
-  const workflowHeadSha = context.payload.workflow_run.head_sha;
+  const headOwner = headRepo.split("/")[0];
+
+  const { data: candidates } = await github.rest.pulls.list({
+    ...context.repo,
+    state: "open",
+    head: `${headOwner}:${headBranch}`,
+  });
+  if (candidates.length !== 1) {
+    core.info(`Skipping: found ${candidates.length} open pull request(s) for ${headOwner}:${headBranch}; expected exactly 1.`);
+    return;
+  }
+  const pr = candidates[0];
+  const issueNumber = pr.number;
 
   // Bail out if a newer push has already superseded this run.
-  const { data: pr } = await github.rest.pulls.get({
-    ...context.repo,
-    pull_number: issueNumber,
-  });
   if (pr.head.sha !== workflowHeadSha) {
     core.info(`Skipping: workflow_run head ${workflowHeadSha} is not current PR head ${pr.head.sha}`);
     return;
