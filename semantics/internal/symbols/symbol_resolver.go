@@ -14,18 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package symbols
 
 import (
 	"fmt"
 	"maps"
-	"slices"
 	"strings"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
@@ -577,7 +577,7 @@ func symbolLocationForNode(node namedDeclaration) diagnostics.Location {
 	return node.GetName().GetPosition()
 }
 
-func ResolveSymbols(cx *context.CompilerContext, pkgID model.PackageID, cuImportsList []CompilationUnitImports) (model.Scope, model.ExportedSymbolSpace) {
+func Resolve(cx *context.CompilerContext, pkgID model.PackageID, cuImportsList []CompilationUnitImports) (model.Scope, model.ExportedSymbolSpace) {
 	packageResolver := newCompilationUnitsSymbolResolver(cx, pkgID)
 	injectOpaqueSymbols(pkgID, packageResolver)
 	cuResolvers := make([]*moduleSymbolResolver, len(cuImportsList))
@@ -1173,7 +1173,7 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		}
 		return nil
 	case *ast.BLangFieldBaseAccess:
-		if isSelfFieldAccess(n) {
+		if common.IsSelfFieldAccess(n) {
 			if classScope, ok := getEnclosingClassBodyScope(resolver); ok {
 				resolveSelfFieldAccess(resolver, n, classScope)
 				return nil
@@ -1216,49 +1216,15 @@ func resolveMappingConstructor[T symbolResolver](resolver T, n *ast.BLangMapping
 
 // since we don't have type information we can't determine if this is an actual method call or need to be converted
 // to a function call.
+type invocable interface {
+	GetName() ast.IdentifierNode
+	SetRawSymbol(model.Symbol)
+}
+
 func createDeferredMethodSymbol[T symbolResolver](resolver T, n invocable) {
 	name := n.GetName().GetValue()
 	scope := resolver.GetScope().(model.SymbolSpaceProvider)
-	n.SetRawSymbol(new(deferredMethodSymbol{name: name, space: scope.MainSpace()}))
-}
-
-type deferredMethodSymbol struct {
-	name  string
-	space *model.SymbolSpace
-}
-
-var _ model.Symbol = &deferredMethodSymbol{}
-
-func (d *deferredMethodSymbol) Name() string {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) Type() semtypes.SemType {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) Kind() model.SymbolKind {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) SetType(semtypes.SemType) {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) Location() diagnostics.Location {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) SetLocation(diagnostics.Location) {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) IsPublic() bool {
-	panic("method symbol has not been resolved yet")
-}
-
-func (d *deferredMethodSymbol) Copy() model.Symbol {
-	panic("method symbol has not been resolved yet")
+	n.SetRawSymbol(common.NewDeferredMethodSymbol(name, scope.MainSpace()))
 }
 
 func referUserDefinedType[T symbolResolver](resolver T, n *ast.BLangUserDefinedType) {
@@ -1687,20 +1653,6 @@ func collectTransitiveFieldsFromClassDefn(ctx *context.CompilerContext, defn *as
 	return collectTransitiveFields(ctx, defn.Inclusions, directFields, localTypeDefns, localClassDefns)
 }
 
-type namedClassMethod struct {
-	name   string
-	method *ast.BLangFunction
-}
-
-func methodsInResolutionOrder(methods map[string]*ast.BLangFunction) []namedClassMethod {
-	names := slices.Sorted(maps.Keys(methods))
-	result := make([]namedClassMethod, len(names))
-	for i, name := range names {
-		result[i] = namedClassMethod{name: name, method: methods[name]}
-	}
-	return result
-}
-
 func resolveServiceDefinition(ms *moduleSymbolResolver, svc *ast.BLangService) {
 	if typeDescriptor := svc.GetTypeData().TypeDescriptor; typeDescriptor != nil {
 		ast.Walk(ms, typeDescriptor.(ast.BLangNode))
@@ -1762,18 +1714,18 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 		blockRes.AddSymbol(name, &symbol)
 	}
 
-	orderedMethods := methodsInResolutionOrder(methods)
+	orderedMethods := common.MethodsInResolutionOrder(methods)
 	for _, m := range orderedMethods {
-		if _, sk, exists := blockRes.GetSymbol(m.name); exists && sk == blockScopeKind {
-			semanticError(blockRes, "redeclared symbol '"+model.StripRemotePrefix(m.name)+"'", m.method.Name.GetPosition())
+		if _, sk, exists := blockRes.GetSymbol(m.Name); exists && sk == blockScopeKind {
+			semanticError(blockRes, "redeclared symbol '"+model.StripRemotePrefix(m.Name)+"'", m.Method.Name.GetPosition())
 			continue
 		}
-		isPublic := m.method.IsPublic()
-		symbol := ms.allocateFunctionSymbolInner(m.method, m.name, isPublic)
-		symbolName := methodSymbolName(m.name)
+		isPublic := m.Method.IsPublic()
+		symbol := ms.allocateFunctionSymbolInner(m.Method, m.Name, isPublic)
+		symbolName := methodSymbolName(m.Name)
 		methodTargetScope.AddSymbol(symbolName, symbol)
 		symRef, _ := methodTargetScope.MainSpace().GetSymbol(symbolName)
-		m.method.SetSymbol(symRef)
+		m.Method.SetSymbol(symRef)
 	}
 
 	for _, m := range includedFields {
@@ -1805,10 +1757,10 @@ func finishResolveClassDefinition(ms *moduleSymbolResolver, blockRes *blockSymbo
 	}
 
 	for _, m := range orderedMethods {
-		methodResolver := newFunctionResolver(blockRes, m.method)
-		m.method.SetScope(methodResolver.scope)
-		resolveFunction(methodResolver, m.method)
-		allocateDefaultParamSymbols(ms, ms.scope, m.method)
+		methodResolver := newFunctionResolver(blockRes, m.Method)
+		m.Method.SetScope(methodResolver.scope)
+		resolveFunction(methodResolver, m.Method)
+		allocateDefaultParamSymbols(ms, ms.scope, m.Method)
 	}
 
 	for _, rm := range resourceMethods {
@@ -1856,8 +1808,8 @@ func allocateResourceMethodSymbol(targetScope methodSymbolTargetScope, rm *ast.B
 
 func publishObjectMethodTable(classSym model.ClassSymbol, classDef *ast.BLangClassDefinition) {
 	methodTable := make(map[string]model.SymbolRef, len(classDef.Methods))
-	for _, m := range methodsInResolutionOrder(classDef.Methods) {
-		methodTable[m.name] = m.method.Symbol()
+	for _, m := range common.MethodsInResolutionOrder(classDef.Methods) {
+		methodTable[m.Name] = m.Method.Symbol()
 	}
 	if classDef.InitFunction != nil {
 		methodTable["init"] = classDef.InitFunction.Symbol()
@@ -1916,14 +1868,6 @@ func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope,
 		}
 		resolver = bs.parent
 	}
-}
-
-func isSelfFieldAccess(n *ast.BLangFieldBaseAccess) bool {
-	varRef, ok := n.Expr.(*ast.BLangVarRef)
-	if !ok {
-		return false
-	}
-	return varRef.VariableName.GetValue() == "self"
 }
 
 func resolveSelfFieldAccess[T symbolResolver](resolver T, n *ast.BLangFieldBaseAccess, classScope model.BlockLevelScope) {

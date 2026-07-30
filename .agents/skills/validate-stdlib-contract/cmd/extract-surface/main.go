@@ -35,9 +35,8 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser"
-	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
-	"github.com/ballerina-nutcracker/ballerina/st/tree"
+	tree "github.com/ballerina-nutcracker/ballerina/st"
 )
 
 var skipDirs = map[string]bool{"tests": true, "build": true, "target": true}
@@ -380,7 +379,7 @@ func qualTexts(quals tree.NodeList[tree.Token]) []string {
 }
 
 func isPublicToken(t tree.Token) bool {
-	return t != nil && t.Kind() == common.PUBLIC_KEYWORD
+	return t != nil && t.Kind() == tree.PUBLIC_KEYWORD
 }
 
 func tokenText(t tree.Token) string {

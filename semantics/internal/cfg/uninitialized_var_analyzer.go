@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package cfg
 
 import (
 	"maps"
@@ -23,6 +23,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 )
 
 // varInitState tracks which variables are definitely initialized
@@ -310,9 +311,9 @@ func (v *varRefChecker) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 // analyzeUninitializedVars is the public entry point for uninitialized variable analysis
 func analyzeUninitializedVars(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
-	for _, fn := range packageFunctionDecls(pkg) {
+	for _, fn := range common.PackageFunctionDecls(pkg) {
 		wg.Add(1)
-		go func(fn functionDecl) {
+		go func(fn common.FunctionDecl) {
 			defer wg.Done()
 			analyzeFunctionUninitializedVars(ctx, fn, cfg)
 		}(fn)
@@ -321,7 +322,7 @@ func analyzeUninitializedVars(ctx *context.CompilerContext, pkg *ast.BLangPackag
 }
 
 // analyzeFunctionUninitializedVars analyzes a single function for uninitialized variables
-func analyzeFunctionUninitializedVars(ctx *context.CompilerContext, fn functionDecl, cfg *PackageCFG) {
+func analyzeFunctionUninitializedVars(ctx *context.CompilerContext, fn common.FunctionDecl, cfg *PackageCFG) {
 	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 	if !ok {
 		return

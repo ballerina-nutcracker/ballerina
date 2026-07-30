@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package analysis
 
 import (
 	"fmt"
@@ -22,6 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -98,7 +99,7 @@ func findRestrictedVariable(a analyzer, body *ast.BLangBlockStmt) (key string, s
 // selfFieldLockEntry returns the (lock key, field's symbol ref, ok) for
 // `self.fieldName` accesses qualifying as restricted-variable references.
 func selfFieldLockEntry(a analyzer, access *ast.BLangFieldBaseAccess) (string, model.SymbolRef, bool) {
-	if !isSelfFieldAccess(access) {
+	if !common.IsSelfFieldAccess(access) {
 		return "", model.SymbolRef{}, false
 	}
 	cls, ok := enclosingClassOf(a)
@@ -230,6 +231,15 @@ func isolatedParamLambdas(ctx *context.CompilerContext, n *ast.BLangInvocation) 
 		}
 	}
 	return lambdas
+}
+
+func paramIndexOf(paramNames []string, name string) int {
+	for i, each := range paramNames {
+		if each == name {
+			return i
+		}
+	}
+	return -1
 }
 
 func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtypes.Context, n *ast.BLangInvocation) (diagnostics.Location, bool) {
@@ -853,7 +863,7 @@ func exprRef(enclosingFields []*ast.BLangVariable, expr ast.BLangExpression) (mo
 	case *ast.BLangVarRef:
 		return expr.Symbol(), true
 	case *ast.BLangFieldBaseAccess:
-		if isSelfFieldAccess(expr) {
+		if common.IsSelfFieldAccess(expr) {
 			fieldName := expr.Field.GetValue()
 			for _, field := range enclosingFields {
 				if field.Name.GetValue() != fieldName {

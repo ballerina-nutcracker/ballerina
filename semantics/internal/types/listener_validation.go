@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package types
 
 import "github.com/ballerina-nutcracker/ballerina/semtypes"
 

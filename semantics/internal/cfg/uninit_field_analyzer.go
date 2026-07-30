@@ -14,12 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package cfg
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 )
 
 type initState struct {
@@ -178,7 +179,7 @@ func (a *uninitAnalyzer) isInitializedAtAllTerminals(name string) bool {
 func extractFieldAssignment(node ast.Node) string {
 	if assignment, ok := node.(*ast.BLangAssignment); ok {
 		if fieldAccess, ok := assignment.VarRef.(*ast.BLangFieldBaseAccess); ok {
-			if isSelfFieldAccess(fieldAccess) {
+			if common.IsSelfFieldAccess(fieldAccess) {
 				return fieldAccess.Field.GetValue()
 			}
 		}

@@ -14,14 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics_test
+package cfg_test
 
 import (
 	"flag"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/context"
-	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/cfg"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
@@ -72,27 +72,23 @@ func testCFGGeneration(t *testing.T, testPair test_util.TestCase) {
 		t.Errorf("loading lang libraries failed for %s: %v", testPair.InputPath, err)
 		return
 	}
-	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseCFG, testPair.InputPath)
+	result, err := testphases.RunPipeline(env, cx, langlibs, testphases.PhaseSemanticAnalysis, testPair.InputPath)
 	if err != nil {
 		t.Errorf("pipeline failed for %s: %v", testPair.InputPath, err)
 		return
 	}
 
-	cfg := result.CFG
-	if cfg == nil {
-		t.Errorf("CFG is nil for %s", testPair.InputPath)
-		return
-	}
+	graph := cfg.Build(cx, result.Package)
 
 	// Validate backedgeParents is a subset of parents for every block
-	for _, err := range cfg.ValidateInvariants() {
+	for _, err := range cfg.ValidateInvariants(graph) {
 		t.Errorf("CFG invariant violated in %s: function %v, block %d: backedgeParent %d is not in parents %v",
 			testPair.InputPath, err.FuncRef, err.BlockID, err.BackedgeParent, err.Parents)
 	}
 
 	// Pretty print CFG output
-	prettyPrinter := semantics.NewCFGPrettyPrinter(cx)
-	actualCFG := prettyPrinter.Print(cfg)
+	prettyPrinter := cfg.NewCFGPrettyPrinter(cx)
+	actualCFG := prettyPrinter.Print(graph)
 
 	// If update flag is set, update expected file
 	if *updateCFG {

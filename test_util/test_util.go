@@ -188,8 +188,7 @@ func GetTests(t testing.TB, kind TestKind, filterFunc func(string) bool) []TestC
 	return testPairs
 }
 
-// resolveDir resolves the input and output directories to absolute paths.
-// It tries ../corpus/<inputBaseDir>, then ./corpus/<inputBaseDir>, then ../../corpus/<inputBaseDir>.
+// resolveDir resolves corpus paths from module roots and nested internal test packages.
 func resolveDir(t testing.TB, inputBaseDir, outputBaseDir string) (string, string) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -199,6 +198,7 @@ func resolveDir(t testing.TB, inputBaseDir, outputBaseDir string) (string, strin
 		filepath.Join(cwd, "..", "corpus"),
 		filepath.Join(cwd, "corpus"),
 		filepath.Join(cwd, "..", "..", "corpus"),
+		filepath.Join(cwd, "..", "..", "..", "corpus"),
 	} {
 		inputDir := filepath.Join(base, inputBaseDir)
 		if _, err := os.Stat(inputDir); err == nil {

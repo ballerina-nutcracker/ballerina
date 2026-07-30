@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package cfg
 
 import (
 	"slices"
@@ -99,7 +99,7 @@ func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG)
 }
 
 // CreateControlFlowGraph creates the control flow graph for the given pkg
-func CreateControlFlowGraph(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
+func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	cfg := &PackageCFG{
 		funcCfgs:   make(map[model.SymbolRef]functionCFG),
 		methodCfgs: make(map[model.SymbolRef]map[model.SymbolRef]functionCFG),

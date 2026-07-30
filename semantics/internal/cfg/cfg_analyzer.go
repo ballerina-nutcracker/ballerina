@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package cfg
 
 import (
 	"sync"
@@ -32,7 +32,7 @@ import (
 // - Unitialized variable analysis: validate all variables are initialized before use in all code paths
 // - Unitialized field analysis: validate object fields are initialized in all code paths in init method (if they don't have inline initializers)
 // - Unitialized global var analysis: validate all module global variables are initialized in module init funciton (if they don't have inline initializers)
-func AnalyzeCFG(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
 	wg.Go(func() { analyzeReachability(ctx, cfg) })
 	wg.Go(func() { analyzeExplicitReturn(ctx, pkg, cfg) })
@@ -43,7 +43,7 @@ func AnalyzeCFG(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *Packag
 }
 
 // analyzeReachability checks for unreachable code in all functions.
-// This is now a private function called by AnalyzeCFG.
+// This is now a private function called by Analyze.
 func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
 	var wg sync.WaitGroup
 	for _, fcfg := range cfg.allFunctionCfgs {
@@ -64,7 +64,7 @@ func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
 
 // analyzeExplicitReturn validates that functions with non-nil return types
 // have explicit return statements.
-// This is now a private function called by AnalyzeCFG.
+// This is now a private function called by Analyze.
 func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
 	spawn := func(n invokableNode) {

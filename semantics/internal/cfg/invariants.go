@@ -14,35 +14,32 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics
+package cfg
 
 import "github.com/ballerina-nutcracker/ballerina/model"
 
-// CFGInvariantError represents a CFG invariant violation
-type CFGInvariantError struct {
+type InvariantError struct {
 	FuncRef        model.SymbolRef
 	BlockID        int
 	BackedgeParent int
 	Parents        []int
 }
 
-// ValidateInvariants checks that CFG invariants hold (e.g., backedgeParents is subset of parents).
-// Returns a list of violations, or nil if all invariants hold.
-func (cfg *PackageCFG) ValidateInvariants() []CFGInvariantError {
-	var errors []CFGInvariantError
-	for symRef, fcfg := range cfg.allFunctionCfgs {
-		for _, bb := range fcfg.bbs {
-			parentSet := make(map[int]bool, len(bb.parents))
-			for _, p := range bb.parents {
-				parentSet[p] = true
+func ValidateInvariants(graph *PackageCFG) []InvariantError {
+	var errors []InvariantError
+	for symRef, functionGraph := range graph.allFunctionCfgs {
+		for _, block := range functionGraph.bbs {
+			parentSet := make(map[int]bool, len(block.parents))
+			for _, parent := range block.parents {
+				parentSet[parent] = true
 			}
-			for _, p := range bb.backedgeParents {
-				if !parentSet[p] {
-					errors = append(errors, CFGInvariantError{
+			for _, parent := range block.backedgeParents {
+				if !parentSet[parent] {
+					errors = append(errors, InvariantError{
 						FuncRef:        symRef,
-						BlockID:        bb.id,
-						BackedgeParent: p,
-						Parents:        bb.parents,
+						BlockID:        block.id,
+						BackedgeParent: parent,
+						Parents:        block.parents,
 					})
 				}
 			}

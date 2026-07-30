@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semantics_test
+package types_test
 
 import (
 	"flag"

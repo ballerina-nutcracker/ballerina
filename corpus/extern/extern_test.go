@@ -642,11 +642,11 @@ func compileSingleFileModule(
 	pkg.Imports = nil
 	importedSymbols := importedByCU[0].Imports
 	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
-	assertNoDiagnostics(t, cx, "ResolveTopLevelNodes")
+	assertNoDiagnostics(t, cx, "ResolvePublicNodeTypes")
 	semantics.ResolvePrivateNodesTypes(cx, pkg, importedSymbols)
-	assertNoDiagnostics(t, cx, "ResolveLocalNodes")
+	assertNoDiagnostics(t, cx, "ResolvePrivateNodesTypes")
 	semantics.AnalyzeSemantics(cx, pkg, importedSymbols)
-	assertNoDiagnostics(t, cx, "SemanticAnalyzer")
+	assertNoDiagnostics(t, cx, "AnalyzeSemantics")
 	cfg := semantics.CreateControlFlowGraph(cx, pkg)
 	assertNoDiagnostics(t, cx, "CreateControlFlowGraph")
 	semantics.AnalyzeCFG(cx, pkg, cfg)
