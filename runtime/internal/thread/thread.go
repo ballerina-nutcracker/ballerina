@@ -17,6 +17,7 @@ package thread
 
 import (
 	"container/list"
+	"runtime"
 	"sync"
 )
 
@@ -45,6 +46,9 @@ func (t *Thread) Yield() <-chan struct{} {
 	t.queue.PushBack(ch)
 	t.signalHead()
 	t.mu.Unlock()
+	// A lone strand immediately schedules itself again. Yield to Go as well so
+	// isolated strands can run on single-threaded targets such as WASM.
+	runtime.Gosched()
 	return ch
 }
 
