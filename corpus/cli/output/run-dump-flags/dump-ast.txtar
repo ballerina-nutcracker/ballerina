@@ -10,7 +10,7 @@ F(7) = 13
 F(8) = 21
 F(9) = 34
 -- stderr --
-(compilation-unit 
+(compilation-unit
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
   (function main () (

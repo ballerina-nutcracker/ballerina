@@ -349,7 +349,9 @@ func (p *PrettyPrinter) printImportPackage(node *BLangImportPackage) {
 func (p *PrettyPrinter) printCompilationUnit(node *BLangCompilationUnit) {
 	p.StartNode()
 	p.PrintString("compilation-unit")
-	p.PrintString(node.Name)
+	if node.Name != "" {
+		p.PrintString(node.Name)
+	}
 	p.printPackageID(node.packageID)
 	p.printBLangNodeBase(&node.bLangNodeBase)
 	p.indentLevel++
