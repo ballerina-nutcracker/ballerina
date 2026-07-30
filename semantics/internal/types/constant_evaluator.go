@@ -62,7 +62,7 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 		return e.evaluateUnaryExpression(expr)
 	case *ast.BLangBinaryExpr:
 		ty := expr.GetDeterminedType()
-		if expr.OpKind == model.OperatorKind_ADD && !semtypes.IsZero(ty) && semtypes.IsSubtypeSimple(ty, semtypes.STRING) {
+		if expr.OpKind == model.OperatorKind_ADD && !semtypes.IsZero(ty) && semtypes.IsSubtypeSimple(ty, semtypes.String) {
 			if value, ok := constantSingleShapeValue(ty); ok {
 				return value, nil
 			}
@@ -152,7 +152,7 @@ func constantMappingKey(key *ast.BLangMappingKey) (string, bool) {
 }
 
 func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangListConstructorExpr) (values.BalValue, error) {
-	initial := make([]values.BalValue, 0, max(len(expr.Exprs), expr.AtomicType.Members.FixedLength))
+	initial := make([]values.BalValue, 0, max(len(expr.Exprs), expr.AtomicType.FixedLength()))
 	for i, member := range expr.Exprs {
 		value, err := e.evaluate(member)
 		if err != nil {
@@ -170,7 +170,7 @@ func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangLis
 		}
 		initial = append(initial, value)
 	}
-	for i := len(initial); i < expr.AtomicType.Members.FixedLength; i++ {
+	for i := len(initial); i < expr.AtomicType.FixedLength(); i++ {
 		filler, ok := values.FillerFactoryFor(e.resolver.typeContext(), expr.AtomicType.MemberAtInnerVal(i))
 		if !ok {
 			return nil, fmt.Errorf("constant list member %d has no filler value", i)
@@ -496,7 +496,7 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 
 func constantCastDiagnostic(value values.BalValue, targetType semtypes.SemType, err error) error {
 	var decimalErr *decimal.Error
-	if semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL) && errors.As(err, &decimalErr) {
+	if semtypes.IsSubtypeSimple(targetType, semtypes.Decimal) && errors.As(err, &decimalErr) {
 		return decimalErr
 	}
 	if errors.Is(err, values.ErrBadTypeCast) {
@@ -508,11 +508,11 @@ func constantCastDiagnostic(value values.BalValue, targetType semtypes.SemType, 
 func constantConversionError(value values.BalValue, targetType semtypes.SemType) error {
 	target := "target type"
 	switch {
-	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
+	case semtypes.IsSubtypeSimple(targetType, semtypes.Int):
 		target = "int"
-	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
+	case semtypes.IsSubtypeSimple(targetType, semtypes.Float):
 		target = "float"
-	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
+	case semtypes.IsSubtypeSimple(targetType, semtypes.Decimal):
 		target = "decimal"
 	}
 	switch value.(type) {

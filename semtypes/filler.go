@@ -76,7 +76,7 @@ func (XMLFiller) isFiller()         {}
 // FillerValue returns the filler value according to https://ballerina.io/spec/lang/master/#FillMember
 // return nil if there is no filler value
 func FillerValue(cx Context, t SemType) (Filler, bool) {
-	if ContainsBasicType(t, NIL) {
+	if ContainsBasicType(t, Nil) {
 		return SingleValueFiller(valueFrom(nil)), true
 	}
 	if shape := SingleShape(t); !shape.IsEmpty() {
@@ -129,7 +129,7 @@ func FillerValue(cx Context, t SemType) (Filler, bool) {
 }
 
 func xmlFiller(cx Context, t SemType) (Filler, bool) {
-	if IsSubtype(cx, XML_TEXT, t) {
+	if IsSubtype(cx, XMLText, t) {
 		return XMLFiller{Type: t}, true
 	}
 	return nil, false
@@ -140,10 +140,10 @@ func objectFiller(cx Context, t SemType) (Filler, bool) {
 	if len(alts) != 1 {
 		return nil, false
 	}
-	if !initFnFillerCompatible(cx, alts[0].InitFnType) {
+	if !initFnFillerCompatible(cx, alts[0].initFunctionType) {
 		return nil, false
 	}
-	return ObjectFiller{Type: alts[0].ObjectType}, true
+	return ObjectFiller{Type: alts[0].objectType}, true
 }
 
 func initFnFillerCompatible(cx Context, initFnTy SemType) bool {
@@ -157,13 +157,13 @@ func initFnFillerCompatible(cx Context, initFnTy SemType) bool {
 	if IsZero(retTy) {
 		return false
 	}
-	return !ContainsBasicType(retTy, ERROR)
+	return !ContainsBasicType(retTy, Error)
 }
 
 func mappingFiller(cx Context, t SemType) (Filler, bool) {
 	mat := ToMappingAtomicType(cx, t)
 	// NOTE: this don't take into account default fields (Which is not a part of type)
-	if mat == nil || len(mat.Names) != 0 {
+	if mat == nil || len(mat.names) != 0 {
 		return nil, false
 	}
 	if filler, memoized := cx._fillerMemo[mat]; memoized {
@@ -184,8 +184,8 @@ func listFiller(cx Context, t SemType) (Filler, bool) {
 	}
 	cx._fillerMemo[lat] = nil
 
-	memberFillers := make([]Filler, lat.Members.FixedLength)
-	for i := 0; i < lat.Members.FixedLength; i++ {
+	memberFillers := make([]Filler, lat.members.FixedLength)
+	for i := 0; i < lat.members.FixedLength; i++ {
 		filler, ok := FillerValue(cx, lat.MemberAtInnerVal(i))
 		if !ok {
 			return nil, false

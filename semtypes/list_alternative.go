@@ -17,8 +17,8 @@
 package semtypes
 
 type ListMemberInfo struct {
-	Index   int
-	ValType SemType
+	Index     int
+	ValueType SemType
 }
 
 // ListAlternative represents a single alternative path through a union of list types.
@@ -26,25 +26,29 @@ type ListMemberInfo struct {
 // uses a single pointer for pos because it represents the intersection of all positive
 // atoms in a BDD path.
 type ListAlternative struct {
-	SemType SemType
-	Pos     *ListAtomicType
+	semType SemType
+	pos     *ListAtomicType
 	neg     []*ListAtomicType
+}
+
+func (a ListAlternative) Type() SemType {
+	return a.semType
 }
 
 func ListAlternatives(cx Context, t SemType) []ListAlternative {
 	if t.some() == 0 {
-		if (t.all() & LIST.all()) == 0 {
+		if (t.all() & List.all()) == 0 {
 			return nil
 		}
 		return []ListAlternative{{
-			SemType: LIST,
-			Pos:     nil,
+			semType: List,
+			pos:     nil,
 			neg:     nil,
 		}}
 	}
 
 	paths := []bddPath{}
-	bddPaths(getComplexSubtypeData(t, BTList).(Bdd), &paths, bddPathFrom())
+	bddPaths(getComplexSubtypeData(t, btList).(bdd), &paths, bddPathFrom())
 	alts := []ListAlternative{}
 	for _, bddPath := range paths {
 		posAtoms := make([]*ListAtomicType, len(bddPath.pos))
@@ -58,8 +62,8 @@ func ListAlternatives(cx Context, t SemType) []ListAlternative {
 				negAtoms[i] = cx.ListAtomType(bddPath.neg[i])
 			}
 			alts = append(alts, ListAlternative{
-				SemType: intersectionSemType,
-				Pos:     &intersectionAtomType,
+				semType: intersectionSemType,
+				pos:     &intersectionAtomType,
 				neg:     negAtoms,
 			})
 		}
@@ -74,7 +78,7 @@ func intersectListAtoms(env Env, atoms []*ListAtomicType) (SemType, ListAtomicTy
 	atom := atoms[0]
 	for i := 1; i < len(atoms); i++ {
 		next := atoms[i]
-		members, rest, ok := listIntersectWith(env, atom.Members, atom.rest, next.Members, next.rest)
+		members, rest, ok := listIntersectWith(env, atom.members, atom.rest, next.members, next.rest)
 		if !ok {
 			return SemType{}, ListAtomicType{}, false
 		}
@@ -84,12 +88,12 @@ func intersectListAtoms(env Env, atoms []*ListAtomicType) (SemType, ListAtomicTy
 			}
 		}
 		atom = &ListAtomicType{
-			Members: members,
+			members: members,
 			rest:    rest,
 		}
 	}
 	typeAtom := env.listAtom(atom)
-	ty := createBasicSemType(BTList, bddAtom(typeAtom))
+	ty := createBasicSemType(btList, bddAtom(typeAtom))
 	return ty, *atom, true
 }
 
@@ -98,11 +102,11 @@ func intersectListAtoms(env Env, atoms []*ListAtomicType) (SemType, ListAtomicTy
 // ignoring the type. Taking type into account brings the same problem as maps where if one expression is a number
 // we can't deside it's contextually expected type without deciding the lhs. We use the same workaround here as well
 func ListAlternativeAllowsMembers(cx Context, alt ListAlternative, members []ListMemberInfo) bool {
-	pos := alt.Pos
+	pos := alt.pos
 	length := len(members)
 
 	if pos != nil {
-		minLength := pos.Members.FixedLength
+		minLength := pos.members.FixedLength
 		restInner := cellInnerVal(pos.rest)
 
 		if IsNever(restInner) {
@@ -119,10 +123,10 @@ func ListAlternativeAllowsMembers(cx Context, alt ListAlternative, members []Lis
 
 		for _, m := range members {
 			ty := pos.MemberAtInnerVal(m.Index)
-			if IsSubtype(cx, m.ValType, NUMBER) && IsSubtype(cx, ty, NUMBER) {
+			if IsSubtype(cx, m.ValueType, Number) && IsSubtype(cx, ty, Number) {
 				continue
 			}
-			if IsNever(ty) || !IsSubtype(cx, m.ValType, ty) {
+			if IsNever(ty) || !IsSubtype(cx, m.ValueType, ty) {
 				return false
 			}
 		}

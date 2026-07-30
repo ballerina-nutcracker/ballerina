@@ -59,8 +59,8 @@ func initFileIOModule(rt *runtime.Runtime) {
 	jmd := semtypes.NewMappingDefinition()
 	jld := semtypes.NewListDefinition()
 	types := fileIOTypes{
-		strArrTy:   sld.DefineListTypeWrappedWithEnvSemType(env, semtypes.STRING),
-		byteArrTy:  bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE),
+		strArrTy:   sld.DefineListTypeWrappedWithEnvSemType(env, semtypes.String),
+		byteArrTy:  bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte),
 		jsonMapTy:  jmd.DefineMappingTypeWrapped(env, nil, jsonTy),
 		jsonListTy: jld.DefineListTypeWrappedWithEnvSemType(env, jsonTy),
 	}

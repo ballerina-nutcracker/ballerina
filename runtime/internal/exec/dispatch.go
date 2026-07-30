@@ -183,22 +183,22 @@ func coerceSegment(tc semtypes.Context, segTy semtypes.SemType, s string) (value
 			return s, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.INT, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Int, segTy) {
 		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
 			return n, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.FLOAT, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Float, segTy) {
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
 			return f, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.DECIMAL, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Decimal, segTy) {
 		if d, err := decimal.FromString(s); err == nil {
 			return d, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.BOOLEAN, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Boolean, segTy) {
 		// Matches lang.boolean:fromString's accepted range for consistency
 		// with the other typed path parameters.
 		switch strings.ToLower(s) {
@@ -208,7 +208,7 @@ func coerceSegment(tc semtypes.Context, segTy semtypes.SemType, s string) (value
 			return false, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.STRING, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.String, segTy) {
 		return s, true
 	}
 	return nil, false

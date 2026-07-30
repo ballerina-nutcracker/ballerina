@@ -18,7 +18,7 @@ package semtypes
 
 type intOps struct{}
 
-var _ BasicTypeOps = &intOps{}
+var _ basicTypeOps = &intOps{}
 
 func newIntOps() intOps {
 	this := intOps{}
@@ -27,17 +27,17 @@ func newIntOps() intOps {
 
 var intOpsInstance = newIntOps()
 
-func (i *intOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (i *intOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(intSubtype)
 	v2 := d2.(intSubtype)
 	v := rangeListUnion(v1.Ranges, v2.Ranges)
-	if len(v) == 1 && v[0].Min == MIN_VALUE && v[0].Max == MAX_VALUE {
+	if len(v) == 1 && v[0].Min == minValue && v[0].Max == maxValue {
 		return createAll()
 	}
 	return createIntSubtype(v...)
 }
 
-func (i *intOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (i *intOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(intSubtype)
 	v2 := d2.(intSubtype)
 	v := rangeListIntersect(v1.Ranges, v2.Ranges)
@@ -47,7 +47,7 @@ func (i *intOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	return createIntSubtype(v...)
 }
 
-func (i *intOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (i *intOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(intSubtype)
 	v2 := d2.(intSubtype)
 	v := rangeListIntersect(v1.Ranges, rangeListComplement(v2.Ranges))
@@ -57,7 +57,7 @@ func (i *intOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	return createIntSubtype(v...)
 }
 
-func (i *intOps) complement(d SubtypeData) SubtypeData {
+func (i *intOps) complement(d subtypeData) subtypeData {
 	v := d.(intSubtype)
 	return createIntSubtype(rangeListComplement(v.Ranges)...)
 }
@@ -78,7 +78,7 @@ func intSubtypeMin(subtype intSubtype) int64 {
 	return subtype.Ranges[0].Min
 }
 
-func (i *intOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (i *intOps) IsEmpty(cx Context, t subtypeData) bool {
 	return notIsEmpty(cx, t)
 }
 
@@ -187,15 +187,15 @@ func rangeListComplement(v []intRange) []intRange {
 	var result []intRange
 	length := len(v)
 	minVal := v[0].Min
-	if minVal > MIN_VALUE {
-		result = append(result, rangeFrom(MIN_VALUE, minVal-1))
+	if minVal > minValue {
+		result = append(result, rangeFrom(minValue, minVal-1))
 	}
 	for i := 1; i < length; i++ {
 		result = append(result, rangeFrom(v[i-1].Max+1, v[i].Min-1))
 	}
 	maxVal := v[len(v)-1].Max
-	if maxVal < MAX_VALUE {
-		result = append(result, rangeFrom(maxVal+1, MAX_VALUE))
+	if maxVal < maxValue {
+		result = append(result, rangeFrom(maxVal+1, maxValue))
 	}
 	return result
 }

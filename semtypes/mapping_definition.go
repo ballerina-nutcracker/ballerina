@@ -27,7 +27,7 @@ type MappingDefinition struct {
 
 var _ Definition = &MappingDefinition{}
 
-func fieldName(f CellField) string {
+func fieldName(f cellField) string {
 	return f.Name
 }
 
@@ -51,10 +51,10 @@ func (m *MappingDefinition) GetSemType(env Env) SemType {
 }
 
 func (m *MappingDefinition) SetSemTypeToNever() {
-	m.semType = NEVER
+	m.semType = Never
 }
 
-func (m *MappingDefinition) Define(env Env, fields []CellField, rest SemType) SemType {
+func (m *MappingDefinition) Define(env Env, fields []cellField, rest SemType) SemType {
 	sfh := m.splitFields(fields)
 	atomicType := mappingAtomicTypeFrom(sfh.Names, sfh.Types, rest)
 	var a atom
@@ -69,46 +69,46 @@ func (m *MappingDefinition) Define(env Env, fields []CellField, rest SemType) Se
 }
 
 func (m *MappingDefinition) DefineMappingTypeWrapped(env Env, fields []Field, rest SemType) SemType {
-	return m.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env, fields, rest, CellMutability_CELL_MUT_LIMITED)
+	return m.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env, fields, rest, CellMutabilityLimited)
 }
 
 func (m *MappingDefinition) DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env Env, fields []Field, rest SemType, mut CellMutability) SemType {
-	var cellFields []CellField
+	var cellFields []cellField
 	for _, field := range fields {
-		ty := field.Ty
+		ty := field.typeOf
 		var optTy SemType
-		if field.Opt {
-			optTy = Union(ty, UNDEF)
+		if field.optional {
+			optTy = Union(ty, Undef)
 		} else {
 			optTy = ty
 		}
 		var ro CellMutability
-		if field.Ro {
-			ro = CellMutability_CELL_MUT_NONE
+		if field.readonly {
+			ro = CellMutabilityNone
 		} else {
 			ro = mut
 		}
-		cellFields = append(cellFields, cellFieldFrom(field.Name, cellContainingWithEnvSemTypeCellMutability(env, optTy, ro)))
+		cellFields = append(cellFields, cellFieldFrom(field.name, cellContainingWithEnvSemTypeCellMutability(env, optTy, ro)))
 	}
 	var restMut CellMutability
 	if IsNever(rest) {
-		restMut = CellMutability_CELL_MUT_NONE
+		restMut = CellMutabilityNone
 	} else {
 		restMut = mut
 	}
-	restCell := cellContainingWithEnvSemTypeCellMutability(env, Union(rest, UNDEF), restMut)
+	restCell := cellContainingWithEnvSemTypeCellMutability(env, Union(rest, Undef), restMut)
 	return m.Define(env, cellFields, restCell)
 }
 
 func (m *MappingDefinition) createSemType(env Env, atom atom) SemType {
 	bdd := bddAtom(atom)
-	s := getBasicSubtype(BTMapping, bdd)
+	s := getBasicSubtype(btMapping, bdd)
 	m.semType = s
 	return s
 }
 
-func (m *MappingDefinition) splitFields(fields []CellField) splitField {
-	sortedFields := make([]CellField, len(fields))
+func (m *MappingDefinition) splitFields(fields []cellField) splitField {
+	sortedFields := make([]cellField, len(fields))
 	copy(sortedFields, fields)
 	// Arrays.sort(sortedFields, Comparator.comparing(MappingDefinition::fieldName))
 	sort.Slice(sortedFields, func(i, j int) bool {

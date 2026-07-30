@@ -17,34 +17,34 @@
 package semtypes
 
 func TypedescContaining(env Env, constraint SemType) SemType {
-	if sameSemType(VAL, constraint) {
-		return TYPEDESC
+	if sameSemType(Val, constraint) {
+		return Typedesc
 	}
 
 	mappingDef := NewMappingDefinition()
-	mappingType := mappingDef.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env, nil, constraint, CellMutability_CELL_MUT_NONE)
-	bdd := subtypeData(mappingType, BTMapping).(Bdd)
-	return createBasicSemType(BTTypeDesc, bdd)
+	mappingType := mappingDef.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env, nil, constraint, CellMutabilityNone)
+	bdd := subtypeDataAt(mappingType, btMapping).(bdd)
+	return createBasicSemType(btTypeDesc, bdd)
 }
 
 // TypedescConstraint extracts the constraint T from a typedesc<T>.
-// Returns VAL when td is the unconstrained typedesc, nil if td is not a typedesc built via TypedescContaining.
+// Returns Val when td is the unconstrained typedesc, nil if td is not a typedesc built via TypedescContaining.
 func TypedescConstraint(ctx Context, td SemType) SemType {
-	if !IsSubtypeSimple(td, TYPEDESC) {
+	if !IsSubtypeSimple(td, Typedesc) {
 		return SemType{}
 	}
 	if td.some() == 0 {
-		return VAL
+		return Val
 	}
 	mappingTy := convertTypeDescToMapping(ctx, td)
-	return MappingMemberTypeInnerVal(ctx, mappingTy, STRING)
+	return MappingMemberTypeInnerVal(ctx, mappingTy, String)
 }
 
 func convertTypeDescToMapping(ctx Context, ty SemType) SemType {
-	td := Intersect(ty, TYPEDESC)
+	td := Intersect(ty, Typedesc)
 	if IsEmpty(ctx, td) {
 		return SemType{}
 	}
-	bdd := subtypeData(td, BTTypeDesc)
-	return createBasicSemType(BTMapping, bdd)
+	bdd := subtypeDataAt(td, btTypeDesc)
+	return createBasicSemType(btMapping, bdd)
 }

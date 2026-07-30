@@ -17,19 +17,19 @@
 package semtypes
 
 // StreamValueType returns T from stream<T, C>, or nil if streamTy is
-// not a subtype of STREAM.
+// not a subtype of Stream.
 func StreamValueType(cx Context, streamTy SemType) SemType {
 	return streamMemberAt(cx, streamTy, 0)
 }
 
 // StreamCompletionType returns C from stream<T, C>, or nil if streamTy is
-// not a subtype of STREAM.
+// not a subtype of Stream.
 func StreamCompletionType(cx Context, streamTy SemType) SemType {
 	return streamMemberAt(cx, streamTy, 1)
 }
 
 func streamMemberAt(cx Context, streamTy SemType, index int64) SemType {
-	if !IsSubtypeSimple(streamTy, STREAM) {
+	if !IsSubtypeSimple(streamTy, Stream) {
 		return SemType{}
 	}
 	if streamTy.some() == 0 {
@@ -41,9 +41,9 @@ func streamMemberAt(cx Context, streamTy SemType, index int64) SemType {
 func bareStreamMember(index int64) SemType {
 	switch index {
 	case 0:
-		return VAL
+		return Val
 	case 1:
-		return Union(ERROR, NIL)
+		return Union(Error, Nil)
 	default:
 		panic("invalid stream member index")
 	}
@@ -58,9 +58,9 @@ func CreateStreamImplementorType(cx Context, valueTy, completionTy SemType) SemT
 	env := cx.Env()
 	nextRecordDefn := NewMappingDefinition()
 	nextRecord := nextRecordDefn.DefineMappingTypeWrapped(env,
-		[]Field{FieldFrom("value", valueTy, false, false)}, NEVER)
+		[]Field{FieldFrom("value", valueTy, false, false)}, Never)
 	nextReturn := Union(nextRecord, completionTy)
-	closeReturn := Union(completionTy, NIL)
+	closeReturn := Union(completionTy, Nil)
 
 	nextFnTy := streamMethodFunctionType(env, nextReturn)
 	closeFnTy := streamMethodFunctionType(env, closeReturn)
@@ -82,7 +82,7 @@ func CreateStreamImplementorType(cx Context, valueTy, completionTy SemType) SemT
 
 func streamMethodFunctionType(env Env, returnTy SemType) SemType {
 	paramListDefn := NewListDefinition()
-	paramList := paramListDefn.DefineListTypeWrapped(env, nil, 0, NEVER, CellMutability_CELL_MUT_NONE)
+	paramList := paramListDefn.DefineListTypeWrapped(env, nil, 0, Never, CellMutabilityNone)
 	fnDefn := NewFunctionDefinition()
 	return fnDefn.Define(env, paramList, returnTy, FunctionQualifiersFrom(env, true, false))
 }
@@ -90,7 +90,7 @@ func streamMethodFunctionType(env Env, returnTy SemType) SemType {
 func streamPublicIsolatedMethod(name string, fnTy SemType) Member {
 	return Member{
 		Name:       name,
-		ValueTy:    fnTy,
+		ValueType:  fnTy,
 		Kind:       MemberKindMethod,
 		Visibility: VisibilityPublic,
 		Immutable:  false,
@@ -98,10 +98,10 @@ func streamPublicIsolatedMethod(name string, fnTy SemType) Member {
 }
 
 func convertStreamToListTy(ctx Context, ty SemType) SemType {
-	streamTy := Intersect(ty, STREAM)
+	streamTy := Intersect(ty, Stream)
 	if IsEmpty(ctx, streamTy) {
 		return SemType{}
 	}
-	bdd := subtypeData(streamTy, BTStream)
-	return createBasicSemType(BTList, bdd)
+	bdd := subtypeDataAt(streamTy, btStream)
+	return createBasicSemType(btList, bdd)
 }

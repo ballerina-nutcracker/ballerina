@@ -17,19 +17,19 @@
 package semtypes
 
 type subtypePair struct {
-	BasicTypeCode BasicTypeCode
-	SubtypeData1  ProperSubtypeData
-	SubtypeData2  ProperSubtypeData
+	basicTypeCode basicTypeCode
+	SubtypeData1  properSubtypeData
+	SubtypeData2  properSubtypeData
 }
 
-func newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicTypeCode BasicTypeCode, subtypeData1 ProperSubtypeData, subtypeData2 ProperSubtypeData) subtypePair {
+func newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicTypeCode basicTypeCode, subtypeData1 properSubtypeData, subtypeData2 properSubtypeData) subtypePair {
 	this := subtypePair{}
-	this.BasicTypeCode = basicTypeCode
+	this.basicTypeCode = basicTypeCode
 	this.SubtypeData1 = subtypeData1
 	this.SubtypeData2 = subtypeData2
 	return this
 }
 
-func createSubTypePair(basicTypeCode BasicTypeCode, subtypeData1 ProperSubtypeData, subtypeData2 ProperSubtypeData) subtypePair {
+func createSubTypePair(basicTypeCode basicTypeCode, subtypeData1 properSubtypeData, subtypeData2 properSubtypeData) subtypePair {
 	return newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicTypeCode, subtypeData1, subtypeData2)
 }

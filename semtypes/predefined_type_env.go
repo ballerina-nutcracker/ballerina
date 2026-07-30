@@ -172,10 +172,10 @@ func atomIndex[E interface {
 
 // Getter methods
 
-// cellAtomicVal returns the cellAtomicType for VAL with limited mutability
+// cellAtomicVal returns the cellAtomicType for Val with limited mutability
 func (p *predefinedTypeEnv) cellAtomicVal() *cellAtomicType {
 	if p._cellAtomicVal == nil {
-		val := cellAtomicTypeFrom(VAL, CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(Val, CellMutabilityLimited)
 		p._cellAtomicVal = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -192,10 +192,10 @@ func (p *predefinedTypeEnv) atomCellVal() *typeAtom {
 	return p._atomCellVal
 }
 
-// cellAtomicNever returns the cellAtomicType for NEVER with limited mutability
+// cellAtomicNever returns the cellAtomicType for Never with limited mutability
 func (p *predefinedTypeEnv) cellAtomicNever() *cellAtomicType {
 	if p._cellAtomicNever == nil {
-		val := cellAtomicTypeFrom(NEVER, CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(Never, CellMutabilityLimited)
 		p._cellAtomicNever = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -212,10 +212,10 @@ func (p *predefinedTypeEnv) atomCellNever() *typeAtom {
 	return p._atomCellNever
 }
 
-// cellAtomicInner returns the cellAtomicType for INNER with limited mutability
+// cellAtomicInner returns the cellAtomicType for Inner with limited mutability
 func (p *predefinedTypeEnv) cellAtomicInner() *cellAtomicType {
 	if p._callAtomicInner == nil {
-		val := cellAtomicTypeFrom(INNER, CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(Inner, CellMutabilityLimited)
 		p._callAtomicInner = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -232,10 +232,10 @@ func (p *predefinedTypeEnv) atomCellInner() *typeAtom {
 	return p._atomCellInner
 }
 
-// cellAtomicInnerMapping returns the cellAtomicType for union(MAPPING, UNDEF) with limited mutability
+// cellAtomicInnerMapping returns the cellAtomicType for union(Mapping, Undef) with limited mutability
 func (p *predefinedTypeEnv) cellAtomicInnerMapping() *cellAtomicType {
 	if p._cellAtomicInnerMapping == nil {
-		val := cellAtomicTypeFrom(Union(MAPPING, UNDEF), CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(Union(Mapping, Undef), CellMutabilityLimited)
 		p._cellAtomicInnerMapping = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -252,10 +252,10 @@ func (p *predefinedTypeEnv) atomCellInnerMapping() *typeAtom {
 	return p._atomCellInnerMapping
 }
 
-// cellAtomicInnerMappingRO returns the cellAtomicType for union(MAPPING_RO, UNDEF) with limited mutability
+// cellAtomicInnerMappingRO returns the cellAtomicType for union(mappingRo, Undef) with limited mutability
 func (p *predefinedTypeEnv) cellAtomicInnerMappingRO() *cellAtomicType {
 	if p._cellAtomicInnerMappingRO == nil {
-		val := cellAtomicTypeFrom(Union(MAPPING_RO, UNDEF), CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(Union(mappingRo, Undef), CellMutabilityLimited)
 		p._cellAtomicInnerMappingRO = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -272,10 +272,10 @@ func (p *predefinedTypeEnv) atomCellInnerMappingRO() *typeAtom {
 	return p._atomCellInnerMappingRO
 }
 
-// listAtomicMapping returns the ListAtomicType for empty fixed length array with CELL_SEMTYPE_INNER_MAPPING
+// listAtomicMapping returns the ListAtomicType for empty fixed length array with cellSemtypeInnerMapping
 func (p *predefinedTypeEnv) listAtomicMapping() *ListAtomicType {
 	if p._listAtomicMapping == nil {
-		val := listAtomicTypeFrom(fixedLengthArrayEmpty(), CELL_SEMTYPE_INNER_MAPPING)
+		val := listAtomicTypeFrom(fixedLengthArrayEmpty(), cellSemtypeInnerMapping)
 		p._listAtomicMapping = &val
 		p.addInitializedListAtom(&val)
 	}
@@ -292,10 +292,10 @@ func (p *predefinedTypeEnv) atomListMapping() *typeAtom {
 	return p._atomListMapping
 }
 
-// listAtomicMappingRO returns the ListAtomicType for empty fixed length array with CELL_SEMTYPE_INNER_MAPPING_RO
+// listAtomicMappingRO returns the ListAtomicType for empty fixed length array with cellSemtypeInnerMappingRo
 func (p *predefinedTypeEnv) listAtomicMappingRO() *ListAtomicType {
 	if p._listAtomicMappingRO == nil {
-		val := listAtomicTypeFrom(fixedLengthArrayEmpty(), CELL_SEMTYPE_INNER_MAPPING_RO)
+		val := listAtomicTypeFrom(fixedLengthArrayEmpty(), cellSemtypeInnerMappingRo)
 		p._listAtomicMappingRO = &val
 		p.addInitializedListAtom(&val)
 	}
@@ -312,10 +312,10 @@ func (p *predefinedTypeEnv) atomListMappingRO() *typeAtom {
 	return p._atomListMappingRO
 }
 
-// cellAtomicInnerRO returns the cellAtomicType for INNER_READONLY with no mutability
+// cellAtomicInnerRO returns the cellAtomicType for ReadonlyInner with no mutability
 func (p *predefinedTypeEnv) cellAtomicInnerRO() *cellAtomicType {
 	if p._cellAtomicInnerRO == nil {
-		val := cellAtomicTypeFrom(INNER_READONLY, CellMutability_CELL_MUT_NONE)
+		val := cellAtomicTypeFrom(ReadonlyInner, CellMutabilityNone)
 		p._cellAtomicInnerRO = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -332,10 +332,10 @@ func (p *predefinedTypeEnv) atomCellInnerRO() *typeAtom {
 	return p._atomCellInnerRO
 }
 
-// cellAtomicUndef returns the cellAtomicType for UNDEF with no mutability
+// cellAtomicUndef returns the cellAtomicType for Undef with no mutability
 func (p *predefinedTypeEnv) cellAtomicUndef() *cellAtomicType {
 	if p._cellAtomicUndef == nil {
-		val := cellAtomicTypeFrom(UNDEF, CellMutability_CELL_MUT_NONE)
+		val := cellAtomicTypeFrom(Undef, CellMutabilityNone)
 		p._cellAtomicUndef = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -352,10 +352,10 @@ func (p *predefinedTypeEnv) atomCellUndef() *typeAtom {
 	return p._atomCellUndef
 }
 
-// listAtomicTwoElement returns the ListAtomicType for two-element list with CELL_SEMTYPE_VAL and CELL_SEMTYPE_UNDEF
+// listAtomicTwoElement returns the ListAtomicType for two-element list with cellSemtypeVal and cellSemtypeUndef
 func (p *predefinedTypeEnv) listAtomicTwoElement() *ListAtomicType {
 	if p._listAtomicTwoElement == nil {
-		val := listAtomicTypeFrom(fixedLengthArrayFrom([]SemType{CELL_SEMTYPE_VAL}, 2), CELL_SEMTYPE_UNDEF)
+		val := listAtomicTypeFrom(fixedLengthArrayFrom([]SemType{cellSemtypeVal}, 2), cellSemtypeUndef)
 		p._listAtomicTwoElement = &val
 		p.addInitializedListAtom(&val)
 	}
@@ -372,10 +372,10 @@ func (p *predefinedTypeEnv) atomListTwoElement() *typeAtom {
 	return p._atomListTwoElement
 }
 
-// cellAtomicValRO returns the cellAtomicType for VAL_READONLY with no mutability
+// cellAtomicValRO returns the cellAtomicType for ValReadonly with no mutability
 func (p *predefinedTypeEnv) cellAtomicValRO() *cellAtomicType {
 	if p._cellAtomicValRO == nil {
-		val := cellAtomicTypeFrom(VAL_READONLY, CellMutability_CELL_MUT_NONE)
+		val := cellAtomicTypeFrom(ValReadonly, CellMutabilityNone)
 		p._cellAtomicValRO = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -397,8 +397,8 @@ func (p *predefinedTypeEnv) mappingAtomicObjectMemberRO() *MappingAtomicType {
 	if p._mappingAtomicObjectMemberRO == nil {
 		val := mappingAtomicTypeFrom(
 			[]string{"kind", "value", "visibility"},
-			[]SemType{CELL_SEMTYPE_OBJECT_MEMBER_KIND, CELL_SEMTYPE_VAL_RO, CELL_SEMTYPE_OBJECT_MEMBER_VISIBILITY},
-			CELL_SEMTYPE_UNDEF)
+			[]SemType{cellSemtypeObjectMemberKind, cellSemtypeValRo, cellSemtypeObjectMemberVisibility},
+			cellSemtypeUndef)
 		p._mappingAtomicObjectMemberRO = &val
 		p.addInitializedMapAtom(&val)
 	}
@@ -418,7 +418,7 @@ func (p *predefinedTypeEnv) atomMappingObjectMemberRO() *typeAtom {
 // cellAtomicObjectMemberRO returns the cellAtomicType for object member RO
 func (p *predefinedTypeEnv) cellAtomicObjectMemberRO() *cellAtomicType {
 	if p._cellAtomicObjectMemberRO == nil {
-		val := cellAtomicTypeFrom(MAPPING_SEMTYPE_OBJECT_MEMBER_RO, CellMutability_CELL_MUT_NONE)
+		val := cellAtomicTypeFrom(mappingSemtypeObjectMemberRo, CellMutabilityNone)
 		p._cellAtomicObjectMemberRO = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -438,7 +438,7 @@ func (p *predefinedTypeEnv) atomCellObjectMemberRO() *typeAtom {
 // cellAtomicObjectMemberKind returns the cellAtomicType for object member kind
 func (p *predefinedTypeEnv) cellAtomicObjectMemberKind() *cellAtomicType {
 	if p._cellAtomicObjectMemberKind == nil {
-		val := cellAtomicTypeFrom(Union(StringConst("field"), StringConst("method")), CellMutability_CELL_MUT_NONE)
+		val := cellAtomicTypeFrom(Union(StringConst("field"), StringConst("method")), CellMutabilityNone)
 		p._cellAtomicObjectMemberKind = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -458,7 +458,7 @@ func (p *predefinedTypeEnv) atomCellObjectMemberKind() *typeAtom {
 // cellAtomicObjectMemberVisibility returns the cellAtomicType for object member visibility
 func (p *predefinedTypeEnv) cellAtomicObjectMemberVisibility() *cellAtomicType {
 	if p._cellAtomicObjectMemberVisibility == nil {
-		val := cellAtomicTypeFrom(Union(StringConst("public"), StringConst("private")), CellMutability_CELL_MUT_NONE)
+		val := cellAtomicTypeFrom(Union(StringConst("public"), StringConst("private")), CellMutabilityNone)
 		p._cellAtomicObjectMemberVisibility = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -480,8 +480,8 @@ func (p *predefinedTypeEnv) mappingAtomicObjectMember() *MappingAtomicType {
 	if p._mappingAtomicObjectMember == nil {
 		val := mappingAtomicTypeFrom(
 			[]string{"kind", "value", "visibility"},
-			[]SemType{CELL_SEMTYPE_OBJECT_MEMBER_KIND, CELL_SEMTYPE_VAL, CELL_SEMTYPE_OBJECT_MEMBER_VISIBILITY},
-			CELL_SEMTYPE_UNDEF)
+			[]SemType{cellSemtypeObjectMemberKind, cellSemtypeVal, cellSemtypeObjectMemberVisibility},
+			cellSemtypeUndef)
 		p._mappingAtomicObjectMember = &val
 		p.addInitializedMapAtom(&val)
 	}
@@ -501,7 +501,7 @@ func (p *predefinedTypeEnv) atomMappingObjectMember() *typeAtom {
 // cellAtomicObjectMember returns the cellAtomicType for object member
 func (p *predefinedTypeEnv) cellAtomicObjectMember() *cellAtomicType {
 	if p._cellAtomicObjectMember == nil {
-		val := cellAtomicTypeFrom(MAPPING_SEMTYPE_OBJECT_MEMBER, CellMutability_CELL_MUT_UNLIMITED)
+		val := cellAtomicTypeFrom(mappingSemtypeObjectMember, cellMutabilityUnlimited)
 		p._cellAtomicObjectMember = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -523,8 +523,8 @@ func (p *predefinedTypeEnv) mappingAtomicObject() *MappingAtomicType {
 	if p._mappingAtomicObject == nil {
 		val := mappingAtomicTypeFrom(
 			[]string{"$qualifiers"},
-			[]SemType{CELL_SEMTYPE_OBJECT_QUALIFIER},
-			CELL_SEMTYPE_OBJECT_MEMBER)
+			[]SemType{cellSemtypeObjectQualifier},
+			cellSemtypeObjectMember)
 		p._mappingAtomicObject = &val
 		p.addInitializedMapAtom(&val)
 	}
@@ -544,7 +544,7 @@ func (p *predefinedTypeEnv) atomMappingObject() *typeAtom {
 // listAtomicRO returns the ListAtomicType for read-only list
 func (p *predefinedTypeEnv) listAtomicRO() *ListAtomicType {
 	if p._listAtomicRO == nil {
-		val := listAtomicTypeFrom(fixedLengthArrayEmpty(), CELL_SEMTYPE_INNER_RO)
+		val := listAtomicTypeFrom(fixedLengthArrayEmpty(), cellSemtypeInnerRo)
 		p._listAtomicRO = &val
 		p.initializedRecListAtoms = append(p.initializedRecListAtoms, &val)
 	}
@@ -554,7 +554,7 @@ func (p *predefinedTypeEnv) listAtomicRO() *ListAtomicType {
 // mappingAtomicRO returns the MappingAtomicType for read-only mapping
 func (p *predefinedTypeEnv) mappingAtomicRO() *MappingAtomicType {
 	if p._mappingAtomicRO == nil {
-		val := mappingAtomicTypeFrom([]string{}, []SemType{}, CELL_SEMTYPE_INNER_RO)
+		val := mappingAtomicTypeFrom([]string{}, []SemType{}, cellSemtypeInnerRo)
 		p._mappingAtomicRO = &val
 		p.initializedRecMappingAtoms = append(p.initializedRecMappingAtoms, &val)
 	}
@@ -566,8 +566,8 @@ func (p *predefinedTypeEnv) getMappingAtomicObjectRO() *MappingAtomicType {
 	if p._mappingAtomicObjectRO == nil {
 		val := mappingAtomicTypeFrom(
 			[]string{"$qualifiers"},
-			[]SemType{CELL_SEMTYPE_OBJECT_QUALIFIER},
-			CELL_SEMTYPE_OBJECT_MEMBER_RO)
+			[]SemType{cellSemtypeObjectQualifier},
+			cellSemtypeObjectMemberRo)
 		p._mappingAtomicObjectRO = &val
 		p.initializedRecMappingAtoms = append(p.initializedRecMappingAtoms, &val)
 	}
@@ -577,7 +577,7 @@ func (p *predefinedTypeEnv) getMappingAtomicObjectRO() *MappingAtomicType {
 // cellAtomicMappingArray returns the cellAtomicType for mapping array
 func (p *predefinedTypeEnv) cellAtomicMappingArray() *cellAtomicType {
 	if p._cellAtomicMappingArray == nil {
-		val := cellAtomicTypeFrom(MAPPING_ARRAY, CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(mappingArray, CellMutabilityLimited)
 		p._cellAtomicMappingArray = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -597,7 +597,7 @@ func (p *predefinedTypeEnv) atomCellMappingArray() *typeAtom {
 // cellAtomicMappingArrayRO returns the cellAtomicType for read-only mapping array
 func (p *predefinedTypeEnv) cellAtomicMappingArrayRO() *cellAtomicType {
 	if p._cellAtomicMappingArrayRO == nil {
-		val := cellAtomicTypeFrom(MAPPING_ARRAY_RO, CellMutability_CELL_MUT_LIMITED)
+		val := cellAtomicTypeFrom(mappingArrayRo, CellMutabilityLimited)
 		p._cellAtomicMappingArrayRO = &val
 		p.addInitializedCellAtom(&val)
 	}
@@ -618,8 +618,8 @@ func (p *predefinedTypeEnv) atomCellMappingArrayRO() *typeAtom {
 func (p *predefinedTypeEnv) listAtomicThreeElement() *ListAtomicType {
 	if p._listAtomicThreeElement == nil {
 		val := listAtomicTypeFrom(
-			fixedLengthArrayFrom([]SemType{CELL_SEMTYPE_LIST_SUBTYPE_MAPPING, CELL_SEMTYPE_VAL}, 3),
-			CELL_SEMTYPE_UNDEF)
+			fixedLengthArrayFrom([]SemType{cellSemtypeListSubtypeMapping, cellSemtypeVal}, 3),
+			cellSemtypeUndef)
 		p._listAtomicThreeElement = &val
 		p.addInitializedListAtom(&val)
 	}
@@ -640,8 +640,8 @@ func (p *predefinedTypeEnv) atomListThreeElement() *typeAtom {
 func (p *predefinedTypeEnv) listAtomicThreeElementRO() *ListAtomicType {
 	if p._listAtomicThreeElementRO == nil {
 		val := listAtomicTypeFrom(
-			fixedLengthArrayFrom([]SemType{CELL_SEMTYPE_LIST_SUBTYPE_MAPPING_RO, CELL_SEMTYPE_VAL}, 3),
-			CELL_SEMTYPE_UNDEF)
+			fixedLengthArrayFrom([]SemType{cellSemtypeListSubtypeMappingRo, cellSemtypeVal}, 3),
+			cellSemtypeUndef)
 		p._listAtomicThreeElementRO = &val
 		p.addInitializedListAtom(&val)
 	}

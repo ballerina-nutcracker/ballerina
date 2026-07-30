@@ -24,7 +24,7 @@ type booleanSubtype struct {
 	Value bool
 }
 
-var _ ProperSubtypeData = &booleanSubtype{}
+var _ properSubtypeData = &booleanSubtype{}
 
 func newBooleanSubtypeFromBool(value bool) booleanSubtype {
 	this := booleanSubtype{}
@@ -36,7 +36,7 @@ func booleanSubtypeFrom(value bool) booleanSubtype {
 	return newBooleanSubtypeFromBool(value)
 }
 
-func booleanSubtypeContains(d SubtypeData, b bool) bool {
+func booleanSubtypeContains(d subtypeData, b bool) bool {
 	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
 		return allOrNothingSubtype.IsAllSubtype()
 	}
@@ -46,10 +46,10 @@ func booleanSubtypeContains(d SubtypeData, b bool) bool {
 
 func BooleanConst(value bool) SemType {
 	t := booleanSubtypeFrom(value)
-	return getBasicSubtype(BTBoolean, t)
+	return getBasicSubtype(btBoolean, t)
 }
 
-func booleanSubtypeSingleValue(d SubtypeData) common.Optional[bool] {
+func booleanSubtypeSingleValue(d subtypeData) common.Optional[bool] {
 	if _, ok := d.(allOrNothingSubtype); ok {
 		return common.OptionalEmpty[bool]()
 	}

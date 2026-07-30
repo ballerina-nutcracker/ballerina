@@ -20,16 +20,16 @@ type typedescOps struct {
 	commonOpsBase
 }
 
-var _ BasicTypeOps = &typedescOps{}
+var _ basicTypeOps = &typedescOps{}
 
-func typedescSubtypeComplement(t SubtypeData) SubtypeData {
-	return bddComplement(t.(Bdd))
+func typedescSubtypeComplement(t subtypeData) subtypeData {
+	return bddComplement(t.(bdd))
 }
 
-func typedescSubtypeIsEmpty(cx Context, t SubtypeData) bool {
-	b := t.(Bdd)
+func typedescSubtypeIsEmpty(cx Context, t subtypeData) bool {
+	b := t.(bdd)
 	if bddPosMaybeEmpty(b) {
-		b = bddIntersect(b, BDD_SUBTYPE_RO)
+		b = bddIntersect(b, bddSubtypeRo)
 	}
 	return mappingSubtypeIsEmpty(cx, b)
 }
@@ -39,10 +39,10 @@ func newTypedescOps() typedescOps {
 	return this
 }
 
-func (t *typedescOps) complement(d SubtypeData) SubtypeData {
+func (t *typedescOps) complement(d subtypeData) subtypeData {
 	return typedescSubtypeComplement(d)
 }
 
-func (t *typedescOps) IsEmpty(cx Context, d SubtypeData) bool {
+func (t *typedescOps) IsEmpty(cx Context, d subtypeData) bool {
 	return typedescSubtypeIsEmpty(cx, d)
 }

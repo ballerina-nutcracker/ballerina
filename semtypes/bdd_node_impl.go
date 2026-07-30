@@ -18,9 +18,9 @@ package semtypes
 
 type bddNodeImpl struct {
 	_atom     atom
-	_left     Bdd
-	_middle   Bdd
-	_right    Bdd
+	_left     bdd
+	_middle   bdd
+	_right    bdd
 	canonical bddKey
 }
 
@@ -30,19 +30,19 @@ func (b *bddNodeImpl) atom() atom {
 	return b._atom
 }
 
-func (b *bddNodeImpl) left() Bdd {
+func (b *bddNodeImpl) left() bdd {
 	return b._left
 }
 
-func (b *bddNodeImpl) middle() Bdd {
+func (b *bddNodeImpl) middle() bdd {
 	return b._middle
 }
 
-func (b *bddNodeImpl) right() Bdd {
+func (b *bddNodeImpl) right() bdd {
 	return b._right
 }
 
-func newBddNodeImpl(atom atom, left, middle, right Bdd) *bddNodeImpl {
+func newBddNodeImpl(atom atom, left, middle, right bdd) *bddNodeImpl {
 	return &bddNodeImpl{
 		_atom:   atom,
 		_left:   left,

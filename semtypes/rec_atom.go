@@ -22,7 +22,7 @@ type recAtom struct {
 	idx int
 }
 
-var ZERO = newRecAtomFromInt(BDD_REC_ATOM_READONLY)
+var zeroRecAtom = newRecAtomFromInt(bddRecAtomReadonly)
 var _ atom = &recAtom{}
 
 func newRecAtomFromInt(index int) recAtom {
@@ -33,8 +33,8 @@ func newRecAtomFromInt(index int) recAtom {
 }
 
 func createRecAtom(index int) recAtom {
-	if index == BDD_REC_ATOM_READONLY {
-		return ZERO
+	if index == bddRecAtomReadonly {
+		return zeroRecAtom
 	}
 	return newRecAtomFromInt(index)
 }

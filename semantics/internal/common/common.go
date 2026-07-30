@@ -55,11 +55,11 @@ func MethodsInResolutionOrder(methods map[string]*ast.BLangFunction) []NamedClas
 }
 
 func IsNumericType(ctx semtypes.Context, ty semtypes.SemType) bool {
-	return semtypes.IsSubtype(ctx, ty, semtypes.NUMBER)
+	return semtypes.IsSubtype(ctx, ty, semtypes.Number)
 }
 
 func MapQuerySelectExpectedType(env semtypes.Env) semtypes.SemType {
-	return mapQuerySelectExpectedTypeWithValue(env, semtypes.Union(semtypes.ANY, semtypes.ERROR))
+	return mapQuerySelectExpectedTypeWithValue(env, semtypes.Union(semtypes.Any, semtypes.Error))
 }
 
 func QuerySelectExpectedType(ctx semtypes.Context, env semtypes.Env, queryConstructType ast.TypeKind, expectedType semtypes.SemType) semtypes.SemType {
@@ -77,13 +77,13 @@ func listQuerySelectExpectedType(ctx semtypes.Context, expectedType semtypes.Sem
 	if semtypes.IsZero(expectedType) {
 		return semtypes.SemType{}
 	}
-	listTy := semtypes.Intersect(expectedType, semtypes.LIST)
+	listTy := semtypes.Intersect(expectedType, semtypes.List)
 	if semtypes.IsEmpty(ctx, listTy) {
 		return semtypes.SemType{}
 	}
 	memberTypes := semtypes.ListAllMemberTypesInner(ctx, listTy)
-	result := semtypes.NEVER
-	for _, memberTy := range memberTypes.SemTypes {
+	result := semtypes.Never
+	for _, memberTy := range memberTypes.Types {
 		result = semtypes.Union(result, memberTy)
 	}
 	if semtypes.IsEmpty(ctx, result) {
@@ -96,11 +96,11 @@ func mapQuerySelectExpectedTypeFromQueryExpectedType(ctx semtypes.Context, env s
 	if semtypes.IsZero(expectedType) {
 		return semtypes.SemType{}
 	}
-	mappingTy := semtypes.Intersect(expectedType, semtypes.MAPPING)
+	mappingTy := semtypes.Intersect(expectedType, semtypes.Mapping)
 	if semtypes.IsEmpty(ctx, mappingTy) {
 		return semtypes.SemType{}
 	}
-	valueTy := semtypes.MappingMemberTypeInnerValProj(ctx, mappingTy, semtypes.STRING)
+	valueTy := semtypes.MappingMemberTypeInnerValProj(ctx, mappingTy, semtypes.String)
 	if semtypes.IsSubtype(ctx, semtypes.CreateAnydata(ctx), valueTy) {
 		return semtypes.SemType{}
 	}
@@ -109,7 +109,7 @@ func mapQuerySelectExpectedTypeFromQueryExpectedType(ctx semtypes.Context, env s
 
 func mapQuerySelectExpectedTypeWithValue(env semtypes.Env, valueTy semtypes.SemType) semtypes.SemType {
 	ld := semtypes.NewListDefinition()
-	return ld.DefineListTypeWrapped(env, []semtypes.SemType{semtypes.STRING, valueTy}, 2, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_LIMITED)
+	return ld.DefineListTypeWrapped(env, []semtypes.SemType{semtypes.String, valueTy}, 2, semtypes.Never, semtypes.CellMutabilityLimited)
 }
 
 func MappingKeyName(key *ast.BLangMappingKey) string {
@@ -127,7 +127,7 @@ func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualTyp
 	return fmt.Sprintf("incompatible type: expected %s, got %s", semtypes.ToString(ctx, expectedType), semtypes.ToString(ctx, actualType))
 }
 
-var TemplateInsertionAllowedTypes = semtypes.Diff(semtypes.SIMPLE_OR_STRING, semtypes.NIL)
+var TemplateInsertionAllowedTypes = semtypes.Diff(semtypes.SimpleOrString, semtypes.Nil)
 
 func XMLTemplateInsertionAllowedTypes(kind ast.XMLTemplateInsertionKind) semtypes.SemType {
 	if kind == ast.XMLTemplateInsertionKindContent {

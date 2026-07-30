@@ -28,29 +28,29 @@ var PackageID = model.INTERNAL_PKG
 
 const PackageName = "lang.__internal"
 
-var templateInsertionAllowedTypes = semtypes.Diff(semtypes.SIMPLE_OR_STRING, semtypes.NIL)
+var templateInsertionAllowedTypes = semtypes.Diff(semtypes.SimpleOrString, semtypes.Nil)
 
 func GetInternalSymbols(ctx *context.CompilerContext) model.ExportedSymbolSpace {
 	space := ctx.NewSymbolSpace(*PackageID)
 	addInternalFunction(ctx, space, "querySort", model.FunctionSignature{
-		ParamTypes: []semtypes.SemType{semtypes.LIST, semtypes.LIST, semtypes.LIST, semtypes.LIST},
-		ReturnType: semtypes.NIL,
+		ParamTypes: []semtypes.SemType{semtypes.List, semtypes.List, semtypes.List, semtypes.List},
+		ReturnType: semtypes.Nil,
 	})
 	addInternalFunction(ctx, space, "queryGroup", model.FunctionSignature{
-		ParamTypes: []semtypes.SemType{semtypes.LIST, semtypes.LIST, semtypes.LIST},
-		ReturnType: semtypes.LIST,
+		ParamTypes: []semtypes.SemType{semtypes.List, semtypes.List, semtypes.List},
+		ReturnType: semtypes.List,
 	})
 	addInternalFunction(ctx, space, "queryCollect", model.FunctionSignature{
-		ParamTypes: []semtypes.SemType{semtypes.LIST, semtypes.INT, semtypes.LIST},
-		ReturnType: semtypes.LIST,
+		ParamTypes: []semtypes.SemType{semtypes.List, semtypes.Int, semtypes.List},
+		ReturnType: semtypes.List,
 	})
 	addInternalFunction(ctx, space, "escapeXMLContent", model.FunctionSignature{
 		ParamTypes: []semtypes.SemType{templateInsertionAllowedTypes},
-		ReturnType: semtypes.STRING,
+		ReturnType: semtypes.String,
 	})
 	addInternalFunction(ctx, space, "escapeXMLAttribute", model.FunctionSignature{
 		ParamTypes: []semtypes.SemType{templateInsertionAllowedTypes},
-		ReturnType: semtypes.STRING,
+		ReturnType: semtypes.String,
 	})
 	return model.NewExportedSymbolSpaces([]*model.SymbolSpace{space}, nil)
 }

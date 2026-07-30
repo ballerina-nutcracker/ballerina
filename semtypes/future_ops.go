@@ -17,16 +17,16 @@
 package semtypes
 
 type futureOps struct {
-	CommonOps
+	commonOps
 }
 
-var _ BasicTypeOps = &futureOps{}
+var _ basicTypeOps = &futureOps{}
 
 func newFutureOps() futureOps {
 	this := futureOps{}
 	return this
 }
 
-func (f *futureOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (f *futureOps) IsEmpty(cx Context, t subtypeData) bool {
 	return mappingSubtypeIsEmpty(cx, t)
 }

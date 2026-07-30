@@ -26,11 +26,11 @@ func newTableSubtype() tableSubtype {
 func tableContainingKeyConstraint(cx Context, tableConstraint SemType, keyConstraint SemType) SemType {
 	var normalizedKc SemType
 	lat := ToListAtomicType(cx.Env(), keyConstraint)
-	if (lat != nil) && (CELL_ATOMIC_UNDEF == getCellAtomicType(lat.rest)) {
-		members := lat.Members
+	if (lat != nil) && (cellAtomicUndef == getCellAtomicType(lat.rest)) {
+		members := lat.members
 		switch members.FixedLength {
 		case 0:
-			normalizedKc = VAL
+			normalizedKc = Val
 		case 1:
 			normalizedKc = getCellAtomicType(members.initial[0]).Ty
 		default:
@@ -39,7 +39,7 @@ func tableContainingKeyConstraint(cx Context, tableConstraint SemType, keyConstr
 	} else {
 		normalizedKc = keyConstraint
 	}
-	return tableContainingWithEnvSemTypeSemTypeSemType(cx.Env(), tableConstraint, normalizedKc, VAL)
+	return tableContainingWithEnvSemTypeSemTypeSemType(cx.Env(), tableConstraint, normalizedKc, Val)
 }
 
 func tableContainingKeySpecifier(cx Context, tableConstraint SemType, fieldNames []string) SemType {
@@ -63,27 +63,27 @@ func tableContainingKeySpecifier(cx Context, tableConstraint SemType, fieldNames
 }
 
 func tableContainingDefault(env Env, tableConstraint SemType) SemType {
-	return tableContainingWithEnvSemTypeCellMutability(env, tableConstraint, CellMutability_CELL_MUT_LIMITED)
+	return tableContainingWithEnvSemTypeCellMutability(env, tableConstraint, CellMutabilityLimited)
 }
 
 func tableContainingWithEnvSemTypeCellMutability(env Env, tableConstraint SemType, mut CellMutability) SemType {
-	var normalizedKc = VAL
-	var normalizedKs = VAL
+	var normalizedKc = Val
+	var normalizedKs = Val
 	return tableContaining(env, tableConstraint, normalizedKc, normalizedKs, mut)
 }
 
 func tableContaining(env Env, tableConstraint SemType, normalizedKc SemType, normalizedKs SemType, mut CellMutability) SemType {
-	if !IsSubtypeSimple(tableConstraint, MAPPING) {
+	if !IsSubtypeSimple(tableConstraint, Mapping) {
 		panic("assertion failed")
 	}
 	typeParamArrDef := NewListDefinition()
 	typeParamArray := typeParamArrDef.DefineListTypeWrappedWithEnvSemTypeCellMutability(env, tableConstraint, mut)
 	listDef := NewListDefinition()
 	tupleType := listDef.TupleTypeWrapped(env, typeParamArray, normalizedKc, normalizedKs)
-	bdd := subtypeData(tupleType, BTList).(Bdd)
-	return createBasicSemType(BTTable, bdd)
+	bdd := subtypeDataAt(tupleType, btList).(bdd)
+	return createBasicSemType(btTable, bdd)
 }
 
 func tableContainingWithEnvSemTypeSemTypeSemType(env Env, tableConstraint SemType, normalizedKc SemType, normalizedKs SemType) SemType {
-	return tableContaining(env, tableConstraint, normalizedKc, normalizedKs, CellMutability_CELL_MUT_LIMITED)
+	return tableContaining(env, tableConstraint, normalizedKc, normalizedKs, CellMutabilityLimited)
 }

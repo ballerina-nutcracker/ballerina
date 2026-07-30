@@ -290,7 +290,7 @@ func (br *birReader) readClassDef(classDef *bir.BIRClassDef) {
 			}
 			restTy := br.readType()
 			if semtypes.IsZero(restTy) {
-				restTy = semtypes.NEVER
+				restTy = semtypes.Never
 			}
 			fn := br.readFunction()
 			entries[j] = bir.BIRResourceMethod{
@@ -574,7 +574,7 @@ func (br *birReader) readInstruction(varMap map[string]bir.BIRVariableDcl) bir.B
 			// After filling, the loaded value is guaranteed non-nil, so strip NIL
 			// from the operand type before looking up the filler factory.
 			tyCx := semtypes.TypeCheckContext(br.ctx.GetTypeEnv())
-			valueType := semtypes.Diff(lhsOp.VariableDcl.GetType(), semtypes.NIL)
+			valueType := semtypes.Diff(lhsOp.VariableDcl.GetType(), semtypes.Nil)
 			filler, _ = values.FillerFactoryFor(tyCx, valueType)
 		}
 		return &bir.FieldAccess{

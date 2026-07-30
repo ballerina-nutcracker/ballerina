@@ -21,7 +21,7 @@ import "sync"
 // SemTypeCache caches semtypes keyed by interned semtype values. SemTypeCache is safe for concurrent use.
 type SemTypeCache struct {
 	mu       sync.Mutex
-	interner *SemtypeInterner
+	interner *SemTypeInterner
 	values   map[InternHandle]SemType
 }
 

@@ -34,14 +34,14 @@ func NewObjectDefinition() ObjectDefinition {
 func ObjectDefinitionDistinct(distinctId int) SemType {
 	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(-distinctId - 1)))
-	return getBasicSubtype(BTObject, bdd)
+	return getBasicSubtype(btObject, bdd)
 }
 
 func stripObjectDistinctAtoms(ty SemType) SemType {
-	return stripDistinctAtomsFromSemType(ty, BTObject, stripDistinctAtomsFromBdd)
+	return stripDistinctAtomsFromSemType(ty, btObject, stripDistinctAtomsFromBdd)
 }
 
-func stripDistinctAtomsFromSemType(ty SemType, typeCode BasicTypeCode, stripBdd func(Bdd) Bdd) SemType {
+func stripDistinctAtomsFromSemType(ty SemType, typeCode basicTypeCode, stripBdd func(bdd) bdd) SemType {
 	typeBit := basicTypeBitSet(1 << typeCode.Code())
 	if ty.some()&typeBit == 0 {
 		return ty
@@ -57,14 +57,14 @@ func stripDistinctAtomsFromSemType(ty SemType, typeCode BasicTypeCode, stripBdd 
 		data := ty.subtypeDataList()[dataIndex]
 		dataIndex++
 		if code == typeCode.Code() {
-			stripped := stripBdd(data.(Bdd))
+			stripped := stripBdd(data.(bdd))
 			if allOrNothing, ok := stripped.(*bddAllOrNothing); ok {
 				if allOrNothing.IsAll() {
 					all |= bit
 				}
 				continue
 			}
-			data = stripped.(ProperSubtypeData)
+			data = stripped.(properSubtypeData)
 		}
 		subtypes = append(subtypes, basicSubtypeFrom(basicTypeCodeFrom(code), data))
 	}
@@ -81,32 +81,32 @@ func stripDistinctAtomsFromSemType(ty SemType, typeCode BasicTypeCode, stripBdd 
 //	   [field_name]: {
 //	     "field"|"method"|"remote-method"|"resource-method" kind,
 //	     "public"|"private" visibility,
-//	      VAL value;
+//	      Val value;
 //	   }
 //	   ...{
 //	     "field" kind,
 //	     "public"|"private" visibility,
-//	      VAL value;
+//	      Val value;
 //	   } | {
 //	      "method"|"remote-method"|"resource-method" kind,
 //	      "public"|"private" visibility,
-//	      FUNCTION value;
+//	      Function value;
 //	   }
 //	}
 func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members []Member) SemType {
 	common.Assert(func() bool { return objectDefinitionValidateMembers(members) })
 	var mut CellMutability
 	if qualifiers.readonly {
-		mut = CellMutability_CELL_MUT_NONE
+		mut = CellMutabilityNone
 	} else {
-		mut = CellMutability_CELL_MUT_LIMITED
+		mut = CellMutabilityLimited
 	}
-	var memberStream []CellField
+	var memberStream []cellField
 	for _, member := range members {
 		memberStream = append(memberStream, memberField(env, &member, mut))
 	}
-	qualifierStream := []CellField{qualifiers.Field(env)}
-	var cellFields []CellField
+	qualifierStream := []cellField{qualifiers.Field(env)}
+	var cellFields []cellField
 	cellFields = append(cellFields, memberStream...)
 	cellFields = append(cellFields, qualifierStream...)
 	mappingType := o.mappingDefinition.Define(env, cellFields, o.restMemberType(env, mut, qualifiers.readonly))
@@ -126,55 +126,55 @@ func objectDefinitionValidateMembers(members []Member) bool {
 }
 
 func (o *ObjectDefinition) objectContaining(mappingType SemType) SemType {
-	bdd := subtypeData(mappingType, BTMapping)
-	return createBasicSemType(BTObject, bdd)
+	bdd := subtypeDataAt(mappingType, btMapping)
+	return createBasicSemType(btObject, bdd)
 }
 
 func (o *ObjectDefinition) restMemberType(env Env, mut CellMutability, immutable bool) SemType {
 	fieldDefn := NewMappingDefinition()
-	var fieldValueTy SemType
+	var fieldValueType SemType
 	if immutable {
-		fieldValueTy = VAL_READONLY
+		fieldValueType = ValReadonly
 	} else {
-		fieldValueTy = VAL
+		fieldValueType = Val
 	}
 	fieldMemberType := fieldDefn.DefineMappingTypeWrapped(
 		env,
 		[]Field{
-			FieldFrom("value", fieldValueTy, immutable, false),
+			FieldFrom("value", fieldValueType, immutable, false),
 			new(MemberKindField).field(),
 			visibilityAll,
 		},
-		NEVER)
+		Never)
 
 	methodDefn := NewMappingDefinition()
 	methodMemberType := methodDefn.DefineMappingTypeWrapped(
 		env,
 		[]Field{
-			FieldFrom("value", FUNCTION, true, false),
+			FieldFrom("value", Function, true, false),
 			allMethodField(),
 			visibilityAll,
 		},
-		NEVER)
+		Never)
 	return cellContainingWithEnvSemTypeCellMutability(env, Union(fieldMemberType, methodMemberType), mut)
 }
 
-func memberField(env Env, member *Member, mut CellMutability) CellField {
+func memberField(env Env, member *Member, mut CellMutability) cellField {
 	md := NewMappingDefinition()
 	var fieldMut CellMutability
 	if member.Immutable {
-		fieldMut = CellMutability_CELL_MUT_NONE
+		fieldMut = CellMutabilityNone
 	} else {
 		fieldMut = mut
 	}
 	semtype := md.DefineMappingTypeWrapped(
 		env,
 		[]Field{
-			FieldFrom("value", member.ValueTy, member.Immutable, false),
+			FieldFrom("value", member.ValueType, member.Immutable, false),
 			(&member.Kind).field(),
 			(&member.Visibility).field(),
 		},
-		NEVER)
+		Never)
 	return cellFieldFrom(member.Name, cellContainingWithEnvSemTypeCellMutability(env, semtype, fieldMut))
 }
 

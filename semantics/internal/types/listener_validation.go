@@ -58,6 +58,6 @@ func validateListenerType(cx semtypes.Context, ty semtypes.SemType, attachPointB
 // attach-point parameter type: `string[] | string | ()`.
 func listenerAttachPointBound(cx semtypes.Context) semtypes.SemType {
 	listDefn := semtypes.NewListDefinition()
-	stringArr := listDefn.DefineListTypeWrapped(cx.Env(), nil, 0, semtypes.STRING, semtypes.CellMutability_CELL_MUT_LIMITED)
-	return semtypes.Union(stringArr, semtypes.Union(semtypes.STRING, semtypes.NIL))
+	stringArr := listDefn.DefineListTypeWrapped(cx.Env(), nil, 0, semtypes.String, semtypes.CellMutabilityLimited)
+	return semtypes.Union(stringArr, semtypes.Union(semtypes.String, semtypes.Nil))
 }

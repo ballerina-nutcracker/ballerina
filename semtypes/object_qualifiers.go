@@ -28,14 +28,14 @@ const (
 
 var (
 	networkQualifierClientTag = StringConst("client")
-	networkQualifierClient    = Field{Name: "network", Ty: networkQualifierClientTag, Ro: true, Opt: false}
+	networkQualifierClient    = Field{name: "network", typeOf: networkQualifierClientTag, readonly: true, optional: false}
 
 	networkQualifierServiceTag = StringConst("service")
-	networkQualifierService    = Field{Name: "network", Ty: networkQualifierServiceTag, Ro: true, Opt: false}
+	networkQualifierService    = Field{name: "network", typeOf: networkQualifierServiceTag, readonly: true, optional: false}
 
 	// Object can't be both client and service, which is enforced by the enum. We are using a union here so that
 	// if this is none it matches both
-	networkQualifierNone = Field{Name: "network", Ty: Union(networkQualifierClientTag, networkQualifierServiceTag), Ro: true, Opt: false}
+	networkQualifierNone = Field{name: "network", typeOf: Union(networkQualifierClientTag, networkQualifierServiceTag), readonly: true, optional: false}
 )
 
 // field returns the Field representation for this NetworkQualifier
@@ -105,14 +105,14 @@ type ObjectQualifiers struct {
 	networkQualifier NetworkQualifier
 }
 
-// ObjectQualifiersDEFAULT is the default ObjectQualifiers instance
+// ObjectQualifiersDefault is the default ObjectQualifiers instance
 // Migrated from ObjectQualifiers.java:45
-var ObjectQualifiersDEFAULT = ObjectQualifiers{isolated: false, readonly: false, networkQualifier: NetworkQualifierNone}
+var ObjectQualifiersDefault = ObjectQualifiers{isolated: false, readonly: false, networkQualifier: NetworkQualifierNone}
 
 // defaultQualifiers returns the default ObjectQualifiers instance
 // Migrated from ObjectQualifiers.java:47
 func defaultQualifiers() ObjectQualifiers {
-	return ObjectQualifiersDEFAULT
+	return ObjectQualifiersDefault
 }
 
 // ObjectQualifiersFrom creates an ObjectQualifiers instance with the given parameters
@@ -124,22 +124,22 @@ func ObjectQualifiersFrom(isolated bool, readonly bool, networkQualifier Network
 	return ObjectQualifiers{isolated: isolated, readonly: readonly, networkQualifier: networkQualifier}
 }
 
-// Field creates a CellField representing these qualifiers
+// Field creates a cellField representing these qualifiers
 // Migrated from ObjectQualifiers.java:82
-func (oq *ObjectQualifiers) Field(env Env) CellField {
+func (oq *ObjectQualifiers) Field(env Env) cellField {
 	md := NewMappingDefinition()
 	var isolatedField Field
 	if oq.isolated {
-		isolatedField = Field{Name: "isolated", Ty: BooleanConst(true), Ro: true, Opt: false}
+		isolatedField = Field{name: "isolated", typeOf: BooleanConst(true), readonly: true, optional: false}
 	} else {
-		isolatedField = Field{Name: "isolated", Ty: BOOLEAN, Ro: true, Opt: false}
+		isolatedField = Field{name: "isolated", typeOf: Boolean, readonly: true, optional: false}
 	}
 	networkField := oq.networkQualifier.field()
 	ty := md.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(
 		env,
 		[]Field{isolatedField, networkField},
-		NEVER,
-		CellMutability_CELL_MUT_NONE,
+		Never,
+		CellMutabilityNone,
 	)
 	return cellFieldFrom("$qualifiers", cellContaining(env, ty))
 }

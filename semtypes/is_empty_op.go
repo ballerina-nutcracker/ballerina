@@ -16,6 +16,6 @@
 
 package semtypes
 
-type IsEmptyOp interface {
-	IsEmpty(cx Context, t SubtypeData) bool
+type isEmptyOp interface {
+	IsEmpty(cx Context, t subtypeData) bool
 }

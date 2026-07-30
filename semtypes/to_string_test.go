@@ -25,7 +25,7 @@ import (
 func TestSimpleBasicType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := Union(INT, STRING)
+	ty := Union(Int, String)
 	actual := ToString(cx, ty)
 	expected := "int|string"
 	if actual != expected {
@@ -77,14 +77,14 @@ func TestSpecialIntSubtypes(t *testing.T) {
 		expected string
 	}
 	var cases []testCase
-	cases = append(cases, testCase{UINT8, "int:Unsigned8"})
-	cases = append(cases, testCase{BYTE, "int:Unsigned8"})
-	cases = append(cases, testCase{UINT16, "int:Unsigned16"})
-	cases = append(cases, testCase{UINT32, "int:Unsigned32"})
+	cases = append(cases, testCase{UnsignedInt8, "int:Unsigned8"})
+	cases = append(cases, testCase{Byte, "int:Unsigned8"})
+	cases = append(cases, testCase{UnsignedInt16, "int:Unsigned16"})
+	cases = append(cases, testCase{UnsignedInt32, "int:Unsigned32"})
 
-	cases = append(cases, testCase{SINT8, "int:Signed8"})
-	cases = append(cases, testCase{SINT16, "int:Signed16"})
-	cases = append(cases, testCase{SINT32, "int:Signed32"})
+	cases = append(cases, testCase{SignedInt8, "int:Signed8"})
+	cases = append(cases, testCase{SignedInt16, "int:Signed16"})
+	cases = append(cases, testCase{SignedInt32, "int:Signed32"})
 	for _, each := range cases {
 		actual := ToString(cx, each.ty)
 		if actual != each.expected {
@@ -96,7 +96,7 @@ func TestSpecialIntSubtypes(t *testing.T) {
 func TestSpecialStringSubtypes(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, CHAR)
+	actual := ToString(cx, Char)
 	expected := "string:Char"
 	if actual != expected {
 		t.Errorf("got %s expected %s", actual, expected)
@@ -118,7 +118,7 @@ func TestStringUnion(t *testing.T) {
 func TestBasicTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, Union(StringConst("a"), INT))
+	actual := ToString(cx, Union(StringConst("a"), Int))
 	expected := "int|\"a\""
 	if actual != expected {
 		t.Errorf("got %s expected %s", actual, expected)
@@ -162,7 +162,7 @@ func TestDecimalSingleton(t *testing.T) {
 func TestNilType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, NIL)
+	actual := ToString(cx, Nil)
 	expected := "nil"
 	if actual != expected {
 		t.Errorf("got %s expected %s", actual, expected)
@@ -173,7 +173,7 @@ func TestListAtomicType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld := NewListDefinition()
-	ty := ld.DefineListTypeWrapped(env, nil, 0, INT, CellMutability_CELL_MUT_LIMITED)
+	ty := ld.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
 	actual := ToString(cx, ty)
 	expected := "[int...]"
 	if actual != expected {
@@ -185,7 +185,7 @@ func TestListAtomicType1(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld := NewListDefinition()
-	ty := ld.DefineListTypeWrapped(env, []SemType{STRING}, 3, INT, CellMutability_CELL_MUT_LIMITED)
+	ty := ld.DefineListTypeWrapped(env, []SemType{String}, 3, Int, CellMutabilityLimited)
 	actual := ToString(cx, ty)
 	expected := "[string, string, string, int...]"
 	if actual != expected {
@@ -197,10 +197,10 @@ func TestListTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, []SemType{STRING}, 3, INT, CellMutability_CELL_MUT_LIMITED)
+	ty1 := ld1.DefineListTypeWrapped(env, []SemType{String}, 3, Int, CellMutabilityLimited)
 
 	ld2 := NewListDefinition()
-	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, INT, CellMutability_CELL_MUT_LIMITED)
+	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
 	actual := ToString(cx, Union(ty1, ty2))
 	expected := "[string, string, string, int...]|[int...]"
 	if actual != expected {
@@ -212,10 +212,10 @@ func TestListTypeDiff(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, INT, CellMutability_CELL_MUT_LIMITED)
+	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
 
 	ld2 := NewListDefinition()
-	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, SINT32, CellMutability_CELL_MUT_LIMITED)
+	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, SignedInt32, CellMutabilityLimited)
 	actual := ToString(cx, Diff(ty1, ty2))
 	expected := "[int...]&¬[int:Signed32...]"
 	if actual != expected {
@@ -227,10 +227,10 @@ func TestListTypeIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, INT, CellMutability_CELL_MUT_LIMITED)
+	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
 
 	ld2 := NewListDefinition()
-	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, SINT32, CellMutability_CELL_MUT_LIMITED)
+	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, SignedInt32, CellMutabilityLimited)
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "[int...]&[int:Signed32...]"
 	if actual != expected {
@@ -242,7 +242,7 @@ func TestMappingAtomicType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md := NewMappingDefinition()
-	ty := md.DefineMappingTypeWrapped(env, nil, INT)
+	ty := md.DefineMappingTypeWrapped(env, nil, Int)
 	actual := ToString(cx, ty)
 	expected := "{| int... |}"
 	if actual != expected {
@@ -255,10 +255,10 @@ func TestMappingWithFields(t *testing.T) {
 	cx := ContextFrom(env)
 	md := NewMappingDefinition()
 	fields := []Field{
-		{Name: "name", Ty: STRING},
-		{Name: "age", Ty: INT},
+		{name: "name", typeOf: String},
+		{name: "age", typeOf: Int},
 	}
-	ty := md.DefineMappingTypeWrapped(env, fields, NEVER)
+	ty := md.DefineMappingTypeWrapped(env, fields, Never)
 	actual := ToString(cx, ty)
 	expected := "{| age: int, name: string, never... |}"
 	if actual != expected {
@@ -270,10 +270,10 @@ func TestMappingTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md1 := NewMappingDefinition()
-	ty1 := md1.DefineMappingTypeWrapped(env, []Field{{Name: "x", Ty: INT}}, NEVER)
+	ty1 := md1.DefineMappingTypeWrapped(env, []Field{{name: "x", typeOf: Int}}, Never)
 
 	md2 := NewMappingDefinition()
-	ty2 := md2.DefineMappingTypeWrapped(env, []Field{{Name: "y", Ty: STRING}}, NEVER)
+	ty2 := md2.DefineMappingTypeWrapped(env, []Field{{name: "y", typeOf: String}}, Never)
 	actual := ToString(cx, Union(ty1, ty2))
 	expected := "{| x: int, never... |}|{| y: string, never... |}"
 	if actual != expected {
@@ -285,10 +285,10 @@ func TestMappingTypeDiff(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md1 := NewMappingDefinition()
-	ty1 := md1.DefineMappingTypeWrapped(env, nil, INT)
+	ty1 := md1.DefineMappingTypeWrapped(env, nil, Int)
 
 	md2 := NewMappingDefinition()
-	ty2 := md2.DefineMappingTypeWrapped(env, nil, SINT32)
+	ty2 := md2.DefineMappingTypeWrapped(env, nil, SignedInt32)
 	actual := ToString(cx, Diff(ty1, ty2))
 	expected := "{| int... |}&¬{| int:Signed32... |}"
 	if actual != expected {
@@ -300,10 +300,10 @@ func TestMappingTypeIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md1 := NewMappingDefinition()
-	ty1 := md1.DefineMappingTypeWrapped(env, nil, INT)
+	ty1 := md1.DefineMappingTypeWrapped(env, nil, Int)
 
 	md2 := NewMappingDefinition()
-	ty2 := md2.DefineMappingTypeWrapped(env, nil, SINT32)
+	ty2 := md2.DefineMappingTypeWrapped(env, nil, SignedInt32)
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "{| int... |}&{| int:Signed32... |}"
 	if actual != expected {
@@ -315,8 +315,8 @@ func TestMappingTypeRO(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md := NewMappingDefinition()
-	ty := md.DefineMappingTypeWrapped(env, nil, INT)
-	actual := ToString(cx, Intersect(ty, VAL_READONLY))
+	ty := md.DefineMappingTypeWrapped(env, nil, Int)
+	actual := ToString(cx, Intersect(ty, ValReadonly))
 	expected := "readonly&{| int... |}"
 	if actual != expected {
 		t.Errorf("got %s expected %s", actual, expected)
@@ -327,9 +327,9 @@ func TestListTypeRO(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, INT, CellMutability_CELL_MUT_LIMITED)
+	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
 
-	ty2 := VAL_READONLY
+	ty2 := ValReadonly
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "readonly&[int...]"
 	if actual != expected {
@@ -340,7 +340,7 @@ func TestListTypeRO(t *testing.T) {
 func TestFunctionType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := funcHelper(env, createTupleType(env, INT), INT)
+	ty := funcHelper(env, createTupleType(env, Int), Int)
 	actual := ToString(cx, ty)
 	expected := "function(int) returns int"
 	if actual != expected {
@@ -351,7 +351,7 @@ func TestFunctionType(t *testing.T) {
 func TestFunctionTypeMultipleParams(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := funcHelper(env, createTupleType(env, INT, STRING), INT)
+	ty := funcHelper(env, createTupleType(env, Int, String), Int)
 	actual := ToString(cx, ty)
 	expected := "function(int, string) returns int"
 	if actual != expected {
@@ -362,7 +362,7 @@ func TestFunctionTypeMultipleParams(t *testing.T) {
 func TestFunctionTypeNoParams(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := funcHelper(env, createTupleType(env), NIL)
+	ty := funcHelper(env, createTupleType(env), Nil)
 	actual := ToString(cx, ty)
 	expected := "function() returns nil"
 	if actual != expected {
@@ -373,8 +373,8 @@ func TestFunctionTypeNoParams(t *testing.T) {
 func TestFunctionTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty1 := funcHelper(env, createTupleType(env, INT), INT)
-	ty2 := funcHelper(env, createTupleType(env, STRING), STRING)
+	ty1 := funcHelper(env, createTupleType(env, Int), Int)
+	ty2 := funcHelper(env, createTupleType(env, String), String)
 	actual := ToString(cx, Union(ty1, ty2))
 	expected := "function(int) returns int|function(string) returns string"
 	if actual != expected {
@@ -385,8 +385,8 @@ func TestFunctionTypeUnion(t *testing.T) {
 func TestFunctionTypeIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty1 := funcHelper(env, createTupleType(env, INT), INT)
-	ty2 := funcHelper(env, createTupleType(env, STRING), STRING)
+	ty1 := funcHelper(env, createTupleType(env, Int), Int)
+	ty2 := funcHelper(env, createTupleType(env, String), String)
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "function(int) returns int&function(string) returns string"
 	if actual != expected {
@@ -397,7 +397,7 @@ func TestFunctionTypeIntersect(t *testing.T) {
 func TestFunctionTypeWithUnionReturn(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := funcHelper(env, createTupleType(env, INT), Union(INT, NIL))
+	ty := funcHelper(env, createTupleType(env, Int), Union(Int, Nil))
 	actual := ToString(cx, ty)
 	expected := "function(int) returns nil|int"
 	if actual != expected {
@@ -408,7 +408,7 @@ func TestFunctionTypeWithUnionReturn(t *testing.T) {
 func TestFunctionTypeWithUnionParams(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := funcHelper(env, createTupleType(env, Union(INT, STRING)), NIL)
+	ty := funcHelper(env, createTupleType(env, Union(Int, String)), Nil)
 	actual := ToString(cx, ty)
 	expected := "function(int|string) returns nil"
 	if actual != expected {
@@ -420,9 +420,9 @@ func TestObjectSimpleFields(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	ty := od.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
-		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty := od.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
+		{Name: "y", ValueType: String, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
 	expected := "object { public int x; public string y }"
@@ -435,9 +435,9 @@ func TestObjectWithMethod(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	methodTy := funcHelper(env, createTupleType(env, INT, INT), INT)
-	ty := od.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "foo", ValueTy: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
+	methodTy := funcHelper(env, createTupleType(env, Int, Int), Int)
+	ty := od.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "foo", ValueType: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
 	expected := "object { public function foo(int, int) returns int }"
@@ -450,10 +450,10 @@ func TestObjectWithFieldsAndMethods(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	methodTy := funcHelper(env, createTupleType(env, INT, INT), INT)
-	ty := od.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "bar", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
-		{Name: "foo", ValueTy: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
+	methodTy := funcHelper(env, createTupleType(env, Int, Int), Int)
+	ty := od.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "bar", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
+		{Name: "foo", ValueType: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
 	expected := "object { public int bar; public function foo(int, int) returns int }"
@@ -467,7 +467,7 @@ func TestObjectIsolated(t *testing.T) {
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
 	ty := od.Define(env, ObjectQualifiersFrom(true, false, NetworkQualifierNone), []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
 	expected := "isolated object { public int x }"
@@ -481,7 +481,7 @@ func TestObjectClient(t *testing.T) {
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
 	ty := od.Define(env, ObjectQualifiersFrom(false, false, NetworkQualifierClient), []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
 	expected := "client object { public int x }"
@@ -495,7 +495,7 @@ func TestObjectService(t *testing.T) {
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
 	ty := od.Define(env, ObjectQualifiersFrom(false, false, NetworkQualifierService), []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
 	expected := "service object { public int x }"
@@ -509,7 +509,7 @@ func TestObjectIsolatedService(t *testing.T) {
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
 	ty := od.Define(env, ObjectQualifiersFrom(true, false, NetworkQualifierService), []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, ty)
 	expected := "isolated service object { public int x }"
@@ -522,9 +522,9 @@ func TestObjectRemoteMethod(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	methodTy := funcHelper(env, createTupleType(env, INT), STRING)
+	methodTy := funcHelper(env, createTupleType(env, Int), String)
 	ty := od.Define(env, ObjectQualifiersFrom(false, false, NetworkQualifierClient), []Member{
-		{Name: "ping", ValueTy: methodTy, Kind: MemberKindRemoteMethod, Visibility: VisibilityPublic, Immutable: true},
+		{Name: "ping", ValueType: methodTy, Kind: MemberKindRemoteMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
 	expected := "client object { public remote function ping(int) returns string }"
@@ -537,9 +537,9 @@ func TestObjectResourceMethod(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	methodTy := funcHelper(env, createTupleType(env), NIL)
+	methodTy := funcHelper(env, createTupleType(env), Nil)
 	ty := od.Define(env, ObjectQualifiersFrom(false, false, NetworkQualifierService), []Member{
-		{Name: "get", ValueTy: methodTy, Kind: MemberKindResourceMethod, Visibility: VisibilityPublic, Immutable: true},
+		{Name: "get", ValueType: methodTy, Kind: MemberKindResourceMethod, Visibility: VisibilityPublic, Immutable: true},
 	})
 	actual := ToString(cx, ty)
 	expected := "service object { public resource function get() returns nil }"
@@ -552,7 +552,7 @@ func TestObjectEmpty(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	ty := od.Define(env, ObjectQualifiersDEFAULT, nil)
+	ty := od.Define(env, ObjectQualifiersDefault, nil)
 	actual := ToString(cx, ty)
 	expected := "object"
 	if actual != expected {
@@ -564,10 +564,10 @@ func TestObjectReadonlyIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od := NewObjectDefinition()
-	ty := od.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty := od.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
-	actual := ToString(cx, Intersect(ty, VAL_READONLY))
+	actual := ToString(cx, Intersect(ty, ValReadonly))
 	expected := "readonly&object { public int x }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
@@ -578,12 +578,12 @@ func TestObjectTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od1 := NewObjectDefinition()
-	ty1 := od1.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty1 := od1.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	od2 := NewObjectDefinition()
-	ty2 := od2.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty2 := od2.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "y", ValueType: String, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Union(ty1, ty2))
 	expected := "object { public int x }|object { public string y }"
@@ -596,12 +596,12 @@ func TestObjectTypeIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od1 := NewObjectDefinition()
-	ty1 := od1.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty1 := od1.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	od2 := NewObjectDefinition()
-	ty2 := od2.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty2 := od2.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "y", ValueType: String, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "object { public int x }&object { public string y }"
@@ -614,12 +614,12 @@ func TestObjectTypeDiff(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	od1 := NewObjectDefinition()
-	ty1 := od1.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "x", ValueTy: INT, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty1 := od1.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "x", ValueType: Int, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	od2 := NewObjectDefinition()
-	ty2 := od2.Define(env, ObjectQualifiersDEFAULT, []Member{
-		{Name: "y", ValueTy: STRING, Kind: MemberKindField, Visibility: VisibilityPublic},
+	ty2 := od2.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "y", ValueType: String, Kind: MemberKindField, Visibility: VisibilityPublic},
 	})
 	actual := ToString(cx, Diff(ty1, ty2))
 	expected := "object { public int x }&¬object { public string y }"
@@ -631,7 +631,7 @@ func TestObjectTypeDiff(t *testing.T) {
 func TestTypedescUnconstrained(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, TYPEDESC)
+	actual := ToString(cx, Typedesc)
 	expected := "typedesc"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
@@ -651,7 +651,7 @@ func TestXMLTop(t *testing.T) {
 func TestTypedescConstrained(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := TypedescContaining(env, INT)
+	ty := TypedescContaining(env, Int)
 	actual := ToString(cx, ty)
 	expected := "typedesc<int>"
 	if actual != expected {
@@ -662,7 +662,7 @@ func TestTypedescConstrained(t *testing.T) {
 func TestXMLElement(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, XML_ELEMENT)
+	actual := ToString(cx, XMLElement)
 	expected := "xml:Element"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
@@ -672,7 +672,7 @@ func TestXMLElement(t *testing.T) {
 func TestXMLComment(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, XML_COMMENT)
+	actual := ToString(cx, XMLComment)
 	expected := "xml:Comment"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
@@ -682,7 +682,7 @@ func TestXMLComment(t *testing.T) {
 func TestXMLText(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, XML_TEXT)
+	actual := ToString(cx, XMLText)
 	expected := "xml:Text"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
@@ -692,7 +692,7 @@ func TestXMLText(t *testing.T) {
 func TestXMLProcessingInstruction(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	actual := ToString(cx, XML_PI)
+	actual := ToString(cx, XMLProcessingInstruction)
 	expected := "xml:ProcessingInstruction"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
@@ -702,7 +702,7 @@ func TestXMLProcessingInstruction(t *testing.T) {
 func TestXMLSequenceOfElement(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := XMLSequence(XML_ELEMENT)
+	ty := XMLSequence(XMLElement)
 	actual := ToString(cx, ty)
 	expected := "xml<xml:Element>"
 	if actual != expected {
@@ -713,7 +713,7 @@ func TestXMLSequenceOfElement(t *testing.T) {
 func TestTypedescConstrainedUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := TypedescContaining(env, Union(INT, STRING))
+	ty := TypedescContaining(env, Union(Int, String))
 	actual := ToString(cx, ty)
 	expected := "typedesc<int|string>"
 	if actual != expected {
@@ -724,7 +724,7 @@ func TestTypedescConstrainedUnion(t *testing.T) {
 func TestXMLSequenceOfComment(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := XMLSequence(XML_COMMENT)
+	ty := XMLSequence(XMLComment)
 	actual := ToString(cx, ty)
 	expected := "xml<xml:Comment>"
 	if actual != expected {
@@ -735,7 +735,7 @@ func TestXMLSequenceOfComment(t *testing.T) {
 func TestXMLSequenceOfPI(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := XMLSequence(XML_PI)
+	ty := XMLSequence(XMLProcessingInstruction)
 	actual := ToString(cx, ty)
 	expected := "xml<xml:ProcessingInstruction>"
 	if actual != expected {
@@ -746,7 +746,7 @@ func TestXMLSequenceOfPI(t *testing.T) {
 func TestXMLNeverSequence(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := XMLSingleton(XML_PRIMITIVE_NEVER)
+	ty := XMLSingleton(xmlPrimitiveNever)
 	actual := ToString(cx, ty)
 	expected := "xml<never>"
 	if actual != expected {

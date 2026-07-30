@@ -33,9 +33,9 @@ type stringSubtype struct {
 }
 
 var (
-	EMPTY_STRING_ARR                   = []enumerableType[string]{}
-	EMPTY_CHAR_ARR                     = []enumerableType[string]{}
-	_                ProperSubtypeData = &stringSubtype{}
+	emptyStringArr                   = []enumerableType[string]{}
+	emptyCharArr                     = []enumerableType[string]{}
+	_              properSubtypeData = &stringSubtype{}
 )
 
 func newStringSubtypeListCoverageFromBoolInts(isSubtype bool, indices []int) stringSubtypeListCoverage {
@@ -60,7 +60,7 @@ func stringSubtypeFrom(chara charStringSubtype, nonChar nonCharStringSubtype) st
 	return newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(chara, nonChar)
 }
 
-func stringSubtypeContains(d SubtypeData, s string) bool {
+func stringSubtypeContains(d subtypeData, s string) bool {
 	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
 		return allOrNothingSubtype.IsAllSubtype()
 	}
@@ -81,7 +81,7 @@ func stringSubtypeContains(d SubtypeData, s string) bool {
 	return !nonChar.Allowed()
 }
 
-func createStringSubtype(chara charStringSubtype, nonChar nonCharStringSubtype) SubtypeData {
+func createStringSubtype(chara charStringSubtype, nonChar nonCharStringSubtype) subtypeData {
 	if len(chara.Values()) == 0 && len(nonChar.Values()) == 0 {
 		if (!chara.allowed) && (!nonChar.allowed) {
 			return createAll()
@@ -92,7 +92,7 @@ func createStringSubtype(chara charStringSubtype, nonChar nonCharStringSubtype) 
 	return stringSubtypeFrom(chara, nonChar)
 }
 
-func stringSubtypeSingleValue(d SubtypeData) common.Optional[string] {
+func stringSubtypeSingleValue(d subtypeData) common.Optional[string] {
 	if _, ok := d.(allOrNothingSubtype); ok {
 		return common.OptionalEmpty[string]()
 	}
@@ -125,12 +125,12 @@ func StringConst(value string) SemType {
 	var nonChar nonCharStringSubtype
 	if codePointCount(value, 0, len(value)) == 1 {
 		chara = charStringSubtypeFrom(true, []enumerableType[string]{enumerableCharStringFrom(value)})
-		nonChar = nonCharStringSubtypeFrom(true, EMPTY_STRING_ARR)
+		nonChar = nonCharStringSubtypeFrom(true, emptyStringArr)
 	} else {
-		chara = charStringSubtypeFrom(true, EMPTY_CHAR_ARR)
+		chara = charStringSubtypeFrom(true, emptyCharArr)
 		nonChar = nonCharStringSubtypeFrom(true, []enumerableType[string]{enumerableStringFrom(value)})
 	}
-	return getBasicSubtype(BTString, newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(chara, nonChar))
+	return getBasicSubtype(btString, newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(chara, nonChar))
 }
 
 func codePointCount(s string, start, end int) int {
@@ -145,10 +145,10 @@ func (s *stringSubtype) GetNonChar() enumerableSubtype[string] {
 	return &s.nonCharData
 }
 
-func stringChar() SemType {
+func makeStringChar() SemType {
 	st := newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(
-		charStringSubtypeFrom(false, EMPTY_CHAR_ARR),
-		nonCharStringSubtypeFrom(true, EMPTY_STRING_ARR),
+		charStringSubtypeFrom(false, emptyCharArr),
+		nonCharStringSubtypeFrom(true, emptyStringArr),
 	)
-	return getBasicSubtype(BTString, st)
+	return getBasicSubtype(btString, st)
 }

@@ -402,7 +402,7 @@ func alwaysTerminatesViaCheck(tyCtx semtypes.Context, expr ast.BLangExpression) 
 	if inner == nil {
 		return false
 	}
-	return semtypes.IsSubtype(tyCtx, inner.GetDeterminedType(), semtypes.ERROR)
+	return semtypes.IsSubtype(tyCtx, inner.GetDeterminedType(), semtypes.Error)
 }
 
 // Branching statement handlers

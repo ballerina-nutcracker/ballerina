@@ -573,7 +573,7 @@ func buildRequest(method, rawPath, httpVersion string, headers map[string][]stri
 		holder = &requestBodyHolder{buf: []byte{}, contentLength: 0}
 	}
 	return values.NewObject(
-		semtypes.OBJECT,
+		semtypes.Object,
 		map[string]values.BalValue{
 			"rawPath":     rawPath,
 			"method":      method,

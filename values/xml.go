@@ -195,35 +195,35 @@ func (c *XMLComment) XMLString() string {
 }
 
 func NewXMLElement(name string, attrs, namespaces *Map, children XMLValue, isReadonly bool) *XMLElement {
-	ty := semtypes.XML_ELEMENT
+	ty := semtypes.XMLElement
 	if isReadonly {
-		ty = semtypes.XMLSingleton(semtypes.XML_PRIMITIVE_ELEMENT_RO)
+		ty = semtypes.ReadonlyXMLElement
 	}
 	return &XMLElement{Name: name, Attributes: attrs, Namespaces: namespaces, Children: children, semType: ty, isReadonly: isReadonly}
 }
 
 func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
-	ty := semtypes.XML_PI
+	ty := semtypes.XMLProcessingInstruction
 	if isReadonly {
-		ty = semtypes.XMLSingleton(semtypes.XML_PRIMITIVE_PI_RO)
+		ty = semtypes.ReadonlyXMLProcessingInstruction
 	}
 	return &XMLProcessingInstruction{Target: target, Data: data, semType: ty, isReadonly: isReadonly}
 }
 
 func NewXMLText(body string) *XMLText {
-	return &XMLText{Body: body, semType: semtypes.XMLSingleton(semtypes.XML_PRIMITIVE_TEXT)}
+	return &XMLText{Body: body, semType: semtypes.XMLText}
 }
 
 func NewXMLComment(body string, isReadonly bool) *XMLComment {
-	ty := semtypes.XML_COMMENT
+	ty := semtypes.XMLComment
 	if isReadonly {
-		ty = semtypes.XMLSingleton(semtypes.XML_PRIMITIVE_COMMENT_RO)
+		ty = semtypes.ReadonlyXMLComment
 	}
 	return &XMLComment{Body: body, semType: ty, isReadonly: isReadonly}
 }
 
 func xmlSequenceType(children []XMLValue) (semtypes.SemType, bool) {
-	var childUnion = semtypes.NEVER
+	var childUnion = semtypes.Never
 	isReadonly := true
 	for _, child := range children {
 		childUnion = semtypes.Union(childUnion, child.Type())

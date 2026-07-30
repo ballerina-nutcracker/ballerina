@@ -39,7 +39,7 @@ func (f *FunctionDefinition) GetSemType(env Env) SemType {
 
 func (f *FunctionDefinition) createSemType(rec atom) SemType {
 	bdd := bddAtom(rec)
-	s := getBasicSubtype(BTFunction, bdd)
+	s := getBasicSubtype(btFunction, bdd)
 	f.semType = s
 	return s
 }

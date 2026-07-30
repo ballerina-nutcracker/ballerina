@@ -31,7 +31,7 @@ func ListenerTy(cx Context, t, a SemType) SemType {
 		return ty
 	}
 	env := cx.Env()
-	errorOrNil := Union(ERROR, NIL)
+	errorOrNil := Union(Error, Nil)
 
 	attachFnTy := listenerMethodType(env, []SemType{t, a}, errorOrNil)
 	detachFnTy := listenerMethodType(env, []SemType{t}, errorOrNil)
@@ -54,7 +54,7 @@ func ListenerTy(cx Context, t, a SemType) SemType {
 
 func listenerMethodType(env Env, paramTys []SemType, returnTy SemType) SemType {
 	paramListDefn := NewListDefinition()
-	paramList := paramListDefn.DefineListTypeWrapped(env, paramTys, len(paramTys), NEVER, CellMutability_CELL_MUT_NONE)
+	paramList := paramListDefn.DefineListTypeWrapped(env, paramTys, len(paramTys), Never, CellMutabilityNone)
 	fnDefn := NewFunctionDefinition()
 	return fnDefn.Define(env, paramList, returnTy, FunctionQualifiersFrom(env, false, false))
 }
@@ -62,7 +62,7 @@ func listenerMethodType(env Env, paramTys []SemType, returnTy SemType) SemType {
 func listenerPublicMethod(name string, fnTy SemType) Member {
 	return Member{
 		Name:       name,
-		ValueTy:    fnTy,
+		ValueType:  fnTy,
 		Kind:       MemberKindMethod,
 		Visibility: VisibilityPublic,
 		Immutable:  true,

@@ -75,9 +75,9 @@ func arrayPush(ctx *extern.Context, args []values.BalValue) (values.BalValue, er
 func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	source := args[0].(*values.List)
 	callback := args[1].(*values.Function)
-	memberTy := semtypes.ListProj(ctx.TypeCtx(), source.Type, semtypes.INT)
+	memberTy := semtypes.ListProj(ctx.TypeCtx(), source.Type, semtypes.Int)
 	argListDef := semtypes.NewListDefinition()
-	argListTy := argListDef.DefineListTypeWrapped(ctx.TypeEnv(), []semtypes.SemType{memberTy}, 1, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	argListTy := argListDef.DefineListTypeWrapped(ctx.TypeEnv(), []semtypes.SemType{memberTy}, 1, semtypes.Never, semtypes.CellMutabilityNone)
 	var resultMemberTy semtypes.SemType
 	if semtypes.IsNever(memberTy) {
 		resultMemberTy = semtypes.FunctionReturnType(ctx.TypeCtx(), callback.Type, semtypes.FunctionParamListType(ctx.TypeCtx(), callback.Type))
@@ -106,7 +106,7 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 func initArrayModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	ld := semtypes.NewListDefinition()
-	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE)
+	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte)
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return arrayLength(args)

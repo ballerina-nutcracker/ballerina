@@ -17,7 +17,7 @@
 package semtypes
 
 type ListAtomicType struct {
-	Members fixedLengthArray
+	members fixedLengthArray
 	rest    SemType
 }
 
@@ -25,7 +25,7 @@ var _ atomicType = &ListAtomicType{}
 
 func newListAtomicTypeFromMembersRest(members fixedLengthArray, rest SemType) ListAtomicType {
 	this := ListAtomicType{}
-	this.Members = members
+	this.members = members
 	this.rest = rest
 	return this
 }
@@ -38,12 +38,16 @@ func (l *ListAtomicType) atomKind() kind {
 	return kind_LIST_ATOM
 }
 
+func (atomic *ListAtomicType) FixedLength() int {
+	return atomic.members.FixedLength
+}
+
 func (atomic *ListAtomicType) MemberAtInnerVal(index int) SemType {
 	return cellInnerVal(atomic.MemberAt(index))
 }
 
 func (atomic *ListAtomicType) MemberAt(index int) SemType {
-	return listMemberAt(atomic.Members, atomic.rest, index)
+	return listMemberAt(atomic.members, atomic.rest, index)
 }
 
 func (atomic *ListAtomicType) Rest() SemType {

@@ -27,7 +27,7 @@ type floatSubtype struct {
 	values  []enumerableFloat
 }
 
-var _ ProperSubtypeData = &floatSubtype{}
+var _ properSubtypeData = &floatSubtype{}
 
 func newFloatSubtypeFromBoolEnumerableFloat(allowed bool, value enumerableFloat) floatSubtype {
 	this := floatSubtype{}
@@ -48,10 +48,10 @@ func newFloatSubtypeFromBoolEnumerableFloats(allowed bool, values []enumerableTy
 }
 
 func FloatConst(value float64) SemType {
-	return getBasicSubtype(BTFloat, newFloatSubtypeFromBoolEnumerableFloat(true, newEnumerableFloatFromFloat64(value)))
+	return getBasicSubtype(btFloat, newFloatSubtypeFromBoolEnumerableFloat(true, newEnumerableFloatFromFloat64(value)))
 }
 
-func floatSubtypeSingleValue(d SubtypeData) common.Optional[float64] {
+func floatSubtypeSingleValue(d subtypeData) common.Optional[float64] {
 	if _, ok := d.(allOrNothingSubtype); ok {
 		return common.OptionalEmpty[float64]()
 	}
@@ -65,7 +65,7 @@ func floatSubtypeSingleValue(d SubtypeData) common.Optional[float64] {
 	return common.OptionalOf(v.values[0].value)
 }
 
-func floatSubtypeContains(d SubtypeData, f enumerableFloat) bool {
+func floatSubtypeContains(d subtypeData, f enumerableFloat) bool {
 	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
 		return allOrNothingSubtype.IsAllSubtype()
 	}
@@ -76,7 +76,7 @@ func floatSubtypeContains(d SubtypeData, f enumerableFloat) bool {
 	return (!v.allowed)
 }
 
-func createFloatSubtype(allowed bool, values []enumerableType[float64]) ProperSubtypeData {
+func createFloatSubtype(allowed bool, values []enumerableType[float64]) properSubtypeData {
 	if len(values) == 0 {
 		if allowed {
 			return createNothing()

@@ -22,35 +22,35 @@ import (
 
 type xmlSubtype struct {
 	Primitives int
-	Sequence   Bdd
+	Sequence   bdd
 }
 
 const (
-	XML_PRIMITIVE_NEVER        = 1
-	XML_PRIMITIVE_TEXT         = (1 << 1)
-	XML_PRIMITIVE_ELEMENT_RO   = (1 << 2)
-	XML_PRIMITIVE_PI_RO        = (1 << 3)
-	XML_PRIMITIVE_COMMENT_RO   = (1 << 4)
-	XML_PRIMITIVE_ELEMENT_RW   = (1 << 5)
-	XML_PRIMITIVE_PI_RW        = (1 << 6)
-	XML_PRIMITIVE_COMMENT_RW   = (1 << 7)
-	XML_PRIMITIVE_RO_SINGLETON = (((XML_PRIMITIVE_TEXT | XML_PRIMITIVE_ELEMENT_RO) | XML_PRIMITIVE_PI_RO) | XML_PRIMITIVE_COMMENT_RO)
-	XML_PRIMITIVE_RO_MASK      = (XML_PRIMITIVE_NEVER | XML_PRIMITIVE_RO_SINGLETON)
-	XML_PRIMITIVE_RW_MASK      = ((XML_PRIMITIVE_ELEMENT_RW | XML_PRIMITIVE_PI_RW) | XML_PRIMITIVE_COMMENT_RW)
-	XML_PRIMITIVE_SINGLETON    = (XML_PRIMITIVE_RO_SINGLETON | XML_PRIMITIVE_RW_MASK)
-	XML_PRIMITIVE_ALL_MASK     = (XML_PRIMITIVE_RO_MASK | XML_PRIMITIVE_RW_MASK)
+	xmlPrimitiveNever                         = 1
+	xmlPrimitiveText                          = (1 << 1)
+	xmlPrimitiveElementReadonly               = (1 << 2)
+	xmlPrimitiveProcessingInstructionReadonly = (1 << 3)
+	xmlPrimitiveCommentReadonly               = (1 << 4)
+	xmlPrimitiveElementRw                     = (1 << 5)
+	xmlPrimitivePiRw                          = (1 << 6)
+	xmlPrimitiveCommentRw                     = (1 << 7)
+	xmlPrimitiveRoSingleton                   = (((xmlPrimitiveText | xmlPrimitiveElementReadonly) | xmlPrimitiveProcessingInstructionReadonly) | xmlPrimitiveCommentReadonly)
+	xmlPrimitiveRoMask                        = (xmlPrimitiveNever | xmlPrimitiveRoSingleton)
+	xmlPrimitiveRwMask                        = ((xmlPrimitiveElementRw | xmlPrimitivePiRw) | xmlPrimitiveCommentRw)
+	xmlPrimitiveSingleton                     = (xmlPrimitiveRoSingleton | xmlPrimitiveRwMask)
+	xmlPrimitiveAllMask                       = (xmlPrimitiveRoMask | xmlPrimitiveRwMask)
 )
 
-var _ ProperSubtypeData = &xmlSubtype{}
+var _ properSubtypeData = &xmlSubtype{}
 
-func newXmlSubtypeFromIntBdd(primitives int, sequence Bdd) *xmlSubtype {
+func newXmlSubtypeFromIntBdd(primitives int, sequence bdd) *xmlSubtype {
 	return &xmlSubtype{
 		Primitives: primitives,
 		Sequence:   sequence,
 	}
 }
 
-func xmlSubtypeFrom(primitives int, sequence Bdd) *xmlSubtype {
+func xmlSubtypeFrom(primitives int, sequence bdd) *xmlSubtype {
 	return newXmlSubtypeFromIntBdd(primitives, sequence)
 }
 
@@ -61,12 +61,12 @@ func XMLSingleton(primitives int) SemType {
 func XMLSequence(constituentType SemType) SemType {
 	common.Assert(func() bool { return IsSubtypeSimple(constituentType, XML) })
 	if IsNever(constituentType) {
-		return XMLSequence(XMLSingleton(XML_PRIMITIVE_NEVER))
+		return XMLSequence(XMLSingleton(xmlPrimitiveNever))
 	}
 	if constituentType.some() == 0 {
 		return constituentType
 	}
-	xmlSt := getComplexSubtypeData(constituentType, BTXML)
+	xmlSt := getComplexSubtypeData(constituentType, btXML)
 	if _, ok := xmlSt.(allOrNothingSubtype); ok {
 		// xmlSt stays as is
 	} else {
@@ -77,63 +77,63 @@ func XMLSequence(constituentType SemType) SemType {
 
 func XMLItemType(t SemType) SemType {
 	if !IsSubtypeSimple(t, XML) {
-		return NEVER
+		return Never
 	}
 	if t.some() == 0 {
 		return t
 	}
-	xmlSt := getComplexSubtypeData(t, BTXML)
+	xmlSt := getComplexSubtypeData(t, btXML)
 	if allOrNothing, ok := xmlSt.(allOrNothingSubtype); ok {
 		if allOrNothing.IsAllSubtype() {
 			return XML
 		}
-		return NEVER
+		return Never
 	}
-	bits := xmlSt.(*xmlSubtype).Primitives &^ XML_PRIMITIVE_NEVER
-	var itemTy = NEVER
-	if bits&(XML_PRIMITIVE_ELEMENT_RO|XML_PRIMITIVE_ELEMENT_RW) != 0 {
-		itemTy = Union(itemTy, XML_ELEMENT)
+	bits := xmlSt.(*xmlSubtype).Primitives &^ xmlPrimitiveNever
+	var itemTy = Never
+	if bits&(xmlPrimitiveElementReadonly|xmlPrimitiveElementRw) != 0 {
+		itemTy = Union(itemTy, XMLElement)
 	}
-	if bits&(XML_PRIMITIVE_COMMENT_RO|XML_PRIMITIVE_COMMENT_RW) != 0 {
-		itemTy = Union(itemTy, XML_COMMENT)
+	if bits&(xmlPrimitiveCommentReadonly|xmlPrimitiveCommentRw) != 0 {
+		itemTy = Union(itemTy, XMLComment)
 	}
-	if bits&(XML_PRIMITIVE_PI_RO|XML_PRIMITIVE_PI_RW) != 0 {
-		itemTy = Union(itemTy, XML_PI)
+	if bits&(xmlPrimitiveProcessingInstructionReadonly|xmlPrimitivePiRw) != 0 {
+		itemTy = Union(itemTy, XMLProcessingInstruction)
 	}
-	if bits&XML_PRIMITIVE_TEXT != 0 {
-		itemTy = Union(itemTy, XML_TEXT)
+	if bits&xmlPrimitiveText != 0 {
+		itemTy = Union(itemTy, XMLText)
 	}
 	return itemTy
 }
 
-func makeXmlSequence(d *xmlSubtype) SubtypeData {
-	primitives := (XML_PRIMITIVE_NEVER | d.Primitives)
-	atom := (d.Primitives & XML_PRIMITIVE_SINGLETON)
+func makeXmlSequence(d *xmlSubtype) subtypeData {
+	primitives := (xmlPrimitiveNever | d.Primitives)
+	atom := (d.Primitives & xmlPrimitiveSingleton)
 	sequence := bddUnion(bddAtom(new(createXMLRecAtom(atom))), d.Sequence)
 	return createXmlSubtype(primitives, sequence)
 }
 
-func createXmlSemtype(xmlSubtype SubtypeData) SemType {
+func createXmlSemtype(xmlSubtype subtypeData) SemType {
 	if allOrNothingSubtype, ok := xmlSubtype.(allOrNothingSubtype); ok {
 		if allOrNothingSubtype.IsAllSubtype() {
 			return XML
 		} else {
-			return NEVER
+			return Never
 		}
 	} else {
-		return getBasicSubtype(BTXML, xmlSubtype.(ProperSubtypeData))
+		return getBasicSubtype(btXML, xmlSubtype.(properSubtypeData))
 	}
 }
 
-func createXmlSubtype(primitives int, sequence Bdd) SubtypeData {
-	p := (primitives & XML_PRIMITIVE_ALL_MASK)
-	if allOrNothing, ok := sequence.(*bddAllOrNothing); ok && allOrNothing.IsAll() && (p == XML_PRIMITIVE_ALL_MASK) {
+func createXmlSubtype(primitives int, sequence bdd) subtypeData {
+	p := (primitives & xmlPrimitiveAllMask)
+	if allOrNothing, ok := sequence.(*bddAllOrNothing); ok && allOrNothing.IsAll() && (p == xmlPrimitiveAllMask) {
 		return createAll()
 	}
 	return createXmlSubtypeOrEmpty(p, sequence)
 }
 
-func createXmlSubtypeOrEmpty(primitives int, sequence Bdd) SubtypeData {
+func createXmlSubtypeOrEmpty(primitives int, sequence bdd) subtypeData {
 	if allOrNothing, ok := sequence.(*bddAllOrNothing); ok && allOrNothing.IsNothing() && (primitives == 0) {
 		return createNothing()
 	}

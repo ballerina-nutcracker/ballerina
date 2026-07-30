@@ -19,9 +19,9 @@ package semtypes
 type xmlOps struct{}
 
 var (
-	XML_SUBTYPE_RO               = xmlSubtypeFrom(XML_PRIMITIVE_RO_MASK, bddAtom(new(createXMLRecAtom(XML_PRIMITIVE_RO_SINGLETON))))
-	XML_SUBTYPE_TOP              = xmlSubtypeFrom(XML_PRIMITIVE_ALL_MASK, bddAll())
-	_               BasicTypeOps = &xmlOps{}
+	xmlSubtypeRo               = xmlSubtypeFrom(xmlPrimitiveRoMask, bddAtom(new(createXMLRecAtom(xmlPrimitiveRoSingleton))))
+	xmlSubtypeTop              = xmlSubtypeFrom(xmlPrimitiveAllMask, bddAll())
+	_             basicTypeOps = &xmlOps{}
 )
 
 func newXmlOps() xmlOps {
@@ -29,32 +29,32 @@ func newXmlOps() xmlOps {
 	return this
 }
 
-func (x *xmlOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (x *xmlOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(*xmlSubtype)
 	v2 := d2.(*xmlSubtype)
 	primitives := (v1.Primitives | v2.Primitives)
 	return createXmlSubtype(primitives, bddUnion(v1.Sequence, v2.Sequence))
 }
 
-func (x *xmlOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (x *xmlOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(*xmlSubtype)
 	v2 := d2.(*xmlSubtype)
 	primitives := (v1.Primitives & v2.Primitives)
 	return createXmlSubtypeOrEmpty(primitives, bddIntersect(v1.Sequence, v2.Sequence))
 }
 
-func (x *xmlOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (x *xmlOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(*xmlSubtype)
 	v2 := d2.(*xmlSubtype)
 	primitives := (v1.Primitives & (^v2.Primitives))
 	return createXmlSubtypeOrEmpty(primitives, bddDiff(v1.Sequence, v2.Sequence))
 }
 
-func (x *xmlOps) complement(d SubtypeData) SubtypeData {
-	return x.Diff(XML_SUBTYPE_TOP, d)
+func (x *xmlOps) complement(d subtypeData) subtypeData {
+	return x.Diff(xmlSubtypeTop, d)
 }
 
-func (x *xmlOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (x *xmlOps) IsEmpty(cx Context, t subtypeData) bool {
 	sd := t.(*xmlSubtype)
 	if sd.Primitives != 0 {
 		return false
@@ -62,12 +62,12 @@ func (x *xmlOps) IsEmpty(cx Context, t SubtypeData) bool {
 	return x.xmlBddEmpty(cx, sd.Sequence)
 }
 
-func (x *xmlOps) xmlBddEmpty(cx Context, bdd Bdd) bool {
+func (x *xmlOps) xmlBddEmpty(cx Context, bdd bdd) bool {
 	return bddEvery(cx, bdd, conjunctionNil, conjunctionNil, xmlFormulaIsEmpty)
 }
 
 func xmlFormulaIsEmpty(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
-	allPosBits := collectAllPrimitives(cx, pos) & XML_PRIMITIVE_ALL_MASK
+	allPosBits := collectAllPrimitives(cx, pos) & xmlPrimitiveAllMask
 	return xmlHasTotalNegative(cx, allPosBits, neg)
 }
 

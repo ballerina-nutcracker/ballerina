@@ -138,7 +138,7 @@ func returnFound(a analyzer, returnStmt *ast.BLangReturn) bool {
 		return false
 	}
 	if returnStmt.Expr == nil {
-		if !semtypes.IsSubtype(a.tyCtx(), retTy, semtypes.NIL) {
+		if !semtypes.IsSubtype(a.tyCtx(), retTy, semtypes.Nil) {
 			a.ctx().SemanticError("expect a return value", returnStmt.GetPosition())
 			return false
 		}
@@ -430,7 +430,7 @@ func validateInitFunction(a analyzer, function *ast.BLangFunction, fnSymbol mode
 
 	actualReturnType := fnSymbol.Signature().ReturnType
 	if !semtypes.IsZero(actualReturnType) {
-		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.NIL) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.NIL, semtypes.ERROR)) {
+		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Nil) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.Nil, semtypes.Error)) {
 			a.semanticErr("'init' function must have return type '()' or  'error?'", pos)
 		}
 	}
@@ -448,7 +448,7 @@ func validateMainFunction(a analyzer, fnSymbol model.FunctionSymbol, pos diagnos
 	actualReturnType := fnSymbol.Signature().ReturnType
 
 	if !semtypes.IsZero(actualReturnType) {
-		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.NIL) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.NIL, semtypes.ERROR)) {
+		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Nil) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.Nil, semtypes.Error)) {
 			a.semanticErr("'main' function must have return type '()' or  'error?'", pos)
 		}
 	}
@@ -988,14 +988,14 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 	case *ast.BLangAnnotAccessExpr:
 		// Annotation access is only valid on a typedesc value, so the receiver
 		// is analyzed with typedesc as its expected type.
-		if !analyzeActionOrExpression(a, expr.Expr, semtypes.TYPEDESC) {
+		if !analyzeActionOrExpression(a, expr.Expr, semtypes.Typedesc) {
 			return false
 		}
 		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangXMLElementLiteral:
 		for i := range expr.Attrs {
 			attr := &expr.Attrs[i]
-			if attr.Value != nil && !analyzeActionOrExpression(a, attr.Value, semtypes.STRING) {
+			if attr.Value != nil && !analyzeActionOrExpression(a, attr.Value, semtypes.String) {
 				return false
 			}
 		}
@@ -1023,7 +1023,7 @@ func analyzeCheckedExpr[A analyzer](a A, expr *ast.BLangCheckedExpr, expectedTyp
 	retTy := expectedReturnType(a)
 	if !semtypes.IsZero(retTy) {
 		exprTy := expr.Expr.GetDeterminedType()
-		errorPart := semtypes.Intersect(exprTy, semtypes.ERROR)
+		errorPart := semtypes.Intersect(exprTy, semtypes.Error)
 		if !semtypes.IsEmpty(a.tyCtx(), errorPart) {
 			if !semtypes.IsSubtype(a.tyCtx(), errorPart, retTy) {
 				a.ctx().SemanticError("error type of check expression is not a subtype of the enclosing function's return type", expr.GetPosition())
@@ -1233,7 +1233,7 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 			a.semanticErr("on conflict clause is supported only for map query construct type", clauses.onConflictClause.GetPosition())
 			return false
 		}
-		if !analyzeActionOrExpression(a, clauses.onConflictClause.Expression, semtypes.Union(semtypes.ERROR, semtypes.NIL)) {
+		if !analyzeActionOrExpression(a, clauses.onConflictClause.Expression, semtypes.Union(semtypes.Error, semtypes.Nil)) {
 			return false
 		}
 	}
@@ -1283,9 +1283,9 @@ func validateStreamCloseMethod[A analyzer](a A, impl ast.BLangExpression, comple
 	}
 	closeFnTy := semtypes.ObjectMemberType(cx, closeName, implTy)
 	paramListDefn := semtypes.NewListDefinition()
-	emptyParamList := paramListDefn.DefineListTypeWrapped(cx.Env(), nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	emptyParamList := paramListDefn.DefineListTypeWrapped(cx.Env(), nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
 	returnTy := semtypes.FunctionReturnType(cx, closeFnTy, emptyParamList)
-	expectedReturnTy := semtypes.Union(completionTy, semtypes.NIL)
+	expectedReturnTy := semtypes.Union(completionTy, semtypes.Nil)
 	if semtypes.IsZero(returnTy) || !semtypes.IsSubtype(cx, returnTy, expectedReturnTy) {
 		a.semanticErr("stream implementor close method is incompatible", impl.GetPosition())
 		return false
@@ -1346,7 +1346,7 @@ func hasPotentialNumericConversions(exprTy, targetType semtypes.SemType) bool {
 	if !semtypes.SingleNumericType(targetType).IsPresent() {
 		return false
 	}
-	return semtypes.ContainsBasicType(exprTy, semtypes.NUMBER)
+	return semtypes.ContainsBasicType(exprTy, semtypes.Number)
 }
 
 func analyzeFieldBasedAccess[A analyzer](a A, expr *ast.BLangFieldBaseAccess, expectedType semtypes.SemType) bool {
@@ -1366,15 +1366,15 @@ func analyzeIndexBasedAccess[A analyzer](a A, expr *ast.BLangIndexBasedAccess, e
 
 	var keyExprExpectedType semtypes.SemType
 	ctx := a.tyCtx()
-	if semtypes.IsSubtype(ctx, containerExprTy, semtypes.LIST) ||
-		semtypes.IsSubtype(ctx, containerExprTy, semtypes.STRING) ||
+	if semtypes.IsSubtype(ctx, containerExprTy, semtypes.List) ||
+		semtypes.IsSubtype(ctx, containerExprTy, semtypes.String) ||
 		semtypes.IsSubtype(ctx, containerExprTy, semtypes.XML) {
-		keyExprExpectedType = semtypes.INT
-	} else if semtypes.IsSubtype(ctx, containerExprTy, semtypes.TABLE) {
+		keyExprExpectedType = semtypes.Int
+	} else if semtypes.IsSubtype(ctx, containerExprTy, semtypes.Table) {
 		a.unimplementedErr("table not supported", expr.GetPosition())
 		return false
-	} else if semtypes.IsSubtype(ctx, containerExprTy, semtypes.Union(semtypes.NIL, semtypes.MAPPING)) {
-		keyExprExpectedType = semtypes.STRING
+	} else if semtypes.IsSubtype(ctx, containerExprTy, semtypes.Union(semtypes.Nil, semtypes.Mapping)) {
+		keyExprExpectedType = semtypes.String
 	} else {
 		a.semanticErr("incompatible type for index based access", expr.GetPosition())
 		return false
@@ -1405,7 +1405,7 @@ func analyzeListConstructorExpr[A analyzer](a A, expr *ast.BLangListConstructorE
 				return false
 			}
 			restMember = true
-			memberIndex = lat.Members.FixedLength
+			memberIndex = lat.FixedLength()
 			continue
 		}
 		if !analyzeActionOrExpression(a, memberExpr, memberExpectedType) {
@@ -1415,7 +1415,7 @@ func analyzeListConstructorExpr[A analyzer](a A, expr *ast.BLangListConstructorE
 			memberIndex++
 		}
 	}
-	for i := memberIndex; i < lat.Members.FixedLength; i++ {
+	for i := memberIndex; i < lat.FixedLength(); i++ {
 		memberTy := lat.MemberAtInnerVal(i)
 		if _, ok := semtypes.FillerValue(a.tyCtx(), memberTy); !ok {
 			a.semanticErr(fmt.Sprintf("missing required member at index %d: type '%s' has no filler value", i, semtypes.ToString(a.tyCtx(), memberTy)), expr.GetPosition())
@@ -1439,8 +1439,8 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 		hasValue[fd.FieldName] = true
 	}
 	seen := make(map[string]bool, len(expr.Fields))
-	namedFields := make(map[string]bool, len(mat.Names))
-	for _, n := range mat.Names {
+	namedFields := make(map[string]bool, len(mat.FieldNames()))
+	for _, n := range mat.FieldNames() {
 		namedFields[n] = true
 	}
 	for _, f := range expr.Fields {
@@ -1451,9 +1451,9 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 			return false
 		}
 		seen[keyName] = true
-		// For record type desc (ie len(mat.Names) > 0) if the key is not a string literal it must be
+		// For record type desc (ie len(mat.FieldNames()) > 0) if the key is not a string literal it must be
 		// nameed field
-		if kv.Key.Kind == ast.MappingKeyIdentifier && len(mat.Names) > 0 && !namedFields[keyName] {
+		if kv.Key.Kind == ast.MappingKeyIdentifier && len(mat.FieldNames()) > 0 && !namedFields[keyName] {
 			a.semanticErr(fmt.Sprintf("identifier '%s' cannot be used as a key for a rest field; use a string literal instead", keyName), kv.Key.GetPosition())
 			return false
 		}
@@ -1463,7 +1463,7 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 			return false
 		}
 	}
-	for _, name := range mat.Names {
+	for _, name := range mat.FieldNames() {
 		if hasValue[name] {
 			continue
 		}
@@ -1485,7 +1485,7 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 	tyCtx := a.tyCtx()
 
 	msgArg := expr.PositionalArgs[0]
-	if !analyzeActionOrExpression(a, msgArg, semtypes.STRING) {
+	if !analyzeActionOrExpression(a, msgArg, semtypes.String) {
 		return false
 	}
 	detailTy, ok := semtypes.ErrorDetailType(tyCtx, expr.DeterminedType)
@@ -1516,8 +1516,8 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 	}
 
 	providedDetailDef := semtypes.NewMappingDefinition()
-	providedDetailTy := providedDetailDef.DefineMappingTypeWrapped(tyCtx.Env(), providedFields, semtypes.NEVER)
-	providedDetailTy = semtypes.Intersect(providedDetailTy, semtypes.VAL_READONLY)
+	providedDetailTy := providedDetailDef.DefineMappingTypeWrapped(tyCtx.Env(), providedFields, semtypes.Never)
+	providedDetailTy = semtypes.Intersect(providedDetailTy, semtypes.ValReadonly)
 	if !semtypes.IsSubtype(tyCtx, providedDetailTy, detailTy) {
 		a.semanticErr("error detail arguments are incompatible with error detail type", expr.GetPosition())
 		return false
@@ -1525,7 +1525,7 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 
 	if argCount == 2 {
 		causeArg := expr.PositionalArgs[1]
-		if !analyzeActionOrExpression(a, causeArg, semtypes.Union(semtypes.ERROR, semtypes.NIL)) {
+		if !analyzeActionOrExpression(a, causeArg, semtypes.Union(semtypes.Error, semtypes.Nil)) {
 			return false
 		}
 	}
@@ -1541,8 +1541,8 @@ func analyzeUnaryExpr[A analyzer](a A, unaryExpr *ast.BLangUnaryExpr, expectedTy
 	exprTy := unaryExpr.Expr.GetDeterminedType()
 	// Strip nil for nil-lifted numeric/bitwise unary operations
 	underlyingTy := exprTy
-	if semtypes.ContainsBasicType(exprTy, semtypes.NIL) {
-		underlyingTy = semtypes.Diff(exprTy, semtypes.NIL)
+	if semtypes.ContainsBasicType(exprTy, semtypes.Nil) {
+		underlyingTy = semtypes.Diff(exprTy, semtypes.Nil)
 	}
 
 	switch unaryExpr.GetOperatorKind() {
@@ -1552,7 +1552,7 @@ func analyzeUnaryExpr[A analyzer](a A, unaryExpr *ast.BLangUnaryExpr, expectedTy
 			return false
 		}
 	case model.OperatorKind_NOT:
-		if !semtypes.IsSubtype(a.tyCtx(), exprTy, semtypes.BOOLEAN) {
+		if !semtypes.IsSubtype(a.tyCtx(), exprTy, semtypes.Boolean) {
 			a.semanticErr(fmt.Sprintf("expect boolean type for %s", string(unaryExpr.GetOperatorKind())), unaryExpr.GetPosition())
 			return false
 		}
@@ -1599,7 +1599,7 @@ func analyzeBinaryExpr[A analyzer](a A, binaryExpr *ast.BLangBinaryExpr, expecte
 			return false
 		}
 	} else if common.IsRangeExpr(binaryExpr) {
-		if !semtypes.IsSubtype(a.tyCtx(), lhsTy, semtypes.INT) || !semtypes.IsSubtype(a.tyCtx(), rhsTy, semtypes.INT) {
+		if !semtypes.IsSubtype(a.tyCtx(), lhsTy, semtypes.Int) || !semtypes.IsSubtype(a.tyCtx(), rhsTy, semtypes.Int) {
 			a.semanticErr(fmt.Sprintf("expect int types for %s", string(binaryExpr.GetOperatorKind())), binaryExpr.GetPosition())
 			return false
 		}
@@ -1608,7 +1608,7 @@ func analyzeBinaryExpr[A analyzer](a A, binaryExpr *ast.BLangBinaryExpr, expecte
 			return false
 		}
 	} else if common.IsLogicalExpression(binaryExpr) {
-		if !semtypes.IsSubtype(a.tyCtx(), lhsTy, semtypes.BOOLEAN) || !semtypes.IsSubtype(a.tyCtx(), rhsTy, semtypes.BOOLEAN) {
+		if !semtypes.IsSubtype(a.tyCtx(), lhsTy, semtypes.Boolean) || !semtypes.IsSubtype(a.tyCtx(), rhsTy, semtypes.Boolean) {
 			a.semanticErr(fmt.Sprintf("expect boolean types for %s", string(binaryExpr.GetOperatorKind())), binaryExpr.GetPosition())
 			return false
 		}
@@ -1620,11 +1620,11 @@ func analyzeBinaryExpr[A analyzer](a A, binaryExpr *ast.BLangBinaryExpr, expecte
 
 func analyzeBitWiseExpr[A analyzer](a A, binaryExpr *ast.BLangBinaryExpr, lhsTy, rhsTy semtypes.SemType) bool {
 	ctx := a.tyCtx()
-	if semtypes.ContainsBasicType(lhsTy, semtypes.NIL) || semtypes.ContainsBasicType(rhsTy, semtypes.NIL) {
-		lhsTy = semtypes.Diff(lhsTy, semtypes.NIL)
-		rhsTy = semtypes.Diff(rhsTy, semtypes.NIL)
+	if semtypes.ContainsBasicType(lhsTy, semtypes.Nil) || semtypes.ContainsBasicType(rhsTy, semtypes.Nil) {
+		lhsTy = semtypes.Diff(lhsTy, semtypes.Nil)
+		rhsTy = semtypes.Diff(rhsTy, semtypes.Nil)
 	}
-	if !semtypes.IsSubtype(ctx, lhsTy, semtypes.INT) || !semtypes.IsSubtype(ctx, rhsTy, semtypes.INT) {
+	if !semtypes.IsSubtype(ctx, lhsTy, semtypes.Int) || !semtypes.IsSubtype(ctx, rhsTy, semtypes.Int) {
 		a.semanticErr("expect integer types for bitwise operators", binaryExpr.GetPosition())
 		return false
 	}
@@ -1633,11 +1633,11 @@ func analyzeBitWiseExpr[A analyzer](a A, binaryExpr *ast.BLangBinaryExpr, lhsTy,
 
 func analyzeShiftExpr[A analyzer](a A, lhsTy, rhsTy semtypes.SemType) bool {
 	ctx := a.tyCtx()
-	if semtypes.ContainsBasicType(lhsTy, semtypes.NIL) || semtypes.ContainsBasicType(rhsTy, semtypes.NIL) {
-		lhsTy = semtypes.Diff(lhsTy, semtypes.NIL)
-		rhsTy = semtypes.Diff(rhsTy, semtypes.NIL) //nolint:staticcheck,ineffassign // rhsTy will be used when nil-lifted binary ops are fully implemented
+	if semtypes.ContainsBasicType(lhsTy, semtypes.Nil) || semtypes.ContainsBasicType(rhsTy, semtypes.Nil) {
+		lhsTy = semtypes.Diff(lhsTy, semtypes.Nil)
+		rhsTy = semtypes.Diff(rhsTy, semtypes.Nil) //nolint:staticcheck,ineffassign // rhsTy will be used when nil-lifted binary ops are fully implemented
 	}
-	if !semtypes.IsSubtype(ctx, lhsTy, semtypes.INT) || !semtypes.IsSubtype(ctx, rhsTy, semtypes.INT) {
+	if !semtypes.IsSubtype(ctx, lhsTy, semtypes.Int) || !semtypes.IsSubtype(ctx, rhsTy, semtypes.Int) {
 		return false
 	}
 	return true
@@ -1772,7 +1772,7 @@ func analyzeSimpleVariableDef[A analyzer](a A, simpleVariableDef *ast.BLangVaria
 	variable := simpleVariableDef.GetVariable()
 	expectedType := variable.GetDeterminedType()
 	if variable.GetName().GetValue() == string(model.IGNORE) {
-		if !semtypes.IsSubtype(a.tyCtx(), expectedType, semtypes.ANY) {
+		if !semtypes.IsSubtype(a.tyCtx(), expectedType, semtypes.Any) {
 			a.semanticErr("wildcard binding pattern type must be a subtype of 'any'", variable.GetPosition())
 			return false
 		}
@@ -1830,7 +1830,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangXMLNS:
 		expr := n.GetNamespaceURI()
-		validateResolvedType(a, expr, semtypes.STRING)
+		validateResolvedType(a, expr, semtypes.String)
 		validateConstantExpr(a.ctx(), expr, func(e ast.BLangExpression) {
 			a.semanticErr("expression is not a constant expression", e.GetPosition())
 		})
@@ -1868,7 +1868,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 			return nil
 		}
 		exprType := n.Expr.GetDeterminedType()
-		if !semtypes.IsSubtype(a.tyCtx(), exprType, semtypes.NIL) {
+		if !semtypes.IsSubtype(a.tyCtx(), exprType, semtypes.Nil) {
 			a.semanticErr("expression value must be assigned", n.Expr.GetPosition())
 			return nil
 		}
@@ -1884,7 +1884,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		}
 		return nil
 	case *ast.BLangPanic:
-		analyzeActionOrExpression(a, n.Expr, semtypes.ERROR)
+		analyzeActionOrExpression(a, n.Expr, semtypes.Error)
 		return nil
 	case *ast.BLangRecordType:
 		validateRecordFieldDefaults(a, n)
@@ -2008,7 +2008,7 @@ func analyzeCompoundAssignment[A analyzer](a A, assignment *ast.BLangCompoundAss
 	}
 	lhsTy := assignment.GetVariable().GetDeterminedType()
 	rhsTy := assignment.GetExpression().GetDeterminedType()
-	if semtypes.ContainsBasicType(lhsTy, semtypes.NIL) || semtypes.ContainsBasicType(rhsTy, semtypes.NIL) {
+	if semtypes.ContainsBasicType(lhsTy, semtypes.Nil) || semtypes.ContainsBasicType(rhsTy, semtypes.Nil) {
 		a.semanticErr("compound assignment operands cannot be nilable", assignment.GetPosition())
 		return false
 	}
@@ -2016,11 +2016,11 @@ func analyzeCompoundAssignment[A analyzer](a A, assignment *ast.BLangCompoundAss
 }
 
 func analyzeIf[A analyzer](a A, ifStmt *ast.BLangIf) bool {
-	return analyzeActionOrExpression(a, ifStmt.Expr, semtypes.BOOLEAN)
+	return analyzeActionOrExpression(a, ifStmt.Expr, semtypes.Boolean)
 }
 
 func analyzeWhile[A analyzer](a A, whileStmt *ast.BLangWhile) bool {
-	return analyzeActionOrExpression(a, whileStmt.Expr, semtypes.BOOLEAN)
+	return analyzeActionOrExpression(a, whileStmt.Expr, semtypes.Boolean)
 }
 
 func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
@@ -2031,7 +2031,7 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 	variable := foreachStmt.VariableDef.GetVariable()
 	variableType := a.ctx().SymbolType(variable.Symbol())
 	if binExpr, ok := collection.(*ast.BLangBinaryExpr); ok && common.IsRangeExpr(binExpr) {
-		if !semtypes.IsSubtype(a.tyCtx(), variableType, semtypes.INT) {
+		if !semtypes.IsSubtype(a.tyCtx(), variableType, semtypes.Int) {
 			a.semanticErr("foreach variable must be a subtype of int for range expression", collection.GetPosition())
 			return false
 		}
@@ -2039,15 +2039,15 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 		collectionType := collection.GetDeterminedType()
 		var expectedValueType semtypes.SemType
 		switch {
-		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.LIST):
+		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.List):
 			memberTypes := semtypes.ListAllMemberTypesInner(a.tyCtx(), collectionType)
-			result := semtypes.NEVER
-			for _, each := range memberTypes.SemTypes {
+			result := semtypes.Never
+			for _, each := range memberTypes.Types {
 				result = semtypes.Union(result, each)
 			}
 			expectedValueType = result
-		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.MAPPING):
-			expectedValueType = semtypes.MappingMemberTypeInnerVal(a.tyCtx(), collectionType, semtypes.STRING)
+		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.Mapping):
+			expectedValueType = semtypes.MappingMemberTypeInnerVal(a.tyCtx(), collectionType, semtypes.String)
 		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.XML):
 			expectedValueType = semtypes.XMLItemType(collectionType)
 		default:
@@ -2064,12 +2064,12 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			// Extract value type from the iterator's next() return type
 			iteratorMethodTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("iterator"), collectionType)
 			ld := semtypes.NewListDefinition()
-			emptyArgs := ld.DefineListTypeWrapped(a.tyCtx().Env(), []semtypes.SemType{}, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+			emptyArgs := ld.DefineListTypeWrapped(a.tyCtx().Env(), []semtypes.SemType{}, 0, semtypes.Never, semtypes.CellMutabilityNone)
 			iteratorTy := semtypes.FunctionReturnType(tyCtx, iteratorMethodTy, emptyArgs)
 			nextMethodTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("next"), iteratorTy)
 			nextReturnTy := semtypes.FunctionReturnType(tyCtx, nextMethodTy, emptyArgs)
 			// next returns record{|T value|}|C where C is completion type (nil, error|nil, etc.)
-			recordPart := semtypes.Diff(nextReturnTy, semtypes.Union(semtypes.NIL, semtypes.ERROR))
+			recordPart := semtypes.Diff(nextReturnTy, semtypes.Union(semtypes.Nil, semtypes.Error))
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(tyCtx, recordPart, semtypes.StringConst("value"))
 		}
 		if !semtypes.IsSubtype(a.tyCtx(), expectedValueType, variableType) {
@@ -2110,7 +2110,7 @@ func validateClassDefn[A analyzer](a A, inclusions []model.SymbolRef, inclusionP
 }
 
 func validateResourceMethodReturnType[A analyzer](a A, retTy semtypes.SemType, rm *ast.BLangResourceMethod) {
-	if !semtypes.IsEmpty(a.tyCtx(), semtypes.Intersect(retTy, semtypes.FUNCTION)) {
+	if !semtypes.IsEmpty(a.tyCtx(), semtypes.Intersect(retTy, semtypes.Function)) {
 		a.semanticErr("resource method return type must not include a function type", rm.GetPosition())
 		return
 	}
@@ -2155,7 +2155,7 @@ func validateDuplicateResourceMethods[A analyzer](a A, rms []*ast.BLangResourceM
 }
 
 func isImmutableField(tyCtx semtypes.Context, field *ast.BLangVariable) bool {
-	return field.IsFinal() && semtypes.IsSubtype(tyCtx, field.GetDeterminedType(), semtypes.VAL_READONLY)
+	return field.IsFinal() && semtypes.IsSubtype(tyCtx, field.GetDeterminedType(), semtypes.ValReadonly)
 }
 
 func validateIsolatedClassFields[A analyzer](a A, fields []*ast.BLangVariable) {

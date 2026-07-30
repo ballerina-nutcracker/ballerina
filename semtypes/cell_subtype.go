@@ -17,11 +17,11 @@
 package semtypes
 
 func cellContaining(env Env, ty SemType) SemType {
-	return cellContainingWithEnvSemTypeCellMutability(env, ty, CellMutability_CELL_MUT_LIMITED)
+	return cellContainingWithEnvSemTypeCellMutability(env, ty, CellMutabilityLimited)
 }
 
 func roCellContaining(env Env, ty SemType) SemType {
-	return cellContainingWithEnvSemTypeCellMutability(env, ty, CellMutability_CELL_MUT_NONE)
+	return cellContainingWithEnvSemTypeCellMutability(env, ty, CellMutabilityNone)
 }
 
 func cellContainingWithEnvSemTypeCellMutability(env Env, ty SemType, mut CellMutability) SemType {
@@ -33,5 +33,5 @@ func cellContainingWithEnvSemTypeCellMutability(env Env, ty SemType, mut CellMut
 	atomicCell := cellAtomicTypeFrom(ty, mut)
 	atom := env.cellAtom(&atomicCell)
 	bdd := bddAtom(atom)
-	return getBasicSubtype(BTCell, bdd)
+	return getBasicSubtype(btCell, bdd)
 }

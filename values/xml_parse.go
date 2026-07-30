@@ -70,7 +70,7 @@ type xmlBuildCtx struct {
 
 func newXMLBuildCtx(tc semtypes.Context, mode XMLParseMode) *xmlBuildCtx {
 	md := semtypes.NewMappingDefinition()
-	stringMapTy := md.DefineMappingTypeWrapped(tc.Env(), nil, semtypes.STRING)
+	stringMapTy := md.DefineMappingTypeWrapped(tc.Env(), nil, semtypes.String)
 	return &xmlBuildCtx{
 		stringMapTy:     stringMapTy,
 		stringMapAtomic: semtypes.ToMappingAtomicType(tc, stringMapTy),

@@ -17,7 +17,7 @@
 package semtypes
 
 func MappingMemberTypeInnerValProj(cx Context, t SemType, k SemType) SemType {
-	return Diff(mappingMemberTypeInner(cx, t, k), UNDEF)
+	return Diff(mappingMemberTypeInner(cx, t, k), Undef)
 }
 
 // This computes the spec operation called "member type of K in T",
@@ -25,24 +25,24 @@ func MappingMemberTypeInnerValProj(cx Context, t SemType, k SemType) SemType {
 // This is what Castagna calls projection.
 func mappingMemberTypeInner(cx Context, t SemType, k SemType) SemType {
 	if t.some() == 0 {
-		if (t.all() & MAPPING.all()) != 0 {
-			return VAL
+		if (t.all() & Mapping.all()) != 0 {
+			return Val
 		}
-		return UNDEF
+		return Undef
 	}
 	keyData := getStringSubtype(k)
 	if isNothingSubtype(keyData) {
-		return UNDEF
+		return Undef
 	}
-	return bddMappingMemberTypeInner(cx, getComplexSubtypeData(t, BTMapping).(Bdd), keyData, INNER)
+	return bddMappingMemberTypeInner(cx, getComplexSubtypeData(t, btMapping).(bdd), keyData, Inner)
 }
 
-func bddMappingMemberTypeInner(cx Context, b Bdd, key SubtypeData, accum SemType) SemType {
+func bddMappingMemberTypeInner(cx Context, b bdd, key subtypeData, accum SemType) SemType {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return accum
 		} else {
-			return NEVER
+			return Never
 		}
 	} else {
 		bn := b.(bddNode)
@@ -60,7 +60,7 @@ func bddMappingMemberTypeInner(cx Context, b Bdd, key SubtypeData, accum SemType
 	}
 }
 
-func mappingAtomicMemberTypeInnerProj(atomic *MappingAtomicType, key SubtypeData) SemType {
+func mappingAtomicMemberTypeInnerProj(atomic *MappingAtomicType, key subtypeData) SemType {
 	var memberType SemType
 	for _, ty := range mappingAtomicApplicableMemberTypesInnerProj(atomic, key) {
 		if IsZero(memberType) {
@@ -70,25 +70,25 @@ func mappingAtomicMemberTypeInnerProj(atomic *MappingAtomicType, key SubtypeData
 		}
 	}
 	if IsZero(memberType) {
-		return UNDEF
+		return Undef
 	} else {
 		return memberType
 	}
 }
 
-func mappingAtomicApplicableMemberTypesInnerProj(atomic *MappingAtomicType, key SubtypeData) []SemType {
-	types := make([]SemType, len(atomic.Types))
-	for i := range atomic.Types {
-		types[i] = cellInner(atomic.Types[i])
+func mappingAtomicApplicableMemberTypesInnerProj(atomic *MappingAtomicType, key subtypeData) []SemType {
+	types := make([]SemType, len(atomic.types))
+	for i := range atomic.types {
+		types[i] = cellInner(atomic.types[i])
 	}
 
 	var memberTypes []SemType
-	rest := cellInner(atomic.Rest)
+	rest := cellInner(atomic.rest)
 	if isAllSubtype(key) {
 		memberTypes = append(memberTypes, types...)
 		memberTypes = append(memberTypes, rest)
 	} else {
-		coverage := getStringSubtypeListCoverage(key.(stringSubtype), atomic.Names)
+		coverage := getStringSubtypeListCoverage(key.(stringSubtype), atomic.names)
 		for _, index := range coverage.Indices {
 			memberTypes = append(memberTypes, types[index])
 		}

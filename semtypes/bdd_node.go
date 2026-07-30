@@ -17,35 +17,35 @@
 package semtypes
 
 type bddNode interface {
-	Bdd
+	bdd
 	atom() atom
-	left() Bdd
-	middle() Bdd
-	right() Bdd
+	left() bdd
+	middle() bdd
+	right() bdd
 }
 
-func bddNodeCreate(atom atom, left Bdd, middle Bdd, right Bdd) bddNode {
+func bddNodeCreate(atom atom, left bdd, middle bdd, right bdd) bddNode {
 	if isSimpleNode(left, middle, right) {
 		return newBddNodeSimple(atom)
 	}
 	return newBddNodeImpl(atom, left, middle, right)
 }
 
-func isSimpleNode(left Bdd, middle Bdd, right Bdd) bool {
+func isSimpleNode(left bdd, middle bdd, right bdd) bool {
 	leftIsAll := isAll(left)
 	middleIsNothing := isNothing(middle)
 	rightIsNothing := isNothing(right)
 	return leftIsAll && middleIsNothing && rightIsNothing
 }
 
-func isAll(bdd Bdd) bool {
+func isAll(bdd bdd) bool {
 	if allOrNothig, ok := bdd.(*bddAllOrNothing); ok {
 		return allOrNothig.isAll
 	}
 	return false
 }
 
-func isNothing(bdd Bdd) bool {
+func isNothing(bdd bdd) bool {
 	if allOrNothig, ok := bdd.(*bddAllOrNothing); ok {
 		return !allOrNothig.isAll
 	}

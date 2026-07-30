@@ -16,38 +16,38 @@
 
 package semtypes
 
-type BddCommonOpsData any
+type bddCommonOpsData any
 
-type BddCommonOps interface {
-	BddCommonOpsData
+type bddCommonOps interface {
+	bddCommonOpsData
 }
 
 type bddOpMemoKey struct {
-	B1 Bdd
-	B2 Bdd
+	B1 bdd
+	B2 bdd
 }
 
 type bddOpMemo struct {
-	UnionMemo        map[bddOpMemoKey]Bdd
-	IntersectionMemo map[bddOpMemoKey]Bdd
-	DiffMemo         map[bddOpMemoKey]Bdd
+	UnionMemo        map[bddOpMemoKey]bdd
+	IntersectionMemo map[bddOpMemoKey]bdd
+	DiffMemo         map[bddOpMemoKey]bdd
 }
 
 type bddCommonOpsBase struct{}
 
 type bddCommonOpsMethods struct {
-	Self BddCommonOps
+	Self bddCommonOps
 }
 
 func bddAtom(atom atom) bddNode {
 	return bddNodeCreate(atom, bddAll(), bddNothing(), bddNothing())
 }
 
-func bddUnion(b1 Bdd, b2 Bdd) Bdd {
+func bddUnion(b1 bdd, b2 bdd) bdd {
 	return bddUnionWithMemo(createBddOpMemo(), b1, b2)
 }
 
-func bddUnionWithMemo(memoTable *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
+func bddUnionWithMemo(memoTable *bddOpMemo, b1 bdd, b2 bdd) bdd {
 	key := bddOpMemoKey{B1: b1, B2: b2}
 	memoized, ok := memoTable.UnionMemo[key]
 	if ok {
@@ -58,7 +58,7 @@ func bddUnionWithMemo(memoTable *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
 	return memoized
 }
 
-func bddUnionInner(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
+func bddUnionInner(memo *bddOpMemo, b1 bdd, b2 bdd) bdd {
 	if b1 == b2 {
 		return b1
 	}
@@ -89,11 +89,11 @@ func bddUnionInner(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
 	}
 }
 
-func bddIntersect(b1 Bdd, b2 Bdd) Bdd {
+func bddIntersect(b1 bdd, b2 bdd) bdd {
 	return bddIntersectWithMemo(createBddOpMemo(), b1, b2)
 }
 
-func bddIntersectWithMemo(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
+func bddIntersectWithMemo(memo *bddOpMemo, b1 bdd, b2 bdd) bdd {
 	key := bddOpMemoKey{B1: b1, B2: b2}
 	memoized, ok := memo.IntersectionMemo[key]
 	if ok {
@@ -104,7 +104,7 @@ func bddIntersectWithMemo(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
 	return memoized
 }
 
-func bddIntersectInner(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
+func bddIntersectInner(memo *bddOpMemo, b1 bdd, b2 bdd) bdd {
 	if b1 == b2 {
 		return b1
 	}
@@ -135,11 +135,11 @@ func bddIntersectInner(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
 	}
 }
 
-func bddDiff(b1 Bdd, b2 Bdd) Bdd {
+func bddDiff(b1 bdd, b2 bdd) bdd {
 	return bddDiffWithMemo(createBddOpMemo(), b1, b2)
 }
 
-func bddDiffWithMemo(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
+func bddDiffWithMemo(memo *bddOpMemo, b1 bdd, b2 bdd) bdd {
 	key := bddOpMemoKey{B1: b1, B2: b2}
 	memoized, ok := memo.DiffMemo[key]
 	if ok {
@@ -150,7 +150,7 @@ func bddDiffWithMemo(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
 	return memoized
 }
 
-func bddDiffInner(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
+func bddDiffInner(memo *bddOpMemo, b1 bdd, b2 bdd) bdd {
 	if b1 == b2 {
 		return bddNothing()
 	}
@@ -181,14 +181,14 @@ func bddDiffInner(memo *bddOpMemo, b1 Bdd, b2 Bdd) Bdd {
 	}
 }
 
-func bddComplement(b Bdd) Bdd {
+func bddComplement(b bdd) bdd {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		return allOrNothing.complement()
 	}
 	return bddNodeComplement(b.(bddNode))
 }
 
-func bddNodeComplement(b bddNode) Bdd {
+func bddNodeComplement(b bddNode) bdd {
 	bddNothing := bddNothing()
 	if b.right() == bddNothing {
 		return bddCreate(b.atom(), bddNothing, bddComplement(bddUnion(b.left(), b.middle())), bddComplement(b.middle()))
@@ -201,7 +201,7 @@ func bddNodeComplement(b bddNode) Bdd {
 	}
 }
 
-func bddCreate(atom atom, left Bdd, middle Bdd, right Bdd) Bdd {
+func bddCreate(atom atom, left bdd, middle bdd, right bdd) bdd {
 	if allOrNothing, ok := middle.(*bddAllOrNothing); ok && allOrNothing.IsAll() {
 		return middle
 	}
@@ -226,7 +226,7 @@ func atomCmp(a1 atom, a2 atom) int {
 	return a1.index() - a2.index()
 }
 
-func (c *bddCommonOpsMethods) BddToString(b Bdd, inner bool) string {
+func (c *bddCommonOpsMethods) BddToString(b bdd, inner bool) string {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return "1"
@@ -251,8 +251,8 @@ func (c *bddCommonOpsMethods) BddToString(b Bdd, inner bool) string {
 
 func createBddOpMemo() *bddOpMemo {
 	return &bddOpMemo{
-		UnionMemo:        make(map[bddOpMemoKey]Bdd),
-		IntersectionMemo: make(map[bddOpMemoKey]Bdd),
-		DiffMemo:         make(map[bddOpMemoKey]Bdd),
+		UnionMemo:        make(map[bddOpMemoKey]bdd),
+		IntersectionMemo: make(map[bddOpMemoKey]bdd),
+		DiffMemo:         make(map[bddOpMemoKey]bdd),
 	}
 }

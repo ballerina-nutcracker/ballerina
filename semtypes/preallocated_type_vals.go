@@ -55,9 +55,9 @@ type basicCellTypeVals struct {
 
 func newPreallocatedTypeVals(env Env) preallocatedTypeVals {
 	p := preallocatedTypeVals{
-		none:      newBasicCellTypeVals(env, CellMutability_CELL_MUT_NONE),
-		limited:   newBasicCellTypeVals(env, CellMutability_CELL_MUT_LIMITED),
-		unlimited: newBasicCellTypeVals(env, CellMutability_CELL_MUT_UNLIMITED),
+		none:      newBasicCellTypeVals(env, CellMutabilityNone),
+		limited:   newBasicCellTypeVals(env, CellMutabilityLimited),
+		unlimited: newBasicCellTypeVals(env, cellMutabilityUnlimited),
 	}
 	env.preallocatedTypeVals = p
 	p.json = buildJSON(env)
@@ -68,7 +68,7 @@ func newPreallocatedTypeVals(env Env) preallocatedTypeVals {
 func buildJSON(env Env) SemType {
 	listDef := &ListDefinition{}
 	mapDef := &MappingDefinition{}
-	j := Union(SIMPLE_OR_STRING, Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
+	j := Union(SimpleOrString, Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
 	listDef.DefineListTypeWrappedWithEnvSemType(env, j)
 	mapDef.DefineMappingTypeWrapped(env, nil, j)
 	return j
@@ -78,7 +78,7 @@ func buildAnydata(env Env) SemType {
 	listDef := &ListDefinition{}
 	mapDef := &MappingDefinition{}
 	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
-	ad := Union(Union(SIMPLE_OR_STRING, Union(XML, Union(REGEXP, tableTy))),
+	ad := Union(Union(SimpleOrString, Union(XML, Union(Regexp, tableTy))),
 		Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
 	listDef.DefineListTypeWrappedWithEnvSemType(env, ad)
 	mapDef.DefineMappingTypeWrapped(env, nil, ad)
@@ -120,16 +120,16 @@ func createCellTypeVal(env Env, ty basicTypeBitSet, mut CellMutability) SemType 
 	atomicCell := cellAtomicTypeFrom(ty.semType(), mut)
 	atom := env.cellAtom(&atomicCell)
 	bdd := bddAtom(atom)
-	return getBasicSubtype(BTCell, bdd)
+	return getBasicSubtype(btCell, bdd)
 }
 
 func (p *preallocatedTypeVals) basicTypeCell(ty basicTypeBitSet, mut CellMutability) (SemType, bool) {
 	switch mut {
-	case CellMutability_CELL_MUT_NONE:
+	case CellMutabilityNone:
 		return p.none.basicTypeCell(ty)
-	case CellMutability_CELL_MUT_LIMITED:
+	case CellMutabilityLimited:
 		return p.limited.basicTypeCell(ty)
-	case CellMutability_CELL_MUT_UNLIMITED:
+	case cellMutabilityUnlimited:
 		return p.unlimited.basicTypeCell(ty)
 	default:
 		return SemType{}, false

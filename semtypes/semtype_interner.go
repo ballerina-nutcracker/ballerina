@@ -16,10 +16,10 @@
 
 package semtypes
 
-// SemtypeInterner is meant to be used to intern copies of the same semtype. IMPORTANT: this does not
-// actually check if two given types are equal under IsEqual. SemtypeInterner is thread compatible,
+// SemTypeInterner is meant to be used to intern copies of the same semtype. IMPORTANT: this does not
+// actually check if two given types are equal under IsEqual. SemTypeInterner is thread compatible,
 // leaving users to apply suitable synchronization logic where needed.
-type SemtypeInterner struct {
+type SemTypeInterner struct {
 	basicTypeHandles      map[basicTypeBitSet]InternHandle
 	complexSemtypeHandles map[complexSemtypeInternKey]complexSemtypeInternValues
 }
@@ -33,11 +33,11 @@ type complexSemtypeInternKey struct {
 
 type complexSemtypeInternValues struct {
 	base      int32
-	dataLists [][]ProperSubtypeData
+	dataLists [][]properSubtypeData
 }
 
-func NewSemtypeInterner() *SemtypeInterner {
-	return &SemtypeInterner{
+func NewSemtypeInterner() *SemTypeInterner {
+	return &SemTypeInterner{
 		basicTypeHandles:      make(map[basicTypeBitSet]InternHandle),
 		complexSemtypeHandles: make(map[complexSemtypeInternKey]complexSemtypeInternValues),
 	}
@@ -45,12 +45,12 @@ func NewSemtypeInterner() *SemtypeInterner {
 
 // reset clears all interned handles in place, keeping the existing map's
 // backing storage instead of allocating fresh maps.
-func (i *SemtypeInterner) reset() {
+func (i *SemTypeInterner) reset() {
 	clear(i.basicTypeHandles)
 	clear(i.complexSemtypeHandles)
 }
 
-func (i *SemtypeInterner) Intern(ty SemType) InternHandle {
+func (i *SemTypeInterner) Intern(ty SemType) InternHandle {
 	if ty.some() == 0 {
 		bits := ty.all()
 		if handle, ok := i.basicTypeHandles[bits]; ok {
@@ -77,7 +77,7 @@ func (i *SemtypeInterner) Intern(ty SemType) InternHandle {
 	return complexInternHandle(values.base, idx)
 }
 
-func (i *SemtypeInterner) Lookup(ty SemType) (InternHandle, bool) {
+func (i *SemTypeInterner) Lookup(ty SemType) (InternHandle, bool) {
 	if ty.some() == 0 {
 		return basicInternHandle(ty.all()), true
 	}
@@ -108,7 +108,7 @@ func sameComplexSemType(a, b SemType) bool {
 		sameSubtypeDataList(a.subtypeDataList(), b.subtypeDataList())
 }
 
-func sameSubtypeDataList(a, b []ProperSubtypeData) bool {
+func sameSubtypeDataList(a, b []properSubtypeData) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -120,7 +120,7 @@ func sameSubtypeDataList(a, b []ProperSubtypeData) bool {
 	return true
 }
 
-func sameSubtypeData(a, b ProperSubtypeData) bool {
+func sameSubtypeData(a, b properSubtypeData) bool {
 	if a == nil || b == nil {
 		return a == b
 	}

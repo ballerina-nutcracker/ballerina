@@ -30,15 +30,15 @@ const (
 
 type subtypePairIterator struct {
 	cache subtypePair
-	list1 []ProperSubtypeData
-	list2 []ProperSubtypeData
+	list1 []properSubtypeData
+	list2 []properSubtypeData
 	some1 basicTypeBitSet
 	some2 basicTypeBitSet
 	bits  basicTypeBitSet
 	state iterState
 }
 
-func (i *subtypePairIterator) include(code BasicTypeCode) bool {
+func (i *subtypePairIterator) include(code basicTypeCode) bool {
 	return (i.bits & (1 << code.Code())) != 0
 }
 
@@ -63,7 +63,7 @@ func (i *subtypePairIterator) next() subtypePair {
 	return i.cache
 }
 
-func (i *subtypePairIterator) advance1() (BasicTypeCode, SubtypeData) {
+func (i *subtypePairIterator) advance1() (basicTypeCode, subtypeData) {
 	code := basicTypeCodeFrom(bits.TrailingZeros(uint(i.some1)))
 	data := i.list1[0]
 	i.list1 = i.list1[1:]
@@ -71,7 +71,7 @@ func (i *subtypePairIterator) advance1() (BasicTypeCode, SubtypeData) {
 	return code, data
 }
 
-func (i *subtypePairIterator) advance2() (BasicTypeCode, SubtypeData) {
+func (i *subtypePairIterator) advance2() (basicTypeCode, subtypeData) {
 	code := basicTypeCodeFrom(bits.TrailingZeros(uint(i.some2)))
 	data := i.list2[0]
 	i.list2 = i.list2[1:]

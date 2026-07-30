@@ -70,14 +70,14 @@ func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[
 		emptyMap := &ast.BLangMappingConstructorExpr{
 			Fields: []ast.MappingField{},
 		}
-		emptyMap.SetDeterminedType(semtypes.Intersect(queryTy, semtypes.MAPPING))
+		emptyMap.SetDeterminedType(semtypes.Intersect(queryTy, semtypes.Mapping))
 		resultVar.SetInitialExpression(emptyMap)
 	default:
 		emptyList := &ast.BLangListConstructorExpr{
 			Exprs: []ast.BLangExpression{},
 		}
-		emptyList.SetDeterminedType(semtypes.LIST)
-		emptyList.AtomicType = semtypes.LIST_ATOMIC_INNER
+		emptyList.SetDeterminedType(semtypes.List)
+		emptyList.AtomicType = semtypes.ListAtomicInner
 		resultVar.SetInitialExpression(emptyList)
 	}
 	resultVar.SetSymbol(resultSymbol)
@@ -206,8 +206,8 @@ func createQueryCollectionSource(
 	var keysRef *ast.BLangVarRef
 	tyCtx := semtypes.ContextFrom(cx.typeEnv())
 	switch {
-	case semtypes.IsSubtype(tyCtx, collTy, semtypes.LIST):
-	case semtypes.IsSubtype(tyCtx, collTy, semtypes.MAPPING):
+	case semtypes.IsSubtype(tyCtx, collTy, semtypes.List):
+	case semtypes.IsSubtype(tyCtx, collTy, semtypes.Mapping):
 		keysInvocation := createKeysInvocation(cx, collRef)
 		if keysInvocation == nil {
 			return nil, nil, nil, semtypes.SemType{}, false
@@ -252,14 +252,14 @@ func walkQueryExprWithRows(
 			emptyMap := &ast.BLangMappingConstructorExpr{
 				Fields: []ast.MappingField{},
 			}
-			emptyMap.SetDeterminedType(semtypes.Intersect(queryTy, semtypes.MAPPING))
+			emptyMap.SetDeterminedType(semtypes.Intersect(queryTy, semtypes.Mapping))
 			resultVar.SetInitialExpression(emptyMap)
 		default:
 			emptyList := &ast.BLangListConstructorExpr{
 				Exprs: []ast.BLangExpression{},
 			}
-			emptyList.SetDeterminedType(semtypes.LIST)
-			emptyList.AtomicType = semtypes.LIST_ATOMIC_INNER
+			emptyList.SetDeterminedType(semtypes.List)
+			emptyList.AtomicType = semtypes.ListAtomicInner
 			resultVar.SetInitialExpression(emptyList)
 		}
 	}
@@ -385,13 +385,13 @@ func appendInitialQueryRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 
@@ -416,7 +416,7 @@ func queryRowBindingFromVarDef(
 		valueTy = varDef.Var.GetDeterminedType()
 	}
 	if semtypes.IsZero(valueTy) {
-		valueTy = semtypes.ANY
+		valueTy = semtypes.Any
 	}
 	return queryRowBinding{
 		varName: varDef.Var.Name,
@@ -432,7 +432,7 @@ func createQueryBindingDeclaration(binding queryRowBinding, pos diagnostics.Loca
 	variable.SetSymbol(binding.symbol)
 	variable.SetDeterminedType(binding.valueTy)
 	varDef := &ast.BLangVariableDef{Var: variable}
-	varDef.SetDeterminedType(semtypes.NEVER)
+	varDef.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(varDef, pos)
 	return varDef
 }
@@ -450,7 +450,7 @@ func createQueryBindingAssignment(
 		VarRef: createQueryBindingVarRef(binding),
 		Expr:   expr,
 	}
-	assign.SetDeterminedType(semtypes.NEVER)
+	assign.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(assign, pos)
 	return assign
 }
@@ -497,15 +497,15 @@ func createQueryRowTupleExpr(
 	}
 	exprs = append(exprs, extraExprs...)
 	rowTuple := &ast.BLangListConstructorExpr{Exprs: exprs}
-	rowTuple.SetDeterminedType(semtypes.LIST)
-	rowTuple.AtomicType = semtypes.LIST_ATOMIC_INNER
+	rowTuple.SetDeterminedType(semtypes.List)
+	rowTuple.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(rowTuple, pos)
 	return rowTuple
 }
 
 func createQueryNilLiteral(pos diagnostics.Location) *ast.BLangLiteral {
 	nilLit := &ast.BLangLiteral{Value: nil}
-	nilLit.SetDeterminedType(semtypes.NIL)
+	nilLit.SetDeterminedType(semtypes.Nil)
 	setPositionIfMissing(nilLit, pos)
 	return nilLit
 }
@@ -527,7 +527,7 @@ func applyQueryLetClauseToRows(
 		return nil, false
 	}
 	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = loopCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -568,13 +568,13 @@ func applyQueryLetClauseToRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 	return newBindings, true
@@ -594,7 +594,7 @@ func applyQueryWhereClauseToRows(
 		return nil, false
 	}
 	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = loopCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -615,7 +615,7 @@ func applyQueryWhereClauseToRows(
 		Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{pushStmt}},
 	}
 	filterIf.SetScope(cx.currentScope())
-	filterIf.SetDeterminedType(semtypes.NEVER)
+	filterIf.SetDeterminedType(semtypes.Never)
 	bodyStmts = append(bodyStmts, filterIf, createIncrementStmt(loopCounterRef))
 
 	cond := &ast.BLangBinaryExpr{
@@ -623,13 +623,13 @@ func applyQueryWhereClauseToRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 	return filteredRowsRef, true
@@ -650,7 +650,7 @@ func applyQueryGroupByClauseToRows(
 		return nil, nil, false
 	}
 	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = loopCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -698,8 +698,8 @@ func applyQueryGroupByClauseToRows(
 	}
 
 	keyTuple := &ast.BLangListConstructorExpr{Exprs: keyExprs}
-	keyTuple.SetDeterminedType(semtypes.LIST)
-	keyTuple.AtomicType = semtypes.LIST_ATOMIC_INNER
+	keyTuple.SetDeterminedType(semtypes.List)
+	keyTuple.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(keyTuple, clause.GetPosition())
 	pushKey := createPushInvocation(cx, keyRowsRef, keyTuple)
 	pushRow := createPushInvocation(cx, keyedRowsRef, rowRef)
@@ -717,13 +717,13 @@ func applyQueryGroupByClauseToRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 
@@ -773,19 +773,19 @@ func buildQueryGroupScalarFlags(
 		flags = append(flags, createBoolLiteral(groupingSymbols[binding.symbol], pos))
 	}
 	listExpr := &ast.BLangListConstructorExpr{Exprs: flags}
-	listExpr.SetDeterminedType(semtypes.LIST)
-	listExpr.AtomicType = semtypes.LIST_ATOMIC_INNER
+	listExpr.SetDeterminedType(semtypes.List)
+	listExpr.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(listExpr, pos)
 	return listExpr
 }
 
 func queryListValueType(env semtypes.Env, elemTy semtypes.SemType, nonEmpty bool) semtypes.SemType {
 	if semtypes.IsZero(elemTy) {
-		elemTy = semtypes.ANY
+		elemTy = semtypes.Any
 	}
 	ld := semtypes.NewListDefinition()
 	if nonEmpty {
-		return ld.DefineListTypeWrapped(env, []semtypes.SemType{elemTy}, 1, elemTy, semtypes.CellMutability_CELL_MUT_LIMITED)
+		return ld.DefineListTypeWrapped(env, []semtypes.SemType{elemTy}, 1, elemTy, semtypes.CellMutabilityLimited)
 	}
 	return ld.DefineListTypeWrappedWithEnvSemType(env, elemTy)
 }
@@ -812,7 +812,7 @@ func applyQueryLimitClauseToRows(
 	}
 	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
 	limitCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = loopCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -824,7 +824,7 @@ func applyQueryLimitClauseToRows(
 		RhsExpr: createQueryVarRefAt(limitRef, pos),
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	withinLimitCond.SetDeterminedType(semtypes.BOOLEAN)
+	withinLimitCond.SetDeterminedType(semtypes.Boolean)
 	pushLimited := createArrayPushInvocation(cx.pkgCtx, limitedRowsRef, rowRef)
 	if pushLimited == nil {
 		return nil, false
@@ -842,7 +842,7 @@ func applyQueryLimitClauseToRows(
 		Body: limitBody,
 	}
 	limitIf.SetScope(cx.currentScope())
-	limitIf.SetDeterminedType(semtypes.NEVER)
+	limitIf.SetDeterminedType(semtypes.Never)
 	bodyStmts = append(bodyStmts, limitIf, createIncrementStmt(loopCounterRef))
 
 	cond := &ast.BLangBinaryExpr{
@@ -850,13 +850,13 @@ func applyQueryLimitClauseToRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 	return limitedRowsRef, true
@@ -886,7 +886,7 @@ func applyQueryOrderByClauseToRows(
 		return false
 	}
 	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = loopCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -911,13 +911,13 @@ func applyQueryOrderByClauseToRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 
@@ -952,7 +952,7 @@ func appendQueryJoinClauseRows(
 		return nil, nil, false
 	}
 	outerCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = outerCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -993,7 +993,7 @@ func appendQueryJoinClauseRows(
 		RhsExpr: rhsResult.replacementNode.(ast.BLangExpression),
 		OpKind:  model.OperatorKind_EQUAL,
 	}
-	matchCond.SetDeterminedType(semtypes.BOOLEAN)
+	matchCond.SetDeterminedType(semtypes.Boolean)
 
 	matchBodyStmts := make([]ast.StatementNode, 0, 3)
 	if matchedRef != nil {
@@ -1001,7 +1001,7 @@ func appendQueryJoinClauseRows(
 			VarRef: createQueryVarRefAt(matchedRef, pos),
 			Expr:   createBoolLiteral(true, pos),
 		}
-		markMatched.SetDeterminedType(semtypes.NEVER)
+		markMatched.SetDeterminedType(semtypes.Never)
 		setPositionIfMissing(markMatched, pos)
 		matchBodyStmts = append(matchBodyStmts, markMatched)
 	}
@@ -1019,7 +1019,7 @@ func appendQueryJoinClauseRows(
 		Body: ast.BLangBlockStmt{Stmts: matchBodyStmts},
 	}
 	matchIf.SetScope(cx.currentScope())
-	matchIf.SetDeterminedType(semtypes.NEVER)
+	matchIf.SetDeterminedType(semtypes.Never)
 	innerBody = append(innerBody, matchIf, createIncrementStmt(innerCounterRef))
 
 	innerCond := &ast.BLangBinaryExpr{
@@ -1027,13 +1027,13 @@ func appendQueryJoinClauseRows(
 		RhsExpr: joinRowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	innerCond.SetDeterminedType(semtypes.BOOLEAN)
+	innerCond.SetDeterminedType(semtypes.Boolean)
 	innerWhile := &ast.BLangWhile{
 		Expr: innerCond,
 		Body: ast.BLangBlockStmt{Stmts: innerBody},
 	}
 	innerWhile.SetScope(cx.currentScope())
-	innerWhile.SetDeterminedType(semtypes.NEVER)
+	innerWhile.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(innerWhile, pos)
 	outerBody = append(outerBody, innerWhile)
 
@@ -1042,7 +1042,7 @@ func appendQueryJoinClauseRows(
 			Expr:     createQueryVarRefAt(matchedRef, pos),
 			Operator: model.OperatorKind_NOT,
 		}
-		notMatched.SetDeterminedType(semtypes.BOOLEAN)
+		notMatched.SetDeterminedType(semtypes.Boolean)
 		unmatchedTuple := createQueryRowTupleExpr(bindings, []ast.BLangExpression{createQueryNilLiteral(pos)}, pos)
 		pushUnmatched := createArrayPushInvocation(cx.pkgCtx, newRowsRef, unmatchedTuple)
 		if pushUnmatched == nil {
@@ -1055,7 +1055,7 @@ func appendQueryJoinClauseRows(
 			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{pushUnmatchedStmt}},
 		}
 		notMatchedIf.SetScope(cx.currentScope())
-		notMatchedIf.SetDeterminedType(semtypes.NEVER)
+		notMatchedIf.SetDeterminedType(semtypes.Never)
 		outerBody = append(outerBody, notMatchedIf)
 	}
 
@@ -1065,13 +1065,13 @@ func appendQueryJoinClauseRows(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	outerCond.SetDeterminedType(semtypes.BOOLEAN)
+	outerCond.SetDeterminedType(semtypes.Boolean)
 	outerWhile := &ast.BLangWhile{
 		Expr: outerCond,
 		Body: ast.BLangBlockStmt{Stmts: outerBody},
 	}
 	outerWhile.SetScope(cx.currentScope())
-	outerWhile.SetDeterminedType(semtypes.NEVER)
+	outerWhile.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(outerWhile, pos)
 	*initStmts = append(*initStmts, outerWhile)
 
@@ -1096,7 +1096,7 @@ func appendQueryRowsSelectResultStmts(
 		return false
 	}
 	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.List, pos)
 	rowAccess.IndexExpr = loopCounterRef
 	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
 
@@ -1123,13 +1123,13 @@ func appendQueryRowsSelectResultStmts(
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
+	cond.SetDeterminedType(semtypes.Boolean)
 	whileStmt := &ast.BLangWhile{
 		Expr: cond,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, pos)
 	*initStmts = append(*initStmts, whileStmt)
 	return true
@@ -1171,7 +1171,7 @@ func appendQueryRowsCollectResultStmts(
 		VarRef: resultRef,
 		Expr:   collectResult.replacementNode.(ast.BLangExpression),
 	}
-	assignResult.SetDeterminedType(semtypes.NEVER)
+	assignResult.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(assignResult, collectClause.GetPosition())
 	bodyStmts = append(bodyStmts, assignResult)
 	*initStmts = append(*initStmts, bodyStmts...)
@@ -1184,8 +1184,8 @@ func buildQueryCollectFlattenFlags(bindings []queryRowBinding, pos diagnostics.L
 		flags = append(flags, createBoolLiteral(binding.groupAggregated, pos))
 	}
 	listExpr := &ast.BLangListConstructorExpr{Exprs: flags}
-	listExpr.SetDeterminedType(semtypes.LIST)
-	listExpr.AtomicType = semtypes.LIST_ATOMIC_INNER
+	listExpr.SetDeterminedType(semtypes.List)
+	listExpr.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(listExpr, pos)
 	return listExpr
 }
@@ -1195,11 +1195,11 @@ func createQueryCounterRef(
 	initStmts *[]ast.StatementNode,
 	pos diagnostics.Location,
 ) *ast.BLangVarRef {
-	counterName, counterSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, pos)
+	counterName, counterSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, pos)
 	counterVar := &ast.BLangVariable{
 		Name: &ast.BLangIdentifier{Value: counterName},
 	}
-	counterVar.SetDeterminedType(semtypes.INT)
+	counterVar.SetDeterminedType(semtypes.Int)
 	counterVar.SetInitialExpression(createIntLiteral(0))
 	counterVar.SetSymbol(counterSymbol)
 	counterVarDef := &ast.BLangVariableDef{Var: counterVar}
@@ -1208,7 +1208,7 @@ func createQueryCounterRef(
 
 	counterRef := &ast.BLangVarRef{VariableName: counterVar.Name}
 	counterRef.SetSymbol(counterSymbol)
-	counterRef.SetDeterminedType(semtypes.INT)
+	counterRef.SetDeterminedType(semtypes.Int)
 	setPositionIfMissing(counterRef, pos)
 	return counterRef
 }
@@ -1223,9 +1223,9 @@ func createQueryLengthRef(
 	if lengthInvocation == nil {
 		return nil, false
 	}
-	lengthName, lengthSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, pos)
+	lengthName, lengthSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, pos)
 	lengthVar := &ast.BLangVariable{Name: &ast.BLangIdentifier{Value: lengthName}}
-	lengthVar.SetDeterminedType(semtypes.INT)
+	lengthVar.SetDeterminedType(semtypes.Int)
 	lengthVar.SetInitialExpression(lengthInvocation)
 	lengthVar.SetSymbol(lengthSymbol)
 	lengthVarDef := &ast.BLangVariableDef{Var: lengthVar}
@@ -1233,7 +1233,7 @@ func createQueryLengthRef(
 	*initStmts = append(*initStmts, lengthVarDef)
 	lengthRef := &ast.BLangVarRef{VariableName: lengthVar.Name}
 	lengthRef.SetSymbol(lengthSymbol)
-	lengthRef.SetDeterminedType(semtypes.INT)
+	lengthRef.SetDeterminedType(semtypes.Int)
 	return lengthRef, true
 }
 
@@ -1243,7 +1243,7 @@ func queryStageBaseIndexExpr(loopCounterRef *ast.BLangVarRef, indexRowsRef *ast.
 	}
 	rowIndexAccess := &ast.BLangIndexBasedAccess{IndexExpr: loopCounterRef}
 	rowIndexAccess.Expr = indexRowsRef
-	rowIndexAccess.SetDeterminedType(semtypes.INT)
+	rowIndexAccess.SetDeterminedType(semtypes.Int)
 	return rowIndexAccess
 }
 
@@ -1342,13 +1342,13 @@ func appendQueryOrderByStageStmts(
 		RhsExpr: stageInput.rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	stageCondition.SetDeterminedType(semtypes.BOOLEAN)
+	stageCondition.SetDeterminedType(semtypes.Boolean)
 	stageWhile := &ast.BLangWhile{
 		Expr: stageCondition,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	stageWhile.SetScope(cx.currentScope())
-	stageWhile.SetDeterminedType(semtypes.NEVER)
+	stageWhile.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(stageWhile, basePos)
 	*initStmts = append(*initStmts, stageWhile)
 
@@ -1438,13 +1438,13 @@ func appendQueryFinalStageStmts(
 		RhsExpr: stageInput.rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	finalCondition.SetDeterminedType(semtypes.BOOLEAN)
+	finalCondition.SetDeterminedType(semtypes.Boolean)
 	finalWhile := &ast.BLangWhile{
 		Expr: finalCondition,
 		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
 	}
 	finalWhile.SetScope(cx.currentScope())
-	finalWhile.SetDeterminedType(semtypes.NEVER)
+	finalWhile.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(finalWhile, basePos)
 	*initStmts = append(*initStmts, finalWhile)
 	return true
@@ -1455,13 +1455,13 @@ func createQueryListStore(
 	initStmts *[]ast.StatementNode,
 	pos diagnostics.Location,
 ) *ast.BLangVarRef {
-	listName, listSymbol := cx.addDesugardSymbol(semtypes.LIST, model.SymbolKindVariable, false, pos)
+	listName, listSymbol := cx.addDesugardSymbol(semtypes.List, model.SymbolKindVariable, false, pos)
 	emptyList := &ast.BLangListConstructorExpr{Exprs: []ast.BLangExpression{}}
-	emptyList.SetDeterminedType(semtypes.LIST)
-	emptyList.AtomicType = semtypes.LIST_ATOMIC_INNER
+	emptyList.SetDeterminedType(semtypes.List)
+	emptyList.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(emptyList, pos)
 	listVar := &ast.BLangVariable{Name: &ast.BLangIdentifier{Value: listName}}
-	listVar.SetDeterminedType(semtypes.LIST)
+	listVar.SetDeterminedType(semtypes.List)
 	listVar.SetInitialExpression(emptyList)
 	listVar.SetSymbol(listSymbol)
 	setPositionIfMissing(listVar, pos)
@@ -1470,7 +1470,7 @@ func createQueryListStore(
 	*initStmts = append(*initStmts, listVarDef)
 	listRef := &ast.BLangVarRef{VariableName: listVar.Name}
 	listRef.SetSymbol(listSymbol)
-	listRef.SetDeterminedType(semtypes.LIST)
+	listRef.SetDeterminedType(semtypes.List)
 	setPositionIfMissing(listRef, pos)
 	return listRef
 }
@@ -1480,12 +1480,12 @@ func createQueryMapStore(
 	initStmts *[]ast.StatementNode,
 	pos diagnostics.Location,
 ) *ast.BLangVarRef {
-	mapName, mapSymbol := cx.addDesugardSymbol(semtypes.MAPPING, model.SymbolKindVariable, false, pos)
+	mapName, mapSymbol := cx.addDesugardSymbol(semtypes.Mapping, model.SymbolKindVariable, false, pos)
 	emptyMap := &ast.BLangMappingConstructorExpr{Fields: []ast.MappingField{}}
-	emptyMap.SetDeterminedType(semtypes.MAPPING)
+	emptyMap.SetDeterminedType(semtypes.Mapping)
 	setPositionIfMissing(emptyMap, pos)
 	mapVar := &ast.BLangVariable{Name: &ast.BLangIdentifier{Value: mapName}}
-	mapVar.SetDeterminedType(semtypes.MAPPING)
+	mapVar.SetDeterminedType(semtypes.Mapping)
 	mapVar.SetInitialExpression(emptyMap)
 	mapVar.SetSymbol(mapSymbol)
 	setPositionIfMissing(mapVar, pos)
@@ -1494,7 +1494,7 @@ func createQueryMapStore(
 	*initStmts = append(*initStmts, mapVarDef)
 	mapRef := &ast.BLangVarRef{VariableName: mapVar.Name}
 	mapRef.SetSymbol(mapSymbol)
-	mapRef.SetDeterminedType(semtypes.MAPPING)
+	mapRef.SetDeterminedType(semtypes.Mapping)
 	setPositionIfMissing(mapRef, pos)
 	return mapRef
 }
@@ -1567,13 +1567,13 @@ func createNegativeLimitPanicIf(
 		RhsExpr: zero,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	negativeCond.SetDeterminedType(semtypes.BOOLEAN)
+	negativeCond.SetDeterminedType(semtypes.Boolean)
 	setPositionIfMissing(negativeCond, pos)
 
 	panicStmt := &ast.BLangPanic{
 		Expr: createErrorWithMessage("limit cannot be negative", pos),
 	}
-	panicStmt.SetDeterminedType(semtypes.NEVER)
+	panicStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(panicStmt, pos)
 
 	negativeLimitIf := &ast.BLangIf{
@@ -1583,7 +1583,7 @@ func createNegativeLimitPanicIf(
 		},
 	}
 	negativeLimitIf.SetScope(cx.currentScope())
-	negativeLimitIf.SetDeterminedType(semtypes.NEVER)
+	negativeLimitIf.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(negativeLimitIf, pos)
 	return negativeLimitIf
 }
@@ -1601,8 +1601,8 @@ func buildOrderKeyTupleExpr(
 		keyExprs = append(keyExprs, keyResult.replacementNode.(ast.BLangExpression))
 	}
 	keyTuple := &ast.BLangListConstructorExpr{Exprs: keyExprs}
-	keyTuple.SetDeterminedType(semtypes.LIST)
-	keyTuple.AtomicType = semtypes.LIST_ATOMIC_INNER
+	keyTuple.SetDeterminedType(semtypes.List)
+	keyTuple.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(keyTuple, pos)
 	return keyTuple, initStmts
 }
@@ -1613,8 +1613,8 @@ func buildOrderDirectionExpr(orderByClause *ast.BLangOrderByClause, pos diagnost
 		directions = append(directions, createBoolLiteral(!orderByClause.OrderByKeyList[i].IsDescending, pos))
 	}
 	listExpr := &ast.BLangListConstructorExpr{Exprs: directions}
-	listExpr.SetDeterminedType(semtypes.LIST)
-	listExpr.AtomicType = semtypes.LIST_ATOMIC_INNER
+	listExpr.SetDeterminedType(semtypes.List)
+	listExpr.AtomicType = semtypes.ListAtomicInner
 	setPositionIfMissing(listExpr, pos)
 	return listExpr
 }
@@ -1637,7 +1637,7 @@ func queryElementAccess(
 		IndexExpr: indexExpr,
 	}
 	keyAccess.Expr = keysRef
-	keyAccess.SetDeterminedType(semtypes.STRING)
+	keyAccess.SetDeterminedType(semtypes.String)
 	mapAccess := &ast.BLangIndexBasedAccess{
 		IndexExpr: keyAccess,
 	}
@@ -1684,13 +1684,13 @@ func appendQuerySelectResultStmts(
 			IndexExpr: createIntLiteral(0),
 		}
 		keyAccess.Expr = pairRef
-		keyAccess.SetDeterminedType(semtypes.STRING)
+		keyAccess.SetDeterminedType(semtypes.String)
 
 		valueAccess := &ast.BLangIndexBasedAccess{
 			IndexExpr: createIntLiteral(1),
 		}
 		valueAccess.Expr = pairRef
-		valueAccess.SetDeterminedType(semtypes.ANY)
+		valueAccess.SetDeterminedType(semtypes.Any)
 
 		if onConflictClause != nil {
 			if seenKeysRef == nil {
@@ -1701,13 +1701,13 @@ func appendQuerySelectResultStmts(
 				IndexExpr: keyAccess,
 			}
 			seenLookup.Expr = seenKeysRef
-			seenLookup.SetDeterminedType(semtypes.ANY)
+			seenLookup.SetDeterminedType(semtypes.Any)
 			conflictCond := &ast.BLangBinaryExpr{
 				LhsExpr: seenLookup,
 				RhsExpr: createBoolLiteral(true, basePos),
 				OpKind:  model.OperatorKind_EQUAL,
 			}
-			conflictCond.SetDeterminedType(semtypes.BOOLEAN)
+			conflictCond.SetDeterminedType(semtypes.Boolean)
 
 			conflictResult := walkExpression(cx, onConflictClause.Expression)
 			conflictBody := make([]ast.StatementNode, 0, len(conflictResult.initStmts)+2)
@@ -1734,18 +1734,18 @@ func appendQuerySelectResultStmts(
 
 			isErrorExpr := ast.NewBLangTypeTestExpr(
 				conflictRef,
-				ast.TypeData{Type: semtypes.ERROR},
+				ast.TypeData{Type: semtypes.Error},
 				false,
 			)
-			isErrorExpr.SetDeterminedType(semtypes.BOOLEAN)
+			isErrorExpr.SetDeterminedType(semtypes.Boolean)
 
 			assignResult := &ast.BLangAssignment{
 				VarRef: resultRef,
 				Expr:   conflictRef,
 			}
-			assignResult.SetDeterminedType(semtypes.NEVER)
+			assignResult.SetDeterminedType(semtypes.Never)
 			breakStmt := &ast.BLangBreak{}
-			breakStmt.SetDeterminedType(semtypes.NEVER)
+			breakStmt.SetDeterminedType(semtypes.Never)
 			errorBody := ast.BLangBlockStmt{
 				Stmts: []ast.StatementNode{assignResult, breakStmt},
 			}
@@ -1754,7 +1754,7 @@ func appendQuerySelectResultStmts(
 				Body: errorBody,
 			}
 			errorIf.SetScope(cx.currentScope())
-			errorIf.SetDeterminedType(semtypes.NEVER)
+			errorIf.SetDeterminedType(semtypes.Never)
 			conflictBody = append(conflictBody, errorIf)
 
 			onConflictIf := &ast.BLangIf{
@@ -1764,7 +1764,7 @@ func appendQuerySelectResultStmts(
 				},
 			}
 			onConflictIf.SetScope(cx.currentScope())
-			onConflictIf.SetDeterminedType(semtypes.NEVER)
+			onConflictIf.SetDeterminedType(semtypes.Never)
 			bodyStmts = append(bodyStmts, onConflictIf)
 
 			markSeen := createMapPutAssignment(seenKeysRef, keyAccess, createBoolLiteral(true, basePos))
@@ -1828,9 +1828,9 @@ func appendQueryIntermediateClauseStmts(
 				Expr:     whereCond,
 				Operator: model.OperatorKind_NOT,
 			}
-			notWhereCond.SetDeterminedType(semtypes.BOOLEAN)
+			notWhereCond.SetDeterminedType(semtypes.Boolean)
 			continueStmt := &ast.BLangContinue{}
-			continueStmt.SetDeterminedType(semtypes.NEVER)
+			continueStmt.SetDeterminedType(semtypes.Never)
 			skipBody := ast.BLangBlockStmt{
 				Stmts: []ast.StatementNode{
 					createIncrementStmt(idxRef),
@@ -1842,7 +1842,7 @@ func appendQueryIntermediateClauseStmts(
 				Body: skipBody,
 			}
 			filterIf.SetScope(cx.currentScope())
-			filterIf.SetDeterminedType(semtypes.NEVER)
+			filterIf.SetDeterminedType(semtypes.Never)
 			bodyStmts = append(bodyStmts, filterIf)
 		case *ast.BLangLimitClause:
 			limitPos := clause.GetPosition()
@@ -1853,11 +1853,11 @@ func appendQueryIntermediateClauseStmts(
 			*initStmts = append(*initStmts, limitVarDef)
 			*initStmts = append(*initStmts, createNegativeLimitPanicIf(cx, limitRef, limitPos))
 
-			limitCounterName, limitCounterSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, limitPos)
+			limitCounterName, limitCounterSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, limitPos)
 			limitCounterVar := &ast.BLangVariable{
 				Name: &ast.BLangIdentifier{Value: limitCounterName},
 			}
-			limitCounterVar.SetDeterminedType(semtypes.INT)
+			limitCounterVar.SetDeterminedType(semtypes.Int)
 			limitCounterVar.SetInitialExpression(createIntLiteral(0))
 			limitCounterVar.SetSymbol(limitCounterSymbol)
 			limitCounterVarDef := &ast.BLangVariableDef{Var: limitCounterVar}
@@ -1868,17 +1868,17 @@ func appendQueryIntermediateClauseStmts(
 				VariableName: limitCounterVar.Name,
 			}
 			limitCounterRef.SetSymbol(limitCounterSymbol)
-			limitCounterRef.SetDeterminedType(semtypes.INT)
+			limitCounterRef.SetDeterminedType(semtypes.Int)
 
 			reachedLimitCond := &ast.BLangBinaryExpr{
 				LhsExpr: limitCounterRef,
 				RhsExpr: createQueryVarRefAt(limitRef, limitPos),
 				OpKind:  model.OperatorKind_GREATER_EQUAL,
 			}
-			reachedLimitCond.SetDeterminedType(semtypes.BOOLEAN)
+			reachedLimitCond.SetDeterminedType(semtypes.Boolean)
 
 			continueStmt := &ast.BLangContinue{}
-			continueStmt.SetDeterminedType(semtypes.NEVER)
+			continueStmt.SetDeterminedType(semtypes.Never)
 			skipBody := ast.BLangBlockStmt{
 				Stmts: []ast.StatementNode{
 					createIncrementStmt(idxRef),
@@ -1890,7 +1890,7 @@ func appendQueryIntermediateClauseStmts(
 				Body: skipBody,
 			}
 			limitIf.SetScope(cx.currentScope())
-			limitIf.SetDeterminedType(semtypes.NEVER)
+			limitIf.SetDeterminedType(semtypes.Never)
 			bodyStmts = append(bodyStmts, limitIf)
 
 			bodyStmts = append(bodyStmts, createIncrementStmt(limitCounterRef))
@@ -1912,7 +1912,7 @@ func createIntLiteral(value int64) *ast.BLangNumericLiteral {
 			OriginalValue: fmt.Sprintf("%d", value),
 		},
 	}
-	lit.SetDeterminedType(semtypes.INT)
+	lit.SetDeterminedType(semtypes.Int)
 	return lit
 }
 
@@ -1925,7 +1925,7 @@ func createBoolLiteral(value bool, pos diagnostics.Location) *ast.BLangLiteral {
 		Value:         value,
 		OriginalValue: originalValue,
 	}
-	lit.SetDeterminedType(semtypes.BOOLEAN)
+	lit.SetDeterminedType(semtypes.Boolean)
 	setPositionIfMissing(lit, pos)
 	return lit
 }
@@ -1935,7 +1935,7 @@ func createStringLiteral(value string, pos diagnostics.Location) *ast.BLangLiter
 		Value:         value,
 		OriginalValue: value,
 	}
-	lit.SetDeterminedType(semtypes.STRING)
+	lit.SetDeterminedType(semtypes.String)
 	setPositionIfMissing(lit, pos)
 	return lit
 }
@@ -1946,7 +1946,7 @@ func createErrorWithMessage(message string, pos diagnostics.Location) *ast.BLang
 			createStringLiteral(message, pos),
 		},
 	}
-	errorExpr.SetDeterminedType(semtypes.ERROR)
+	errorExpr.SetDeterminedType(semtypes.Error)
 	setPositionIfMissing(errorExpr, pos)
 	return errorExpr
 }
@@ -1956,12 +1956,12 @@ func createMapPutAssignment(mapExpr ast.BLangExpression, keyExpr ast.BLangExpres
 		IndexExpr: keyExpr,
 	}
 	mapAccess.Expr = mapExpr
-	mapAccess.SetDeterminedType(semtypes.ANY)
+	mapAccess.SetDeterminedType(semtypes.Any)
 	assign := &ast.BLangAssignment{
 		VarRef: mapAccess,
 		Expr:   valueExpr,
 	}
-	assign.SetDeterminedType(semtypes.NEVER)
+	assign.SetDeterminedType(semtypes.Never)
 	return assign
 }
 
@@ -1992,7 +1992,7 @@ func createQuerySortInvocation(
 	inv.Name = &ast.BLangIdentifier{Value: "querySort"}
 	inv.ArgExprs = []ast.BLangExpression{keysExpr, directionsExpr, indicesExpr, payloadExpr}
 	inv.SetSymbol(symbolRef)
-	inv.SetDeterminedType(semtypes.NIL)
+	inv.SetDeterminedType(semtypes.Nil)
 	setPositionIfMissing(inv, keysExpr.GetPosition())
 	return inv
 }
@@ -2003,7 +2003,7 @@ func createQueryGroupInvocation(
 	keysExpr ast.BLangExpression,
 	scalarFlagsExpr ast.BLangExpression,
 ) *ast.BLangInvocation {
-	return createLangInternalInvocation(cx, "queryGroup", semtypes.LIST,
+	return createLangInternalInvocation(cx, "queryGroup", semtypes.List,
 		[]ast.BLangExpression{rowsExpr, keysExpr, scalarFlagsExpr}, rowsExpr.GetPosition())
 }
 
@@ -2013,7 +2013,7 @@ func createQueryCollectInvocation(
 	slotCountExpr ast.BLangExpression,
 	flattenFlagsExpr ast.BLangExpression,
 ) *ast.BLangInvocation {
-	return createLangInternalInvocation(cx, "queryCollect", semtypes.LIST,
+	return createLangInternalInvocation(cx, "queryCollect", semtypes.List,
 		[]ast.BLangExpression{rowsExpr, slotCountExpr, flattenFlagsExpr}, rowsExpr.GetPosition())
 }
 
@@ -2062,7 +2062,7 @@ func createPushInvocation(cx *functionContext, listExpr ast.BLangExpression, val
 	inv.Name = &ast.BLangIdentifier{Value: "push"}
 	inv.ArgExprs = []ast.BLangExpression{listExpr, valueExpr}
 	inv.SetSymbol(symbolRef)
-	inv.SetDeterminedType(semtypes.NIL)
+	inv.SetDeterminedType(semtypes.Nil)
 	setPositionIfMissing(inv, listExpr.GetPosition())
 	return inv
 }

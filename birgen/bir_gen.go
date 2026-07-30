@@ -137,7 +137,7 @@ func absoluteAddress(baseIndex, frameIndex int) bir.Address {
 func (c *packageContext) stringMapType() semtypes.SemType {
 	if semtypes.IsZero(c.stringMapTy) {
 		md := semtypes.NewMappingDefinition()
-		c.stringMapTy = md.DefineMappingTypeWrapped(c.CompilerContext.GetTypeEnv(), nil, semtypes.STRING)
+		c.stringMapTy = md.DefineMappingTypeWrapped(c.CompilerContext.GetTypeEnv(), nil, semtypes.String)
 	}
 	return c.stringMapTy
 }
@@ -614,11 +614,11 @@ func compoundAssignmentToMember(ctx context, curBB *bir.BIRBasicBlock, stmt *ast
 }
 
 func memberAccessInstructionKinds(tyCtx semtypes.Context, containerType semtypes.SemType) (loadKind, storeKind bir.InstructionKind) {
-	containerType = semtypes.Diff(containerType, semtypes.NIL)
+	containerType = semtypes.Diff(containerType, semtypes.Nil)
 	switch {
-	case semtypes.IsSubtype(tyCtx, containerType, semtypes.LIST):
+	case semtypes.IsSubtype(tyCtx, containerType, semtypes.List):
 		return bir.INSTRUCTION_KIND_ARRAY_LOAD, bir.INSTRUCTION_KIND_ARRAY_STORE
-	case semtypes.IsSubtype(tyCtx, containerType, semtypes.OBJECT):
+	case semtypes.IsSubtype(tyCtx, containerType, semtypes.Object):
 		return bir.INSTRUCTION_KIND_OBJECT_LOAD, bir.INSTRUCTION_KIND_OBJECT_STORE
 	default:
 		return bir.INSTRUCTION_KIND_MAP_LOAD, bir.INSTRUCTION_KIND_MAP_STORE
@@ -838,14 +838,14 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 			case *ast.BLangConstPattern:
 				patternEffect := handleActionOrExpression(ctx, curBB, p.Expr)
 				curBB = patternEffect.block
-				eqResult := ctx.addTempVar(semtypes.BOOLEAN)
+				eqResult := ctx.addTempVar(semtypes.Boolean)
 				eqPos := ctx.function().loc(p.Expr.GetPosition())
 				binaryOp := bir.NewBinaryOp(bir.INSTRUCTION_KIND_EQUAL, eqResult, matchOperand, patternEffect.result, eqPos)
 				curBB.Instructions = append(curBB.Instructions, binaryOp)
 				condOperand = orOperands(ctx, curBB, condOperand, eqResult, eqPos)
 			case *ast.BLangWildCardMatchPattern:
 				// Wildcard in multi-pattern — always matches; but may have guard
-				trueOperand := ctx.addTempVar(semtypes.BOOLEAN)
+				trueOperand := ctx.addTempVar(semtypes.Boolean)
 				constLoad := bir.NewConstantLoad(trueOperand, true, ctx.function().loc(p.GetPosition()))
 				curBB.Instructions = append(curBB.Instructions, constLoad)
 				condOperand = orOperands(ctx, curBB, condOperand, trueOperand, ctx.function().loc(p.GetPosition()))
@@ -893,14 +893,14 @@ func orOperands(ctx context, bb *bir.BIRBasicBlock, existing *bir.BIROperand, ne
 	if existing == nil {
 		return new
 	}
-	result := ctx.addTempVar(semtypes.BOOLEAN)
+	result := ctx.addTempVar(semtypes.Boolean)
 	binaryOp := bir.NewBinaryOp(bir.INSTRUCTION_KIND_OR, result, existing, new, pos)
 	bb.Instructions = append(bb.Instructions, binaryOp)
 	return result
 }
 
 func andOperands(ctx context, bb *bir.BIRBasicBlock, existing *bir.BIROperand, new *bir.BIROperand, pos bir.Location) *bir.BIROperand {
-	result := ctx.addTempVar(semtypes.BOOLEAN)
+	result := ctx.addTempVar(semtypes.Boolean)
 	binaryOp := bir.NewBinaryOp(bir.INSTRUCTION_KIND_AND, result, existing, new, pos)
 	bb.Instructions = append(bb.Instructions, binaryOp)
 	return result
@@ -1037,7 +1037,7 @@ func annotAccessExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLan
 	curBB = receiver.block
 	symRef := expr.Symbol()
 	sym := ctx.getSymbol(symRef)
-	keyOp := ctx.addTempVar(semtypes.STRING)
+	keyOp := ctx.addTempVar(semtypes.String)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(keyOp, model.AnnotationKey(ctx.symbolPackage(symRef), sym.Name()), pos))
 	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
 	curBB.Instructions = append(curBB.Instructions, bir.NewBinaryOp(bir.INSTRUCTION_KIND_ANNOT_ACCESS, resultOperand, receiver.result, keyOp, pos))
@@ -1049,7 +1049,7 @@ func annotAccessExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLan
 
 func xmlTextLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLTextLiteral) expressionEffect {
 	pos := ctx.function().loc(expr.GetPosition())
-	bodyOp := ctx.addTempVar(semtypes.STRING)
+	bodyOp := ctx.addTempVar(semtypes.String)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(bodyOp, expr.Body, pos))
 	resultOp := ctx.addTempVar(expr.GetDeterminedType())
 	curBB.Instructions = append(curBB.Instructions, bir.NewXMLTextInstr(resultOp, bodyOp, pos))
@@ -1058,7 +1058,7 @@ func xmlTextLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLTex
 
 func xmlCommentLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLCommentLiteral) expressionEffect {
 	pos := ctx.function().loc(expr.GetPosition())
-	bodyOp := ctx.addTempVar(semtypes.STRING)
+	bodyOp := ctx.addTempVar(semtypes.String)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(bodyOp, expr.Body, pos))
 	resultOp := ctx.addTempVar(expr.GetDeterminedType())
 	curBB.Instructions = append(curBB.Instructions, bir.NewXMLCommentInstr(resultOp, bodyOp, pos))
@@ -1067,9 +1067,9 @@ func xmlCommentLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXML
 
 func xmlPILiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLPILiteral) expressionEffect {
 	pos := ctx.function().loc(expr.GetPosition())
-	targetOp := ctx.addTempVar(semtypes.STRING)
+	targetOp := ctx.addTempVar(semtypes.String)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(targetOp, expr.Target, pos))
-	dataOp := ctx.addTempVar(semtypes.STRING)
+	dataOp := ctx.addTempVar(semtypes.String)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(dataOp, expr.Data, pos))
 	resultOp := ctx.addTempVar(expr.GetDeterminedType())
 	curBB.Instructions = append(curBB.Instructions, bir.NewXMLPIInstr(resultOp, targetOp, dataOp, pos))
@@ -1078,7 +1078,7 @@ func xmlPILiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLPILit
 
 func xmlElementLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLElementLiteral) expressionEffect {
 	pos := ctx.function().loc(expr.GetPosition())
-	nameOp := ctx.addTempVar(semtypes.STRING)
+	nameOp := ctx.addTempVar(semtypes.String)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(nameOp, expr.Name, pos))
 	var contentOp *bir.BIROperand
 	if expr.Content != nil {
@@ -1139,9 +1139,9 @@ func buildXMLNamespacesMap(ctx context, curBB *bir.BIRBasicBlock, ns []model.Sym
 	})
 	entries := make([]bir.MappingConstructorEntry, 0, len(namespaces))
 	for _, ns := range namespaces {
-		keyOp := ctx.addTempVar(semtypes.STRING)
+		keyOp := ctx.addTempVar(semtypes.String)
 		curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(keyOp, ns.key, pos))
-		valOp := ctx.addTempVar(semtypes.STRING)
+		valOp := ctx.addTempVar(semtypes.String)
 		curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(valOp, ns.uri, pos))
 		entries = append(entries, bir.NewMappingConstructorKeyValueEntry(keyOp, valOp))
 	}
@@ -1228,7 +1228,7 @@ func mappingKeyName(key *ast.BLangMappingKey) string {
 func mappingConstructorExpressionInner(ctx context, curBB *bir.BIRBasicBlock, mapType semtypes.SemType, fields []mappingField, defaults []bir.MappingConstructorDefaultEntry, pos bir.Location) expressionEffect {
 	var entries []bir.MappingConstructorEntry
 	for _, field := range fields {
-		keyOperand := ctx.addTempVar(semtypes.STRING)
+		keyOperand := ctx.addTempVar(semtypes.String)
 		keyLoad := bir.NewConstantLoad(keyOperand, field.key, pos)
 		curBB.Instructions = append(curBB.Instructions, keyLoad)
 
@@ -1237,7 +1237,7 @@ func mappingConstructorExpressionInner(ctx context, curBB *bir.BIRBasicBlock, ma
 		entries = append(entries, bir.NewMappingConstructorKeyValueEntry(keyOperand, valueEffect.result))
 	}
 	resultOperand := ctx.addTempVar(mapType)
-	isReadonly := semtypes.IsSubtype(ctx.function().pkgCtx.typeCtx, mapType, semtypes.VAL_READONLY)
+	isReadonly := semtypes.IsSubtype(ctx.function().pkgCtx.typeCtx, mapType, semtypes.ValReadonly)
 	newMap := bir.NewMapConstructor(mapType, resultOperand, entries, defaults, isReadonly, pos)
 	curBB.Instructions = append(curBB.Instructions, newMap)
 	return expressionEffect{
@@ -1266,7 +1266,7 @@ func errorConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast
 		for _, namedArg := range expr.NamedArgs {
 			fields = append(fields, mappingField{key: namedArg.Name.GetValue(), value: namedArg.Expr})
 		}
-		detailEffect := mappingConstructorExpressionInner(ctx, curBB, semtypes.MAPPING, fields, nil, ctx.function().loc(expr.GetPosition()))
+		detailEffect := mappingConstructorExpressionInner(ctx, curBB, semtypes.Mapping, fields, nil, ctx.function().loc(expr.GetPosition()))
 		curBB = detailEffect.block
 		detailOp = detailEffect.result
 	}
@@ -1324,7 +1324,7 @@ func materializeFiller(ctx context, bb *bir.BIRBasicBlock, ty semtypes.SemType, 
 		return operand, bb
 	case semtypes.MappingFiller:
 		operand := ctx.addTempVar(f.Type)
-		mapReadonly := semtypes.IsSubtype(tyCx, f.Type, semtypes.VAL_READONLY)
+		mapReadonly := semtypes.IsSubtype(tyCx, f.Type, semtypes.ValReadonly)
 		bb.Instructions = append(bb.Instructions, bir.NewMapConstructor(f.Type, operand, nil, nil, mapReadonly, pos))
 		return operand, bb
 	case semtypes.ListFiller:
@@ -1332,11 +1332,11 @@ func materializeFiller(ctx context, bb *bir.BIRBasicBlock, ty semtypes.SemType, 
 		for i, memberFiller := range f.Members {
 			memberOperands[i], bb = materializeFiller(ctx, bb, f.Atomic.MemberAtInnerVal(i), memberFiller, pos)
 		}
-		sizeOperand := ctx.addTempVar(semtypes.INT)
+		sizeOperand := ctx.addTempVar(semtypes.Int)
 		bb.Instructions = append(bb.Instructions, bir.NewConstantLoad(sizeOperand, int64(len(memberOperands)), pos))
 		restFiller, _ := values.FillerFactoryFor(tyCx, f.Atomic.Rest())
 		operand := ctx.addTempVar(f.Type)
-		listReadonly := semtypes.IsSubtype(tyCx, f.Type, semtypes.VAL_READONLY)
+		listReadonly := semtypes.IsSubtype(tyCx, f.Type, semtypes.ValReadonly)
 		bb.Instructions = append(bb.Instructions, bir.NewArrayConstructor(f.Type, operand, sizeOperand, memberOperands, restFiller, listReadonly, pos))
 		return operand, bb
 	default:
@@ -1355,7 +1355,7 @@ func listConstructorExpression(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLa
 	lat := expr.AtomicType
 	exprPos := ctx.function().loc(expr.GetPosition())
 	tyCx := ctx.function().pkgCtx.typeCtx
-	for i := len(expr.Exprs); i < lat.Members.FixedLength; i++ {
+	for i := len(expr.Exprs); i < lat.FixedLength(); i++ {
 		ty := lat.MemberAtInnerVal(i)
 		filler, ok := semtypes.FillerValue(tyCx, ty)
 		if !ok {
@@ -1367,13 +1367,13 @@ func listConstructorExpression(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLa
 	}
 	restFiller, _ := values.FillerFactoryFor(tyCx, lat.Rest())
 
-	sizeOperand := ctx.addTempVar(semtypes.INT)
+	sizeOperand := ctx.addTempVar(semtypes.Int)
 	constantLoad := bir.NewConstantLoad(sizeOperand, int64(len(initValues)), exprPos)
 	bb.Instructions = append(bb.Instructions, constantLoad)
 
-	resultOperand := ctx.addTempVar(semtypes.LIST)
+	resultOperand := ctx.addTempVar(semtypes.List)
 	listTy := expr.GetDeterminedType()
-	isReadonly := semtypes.IsSubtype(tyCx, listTy, semtypes.VAL_READONLY)
+	isReadonly := semtypes.IsSubtype(tyCx, listTy, semtypes.ValReadonly)
 	newArray := bir.NewArrayConstructor(listTy, resultOperand, sizeOperand, initValues, restFiller, isReadonly, exprPos)
 	bb.Instructions = append(bb.Instructions, newArray)
 	return expressionEffect{
@@ -1395,17 +1395,17 @@ func assignmentContainerReference(ctx context, bb *bir.BIRBasicBlock, expr ast.B
 	// when it itself comes from another map index (e.g. `m["a"]["b"]` where the
 	// inner lookup nominally yields `T?`). After filling, the container is
 	// guaranteed non-nil, so we strip `()` before classifying.
-	containerType := semtypes.Diff(inner.Expr.GetDeterminedType(), semtypes.NIL)
+	containerType := semtypes.Diff(inner.Expr.GetDeterminedType(), semtypes.Nil)
 	tyCtx := ctx.function().pkgCtx.typeContext()
 	var fillingKind bir.InstructionKind
 	var filler values.FillerFactory
 	switch {
-	case semtypes.IsSubtype(tyCtx, containerType, semtypes.LIST):
+	case semtypes.IsSubtype(tyCtx, containerType, semtypes.List):
 		fillingKind = bir.INSTRUCTION_KIND_ARRAY_FILLING_LOAD
-	case semtypes.IsSubtype(tyCtx, containerType, semtypes.MAPPING):
+	case semtypes.IsSubtype(tyCtx, containerType, semtypes.Mapping):
 		fillingKind = bir.INSTRUCTION_KIND_MAP_FILLING_LOAD
 		tyCx := semtypes.TypeCheckContext(ctx.typeEnv())
-		valueType := semtypes.MappingMemberTypeInnerVal(tyCx, containerType, semtypes.STRING)
+		valueType := semtypes.MappingMemberTypeInnerVal(tyCx, containerType, semtypes.String)
 		filler, _ = values.FillerFactoryFor(tyCx, valueType)
 	default:
 		return handleActionOrExpression(ctx, bb, expr)
@@ -1443,7 +1443,7 @@ func groupExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangGroup
 
 func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangWildCardBindingPattern) expressionEffect {
 	return expressionEffect{
-		result: ctx.addTempVar(semtypes.NEVER),
+		result: ctx.addTempVar(semtypes.Never),
 		block:  curBB,
 	}
 }
@@ -1893,7 +1893,7 @@ func transformClassBody(
 
 func buildResourceMethodEntry(ctx *packageContext, rm *ast.BLangResourceMethod, fn *bir.BIRFunction) bir.BIRResourceMethod {
 	var pathSegments []bir.ResourcePathSegmentDef
-	var restTy = semtypes.NEVER
+	var restTy = semtypes.Never
 	for i := range rm.ResourcePath {
 		seg := &rm.ResourcePath[i]
 		segTy := seg.GetDeterminedType()
@@ -1975,13 +1975,13 @@ func transformResourceMethodInner(root *funcBlock, rm *ast.BLangResourceMethod, 
 }
 
 func newExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangNewExpression) expressionEffect {
-	if semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.STREAM) {
+	if semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.Stream) {
 		return newStreamExpression(ctx, curBB, expr)
 	}
 	classSymbol := expr.ClassSymbol
 	className := ctx.symbolName(classSymbol)
 	classLookupKey := buildLookupKey(ctx.symbolPackage(classSymbol), className)
-	objectTy := semtypes.Diff(expr.GetDeterminedType(), semtypes.ERROR)
+	objectTy := semtypes.Diff(expr.GetDeterminedType(), semtypes.Error)
 	return emitObjectInit(ctx, curBB, classLookupKey, objectTy, expr.GetDeterminedType(), expr.ArgsExprs, expr.GetPosition())
 }
 
@@ -1991,7 +1991,7 @@ func serviceInitExpression(ctx context, curBB *bir.BIRBasicBlock, expr *desugar.
 		// We should have set this when going over the service decl at the begining
 		ctx.function().pkgCtx.CompilerContext.InternalError("service class not registered", expr.GetPosition())
 	}
-	objectTy := semtypes.Diff(expr.GetDeterminedType(), semtypes.ERROR)
+	objectTy := semtypes.Diff(expr.GetDeterminedType(), semtypes.Error)
 	return emitObjectInit(ctx, curBB, classLookupKey, objectTy, expr.GetDeterminedType(), nil, expr.GetPosition())
 }
 
@@ -2009,7 +2009,7 @@ func emitObjectInit(ctx context, curBB *bir.BIRBasicBlock, classLookupKey string
 	}
 
 	initMethodLookupKey := classLookupKey + ".init"
-	initResult := ctx.addTempVar(semtypes.Union(semtypes.NIL, semtypes.ERROR))
+	initResult := ctx.addTempVar(semtypes.Union(semtypes.Nil, semtypes.Error))
 	initDoneBB := ctx.function().addBB()
 	call := bir.NewCall(bir.INSTRUCTION_KIND_CALL, args, model.Name("init"), initDoneBB, initResult, ctx.function().loc(pos))
 	call.IsMethodCall = true
@@ -2017,8 +2017,8 @@ func emitObjectInit(ctx context, curBB *bir.BIRBasicBlock, classLookupKey string
 	curBB.Terminator = call
 
 	result := ctx.addTempVar(resultTy)
-	isInitResultNil := ctx.addTempVar(semtypes.BOOLEAN)
-	nilCheck := bir.NewTypeTest(semtypes.NIL, isInitResultNil, initResult, ctx.function().loc(pos))
+	isInitResultNil := ctx.addTempVar(semtypes.Boolean)
+	nilCheck := bir.NewTypeTest(semtypes.Nil, isInitResultNil, initResult, ctx.function().loc(pos))
 	initDoneBB.Instructions = append(initDoneBB.Instructions, nilCheck)
 
 	assignObjectBB := ctx.function().addBB()
@@ -2071,5 +2071,5 @@ func appendIfNotNil[T any](slice []T, item *T) []T {
 }
 
 func hasNoStorageIdentity(tyCtx semtypes.Context, ty semtypes.SemType) bool {
-	return semtypes.IsSubtype(tyCtx, ty, semtypes.SIMPLE_BASIC)
+	return semtypes.IsSubtype(tyCtx, ty, semtypes.SimpleBasic)
 }

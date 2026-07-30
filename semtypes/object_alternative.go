@@ -17,8 +17,16 @@
 package semtypes
 
 type ObjectAlternative struct {
-	ObjectType SemType
-	InitFnType SemType
+	objectType       SemType
+	initFunctionType SemType
+}
+
+func (a ObjectAlternative) Type() SemType {
+	return a.objectType
+}
+
+func (a ObjectAlternative) InitFunctionType() SemType {
+	return a.initFunctionType
 }
 
 func ObjectAlternatives(cx Context, t SemType) []ObjectAlternative {
@@ -30,11 +38,11 @@ func ObjectAlternatives(cx Context, t SemType) []ObjectAlternative {
 		if len(each.neg) > 0 {
 			continue
 		}
-		objectTy := convertMappingToObjectTy(cx, each.SemType)
+		objectTy := convertMappingToObjectTy(cx, each.semType)
 		initTy := ObjectMemberType(cx, initKey, objectTy)
 		alts = append(alts, ObjectAlternative{
-			ObjectType: objectTy,
-			InitFnType: initTy,
+			objectType:       objectTy,
+			initFunctionType: initTy,
 		})
 	}
 

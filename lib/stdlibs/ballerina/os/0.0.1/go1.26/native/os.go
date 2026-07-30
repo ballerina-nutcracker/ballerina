@@ -33,7 +33,7 @@ const (
 
 func newProcessObject(handle pal.ProcessHandle) *values.Object {
 	return values.NewObject(
-		semtypes.OBJECT,
+		semtypes.Object,
 		map[string]values.BalValue{"$handle": handle},
 		map[string]string{
 			"waitForExit": "ballerina/os:Process.waitForExit",
@@ -67,9 +67,9 @@ func initOSModule(rt *runtime.Runtime) {
 
 	env := rt.GetTypeEnv()
 	bld := semtypes.NewListDefinition()
-	byteArrTy := bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE)
+	byteArrTy := bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte)
 	smd := semtypes.NewMappingDefinition()
-	strMapTy := smd.DefineMappingTypeWrapped(env, nil, semtypes.STRING)
+	strMapTy := smd.DefineMappingTypeWrapped(env, nil, semtypes.String)
 
 	// Atomic types are a structural property of the (fixed) SemTypes above and
 	// do not vary per strand, so compute them once instead of on every call.

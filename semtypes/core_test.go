@@ -53,29 +53,29 @@ func createTupleType(env Env, members ...SemType) SemType {
 // TestSubtypeSimple tests basic subtype relationships
 // Ported from SemTypeCoreTest.java:testSubtypeSimple()
 func TestSubtypeSimple(t *testing.T) {
-	assertTrue(t, IsSubtypeSimple(NIL, ANY))
-	assertTrue(t, IsSubtypeSimple(INT, VAL))
-	assertTrue(t, IsSubtypeSimple(ANY, VAL))
-	assertFalse(t, IsSubtypeSimple(INT, BOOLEAN))
-	assertFalse(t, IsSubtypeSimple(ERROR, ANY))
+	assertTrue(t, IsSubtypeSimple(Nil, Any))
+	assertTrue(t, IsSubtypeSimple(Int, Val))
+	assertTrue(t, IsSubtypeSimple(Any, Val))
+	assertFalse(t, IsSubtypeSimple(Int, Boolean))
+	assertFalse(t, IsSubtypeSimple(Error, Any))
 }
 
 // TestSingleNumericType tests the singleNumericType function
 // Ported from SemTypeCoreTest.java:testSingleNumericType()
 func TestSingleNumericType(t *testing.T) {
-	result := SingleNumericType(INT)
-	assertTrue(t, result.IsPresent(), "INT should return a single numeric type")
-	assertEqual(t, result.Get(), INT)
+	result := SingleNumericType(Int)
+	assertTrue(t, result.IsPresent(), "Int should return a single numeric type")
+	assertEqual(t, result.Get(), Int)
 
-	result = SingleNumericType(BOOLEAN)
-	assertFalse(t, result.IsPresent(), "BOOLEAN should not return a single numeric type")
+	result = SingleNumericType(Boolean)
+	assertFalse(t, result.IsPresent(), "Boolean should not return a single numeric type")
 
 	result = SingleNumericType(singleton(int64(1)))
-	assertTrue(t, result.IsPresent(), "singleton int should return INT")
-	assertEqual(t, result.Get(), INT)
+	assertTrue(t, result.IsPresent(), "singleton int should return Int")
+	assertEqual(t, result.Get(), Int)
 
-	result = SingleNumericType(Union(INT, FLOAT))
-	assertFalse(t, result.IsPresent(), "union of INT and FLOAT should not return a single numeric type")
+	result = SingleNumericType(Union(Int, Float))
+	assertFalse(t, result.IsPresent(), "union of Int and Float should not return a single numeric type")
 }
 
 // TestBitTwiddling tests bit manipulation operations
@@ -96,12 +96,12 @@ func TestBitTwiddling(t *testing.T) {
 func Test1(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
-	disjoint(t, ctx, STRING, INT)
-	disjoint(t, ctx, INT, NIL)
-	t1 := createTupleType(env, INT, INT)
-	disjoint(t, ctx, t1, INT)
-	t2 := createTupleType(env, STRING, STRING)
-	disjoint(t, ctx, NIL, t2)
+	disjoint(t, ctx, String, Int)
+	disjoint(t, ctx, Int, Nil)
+	t1 := createTupleType(env, Int, Int)
+	disjoint(t, ctx, t1, Int)
+	t2 := createTupleType(env, String, String)
+	disjoint(t, ctx, Nil, t2)
 }
 
 // Test2 tests basic subtype relationship
@@ -109,16 +109,16 @@ func Test1(t *testing.T) {
 func Test2(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
-	assertTrue(t, IsSubtype(ctx, INT, VAL))
+	assertTrue(t, IsSubtype(ctx, Int, Val))
 }
 
 // Test3 tests tuple union equivalence
 // Ported from SemTypeCoreTest.java:test3()
 func Test3(t *testing.T) {
 	env := CreateTypeEnv()
-	s := testRoTuple(env, INT, Union(INT, STRING))
-	tuple1 := testRoTuple(env, INT, INT)
-	tuple2 := testRoTuple(env, INT, STRING)
+	s := testRoTuple(env, Int, Union(Int, String))
+	tuple1 := testRoTuple(env, Int, Int)
+	tuple2 := testRoTuple(env, Int, String)
 	ty := Union(tuple1, tuple2)
 	equiv(t, env, s, ty)
 }
@@ -129,11 +129,11 @@ func Test4(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	isT := createTupleType(env, INT, STRING)
-	itT := createTupleType(env, INT, VAL)
-	tsT := createTupleType(env, VAL, STRING)
-	iiT := createTupleType(env, INT, INT)
-	ttT := createTupleType(env, VAL, VAL)
+	isT := createTupleType(env, Int, String)
+	itT := createTupleType(env, Int, Val)
+	tsT := createTupleType(env, Val, String)
+	iiT := createTupleType(env, Int, Int)
+	ttT := createTupleType(env, Val, Val)
 
 	assertTrue(t, IsSubtype(ctx, isT, itT))
 	assertTrue(t, IsSubtype(ctx, isT, tsT))
@@ -144,10 +144,10 @@ func Test4(t *testing.T) {
 // Ported from SemTypeCoreTest.java:test5()
 func Test5(t *testing.T) {
 	env := CreateTypeEnv()
-	s := testRoTuple(env, INT, Union(NIL, Union(INT, STRING)))
-	tuple1 := testRoTuple(env, INT, INT)
-	tuple2 := testRoTuple(env, INT, NIL)
-	tuple3 := testRoTuple(env, INT, STRING)
+	s := testRoTuple(env, Int, Union(Nil, Union(Int, String)))
+	tuple1 := testRoTuple(env, Int, Int)
+	tuple2 := testRoTuple(env, Int, Nil)
+	tuple3 := testRoTuple(env, Int, String)
 	ty := Union(tuple1, Union(tuple2, tuple3))
 	equiv(t, env, s, ty)
 }
@@ -158,10 +158,10 @@ func Test6(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := testTuple(env, INT, Union(NIL, Union(INT, STRING)))
-	tuple1 := testTuple(env, INT, INT)
-	tuple2 := testTuple(env, INT, NIL)
-	tuple3 := testTuple(env, INT, STRING)
+	s := testTuple(env, Int, Union(Nil, Union(Int, String)))
+	tuple1 := testTuple(env, Int, Int)
+	tuple2 := testTuple(env, Int, Nil)
+	tuple3 := testTuple(env, Int, String)
 	ty := Union(tuple1, Union(tuple2, tuple3))
 
 	assertTrue(t, IsSubtype(ctx, ty, s))
@@ -174,9 +174,9 @@ func Test7(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := testTuple(env, INT, Union(INT, STRING))
-	tuple1 := testTuple(env, INT, INT)
-	tuple2 := testTuple(env, INT, STRING)
+	s := testTuple(env, Int, Union(Int, String))
+	tuple1 := testTuple(env, Int, Int)
+	tuple2 := testTuple(env, Int, String)
 	ty := Union(tuple1, tuple2)
 
 	assertTrue(t, IsSubtype(ctx, ty, s))
@@ -191,8 +191,8 @@ func TestTuple1(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := createTupleType(env, INT, STRING, NIL)
-	ty := createTupleType(env, VAL, VAL, VAL)
+	s := createTupleType(env, Int, String, Nil)
+	ty := createTupleType(env, Val, Val, Val)
 
 	assertTrue(t, IsSubtype(ctx, s, ty))
 	assertFalse(t, IsSubtype(ctx, ty, s))
@@ -204,8 +204,8 @@ func TestTuple2(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := createTupleType(env, INT, STRING, NIL)
-	ty := createTupleType(env, VAL, VAL)
+	s := createTupleType(env, Int, String, Nil)
+	ty := createTupleType(env, Val, Val)
 
 	assertFalse(t, IsSubtype(ctx, s, ty))
 	assertFalse(t, IsSubtype(ctx, ty, s))
@@ -219,13 +219,13 @@ func TestTuple3(t *testing.T) {
 
 	z1 := createTupleType(env)
 	z2 := createTupleType(env)
-	_ = createTupleType(env, INT) // Not used in this test but kept for completeness
+	_ = createTupleType(env, Int) // Not used in this test but kept for completeness
 
 	assertFalse(t, IsEmpty(ctx, z1))
 	assertTrue(t, IsSubtype(ctx, z1, z2))
 	assertTrue(t, IsEmpty(ctx, Diff(z1, z2)))
-	assertFalse(t, IsEmpty(ctx, Diff(z1, INT)))
-	assertFalse(t, IsEmpty(ctx, Diff(INT, z1)))
+	assertFalse(t, IsEmpty(ctx, Diff(z1, Int)))
+	assertFalse(t, IsEmpty(ctx, Diff(Int, z1)))
 }
 
 // TestTuple4 tests tuple disjointness with different lengths
@@ -234,8 +234,8 @@ func TestTuple4(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := createTupleType(env, INT, INT)
-	ty := createTupleType(env, INT, INT, INT)
+	s := createTupleType(env, Int, Int)
+	ty := createTupleType(env, Int, Int, Int)
 
 	assertFalse(t, IsEmpty(ctx, s))
 	assertFalse(t, IsEmpty(ctx, ty))
@@ -259,8 +259,8 @@ func TestFunc1(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := funcHelper(env, INT, INT)
-	ty := funcHelper(env, INT, Union(NIL, INT))
+	s := funcHelper(env, Int, Int)
+	ty := funcHelper(env, Int, Union(Nil, Int))
 
 	assertTrue(t, IsSubtype(ctx, s, ty))
 	assertFalse(t, IsSubtype(ctx, ty, s))
@@ -272,8 +272,8 @@ func TestFunc2(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := funcHelper(env, Union(NIL, INT), INT)
-	ty := funcHelper(env, INT, INT)
+	s := funcHelper(env, Union(Nil, Int), Int)
+	ty := funcHelper(env, Int, Int)
 
 	assertTrue(t, IsSubtype(ctx, s, ty))
 	assertFalse(t, IsSubtype(ctx, ty, s))
@@ -285,8 +285,8 @@ func TestFunc3(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := funcHelper(env, createTupleType(env, Union(NIL, INT)), INT)
-	ty := funcHelper(env, createTupleType(env, INT), INT)
+	s := funcHelper(env, createTupleType(env, Union(Nil, Int)), Int)
+	ty := funcHelper(env, createTupleType(env, Int), Int)
 
 	assertTrue(t, IsSubtype(ctx, s, ty))
 	assertFalse(t, IsSubtype(ctx, ty, s))
@@ -298,8 +298,8 @@ func TestFunc4(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	s := funcHelper(env, createTupleType(env, Union(NIL, INT)), INT)
-	ty := funcHelper(env, createTupleType(env, INT), Union(NIL, INT))
+	s := funcHelper(env, createTupleType(env, Union(Nil, Int)), Int)
+	ty := funcHelper(env, createTupleType(env, Int), Union(Nil, Int))
 
 	assertTrue(t, IsSubtype(ctx, s, ty))
 	assertFalse(t, IsSubtype(ctx, ty, s))
@@ -373,9 +373,9 @@ func TestRoList(t *testing.T) {
 	env := CreateTypeEnv()
 	ctx := ContextFrom(env)
 
-	t1 := Intersect(LIST, VAL_READONLY)
+	t1 := Intersect(List, ValReadonly)
 	ld := NewListDefinition()
-	t2 := ld.DefineListTypeWrapped(env, []SemType{}, 0, VAL, CellMutability_CELL_MUT_NONE)
+	t2 := ld.DefineListTypeWrapped(env, []SemType{}, 0, Val, CellMutabilityNone)
 	ty := Diff(t1, t2)
 	b := IsEmpty(ctx, ty)
 	assertTrue(t, b)
@@ -420,7 +420,7 @@ func recursiveTuple(env Env, f func(Env, SemType) []SemType) SemType {
 	def := NewListDefinition()
 	t := def.GetSemType(env)
 	members := f(env, t)
-	return def.DefineListTypeWrapped(env, members, len(members), VAL, CellMutability_CELL_MUT_LIMITED)
+	return def.DefineListTypeWrapped(env, members, len(members), Val, CellMutabilityLimited)
 }
 
 // TestRec tests recursive tuple types
@@ -433,12 +433,12 @@ func TestRec(t *testing.T) {
 	// ctx := ContextFrom(env)
 	//
 	// t1 := recursiveTuple(env, func(e Env, t SemType) []SemType {
-	// 	return []SemType{INT, Union(t, NIL)}
+	// 	return []SemType{Int, Union(t, Nil)}
 	// })
 	// t2 := recursiveTuple(env, func(e Env, t SemType) []SemType {
 	// 	return []SemType{
-	// 		Union(INT, STRING),
-	// 		Union(t, NIL),
+	// 		Union(Int, String),
+	// 		Union(t, Nil),
 	// 	}
 	// })
 	// assertTrue(t, IsSubtype(ctx, t1, t2))
@@ -453,11 +453,11 @@ func TestRec2(t *testing.T) {
 	// env := GetTypeEnv()
 	// ctx := ContextFrom(env)
 	//
-	// t1 := Union(NIL, recursiveTuple(env, func(e Env, t SemType) []SemType {
-	// 	return []SemType{INT, Union(t, NIL)}
+	// t1 := Union(Nil, recursiveTuple(env, func(e Env, t SemType) []SemType {
+	// 	return []SemType{Int, Union(t, Nil)}
 	// }))
 	// t2 := recursiveTuple(env, func(e Env, t SemType) []SemType {
-	// 	return []SemType{INT, Union(t, NIL)}
+	// 	return []SemType{Int, Union(t, Nil)}
 	// })
 	// assertTrue(t, IsSubtype(ctx, t2, t1))
 }
@@ -471,12 +471,12 @@ func TestRec3(t *testing.T) {
 	// ctx := ContextFrom(env)
 	//
 	// t1 := recursiveTuple(env, func(e Env, t SemType) []SemType {
-	// 	return []SemType{INT, Union(t, NIL)}
+	// 	return []SemType{Int, Union(t, Nil)}
 	// })
 	// t2 := recursiveTuple(env, func(e Env, t SemType) []SemType {
 	// 	return []SemType{
-	// 		INT,
-	// 		Union(NIL, createTupleType(e, INT, Union(NIL, t))),
+	// 		Int,
+	// 		Union(Nil, createTupleType(e, Int, Union(Nil, t))),
 	// 	}
 	// })
 	// assertTrue(t, IsSubtype(ctx, t1, t2))
@@ -520,8 +520,8 @@ func TestStringSubtypeSingleValue(t *testing.T) {
 	assertEqual(t, stringSubtypeSingleValue(abcSD).Get(), "abc")
 
 	a := StringConst("a")
-	aSD := a.subtypeDataList()[0]
-	assertEqual(t, stringSubtypeSingleValue(aSD).Get(), "a")
+	data := a.subtypeDataList()[0]
+	assertEqual(t, stringSubtypeSingleValue(data).Get(), "a")
 
 	aAndAbc := Union(a, abc)
 	assertFalse(t, stringSubtypeSingleValue(aAndAbc.subtypeDataList()[0]).IsPresent())
@@ -536,7 +536,7 @@ func TestStringSubtypeSingleValue(t *testing.T) {
 
 	intersect3 := Intersect(a, abc)
 	// TODO: The intersection of two different string constants behavior may differ
-	// between Java and Go implementations. The Java test expects NEVER, but Go
+	// between Java and Go implementations. The Java test expects Never, but Go
 	// implementation may handle this differently. The core functionality (single value
 	// extraction) is already tested by the assertions above.
 	_ = intersect3 // Suppress unused variable warning

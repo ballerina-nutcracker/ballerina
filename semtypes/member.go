@@ -18,14 +18,14 @@ package semtypes
 
 type Member struct {
 	Name       string
-	ValueTy    SemType
+	ValueType  SemType
 	Kind       MemberKind
 	Visibility Visibility
 	Immutable  bool
 }
 
 func newMember(name string, valueTy SemType, kind MemberKind, visibility Visibility, immutable bool) *Member {
-	return &Member{Name: name, ValueTy: valueTy, Kind: kind, Visibility: visibility, Immutable: immutable}
+	return &Member{Name: name, ValueType: valueTy, Kind: kind, Visibility: visibility, Immutable: immutable}
 }
 
 type memberTag interface {
@@ -44,13 +44,13 @@ const (
 func (k *MemberKind) field() Field {
 	switch *k {
 	case MemberKindField:
-		return Field{Name: "kind", Ty: StringConst("field"), Ro: true, Opt: false}
+		return Field{name: "kind", typeOf: StringConst("field"), readonly: true, optional: false}
 	case MemberKindMethod:
-		return Field{Name: "kind", Ty: StringConst("method"), Ro: true, Opt: false}
+		return Field{name: "kind", typeOf: StringConst("method"), readonly: true, optional: false}
 	case MemberKindRemoteMethod:
-		return Field{Name: "kind", Ty: StringConst("remote-method"), Ro: true, Opt: false}
+		return Field{name: "kind", typeOf: StringConst("remote-method"), readonly: true, optional: false}
 	case MemberKindResourceMethod:
-		return Field{Name: "kind", Ty: StringConst("resource-method"), Ro: true, Opt: false}
+		return Field{name: "kind", typeOf: StringConst("resource-method"), readonly: true, optional: false}
 	default:
 		panic("invalid member kind")
 	}
@@ -63,11 +63,11 @@ func allMethodField() Field {
 		"remote-method",
 		"resource-method",
 	}
-	var ty = NEVER
+	var ty = Never
 	for _, each := range tys {
 		ty = Union(ty, StringConst(each))
 	}
-	return Field{Name: "kind", Ty: ty, Ro: true, Opt: false}
+	return Field{name: "kind", typeOf: ty, readonly: true, optional: false}
 }
 
 type Visibility uint8
@@ -80,15 +80,15 @@ const (
 var (
 	visibilityPublicTag  = StringConst("public")
 	visibilityPrivateTag = StringConst("private")
-	visibilityAll        = Field{Name: "visibility", Ty: Union(visibilityPublicTag, visibilityPrivateTag), Ro: true, Opt: false}
+	visibilityAll        = Field{name: "visibility", typeOf: Union(visibilityPublicTag, visibilityPrivateTag), readonly: true, optional: false}
 )
 
 func (v *Visibility) field() Field {
 	switch *v {
 	case VisibilityPublic:
-		return Field{Name: "visibility", Ty: visibilityPublicTag, Ro: true, Opt: false}
+		return Field{name: "visibility", typeOf: visibilityPublicTag, readonly: true, optional: false}
 	case VisibilityPrivate:
-		return Field{Name: "visibility", Ty: visibilityPrivateTag, Ro: true, Opt: false}
+		return Field{name: "visibility", typeOf: visibilityPrivateTag, readonly: true, optional: false}
 	default:
 		panic("invalid visibility")
 	}
@@ -125,19 +125,19 @@ func ObjectMemberType(ctx Context, name, ty SemType) SemType {
 }
 
 func convertObjectToMappingTy(ctx Context, ty SemType) SemType {
-	objectTy := Intersect(ty, OBJECT)
+	objectTy := Intersect(ty, Object)
 	if IsEmpty(ctx, objectTy) {
 		return SemType{}
 	}
-	bdd := subtypeData(objectTy, BTObject)
-	return createBasicSemType(BTMapping, bdd)
+	bdd := subtypeDataAt(objectTy, btObject)
+	return createBasicSemType(btMapping, bdd)
 }
 
 func convertMappingToObjectTy(ctx Context, ty SemType) SemType {
-	mappingTy := Intersect(ty, MAPPING)
+	mappingTy := Intersect(ty, Mapping)
 	if IsEmpty(ctx, mappingTy) {
 		return SemType{}
 	}
-	bdd := subtypeData(mappingTy, BTMapping)
-	return createBasicSemType(BTObject, bdd)
+	bdd := subtypeDataAt(mappingTy, btMapping)
+	return createBasicSemType(btObject, bdd)
 }

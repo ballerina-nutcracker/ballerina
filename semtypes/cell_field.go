@@ -16,13 +16,13 @@
 
 package semtypes
 
-type CellField struct {
+type cellField struct {
 	Name string
 	Type SemType
 }
 
-func cellFieldFrom(name string, ty SemType) CellField {
-	return CellField{
+func cellFieldFrom(name string, ty SemType) cellField {
+	return cellField{
 		Name: name,
 		Type: ty,
 	}

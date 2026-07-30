@@ -23,8 +23,8 @@ type allOrNothingSubtype struct {
 var (
 	allOrNothingSubtypeAll                 = newAllOrNothingSubtypeFromBool(true)
 	allOrNothingSubtypeNothing             = newAllOrNothingSubtypeFromBool(false)
-	_                          SubtypeData = &allOrNothingSubtype{}
-	_                          Bdd         = &allOrNothingSubtype{}
+	_                          subtypeData = &allOrNothingSubtype{}
+	_                          bdd         = &allOrNothingSubtype{}
 )
 
 func newAllOrNothingSubtypeFromBool(isAll bool) allOrNothingSubtype {

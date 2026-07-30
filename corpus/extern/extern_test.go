@@ -94,13 +94,13 @@ func TestDependentlyTyped(t *testing.T) {
 			if got := values.String(td, nil); got != "typedesc" {
 				return nil, fmt.Errorf("expected typedesc string, got %q", got)
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(td), semtypes.TYPEDESC) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(td), semtypes.Typedesc) {
 				return nil, fmt.Errorf("expected typedesc semtype")
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.INT):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
 				return int64(1), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.STRING):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
 				return "foo", nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
@@ -110,7 +110,7 @@ func TestDependentlyTyped(t *testing.T) {
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.INT) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int) {
 				panic(values.NewErrorWithMessage("inferredSubType requires typedesc<int>"))
 			}
 			return int64(1), nil
@@ -121,9 +121,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.INT, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Type):
 				return int64(0), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.STRING, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type):
 				return "bar", nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredPartially typedesc constraint"))
@@ -157,9 +157,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.INT):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
 				return val, nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.STRING):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
 				return fmt.Sprintf("%d", val), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredWithDefault typedesc constraint"))
@@ -170,7 +170,7 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
 			}
 			// return an error to verify the inferred typedesc was widened to include error
-			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.ERROR, td.Type) {
+			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Error, td.Type) {
 				return values.NewErrorWithMessage("error"), nil
 			}
 			panic(values.NewErrorWithMessage("inferredMaybeError: expected error to be in typedesc"))
@@ -180,7 +180,7 @@ func TestDependentlyTyped(t *testing.T) {
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.STRING, td.Type) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type) {
 				panic(values.NewErrorWithMessage("Getter.get: expected string-compatible typedesc"))
 			}
 			return "immutable", nil
@@ -250,9 +250,9 @@ func TestDependentlyTypedMethod(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[3])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.STRING, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type):
 				return "string response", nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.INT, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Type):
 				return int64(2), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported targetType"))
@@ -576,9 +576,9 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 			return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 		}
 		switch {
-		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.INT):
+		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.Int):
 			return int64(1), nil
-		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.STRING):
+		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.String):
 			return "foo", nil
 		}
 		panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))

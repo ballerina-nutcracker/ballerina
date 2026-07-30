@@ -14,11 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// Package semtypes provides operations for working with shapes of values.
 package semtypes
-
-type commonBasicTypeOps interface {
-	Union(t1 subtypeData, t2 subtypeData) subtypeData
-	Intersect(t1 subtypeData, t2 subtypeData) subtypeData
-	Diff(t1 subtypeData, t2 subtypeData) subtypeData
-	complement(t subtypeData) subtypeData
-}

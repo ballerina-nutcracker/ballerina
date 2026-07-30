@@ -261,7 +261,7 @@ func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Fra
 }
 
 func xmlResultReadonly(ctx *extern.Context, op *bir.BIROperand) bool {
-	return semtypes.IsSubtype(ctx.TypeCtx(), op.VariableDcl.GetType(), semtypes.VAL_READONLY)
+	return semtypes.IsSubtype(ctx.TypeCtx(), op.VariableDcl.GetType(), semtypes.ValReadonly)
 }
 
 func execEvalTemplateExpr(ctx *extern.Context, instr *bir.EvalTemplateExpr, frame *Frame) {

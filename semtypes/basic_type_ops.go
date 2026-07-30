@@ -16,7 +16,7 @@
 
 package semtypes
 
-type BasicTypeOps interface {
-	IsEmptyOp
-	CommonBasicTypeOps
+type basicTypeOps interface {
+	isEmptyOp
+	commonBasicTypeOps
 }

@@ -322,7 +322,7 @@ func TestResolveQueryExprMapCollection(t *testing.T) {
 	mapSymbol := model.NewVariableSymbol("m", false, false, false, queryTestPos)
 	space.AddSymbol("m", &mapSymbol)
 	mapSymbolRef, _ := space.GetSymbol("m")
-	cx.SetSymbolType(mapSymbolRef, semtypes.MAPPING)
+	cx.SetSymbolType(mapSymbolRef, semtypes.Mapping)
 
 	mapRef := &ast.BLangVarRef{
 		VariableName: &ast.BLangIdentifier{
@@ -340,7 +340,7 @@ func TestResolveQueryExprMapCollection(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for map collection")
 	}
-	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
 }
@@ -358,7 +358,7 @@ func TestResolveQueryExprMapConstructType(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for map construct type")
 	}
-	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.MAPPING) {
+	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.Mapping) {
 		t.Fatalf("expected query result type to be mapping, got %v", queryTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -378,7 +378,7 @@ func TestResolveQueryExprCollectClause(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for collect clause")
 	}
-	if !semtypes.IsSubtypeSimple(queryTy, semtypes.INT) {
+	if !semtypes.IsSubtypeSimple(queryTy, semtypes.Int) {
 		t.Fatalf("expected query result type to be int, got %v", queryTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -419,10 +419,10 @@ func TestResolveQueryExprCollectAggregatesVariables(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for collect clause with query variable")
 	}
-	if !semtypes.IsSubtypeSimple(queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected collect result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(collectXRef.GetDeterminedType(), semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(collectXRef.GetDeterminedType(), semtypes.List) {
 		t.Fatalf("expected collect variable reference to be aggregated as a list, got %v", collectXRef.GetDeterminedType())
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -454,13 +454,13 @@ func TestResolveQueryExprGroupByClauseAggregatesNonGroupingVars(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for group by clause")
 	}
-	if !semtypes.IsSubtypeSimple(queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(groupXRef.GetDeterminedType(), semtypes.INT) {
+	if !semtypes.IsSubtypeSimple(groupXRef.GetDeterminedType(), semtypes.Int) {
 		t.Fatalf("expected grouping key variable to remain int, got %v", groupXRef.GetDeterminedType())
 	}
-	if !semtypes.IsSubtypeSimple(selectYRef.GetDeterminedType(), semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(selectYRef.GetDeterminedType(), semtypes.List) {
 		t.Fatalf("expected non-grouping variable to be aggregated as a non-empty list, got %v", selectYRef.GetDeterminedType())
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -492,19 +492,19 @@ func TestResolveQueryExprCollectDoesNotReaggregateGroupByVars(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for group by + collect")
 	}
-	if !semtypes.IsSubtypeSimple(queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected collect result type to be a list, got %v", queryTy)
 	}
 	tyCtx := semtypes.ContextFrom(cx.GetTypeEnv())
 	collectYTy := collectYRef.GetDeterminedType()
-	if !semtypes.IsSubtypeSimple(collectYTy, semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(collectYTy, semtypes.List) {
 		t.Fatalf("expected grouped non-key variable to remain a list, got %v", collectYTy)
 	}
 	memberTy := semtypes.ListMemberTypeInnerVal(tyCtx, collectYTy, semtypes.IntConst(0))
-	if !semtypes.IsSubtypeSimple(memberTy, semtypes.INT) {
+	if !semtypes.IsSubtypeSimple(memberTy, semtypes.Int) {
 		t.Fatalf("expected grouped non-key variable member type to be int, got %v", memberTy)
 	}
-	if semtypes.IsSubtypeSimple(memberTy, semtypes.LIST) {
+	if semtypes.IsSubtypeSimple(memberTy, semtypes.List) {
 		t.Fatalf("expected grouped non-key variable not to be re-aggregated as a list of lists, got %v", collectYTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -534,10 +534,10 @@ func TestResolveQueryExprGroupByVarDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for group by variable declaration")
 	}
-	if !semtypes.IsSubtypeSimple(queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(selectNRef.GetDeterminedType(), semtypes.INT) {
+	if !semtypes.IsSubtypeSimple(selectNRef.GetDeterminedType(), semtypes.Int) {
 		t.Fatalf("expected grouping variable declaration to be int, got %v", selectNRef.GetDeterminedType())
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -574,7 +574,7 @@ func TestResolveQueryExprOrderByClause(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for order by clause")
 	}
-	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -601,7 +601,7 @@ func TestResolveQueryExprJoinClause(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for join clause")
 	}
-	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -623,7 +623,7 @@ func TestResolveQueryExprMultipleOrderByConsecutive(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for consecutive order by clauses")
 	}
-	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -646,7 +646,7 @@ func TestResolveQueryExprMultipleOrderByNonConsecutive(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected resolveQueryExpr to succeed for non-consecutive order by clauses")
 	}
-	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.LIST) {
+	if !semtypes.IsSubtype(semtypes.ContextFrom(cx.GetTypeEnv()), queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
 	if len(cx.Diagnostics()) > 0 {
@@ -661,7 +661,7 @@ func TestResolveQueryExprOrderByRejectsMixedSimpleUnion(t *testing.T) {
 	keySymbol := model.NewVariableSymbol("k", false, false, false, queryTestPos)
 	space.AddSymbol("k", &keySymbol)
 	keySymbolRef, _ := space.GetSymbol("k")
-	cx.SetSymbolType(keySymbolRef, semtypes.Union(semtypes.INT, semtypes.STRING))
+	cx.SetSymbolType(keySymbolRef, semtypes.Union(semtypes.Int, semtypes.String))
 
 	keyRef := &ast.BLangVarRef{
 		VariableName: &ast.BLangIdentifier{
@@ -729,10 +729,10 @@ func TestResolveQueryExprMapConstructTypeOnConflictNil(t *testing.T) {
 		t.Fatalf("expected resolveQueryExpr to succeed for map on conflict nil")
 	}
 	tyCtx := semtypes.ContextFrom(cx.GetTypeEnv())
-	if !semtypes.IsSubtype(tyCtx, queryTy, semtypes.MAPPING) {
+	if !semtypes.IsSubtype(tyCtx, queryTy, semtypes.Mapping) {
 		t.Fatalf("expected query result type to be mapping, got %v", queryTy)
 	}
-	if semtypes.IsSubtype(tyCtx, semtypes.ERROR, queryTy) {
+	if semtypes.IsSubtype(tyCtx, semtypes.Error, queryTy) {
 		t.Fatalf("expected query result type not to include error, got %v", queryTy)
 	}
 }
@@ -751,7 +751,7 @@ func TestResolveQueryExprMapConstructTypeOnConflictError(t *testing.T) {
 		t.Fatalf("expected resolveQueryExpr to succeed for map on conflict error")
 	}
 	tyCtx := semtypes.ContextFrom(cx.GetTypeEnv())
-	if !semtypes.IsSubtype(tyCtx, semtypes.ERROR, queryTy) {
+	if !semtypes.IsSubtype(tyCtx, semtypes.Error, queryTy) {
 		t.Fatalf("expected query result type to include error, got %v", queryTy)
 	}
 }

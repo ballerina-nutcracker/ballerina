@@ -27,7 +27,7 @@ import (
 type TypePool struct {
 	tys      []SemType
 	memo     map[InternHandle]TypePoolIndex
-	interner *SemtypeInterner
+	interner *SemTypeInterner
 }
 
 func NewTypePool() *TypePool {
@@ -84,7 +84,7 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 		start := uint32(len(bp.subtypeData))
 		for _, bs := range subtypes {
 			var entry subtypeDataEntry
-			switch data := bs.SubtypeData.(type) {
+			switch data := bs.subtypeData.(type) {
 			case intSubtype:
 				entry = subtypeDataEntry{kind: intSubtypeData, index: uint32(len(bp.intSubtypes))}
 				bp.intSubtypes = append(bp.intSubtypes, fromIntSubtype(&data))
@@ -103,37 +103,37 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 			case *xmlSubtype:
 				entry = subtypeDataEntry{kind: xmlSubtypeData, index: uint32(len(bp.xmlSubtypes))}
 				bp.xmlSubtypes = append(bp.xmlSubtypes, sc.serializeXmlSubtype(data))
-			case Bdd:
-				switch bs.BasicTypeCode {
-				case BTList:
+			case bdd:
+				switch bs.basicTypeCode {
+				case btList:
 					entry = subtypeDataEntry{kind: listBddSubtypeData, index: uint32(len(bp.listBdds))}
 					bp.listBdds = append(bp.listBdds, sc.serializeListBdd(data))
-				case BTMapping:
+				case btMapping:
 					entry = subtypeDataEntry{kind: mappingBddSubtypeData, index: uint32(len(bp.mappingBdds))}
 					bp.mappingBdds = append(bp.mappingBdds, sc.serializeMappingBdd(data))
-				case BTFunction:
+				case btFunction:
 					entry = subtypeDataEntry{kind: functionBddSubtypeData, index: uint32(len(bp.functionBdds))}
 					bp.functionBdds = append(bp.functionBdds, sc.serializeFunctionBdd(data))
-				case BTTypeDesc:
+				case btTypeDesc:
 					entry = subtypeDataEntry{kind: typedescBddSubtypeData, index: uint32(len(bp.typedescBdds))}
 					bp.typedescBdds = append(bp.typedescBdds, sc.serializeMappingBdd(data))
-				case BTError:
+				case btError:
 					entry = subtypeDataEntry{kind: errorBddSubtypeData, index: uint32(len(bp.errorBdds))}
 					bp.errorBdds = append(bp.errorBdds, sc.serializeMappingBdd(data))
-				case BTTable:
+				case btTable:
 					entry = subtypeDataEntry{kind: tableBddSubtypeData, index: uint32(len(bp.tableBdds))}
 					bp.tableBdds = append(bp.tableBdds, sc.serializeListBdd(data))
-				case BTObject:
+				case btObject:
 					entry = subtypeDataEntry{kind: objectBddSubtypeData, index: uint32(len(bp.objectBdds))}
 					bp.objectBdds = append(bp.objectBdds, sc.serializeMappingBdd(data))
-				case BTStream:
+				case btStream:
 					entry = subtypeDataEntry{kind: streamBddSubtypeData, index: uint32(len(bp.streamBdds))}
 					bp.streamBdds = append(bp.streamBdds, sc.serializeListBdd(data))
 				default:
-					panic(fmt.Sprintf("unsupported BDD basic type code: %v", bs.BasicTypeCode))
+					panic(fmt.Sprintf("unsupported BDD basic type code: %v", bs.basicTypeCode))
 				}
 			default:
-				panic(fmt.Sprintf("unexpected subtype data type: %T (basic type code: %v)", bs.SubtypeData, bs.BasicTypeCode))
+				panic(fmt.Sprintf("unexpected subtype data type: %T (basic type code: %v)", bs.subtypeData, bs.basicTypeCode))
 			}
 			bp.subtypeData = append(bp.subtypeData, entry)
 		}
@@ -582,7 +582,7 @@ func fromFloatSubtype(st *floatSubtype) floatSubtypeEntry {
 	return floatSubtypeEntry{allowed: st.Allowed(), nValues: int32(nValues), values: values}
 }
 
-func toFloatSubtype(entry floatSubtypeEntry) ProperSubtypeData {
+func toFloatSubtype(entry floatSubtypeEntry) properSubtypeData {
 	values := make([]enumerableType[float64], entry.nValues)
 	for i, v := range entry.values {
 		f := newEnumerableFloatFromFloat64(v)
@@ -630,7 +630,7 @@ func fromDecimalSubtype(st *decimalSubtype) decimalSubtypeEntry {
 	return decimalSubtypeEntry{allowed: st.Allowed(), nValues: int32(len(values)), values: values}
 }
 
-func toDecimalSubtype(entry decimalSubtypeEntry) ProperSubtypeData {
+func toDecimalSubtype(entry decimalSubtypeEntry) properSubtypeData {
 	values := make([]enumerableType[decimal.Decimal], len(entry.values))
 	for i, v := range entry.values {
 		r, err := decimal.FromString(v.value)

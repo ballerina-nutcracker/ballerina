@@ -48,7 +48,7 @@ func (l *ListDefinition) TupleTypeWrapped(env Env, members ...SemType) SemType {
 }
 
 func (l *ListDefinition) TupleTypeWrappedRo(env Env, members ...SemType) SemType {
-	return l.DefineListTypeWrapped(env, members, len(members), NEVER, CellMutability_CELL_MUT_NONE)
+	return l.DefineListTypeWrapped(env, members, len(members), Never, CellMutabilityNone)
 }
 
 func (l *ListDefinition) DefineListTypeWrapped(env Env, initial []SemType, fixedLength int, rest SemType, mut CellMutability) SemType {
@@ -58,20 +58,20 @@ func (l *ListDefinition) DefineListTypeWrapped(env Env, initial []SemType, fixed
 	}
 	var restMut CellMutability
 	if IsNever(rest) {
-		restMut = CellMutability_CELL_MUT_NONE
+		restMut = CellMutabilityNone
 	} else {
 		restMut = mut
 	}
-	restCell := cellContainingWithEnvSemTypeCellMutability(env, Union(rest, UNDEF), restMut)
+	restCell := cellContainingWithEnvSemTypeCellMutability(env, Union(rest, Undef), restMut)
 	return l.define(env, initialCells, fixedLength, restCell)
 }
 
 func (l *ListDefinition) DefineListTypeWrappedWithEnvSemTypesInt(env Env, initial []SemType, size int) SemType {
-	return l.DefineListTypeWrapped(env, initial, size, NEVER, CellMutability_CELL_MUT_LIMITED)
+	return l.DefineListTypeWrapped(env, initial, size, Never, CellMutabilityLimited)
 }
 
 func (l *ListDefinition) DefineListTypeWrappedWithEnvSemTypesIntSemType(env Env, initial []SemType, fixedLength int, rest SemType) SemType {
-	return l.DefineListTypeWrapped(env, initial, fixedLength, rest, CellMutability_CELL_MUT_LIMITED)
+	return l.DefineListTypeWrapped(env, initial, fixedLength, rest, CellMutabilityLimited)
 }
 
 func (l *ListDefinition) DefineListTypeWrappedWithEnvSemType(env Env, rest SemType) SemType {
@@ -83,7 +83,7 @@ func (l *ListDefinition) DefineListTypeWrappedWithEnvSemTypeCellMutability(env E
 }
 
 func (l *ListDefinition) DefineListTypeWrappedWithEnvSemTypesSemType(env Env, initial []SemType, rest SemType) SemType {
-	return l.DefineListTypeWrapped(env, initial, len(initial), rest, CellMutability_CELL_MUT_LIMITED)
+	return l.DefineListTypeWrapped(env, initial, len(initial), rest, CellMutabilityLimited)
 }
 
 func (l *ListDefinition) define(env Env, initial []SemType, fixedLength int, rest SemType) SemType {
@@ -119,7 +119,7 @@ func (l *ListDefinition) fixedLengthNormalize(array fixedLengthArray) fixedLengt
 
 func (l *ListDefinition) createSemType(env Env, atom atom) SemType {
 	bdd := bddAtom(atom)
-	SemType := getBasicSubtype(BTList, bdd)
-	l.semType = SemType
-	return SemType
+	semType := getBasicSubtype(btList, bdd)
+	l.semType = semType
+	return semType
 }

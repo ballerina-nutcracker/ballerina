@@ -265,7 +265,7 @@ func civilToGoTime(m *values.Map) (time.Time, int, error) {
 // buildCivil constructs a Ballerina Civil map from a Go time.Time (always includes second field).
 // Matches Java's Civil.build().
 func buildCivil(tc semtypes.Context, t time.Time) *values.Map {
-	m := values.NewMap(semtypes.MAPPING, semtypes.ToMappingAtomicType(tc, semtypes.MAPPING), false, nil)
+	m := values.NewMap(semtypes.Mapping, semtypes.ToMappingAtomicType(tc, semtypes.Mapping), false, nil)
 	putCivilCommonFields(tc, m, t)
 	m.Put(tc, "second", timeToSecondDecimal(t))
 	return m
@@ -274,7 +274,7 @@ func buildCivil(tc semtypes.Context, t time.Time) *values.Map {
 // buildCivilWithZone constructs a Civil map, optionally including second and utcOffset.
 // Matches Java's Civil.buildWithZone().
 func buildCivilWithZone(tc semtypes.Context, t time.Time, includeSecond, includeOffset bool) *values.Map {
-	m := values.NewMap(semtypes.MAPPING, semtypes.ToMappingAtomicType(tc, semtypes.MAPPING), false, nil)
+	m := values.NewMap(semtypes.Mapping, semtypes.ToMappingAtomicType(tc, semtypes.Mapping), false, nil)
 	putCivilCommonFields(tc, m, t)
 	if includeSecond {
 		m.Put(tc, "second", timeToSecondDecimal(t))
@@ -321,7 +321,7 @@ func buildZoneOffset(tc semtypes.Context, totalOffsetSecs int) *values.Map {
 		sign = -1
 		totalOffsetSecs = -totalOffsetSecs
 	}
-	zm := values.NewMap(semtypes.MAPPING, semtypes.ToMappingAtomicType(tc, semtypes.MAPPING), false, nil)
+	zm := values.NewMap(semtypes.Mapping, semtypes.ToMappingAtomicType(tc, semtypes.Mapping), false, nil)
 	zm.Put(tc, "hours", int64(sign*(totalOffsetSecs/3600)))
 	zm.Put(tc, "minutes", int64(sign*((totalOffsetSecs%3600)/60)))
 	return zm
@@ -381,7 +381,7 @@ func emailOffsetStr(zh string) string {
 }
 
 func newFormatError(msg string) *values.Error {
-	return values.NewError(semtypes.ERROR, msg, nil, "FormatError", nil)
+	return values.NewError(semtypes.Error, msg, nil, "FormatError", nil)
 }
 
 func mapInt(m *values.Map, key string) int64 {
@@ -454,7 +454,7 @@ func civilMapToGoTimeInLocation(m *values.Map, loc *time.Location) (time.Time, e
 func initTimeModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	utcBld := semtypes.NewListDefinition()
-	utcTy := utcBld.TupleTypeWrappedRo(env, semtypes.INT, semtypes.DECIMAL)
+	utcTy := utcBld.TupleTypeWrappedRo(env, semtypes.Int, semtypes.Decimal)
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externUtcNow",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {

@@ -17,12 +17,12 @@
 package semtypes
 
 func futureContaining(env Env, constraint SemType) SemType {
-	if sameSemType(VAL, constraint) {
-		return FUTURE
+	if sameSemType(Val, constraint) {
+		return Future
 	}
 
 	mappingDef := NewMappingDefinition()
 	mappingType := mappingDef.DefineMappingTypeWrapped(env, nil, constraint)
-	bdd := subtypeData(mappingType, BTMapping).(Bdd)
-	return createBasicSemType(BTFuture, bdd)
+	bdd := subtypeDataAt(mappingType, btMapping).(bdd)
+	return createBasicSemType(btFuture, bdd)
 }

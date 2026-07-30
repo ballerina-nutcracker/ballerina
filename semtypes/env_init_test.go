@@ -29,35 +29,35 @@ func TestEnvInitAtomTable(t *testing.T) {
 	env.atomTableMutex.Unlock()
 
 	// Ensure atoms are in the table by calling Env methods
-	cellAtomicVal := cellAtomicTypeFrom(VAL, CellMutability_CELL_MUT_LIMITED)
+	cellAtomicVal := cellAtomicTypeFrom(Val, CellMutabilityLimited)
 	typeAtom0 := env.cellAtom(&cellAtomicVal)
 
-	cellAtomicNever := cellAtomicTypeFrom(NEVER, CellMutability_CELL_MUT_LIMITED)
+	cellAtomicNever := cellAtomicTypeFrom(Never, CellMutabilityLimited)
 	typeAtom1 := env.cellAtom(&cellAtomicNever)
 
-	cellAtomicInner := cellAtomicTypeFrom(INNER, CellMutability_CELL_MUT_LIMITED)
+	cellAtomicInner := cellAtomicTypeFrom(Inner, CellMutabilityLimited)
 	typeAtom2 := env.cellAtom(&cellAtomicInner)
 
-	cellAtomicInnerMapping := cellAtomicTypeFrom(Union(MAPPING, UNDEF), CellMutability_CELL_MUT_LIMITED)
+	cellAtomicInnerMapping := cellAtomicTypeFrom(Union(Mapping, Undef), CellMutabilityLimited)
 	typeAtom3 := env.cellAtom(&cellAtomicInnerMapping)
 
-	listAtomicMapping := listAtomicTypeFrom(fixedLengthArrayEmpty(), CELL_SEMTYPE_INNER_MAPPING)
+	listAtomicMapping := listAtomicTypeFrom(fixedLengthArrayEmpty(), cellSemtypeInnerMapping)
 	typeAtom4 := env.listAtom(&listAtomicMapping)
 
-	typeAtom5 := env.cellAtom(CELL_ATOMIC_INNER_MAPPING_RO)
+	typeAtom5 := env.cellAtom(cellAtomicInnerMappingRo)
 
-	listAtomicMappingRo := listAtomicTypeFrom(fixedLengthArrayEmpty(), CELL_SEMTYPE_INNER_MAPPING_RO)
+	listAtomicMappingRo := listAtomicTypeFrom(fixedLengthArrayEmpty(), cellSemtypeInnerMappingRo)
 	typeAtom6 := env.listAtom(&listAtomicMappingRo)
 
-	cellAtomicInnerRo := cellAtomicTypeFrom(INNER_READONLY, CellMutability_CELL_MUT_NONE)
+	cellAtomicInnerRo := cellAtomicTypeFrom(ReadonlyInner, CellMutabilityNone)
 	typeAtom7 := env.cellAtom(&cellAtomicInnerRo)
 
-	cellAtomicUndef := cellAtomicTypeFrom(UNDEF, CellMutability_CELL_MUT_NONE)
+	cellAtomicUndef := cellAtomicTypeFrom(Undef, CellMutabilityNone)
 	typeAtom8 := env.cellAtom(&cellAtomicUndef)
 
 	listAtomicTwoElement := listAtomicTypeFrom(
-		fixedLengthArrayFrom([]SemType{CELL_SEMTYPE_VAL}, 2),
-		CELL_SEMTYPE_UNDEF,
+		fixedLengthArrayFrom([]SemType{cellSemtypeVal}, 2),
+		cellSemtypeUndef,
 	)
 	typeAtom9 := env.listAtom(&listAtomicTwoElement)
 
@@ -96,9 +96,9 @@ func TestEnvInitAtomTable(t *testing.T) {
 	assertEqual(t, ta4.AtomicType, &listAtomicMapping)
 	assertEqual(t, ta4, *typeAtom4)
 
-	ta5, ok := atomTable[CELL_ATOMIC_INNER_MAPPING_RO]
-	assertTrue(t, ok, "CELL_ATOMIC_INNER_MAPPING_RO should be in atomTable")
-	assertEqual(t, ta5.AtomicType, CELL_ATOMIC_INNER_MAPPING_RO)
+	ta5, ok := atomTable[cellAtomicInnerMappingRo]
+	assertTrue(t, ok, "cellAtomicInnerMappingRo should be in atomTable")
+	assertEqual(t, ta5.AtomicType, cellAtomicInnerMappingRo)
 	assertEqual(t, ta5, *typeAtom5)
 
 	ta6, ok := atomTable[&listAtomicMappingRo]
@@ -155,7 +155,7 @@ func TestEnvInitRecAtoms(t *testing.T) {
 	assertEqual(t, len(recListAtoms), 4)
 	if recListAtoms[0] == nil {
 		t.Error("recListAtoms[0] should not be nil")
-	} else if recListAtoms[0] != LIST_ATOMIC_RO {
+	} else if recListAtoms[0] != listAtomicRo {
 		t.Errorf("recListAtoms[0] does not match expected ListAtomicType")
 	}
 	if recListAtoms[1] != nil {
@@ -177,13 +177,13 @@ func TestEnvInitRecAtoms(t *testing.T) {
 	assertEqual(t, len(recMappingAtoms), 4)
 	if recMappingAtoms[0] == nil {
 		t.Error("recMappingAtoms[0] should not be nil")
-	} else if recMappingAtoms[0] != MAPPING_ATOMIC_RO {
-		t.Errorf("recMappingAtoms[0] does not match MAPPING_ATOMIC_RO")
+	} else if recMappingAtoms[0] != mappingAtomicRo {
+		t.Errorf("recMappingAtoms[0] does not match mappingAtomicRo")
 	}
 	if recMappingAtoms[1] == nil {
 		t.Error("recMappingAtoms[1] should not be nil")
-	} else if recMappingAtoms[1] != MAPPING_ATOMIC_OBJECT_RO {
-		t.Errorf("recMappingAtoms[1] does not match MAPPING_ATOMIC_OBJECT_RO")
+	} else if recMappingAtoms[1] != mappingAtomicObjectRo {
+		t.Errorf("recMappingAtoms[1] does not match mappingAtomicObjectRo")
 	}
 	if recMappingAtoms[2] == nil {
 		t.Error("recMappingAtoms[2] (json) should not be nil")

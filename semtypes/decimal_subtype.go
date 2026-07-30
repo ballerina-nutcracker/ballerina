@@ -26,7 +26,7 @@ type decimalSubtype struct {
 	values  []enumerableDecimal
 }
 
-var _ ProperSubtypeData = &decimalSubtype{}
+var _ properSubtypeData = &decimalSubtype{}
 
 func newDecimalSubtypeFromBoolEnumerableDecimal(allowed bool, value enumerableDecimal) decimalSubtype {
 	this := decimalSubtype{}
@@ -47,10 +47,10 @@ func newDecimalSubtypeFromBoolEnumerableDecimals(allowed bool, values []enumerab
 }
 
 func DecimalConst(value decimal.Decimal) SemType {
-	return getBasicSubtype(BTDecimal, newDecimalSubtypeFromBoolEnumerableDecimal(true, enumerableDecimalFrom(value)))
+	return getBasicSubtype(btDecimal, newDecimalSubtypeFromBoolEnumerableDecimal(true, enumerableDecimalFrom(value)))
 }
 
-func decimalSubtypeSingleValue(d SubtypeData) common.Optional[decimal.Decimal] {
+func decimalSubtypeSingleValue(d subtypeData) common.Optional[decimal.Decimal] {
 	if _, ok := d.(allOrNothingSubtype); ok {
 		return common.OptionalEmpty[decimal.Decimal]()
 	}
@@ -64,7 +64,7 @@ func decimalSubtypeSingleValue(d SubtypeData) common.Optional[decimal.Decimal] {
 	return common.OptionalOf(v.values[0].value)
 }
 
-func decimalSubtypeContains(d SubtypeData, f enumerableDecimal) bool {
+func decimalSubtypeContains(d subtypeData, f enumerableDecimal) bool {
 	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
 		return allOrNothingSubtype.IsAllSubtype()
 	}
@@ -77,7 +77,7 @@ func decimalSubtypeContains(d SubtypeData, f enumerableDecimal) bool {
 	return (!v.allowed)
 }
 
-func createDecimalSubtype(allowed bool, values []enumerableType[decimal.Decimal]) ProperSubtypeData {
+func createDecimalSubtype(allowed bool, values []enumerableType[decimal.Decimal]) properSubtypeData {
 	if len(values) == 0 {
 		if allowed {
 			return createNothing()

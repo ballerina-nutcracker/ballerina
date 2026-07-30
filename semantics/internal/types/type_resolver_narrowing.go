@@ -266,9 +266,9 @@ func singletonResultEffect(chain *binding, ty semtypes.SemType) (expressionEffec
 		return expressionEffect{}, false
 	}
 	if isSingletonBool(ty, true) {
-		return expressionEffect{ifTrue: chain, ifFalse: &binding{defaultType: semtypes.NEVER, prev: chain}}, true
+		return expressionEffect{ifTrue: chain, ifFalse: &binding{defaultType: semtypes.Never, prev: chain}}, true
 	} else if isSingletonBool(ty, false) {
-		return expressionEffect{ifTrue: &binding{defaultType: semtypes.NEVER, prev: chain}, ifFalse: chain}, true
+		return expressionEffect{ifTrue: &binding{defaultType: semtypes.Never, prev: chain}, ifFalse: chain}, true
 	}
 	return expressionEffect{}, false
 }

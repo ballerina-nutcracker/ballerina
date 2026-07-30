@@ -76,7 +76,7 @@ func NewMap(ty semtypes.SemType, atomic *semtypes.MappingAtomicType, isReadonly 
 func (m *Map) ShouldDeleteOnNilStore(cx semtypes.Context, key string) bool {
 	keyTy := semtypes.StringConst(key)
 	fieldTy := semtypes.MappingMemberTypeInner(cx, m.Type, keyTy)
-	if semtypes.ContainsBasicType(fieldTy, semtypes.NIL) {
+	if semtypes.ContainsBasicType(fieldTy, semtypes.Nil) {
 		return false
 	}
 	return semtypes.AllMappingAtomsHaveOptionalFieldByName(cx, m.Type, key)

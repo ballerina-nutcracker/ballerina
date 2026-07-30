@@ -84,38 +84,38 @@ func assertFalse(t *testing.T, condition bool, msgAndArgs ...any) {
 	}
 }
 
-// Relation represents the subtype relationship between two types
-// Ported from CellTypeTest.java:Relation enum
-type Relation string
+// relation represents the subtype relationship between two types
+// Ported from CellTypeTest.java:relation enum
+type relation string
 
 const (
-	RelationEqual      Relation = "="
-	RelationSubtype    Relation = "<"
-	RelationNoRelation Relation = "<>"
+	relationEqual      relation = "="
+	relationSubtype    relation = "<"
+	relationNoRelation relation = "<>"
 )
 
 // getSemTypeRelation determines the relationship between two types
 // Ported from CellTypeTest.java:getSemTypeRelation()
-func getSemTypeRelation(ctx Context, t1, t2 SemType) Relation {
+func getSemTypeRelation(ctx Context, t1, t2 SemType) relation {
 	s1 := IsSubtype(ctx, t1, t2)
 	s2 := IsSubtype(ctx, t2, t1)
 
 	if s1 && s2 {
-		return RelationEqual
+		return relationEqual
 	} else if s1 {
-		return RelationSubtype
+		return relationSubtype
 	} else if s2 {
 		// If t2 <: t1 but not t1 <: t2, this is a '>' relation
 		// which should be converted to '<' by swapping arguments
 		panic("'>' relation found which can be converted to a '<' relation")
 	} else {
-		return RelationNoRelation
+		return relationNoRelation
 	}
 }
 
 // assertSemTypeRelation asserts that two types have the expected relationship
 // Ported from CellTypeTest.java:assertSemTypeRelation()
-func assertSemTypeRelation(t *testing.T, ctx Context, t1, t2 SemType, expected Relation) {
+func assertSemTypeRelation(t *testing.T, ctx Context, t1, t2 SemType, expected relation) {
 	t.Helper()
 	actual := getSemTypeRelation(ctx, t1, t2)
 	if actual != expected {

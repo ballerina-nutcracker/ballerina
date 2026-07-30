@@ -17,17 +17,17 @@
 package semtypes
 
 type Field struct {
-	Name string
-	Ty   SemType
-	Ro   bool
-	Opt  bool
+	name     string
+	typeOf   SemType
+	readonly bool
+	optional bool
 }
 
 func FieldFrom(name string, ty SemType, ro bool, opt bool) Field {
 	return Field{
-		Name: name,
-		Ty:   ty,
-		Ro:   ro,
-		Opt:  opt,
+		name:     name,
+		typeOf:   ty,
+		readonly: ro,
+		optional: opt,
 	}
 }

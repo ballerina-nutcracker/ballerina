@@ -18,25 +18,29 @@ package semtypes
 
 type MappingFieldInfo struct {
 	Name string
-	Ty   SemType
+	Type SemType
 }
 
 type MappingAlternative struct {
-	SemType SemType
-	Pos     *MappingAtomicType
+	semType SemType
+	pos     *MappingAtomicType
 	neg     []MappingAtomicType
+}
+
+func (a MappingAlternative) Type() SemType {
+	return a.semType
 }
 
 func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 	if t.some() == 0 {
-		if (t.all() & MAPPING.all()) == 0 {
+		if (t.all() & Mapping.all()) == 0 {
 			return nil
 		}
-		return []MappingAlternative{{SemType: MAPPING, Pos: nil, neg: nil}}
+		return []MappingAlternative{{semType: Mapping, pos: nil, neg: nil}}
 	}
 
 	paths := []bddPath{}
-	bddPathsPositive(getComplexSubtypeData(t, BTMapping).(Bdd), &paths, bddPathFrom())
+	bddPathsPositive(getComplexSubtypeData(t, btMapping).(bdd), &paths, bddPathFrom())
 	alts := []MappingAlternative{}
 	for _, bddPath := range paths {
 		posAtoms := make([]*MappingAtomicType, len(bddPath.pos))
@@ -49,7 +53,7 @@ func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 			for i := 0; i < len(bddPath.neg); i++ {
 				negAtoms[i] = *cx.MappingAtomType(bddPath.neg[i])
 			}
-			alts = append(alts, MappingAlternative{SemType: intersectionSemType, Pos: intersectionAtomType, neg: negAtoms})
+			alts = append(alts, MappingAlternative{semType: intersectionSemType, pos: intersectionAtomType, neg: negAtoms})
 		}
 	}
 	return alts
@@ -68,7 +72,7 @@ func intersectMappingAtoms(env Env, atoms []*MappingAtomicType) (SemType, *Mappi
 		atom = result
 	}
 	typeAtom := env.mappingAtom(atom)
-	ty := createBasicSemType(BTMapping, bddAtom(typeAtom))
+	ty := createBasicSemType(btMapping, bddAtom(typeAtom))
 	return ty, atom, true
 }
 
@@ -78,12 +82,12 @@ func intersectMappingAtoms(env Env, atoms []*MappingAtomicType) (SemType, *Mappi
 // determine a literal in rhs to be which numeric type without deciding the type in lhs. We currently work around this
 // by widening both to numeric
 func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields []MappingFieldInfo) bool {
-	pos := alt.Pos
+	pos := alt.pos
 	if pos != nil {
-		if len(pos.Names) == 0 {
+		if len(pos.names) == 0 {
 			// map<T>
 			for _, each := range fields {
-				fieldTy := each.Ty
+				fieldTy := each.Type
 				fieldName := each.Name
 				expectedTy := pos.FieldInnerVal(fieldName)
 				if !IsSubtype(cx, fieldTy, expectedTy) {
@@ -95,7 +99,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 			i := 0
 			n := len(fields)
 		names:
-			for _, name := range pos.Names {
+			for _, name := range pos.names {
 				for {
 					if i >= n {
 						if pos.IsOptional(cx, name) {
@@ -104,10 +108,10 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 						return false
 					}
 					fieldName := fields[i].Name
-					fieldTy := fields[i].Ty
+					fieldTy := fields[i].Type
 					expectedTy := pos.FieldInnerVal(fieldName)
-					if IsSubtype(cx, expectedTy, NUMBER) && IsSubtype(cx, fieldTy, NUMBER) {
-						expectedTy = NUMBER
+					if IsSubtype(cx, expectedTy, Number) && IsSubtype(cx, fieldTy, Number) {
+						expectedTy = Number
 					}
 					if IsNever(expectedTy) || !IsSubtype(cx, fieldTy, expectedTy) {
 						return false
@@ -128,7 +132,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 			}
 			for ; i < n; i++ {
 				expectedTy := pos.FieldInnerVal(fields[i].Name)
-				if IsNever(expectedTy) || !IsSubtype(cx, fields[i].Ty, expectedTy) {
+				if IsNever(expectedTy) || !IsSubtype(cx, fields[i].Type, expectedTy) {
 					return false
 				}
 			}

@@ -19,22 +19,22 @@ package semtypes
 import "github.com/ballerina-nutcracker/ballerina/common"
 
 func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
-	errorType = Intersect(errorType, ERROR)
-	if IsNever(errorType) || !IsSubtype(ctx, errorType, ERROR) {
+	errorType = Intersect(errorType, Error)
+	if IsNever(errorType) || !IsSubtype(ctx, errorType, Error) {
 		return SemType{}, false
 	}
 
-	if IsSameType(ctx, errorType, ERROR) {
+	if IsSameType(ctx, errorType, Error) {
 		return errorDetailTop(ctx), true
 	}
-	mappingSd := stripDistinctAtomsFromBdd(subtypeData(errorType, BTError).(Bdd))
+	mappingSd := stripDistinctAtomsFromBdd(subtypeDataAt(errorType, btError).(bdd))
 	if allOrNothing, ok := mappingSd.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return errorDetailTop(ctx), true
 		}
 		return SemType{}, false
 	}
-	return getBasicSubtype(BTMapping, mappingSd.(ProperSubtypeData)), true
+	return getBasicSubtype(btMapping, mappingSd.(properSubtypeData)), true
 }
 
 func errorDetailTop(ctx Context) SemType {
@@ -43,10 +43,10 @@ func errorDetailTop(ctx Context) SemType {
 }
 
 func stripErrorDistinctAtoms(ty SemType) SemType {
-	return stripDistinctAtomsFromSemType(ty, BTError, stripDistinctAtomsFromBdd)
+	return stripDistinctAtomsFromSemType(ty, btError, stripDistinctAtomsFromBdd)
 }
 
-func stripDistinctAtomsFromBdd(bdd Bdd) Bdd {
+func stripDistinctAtomsFromBdd(bdd bdd) bdd {
 	var paths []bddPath
 	bddPathsPositive(bdd, &paths, bddPathFrom())
 	if len(paths) == 0 {
@@ -60,23 +60,23 @@ func stripDistinctAtomsFromBdd(bdd Bdd) Bdd {
 }
 
 func ErrorWithDetail(detail SemType) SemType {
-	mappingSd := subtypeData(detail, BTMapping)
+	mappingSd := subtypeDataAt(detail, btMapping)
 	if allOrNothingSubtype, ok := mappingSd.(allOrNothingSubtype); ok {
 		if allOrNothingSubtype.IsAllSubtype() {
-			return ERROR
+			return Error
 		} else {
-			return NEVER
+			return Never
 		}
 	}
-	sd := bddIntersect(mappingSd.(Bdd), BDD_SUBTYPE_RO)
-	if sd == BDD_SUBTYPE_RO {
-		return ERROR
+	sd := bddIntersect(mappingSd.(bdd), bddSubtypeRo)
+	if sd == bddSubtypeRo {
+		return Error
 	}
-	return getBasicSubtype(BTError, sd.(ProperSubtypeData))
+	return getBasicSubtype(btError, sd.(properSubtypeData))
 }
 
 func ErrorDistinct(distinctId int) SemType {
 	common.Assert(func() bool { return distinctId >= 0 })
 	bdd := bddAtom(new(createDistinctRecAtom(((-distinctId) - 1))))
-	return getBasicSubtype(BTError, bdd)
+	return getBasicSubtype(btError, bdd)
 }

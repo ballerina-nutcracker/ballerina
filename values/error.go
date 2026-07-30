@@ -33,7 +33,7 @@ type Error struct {
 
 func NewError(t semtypes.SemType, message string, cause BalValue, typeName string, detail *Map) *Error {
 	if detail == nil {
-		detail = NewMap(semtypes.MAPPING, &semtypes.MAPPING_ATOMIC_INNER, true, nil)
+		detail = NewMap(semtypes.Mapping, &semtypes.MappingAtomicInner, true, nil)
 	}
 	return &Error{
 		Type:     t,
@@ -45,7 +45,7 @@ func NewError(t semtypes.SemType, message string, cause BalValue, typeName strin
 }
 
 func NewErrorWithMessage(message string) *Error {
-	return NewError(semtypes.ERROR, message, nil, "", nil)
+	return NewError(semtypes.Error, message, nil, "", nil)
 }
 
 // String returns the Ballerina string representation of the error.

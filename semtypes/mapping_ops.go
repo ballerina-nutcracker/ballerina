@@ -18,18 +18,18 @@ package semtypes
 
 type mappingOps struct{}
 
-var _ BasicTypeOps = &mappingOps{}
+var _ basicTypeOps = &mappingOps{}
 
-func mappingSubtypeIsEmpty(cx Context, t SubtypeData) bool {
-	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), func(cx Context, b Bdd) bool {
+func mappingSubtypeIsEmpty(cx Context, t subtypeData) bool {
+	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), func(cx Context, b bdd) bool {
 		return bddEvery(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
-	}, t.(Bdd))
+	}, t.(bdd))
 }
 
 func mappingFormulaIsEmpty(cx Context, posList conjunctionHandle, negList conjunctionHandle) bool {
 	var combined *MappingAtomicType
 	if posList == conjunctionNil {
-		combined = &MAPPING_ATOMIC_INNER
+		combined = &MappingAtomicInner
 	} else {
 		combined = cx.MappingAtomType(cx.conjunctionAtom(posList))
 		p := cx.conjunctionNext(posList)
@@ -46,8 +46,8 @@ func mappingFormulaIsEmpty(cx Context, posList conjunctionHandle, negList conjun
 				p = cx.conjunctionNext(p)
 			}
 		}
-		for i := range combined.Types {
-			if IsEmpty(cx, combined.Types[i]) {
+		for i := range combined.types {
+			if IsEmpty(cx, combined.types[i]) {
 				return true
 			}
 		}
@@ -65,7 +65,7 @@ func mappingInhabitedFast(cx Context, pos *MappingAtomicType, negList conjunctio
 		neg := cx.MappingAtomType(cx.conjunctionAtom(negList))
 		negNext := cx.conjunctionNext(negList)
 		pairing := newFieldPairs(pos, neg)
-		if !IsEmpty(cx, Diff(pos.Rest, neg.Rest)) {
+		if !IsEmpty(cx, Diff(pos.rest, neg.rest)) {
 			return mappingInhabitedFast(cx, pos, negNext)
 		}
 		for fieldPair := range pairing {
@@ -89,7 +89,7 @@ func mappingInhabited(cx Context, pos *MappingAtomicType, negList conjunctionHan
 		neg := cx.MappingAtomType(cx.conjunctionAtom(negList))
 		negNext := cx.conjunctionNext(negList)
 		pairing := newFieldPairs(pos, neg)
-		if !IsEmpty(cx, Diff(pos.Rest, neg.Rest)) {
+		if !IsEmpty(cx, Diff(pos.rest, neg.rest)) {
 			return mappingInhabited(cx, pos, negNext)
 		}
 		for fieldPair := range pairing {
@@ -103,9 +103,9 @@ func mappingInhabited(cx Context, pos *MappingAtomicType, negList conjunctionHan
 				if fieldPair.Index1 < 0 {
 					mt = insertField(*pos, fieldPair.Name, d)
 				} else {
-					posTypes := append([]SemType(nil), pos.Types...)
+					posTypes := append([]SemType(nil), pos.types...)
 					posTypes[fieldPair.Index1] = d
-					mt = mappingAtomicTypeFrom(pos.Names, posTypes, pos.Rest)
+					mt = mappingAtomicTypeFrom(pos.names, posTypes, pos.rest)
 				}
 				if mappingInhabited(cx, &mt, negNext) {
 					return true
@@ -117,9 +117,9 @@ func mappingInhabited(cx Context, pos *MappingAtomicType, negList conjunctionHan
 }
 
 func insertField(m MappingAtomicType, name string, t SemType) MappingAtomicType {
-	names := append([]string(nil), m.Names...)
+	names := append([]string(nil), m.names...)
 	names = append(names, "")
-	types := append([]SemType(nil), m.Types...)
+	types := append([]SemType(nil), m.types...)
 	types = append(types, SemType{})
 	i := len(names) - 1
 	for {
@@ -132,7 +132,7 @@ func insertField(m MappingAtomicType, name string, t SemType) MappingAtomicType 
 		types[i] = types[i-1]
 		i = (i - 1)
 	}
-	return mappingAtomicTypeFrom(names, types, m.Rest)
+	return mappingAtomicTypeFrom(names, types, m.rest)
 }
 
 func intersectMapping(env Env, m1 *MappingAtomicType, m2 *MappingAtomicType) *MappingAtomicType {
@@ -147,23 +147,23 @@ func intersectMapping(env Env, m1 *MappingAtomicType, m2 *MappingAtomicType) *Ma
 		}
 		types = append(types, t)
 	}
-	rest := intersectMemberSemTypes(env, m1.Rest, m2.Rest)
+	rest := intersectMemberSemTypes(env, m1.rest, m2.rest)
 	return new(mappingAtomicTypeFrom(names, types, rest))
 }
 
-func bddMappingMemberTypeInnerCore(cx Context, b Bdd, key SubtypeData, accum SemType) SemType {
+func bddMappingMemberTypeInnerCore(cx Context, b bdd, key subtypeData, accum SemType) SemType {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return accum
 		}
-		return NEVER
+		return Never
 	} else {
 		bn := b.(bddNode)
 		return Union(bddMappingMemberTypeInnerCore(cx, bn.left(), key, Intersect(mappingAtomicMemberTypeInner(*cx.MappingAtomType(bn.atom()), key), accum)), Union(bddMappingMemberTypeInnerCore(cx, bn.middle(), key, accum), bddMappingMemberTypeInnerCore(cx, bn.right(), key, accum)))
 	}
 }
 
-func mappingAtomicMemberTypeInner(atomic MappingAtomicType, key SubtypeData) SemType {
+func mappingAtomicMemberTypeInner(atomic MappingAtomicType, key subtypeData) SemType {
 	var memberType SemType
 	for _, ty := range mappingAtomicApplicableMemberTypesInner(atomic, key) {
 		if IsZero(memberType) {
@@ -173,23 +173,23 @@ func mappingAtomicMemberTypeInner(atomic MappingAtomicType, key SubtypeData) Sem
 		}
 	}
 	if IsZero(memberType) {
-		return UNDEF
+		return Undef
 	}
 	return memberType
 }
 
-func mappingAtomicApplicableMemberTypesInner(atomic MappingAtomicType, key SubtypeData) []SemType {
+func mappingAtomicApplicableMemberTypesInner(atomic MappingAtomicType, key subtypeData) []SemType {
 	var types []SemType
-	for i := range atomic.Types {
-		types = append(types, cellInner(atomic.Types[i]))
+	for i := range atomic.types {
+		types = append(types, cellInner(atomic.types[i]))
 	}
 	var memberTypes []SemType
-	rest := cellInner(atomic.Rest)
+	rest := cellInner(atomic.rest)
 	if isAllSubtype(key) {
 		memberTypes = append(memberTypes, types...)
 		memberTypes = append(memberTypes, rest)
 	} else {
-		coverage := getStringSubtypeListCoverage(key.(stringSubtype), atomic.Names)
+		coverage := getStringSubtypeListCoverage(key.(stringSubtype), atomic.names)
 		for _, index := range coverage.Indices {
 			memberTypes = append(memberTypes, types[index])
 		}
@@ -204,22 +204,22 @@ func newMappingOps() mappingOps {
 	return mappingOps{}
 }
 
-func (m *mappingOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (m *mappingOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeUnion(d1, d2)
 }
 
-func (m *mappingOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (m *mappingOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeIntersect(d1, d2)
 }
 
-func (m *mappingOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (m *mappingOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeDiff(d1, d2)
 }
 
-func (m *mappingOps) complement(d SubtypeData) SubtypeData {
+func (m *mappingOps) complement(d subtypeData) subtypeData {
 	return bddSubtypeComplement(d)
 }
 
-func (m *mappingOps) IsEmpty(cx Context, d SubtypeData) bool {
+func (m *mappingOps) IsEmpty(cx Context, d subtypeData) bool {
 	return mappingSubtypeIsEmpty(cx, d)
 }

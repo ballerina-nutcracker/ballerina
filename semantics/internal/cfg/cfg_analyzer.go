@@ -104,7 +104,7 @@ func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNo
 	}
 	sym := ctx.GetSymbol(fn.Symbol()).(model.FunctionSymbol)
 	retType := sym.Signature().ReturnType
-	if semtypes.ContainsBasicType(retType, semtypes.NIL) {
+	if semtypes.ContainsBasicType(retType, semtypes.Nil) {
 		return
 	}
 

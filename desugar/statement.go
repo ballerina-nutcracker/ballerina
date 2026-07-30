@@ -254,7 +254,7 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangVariableDef) desu
 
 				varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, rf.fn.GetPosition())
 				varIdent := &ast.BLangIdentifier{Value: varName}
-				varIdent.SetDeterminedType(semtypes.NEVER)
+				varIdent.SetDeterminedType(semtypes.Never)
 				simpleVar := &ast.BLangVariable{Name: varIdent}
 				simpleVar.Expr = lambda
 				simpleVar.SetDeterminedType(fnType)
@@ -316,18 +316,18 @@ func createIncrementStmt(loopVar ast.LExpr) *ast.BLangAssignment {
 			OriginalValue: "1",
 		},
 	}
-	oneLiteral.SetDeterminedType(semtypes.INT)
+	oneLiteral.SetDeterminedType(semtypes.Int)
 	addExpr := &ast.BLangBinaryExpr{
 		LhsExpr: loopVar,
 		RhsExpr: oneLiteral,
 		OpKind:  model.OperatorKind_ADD,
 	}
-	addExpr.SetDeterminedType(semtypes.INT)
+	addExpr.SetDeterminedType(semtypes.Int)
 	incrementStmt := &ast.BLangAssignment{
 		VarRef: loopVar,
 		Expr:   addExpr,
 	}
-	incrementStmt.SetDeterminedType(semtypes.NEVER)
+	incrementStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(incrementStmt, basePos)
 	return incrementStmt
 }
@@ -361,10 +361,10 @@ func visitForEach(cx *functionContext, stmt *ast.BLangForeach) desugaredNode[ast
 		return desugarForEachOnRange(cx, rangeExpr, stmt.VariableDef, &stmt.Body, stmt.Scope())
 	}
 	tyCtx := semtypes.ContextFrom(cx.typeEnv())
-	if semtypes.IsSubtype(tyCtx, stmt.Collection.GetDeterminedType(), semtypes.LIST) {
+	if semtypes.IsSubtype(tyCtx, stmt.Collection.GetDeterminedType(), semtypes.List) {
 		return desugarForEachOnList(cx, stmt.Collection, stmt.VariableDef, &stmt.Body, stmt.Scope())
 	}
-	if semtypes.IsSubtype(tyCtx, stmt.Collection.GetDeterminedType(), semtypes.MAPPING) {
+	if semtypes.IsSubtype(tyCtx, stmt.Collection.GetDeterminedType(), semtypes.Mapping) {
 		return desugarForEachOnMap(cx, stmt.Collection, stmt.VariableDef, &stmt.Body, stmt.Scope())
 	}
 	return desugarForEachOnIterable(cx, stmt.Collection, stmt.VariableDef, &stmt.Body, stmt.Scope())
@@ -402,12 +402,12 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 			OriginalValue: "0",
 		},
 	}
-	zeroLiteral.SetDeterminedType(semtypes.INT)
+	zeroLiteral.SetDeterminedType(semtypes.Int)
 
-	idxName, idxVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	idxName, idxVarSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, basePos)
 	idxVarName := &ast.BLangIdentifier{Value: idxName}
 	idxVar := &ast.BLangVariable{Name: idxVarName}
-	idxVar.SetDeterminedType(semtypes.INT)
+	idxVar.SetDeterminedType(semtypes.Int)
 	idxVar.SetInitialExpression(zeroLiteral)
 	idxVar.SetSymbol(idxVarSymbol)
 	idxVarDef := &ast.BLangVariableDef{Var: idxVar}
@@ -416,15 +416,15 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 
 	idxVarRef := &ast.BLangVarRef{VariableName: idxVarName}
 	idxVarRef.SetSymbol(idxVarSymbol)
-	idxVarRef.SetDeterminedType(semtypes.INT)
+	idxVarRef.SetDeterminedType(semtypes.Int)
 
 	// Step 3: length variable ($desugar$M = length(collVar))
 	lengthInvocation := createLengthInvocation(cx, collVarRef)
 
-	lenName, lenVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	lenName, lenVarSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, basePos)
 	lenVarName := &ast.BLangIdentifier{Value: lenName}
 	lenVar := &ast.BLangVariable{Name: lenVarName}
-	lenVar.SetDeterminedType(semtypes.INT)
+	lenVar.SetDeterminedType(semtypes.Int)
 	lenVar.SetInitialExpression(lengthInvocation)
 	lenVar.SetSymbol(lenVarSymbol)
 	lenVarDef := &ast.BLangVariableDef{Var: lenVar}
@@ -433,7 +433,7 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 
 	lenVarRef := &ast.BLangVarRef{VariableName: lenVarName}
 	lenVarRef.SetSymbol(lenVarSymbol)
-	lenVarRef.SetDeterminedType(semtypes.INT)
+	lenVarRef.SetDeterminedType(semtypes.Int)
 
 	// Step 4: while condition ($idx < $len)
 	whileCondition := &ast.BLangBinaryExpr{
@@ -441,7 +441,7 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 		RhsExpr: lenVarRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	whileCondition.SetDeterminedType(semtypes.BOOLEAN)
+	whileCondition.SetDeterminedType(semtypes.Boolean)
 
 	// Step 5: element access (collVar[$idx])
 	elementAccess := &ast.BLangIndexBasedAccess{
@@ -478,7 +478,7 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 		Body: *newBody,
 	}
 	whileStmt.SetScope(foreachScope)
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, basePos)
 
 	return desugaredNode[ast.StatementNode]{
@@ -522,7 +522,7 @@ func createLengthInvocation(cx *functionContext, collection ast.BLangExpression)
 	inv.Name = nameIdent
 	inv.ArgExprs = []ast.BLangExpression{collection}
 	inv.SetSymbol(symbolRef)
-	inv.SetDeterminedType(semtypes.INT)
+	inv.SetDeterminedType(semtypes.Int)
 	setPositionIfMissing(inv, basePos)
 	return inv
 }
@@ -577,12 +577,12 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 			OriginalValue: "0",
 		},
 	}
-	zeroLiteral.SetDeterminedType(semtypes.INT)
+	zeroLiteral.SetDeterminedType(semtypes.Int)
 
-	idxName, idxVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	idxName, idxVarSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, basePos)
 	idxVarName := &ast.BLangIdentifier{Value: idxName}
 	idxVar := &ast.BLangVariable{Name: idxVarName}
-	idxVar.SetDeterminedType(semtypes.INT)
+	idxVar.SetDeterminedType(semtypes.Int)
 	idxVar.SetInitialExpression(zeroLiteral)
 	idxVar.SetSymbol(idxVarSymbol)
 	idxVarDef := &ast.BLangVariableDef{Var: idxVar}
@@ -591,15 +591,15 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 
 	idxVarRef := &ast.BLangVarRef{VariableName: idxVarName}
 	idxVarRef.SetSymbol(idxVarSymbol)
-	idxVarRef.SetDeterminedType(semtypes.INT)
+	idxVarRef.SetDeterminedType(semtypes.Int)
 
 	// Step 4: length variable ($desugar$N = lang.array:length(keysVar))
 	lengthInvocation := createLengthInvocation(cx, keysVarRef)
 
-	lenName, lenVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	lenName, lenVarSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, basePos)
 	lenVarName := &ast.BLangIdentifier{Value: lenName}
 	lenVar := &ast.BLangVariable{Name: lenVarName}
-	lenVar.SetDeterminedType(semtypes.INT)
+	lenVar.SetDeterminedType(semtypes.Int)
 	lenVar.SetInitialExpression(lengthInvocation)
 	lenVar.SetSymbol(lenVarSymbol)
 	lenVarDef := &ast.BLangVariableDef{Var: lenVar}
@@ -608,7 +608,7 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 
 	lenVarRef := &ast.BLangVarRef{VariableName: lenVarName}
 	lenVarRef.SetSymbol(lenVarSymbol)
-	lenVarRef.SetDeterminedType(semtypes.INT)
+	lenVarRef.SetDeterminedType(semtypes.Int)
 
 	// Step 5: while condition ($idx < $len)
 	whileCondition := &ast.BLangBinaryExpr{
@@ -616,14 +616,14 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 		RhsExpr: lenVarRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	whileCondition.SetDeterminedType(semtypes.BOOLEAN)
+	whileCondition.SetDeterminedType(semtypes.Boolean)
 
 	// Step 6: key access (keysVar[$idx]) then map access (collVar[key])
 	keyAccess := &ast.BLangIndexBasedAccess{
 		IndexExpr: idxVarRef,
 	}
 	keyAccess.Expr = keysVarRef
-	keyAccess.SetDeterminedType(semtypes.STRING)
+	keyAccess.SetDeterminedType(semtypes.String)
 
 	mapAccess := &ast.BLangIndexBasedAccess{
 		IndexExpr: keyAccess,
@@ -659,7 +659,7 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 		Body: *newBody,
 	}
 	whileStmt.SetScope(foreachScope)
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, basePos)
 
 	return desugaredNode[ast.StatementNode]{
@@ -709,10 +709,10 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 	endExpr := endResult.replacementNode
 
 	// Keep loop control separate so the source variable can be declared and captured afresh in each iteration.
-	controlName, controlVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	controlName, controlVarSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, basePos)
 	controlVarName := &ast.BLangIdentifier{Value: controlName}
 	controlVar := &ast.BLangVariable{Name: controlVarName}
-	controlVar.SetDeterminedType(semtypes.INT)
+	controlVar.SetDeterminedType(semtypes.Int)
 	controlVar.SetInitialExpression(startExpr)
 	controlVar.SetSymbol(controlVarSymbol)
 	controlVarDef := &ast.BLangVariableDef{Var: controlVar}
@@ -721,12 +721,12 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 
 	controlVarRef := &ast.BLangVarRef{VariableName: controlVarName}
 	controlVarRef.SetSymbol(controlVarSymbol)
-	controlVarRef.SetDeterminedType(semtypes.INT)
+	controlVarRef.SetDeterminedType(semtypes.Int)
 
-	endName, endVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	endName, endVarSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, basePos)
 	endVarName := &ast.BLangIdentifier{Value: endName}
 	endVar := &ast.BLangVariable{Name: endVarName}
-	endVar.SetDeterminedType(semtypes.INT)
+	endVar.SetDeterminedType(semtypes.Int)
 	endVar.SetInitialExpression(endExpr)
 	endVar.SetSymbol(endVarSymbol)
 
@@ -740,7 +740,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 		VariableName: endVarName,
 	}
 	endVarRef.SetSymbol(endVarSymbol)
-	endVarRef.SetDeterminedType(semtypes.INT)
+	endVarRef.SetDeterminedType(semtypes.Int)
 
 	var compOp model.OperatorKind
 	if rangeExpr.GetOperatorKind() == model.OperatorKind_CLOSED_RANGE {
@@ -754,7 +754,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 		RhsExpr: endVarRef,
 		OpKind:  compOp,
 	}
-	whileCondition.SetDeterminedType(semtypes.BOOLEAN)
+	whileCondition.SetDeterminedType(semtypes.Boolean)
 
 	loopVarDef.Var.SetInitialExpression(controlVarRef)
 	incrementStmt := createIncrementStmt(controlVarRef)
@@ -781,7 +781,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 		Body: *newBody,
 	}
 	whileStmt.SetScope(foreachScope)
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, basePos)
 
 	return desugaredNode[ast.StatementNode]{
@@ -863,16 +863,16 @@ func buildXMLIteratorType(env semtypes.Env, itemTy semtypes.SemType) semtypes.Se
 	recordDef := semtypes.NewMappingDefinition()
 	recordTy := recordDef.DefineMappingTypeWrapped(env,
 		[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},
-		semtypes.NEVER)
-	nextReturnTy := semtypes.Union(recordTy, semtypes.NIL)
+		semtypes.Never)
+	nextReturnTy := semtypes.Union(recordTy, semtypes.Nil)
 	ld := semtypes.NewListDefinition()
-	emptyParams := ld.DefineListTypeWrapped(env, nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	emptyParams := ld.DefineListTypeWrapped(env, nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
 	fd := semtypes.NewFunctionDefinition()
 	nextFnTy := fd.Define(env, emptyParams, nextReturnTy, semtypes.FunctionQualifiersFrom(env, true, false))
 	iterOd := semtypes.NewObjectDefinition()
-	return iterOd.Define(env, semtypes.ObjectQualifiersDEFAULT, []semtypes.Member{{
+	return iterOd.Define(env, semtypes.ObjectQualifiersDefault, []semtypes.Member{{
 		Name:       "next",
-		ValueTy:    nextFnTy,
+		ValueType:  nextFnTy,
 		Kind:       semtypes.MemberKindMethod,
 		Visibility: semtypes.VisibilityPublic,
 		Immutable:  true,
@@ -888,7 +888,7 @@ func createMethodInvocation(cx *functionContext, receiver ast.BLangExpression, m
 		argTys[i] = arg.GetDeterminedType()
 	}
 	ld := semtypes.NewListDefinition()
-	paramList := ld.DefineListTypeWrapped(cx.typeEnv(), argTys, len(argTys), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	paramList := ld.DefineListTypeWrapped(cx.typeEnv(), argTys, len(argTys), semtypes.Never, semtypes.CellMutabilityNone)
 	retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
 	_, fnSymRef := cx.addDesugardSymbol(fnTy, model.SymbolKindFunction, false, pos)
@@ -943,7 +943,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 
 	// Step 3: while(true) condition
 	trueLiteral := &ast.BLangLiteral{Value: true, OriginalValue: "true"}
-	trueLiteral.SetDeterminedType(semtypes.BOOLEAN)
+	trueLiteral.SetDeterminedType(semtypes.Boolean)
 
 	// Step 4: Build while body
 	var whileBodyStmts []ast.StatementNode
@@ -973,10 +973,10 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 
 	nilCheck := ast.NewBLangTypeTestExpr(
 		nextRefForNilCheck,
-		ast.TypeData{Type: semtypes.NIL},
+		ast.TypeData{Type: semtypes.Nil},
 		false,
 	)
-	nilCheck.SetDeterminedType(semtypes.BOOLEAN)
+	nilCheck.SetDeterminedType(semtypes.Boolean)
 
 	breakStmt := &ast.BLangBreak{}
 	setPositionIfMissing(breakStmt, basePos)
@@ -989,7 +989,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	whileBodyStmts = append(whileBodyStmts, nilCheckIf)
 
 	// 4c: if $next is error { panic $next } (only if error is possible)
-	hasError := !semtypes.IsEmpty(tyCtx, semtypes.Intersect(nextReturnType, semtypes.ERROR))
+	hasError := !semtypes.IsEmpty(tyCtx, semtypes.Intersect(nextReturnType, semtypes.Error))
 	if hasError {
 		nextRefForErrCheck := &ast.BLangVarRef{VariableName: nextVarName}
 		nextRefForErrCheck.SetSymbol(nextSymbol)
@@ -997,10 +997,10 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 
 		errCheck := ast.NewBLangTypeTestExpr(
 			nextRefForErrCheck,
-			ast.TypeData{Type: semtypes.ERROR},
+			ast.TypeData{Type: semtypes.Error},
 			false,
 		)
-		errCheck.SetDeterminedType(semtypes.BOOLEAN)
+		errCheck.SetDeterminedType(semtypes.Boolean)
 
 		nextRefForPanic := &ast.BLangVarRef{VariableName: nextVarName}
 		nextRefForPanic.SetSymbol(nextSymbol)
@@ -1020,7 +1020,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	// 4d: loopVar = $next.value (field access desugared to index access by walkBlockStmt)
 	nextRefForValue := &ast.BLangVarRef{VariableName: nextVarName}
 	nextRefForValue.SetSymbol(nextSymbol)
-	nextRefForValue.SetDeterminedType(semtypes.MAPPING)
+	nextRefForValue.SetDeterminedType(semtypes.Mapping)
 
 	valueAccess := &ast.BLangFieldBaseAccess{
 		Field: &ast.BLangIdentifier{Value: "value"},
@@ -1050,7 +1050,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 		Body: *newBody,
 	}
 	whileStmt.SetScope(foreachScope)
-	whileStmt.SetDeterminedType(semtypes.NEVER)
+	whileStmt.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(whileStmt, basePos)
 
 	return desugaredNode[ast.StatementNode]{

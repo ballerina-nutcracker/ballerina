@@ -467,7 +467,7 @@ func buildInitAssignment(compilerCtx *context.CompilerContext, node moduleInitNo
 		VarRef: varRef,
 		Expr:   initExpr,
 	}
-	assignment.SetDeterminedType(semtypes.NEVER)
+	assignment.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(assignment, basePos)
 	return assignment
 }
@@ -475,10 +475,10 @@ func buildInitAssignment(compilerCtx *context.CompilerContext, node moduleInitNo
 // wrapInCheck wraps an expression with a check (check <expr>).
 func wrapInCheck(expr ast.BLangExpression) ast.BLangExpression {
 	exprTy := expr.GetDeterminedType()
-	if !semtypes.ContainsBasicType(exprTy, semtypes.ERROR) {
+	if !semtypes.ContainsBasicType(exprTy, semtypes.Error) {
 		return expr
 	}
-	narrowed := semtypes.Diff(exprTy, semtypes.ERROR)
+	narrowed := semtypes.Diff(exprTy, semtypes.Error)
 	checked := &ast.BLangCheckedExpr{Expr: expr}
 	checked.SetDeterminedType(narrowed)
 	checked.SetPosition(expr.GetPosition())
@@ -488,7 +488,7 @@ func wrapInCheck(expr ast.BLangExpression) ast.BLangExpression {
 // createExpressionStmt wraps the given expression into a BLangExpressionStmt
 func createExpressionStmt(expr ast.BLangExpression, pos diagnostics.Location) *ast.BLangExpressionStmt {
 	stmt := &ast.BLangExpressionStmt{Expr: expr}
-	stmt.SetDeterminedType(semtypes.NEVER)
+	stmt.SetDeterminedType(semtypes.Never)
 	stmt.SetPosition(pos)
 	return stmt
 }
@@ -502,10 +502,10 @@ func serviceInitResultType(pkgCtx *packageContext, svc *ast.BLangService, svcTy 
 	fnSym, ok := pkgCtx.getSymbol(svc.InitFunction.Symbol()).(model.FunctionSymbol)
 	if !ok {
 		pkgCtx.internalError("failed to find init function symbol")
-		return semtypes.NEVER
+		return semtypes.Never
 	}
 	retTy := fnSym.Signature().ReturnType
-	errComponent := semtypes.Diff(retTy, semtypes.NIL)
+	errComponent := semtypes.Diff(retTy, semtypes.Nil)
 	return semtypes.Union(errComponent, svcTy)
 }
 
@@ -589,10 +589,10 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 // `check`.
 func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleListenersRef *ast.BLangVarRef, initPos diagnostics.Location) {
 	compilerCtx := pkgCtx.compilerCtx
-	errorOrNil := semtypes.Union(semtypes.NIL, semtypes.ERROR)
+	errorOrNil := semtypes.Union(semtypes.Nil, semtypes.Error)
 	pkgID := pkg.PackageID
 	tyCtx := pkgCtx.typeCtx()
-	elementTy := semtypes.ListMemberTypeInnerVal(tyCtx, moduleListenersRef.GetDeterminedType(), semtypes.INT)
+	elementTy := semtypes.ListMemberTypeInnerVal(tyCtx, moduleListenersRef.GetDeterminedType(), semtypes.Int)
 
 	buildMethodCallStmt := func(scope model.Scope, listenerRef ast.BLangExpression, methodName string) ast.StatementNode {
 		fnTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst(methodName), elementTy)
@@ -601,7 +601,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 			return nil
 		}
 		ld := semtypes.NewListDefinition()
-		paramList := ld.DefineListTypeWrapped(pkgCtx.typeEnv(), nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+		paramList := ld.DefineListTypeWrapped(pkgCtx.typeEnv(), nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
 		retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
 		fnSymName := "$" + methodName + "Method"
@@ -626,14 +626,14 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		loopSymRef, _ := foreachScope.GetSymbol(loopVarName)
 
 		loopVarIdent := &ast.BLangIdentifier{Value: loopVarName}
-		loopVarIdent.SetDeterminedType(semtypes.NEVER)
+		loopVarIdent.SetDeterminedType(semtypes.Never)
 		loopVarIdent.SetPosition(initPos)
 		loopVar := &ast.BLangVariable{Name: loopVarIdent}
 		loopVar.SetDeterminedType(elementTy)
 		loopVar.SetSymbol(loopSymRef)
 		loopVar.SetPosition(initPos)
 		loopVarDef := &ast.BLangVariableDef{Var: loopVar}
-		loopVarDef.SetDeterminedType(semtypes.NEVER)
+		loopVarDef.SetDeterminedType(semtypes.Never)
 		loopVarDef.SetPosition(initPos)
 
 		loopVarRef := &ast.BLangVarRef{VariableName: loopVarIdent}
@@ -650,10 +650,10 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 			Collection:  &collectionRef,
 			Body:        ast.BLangBlockStmt{Stmts: []ast.StatementNode{bodyStmt}},
 		}
-		foreach.Body.SetDeterminedType(semtypes.NEVER)
+		foreach.Body.SetDeterminedType(semtypes.Never)
 		foreach.Body.SetPosition(initPos)
 		foreach.SetScope(foreachScope)
-		foreach.SetDeterminedType(semtypes.NEVER)
+		foreach.SetDeterminedType(semtypes.Never)
 		foreach.SetPosition(initPos)
 		return foreach
 	}
@@ -661,8 +661,8 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 	buildLifecycleFn := func(fnName string) *ast.BLangFunction {
 		fn := &ast.BLangFunction{}
 		fn.Name = &ast.BLangIdentifier{Value: fnName}
-		fn.Name.SetDeterminedType(semtypes.NEVER)
-		fn.SetDeterminedType(semtypes.NEVER)
+		fn.Name.SetDeterminedType(semtypes.Never)
+		fn.SetDeterminedType(semtypes.Never)
 		fn.SetPosition(initPos)
 
 		signature := model.FunctionSignature{ReturnType: errorOrNil}
@@ -677,7 +677,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		foreachStmt := buildForeach(fnScope, ListenerMethodFor(fnName))
 
 		body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{foreachStmt}}
-		body.SetDeterminedType(semtypes.NEVER)
+		body.SetDeterminedType(semtypes.Never)
 		body.SetPosition(initPos)
 		fn.Body = body
 		return fn
@@ -738,7 +738,7 @@ func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListene
 	listenerVarRef := buildModuleInitVarRef(compilerCtx, node)
 
 	assign := &ast.BLangAssignment{VarRef: listenerVarRef, Expr: wrapInCheck(node.expr)}
-	assign.SetDeterminedType(semtypes.NEVER)
+	assign.SetDeterminedType(semtypes.Never)
 	assign.SetPosition(pos)
 
 	stmts := []ast.StatementNode{assign}
@@ -771,7 +771,7 @@ func pickInitFunctionPosition(nodes []moduleInitNode, pkg *ast.BLangPackage) dia
 // widenInitReturnTypeToErrorOptional mutates the module init function so its
 // return type is `error?`
 func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, initFn *ast.BLangFunction) {
-	newRet := semtypes.Union(semtypes.NIL, semtypes.ERROR)
+	newRet := semtypes.Union(semtypes.Nil, semtypes.Error)
 	fnSym, ok := compilerCtx.GetSymbol(initFn.Symbol()).(model.FunctionSymbol)
 	if !ok {
 		compilerCtx.InternalError("module init function symbol is not a FunctionSymbol", initFn.GetPosition())
@@ -785,15 +785,15 @@ func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, in
 func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, initPos diagnostics.Location) {
 	pkg.InitFunction = &ast.BLangFunction{}
 	pkg.InitFunction.Name = &ast.BLangIdentifier{Value: "init"}
-	pkg.InitFunction.Name.SetDeterminedType(semtypes.NEVER)
+	pkg.InitFunction.Name.SetDeterminedType(semtypes.Never)
 	body := &ast.BLangBlockFunctionBody{}
-	body.SetDeterminedType(semtypes.NEVER)
+	body.SetDeterminedType(semtypes.Never)
 	body.SetPosition(initPos)
 	pkg.InitFunction.Body = body
-	pkg.InitFunction.SetDeterminedType(semtypes.NEVER)
+	pkg.InitFunction.SetDeterminedType(semtypes.Never)
 	pkg.InitFunction.SetPosition(initPos)
 	pkgID := pkg.PackageID
-	signature := model.FunctionSignature{ReturnType: semtypes.NIL}
+	signature := model.FunctionSignature{ReturnType: semtypes.Nil}
 	initSymbol := model.NewFunctionSymbol("init", signature, false, initPos)
 	symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 	symbolSpace.AddSymbol("init", initSymbol)
@@ -815,13 +815,13 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 	var listnerTop semtypes.SemType
 	{
 		listDefn := semtypes.NewListDefinition()
-		stringArr := listDefn.DefineListTypeWrapped(env, nil, 0, semtypes.STRING, semtypes.CellMutability_CELL_MUT_LIMITED)
-		listnerTop = semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.NEVER, stringArr), semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.NEVER, semtypes.STRING), semtypes.ListenerTy(tyCtx, semtypes.NEVER, semtypes.NIL)))
+		stringArr := listDefn.DefineListTypeWrapped(env, nil, 0, semtypes.String, semtypes.CellMutabilityLimited)
+		listnerTop = semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.Never, stringArr), semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.Never, semtypes.String), semtypes.ListenerTy(tyCtx, semtypes.Never, semtypes.Nil)))
 	}
 	var arrTy semtypes.SemType
 	{
 		listDefn := semtypes.NewListDefinition()
-		arrTy = listDefn.DefineListTypeWrapped(env, nil, 0, listnerTop, semtypes.CellMutability_CELL_MUT_LIMITED)
+		arrTy = listDefn.DefineListTypeWrapped(env, nil, 0, listnerTop, semtypes.CellMutabilityLimited)
 	}
 
 	sym := model.NewVariableSymbol(moduleListenersGlobalName, false, false, false, pos)
@@ -830,7 +830,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 
 	global := &ast.BLangVariable{}
 	global.SetName(&ast.BLangIdentifier{Value: moduleListenersGlobalName})
-	global.Name.SetDeterminedType(semtypes.NEVER)
+	global.Name.SetDeterminedType(semtypes.Never)
 	global.SetSymbol(symRef)
 	global.SetDeterminedType(arrTy)
 	global.SetPosition(pos)
@@ -844,12 +844,12 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 
 	emptyList := &ast.BLangListConstructorExpr{Exprs: []ast.BLangExpression{}}
 	emptyList.SetDeterminedType(arrTy)
-	emptyList.AtomicType = semtypes.LIST_ATOMIC_INNER
+	emptyList.AtomicType = semtypes.ListAtomicInner
 	emptyList.SetPosition(pos)
 
 	assignRef := *ref
 	assign := &ast.BLangAssignment{VarRef: &assignRef, Expr: emptyList}
-	assign.SetDeterminedType(semtypes.NEVER)
+	assign.SetDeterminedType(semtypes.Never)
 	assign.SetPosition(pos)
 	return ref, assign
 }
@@ -905,7 +905,7 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 				pkgCtx.internalError("inline listener expression has no determined type at desugar")
 				return
 			}
-			ty := semtypes.Diff(exprTy, semtypes.ERROR)
+			ty := semtypes.Diff(exprTy, semtypes.Error)
 			name := pkgCtx.nextDesugarSymbolName()
 			sym := model.NewVariableSymbol(name, false, false, false, pos)
 			sym.SetListener()
@@ -913,7 +913,7 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 			pkgCtx.setSymbolType(symRef, ty)
 
 			ident := &ast.BLangIdentifier{Value: name}
-			ident.SetDeterminedType(semtypes.NEVER)
+			ident.SetDeterminedType(semtypes.Never)
 			ident.SetPosition(pos)
 
 			gv := &ast.BLangVariable{Name: ident}
@@ -939,7 +939,7 @@ func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes
 	symRef, _ := scope.GetSymbol(name)
 
 	ident := &ast.BLangIdentifier{Value: name}
-	ident.SetDeterminedType(semtypes.NEVER)
+	ident.SetDeterminedType(semtypes.Never)
 	ident.SetPosition(pos)
 
 	variable := &ast.BLangVariable{Name: ident}
@@ -949,7 +949,7 @@ func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes
 	variable.SetPosition(pos)
 
 	varDef := &ast.BLangVariableDef{Var: variable}
-	varDef.SetDeterminedType(semtypes.NEVER)
+	varDef.SetDeterminedType(semtypes.Never)
 	varDef.SetPosition(pos)
 
 	ref := &ast.BLangVarRef{VariableName: ident}
@@ -986,7 +986,7 @@ func createArrayPushInvocation(pkgCtx *packageContext, listExpr, valueExpr ast.B
 	inv.Name = &ast.BLangIdentifier{Value: pushSym.Name()}
 	inv.ArgExprs = []ast.BLangExpression{listExpr, valueExpr}
 	inv.SetSymbol(pushRef)
-	inv.SetDeterminedType(semtypes.NIL)
+	inv.SetDeterminedType(semtypes.Nil)
 	inv.SetPosition(valueExpr.GetPosition())
 	return inv
 }
@@ -1006,7 +1006,7 @@ func buildListenerStartInvocation(pkgCtx *packageContext, listenerExpr ast.BLang
 	inv.Name = &ast.BLangIdentifier{Value: "start"}
 	inv.Expr = listenerExpr
 	argListDefn := semtypes.NewListDefinition()
-	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{}, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{}, 0, semtypes.Never, semtypes.CellMutabilityNone)
 	inv.SetDeterminedType(semtypes.FunctionReturnType(pkgCtx.typeCtx(), startFnTy, argListTy))
 	inv.SetPosition(listenerExpr.GetPosition())
 	return inv
@@ -1033,7 +1033,7 @@ func buildListenerAttachInvocation(pkgCtx *packageContext, svc *ast.BLangService
 	inv.Expr = listenerExpr
 	inv.ArgExprs = []ast.BLangExpression{svcRef, attachPointExpr}
 	argListDefn := semtypes.NewListDefinition()
-	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{svcRef.GetDeterminedType(), attachPointExpr.GetDeterminedType()}, 2, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{svcRef.GetDeterminedType(), attachPointExpr.GetDeterminedType()}, 2, semtypes.Never, semtypes.CellMutabilityNone)
 	inv.SetDeterminedType(semtypes.FunctionReturnType(tyCtx, attachFnTy, argListTy))
 	inv.SetPosition(svc.GetPosition())
 	return inv
@@ -1048,7 +1048,7 @@ func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService) a
 	}
 	if len(svc.AbsoluteResourcePath) == 0 {
 		lit := &ast.BLangLiteral{Value: nil}
-		lit.SetDeterminedType(semtypes.NIL)
+		lit.SetDeterminedType(semtypes.Nil)
 		lit.SetPosition(svc.GetPosition())
 		return lit
 	}
@@ -1063,7 +1063,7 @@ func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService) a
 		tupleMembers[i] = litTy
 	}
 	ld := semtypes.NewListDefinition()
-	listTy := ld.DefineListTypeWrapped(pkgCtx.typeEnv(), tupleMembers, len(tupleMembers), semtypes.NEVER, semtypes.CellMutability_CELL_MUT_LIMITED)
+	listTy := ld.DefineListTypeWrapped(pkgCtx.typeEnv(), tupleMembers, len(tupleMembers), semtypes.Never, semtypes.CellMutabilityLimited)
 	lat := semtypes.ToListAtomicType(pkgCtx.typeEnv(), listTy)
 	arr := &ast.BLangListConstructorExpr{Exprs: elements, AtomicType: *lat}
 	arr.SetDeterminedType(listTy)
@@ -1074,22 +1074,22 @@ func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService) a
 func newSimpleVariable(name string, ty semtypes.SemType) *ast.BLangVariable {
 	v := &ast.BLangVariable{}
 	v.Name = &ast.BLangIdentifier{Value: name}
-	v.Name.SetDeterminedType(semtypes.NEVER)
+	v.Name.SetDeterminedType(semtypes.Never)
 	v.SetDeterminedType(ty)
 	return v
 }
 
 func createDefaultValueFunction(name string, defaultExpr ast.BLangExpression) *ast.BLangFunction {
 	retStmt := &ast.BLangReturn{Expr: defaultExpr}
-	retStmt.SetDeterminedType(semtypes.NEVER)
+	retStmt.SetDeterminedType(semtypes.Never)
 	body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{retStmt}}
-	body.SetDeterminedType(semtypes.NEVER)
+	body.SetDeterminedType(semtypes.Never)
 
 	fn := &ast.BLangFunction{}
 	fn.Name = &ast.BLangIdentifier{Value: name}
-	fn.Name.SetDeterminedType(semtypes.NEVER)
+	fn.Name.SetDeterminedType(semtypes.Never)
 	fn.Body = body
-	fn.SetDeterminedType(semtypes.NEVER)
+	fn.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(fn, defaultExpr.GetPosition())
 	return fn
 }
@@ -1356,10 +1356,10 @@ func synthesizeDefaultInitFunction(pkgCtx *packageContext, classScope model.Scop
 	body := &ast.BLangBlockFunctionBody{}
 	body.SetPosition(pos)
 	fn.Body = body
-	fn.SetDeterminedType(semtypes.NEVER)
+	fn.SetDeterminedType(semtypes.Never)
 	fn.SetScope(pkgCtx.newFunctionScope(classScope))
 	fn.SetPosition(pos)
-	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.NIL}, false, pos)
+	initSymbol := model.NewFunctionSymbol("init", model.FunctionSignature{ReturnType: semtypes.Nil}, false, pos)
 	classScope.AddSymbol("init", initSymbol)
 	symRef, _ := classScope.GetSymbol("init")
 	fn.SetSymbol(symRef)
@@ -1400,7 +1400,7 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 		fieldAccess := &ast.BLangFieldBaseAccess{
 			Field: &ast.BLangIdentifier{Value: field.GetName().GetValue()},
 		}
-		fieldAccess.Field.SetDeterminedType(semtypes.NEVER)
+		fieldAccess.Field.SetDeterminedType(semtypes.Never)
 		fieldAccess.Expr = selfVarRef
 		fieldAccess.SetDeterminedType(pkgCtx.getSymbolType(field.Symbol()))
 
@@ -1408,7 +1408,7 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 			VarRef: fieldAccess,
 			Expr:   initExprBal,
 		}
-		assignment.SetDeterminedType(semtypes.NEVER)
+		assignment.SetDeterminedType(semtypes.Never)
 		setPositionIfMissing(assignment, basePos)
 
 		initStmts = append(initStmts, assignment)

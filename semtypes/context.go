@@ -42,7 +42,7 @@ type context struct {
 	_fillerMemo            map[atomicType]Filler
 	_streamImplementorMemo map[streamImplementorMemoKey]SemType
 	_listenerMemo          map[listenerMemoKey]SemType
-	_semtypeInterner       *SemtypeInterner
+	_semtypeInterner       *SemTypeInterner
 }
 
 type streamImplementorMemoKey struct {
@@ -247,14 +247,14 @@ func (c *context) setListenerMemo(t, a, listenerTy SemType) {
 	c._listenerMemo[key] = listenerTy
 }
 
-func (c *context) comparableMemo(b1, b2 Bdd) *comparableMemo {
+func (c *context) comparableMemo(b1, b2 bdd) *comparableMemo {
 	return c._comparableMemo[comparableMemoKeyOf(b1, b2)]
 }
 
-func (c *context) setComparableMemo(b1, b2 Bdd, memo *comparableMemo) {
+func (c *context) setComparableMemo(b1, b2 bdd, memo *comparableMemo) {
 	c._comparableMemo[comparableMemoKeyOf(b1, b2)] = memo
 }
 
-func comparableMemoKeyOf(b1, b2 Bdd) comparableMemoKey {
+func comparableMemoKeyOf(b1, b2 bdd) comparableMemoKey {
 	return comparableMemoKey{key1: b1.canonicalKey(), key2: b2.canonicalKey()}
 }

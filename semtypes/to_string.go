@@ -36,7 +36,7 @@ func ToString(cx Context, ty SemType) string {
 }
 
 func builtinUnion(cx Context, ty SemType) (string, bool) {
-	if IsSameType(cx, ty, ANY) {
+	if IsSameType(cx, ty, Any) {
 		return "any", true
 	}
 	if IsSameType(cx, ty, CreateAnydata(cx)) {
@@ -62,16 +62,16 @@ func (s *toStringState) semTypeToString(ty SemType) string {
 }
 
 func xmlPredefinedName(cx Context, ty SemType) (string, bool) {
-	if IsSameType(cx, ty, XML_ELEMENT) {
+	if IsSameType(cx, ty, XMLElement) {
 		return "xml:Element", true
 	}
-	if IsSameType(cx, ty, XML_COMMENT) {
+	if IsSameType(cx, ty, XMLComment) {
 		return "xml:Comment", true
 	}
-	if IsSameType(cx, ty, XML_TEXT) {
+	if IsSameType(cx, ty, XMLText) {
 		return "xml:Text", true
 	}
-	if IsSameType(cx, ty, XML_PI) {
+	if IsSameType(cx, ty, XMLProcessingInstruction) {
 		return "xml:ProcessingInstruction", true
 	}
 	return "", false
@@ -87,7 +87,7 @@ func basicTypeToString(ty basicTypeBitSet) string {
 
 func basicTypeBitSetToString(bits basicTypeBitSet) string {
 	var parts []string
-	for i := 0; i < int(ValueTypeCount); i++ {
+	for i := 0; i < int(valueTypeCount); i++ {
 		if bits&(1<<i) != 0 {
 			code := basicTypeCodeFrom(i)
 			name := strings.TrimPrefix(code.String(), "BT_")
@@ -110,7 +110,7 @@ func (s *toStringState) complexSemtypeToString(ty SemType) string {
 }
 
 func (s *toStringState) subtypeToString(sub basicSubtype) string {
-	switch st := sub.SubtypeData.(type) {
+	switch st := sub.subtypeData.(type) {
 	case intSubtype:
 		return intSubtypeToString(st)
 	case booleanSubtype:
@@ -121,32 +121,32 @@ func (s *toStringState) subtypeToString(sub basicSubtype) string {
 		return decimalSubtypeToString(st)
 	case stringSubtype:
 		return stringSubtypeToString(st)
-	case Bdd:
-		switch sub.BasicTypeCode {
-		case BTList:
+	case bdd:
+		switch sub.basicTypeCode {
+		case btList:
 			return s.bddListToString(st)
-		case BTMapping:
+		case btMapping:
 			return s.bddMappingToString(st)
-		case BTError:
+		case btError:
 			return s.bddErrorToString(st)
-		case BTFunction:
+		case btFunction:
 			return s.bddFunctionToString(st)
-		case BTObject:
+		case btObject:
 			return s.bddObjectToString(st)
-		case BTTypeDesc:
+		case btTypeDesc:
 			return s.bddTypedescToString(st)
 		default:
-			name := strings.TrimPrefix(sub.BasicTypeCode.String(), "BT_")
+			name := strings.TrimPrefix(sub.basicTypeCode.String(), "BT_")
 			return strings.ToLower(name)
 		}
 	case *xmlSubtype:
 		return s.xmlSubtypeToString(st)
 	default:
-		panic(fmt.Sprintf("unimplemented: ToString for %s", sub.BasicTypeCode.String()))
+		panic(fmt.Sprintf("unimplemented: ToString for %s", sub.basicTypeCode.String()))
 	}
 }
 
-func bddFormulaToString(cx Context, bdd Bdd, atomToString func(atom) string) string {
+func bddFormulaToString(cx Context, bdd bdd, atomToString func(atom) string) string {
 	var formulas []string
 	bddEvery(cx, bdd, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
 		var posParts []string
@@ -170,12 +170,12 @@ func bddFormulaToString(cx Context, bdd Bdd, atomToString func(atom) string) str
 	return strings.Join(formulas, "|")
 }
 
-func (s *toStringState) bddListToString(bdd Bdd) string {
+func (s *toStringState) bddListToString(bdd bdd) string {
 	return bddFormulaToString(s.cx, bdd, s.listAtomToString)
 }
 
 func (s *toStringState) listAtomToString(atom atom) string {
-	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() == BDD_REC_ATOM_READONLY {
+	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() == bddRecAtomReadonly {
 		return "readonly"
 	}
 	key := atom.canonicalKey()
@@ -190,8 +190,8 @@ func (s *toStringState) listAtomToString(atom atom) string {
 func (s *toStringState) listAtomicTypeToString(atom atom) string {
 	atomic := s.cx.ListAtomType(atom)
 	var parts []string
-	for i := 0; i < atomic.Members.FixedLength; i++ {
-		member := listMemberAt(atomic.Members, atomic.rest, i)
+	for i := 0; i < atomic.members.FixedLength; i++ {
+		member := listMemberAt(atomic.members, atomic.rest, i)
 		parts = append(parts, s.semTypeToString(cellInnerVal(member)))
 	}
 	restStr := s.semTypeToString(cellInnerVal(atomic.rest))
@@ -199,7 +199,7 @@ func (s *toStringState) listAtomicTypeToString(atom atom) string {
 	return "[" + strings.Join(parts, ", ") + "]"
 }
 
-func (s *toStringState) bddErrorToString(bdd Bdd) string {
+func (s *toStringState) bddErrorToString(bdd bdd) string {
 	return "error<" + bddFormulaToString(s.cx, bdd, s.errorAtomToString) + ">"
 }
 
@@ -210,7 +210,7 @@ func (s *toStringState) errorAtomToString(atom atom) string {
 	return s.mappingAtomToString(atom)
 }
 
-func (s *toStringState) bddFunctionToString(bdd Bdd) string {
+func (s *toStringState) bddFunctionToString(bdd bdd) string {
 	return bddFormulaToString(s.cx, bdd, s.functionAtomToString)
 }
 
@@ -238,10 +238,10 @@ func (s *toStringState) functionParamsToString(paramType SemType) string {
 		return s.semTypeToString(paramType)
 	}
 	for _, sub := range unpack(paramType) {
-		if sub.BasicTypeCode != BTList {
+		if sub.basicTypeCode != btList {
 			continue
 		}
-		bdd, ok := sub.SubtypeData.(Bdd)
+		bdd, ok := sub.subtypeData.(bdd)
 		if !ok {
 			continue
 		}
@@ -251,8 +251,8 @@ func (s *toStringState) functionParamsToString(paramType SemType) string {
 		}
 		listAtomic := s.cx.ListAtomType(node.atom())
 		var parts []string
-		for i := 0; i < listAtomic.Members.FixedLength; i++ {
-			member := listMemberAt(listAtomic.Members, listAtomic.rest, i)
+		for i := 0; i < listAtomic.members.FixedLength; i++ {
+			member := listMemberAt(listAtomic.members, listAtomic.rest, i)
 			parts = append(parts, s.semTypeToString(cellInnerVal(member)))
 		}
 		restInner := cellInnerVal(listAtomic.rest)
@@ -264,21 +264,21 @@ func (s *toStringState) functionParamsToString(paramType SemType) string {
 	return s.semTypeToString(paramType)
 }
 
-func (s *toStringState) bddTypedescToString(bdd Bdd) string {
-	mappingTy := createBasicSemType(BTMapping, bdd)
-	constraint := MappingMemberTypeInnerVal(s.cx, mappingTy, STRING)
-	if IsSameType(s.cx, constraint, VAL) {
+func (s *toStringState) bddTypedescToString(bdd bdd) string {
+	mappingTy := createBasicSemType(btMapping, bdd)
+	constraint := MappingMemberTypeInnerVal(s.cx, mappingTy, String)
+	if IsSameType(s.cx, constraint, Val) {
 		return "typedesc"
 	}
 	return "typedesc<" + s.semTypeToString(constraint) + ">"
 }
 
-func (s *toStringState) bddMappingToString(bdd Bdd) string {
+func (s *toStringState) bddMappingToString(bdd bdd) string {
 	return bddFormulaToString(s.cx, bdd, s.mappingAtomToString)
 }
 
 func (s *toStringState) mappingAtomToString(atom atom) string {
-	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() == BDD_REC_ATOM_READONLY {
+	if recAtom, ok := atom.(*recAtom); ok && recAtom.index() == bddRecAtomReadonly {
 		return "readonly"
 	}
 	key := atom.canonicalKey()
@@ -293,15 +293,15 @@ func (s *toStringState) mappingAtomToString(atom atom) string {
 func (s *toStringState) mappingAtomicTypeToString(atom atom) string {
 	atomic := s.cx.MappingAtomType(atom)
 	var parts []string
-	for i, name := range atomic.Names {
-		parts = append(parts, name+": "+s.semTypeToString(cellInnerVal(atomic.Types[i])))
+	for i, name := range atomic.names {
+		parts = append(parts, name+": "+s.semTypeToString(cellInnerVal(atomic.types[i])))
 	}
-	restStr := s.semTypeToString(cellInnerVal(atomic.Rest))
+	restStr := s.semTypeToString(cellInnerVal(atomic.rest))
 	parts = append(parts, restStr+"...")
 	return "{| " + strings.Join(parts, ", ") + " |}"
 }
 
-func (s *toStringState) bddObjectToString(bdd Bdd) string {
+func (s *toStringState) bddObjectToString(bdd bdd) string {
 	return bddFormulaToString(s.cx, bdd, s.objectAtomToString)
 }
 
@@ -310,7 +310,7 @@ func (s *toStringState) objectAtomToString(atom atom) string {
 		if recAtom.index() < 0 {
 			return "object"
 		}
-		if recAtom.index() == BDD_REC_ATOM_OBJECT_READONLY {
+		if recAtom.index() == bddRecAtomObjectReadonly {
 			return "readonly"
 		}
 	}
@@ -327,9 +327,9 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 	atomic := s.cx.MappingAtomType(atom)
 	var prefix []string
 	var members []string
-	for i, name := range atomic.Names {
+	for i, name := range atomic.names {
 		if name == "$qualifiers" {
-			qualTy := cellInnerVal(atomic.Types[i])
+			qualTy := cellInnerVal(atomic.types[i])
 			qualAtomic := ToMappingAtomicType(s.cx, qualTy)
 			if qualAtomic != nil {
 				isolatedTy := qualAtomic.FieldInnerVal("isolated")
@@ -345,7 +345,7 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 			}
 			continue
 		}
-		memberTy := cellInnerVal(atomic.Types[i])
+		memberTy := cellInnerVal(atomic.types[i])
 		memberAtomic := ToMappingAtomicType(s.cx, memberTy)
 		if memberAtomic == nil {
 			members = append(members, name+": "+s.semTypeToString(memberTy))
@@ -392,8 +392,8 @@ func (s *toStringState) objectMethodToString(name string, kindTy SemType, fnTy S
 		return methodPrefix + name + "()"
 	}
 	for _, sub := range unpack(fnTy) {
-		if sub.BasicTypeCode == BTFunction {
-			bdd, ok := sub.SubtypeData.(Bdd)
+		if sub.basicTypeCode == btFunction {
+			bdd, ok := sub.subtypeData.(bdd)
 			if !ok {
 				continue
 			}
@@ -466,7 +466,7 @@ func decimalSubtypeToString(st decimalSubtype) string {
 }
 
 func (s *toStringState) xmlSubtypeToString(st *xmlSubtype) string {
-	bits := st.Primitives & ^XML_PRIMITIVE_NEVER
+	bits := st.Primitives & ^xmlPrimitiveNever
 	bddEvery(s.cx, st.Sequence, conjunctionNil, conjunctionNil, func(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
 		for c := pos; c != conjunctionNil; c = cx.conjunctionNext(c) {
 			if rec, ok := cx.conjunctionAtom(c).(*recAtom); ok {
@@ -483,16 +483,16 @@ func xmlConstituentName(bits int) string {
 		return "never"
 	}
 	var parts []string
-	if bits&XML_PRIMITIVE_TEXT != 0 {
+	if bits&xmlPrimitiveText != 0 {
 		parts = append(parts, "xml:Text")
 	}
-	if bits&(XML_PRIMITIVE_ELEMENT_RO|XML_PRIMITIVE_ELEMENT_RW) != 0 {
+	if bits&(xmlPrimitiveElementReadonly|xmlPrimitiveElementRw) != 0 {
 		parts = append(parts, "xml:Element")
 	}
-	if bits&(XML_PRIMITIVE_COMMENT_RO|XML_PRIMITIVE_COMMENT_RW) != 0 {
+	if bits&(xmlPrimitiveCommentReadonly|xmlPrimitiveCommentRw) != 0 {
 		parts = append(parts, "xml:Comment")
 	}
-	if bits&(XML_PRIMITIVE_PI_RO|XML_PRIMITIVE_PI_RW) != 0 {
+	if bits&(xmlPrimitiveProcessingInstructionReadonly|xmlPrimitivePiRw) != 0 {
 		parts = append(parts, "xml:ProcessingInstruction")
 	}
 	return strings.Join(parts, "|")

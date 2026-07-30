@@ -26,12 +26,12 @@ func FunctionSignatureToSemType(env semtypes.Env, fs *model.FunctionSignature) s
 	if !semtypes.IsZero(fs.RestParamType) {
 		restTy = fs.RestParamType
 	} else {
-		restTy = semtypes.NEVER
+		restTy = semtypes.Never
 	}
 
 	// Build the parameter list type
 	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.DefineListTypeWrapped(env, fs.ParamTypes, len(fs.ParamTypes), restTy, semtypes.CellMutability_CELL_MUT_NONE)
+	paramListTy := paramListDefn.DefineListTypeWrapped(env, fs.ParamTypes, len(fs.ParamTypes), restTy, semtypes.CellMutabilityNone)
 
 	// Build the function type
 	functionDefn := semtypes.NewFunctionDefinition()

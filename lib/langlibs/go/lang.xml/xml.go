@@ -36,7 +36,7 @@ func initXMLModule(rt *runtime.Runtime) {
 
 func xmlIterator(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	x, _ := args[0].(values.XMLValue)
-	return values.NewObject(semtypes.OBJECT, map[string]values.BalValue{
+	return values.NewObject(semtypes.Object, map[string]values.BalValue{
 		"items": x.IterItems(),
 		"idx":   int64(0),
 	}, map[string]string{
@@ -65,7 +65,7 @@ func xmlIteratorNextRecordType(env semtypes.Env) semtypes.SemType {
 	def := semtypes.NewMappingDefinition()
 	return def.DefineMappingTypeWrapped(env,
 		[]semtypes.Field{semtypes.FieldFrom("value", semtypes.XML, false, false)},
-		semtypes.NEVER)
+		semtypes.Never)
 }
 
 func init() {

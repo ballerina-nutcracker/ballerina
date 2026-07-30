@@ -117,7 +117,7 @@ type queryGroupState struct {
 type queryGroupIndex map[string]int
 
 func newQueryList(ctx *extern.Context) *values.List {
-	return values.NewList(semtypes.LIST, semtypes.ToListAtomicType(ctx.TypeEnv(), semtypes.LIST), false, nil, 0, nil)
+	return values.NewList(semtypes.List, semtypes.ToListAtomicType(ctx.TypeEnv(), semtypes.List), false, nil, 0, nil)
 }
 
 func queryGroup(ctx *extern.Context, rows *values.List, keyRows *values.List, scalarFlags *values.List) (*values.List, error) {

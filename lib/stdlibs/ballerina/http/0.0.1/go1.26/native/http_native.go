@@ -193,24 +193,24 @@ func eagerBufferResponse(respHeaders map[string][]string, bodyStream io.ReadClos
 
 // newMappingValue builds a fresh open map<anydata|error> value.
 // The header/request maps and value lists built per request all use the
-// program-constant MAPPING / LIST inherent types, and MAPPING_ATOMIC_INNER /
-// LIST_ATOMIC_INNER are exactly what ToMappingAtomicType/ToListAtomicType
+// program-constant Mapping / List inherent types, and MappingAtomicInner /
+// ListAtomicInner are exactly what ToMappingAtomicType/ToListAtomicType
 // compute for those two types (their fast path for a type with no subtype
 // data) — so the shared instances can be referenced directly at package load
 // without needing a type context (or even an Env) at all. Map/List only read
 // the atomic type, never mutate it, so sharing is safe.
 var (
-	mappingAtomicType = &semtypes.MAPPING_ATOMIC_INNER
-	listAtomicType    = &semtypes.LIST_ATOMIC_INNER
+	mappingAtomicType = &semtypes.MappingAtomicInner
+	listAtomicType    = &semtypes.ListAtomicInner
 )
 
 func newMappingValue() *values.Map {
-	return values.NewMap(semtypes.MAPPING, mappingAtomicType, false, nil)
+	return values.NewMap(semtypes.Mapping, mappingAtomicType, false, nil)
 }
 
 // newListValue builds a fresh open list seeded with items.
 func newListValue(items []values.BalValue) *values.List {
-	return values.NewList(semtypes.LIST, listAtomicType, false, nil, 0, items)
+	return values.NewList(semtypes.List, listAtomicType, false, nil, 0, items)
 }
 
 // newTypedListValue builds a typed list seeded with items.
@@ -368,8 +368,8 @@ func initHttpModule(rt *runtime.Runtime) {
 	jsonMapMd := semtypes.NewMappingDefinition()
 	jsonListLd := semtypes.NewListDefinition()
 	types := httpTypes{
-		byteArrTy:  byteArrLd.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE),
-		strArrTy:   strArrLd.DefineListTypeWrappedWithEnvSemType(env, semtypes.STRING),
+		byteArrTy:  byteArrLd.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte),
+		strArrTy:   strArrLd.DefineListTypeWrappedWithEnvSemType(env, semtypes.String),
 		jsonMapTy:  jsonMapMd.DefineMappingTypeWrapped(env, nil, jsonTy),
 		jsonListTy: jsonListLd.DefineListTypeWrappedWithEnvSemType(env, jsonTy),
 	}
@@ -459,10 +459,10 @@ func initHttpModule(rt *runtime.Runtime) {
 		Name:      model.Name("Client"),
 		LookupKey: "ballerina/http:Client",
 		Fields: []bir.ObjectField{
-			{Name: "url", Ty: semtypes.STRING},
-			{Name: "timeout", Ty: semtypes.DECIMAL},
-			{Name: "followRedirects", Ty: semtypes.Union(semtypes.MAPPING, semtypes.NIL)},
-			{Name: "httpVersion", Ty: semtypes.STRING},
+			{Name: "url", Ty: semtypes.String},
+			{Name: "timeout", Ty: semtypes.Decimal},
+			{Name: "followRedirects", Ty: semtypes.Union(semtypes.Mapping, semtypes.Nil)},
+			{Name: "httpVersion", Ty: semtypes.String},
 		},
 		VTable: map[string]*bir.BIRFunction{
 			"init":            {FunctionLookupKey: "ballerina/http:Client.init"},
@@ -957,7 +957,7 @@ func initHttpModule(rt *runtime.Runtime) {
 		Name:      model.Name("Response"),
 		LookupKey: "ballerina/http:Response",
 		Fields: []bir.ObjectField{
-			{Name: "statusCode", Ty: semtypes.INT},
+			{Name: "statusCode", Ty: semtypes.Int},
 		},
 		VTable: responseVTable,
 	}
@@ -1217,9 +1217,9 @@ func initHttpModule(rt *runtime.Runtime) {
 		Name:      model.Name("Request"),
 		LookupKey: "ballerina/http:Request",
 		Fields: []bir.ObjectField{
-			{Name: "rawPath", Ty: semtypes.STRING},
-			{Name: "method", Ty: semtypes.STRING},
-			{Name: "httpVersion", Ty: semtypes.STRING},
+			{Name: "rawPath", Ty: semtypes.String},
+			{Name: "method", Ty: semtypes.String},
+			{Name: "httpVersion", Ty: semtypes.String},
 		},
 		VTable: requestVTable,
 	}
@@ -1765,7 +1765,7 @@ func buildResponse(tc semtypes.Context, statusCode int, respHeaders map[string][
 	}
 	holder := eagerBufferResponse(respHeaders, bodyStream)
 	return values.NewObject(
-		semtypes.OBJECT,
+		semtypes.Object,
 		map[string]values.BalValue{
 			"statusCode": int64(statusCode),
 			"$headers":   headersMap,

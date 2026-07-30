@@ -34,7 +34,7 @@ func TestFreezeRoutesNewAtomsToEphemeralStore(t *testing.T) {
 	before := len(env.atomTable)
 	env.atomTableMutex.Unlock()
 
-	ty := defineRuntimeList(env, STRING)
+	ty := defineRuntimeList(env, String)
 
 	env.atomTableMutex.Lock()
 	after := len(env.atomTable)
@@ -64,7 +64,7 @@ func TestEphemeralAtomIsReclaimedAndSlotReused(t *testing.T) {
 
 	// Hold a runtime type, capture its ephemeral slot, then drop it.
 	slotsAfterFirst := func() int {
-		ty := defineRuntimeList(env, STRING)
+		ty := defineRuntimeList(env, String)
 		if n := liveEphemeralSlots(env); n == 0 {
 			t.Fatal("expected at least one live ephemeral slot")
 		}
@@ -86,7 +86,7 @@ func TestEphemeralAtomIsReclaimedAndSlotReused(t *testing.T) {
 	}
 
 	// A new runtime type reuses the freed slot instead of growing the array.
-	ty2 := defineRuntimeList(env, INT)
+	ty2 := defineRuntimeList(env, Int)
 	if ToListAtomicType(env, ty2) == nil {
 		t.Fatal("expected a list atomic type for the second runtime list")
 	}

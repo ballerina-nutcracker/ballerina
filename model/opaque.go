@@ -139,12 +139,12 @@ func langIntOpaqueSymbols() []Symbol {
 		name string
 		ty   semtypes.SemType
 	}{
-		{"Signed8", semtypes.SINT8},
-		{"Signed16", semtypes.SINT16},
-		{"Signed32", semtypes.SINT32},
-		{"Unsigned8", semtypes.UINT8},
-		{"Unsigned16", semtypes.UINT16},
-		{"Unsigned32", semtypes.UINT32},
+		{"Signed8", semtypes.SignedInt8},
+		{"Signed16", semtypes.SignedInt16},
+		{"Signed32", semtypes.SignedInt32},
+		{"Unsigned8", semtypes.UnsignedInt8},
+		{"Unsigned16", semtypes.UnsignedInt16},
+		{"Unsigned32", semtypes.UnsignedInt32},
 	}
 	syms := make([]Symbol, len(defs))
 	for i, def := range defs {
@@ -154,7 +154,7 @@ func langIntOpaqueSymbols() []Symbol {
 }
 
 func langStringOpaqueSymbols() []Symbol {
-	return []Symbol{newOpaqueTypeSymbol("Char", semtypes.CHAR, 0)}
+	return []Symbol{newOpaqueTypeSymbol("Char", semtypes.Char, 0)}
 }
 
 func langXMLOpaqueSymbols() []Symbol {
@@ -162,10 +162,10 @@ func langXMLOpaqueSymbols() []Symbol {
 		name string
 		ty   semtypes.SemType
 	}{
-		{"Element", semtypes.XML_ELEMENT},
-		{"Comment", semtypes.XML_COMMENT},
-		{"Text", semtypes.XML_TEXT},
-		{"ProcessingInstruction", semtypes.XML_PI},
+		{"Element", semtypes.XMLElement},
+		{"Comment", semtypes.XMLComment},
+		{"Text", semtypes.XMLText},
+		{"ProcessingInstruction", semtypes.XMLProcessingInstruction},
 	}
 	syms := make([]Symbol, len(defs)+1)
 	for i, def := range defs {

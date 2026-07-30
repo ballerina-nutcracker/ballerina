@@ -24,9 +24,9 @@ type cellAtomicType struct {
 }
 
 const (
-	CellMutability_CELL_MUT_NONE CellMutability = iota
-	CellMutability_CELL_MUT_LIMITED
-	CellMutability_CELL_MUT_UNLIMITED
+	CellMutabilityNone CellMutability = iota
+	CellMutabilityLimited
+	cellMutabilityUnlimited
 )
 
 var _ atomicType = &cellAtomicType{}

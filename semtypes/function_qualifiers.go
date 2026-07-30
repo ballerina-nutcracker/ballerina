@@ -36,11 +36,11 @@ func createSemType(env Env, isolated bool, transactional bool) SemType {
 	if isolated {
 		isolatedType = BooleanConst(true)
 	} else {
-		isolatedType = BOOLEAN
+		isolatedType = Boolean
 	}
 	var transactionalType SemType
 	if transactional {
-		transactionalType = BOOLEAN
+		transactionalType = Boolean
 	} else {
 		transactionalType = BooleanConst(false)
 	}

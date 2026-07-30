@@ -22,24 +22,24 @@ import (
 
 func listProjInnerVal(cx Context, t SemType, k SemType) SemType {
 	if t.some() == 0 {
-		if (t.all() & LIST.all()) != 0 {
-			return VAL
+		if (t.all() & List.all()) != 0 {
+			return Val
 		}
-		return NEVER
+		return Never
 	}
 	keyData := getIntSubtype(k)
 	if isNothingSubtype(keyData) {
-		return NEVER
+		return Never
 	}
-	return listProjBddInnerVal(cx, keyData, getComplexSubtypeData(t, BTList).(Bdd), conjunctionNil, conjunctionNil)
+	return listProjBddInnerVal(cx, keyData, getComplexSubtypeData(t, btList).(bdd), conjunctionNil, conjunctionNil)
 }
 
-func listProjBddInnerVal(cx Context, k SubtypeData, b Bdd, pos conjunctionHandle, neg conjunctionHandle) SemType {
+func listProjBddInnerVal(cx Context, k subtypeData, b bdd, pos conjunctionHandle, neg conjunctionHandle) SemType {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return listProjPathInnerVal(cx, k, pos, neg)
 		} else {
-			return NEVER
+			return Never
 		}
 	} else {
 		bn := b.(bddNode)
@@ -52,16 +52,16 @@ func listProjBddInnerVal(cx Context, k SubtypeData, b Bdd, pos conjunctionHandle
 	}
 }
 
-func listProjPathInnerVal(cx Context, k SubtypeData, pos conjunctionHandle, neg conjunctionHandle) SemType {
+func listProjPathInnerVal(cx Context, k subtypeData, pos conjunctionHandle, neg conjunctionHandle) SemType {
 	var members fixedLengthArray
 	var rest SemType
 	if pos == conjunctionNil {
 		members = fixedLengthArrayEmpty()
-		rest = cellContaining(cx.Env(), Union(VAL, UNDEF))
+		rest = cellContaining(cx.Env(), Union(Val, Undef))
 	} else {
 		// combine all the positive tuples using intersection
 		lt := cx.ListAtomType(cx.conjunctionAtom(pos))
-		members = lt.Members
+		members = lt.members
 		rest = lt.rest
 		p := cx.conjunctionNext(pos)
 		// the neg case is in case we grow the array in listInhabited
@@ -76,20 +76,20 @@ func listProjPathInnerVal(cx Context, k SubtypeData, pos conjunctionHandle, neg 
 				d := cx.conjunctionAtom(p)
 				p = cx.conjunctionNext(p)
 				lt = cx.ListAtomType(d)
-				intersectedMembers, intersectedRest, ok := listIntersectWith(cx.Env(), members, rest, lt.Members, lt.rest)
+				intersectedMembers, intersectedRest, ok := listIntersectWith(cx.Env(), members, rest, lt.members, lt.rest)
 				if !ok {
-					return NEVER
+					return Never
 				}
 				members = intersectedMembers
 				rest = intersectedRest
 			}
 		}
 		if fixedArrayAnyEmpty(cx, members) {
-			return NEVER
+			return Never
 		}
 		// Ensure that we can use isNever on rest in listInhabited
 		if !IsNever(cellInnerVal(rest)) && IsEmpty(cx, rest) {
-			rest = roCellContaining(cx.Env(), NEVER)
+			rest = roCellContaining(cx.Env(), Never)
 		}
 	}
 	// return listProjExclude(cx, k, members, rest, listConjunction(cx, neg));
@@ -99,7 +99,7 @@ func listProjPathInnerVal(cx Context, k SubtypeData, pos conjunctionHandle, neg 
 	return listProjExcludeInnerVal(cx, projIndices, keyIndices, sampleTypes, nRequired, neg)
 }
 
-func listProjSamples(indices []int, k SubtypeData) ([]int, []int) {
+func listProjSamples(indices []int, k subtypeData) ([]int, []int) {
 	type indexBoolPair struct {
 		index   int
 		isInKey bool
@@ -142,7 +142,7 @@ func listProjSamples(indices []int, k SubtypeData) ([]int, []int) {
 }
 
 func listProjExcludeInnerVal(cx Context, indices []int, keyIndices []int, memberTypes []SemType, nRequired int, neg conjunctionHandle) SemType {
-	var p = NEVER
+	var p = Never
 	if neg == conjunctionNil {
 		length := len(memberTypes)
 		for _, k := range keyIndices {
@@ -153,10 +153,10 @@ func listProjExcludeInnerVal(cx Context, indices []int, keyIndices []int, member
 	} else {
 		nt := cx.ListAtomType(cx.conjunctionAtom(neg))
 		negNext := cx.conjunctionNext(neg)
-		if nRequired > 0 && IsNever(listMemberAtInnerVal(nt.Members, nt.rest, indices[nRequired-1])) {
+		if nRequired > 0 && IsNever(listMemberAtInnerVal(nt.members, nt.rest, indices[nRequired-1])) {
 			return listProjExcludeInnerVal(cx, indices, keyIndices, memberTypes, nRequired, negNext)
 		}
-		negLen := nt.Members.FixedLength
+		negLen := nt.members.FixedLength
 		if negLen > 0 {
 			length := len(memberTypes)
 			if length < len(indices) && indices[length] < negLen {
@@ -171,7 +171,7 @@ func listProjExcludeInnerVal(cx Context, indices []int, keyIndices []int, member
 			}
 		}
 		for i := range memberTypes {
-			d := Diff(cellInnerVal(memberTypes[i]), listMemberAtInnerVal(nt.Members, nt.rest, indices[i]))
+			d := Diff(cellInnerVal(memberTypes[i]), listMemberAtInnerVal(nt.members, nt.rest, indices[i]))
 			if !IsEmpty(cx, d) {
 				t := append([]SemType(nil), memberTypes...)
 				t[i] = cellContaining(cx.Env(), d)

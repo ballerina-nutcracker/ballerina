@@ -1078,12 +1078,12 @@ func (b *BLangTrapExpr) GetExpression() BLangExpression {
 // IsStreamOperation use to distinguish stream operations from method calls.
 func IsStreamOperation(inv interface{ Receiver() BLangExpression }) bool {
 	recv := inv.Receiver()
-	return recv != nil && semtypes.IsSubtypeSimple(recv.GetDeterminedType(), semtypes.STREAM)
+	return recv != nil && semtypes.IsSubtypeSimple(recv.GetDeterminedType(), semtypes.Stream)
 }
 
 // IsStreamNewExpression returns true when the new expression constructs a stream value.
 func IsStreamNewExpression(expr *BLangNewExpression) bool {
-	return semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.STREAM)
+	return semtypes.IsSubtypeSimple(expr.GetDeterminedType(), semtypes.Stream)
 }
 
 func NewBLangUnaryExpr(location diagnostics.Location, operator model.OperatorKind, expr BLangExpression) *BLangUnaryExpr {

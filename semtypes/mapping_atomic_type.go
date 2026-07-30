@@ -21,18 +21,18 @@ import (
 )
 
 type MappingAtomicType struct {
-	Names []string
-	Types []SemType
-	Rest  SemType
+	names []string
+	types []SemType
+	rest  SemType
 }
 
 var _ atomicType = &MappingAtomicType{}
 
 func mappingAtomicTypeFrom(names []string, types []SemType, rest SemType) MappingAtomicType {
 	return MappingAtomicType{
-		Names: names,
-		Types: types,
-		Rest:  rest,
+		names: names,
+		types: types,
+		rest:  rest,
 	}
 }
 
@@ -40,19 +40,23 @@ func (m *MappingAtomicType) atomKind() kind {
 	return kind_MAPPING_ATOM
 }
 
+func (m *MappingAtomicType) FieldNames() []string {
+	return slices.Clone(m.names)
+}
+
 func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
-	for i, n := range m.Names {
+	for i, n := range m.names {
 		if n == name {
-			return cellInnerVal(m.Types[i])
+			return cellInnerVal(m.types[i])
 		}
 	}
-	return cellInnerVal(m.Rest)
+	return cellInnerVal(m.rest)
 }
 
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
-	for i, n := range m.Names {
+	for i, n := range m.names {
 		if n == name {
-			return IsSubtype(cx, UNDEF, cellInner(m.Types[i]))
+			return IsSubtype(cx, Undef, cellInner(m.types[i]))
 		}
 	}
 	return true
@@ -85,13 +89,13 @@ func AllMappingAtomsHaveOptionalFieldByName(cx Context, ty SemType, key string) 
 }
 
 func mappingAtomsMatch(cx Context, ty SemType, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
-	if !IsSubtypeSimple(ty, MAPPING) {
+	if !IsSubtypeSimple(ty, Mapping) {
 		return false
 	}
 	if ty.some() == 0 {
 		return false
 	}
-	bdd := getComplexSubtypeData(ty, BTMapping).(Bdd)
+	bdd := getComplexSubtypeData(ty, btMapping).(bdd)
 	if simple, ok := bdd.(*bddNodeSimple); ok {
 		return predicate(cx, cx.MappingAtomType(simple.atom()))
 	}
@@ -99,7 +103,7 @@ func mappingAtomsMatch(cx Context, ty SemType, quantifier matchQuantifier, predi
 	return bddMappingAtomsMatch(cx, bdd, quantifier, predicate)
 }
 
-func bddMappingAtomsMatch(cx Context, bdd Bdd, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
+func bddMappingAtomsMatch(cx Context, bdd bdd, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
 	switch quantifier {
 	case matchAny:
 		found := false
@@ -129,13 +133,13 @@ func bddMappingAtomsMatch(cx Context, bdd Bdd, quantifier matchQuantifier, predi
 }
 
 func mappingAtomHasFieldByName(atom *MappingAtomicType, key string) bool {
-	return slices.Contains(atom.Names, key)
+	return slices.Contains(atom.names, key)
 }
 
 func mappingAtomHasOptionalFieldByName(_ Context, atom *MappingAtomicType, key string) bool {
-	for i, n := range atom.Names {
+	for i, n := range atom.names {
 		if n == key {
-			return ContainsUndef(cellInner(atom.Types[i]))
+			return ContainsUndef(cellInner(atom.types[i]))
 		}
 	}
 	return false
