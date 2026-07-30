@@ -31,6 +31,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
+	"github.com/ballerina-nutcracker/ballerina/birgen"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -683,7 +684,7 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
 
-	return bir.GenBir(cx, pkg), nil
+	return birgen.GenBir(cx, pkg), nil
 }
 
 func BenchmarkIntegration(b *testing.B) {

@@ -5,6 +5,7 @@ go 1.26
 require (
 	github.com/ballerina-nutcracker/ballerina/ast v0.6.0
 	github.com/ballerina-nutcracker/ballerina/bir v0.6.0
+	github.com/ballerina-nutcracker/ballerina/birgen v0.6.0
 	github.com/ballerina-nutcracker/ballerina/cli v0.6.0
 	github.com/ballerina-nutcracker/ballerina/common v0.6.0
 	github.com/ballerina-nutcracker/ballerina/context v0.6.0

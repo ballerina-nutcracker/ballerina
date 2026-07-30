@@ -15,11 +15,14 @@ require (
 
 require (
 	github.com/ballerina-nutcracker/ballerina/ast v0.6.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/birgen v0.6.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/common v0.6.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/context v0.6.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/desugar v0.6.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/node-builder v0.6.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/parser v0.6.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/semantics v0.6.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/st v0.6.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/tools v0.6.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect

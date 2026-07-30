@@ -21,7 +21,6 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
@@ -30,7 +29,6 @@ type CPEntryType uint8
 const (
 	CP_ENTRY_STRING CPEntryType = iota + 1
 	CP_ENTRY_PACKAGE
-	CP_ENTRY_SHAPE
 )
 
 type CPEntry interface {
@@ -47,9 +45,6 @@ type (
 		ModuleNameCPIndex int32
 		VersionCPIndex    int32
 	}
-	ShapeCPEntry struct {
-		Shape ast.BType
-	}
 )
 
 func (e *StringCPEntry) EntryType() CPEntryType {
@@ -58,10 +53,6 @@ func (e *StringCPEntry) EntryType() CPEntryType {
 
 func (e *PackageCPEntry) EntryType() CPEntryType {
 	return CP_ENTRY_PACKAGE
-}
-
-func (e *ShapeCPEntry) EntryType() CPEntryType {
-	return CP_ENTRY_SHAPE
 }
 
 type ConstantPool struct {
@@ -82,8 +73,6 @@ func (cp *ConstantPool) EntryKey(entry CPEntry) string {
 		return fmt.Sprintf("str:%s", e.Value)
 	case *PackageCPEntry:
 		return fmt.Sprintf("pkg:%d:%d:%d:%d", e.OrgNameCPIndex, e.PkgNameCPIndex, e.ModuleNameCPIndex, e.VersionCPIndex)
-	case *ShapeCPEntry:
-		panic("shape key generation not implemented")
 	default:
 		panic("unknown CPEntry type")
 	}
@@ -112,10 +101,6 @@ func (cp *ConstantPool) AddPackageCPEntry(pkg *model.PackageID) int32 {
 		ModuleNameCPIndex: cp.AddStringCPEntry(pkg.Name.Value()),
 		VersionCPIndex:    cp.AddStringCPEntry(pkg.Version.Value()),
 	})
-}
-
-func (cp *ConstantPool) AddShapeCPEntry(shape ast.BType) int32 {
-	panic("shape entry addition not implemented")
 }
 
 func (cp *ConstantPool) Serialize() ([]byte, error) {
@@ -161,8 +146,6 @@ func (cp *ConstantPool) WriteCPEntry(buf *bytes.Buffer, entry CPEntry) {
 		write(buf, e.PkgNameCPIndex)
 		write(buf, e.ModuleNameCPIndex)
 		write(buf, e.VersionCPIndex)
-	case *ShapeCPEntry:
-		panic("shape serialization not implemented")
 	default:
 		panic(fmt.Sprintf("unsupported constant pool entry type: %T", entry))
 	}

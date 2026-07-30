@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package bir_test
+package birgen_test
 
 import (
 	"flag"

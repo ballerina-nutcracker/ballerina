@@ -36,6 +36,7 @@ import (
 
 	sourceast "github.com/ballerina-nutcracker/ballerina/ast"
 	sourcebir "github.com/ballerina-nutcracker/ballerina/bir"
+	sourcebirgen "github.com/ballerina-nutcracker/ballerina/birgen"
 	sourcecli "github.com/ballerina-nutcracker/ballerina/cli"
 	sourcecommon "github.com/ballerina-nutcracker/ballerina/common"
 	sourcecontext "github.com/ballerina-nutcracker/ballerina/context"
@@ -71,6 +72,7 @@ var interpreterSources = []sourceTree{
 	{fs: rootSource},
 	{dir: "ast", fs: sourceast.InterpreterSource()},
 	{dir: "bir", fs: sourcebir.InterpreterSource()},
+	{dir: "birgen", fs: sourcebirgen.InterpreterSource()},
 	{dir: "cli", fs: sourcecli.InterpreterSource()},
 	{dir: "common", fs: sourcecommon.InterpreterSource()},
 	{dir: "context", fs: sourcecontext.InterpreterSource()},
@@ -223,6 +225,7 @@ use (
 	.
 	./ast
 	./bir
+	./birgen
 	./cli
 	./common
 	./context
@@ -246,6 +249,7 @@ replace (
 	github.com/ballerina-nutcracker/ballerina v0.6.0 => .
 	github.com/ballerina-nutcracker/ballerina/ast v0.6.0 => ./ast
 	github.com/ballerina-nutcracker/ballerina/bir v0.6.0 => ./bir
+	github.com/ballerina-nutcracker/ballerina/birgen v0.6.0 => ./birgen
 	github.com/ballerina-nutcracker/ballerina/cli v0.6.0 => ./cli
 	github.com/ballerina-nutcracker/ballerina/common v0.6.0 => ./common
 	github.com/ballerina-nutcracker/ballerina/context v0.6.0 => ./context

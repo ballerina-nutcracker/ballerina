@@ -692,9 +692,9 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 // Each one iterates the module's listener array and invokes the matching
 // listener method (see ListenerMethodFor).
 const (
-	StartFunctionName         = "$start"
-	GracefulStopFunctionName  = "$gracefulStop"
-	ImmediateStopFunctionName = "$immediateStop"
+	StartFunctionName         = model.ModuleStartFunctionName
+	GracefulStopFunctionName  = model.ModuleGracefulStopFunctionName
+	ImmediateStopFunctionName = model.ModuleImmediateStopFunctionName
 )
 
 // ListenerMethodFor returns the listener method name that the given lifecycle

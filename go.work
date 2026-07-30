@@ -4,6 +4,7 @@ use (
 	.
 	./ast
 	./bir
+	./birgen
 	./cli
 	./common
 	./compiler-tools/benchmark
@@ -30,6 +31,8 @@ replace github.com/ballerina-nutcracker/ballerina v0.6.0 => ./
 replace github.com/ballerina-nutcracker/ballerina/ast v0.6.0 => ./ast
 
 replace github.com/ballerina-nutcracker/ballerina/bir v0.6.0 => ./bir
+
+replace github.com/ballerina-nutcracker/ballerina/birgen v0.6.0 => ./birgen
 
 replace github.com/ballerina-nutcracker/ballerina/cli v0.6.0 => ./cli
 

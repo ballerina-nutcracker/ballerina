@@ -24,7 +24,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
-	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -112,11 +111,11 @@ func rebindLifecycleFunctions(pkg *bir.BIRPackage) {
 	for i := range pkg.Functions {
 		fn := &pkg.Functions[i]
 		switch fn.Name.Value() {
-		case desugar.StartFunctionName:
+		case model.ModuleStartFunctionName:
 			pkg.StartFunction = fn
-		case desugar.GracefulStopFunctionName:
+		case model.ModuleGracefulStopFunctionName:
 			pkg.GracefulStopFunction = fn
-		case desugar.ImmediateStopFunctionName:
+		case model.ModuleImmediateStopFunctionName:
 			pkg.ImmediateStopFunction = fn
 		}
 	}

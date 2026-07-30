@@ -26,6 +26,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
+	"github.com/ballerina-nutcracker/ballerina/birgen"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -652,7 +653,7 @@ func compileSingleFileModule(
 	semantics.AnalyzeCFG(cx, pkg, cfg)
 	assertNoDiagnostics(t, cx, "AnalyzeCFG")
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
-	return exported, bir.GenBir(cx, pkg)
+	return exported, birgen.GenBir(cx, pkg)
 }
 
 func assertNoDiagnostics(t *testing.T, cx *context.CompilerContext, stage string) {

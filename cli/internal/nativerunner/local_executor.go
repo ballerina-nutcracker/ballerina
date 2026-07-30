@@ -386,7 +386,7 @@ func writeNativeFiles(dir string, payload nativeexec.NativePayload) error {
 const interpreterModuleVersion = "v0.6.0"
 
 var interpreterModuleDirs = []string{
-	"", "ast", "bir", "cli", "common", "context", "decimal", "desugar", "lib",
+	"", "ast", "bir", "birgen", "cli", "common", "context", "decimal", "desugar", "lib",
 	"model", "node-builder", "parser", "platform", "projects", "runtime", "semantics", "semtypes",
 	"st", "tools", "values",
 }
