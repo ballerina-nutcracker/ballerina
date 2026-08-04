@@ -25,14 +25,14 @@ import (
 // Ported from TypeTestUtils.java:tuple()
 func testTuple(env Env, members ...SemType) SemType {
 	ld := NewListDefinition()
-	return ld.TupleTypeWrapped(env, members...)
+	return ld.Define(env, members)
 }
 
 // testRoTuple creates a read-only tuple type from the given members
 // Ported from TypeTestUtils.java:roTuple()
 func testRoTuple(env Env, members ...SemType) SemType {
 	ld := NewListDefinition()
-	return ld.TupleTypeWrappedRo(env, members...)
+	return ld.Define(env, members, ListMutability(CellMutabilityNone))
 }
 
 // assertEqual asserts that two values are equal

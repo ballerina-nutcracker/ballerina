@@ -57,7 +57,7 @@ func CreateStreamImplementorType(cx Context, valueTy, completionTy SemType) SemT
 	}
 	env := cx.Env()
 	nextRecordDefn := NewMappingDefinition()
-	nextRecord := nextRecordDefn.DefineMappingTypeWrapped(env,
+	nextRecord := nextRecordDefn.Define(env,
 		[]Field{FieldFrom("value", valueTy, false, false)}, Never)
 	nextReturn := Union(nextRecord, completionTy)
 	closeReturn := Union(completionTy, Nil)
@@ -82,7 +82,7 @@ func CreateStreamImplementorType(cx Context, valueTy, completionTy SemType) SemT
 
 func streamMethodFunctionType(env Env, returnTy SemType) SemType {
 	paramListDefn := NewListDefinition()
-	paramList := paramListDefn.DefineListTypeWrapped(env, nil, 0, Never, CellMutabilityNone)
+	paramList := paramListDefn.Define(env, nil, ListMutability(CellMutabilityNone))
 	fnDefn := NewFunctionDefinition()
 	return fnDefn.Define(env, paramList, returnTy, FunctionQualifiersFrom(env, true, false))
 }

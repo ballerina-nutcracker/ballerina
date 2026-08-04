@@ -135,11 +135,7 @@ func (oq *ObjectQualifiers) Field(env Env) cellField {
 		isolatedField = Field{name: "isolated", typeOf: Boolean, readonly: true, optional: false}
 	}
 	networkField := oq.networkQualifier.field()
-	ty := md.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(
-		env,
-		[]Field{isolatedField, networkField},
-		Never,
-		CellMutabilityNone,
-	)
+	ty := md.Define(env, []Field{isolatedField, networkField}, Never,
+		MappingMutability(CellMutabilityNone))
 	return cellFieldFrom("$qualifiers", cellContaining(env, ty))
 }

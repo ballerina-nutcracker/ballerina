@@ -877,12 +877,14 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 		elementType := restParam.GetDeterminedType()
 		restTy = elementType
 		listDefn := semtypes.NewListDefinition()
-		restParamListTy := listDefn.DefineListTypeWrapped(t.typeEnv(), []semtypes.SemType{}, 0, elementType, semtypes.CellMutabilityNone)
+		restParamListTy := listDefn.Define(t.typeEnv(), nil, semtypes.ListRest(elementType),
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
 		restParam.SetDeterminedType(restParamListTy)
 		updateSymbolType(t, restParam, restParamListTy)
 	}
 	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.DefineListTypeWrapped(t.typeEnv(), paramTypes, len(paramTypes), restTy, semtypes.CellMutabilityNone)
+	paramListTy := paramListDefn.Define(t.typeEnv(), paramTypes, semtypes.ListRest(restTy),
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	var returnTy semtypes.SemType
 	if retTd := fn.GetReturnTypeDescriptor(); retTd != nil {
 		var ok bool
@@ -1076,7 +1078,7 @@ func annotationMapType(t typeResolver) semtypes.SemType {
 
 func annotationMapListType(t typeResolver) semtypes.SemType {
 	ld := semtypes.NewListDefinition()
-	return ld.DefineListTypeWrappedWithEnvSemType(t.typeEnv(), annotationMapType(t))
+	return ld.Define(t.typeEnv(), nil, semtypes.ListRest(annotationMapType(t)))
 }
 
 func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotation) bool {
@@ -1979,7 +1981,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		arityTypes[i] = semtypes.Val
 	}
 	arityDef := semtypes.NewListDefinition()
-	arityTy := arityDef.DefineListTypeWrapped(t.typeEnv(), arityTypes, len(arityTypes), semtypes.Never, semtypes.CellMutabilityNone)
+	arityTy := arityDef.Define(t.typeEnv(), arityTypes, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	if semtypes.IsEmpty(cx, semtypes.Intersect(paramListTy, arityTy)) {
 		t.semanticError("anonymous function parameters are incompatible with the expected function type", e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -2000,7 +2002,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	}
 
 	argListDef := semtypes.NewListDefinition()
-	argListTy := argListDef.DefineListTypeWrapped(t.typeEnv(), paramTypes, len(paramTypes), semtypes.Never, semtypes.CellMutabilityNone)
+	argListTy := argListDef.Define(t.typeEnv(), paramTypes, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	expectedReturnTy := semtypes.FunctionReturnType(cx, functionContext, argListTy)
 	if semtypes.IsZero(expectedReturnTy) {
 		t.semanticError("anonymous function parameters are incompatible with the expected function type", e.GetPosition())
@@ -2709,7 +2711,8 @@ func initDirectMember(t typeResolver, initFn *ast.BLangFunction) (directMember, 
 		}, true
 	}
 	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.DefineListTypeWrapped(t.typeEnv(), nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
+	paramListTy := paramListDefn.Define(t.typeEnv(), nil,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	functionDefn := semtypes.NewFunctionDefinition()
 	initFnType := functionDefn.Define(t.typeEnv(), paramListTy, semtypes.Nil,
 		semtypes.FunctionQualifiersFrom(t.typeEnv(), false, false))
@@ -3238,7 +3241,8 @@ func serviceAttachPointType(t typeResolver, svc *ast.BLangService) semtypes.SemT
 		segmentTypes[i] = semtypes.StringConst(svc.AbsoluteResourcePath[i].Value)
 	}
 	listDefn := semtypes.NewListDefinition()
-	return listDefn.DefineListTypeWrapped(t.typeEnv(), segmentTypes, len(segmentTypes), semtypes.Never, semtypes.CellMutabilityNone)
+	return listDefn.Define(t.typeEnv(), segmentTypes,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 }
 
 func resolveSimpleVariable(t typeResolver, chain *binding, node *ast.BLangVariable) bool {
@@ -3705,7 +3709,8 @@ func determineObjectType(t typeResolver, expr *ast.BLangNewExpression, argTys []
 	for _, alt := range alts {
 		altArgTys, _ := padNewExprArgTypesForDefaults(t, alt.Type(), argTys, expr.GetPosition())
 		argLd := semtypes.NewListDefinition()
-		altArgListTy := argLd.DefineListTypeWrapped(cx.Env(), altArgTys, len(altArgTys), semtypes.Never, semtypes.CellMutabilityNone)
+		altArgListTy := argLd.Define(cx.Env(), altArgTys,
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
 		paramListTy := semtypes.FunctionParamListType(cx, alt.InitFunctionType())
 		if semtypes.IsSubtype(cx, altArgListTy, paramListTy) {
 			retTy := semtypes.FunctionReturnType(cx, alt.InitFunctionType(), altArgListTy)
@@ -3835,7 +3840,7 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 		fields[i] = semtypes.FieldFrom(keyName, broadTy, false, false)
 	}
 	md := semtypes.NewMappingDefinition()
-	mapTy := md.DefineMappingTypeWrapped(t.typeEnv(), fields, semtypes.Never)
+	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
 	setExpectedType(e, mapTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	e.AtomicType = *mat
@@ -4084,7 +4089,7 @@ func resolveQueryExpr(
 		switch expr.QueryConstructType {
 		case ast.TypeKindNone:
 			ld := semtypes.NewListDefinition()
-			queryTy = ld.DefineListTypeWrappedWithEnvSemType(t.typeEnv(), selectTy)
+			queryTy = ld.Define(t.typeEnv(), nil, semtypes.ListRest(selectTy))
 		case ast.TypeKindMap:
 			expectedSelectTy := common.MapQuerySelectExpectedType(t.typeEnv())
 			if !semtypes.IsSubtype(t.typeContext(), selectTy, expectedSelectTy) {
@@ -4096,7 +4101,7 @@ func resolveQueryExpr(
 			}
 			valueTy := semtypes.ListMemberTypeInnerVal(t.typeContext(), selectTy, semtypes.IntConst(1))
 			md := semtypes.NewMappingDefinition()
-			queryTy = md.DefineMappingTypeWrapped(t.typeEnv(), nil, valueTy)
+			queryTy = md.Define(t.typeEnv(), nil, valueTy)
 		default:
 			t.unimplemented("query construct type is not supported yet", expr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
@@ -4193,7 +4198,8 @@ func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpr
 			return semtypes.SemType{}, false
 		}
 		ld := semtypes.NewListDefinition()
-		emptyListTy := ld.DefineListTypeWrapped(t.typeEnv(), nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
+		emptyListTy := ld.Define(t.typeEnv(), nil,
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
 		iteratorFnTy := semtypes.ObjectMemberType(ctx, semtypes.StringConst("iterator"), collectionTy)
 		if semtypes.IsZero(iteratorFnTy) || !semtypes.IsSubtype(ctx, iteratorFnTy, semtypes.Function) {
 			t.semanticError("foreach collection is not iterable", collection.GetPosition())
@@ -4284,9 +4290,9 @@ func queryAggregatedListType(env semtypes.Env, elemTy semtypes.SemType, nonEmpty
 	}
 	ld := semtypes.NewListDefinition()
 	if nonEmpty {
-		return ld.DefineListTypeWrapped(env, []semtypes.SemType{elemTy}, 1, elemTy, semtypes.CellMutabilityLimited)
+		return ld.Define(env, []semtypes.SemType{elemTy}, semtypes.ListRest(elemTy))
 	}
-	return ld.DefineListTypeWrappedWithEnvSemType(env, elemTy)
+	return ld.Define(env, nil, semtypes.ListRest(elemTy))
 }
 
 func aggregateQueryVariable(t typeResolver, chain *binding, variable queryVariableInfo, nonEmpty bool) *binding {
@@ -4624,7 +4630,7 @@ func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLang
 	setListConstructorSpreadMembers(expr, spreadMembers)
 
 	ld := semtypes.NewListDefinition()
-	listTy := ld.DefineListTypeWrapped(t.typeEnv(), memberTypes, len(memberTypes), restTy, semtypes.CellMutabilityLimited)
+	listTy := ld.Define(t.typeEnv(), memberTypes, semtypes.ListRest(restTy))
 
 	setExpectedType(expr, listTy)
 	lat := semtypes.ToListAtomicType(t.typeEnv(), listTy)
@@ -5457,7 +5463,7 @@ func createIteratorType(env semtypes.Env, t, c semtypes.SemType) semtypes.SemTyp
 	resultTy := semtypes.Union(recordTy, c)
 
 	ld := semtypes.NewListDefinition()
-	listTy := ld.DefineListTypeWrapped(env, []semtypes.SemType{}, 0, semtypes.Never, semtypes.CellMutabilityNone)
+	listTy := ld.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	fd := semtypes.NewFunctionDefinition()
 	fnTy := fd.Define(env, listTy, resultTy, semtypes.FunctionQualifiersFrom(env, false, false))
 
@@ -5475,7 +5481,7 @@ func createIteratorType(env semtypes.Env, t, c semtypes.SemType) semtypes.SemTyp
 
 func createClosedRecordType(env semtypes.Env, fields []semtypes.Field, rest semtypes.SemType) semtypes.SemType {
 	md := semtypes.NewMappingDefinition()
-	return md.DefineMappingTypeWrapped(env, fields, rest)
+	return md.Define(env, fields, rest)
 }
 
 func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangIndexBasedAccess) (semtypes.SemType, expressionEffect, bool) {
@@ -5740,7 +5746,7 @@ func resolveStreamOperation(t typeResolver, chain *binding, expr *ast.BLangInvoc
 	switch methodSymbol.MethodName() {
 	case "next":
 		nextRecordDefn := semtypes.NewMappingDefinition()
-		nextRecord := nextRecordDefn.DefineMappingTypeWrapped(t.typeEnv(),
+		nextRecord := nextRecordDefn.Define(t.typeEnv(),
 			[]semtypes.Field{semtypes.FieldFrom("value", valueTy, false, false)},
 			semtypes.Never)
 		resultTy = semtypes.Union(nextRecord, completionTy)
@@ -5788,7 +5794,8 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 		argTys[i] = argTy
 	}
 	argLd := semtypes.NewListDefinition()
-	argListTy := argLd.DefineListTypeWrapped(t.typeEnv(), argTys, len(argTys), semtypes.Never, semtypes.CellMutabilityNone)
+	argListTy := argLd.Define(t.typeEnv(), argTys,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	retTy := semtypes.FunctionReturnType(t.typeContext(), fnTy, argListTy)
 	sig := model.FunctionSignature{ParamTypes: argTys, ReturnType: retTy}
 	symbolRef := t.createFunctionSymbol(methodSymbol.SymbolSpace(), methodName, sig, fnTy)
@@ -5847,7 +5854,8 @@ func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, de
 			symbolTy := paramTy
 			if seg.Kind == ast.ResourcePathSegmentParamRest {
 				restListDefn := semtypes.NewListDefinition()
-				symbolTy = restListDefn.DefineListTypeWrapped(t.typeEnv(), []semtypes.SemType{}, 0, paramTy, semtypes.CellMutabilityNone)
+				symbolTy = restListDefn.Define(t.typeEnv(), nil, semtypes.ListRest(paramTy),
+					semtypes.ListMutability(semtypes.CellMutabilityNone))
 			}
 			if seg.Name != "" {
 				ref, ok := method.Scope().GetSymbol(seg.Name)
@@ -5866,7 +5874,8 @@ func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, de
 		}
 	}
 	listDefn := semtypes.NewListDefinition()
-	pathTy := listDefn.DefineListTypeWrapped(t.typeEnv(), members, len(members), restMember, semtypes.CellMutabilityNone)
+	pathTy := listDefn.Define(t.typeEnv(), members, semtypes.ListRest(restMember),
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	return pathTy, paramRefs, true
 }
 
@@ -5939,7 +5948,8 @@ func resolveResourceAccessPathType(t typeResolver, chain *binding, expr *ast.BLa
 		}
 	}
 	listDefn := semtypes.NewListDefinition()
-	pathTy := listDefn.DefineListTypeWrapped(t.typeEnv(), members, len(members), semtypes.Never, semtypes.CellMutabilityNone)
+	pathTy := listDefn.Define(t.typeEnv(), members,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	return pathTy, len(members), true
 }
 
@@ -6439,7 +6449,8 @@ func resolveFunctionCall(t typeResolver, chain *binding, inv invocable, symbolRe
 	}
 
 	argLd := semtypes.NewListDefinition()
-	argListTy := argLd.DefineListTypeWrapped(t.typeEnv(), argTys, len(argTys), semtypes.Never, semtypes.CellMutabilityNone)
+	argListTy := argLd.Define(t.typeEnv(), argTys,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 
 	retTy := semtypes.FunctionReturnType(t.typeContext(), t.symbolType(symbolRef), argListTy)
 	if semtypes.IsZero(retTy) {
@@ -6476,7 +6487,8 @@ func methodMemberType(t typeResolver, methodRef model.SymbolRef) semtypes.SemTyp
 
 func typeFromFunctionSignature(t typeResolver, sig model.FunctionSignature) semtypes.SemType {
 	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.DefineListTypeWrapped(t.typeEnv(), sig.ParamTypes, len(sig.ParamTypes), sig.RestParamType, semtypes.CellMutabilityNone)
+	paramListTy := paramListDefn.Define(t.typeEnv(), sig.ParamTypes, semtypes.ListRest(sig.RestParamType),
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	fnDefn := semtypes.NewFunctionDefinition()
 	return fnDefn.Define(t.typeEnv(), paramListTy, sig.ReturnType,
 		semtypes.FunctionQualifiersFrom(t.typeEnv(), sig.IsIsolated(), sig.IsTransactional()))
@@ -6591,13 +6603,13 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			for i := len(ty.Sizes); i > 0; i-- {
 				lenExp := ty.Sizes[i-1]
 				if lenExp == nil {
-					elemTy = d.DefineListTypeWrappedWithEnvSemType(t.typeEnv(), elemTy)
+					elemTy = d.Define(t.typeEnv(), nil, semtypes.ListRest(elemTy))
 				} else {
 					length, ok := resolveFixedArraySize(t, lenExp)
 					if !ok {
 						return semtypes.SemType{}, false
 					}
-					elemTy = d.DefineListTypeWrappedWithEnvSemTypesInt(t.typeEnv(), []semtypes.SemType{elemTy}, length)
+					elemTy = d.Define(t.typeEnv(), []semtypes.SemType{elemTy}, semtypes.ListFixedLength(length))
 				}
 			}
 			semTy = elemTy
@@ -6678,7 +6690,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				if !ok {
 					return semtypes.SemType{}, false
 				}
-				semType := d.DefineMappingTypeWrapped(t.typeEnv(), nil, rest)
+				semType := d.Define(t.typeEnv(), nil, rest)
 				mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
 				t.setMappingAtomBType(mat, ty)
 				return semType, true
@@ -6768,7 +6780,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 					return semtypes.SemType{}, false
 				}
 			}
-			return d.DefineListTypeWrappedWithEnvSemTypesSemType(t.typeEnv(), members, rest), true
+			return d.Define(t.typeEnv(), members, semtypes.ListRest(rest)), true
 		}
 		return defn.GetSemType(t.typeEnv()), true
 	case *ast.BLangRecordType:
@@ -6851,7 +6863,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		} else {
 			rest = semtypes.Never
 		}
-		semType := d.DefineMappingTypeWrapped(t.typeEnv(), fields, rest)
+		semType := d.Define(t.typeEnv(), fields, rest)
 		mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
 		t.setMappingAtomBType(mat, ty)
 		return semType, true
@@ -6886,7 +6898,8 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			ty.RestParam.SetDeterminedType(restParamTy)
 		}
 		paramListDefn := semtypes.NewListDefinition()
-		paramListTy := paramListDefn.DefineListTypeWrapped(t.typeEnv(), paramTypes, len(paramTypes), restTy, semtypes.CellMutabilityNone)
+		paramListTy := paramListDefn.Define(t.typeEnv(), paramTypes, semtypes.ListRest(restTy),
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
 		var returnTy semtypes.SemType
 		if ty.ReturnTypeDescriptor != nil {
 			var ok bool
@@ -7560,7 +7573,8 @@ func monomorphizeArrayMap(t typeResolver, sym *model.OpaqueFunctionSymbol, polym
 	}
 	chain = effect.ifTrue
 	callbackArgsDef := semtypes.NewListDefinition()
-	callbackArgsTy := callbackArgsDef.DefineListTypeWrapped(t.typeEnv(), []semtypes.SemType{memberTy}, 1, semtypes.Never, semtypes.CellMutabilityNone)
+	callbackArgsTy := callbackArgsDef.Define(t.typeEnv(), []semtypes.SemType{memberTy},
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	var resultMemberTy semtypes.SemType
 	if semtypes.IsNever(memberTy) {
 		resultMemberTy = semtypes.FunctionReturnType(cx, callbackTy, semtypes.FunctionParamListType(cx, callbackTy))
@@ -7584,7 +7598,7 @@ func monomorphizeArrayMap(t typeResolver, sym *model.OpaqueFunctionSymbol, polym
 		}
 	}
 	resultDef := semtypes.NewListDefinition()
-	resultTy := resultDef.DefineListTypeWrappedWithEnvSemType(t.typeEnv(), resultMemberTy)
+	resultTy := resultDef.Define(t.typeEnv(), nil, semtypes.ListRest(resultMemberTy))
 	sig := model.FunctionSignature{
 		ParamTypes:    []semtypes.SemType{containerTy, callbackParamTy},
 		ParamNames:    paramNames,
@@ -7630,12 +7644,12 @@ func createXMLIteratorType(t typeResolver, itemTy semtypes.SemType) semtypes.Sem
 	env := t.typeEnv()
 	return t.xmlIteratorTypeCache().GetOrBuild(itemTy, func() semtypes.SemType {
 		recordDef := semtypes.NewMappingDefinition()
-		recordTy := recordDef.DefineMappingTypeWrapped(env,
+		recordTy := recordDef.Define(env,
 			[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},
 			semtypes.Never)
 		nextReturnTy := semtypes.Union(recordTy, semtypes.Nil)
 		ld := semtypes.NewListDefinition()
-		emptyParams := ld.DefineListTypeWrapped(env, nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
+		emptyParams := ld.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 		fd := semtypes.NewFunctionDefinition()
 		nextFnTy := fd.Define(env, emptyParams, nextReturnTy, semtypes.FunctionQualifiersFrom(env, true, false))
 		iterOd := semtypes.NewObjectDefinition()

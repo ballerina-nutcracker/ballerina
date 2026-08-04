@@ -63,7 +63,7 @@ func xmlIteratorNext(ctx *extern.Context, args []values.BalValue) (values.BalVal
 
 func xmlIteratorNextRecordType(env semtypes.Env) semtypes.SemType {
 	def := semtypes.NewMappingDefinition()
-	return def.DefineMappingTypeWrapped(env,
+	return def.Define(env,
 		[]semtypes.Field{semtypes.FieldFrom("value", semtypes.XML, false, false)},
 		semtypes.Never)
 }

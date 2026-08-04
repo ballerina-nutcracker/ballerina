@@ -22,7 +22,7 @@ func TypedescContaining(env Env, constraint SemType) SemType {
 	}
 
 	mappingDef := NewMappingDefinition()
-	mappingType := mappingDef.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env, nil, constraint, CellMutabilityNone)
+	mappingType := mappingDef.Define(env, nil, constraint, MappingMutability(CellMutabilityNone))
 	bdd := subtypeDataAt(mappingType, btMapping).(bdd)
 	return createBasicSemType(btTypeDesc, bdd)
 }

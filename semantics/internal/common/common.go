@@ -109,7 +109,7 @@ func mapQuerySelectExpectedTypeFromQueryExpectedType(ctx semtypes.Context, env s
 
 func mapQuerySelectExpectedTypeWithValue(env semtypes.Env, valueTy semtypes.SemType) semtypes.SemType {
 	ld := semtypes.NewListDefinition()
-	return ld.DefineListTypeWrapped(env, []semtypes.SemType{semtypes.String, valueTy}, 2, semtypes.Never, semtypes.CellMutabilityLimited)
+	return ld.Define(env, []semtypes.SemType{semtypes.String, valueTy})
 }
 
 func MappingKeyName(key *ast.BLangMappingKey) string {

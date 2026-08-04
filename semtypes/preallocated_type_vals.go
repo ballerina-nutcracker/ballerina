@@ -69,8 +69,8 @@ func buildJSON(env Env) SemType {
 	listDef := &ListDefinition{}
 	mapDef := &MappingDefinition{}
 	j := Union(SimpleOrString, Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
-	listDef.DefineListTypeWrappedWithEnvSemType(env, j)
-	mapDef.DefineMappingTypeWrapped(env, nil, j)
+	listDef.Define(env, nil, ListRest(j))
+	mapDef.Define(env, nil, j)
 	return j
 }
 
@@ -80,8 +80,8 @@ func buildAnydata(env Env) SemType {
 	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
 	ad := Union(Union(SimpleOrString, Union(XML, Union(Regexp, tableTy))),
 		Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
-	listDef.DefineListTypeWrappedWithEnvSemType(env, ad)
-	mapDef.DefineMappingTypeWrapped(env, nil, ad)
+	listDef.Define(env, nil, ListRest(ad))
+	mapDef.Define(env, nil, ad)
 	return ad
 }
 

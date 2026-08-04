@@ -23,7 +23,7 @@ import (
 
 func defineRuntimeList(env Env, member SemType) SemType {
 	ld := NewListDefinition()
-	return ld.DefineListTypeWrappedWithEnvSemType(env, member)
+	return ld.Define(env, nil, ListRest(member))
 }
 
 func TestFreezeRoutesNewAtomsToEphemeralStore(t *testing.T) {

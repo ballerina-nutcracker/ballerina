@@ -191,7 +191,8 @@ func buildResourceCallArgs(ctx *extern.Context, receiver *values.Object, match *
 		restVals := pathVals[k:]
 		// FIXME: https://github.com/ballerina-nutcracker/ballerina/issues/471
 		listDefn := semtypes.NewListDefinition()
-		restListTy := listDefn.DefineListTypeWrapped(ctx.TypeEnv(), []semtypes.SemType{}, 0, match.RestSegmentTy, semtypes.CellMutabilityNone)
+		restListTy := listDefn.Define(ctx.TypeEnv(), nil, semtypes.ListRest(match.RestSegmentTy),
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
 		atomic := semtypes.ToListAtomicType(ctx.TypeEnv(), restListTy)
 		if atomic == nil {
 			panic("rest segment type has no list atomic representation")

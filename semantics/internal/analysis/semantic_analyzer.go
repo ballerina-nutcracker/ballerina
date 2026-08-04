@@ -1283,7 +1283,8 @@ func validateStreamCloseMethod[A analyzer](a A, impl ast.BLangExpression, comple
 	}
 	closeFnTy := semtypes.ObjectMemberType(cx, closeName, implTy)
 	paramListDefn := semtypes.NewListDefinition()
-	emptyParamList := paramListDefn.DefineListTypeWrapped(cx.Env(), nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
+	emptyParamList := paramListDefn.Define(cx.Env(), nil,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	returnTy := semtypes.FunctionReturnType(cx, closeFnTy, emptyParamList)
 	expectedReturnTy := semtypes.Union(completionTy, semtypes.Nil)
 	if semtypes.IsZero(returnTy) || !semtypes.IsSubtype(cx, returnTy, expectedReturnTy) {
@@ -1427,7 +1428,7 @@ func analyzeListConstructorExpr[A analyzer](a A, expr *ast.BLangListConstructorE
 
 func listOfMemberType(env semtypes.Env, memberTy semtypes.SemType) semtypes.SemType {
 	ld := semtypes.NewListDefinition()
-	return ld.DefineListTypeWrappedWithEnvSemType(env, memberTy)
+	return ld.Define(env, nil, semtypes.ListRest(memberTy))
 }
 
 func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) bool {
@@ -1516,7 +1517,7 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 	}
 
 	providedDetailDef := semtypes.NewMappingDefinition()
-	providedDetailTy := providedDetailDef.DefineMappingTypeWrapped(tyCtx.Env(), providedFields, semtypes.Never)
+	providedDetailTy := providedDetailDef.Define(tyCtx.Env(), providedFields, semtypes.Never)
 	providedDetailTy = semtypes.Intersect(providedDetailTy, semtypes.ValReadonly)
 	if !semtypes.IsSubtype(tyCtx, providedDetailTy, detailTy) {
 		a.semanticErr("error detail arguments are incompatible with error detail type", expr.GetPosition())
@@ -2064,7 +2065,8 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			// Extract value type from the iterator's next() return type
 			iteratorMethodTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("iterator"), collectionType)
 			ld := semtypes.NewListDefinition()
-			emptyArgs := ld.DefineListTypeWrapped(a.tyCtx().Env(), []semtypes.SemType{}, 0, semtypes.Never, semtypes.CellMutabilityNone)
+			emptyArgs := ld.Define(a.tyCtx().Env(), nil,
+				semtypes.ListMutability(semtypes.CellMutabilityNone))
 			iteratorTy := semtypes.FunctionReturnType(tyCtx, iteratorMethodTy, emptyArgs)
 			nextMethodTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("next"), iteratorTy)
 			nextReturnTy := semtypes.FunctionReturnType(tyCtx, nextMethodTy, emptyArgs)

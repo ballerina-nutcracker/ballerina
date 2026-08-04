@@ -44,5 +44,5 @@ func createSemType(env Env, isolated bool, transactional bool) SemType {
 	} else {
 		transactionalType = BooleanConst(false)
 	}
-	return ld.DefineListTypeWrappedWithEnvSemTypesInt(env, []SemType{isolatedType, transactionalType}, 2)
+	return ld.Define(env, []SemType{isolatedType, transactionalType})
 }

@@ -861,12 +861,12 @@ func (ctx *packageContext) xmlIteratorType(itemTy semtypes.SemType) semtypes.Sem
 
 func buildXMLIteratorType(env semtypes.Env, itemTy semtypes.SemType) semtypes.SemType {
 	recordDef := semtypes.NewMappingDefinition()
-	recordTy := recordDef.DefineMappingTypeWrapped(env,
+	recordTy := recordDef.Define(env,
 		[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},
 		semtypes.Never)
 	nextReturnTy := semtypes.Union(recordTy, semtypes.Nil)
 	ld := semtypes.NewListDefinition()
-	emptyParams := ld.DefineListTypeWrapped(env, nil, 0, semtypes.Never, semtypes.CellMutabilityNone)
+	emptyParams := ld.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	fd := semtypes.NewFunctionDefinition()
 	nextFnTy := fd.Define(env, emptyParams, nextReturnTy, semtypes.FunctionQualifiersFrom(env, true, false))
 	iterOd := semtypes.NewObjectDefinition()
@@ -888,7 +888,7 @@ func createMethodInvocation(cx *functionContext, receiver ast.BLangExpression, m
 		argTys[i] = arg.GetDeterminedType()
 	}
 	ld := semtypes.NewListDefinition()
-	paramList := ld.DefineListTypeWrapped(cx.typeEnv(), argTys, len(argTys), semtypes.Never, semtypes.CellMutabilityNone)
+	paramList := ld.Define(cx.typeEnv(), argTys, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
 	_, fnSymRef := cx.addDesugardSymbol(fnTy, model.SymbolKindFunction, false, pos)

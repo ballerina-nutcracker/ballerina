@@ -25,6 +25,18 @@ type MappingDefinition struct {
 	semType SemType
 }
 
+type mappingDefinitionOptions struct {
+	mutability CellMutability
+}
+
+type MappingDefinitionOption func(*mappingDefinitionOptions)
+
+func MappingMutability(mutability CellMutability) MappingDefinitionOption {
+	return func(options *mappingDefinitionOptions) {
+		options.mutability = mutability
+	}
+}
+
 var _ Definition = &MappingDefinition{}
 
 func fieldName(f cellField) string {
@@ -54,7 +66,34 @@ func (m *MappingDefinition) SetSemTypeToNever() {
 	m.semType = Never
 }
 
-func (m *MappingDefinition) Define(env Env, fields []cellField, rest SemType) SemType {
+func (m *MappingDefinition) Define(env Env, fields []Field, rest SemType, options ...MappingDefinitionOption) SemType {
+	opts := mappingDefinitionOptions{mutability: CellMutabilityLimited}
+	for _, option := range options {
+		option(&opts)
+	}
+
+	cellFields := make([]cellField, 0, len(fields))
+	for _, field := range fields {
+		ty := field.typeOf
+		if field.optional {
+			ty = Union(ty, Undef)
+		}
+		mutability := opts.mutability
+		if field.readonly {
+			mutability = CellMutabilityNone
+		}
+		cellFields = append(cellFields, cellFieldFrom(field.name,
+			cellContainingWithEnvSemTypeCellMutability(env, ty, mutability)))
+	}
+	restMutability := opts.mutability
+	if IsNever(rest) {
+		restMutability = CellMutabilityNone
+	}
+	restCell := cellContainingWithEnvSemTypeCellMutability(env, Union(rest, Undef), restMutability)
+	return m.defineFromCells(env, cellFields, restCell)
+}
+
+func (m *MappingDefinition) defineFromCells(env Env, fields []cellField, rest SemType) SemType {
 	sfh := m.splitFields(fields)
 	atomicType := mappingAtomicTypeFrom(sfh.Names, sfh.Types, rest)
 	var a atom
@@ -66,38 +105,6 @@ func (m *MappingDefinition) Define(env Env, fields []cellField, rest SemType) Se
 		a = env.mappingAtom(&atomicType)
 	}
 	return m.createSemType(env, a)
-}
-
-func (m *MappingDefinition) DefineMappingTypeWrapped(env Env, fields []Field, rest SemType) SemType {
-	return m.DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env, fields, rest, CellMutabilityLimited)
-}
-
-func (m *MappingDefinition) DefineMappingTypeWrappedWithEnvFieldsSemTypeCellMutability(env Env, fields []Field, rest SemType, mut CellMutability) SemType {
-	var cellFields []cellField
-	for _, field := range fields {
-		ty := field.typeOf
-		var optTy SemType
-		if field.optional {
-			optTy = Union(ty, Undef)
-		} else {
-			optTy = ty
-		}
-		var ro CellMutability
-		if field.readonly {
-			ro = CellMutabilityNone
-		} else {
-			ro = mut
-		}
-		cellFields = append(cellFields, cellFieldFrom(field.name, cellContainingWithEnvSemTypeCellMutability(env, optTy, ro)))
-	}
-	var restMut CellMutability
-	if IsNever(rest) {
-		restMut = CellMutabilityNone
-	} else {
-		restMut = mut
-	}
-	restCell := cellContainingWithEnvSemTypeCellMutability(env, Union(rest, Undef), restMut)
-	return m.Define(env, cellFields, restCell)
 }
 
 func (m *MappingDefinition) createSemType(env Env, atom atom) SemType {

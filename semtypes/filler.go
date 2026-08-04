@@ -148,7 +148,7 @@ func objectFiller(cx Context, t SemType) (Filler, bool) {
 
 func initFnFillerCompatible(cx Context, initFnTy SemType) bool {
 	ld := NewListDefinition()
-	emptyArgList := ld.TupleTypeWrapped(cx.Env())
+	emptyArgList := ld.Define(cx.Env(), nil)
 	paramListTy := FunctionParamListType(cx, initFnTy)
 	if IsZero(paramListTy) || !IsSubtype(cx, emptyArgList, paramListTy) {
 		return false

@@ -785,9 +785,9 @@ func queryListValueType(env semtypes.Env, elemTy semtypes.SemType, nonEmpty bool
 	}
 	ld := semtypes.NewListDefinition()
 	if nonEmpty {
-		return ld.DefineListTypeWrapped(env, []semtypes.SemType{elemTy}, 1, elemTy, semtypes.CellMutabilityLimited)
+		return ld.Define(env, []semtypes.SemType{elemTy}, semtypes.ListRest(elemTy))
 	}
-	return ld.DefineListTypeWrappedWithEnvSemType(env, elemTy)
+	return ld.Define(env, nil, semtypes.ListRest(elemTy))
 }
 
 func applyQueryLimitClauseToRows(

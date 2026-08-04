@@ -31,7 +31,8 @@ func FunctionSignatureToSemType(env semtypes.Env, fs *model.FunctionSignature) s
 
 	// Build the parameter list type
 	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.DefineListTypeWrapped(env, fs.ParamTypes, len(fs.ParamTypes), restTy, semtypes.CellMutabilityNone)
+	paramListTy := paramListDefn.Define(env, fs.ParamTypes, semtypes.ListRest(restTy),
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 
 	// Build the function type
 	functionDefn := semtypes.NewFunctionDefinition()

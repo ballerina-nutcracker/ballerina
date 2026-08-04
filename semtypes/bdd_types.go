@@ -411,7 +411,7 @@ func (dc *bddDeserializationContext) deserializeListAtom(atomIndex int32) atom {
 	rest := dc.resolvePoolType(entry.rest)
 	mut := CellMutability(entry.mut)
 
-	result := def.DefineListTypeWrapped(dc.env, initial, int(entry.fixedLength), rest, mut)
+	result := def.Define(dc.env, initial, ListFixedLength(int(entry.fixedLength)), ListRest(rest), ListMutability(mut))
 	atom := extractAtom(result)
 	dc.listAtoms[atomIndex] = atom
 	return atom
@@ -450,7 +450,7 @@ func (dc *bddDeserializationContext) deserializeMappingAtom(atomIndex int32) ato
 	restInner := dc.resolvePoolType(entry.rest)
 	restCell := cellContainingWithEnvSemTypeCellMutability(dc.env, restInner, CellMutability(entry.restMut))
 
-	result := def.Define(dc.env, cellFields, restCell)
+	result := def.defineFromCells(dc.env, cellFields, restCell)
 	atom := extractAtom(result)
 	dc.mappingAtoms[atomIndex] = atom
 	return atom

@@ -51,11 +51,11 @@ func tableContainingKeySpecifier(cx Context, tableConstraint SemType, fieldNames
 		fieldTypes[i] = MappingMemberTypeInnerVal(cx, tableConstraint, key)
 	}
 	listDef1 := NewListDefinition()
-	normalizedKs := listDef1.TupleTypeWrapped(cx.Env(), fieldNameSingletons...)
+	normalizedKs := listDef1.Define(cx.Env(), fieldNameSingletons)
 	var normalizedKc SemType
 	if len(fieldTypes) > 1 {
 		ld := NewListDefinition()
-		normalizedKc = ld.TupleTypeWrapped(cx.Env(), fieldTypes...)
+		normalizedKc = ld.Define(cx.Env(), fieldTypes)
 	} else {
 		normalizedKc = fieldTypes[0]
 	}
@@ -77,9 +77,9 @@ func tableContaining(env Env, tableConstraint SemType, normalizedKc SemType, nor
 		panic("assertion failed")
 	}
 	typeParamArrDef := NewListDefinition()
-	typeParamArray := typeParamArrDef.DefineListTypeWrappedWithEnvSemTypeCellMutability(env, tableConstraint, mut)
+	typeParamArray := typeParamArrDef.Define(env, nil, ListRest(tableConstraint), ListMutability(mut))
 	listDef := NewListDefinition()
-	tupleType := listDef.TupleTypeWrapped(env, typeParamArray, normalizedKc, normalizedKs)
+	tupleType := listDef.Define(env, []SemType{typeParamArray, normalizedKc, normalizedKs})
 	bdd := subtypeDataAt(tupleType, btList).(bdd)
 	return createBasicSemType(btTable, bdd)
 }

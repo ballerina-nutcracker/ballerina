@@ -59,10 +59,10 @@ func initFileIOModule(rt *runtime.Runtime) {
 	jmd := semtypes.NewMappingDefinition()
 	jld := semtypes.NewListDefinition()
 	types := fileIOTypes{
-		strArrTy:   sld.DefineListTypeWrappedWithEnvSemType(env, semtypes.String),
-		byteArrTy:  bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte),
-		jsonMapTy:  jmd.DefineMappingTypeWrapped(env, nil, jsonTy),
-		jsonListTy: jld.DefineListTypeWrappedWithEnvSemType(env, jsonTy),
+		strArrTy:   sld.Define(env, nil, semtypes.ListRest(semtypes.String)),
+		byteArrTy:  bld.Define(env, nil, semtypes.ListRest(semtypes.Byte)),
+		jsonMapTy:  jmd.Define(env, nil, jsonTy),
+		jsonListTy: jld.Define(env, nil, semtypes.ListRest(jsonTy)),
 	}
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileReadString",

@@ -50,7 +50,7 @@ func stringFromBytes(args []values.BalValue) (values.BalValue, error) {
 func initStringModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	ld := semtypes.NewListDefinition()
-	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte)
+	byteArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return stringLength(args)

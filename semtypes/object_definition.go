@@ -109,7 +109,8 @@ func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members 
 	var cellFields []cellField
 	cellFields = append(cellFields, memberStream...)
 	cellFields = append(cellFields, qualifierStream...)
-	mappingType := o.mappingDefinition.Define(env, cellFields, o.restMemberType(env, mut, qualifiers.readonly))
+	mappingType := o.mappingDefinition.defineFromCells(env, cellFields,
+		o.restMemberType(env, mut, qualifiers.readonly))
 	return o.objectContaining(mappingType)
 }
 
@@ -138,7 +139,7 @@ func (o *ObjectDefinition) restMemberType(env Env, mut CellMutability, immutable
 	} else {
 		fieldValueType = Val
 	}
-	fieldMemberType := fieldDefn.DefineMappingTypeWrapped(
+	fieldMemberType := fieldDefn.Define(
 		env,
 		[]Field{
 			FieldFrom("value", fieldValueType, immutable, false),
@@ -148,7 +149,7 @@ func (o *ObjectDefinition) restMemberType(env Env, mut CellMutability, immutable
 		Never)
 
 	methodDefn := NewMappingDefinition()
-	methodMemberType := methodDefn.DefineMappingTypeWrapped(
+	methodMemberType := methodDefn.Define(
 		env,
 		[]Field{
 			FieldFrom("value", Function, true, false),
@@ -167,7 +168,7 @@ func memberField(env Env, member *Member, mut CellMutability) cellField {
 	} else {
 		fieldMut = mut
 	}
-	semtype := md.DefineMappingTypeWrapped(
+	semtype := md.Define(
 		env,
 		[]Field{
 			FieldFrom("value", member.ValueType, member.Immutable, false),

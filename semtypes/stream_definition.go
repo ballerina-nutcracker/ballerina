@@ -44,6 +44,6 @@ func (s *StreamDefinition) Define(env Env, valueTy SemType, completionTy SemType
 	if sameSemType(Val, completionTy) && sameSemType(Val, valueTy) {
 		return Stream
 	}
-	tuple := s.listDefinition.TupleTypeWrapped(env, valueTy, completionTy)
+	tuple := s.listDefinition.Define(env, []SemType{valueTy, completionTy})
 	return streamContaining(tuple)
 }

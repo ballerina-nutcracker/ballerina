@@ -804,8 +804,8 @@ func CreateCloneable(context Context) SemType {
 	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
 	ad := Union(ValReadonly, Union(XML, Union(listDef.GetSemType(env), Union(tableTy,
 		mapDef.GetSemType(env)))))
-	listDef.DefineListTypeWrappedWithEnvSemType(env, ad)
-	mapDef.DefineMappingTypeWrapped(env, []Field{}, ad)
+	listDef.Define(env, nil, ListRest(ad))
+	mapDef.Define(env, nil, ad)
 	context.setCloneableMemo(ad)
 	return ad
 }
@@ -819,7 +819,7 @@ func CreateOrdered(context Context) SemType {
 	}
 	listDef := &ListDefinition{}
 	ordered := Union(Nil, Union(Boolean, Union(Int, Union(Float, Union(Decimal, Union(String, listDef.GetSemType(env)))))))
-	listDef.DefineListTypeWrappedWithEnvSemType(env, ordered)
+	listDef.Define(env, nil, ListRest(ordered))
 	context.setOrderedMemo(ordered)
 	return ordered
 }
@@ -873,12 +873,12 @@ func CreateIterable(context Context) SemType {
 	// Build the broadest next() return type: record {| (any|error) value; |}|error?
 	valueField := FieldFrom("value", Val, false, false)
 	md := NewMappingDefinition()
-	recordTy := md.DefineMappingTypeWrapped(env, []Field{valueField}, Never)
+	recordTy := md.Define(env, []Field{valueField}, Never)
 	nextReturnTy := Union(recordTy, Union(Error, Nil))
 
 	// next() function type: () -> nextReturnTy
 	ld := NewListDefinition()
-	emptyParams := ld.DefineListTypeWrapped(env, []SemType{}, 0, Never, CellMutabilityNone)
+	emptyParams := ld.Define(env, nil, ListMutability(CellMutabilityNone))
 	fd := NewFunctionDefinition()
 	nextFnTy := fd.Define(env, emptyParams, nextReturnTy, FunctionQualifiersFrom(env, false, false))
 
@@ -891,7 +891,7 @@ func CreateIterable(context Context) SemType {
 
 	// iterator() function type: () -> iteratorTy
 	ld2 := NewListDefinition()
-	emptyParams2 := ld2.DefineListTypeWrapped(env, []SemType{}, 0, Never, CellMutabilityNone)
+	emptyParams2 := ld2.Define(env, nil, ListMutability(CellMutabilityNone))
 	fd2 := NewFunctionDefinition()
 	iteratorFnTy := fd2.Define(env, emptyParams2, iteratorTy, FunctionQualifiersFrom(env, false, false))
 

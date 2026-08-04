@@ -54,7 +54,7 @@ func ListenerTy(cx Context, t, a SemType) SemType {
 
 func listenerMethodType(env Env, paramTys []SemType, returnTy SemType) SemType {
 	paramListDefn := NewListDefinition()
-	paramList := paramListDefn.DefineListTypeWrapped(env, paramTys, len(paramTys), Never, CellMutabilityNone)
+	paramList := paramListDefn.Define(env, paramTys, ListMutability(CellMutabilityNone))
 	fnDefn := NewFunctionDefinition()
 	return fnDefn.Define(env, paramList, returnTy, FunctionQualifiersFrom(env, false, false))
 }

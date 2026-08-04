@@ -27,9 +27,10 @@ func initCryptoModule(rt *runtime.Runtime) {
 	keyMapBld := semtypes.NewMappingDefinition()
 	utcBld := semtypes.NewListDefinition()
 	types := cryptoTypes{
-		byteArrTy: byteArrBld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte),
-		keyMapTy:  keyMapBld.DefineMappingTypeWrapped(env, nil, semtypes.String),
-		utcTy:     utcBld.TupleTypeWrappedRo(env, semtypes.Int, semtypes.Decimal),
+		byteArrTy: byteArrBld.Define(env, nil, semtypes.ListRest(semtypes.Byte)),
+		keyMapTy:  keyMapBld.Define(env, nil, semtypes.String),
+		utcTy: utcBld.Define(env, []semtypes.SemType{semtypes.Int, semtypes.Decimal},
+			semtypes.ListMutability(semtypes.CellMutabilityNone)),
 	}
 	registerHashFunctions(rt, types)
 	registerHmacFunctions(rt, types)

@@ -173,7 +173,7 @@ func TestListAtomicType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld := NewListDefinition()
-	ty := ld.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
+	ty := ld.Define(env, nil, ListRest(Int))
 	actual := ToString(cx, ty)
 	expected := "[int...]"
 	if actual != expected {
@@ -185,7 +185,7 @@ func TestListAtomicType1(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld := NewListDefinition()
-	ty := ld.DefineListTypeWrapped(env, []SemType{String}, 3, Int, CellMutabilityLimited)
+	ty := ld.Define(env, []SemType{String}, ListFixedLength(3), ListRest(Int))
 	actual := ToString(cx, ty)
 	expected := "[string, string, string, int...]"
 	if actual != expected {
@@ -197,10 +197,10 @@ func TestListTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, []SemType{String}, 3, Int, CellMutabilityLimited)
+	ty1 := ld1.Define(env, []SemType{String}, ListFixedLength(3), ListRest(Int))
 
 	ld2 := NewListDefinition()
-	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
+	ty2 := ld2.Define(env, nil, ListRest(Int))
 	actual := ToString(cx, Union(ty1, ty2))
 	expected := "[string, string, string, int...]|[int...]"
 	if actual != expected {
@@ -212,10 +212,10 @@ func TestListTypeDiff(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
+	ty1 := ld1.Define(env, nil, ListRest(Int))
 
 	ld2 := NewListDefinition()
-	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, SignedInt32, CellMutabilityLimited)
+	ty2 := ld2.Define(env, nil, ListRest(SignedInt32))
 	actual := ToString(cx, Diff(ty1, ty2))
 	expected := "[int...]&¬[int:Signed32...]"
 	if actual != expected {
@@ -227,10 +227,10 @@ func TestListTypeIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
+	ty1 := ld1.Define(env, nil, ListRest(Int))
 
 	ld2 := NewListDefinition()
-	ty2 := ld2.DefineListTypeWrapped(env, nil, 0, SignedInt32, CellMutabilityLimited)
+	ty2 := ld2.Define(env, nil, ListRest(SignedInt32))
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "[int...]&[int:Signed32...]"
 	if actual != expected {
@@ -242,7 +242,7 @@ func TestMappingAtomicType(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md := NewMappingDefinition()
-	ty := md.DefineMappingTypeWrapped(env, nil, Int)
+	ty := md.Define(env, nil, Int)
 	actual := ToString(cx, ty)
 	expected := "{| int... |}"
 	if actual != expected {
@@ -258,7 +258,7 @@ func TestMappingWithFields(t *testing.T) {
 		{name: "name", typeOf: String},
 		{name: "age", typeOf: Int},
 	}
-	ty := md.DefineMappingTypeWrapped(env, fields, Never)
+	ty := md.Define(env, fields, Never)
 	actual := ToString(cx, ty)
 	expected := "{| age: int, name: string, never... |}"
 	if actual != expected {
@@ -270,10 +270,10 @@ func TestMappingTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md1 := NewMappingDefinition()
-	ty1 := md1.DefineMappingTypeWrapped(env, []Field{{name: "x", typeOf: Int}}, Never)
+	ty1 := md1.Define(env, []Field{{name: "x", typeOf: Int}}, Never)
 
 	md2 := NewMappingDefinition()
-	ty2 := md2.DefineMappingTypeWrapped(env, []Field{{name: "y", typeOf: String}}, Never)
+	ty2 := md2.Define(env, []Field{{name: "y", typeOf: String}}, Never)
 	actual := ToString(cx, Union(ty1, ty2))
 	expected := "{| x: int, never... |}|{| y: string, never... |}"
 	if actual != expected {
@@ -285,10 +285,10 @@ func TestMappingTypeDiff(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md1 := NewMappingDefinition()
-	ty1 := md1.DefineMappingTypeWrapped(env, nil, Int)
+	ty1 := md1.Define(env, nil, Int)
 
 	md2 := NewMappingDefinition()
-	ty2 := md2.DefineMappingTypeWrapped(env, nil, SignedInt32)
+	ty2 := md2.Define(env, nil, SignedInt32)
 	actual := ToString(cx, Diff(ty1, ty2))
 	expected := "{| int... |}&¬{| int:Signed32... |}"
 	if actual != expected {
@@ -300,10 +300,10 @@ func TestMappingTypeIntersect(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md1 := NewMappingDefinition()
-	ty1 := md1.DefineMappingTypeWrapped(env, nil, Int)
+	ty1 := md1.Define(env, nil, Int)
 
 	md2 := NewMappingDefinition()
-	ty2 := md2.DefineMappingTypeWrapped(env, nil, SignedInt32)
+	ty2 := md2.Define(env, nil, SignedInt32)
 	actual := ToString(cx, Intersect(ty1, ty2))
 	expected := "{| int... |}&{| int:Signed32... |}"
 	if actual != expected {
@@ -315,7 +315,7 @@ func TestMappingTypeRO(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md := NewMappingDefinition()
-	ty := md.DefineMappingTypeWrapped(env, nil, Int)
+	ty := md.Define(env, nil, Int)
 	actual := ToString(cx, Intersect(ty, ValReadonly))
 	expected := "readonly&{| int... |}"
 	if actual != expected {
@@ -327,7 +327,7 @@ func TestListTypeRO(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	ld1 := NewListDefinition()
-	ty1 := ld1.DefineListTypeWrapped(env, nil, 0, Int, CellMutabilityLimited)
+	ty1 := ld1.Define(env, nil, ListRest(Int))
 
 	ty2 := ValReadonly
 	actual := ToString(cx, Intersect(ty1, ty2))

@@ -67,9 +67,9 @@ func initOSModule(rt *runtime.Runtime) {
 
 	env := rt.GetTypeEnv()
 	bld := semtypes.NewListDefinition()
-	byteArrTy := bld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte)
+	byteArrTy := bld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 	smd := semtypes.NewMappingDefinition()
-	strMapTy := smd.DefineMappingTypeWrapped(env, nil, semtypes.String)
+	strMapTy := smd.Define(env, nil, semtypes.String)
 
 	// Atomic types are a structural property of the (fixed) SemTypes above and
 	// do not vary per strand, so compute them once instead of on every call.

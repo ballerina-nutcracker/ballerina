@@ -39,7 +39,7 @@ func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
 
 func errorDetailTop(ctx Context) SemType {
 	md := NewMappingDefinition()
-	return md.DefineMappingTypeWrapped(ctx.Env(), nil, CreateCloneable(ctx))
+	return md.Define(ctx.Env(), nil, CreateCloneable(ctx))
 }
 
 func stripErrorDistinctAtoms(ty SemType) SemType {

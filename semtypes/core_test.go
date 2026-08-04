@@ -45,7 +45,7 @@ func equiv(t *testing.T, env Env, s, semType SemType) {
 // Ported from SemTypeCoreTest.java:createTupleType()
 func createTupleType(env Env, members ...SemType) SemType {
 	ld := NewListDefinition()
-	return ld.TupleTypeWrapped(env, members...)
+	return ld.Define(env, members)
 }
 
 // Basic tests
@@ -375,7 +375,7 @@ func TestRoList(t *testing.T) {
 
 	t1 := Intersect(List, ValReadonly)
 	ld := NewListDefinition()
-	t2 := ld.DefineListTypeWrapped(env, []SemType{}, 0, Val, CellMutabilityNone)
+	t2 := ld.Define(env, nil, ListRest(Val), ListMutability(CellMutabilityNone))
 	ty := Diff(t1, t2)
 	b := IsEmpty(ctx, ty)
 	assertTrue(t, b)
@@ -420,7 +420,7 @@ func recursiveTuple(env Env, f func(Env, SemType) []SemType) SemType {
 	def := NewListDefinition()
 	t := def.GetSemType(env)
 	members := f(env, t)
-	return def.DefineListTypeWrapped(env, members, len(members), Val, CellMutabilityLimited)
+	return def.Define(env, members, ListRest(Val))
 }
 
 // TestRec tests recursive tuple types

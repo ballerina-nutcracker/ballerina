@@ -454,7 +454,8 @@ func civilMapToGoTimeInLocation(m *values.Map, loc *time.Location) (time.Time, e
 func initTimeModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	utcBld := semtypes.NewListDefinition()
-	utcTy := utcBld.TupleTypeWrappedRo(env, semtypes.Int, semtypes.Decimal)
+	utcTy := utcBld.Define(env, []semtypes.SemType{semtypes.Int, semtypes.Decimal},
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externUtcNow",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {

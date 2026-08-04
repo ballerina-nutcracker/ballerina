@@ -77,7 +77,8 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 	callback := args[1].(*values.Function)
 	memberTy := semtypes.ListProj(ctx.TypeCtx(), source.Type, semtypes.Int)
 	argListDef := semtypes.NewListDefinition()
-	argListTy := argListDef.DefineListTypeWrapped(ctx.TypeEnv(), []semtypes.SemType{memberTy}, 1, semtypes.Never, semtypes.CellMutabilityNone)
+	argListTy := argListDef.Define(ctx.TypeEnv(), []semtypes.SemType{memberTy},
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	var resultMemberTy semtypes.SemType
 	if semtypes.IsNever(memberTy) {
 		resultMemberTy = semtypes.FunctionReturnType(ctx.TypeCtx(), callback.Type, semtypes.FunctionParamListType(ctx.TypeCtx(), callback.Type))
@@ -97,7 +98,7 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 	}
 
 	resultDef := semtypes.NewListDefinition()
-	resultTy := resultDef.DefineListTypeWrappedWithEnvSemType(ctx.TypeEnv(), resultMemberTy)
+	resultTy := resultDef.Define(ctx.TypeEnv(), nil, semtypes.ListRest(resultMemberTy))
 	atomic := semtypes.ToListAtomicType(ctx.TypeEnv(), resultTy)
 	filler, _ := values.FillerFactoryFor(ctx.TypeCtx(), resultMemberTy)
 	return values.NewList(resultTy, atomic, false, filler, 0, items), nil
@@ -106,7 +107,7 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 func initArrayModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	ld := semtypes.NewListDefinition()
-	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.Byte)
+	byteArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return arrayLength(args)
