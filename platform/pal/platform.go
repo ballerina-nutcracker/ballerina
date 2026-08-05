@@ -26,6 +26,7 @@ package pal
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"time"
 )
@@ -54,6 +55,7 @@ type (
 		OS      OS
 		Time    Time
 		HTTP    HTTP
+		Net     Net
 		Signals SignalSource
 	}
 	IO struct {
@@ -77,6 +79,28 @@ type (
 	Time struct {
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
+		Sleep        func(d time.Duration)
+	}
+	// Net abstracts raw TCP(+TLS) socket dialing and listening for non-HTTP
+	// wire protocols (e.g. ldap, tcp). HTTP-based stdlibs must keep using
+	// pal.HTTP instead.
+	Net struct {
+		// Dial opens a TCP connection to address, optionally binding to
+		// localAddr first (empty = OS-chosen) and optionally upgrading to
+		// TLS (tlsCfg != nil) before returning. Reuses TLSConfig from HTTP.
+		Dial func(ctx context.Context, network, address, localAddr string, tlsCfg *TLSConfig) (net.Conn, error)
+		// Listen binds a TCP listener on address, optionally wrapping it in
+		// TLS (tlsCfg != nil). Reuses ServerTLSConfig from HTTP. The caller
+		// owns the accept loop and per-connection dispatch.
+		Listen func(network, address string, tlsCfg *ServerTLSConfig) (net.Listener, error)
+		// DialPacket opens a connected datagram socket (e.g. UDP) to address,
+		// optionally binding to localAddr first (empty = OS-chosen). The
+		// returned net.Conn's Read/Write only exchange data with address.
+		DialPacket func(ctx context.Context, network, address, localAddr string) (net.Conn, error)
+		// ListenPacket binds an unconnected datagram socket (e.g. UDP) on
+		// address. The returned net.PacketConn's ReadFrom/WriteTo carry an
+		// explicit per-datagram peer address, unlike DialPacket's net.Conn.
+		ListenPacket func(network, address string) (net.PacketConn, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).

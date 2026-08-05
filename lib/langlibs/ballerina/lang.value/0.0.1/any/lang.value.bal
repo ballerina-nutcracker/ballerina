@@ -14,8 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// This module exposes the anydata value-conversion functions cloneWithType and
-// fromJsonWithType.
+# Returns a string that represents `v`.
+#
+# + v - the value
+# + return - a string representing `v`
+public isolated function toString(any v) returns string = external;
 
 # Constructs a value with a specified type by cloning another value.
 #

@@ -57,10 +57,18 @@ func mapRemove(ctx *extern.Context, args []values.BalValue) (values.BalValue, er
 	return val, nil
 }
 
+func mapHasKey(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	m := args[0].(*values.Map)
+	key := args[1].(string)
+	_, ok := m.Get(key)
+	return ok, nil
+}
+
 func initMapModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", mapLength)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "keys", mapKeys(rt.GetTypeEnv()))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "remove", mapRemove)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "hasKey", mapHasKey)
 }
 
 func init() {
