@@ -1,0 +1,62 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina mime (as mime))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable cd (type
+          (user-defined-type mime ContentDisposition)) (expr
+          (invocation mime getContentDispositionObject (
+            (literal form-data; name="file"; filename="test.txt"))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref cd)
+            (literal disposition)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref cd)
+            (literal name)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref cd)
+            (literal fileName)))))
+      (var-def
+        (variable newCd (type
+          (user-defined-type mime ContentDisposition)) (expr
+          (new ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref newCd)
+          (literal disposition))
+        (literal attachment))
+      (assignment
+        (index-based-access
+          (simple-var-ref newCd)
+          (literal fileName))
+        (literal report.pdf))
+      (expression-stmt
+        (invocation io println (
+          (invocation toString expr:
+            (simple-var-ref newCd) ()))))
+      (var-def
+        (variable quotedCd (type
+          (user-defined-type mime ContentDisposition)) (expr
+          (new ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref quotedCd)
+          (literal disposition))
+        (literal attachment))
+      (assignment
+        (index-based-access
+          (simple-var-ref quotedCd)
+          (literal fileName))
+        (literal my report.pdf))
+      (expression-stmt
+        (invocation io println (
+          (invocation toString expr:
+            (simple-var-ref quotedCd) ())))))))

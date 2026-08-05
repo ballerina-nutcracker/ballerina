@@ -19,32 +19,39 @@ package semtypes
 import "fmt"
 
 type recAtom struct {
-	idx int
+	idx  int
+	kind recAtomKind
 }
 
-var ZERO = newRecAtomFromInt(BDD_REC_ATOM_READONLY)
+// ZERO is the shared "fully readonly" sentinel recursive atom. It is used
+// interchangeably as the readonly placeholder for both list and mapping BDDs
+// (see BDD_SUBTYPE_RO), so its kind is not meaningful; the to-string cycle
+// detector always special-cases index 0 before consulting kind or the
+// visited set.
+var ZERO = newRecAtomFromInt(BDD_REC_ATOM_READONLY, recAtomKindList)
 var _ atom = &recAtom{}
 
-func newRecAtomFromInt(index int) recAtom {
+func newRecAtomFromInt(index int, kind recAtomKind) recAtom {
 	this := recAtom{}
 
 	this.idx = index
+	this.kind = kind
 	return this
 }
 
-func createRecAtom(index int) recAtom {
+func createRecAtom(index int, kind recAtomKind) recAtom {
 	if index == BDD_REC_ATOM_READONLY {
 		return ZERO
 	}
-	return newRecAtomFromInt(index)
+	return newRecAtomFromInt(index, kind)
 }
 
 func createXMLRecAtom(index int) recAtom {
-	return newRecAtomFromInt(index)
+	return newRecAtomFromInt(index, recAtomKindXML)
 }
 
 func createDistinctRecAtom(index int) recAtom {
-	return newRecAtomFromInt(index)
+	return newRecAtomFromInt(index, recAtomKindDistinct)
 }
 
 func isDistinctRecAtom(atom atom) bool {
@@ -57,7 +64,7 @@ func (r *recAtom) index() int {
 }
 
 func (r *recAtom) canonicalKey() atomKey {
-	return recAtomKey(r.idx)
+	return recAtomKey(r.idx, r.kind)
 }
 
 func (r *recAtom) String() string {

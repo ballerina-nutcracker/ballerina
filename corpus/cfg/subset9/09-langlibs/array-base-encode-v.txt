@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable data (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 222)
+          (literal 173)
+          (literal 190)
+          (literal 239)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array toBase16 (
+          (simple-var-ref data))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array toBase64 (
+          (simple-var-ref data))))))
+    (var-def
+      (variable empty (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (invocation lang.array toBase16 (
+            (simple-var-ref empty))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (invocation lang.array toBase64 (
+            (simple-var-ref empty))))))))
+  )
+)

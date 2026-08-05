@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina mime (as mime))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (user-defined-type mime Entity)) (expr
+          (new ()))))
+      (var-def
+        (variable err (type
+          (union-type
+            (user-defined-type mime InvalidContentTypeError)
+            (value-type null))) (expr
+          (invocation setContentType expr:
+            (simple-var-ref e) (
+            (literal text/html))))))
+      (if
+        (unary-expr !
+          (group-expr
+            (type-test-expr is
+              (simple-var-ref err)
+              (user-defined-type mime InvalidContentTypeError))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation getContentType expr:
+                (simple-var-ref e) ()))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation setContentId expr:
+            (simple-var-ref e) (
+            (literal cid-001))))
+        (expression-stmt
+          (invocation io println (
+            (invocation getContentId expr:
+              (simple-var-ref e) ()))))
+        (expression-stmt
+          (invocation setContentLength expr:
+            (simple-var-ref e) (
+            (literal 512))))
+        (var-def
+          (variable clen (type
+            (union-type
+              (value-type int)
+              (error-type))) (expr
+            (invocation getContentLength expr:
+              (simple-var-ref e) ()))))
+        (if
+          (type-test-expr is
+            (simple-var-ref clen)
+            (value-type int))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref clen))))) ())
+        (block-stmt)))))

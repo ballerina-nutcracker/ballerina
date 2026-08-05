@@ -1,0 +1,111 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad application/json; charset=UTF-8
+    %2 = getMediaType(%1) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = $desugar$0 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    result = $desugar$0;
+    %7 = ConstantLoad primaryType
+    %6 = result[%7];
+    %8 = println(%6) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad subType
+    %9 = result[%10];
+    %11 = println(%9) -> bb5;
+  }
+  bb5 {
+    %13 = ConstantLoad suffix
+    %12 = result[%13];
+    %14 = println(%12) -> bb6;
+  }
+  bb6 {
+    %15 = getBaseType(result) -> bb7;
+  }
+  bb7 {
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    %18 = ConstantLoad charset
+    %20 = ConstantLoad parameters
+    %19 = result[%20];
+    %17 = %19[%18];
+    %21 = println(%17) -> bb9;
+  }
+  bb9 {
+    %22 = ConstantLoad application/svg+xml
+    %23 = getMediaType(%22) -> bb10;
+  }
+  bb10 {
+    $desugar$1 = %23;
+    %25 = $desugar$1 is error
+    %25 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    result2 = $desugar$1;
+    %28 = ConstantLoad primaryType
+    %27 = result2[%28];
+    %29 = println(%27) -> bb13;
+  }
+  bb13 {
+    %31 = ConstantLoad subType
+    %30 = result2[%31];
+    %32 = println(%30) -> bb14;
+  }
+  bb14 {
+    %34 = ConstantLoad suffix
+    %33 = result2[%34];
+    %35 = println(%33) -> bb15;
+  }
+  bb15 {
+    %36 = getBaseType(result2) -> bb16;
+  }
+  bb16 {
+    %37 = println(%36) -> bb17;
+  }
+  bb17 {
+    %38 = ConstantLoad invalid!!
+    %39 = getMediaType(%38) -> bb18;
+  }
+  bb18 {
+    result3 = %39;
+    %41 = result3 is object { public function getBaseType() returns string; public function init() returns nil; public {| string... |} parameters; public string primaryType; public string subType; public string suffix; public function toString() returns string }
+    %41 ? bb19 : bb21;
+  }
+  bb19 {
+    PushScopeFrame 2
+    %0 = ConstantLoad got media type: 
+    %1 = println(%0,(1, result3)) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid content type
+    %1 = println(%0) -> bb22;
+  }
+  bb22 {
+    PopScopeFrame
+    return;
+  }
+}

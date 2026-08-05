@@ -83,7 +83,7 @@ var (
 	XML_TEXT                              = XMLSequence(XMLSingleton(XML_PRIMITIVE_TEXT))
 	XML_PI                                = XMLSingleton((XML_PRIMITIVE_PI_RO | XML_PRIMITIVE_PI_RW))
 	BDD_REC_ATOM_READONLY                 = 0
-	BDD_SUBTYPE_RO                        = bddAtom(new(createRecAtom(BDD_REC_ATOM_READONLY)))
+	BDD_SUBTYPE_RO                        = bddAtom(new(createRecAtom(BDD_REC_ATOM_READONLY, recAtomKindList)))
 	MAPPING_RO                            = getBasicSubtype(BTMapping, BDD_SUBTYPE_RO)
 	CELL_ATOMIC_VAL                       = predefTypeEnv.cellAtomicVal()
 	ATOM_CELL_VAL                         = predefTypeEnv.atomCellVal()
@@ -122,7 +122,7 @@ var (
 	ATOM_MAPPING_OBJECT                   = predefTypeEnv.atomMappingObject()
 	MAPPING_SUBTYPE_OBJECT                = bddAtom(ATOM_MAPPING_OBJECT)
 	BDD_REC_ATOM_OBJECT_READONLY          = 1
-	OBJECT_RO_REC_ATOM                    = new(createRecAtom(BDD_REC_ATOM_OBJECT_READONLY))
+	OBJECT_RO_REC_ATOM                    = new(createRecAtom(BDD_REC_ATOM_OBJECT_READONLY, recAtomKindMapping))
 	MAPPING_SUBTYPE_OBJECT_RO             = bddAtom(OBJECT_RO_REC_ATOM)
 	MAPPING_ARRAY_RO                      = getBasicSubtype(BTList, LIST_SUBTYPE_MAPPING_RO)
 	ATOM_CELL_MAPPING_ARRAY_RO            = predefTypeEnv.atomCellMappingArrayRO()

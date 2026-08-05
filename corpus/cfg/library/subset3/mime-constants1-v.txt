@@ -1,0 +1,28 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime APPLICATION_JSON))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime TEXT_PLAIN))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime APPLICATION_OCTET_STREAM))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime CONTENT_TYPE))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime CONTENT_LENGTH))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime DEFAULT_CHARSET))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime MULTIPART_FORM_DATA))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mime IMAGE_JPEG))))
+  )
+)

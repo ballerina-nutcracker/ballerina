@@ -1,0 +1,79 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newObject ballerina/mime:Entity
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    e = %3;
+    %6 = ConstantLoad text/html
+    %7 = setContentType(e,%6) -> bb5;
+  }
+  bb5 {
+    err = %7;
+    %9 = err is error
+    %10 = ! %9;
+    %10 ? bb6 : bb9;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = getContentType((1, e)) -> bb7;
+  }
+  bb7 {
+    %1 = println(%0) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 10
+    %0 = ConstantLoad cid-001
+    %1 = setContentId((1, e),%0) -> bb10;
+  }
+  bb10 {
+    %2 = getContentId((1, e)) -> bb11;
+  }
+  bb11 {
+    %3 = println(%2) -> bb12;
+  }
+  bb12 {
+    %4 = ConstantLoad 512
+    %5 = %4;
+    %6 = setContentLength((1, e),%5) -> bb13;
+  }
+  bb13 {
+    %7 = getContentLength((1, e)) -> bb14;
+  }
+  bb14 {
+    clen = %7;
+    %9 = clen is int
+    %9 ? bb15 : bb17;
+  }
+  bb15 {
+    PushScopeFrame 1
+    %0 = println((1, clen)) -> bb16;
+  }
+  bb16 {
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

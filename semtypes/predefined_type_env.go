@@ -667,9 +667,9 @@ func (p *predefinedTypeEnv) ReservedRecAtomCount() int {
 }
 
 // GetPredefinedRecAtom returns a predefined recAtom for the given index
-func (p *predefinedTypeEnv) GetPredefinedRecAtom(index int) common.Optional[*recAtom] {
+func (p *predefinedTypeEnv) GetPredefinedRecAtom(index int, kind recAtomKind) common.Optional[*recAtom] {
 	if p.IsPredefinedRecAtom(index) {
-		recAtom := createRecAtom(index)
+		recAtom := createRecAtom(index, kind)
 		return common.OptionalOf(&recAtom)
 	}
 	return common.OptionalEmpty[*recAtom]()

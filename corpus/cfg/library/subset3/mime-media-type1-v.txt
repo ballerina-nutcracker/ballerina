@@ -1,0 +1,75 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable result (type
+        (user-defined-type mime MediaType)) (expr
+        (checked-expr
+          (invocation mime getMediaType (
+            (literal application/json; charset=UTF-8)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access primaryType
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access subType
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access suffix
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getBaseType expr:
+          (simple-var-ref result) ()))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access parameters
+            (simple-var-ref result))
+          (literal charset)))))
+    (var-def
+      (variable result2 (type
+        (user-defined-type mime MediaType)) (expr
+        (checked-expr
+          (invocation mime getMediaType (
+            (literal application/svg+xml)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access primaryType
+          (simple-var-ref result2)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access subType
+          (simple-var-ref result2)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access suffix
+          (simple-var-ref result2)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getBaseType expr:
+          (simple-var-ref result2) ()))))
+    (var-def
+      (variable result3 (type
+        (union-type
+          (user-defined-type mime MediaType)
+          (error-type))) (expr
+        (invocation mime getMediaType (
+          (literal invalid!!))))))
+    (type-test-expr is
+      (simple-var-ref result3)
+      (user-defined-type mime MediaType))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal got media type: )
+        (simple-var-ref result3))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal invalid content type))))
+  )
+)

@@ -24,8 +24,8 @@ import (
 // Ported from SemTypeBddTest.java:bddTest()
 func TestBddDiff(t *testing.T) {
 	// Create two BDD atoms from different rec atoms
-	b1 := bddAtom(new(createRecAtom(1)))
-	b2 := bddAtom(new(createRecAtom(2)))
+	b1 := bddAtom(new(createRecAtom(1, recAtomKindList)))
+	b2 := bddAtom(new(createRecAtom(2, recAtomKindList)))
 
 	// Intersect them
 	b1and2 := bddIntersect(b1, b2)

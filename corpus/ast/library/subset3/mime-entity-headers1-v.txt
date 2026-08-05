@@ -1,0 +1,100 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina mime (as mime))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable entity (type
+          (user-defined-type mime Entity)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation setHeader expr:
+          (simple-var-ref entity) (
+          (literal Content-Type)
+          (literal application/json))))
+      (var-def
+        (variable ct (type
+          (union-type
+            (value-type string)
+            (user-defined-type mime HeaderNotFoundError))) (expr
+          (invocation getHeader expr:
+            (simple-var-ref entity) (
+            (literal content-type))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref ct)
+          (value-type string))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref ct))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (invocation hasHeader expr:
+              (simple-var-ref entity) (
+              (literal content-type))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation hasHeader expr:
+              (simple-var-ref entity) (
+              (literal accept))))))
+        (expression-stmt
+          (invocation addHeader expr:
+            (simple-var-ref entity) (
+            (literal Accept)
+            (literal text/html))))
+        (expression-stmt
+          (invocation addHeader expr:
+            (simple-var-ref entity) (
+            (literal Accept)
+            (literal application/json))))
+        (var-def
+          (variable accepts (type
+            (union-type
+              (array-type
+                (value-type string) dimensions: 1 ([]))
+              (user-defined-type mime HeaderNotFoundError))) (expr
+            (invocation getHeaders expr:
+              (simple-var-ref entity) (
+              (literal accept))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref accepts)
+            (array-type
+              (value-type string) dimensions: 1 ([])))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation length expr:
+                  (simple-var-ref accepts) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable names (type
+              (array-type
+                (value-type string) dimensions: 1 ([]))) (expr
+              (invocation getHeaderNames expr:
+                (simple-var-ref entity) ()))))
+          (expression-stmt
+            (invocation io println (
+              (invocation length expr:
+                (simple-var-ref names) ()))))
+          (expression-stmt
+            (invocation removeHeader expr:
+              (simple-var-ref entity) (
+              (literal Accept))))
+          (expression-stmt
+            (invocation io println (
+              (invocation hasHeader expr:
+                (simple-var-ref entity) (
+                (literal accept))))))
+          (expression-stmt
+            (invocation removeAllHeaders expr:
+              (simple-var-ref entity) ()))
+          (expression-stmt
+            (invocation io println (
+              (invocation hasHeader expr:
+                (simple-var-ref entity) (
+                (literal content-type)))))))))))

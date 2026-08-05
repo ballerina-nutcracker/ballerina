@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad application/json
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad text/plain
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad application/octet-stream
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad content-type
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad content-length
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad UTF-8
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad multipart/form-data
+    %14 = println(%13) -> bb7;
+  }
+  bb7 {
+    %15 = ConstantLoad image/jpeg
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

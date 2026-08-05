@@ -1,0 +1,7 @@
+-- stdout --
+Hello World
+5
+dispatched text
+4
+parser error
+-- stderr --

@@ -1,6 +1,6 @@
 (package
-  (import-package ballerina log (as log))
   (import-package ballerina io (as io))
+  (import-package ballerina log (as log))
   (function main () (
     (value-type null))
     (block-function-body
