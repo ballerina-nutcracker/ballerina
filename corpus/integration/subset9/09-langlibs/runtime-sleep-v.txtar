@@ -1,0 +1,6 @@
+-- stdout --
+before
+after
+zero-ok
+negative-ok
+-- stderr --

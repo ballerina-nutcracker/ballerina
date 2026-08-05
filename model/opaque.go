@@ -47,8 +47,10 @@ type OpaqueFunctionSymbol struct {
 
 const (
 	// lang.array
-	OpaqueFnArrayPush = 0
-	OpaqueFnArrayMap  = 1
+	OpaqueFnArrayPush    = 0
+	OpaqueFnArrayIndexOf = 1
+	OpaqueFnArrayRemove  = 2
+	OpaqueFnArrayMap     = 3
 	// lang.map
 	OpaqueFnMapRemove = 0
 	// lang.xml
@@ -125,6 +127,8 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 	case "lang.array":
 		return []Symbol{
 			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush, noIsolatedParams),
+			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf, noIsolatedParams),
+			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove, noIsolatedParams),
 			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 }),
 		}
 	case "lang.map":
