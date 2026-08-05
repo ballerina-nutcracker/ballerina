@@ -130,6 +130,36 @@ func (l *List) Append(tc semtypes.Context, vs ...BalValue) {
 	l.elems = append(l.elems, vs...)
 }
 
+// RemoveAt removes and returns the element at idx, shifting subsequent elements down.
+// Panics if the list's inherent type is fixed-length.
+func (l *List) RemoveAt(idx int) BalValue {
+	l.checkMutable()
+	l.checkNotFixedLength()
+	val := l.elems[idx]
+	copy(l.elems[idx:], l.elems[idx+1:])
+	last := len(l.elems) - 1
+	l.elems[last] = nil // release the vacated slot so the GC can reclaim it
+	l.elems = l.elems[:last]
+	return val
+}
+
+// Clear removes all elements from the list.
+// Panics if the list's inherent type is fixed-length.
+func (l *List) Clear() {
+	l.checkMutable()
+	l.checkNotFixedLength()
+	clear(l.elems) // release references before truncating so the GC can reclaim them
+	l.elems = l.elems[:0]
+}
+
+// checkNotFixedLength panics if the list's inherent type has no rest member
+// type, i.e. its length cannot change (e.g. `int[2]`).
+func (l *List) checkNotFixedLength() {
+	if semtypes.IsNever(l.atomic.Rest()) {
+		panic(NewErrorWithMessage("inherent type violation: cannot change the length of a fixed-length list"))
+	}
+}
+
 func (l *List) checkMutable() {
 	if l.isReadonly {
 		panic(NewErrorWithMessage("inherent type violation: cannot mutate readonly value"))
