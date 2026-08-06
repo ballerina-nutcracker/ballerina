@@ -18,13 +18,14 @@ package values
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type Object struct {
 	Type        semtypes.SemType
-	fields      map[string]BalValue
+	fields      sync.Map // string -> BalValue
 	methodKeys  map[string]string
 	rtable      map[string][]ResourceEntry
 	annotations AnnotationValues
@@ -66,13 +67,16 @@ func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys
 	if annotations == nil {
 		annotations = NewAnnotationValues()
 	}
-	return &Object{
+	o := &Object{
 		Type:        typ,
-		fields:      fieldValues,
 		methodKeys:  methodKeys,
 		rtable:      rtable,
 		annotations: annotations,
 	}
+	for field, value := range fieldValues {
+		o.Put(field, value)
+	}
+	return o
 }
 
 // AnnotationValues returns the runtime-visible annotations on the object's
@@ -98,12 +102,11 @@ func (o *Object) AllResourceMethodNames() []string {
 }
 
 func (o *Object) Put(field string, value BalValue) {
-	o.fields[field] = value
+	o.fields.Store(field, value)
 }
 
 func (o *Object) Get(field string) (BalValue, bool) {
-	value, ok := o.fields[field]
-	return value, ok
+	return o.fields.Load(field)
 }
 
 func (o *Object) MethodLookupKey(name string) (string, bool) {

@@ -136,7 +136,7 @@ func (rt *Runtime) registry() *modules.Registry {
 // fails), call Listen.
 func (rt *Runtime) Init(pkg bir.BIRPackage) error {
 	rt.transition(StateInitializing)
-	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), &pkg))
+	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), &pkg, nil))
 	if err := rt.recordLifecycleHooks(&pkg); err != nil {
 		return rt.abortInitialization(err)
 	}
@@ -262,13 +262,8 @@ func RegisterExternClassDef(rt *Runtime, def *bir.BIRClassDef) {
 // registration, GetModule returns nil and causes a nil dereference panic.
 func RegisterModuleGlobals(rt *Runtime, pkgId *model.PackageID, globals map[string]values.BalValue) {
 	if existing := rt.registry().GetModule(pkgId); existing != nil {
-		if existing.Globals == nil {
-			existing.Globals = make(map[string]values.BalValue)
-		}
-		for k, v := range globals {
-			existing.Globals[k] = v
-		}
+		existing.SetGlobals(globals)
 		return
 	}
-	rt.registry().RegisterModule(pkgId, &modules.BIRModule{Globals: globals})
+	rt.registry().RegisterModule(pkgId, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), nil, globals))
 }

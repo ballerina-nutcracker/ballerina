@@ -1,0 +1,81 @@
+(package
+  (import-package ballerina io (as io))
+  (variable counterA (type
+    (value-type int)))
+  (variable counterB (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref counterA)
+        (literal 0))
+      (assignment
+        (simple-var-ref counterB)
+        (literal 0))))
+  (function incrementA () (
+    (value-type int))
+    (block-function-body
+      (lock
+        (block-stmt
+          (while
+            (binary-expr <
+              (simple-var-ref counterA)
+              (literal 10000))
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref counterA)
+                (literal 1))))
+          (return
+            (simple-var-ref counterA))))))
+  (function incrementB () (
+    (value-type int))
+    (block-function-body
+      (lock
+        (block-stmt
+          (while
+            (binary-expr <
+              (simple-var-ref counterB)
+              (literal 10000))
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref counterB)
+                (literal 1))))
+          (return
+            (simple-var-ref counterB))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (invocation incrementA ())))))
+      (var-def
+        (variable b (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (invocation incrementB ())))))
+      (var-def
+        (variable aResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (var-def
+        (variable bResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref aResult))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bResult)))))))
