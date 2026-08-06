@@ -12,33 +12,22 @@ identity(future) -> future{
     return;
   }
 }
-$desugar$0() -> int{
-  bb0 {
-    %1 = number() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
-    %1 = fp $anon/.:$desugar$0
-    $desugar$1 = %1;
-    %3 = start $desugar$1 isolated=false -> bb1;
+    %1 = start number() isolated=false -> bb1;
   }
   bb1 {
-    started = %3;
+    started = %1;
     widened = started;
-    %6 = identity(widened) -> bb2;
+    %4 = identity(widened) -> bb2;
   }
   bb2 {
-    same = %6;
-    %8 = wait same -> bb3;
+    same = %4;
+    %6 = wait same -> bb3;
   }
   bb3 {
-    result = %8;
-    %10 = println(result) -> bb4;
+    result = %6;
+    %8 = println(result) -> bb4;
   }
   bb4 {
     return;

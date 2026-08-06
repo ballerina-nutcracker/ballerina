@@ -69,7 +69,11 @@ func LookupResourceMethod(ctx *extern.Context, obj *values.Object, resourceMetho
 	if len(matches) != 1 {
 		return nil, false
 	}
-	return newResourceHandle(ctx, obj, matches[0], path), true
+	handle, err := newResourceHandle(ctx.Env, obj, matches[0], path)
+	if err != nil {
+		panic(err)
+	}
+	return handle, true
 }
 
 // LookupResourceMethodByPath resolves a resource method from a RAW, untyped
@@ -109,7 +113,11 @@ func LookupResourceMethodByPath(ctx *extern.Context, obj *values.Object, accesso
 	if matchEntry == nil {
 		return nil, 0, false
 	}
-	return newResourceHandle(ctx, obj, matchEntry, matchPath), resourceExtraArgCount(ctx, matchEntry), true
+	handle, err := newResourceHandle(ctx.Env, obj, matchEntry, matchPath)
+	if err != nil {
+		panic(err)
+	}
+	return handle, resourceExtraArgCount(ctx, matchEntry), true
 }
 
 // resourceExtraArgCount returns how many parameters of the resource function

@@ -14,33 +14,19 @@
     (value-type null))
     (block-function-body
       (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (invocation crash ()))))))))
-      (var-def
         (variable panicked (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$1)))))
-      (var-def
-        (variable $desugar$3 (expr
-          (lambda
-            (function $desugar$2 () ()
-              (block-function-body
-                (return
-                  (invocation delayed ()))))))))
+            (invocation crash ())))))
       (var-def
         (variable delayedResult (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$3)))))
+            (invocation delayed ())))))
       (var-def
         (variable trapped (expr
           (trap-expr

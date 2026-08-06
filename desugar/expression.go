@@ -744,49 +744,9 @@ func walkTemplateExpr(cx *functionContext, expr *ast.BLangTemplateExpr) desugare
 
 func walkStartAction(cx *functionContext, action *ast.BLangStartAction) desugaredNode[ast.BLangActionOrExpression] {
 	callResult := walkExpression(cx, action.Call)
-	call := callResult.replacementNode
-	var lambda *ast.BLangLambdaFunction
-	{
-		pos := action.GetPosition()
-		returnTy := call.GetDeterminedType()
-		name := cx.nextDesugarSymbolName()
-		fnSymbol := model.NewFunctionSymbol(name, model.TypedFunctionSignature{ReturnType: returnTy}, false, pos)
-		cx.currentScope().AddSymbol(name, fnSymbol)
-		fnRef, _ := cx.currentScope().GetSymbol(name)
-		nameNode := &ast.BLangIdentifier{Value: name}
-		nameNode.SetDeterminedType(semtypes.Never)
-		nameNode.SetPosition(pos)
-		flags := model.FlagLambda | model.FlagAnonymous
-		if action.IsIsolated {
-			flags |= model.FlagIsolated
-		}
-		fn := ast.NewBLangFunction(ast.InvokableData{
-			Position: pos,
-			Name:     nameNode,
-			Flags:    flags,
-		})
-		fn.SetSymbol(fnRef)
-		fn.SetScope(cx.newFunctionScope(cx.currentScope()))
-		fn.SetDeterminedType(semtypes.Never)
-		returnStmt := &ast.BLangReturn{Expr: call}
-		returnStmt.SetDeterminedType(semtypes.Never)
-		returnStmt.SetPosition(pos)
-		body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{returnStmt}}
-		body.SetDeterminedType(semtypes.Never)
-		body.SetPosition(pos)
-		fn.Body = body
-		params := semtypes.NewListDefinition()
-		fnDef := semtypes.NewFunctionDefinition()
-		fnTy := fnDef.Define(cx.typeEnv(), params.Define(cx.typeEnv(), nil), returnTy, semtypes.FunctionQualifiersFrom(cx.typeEnv(), action.IsIsolated, false))
-		cx.setSymbolType(fnRef, fnTy)
-		lambda = &ast.BLangLambdaFunction{Function: fn}
-		lambda.SetDeterminedType(fnTy)
-		lambda.SetPosition(pos)
-	}
-	lambdaDef, lambdaRef := assignToLocal(cx, lambda, action.GetPosition())
-	action.Call = lambdaRef
+	action.Call = callResult.replacementNode.(ast.Invocable)
 	return desugaredNode[ast.BLangActionOrExpression]{
-		initStmts:       append(callResult.initStmts, lambdaDef),
+		initStmts:       callResult.initStmts,
 		replacementNode: action,
 	}
 }

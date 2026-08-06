@@ -58,24 +58,17 @@
           (user-defined-type Client)) (expr
           (new ()))))
       (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (client-resource-access get expr:
-                    (invocation receiver (
-                      (simple-var-ref endpoint))) computed:
-                    (invocation next ()) computed:
-                    (invocation next ())
-                    (invocation next ())))))))))
-      (var-def
         (variable result (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$1)))))
+            (client-resource-access get expr:
+              (invocation receiver (
+                (simple-var-ref endpoint))) computed:
+              (invocation next ()) computed:
+              (invocation next ())
+              (invocation next ()))))))
       (var-def
         (variable value (type
           (union-type

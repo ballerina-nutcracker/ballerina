@@ -51,7 +51,7 @@ class Doubler {
   init() -> nil{
     bb0 {
       %2 = newObject $anon/.:Counter
-      %3 = init(%2) -> bb1;
+      %3 = %2.init() -> bb1;
     }
     bb1 {
       %5 = %3 is nil
@@ -76,7 +76,7 @@ class Doubler {
     bb0 {
       %3 = ConstantLoad c
       %2 = self[%3];
-      %4 = next(%2) -> bb1;
+      %4 = %2.next() -> bb1;
     }
     bb1 {
       r = %4;
@@ -109,7 +109,7 @@ class Doubler {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Doubler
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil

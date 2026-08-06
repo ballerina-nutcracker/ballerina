@@ -804,6 +804,7 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		if !isIsolatedInvocationTarget(a, call) || !isIsolatedInvocation(a, call) {
 			a.semanticErr("start action is not isolated", node.GetPosition())
 		}
+		visitor.walkInvocableOperands(call)
 		return nil
 	case *ast.BLangInvocation:
 		if loc, invalid := isolatedInvocationViolation(a, node); invalid {
@@ -832,6 +833,22 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		return visitor
 	}
 	return visitor
+}
+
+func (visitor *isolatedFnVisitor) walkInvocableOperands(call ast.Invocable) {
+	if receiver := call.Receiver(); receiver != nil {
+		ast.Walk(visitor, receiver)
+	}
+	if resource, ok := call.(*ast.BLangClientResourceAccessAction); ok {
+		for i := range resource.Path {
+			if expr := resource.Path[i].Expr; expr != nil {
+				ast.Walk(visitor, expr)
+			}
+		}
+	}
+	for _, arg := range call.CallArgs() {
+		ast.Walk(visitor, arg)
+	}
 }
 
 func (visitor *isolatedFnVisitor) walkLambda(node *ast.BLangLambdaFunction) {

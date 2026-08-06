@@ -16,92 +16,17 @@ crash() -> int{
     panic %2;
   }
 }
-$desugar$0() -> int{
+main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
     %2 = %1;
-    %3 = printAndReturn(%2) -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$desugar$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 2
-    %2 = %1;
-    %3 = printAndReturn(%2) -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$desugar$4() -> int{
-  bb0 {
-    %1 = ConstantLoad 3
-    %2 = %1;
-    %3 = printAndReturn(%2) -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$desugar$6() -> int{
-  bb0 {
-    %1 = ConstantLoad 4
-    %2 = %1;
-    %3 = printAndReturn(%2) -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$desugar$8() -> int{
-  bb0 {
-    %1 = crash() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$10() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %2 = %1;
-    %3 = printAndReturn(%2) -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$desugar$12() -> int{
-  bb0 {
-    %1 = ConstantLoad 6
-    %2 = %1;
-    %3 = printAndReturn(%2) -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-main() -> nil{
-  bb0 {
-    %1 = fp $anon/.:$desugar$0
-    $desugar$1 = %1;
-    %3 = start $desugar$1 isolated=false -> bb1;
+    %3 = start printAndReturn(%2) isolated=false -> bb1;
   }
   bb1 {
     %4 = %3;
-    %5 = fp $anon/.:$desugar$2
-    $desugar$3 = %5;
-    %7 = start $desugar$3 isolated=false -> bb2;
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %7 = start printAndReturn(%6) isolated=false -> bb2;
   }
   bb2 {
     second = %7;
@@ -117,9 +42,9 @@ main() -> nil{
     %14 = println(secondResult) -> bb5;
   }
   bb5 {
-    %15 = fp $anon/.:$desugar$4
-    $desugar$5 = %15;
-    %17 = start $desugar$5 isolated=false -> bb6;
+    %15 = ConstantLoad 3
+    %16 = %15;
+    %17 = start printAndReturn(%16) isolated=false -> bb6;
   }
   bb6 {
     completed = %17;
@@ -130,9 +55,9 @@ main() -> nil{
     %21 = println(completedResult) -> bb8;
   }
   bb8 {
-    %22 = fp $anon/.:$desugar$6
-    $desugar$7 = %22;
-    %24 = start $desugar$7 isolated=false -> bb9;
+    %22 = ConstantLoad 4
+    %23 = %22;
+    %24 = start printAndReturn(%23) isolated=false -> bb9;
   }
   bb9 {
     %25 = %24;
@@ -143,49 +68,47 @@ main() -> nil{
     %27 = println(completedResult) -> bb11;
   }
   bb11 {
-    %28 = fp $anon/.:$desugar$8
-    $desugar$9 = %28;
-    %30 = start $desugar$9 isolated=false -> bb12;
+    %28 = start crash() isolated=false -> bb12;
   }
   bb12 {
-    failed = %30;
-    %32 = fp $anon/.:$desugar$10
-    $desugar$11 = %32;
-    %34 = start $desugar$11 isolated=false -> bb13;
+    failed = %28;
+    %30 = ConstantLoad 5
+    %31 = %30;
+    %32 = start printAndReturn(%31) isolated=false -> bb13;
   }
   bb13 {
-    %35 = %34;
+    %33 = %32;
     GOTO bb14;
   }
   bb14 {
-    %37 = wait failed -> bb15;
+    %35 = wait failed -> bb15;
   }
   bb15 {
-    %36 = %37;
+    %34 = %35;
     GOTO bb16;
   }
   bb16 {
-    trapped = %36;
-    %39 = trapped is error
-    %40 = %39;
-    %41 = println(%40) -> bb17;
+    trapped = %34;
+    %37 = trapped is error
+    %38 = %37;
+    %39 = println(%38) -> bb17;
   }
   bb17 {
-    %42 = fp $anon/.:$desugar$12
-    $desugar$13 = %42;
-    %44 = start $desugar$13 isolated=false -> bb18;
+    %40 = ConstantLoad 6
+    %41 = %40;
+    %42 = start printAndReturn(%41) isolated=false -> bb18;
   }
   bb18 {
+    %43 = %42;
+    %44 = ConstantLoad 7
     %45 = %44;
-    %46 = ConstantLoad 7
-    %47 = %46;
-    %48 = println(%47) -> bb19;
+    %46 = println(%45) -> bb19;
   }
   bb19 {
     return;
   }
   
   error-table {
-    [bb14, bb15] -> bb16, %36
+    [bb14, bb15] -> bb16, %34
   }
 }

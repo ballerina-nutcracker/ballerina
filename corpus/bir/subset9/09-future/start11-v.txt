@@ -34,59 +34,37 @@ foo(future<int>) -> int|error{
     return;
   }
 }
-$desugar$0() -> int{
-  bb0 {
-    %1 = bar((1, values)) -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$2() -> int|error{
-  bb0 {
-    %1 = foo((1, barResult)) -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil|error{
   bb0 {
     %1 = ConstantLoad 0
     %2 = newArray [int...][%1]{}
     values = %2;
-    %4 = closure_fp $anon/.:$desugar$0
-    $desugar$1 = %4;
-    %6 = start $desugar$1 isolated=false -> bb1;
+    %4 = start bar(values) isolated=false -> bb1;
   }
   bb1 {
-    barResult = %6;
-    %8 = closure_fp $anon/.:$desugar$2
-    $desugar$3 = %8;
-    %10 = start $desugar$3 isolated=false -> bb2;
+    barResult = %4;
+    %6 = start foo(barResult) isolated=false -> bb2;
   }
   bb2 {
-    fooResult = %10;
-    %13 = wait fooResult -> bb3;
+    fooResult = %6;
+    %9 = wait fooResult -> bb3;
   }
   bb3 {
-    %14 = %13 is error
-    %14 ? bb4 : bb5;
+    %10 = %9 is error
+    %10 ? bb4 : bb5;
   }
   bb4 {
-    %0 = %13;
+    %0 = %9;
     return;
   }
   bb5 {
-    %12 = %13;
+    %8 = %9;
     GOTO bb6;
   }
   bb6 {
-    value = %12;
-    %16 = value;
-    %17 = println(%16) -> bb7;
+    value = %8;
+    %12 = value;
+    %13 = println(%12) -> bb7;
   }
   bb7 {
     return;

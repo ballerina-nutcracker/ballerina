@@ -56,14 +56,22 @@ func snapshotSpawnFrames(cs *callStack) []callStackEntry {
 	return out
 }
 
-func startFuture(parent *extern.Context, fn *values.Function, isolated bool, ty semtypes.SemType) *values.Future {
-	handle, err := NewFunctionValueHandle(parent.Env, fn)
+type bootstrappedCall struct {
+	handle *InvokableHandle
+	args   []values.BalValue
+}
+
+func invokeBootstrappedCall(ctx *extern.Context, call *bootstrappedCall) values.BalValue {
+	result, err := call.handle.invoke(ctx, call.args)
 	if err != nil {
 		panic(err)
 	}
+	return result
+}
+
+func startFuture(parent *extern.Context, call *bootstrappedCall, spawnFrames []callStackEntry, isolated bool, ty semtypes.SemType) *values.Future {
 	future := values.NewFuture(ty)
-	seed := snapshotSpawnFrames(parent.CallStack.(*callStack))
-	ctx := contextForStartedStrand(parent, seed, isolated)
+	ctx := contextForStartedStrand(parent, spawnFrames, isolated)
 	run := func() {
 		var result values.BalValue
 		defer func() {
@@ -74,11 +82,7 @@ func startFuture(parent *extern.Context, fn *values.Function, isolated bool, ty 
 			}
 			future.Complete(result, panicValue)
 		}()
-		invokedResult, invokeErr := handle.invoke(ctx, nil)
-		if invokeErr != nil {
-			panic(invokeErr)
-		}
-		result = invokedResult
+		result = invokeBootstrappedCall(ctx, call)
 	}
 	if isolated {
 		go run()

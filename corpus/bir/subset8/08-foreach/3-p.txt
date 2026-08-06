@@ -60,7 +60,7 @@ class FailingIterable {
   iterator() -> object { private int idx; public function init() returns nil; public function next() returns nil|error|{| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:FailingIterator
-      %3 = init(%2) -> bb1;
+      %3 = %2.init() -> bb1;
     }
     bb1 {
       %5 = %3 is nil
@@ -83,7 +83,7 @@ class FailingIterable {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:FailingIterable
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -100,7 +100,7 @@ main() -> nil{
   bb4 {
     f = %3;
     $desugar$0 = f;
-    %7 = iterator($desugar$0) -> bb5;
+    %7 = $desugar$0.iterator() -> bb5;
   }
   bb5 {
     $desugar$2 = %7;
@@ -112,7 +112,7 @@ main() -> nil{
   }
   bb7 {
     PushScopeFrame 9
-    %0 = next((1, $desugar$2)) -> bb9;
+    %0 = (1, $desugar$2).next() -> bb9;
   }
   bb8 {
     return;

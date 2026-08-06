@@ -55,7 +55,7 @@ main() -> nil{
   }
   bb4 {
     %5 = newObject $anon/.:Counter
-    %6 = init(%5) -> bb5;
+    %6 = %5.init() -> bb5;
   }
   bb5 {
     %8 = %6 is nil
@@ -78,7 +78,7 @@ main() -> nil{
   bb9 {
     PushScopeFrame 4
     %1 = (1, value);
-    %2 = $remote$next((1, c)) -> bb10;
+    %2 = (1, c).$remote$next() -> bb10;
   }
   bb10 {
     %3 = %2;

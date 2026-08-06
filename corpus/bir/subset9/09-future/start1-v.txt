@@ -63,7 +63,7 @@ crash() -> nil{
     panic %2;
   }
 }
-$desugar$0() -> int{
+main() -> nil{
   bb0 {
     %1 = argument() -> bb1;
   }
@@ -73,165 +73,110 @@ $desugar$0() -> int{
   }
   bb2 {
     %4 = %3;
-    %5 = combine(%2,%4) -> bb3;
+    %5 = start combine(%2,%4) isolated=false -> bb3;
   }
   bb3 {
-    %0 = %5;
-    return;
-  }
-}
-$desugar$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 20
-    %2 = %1;
-    %3 = ConstantLoad 22
-    %4 = %3;
-    %5 = add(%2,%4) -> bb1;
-  }
-  bb1 {
-    %0 = %5;
-    return;
-  }
-}
-$desugar$4() -> error{
-  bb0 {
-    %1 = failure() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$6() -> int|error{
-  bb0 {
-    %1 = unionFailure() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$8() -> nil{
-  bb0 {
-    %1 = crash() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-main() -> nil{
-  bb0 {
-    %1 = fp $anon/.:$desugar$0
-    $desugar$1 = %1;
-    %3 = start $desugar$1 isolated=false -> bb1;
-  }
-  bb1 {
-    ordered = %3;
-    %5 = ConstantLoad 99
-    %6 = %5;
-    %7 = println(%6) -> bb2;
-  }
-  bb2 {
-    %8 = wait ordered -> bb3;
-  }
-  bb3 {
-    orderedResult = %8;
-    %10 = println(orderedResult) -> bb4;
+    ordered = %5;
+    %7 = ConstantLoad 99
+    %8 = %7;
+    %9 = println(%8) -> bb4;
   }
   bb4 {
-    %11 = fp $anon/.:$desugar$2
-    $desugar$3 = %11;
-    %13 = start $desugar$3 isolated=true -> bb5;
+    %10 = wait ordered -> bb5;
   }
   bb5 {
-    f = %13;
-    %15 = wait f -> bb6;
+    orderedResult = %10;
+    %12 = println(orderedResult) -> bb6;
   }
   bb6 {
-    first = %15;
-    %17 = wait f -> bb7;
+    %13 = ConstantLoad 20
+    %14 = %13;
+    %15 = ConstantLoad 22
+    %16 = %15;
+    %17 = start add(%14,%16) isolated=true -> bb7;
   }
   bb7 {
-    second = %17;
-    %19 = println(first) -> bb8;
+    f = %17;
+    %19 = wait f -> bb8;
   }
   bb8 {
-    %20 = println(second) -> bb9;
+    first = %19;
+    %21 = wait f -> bb9;
   }
   bb9 {
-    %21 = fp $anon/.:$desugar$4
-    $desugar$5 = %21;
-    %23 = start $desugar$5 isolated=true -> bb10;
+    second = %21;
+    %23 = println(first) -> bb10;
   }
   bb10 {
-    errorFuture = %23;
-    %25 = wait errorFuture -> bb11;
+    %24 = println(second) -> bb11;
   }
   bb11 {
-    errorResult = %25;
-    %27 = message(errorResult) -> bb12;
+    %25 = start failure() isolated=true -> bb12;
   }
   bb12 {
-    %28 = println(%27) -> bb13;
+    errorFuture = %25;
+    %27 = wait errorFuture -> bb13;
   }
   bb13 {
-    %29 = fp $anon/.:$desugar$6
-    $desugar$7 = %29;
-    %31 = start $desugar$7 isolated=true -> bb14;
+    errorResult = %27;
+    %29 = message(errorResult) -> bb14;
   }
   bb14 {
-    unionFuture = %31;
-    %33 = wait unionFuture -> bb15;
+    %30 = println(%29) -> bb15;
   }
   bb15 {
+    %31 = start unionFailure() isolated=true -> bb16;
+  }
+  bb16 {
+    unionFuture = %31;
+    %33 = wait unionFuture -> bb17;
+  }
+  bb17 {
     unionResult = %33;
     %35 = unionResult is error
     %36 = %35;
-    %37 = println(%36) -> bb16;
-  }
-  bb16 {
-    %38 = fp $anon/.:$desugar$8
-    $desugar$9 = %38;
-    %40 = start $desugar$9 isolated=true -> bb17;
-  }
-  bb17 {
-    panicFuture = %40;
-    GOTO bb18;
+    %37 = println(%36) -> bb18;
   }
   bb18 {
-    %43 = wait panicFuture -> bb19;
+    %38 = start crash() isolated=true -> bb19;
   }
   bb19 {
-    %42 = %43;
+    panicFuture = %38;
     GOTO bb20;
   }
   bb20 {
-    trappedFirst = %42;
-    GOTO bb21;
+    %41 = wait panicFuture -> bb21;
   }
   bb21 {
-    %46 = wait panicFuture -> bb22;
+    %40 = %41;
+    GOTO bb22;
   }
   bb22 {
-    %45 = %46;
+    trappedFirst = %40;
     GOTO bb23;
   }
   bb23 {
-    trappedSecond = %45;
-    %48 = trappedFirst is error
-    %49 = %48;
-    %50 = println(%49) -> bb24;
+    %44 = wait panicFuture -> bb24;
   }
   bb24 {
-    %51 = println(trappedSecond) -> bb25;
+    %43 = %44;
+    GOTO bb25;
   }
   bb25 {
+    trappedSecond = %43;
+    %46 = trappedFirst is error
+    %47 = %46;
+    %48 = println(%47) -> bb26;
+  }
+  bb26 {
+    %49 = println(trappedSecond) -> bb27;
+  }
+  bb27 {
     return;
   }
   
   error-table {
-    [bb18, bb19] -> bb20, %42
-    [bb21, bb22] -> bb23, %45
+    [bb20, bb21] -> bb22, %40
+    [bb23, bb24] -> bb25, %43
   }
 }

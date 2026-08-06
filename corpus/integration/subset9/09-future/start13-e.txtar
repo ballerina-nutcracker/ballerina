@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> start13-e.bal:25:39
+   |
+25 |     future<int> result = start target(nonIsolated()); // @error
+   |                                       ^^^^^^^^^^^^^

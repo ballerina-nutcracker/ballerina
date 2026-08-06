@@ -70,7 +70,7 @@ class NumberGenerator {
   iterator() -> object { private int idx; public function init() returns nil; private [int...] items; public function next() returns nil|{| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:NumberIterator
-      %3 = init(%2) -> bb1;
+      %3 = %2.init() -> bb1;
     }
     bb1 {
       %5 = %3 is nil
@@ -93,7 +93,7 @@ class NumberGenerator {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:NumberGenerator
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -110,7 +110,7 @@ main() -> nil{
   bb4 {
     gen = %3;
     $desugar$0 = gen;
-    %7 = iterator($desugar$0) -> bb5;
+    %7 = $desugar$0.iterator() -> bb5;
   }
   bb5 {
     $desugar$2 = %7;
@@ -122,7 +122,7 @@ main() -> nil{
   }
   bb7 {
     PushScopeFrame 8
-    %0 = next((1, $desugar$2)) -> bb9;
+    %0 = (1, $desugar$2).next() -> bb9;
   }
   bb8 {
     return;

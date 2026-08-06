@@ -1070,10 +1070,10 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 
 func generateStartAction(ctx context, curBB *bir.BIRBasicBlock, action *ast.BLangStartAction) expressionEffect {
 	pos := ctx.function().loc(action.GetPosition())
-	fnEffect := handleActionOrExpression(ctx, curBB, action.Call)
+	callEffect := generateCallSite(ctx, curBB, action.Call.(ast.Invocable))
 	thenBB := ctx.function().addBB()
 	result := ctx.addTempVar(action.GetDeterminedType())
-	fnEffect.block.Terminator = bir.NewStartAction(*fnEffect.result, action.IsIsolated, thenBB, result, pos)
+	callEffect.block.Terminator = bir.NewStartAction(callEffect.call, action.IsIsolated, thenBB, result, pos)
 	return expressionEffect{result: result, block: thenBB}
 }
 
@@ -1569,24 +1569,34 @@ type callable interface {
 	GetName() ast.IdentifierNode
 }
 
+type callEffect struct {
+	call  bir.CallSite
+	block *bir.BIRBasicBlock
+	pos   diagnostics.Location
+}
+
 func generateResourceAccessCall(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLangClientResourceAccessAction) expressionEffect {
+	return finishCall(ctx, generateResourceCall(ctx, bb, expr), expr.GetDeterminedType())
+}
+
+func generateResourceCall(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLangClientResourceAccessAction) callEffect {
 	curBB := bb
+	pos := expr.GetPosition()
+	birPos := ctx.function().loc(pos)
 	recvEffect := handleActionOrExpression(ctx, curBB, expr.Expr)
 	curBB = recvEffect.block
-	// this should always result in a value
 	receiver := *recvEffect.result
-	pos := ctx.function().loc(expr.GetPosition())
 	var pathSegments []bir.BIROperand
 	for i := range expr.Path {
 		seg := &expr.Path[i]
 		switch seg.Kind {
 		case ast.ResourceAccessSegmentName:
 			temp := ctx.addTempVar(semtypes.StringConst(seg.Name))
-			curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(temp, seg.Name, pos))
+			curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(temp, seg.Name, birPos))
 			pathSegments = append(pathSegments, *temp)
 		case ast.ResourceAccessSegmentComputed:
 			effect := handleActionOrExpression(ctx, curBB, seg.Expr)
-			effect = snapshotIfNeeded(ctx, effect, pos)
+			effect = snapshotIfNeeded(ctx, effect, birPos)
 			curBB = effect.block
 			pathSegments = append(pathSegments, *effect.result)
 		}
@@ -1594,55 +1604,78 @@ func generateResourceAccessCall(ctx context, bb *bir.BIRBasicBlock, expr *ast.BL
 	var args []bir.BIROperand
 	for _, arg := range expr.ArgExprs {
 		effect := handleActionOrExpression(ctx, curBB, arg)
-		effect = snapshotIfNeeded(ctx, effect, pos)
+		effect = snapshotIfNeeded(ctx, effect, birPos)
 		curBB = effect.block
 		args = append(args, *effect.result)
 	}
-	thenBB := ctx.function().addBB()
-	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-	curBB.Terminator = bir.NewResourceFunctionCall(receiver, expr.MethodName, pathSegments, args, thenBB, resultOperand, pos)
-	return expressionEffect{result: resultOperand, block: thenBB}
+	call := bir.CallSite{
+		Kind:         bir.CallKindResource,
+		Args:         args,
+		Receiver:     &receiver,
+		MethodName:   expr.MethodName,
+		PathSegments: pathSegments,
+	}
+	return callEffect{call: call, block: curBB, pos: pos}
 }
 
 func generateCall(ctx context, bb *bir.BIRBasicBlock, callable callable) expressionEffect {
-	curBB := bb
 	if ast.IsStreamOperation(callable) {
-		return streamMethodCall(ctx, curBB, callable)
+		return streamMethodCall(ctx, bb, callable)
 	}
-	var args []bir.BIROperand
-	isMethodCall := false
+	return finishCall(ctx, generateCallSite(ctx, bb, callable), callable.GetDeterminedType())
+}
 
+func finishCall(ctx context, effect callEffect, resultType semtypes.SemType) expressionEffect {
+	thenBB := ctx.function().addBB()
+	result := ctx.addTempVar(resultType)
+	pos := ctx.function().loc(effect.pos)
+	switch effect.call.Kind {
+	case bir.CallKindFunction, bir.CallKindFunctionPointer, bir.CallKindMethod:
+		effect.block.Terminator = bir.NewCall(effect.call, thenBB, result, pos)
+	case bir.CallKindResource:
+		effect.block.Terminator = bir.NewResourceFunctionCall(effect.call, thenBB, result, pos)
+	default:
+		ctx.internalError(fmt.Sprintf("unexpected call kind: %d", effect.call.Kind), effect.pos)
+	}
+	return expressionEffect{result: result, block: thenBB}
+}
+
+func generateCallSite(ctx context, bb *bir.BIRBasicBlock, invocable ast.Invocable) callEffect {
+	if resource, ok := invocable.(*ast.BLangClientResourceAccessAction); ok {
+		return generateResourceCall(ctx, bb, resource)
+	}
+	callable := invocable.(callable)
+	curBB := bb
+	pos := callable.GetPosition()
+	birPos := ctx.function().loc(pos)
+	var args []bir.BIROperand
+	var receiver *bir.BIROperand
 	if callable.Receiver() != nil {
 		effect := handleActionOrExpression(ctx, curBB, callable.Receiver())
 		curBB = effect.block
-		args = append(args, *effect.result)
-		isMethodCall = true
+		receiver = effect.result
+		args = append(args, *receiver)
 	}
-
 	for _, arg := range callable.CallArgs() {
 		effect := handleActionOrExpression(ctx, curBB, arg)
-		effect = snapshotIfNeeded(ctx, effect, ctx.function().loc(callable.GetPosition()))
+		effect = snapshotIfNeeded(ctx, effect, birPos)
 		curBB = effect.block
 		args = append(args, *effect.result)
 	}
-
-	thenBB := ctx.function().addBB()
-	resultOperand := ctx.addTempVar(callable.GetDeterminedType())
 	callName := callable.GetName().GetValue()
 	if _, isRemote := callable.(*ast.BLangRemoteMethodCallAction); isRemote {
 		callName = model.RemoteMethodName(callName)
 	}
-	call := bir.NewCall(bir.InstructionKindCall, args, model.Name(callName), thenBB, resultOperand, ctx.function().loc(callable.GetPosition()))
-	call.IsMethodCall = isMethodCall
-
-	if !isMethodCall {
+	call := bir.CallSite{Kind: bir.CallKindMethod, Args: args, Receiver: receiver, Name: model.Name(callName)}
+	if receiver == nil {
+		call.Kind = bir.CallKindFunction
 		symRef := callable.ResolvedSymbol()
 		sym := ctx.getSymbol(symRef)
 		if sym.Kind() == model.SymbolKindFunction {
 			call.FunctionLookupKey = buildFunctionLookupKeyFromSymbol(ctx.function().pkgCtx, symRef)
 			call.CalleePkg = packageIDFromIdentifier(ctx.compilerContext(), ctx.symbolPackage(symRef))
 		} else {
-			call.Kind = bir.InstructionKindFPCall
+			call.Kind = bir.CallKindFunctionPointer
 			unnarrowedRef := ctx.unnarrowedSymbol(symRef)
 			if op, crossedFunction, ok := lookupVar(ctx, unnarrowedRef); ok {
 				call.FpOperand = op
@@ -1657,11 +1690,7 @@ func generateCall(ctx context, bb *bir.BIRBasicBlock, callable callable) express
 			}
 		}
 	}
-	curBB.Terminator = call
-	return expressionEffect{
-		result: resultOperand,
-		block:  thenBB,
-	}
+	return callEffect{call: call, block: curBB, pos: pos}
 }
 
 func literal(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangLiteral) expressionEffect {
@@ -2208,8 +2237,8 @@ func emitObjectInit(ctx context, curBB *bir.BIRBasicBlock, classLookupKey string
 	initMethodLookupKey := classLookupKey + ".init"
 	initResult := ctx.addTempVar(semtypes.Union(semtypes.Nil, semtypes.Error))
 	initDoneBB := ctx.function().addBB()
-	call := bir.NewCall(bir.InstructionKindCall, args, model.Name("init"), initDoneBB, initResult, ctx.function().loc(pos))
-	call.IsMethodCall = true
+	callSite := bir.CallSite{Kind: bir.CallKindMethod, Args: args, Receiver: &args[0], Name: model.Name("init")}
+	call := bir.NewCall(callSite, initDoneBB, initResult, ctx.function().loc(pos))
 	call.CachedMethodLookupKey = initMethodLookupKey
 	curBB.Terminator = call
 

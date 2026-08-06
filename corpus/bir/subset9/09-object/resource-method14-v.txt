@@ -19,7 +19,7 @@ class foo {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:foo
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil

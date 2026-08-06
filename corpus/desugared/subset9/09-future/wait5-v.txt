@@ -32,47 +32,26 @@
     (value-type null))
     (block-function-body
       (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (invocation number ()))))))))
-      (var-def
         (variable numberFuture (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$1)))))
-      (var-def
-        (variable $desugar$3 (expr
-          (lambda
-            (function $desugar$2 () ()
-              (block-function-body
-                (return
-                  (invocation text ()))))))))
+            (invocation number ())))))
       (var-def
         (variable textFuture (type
           (constrained-type
             (builtin-ref-type future)
             (value-type string))) (expr
           (start-action
-            (simple-var-ref $desugar$3)))))
-      (var-def
-        (variable $desugar$5 (expr
-          (lambda
-            (function $desugar$4 () ()
-              (block-function-body
-                (return
-                  (invocation failure ()))))))))
+            (invocation text ())))))
       (var-def
         (variable failureFuture (type
           (constrained-type
             (builtin-ref-type future)
             (error-type))) (expr
           (start-action
-            (simple-var-ref $desugar$5)))))
+            (invocation failure ())))))
       (var-def
         (variable result (type
           (record-type
@@ -108,19 +87,12 @@
               (simple-var-ref result)
               (literal failureFuture)))))))
       (var-def
-        (variable $desugar$7 (expr
-          (lambda
-            (function $desugar$6 () ()
-              (block-function-body
-                (return
-                  (invocation number ()))))))))
-      (var-def
         (variable repeated (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$7)))))
+            (invocation number ())))))
       (var-def
         (variable repeatedResult (expr
           (multiple-wait-action first
@@ -137,33 +109,19 @@
             (simple-var-ref repeatedResult)
             (literal second)))))
       (var-def
-        (variable $desugar$9 (expr
-          (lambda
-            (function $desugar$8 () ()
-              (block-function-body
-                (return
-                  (invocation number ()))))))))
-      (var-def
         (variable inferredNumber (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$9)))))
-      (var-def
-        (variable $desugar$11 (expr
-          (lambda
-            (function $desugar$10 () ()
-              (block-function-body
-                (return
-                  (invocation text ()))))))))
+            (invocation number ())))))
       (var-def
         (variable inferredText (type
           (constrained-type
             (builtin-ref-type future)
             (value-type string))) (expr
           (start-action
-            (simple-var-ref $desugar$11)))))
+            (invocation text ())))))
       (var-def
         (variable inferred (expr
           (multiple-wait-action number
@@ -192,19 +150,12 @@
         (invocation io println (
           (simple-var-ref inferredTextResult))))
       (var-def
-        (variable $desugar$13 (expr
-          (lambda
-            (function $desugar$12 () ()
-              (block-function-body
-                (return
-                  (invocation number ()))))))))
-      (var-def
         (variable mapped (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$13)))))
+            (invocation number ())))))
       (var-def
         (variable mappedResult (type
           (constrained-type
@@ -225,19 +176,12 @@
             (simple-var-ref mappedResult)
             (literal extra)))))
       (var-def
-        (variable $desugar$15 (expr
-          (lambda
-            (function $desugar$14 () ()
-              (block-function-body
-                (return
-                  (invocation number ()))))))))
-      (var-def
         (variable open (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$15)))))
+            (invocation number ())))))
       (var-def
         (variable openResult (type
           (record-type

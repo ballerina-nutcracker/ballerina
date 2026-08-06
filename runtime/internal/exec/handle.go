@@ -72,13 +72,16 @@ func nativeHandleFor(reg *modules.Registry, lookupKey string) *InvokableHandle {
 }
 
 func NewFunctionValueHandle(env *extern.Env, fnValue *values.Function) (*InvokableHandle, error) {
+	return newLookupKeyHandle(env, fnValue.LookupKey, parentFrameFromFunctionValue(fnValue))
+}
+
+func newLookupKeyHandle(env *extern.Env, lookupKey string, parentFrame *Frame) (*InvokableHandle, error) {
 	reg := env.Registry.(*modules.Registry)
-	lookupKey := fnValue.LookupKey
 	if builtin := reg.GetRuntimeBuiltin(lookupKey); builtin != nil {
 		return newNativeHandle(builtin, reg.GetFunctionDescriptor(lookupKey)), nil
 	}
 	if fn := reg.GetBIRFunction(lookupKey); fn != nil {
-		return newBIRHandle(fn, parentFrameFromFunctionValue(fnValue)), nil
+		return newBIRHandle(fn, parentFrame), nil
 	}
 	if handle := nativeHandleFor(reg, lookupKey); handle != nil {
 		return handle, nil
@@ -93,16 +96,19 @@ func parentFrameFromFunctionValue(fnValue *values.Function) *Frame {
 	return fnValue.ParentFrame.(*Frame)
 }
 
-func newResourceHandle(ctx *extern.Context, receiver *values.Object, match *values.ResourceEntry, path []values.BalValue) *InvokableHandle {
-	descriptor := ctx.Env.Registry.(*modules.Registry).GetFunctionDescriptor(match.FunctionLookupKey)
+func newResourceHandle(env *extern.Env, receiver *values.Object, match *values.ResourceEntry, path []values.BalValue) (*InvokableHandle, error) {
+	target, err := newLookupKeyHandle(env, match.FunctionLookupKey, nil)
+	if err != nil {
+		return nil, err
+	}
 	return newInvokableHandle(
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			full := buildResourceCallArgs(ctx, receiver, match, path, args)
-			return lookupAndExecute(ctx, nil, full, match.FunctionLookupKey)
+			return target.invoke(ctx, full)
 		},
-		descriptor,
+		target.descriptor,
 		resourcePathParamCount(match),
-	)
+	), nil
 }
 
 func newInvokableHandle(

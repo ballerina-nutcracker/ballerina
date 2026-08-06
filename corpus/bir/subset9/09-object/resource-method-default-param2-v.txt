@@ -27,7 +27,7 @@ class Store {
 main() -> nil|error{
   bb0 {
     %1 = newObject $anon/.:Store
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil

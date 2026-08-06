@@ -74,12 +74,12 @@ main() -> nil{
     PushScopeFrame 8
     %0 = fp $anon/.:$anonFunc$_1
     $desugar$2 = %0;
-    %2 = $desugar$0($desugar$2) -> bb2;
+    %2 = (1, $desugar$0)($desugar$2) -> bb2;
   }
   bb2 {
     $desugar$3 = %2;
     %4 = $desugar$3;
-    %5 = narrowedWithLambdaArg($desugar$2,%4) -> bb3;
+    %5 = (1, narrowedWithLambdaArg)($desugar$2,%4) -> bb3;
   }
   bb3 {
     %6 = %5;
@@ -102,11 +102,11 @@ main() -> nil{
   }
   bb6 {
     PushScopeFrame 5
-    %0 = $desugar$4() -> bb7;
+    %0 = (1, $desugar$4)() -> bb7;
   }
   bb7 {
     $desugar$6 = %0;
-    %2 = narrowedWithInlineRecord($desugar$6) -> bb8;
+    %2 = (1, narrowedWithInlineRecord)($desugar$6) -> bb8;
   }
   bb8 {
     %3 = %2;

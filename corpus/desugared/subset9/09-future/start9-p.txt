@@ -5,17 +5,10 @@
   (function startIndirectly () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (invocation isolatedWorker ()))))))))
       (assignment
         (wildcard-binding-pattern)
         (start-action isolated
-          (simple-var-ref $desugar$1)))))
+          (invocation isolatedWorker ())))))
   (function caller () (
     (value-type null))
     (block-function-body

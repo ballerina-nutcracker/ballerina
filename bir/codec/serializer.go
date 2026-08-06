@@ -428,28 +428,8 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 		bw.writeStringCPEntry(buf, term.TrueBB.ID.Value())
 		bw.writeStringCPEntry(buf, term.FalseBB.ID.Value())
 	case *bir.Call:
-		write(buf, term.IsMethodCall)
-		bw.writePackageCPEntry(buf, term.CalleePkg)
-		bw.writeStringCPEntry(buf, term.Name.Value())
-		bw.writeStringCPEntry(buf, term.FunctionLookupKey)
-
-		bw.writeLength(buf, len(term.Args))
-		for _, arg := range term.Args {
-			bw.writeOperand(buf, &arg)
-		}
-
-		if term.LhsOp != nil {
-			write(buf, uint8(1))
-			bw.writeOperand(buf, term.LhsOp)
-		} else {
-			write(buf, uint8(0))
-		}
-
-		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
-
-		if term.Kind == bir.InstructionKindFPCall {
-			bw.writeOperand(buf, term.FpOperand)
-		}
+		bw.writeCallSite(buf, term.CallSite)
+		bw.writeCallContinuation(buf, &term.BIRTerminatorBase)
 	case *bir.Return:
 	case *bir.Panic:
 		bw.writeOperand(buf, term.ErrorOp)
@@ -460,10 +440,9 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 		bw.writeStringCPEntry(buf, term.LockKey)
 		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
 	case *bir.StartAction:
-		bw.writeOperand(buf, &term.Fn)
+		bw.writeCallSite(buf, term.Call)
 		write(buf, term.IsIsolated)
-		bw.writeOperand(buf, term.LhsOp)
-		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
+		bw.writeCallContinuation(buf, &term.BIRTerminatorBase)
 	case *bir.SingleWaitAction:
 		bw.writeOperand(buf, &term.Future)
 		bw.writeOperand(buf, term.LhsOp)
@@ -485,26 +464,48 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 		bw.writeOperand(buf, term.LhsOp)
 		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
 	case *bir.ResourceFunctionCall:
-		bw.writeOperand(buf, &term.Receiver)
-		bw.writeStringCPEntry(buf, term.MethodName)
-		bw.writeLength(buf, len(term.PathSegments))
-		for i := range term.PathSegments {
-			bw.writeOperand(buf, &term.PathSegments[i])
-		}
-		bw.writeLength(buf, len(term.Args))
-		for i := range term.Args {
-			bw.writeOperand(buf, &term.Args[i])
-		}
-		if term.LhsOp != nil {
-			write(buf, uint8(1))
-			bw.writeOperand(buf, term.LhsOp)
-		} else {
-			write(buf, uint8(0))
-		}
-		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
+		bw.writeCallSite(buf, term.CallSite)
+		bw.writeCallContinuation(buf, &term.BIRTerminatorBase)
 	default:
 		panic(fmt.Sprintf("unsupported terminator type: %T", term))
 	}
+}
+
+func (bw *birWriter) writeCallSite(buf *bytes.Buffer, call bir.CallSite) {
+	write(buf, uint8(call.Kind))
+	bw.writeLength(buf, len(call.Args))
+	for i := range call.Args {
+		bw.writeOperand(buf, &call.Args[i])
+	}
+	switch call.Kind {
+	case bir.CallKindFunction, bir.CallKindFunctionPointer, bir.CallKindMethod:
+		bw.writePackageCPEntry(buf, call.CalleePkg)
+		bw.writeStringCPEntry(buf, call.Name.Value())
+		bw.writeStringCPEntry(buf, call.FunctionLookupKey)
+		switch call.Kind {
+		case bir.CallKindFunctionPointer:
+			bw.writeOperand(buf, call.FpOperand)
+		case bir.CallKindMethod:
+			bw.writeOperand(buf, call.Receiver)
+		}
+	case bir.CallKindResource:
+		bw.writeOperand(buf, call.Receiver)
+		bw.writeStringCPEntry(buf, call.MethodName)
+		bw.writeLength(buf, len(call.PathSegments))
+		for i := range call.PathSegments {
+			bw.writeOperand(buf, &call.PathSegments[i])
+		}
+	default:
+		panic(fmt.Sprintf("unsupported call kind: %d", call.Kind))
+	}
+}
+
+func (bw *birWriter) writeCallContinuation(buf *bytes.Buffer, term *bir.BIRTerminatorBase) {
+	write(buf, term.LhsOp != nil)
+	if term.LhsOp != nil {
+		bw.writeOperand(buf, term.LhsOp)
+	}
+	bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
 }
 
 func (bw *birWriter) writeOperand(buf *bytes.Buffer, op *bir.BIROperand) {

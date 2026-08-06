@@ -30,7 +30,7 @@ main() -> nil|error{
     %2 = newObject $anon/.:Listener
     %3 = ConstantLoad /tmp
     %4 = ConstantLoad true
-    %5 = init(%2,%3,%4) -> bb1;
+    %5 = %2.init(%3,%4) -> bb1;
   }
   bb1 {
     %7 = %5 is nil
@@ -58,7 +58,7 @@ main() -> nil|error{
   }
   bb7 {
     named = %1;
-    %10 = describe(named) -> bb8;
+    %10 = named.describe() -> bb8;
   }
   bb8 {
     %11 = println(%10) -> bb9;
@@ -67,7 +67,7 @@ main() -> nil|error{
     %13 = newObject $anon/.:Listener
     %14 = ConstantLoad /var
     %15 = ConstantLoad true
-    %16 = init(%13,%14,%15) -> bb10;
+    %16 = %13.init(%14,%15) -> bb10;
   }
   bb10 {
     %18 = %16 is nil
@@ -95,7 +95,7 @@ main() -> nil|error{
   }
   bb16 {
     mixed = %12;
-    %21 = describe(mixed) -> bb17;
+    %21 = mixed.describe() -> bb17;
   }
   bb17 {
     %22 = println(%21) -> bb18;
@@ -108,7 +108,7 @@ main() -> nil|error{
   bb19 {
     $desugar$1 = %25;
     %28 = newObject $anon/.:Listener
-    %29 = init(%28,$desugar$0,$desugar$1) -> bb20;
+    %29 = %28.init($desugar$0,$desugar$1) -> bb20;
   }
   bb20 {
     %31 = %29 is nil
@@ -136,7 +136,7 @@ main() -> nil|error{
   }
   bb26 {
     defaulted = %27;
-    %34 = describe(defaulted) -> bb27;
+    %34 = defaulted.describe() -> bb27;
   }
   bb27 {
     %35 = println(%34) -> bb28;

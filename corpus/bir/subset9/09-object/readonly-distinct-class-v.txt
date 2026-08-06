@@ -25,7 +25,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Person
     %2 = ConstantLoad John Smith
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -48,7 +48,7 @@ main() -> nil{
   bb5 {
     %10 = newObject $anon/.:Employee
     %11 = ConstantLoad Alice Johnson
-    %12 = init(%10,%11) -> bb6;
+    %12 = %10.init(%11) -> bb6;
   }
   bb6 {
     %14 = %12 is nil

@@ -37,7 +37,7 @@ main() -> nil|error{
     %5 = ConstantLoad recursive
     %6 = ConstantLoad true
     %7 = newMap {| path: string, recursive: boolean, never... |}{%3=%4, %5=%6} defaults{recursive=$anon/.:$desugar$0}
-    %8 = init(%2,%7) -> bb1;
+    %8 = %2.init(%7) -> bb1;
   }
   bb1 {
     %10 = %8 is nil
@@ -65,7 +65,7 @@ main() -> nil|error{
   }
   bb7 {
     instance = %1;
-    %13 = describe(instance) -> bb8;
+    %13 = instance.describe() -> bb8;
   }
   bb8 {
     %14 = println(%13) -> bb9;

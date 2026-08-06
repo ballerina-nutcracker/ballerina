@@ -22,19 +22,12 @@
     (value-type null))
     (block-function-body
       (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (invocation number ()))))))))
-      (var-def
         (variable started (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$1)))))
+            (invocation number ())))))
       (var-def
         (variable widened (type
           (user-defined-type ValueFuture)) (expr

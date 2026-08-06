@@ -20,7 +20,7 @@ class Client {
 valueFromLock() -> error|{| int... |}{
   bb0 {
     %1 = newObject $anon/.:Client
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -43,7 +43,7 @@ valueFromLock() -> error|{| int... |}{
     GOTO bb6;
   }
   bb6 {
-    %1 = $remote$value((1, c)) -> bb7;
+    %1 = (1, c).$remote$value() -> bb7;
   }
   bb7 {
     %0 = %1;

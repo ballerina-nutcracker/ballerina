@@ -64,7 +64,7 @@ main() -> nil{
     PushScopeFrame 5
     %0 = ConstantLoad 12
     %1 = %0;
-    %2 = narrowed(%1) -> bb2;
+    %2 = (1, narrowed)(%1) -> bb2;
   }
   bb2 {
     %3 = %2;
@@ -83,12 +83,12 @@ main() -> nil{
   }
   bb5 {
     PushScopeFrame 11
-    %0 = $desugar$1() -> bb6;
+    %0 = (1, $desugar$1)() -> bb6;
   }
   bb6 {
     $desugar$2 = %0;
     %2 = $desugar$2;
-    %3 = narrowed(%2) -> bb7;
+    %3 = (2, narrowed)(%2) -> bb7;
   }
   bb7 {
     %4 = %3;
@@ -97,7 +97,7 @@ main() -> nil{
   bb8 {
     %6 = ConstantLoad 11
     %7 = %6;
-    %8 = narrowed(%7) -> bb9;
+    %8 = (2, narrowed)(%7) -> bb9;
   }
   bb9 {
     %9 = %8;
@@ -124,7 +124,7 @@ main() -> nil{
     %2 = ConstantLoad right
     %3 = ConstantLoad 7
     %4 = newMap {| left: int, right: int, never... |}{%0=%1, %2=%3}
-    %5 = narrowedRecord(%4) -> bb14;
+    %5 = (1, narrowedRecord)(%4) -> bb14;
   }
   bb14 {
     %6 = %5;
@@ -148,7 +148,7 @@ main() -> nil{
   bb18 {
     $desugar$3 = %0;
     %2 = $desugar$3;
-    %3 = narrowedAlias(%2) -> bb19;
+    %3 = (1, narrowedAlias)(%2) -> bb19;
   }
   bb19 {
     %4 = %3;
@@ -157,7 +157,7 @@ main() -> nil{
   bb20 {
     %6 = ConstantLoad 14
     %7 = %6;
-    %8 = narrowedAlias(%7) -> bb21;
+    %8 = (1, narrowedAlias)(%7) -> bb21;
   }
   bb21 {
     %9 = %8;
@@ -187,12 +187,12 @@ main() -> nil{
   }
   bb26 {
     PushScopeFrame 11
-    %0 = $desugar$4() -> bb27;
+    %0 = (1, $desugar$4)() -> bb27;
   }
   bb27 {
     $desugar$5 = %0;
     %2 = $desugar$5;
-    %3 = negated(%2) -> bb28;
+    %3 = (1, negated)(%2) -> bb28;
   }
   bb28 {
     %4 = %3;
@@ -201,7 +201,7 @@ main() -> nil{
   bb29 {
     %6 = ConstantLoad 16
     %7 = %6;
-    %8 = negated(%7) -> bb30;
+    %8 = (1, negated)(%7) -> bb30;
   }
   bb30 {
     %9 = %8;

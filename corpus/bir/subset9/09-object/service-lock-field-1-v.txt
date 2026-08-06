@@ -44,7 +44,7 @@ class SimpleListener {
     }
     bb2 {
       PushScopeFrame 1
-      %0 = get((1, svc)) -> bb3;
+      %0 = (1, svc).get() -> bb3;
     }
     bb3 {
       (1, %0) = %0;
@@ -85,7 +85,7 @@ class SimpleListener {
     }
     bb2 {
       PushScopeFrame 1
-      %0 = inc((1, svc)) -> bb3;
+      %0 = (1, svc).inc() -> bb3;
     }
     bb3 {
       PopScopeFrame
@@ -164,16 +164,16 @@ class $service$0 {
 }
 main() -> nil{
   bb0 {
-    %1 = inc(l) -> bb1;
+    %1 = l.inc() -> bb1;
   }
   bb1 {
-    %2 = inc(l) -> bb2;
+    %2 = l.inc() -> bb2;
   }
   bb2 {
-    %3 = inc(l) -> bb3;
+    %3 = l.inc() -> bb3;
   }
   bb3 {
-    %4 = get(l) -> bb4;
+    %4 = l.get() -> bb4;
   }
   bb4 {
     %5 = %4;
@@ -211,7 +211,7 @@ $start() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = start($listener) -> bb5;
+    %3 = $listener.start() -> bb5;
   }
   bb4 {
     return;
@@ -260,7 +260,7 @@ $gracefulStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = gracefulStop($listener) -> bb5;
+    %3 = $listener.gracefulStop() -> bb5;
   }
   bb4 {
     return;
@@ -309,7 +309,7 @@ $immediateStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = immediateStop($listener) -> bb5;
+    %3 = $listener.immediateStop() -> bb5;
   }
   bb4 {
     return;

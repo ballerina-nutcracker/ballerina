@@ -46,10 +46,10 @@ isolated function crash() {
 
 public function main() {
     future<int> ordered = start combine(argument(), argument());
+                                        // @output 1
+                                        // @output 2
     io:println(99); // @output 99
-    // wait is going to start the process
-                    // @output 1
-                    // @output 2
+    // wait is going to start the function body
                     // @output 1000
     int|error orderedResult = wait ordered;
     io:println(orderedResult); // @output 12

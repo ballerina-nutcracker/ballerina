@@ -54,7 +54,7 @@ main() -> nil{
     PushScopeFrame 4
     %0 = ConstantLoad 5
     %1 = %0;
-    %2 = res(%1) -> bb4;
+    %2 = (1, res)(%1) -> bb4;
   }
   bb4 {
     %3 = println(%2) -> bb5;

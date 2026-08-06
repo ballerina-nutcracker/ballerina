@@ -42,7 +42,7 @@ class Foo {
 createFoo(int) -> int|error{
   bb0 {
     %3 = newObject $anon/.:Foo
-    %4 = init(%3,v) -> bb1;
+    %4 = %3.init(v) -> bb1;
   }
   bb1 {
     %6 = %4 is nil
@@ -70,7 +70,7 @@ createFoo(int) -> int|error{
   }
   bb7 {
     f = %2;
-    %9 = getVal(f) -> bb8;
+    %9 = f.getVal() -> bb8;
   }
   bb8 {
     %0 = %9;

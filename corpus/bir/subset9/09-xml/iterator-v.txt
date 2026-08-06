@@ -12,7 +12,7 @@ main() -> nil{
     %9 = iterator(x) -> bb1;
   }
   bb1 {
-    %10 = next(%9) -> bb2;
+    %10 = %9.next() -> bb2;
   }
   bb2 {
     methodNext = %10;
@@ -36,7 +36,7 @@ main() -> nil{
     %0 = iterator((1, x)) -> bb6;
   }
   bb6 {
-    %1 = next(%0) -> bb7;
+    %1 = %0.next() -> bb7;
   }
   bb7 {
     functionNext = %1;
@@ -70,7 +70,7 @@ main() -> nil{
   }
   bb13 {
     PushScopeFrame 7
-    %0 = next((1, $desugar$1)) -> bb15;
+    %0 = (1, $desugar$1).next() -> bb15;
   }
   bb14 {
     %4 = ConstantLoad e
@@ -100,7 +100,7 @@ main() -> nil{
     GOTO bb12;
   }
   bb19 {
-    %8 = next(%7) -> bb20;
+    %8 = %7.next() -> bb20;
   }
   bb20 {
     elementNext = %8;
@@ -134,7 +134,7 @@ main() -> nil{
   }
   bb26 {
     PushScopeFrame 7
-    %0 = next((1, $desugar$5)) -> bb28;
+    %0 = (1, $desugar$5).next() -> bb28;
   }
   bb27 {
     %4 = ConstantLoad comment
@@ -164,7 +164,7 @@ main() -> nil{
     GOTO bb25;
   }
   bb32 {
-    %8 = next(%7) -> bb33;
+    %8 = %7.next() -> bb33;
   }
   bb33 {
     commentNext = %8;
@@ -198,7 +198,7 @@ main() -> nil{
   }
   bb39 {
     PushScopeFrame 7
-    %0 = next((1, $desugar$9)) -> bb41;
+    %0 = (1, $desugar$9).next() -> bb41;
   }
   bb40 {
     %4 = ConstantLoad p
@@ -229,7 +229,7 @@ main() -> nil{
     GOTO bb38;
   }
   bb45 {
-    %9 = next(%8) -> bb46;
+    %9 = %8.next() -> bb46;
   }
   bb46 {
     piNext = %9;
@@ -263,7 +263,7 @@ main() -> nil{
   }
   bb52 {
     PushScopeFrame 7
-    %0 = next((1, $desugar$13)) -> bb54;
+    %0 = (1, $desugar$13).next() -> bb54;
   }
   bb53 {
     %4 = ConstantLoad text
@@ -293,7 +293,7 @@ main() -> nil{
     GOTO bb51;
   }
   bb58 {
-    %8 = next(%7) -> bb59;
+    %8 = %7.next() -> bb59;
   }
   bb59 {
     textNext = %8;
@@ -327,7 +327,7 @@ main() -> nil{
   }
   bb65 {
     PushScopeFrame 7
-    %0 = next((1, $desugar$17)) -> bb67;
+    %0 = (1, $desugar$17).next() -> bb67;
   }
   bb66 {
     PopScopeFrame

@@ -3,7 +3,7 @@ class Foo {
 
   foo() -> nil{
     bb0 {
-      %2 = init(self) -> bb1;
+      %2 = self.init() -> bb1;
     }
     bb1 {
       return;
@@ -23,7 +23,7 @@ class Foo {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Foo
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -39,7 +39,7 @@ main() -> nil{
   }
   bb4 {
     f = %3;
-    %6 = foo(f) -> bb5;
+    %6 = f.foo() -> bb5;
   }
   bb5 {
     return;

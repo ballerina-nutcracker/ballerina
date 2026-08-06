@@ -36,7 +36,7 @@ class C {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:C
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -56,7 +56,7 @@ main() -> nil{
     %7 = %6;
     %8 = newMap {| foo: int, anydata... |}{} defaults{foo=$anon/.:$desugar$0}
     %9 = newMap {| bar: int, anydata... |}{} defaults{bar=$anon/.:$desugar$1}
-    %10 = foo(c,%7,%8,%9) -> bb5;
+    %10 = c.foo(%7,%8,%9) -> bb5;
   }
   bb5 {
     %11 = %10;
@@ -69,7 +69,7 @@ main() -> nil{
     %16 = ConstantLoad 10
     %17 = newMap {| foo: int, anydata... |}{%15=%16} defaults{foo=$anon/.:$desugar$0}
     %18 = newMap {| bar: int, anydata... |}{} defaults{bar=$anon/.:$desugar$1}
-    %19 = foo(c,%14,%17,%18) -> bb7;
+    %19 = c.foo(%14,%17,%18) -> bb7;
   }
   bb7 {
     %20 = %19;
@@ -82,7 +82,7 @@ main() -> nil{
     %25 = ConstantLoad bar
     %26 = ConstantLoad 5
     %27 = newMap {| bar: int, anydata... |}{%25=%26} defaults{bar=$anon/.:$desugar$1}
-    %28 = foo(c,%23,%24,%27) -> bb9;
+    %28 = c.foo(%23,%24,%27) -> bb9;
   }
   bb9 {
     %29 = %28;
@@ -97,7 +97,7 @@ main() -> nil{
     %36 = ConstantLoad bar
     %37 = ConstantLoad 5
     %38 = newMap {| bar: int, anydata... |}{%36=%37} defaults{bar=$anon/.:$desugar$1}
-    %39 = foo(c,%32,%35,%38) -> bb11;
+    %39 = c.foo(%32,%35,%38) -> bb11;
   }
   bb11 {
     %40 = %39;
@@ -112,7 +112,7 @@ main() -> nil{
     %47 = ConstantLoad bar
     %48 = ConstantLoad 5
     %49 = newMap {| bar: int, anydata... |}{%47=%48} defaults{bar=$anon/.:$desugar$1}
-    %50 = foo(c,%43,%46,%49) -> bb13;
+    %50 = c.foo(%43,%46,%49) -> bb13;
   }
   bb13 {
     %51 = %50;

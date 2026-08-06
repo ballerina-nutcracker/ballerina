@@ -452,25 +452,11 @@ func (p *PrettyPrinter) PrintGoto(g *Goto) string {
 }
 
 func (p *PrettyPrinter) PrintResourceFunctionCall(call *ResourceFunctionCall) string {
-	segs := strings.Builder{}
-	for i, seg := range call.PathSegments {
-		if i > 0 {
-			segs.WriteString(",")
-		}
-		segs.WriteString(p.PrintOperand(seg))
-	}
-	args := strings.Builder{}
-	for i, arg := range call.Args {
-		if i > 0 {
-			args.WriteString(",")
-		}
-		args.WriteString(p.PrintOperand(arg))
-	}
-	return fmt.Sprintf("%s = %s->[%s].%s(%s) -> %s;", p.PrintOperand(*call.LhsOp), p.PrintOperand(call.Receiver), segs.String(), call.MethodName, args.String(), call.ThenBB.ID.Value())
+	return fmt.Sprintf("%s = %s -> %s;", p.PrintOperand(*call.LhsOp), p.printCallSite(call.CallSite), call.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintStartAction(action *StartAction) string {
-	return fmt.Sprintf("%s = start %s isolated=%t -> %s;", p.PrintOperand(*action.LhsOp), p.PrintOperand(action.Fn), action.IsIsolated, action.ThenBB.ID.Value())
+	return fmt.Sprintf("%s = start %s isolated=%t -> %s;", p.PrintOperand(*action.LhsOp), p.printCallSite(action.Call), action.IsIsolated, action.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintSingleWaitAction(action *SingleWaitAction) string {
@@ -502,14 +488,37 @@ func (p *PrettyPrinter) PrintMultipleWaitAction(action *MultipleWaitAction) stri
 }
 
 func (p *PrettyPrinter) PrintCall(call *Call) string {
-	args := strings.Builder{}
-	for i, arg := range call.Args {
-		if i > 0 {
-			args.WriteString(",")
+	return fmt.Sprintf("%s = %s -> %s;", p.PrintOperand(*call.LhsOp), p.printCallSite(call.CallSite), call.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) printCallSite(call CallSite) string {
+	switch call.Kind {
+	case CallKindFunction:
+		return fmt.Sprintf("%s(%s)", call.Name.Value(), p.printOperands(call.Args))
+	case CallKindFunctionPointer:
+		name := call.Name.Value()
+		if call.FpOperand != nil {
+			name = p.PrintOperand(*call.FpOperand)
 		}
-		args.WriteString(p.PrintOperand(arg))
+		return fmt.Sprintf("%s(%s)", name, p.printOperands(call.Args))
+	case CallKindMethod:
+		return fmt.Sprintf("%s.%s(%s)", p.PrintOperand(*call.Receiver), call.Name.Value(), p.printOperands(call.Args[1:]))
+	case CallKindResource:
+		return fmt.Sprintf("%s->[%s].%s(%s)", p.PrintOperand(*call.Receiver), p.printOperands(call.PathSegments), call.MethodName, p.printOperands(call.Args))
+	default:
+		panic(fmt.Sprintf("unexpected call kind: %d", call.Kind))
 	}
-	return fmt.Sprintf("%s = %s(%s) -> %s;", p.PrintOperand(*call.LhsOp), call.Name.Value(), args.String(), call.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) printOperands(operands []BIROperand) string {
+	result := strings.Builder{}
+	for i, operand := range operands {
+		if i > 0 {
+			result.WriteString(",")
+		}
+		result.WriteString(p.PrintOperand(operand))
+	}
+	return result.String()
 }
 
 func (p *PrettyPrinter) PrintOperand(operand BIROperand) string {

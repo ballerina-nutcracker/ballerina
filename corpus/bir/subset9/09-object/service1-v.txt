@@ -9,7 +9,7 @@ class MyListener {
       _ = svc;
       _ = attachPoint;
       %6 = ConstantLoad attached
-      %7 = onAttach(svc,%6) -> bb1;
+      %7 = svc.onAttach(%6) -> bb1;
     }
     bb1 {
       %8 = ConstantLoad s
@@ -22,7 +22,7 @@ class MyListener {
     bb0 {
       _ = svc;
       %4 = ConstantLoad detached
-      %5 = onDetach(svc,%4) -> bb1;
+      %5 = svc.onDetach(%4) -> bb1;
     }
     bb1 {
       %6 = ConstantLoad <nil>
@@ -91,7 +91,7 @@ class MyListener {
     }
     bb2 {
       PushScopeFrame 1
-      %0 = trigger((1, svc),(1, message)) -> bb3;
+      %0 = (1, svc).trigger((1, message)) -> bb3;
     }
     bb3 {
       PopScopeFrame
@@ -140,7 +140,7 @@ class $service$0 {
 main() -> nil{
   bb0 {
     %1 = ConstantLoad foo
-    %2 = trigger(l,%1) -> bb1;
+    %2 = l.trigger(%1) -> bb1;
   }
   bb1 {
     return;
@@ -174,7 +174,7 @@ $start() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = start($listener) -> bb5;
+    %3 = $listener.start() -> bb5;
   }
   bb4 {
     return;
@@ -223,7 +223,7 @@ $gracefulStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = gracefulStop($listener) -> bb5;
+    %3 = $listener.gracefulStop() -> bb5;
   }
   bb4 {
     return;
@@ -272,7 +272,7 @@ $immediateStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = immediateStop($listener) -> bb5;
+    %3 = $listener.immediateStop() -> bb5;
   }
   bb4 {
     return;

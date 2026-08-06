@@ -95,7 +95,7 @@ fooBar(function(int) returns int,function(int, int) returns int,int,[int...]...)
   bb2 {
     PushScopeFrame 2
     %0 = (1, x);
-    %1 = single(%0) -> bb3;
+    %1 = (1, single)(%0) -> bb3;
   }
   bb3 {
     (1, %0) = %1;
@@ -108,7 +108,7 @@ fooBar(function(int) returns int,function(int, int) returns int,int,[int...]...)
     %2 = ConstantLoad 0
     %1 = (1, y)[%2];
     %3 = %1;
-    %4 = pair(%0,%3) -> bb5;
+    %4 = (1, pair)(%0,%3) -> bb5;
   }
   bb5 {
     curr = %4;
@@ -132,7 +132,7 @@ fooBar(function(int) returns int,function(int, int) returns int,int,[int...]...)
     %1 = (1, curr);
     %2 = (2, y)[i];
     %3 = %2;
-    %4 = pair(%1,%3) -> bb10;
+    %4 = (2, pair)(%1,%3) -> bb10;
   }
   bb9 {
     (1, %0) = curr;

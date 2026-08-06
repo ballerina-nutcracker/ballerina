@@ -27,205 +27,117 @@ identity(future<string>) -> future<string>{
     return;
   }
 }
-$desugar$0() -> int{
-  bb0 {
-    %1 = number() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$2() -> string{
-  bb0 {
-    %1 = text() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$4() -> error{
-  bb0 {
-    %1 = failure() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$6() -> int{
-  bb0 {
-    %1 = number() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$8() -> int{
-  bb0 {
-    %1 = number() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$10() -> string{
-  bb0 {
-    %1 = text() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$12() -> int{
-  bb0 {
-    %1 = number() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
-$desugar$14() -> int{
-  bb0 {
-    %1 = number() -> bb1;
-  }
-  bb1 {
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
-    %1 = fp $anon/.:$desugar$0
-    $desugar$1 = %1;
-    %3 = start $desugar$1 isolated=false -> bb1;
+    %1 = start number() isolated=false -> bb1;
   }
   bb1 {
-    numberFuture = %3;
-    %5 = fp $anon/.:$desugar$2
-    $desugar$3 = %5;
-    %7 = start $desugar$3 isolated=false -> bb2;
+    numberFuture = %1;
+    %3 = start text() isolated=false -> bb2;
   }
   bb2 {
-    textFuture = %7;
-    %9 = fp $anon/.:$desugar$4
-    $desugar$5 = %9;
-    %11 = start $desugar$5 isolated=false -> bb3;
+    textFuture = %3;
+    %5 = start failure() isolated=false -> bb3;
   }
   bb3 {
-    failureFuture = %11;
-    %13 = identity(textFuture) -> bb4;
+    failureFuture = %5;
+    %7 = identity(textFuture) -> bb4;
   }
   bb4 {
-    %14 = wait {numberFuture: numberFuture, label: %13, failureFuture: failureFuture} -> bb5;
+    %8 = wait {numberFuture: numberFuture, label: %7, failureFuture: failureFuture} -> bb5;
   }
   bb5 {
-    result = %14;
-    %17 = ConstantLoad numberFuture
-    %16 = result[%17];
-    %18 = println(%16) -> bb6;
+    result = %8;
+    %11 = ConstantLoad numberFuture
+    %10 = result[%11];
+    %12 = println(%10) -> bb6;
   }
   bb6 {
-    %20 = ConstantLoad label
-    %19 = result[%20];
-    %21 = println(%19) -> bb7;
+    %14 = ConstantLoad label
+    %13 = result[%14];
+    %15 = println(%13) -> bb7;
   }
   bb7 {
-    %23 = ConstantLoad failureFuture
-    %22 = result[%23];
-    %24 = message(%22) -> bb8;
+    %17 = ConstantLoad failureFuture
+    %16 = result[%17];
+    %18 = message(%16) -> bb8;
   }
   bb8 {
-    %25 = println(%24) -> bb9;
+    %19 = println(%18) -> bb9;
   }
   bb9 {
-    %26 = fp $anon/.:$desugar$6
-    $desugar$7 = %26;
-    %28 = start $desugar$7 isolated=false -> bb10;
+    %20 = start number() isolated=false -> bb10;
   }
   bb10 {
-    repeated = %28;
-    %30 = wait {first: repeated, second: repeated} -> bb11;
+    repeated = %20;
+    %22 = wait {first: repeated, second: repeated} -> bb11;
   }
   bb11 {
-    repeatedResult = %30;
-    %33 = ConstantLoad first
-    %32 = repeatedResult[%33];
-    %34 = println(%32) -> bb12;
+    repeatedResult = %22;
+    %25 = ConstantLoad first
+    %24 = repeatedResult[%25];
+    %26 = println(%24) -> bb12;
   }
   bb12 {
-    %36 = ConstantLoad second
-    %35 = repeatedResult[%36];
-    %37 = println(%35) -> bb13;
+    %28 = ConstantLoad second
+    %27 = repeatedResult[%28];
+    %29 = println(%27) -> bb13;
   }
   bb13 {
-    %38 = fp $anon/.:$desugar$8
-    $desugar$9 = %38;
-    %40 = start $desugar$9 isolated=false -> bb14;
+    %30 = start number() isolated=false -> bb14;
   }
   bb14 {
-    inferredNumber = %40;
-    %42 = fp $anon/.:$desugar$10
-    $desugar$11 = %42;
-    %44 = start $desugar$11 isolated=false -> bb15;
+    inferredNumber = %30;
+    %32 = start text() isolated=false -> bb15;
   }
   bb15 {
-    inferredText = %44;
-    %46 = wait {number: inferredNumber, text: inferredText} -> bb16;
+    inferredText = %32;
+    %34 = wait {number: inferredNumber, text: inferredText} -> bb16;
   }
   bb16 {
-    inferred = %46;
-    %49 = ConstantLoad number
-    %48 = inferred[%49];
-    inferredNumberResult = %48;
-    %52 = ConstantLoad text
-    %51 = inferred[%52];
-    inferredTextResult = %51;
-    %54 = println(inferredNumberResult) -> bb17;
+    inferred = %34;
+    %37 = ConstantLoad number
+    %36 = inferred[%37];
+    inferredNumberResult = %36;
+    %40 = ConstantLoad text
+    %39 = inferred[%40];
+    inferredTextResult = %39;
+    %42 = println(inferredNumberResult) -> bb17;
   }
   bb17 {
-    %55 = println(inferredTextResult) -> bb18;
+    %43 = println(inferredTextResult) -> bb18;
   }
   bb18 {
-    %56 = fp $anon/.:$desugar$12
-    $desugar$13 = %56;
-    %58 = start $desugar$13 isolated=false -> bb19;
+    %44 = start number() isolated=false -> bb19;
   }
   bb19 {
-    mapped = %58;
-    %60 = wait {value: mapped} -> bb20;
+    mapped = %44;
+    %46 = wait {value: mapped} -> bb20;
   }
   bb20 {
-    mappedResult = %60;
-    %62 = ConstantLoad 2
-    %63 = ConstantLoad extra
-    mappedResult[%63] = %62;
-    %65 = ConstantLoad extra
-    %64 = mappedResult[%65];
-    %66 = println(%64) -> bb21;
+    mappedResult = %46;
+    %48 = ConstantLoad 2
+    %49 = ConstantLoad extra
+    mappedResult[%49] = %48;
+    %51 = ConstantLoad extra
+    %50 = mappedResult[%51];
+    %52 = println(%50) -> bb21;
   }
   bb21 {
-    %67 = fp $anon/.:$desugar$14
-    $desugar$15 = %67;
-    %69 = start $desugar$15 isolated=false -> bb22;
+    %53 = start number() isolated=false -> bb22;
   }
   bb22 {
-    open = %69;
-    %71 = wait {value: open} -> bb23;
+    open = %53;
+    %55 = wait {value: open} -> bb23;
   }
   bb23 {
-    openResult = %71;
-    %73 = ConstantLoad 3
-    %74 = ConstantLoad extra
-    openResult[%74] = %73;
-    %76 = ConstantLoad extra
-    %75 = openResult[%76];
-    %77 = println(%75) -> bb24;
+    openResult = %55;
+    %57 = ConstantLoad 3
+    %58 = ConstantLoad extra
+    openResult[%58] = %57;
+    %60 = ConstantLoad extra
+    %59 = openResult[%60];
+    %61 = println(%59) -> bb24;
   }
   bb24 {
     return;

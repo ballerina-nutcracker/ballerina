@@ -12,7 +12,7 @@ class Listener {
       %7 = println(%6) -> bb1;
     }
     bb1 {
-      %8 = value(svc) -> bb2;
+      %8 = svc.value() -> bb2;
     }
     bb2 {
       %9 = %8;
@@ -71,7 +71,7 @@ class ExplicitListener {
       %7 = println(%6) -> bb1;
     }
     bb1 {
-      %8 = value(svc) -> bb2;
+      %8 = svc.value() -> bb2;
     }
     bb2 {
       %9 = %8;
@@ -147,7 +147,7 @@ class $service$0 {
 
   value() -> int{
     bb0 {
-      %2 = increment(self) -> bb1;
+      %2 = self.increment() -> bb1;
     }
     bb1 {
       %0 = %2;
@@ -182,7 +182,7 @@ class $service$1 {
 
   value() -> int{
     bb0 {
-      %2 = increment(self) -> bb1;
+      %2 = self.increment() -> bb1;
     }
     bb1 {
       %0 = %2;
@@ -216,7 +216,7 @@ $start() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = start($listener) -> bb5;
+    %3 = $listener.start() -> bb5;
   }
   bb4 {
     return;
@@ -265,7 +265,7 @@ $gracefulStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = gracefulStop($listener) -> bb5;
+    %3 = $listener.gracefulStop() -> bb5;
   }
   bb4 {
     return;
@@ -314,7 +314,7 @@ $immediateStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = immediateStop($listener) -> bb5;
+    %3 = $listener.immediateStop() -> bb5;
   }
   bb4 {
     return;

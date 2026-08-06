@@ -19,33 +19,19 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (invocation printAndReturn (
-                    (literal 1))))))))))
       (assignment
         (wildcard-binding-pattern)
         (start-action
-          (simple-var-ref $desugar$1)))
-      (var-def
-        (variable $desugar$3 (expr
-          (lambda
-            (function $desugar$2 () ()
-              (block-function-body
-                (return
-                  (invocation printAndReturn (
-                    (literal 2))))))))))
+          (invocation printAndReturn (
+            (literal 1)))))
       (var-def
         (variable second (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$3)))))
+            (invocation printAndReturn (
+              (literal 2)))))))
       (expression-stmt
         (invocation io println (
           (literal 0))))
@@ -60,20 +46,13 @@
         (invocation io println (
           (simple-var-ref secondResult))))
       (var-def
-        (variable $desugar$5 (expr
-          (lambda
-            (function $desugar$4 () ()
-              (block-function-body
-                (return
-                  (invocation printAndReturn (
-                    (literal 3))))))))))
-      (var-def
         (variable completed (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$5)))))
+            (invocation printAndReturn (
+              (literal 3)))))))
       (var-def
         (variable completedResult (type
           (union-type
@@ -84,18 +63,11 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref completedResult))))
-      (var-def
-        (variable $desugar$7 (expr
-          (lambda
-            (function $desugar$6 () ()
-              (block-function-body
-                (return
-                  (invocation printAndReturn (
-                    (literal 4))))))))))
       (assignment
         (wildcard-binding-pattern)
         (start-action
-          (simple-var-ref $desugar$7)))
+          (invocation printAndReturn (
+            (literal 4)))))
       (assignment
         (simple-var-ref completedResult)
         (single-wait-action
@@ -104,31 +76,17 @@
         (invocation io println (
           (simple-var-ref completedResult))))
       (var-def
-        (variable $desugar$9 (expr
-          (lambda
-            (function $desugar$8 () ()
-              (block-function-body
-                (return
-                  (invocation crash ()))))))))
-      (var-def
         (variable failed (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$9)))))
-      (var-def
-        (variable $desugar$11 (expr
-          (lambda
-            (function $desugar$10 () ()
-              (block-function-body
-                (return
-                  (invocation printAndReturn (
-                    (literal 5))))))))))
+            (invocation crash ())))))
       (assignment
         (wildcard-binding-pattern)
         (start-action
-          (simple-var-ref $desugar$11)))
+          (invocation printAndReturn (
+            (literal 5)))))
       (var-def
         (variable trapped (type
           (union-type
@@ -142,18 +100,11 @@
           (type-test-expr is
             (simple-var-ref trapped)
             (error-type)))))
-      (var-def
-        (variable $desugar$13 (expr
-          (lambda
-            (function $desugar$12 () ()
-              (block-function-body
-                (return
-                  (invocation printAndReturn (
-                    (literal 6))))))))))
       (assignment
         (wildcard-binding-pattern)
         (start-action
-          (simple-var-ref $desugar$13)))
+          (invocation printAndReturn (
+            (literal 6)))))
       (expression-stmt
         (invocation io println (
           (literal 7)))))))

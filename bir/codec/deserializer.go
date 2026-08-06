@@ -896,60 +896,15 @@ func (br *birReader) readTerminator(varMap map[int32]*bir.BIRLocalVariableDcl) b
 			},
 		}
 	case bir.InstructionKindCall, bir.InstructionKindFPCall:
-		var isMethodCall bool
-		br.read(&isMethodCall)
-
-		pkg := br.readPackageCPEntry()
-		name := br.readStringCPEntry()
-		functionLookupKey := br.readStringCPEntry()
-		argsCount := br.readLength()
-
-		args := make([]bir.BIROperand, argsCount)
-		for k := 0; k < int(argsCount); k++ {
-			arg := br.readOperand(varMap)
-			args[k] = *arg
-		}
-
-		var lshOpExists bool
-		br.read(&lshOpExists)
-
-		var lhsOp *bir.BIROperand
-		if lshOpExists {
-			lhsOp = br.readOperand(varMap)
-		}
-
-		thenBBId := br.readStringCPEntry()
-
-		var fpOperand *bir.BIROperand
-		if termInstructionKind == bir.InstructionKindFPCall {
-			fpOperand = br.readOperand(varMap)
-		}
-
-		return &bir.Call{
-			Kind:              termInstructionKind,
-			IsMethodCall:      isMethodCall,
-			CalleePkg:         pkg,
-			Name:              name,
-			FunctionLookupKey: string(functionLookupKey),
-			Args:              args,
-			FpOperand:         fpOperand,
-			BIRTerminatorBase: bir.BIRTerminatorBase{
-				ThenBB: &bir.BIRBasicBlock{
-					ID: thenBBId,
-				},
-				BIRInstructionBase: bir.BIRInstructionBase{
-					BIRNodeBase: bir.BIRNodeBase{Pos: pos},
-					LhsOp:       lhsOp,
-				},
-			},
-		}
+		call := br.readCallSite(varMap)
+		lhsOp, thenBB := br.readCallContinuation(varMap)
+		return bir.NewCall(call, thenBB, lhsOp, pos)
 	case bir.InstructionKindAsyncCall:
-		fn := br.readOperand(varMap)
+		call := br.readCallSite(varMap)
 		var isolated bool
 		br.read(&isolated)
-		lhsOp := br.readOperand(varMap)
-		thenBBId := br.readStringCPEntry()
-		return bir.NewStartAction(*fn, isolated, &bir.BIRBasicBlock{ID: thenBBId}, lhsOp, pos)
+		lhsOp, thenBB := br.readCallContinuation(varMap)
+		return bir.NewStartAction(call, isolated, thenBB, lhsOp, pos)
 	case bir.InstructionKindWait:
 		future := br.readOperand(varMap)
 		lhsOp := br.readOperand(varMap)
@@ -999,39 +954,9 @@ func (br *birReader) readTerminator(varMap map[int32]*bir.BIRLocalVariableDcl) b
 			LockKey: string(key),
 		}
 	case bir.InstructionKindResourceCall:
-		receiver := br.readOperand(varMap)
-		methodNameN := br.readStringCPEntry()
-		methodName := methodNameN.Value()
-		segCount := br.readLength()
-		pathSegments := make([]bir.BIROperand, segCount)
-		for k := 0; k < int(segCount); k++ {
-			pathSegments[k] = *br.readOperand(varMap)
-		}
-		argCount := br.readLength()
-		args := make([]bir.BIROperand, argCount)
-		for k := 0; k < int(argCount); k++ {
-			args[k] = *br.readOperand(varMap)
-		}
-		var lhsExists bool
-		br.read(&lhsExists)
-		var lhsOp *bir.BIROperand
-		if lhsExists {
-			lhsOp = br.readOperand(varMap)
-		}
-		thenBBId := br.readStringCPEntry()
-		return &bir.ResourceFunctionCall{
-			BIRTerminatorBase: bir.BIRTerminatorBase{
-				BIRInstructionBase: bir.BIRInstructionBase{
-					BIRNodeBase: bir.BIRNodeBase{Pos: pos},
-					LhsOp:       lhsOp,
-				},
-				ThenBB: &bir.BIRBasicBlock{ID: thenBBId},
-			},
-			Receiver:     *receiver,
-			MethodName:   methodName,
-			PathSegments: pathSegments,
-			Args:         args,
-		}
+		call := br.readCallSite(varMap)
+		lhsOp, thenBB := br.readCallContinuation(varMap)
+		return bir.NewResourceFunctionCall(call, thenBB, lhsOp, pos)
 	case bir.InstructionKindUnlock:
 		key := br.readStringCPEntry()
 		thenBBId := br.readStringCPEntry()
@@ -1047,6 +972,67 @@ func (br *birReader) readTerminator(varMap map[int32]*bir.BIRLocalVariableDcl) b
 	default:
 		panic(fmt.Sprintf("unsupported terminator kind: %d", termInstructionKind))
 	}
+}
+
+func (br *birReader) readCallSite(varMap map[int32]*bir.BIRLocalVariableDcl) bir.CallSite {
+	var rawKind uint8
+	br.read(&rawKind)
+	kind := bir.CallKind(rawKind)
+	argCount := br.readLength()
+	args := make([]bir.BIROperand, argCount)
+	for i := range args {
+		args[i] = *br.readOperand(varMap)
+	}
+	switch kind {
+	case bir.CallKindFunction, bir.CallKindFunctionPointer, bir.CallKindMethod:
+		pkg := br.readPackageCPEntry()
+		name := br.readStringCPEntry()
+		lookupKey := br.readStringCPEntry()
+		var fpOperand, receiver *bir.BIROperand
+		switch kind {
+		case bir.CallKindFunctionPointer:
+			fpOperand = br.readOperand(varMap)
+		case bir.CallKindMethod:
+			receiver = br.readOperand(varMap)
+		}
+		return bir.CallSite{
+			Kind:              kind,
+			Args:              args,
+			CalleePkg:         pkg,
+			Name:              name,
+			FunctionLookupKey: lookupKey.Value(),
+			FpOperand:         fpOperand,
+			Receiver:          receiver,
+		}
+	case bir.CallKindResource:
+		receiver := br.readOperand(varMap)
+		methodName := br.readStringCPEntry()
+		segCount := br.readLength()
+		segments := make([]bir.BIROperand, segCount)
+		for i := range segments {
+			segments[i] = *br.readOperand(varMap)
+		}
+		return bir.CallSite{
+			Kind:         bir.CallKindResource,
+			Args:         args,
+			Receiver:     receiver,
+			MethodName:   methodName.Value(),
+			PathSegments: segments,
+		}
+	default:
+		panic(fmt.Sprintf("unsupported call site kind: %d", kind))
+	}
+}
+
+func (br *birReader) readCallContinuation(varMap map[int32]*bir.BIRLocalVariableDcl) (*bir.BIROperand, *bir.BIRBasicBlock) {
+	var lhsExists bool
+	br.read(&lhsExists)
+	var lhsOp *bir.BIROperand
+	if lhsExists {
+		lhsOp = br.readOperand(varMap)
+	}
+	thenBBId := br.readStringCPEntry()
+	return lhsOp, &bir.BIRBasicBlock{ID: thenBBId}
 }
 
 func (br *birReader) readOperand(varMap map[int32]*bir.BIRLocalVariableDcl) *bir.BIROperand {

@@ -2153,7 +2153,7 @@ strictAccesses() -> nil{
   }
   bb1 {
     %10 = newObject $anon/.:Counter
-    %11 = init(%10) -> bb2;
+    %11 = %10.init() -> bb2;
   }
   bb2 {
     %13 = %11 is nil

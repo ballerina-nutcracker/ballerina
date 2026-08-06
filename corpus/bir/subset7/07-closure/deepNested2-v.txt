@@ -89,7 +89,7 @@ main() -> nil{
   bb2 {
     PushScopeFrame 6
     %0 = (1, p);
-    %1 = f(%0) -> bb4;
+    %1 = (1, f)(%0) -> bb4;
   }
   bb3 {
     %8 = p;

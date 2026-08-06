@@ -43,7 +43,7 @@ main() -> nil|error{
   bb0 {
     %2 = newObject $anon/.:Counter
     %3 = ConstantLoad 5
-    %4 = init(%2,%3) -> bb1;
+    %4 = %2.init(%3) -> bb1;
   }
   bb1 {
     %6 = %4 is nil
@@ -71,7 +71,7 @@ main() -> nil|error{
   }
   bb7 {
     c = %1;
-    %9 = get(c) -> bb8;
+    %9 = c.get() -> bb8;
   }
   bb8 {
     %10 = %9;

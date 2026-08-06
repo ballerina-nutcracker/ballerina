@@ -70,21 +70,14 @@
     (value-type null))
     (block-function-body
       (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $desugar$0 () ()
-              (block-function-body
-                (return
-                  (invocation combine (
-                    (invocation argument ())
-                    (invocation argument ()))))))))))
-      (var-def
         (variable ordered (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action
-            (simple-var-ref $desugar$1)))))
+            (invocation combine (
+              (invocation argument ())
+              (invocation argument ())))))))
       (expression-stmt
         (invocation io println (
           (literal 99))))
@@ -99,21 +92,14 @@
         (invocation io println (
           (simple-var-ref orderedResult))))
       (var-def
-        (variable $desugar$3 (expr
-          (lambda
-            (function $desugar$2 () ()
-              (block-function-body
-                (return
-                  (invocation add (
-                    (literal 20)
-                    (literal 22))))))))))
-      (var-def
         (variable f (type
           (constrained-type
             (builtin-ref-type future)
             (value-type int))) (expr
           (start-action isolated
-            (simple-var-ref $desugar$3)))))
+            (invocation add (
+              (literal 20)
+              (literal 22)))))))
       (var-def
         (variable first (type
           (union-type
@@ -135,19 +121,12 @@
         (invocation io println (
           (simple-var-ref second))))
       (var-def
-        (variable $desugar$5 (expr
-          (lambda
-            (function $desugar$4 () ()
-              (block-function-body
-                (return
-                  (invocation failure ()))))))))
-      (var-def
         (variable errorFuture (type
           (constrained-type
             (builtin-ref-type future)
             (error-type))) (expr
           (start-action isolated
-            (simple-var-ref $desugar$5)))))
+            (invocation failure ())))))
       (var-def
         (variable errorResult (type
           (error-type)) (expr
@@ -158,13 +137,6 @@
           (invocation lang.error message (
             (simple-var-ref errorResult))))))
       (var-def
-        (variable $desugar$7 (expr
-          (lambda
-            (function $desugar$6 () ()
-              (block-function-body
-                (return
-                  (invocation unionFailure ()))))))))
-      (var-def
         (variable unionFuture (type
           (constrained-type
             (builtin-ref-type future)
@@ -172,7 +144,7 @@
               (value-type int)
               (error-type)))) (expr
           (start-action isolated
-            (simple-var-ref $desugar$7)))))
+            (invocation unionFailure ())))))
       (var-def
         (variable unionResult (type
           (union-type
@@ -186,19 +158,12 @@
             (simple-var-ref unionResult)
             (error-type)))))
       (var-def
-        (variable $desugar$9 (expr
-          (lambda
-            (function $desugar$8 () ()
-              (block-function-body
-                (return
-                  (invocation crash ()))))))))
-      (var-def
         (variable panicFuture (type
           (constrained-type
             (builtin-ref-type future)
             (value-type null))) (expr
           (start-action isolated
-            (simple-var-ref $desugar$9)))))
+            (invocation crash ())))))
       (var-def
         (variable trappedFirst (expr
           (trap-expr

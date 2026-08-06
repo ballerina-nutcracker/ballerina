@@ -17,6 +17,8 @@
 package exec
 
 import (
+	"fmt"
+
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/runtime/internal/modules"
@@ -28,10 +30,46 @@ func execStartAction(ctx *extern.Context, action *bir.StartAction, frame *Frame)
 	if ctx.HoldsLock() {
 		panic(values.NewErrorWithMessage("attempted strand start while holding a lock"))
 	}
-	fn := getOperandValue(ctx, &action.Fn, frame).(*values.Function)
-	future := startFuture(ctx, fn, action.IsIsolated, action.LhsOp.VariableDcl.GetType())
+	call := bootstrapCall(ctx, &action.Call, frame)
+	spawnFrames := snapshotSpawnFrames(ctx.CallStack.(*callStack))
+	spawnFrames[len(spawnFrames)-1].location = action.Pos
+	future := startFuture(ctx, call, spawnFrames, action.IsIsolated, action.LhsOp.VariableDcl.GetType())
 	setOperandValue(ctx, action.LhsOp, frame, future)
 	return action.ThenBB
+}
+
+func bootstrapCall(ctx *extern.Context, call *bir.CallSite, frame *Frame) *bootstrappedCall {
+	args := extractArgs(ctx, call.Args, frame)
+	var handle *InvokableHandle
+	var err error
+	switch call.Kind {
+	case bir.CallKindFunctionPointer:
+		fn := getOperandValue(ctx, call.FpOperand, frame).(*values.Function)
+		handle, err = NewFunctionValueHandle(ctx.Env, fn)
+	case bir.CallKindMethod:
+		receiver := getOperandValue(ctx, call.Receiver, frame).(*values.Object)
+		lookupKey, found := receiver.MethodLookupKey(call.Name.Value())
+		if !found {
+			panic(values.NewErrorWithMessage("function not found: " + call.Name.Value()))
+		}
+		handle, err = newLookupKeyHandle(ctx.Env, lookupKey, nil)
+	case bir.CallKindResource:
+		receiver := getOperandValue(ctx, call.Receiver, frame).(*values.Object)
+		path := extractArgs(ctx, call.PathSegments, frame)
+		impl, ok := LookupResourceMethod(ctx, receiver, call.MethodName, path)
+		if !ok {
+			panic(values.NewErrorWithMessage("no matching resource method"))
+		}
+		handle = impl.(*InvokableHandle)
+	case bir.CallKindFunction:
+		handle, err = newLookupKeyHandle(ctx.Env, call.FunctionLookupKey, nil)
+	default:
+		panic(fmt.Sprintf("unexpected call kind: %d", call.Kind))
+	}
+	if err != nil {
+		panic(err)
+	}
+	return &bootstrappedCall{handle: handle, args: args}
 }
 
 func execSingleWaitAction(ctx *extern.Context, action *bir.SingleWaitAction, frame *Frame) *bir.BIRBasicBlock {
@@ -167,7 +205,7 @@ func execCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRBas
 }
 
 func executeCall(ctx *extern.Context, callInfo *bir.Call, args []values.BalValue) values.BalValue {
-	if callInfo.IsMethodCall {
+	if callInfo.Kind == bir.CallKindMethod {
 		return dispatchMethodCall(ctx, callInfo, args)
 	}
 	if callInfo.CachedBIRFunc != nil {
@@ -188,12 +226,11 @@ func executeCall(ctx *extern.Context, callInfo *bir.Call, args []values.BalValue
 }
 
 func dispatchMethodCall(ctx *extern.Context, callInfo *bir.Call, args []values.BalValue) values.BalValue {
-	receiverObj := args[0].(*values.Object)
-	lookupKey, found := receiverObj.MethodLookupKey(string(callInfo.Name))
+	receiver := args[0].(*values.Object)
+	lookupKey, found := receiver.MethodLookupKey(callInfo.Name.Value())
 	if !found {
-		panic("function not found: " + callInfo.Name.Value())
+		panic(values.NewErrorWithMessage("function not found: " + callInfo.Name.Value()))
 	}
-
 	// The same call site can be polymorphic across executions (e.g., iterating over a list
 	// of objects with different concrete types). Cache only when it matches the receiver.
 	if callInfo.CachedMethodLookupKey == lookupKey {
@@ -208,7 +245,6 @@ func dispatchMethodCall(ctx *extern.Context, callInfo *bir.Call, args []values.B
 			return result
 		}
 	}
-
 	callInfo.CachedBIRFunc = nil
 	callInfo.CachedNativeFunc = nil
 	callInfo.CachedMethodLookupKey = lookupKey
@@ -224,27 +260,21 @@ func lookupAndExecute(ctx *extern.Context, callInfo *bir.Call, args []values.Bal
 	if builtin := reg.GetRuntimeBuiltin(lookupKey); builtin != nil {
 		return builtin(ctx, args)
 	}
-	isResourceFnCall := callInfo == nil
 	fn := reg.GetBIRFunction(lookupKey)
 	if fn != nil {
-		if !isResourceFnCall {
-			callInfo.CachedBIRFunc = fn
-		}
+		callInfo.CachedBIRFunc = fn
 		return executeFunction(ctx, fn, args, nil), nil
 	}
 	externFn := reg.GetNativeFunction(lookupKey)
 	if externFn != nil {
-		if !isResourceFnCall {
-			callInfo.CachedNativeFunc = externFn.Impl
-		}
+		callInfo.CachedNativeFunc = externFn.Impl
 		return externFn.Impl(ctx, args)
 	}
-	// In resource function case we have already validated function exists using RTable
 	panic(values.NewErrorWithMessage("function not found: " + callInfo.Name.Value()))
 }
 
 func execResourceCall(ctx *extern.Context, instr *bir.ResourceFunctionCall, frame *Frame) *bir.BIRBasicBlock {
-	receiver := getOperandValue(ctx, &instr.Receiver, frame).(*values.Object)
+	receiver := getOperandValue(ctx, instr.Receiver, frame).(*values.Object)
 	pathVals := extractArgs(ctx, instr.PathSegments, frame)
 	impl, ok := LookupResourceMethod(ctx, receiver, instr.MethodName, pathVals)
 	if !ok {
@@ -337,10 +367,6 @@ func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRB
 	fnValue := getOperandValue(ctx, callInfo.FpOperand, frame).(*values.Function)
 	lookupKey := fnValue.LookupKey
 	var result values.BalValue
-	var parentFrame *Frame
-	if fnValue.ParentFrame != nil {
-		parentFrame = fnValue.ParentFrame.(*Frame)
-	}
 	reg := ctx.Env.Registry.(*modules.Registry)
 	if builtin := reg.GetRuntimeBuiltin(lookupKey); builtin != nil {
 		var err error
@@ -349,7 +375,7 @@ func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRB
 			panicWithExternError(err)
 		}
 	} else if fn := reg.GetBIRFunction(lookupKey); fn != nil {
-		result = executeFunction(ctx, fn, args, parentFrame)
+		result = executeFunction(ctx, fn, args, parentFrameFromFunctionValue(fnValue))
 	} else if externFn := reg.GetNativeFunction(lookupKey); externFn != nil {
 		var err error
 		result, err = externFn.Impl(ctx, args)
@@ -357,7 +383,7 @@ func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRB
 			panicWithExternError(err)
 		}
 	} else {
-		panic("function not found: " + callInfo.Name.Value())
+		panic(values.NewErrorWithMessage("function not found: " + lookupKey))
 	}
 	if callInfo.LhsOp != nil {
 		setOperandValue(ctx, callInfo.LhsOp, frame, result)

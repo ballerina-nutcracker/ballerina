@@ -17,13 +17,21 @@
 package bir
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type BIRTerminator = BIRInstruction
+
+type CallKind uint8
+
+const (
+	CallKindFunction CallKind = iota
+	CallKindFunctionPointer
+	CallKindMethod
+	CallKindResource
+)
 
 type (
 	BIRTerminatorBase struct {
@@ -35,21 +43,26 @@ type (
 		BIRTerminatorBase
 	}
 
-	Call struct {
-		BIRTerminatorBase
-		Kind              InstructionKind
-		IsMethodCall      bool
+	CallSite struct {
+		Kind              CallKind
 		Args              []BIROperand
 		Name              model.Name
 		CalleePkg         *model.PackageID
-		CalleeFlags       common.Set[model.Flag]
 		FunctionLookupKey string
-		CachedBIRFunc     *BIRFunction
+		FpOperand         *BIROperand
+		Receiver          *BIROperand
+		MethodName        string
+		PathSegments      []BIROperand
+	}
+
+	Call struct {
+		BIRTerminatorBase
+		CallSite
+		CachedBIRFunc *BIRFunction
 		// CachedMethodLookupKey is used only for method calls. It ensures CachedBIRFunc
 		// matches the receiver object's resolved method lookup key for this call site.
 		CachedMethodLookupKey string
 		CachedNativeFunc      extern.NativeFunc
-		FpOperand             *BIROperand // For FP_CALL: the operand holding the function value
 	}
 
 	Return struct {
@@ -80,15 +93,12 @@ type (
 
 	ResourceFunctionCall struct {
 		BIRTerminatorBase
-		Receiver     BIROperand
-		MethodName   string
-		PathSegments []BIROperand
-		Args         []BIROperand
+		CallSite
 	}
 
 	StartAction struct {
 		BIRTerminatorBase
-		Fn         BIROperand
+		Call       CallSite
 		IsIsolated bool
 	}
 
@@ -155,14 +165,17 @@ func NewGoto(thenBB *BIRBasicBlock, pos Location) *Goto {
 }
 
 func (c *Call) GetKind() InstructionKind {
-	return c.Kind
+	if c.Kind == CallKindFunctionPointer {
+		return InstructionKindFPCall
+	}
+	return InstructionKindCall
 }
 
 func (c *Call) GetLhsOperand() *BIROperand {
 	return c.LhsOp
 }
 
-func NewCall(kind InstructionKind, args []BIROperand, name model.Name, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *Call {
+func NewCall(call CallSite, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *Call {
 	return &Call{
 		BIRTerminatorBase: BIRTerminatorBase{
 			BIRInstructionBase: BIRInstructionBase{
@@ -173,9 +186,7 @@ func NewCall(kind InstructionKind, args []BIROperand, name model.Name, thenBB *B
 			},
 			ThenBB: thenBB,
 		},
-		Kind: kind,
-		Args: args,
-		Name: name,
+		CallSite: call,
 	}
 }
 
@@ -244,7 +255,7 @@ func (r *ResourceFunctionCall) GetLhsOperand() *BIROperand {
 	return r.LhsOp
 }
 
-func NewResourceFunctionCall(receiver BIROperand, methodName string, pathSegments, args []BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *ResourceFunctionCall {
+func NewResourceFunctionCall(call CallSite, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *ResourceFunctionCall {
 	return &ResourceFunctionCall{
 		BIRTerminatorBase: BIRTerminatorBase{
 			BIRInstructionBase: BIRInstructionBase{
@@ -253,23 +264,20 @@ func NewResourceFunctionCall(receiver BIROperand, methodName string, pathSegment
 			},
 			ThenBB: thenBB,
 		},
-		Receiver:     receiver,
-		MethodName:   methodName,
-		PathSegments: pathSegments,
-		Args:         args,
+		CallSite: call,
 	}
 }
 
 func (s *StartAction) GetKind() InstructionKind   { return InstructionKindAsyncCall }
 func (s *StartAction) GetLhsOperand() *BIROperand { return s.LhsOp }
 
-func NewStartAction(fn BIROperand, isolated bool, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *StartAction {
+func NewStartAction(call CallSite, isolated bool, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *StartAction {
 	return &StartAction{
 		BIRTerminatorBase: BIRTerminatorBase{
 			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
 			ThenBB:             thenBB,
 		},
-		Fn:         fn,
+		Call:       call,
 		IsIsolated: isolated,
 	}
 }

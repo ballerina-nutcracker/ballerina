@@ -74,7 +74,7 @@ class NumberGenerator {
   iterator() -> object { private int index; public function init() returns nil; private [int...] items; public function next() returns nil|{| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:NumberIterator
-      %3 = init(%2) -> bb1;
+      %3 = %2.init() -> bb1;
     }
     bb1 {
       %5 = %3 is nil
@@ -333,7 +333,7 @@ main() -> nil{
     %56 = newArray [function() returns int...][%55]{}
     functions = %56;
     %57 = newObject $anon/.:NumberGenerator
-    %58 = init(%57) -> bb24;
+    %58 = %57.init() -> bb24;
   }
   bb24 {
     %60 = %58 is nil
@@ -350,7 +350,7 @@ main() -> nil{
   bb27 {
     generator = %59;
     $desugar$9 = generator;
-    %63 = iterator($desugar$9) -> bb28;
+    %63 = $desugar$9.iterator() -> bb28;
   }
   bb28 {
     $desugar$11 = %63;
@@ -362,7 +362,7 @@ main() -> nil{
   }
   bb30 {
     PushScopeFrame 8
-    %0 = next((1, $desugar$11)) -> bb32;
+    %0 = (1, $desugar$11).next() -> bb32;
   }
   bb31 {
     %66 = capturedSum(functions) -> bb36;
@@ -418,7 +418,7 @@ main() -> nil{
   }
   bb40 {
     PushScopeFrame 8
-    %0 = next((1, $desugar$15)) -> bb42;
+    %0 = (1, $desugar$15).next() -> bb42;
   }
   bb41 {
     $desugar$18 = xmlFunctions;

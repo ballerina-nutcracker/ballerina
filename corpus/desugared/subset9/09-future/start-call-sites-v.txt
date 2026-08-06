@@ -1,0 +1,477 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (variable evaluationCount (type
+    (value-type int)))
+  (variable bodyRan (type
+    (value-type boolean)))
+  (type-definition IntSupplier
+    (function-type () (
+      (value-type int))))
+  (class-definition Worker
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))))
+    (function run () (
+      (value-type int))
+      (block-function-body
+        (return
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))))))
+  (class-definition Client
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))))
+    (function $remote$run () (
+      (value-type int))
+      (block-function-body
+        (return
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref evaluationCount)
+        (literal 0))
+      (assignment
+        (simple-var-ref bodyRan)
+        (literal false))))
+  (function one () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function two () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 2))))
+  (function identity (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (simple-var-ref value))))
+  (function readFirst (
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (index-based-access
+          (simple-var-ref values)
+          (literal 0)))))
+  (function delayed () (
+    (value-type int))
+    (block-function-body
+      (assignment
+        (simple-var-ref bodyRan)
+        (literal true))
+      (return
+        (literal 10))))
+  (function parallel () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 20))))
+  (function failArgument () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal argument))))))
+  (function failBody () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal body))))))
+  (function mark () (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref evaluationCount)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref evaluationCount))))
+      (return
+        (simple-var-ref evaluationCount))))
+  (function defaultAndRest (
+    (variable first (type
+      (value-type int)))
+    (variable second (type
+      (value-type int)) (expr
+      (invocation mark ())))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref first)
+            (simple-var-ref second))
+          (invocation lang.array length (
+            (simple-var-ref rest)))))))
+  (function named (
+    (variable first (type
+      (value-type int)))
+    (variable second (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (binary-expr *
+            (simple-var-ref first)
+            (literal 10))
+          (simple-var-ref second)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable printlnResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type null))) (expr
+          (start-action isolated
+            (invocation io println (
+              (literal started println)))))))
+      (var-def
+        (variable printlnError (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (single-wait-action
+            (simple-var-ref printlnResult)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref printlnError)
+            (value-type null)))))
+      (var-def
+        (variable scalar (type
+          (value-type int)) (expr
+          (literal 5))))
+      (var-def
+        (variable scalarResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation identity (
+              (simple-var-ref scalar)))))))
+      (assignment
+        (simple-var-ref scalar)
+        (literal 6))
+      (var-def
+        (variable scalarValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref scalarResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref scalarValue))))
+      (var-def
+        (variable selected (type
+          (user-defined-type IntSupplier)) (expr
+          (simple-var-ref one))))
+      (var-def
+        (variable functionResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation selected ())))))
+      (assignment
+        (simple-var-ref selected)
+        (simple-var-ref two))
+      (var-def
+        (variable functionValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref functionResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref functionValue))))
+      (var-def
+        (variable captured (type
+          (value-type int)) (expr
+          (literal 7))))
+      (var-def
+        (variable closure (type
+          (user-defined-type IntSupplier)) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref captured))))))))
+      (var-def
+        (variable closureResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation closure ())))))
+      (assignment
+        (simple-var-ref captured)
+        (literal 8))
+      (var-def
+        (variable closureValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref closureResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref closureValue))))
+      (var-def
+        (variable target (type
+          (user-defined-type Worker)) (expr
+          (new (
+            (literal 11))))))
+      (var-def
+        (variable methodResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation run expr:
+              (simple-var-ref target) ())))))
+      (assignment
+        (simple-var-ref target)
+        (new (
+          (literal 12))))
+      (var-def
+        (variable methodValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref methodResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref methodValue))))
+      (var-def
+        (variable endpoint (type
+          (user-defined-type Client)) (expr
+          (new (
+            (literal 13))))))
+      (var-def
+        (variable remoteResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (remote-method-call run expr:
+              (simple-var-ref endpoint) ())))))
+      (assignment
+        (simple-var-ref endpoint)
+        (new (
+          (literal 14))))
+      (var-def
+        (variable remoteValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref remoteResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref remoteValue))))
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 15)))))
+      (var-def
+        (variable referenceResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation readFirst (
+              (simple-var-ref values)))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref values)
+          (literal 0))
+        (literal 16))
+      (var-def
+        (variable referenceValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref referenceResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref referenceValue))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation mark ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable defaultResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation defaultAndRest (
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1)))))))
+      (var-def
+        (variable defaultValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref defaultResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultValue))))
+      (var-def
+        (variable restResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation defaultAndRest (
+              (invocation mark ())
+              (invocation mark ())
+              (invocation mark ())
+              (invocation mark ())))))))
+      (var-def
+        (variable restValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref restResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref restValue))))
+      (var-def
+        (variable namedResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation named (
+              (invocation mark ())
+              (invocation mark ())))))))
+      (var-def
+        (variable namedValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref namedResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref namedValue))))
+      (var-def
+        (variable argumentPanic (expr
+          (trap-expr
+            (start-action
+              (invocation identity (
+                (invocation failArgument ()))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref argumentPanic)
+            (error-type)))))
+      (var-def
+        (variable bodyPanic (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation failBody ())))))
+      (var-def
+        (variable bodyPanicResult (expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref bodyPanic))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref bodyPanicResult)
+            (error-type)))))
+      (var-def
+        (variable delayedResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation delayed ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bodyRan))))
+      (var-def
+        (variable delayedValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref delayedResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref delayedValue))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bodyRan))))
+      (var-def
+        (variable parallelResult (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (invocation parallel ())))))
+      (var-def
+        (variable parallelValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref parallelResult)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref parallelValue))))))
+  (function $default$0 (
+    (variable first (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (invocation mark ())))))

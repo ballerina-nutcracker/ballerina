@@ -49,7 +49,7 @@ class IntAdder {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:IntAdder
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -67,7 +67,7 @@ main() -> nil{
     s = %3;
     %6 = ConstantLoad 10
     %7 = %6;
-    %8 = sum(s,%7) -> bb5;
+    %8 = s.sum(%7) -> bb5;
   }
   bb5 {
     %9 = %8;
@@ -78,7 +78,7 @@ main() -> nil{
     %12 = %11;
     %13 = ConstantLoad 5
     %14 = %13;
-    %15 = sum(s,%12,%14) -> bb7;
+    %15 = s.sum(%12,%14) -> bb7;
   }
   bb7 {
     %16 = %15;
@@ -95,7 +95,7 @@ main() -> nil{
     %25 = %24;
     %26 = ConstantLoad 4
     %27 = %26;
-    %28 = sum(s,%19,%21,%23,%25,%27) -> bb9;
+    %28 = s.sum(%19,%21,%23,%25,%27) -> bb9;
   }
   bb9 {
     %29 = %28;

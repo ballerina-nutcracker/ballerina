@@ -56,7 +56,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Counter
     %2 = ConstantLoad 0
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -72,16 +72,16 @@ main() -> nil{
   }
   bb4 {
     c = %4;
-    %7 = inc(c) -> bb5;
+    %7 = c.inc() -> bb5;
   }
   bb5 {
-    %8 = inc(c) -> bb6;
+    %8 = c.inc() -> bb6;
   }
   bb6 {
-    %9 = inc(c) -> bb7;
+    %9 = c.inc() -> bb7;
   }
   bb7 {
-    %10 = get(c) -> bb8;
+    %10 = c.get() -> bb8;
   }
   bb8 {
     %11 = %10;

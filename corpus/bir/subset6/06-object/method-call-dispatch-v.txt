@@ -50,7 +50,7 @@ class F2 {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:F1
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -66,7 +66,7 @@ main() -> nil{
   }
   bb4 {
     f = %3;
-    %6 = foo(f) -> bb5;
+    %6 = f.foo() -> bb5;
   }
   bb5 {
     %7 = %6;
@@ -74,7 +74,7 @@ main() -> nil{
   }
   bb6 {
     %9 = newObject $anon/.:F2
-    %10 = init(%9) -> bb7;
+    %10 = %9.init() -> bb7;
   }
   bb7 {
     %12 = %10 is nil
@@ -90,7 +90,7 @@ main() -> nil{
   }
   bb10 {
     f = %11;
-    %13 = foo(f) -> bb11;
+    %13 = f.foo() -> bb11;
   }
   bb11 {
     %14 = %13;

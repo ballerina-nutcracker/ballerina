@@ -2,5 +2,4 @@
 -- stderr --
 error: alternate wait panic
         at crash(wait4-p.bal:17)
-           $desugar$0(wait4-p.bal:25)
            main(wait4-p.bal:25)

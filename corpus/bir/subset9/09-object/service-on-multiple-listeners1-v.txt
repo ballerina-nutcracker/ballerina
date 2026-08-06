@@ -64,7 +64,7 @@ class $service$0 {
 makeListener(string) -> object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; private string tag }{
   bb0 {
     %2 = newObject $anon/.:TaggedListener
-    %3 = init(%2,tag) -> bb1;
+    %3 = %2.init(tag) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -116,7 +116,7 @@ $start() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = start($listener) -> bb5;
+    %3 = $listener.start() -> bb5;
   }
   bb4 {
     return;
@@ -165,7 +165,7 @@ $gracefulStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = gracefulStop($listener) -> bb5;
+    %3 = $listener.gracefulStop() -> bb5;
   }
   bb4 {
     return;
@@ -214,7 +214,7 @@ $immediateStop() -> nil|error{
     PushScopeFrame 9
     %0 = (1, $desugar$0)[(1, $desugar$1)];
     $listener = %0;
-    %3 = immediateStop($listener) -> bb5;
+    %3 = $listener.immediateStop() -> bb5;
   }
   bb4 {
     return;

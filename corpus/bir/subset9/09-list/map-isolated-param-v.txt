@@ -149,7 +149,7 @@ mapWithFunctionReference([int...]) -> [int...]{
 $anonFunc$_4() -> object { public function init() returns nil }{
   bb0 {
     %1 = newObject $anon/.:NonIsolatedInit
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil

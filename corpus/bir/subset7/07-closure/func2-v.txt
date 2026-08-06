@@ -26,7 +26,7 @@ $anonFunc$_4(int) -> int{
   bb0 {
     %3 = (4, val);
     %4 = (1, p3);
-    %5 = a(%4) -> bb1;
+    %5 = (1, a)(%4) -> bb1;
   }
   bb1 {
     %6 = %5;
@@ -88,7 +88,7 @@ main() -> nil{
   bb2 {
     PushScopeFrame 6
     %0 = (1, p);
-    %1 = f(%0) -> bb4;
+    %1 = (1, f)(%0) -> bb4;
   }
   bb3 {
     %8 = f !is function(int) returns int
@@ -114,7 +114,7 @@ main() -> nil{
   bb6 {
     PushScopeFrame 6
     %0 = (1, p);
-    %1 = f(%0) -> bb7;
+    %1 = (1, f)(%0) -> bb7;
   }
   bb7 {
     %2 = %1;

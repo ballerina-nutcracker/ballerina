@@ -25,7 +25,7 @@ class Baz {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Baz
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -41,7 +41,7 @@ main() -> nil{
   }
   bb4 {
     b = %3;
-    %6 = getX(b) -> bb5;
+    %6 = b.getX() -> bb5;
   }
   bb5 {
     %7 = %6;

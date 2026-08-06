@@ -29,7 +29,7 @@ class foo {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:foo
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -56,7 +56,7 @@ main() -> nil{
     $desugar$1 = %9;
     %11 = $desugar$0;
     %12 = $desugar$1;
-    %13 = bar(f,%11,%12) -> bb7;
+    %13 = f.bar(%11,%12) -> bb7;
   }
   bb7 {
     %14 = %13;
@@ -72,7 +72,7 @@ main() -> nil{
     $desugar$3 = %19;
     %21 = $desugar$2;
     %22 = $desugar$3;
-    %23 = bar(f,%21,%22) -> bb10;
+    %23 = f.bar(%21,%22) -> bb10;
   }
   bb10 {
     %24 = %23;
@@ -83,7 +83,7 @@ main() -> nil{
     %27 = %26;
     %28 = ConstantLoad 5
     %29 = %28;
-    %30 = bar(f,%27,%29) -> bb12;
+    %30 = f.bar(%27,%29) -> bb12;
   }
   bb12 {
     %31 = %30;

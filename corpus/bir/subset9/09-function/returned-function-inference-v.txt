@@ -144,7 +144,7 @@ main() -> nil{
   }
   bb18 {
     %46 = newObject $anon/.:Factory
-    %47 = init(%46) -> bb19;
+    %47 = %46.init() -> bb19;
   }
   bb19 {
     %49 = %47 is nil
@@ -165,7 +165,7 @@ main() -> nil{
   bb23 {
     $desugar$4 = %51;
     %53 = $desugar$4;
-    %54 = create(factory,%53) -> bb24;
+    %54 = factory.create(%53) -> bb24;
   }
   bb24 {
     fromMethod = %54;
@@ -192,7 +192,7 @@ main() -> nil{
   bb29 {
     %67 = ConstantLoad 4
     %68 = %67;
-    %69 = create(factory,%68) -> bb30;
+    %69 = factory.create(%68) -> bb30;
   }
   bb30 {
     fromMethodAgain = %69;
@@ -206,7 +206,7 @@ main() -> nil{
   }
   bb32 {
     %76 = newObject $anon/.:RemoteFactory
-    %77 = init(%76) -> bb33;
+    %77 = %76.init() -> bb33;
   }
   bb33 {
     %79 = %77 is nil
@@ -227,7 +227,7 @@ main() -> nil{
   bb37 {
     $desugar$6 = %81;
     %83 = $desugar$6;
-    %84 = $remote$create(remoteFactory,%83) -> bb38;
+    %84 = remoteFactory.$remote$create(%83) -> bb38;
   }
   bb38 {
     fromRemoteMethod = %84;
@@ -254,7 +254,7 @@ main() -> nil{
   bb43 {
     %97 = ConstantLoad 6
     %98 = %97;
-    %99 = $remote$create(remoteFactory,%98) -> bb44;
+    %99 = remoteFactory.$remote$create(%98) -> bb44;
   }
   bb44 {
     fromRemoteMethodAgain = %99;
@@ -334,7 +334,7 @@ main() -> nil{
     PushScopeFrame 5
     %0 = ConstantLoad 16
     %1 = %0;
-    %2 = positiveNarrowed(%1) -> bb62;
+    %2 = (1, positiveNarrowed)(%1) -> bb62;
   }
   bb62 {
     %3 = %2;
@@ -374,7 +374,7 @@ main() -> nil{
   bb70 {
     $desugar$13 = %0;
     %2 = $desugar$13;
-    %3 = negatedNarrowed(%2) -> bb71;
+    %3 = (1, negatedNarrowed)(%2) -> bb71;
   }
   bb71 {
     %4 = %3;
@@ -383,7 +383,7 @@ main() -> nil{
   bb72 {
     %6 = ConstantLoad 17
     %7 = %6;
-    %8 = negatedNarrowed(%7) -> bb73;
+    %8 = (1, negatedNarrowed)(%7) -> bb73;
   }
   bb73 {
     %9 = %8;

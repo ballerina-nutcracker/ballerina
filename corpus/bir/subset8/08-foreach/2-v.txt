@@ -79,7 +79,7 @@ class Words {
       %4 = ConstantLoad data
       %3 = self[%4];
       %5 = ConstantLoad 2
-      %6 = init(%2,%3,%5) -> bb1;
+      %6 = %2.init(%3,%5) -> bb1;
     }
     bb1 {
       %8 = %6 is nil
@@ -102,7 +102,7 @@ class Words {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Words
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -119,7 +119,7 @@ main() -> nil{
   bb4 {
     w = %3;
     $desugar$0 = w;
-    %7 = iterator($desugar$0) -> bb5;
+    %7 = $desugar$0.iterator() -> bb5;
   }
   bb5 {
     $desugar$2 = %7;
@@ -131,7 +131,7 @@ main() -> nil{
   }
   bb7 {
     PushScopeFrame 7
-    %0 = next((1, $desugar$2)) -> bb9;
+    %0 = (1, $desugar$2).next() -> bb9;
   }
   bb8 {
     return;
