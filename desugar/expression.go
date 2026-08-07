@@ -981,11 +981,18 @@ func walkCheckPanickedExpr(cx *functionContext, expr *ast.BLangCheckPanickedExpr
 func walkTrapExpr(cx *functionContext, expr *ast.BLangTrapExpr) desugaredNode[ast.BLangActionOrExpression] {
 	result := walkExpression(cx, expr.Expr)
 	if len(result.initStmts) > 0 {
-		// I don't think this can ever happen but if it does we need to think about how to add these statements in to the
-		// trap region in BIR gen
-		cx.internalError("Init statements will be hoisted outside of trap region")
+		block := &ast.BLangBlockStmt{Stmts: result.initStmts}
+		block.SetPosition(expr.GetPosition())
+		statementExpr := &ast.BLangStatementExpression{
+			Stmt: block,
+			Expr: result.replacementNode,
+		}
+		statementExpr.SetPosition(expr.Expr.GetPosition())
+		statementExpr.SetDeterminedType(expr.Expr.GetDeterminedType())
+		expr.Expr = statementExpr
+	} else {
+		expr.Expr = result.replacementNode
 	}
-	expr.Expr = result.replacementNode
 	return desugaredNode[ast.BLangActionOrExpression]{initStmts: nil, replacementNode: expr}
 }
 

@@ -1,0 +1,61 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (statement-expr
+            (block-stmt
+              (var-def
+                (variable $desugar$0 (expr
+                  (literal <nil>))))
+              (var-def
+                (variable value))
+              (var-def
+                (variable $desugar$1 (expr
+                  (list-constructor-expr
+                    (literal 1)
+                    (literal 2)))))
+              (var-def
+                (variable $desugar$2 (expr
+                  (invocation lang.array length (
+                    (simple-var-ref $desugar$1))))))
+              (var-def
+                (variable $desugar$3 (expr
+                  (numeric-literal 0))))
+              (while
+                (binary-expr <
+                  (simple-var-ref $desugar$3)
+                  (simple-var-ref $desugar$2))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref value)
+                    (index-based-access
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$3)))
+                  (if
+                    (binary-expr ==
+                      (simple-var-ref value)
+                      (literal 2))
+                    (block-stmt
+                      (panic
+                        (error-constructor-expr (
+                          (literal boom))))) ())
+                  (block-stmt)
+                  (assignment
+                    (simple-var-ref $desugar$3)
+                    (binary-expr +
+                      (simple-var-ref $desugar$3)
+                      (numeric-literal 1))))))
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type))))))))

@@ -260,6 +260,13 @@ type (
 		bLangExpressionBase
 		Expr BLangActionOrExpression
 	}
+	// BLangStatementExpression is introduced during desugaring when statements
+	// must remain within an enclosing expression's evaluation region.
+	BLangStatementExpression struct {
+		bLangExpressionBase
+		Stmt StatementNode
+		Expr BLangActionOrExpression
+	}
 
 	BLangCommitExpr struct {
 		bLangExpressionBase
@@ -549,6 +556,7 @@ var (
 	_ NamedArgNode                                           = &BLangNamedArgsExpression{}
 	_ TrapNode                                               = &BLangTrapExpr{}
 	_ BLangExpression                                        = &BLangTrapExpr{}
+	_ BLangExpression                                        = &BLangStatementExpression{}
 	_ BLangExpression                                        = &BLangNewExpression{}
 )
 
@@ -588,6 +596,7 @@ var (
 	_ BLangNode       = &BLangMappingConstructorExpr{}
 	_ BLangNode       = &BLangMappingKeyValueField{}
 	_ BLangNode       = &BLangTrapExpr{}
+	_ BLangNode       = &BLangStatementExpression{}
 	_ BLangNode       = &BLangNewExpression{}
 )
 
