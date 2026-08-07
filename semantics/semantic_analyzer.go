@@ -1274,23 +1274,11 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 }
 
 func analyzeQueryAction[A analyzer](a A, action *ast.BLangQueryAction, expectedType semtypes.SemType) bool {
-	if len(action.QueryClauseList) < 1 {
-		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
-		return false
-	}
-	fromClause, ok := action.QueryClauseList[0].(*ast.BLangFromClause)
-	if !ok {
-		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
-		return false
-	}
+	fromClause := action.QueryClauseList[0].(*ast.BLangFromClause)
 	if !analyzeQueryFromClause(a, fromClause) {
 		return false
 	}
 	if !analyzeQueryIntermediateClauses(a, action.QueryClauseList, len(action.QueryClauseList)) {
-		return false
-	}
-	if action.DoClause == nil || action.DoClause.Body == nil {
-		a.internalErr("query action shape should have been validated during type resolution", action.GetPosition())
 		return false
 	}
 	ast.Walk(a, action.DoClause.Body)
