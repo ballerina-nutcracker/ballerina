@@ -4449,7 +4449,7 @@ func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQue
 			common.GROUP_BY_CLAUSE, common.LIMIT_CLAUSE, common.ORDER_BY_CLAUSE:
 			queryClauseAdder.AddQueryClause(n.TransformSyntaxNode(clause))
 		default:
-			n.cx.Unimplemented("only from + join + let + where + group by + order by + limit query clauses are supported for now", n.getPosition(clause))
+			n.cx.Unimplemented("only from, join, let, where, group by, order by, and limit query clauses are supported for now", n.getPosition(clause))
 		}
 	}
 }
