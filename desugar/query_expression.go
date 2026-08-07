@@ -260,15 +260,15 @@ func createQueryPipelineCollectionSource(
 	collectionVarDef, collectionRef := assignActionOrExpressionToLocal(cx, collectionValue, pos)
 	*initStmts = append(*initStmts, collectionVarDef)
 
-	if semtypes.IsSubtypeSimple(collectionTy, semtypes.STREAM) {
+	switch {
+	case semtypes.IsSubtype(tyCtx, collectionTy, semtypes.STREAM):
 		return queryActionCollectionSource{
 			nextReceiverRef: collectionRef,
 			nextReceiverTy:  collectionTy,
 		}, true
-	}
-
-	if semtypes.IsSubtype(tyCtx, collectionTy, semtypes.STRING) ||
-		semtypes.IsSubtype(tyCtx, collectionTy, semtypes.XML) {
+	case semtypes.IsSubtype(tyCtx, collectionTy, semtypes.STRING),
+		semtypes.IsSubtype(tyCtx, collectionTy, semtypes.XML),
+		semtypes.IsSubtype(tyCtx, collectionTy, semtypes.OBJECT):
 		iteratorInvocation := createIteratorInvocation(cx, collectionRef, collectionTy, pos)
 		if iteratorInvocation == nil {
 			return queryActionCollectionSource{}, false
@@ -279,22 +279,10 @@ func createQueryPipelineCollectionSource(
 			nextReceiverRef: iteratorRef,
 			nextReceiverTy:  iteratorInvocation.GetDeterminedType(),
 		}, true
-	}
-
-	if !semtypes.IsSubtype(tyCtx, collectionTy, semtypes.OBJECT) {
+	default:
 		cx.internalError("query action collection type should have been validated during type resolution")
 		return queryActionCollectionSource{}, false
 	}
-	iteratorInvocation := createIteratorInvocation(cx, collectionRef, collectionTy, pos)
-	if iteratorInvocation == nil {
-		return queryActionCollectionSource{}, false
-	}
-	iteratorVarDef, iteratorRef := assignToLocal(cx, iteratorInvocation, pos)
-	*initStmts = append(*initStmts, iteratorVarDef)
-	return queryActionCollectionSource{
-		nextReceiverRef: iteratorRef,
-		nextReceiverTy:  iteratorInvocation.GetDeterminedType(),
-	}, true
 }
 
 // createQueryActionNextInvocation gives generated stream next calls the implementor method type;

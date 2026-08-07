@@ -348,9 +348,6 @@ func (analyzer *functionControlFlowAnalyzer) analyzeQueryActionsInStatement(curB
 	collector := &queryActionCollector{root: stmt}
 	ast.Walk(collector, stmt.(ast.BLangNode))
 	for _, action := range collector.actions {
-		if action.DoClause == nil || action.DoClause.Body == nil {
-			continue
-		}
 		bodyBB := analyzer.createNewBB()
 		analyzer.addEdge(curBB, bodyBB)
 		bodyEffect := analyzer.analyzeBlockStmt(bodyBB, action.DoClause.Body)
@@ -375,7 +372,9 @@ func (c *queryActionCollector) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	}
 	if action, ok := node.(*ast.BLangQueryAction); ok {
-		c.actions = append(c.actions, action)
+		if action.DoClause != nil && action.DoClause.Body != nil {
+			c.actions = append(c.actions, action)
+		}
 		return nil
 	}
 	return c
