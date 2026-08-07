@@ -48,8 +48,7 @@ func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[
 	}
 	fromCollectionTy := fromClause.Collection.GetDeterminedType()
 	if collectClause != nil ||
-		semtypes.IsSubtype(cx.typeCtx(), fromCollectionTy, semtypes.STRING) ||
-		semtypes.IsSubtype(cx.typeCtx(), fromCollectionTy, semtypes.XML) ||
+		semtypes.IsSubtype(cx.typeCtx(), fromCollectionTy, semtypes.Union(semtypes.STRING, semtypes.XML)) ||
 		queryExprNeedsRowPipeline(expr, 1, finalClauseIndex) {
 		return walkQueryExprWithRows(cx, expr, fromClause, selectClause, collectClause, finalClauseIndex, onConflictClause)
 	}
