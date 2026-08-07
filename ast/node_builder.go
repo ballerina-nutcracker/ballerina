@@ -3366,9 +3366,8 @@ func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode
 	if annotations.Size() > 0 {
 		panic("annotations not yet supported")
 	}
-	if variableDef, ok := varDef.(*BLangSimpleVariableDef); ok && variableDef.Var != nil {
-		variableDef.Var.SetFinal()
-	}
+	variableDef := varDef.(*BLangSimpleVariableDef)
+	variableDef.Var.SetFinal()
 	return varDef.(BLangNode)
 }
 
