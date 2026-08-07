@@ -4362,9 +4362,7 @@ func (n *NodeBuilder) TransformFromClause(fromClauseNode *tree.FromClauseNode) B
 	bindingPatternNode := fromClauseNode.TypedBindingPattern()
 	fromClause.SetVariableDefinitionNode(n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode,
 		nil, nil))
-	if fromClause.VariableDefinitionNode != nil && fromClause.VariableDefinitionNode.Var != nil {
-		fromClause.VariableDefinitionNode.Var.SetFinal()
-	}
+	fromClause.VariableDefinitionNode.Var.SetFinal()
 	fromClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	return fromClause
 }
