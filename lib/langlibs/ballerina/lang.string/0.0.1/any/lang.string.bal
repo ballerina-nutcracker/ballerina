@@ -26,7 +26,30 @@ public isolated function length(string str) returns int = external;
 # + return - a new character iterator
 public isolated function iterator(string str) returns object {
     public isolated function next() returns record {| Char value; |}?;
-} = external;
+} {
+    return new StringIterator(str);
+}
+
+class StringIterator {
+    private final handle iteratorHandle;
+
+    isolated function init(string str) {
+        self.iteratorHandle = createIteratorHandle(str);
+    }
+
+    public isolated function next() returns record {| Char value; |}? {
+        if !iteratorHasNext(self.iteratorHandle) {
+            return;
+        }
+        return {value: iteratorNext(self.iteratorHandle)};
+    }
+}
+
+isolated function createIteratorHandle(string str) returns handle = external;
+
+isolated function iteratorHasNext(handle iteratorHandle) returns boolean = external;
+
+isolated function iteratorNext(handle iteratorHandle) returns Char = external;
 
 # Returns a byte array for a string using UTF-8 encoding.
 #
