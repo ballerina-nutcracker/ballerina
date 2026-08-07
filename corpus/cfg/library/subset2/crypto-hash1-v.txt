@@ -15,7 +15,7 @@
         (array-type
           (value-type byte) dimensions: 1 ([]))) (expr
         (invocation crypto hashSha256 (
-          (simple-var-ref input))))))
+          (simple-var-ref input) <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation lang.array length (

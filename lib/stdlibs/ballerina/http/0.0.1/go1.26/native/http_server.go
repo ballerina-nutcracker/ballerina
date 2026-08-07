@@ -43,18 +43,14 @@ import (
 // services. The program stays alive while the runtime is in its listening
 // state — the runtime lifecycle owns signal handling and shutdown.
 type listenerState struct {
-	host           string
-	port           int
-	timeout        time.Duration
-	httpVersion    string
-	tlsCfg         *pal.ServerTLSConfig
-	mu             sync.RWMutex
-	services       []*serviceEntry
-	server         pal.ServerHandle
-	servingStrands map[uint64]struct{}
-	shutdownOnce   sync.Once
-	shutdownDone   chan struct{}
-	shutdownErr    error // set once before shutdownDone is closed; safe to read after
+	host        string
+	port        int
+	timeout     time.Duration
+	httpVersion string
+	tlsCfg      *pal.ServerTLSConfig
+	mu          sync.RWMutex
+	services    []*serviceEntry
+	server      pal.ServerHandle
 }
 
 type serviceEntry struct {
@@ -91,12 +87,10 @@ func registerListenerExterns(rt *runtime.Runtime) {
 			self := args[0].(*values.Object)
 			port := int(args[1].(int64))
 			state := &listenerState{
-				host:           "0.0.0.0",
-				port:           port,
-				timeout:        60 * time.Second,
-				httpVersion:    "2.0",
-				servingStrands: make(map[uint64]struct{}),
-				shutdownDone:   make(chan struct{}),
+				host:        "0.0.0.0",
+				port:        port,
+				timeout:     60 * time.Second,
+				httpVersion: "2.0",
 			}
 			if len(args) > 2 {
 				if cfg, ok := args[2].(*values.Map); ok {
@@ -213,58 +207,31 @@ func registerListenerExterns(rt *runtime.Runtime) {
 			return nil, nil
 		})
 
-	// Listener.gracefulStop drains in-flight requests before closing the server.
+	// Listener.gracefulStop blocks until in-flight requests drain and the server
+	// closes, per the http:Listener contract, returning () on a clean drain or an
+	// error if the shutdown fails (e.g. the timeout elapses).
 	//
-	// This extern has two callers that need opposite blocking behaviour:
-	//   - A resource function invoking ep.gracefulStop() runs inline on the
-	//     handler's own goroutine (same strand that is currently serving the
-	//     HTTP request). Blocking here on server.Shutdown would deadlock: the
-	//     connection can't go idle until the handler returns, but the handler
-	//     can't return until Shutdown does.
-	//   - The runtime's signal-triggered graceful stop (SIGINT/SIGTERM) runs on
-	//     a separate strand that never served a request. It must block until
-	//     the drain completes, because the process exits right after this call
-	//     returns.
-	//
-	// We tell the two apart via the calling strand: dispatchRequest registers
-	// its strand ID in state.servingStrands for the duration of the resource
-	// invocation, so a hit on that set means we're on the handler path.
+	// The block is unconditional by design: a resource that calls ep.gracefulStop()
+	// on the listener serving it self-deadlocks (the connection can't go idle until
+	// the handler returns, but the handler is blocked on the drain) — caller error,
+	// not a case to special-case.
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.gracefulStop",
-		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
 			state.mu.RLock()
 			server := state.server
 			timeout := state.timeout
-			_, isServingStrand := state.servingStrands[ctx.StrandID]
 			state.mu.RUnlock()
 			if server == nil {
 				return nil, nil
 			}
 
-			state.shutdownOnce.Do(func() {
-				go func() {
-					shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
-					defer cancel()
-					state.shutdownErr = server.Shutdown(shutdownCtx)
-					close(state.shutdownDone)
-				}()
-			})
-
-			if isServingStrand {
-				select {
-				case <-state.shutdownDone:
-					if state.shutdownErr != nil {
-						return values.NewErrorWithMessage("Listener.gracefulStop: " + state.shutdownErr.Error()), nil
-					}
-				default:
-				}
-				return nil, nil
-			}
-			<-state.shutdownDone
-			if state.shutdownErr != nil {
-				return values.NewErrorWithMessage("Listener.gracefulStop: " + state.shutdownErr.Error()), nil
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			if err := server.Shutdown(shutdownCtx); err != nil {
+				return values.NewErrorWithMessage("Listener.gracefulStop: " + err.Error()), nil
 			}
 			return nil, nil
 		})
@@ -481,15 +448,12 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 	}
 
 	segments := splitURLPath(subPath)
-	ctx := rt.NewExternContext()
-	state.mu.Lock()
-	state.servingStrands[ctx.StrandID] = struct{}{}
-	state.mu.Unlock()
-	defer func() {
-		state.mu.Lock()
-		delete(state.servingStrands, ctx.StrandID)
-		state.mu.Unlock()
-	}()
+	ctx := rt.AcquirePooledContext()
+	// Recycle the context once the request is fully served. The resource runs
+	// synchronously on this strand within dispatchRequest and the response is
+	// written before we return; any async work it starts gets its own context
+	// (see runStrand), so releasing here cannot race with a started strand.
+	defer rt.ReleasePooledContext(ctx)
 	httpMethod := strings.ToLower(r.Method)
 
 	// Resource-level dispatch is delegated to the language runtime: it coerces
@@ -505,7 +469,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 		switch {
 		case extraArgs == 1:
 			// The resource declares a single parameter beyond its path params; inject the request.
-			req, err := buildRequestFromHTTP(ctx.TypeCtx, r)
+			req, err := buildRequestFromHTTP(r)
 			if err != nil {
 				writeErrorJSON(rt, w, r, http.StatusBadRequest, "failed to read request body: "+err.Error())
 				return
@@ -526,7 +490,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResult(rt, ctx.TypeCtx, w, r, result)
+		writeResult(rt, w, r, result)
 		return
 	}
 	// The path matched a service but no resource under the requested method. If
@@ -570,7 +534,7 @@ func splitURLPath(p string) []string {
 
 // buildRequestFromHTTP builds an http:Request value from r, buffering small
 // bodies eagerly and streaming large ones lazily for passthrough.
-func buildRequestFromHTTP(tc semtypes.Context, r *http.Request) (*values.Object, error) {
+func buildRequestFromHTTP(r *http.Request) (*values.Object, error) {
 	var bodyBuf []byte
 	var bodyStream io.ReadCloser
 	cl := r.ContentLength
@@ -588,22 +552,17 @@ func buildRequestFromHTTP(tc semtypes.Context, r *http.Request) (*values.Object,
 	default:
 		bodyStream = r.Body
 	}
-	return buildRequest(tc, r.Method, r.RequestURI, r.Proto, r.Header, bodyStream, cl, r.URL.RawQuery, bodyBuf), nil
+	return buildRequest(r.Method, r.RequestURI, r.Proto, r.Header, bodyStream, cl, r.URL.RawQuery, bodyBuf), nil
 }
 
 // buildRequest constructs a Ballerina Request object from HTTP request data.
 // bodyStream is the raw request body; it is stored lazily in a requestBodyHolder
 // so the body is only read from the network when a getPayload method is called.
 // bodyBuf, when non-nil, is an already-read body; bodyStream must be nil in that case.
-func buildRequest(tc semtypes.Context, method, rawPath, httpVersion string, headers map[string][]string, bodyStream io.ReadCloser, contentLength int64, rawQuery string, bodyBuf []byte) *values.Object {
-	headersMap := newMappingValue(tc)
-	for k, vals := range headers {
-		items := make([]values.BalValue, len(vals))
-		for i, v := range vals {
-			items[i] = v
-		}
-		headersMap.Put(tc, strings.ToLower(k), newListValue(tc, items))
-	}
+func buildRequest(method, rawPath, httpVersion string, headers map[string][]string, bodyStream io.ReadCloser, contentLength int64, rawQuery string, bodyBuf []byte) *values.Object {
+	// Headers are stored lazily: the raw map is only converted to the Ballerina
+	// header Map on first access (see requestHeadersMap). A request that never
+	// reads a header skips building that value graph entirely.
 	var holder *requestBodyHolder
 	switch {
 	case bodyBuf != nil:
@@ -619,7 +578,7 @@ func buildRequest(tc semtypes.Context, method, rawPath, httpVersion string, head
 			"rawPath":     rawPath,
 			"method":      method,
 			"httpVersion": httpVersion,
-			"$headers":    headersMap,
+			"$headers":    &lazyRequestHeaders{raw: headers},
 			"$body":       holder,
 			"$queryStr":   rawQuery,
 		},
@@ -653,7 +612,7 @@ func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request,
 }
 
 // writeResult writes a Ballerina resource method return value as an HTTP response.
-func writeResult(rt *runtime.Runtime, _ semtypes.Context, w http.ResponseWriter, r *http.Request, result values.BalValue) {
+func writeResult(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request, result values.BalValue) {
 	switch v := result.(type) {
 	case nil:
 		w.WriteHeader(http.StatusAccepted)
@@ -708,8 +667,22 @@ func writeResult(rt *runtime.Runtime, _ semtypes.Context, w http.ResponseWriter,
 	}
 }
 
-// writeStream writes the body to w via io.Copy (streaming) or w.Write (buffered),
-// then closes the stream. After this call the holder is exhausted.
+// copyBufPool reuses 32 KB buffers for streaming a backend response body to the
+// downstream client. Without it, io.Copy → net/http's response.ReadFrom
+// allocates a fresh 32 KB buffer on every request (kernel splice is unavailable
+// when the source is a userspace stream), which dominates allocations at large
+// payloads.
+var copyBufPool = sync.Pool{New: func() any { b := make([]byte, 32*1024); return &b }}
+
+// onlyWriter exposes only Write, hiding any ReadFrom the underlying writer has,
+// so io.CopyBuffer uses our pooled buffer instead of response.ReadFrom's
+// per-call allocation. Output is identical — the ResponseWriter's Write already
+// handles chunked/content-length framing.
+type onlyWriter struct{ io.Writer }
+
+// writeStream writes the body to w via io.CopyBuffer (streaming, pooled buffer)
+// or w.Write (buffered), then closes the stream. After this call the holder is
+// exhausted.
 func (h *responseBodyHolder) writeStream(w io.Writer) error {
 	var (
 		s   io.ReadCloser
@@ -726,7 +699,9 @@ func (h *responseBodyHolder) writeStream(w io.Writer) error {
 		}
 	})
 	if s != nil {
-		_, err := io.Copy(w, s)
+		bufp := copyBufPool.Get().(*[]byte)
+		_, err := io.CopyBuffer(onlyWriter{w}, s, *bufp)
+		copyBufPool.Put(bufp)
 		_ = s.Close()
 		return err
 	}

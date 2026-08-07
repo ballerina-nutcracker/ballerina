@@ -22,50 +22,53 @@
               (literal 8)
               (literal 9))))))
       (var-def
-        (variable i (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 0))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (literal 3))))
       (while
         (binary-expr <
-          (simple-var-ref i)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
           (var-def
-            (variable $desugar$1 (expr
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (var-def
+            (variable $desugar$2 (expr
               (index-based-access
                 (simple-var-ref values)
                 (simple-var-ref i)))))
           (var-def
-            (variable $desugar$2 (expr
+            (variable $desugar$3 (expr
               (numeric-literal 0))))
           (var-def
-            (variable $desugar$3 (expr
+            (variable $desugar$4 (expr
               (invocation lang.array length (
-                (simple-var-ref $desugar$1))))))
+                (simple-var-ref $desugar$2))))))
           (while
             (binary-expr <
-              (simple-var-ref $desugar$2)
-              (simple-var-ref $desugar$3))
+              (simple-var-ref $desugar$3)
+              (simple-var-ref $desugar$4))
             (block-stmt
               (var-def
                 (variable value (type
                   (value-type int)) (expr
                   (index-based-access
-                    (simple-var-ref $desugar$1)
-                    (simple-var-ref $desugar$2)))))
+                    (simple-var-ref $desugar$2)
+                    (simple-var-ref $desugar$3)))))
               (expression-stmt
                 (invocation io println (
                   (simple-var-ref value))))
               (assignment
-                (simple-var-ref $desugar$2)
+                (simple-var-ref $desugar$3)
                 (binary-expr +
-                  (simple-var-ref $desugar$2)
+                  (simple-var-ref $desugar$3)
                   (numeric-literal 1)))))
           (assignment
-            (simple-var-ref i)
+            (simple-var-ref $desugar$0)
             (binary-expr +
-              (simple-var-ref i)
+              (simple-var-ref $desugar$0)
               (numeric-literal 1))))))))

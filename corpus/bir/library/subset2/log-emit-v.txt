@@ -8,26 +8,28 @@ main() -> nil{
   bb1 {
     $desugar$1 = %3;
     %5 = newMap {| 'error: never, msg: never, anydata... |}{}
-    %6 = printInfo($desugar$0,$desugar$1,%5) -> bb2;
+    $desugar$2 = %5;
+    %7 = printInfo($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %7 = ConstantLoad low disk space
-    $desugar$2 = %7;
-    %9 = $default$3($desugar$2) -> bb3;
+    %8 = ConstantLoad low disk space
+    $desugar$3 = %8;
+    %10 = $default$3($desugar$3) -> bb3;
   }
   bb3 {
-    $desugar$3 = %9;
-    %11 = ConstantLoad diskPct
-    %12 = ConstantLoad 12
-    %13 = newMap {| 'error: never, msg: never, anydata... |}{%11=%12}
-    %14 = printWarn($desugar$2,$desugar$3,%13) -> bb4;
+    $desugar$4 = %10;
+    %12 = ConstantLoad diskPct
+    %13 = ConstantLoad 12
+    %14 = newMap {| 'error: never, msg: never, anydata... |}{%12=%13}
+    $desugar$5 = %14;
+    %16 = printWarn($desugar$3,$desugar$4,$desugar$5) -> bb4;
   }
   bb4 {
-    %15 = ConstantLoad request failed
-    %16 = ConstantLoad disk full
-    %17 = newError error(%16)
-    %18 = newMap {| 'error: never, msg: never, anydata... |}{}
-    %19 = printError(%15,%17,%18) -> bb5;
+    %17 = ConstantLoad request failed
+    %18 = ConstantLoad disk full
+    %19 = newError error(%18)
+    %20 = newMap {| 'error: never, msg: never, anydata... |}{}
+    %21 = printError(%17,%19,%20) -> bb5;
   }
   bb5 {
     return;

@@ -44,7 +44,7 @@ func TestFreezeRoutesNewAtomsToEphemeralStore(t *testing.T) {
 		t.Fatalf("atomTable grew after freeze: before=%d after=%d", before, after)
 	}
 
-	atom := ToListAtomicType(ContextFrom(env), ty)
+	atom := ToListAtomicType(env, ty)
 	if atom == nil {
 		t.Fatal("expected a list atomic type for the runtime list")
 	}
@@ -87,7 +87,7 @@ func TestEphemeralAtomIsReclaimedAndSlotReused(t *testing.T) {
 
 	// A new runtime type reuses the freed slot instead of growing the array.
 	ty2 := defineRuntimeList(env, INT)
-	if ToListAtomicType(ContextFrom(env), ty2) == nil {
+	if ToListAtomicType(env, ty2) == nil {
 		t.Fatal("expected a list atomic type for the second runtime list")
 	}
 	if grew := len(env.ephemeralSlots); grew > slotsAfterFirst {

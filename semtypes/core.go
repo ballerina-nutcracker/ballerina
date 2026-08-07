@@ -538,7 +538,11 @@ func MappingMemberTypeInner(cx Context, t, k SemType) SemType {
 		INNER)
 }
 
-func ToListAtomicType(cx Context, t SemType) *ListAtomicType {
+// ToListAtomicType only ever needs the program-constant Env: the fast path
+// for a simple (non-BDD) type doesn't touch it at all, and the general path
+// only looks up an atom in Env's atom table — unlike ToMappingAtomicType,
+// it never needs a type-check Context's conjunction stack.
+func ToListAtomicType(env Env, t SemType) *ListAtomicType {
 	listAtomicInner := LIST_ATOMIC_INNER
 	if t.some() == 0 {
 		if t.all() == LIST.all() {
@@ -546,7 +550,6 @@ func ToListAtomicType(cx Context, t SemType) *ListAtomicType {
 		}
 		return nil
 	}
-	env := cx.Env()
 	if !IsSubtypeSimple(t, LIST) {
 		return nil
 	}
@@ -782,37 +785,11 @@ func TypeCheckContext(env Env) Context {
 }
 
 func CreateJSON(context Context) SemType {
-	memo := context.jsonMemo()
-	env := context.Env()
-
-	if !IsZero(memo) {
-		return memo
-	}
-	listDef := &ListDefinition{}
-	mapDef := &MappingDefinition{}
-	j := Union(SIMPLE_OR_STRING, Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
-	listDef.DefineListTypeWrappedWithEnvSemType(env, j)
-	mapDef.DefineMappingTypeWrapped(env, nil, j)
-	context.setJsonMemo(j)
-	return j
+	return context.Env().preallocatedTypeVals.json
 }
 
 func CreateAnydata(context Context) SemType {
-	memo := context.anydataMemo()
-	env := context.Env()
-
-	if !IsZero(memo) {
-		return memo
-	}
-	listDef := &ListDefinition{}
-	mapDef := &MappingDefinition{}
-	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
-	ad := Union(Union(SIMPLE_OR_STRING, Union(XML, Union(REGEXP, tableTy))),
-		Union(listDef.GetSemType(env), mapDef.GetSemType(env)))
-	listDef.DefineListTypeWrappedWithEnvSemType(env, ad)
-	mapDef.DefineMappingTypeWrapped(env, nil, ad)
-	context.setAnydataMemo(ad)
-	return ad
+	return context.Env().preallocatedTypeVals.anydata
 }
 
 func CreateCloneable(context Context) SemType {

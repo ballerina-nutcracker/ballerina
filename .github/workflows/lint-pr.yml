@@ -1,0 +1,69 @@
+name: Lint PR
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+
+# IMPORTANT: pull_request_target runs with base branch context and has access to secrets.
+# Permissions should be used with extreme caution.
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+permissions: {}
+
+concurrency:
+  group: lint-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  COMMIT_TYPES: |
+    feat
+    fix
+    build
+    chore
+    ci
+    docs
+    style
+    refactor
+    perf
+    test
+    revert
+  MAX_SUBJECT_LENGTH: 72
+  ALLOWED_SCOPES: ""
+  SUBJECT_CASE: lower
+  ALLOW_BREAKING_CHANGE_MARKER: "true"
+
+jobs:
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # Checks out the base branch (the default ref for pull_request_target), not the PR head,
+      # so the validation script itself can't be altered by the PR under review.
+      - uses: actions/checkout@v7
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { validatePrTitle } = require('./.github/scripts/validate-commits.js');
+            await validatePrTitle({ github, context, core });
+
+  validate-commit-messages:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # Checks out the base branch (the default ref for pull_request_target), not the PR head,
+      # so the validation script itself can't be altered by the PR under review.
+      - uses: actions/checkout@v7
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { validateCommitMessages } = require('./.github/scripts/validate-commits.js');
+            await validateCommitMessages({ github, context, core });

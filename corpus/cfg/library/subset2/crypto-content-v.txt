@@ -28,7 +28,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_content.pem)
-          (simple-var-ref certPem)))))
+          (simple-var-ref certPem) <default>))))
     (var-def
       (variable certBytes (type
         (array-type
@@ -50,13 +50,13 @@
               (checked-expr
                 (invocation crypto encryptRsaEcb (
                   (simple-var-ref data)
-                  (simple-var-ref pub)))))))
+                  (simple-var-ref pub) <default>))))))
           (literal 0)))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_content.pem)
-          (simple-var-ref keyPem)))))
+          (simple-var-ref keyPem) <default>))))
     (var-def
       (variable keyBytes (type
         (array-type
@@ -69,7 +69,7 @@
         (user-defined-type crypto PrivateKey)) (expr
         (checked-expr
           (invocation crypto decodeRsaPrivateKeyFromContent (
-            (simple-var-ref keyBytes)))))))
+            (simple-var-ref keyBytes) <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr >
@@ -84,7 +84,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_content.pem)
-          (simple-var-ref encKeyPem)))))
+          (simple-var-ref encKeyPem) <default>))))
     (var-def
       (variable encBytes (type
         (array-type
@@ -144,7 +144,7 @@
               (checked-expr
                 (invocation crypto encryptRsaEcb (
                   (simple-var-ref data)
-                  (simple-var-ref built)))))))
+                  (simple-var-ref built) <default>))))))
           (literal 0)))))
     (var-def
       (variable badBuilt (type

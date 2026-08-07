@@ -28,7 +28,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_enc.pem)
-          (simple-var-ref pbes2)))))
+          (simple-var-ref pbes2) <default>))))
     (var-def
       (variable pkPbes2 (type
         (user-defined-type crypto PrivateKey)) (expr
@@ -50,7 +50,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_enc.pem)
-          (simple-var-ref pbe3des)))))
+          (simple-var-ref pbe3des) <default>))))
     (var-def
       (variable pk3des (type
         (user-defined-type crypto PrivateKey)) (expr
@@ -72,7 +72,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_enc.pem)
-          (simple-var-ref pbeRc2)))))
+          (simple-var-ref pbeRc2) <default>))))
     (var-def
       (variable pkRc2 (type
         (user-defined-type crypto PrivateKey)) (expr
@@ -94,7 +94,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_crypto_enc.pem)
-          (simple-var-ref pbes2)))))
+          (simple-var-ref pbes2) <default>))))
     (var-def
       (variable bad (type
         (union-type

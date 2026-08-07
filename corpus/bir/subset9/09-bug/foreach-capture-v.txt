@@ -1,0 +1,482 @@
+module $anon.. v 0.0.0;
+class NumberIterator {
+  items [int...]
+  index int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 7
+      %3 = ConstantLoad 8
+      %4 = ConstantLoad 9
+      %5 = ConstantLoad 3
+      %6 = newArray [int...][%5]{%2, %3, %4}
+      %7 = ConstantLoad items
+      self[%7] = %6;
+      %8 = ConstantLoad 0
+      %9 = ConstantLoad index
+      self[%9] = %8;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %4 = ConstantLoad index
+      %3 = self[%4];
+      %5 = %3;
+      %7 = ConstantLoad items
+      %6 = self[%7];
+      %8 = length(%6) -> bb1;
+    }
+    bb1 {
+      %9 = %8;
+      %2 = >= %5 %9;
+      %2 ? bb2 : bb3;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 14
+      %2 = ConstantLoad index
+      %1 = (1, self)[%2];
+      %4 = ConstantLoad items
+      %3 = (1, self)[%4];
+      %0 = %3[%1];
+      value = %0;
+      %6 = ConstantLoad index
+      %7 = (1, self)[%6];
+      %8 = %7;
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %11 = + %8 %10;
+      (1, self)[%6] = %11;
+      %12 = ConstantLoad value
+      %13 = newMap {| value: int, never... |}{%12=value}
+      (1, %0) = %13;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+class NumberGenerator {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  iterator() -> object { private int index; public function init() returns nil; private [int...] items; public function next() returns nil|{| value: int, never... |} }{
+    bb0 {
+      %2 = newObject $anon/.:NumberIterator
+      %3 = init(%2) -> bb1;
+    }
+    bb1 {
+      %5 = %3 is nil
+      %5 ? bb2 : bb3;
+    }
+    bb2 {
+      %4 = %2;
+      GOTO bb4;
+    }
+    bb3 {
+      %4 = %3;
+      GOTO bb4;
+    }
+    bb4 {
+      %0 = %4;
+      return;
+    }
+  }
+}
+capturedSum([function() returns int...]) -> int{
+  bb0 {
+    %2 = ConstantLoad 0
+    sum = %2;
+    $desugar$0 = functions;
+    %5 = ConstantLoad 0
+    $desugar$1 = %5;
+    %7 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %7;
+    GOTO bb2;
+  }
+  bb2 {
+    %10 = $desugar$1;
+    %11 = $desugar$2;
+    %9 = < %10 %11;
+    %9 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    fn = %0;
+    %3 = (1, sum);
+    %4 = fn() -> bb5;
+  }
+  bb4 {
+    %0 = sum;
+    return;
+  }
+  bb5 {
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, sum) = %2;
+    %7 = (1, $desugar$1);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$1) = %6;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %0 = (2, value);
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %0 = (1, value);
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %0 = (1, value);
+    return;
+  }
+}
+$anonFunc$_3() -> int{
+  bb0 {
+    %0 = (1, value);
+    return;
+  }
+}
+$anonFunc$_4() -> xml{
+  bb0 {
+    %0 = (1, item);
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [function() returns int...][%1]{}
+    functions = %2;
+    %4 = ConstantLoad 0
+    $desugar$0 = %4;
+    %6 = ConstantLoad 3
+    $desugar$1 = %6;
+    GOTO bb1;
+  }
+  bb1 {
+    %9 = $desugar$0;
+    %10 = $desugar$1;
+    %8 = <= %9 %10;
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 9
+    value = (1, $desugar$0);
+    %2 = value;
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = == %2 %4;
+    %1 ? bb4 : bb5;
+  }
+  bb3 {
+    %11 = capturedSum(functions) -> bb7;
+  }
+  bb4 {
+    PushScopeFrame 4
+    %1 = (2, $desugar$0);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, $desugar$0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = closure_fp $anon/.:$anonFunc$_0
+    %1 = push((2, functions),%0) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    %6 = (1, $desugar$0);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$0) = %5;
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb7 {
+    %12 = %11;
+    %13 = println(%12) -> bb8;
+  }
+  bb8 {
+    %14 = ConstantLoad 0
+    %15 = newArray [function() returns int...][%14]{}
+    functions = %15;
+    %16 = ConstantLoad 1
+    %17 = ConstantLoad 2
+    %18 = ConstantLoad 3
+    %19 = ConstantLoad 3
+    %20 = newArray [int, int, int, never...][%19]{%16, %17, %18}
+    $desugar$2 = %20;
+    %22 = ConstantLoad 0
+    $desugar$3 = %22;
+    %24 = length($desugar$2) -> bb9;
+  }
+  bb9 {
+    $desugar$4 = %24;
+    GOTO bb10;
+  }
+  bb10 {
+    %27 = $desugar$3;
+    %28 = $desugar$4;
+    %26 = < %27 %28;
+    %26 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$2)[(1, $desugar$3)];
+    value = %0;
+    %2 = closure_fp $anon/.:$anonFunc$_1
+    %3 = push((1, functions),%2) -> bb13;
+  }
+  bb12 {
+    %29 = capturedSum(functions) -> bb14;
+  }
+  bb13 {
+    %5 = (1, $desugar$3);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$3) = %4;
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb14 {
+    %30 = %29;
+    %31 = println(%30) -> bb15;
+  }
+  bb15 {
+    %32 = ConstantLoad 0
+    %33 = newArray [function() returns int...][%32]{}
+    functions = %33;
+    %34 = ConstantLoad a
+    %35 = ConstantLoad 4
+    %36 = ConstantLoad b
+    %37 = ConstantLoad 5
+    %38 = ConstantLoad c
+    %39 = ConstantLoad 6
+    %40 = newMap {| int... |}{%34=%35, %36=%37, %38=%39}
+    values = %40;
+    $desugar$5 = values;
+    %43 = keys($desugar$5) -> bb16;
+  }
+  bb16 {
+    $desugar$6 = %43;
+    %45 = ConstantLoad 0
+    $desugar$7 = %45;
+    %47 = length($desugar$6) -> bb17;
+  }
+  bb17 {
+    $desugar$8 = %47;
+    GOTO bb18;
+  }
+  bb18 {
+    %50 = $desugar$7;
+    %51 = $desugar$8;
+    %49 = < %50 %51;
+    %49 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 9
+    %1 = (1, $desugar$6)[(1, $desugar$7)];
+    %0 = (1, $desugar$5)[%1];
+    value = %0;
+    %3 = closure_fp $anon/.:$anonFunc$_2
+    %4 = push((1, functions),%3) -> bb21;
+  }
+  bb20 {
+    %52 = capturedSum(functions) -> bb22;
+  }
+  bb21 {
+    %6 = (1, $desugar$7);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$7) = %5;
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb22 {
+    %53 = %52;
+    %54 = println(%53) -> bb23;
+  }
+  bb23 {
+    %55 = ConstantLoad 0
+    %56 = newArray [function() returns int...][%55]{}
+    functions = %56;
+    %57 = newObject $anon/.:NumberGenerator
+    %58 = init(%57) -> bb24;
+  }
+  bb24 {
+    %60 = %58 is nil
+    %60 ? bb25 : bb26;
+  }
+  bb25 {
+    %59 = %57;
+    GOTO bb27;
+  }
+  bb26 {
+    %59 = %58;
+    GOTO bb27;
+  }
+  bb27 {
+    generator = %59;
+    $desugar$9 = generator;
+    %63 = iterator($desugar$9) -> bb28;
+  }
+  bb28 {
+    $desugar$11 = %63;
+    GOTO bb29;
+  }
+  bb29 {
+    %65 = ConstantLoad true
+    %65 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 8
+    %0 = next((1, $desugar$11)) -> bb32;
+  }
+  bb31 {
+    %66 = capturedSum(functions) -> bb36;
+  }
+  bb32 {
+    $desugar$13 = %0;
+    %2 = $desugar$13 is nil
+    %2 ? bb33 : bb34;
+  }
+  bb33 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb31;
+  }
+  bb34 {
+    %4 = ConstantLoad value
+    %3 = $desugar$13[%4];
+    value = %3;
+    %6 = closure_fp $anon/.:$anonFunc$_3
+    %7 = push((1, functions),%6) -> bb35;
+  }
+  bb35 {
+    PopScopeFrame
+    GOTO bb29;
+  }
+  bb36 {
+    %67 = %66;
+    %68 = println(%67) -> bb37;
+  }
+  bb37 {
+    %69 = ConstantLoad 0
+    %70 = newArray [function() returns xml...][%69]{}
+    xmlFunctions = %70;
+    %72 = ConstantLoad item
+    %73 = newXMLElement(%72, ())
+    %74 = ConstantLoad text
+    %75 = newXMLText(%74)
+    %76 = ConstantLoad comment
+    %77 = newXMLComment(%76)
+    %78 = newXMLSequence{%73, %75, %77}
+    sequence = %78;
+    $desugar$14 = sequence;
+    %81 = iterator($desugar$14) -> bb38;
+  }
+  bb38 {
+    $desugar$15 = %81;
+    GOTO bb39;
+  }
+  bb39 {
+    %83 = ConstantLoad true
+    %83 ? bb40 : bb41;
+  }
+  bb40 {
+    PushScopeFrame 8
+    %0 = next((1, $desugar$15)) -> bb42;
+  }
+  bb41 {
+    $desugar$18 = xmlFunctions;
+    %85 = ConstantLoad 0
+    $desugar$19 = %85;
+    %87 = length($desugar$18) -> bb46;
+  }
+  bb42 {
+    $desugar$17 = %0;
+    %2 = $desugar$17 is nil
+    %2 ? bb43 : bb44;
+  }
+  bb43 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb41;
+  }
+  bb44 {
+    %4 = ConstantLoad value
+    %3 = $desugar$17[%4];
+    item = %3;
+    %6 = closure_fp $anon/.:$anonFunc$_4
+    %7 = push((1, xmlFunctions),%6) -> bb45;
+  }
+  bb45 {
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb46 {
+    $desugar$20 = %87;
+    GOTO bb47;
+  }
+  bb47 {
+    %90 = $desugar$19;
+    %91 = $desugar$20;
+    %89 = < %90 %91;
+    %89 ? bb48 : bb49;
+  }
+  bb48 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$18)[(1, $desugar$19)];
+    fn = %0;
+    %2 = fn() -> bb50;
+  }
+  bb49 {
+    return;
+  }
+  bb50 {
+    %3 = println(%2) -> bb51;
+  }
+  bb51 {
+    %5 = (1, $desugar$19);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$19) = %4;
+    PopScopeFrame
+    GOTO bb47;
+  }
+}

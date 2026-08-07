@@ -82,7 +82,7 @@
           (invocation crypto encryptAesCbc (
             (simple-var-ref plaintext)
             (simple-var-ref key)
-            (simple-var-ref iv)))))))
+            (simple-var-ref iv) <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr >
@@ -97,7 +97,7 @@
             (invocation crypto decryptAesCbc (
               (simple-var-ref cbc)
               (simple-var-ref key)
-              (simple-var-ref iv))))
+              (simple-var-ref iv) <default>)))
           (simple-var-ref plaintext)))))
     (var-def
       (variable ecb (type
@@ -106,14 +106,14 @@
         (checked-expr
           (invocation crypto encryptAesEcb (
             (simple-var-ref plaintext)
-            (simple-var-ref key)))))))
+            (simple-var-ref key) <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr ==
           (checked-expr
             (invocation crypto decryptAesEcb (
               (simple-var-ref ecb)
-              (simple-var-ref key))))
+              (simple-var-ref key) <default>)))
           (simple-var-ref plaintext)))))
     (var-def
       (variable gcm (type
@@ -123,7 +123,7 @@
           (invocation crypto encryptAesGcm (
             (simple-var-ref plaintext)
             (simple-var-ref key)
-            (simple-var-ref iv12)))))))
+            (simple-var-ref iv12) <default> <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr ==
@@ -131,7 +131,7 @@
             (invocation crypto decryptAesGcm (
               (simple-var-ref gcm)
               (simple-var-ref key)
-              (simple-var-ref iv12))))
+              (simple-var-ref iv12) <default> <default>)))
           (simple-var-ref plaintext)))))
     (var-def
       (variable gcm96 (type
@@ -174,7 +174,7 @@
         (invocation crypto encryptAesCbc (
           (simple-var-ref plaintext)
           (simple-var-ref badKey)
-          (simple-var-ref iv))))))
+          (simple-var-ref iv) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -188,7 +188,7 @@
           (user-defined-type crypto Error))) (expr
         (invocation crypto encryptAesEcb (
           (simple-var-ref plaintext)
-          (simple-var-ref badKey))))))
+          (simple-var-ref badKey) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -203,7 +203,7 @@
         (invocation crypto encryptAesGcm (
           (simple-var-ref plaintext)
           (simple-var-ref badKey)
-          (simple-var-ref iv12))))))
+          (simple-var-ref iv12) <default> <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -239,7 +239,7 @@
         (invocation crypto decryptAesCbc (
           (simple-var-ref zeros)
           (simple-var-ref key)
-          (simple-var-ref iv))))))
+          (simple-var-ref iv) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -257,7 +257,7 @@
             (literal 2)
             (literal 3))
           (simple-var-ref key)
-          (simple-var-ref iv))))))
+          (simple-var-ref iv) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -272,7 +272,7 @@
         (invocation crypto decryptAesCbc (
           (simple-var-ref cbc)
           (simple-var-ref badKey)
-          (simple-var-ref iv))))))
+          (simple-var-ref iv) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -286,7 +286,7 @@
           (user-defined-type crypto Error))) (expr
         (invocation crypto decryptAesEcb (
           (simple-var-ref ecb)
-          (simple-var-ref badKey))))))
+          (simple-var-ref badKey) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -303,7 +303,7 @@
             (literal 1)
             (literal 2)
             (literal 3))
-          (simple-var-ref key))))))
+          (simple-var-ref key) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -317,7 +317,7 @@
           (user-defined-type crypto Error))) (expr
         (invocation crypto decryptAesEcb (
           (simple-var-ref zeros)
-          (simple-var-ref key))))))
+          (simple-var-ref key) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -332,7 +332,7 @@
         (invocation crypto decryptAesCbc (
           (list-constructor-expr)
           (simple-var-ref key)
-          (simple-var-ref iv))))))
+          (simple-var-ref iv) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -415,7 +415,7 @@
         (invocation crypto decryptAesGcm (
           (simple-var-ref gcm)
           (simple-var-ref badKey)
-          (simple-var-ref iv12))))))
+          (simple-var-ref iv12) <default> <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -451,7 +451,7 @@
         (invocation crypto decryptAesGcm (
           (simple-var-ref gcm)
           (simple-var-ref key2)
-          (simple-var-ref iv12))))))
+          (simple-var-ref iv12) <default> <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is

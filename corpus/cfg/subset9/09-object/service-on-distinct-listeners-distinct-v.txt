@@ -1,0 +1,73 @@
+(FirstListener
+  (attach
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref svc)
+            (user-defined-type FirstService)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref svc)
+            (user-defined-type SecondService)))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(SecondListener
+  (attach
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref svc)
+            (user-defined-type FirstService)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref svc)
+            (user-defined-type SecondService)))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(main
+  (bb0 () ())
+)

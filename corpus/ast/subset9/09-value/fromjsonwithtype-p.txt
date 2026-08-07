@@ -1,0 +1,25 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable missing (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alice))))))
+      (var-def
+        (variable _ (type
+          (user-defined-type Person)) (expr
+          (check-panicked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref missing) (
+              (simple-var-ref Person))))))))))

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer maximal type such that it is a subtype of both anydata and error
+  --> dependent-fn-infer-e.bal:18:15
+   |
+18 |     error e = inferredPartially(0); // @error
+   |               ^^^^^^^^^^^^^^^^^^^^

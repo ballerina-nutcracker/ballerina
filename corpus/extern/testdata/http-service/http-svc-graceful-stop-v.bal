@@ -19,18 +19,26 @@ import ballerina/io;
 
 listener http:Listener ep = new (19199);
 
-// A resource calling ep.gracefulStop() on itself must not self-deadlock: the
-// extern runs inline on this resource's own goroutine, so it must return
-// immediately and let the shutdown drain in the background instead of
-// blocking until the connection (this very request) goes idle.
 service /svc on ep {
-    resource function get stop() returns error? {
-        check ep.gracefulStop();
+    resource function get ping() returns http:Response {
+        http:Response resp = new;
+        resp.setTextPayload("pong");
+        return resp;
     }
 }
 
 public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19199", {});
-    http:Response r = check c->get("/svc/stop");
-    io:println(r.statusCode); // @output 202
+
+    http:Response r = check c->get("/svc/ping");
+    io:println(r.statusCode); // @output 200
+
+    // Invoked from this non-serving strand, gracefulStop blocks until in-flight
+    // requests drain and the server closes, then returns () on success.
+    check ep.gracefulStop();
+    io:println("gracefully stopped"); // @output gracefully stopped
+
+    // The listener is now closed, so a fresh request is connection-refused.
+    http:Response|error afterStop = c->get("/svc/ping");
+    io:println(afterStop is error); // @output true
 }

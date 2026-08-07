@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot derive a service type satisfying all listeners
+  --> service-type-resolution1-e.bal:57:12
+   |
+57 | service on intValueListener, stringValueListener { // @error listener service types have an empty intersection
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: resource path parameter type must be a subtype of anydata
+  --> service-type-resolution1-e.bal:63:33
+   |
+63 |     resource function get items/[any path]() { // @error resource path parameter is not anydata
+   |                                 ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: service definition is empty
+  --> service-type-resolution1-e.bal:67:1
+   |
+67 | service on intValueListener {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+68 |     int value = 0;
+   |     ^^^^^^^^^^^^^^
+69 |     never impossible; // @error service definition is empty
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+70 | }
+   | ^

@@ -26,17 +26,20 @@
             (user-defined-type F) dimensions: 1 ([]))) (expr
           (list-constructor-expr))))
       (var-def
-        (variable i (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 0))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (literal 1000))))
       (while
         (binary-expr <
-          (simple-var-ref i)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
           (var-def
             (variable v (type
               (value-type int)) (expr
@@ -73,9 +76,9 @@
                   (simple-var-ref array)
                   (simple-var-ref foo)))))))
           (assignment
-            (simple-var-ref i)
+            (simple-var-ref $desugar$0)
             (binary-expr +
-              (simple-var-ref i)
+              (simple-var-ref $desugar$0)
               (numeric-literal 1)))))
       (return
         (simple-var-ref array))))
@@ -90,18 +93,21 @@
           (value-type int)) (expr
           (literal 0))))
       (var-def
-        (variable i (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 0))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (invocation lang.array length (
             (simple-var-ref funcs))))))
       (while
         (binary-expr <
-          (simple-var-ref i)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
           (var-def
             (variable f (type
               (user-defined-type F)) (expr
@@ -113,9 +119,9 @@
             (invocation f (
               (simple-var-ref i))))
           (assignment
-            (simple-var-ref i)
+            (simple-var-ref $desugar$0)
             (binary-expr +
-              (simple-var-ref i)
+              (simple-var-ref $desugar$0)
               (numeric-literal 1)))))
       (return
         (simple-var-ref sum))))

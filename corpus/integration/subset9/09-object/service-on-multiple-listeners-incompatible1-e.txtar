@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: service body is not a subtype of the listener's expected service type
+error[SEMANTIC_ERROR]: service body does not implement the service type
   --> service-on-multiple-listeners-incompatible1-e.bal:68:1
    |
 68 | service on fooListener, barListener { // @error service must satisfy both listener target service types

@@ -1,0 +1,272 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 2022
+    badBool = %1;
+    %3 = ConstantLoad typedesc
+    %4 = fromJsonWithType(badBool,%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is error
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad a
+    %9 = ConstantLoad b
+    %10 = ConstantLoad 2
+    %11 = newArray [json...][%10]{%8, %9}
+    badArr = %11;
+    %13 = ConstantLoad typedesc
+    %14 = fromJsonWithType(badArr,%13) -> bb3;
+  }
+  bb3 {
+    %15 = %14 is error
+    %16 = %15;
+    %17 = println(%16) -> bb4;
+  }
+  bb4 {
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad 2
+    %20 = ConstantLoad 2
+    %21 = newArray [json...][%20]{%18, %19}
+    badNumArr = %21;
+    %23 = ConstantLoad typedesc
+    %24 = fromJsonWithType(badNumArr,%23) -> bb5;
+  }
+  bb5 {
+    %25 = %24 is error
+    %26 = %25;
+    %27 = println(%26) -> bb6;
+  }
+  bb6 {
+    %28 = ConstantLoad foobar
+    badString = %28;
+    %30 = ConstantLoad typedesc
+    %31 = fromJsonWithType(badString,%30) -> bb7;
+  }
+  bb7 {
+    %32 = %31 is error
+    %33 = %32;
+    %34 = println(%33) -> bb8;
+  }
+  bb8 {
+    %35 = ConstantLoad name
+    %36 = ConstantLoad Alice
+    %37 = newMap {| json... |}{%35=%36}
+    missingField = %37;
+    %39 = ConstantLoad typedesc
+    %40 = fromJsonWithType(missingField,%39) -> bb9;
+  }
+  bb9 {
+    %41 = %40 is error
+    %42 = %41;
+    %43 = println(%42) -> bb10;
+  }
+  bb10 {
+    %44 = ConstantLoad name
+    %45 = ConstantLoad Alice
+    %46 = ConstantLoad age
+    %47 = ConstantLoad old
+    %48 = newMap {| json... |}{%44=%45, %46=%47}
+    badAge = %48;
+    %50 = ConstantLoad typedesc
+    %51 = fromJsonWithType(badAge,%50) -> bb11;
+  }
+  bb11 {
+    %52 = %51 is error
+    %53 = %52;
+    %54 = println(%53) -> bb12;
+  }
+  bb12 {
+    %55 = ConstantLoad x
+    %56 = ConstantLoad a
+    %57 = ConstantLoad y
+    %58 = ConstantLoad 1
+    %59 = newMap {| json... |}{%55=%56, %57=%58}
+    extraField = %59;
+    %61 = ConstantLoad typedesc
+    %62 = fromJsonWithType(extraField,%61) -> bb13;
+  }
+  bb13 {
+    %63 = %62 is error
+    %64 = %63;
+    %65 = println(%64) -> bb14;
+  }
+  bb14 {
+    %66 = ConstantLoad <nil>
+    nilVal = %66;
+    %68 = ConstantLoad typedesc
+    %69 = fromJsonWithType(nilVal,%68) -> bb15;
+  }
+  bb15 {
+    %70 = %69 is error
+    %71 = %70;
+    %72 = println(%71) -> bb16;
+  }
+  bb16 {
+    %73 = ConstantLoad a
+    %74 = ConstantLoad 1
+    %75 = newMap {| json... |}{%73=%74}
+    notPerson = %75;
+    %77 = ConstantLoad typedesc
+    %78 = fromJsonWithType(notPerson,%77) -> bb17;
+  }
+  bb17 {
+    %79 = %78 is error
+    %80 = %79;
+    %81 = println(%80) -> bb18;
+  }
+  bb18 {
+    %82 = ConstantLoad 1
+    %83 = ConstantLoad 1
+    %84 = newArray [json...][%83]{%82}
+    shortTuple = %84;
+    %86 = ConstantLoad typedesc
+    %87 = fromJsonWithType(shortTuple,%86) -> bb19;
+  }
+  bb19 {
+    %88 = %87 is error
+    %89 = %88;
+    %90 = println(%89) -> bb20;
+  }
+  bb20 {
+    %91 = ConstantLoad 1
+    %92 = ConstantLoad a
+    %93 = ConstantLoad 2
+    %94 = ConstantLoad 3
+    %95 = newArray [json...][%94]{%91, %92, %93}
+    longTuple = %95;
+    %97 = ConstantLoad typedesc
+    %98 = fromJsonWithType(longTuple,%97) -> bb21;
+  }
+  bb21 {
+    %99 = %98 is error
+    %100 = %99;
+    %101 = println(%100) -> bb22;
+  }
+  bb22 {
+    %102 = ConstantLoad 1
+    %103 = ConstantLoad 1
+    %104 = newArray [json...][%103]{%102}
+    shortOpenTuple = %104;
+    %106 = ConstantLoad typedesc
+    %107 = fromJsonWithType(shortOpenTuple,%106) -> bb23;
+  }
+  bb23 {
+    %108 = %107 is error
+    %109 = %108;
+    %110 = println(%109) -> bb24;
+  }
+  bb24 {
+    %111 = ConstantLoad <nil>
+    nullVal = %111;
+    %113 = ConstantLoad typedesc
+    %114 = fromJsonWithType(nullVal,%113) -> bb25;
+  }
+  bb25 {
+    %115 = %114 is error
+    %116 = %115;
+    %117 = println(%116) -> bb26;
+  }
+  bb26 {
+    %118 = ConstantLoad 42
+    numBool = %118;
+    %120 = ConstantLoad typedesc
+    %121 = fromJsonWithType(numBool,%120) -> bb27;
+  }
+  bb27 {
+    %122 = %121 is error
+    %123 = %122;
+    %124 = println(%123) -> bb28;
+  }
+  bb28 {
+    %125 = ConstantLoad 1
+    %126 = ConstantLoad 2
+    %127 = ConstantLoad 2
+    %128 = newArray [json...][%127]{%125, %126}
+    arrForMap = %128;
+    %130 = ConstantLoad typedesc
+    %131 = fromJsonWithType(arrForMap,%130) -> bb29;
+  }
+  bb29 {
+    %132 = %131 is error
+    %133 = %132;
+    %134 = println(%133) -> bb30;
+  }
+  bb30 {
+    %135 = ConstantLoad a
+    %136 = ConstantLoad 1
+    %137 = newMap {| json... |}{%135=%136}
+    mapForArr = %137;
+    %139 = ConstantLoad typedesc
+    %140 = fromJsonWithType(mapForArr,%139) -> bb31;
+  }
+  bb31 {
+    %141 = %140 is error
+    %142 = %141;
+    %143 = println(%142) -> bb32;
+  }
+  bb32 {
+    %144 = ConstantLoad name
+    %145 = ConstantLoad Bob
+    %146 = newMap {| json... |}{%144=%145}
+    missingNilableReq = %146;
+    %148 = ConstantLoad typedesc
+    %149 = fromJsonWithType(missingNilableReq,%148) -> bb33;
+  }
+  bb33 {
+    %150 = %149 is error
+    %151 = %150;
+    %152 = println(%151) -> bb34;
+  }
+  bb34 {
+    %153 = ConstantLoad name
+    %154 = ConstantLoad Carol
+    %155 = newMap {| json... |}{%153=%154}
+    missingWithDefault = %155;
+    %157 = ConstantLoad typedesc
+    %158 = fromJsonWithType(missingWithDefault,%157) -> bb35;
+  }
+  bb35 {
+    withDefault = %158;
+    %160 = withDefault is error
+    %160 ? bb36 : bb39;
+  }
+  bb36 {
+    PushScopeFrame 2
+    %0 = message((1, withDefault)) -> bb37;
+  }
+  bb37 {
+    %1 = println(%0) -> bb38;
+  }
+  bb38 {
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb39 {
+    PushScopeFrame 8
+    %0 = ConstantLoad hello
+    neitherIntNorBool = %0;
+    %2 = ConstantLoad typedesc
+    %3 = fromJsonWithType(neitherIntNorBool,%2) -> bb40;
+  }
+  bb40 {
+    %4 = %3 is error
+    %5 = %4;
+    %6 = println(%5) -> bb41;
+  }
+  bb41 {
+    %7 = ConstantLoad <nil>
+    (1, %0) = %7;
+    PopScopeFrame
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 99
+    %0 = %1;
+    return;
+  }
+}

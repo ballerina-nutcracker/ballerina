@@ -1,6 +1,6 @@
 (package
-  (import-package ballerina random (as random))
   (import-package ballerina io (as io))
+  (import-package ballerina random (as random))
   (function main () (
     (union-type
       (error-type)

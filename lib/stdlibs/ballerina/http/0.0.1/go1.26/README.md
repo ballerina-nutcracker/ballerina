@@ -8,7 +8,7 @@ This module provides the HTTP client and listener APIs for building and consumin
 
 **Service / Listener** — an HTTP listener with configurable host, TLS, HTTP version, and request limits; service definition with path-based routing and resource function dispatch; automatic binding of path parameters, query parameters, headers, and payloads in resource signatures; caller-based response dispatch; request/response interceptor pipeline; service-level and resource-level annotations (`@http:ServiceConfig`, `@http:ResourceConfig`, `@http:Payload`, `@http:Header`, `@http:Query`, `@http:Cache`); CORS configuration; listener authentication and authorization (File user store, LDAP, JWT, OAuth2); status code response types from resources; and SSE streaming responses.
 
-The Go Native Interpreter currently supports the **HTTP client subset only**: the nine core remote methods (including `forward`), TLS/mTLS (PEM-based), redirect following, connection pooling, and manual payload extraction from responses. The service/listener side is not yet implemented.
+The Go Native Interpreter supports the **HTTP client subset**: the nine core remote methods (including `forward`), TLS/mTLS (PEM-based), redirect following, connection pooling, and manual payload extraction from responses. It also supports a native **listener**: creating an `http:Listener`, attaching and detaching services, and starting and stopping it (`'start`, `gracefulStop`, `immediateStop`); attached services are dispatched by path-based routing to resource functions. See the Listener and Service tables below for the current support status of listener configuration, TLS, and broader service-side features.
 
 ## Key Functionalities
 
@@ -142,9 +142,9 @@ Support Levels:
 
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
-| HTTP Listener | Not Yet Supported | The `Listener` class (start, graceful stop, attach, detach) is not implemented; no server-side listener can be created. |
-| Listener configuration | Not Yet Supported | `ListenerConfiguration` (host, timeout, HTTP version, HTTP/1.x settings, HTTP/2 window size, graceful stop timeout, request limits, server name, socket config) is not implemented. |
-| Listener TLS / mTLS | Not Yet Supported | `ListenerSecureSocket` (server certificate, mutual TLS, protocol, ciphers, etc.) is not implemented. |
+| HTTP Listener | Supported | The `Listener` class is implemented: `init`, `attach`, `detach`, `'start`, `gracefulStop`, and `immediateStop` create a listener, attach/detach services, and start/stop the server. See the `gracefulStop` behavioural note below. |
+| Listener configuration | Partially Supported | `ListenerConfiguration` supports `host` (default `0.0.0.0`), `timeout` (response write timeout, default 60s), `httpVersion` (`HTTP_1_1` or `HTTP_2_0`), and `secureSocket` (TLS). Request/response size limits, server name, `http1Settings`, `http2Settings`, and `socketConfig` are not present in the record. |
+| Listener TLS / mTLS | Partially Supported | `ListenerSecureSocket` supports a PEM server certificate/key (`key`), mutual TLS (`mutualSsl` + `cert` as the CA path), TLS protocol version bounds (`protocol`), cipher suite selection (`ciphers`), and session ticket disabling (`shareSession`) — these are the only fields the record declares. Certificate revocation validation, session/handshake timeouts, and Java KeyStore/TrustStore-based configuration are not present. |
 | Default listener | Not Yet Supported | The module-level default listener (`http:defaultListener`) is not implemented. |
 | Listener authentication and authorization | Not Yet Supported | `ListenerAuthConfig` and listener-side auth handlers (file user store, LDAP, JWT, OAuth2) are not implemented. |
 
@@ -152,8 +152,8 @@ Support Levels:
 
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
-| HTTP service definition and routing | Not Yet Supported | Declaring `service on listener` with path-based routing is not implemented. |
-| Resource function dispatch | Not Yet Supported | Resource functions with path parameters, accessor methods, and typed response returns are not implemented. |
+| HTTP service definition and routing | Supported | Path-based routing dispatches to the first attached service whose base path matches, not longest-prefix match; attach overlapping base paths on the same listener in most-specific-first order. |
+| Resource function dispatch | Partially Supported | Path parameters (typed segment coercion) and accessor methods (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `default`) dispatch to the matching resource function. Resource return values are restricted to `http:Response`, `error`, or `()` — status code response types and plain `anydata`/`json` returns are not implemented (see the row below). |
 | Caller-based response dispatch | Not Yet Supported | The `Caller` class and its `respond()` method for sending responses back to the client are not implemented. |
 | Status code response types from resources | Not Yet Supported | Returning `http:Ok`, `http:Created`, `http:NotFound`, and other `StatusCodeResponse` subtypes from resource functions is not implemented. |
 | Service-level annotation | Not Yet Supported | `@http:ServiceConfig` (host, compression, chunking, CORS, auth, validation, lax data binding) is not implemented. |
@@ -184,3 +184,4 @@ Support Levels:
 - **`poolConfig.waitTime` maps to `ResponseHeaderTimeout`.** jBallerina's `waitTime` limits how long a request waits for a connection. In the Go runtime this is approximated by `ResponseHeaderTimeout` (maximum time to wait for the first response byte). True connection-wait limiting is not available in Go's `net/http` transport.
 - **`responseLimits.maxStatusLineLength` is not enforced.** The value is accepted and validated (must be ≥ 0) but has no runtime effect. Go's HTTP transport does not expose a configurable maximum status line length (unlike jBallerina's Netty `HttpClientCodec`).
 - **Proxy DNS resolution is lazy, not eager.** In jBallerina, `ProxyConfig.host` is DNS-resolved at client creation time, and an unknown hostname causes an `error` from `new http:Client(...)`. In the Go runtime, DNS resolution is deferred to the first request that uses the proxy. A bad proxy hostname does not fail at init time.
+- **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.

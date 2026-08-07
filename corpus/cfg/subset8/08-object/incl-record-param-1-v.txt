@@ -28,41 +28,37 @@
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg values
-            (mapping-constructor-expr)))))))
+          (mapping-constructor-expr))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg values
-            (mapping-constructor-expr
-              (key-value
-                (literal foo)
-                (literal 10)))))))))
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 10))))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg values
-            (mapping-constructor-expr
-              (key-value
-                (literal bar)
-                (literal 5)))))))))
+          (mapping-constructor-expr
+            (key-value
+              (literal bar)
+              (literal 5))))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:
           (simple-var-ref c) (
           (literal 1)
-          (named-arg values
-            (mapping-constructor-expr
-              (key-value
-                (literal foo)
-                (literal 1))
-              (key-value
-                (literal bar)
-                (literal 5)))))))))
+          (mapping-constructor-expr
+            (key-value
+              (literal foo)
+              (literal 1))
+            (key-value
+              (literal bar)
+              (literal 5))))))))
     (expression-stmt
       (invocation io println (
         (invocation foo expr:

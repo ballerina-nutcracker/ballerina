@@ -161,18 +161,21 @@
                 (simple-var-ref y)
                 (literal 0)))))))
         (var-def
-          (variable i (type
-            (value-type int)) (expr
+          (variable $desugar$0 (expr
             (literal 1))))
         (var-def
-          (variable $desugar$0 (expr
+          (variable $desugar$1 (expr
             (invocation lang.array length (
               (simple-var-ref y))))))
         (while
           (binary-expr <
-            (simple-var-ref i)
-            (simple-var-ref $desugar$0))
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))
           (block-stmt
+            (var-def
+              (variable i (type
+                (value-type int)) (expr
+                (simple-var-ref $desugar$0))))
             (assignment
               (simple-var-ref curr)
               (invocation bar (
@@ -181,9 +184,9 @@
                   (simple-var-ref y)
                   (simple-var-ref i)))))
             (assignment
-              (simple-var-ref i)
+              (simple-var-ref $desugar$0)
               (binary-expr +
-                (simple-var-ref i)
+                (simple-var-ref $desugar$0)
                 (numeric-literal 1)))))
         (return
           (simple-var-ref curr))))))

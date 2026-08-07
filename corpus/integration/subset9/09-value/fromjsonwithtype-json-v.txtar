@@ -1,0 +1,9 @@
+-- stdout --
+hello
+42
+true
+[1,null,3]
+{"a":1,"b":null}
+[[1,2],[3,4]]
+{"items":[1,2],"meta":{"n":2}}
+-- stderr --

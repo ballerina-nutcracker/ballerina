@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: service body is not a subtype of the declared service type
+error[SEMANTIC_ERROR]: service type must be a subtype of service object {}
   --> numeric-literal-service-attach-point-e.bal:34:1
    |
 34 | service 123 on new Listener() { // @error numeric literals cannot be service attach points

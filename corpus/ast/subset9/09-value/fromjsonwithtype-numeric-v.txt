@@ -1,0 +1,133 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable maxByte (type
+          (builtin-ref-type json)) (expr
+          (literal 255))))
+      (var-def
+        (variable b (type
+          (value-type byte)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref maxByte) (
+              (typedesc-expr
+                (value-type byte))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable roundedOutOfRange (type
+          (builtin-ref-type json)) (expr
+          (literal 255.6))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref roundedOutOfRange) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (var-def
+        (variable hugeFloat (type
+          (builtin-ref-type json)) (expr
+          (literal 1e100))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref hugeFloat) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable maxIntOverflow (type
+          (value-type float)) (expr
+          (literal 9223372036854775808.0))))
+      (var-def
+        (variable maxIntOverflowJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref maxIntOverflow))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref maxIntOverflowJson) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable tooBig (type
+          (value-type decimal)) (expr
+          (literal 9.223372036854776e+18))))
+      (var-def
+        (variable tooBigJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref tooBig))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref tooBigJson) (
+              (typedesc-expr
+                (value-type int))))
+            (error-type)))))
+      (var-def
+        (variable nan (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0.0)
+            (literal 0.0)))))
+      (var-def
+        (variable nanJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref nan))))
+      (var-def
+        (variable inf (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1.0)
+            (literal 0.0)))))
+      (var-def
+        (variable infJson (type
+          (builtin-ref-type json)) (expr
+          (simple-var-ref inf))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nanJson) (
+              (typedesc-expr
+                (value-type decimal))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref infJson) (
+              (typedesc-expr
+                (value-type decimal))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref nanJson) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation fromJsonWithType expr:
+              (simple-var-ref infJson) (
+              (typedesc-expr
+                (value-type byte))))
+            (error-type)))))
+      (return
+        (literal <nil>)))))

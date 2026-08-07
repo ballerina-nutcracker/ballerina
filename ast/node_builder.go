@@ -1835,6 +1835,9 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 	if node.HasDiagnostics() {
 		return
 	}
+	if paths.Size() > 0 {
+		service.AbsoluteResourcePath = []BLangIdentifier{}
+	}
 	for i := 0; i < paths.Size(); i++ {
 		seg := paths.Get(i)
 		if seg.Kind() == common.STRING_LITERAL {
@@ -1860,6 +1863,9 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 
 func (n *NodeBuilder) populateServiceAttachedExprs(service *BLangService, node *tree.ServiceDeclarationNode) {
 	exprs := node.Expressions()
+	if exprs.Size() > 0 {
+		service.AttachedExprsPosition = n.getPositionRange(exprs.Get(0), exprs.Get(exprs.Size()-1))
+	}
 	for i := 0; i < exprs.Size(); i += 2 {
 		service.AttachedExprs = append(service.AttachedExprs, n.createExpression(exprs.Get(i)))
 	}
@@ -4248,9 +4254,12 @@ func (n *NodeBuilder) createFunctionTypeParam(param tree.ParameterNode) BLangFun
 
 	ftParam.TypeDesc = n.createTypeNode(typeName).(BType)
 
-	if dp, ok := param.(*tree.DefaultableParameterNode); ok {
-		defaultExpr := dp.Expression()
+	switch p := param.(type) {
+	case *tree.DefaultableParameterNode:
+		defaultExpr := p.Expression()
 		ftParam.InitExpr = n.createExpression(defaultExpr)
+	case *tree.IncludedRecordParameterNode:
+		ftParam.SetIncludedRecordParam()
 	}
 
 	if annotations.Size() > 0 {
@@ -4529,8 +4538,51 @@ func (n *NodeBuilder) TransformImplicitAnonymousFunctionParameters(implicitAnony
 	panic("TransformImplicitAnonymousFunctionParameters unimplemented")
 }
 
-func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(implicitAnonymousFunctionBLangExpression *tree.ImplicitAnonymousFunctionExpressionNode) BLangNode {
-	panic("TransformImplicitAnonymousFunctionExpression unimplemented")
+func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *tree.ImplicitAnonymousFunctionExpressionNode) BLangNode {
+	fn := &BLangFunction{}
+	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
+	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
+	fn.Name = &ident
+	fn.pos = n.getPosition(node)
+	fn.SetAnonymous()
+
+	var paramNodes []*tree.SimpleNameReferenceNode
+	switch params := node.Params().(type) {
+	case *tree.SimpleNameReferenceNode:
+		paramNodes = append(paramNodes, params)
+	case *tree.ImplicitAnonymousFunctionParameters:
+		parameters := params.Parameters()
+		for param := range parameters.Iterator() {
+			paramNodes = append(paramNodes, param)
+		}
+	default:
+		n.cx.SyntaxError("invalid parameter list in inferred anonymous function expression", n.getPosition(node.Params()))
+	}
+	fn.RequiredParams = make([]BLangSimpleVariable, len(paramNodes))
+	for i, param := range paramNodes {
+		paramName := param.Name()
+		paramPos := n.getPosition(paramName)
+		ident := createIdentifier(paramPos, nil, nil)
+		if paramName != nil && !paramName.IsMissing() {
+			paramValue := paramName.Text()
+			if paramValue == "_" || paramValue == "'_" {
+				n.cx.SyntaxError("'_' cannot be used as an identifier", paramPos)
+			}
+			ident = createIdentifier(paramPos, &paramValue, &paramValue)
+		}
+		fn.RequiredParams[i].Name = &ident
+		fn.RequiredParams[i].pos = n.getPosition(param)
+		fn.RequiredParams[i].SetRequiredParam()
+	}
+	fn.Body = &BLangExprFunctionBody{
+		Expr: n.createExpression(node.Expression()),
+	}
+	fn.Body.(*BLangExprFunctionBody).pos = n.getPosition(node.Expression())
+
+	lambda := &BLangLambdaFunction{Function: fn}
+	lambda.SetInferredParams()
+	lambda.pos = fn.pos
+	return lambda
 }
 
 func (n *NodeBuilder) TransformStartAction(startActionNode *tree.StartActionNode) BLangNode {

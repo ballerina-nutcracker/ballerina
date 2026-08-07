@@ -42,7 +42,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref badJson)
-          (literal {not valid json})))))
+          (literal {not valid json}) <default>))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -57,7 +57,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref trailingJson)
-          (literal {"k": 1} extra)))))
+          (literal {"k": 1} extra) <default>))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is

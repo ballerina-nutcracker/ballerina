@@ -28,10 +28,10 @@ func (l *List) ToByteSlice() []byte {
 }
 
 // ByteSliceToList converts a Go []byte to a Ballerina byte[] (List).
-func ByteSliceToList(byteArrTy semtypes.SemType, tc semtypes.Context, data []byte) *List {
+func ByteSliceToList(byteArrTy semtypes.SemType, env semtypes.Env, data []byte) *List {
 	items := make([]BalValue, len(data))
 	for i, b := range data {
 		items[i] = int64(b)
 	}
-	return NewList(byteArrTy, semtypes.ToListAtomicType(tc, byteArrTy), false, nil, 0, items)
+	return NewList(byteArrTy, semtypes.ToListAtomicType(env, byteArrTy), false, nil, 0, items)
 }

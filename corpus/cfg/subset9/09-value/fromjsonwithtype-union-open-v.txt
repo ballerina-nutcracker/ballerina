@@ -1,0 +1,91 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable petJson (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal nickname)
+            (literal Fido))
+          (key-value
+            (literal pet_type)
+            (literal Dog))
+          (key-value
+            (literal age)
+            (literal 4))))))
+    (var-def
+      (variable pet (type
+        (user-defined-type Pet)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref petJson)
+            (simple-var-ref Pet)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref pet))))
+    (var-def
+      (variable arrJson (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (var-def
+      (variable arrVal (type
+        (user-defined-type IntStrArr)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arrJson)
+            (simple-var-ref IntStrArr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref arrVal))))
+    (var-def
+      (variable strArrJson (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal a)
+          (literal b)))))
+    (var-def
+      (variable strArrVal (type
+        (user-defined-type IntStrArr)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref strArrJson)
+            (simple-var-ref IntStrArr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref strArrVal))))
+    (var-def
+      (variable floatJson (type
+        (builtin-ref-type json)) (expr
+        (literal 12))))
+    (var-def
+      (variable numVal (type
+        (user-defined-type IntFloat)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref floatJson)
+            (simple-var-ref IntFloat)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref numVal)
+          (value-type float)))))
+    (var-def
+      (variable floatAsByte (type
+        (builtin-ref-type json)) (expr
+        (literal 200))))
+    (var-def
+      (variable asByte (type
+        (user-defined-type ByteOrString)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref floatAsByte)
+            (simple-var-ref ByteOrString)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref asByte))))
+    (return
+      (literal <nil>))
+  )
+)

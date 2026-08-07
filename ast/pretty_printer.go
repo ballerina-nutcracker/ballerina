@@ -76,6 +76,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printReturnTypeDescriptor(t)
 	case *BLangBlockFunctionBody:
 		p.printBlockFunctionBody(t)
+	case *BLangExprFunctionBody:
+		p.printExprFunctionBody(t)
 	case *BLangSimpleVariable:
 		p.printSimpleVariable(t)
 	case *BLangIf:
@@ -102,6 +104,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printClientResourceAccessAction(t)
 	case *BLangNamedArgsExpression:
 		p.printNamedArgsExpression(t)
+	case *BLangDefaultArg:
+		p.PrintString("<default>")
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:
@@ -378,8 +382,11 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	p.StartNode()
 	p.PrintString("package")
 	p.indentLevel++
-	for i := range node.Imports {
-		p.PrintInner(&node.Imports[i])
+	sortedImports := slices.SortedFunc(slices.Values(node.Imports), func(a, b BLangImportPackage) int {
+		return cmp.Compare(a.Alias.Value, b.Alias.Value)
+	})
+	for i := range sortedImports {
+		p.PrintInner(&sortedImports[i])
 	}
 	for i := range node.Constants {
 		p.PrintInner(&node.Constants[i])
@@ -943,6 +950,17 @@ func (p *PrettyPrinter) printBlockFunctionBody(node *BLangBlockFunctionBody) {
 		p.PrintInner(stmt.(BLangNode))
 	}
 	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printExprFunctionBody(node *BLangExprFunctionBody) {
+	p.StartNode()
+	p.PrintString("expr-function-body")
+	if node.Expr != nil {
+		p.indentLevel++
+		p.PrintInner(node.Expr.(BLangNode))
+		p.indentLevel--
+	}
 	p.EndNode()
 }
 
@@ -2163,12 +2181,16 @@ func (p *PrettyPrinter) printService(node *BLangService) {
 		p.indentLevel++
 		p.PrintInner(node.AttachPointLiteral)
 		p.indentLevel--
-	} else if len(node.AbsoluteResourcePath) > 0 {
+	} else if node.AbsoluteResourcePath != nil {
 		p.indentLevel++
 		p.StartNode()
 		p.PrintString("absolute-resource-path")
-		for i := range node.AbsoluteResourcePath {
-			p.PrintString(node.AbsoluteResourcePath[i].Value)
+		if len(node.AbsoluteResourcePath) == 0 {
+			p.PrintString("/")
+		} else {
+			for i := range node.AbsoluteResourcePath {
+				p.PrintString(node.AbsoluteResourcePath[i].Value)
+			}
 		}
 		p.EndNode()
 		p.indentLevel--

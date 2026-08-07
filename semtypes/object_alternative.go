@@ -21,6 +21,10 @@ type ObjectAlternative struct {
 	InitFnType SemType
 }
 
+func IsAtomicObjectType(cx Context, t SemType) bool {
+	return IsSubtype(cx, t, OBJECT) && len(ObjectAlternatives(cx, t)) == 1
+}
+
 func ObjectAlternatives(cx Context, t SemType) []ObjectAlternative {
 	mappingTy := convertObjectToMappingTy(cx, t)
 	mappingAlternatives := MappingAlternatives(cx, mappingTy)

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: attach point does not have a single applicable listener list type
+  --> listener-union-attach-point1-e.bal:55:19
+   |
+55 | service S /foo on ambiguousListener { // @error multiple applicable attach-point list types
+   |                   ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: attach point is not supported by listener
+  --> listener-union-attach-point1-e.bal:58:27
+   |
+58 | service S /foo/bar/baz on unsupportedListener { // @error unsupported attach point
+   |                           ^^^^^^^^^^^^^^^^^^^

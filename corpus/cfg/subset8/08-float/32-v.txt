@@ -53,7 +53,7 @@
       (invocation io println (
         (binary-expr ==
           (invocation lang.float round (
-            (simple-var-ref x)))
+            (simple-var-ref x) <default>))
           (simple-var-ref x)))))
   )
 )

@@ -2,24 +2,25 @@ module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 6
-    i = %1;
+    $desugar$0 = %1;
     %3 = ConstantLoad 10
-    $desugar$0 = %3;
+    $desugar$1 = %3;
     GOTO bb1;
   }
   bb1 {
-    %6 = i;
-    %7 = $desugar$0;
+    %6 = $desugar$0;
+    %7 = $desugar$1;
     %5 = < %6 %7;
     %5 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 8
-    %1 = (1, i);
-    %2 = ConstantLoad 8
-    %3 = %2;
-    %0 = == %1 %3;
-    %0 ? bb4 : bb5;
+    PushScopeFrame 9
+    i = (1, $desugar$0);
+    %2 = i;
+    %3 = ConstantLoad 8
+    %4 = %3;
+    %1 = == %2 %4;
+    %1 ? bb4 : bb5;
   }
   bb3 {
     %8 = ConstantLoad true
@@ -34,16 +35,16 @@ main() -> nil{
   }
   bb5 {
     PushScopeFrame 2
-    %0 = (2, i);
+    %0 = (1, i);
     %1 = println(%0) -> bb6;
   }
   bb6 {
     PopScopeFrame
-    %5 = (1, i);
-    %6 = ConstantLoad 1
-    %7 = %6;
-    %4 = + %5 %7;
-    (1, i) = %4;
+    %6 = (1, $desugar$0);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$0) = %5;
     PopScopeFrame
     GOTO bb1;
   }

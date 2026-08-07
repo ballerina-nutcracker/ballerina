@@ -1,0 +1,61 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable index (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable fs (type
+        (array-type
+          (user-defined-type f) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref index)
+      (literal 10))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref fs)
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref r))))))))
+    (compound-assignment +
+      (simple-var-ref r)
+      (simple-var-ref index))
+    (compound-assignment +
+      (simple-var-ref index)
+      (literal 1))
+  )
+  (bb3 (bb1) (bb4)
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref fs)
+    (var-def
+      (variable func (type
+        (user-defined-type f))))
+  )
+  (bb5 (bb4) (bb4)
+    (compound-assignment +
+      (simple-var-ref result)
+      (invocation func ()))
+  )
+  (bb6 (bb4) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)

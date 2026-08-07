@@ -1,13 +1,12 @@
 github_checks:
   annotations: true
 
-ignore:
-  - "test_util/**"
-
 coverage:
-  ignore:
-    - "test_util/**"
+  range: "60...80"
   status:
+    project:
+      default:
+        target: auto
     patch:
       default:
         target: 80%

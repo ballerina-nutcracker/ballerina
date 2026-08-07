@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: '{| anydata... |}' value has cyclic reference
+        at main(clonewithtype-p.bal:21)

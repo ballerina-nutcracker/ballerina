@@ -2,23 +2,24 @@ module $anon.. v 0.0.0;
 earlyReturn(int) -> int{
   bb0 {
     %2 = ConstantLoad 0
-    i = %2;
-    $desugar$0 = n;
+    $desugar$0 = %2;
+    $desugar$1 = n;
     GOTO bb1;
   }
   bb1 {
-    %6 = i;
-    %7 = $desugar$0;
+    %6 = $desugar$0;
+    %7 = $desugar$1;
     %5 = < %6 %7;
     %5 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 8
-    %1 = (1, i);
-    %2 = ConstantLoad 3
-    %3 = %2;
-    %0 = == %1 %3;
-    %0 ? bb4 : bb5;
+    PushScopeFrame 9
+    i = (1, $desugar$0);
+    %2 = i;
+    %3 = ConstantLoad 3
+    %4 = %3;
+    %1 = == %2 %4;
+    %1 ? bb4 : bb5;
   }
   bb3 {
     %8 = ConstantLoad 1
@@ -28,7 +29,7 @@ earlyReturn(int) -> int{
   }
   bb4 {
     PushScopeFrame 4
-    %1 = (2, i);
+    %1 = (1, i);
     %2 = ConstantLoad 10
     %3 = %2;
     %0 = * %1 %3;
@@ -40,11 +41,11 @@ earlyReturn(int) -> int{
   bb5 {
     PushScopeFrame 0
     PopScopeFrame
-    %5 = (1, i);
-    %6 = ConstantLoad 1
-    %7 = %6;
-    %4 = + %5 %7;
-    (1, i) = %4;
+    %6 = (1, $desugar$0);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$0) = %5;
     PopScopeFrame
     GOTO bb1;
   }
@@ -54,27 +55,28 @@ normalReturn(int) -> int{
     %2 = ConstantLoad 0
     sum = %2;
     %4 = ConstantLoad 0
-    i = %4;
-    $desugar$0 = n;
+    $desugar$0 = %4;
+    $desugar$1 = n;
     GOTO bb1;
   }
   bb1 {
-    %8 = i;
-    %9 = $desugar$0;
+    %8 = $desugar$0;
+    %9 = $desugar$1;
     %7 = < %8 %9;
     %7 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 7
-    %1 = (1, sum);
-    %2 = (1, i);
-    %0 = + %1 %2;
-    (1, sum) = %0;
-    %4 = (1, i);
-    %5 = ConstantLoad 1
-    %6 = %5;
-    %3 = + %4 %6;
-    (1, i) = %3;
+    PushScopeFrame 8
+    i = (1, $desugar$0);
+    %2 = (1, sum);
+    %3 = i;
+    %1 = + %2 %3;
+    (1, sum) = %1;
+    %5 = (1, $desugar$0);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$0) = %4;
     PopScopeFrame
     GOTO bb1;
   }

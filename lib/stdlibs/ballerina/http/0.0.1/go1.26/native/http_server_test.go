@@ -20,8 +20,6 @@ import (
 	"errors"
 	"net/http/httptest"
 	"testing"
-
-	"ballerina/semtypes"
 )
 
 // failingReadCloser errors out of Read before delivering the number of bytes
@@ -37,11 +35,10 @@ func (failingReadCloser) Close() error             { return nil }
 // which never sends a body shorter than its declared Content-Length, so it
 // isn't exercisable from a corpus/.bal test and is covered here directly.
 func TestBuildRequestFromHTTPBodyReadError(t *testing.T) {
-	tc := semtypes.ContextFrom(semtypes.CreateTypeEnv())
 	r := httptest.NewRequest("POST", "/", failingReadCloser{})
 	r.ContentLength = 10 // within eagerBufferThreshold, triggers io.ReadAll
 
-	req, err := buildRequestFromHTTP(tc, r)
+	req, err := buildRequestFromHTTP(r)
 	if err == nil {
 		t.Fatal("buildRequestFromHTTP: expected an error for a body that fails mid-read, got nil")
 	}

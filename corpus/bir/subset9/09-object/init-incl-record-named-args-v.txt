@@ -1,0 +1,82 @@
+module $anon.. v 0.0.0;
+class Listener {
+  path string
+  recursive boolean
+
+  describe() -> string{
+    bb0 {
+      %3 = ConstantLoad path
+      %2 = self[%3];
+      %5 = ConstantLoad recursive
+      %4 = self[%5];
+      %6 = evalTemplate[string]("", %2, ":", %4, "")
+      %0 = %6;
+      return;
+    }
+  }
+
+  init({| path: string, recursive: boolean, never... |}) -> nil|error{
+    bb0 {
+      %4 = ConstantLoad path
+      %3 = config[%4];
+      %5 = ConstantLoad path
+      self[%5] = %3;
+      %7 = ConstantLoad recursive
+      %6 = config[%7];
+      %8 = ConstantLoad recursive
+      self[%8] = %6;
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:Listener
+    %2 = ConstantLoad path
+    %3 = ConstantLoad /tmp
+    %4 = ConstantLoad recursive
+    %5 = ConstantLoad true
+    %6 = newMap {| path: string, recursive: boolean, never... |}{%2=%3, %4=%5} defaults{recursive=$anon/.:$desugar$0}
+    %7 = init(%1,%6) -> bb1;
+  }
+  bb1 {
+    %9 = %7 is nil
+    %9 ? bb2 : bb3;
+  }
+  bb2 {
+    %8 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %8 = %7;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = %8;
+    %11 = $desugar$0 is error
+    %11 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    instance = $desugar$0;
+    %13 = describe(instance) -> bb7;
+  }
+  bb7 {
+    %14 = println(%13) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$desugar$0() -> boolean{
+  bb0 {
+    %1 = ConstantLoad false
+    %0 = %1;
+    return;
+  }
+}

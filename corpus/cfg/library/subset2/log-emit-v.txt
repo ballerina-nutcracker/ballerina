@@ -2,24 +2,20 @@
   (bb0 () ()
     (expression-stmt
       (invocation log printInfo (
-        (literal server started)
-        (named-arg keyValues
-          (mapping-constructor-expr)))))
+        (literal server started) <default>
+        (mapping-constructor-expr))))
     (expression-stmt
       (invocation log printWarn (
-        (literal low disk space)
-        (named-arg keyValues
-          (mapping-constructor-expr
-            (key-value
-              (literal diskPct)
-              (literal 12)))))))
+        (literal low disk space) <default>
+        (mapping-constructor-expr
+          (key-value
+            (literal diskPct)
+            (literal 12))))))
     (expression-stmt
       (invocation log printError (
         (literal request failed)
-        (named-arg error
-          (error-constructor-expr (
-            (literal disk full))))
-        (named-arg keyValues
-          (mapping-constructor-expr)))))
+        (error-constructor-expr (
+          (literal disk full)))
+        (mapping-constructor-expr))))
   )
 )

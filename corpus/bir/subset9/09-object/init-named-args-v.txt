@@ -1,0 +1,151 @@
+module $anon.. v 0.0.0;
+class Listener {
+  path string
+  recursive boolean
+
+  describe() -> string{
+    bb0 {
+      %3 = ConstantLoad path
+      %2 = self[%3];
+      %5 = ConstantLoad recursive
+      %4 = self[%5];
+      %6 = evalTemplate[string]("", %2, ":", %4, "")
+      %0 = %6;
+      return;
+    }
+  }
+
+  init(string,boolean) -> nil|error{
+    bb0 {
+      %4 = ConstantLoad path
+      self[%4] = path;
+      %5 = ConstantLoad recursive
+      self[%5] = recursive;
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:Listener
+    %2 = ConstantLoad /tmp
+    %3 = ConstantLoad true
+    %4 = init(%1,%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = %5;
+    %8 = $desugar$0 is error
+    %8 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    named = $desugar$0;
+    %10 = describe(named) -> bb7;
+  }
+  bb7 {
+    %11 = println(%10) -> bb8;
+  }
+  bb8 {
+    %12 = newObject $anon/.:Listener
+    %13 = ConstantLoad /var
+    %14 = ConstantLoad true
+    %15 = init(%12,%13,%14) -> bb9;
+  }
+  bb9 {
+    %17 = %15 is nil
+    %17 ? bb10 : bb11;
+  }
+  bb10 {
+    %16 = %12;
+    GOTO bb12;
+  }
+  bb11 {
+    %16 = %15;
+    GOTO bb12;
+  }
+  bb12 {
+    $desugar$1 = %16;
+    %19 = $desugar$1 is error
+    %19 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    mixed = $desugar$1;
+    %21 = describe(mixed) -> bb15;
+  }
+  bb15 {
+    %22 = println(%21) -> bb16;
+  }
+  bb16 {
+    %23 = ConstantLoad /etc
+    $desugar$2 = %23;
+    %25 = $default$0($desugar$2) -> bb17;
+  }
+  bb17 {
+    $desugar$3 = %25;
+    %27 = newObject $anon/.:Listener
+    %28 = init(%27,$desugar$2,$desugar$3) -> bb18;
+  }
+  bb18 {
+    %30 = %28 is nil
+    %30 ? bb19 : bb20;
+  }
+  bb19 {
+    %29 = %27;
+    GOTO bb21;
+  }
+  bb20 {
+    %29 = %28;
+    GOTO bb21;
+  }
+  bb21 {
+    $desugar$4 = %29;
+    %32 = $desugar$4 is error
+    %32 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    defaulted = $desugar$4;
+    %34 = describe(defaulted) -> bb24;
+  }
+  bb24 {
+    %35 = println(%34) -> bb25;
+  }
+  bb25 {
+    return;
+  }
+}
+$default$0(string) -> boolean{
+  bb0 {
+    %2 = ConstantLoad false
+    %0 = %2;
+    return;
+  }
+}

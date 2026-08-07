@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: anonymous function parameters are incompatible with the expected function type
+  --> inferred-lambda-diagnostics-e.bal:39:28
+   |
+39 |     BinaryInt wrongArity = value => value; // @error
+   |                            ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: anonymous function parameters are incompatible with the expected function type
+  --> inferred-lambda-diagnostics-e.bal:40:50
+   |
+40 |     IntOrStringIdentity incompatibleArityTypes = value => value; // @error
+   |                                                  ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: anonymous function parameters are incompatible with the expected function type
+  --> inferred-lambda-diagnostics-e.bal:41:62
+   |
+41 |     CrossParamsOne & CrossParamsTwo incompatibleParameters = (first, second) => consume(first, second); // @error
+   |                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer anonymous function parameter types without an expected function type
+  --> inferred-lambda-diagnostics-e.bal:36:26
+   |
+36 |     var noExpectedType = value => value; // @error
+   |                          ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer types of the arrow expression with unknown invokable type
+  --> inferred-lambda-diagnostics-e.bal:37:20
+   |
+37 |     acceptFunction(value => value); // @error
+   |                    ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns string, got function(int) returns int
+  --> inferred-lambda-diagnostics-e.bal:43:39
+   |
+43 |     StringResult incompatibleReturn = value => value; // @error
+   |                                       ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(int...) returns int, got function(int, int) returns int
+  --> inferred-lambda-diagnostics-e.bal:44:40
+   |
+44 |     RestInt incompatibleFunctionType = (first, second) => first + second; // @error
+   |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

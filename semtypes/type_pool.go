@@ -67,7 +67,7 @@ func (pool *TypePool) Put(ty SemType) TypePoolIndex {
 }
 
 func (pool *TypePool) PutObjectDefinition(ty SemType) TypePoolIndex {
-	return pool.Put(stripObjectDistinctAtoms(ty))
+	return pool.Put(StripObjectDistinctAtoms(ty))
 }
 
 func (pool *TypePool) PutErrorDefinition(ty SemType) TypePoolIndex {

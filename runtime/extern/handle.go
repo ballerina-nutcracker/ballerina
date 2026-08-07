@@ -103,6 +103,11 @@ func (c *Context) InvokeFunction(h FunctionHandle, args []values.BalValue) (valu
 	return c.Env.dispatch.Invoke(c, h.Fn, args)
 }
 
+// InvokeFunctionValue invokes a Ballerina function value on the current strand.
+func (c *Context) InvokeFunctionValue(fn *values.Function, args []values.BalValue) (values.BalValue, error) {
+	return c.Env.dispatch.Invoke(c, fn, args)
+}
+
 // StartMethod is the non-blocking counterpart to InvokeMethod. It spawns a
 // new strand to execute h and returns a buffered channel of capacity 1
 // that will receive exactly one BalValue and then be closed.

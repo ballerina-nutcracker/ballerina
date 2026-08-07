@@ -20,11 +20,23 @@ import (
 	"ballerina/bir"
 	"ballerina/model"
 	"ballerina/runtime/extern"
+	"ballerina/values"
 )
+
+// ClassTemplate holds the per-class data that is identical for every instance
+// of a class and never mutated after construction: the method-key map and the
+// resource table. It is computed once when a class is registered and shared by
+// reference across all instances, so object creation only allocates the
+// per-instance field map. FieldCount pre-sizes that map.
+type ClassTemplate struct {
+	MethodKeys map[string]string
+	RTable     map[string][]values.ResourceEntry
+	FieldCount int
+}
 
 type Registry struct {
 	birFunctions    map[string]*bir.BIRFunction
-	birClassDefs    map[string]*bir.BIRClassDef
+	classTemplates  map[string]*ClassTemplate
 	nativeFunctions map[string]*ExternFunction
 	runtimeBuiltins map[string]extern.NativeFunc
 	modules         map[string]*BIRModule
@@ -33,10 +45,40 @@ type Registry struct {
 func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
 	return &Registry{
 		birFunctions:    make(map[string]*bir.BIRFunction),
-		birClassDefs:    make(map[string]*bir.BIRClassDef),
+		classTemplates:  make(map[string]*ClassTemplate),
 		nativeFunctions: make(map[string]*ExternFunction),
 		runtimeBuiltins: builtins,
 		modules:         make(map[string]*BIRModule),
+	}
+}
+
+// buildClassTemplate converts a class definition's method and resource tables
+// into the shared, read-only form used by every instance of the class.
+func buildClassTemplate(def *bir.BIRClassDef) *ClassTemplate {
+	methodKeys := make(map[string]string, len(def.VTable))
+	for methodName, method := range def.VTable {
+		methodKeys[methodName] = method.FunctionLookupKey
+	}
+	rtable := make(map[string][]values.ResourceEntry, len(def.RTable))
+	for methodName, entries := range def.RTable {
+		copied := make([]values.ResourceEntry, len(entries))
+		for i, entry := range entries {
+			segs := make([]values.ResourcePathSegmentDef, len(entry.PathSegments))
+			for j, seg := range entry.PathSegments {
+				segs[j] = values.ResourcePathSegmentDef{Ty: seg.Ty}
+			}
+			copied[i] = values.ResourceEntry{
+				PathSegments:      segs,
+				RestSegmentTy:     entry.RestSegmentTy,
+				FunctionLookupKey: entry.Fn.FunctionLookupKey,
+			}
+		}
+		rtable[methodName] = copied
+	}
+	return &ClassTemplate{
+		MethodKeys: methodKeys,
+		RTable:     rtable,
+		FieldCount: len(def.Fields),
 	}
 }
 
@@ -52,7 +94,7 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 		}
 		for i := range m.Pkg.ClassDefs {
 			classDef := &m.Pkg.ClassDefs[i]
-			r.birClassDefs[classDef.LookupKey] = classDef
+			r.classTemplates[classDef.LookupKey] = buildClassTemplate(classDef)
 			for _, fn := range classDef.VTable {
 				if fn.Flags.Has(model.FlagNative) {
 					continue
@@ -95,15 +137,17 @@ func (r *Registry) RegisterExternFunction(orgName string, moduleName string, fun
 	r.nativeFunctions[funcName] = externFn
 }
 
-func (r *Registry) GetClassDef(lookupKey string) *bir.BIRClassDef {
-	return r.birClassDefs[lookupKey]
+// GetClassTemplate returns the shared, precomputed method/resource tables for a
+// class. The returned maps are read-only and shared across every instance.
+func (r *Registry) GetClassTemplate(lookupKey string) *ClassTemplate {
+	return r.classTemplates[lookupKey]
 }
 
 // RegisterExternClassDef registers a synthetic BIRClassDef so that execNewObject
 // can build method-key maps for Go-declared classes. VTable entries are intentionally
 // NOT added to birFunctions so that exec falls through to nativeFunctions for dispatch.
 func (r *Registry) RegisterExternClassDef(def *bir.BIRClassDef) {
-	r.birClassDefs[def.LookupKey] = def
+	r.classTemplates[def.LookupKey] = buildClassTemplate(def)
 }
 
 func (r *Registry) GetBIRFunction(funcName string) *bir.BIRFunction {

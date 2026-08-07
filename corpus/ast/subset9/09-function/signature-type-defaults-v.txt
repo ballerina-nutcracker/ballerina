@@ -1,0 +1,41 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function regular () (
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+    (block-function-body
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callbacks))))
+      (return
+        (lambda
+          (function $anonFunc$_0 (
+            (variable value (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+  (class-definition Client
+    (resource-function get name:value
+      (record-type
+        (field value
+          (value-type int)
+          (literal 14)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callbacks))))
+        (return
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 14)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))

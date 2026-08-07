@@ -24,18 +24,16 @@
   (bb0 () ()
     (expression-stmt
       (invocation foo (
-        (named-arg age
-          (literal 30))
-        (named-arg config
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Alice))
-            (key-value
-              (literal city)
-              (literal New York))
-            (key-value
-              (literal country)
-              (literal USA)))))))
+        (literal 30)
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal city)
+            (literal New York))
+          (key-value
+            (literal country)
+            (literal USA))))))
   )
 )

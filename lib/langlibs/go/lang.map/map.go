@@ -43,7 +43,7 @@ func mapKeys(env semtypes.Env) extern.NativeFunc {
 		for i, k := range keys {
 			items[i] = k
 		}
-		atomic := semtypes.ToListAtomicType(ctx.TypeCtx, stringArrayTy)
+		atomic := semtypes.ToListAtomicType(ctx.TypeEnv(), stringArrayTy)
 		list := values.NewList(stringArrayTy, atomic, false, nil, 0, items)
 		return list, nil
 	}
@@ -53,7 +53,7 @@ func mapRemove(ctx *extern.Context, args []values.BalValue) (values.BalValue, er
 	m := args[0].(*values.Map)
 	key := args[1].(string)
 	val, _ := m.Get(key)
-	m.Delete(ctx.TypeCtx, key)
+	m.Delete(ctx.TypeCtx(), key)
 	return val, nil
 }
 

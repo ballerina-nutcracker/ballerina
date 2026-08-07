@@ -5,14 +5,14 @@
         (user-defined-type http Client)) (expr
         (checked-expr
           (new (
-            (literal https://example.com)))))))
+            (literal https://example.com) <default>))))))
     (var-def
       (variable r (type
         (user-defined-type http Response)) (expr
         (checked-expr
           (remote-method-call get expr:
             (simple-var-ref c) (
-            (literal /path)))))))
+            (literal /path) <default>))))))
     (var-def
       (variable b (expr
         (checked-expr

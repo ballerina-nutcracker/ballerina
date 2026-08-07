@@ -25,33 +25,34 @@ foo({| x: int, anydata... |},[{| x: int, anydata... |}...]...) -> int{
     %3 = init[%4];
     a = %3;
     %6 = ConstantLoad 0
-    i = %6;
+    $desugar$0 = %6;
     %8 = length(rest) -> bb1;
   }
   bb1 {
-    $desugar$0 = %8;
+    $desugar$1 = %8;
     GOTO bb2;
   }
   bb2 {
-    %11 = i;
-    %12 = $desugar$0;
+    %11 = $desugar$0;
+    %12 = $desugar$1;
     %10 = < %11 %12;
     %10 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 10
-    %1 = (1, a);
-    %3 = ConstantLoad x
-    %4 = (1, rest)[(1, i)];
-    %2 = %4[%3];
-    %5 = %2;
-    %0 = + %1 %5;
-    (1, a) = %0;
-    %7 = (1, i);
-    %8 = ConstantLoad 1
-    %9 = %8;
-    %6 = + %7 %9;
-    (1, i) = %6;
+    PushScopeFrame 11
+    i = (1, $desugar$0);
+    %2 = (1, a);
+    %4 = ConstantLoad x
+    %5 = (1, rest)[i];
+    %3 = %5[%4];
+    %6 = %3;
+    %1 = + %2 %6;
+    (1, a) = %1;
+    %8 = (1, $desugar$0);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$0) = %7;
     PopScopeFrame
     GOTO bb2;
   }

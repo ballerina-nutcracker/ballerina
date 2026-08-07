@@ -1,0 +1,121 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad Whiskers
+    %3 = ConstantLoad lives
+    %4 = ConstantLoad 9
+    %5 = newMap {| json... |}{%1=%2, %3=%4}
+    catJson = %5;
+    %7 = ConstantLoad typedesc
+    %8 = fromJsonWithType(catJson,%7) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %8;
+    %10 = $desugar$0 is error
+    %10 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    cat = $desugar$0;
+    %12 = println(cat) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad name
+    %14 = ConstantLoad Rex
+    %15 = ConstantLoad breed
+    %16 = ConstantLoad Labrador
+    %17 = newMap {| json... |}{%13=%14, %15=%16}
+    dogJson = %17;
+    %19 = ConstantLoad typedesc
+    %20 = fromJsonWithType(dogJson,%19) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %20;
+    %22 = $desugar$1 is error
+    %22 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    dog = $desugar$1;
+    %24 = println(dog) -> bb8;
+  }
+  bb8 {
+    %25 = ConstantLoad a
+    %26 = ConstantLoad hello
+    %27 = ConstantLoad b
+    %28 = ConstantLoad world
+    %29 = newMap {| json... |}{%25=%26, %27=%28}
+    strMapJson = %29;
+    %31 = ConstantLoad typedesc
+    %32 = fromJsonWithType(strMapJson,%31) -> bb9;
+  }
+  bb9 {
+    $desugar$2 = %32;
+    %34 = $desugar$2 is error
+    %34 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    strMap = $desugar$2;
+    %36 = println(strMap) -> bb12;
+  }
+  bb12 {
+    %37 = ConstantLoad x
+    %38 = ConstantLoad 1
+    %39 = ConstantLoad y
+    %40 = ConstantLoad 2
+    %41 = newMap {| json... |}{%37=%38, %39=%40}
+    intMapJson = %41;
+    %43 = ConstantLoad typedesc
+    %44 = fromJsonWithType(intMapJson,%43) -> bb13;
+  }
+  bb13 {
+    $desugar$3 = %44;
+    %46 = $desugar$3 is error
+    %46 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb15 {
+    intMap = $desugar$3;
+    %48 = println(intMap) -> bb16;
+  }
+  bb16 {
+    %49 = ConstantLoad name
+    %50 = ConstantLoad Whiskers
+    %51 = newMap {| json... |}{%49=%50}
+    neither = %51;
+    %53 = ConstantLoad typedesc
+    %54 = fromJsonWithType(neither,%53) -> bb17;
+  }
+  bb17 {
+    %55 = %54 is error
+    %56 = %55;
+    %57 = println(%56) -> bb18;
+  }
+  bb18 {
+    %58 = ConstantLoad <nil>
+    %0 = %58;
+    return;
+  }
+}

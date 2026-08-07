@@ -21,7 +21,6 @@ package nativeexec
 
 import (
 	"context"
-	"errors"
 	"io"
 	"io/fs"
 	"os"
@@ -50,10 +49,6 @@ func AppendNativeMode(env []string) []string {
 	return append(append([]string(nil), env...), envNativeMode+"=1")
 }
 
-// ErrNativeUnsupported is returned when native Go packages cannot be built in
-// the current environment (e.g., WASM playground, serverless runtimes).
-var ErrNativeUnsupported = errors.New("native Go packages are not supported in this environment")
-
 // NativeExecutor builds a custom interpreter binary that includes Go-native
 // function implementations from external Ballerina packages and returns a Runner
 // that can re-execute the program with those implementations registered.
@@ -65,6 +60,10 @@ type NativeExecutor interface {
 	// sources described by req.Payload. Returns a Runner whose Run method
 	// re-executes the current program via the compiled binary.
 	Prepare(ctx context.Context, req NativeRunnerRequest) (Runner, error)
+	// Build is like Prepare but returns a bare binary path instead of a
+	// Runner — for bal build, which hands that path to executable.Pack
+	// rather than re-executing into it.
+	Build(ctx context.Context, req NativeRunnerRequest) (string, error)
 }
 
 // Runner re-executes the program via a previously-built native interpreter binary.
@@ -94,6 +93,11 @@ type NativeRunnerRequest struct {
 	// Env is the environment for the re-executed binary (typically os.Environ()
 	// with BAL_NATIVE=1 appended).
 	Env []string
+	// TargetOS/TargetArch cross-compile for a platform other than the host;
+	// empty means build for the host (like GOOS/GOARCH). bal run always
+	// leaves these empty; bal build sets them from --target-os/--target-arch.
+	TargetOS   string
+	TargetArch string
 }
 
 // NativePayload provides the Go source files that implement native Ballerina
@@ -114,15 +118,3 @@ type GoSourcePayload struct {
 
 func (p *GoSourcePayload) FS() fs.FS            { return p.GoFiles }
 func (p *GoSourcePayload) GoModuleName() string { return p.Module }
-
-// Noop is a NativeExecutor that is always unavailable. It is the default for
-// environments where native builds are not supported.
-type Noop struct{}
-
-var _ NativeExecutor = Noop{}
-
-func (Noop) Available() bool { return false }
-
-func (Noop) Prepare(_ context.Context, _ NativeRunnerRequest) (Runner, error) {
-	return nil, ErrNativeUnsupported
-}

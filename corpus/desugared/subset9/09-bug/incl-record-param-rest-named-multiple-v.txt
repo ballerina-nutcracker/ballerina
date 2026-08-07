@@ -2,6 +2,8 @@
   (import-package ballerina io (as io))
   (type-definition StringConfig
     (record-type
+      (field count optional
+        (value-type never))
       (rest
         (value-type string))))
   (type-definition IntConfig

@@ -1,0 +1,115 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition public Listener
+    (variable path (type
+      (value-type string)))
+    (variable recursive (type
+      (value-type boolean)))
+    (function init (
+      (variable path (type
+        (value-type string)))
+      (variable recursive (type
+        (value-type boolean)) (expr
+        (literal false)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal path))
+          (simple-var-ref path))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal recursive))
+          (simple-var-ref recursive))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (return
+          (string-template-literal
+            (template-string "")
+            (index-based-access
+              (simple-var-ref self)
+              (literal path))
+            (template-string ":")
+            (index-based-access
+              (simple-var-ref self)
+              (literal recursive))
+            (template-string ""))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (new (
+            (literal /tmp)
+            (literal true))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable named (type
+          (user-defined-type Listener)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref named) ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (new (
+            (literal /var)
+            (literal true))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable mixed (type
+          (user-defined-type Listener)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref mixed) ()))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal /etc))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$2))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (new (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable defaulted (type
+          (user-defined-type Listener)) (expr
+          (simple-var-ref $desugar$4))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref defaulted) ()))))))
+  (function $default$0 (
+    (variable path)) ()
+    (block-function-body
+      (return
+        (literal false)))))

@@ -1,0 +1,8 @@
+-- stdout --
+-- stderr --
+ballerina runtime binary for
+not found at
+your bal installation may be incomplete
+try reinstalling bal
+-- exitcode --
+1

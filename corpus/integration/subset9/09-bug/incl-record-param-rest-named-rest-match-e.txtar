@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: named argument 'count' matches multiple included record parameters
+  --> incl-record-param-rest-named-rest-match-e.bal:36:44
+   |
+36 |     foo(name = "Alice", city = "New York", count = 2); // @error
+   |                                            ^^^^^^^^^

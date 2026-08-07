@@ -21,8 +21,15 @@ public function stopHandler() returns error? {
     io:println("handler");
 }
 
+public function mappedStopHandler() returns error? {
+    io:println("mapped handler");
+}
+
 public function main() {
     runtime:onGracefulStop(stopHandler);
+    runtime:StopHandler[] handlers = [mappedStopHandler];
+    _ = handlers.map(runtime:onGracefulStop);
     io:println("done"); // @output done
 }
+// @output mapped handler
 // @output handler

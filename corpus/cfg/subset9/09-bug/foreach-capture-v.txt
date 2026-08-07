@@ -1,0 +1,264 @@
+(NumberGenerator
+  (iterator
+    (bb0 () ()
+      (return
+        (new ()))
+    )
+  )
+)
+(NumberIterator
+  (next
+    (bb0 () (bb1 bb2)
+      (binary-expr >=
+        (field-based-access index
+          (simple-var-ref self))
+        (invocation lang.array length (
+          (field-based-access items
+            (simple-var-ref self)))))
+    )
+    (bb1 (bb0) ()
+      (return
+        (literal <nil>))
+    )
+    (bb2 (bb0) ()
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (index-based-access
+            (field-based-access items
+              (simple-var-ref self))
+            (field-based-access index
+              (simple-var-ref self))))))
+      (compound-assignment +
+        (field-based-access index
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref value))))
+    )
+  )
+)
+(capturedSum
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref functions)
+    (var-def
+      (variable fn (type
+        (function-type () (
+          (value-type int))))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref sum)
+      (invocation fn ()))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref sum))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable functions (type
+        (array-type
+          (function-type () (
+            (value-type int))) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb4 bb5) (bb2 bb3)
+    (binary-expr ...
+      (literal 0)
+      (literal 3))
+    (var-def
+      (variable value (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb4 bb5)
+    (binary-expr ==
+      (simple-var-ref value)
+      (literal 1))
+  )
+  (bb3 (bb1) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (invocation capturedSum (
+          (simple-var-ref functions))))))
+    (assignment
+      (simple-var-ref functions)
+      (list-constructor-expr))
+  )
+  (bb4 (bb2) (bb1)
+    (continue)
+  )
+  (bb5 (bb2) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref functions)
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+  )
+  (bb6 (bb3 bb7) (bb7 bb8)
+    (list-constructor-expr
+      (literal 1)
+      (literal 2)
+      (literal 3))
+    (var-def
+      (variable value (type
+        (value-type int))))
+  )
+  (bb7 (bb6) (bb6)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref functions)
+        (lambda
+          (function $anonFunc$_1 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+  )
+  (bb8 (bb6) (bb9)
+    (expression-stmt
+      (invocation io println (
+        (invocation capturedSum (
+          (simple-var-ref functions))))))
+    (assignment
+      (simple-var-ref functions)
+      (list-constructor-expr))
+    (var-def
+      (variable values (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 4))
+          (key-value
+            (literal b)
+            (literal 5))
+          (key-value
+            (literal c)
+            (literal 6))))))
+  )
+  (bb9 (bb8 bb10) (bb10 bb11)
+    (simple-var-ref values)
+    (var-def
+      (variable value (type
+        (value-type int))))
+  )
+  (bb10 (bb9) (bb9)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref functions)
+        (lambda
+          (function $anonFunc$_2 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+  )
+  (bb11 (bb9) (bb12)
+    (expression-stmt
+      (invocation io println (
+        (invocation capturedSum (
+          (simple-var-ref functions))))))
+    (assignment
+      (simple-var-ref functions)
+      (list-constructor-expr))
+    (var-def
+      (variable generator (type
+        (user-defined-type NumberGenerator)) (expr
+        (new ()))))
+  )
+  (bb12 (bb11 bb13) (bb13 bb14)
+    (simple-var-ref generator)
+    (var-def
+      (variable value (type
+        (value-type int))))
+  )
+  (bb13 (bb12) (bb12)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref functions)
+        (lambda
+          (function $anonFunc$_3 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+  )
+  (bb14 (bb12) (bb15)
+    (expression-stmt
+      (invocation io println (
+        (invocation capturedSum (
+          (simple-var-ref functions))))))
+    (var-def
+      (variable xmlFunctions (type
+        (array-type
+          (function-type () (
+            (value-type xml))) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable sequence (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (union-type
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text))
+            (user-defined-type xml Comment)))) (expr
+        (xml-sequence-literal
+          (xml-element-literal item)
+          (xml-text-literal text)
+          (xml-comment-literal comment)))))
+  )
+  (bb15 (bb14 bb16) (bb16 bb17)
+    (simple-var-ref sequence)
+    (var-def
+      (variable item (type
+        (union-type
+          (union-type
+            (user-defined-type xml Element)
+            (user-defined-type xml Text))
+          (user-defined-type xml Comment)))))
+  )
+  (bb16 (bb15) (bb15)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref xmlFunctions)
+        (lambda
+          (function $anonFunc$_4 () (
+            (value-type xml))
+            (block-function-body
+              (return
+                (simple-var-ref item))))))))
+  )
+  (bb17 (bb15) (bb18))
+  (bb18 (bb17 bb19) (bb19 bb20)
+    (simple-var-ref xmlFunctions)
+    (var-def
+      (variable fn (type
+        (function-type () (
+          (value-type xml))))))
+  )
+  (bb19 (bb18) (bb18)
+    (expression-stmt
+      (invocation io println (
+        (invocation fn ()))))
+  )
+  (bb20 (bb18) ())
+)

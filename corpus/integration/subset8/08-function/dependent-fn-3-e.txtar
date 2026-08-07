@@ -1,47 +1,13 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: dependently-typed function must be external
-  --> dependent-fn-3-e.bal:23:1
-   |
-23 | function nonExternDependent(int val, typedesc retTy = <>) returns retTy { // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-24 |     typedesc _ = retTy;
-   |     ^^^^^^^^^^^^^^^^^^^
-25 |     return val;
-   |     ^^^^^^^^^^^
-26 | }
-   | ^
-
-error[SEMANTIC_ERROR]: dependently-typed function must be external
-  --> dependent-fn-3-e.bal:28:1
-   |
-28 | function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-29 |     int _ = val;
-   |     ^^^^^^^^^^^^
-30 |     typedesc _ = retTy;
-   |     ^^^^^^^^^^^^^^^^^^^
-31 |     return 1;
-   |     ^^^^^^^^^
-32 | }
-   | ^
-
 error[SEMANTIC_ERROR]: dependently-typed function return type dependent and defined parts must be disjoint
-  --> dependent-fn-3-e.bal:28:1
+  --> dependent-fn-3-e.bal:19:1
    |
-28 | function inferred(int val, typedesc retTy = <>) returns retTy|int { // @error
+19 | function inferred(int val, typedesc retTy = <>) returns retTy|int = external; // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-29 |     int _ = val;
-   |     ^^^^^^^^^^^^
-30 |     typedesc _ = retTy;
-   |     ^^^^^^^^^^^^^^^^^^^
-31 |     return 1;
-   |     ^^^^^^^^^
-32 | }
-   | ^
 
 error[SEMANTIC_ERROR]: inferred typedesc default '<>' requires the return type to depend on this parameter
-  --> dependent-fn-3-e.bal:21:39
+  --> dependent-fn-3-e.bal:17:39
    |
-21 | function nonDependentDefault(int val, typedesc retTy = <>) returns int = external; // @error
+17 | function nonDependentDefault(int val, typedesc retTy = <>) returns int = external; // @error
    |                                       ^^^^^^^^^^^^^^^^^^^

@@ -154,9 +154,13 @@ const (
 	valueExpressionFlagOptionalAccess
 )
 
+const bLangLambdaFunctionFlagInferredParams bLangLambdaFunctionFlags = 1 << iota
+
 type TemplateExprKind uint8
 
 type XMLTemplateInsertionKind uint8
+
+type bLangLambdaFunctionFlags byte
 
 const (
 	TemplateExprKindString TemplateExprKind = iota
@@ -225,6 +229,7 @@ type (
 	BLangLambdaFunction struct {
 		bLangExpressionBase
 		Function *BLangFunction
+		flags    bLangLambdaFunctionFlags
 	}
 
 	BLangBinaryExpr struct {
@@ -385,6 +390,11 @@ type (
 
 	BLangInferredTypedescDefault struct {
 		bLangExpressionBase
+	}
+
+	BLangDefaultArg struct {
+		bLangExpressionBase
+		DefaultClosure model.SymbolRef
 	}
 
 	BLangUnaryExpr struct {
@@ -590,6 +600,8 @@ var (
 	_ BLangNode       = &BLangTypedescExpr{}
 	_ BLangNode       = &BLangInferredTypedescDefault{}
 	_ BLangExpression = &BLangInferredTypedescDefault{}
+	_ BLangNode       = &BLangDefaultArg{}
+	_ BLangExpression = &BLangDefaultArg{}
 	_ BLangNode       = &BLangIndexBasedAccess{}
 	_ BLangNode       = &BLangListConstructorExpr{}
 	_ BLangNode       = &BLangTypeConversionExpr{}
@@ -688,6 +700,14 @@ func (b *BLangLiteral) SetValueType(bt BType) {
 
 func (b *BLangLambdaFunction) GetFunctionNode() FunctionNode {
 	return b.Function
+}
+
+func (b *BLangLambdaFunction) HasInferredParams() bool {
+	return b.flags&bLangLambdaFunctionFlagInferredParams != 0
+}
+
+func (b *BLangLambdaFunction) SetInferredParams() {
+	b.flags |= bLangLambdaFunctionFlagInferredParams
 }
 
 func (b *BLangLambdaFunction) SetFunctionNode(functionNode FunctionNode) {

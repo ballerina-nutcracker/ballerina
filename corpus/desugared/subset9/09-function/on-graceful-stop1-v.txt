@@ -1,6 +1,7 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang runtime (as runtime))
+  (import-package ballerina lang array (as lang.array))
   (function stopHandler () (
     (union-type
       (error-type)
@@ -9,12 +10,31 @@
       (expression-stmt
         (invocation io println (
           (literal handler))))))
+  (function mappedStopHandler () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal mapped handler))))))
   (function main () (
     (value-type null))
     (block-function-body
       (expression-stmt
         (invocation runtime onGracefulStop (
           (simple-var-ref stopHandler))))
+      (var-def
+        (variable handlers (type
+          (array-type
+            (user-defined-type runtime StopHandler) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref mappedStopHandler)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.array map (
+          (simple-var-ref handlers)
+          (simple-var-ref runtime onGracefulStop))))
       (expression-stmt
         (invocation io println (
           (literal done)))))))

@@ -92,7 +92,7 @@ func GoToBalValue(tc semtypes.Context, v any, jsonListTy, jsonMapTy semtypes.Sem
 		for i, elem := range v {
 			items[i] = GoToBalValue(tc, elem, jsonListTy, jsonMapTy)
 		}
-		return NewList(jsonListTy, semtypes.ToListAtomicType(tc, jsonListTy), false, nil, 0, items)
+		return NewList(jsonListTy, semtypes.ToListAtomicType(tc.Env(), jsonListTy), false, nil, 0, items)
 	case map[string]any:
 		m := NewMap(jsonMapTy, semtypes.ToMappingAtomicType(tc, jsonMapTy), false, nil)
 		for k, val := range v {

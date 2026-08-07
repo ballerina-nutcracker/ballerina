@@ -69,6 +69,6 @@ func hashFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFunc {
 			h.Write(salt)
 		}
 		h.Write(input)
-		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, h.Sum(nil)), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), h.Sum(nil)), nil
 	}
 }

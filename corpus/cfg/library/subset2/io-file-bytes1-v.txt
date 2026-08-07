@@ -18,7 +18,7 @@
       (checked-expr
         (invocation io fileWriteBytes (
           (simple-var-ref path)
-          (simple-var-ref written)))))
+          (simple-var-ref written) <default>))))
     (var-def
       (variable readBack (type
         (array-type

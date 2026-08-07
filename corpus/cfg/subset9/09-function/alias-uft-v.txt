@@ -1,0 +1,33 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type Alias)) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable next (type
+              (union-type
+                (user-defined-type Alias)
+                (value-type null))) (expr
+              (literal <nil>)))) (
+            (value-type int))
+            (block-function-body
+              (if
+                (type-test-expr is
+                  (simple-var-ref next)
+                  (value-type null))
+                (block-stmt
+                  (return
+                    (literal 1))) ())
+              (block-stmt
+                (return
+                  (literal 2)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (simple-var-ref f))))))
+  )
+)

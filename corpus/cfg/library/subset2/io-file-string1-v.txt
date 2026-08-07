@@ -9,7 +9,7 @@
         (invocation io fileWriteString (
           (simple-var-ref path)
           (literal Hello
-    World)))))
+    World) <default>))))
     (var-def
       (variable content (type
         (value-type string)) (expr

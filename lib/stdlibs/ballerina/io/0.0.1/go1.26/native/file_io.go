@@ -88,7 +88,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 			for i, line := range lines {
 				items[i] = line
 			}
-			return values.NewList(types.strArrTy, semtypes.ToListAtomicType(ctx.TypeCtx, types.strArrTy), false, nil, 0, items), nil
+			return values.NewList(types.strArrTy, semtypes.ToListAtomicType(ctx.TypeEnv(), types.strArrTy), false, nil, 0, items), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileReadBytes",
@@ -103,7 +103,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 			for i, b := range data {
 				items[i] = int64(b)
 			}
-			return values.NewList(types.byteArrTy, semtypes.ToListAtomicType(ctx.TypeCtx, types.byteArrTy), false, nil, 0, items), nil
+			return values.NewList(types.byteArrTy, semtypes.ToListAtomicType(ctx.TypeEnv(), types.byteArrTy), false, nil, 0, items), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileReadJson",
@@ -127,7 +127,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 				}
 				return fileIOError(fmt.Sprintf("error reading trailing content in file '%s': %s", path, err.Error())), nil
 			}
-			return values.GoToBalValue(ctx.TypeCtx, raw, types.jsonListTy, types.jsonMapTy), nil
+			return values.GoToBalValue(ctx.TypeCtx(), raw, types.jsonListTy, types.jsonMapTy), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externFileWriteString",
@@ -211,7 +211,7 @@ func initFileIOModule(rt *runtime.Runtime) {
 			if err != nil {
 				return fileIOError(fmt.Sprintf("error while reading file '%s': %s", path, err.Error())), nil
 			}
-			xmlVal, parseErr := values.ParseAsXMLValue(ctx.TypeCtx, values.FromBytes(data), values.XMLLenientMode)
+			xmlVal, parseErr := values.ParseAsXMLValue(ctx.TypeCtx(), values.FromBytes(data), values.XMLLenientMode)
 			if parseErr != nil {
 				return fileIOError(fmt.Sprintf("error while parsing XML from file '%s': %s", path, parseErr.Error())), nil
 			}

@@ -1,0 +1,11 @@
+-- stdout --
+[1,2]
+2022
+true
+false
+hello
+true
+{"name":"Alice","age":null}
+[1,2,3,4]
+{"name":"Alice","age":30}
+-- stderr --

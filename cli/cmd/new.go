@@ -393,27 +393,6 @@ func isWorkspaceToml(tomlPath string) bool {
 	return ok
 }
 
-// findWorkspaceRoot searches for a workspace root starting from the given path.
-// Returns the workspace root path if found, or empty string if not inside a workspace.
-func findWorkspaceRoot(startPath string) string {
-	current := startPath
-	for {
-		tomlPath := filepath.Join(current, projects.BallerinaTomlFile)
-		if _, err := os.Stat(tomlPath); err == nil {
-			if isWorkspaceToml(tomlPath) {
-				return current
-			}
-		}
-
-		parent := filepath.Dir(current)
-		if parent == current {
-			// Reached root
-			return ""
-		}
-		current = parent
-	}
-}
-
 // getOrgNameFromWorkspace gets the organization name from the first package
 // declared in the workspace manifest. Reading the manifest (rather than scanning
 // immediate child directories) ensures nested member paths like

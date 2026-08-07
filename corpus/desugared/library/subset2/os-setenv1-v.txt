@@ -1,6 +1,6 @@
 (package
-  (import-package ballerina os (as os))
   (import-package ballerina io (as io))
+  (import-package ballerina os (as os))
   (function main () (
     (union-type
       (error-type)

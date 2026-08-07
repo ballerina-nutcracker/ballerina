@@ -1,6 +1,6 @@
 (package
-  (import-package ballerina io (as io))
   (import-package ballerina lang float (as floats))
+  (import-package ballerina io (as io))
   (import-package ballerina lang float (as lang.float))
   (function main () (
     (value-type null))

@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1560 720" width="1560" height="720" role="img" aria-label="Ballerina Nutcracker architecture, left to right: the bal CLI feeds the compilation pipeline (parse, AST, symbols and types, desugar, emit BIR), whose BIR is executed by the runtime (dispatch loop, strands and frames, values, extern bridge), which reaches the host only through the Platform Adaptation Layer. The library of language and standard modules is resolved both at compile time and at run time. Ballerina Central and the host OS are the only boundaries outside the binary.">
+  <title>How a .bal file becomes a running program</title>
+  <style>
+    .bg{fill:#ffffff}
+    text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1f2328}
+    .h1{font-size:20px;font-weight:700}
+    .sub{font-size:12px;fill:#6a737d}
+    .pt{font-size:15px;font-weight:700}
+    .pd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:9.5px;fill:#6a737d}
+    .pill{fill:#1f2328}
+    .pilltx{font-size:8.5px;font-weight:700;fill:#ffffff;letter-spacing:.6px}
+    .card{fill:#ffffff;stroke:#dbe2e8;stroke-width:1}
+    .ctx{font-size:11px}
+    .cmono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:9.5px}
+    .cap{font-size:9.5px;fill:#6a737d}
+    .ic{fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+    .ln{stroke:#8c98a4;stroke-width:1.8;fill:none}
+    .dash{stroke:#8c98a4;stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+    .ah{fill:#8c98a4}
+    .alab{font-size:9.5px;fill:#6a737d}
+
+    .p-grey{fill:#f4f6f8;stroke:#c2ccd6;stroke-width:1.6}
+    .p-teal{fill:#effaf9;stroke:#12938f;stroke-width:1.8}
+    .p-indg{fill:#f1f2ff;stroke:#5350c9;stroke-width:1.8}
+    .p-amb {fill:#fff9ec;stroke:#c98a0f;stroke-width:1.8}
+    .p-purp{fill:#faf3ff;stroke:#8a4fbd;stroke-width:1.8}
+    .t-grey{fill:#4a5560} .s-grey{stroke:#4a5560}
+    .t-teal{fill:#0d7d7a} .s-teal{stroke:#0d7d7a}
+    .t-indg{fill:#4744b8} .s-indg{stroke:#4744b8}
+    .t-amb {fill:#8a5c0c} .s-amb {stroke:#8a5c0c}
+    .t-purp{fill:#7b45ab} .s-purp{stroke:#7b45ab}
+
+    @media (prefers-color-scheme: dark){
+      .bg{fill:#0d1117}
+      text{fill:#e6edf3}
+      .sub,.pd,.cap,.alab{fill:#8b949e}
+      .pill{fill:#2d333b}
+      .pilltx{fill:#e6edf3}
+      .card{fill:#0d1117;stroke:#30363d}
+      .ln,.dash{stroke:#6e7781} .ah{fill:#6e7781}
+      .p-grey{fill:#161b22;stroke:#30363d}
+      .p-teal{fill:#0e1f20;stroke:#2dd4bf}
+      .p-indg{fill:#15172a;stroke:#8b8bf0}
+      .p-amb {fill:#221b0d;stroke:#e3b341}
+      .p-purp{fill:#1d1229;stroke:#c093e8}
+      .t-grey{fill:#adbac7} .s-grey{stroke:#adbac7}
+      .t-teal{fill:#52c3c2} .s-teal{stroke:#52c3c2}
+      .t-indg{fill:#a5a2f5} .s-indg{stroke:#a5a2f5}
+      .t-amb {fill:#e3b341} .s-amb {stroke:#e3b341}
+      .t-purp{fill:#c093e8} .s-purp{stroke:#c093e8}
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="ah" d="M0 1 L9 5 L0 9 z"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1560" height="720"/>
+
+  <text class="h1" x="28" y="44">How a .bal file becomes a running program</text>
+  <text class="sub" x="28" y="68">Coloured boxes are Go packages inside the single static bal binary; grey boxes sit outside it. Solid arrows are in-process calls, the dashed arrow is a network call.</text>
+
+  <!-- ============================================================ A. Developer interface -->
+  <rect class="p-grey" x="28" y="110" width="200" height="344" rx="14"/>
+  <g class="ic s-grey" transform="translate(44,124) scale(.78)">
+    <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+  </g>
+  <text class="pt t-grey" x="44" y="172">Developer</text>
+  <text class="pt t-grey" x="44" y="190">interface</text>
+  <text class="pd" x="44" y="206">cli/  projects/</text>
+
+  <rect class="pill" x="44" y="220" width="80" height="18" rx="5"/>
+  <text class="pilltx" x="54" y="232">COMMANDS</text>
+  <rect class="card" x="44" y="246" width="168" height="28" rx="6"/><text class="cmono" x="58" y="264">bal new</text>
+  <rect class="card" x="44" y="280" width="168" height="28" rx="6"/><text class="cmono" x="58" y="298">bal run</text>
+  <rect class="card" x="44" y="314" width="168" height="28" rx="6"/><text class="cmono" x="58" y="332">bal pack</text>
+  <rect class="card" x="44" y="348" width="168" height="28" rx="6"/><text class="cmono" x="58" y="366">bal build</text>
+  <rect class="card" x="44" y="382" width="168" height="28" rx="6"/><text class="cmono" x="58" y="400">bal version</text>
+  <text class="cap" x="44" y="430">The only entry point.</text>
+
+  <line class="ln" x1="228" y1="250" x2="250" y2="250" marker-end="url(#a)"/>
+
+  <!-- ============================================================ B. Compilation pipeline -->
+  <rect class="p-teal" x="256" y="110" width="470" height="372" rx="14"/>
+  <g class="ic s-teal" transform="translate(272,124) scale(.78)">
+    <circle cx="12" cy="12" r="3.2"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </g>
+  <text class="pt t-teal" x="300" y="140">Compilation pipeline</text>
+  <text class="pd" x="300" y="156">source → BIR</text>
+
+  <rect class="pill" x="272" y="176" width="64" height="18" rx="5"/>
+  <text class="pilltx" x="282" y="188">STAGES</text>
+
+  <rect class="card" x="272" y="202" width="438" height="30" rx="6"/>
+  <text class="ctx" x="288" y="221">Parse</text><text class="cmono" x="694" y="221" text-anchor="end">parser/</text>
+  <line class="ln" x1="291" y1="234" x2="291" y2="243" marker-end="url(#a)"/>
+
+  <rect class="card" x="272" y="246" width="438" height="30" rx="6"/>
+  <text class="ctx" x="288" y="265">Abstract syntax tree</text><text class="cmono" x="694" y="265" text-anchor="end">ast/</text>
+  <line class="ln" x1="291" y1="278" x2="291" y2="287" marker-end="url(#a)"/>
+
+  <rect class="card" x="272" y="290" width="438" height="30" rx="6"/>
+  <text class="ctx" x="288" y="309">Symbols, types &amp; analysis</text><text class="cmono" x="694" y="309" text-anchor="end">semantics/</text>
+  <line class="ln" x1="291" y1="322" x2="291" y2="331" marker-end="url(#a)"/>
+
+  <rect class="card" x="272" y="334" width="438" height="30" rx="6"/>
+  <text class="ctx" x="288" y="353">Desugar</text><text class="cmono" x="694" y="353" text-anchor="end">desugar/</text>
+  <line class="ln" x1="291" y1="366" x2="291" y2="375" marker-end="url(#a)"/>
+
+  <rect class="card" x="272" y="378" width="438" height="30" rx="6"/>
+  <text class="ctx" x="288" y="397">Emit BIR</text><text class="cmono" x="694" y="397" text-anchor="end">bir/</text>
+
+  <rect class="pill" x="272" y="424" width="98" height="18" rx="5"/>
+  <text class="pilltx" x="282" y="436">TYPE SYSTEM</text>
+  <rect class="card" x="378" y="422" width="80" height="22" rx="6"/><text class="cmono" x="418" y="437" text-anchor="middle">semtypes/</text>
+  <text class="cap" x="466" y="437">cross-cuts ast/ onward and the runtime</text>
+
+  <line class="ln" x1="726" y1="250" x2="748" y2="250" marker-end="url(#a)"/>
+  <text class="alab" x="729" y="242">BIR</text>
+
+  <!-- ============================================================ C. Runtime -->
+  <rect class="p-indg" x="754" y="110" width="380" height="332" rx="14"/>
+  <g class="ic s-indg" transform="translate(770,124) scale(.78)">
+    <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+    <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+    <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+    <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/>
+    <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/>
+  </g>
+  <text class="pt t-indg" x="798" y="140">Runtime</text>
+  <text class="pd" x="798" y="156">runtime/</text>
+
+  <rect class="pill" x="770" y="176" width="126" height="18" rx="5"/>
+  <text class="pilltx" x="780" y="188">BIR INTERPRETER</text>
+  <rect class="card" x="770" y="202" width="348" height="28" rx="6"/><text class="ctx" x="786" y="220">Dispatch loop</text>
+  <rect class="card" x="770" y="236" width="348" height="28" rx="6"/><text class="ctx" x="786" y="254">Strands &amp; call frames</text>
+  <rect class="card" x="770" y="270" width="348" height="28" rx="6"/><text class="ctx" x="786" y="288">Module registry &amp; lifecycle</text>
+
+  <rect class="pill" x="770" y="314" width="64" height="18" rx="5"/>
+  <text class="pilltx" x="780" y="326">VALUES</text>
+  <text class="pd" x="1118" y="326" text-anchor="end">values/</text>
+  <rect class="card" x="770"  y="340" width="40" height="24" rx="6"/><text class="cmono" x="790"  y="356" text-anchor="middle">list</text>
+  <rect class="card" x="818"  y="340" width="42" height="24" rx="6"/><text class="cmono" x="839"  y="356" text-anchor="middle">map</text>
+  <rect class="card" x="868"  y="340" width="38" height="24" rx="6"/><text class="cmono" x="887"  y="356" text-anchor="middle">xml</text>
+  <rect class="card" x="914"  y="340" width="52" height="24" rx="6"/><text class="cmono" x="940"  y="356" text-anchor="middle">object</text>
+  <rect class="card" x="974"  y="340" width="48" height="24" rx="6"/><text class="cmono" x="998"  y="356" text-anchor="middle">error</text>
+  <rect class="card" x="1030" y="340" width="52" height="24" rx="6"/><text class="cmono" x="1056" y="356" text-anchor="middle">stream</text>
+  <rect class="card" x="1090" y="340" width="28" height="24" rx="6"/><text class="cmono" x="1104" y="356" text-anchor="middle">…</text>
+
+  <rect class="pill" x="770" y="384" width="112" height="18" rx="5"/>
+  <text class="pilltx" x="780" y="396">EXTERN BRIDGE</text>
+  <rect class="card" x="890" y="382" width="104" height="22" rx="6"/><text class="cmono" x="942" y="397" text-anchor="middle">runtime/extern</text>
+  <text class="cap" x="770" y="426">Where BIR calls cross into native Go.</text>
+
+  <line class="ln" x1="1134" y1="250" x2="1156" y2="250" marker-end="url(#a)"/>
+
+  <!-- ============================================================ D. Platform layer -->
+  <rect class="p-purp" x="1162" y="110" width="370" height="280" rx="14"/>
+  <g class="ic s-purp" transform="translate(1178,124) scale(.78)">
+    <path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0V8zM12 17v5"/>
+  </g>
+  <text class="pt t-purp" x="1206" y="140">Platform Adaptation Layer</text>
+  <text class="pd" x="1206" y="156">platform/</text>
+
+  <rect class="pill" x="1178" y="176" width="84" height="18" rx="5"/>
+  <text class="pilltx" x="1188" y="188">INTERFACE</text>
+  <rect class="card" x="1270" y="174" width="94" height="22" rx="6"/><text class="cmono" x="1317" y="189" text-anchor="middle">platform/pal</text>
+
+  <rect class="pill" x="1178" y="210" width="98" height="18" rx="5"/>
+  <text class="pilltx" x="1188" y="222">NATIVE IMPL</text>
+  <rect class="card" x="1284" y="208" width="126" height="22" rx="6"/><text class="cmono" x="1347" y="223" text-anchor="middle">platform/palnative</text>
+
+  <rect class="pill" x="1178" y="248" width="106" height="18" rx="5"/>
+  <text class="pilltx" x="1188" y="260">CAPABILITIES</text>
+  <rect class="card" x="1178" y="276" width="40" height="26" rx="6"/><text class="cmono" x="1198" y="293" text-anchor="middle">io</text>
+  <rect class="card" x="1226" y="276" width="40" height="26" rx="6"/><text class="cmono" x="1246" y="293" text-anchor="middle">fs</text>
+  <rect class="card" x="1274" y="276" width="40" height="26" rx="6"/><text class="cmono" x="1294" y="293" text-anchor="middle">os</text>
+  <rect class="card" x="1322" y="276" width="46" height="26" rx="6"/><text class="cmono" x="1345" y="293" text-anchor="middle">time</text>
+  <rect class="card" x="1376" y="276" width="46" height="26" rx="6"/><text class="cmono" x="1399" y="293" text-anchor="middle">http</text>
+  <rect class="card" x="1430" y="276" width="62" height="26" rx="6"/><text class="cmono" x="1461" y="293" text-anchor="middle">signals</text>
+  <text class="cap" x="1178" y="330">The six fields of pal.Platform. palnative is the</text>
+  <text class="cap" x="1178" y="346">only implementation here; the Ballerina Playground</text>
+  <text class="cap" x="1178" y="362">implements one for the browser (pal_wasm.go).</text>
+
+  <!-- ============================================================ E. Ballerina Central -->
+  <rect class="p-grey" x="28" y="522" width="200" height="130" rx="14"/>
+  <g class="ic s-grey" transform="translate(44,536) scale(.78)">
+    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+  </g>
+  <text class="pt t-grey" x="72" y="552">Ballerina Central</text>
+  <rect class="card" x="44" y="574" width="152" height="24" rx="6"/><text class="cmono" x="120" y="590" text-anchor="middle">.bala registry</text>
+  <text class="cap" x="44" y="622">Remote. The only host the</text>
+  <text class="cap" x="44" y="636">toolchain itself talks to.</text>
+  <line class="dash" x1="128" y1="518" x2="128" y2="460" marker-end="url(#a)"/>
+  <text class="alab" x="136" y="484">fetch deps</text>
+  <text class="pd" x="136" y="498">projects/centralclient</text>
+
+  <!-- ============================================================ F. Library -->
+  <rect class="p-amb" x="256" y="522" width="878" height="162" rx="14"/>
+  <g class="ic s-amb" transform="translate(272,534) scale(.78)">
+    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+  </g>
+  <text class="pt t-amb" x="300" y="550">Library</text>
+  <text class="pd" x="1118" y="550" text-anchor="end">lib/</text>
+
+  <rect class="pill" x="272" y="568" width="134" height="18" rx="5"/>
+  <text class="pilltx" x="282" y="580">LANGUAGE LIBRARY</text>
+  <rect class="card" x="272" y="594" width="72" height="24" rx="6"/><text class="cmono" x="308" y="610" text-anchor="middle">lang.array</text>
+  <rect class="card" x="352" y="594" width="64" height="24" rx="6"/><text class="cmono" x="384" y="610" text-anchor="middle">lang.map</text>
+  <rect class="card" x="424" y="594" width="76" height="24" rx="6"/><text class="cmono" x="462" y="610" text-anchor="middle">lang.string</text>
+  <rect class="card" x="508" y="594" width="72" height="24" rx="6"/><text class="cmono" x="544" y="610" text-anchor="middle">lang.value</text>
+  <rect class="card" x="588" y="594" width="58" height="24" rx="6"/><text class="cmono" x="617" y="610" text-anchor="middle">lang.int</text>
+  <rect class="card" x="654" y="594" width="70" height="24" rx="6"/><text class="cmono" x="689" y="610" text-anchor="middle">lang.error</text>
+  <rect class="card" x="732" y="594" width="30" height="24" rx="6"/><text class="cmono" x="747" y="610" text-anchor="middle">…</text>
+  <text class="cap" x="774" y="610">12 modules, required by every program</text>
+
+  <rect class="pill" x="272" y="632" width="134" height="18" rx="5"/>
+  <text class="pilltx" x="282" y="644">STANDARD LIBRARY</text>
+  <rect class="card" x="272" y="658" width="46" height="24" rx="6"/><text class="cmono" x="295" y="674" text-anchor="middle">http</text>
+  <rect class="card" x="326" y="658" width="34" height="24" rx="6"/><text class="cmono" x="343" y="674" text-anchor="middle">io</text>
+  <rect class="card" x="368" y="658" width="34" height="24" rx="6"/><text class="cmono" x="385" y="674" text-anchor="middle">os</text>
+  <rect class="card" x="410" y="658" width="56" height="24" rx="6"/><text class="cmono" x="438" y="674" text-anchor="middle">crypto</text>
+  <rect class="card" x="474" y="658" width="40" height="24" rx="6"/><text class="cmono" x="494" y="674" text-anchor="middle">log</text>
+  <rect class="card" x="522" y="658" width="46" height="24" rx="6"/><text class="cmono" x="545" y="674" text-anchor="middle">time</text>
+  <rect class="card" x="576" y="658" width="30" height="24" rx="6"/><text class="cmono" x="591" y="674" text-anchor="middle">…</text>
+  <text class="cap" x="618" y="674">optional modules — declared in Ballerina, native Go impl wired by lib/rt</text>
+
+  <line class="ln" x1="420" y1="518" x2="420" y2="486" marker-end="url(#a)"/>
+  <text class="alab" x="428" y="508">resolved at compile time</text>
+  <line class="ln" x1="944" y1="518" x2="944" y2="446" marker-end="url(#a)"/>
+  <text class="alab" x="952" y="486">extern calls</text>
+
+  <!-- ============================================================ G. Host OS -->
+  <rect class="p-grey" x="1162" y="522" width="370" height="114" rx="14"/>
+  <g class="ic s-grey" transform="translate(1178,536) scale(.78)">
+    <rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/>
+    <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+  </g>
+  <text class="pt t-grey" x="1206" y="552">Host OS</text>
+  <rect class="card" x="1178" y="574" width="72" height="24" rx="6"/><text class="cmono" x="1214" y="590" text-anchor="middle">filesystem</text>
+  <rect class="card" x="1258" y="574" width="62" height="24" rx="6"/><text class="cmono" x="1289" y="590" text-anchor="middle">network</text>
+  <rect class="card" x="1328" y="574" width="40" height="24" rx="6"/><text class="cmono" x="1348" y="590" text-anchor="middle">env</text>
+  <rect class="card" x="1376" y="574" width="60" height="24" rx="6"/><text class="cmono" x="1406" y="590" text-anchor="middle">signals</text>
+
+  <line class="ln" x1="1347" y1="394" x2="1347" y2="518" marker-end="url(#a)"/>
+  <text class="alab" x="1355" y="460">only path out</text>
+</svg>

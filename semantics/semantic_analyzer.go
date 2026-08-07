@@ -65,7 +65,7 @@ type (
 
 	functionAnalyzer struct {
 		analyzerBase
-		function ast.BLangNode
+		function invokableSignatureNode
 		retTy    semtypes.SemType
 		// enclosingClass is set when the function is a method of a class or
 		// service body. nil for free functions.
@@ -425,7 +425,7 @@ func validateInitFunction(a analyzer, function *ast.BLangFunction, fnSymbol mode
 		a.semanticErr("'init' function cannot be declared as public", pos)
 	}
 
-	actualReturnType := fnSymbol.Signature().ReturnType
+	actualReturnType := fnSymbol.TypedSignature().ReturnType
 	if !semtypes.IsZero(actualReturnType) {
 		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.NIL) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.NIL, semtypes.ERROR)) {
 			a.semanticErr("'init' function must have return type '()' or  'error?'", pos)
@@ -442,7 +442,7 @@ func validateMainFunction(a analyzer, fnSymbol model.FunctionSymbol, pos diagnos
 		a.semanticErr("'main' function must be public", pos)
 	}
 
-	actualReturnType := fnSymbol.Signature().ReturnType
+	actualReturnType := fnSymbol.TypedSignature().ReturnType
 
 	if !semtypes.IsZero(actualReturnType) {
 		if !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.NIL) && !semtypes.IsSameType(a.tyCtx(), actualReturnType, semtypes.Union(semtypes.NIL, semtypes.ERROR)) {
@@ -503,7 +503,7 @@ func initializeInvokableAnalyzer(parent analyzer, function invokableSignatureNod
 		return fa
 	}
 	rejectInferredTypedescOnNonDependent(parent, function)
-	fa.retTy = fnSymbol.Signature().ReturnType
+	fa.retTy = fnSymbol.TypedSignature().ReturnType
 	validateDefaultParamTypes(parent, function)
 	if function.IsIsolated() && !function.IsNative() {
 		validateIsolatedFunction(fa, function)
@@ -987,6 +987,8 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeClientResourceAccessAction(a, expr, expectedType)
 	case *ast.BLangInferredTypedescDefault:
 		return validateResolvedType(a, expr, expectedType)
+	case *ast.BLangDefaultArg:
+		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangTypedescExpr:
 		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangAnnotAccessExpr:
@@ -1342,8 +1344,7 @@ func enclosingFunctionIsIsolated(a analyzer) bool {
 	if fa == nil {
 		return false
 	}
-	fn, ok := fa.function.(invokableSignatureNode)
-	return ok && fn.IsIsolated()
+	return fa.function.IsIsolated()
 }
 
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
@@ -1710,17 +1711,7 @@ func analyzeInvocation[A analyzer](a A, inv invocable, expectedType semtypes.Sem
 	}
 	fnTy := a.ctx().SymbolType(symbol)
 	paramListTy := semtypes.FunctionParamListType(a.tyCtx(), fnTy)
-
-	fnSymbol, isDirectCall := a.ctx().GetSymbol(symbol).(model.FunctionSymbol)
-	// TODO: ideally we need to unify these when we no longer has restrictions on lambdas
-	if !isDirectCall {
-		if invocation, ok := inv.(*ast.BLangInvocation); ok {
-			return analyzeLambdaInvocation(a, invocation, paramListTy, expectedType)
-		}
-		a.internalErr("expected function symbol", inv.GetPosition())
-		return false
-	}
-	return analyzeDirectInvocation(a, inv, fnSymbol, paramListTy, expectedType)
+	return analyzeInvocationArgs(a, inv, paramListTy, expectedType)
 }
 
 // Path computed segments are typed against rmSym.PathType() during type
@@ -1770,46 +1761,20 @@ func analyzeStreamOperation[A analyzer](a A, invocation *ast.BLangInvocation, ex
 	return validateResolvedType(a, invocation, expectedType)
 }
 
-func analyzeDirectInvocation[A analyzer](a A, inv invocable, fnSymbol model.FunctionSymbol, paramListTy, expectedType semtypes.SemType) bool {
-	signature := fnSymbol.Signature()
+func analyzeInvocationArgs[A analyzer](a A, inv invocable, paramListTy, expectedType semtypes.SemType) bool {
 	tyCtx := a.tyCtx()
 	for i, arg := range inv.CallArgs() {
-		switch arg := arg.(type) {
-		case *ast.BLangNamedArgsExpression:
-			name := arg.Name.GetValue()
-			targetIndex := -1
-			for j, each := range signature.ParamNames {
-				if each == name {
-					targetIndex = j
-					break
-				}
-			}
-			key := semtypes.IntConst(int64(targetIndex))
-			if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
-				return false
-			}
-		default:
-			key := semtypes.IntConst(int64(i))
-			if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
-				return false
-			}
+		if _, named := arg.(*ast.BLangNamedArgsExpression); named {
+			a.internalError("named argument after call-argument lowering", arg.GetPosition())
+			return false
 		}
-	}
-
-	return validateResolvedType(a, inv, expectedType)
-}
-
-func analyzeLambdaInvocation[A analyzer](a A, invocation *ast.BLangInvocation, paramListTy, expectedType semtypes.SemType) bool {
-	tyCtx := a.tyCtx()
-
-	for i, arg := range invocation.ArgExprs {
 		key := semtypes.IntConst(int64(i))
 		if !analyzeActionOrExpression(a, arg, semtypes.ListMemberTypeInnerVal(tyCtx, paramListTy, key)) {
 			return false
 		}
 	}
 
-	return validateResolvedType(a, invocation, expectedType)
+	return validateResolvedType(a, inv, expectedType)
 }
 
 func analyzeSimpleVariableDef[A analyzer](a A, simpleVariableDef *ast.BLangSimpleVariableDef) bool {
@@ -1950,7 +1915,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		for _, expr := range n.AttachedExprs {
 			ast.Walk(a, expr.(ast.BLangNode))
 		}
-		validateServiceDeclaredType(a, n)
+		validateServiceListenerTypes(a, n)
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
 			n.InclusionPositions, n.IsIsolated(), n.GetPosition(), enclosingFromService(n))
 		return nil
@@ -1959,20 +1924,54 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 	}
 }
 
-func validateServiceDeclaredType[A analyzer](a A, svc *ast.BLangService) {
-	typeData := svc.GetTypeData()
-	if typeData.TypeDescriptor == nil {
+func validateServiceListenerTypes[A analyzer](a A, svc *ast.BLangService) {
+	serviceTy := svc.GetTypeData().Type
+	attachPointTy := svc.AttachPointType
+	if semtypes.IsZero(serviceTy) || semtypes.IsZero(attachPointTy) {
+		a.internalErr("service types not resolved", svc.GetPosition())
 		return
 	}
-	bodyTy := typeData.Type
-	declaredTy := typeData.TypeDescriptor.(ast.BType).GetTypeData().Type
-	if semtypes.IsZero(bodyTy) || semtypes.IsZero(declaredTy) {
-		a.internalErr("service type not resolved", svc.GetPosition())
-		return
+	attachPointBound := listenerAttachPointBound(a.tyCtx())
+	for _, expr := range svc.AttachedExprs {
+		listenerTy := semtypes.Diff(expr.GetDeterminedType(), semtypes.ERROR)
+		if semtypes.IsNever(listenerTy) {
+			a.semanticErr("expression in 'on' clause is not a listener", expr.GetPosition())
+			continue
+		}
+		listenerServiceTy, listenerAttachPointTy, ok := listenerTypes(a.tyCtx(), listenerTy, attachPointBound)
+		if !ok {
+			a.semanticErr("listener expression type not resolved", expr.GetPosition())
+			continue
+		}
+		if !semtypes.IsSubtype(a.tyCtx(), serviceTy, listenerServiceTy) {
+			a.semanticErr("service type is not supported by listener", expr.GetPosition())
+		}
+		if !semtypes.IsSubtype(a.tyCtx(), attachPointTy, listenerAttachPointTy) {
+			a.semanticErr("attach point is not supported by listener", expr.GetPosition())
+			continue
+		}
+		if svc.AbsoluteResourcePath != nil && !hasSingleApplicableAttachPointListType(a.tyCtx(), svc, listenerAttachPointTy) {
+			a.semanticErr("attach point does not have a single applicable listener list type", expr.GetPosition())
+		}
 	}
-	if !semtypes.IsSubtype(a.tyCtx(), bodyTy, declaredTy) {
-		a.semanticErr("service body is not a subtype of the declared service type", svc.GetPosition())
+}
+
+func hasSingleApplicableAttachPointListType(cx semtypes.Context, svc *ast.BLangService, attachPointTy semtypes.SemType) bool {
+	members := make([]semtypes.ListMemberInfo, len(svc.AbsoluteResourcePath))
+	for i, segment := range svc.AbsoluteResourcePath {
+		members[i] = semtypes.ListMemberInfo{Index: i, ValType: semtypes.StringConst(segment.Value)}
 	}
+	found := false
+	for _, alt := range semtypes.ListAlternatives(cx, semtypes.Intersect(attachPointTy, semtypes.LIST)) {
+		if !semtypes.ListAlternativeAllowsMembers(cx, alt, members) {
+			continue
+		}
+		if found {
+			return false
+		}
+		found = true
+	}
+	return found
 }
 
 func analyzeClassLikeDefn[A analyzer](a A, fields []ast.SimpleVariableNode, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, inclusions []model.SymbolRef, inclusionPositions []diagnostics.Location, isolated bool, pos diagnostics.Location, enclosing *enclosingClassBody) {

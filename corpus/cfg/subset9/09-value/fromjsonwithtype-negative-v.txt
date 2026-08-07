@@ -1,0 +1,269 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable badBool (type
+        (builtin-ref-type json)) (expr
+        (literal 2022))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref badBool)
+            (typedesc-expr
+              (value-type boolean))))
+          (error-type)))))
+    (var-def
+      (variable badArr (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal a)
+          (literal b)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref badArr)
+            (simple-var-ref IntArray)))
+          (error-type)))))
+    (var-def
+      (variable badNumArr (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref badNumArr)
+            (simple-var-ref StringArray)))
+          (error-type)))))
+    (var-def
+      (variable badString (type
+        (builtin-ref-type json)) (expr
+        (literal foobar))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref badString)
+            (typedesc-expr
+              (value-type int))))
+          (error-type)))))
+    (var-def
+      (variable missingField (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref missingField)
+            (simple-var-ref Person)))
+          (error-type)))))
+    (var-def
+      (variable badAge (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal old))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref badAge)
+            (simple-var-ref Person)))
+          (error-type)))))
+    (var-def
+      (variable extraField (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal a))
+          (key-value
+            (literal y)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref extraField)
+            (simple-var-ref Closed)))
+          (error-type)))))
+    (var-def
+      (variable nilVal (type
+        (builtin-ref-type json)) (expr
+        (literal <nil>))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref nilVal)
+            (simple-var-ref Person)))
+          (error-type)))))
+    (var-def
+      (variable notPerson (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref notPerson)
+            (simple-var-ref PersonOrClosed)))
+          (error-type)))))
+    (var-def
+      (variable shortTuple (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref shortTuple)
+            (simple-var-ref IntStringTuple)))
+          (error-type)))))
+    (var-def
+      (variable longTuple (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal a)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref longTuple)
+            (simple-var-ref IntStringTuple)))
+          (error-type)))))
+    (var-def
+      (variable shortOpenTuple (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref shortOpenTuple)
+            (simple-var-ref OpenIntStringTuple)))
+          (error-type)))))
+    (var-def
+      (variable nullVal (type
+        (builtin-ref-type json)) (expr
+        (literal <nil>))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref nullVal)
+            (typedesc-expr
+              (value-type int))))
+          (error-type)))))
+    (var-def
+      (variable numBool (type
+        (builtin-ref-type json)) (expr
+        (literal 42))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref numBool)
+            (typedesc-expr
+              (value-type boolean))))
+          (error-type)))))
+    (var-def
+      (variable arrForMap (type
+        (builtin-ref-type json)) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref arrForMap)
+            (simple-var-ref IntMap)))
+          (error-type)))))
+    (var-def
+      (variable mapForArr (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref mapForArr)
+            (simple-var-ref IntArray)))
+          (error-type)))))
+    (var-def
+      (variable missingNilableReq (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Bob))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref missingNilableReq)
+            (simple-var-ref PersonNilRequired)))
+          (error-type)))))
+    (var-def
+      (variable missingWithDefault (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Carol))))))
+    (var-def
+      (variable withDefault (type
+        (union-type
+          (user-defined-type PersonWithDefault)
+          (error-type))) (expr
+        (invocation lang.value fromJsonWithType (
+          (simple-var-ref missingWithDefault)
+          (simple-var-ref PersonWithDefault))))))
+    (type-test-expr is
+      (simple-var-ref withDefault)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref withDefault))))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable neitherIntNorBool (type
+        (builtin-ref-type json)) (expr
+        (literal hello))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref neitherIntNorBool)
+            (simple-var-ref IntOrBoolean)))
+          (error-type)))))
+    (return
+      (literal <nil>))
+  )
+)

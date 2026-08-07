@@ -1,0 +1,412 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang map (as lang.map))
+  (import-package ballerina lang xml (as lang.xml))
+  (class-definition NumberIterator
+    (variable items (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable index (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal items))
+          (list-constructor-expr
+            (literal 7)
+            (literal 8)
+            (literal 9)))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal index))
+          (literal 0))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (index-based-access
+              (simple-var-ref self)
+              (literal index))
+            (invocation lang.array length (
+              (index-based-access
+                (simple-var-ref self)
+                (literal items)))))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (index-based-access
+                (index-based-access
+                  (simple-var-ref self)
+                  (literal items))
+                (index-based-access
+                  (simple-var-ref self)
+                  (literal index))))))
+          (compound-assignment +
+            (index-based-access
+              (simple-var-ref self)
+              (literal index))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (simple-var-ref value))))))))
+  (class-definition NumberGenerator
+    (function init () ()
+      (block-function-body))
+    (function iterator () (
+      (user-defined-type NumberIterator))
+      (block-function-body
+        (return
+          (new ())))))
+  (function capturedSum (
+    (variable functions (type
+      (array-type
+        (function-type () (
+          (value-type int))) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref functions))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable fn (type
+              (function-type () (
+                (value-type int)))) (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (compound-assignment +
+            (simple-var-ref sum)
+            (invocation fn ()))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref sum))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable functions (type
+          (array-type
+            (function-type () (
+              (value-type int))) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 3))))
+      (while
+        (binary-expr <=
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (if
+            (binary-expr ==
+              (simple-var-ref value)
+              (literal 1))
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$0)
+                (binary-expr +
+                  (simple-var-ref $desugar$0)
+                  (numeric-literal 1)))
+              (continue)) ())
+          (block-stmt
+            (expression-stmt
+              (invocation lang.array push (
+                (simple-var-ref functions)
+                (lambda
+                  (function $anonFunc$_0 () (
+                    (value-type int))
+                    (block-function-body
+                      (return
+                        (simple-var-ref value)))))))))
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (assignment
+        (simple-var-ref functions)
+        (list-constructor-expr))
+      (var-def
+        (variable $desugar$2 (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$3 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$2))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$3)
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$2)
+                (simple-var-ref $desugar$3)))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref functions)
+              (lambda
+                (function $anonFunc$_1 () (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))
+          (assignment
+            (simple-var-ref $desugar$3)
+            (binary-expr +
+              (simple-var-ref $desugar$3)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (assignment
+        (simple-var-ref functions)
+        (list-constructor-expr))
+      (var-def
+        (variable values (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 4))
+            (key-value
+              (literal b)
+              (literal 5))
+            (key-value
+              (literal c)
+              (literal 6))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref values))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation lang.map keys (
+            (simple-var-ref $desugar$5))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$6))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$7)
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$5)
+                (index-based-access
+                  (simple-var-ref $desugar$6)
+                  (simple-var-ref $desugar$7))))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref functions)
+              (lambda
+                (function $anonFunc$_2 () (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))
+          (assignment
+            (simple-var-ref $desugar$7)
+            (binary-expr +
+              (simple-var-ref $desugar$7)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (assignment
+        (simple-var-ref functions)
+        (list-constructor-expr))
+      (var-def
+        (variable generator (type
+          (user-defined-type NumberGenerator)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$9 (expr
+          (simple-var-ref generator))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$9) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$13 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$11) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$13))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$13)
+                (literal value)))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref functions)
+              (lambda
+                (function $anonFunc$_3 () (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (var-def
+        (variable xmlFunctions (type
+          (array-type
+            (function-type () (
+              (value-type xml))) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable sequence (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))
+              (user-defined-type xml Comment)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal item)
+            (xml-text-literal text)
+            (xml-comment-literal comment)))))
+      (var-def
+        (variable $desugar$14 (expr
+          (simple-var-ref sequence))))
+      (var-def
+        (variable $desugar$15 (expr
+          (invocation lang.xml iterator (
+            (simple-var-ref $desugar$14))))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$17 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$15) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$17))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable item (type
+              (union-type
+                (union-type
+                  (user-defined-type xml Element)
+                  (user-defined-type xml Text))
+                (user-defined-type xml Comment))) (expr
+              (index-based-access
+                (simple-var-ref $desugar$17)
+                (literal value)))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref xmlFunctions)
+              (lambda
+                (function $anonFunc$_4 () (
+                  (value-type xml))
+                  (block-function-body
+                    (return
+                      (simple-var-ref item))))))))))
+      (var-def
+        (variable $desugar$18 (expr
+          (simple-var-ref xmlFunctions))))
+      (var-def
+        (variable $desugar$19 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$18))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$19)
+          (simple-var-ref $desugar$20))
+        (block-stmt
+          (var-def
+            (variable fn (type
+              (function-type () (
+                (value-type xml)))) (expr
+              (index-based-access
+                (simple-var-ref $desugar$18)
+                (simple-var-ref $desugar$19)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation fn ()))))
+          (assignment
+            (simple-var-ref $desugar$19)
+            (binary-expr +
+              (simple-var-ref $desugar$19)
+              (numeric-literal 1))))))))

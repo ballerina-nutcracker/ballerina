@@ -5,7 +5,7 @@
         (user-defined-type http Client)) (expr
         (checked-expr
           (new (
-            (literal https://example.com)))))))
+            (literal https://example.com) <default>))))))
     (var-def
       (variable _ (type
         (user-defined-type http Client)) (expr

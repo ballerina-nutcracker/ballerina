@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-is a workspace; expected a package directory
+is a workspace; run bal pack <package-path> to pack a specific package within it
 -- exitcode --
 1

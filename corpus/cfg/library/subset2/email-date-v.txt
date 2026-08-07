@@ -10,7 +10,7 @@
       (variable emailStr (type
         (value-type string)) (expr
         (invocation time utcToEmailString (
-          (simple-var-ref utc))))))
+          (simple-var-ref utc) <default>)))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref emailStr))))

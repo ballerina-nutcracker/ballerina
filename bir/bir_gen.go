@@ -458,7 +458,7 @@ func transformFunctionInner(root *funcBlock, astFunc *ast.BLangFunction, selfSym
 	ctx := root.fn.birCx
 	birFunc.FunctionLookupKey = buildFunctionLookupKeyFromSymbol(ctx, symRef)
 	funcSym := ctx.CompilerContext.GetSymbol(astFunc.Symbol()).(model.FunctionSymbol)
-	retOp := root.addLocalVarInner(model.Name("%0"), funcSym.Signature().ReturnType)
+	retOp := root.addLocalVarInner(model.Name("%0"), funcSym.TypedSignature().ReturnType)
 	root.fn.retVarDcl = retOp.VariableDcl.(*BIRLocalVariableDcl)
 	if selfSymbolRef != nil {
 		root.addLocalVar(model.Name("self"), ctx.CompilerContext.SymbolType(*selfSymbolRef), *selfSymbolRef)
@@ -906,11 +906,9 @@ func handleExprFunctionBody(ctx context, body *ast.BLangExprFunctionBody) {
 	effect := handleActionOrExpression(ctx, curBB, body.Expr)
 	curBB = effect.block
 	if curBB != nil {
-		retAssign := &Move{}
-		retAssign.LhsOp = retVar(ctx)
-		retAssign.RhsOp = effect.result
-		curBB.Instructions = append(curBB.Instructions, retAssign)
-		curBB.Terminator = &Return{}
+		pos := ctx.function().loc(body.Expr.GetPosition())
+		curBB.Instructions = append(curBB.Instructions, NewMove(effect.result, retVar(ctx), pos))
+		curBB.Terminator = NewReturn(pos)
 	}
 }
 
@@ -1568,6 +1566,13 @@ func generateCall(ctx context, bb *BIRBasicBlock, callable callable) expressionE
 			if op, crossedFunction, ok := lookupVar(ctx, unnarrowedRef); ok {
 				call.FpOperand = op
 				ctx.function().isClosure = ctx.function().isClosure || crossedFunction
+			} else {
+				pkgID := packageIDFromIdentifier(ctx.compilerContext(), ctx.symbolPackage(unnarrowedRef))
+				global := &BIRGlobalVariableDcl{}
+				global.Name = model.Name(ctx.symbolName(unnarrowedRef))
+				global.PkgId = pkgID
+				global.GlobalVarLookupKey = buildGlobalVarLookupKey(pkgID, global.Name)
+				call.FpOperand = &BIROperand{VariableDcl: global}
 			}
 		}
 	}
@@ -1932,7 +1937,7 @@ func transformResourceMethodInner(root *funcBlock, rm *ast.BLangResourceMethod, 
 	birFunc.Flags = rm.Flags()
 	birFunc.FunctionLookupKey = buildFunctionLookupKeyFromSymbol(ctx, symRef)
 	funcSym := ctx.CompilerContext.GetSymbol(symRef).(model.FunctionSymbol)
-	retOp := root.addLocalVarInner(model.Name("%0"), funcSym.Signature().ReturnType)
+	retOp := root.addLocalVarInner(model.Name("%0"), funcSym.TypedSignature().ReturnType)
 	root.fn.retVarDcl = retOp.VariableDcl.(*BIRLocalVariableDcl)
 	if selfSymbolRef != nil {
 		root.addLocalVar(model.Name("self"), ctx.CompilerContext.SymbolType(*selfSymbolRef), *selfSymbolRef)

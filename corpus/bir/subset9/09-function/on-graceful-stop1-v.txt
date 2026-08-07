@@ -8,16 +8,34 @@ stopHandler() -> nil|error{
     return;
   }
 }
+mappedStopHandler() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad mapped handler
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:stopHandler
     %2 = onGracefulStop(%1) -> bb1;
   }
   bb1 {
-    %3 = ConstantLoad done
-    %4 = println(%3) -> bb2;
+    %3 = fp $anon/.:mappedStopHandler
+    %4 = ConstantLoad 1
+    %5 = newArray [function() returns nil|error...][%4]{%3}
+    handlers = %5;
+    %7 = fp ballerina/lang.runtime:onGracefulStop
+    %8 = map(handlers,%7) -> bb2;
   }
   bb2 {
+    %9 = %8;
+    %10 = ConstantLoad done
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
     return;
   }
 }

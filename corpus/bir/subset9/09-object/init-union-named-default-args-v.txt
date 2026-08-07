@@ -1,0 +1,176 @@
+module $anon.. v 0.0.0;
+class Counter {
+  label string
+  count int
+
+  describe() -> string{
+    bb0 {
+      %3 = ConstantLoad label
+      %2 = self[%3];
+      %5 = ConstantLoad count
+      %4 = self[%5];
+      %6 = evalTemplate[string]("", %2, ":", %4, "")
+      %0 = %6;
+      return;
+    }
+  }
+
+  init(string,int) -> nil|error{
+    bb0 {
+      %4 = ConstantLoad 
+      %5 = ConstantLoad label
+      self[%5] = %4;
+      %6 = ConstantLoad 0
+      %7 = ConstantLoad count
+      self[%7] = %6;
+      %9 = count;
+      %10 = ConstantLoad 0
+      %11 = %10;
+      %8 = < %9 %11;
+      %8 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad negative count
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 2
+      %0 = ConstantLoad label
+      (1, self)[%0] = (1, label);
+      %1 = ConstantLoad count
+      (1, self)[%1] = (1, count);
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $default$1($desugar$0) -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %3;
+    %5 = newObject $anon/.:Counter
+    %6 = init(%5,$desugar$0,$desugar$1) -> bb3;
+  }
+  bb3 {
+    %8 = %6 is nil
+    %8 ? bb4 : bb5;
+  }
+  bb4 {
+    %7 = %5;
+    GOTO bb6;
+  }
+  bb5 {
+    %7 = %6;
+    GOTO bb6;
+  }
+  bb6 {
+    defaulted = %7;
+    %10 = defaulted is object { private int count; private function describe() returns string; public function init(string, int) returns nil|error; private string label }
+    %10 ? bb7 : bb10;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = describe((1, defaulted)) -> bb8;
+  }
+  bb8 {
+    %1 = println(%0) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 8
+    %0 = newObject $anon/.:Counter
+    %1 = ConstantLoad named
+    %2 = ConstantLoad 7
+    %3 = init(%0,%1,%2) -> bb11;
+  }
+  bb11 {
+    %5 = %3 is nil
+    %5 ? bb12 : bb13;
+  }
+  bb12 {
+    %4 = %0;
+    GOTO bb14;
+  }
+  bb13 {
+    %4 = %3;
+    GOTO bb14;
+  }
+  bb14 {
+    named = %4;
+    %7 = named is object { private int count; private function describe() returns string; public function init(string, int) returns nil|error; private string label }
+    %7 ? bb15 : bb18;
+  }
+  bb15 {
+    PushScopeFrame 2
+    %0 = describe((1, named)) -> bb16;
+  }
+  bb16 {
+    %1 = println(%0) -> bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    PushScopeFrame 13
+    %0 = $default$0() -> bb19;
+  }
+  bb19 {
+    $desugar$2 = %0;
+    %2 = ConstantLoad 1
+    %3 = unknown %2;
+    $desugar$3 = %3;
+    %5 = newObject $anon/.:Counter
+    %6 = init(%5,$desugar$2,$desugar$3) -> bb20;
+  }
+  bb20 {
+    %8 = %6 is nil
+    %8 ? bb21 : bb22;
+  }
+  bb21 {
+    %7 = %5;
+    GOTO bb23;
+  }
+  bb22 {
+    %7 = %6;
+    GOTO bb23;
+  }
+  bb23 {
+    failed = %7;
+    %10 = failed is error
+    %11 = %10;
+    %12 = println(%11) -> bb24;
+  }
+  bb24 {
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> string{
+  bb0 {
+    %1 = ConstantLoad default
+    %0 = %1;
+    return;
+  }
+}
+$default$1(string) -> int{
+  bb0 {
+    %2 = ConstantLoad 5
+    %0 = %2;
+    return;
+  }
+}

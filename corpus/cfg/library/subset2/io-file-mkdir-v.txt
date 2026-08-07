@@ -8,7 +8,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref stringPath)
-          (literal hello)))))
+          (literal hello) <default>))))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -24,7 +24,7 @@
           (simple-var-ref linesPath)
           (list-constructor-expr
             (literal one)
-            (literal two))))))
+            (literal two)) <default>))))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -41,7 +41,7 @@
           (list-constructor-expr
             (literal 1)
             (literal 2)
-            (literal 3))))))
+            (literal 3)) <default>))))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -72,7 +72,7 @@
       (checked-expr
         (invocation io fileWriteXml (
           (simple-var-ref xmlPath)
-          (xml-element-literal a)))))
+          (xml-element-literal a) <default>))))
     (expression-stmt
       (invocation io println (
         (checked-expr
@@ -86,7 +86,7 @@
       (checked-expr
         (invocation io fileWriteString (
           (simple-var-ref appendPath)
-          (literal First)))))
+          (literal First) <default>))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (

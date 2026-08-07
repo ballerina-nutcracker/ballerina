@@ -19,14 +19,11 @@
     (expression-stmt
       (invocation io println (
         (invocation foo (
-          (named-arg y
-            (literal 10))
-          (named-arg x
-            (literal 100)))))))
+          (literal 100)
+          (literal 10))))))
     (expression-stmt
       (invocation io println (
-        (invocation bar (
-          (named-arg y
-            (literal 5)))))))
+        (invocation bar ( <default>
+          (literal 5))))))
   )
 )

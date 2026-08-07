@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression in 'on' clause is not a listener
+  --> service-explicit-bad-listener1-e.bal:24:14
+   |
+24 | service S on listenerError { // @error error-only expression
+   |              ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: listener expression type not resolved
+  --> service-explicit-bad-listener1-e.bal:21:14
+   |
+21 | service S on notAListener { // @error non-listener expression
+   |              ^^^^^^^^^^^^

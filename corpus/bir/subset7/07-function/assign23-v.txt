@@ -107,25 +107,26 @@ bar(function("a"|"b") returns boolean,["a"|"b"|"c"...]...) -> [boolean...]{
     %4 = newArray [boolean...][%3]{}
     result = %4;
     %6 = ConstantLoad 0
-    i = %6;
+    $desugar$0 = %6;
     %8 = length(vals) -> bb1;
   }
   bb1 {
-    $desugar$0 = %8;
+    $desugar$1 = %8;
     GOTO bb2;
   }
   bb2 {
-    %11 = i;
-    %12 = $desugar$0;
+    %11 = $desugar$0;
+    %12 = $desugar$1;
     %10 = < %11 %12;
     %10 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 7
-    %0 = (1, vals)[(1, i)];
-    val = %0;
-    %2 = val is "c"
-    %2 ? bb5 : bb6;
+    PushScopeFrame 8
+    i = (1, $desugar$0);
+    %1 = (1, vals)[i];
+    val = %1;
+    %3 = val is "c"
+    %3 ? bb5 : bb6;
   }
   bb4 {
     %0 = result;
@@ -133,11 +134,11 @@ bar(function("a"|"b") returns boolean,["a"|"b"|"c"...]...) -> [boolean...]{
   }
   bb5 {
     PushScopeFrame 4
-    %1 = (2, i);
+    %1 = (2, $desugar$0);
     %2 = ConstantLoad 1
     %3 = %2;
     %0 = + %1 %3;
-    (2, i) = %0;
+    (2, $desugar$0) = %0;
     PopScopeFrame
     PopScopeFrame
     GOTO bb2;
@@ -152,11 +153,11 @@ bar(function("a"|"b") returns boolean,["a"|"b"|"c"...]...) -> [boolean...]{
   }
   bb8 {
     PopScopeFrame
-    %4 = (1, i);
-    %5 = ConstantLoad 1
-    %6 = %5;
-    %3 = + %4 %6;
-    (1, i) = %3;
+    %5 = (1, $desugar$0);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$0) = %4;
     PopScopeFrame
     GOTO bb2;
   }

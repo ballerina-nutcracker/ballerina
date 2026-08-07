@@ -40,7 +40,7 @@ func stringLength(args []values.BalValue) (values.BalValue, error) {
 }
 
 func stringToBytes(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	return values.ByteSliceToList(byteArrTy, ctx.TypeCtx, []byte(args[0].(string))), nil
+	return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), []byte(args[0].(string))), nil
 }
 
 func stringFromBytes(args []values.BalValue) (values.BalValue, error) {

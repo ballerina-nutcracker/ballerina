@@ -63,17 +63,20 @@
                 (simple-var-ref seed)))
             (simple-var-ref bufferSize)))))
       (var-def
-        (variable _ (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 0))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (simple-var-ref iterations))))
       (while
         (binary-expr <
-          (simple-var-ref _)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
           (compound-assignment +
             (simple-var-ref currentVal)
             (index-based-access
@@ -88,9 +91,9 @@
                   (simple-var-ref seed)))
               (simple-var-ref bufferSize)))
           (assignment
-            (simple-var-ref _)
+            (simple-var-ref $desugar$0)
             (binary-expr +
-              (simple-var-ref _)
+              (simple-var-ref $desugar$0)
               (numeric-literal 1)))))
       (return
         (simple-var-ref currentVal)))))

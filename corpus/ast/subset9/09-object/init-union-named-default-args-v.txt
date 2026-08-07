@@ -1,0 +1,103 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable label (type
+      (value-type string)) (expr
+      (literal )))
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function init (
+      (variable label (type
+        (value-type string)) (expr
+        (literal default)))
+      (variable count (type
+        (value-type int)) (expr
+        (literal 5)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr <
+            (simple-var-ref count)
+            (literal 0))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal negative count))))) ())
+        (block-stmt
+          (assignment
+            (field-based-access label
+              (simple-var-ref self))
+            (simple-var-ref label))
+          (assignment
+            (field-based-access count
+              (simple-var-ref self))
+            (simple-var-ref count)))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (return
+          (string-template-literal
+            (template-string "")
+            (field-based-access label
+              (simple-var-ref self))
+            (template-string ":")
+            (field-based-access count
+              (simple-var-ref self))
+            (template-string ""))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable defaulted (type
+          (union-type
+            (user-defined-type Counter)
+            (error-type))) (expr
+          (new ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref defaulted)
+          (user-defined-type Counter))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation describe expr:
+                (simple-var-ref defaulted) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable named (type
+            (union-type
+              (user-defined-type Counter)
+              (error-type))) (expr
+            (new (
+              (named-arg label
+                (literal named))
+              (named-arg count
+                (literal 7)))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref named)
+            (user-defined-type Counter))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation describe expr:
+                  (simple-var-ref named) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable failed (type
+              (union-type
+                (user-defined-type Counter)
+                (error-type))) (expr
+              (new (
+                (named-arg count
+                  (unary-expr -
+                    (literal 1))))))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref failed)
+                (error-type))))))))))

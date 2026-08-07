@@ -86,6 +86,16 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 - `@error`: -e test cases should use error markers to indicate lines where an error is expect. Text after marker is purely for commenting, not validated against actual error.
 - `@panic`: -p test cases should use panic markers to indicate first line which triggers a panic. We validate it is the first line the stack trace. Similar to error markers text after marker is ignored.
 
+## Commit messages and PR titles
+
+- Every commit subject and the PR title must follow Conventional Commits: `<type>(<optional scope>): <description>` (`.github/workflows/lint-pr.yml`, enforced by `.github/scripts/validate-commits.js`)
+- Allowed types: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`, `revert`
+- Max subject length is 72 characters
+- The description must start with a lowercase letter
+- A breaking-change marker (`!` before the colon, e.g. `feat!: ...`) is allowed
+- Scope is optional and unrestricted (no allowed-scope list is configured)
+- Merge commits are exempt from this check
+
 ## Commands
 
 - You can run interpreter as `go run ./cli/cmd run [flags] <path to bal file>`

@@ -12,6 +12,6 @@
     (expression-stmt
       (invocation io println (
         (invocation foo (
-          (literal 10))))))
+          (literal 10) <default>)))))
   )
 )

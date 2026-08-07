@@ -1,0 +1,82 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Config
+    (record-type
+      (field path
+        (value-type string))
+      (field recursive
+        (value-type boolean)
+        (literal false))))
+  (class-definition public Listener
+    (variable path (type
+      (value-type string)))
+    (variable recursive (type
+      (value-type boolean)))
+    (function init (
+      (variable config (type
+        (user-defined-type Config)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal path))
+          (index-based-access
+            (simple-var-ref config)
+            (literal path)))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal recursive))
+          (index-based-access
+            (simple-var-ref config)
+            (literal recursive)))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (return
+          (string-template-literal
+            (template-string "")
+            (index-based-access
+              (simple-var-ref self)
+              (literal path))
+            (template-string ":")
+            (index-based-access
+              (simple-var-ref self)
+              (literal recursive))
+            (template-string ""))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (new (
+            (mapping-constructor-expr
+              (key-value
+                (literal path)
+                (literal /tmp))
+              (key-value
+                (literal recursive)
+                (literal true))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable instance (type
+          (user-defined-type Listener)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref instance) ()))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal false)))))

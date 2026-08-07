@@ -43,39 +43,40 @@ sum([function() returns int...]) -> int{
     %2 = ConstantLoad 0
     tmp = %2;
     %4 = ConstantLoad 0
-    i = %4;
+    $desugar$0 = %4;
     %6 = length(fns) -> bb1;
   }
   bb1 {
-    $desugar$0 = %6;
+    $desugar$1 = %6;
     GOTO bb2;
   }
   bb2 {
-    %9 = i;
-    %10 = $desugar$0;
+    %9 = $desugar$0;
+    %10 = $desugar$1;
     %8 = < %9 %10;
     %8 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 10
-    %0 = (1, fns)[(1, i)];
-    fn = %0;
-    %3 = (1, tmp);
-    %4 = fn() -> bb5;
+    PushScopeFrame 11
+    i = (1, $desugar$0);
+    %1 = (1, fns)[i];
+    fn = %1;
+    %4 = (1, tmp);
+    %5 = fn() -> bb5;
   }
   bb4 {
     %0 = tmp;
     return;
   }
   bb5 {
-    %5 = %4;
-    %2 = + %3 %5;
-    (1, tmp) = %2;
-    %7 = (1, i);
-    %8 = ConstantLoad 1
-    %9 = %8;
-    %6 = + %7 %9;
-    (1, i) = %6;
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, tmp) = %3;
+    %8 = (1, $desugar$0);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$0) = %7;
     PopScopeFrame
     GOTO bb2;
   }

@@ -13,7 +13,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
 | [crypto](crypto/0.0.1/go1.26/README.md)           | 26 | 1 | 5 | 81% |
-| [http](http/0.0.1/go1.26/README.md)               | 24 | 2 | 46 | 33% |
+| [http](http/0.0.1/go1.26/README.md)               | 26 | 5 | 41 | 36% |
 | [io](io/0.0.1/go1.26/README.md)                   | 14 | 1 | 12 | 52% |
 | [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
@@ -21,7 +21,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **124** | **9** | **80** | **58%** |
+| **Total**                                         | **126** | **12** | **75** | **59%** |
 
 ## Notable Behavioural Changes
 
@@ -41,6 +41,7 @@ tables instead.
 - **`poolConfig.waitTime` maps to `ResponseHeaderTimeout`.** jBallerina's `waitTime` limits how long a request waits for a connection. In the Go runtime this is approximated by `ResponseHeaderTimeout` (maximum time to wait for the first response byte). True connection-wait limiting is not available in Go's `net/http` transport.
 - **`responseLimits.maxStatusLineLength` is not enforced.** The value is accepted and validated (must be ≥ 0) but has no runtime effect. Go's HTTP transport does not expose a configurable maximum status line length (unlike jBallerina's Netty `HttpClientCodec`).
 - **Proxy DNS resolution is lazy, not eager.** In jBallerina, `ProxyConfig.host` is DNS-resolved at client creation time, and an unknown hostname causes an `error` from `new http:Client(...)`. In the Go runtime, DNS resolution is deferred to the first request that uses the proxy. A bad proxy hostname does not fail at init time.
+- **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.
 
 ### io
 

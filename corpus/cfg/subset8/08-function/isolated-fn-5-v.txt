@@ -11,6 +11,6 @@
 (main
   (bb0 () ()
     (expression-stmt
-      (invocation foo ()))
+      (invocation foo ( <default> <default>)))
   )
 )

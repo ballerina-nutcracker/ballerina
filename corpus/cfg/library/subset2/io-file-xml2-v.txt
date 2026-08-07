@@ -15,7 +15,7 @@
       (checked-expr
         (invocation io fileWriteXml (
           (simple-var-ref path)
-          (simple-var-ref data)))))
+          (simple-var-ref data) <default>))))
     (var-def
       (variable result (type
         (value-type xml)) (expr
@@ -33,7 +33,7 @@
       (checked-expr
         (invocation io fileWriteXml (
           (simple-var-ref path)
-          (simple-var-ref data2)))))
+          (simple-var-ref data2) <default>))))
     (var-def
       (variable result2 (type
         (value-type xml)) (expr

@@ -251,24 +251,12 @@ func walkSimpleVariableDef(cx *functionContext, stmt *ast.BLangSimpleVariableDef
 	if stmt.Var != nil {
 		if typeNode := stmt.Var.TypeNode(); typeNode != nil {
 			result := desugarTypeDesc(cx, typeNode, cx.currentScope())
-			for _, rf := range result.recordFields {
-				rf.fn = desugarFunction(cx.pkgCtx, rf.fn)
-				fnType := cx.symbolType(rf.symRef)
-				lambda := &ast.BLangLambdaFunction{Function: rf.fn}
-				lambda.SetDeterminedType(fnType)
-				setPositionIfMissing(lambda, rf.fn.GetPosition())
-
-				varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, rf.fn.GetPosition())
-				varIdent := &ast.BLangIdentifier{Value: varName}
-				varIdent.SetDeterminedType(semtypes.NEVER)
-				simpleVar := &ast.BLangSimpleVariable{Name: varIdent}
-				simpleVar.Expr = lambda
-				simpleVar.SetDeterminedType(fnType)
-				simpleVar.SetSymbol(varSymRef)
-				varDef := &ast.BLangSimpleVariableDef{Var: simpleVar}
-				setPositionIfMissing(varDef, rf.fn.GetPosition())
-				initStmts = append(initStmts, varDef)
+			initStmts = append(initStmts, desugarLocalTypeDescDefaults(cx, result.functions)...)
+			for _, field := range result.recordFields {
+				initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
 			}
+		} else {
+			cx.pkgCtx.addDefaultClosureOwner(stmt.Var.Expr)
 		}
 		if stmt.Var.Expr != nil {
 			result := walkExpression(cx, stmt.Var.Expr)
@@ -690,7 +678,7 @@ func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *
 		return nil
 	}
 	fnSymbol := cx.getSymbol(symbolRef).(model.FunctionSymbol)
-	returnType := fnSymbol.Signature().ReturnType
+	returnType := fnSymbol.TypedSignature().ReturnType
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
 		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
 		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "map"}},
@@ -717,13 +705,20 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 	initStmts = append(initStmts, endResult.initStmts...)
 	endExpr := endResult.replacementNode
 
-	loopVarDef.Var.SetInitialExpression(startExpr)
-	initStmts = append(initStmts, loopVarDef)
+	// Keep loop control separate so the source variable can be declared and captured afresh in each iteration.
+	controlName, controlVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
+	controlVarName := &ast.BLangIdentifier{Value: controlName}
+	controlVar := &ast.BLangSimpleVariable{Name: controlVarName}
+	controlVar.SetDeterminedType(semtypes.INT)
+	controlVar.SetInitialExpression(startExpr)
+	controlVar.SetSymbol(controlVarSymbol)
+	controlVarDef := &ast.BLangSimpleVariableDef{Var: controlVar}
+	setPositionIfMissing(controlVarDef, basePos)
+	initStmts = append(initStmts, controlVarDef)
 
-	loopVarRef := &ast.BLangSimpleVarRef{
-		VariableName: loopVarDef.Var.Name,
-	}
-	loopVarRef.SetSymbol(loopVarDef.Var.Symbol())
+	controlVarRef := &ast.BLangSimpleVarRef{VariableName: controlVarName}
+	controlVarRef.SetSymbol(controlVarSymbol)
+	controlVarRef.SetDeterminedType(semtypes.INT)
 
 	endName, endVarSymbol := cx.addDesugardSymbol(semtypes.INT, model.SymbolKindVariable, false, basePos)
 	endVarName := &ast.BLangIdentifier{Value: endName}
@@ -742,6 +737,7 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 		VariableName: endVarName,
 	}
 	endVarRef.SetSymbol(endVarSymbol)
+	endVarRef.SetDeterminedType(semtypes.INT)
 
 	var compOp model.OperatorKind
 	if rangeExpr.GetOperatorKind() == model.OperatorKind_CLOSED_RANGE {
@@ -751,30 +747,23 @@ func desugarForEachOnRange(cx *functionContext, rangeExpr *ast.BLangBinaryExpr, 
 	}
 
 	whileCondition := &ast.BLangBinaryExpr{
-		LhsExpr: loopVarRef,
+		LhsExpr: controlVarRef,
 		RhsExpr: endVarRef,
 		OpKind:  compOp,
 	}
 	whileCondition.SetDeterminedType(semtypes.BOOLEAN)
 
-	incrementStmt := createIncrementStmt(loopVarRef)
+	loopVarDef.Var.SetInitialExpression(controlVarRef)
+	incrementStmt := createIncrementStmt(controlVarRef)
 
 	// Note: foreach scope is already pushed by visitForEach at the top level
-	cx.pushLoopVar(loopVarRef)
+	cx.pushLoopVar(controlVarRef)
 
-	newBodyStmts := make([]ast.StatementNode, len(body.Stmts))
-	copy(newBodyStmts, body.Stmts)
-	if len(newBodyStmts) > 0 {
-		if isAppendReachable(newBodyStmts[len(newBodyStmts)-1]) {
-			newBodyStmts = append(newBodyStmts, incrementStmt)
-		}
-	} else {
-		// just replace it with a no-op
-		emptyBlock := &ast.BLangBlockStmt{}
-		setPositionIfMissing(emptyBlock, basePos)
-		return desugaredNode[ast.StatementNode]{
-			replacementNode: emptyBlock,
-		}
+	newBodyStmts := make([]ast.StatementNode, 0, len(body.Stmts)+2)
+	newBodyStmts = append(newBodyStmts, loopVarDef)
+	newBodyStmts = append(newBodyStmts, body.Stmts...)
+	if isAppendReachable(newBodyStmts[len(newBodyStmts)-1]) {
+		newBodyStmts = append(newBodyStmts, incrementStmt)
 	}
 	body.Stmts = newBodyStmts
 

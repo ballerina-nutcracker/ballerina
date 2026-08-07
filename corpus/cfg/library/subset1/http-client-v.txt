@@ -12,7 +12,7 @@
         (checked-expr
           (remote-method-call get expr:
             (simple-var-ref c1) (
-            (literal /path)))))))
+            (literal /path) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -38,7 +38,7 @@
         (checked-expr
           (remote-method-call get expr:
             (simple-var-ref c2) (
-            (literal /path)))))))
+            (literal /path) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -52,13 +52,13 @@
         (user-defined-type http Client)) (expr
         (checked-expr
           (new (
-            (literal https://example.com)))))))
+            (literal https://example.com) <default>))))))
     (var-def
       (variable r3 (expr
         (checked-expr
           (remote-method-call get expr:
             (simple-var-ref c3) (
-            (literal /path)))))))
+            (literal /path) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -68,7 +68,7 @@
         (user-defined-type http Client)) (expr
         (checked-expr
           (new (
-            (literal https://example.com)))))))
+            (literal https://example.com) <default>))))))
     (var-def
       (variable r4 (expr
         (checked-expr
@@ -98,7 +98,7 @@
         (checked-expr
           (remote-method-call get expr:
             (simple-var-ref c5) (
-            (literal /path)))))))
+            (literal /path) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode
@@ -118,7 +118,7 @@
         (checked-expr
           (remote-method-call get expr:
             (simple-var-ref c6) (
-            (literal /path)))))))
+            (literal /path) <default>))))))
     (expression-stmt
       (invocation io println (
         (field-based-access statusCode

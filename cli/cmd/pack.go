@@ -173,7 +173,17 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 		return packError(stderr, "resolve absolute path: %w", err)
 	}
 
-	fsys := os.DirFS(absPath)
+	// Detect whether absPath sits inside a workspace without being its
+	// root — e.g. cwd is a workspace member's own directory. If so, load
+	// from the workspace root instead so sibling member-to-member
+	// dependencies resolve, matching bal run's findWorkspaceRoot handling.
+	workspaceRoot := findWorkspaceRoot(absPath)
+	effectiveBaseDir := absPath
+	if workspaceRoot != "" && workspaceRoot != absPath {
+		effectiveBaseDir = workspaceRoot
+	}
+
+	fsys := os.DirFS(effectiveBaseDir)
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
 		return packError(stderr, "resolve ballerina env path: %w", err)
@@ -194,7 +204,17 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 
 	project := result.Project()
 	if project.Kind() == projects.ProjectKindWorkspace {
-		return packError(stderr, "provided path %q is a workspace; expected a package directory", path)
+		workspace := project.(*projects.WorkspaceProject)
+		if workspaceRoot == "" || workspaceRoot == absPath {
+			return packError(stderr, "%q is a workspace; run bal pack <package-path> to pack a specific package within it", path)
+		}
+		// absPath names one specific member (we walked up to workspaceRoot
+		// to load it) — pack just that member.
+		memberProject := findBuildProjectByPath(workspace, workspaceRoot, absPath)
+		if memberProject == nil {
+			return packError(stderr, "no package found at path %s within workspace %s", absPath, workspaceRoot)
+		}
+		project = memberProject
 	}
 
 	pkg := project.CurrentPackage()

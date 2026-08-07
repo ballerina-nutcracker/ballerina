@@ -34,7 +34,7 @@ type NativeFunc func(ctx *Context, args []values.BalValue) (values.BalValue, err
 type Context struct {
 	Env       *Env
 	CallStack any // opaque pointer to the call stack
-	TypeCtx   semtypes.Context
+	typeCtx   semtypes.Context
 	StrandID  uint64
 	heldLocks []*locks.ReentrantMutex
 }
@@ -71,10 +71,47 @@ func (e *Env) AllocateStrandID() uint64 {
 	}
 }
 
+// CreateContext builds a fresh, unpooled Context. Use this for callers that
+// cannot guarantee a single clear release point — e.g. a strand started via
+// StartMethod, or the public InvokeFunction API — where routing through a
+// pool would be pure overhead (or a correctness risk if the context outlives
+// its release). Callers that own a well-defined unit of work end-to-end (like
+// HTTP resource/remote dispatch) should prefer Runtime.AcquirePooledContext.
 func CreateContext(env *Env) *Context {
-	tyCtx := semtypes.ContextFrom(env.TypeEnv)
-	ctx := Context{Env: env, TypeCtx: tyCtx, StrandID: env.AllocateStrandID()}
+	ctx := Context{Env: env, StrandID: env.AllocateStrandID()}
 	return &ctx
+}
+
+// TypeCtx returns the strand's semtype type-check context, building it lazily
+// on first use. Not every invocation performs a type check, so the context
+// (and its memo caches) is only allocated for strands that actually call this.
+func (ctx *Context) TypeCtx() semtypes.Context {
+	if ctx.typeCtx == nil {
+		ctx.typeCtx = semtypes.ContextFrom(ctx.Env.TypeEnv)
+	}
+	return ctx.typeCtx
+}
+
+// TypeEnv returns the program-constant semantic type environment directly,
+// for callers that only need type definitions and not a full type-check
+// context (which would otherwise force allocation of TypeCtx's memo caches).
+func (ctx *Context) TypeEnv() semtypes.Env {
+	return ctx.Env.TypeEnv
+}
+
+// ResetForReuse clears a context's per-request mutable state — a fresh strand
+// ID, an empty held-lock stack, and (if one was ever built) a cleared TypeCtx
+// — while retaining the constant Env. Clearing TypeCtx rather than keeping its
+// memo caches warm bounds its memory across the pooled context's lifetime;
+// combined with TypeCtx's lazy construction, an invocation that never
+// type-checks pays nothing here either. Safe only under exclusive ownership
+// (e.g. via sync.Pool).
+func (ctx *Context) ResetForReuse() {
+	ctx.StrandID = ctx.Env.AllocateStrandID()
+	ctx.heldLocks = ctx.heldLocks[:0]
+	if ctx.typeCtx != nil {
+		ctx.typeCtx.Reset()
+	}
 }
 
 // AcquireLock acquires the global re-entrant mutex for the given lock key on

@@ -3,7 +3,7 @@
     (var-def
       (variable now (type
         (user-defined-type time Utc)) (expr
-        (invocation time utcNow ()))))
+        (invocation time utcNow ( <default>)))))
     (expression-stmt
       (invocation io println (
         (binary-expr ==

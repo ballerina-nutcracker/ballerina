@@ -34,6 +34,7 @@ type symbolReader struct {
 	tp              *semtypes.TypePool
 	env             *context.CompilerEnvironment
 	externalRefKeys []serializedSymbolRefKey
+	sigHandles      []model.FunctionSignatureRef
 }
 
 func Unmarshal(env *context.CompilerEnvironment, data []byte) (model.ExportedSymbolSpace, error) {
@@ -89,14 +90,15 @@ func (sr *symbolReader) readResourceMethodSymbol(space *model.SymbolSpace) {
 	name, isPublic, ty := sr.readSymbolBase()
 	methodName := sr.readStringCP()
 	pathType := sr.readType()
-	sig, defaults, included := sr.readFunctionSignatureBody(space)
+	typedSig, sigHandle := sr.readFunctionSignatureBody(space)
 	rm := model.NewResourceMethodSymbol(name, methodName, isPublic, diagnostics.NewBuiltinLocation())
 	rm.SetType(ty)
-	rm.SetSignature(sig)
-	rm.SetDefaultableParams(defaults)
-	rm.SetIncludedRecordParams(included)
+	rm.SetTypedSignature(typedSig)
 	rm.SetPathListType(pathType)
-	addDeserializedSymbol(space, name, rm)
+	ref := addDeserializedSymbol(space, name, rm)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
 }
 
 func addDeserializedSymbol(space *model.SymbolSpace, name string, sym model.Symbol) model.SymbolRef {
@@ -140,6 +142,7 @@ func (sr *symbolReader) readSymbolSpace() *model.SymbolSpace {
 
 	pkgID := sr.readPackageIdentifier()
 	space := sr.env.NewSymbolSpace(*pkgID)
+	sr.readFunctionSignatureTable(space)
 	opaque := model.OpaqueSymbols(space.Pkg)
 	for i := int64(0); i < count; i++ {
 		sr.readSymbol(space, opaque)
@@ -206,8 +209,13 @@ func (sr *symbolReader) readTypeSymbol(space *model.SymbolSpace) {
 	sym.SetType(ty)
 	annotations := sr.readAnnotationValues()
 	_ = sr.readInclusionMembers(space)
+	var sigHandle int64
+	read(sr.r, &sigHandle)
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
 }
 
 func (sr *symbolReader) readRecordSymbol(space *model.SymbolSpace) {
@@ -398,6 +406,11 @@ func (sr *symbolReader) readClassSymbol(space *model.SymbolSpace, isNetwork bool
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
 	sym.SetType(intersectDistinctAtoms(ty, ids, semtypes.ObjectDefinitionDistinct))
+	var hasInit bool
+	read(sr.r, &hasInit)
+	if hasInit {
+		methods["init"] = sr.readSymbolRef(space)
+	}
 	sym.SetMethods(methods)
 	if isNetwork {
 		var rmCount int64
@@ -421,6 +434,7 @@ type valueSymbolFields struct {
 	isFinal        bool
 	isConfigurable bool
 	isIsolated     bool
+	sigHandle      int64
 }
 
 func (sr *symbolReader) readValueSymbolFields() valueSymbolFields {
@@ -431,6 +445,7 @@ func (sr *symbolReader) readValueSymbolFields() valueSymbolFields {
 	read(sr.r, &f.isFinal)
 	read(sr.r, &f.isConfigurable)
 	read(sr.r, &f.isIsolated)
+	read(sr.r, &f.sigHandle)
 	return f
 }
 
@@ -451,7 +466,10 @@ func (sr *symbolReader) readValueSymbol(space *model.SymbolSpace) {
 	f := sr.readValueSymbolFields()
 	sym := model.NewVariableSymbol(f.name, f.isPublic, f.isConst, f.isParameter, diagnostics.NewBuiltinLocation())
 	applyValueSymbolFields(&sym, f)
-	addDeserializedSymbol(space, f.name, &sym)
+	ref := addDeserializedSymbol(space, f.name, &sym)
+	if f.sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[f.sigHandle])
+	}
 }
 
 func (sr *symbolReader) readConstantValueSymbol(space *model.SymbolSpace) {
@@ -459,7 +477,10 @@ func (sr *symbolReader) readConstantValueSymbol(space *model.SymbolSpace) {
 	sym := model.NewConstantValueSymbol(f.name, f.isPublic, diagnostics.NewBuiltinLocation())
 	applyValueSymbolFields(&sym.VariableSymbol, f)
 	sym.SetConstantValue(sr.readAnnotationValue())
-	addDeserializedSymbol(space, f.name, sym)
+	ref := addDeserializedSymbol(space, f.name, sym)
+	if f.sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[f.sigHandle])
+	}
 }
 
 func (sr *symbolReader) readAnnotationSymbol(space *model.SymbolSpace) {
@@ -480,26 +501,21 @@ func (sr *symbolReader) readAnnotationSymbol(space *model.SymbolSpace) {
 func (sr *symbolReader) readFunctionSymbol(space *model.SymbolSpace) {
 	name, isPublic, ty := sr.readSymbolBase()
 
-	sig, defaultInfo, inclInfo := sr.readFunctionSignatureBody(space)
-	sym := model.NewFunctionSymbol(name, sig, isPublic, diagnostics.NewBuiltinLocation())
+	typedSig, sigHandle := sr.readFunctionSignatureBody(space)
+	sym := model.NewFunctionSymbol(name, typedSig, isPublic, diagnostics.NewBuiltinLocation())
 	sym.SetType(ty)
-	sym.SetDefaultableParams(defaultInfo)
-	sym.SetIncludedRecordParams(inclInfo)
-	addDeserializedSymbol(space, name, sym)
+	ref := addDeserializedSymbol(space, name, sym)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
 }
 
-func (sr *symbolReader) readFunctionSignatureBody(space *model.SymbolSpace) (model.FunctionSignature, model.DefaultableParamInfo, *model.IncludedRecordParamInfo) {
+func (sr *symbolReader) readFunctionSignatureBody(space *model.SymbolSpace) (model.TypedFunctionSignature, int64) {
 	var paramCount int64
 	read(sr.r, &paramCount)
 	paramTypes := make([]semtypes.SemType, paramCount)
 	for i := int64(0); i < paramCount; i++ {
 		paramTypes[i] = sr.readType()
-	}
-	var nameCount int64
-	read(sr.r, &nameCount)
-	paramNames := make([]string, nameCount)
-	for i := int64(0); i < nameCount; i++ {
-		paramNames[i] = sr.readStringCP()
 	}
 	returnType := sr.readType()
 	var hasRestParam bool
@@ -510,16 +526,69 @@ func (sr *symbolReader) readFunctionSignatureBody(space *model.SymbolSpace) (mod
 	}
 	var flags uint8
 	read(sr.r, &flags)
-	sig := model.FunctionSignature{
+	typedSig := model.TypedFunctionSignature{
 		ParamTypes:    paramTypes,
-		ParamNames:    paramNames,
 		ReturnType:    returnType,
 		RestParamType: restParamType,
 		Flags:         model.FuncSymbolFlags(flags),
 	}
-	defaultInfo := sr.readDefaultableParams(int(paramCount), space)
-	inclInfo := sr.readIncludedRecordParams(int(paramCount))
-	return sig, defaultInfo, inclInfo
+	var sigHandle int64
+	read(sr.r, &sigHandle)
+	return typedSig, sigHandle
+}
+
+func (sr *symbolReader) readFunctionSignatureTable(space *model.SymbolSpace) {
+	var count int64
+	read(sr.r, &count)
+	sr.sigHandles = make([]model.FunctionSignatureRef, count)
+	for i := int64(0); i < count; i++ {
+		params, hasRest := sr.readUntypedFunctionSignatureParams(space)
+		sr.sigHandles[i] = sr.env.AllocateFunctionSignature(params, hasRest)
+	}
+}
+
+func (sr *symbolReader) readUntypedFunctionSignatureParams(space *model.SymbolSpace) ([]model.Param, bool) {
+	var hasRest bool
+	read(sr.r, &hasRest)
+	var paramCount int64
+	read(sr.r, &paramCount)
+	params := make([]model.Param, paramCount)
+	for i := int64(0); i < paramCount; i++ {
+		params[i].Name = sr.readStringCP()
+		var flag uint8
+		read(sr.r, &flag)
+		params[i].Flag = model.ParamFlag(flag)
+		var hasDefault bool
+		read(sr.r, &hasDefault)
+		if hasDefault {
+			var kind uint8
+			read(sr.r, &kind)
+			params[i].Default = &model.DefaultableParam{Kind: model.DefaultableParamKind(kind)}
+			if params[i].Default.Kind != model.DefaultableParamKindInferredTypedesc {
+				params[i].Default.Symbol = sr.readSymbolRef(space)
+			}
+		}
+		var hasIncluded bool
+		read(sr.r, &hasIncluded)
+		if !hasIncluded {
+			continue
+		}
+		metadata := &model.IncludedRecordMetadata{}
+		read(sr.r, &metadata.IsOpen)
+		var fieldCount int64
+		read(sr.r, &fieldCount)
+		for j := int64(0); j < fieldCount; j++ {
+			name := sr.readStringCP()
+			ty := sr.readType()
+			if semtypes.IsNever(ty) {
+				metadata.NeverFields = append(metadata.NeverFields, name)
+			} else {
+				metadata.RequiredFields = append(metadata.RequiredFields, name)
+			}
+		}
+		params[i].IncludedRecord = metadata
+	}
+	return params, hasRest
 }
 
 func (sr *symbolReader) readDependentlyTypedFunctionSymbol(space *model.SymbolSpace) {
@@ -532,25 +601,18 @@ func (sr *symbolReader) readDependentlyTypedFunctionSymbol(space *model.SymbolSp
 	for i := int64(0); i < paramCount; i++ {
 		paramTypes[i] = sr.readType()
 	}
-	var nameCount int64
-	read(sr.r, &nameCount)
-	paramNames := make([]string, nameCount)
-	for i := int64(0); i < nameCount; i++ {
-		paramNames[i] = sr.readStringCP()
-	}
-	var nRequired int64
-	read(sr.r, &nRequired)
 	var flags uint8
 	read(sr.r, &flags)
 
-	sym := model.NewDependentlyTypedFunctionSymbol(name, paramNames, int(nRequired), model.FuncSymbolFlags(flags), isPublic, diagnostics.NewBuiltinLocation())
+	sym := model.NewDependentlyTypedFunctionSymbol(name, model.FuncSymbolFlags(flags), isPublic, diagnostics.NewBuiltinLocation())
 	sym.SetParamTypes(paramTypes)
-	defaultInfo := sr.readDefaultableParams(int(paramCount), space)
-	sym.SetDefaultableParams(defaultInfo)
-	inclInfo := sr.readIncludedRecordParams(int(paramCount))
-	sym.SetIncludedRecordParams(inclInfo)
+	var sigHandle int64
+	read(sr.r, &sigHandle)
 	sym.SetReturnType(sr.readTypeOp())
-	addDeserializedSymbol(space, name, sym)
+	ref := addDeserializedSymbol(space, name, sym)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
 }
 
 func (sr *symbolReader) readTypeOp() model.TypeOp {

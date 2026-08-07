@@ -25,7 +25,7 @@ func newTableSubtype() tableSubtype {
 
 func tableContainingKeyConstraint(cx Context, tableConstraint SemType, keyConstraint SemType) SemType {
 	var normalizedKc SemType
-	lat := ToListAtomicType(cx, keyConstraint)
+	lat := ToListAtomicType(cx.Env(), keyConstraint)
 	if (lat != nil) && (CELL_ATOMIC_UNDEF == getCellAtomicType(lat.rest)) {
 		members := lat.Members
 		switch members.FixedLength {

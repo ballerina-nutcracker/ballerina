@@ -1,0 +1,62 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Config
+    (record-type
+      (field path
+        (value-type string))
+      (field recursive
+        (value-type boolean)
+        (literal false))))
+  (class-definition public Listener
+    (variable path (type
+      (value-type string)))
+    (variable recursive (type
+      (value-type boolean)))
+    (function init (
+      (variable config (type
+        (user-defined-type Config)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (field-based-access path
+            (simple-var-ref self))
+          (field-based-access path
+            (simple-var-ref config)))
+        (assignment
+          (field-based-access recursive
+            (simple-var-ref self))
+          (field-based-access recursive
+            (simple-var-ref config)))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (return
+          (string-template-literal
+            (template-string "")
+            (field-based-access path
+              (simple-var-ref self))
+            (template-string ":")
+            (field-based-access recursive
+              (simple-var-ref self))
+            (template-string ""))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable instance (type
+          (user-defined-type Listener)) (expr
+          (checked-expr
+            (new (
+              (named-arg path
+                (literal /tmp))
+              (named-arg recursive
+                (literal true))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref instance) ())))))))

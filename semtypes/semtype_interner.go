@@ -43,6 +43,13 @@ func NewSemtypeInterner() *SemtypeInterner {
 	}
 }
 
+// reset clears all interned handles in place, keeping the existing map's
+// backing storage instead of allocating fresh maps.
+func (i *SemtypeInterner) reset() {
+	clear(i.basicTypeHandles)
+	clear(i.complexSemtypeHandles)
+}
+
 func (i *SemtypeInterner) Intern(ty SemType) InternHandle {
 	if ty.some() == 0 {
 		bits := ty.all()

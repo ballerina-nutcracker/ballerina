@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no such parameter x
+  --> narrowed-lambda-args-e.bal:22:26
+   |
+22 |         int _ = narrowed(x = 1); // @error
+   |                          ^^^^^

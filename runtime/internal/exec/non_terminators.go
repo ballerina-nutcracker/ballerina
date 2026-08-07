@@ -45,7 +45,7 @@ func execNewArray(ctx *extern.Context, newArray *bir.NewArray, frame *Frame) {
 	for i, value := range newArray.Values {
 		initial[i] = getOperandValue(ctx, value, frame)
 	}
-	atomic := semtypes.ToListAtomicType(ctx.TypeCtx, newArray.Type)
+	atomic := semtypes.ToListAtomicType(ctx.TypeEnv(), newArray.Type)
 	list := values.NewList(newArray.Type, atomic, newArray.IsReadonly, newArray.Filler, size, initial)
 	setOperandValue(ctx, newArray.LhsOp, frame, list)
 }
@@ -68,7 +68,7 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 		val := executeFunction(ctx, fn, nil, frame)
 		entries = append(entries, values.MapEntry{Key: def.FieldName, Value: val})
 	}
-	atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx, newMap.Type)
+	atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx(), newMap.Type)
 	if atomic == nil {
 		panic("mapping inherent type has no atomic representation")
 	}
@@ -94,30 +94,14 @@ func execNewError(ctx *extern.Context, newError *bir.NewError, frame *Frame) {
 }
 
 func execNewObject(ctx *extern.Context, newObject *bir.NewObject, frame *Frame) {
-	classDef := ctx.Env.Registry.(*modules.Registry).GetClassDef(newObject.ClassDefRef)
-	fieldValues := make(map[string]values.BalValue, len(classDef.Fields))
-	methodKeys := make(map[string]string, len(classDef.VTable))
-	for methodName, method := range classDef.VTable {
-		methodKeys[methodName] = method.FunctionLookupKey
-	}
-	rtable := make(map[string][]values.ResourceEntry, len(classDef.RTable))
-	for methodName, entries := range classDef.RTable {
-		copied := make([]values.ResourceEntry, len(entries))
-		for i, entry := range entries {
-			segs := make([]values.ResourcePathSegmentDef, len(entry.PathSegments))
-			for j, seg := range entry.PathSegments {
-				segs[j] = values.ResourcePathSegmentDef{Ty: seg.Ty}
-			}
-			copied[i] = values.ResourceEntry{
-				PathSegments:      segs,
-				RestSegmentTy:     entry.RestSegmentTy,
-				FunctionLookupKey: entry.Fn.FunctionLookupKey,
-			}
-		}
-		rtable[methodName] = copied
-	}
+	// The method-key and resource tables are identical for every instance of a
+	// class and never mutated after construction, so they are precomputed once
+	// per class and shared by reference (see modules.ClassTemplate). Only the
+	// per-instance field map is allocated here.
+	tmpl := ctx.Env.Registry.(*modules.Registry).GetClassTemplate(newObject.ClassDefRef)
+	fieldValues := make(map[string]values.BalValue, tmpl.FieldCount)
 	objType := newObject.GetLhsOperand().VariableDcl.GetType()
-	obj := values.NewObject(objType, fieldValues, methodKeys, rtable)
+	obj := values.NewObject(objType, fieldValues, tmpl.MethodKeys, tmpl.RTable)
 	setOperandValue(ctx, newObject.GetLhsOperand(), frame, obj)
 }
 
@@ -127,7 +111,7 @@ func execArrayStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) 
 	if idx < 0 {
 		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", idx)))
 	}
-	list.FillingSet(ctx.TypeCtx, idx, getOperandValue(ctx, access.RhsOp, frame))
+	list.FillingSet(ctx.TypeCtx(), idx, getOperandValue(ctx, access.RhsOp, frame))
 }
 
 func execArrayLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
@@ -156,11 +140,11 @@ func execMapStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
 	}
 	m := container.(*values.Map)
 	valueVal := getOperandValue(ctx, access.RhsOp, frame)
-	if valueVal == nil && m.ShouldDeleteOnNilStore(ctx.TypeCtx, keyStr) {
-		m.Delete(ctx.TypeCtx, keyStr)
+	if valueVal == nil && m.ShouldDeleteOnNilStore(ctx.TypeCtx(), keyStr) {
+		m.Delete(ctx.TypeCtx(), keyStr)
 		return
 	}
-	m.Put(ctx.TypeCtx, keyStr, valueVal)
+	m.Put(ctx.TypeCtx(), keyStr, valueVal)
 }
 
 func execMapFillingLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
@@ -169,7 +153,7 @@ func execMapFillingLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Fra
 	if container == nil {
 		panic(values.NewErrorWithMessage(fmt.Sprintf("missing key: %q", key)))
 	}
-	setOperandValue(ctx, access.LhsOp, frame, container.(*values.Map).FillingGet(ctx.TypeCtx, key, access.Filler))
+	setOperandValue(ctx, access.LhsOp, frame, container.(*values.Map).FillingGet(ctx.TypeCtx(), key, access.Filler))
 }
 
 func execMapLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
@@ -218,13 +202,13 @@ func execFPLoad(ctx *extern.Context, fpLoad *bir.FPLoad, frame *Frame) {
 func execTypeTest(ctx *extern.Context, typeTest *bir.TypeTest, frame *Frame) {
 	sourceValue := getOperandValue(ctx, typeTest.RhsOp, frame)
 	valueType := values.SemTypeForValue(sourceValue)
-	typeCtx := ctx.TypeCtx
+	typeCtx := ctx.TypeCtx()
 	matches := semtypes.IsSubtype(typeCtx, valueType, typeTest.Type) != typeTest.IsNegation
 	setOperandValue(ctx, typeTest.LhsOp, frame, matches)
 }
 
 func castValue(ctx *extern.Context, value values.BalValue, targetType semtypes.SemType) values.BalValue {
-	converted, err := values.CastValue(ctx.TypeCtx, value, targetType)
+	converted, err := values.CastValue(ctx.TypeCtx(), value, targetType)
 	if err == nil {
 		return converted
 	}
@@ -277,7 +261,7 @@ func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Fra
 }
 
 func xmlResultReadonly(ctx *extern.Context, op *bir.BIROperand) bool {
-	return semtypes.IsSubtype(ctx.TypeCtx, op.VariableDcl.GetType(), semtypes.VAL_READONLY)
+	return semtypes.IsSubtype(ctx.TypeCtx(), op.VariableDcl.GetType(), semtypes.VAL_READONLY)
 }
 
 func execEvalTemplateExpr(ctx *extern.Context, instr *bir.EvalTemplateExpr, frame *Frame) {
@@ -296,7 +280,7 @@ func execEvalTemplateExpr(ctx *extern.Context, instr *bir.EvalTemplateExpr, fram
 	case bir.TemplateKindString:
 		setOperandValue(ctx, instr.LhsOp, frame, result)
 	case bir.TemplateKindXML:
-		xmlValue, err := values.ParseAsXMLValue(ctx.TypeCtx, result, values.XMLTemplateMode)
+		xmlValue, err := values.ParseAsXMLValue(ctx.TypeCtx(), result, values.XMLTemplateMode)
 		if err != nil {
 			panic(err)
 		}

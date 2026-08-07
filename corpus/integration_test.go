@@ -80,7 +80,7 @@ var (
 		// once that's registered in DiagnosticEnv).
 		"project/missing-package-e",
 		"project/parse-error-e",
-		// Pre-existing -fp.bal test that does not currently surface a runtime
+		// Pre-existing future test that does not currently surface a runtime
 		// panic or a compile-time `fatal[...]` bailout, so it does not satisfy
 		// the future-test contract yet. Tracked separately.
 		"subset8/08-future/fieldlvalue1-fp.bal",

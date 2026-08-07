@@ -24,28 +24,28 @@
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_rsa_key.pem)
-          (simple-var-ref rsaKey)))))
+          (simple-var-ref rsaKey) <default>))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_rsa_cert.pem)
-          (simple-var-ref rsaCert)))))
+          (simple-var-ref rsaCert) <default>))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_ec_key.pem)
-          (simple-var-ref ecKey)))))
+          (simple-var-ref ecKey) <default>))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteString (
           (literal /tmp/bal_ec_cert.pem)
-          (simple-var-ref ecCert)))))
+          (simple-var-ref ecCert) <default>))))
     (var-def
       (variable rsaPk (type
         (user-defined-type crypto PrivateKey)) (expr
         (checked-expr
           (invocation crypto decodeRsaPrivateKeyFromKeyFile (
-            (literal /tmp/bal_rsa_key.pem)))))))
+            (literal /tmp/bal_rsa_key.pem) <default>))))))
     (var-def
       (variable rsaPub (type
         (user-defined-type crypto PublicKey)) (expr
@@ -180,14 +180,14 @@
         (checked-expr
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
-            (simple-var-ref rsaPub)))))))
+            (simple-var-ref rsaPub) <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr ==
           (checked-expr
             (invocation crypto decryptRsaEcb (
               (simple-var-ref ct)
-              (simple-var-ref rsaPk))))
+              (simple-var-ref rsaPk) <default>)))
           (simple-var-ref data)))))
     (var-def
       (variable oaepMd5 (type
@@ -284,7 +284,7 @@
         (user-defined-type crypto PrivateKey)) (expr
         (checked-expr
           (invocation crypto decodeEcPrivateKeyFromKeyFile (
-            (literal /tmp/bal_ec_key.pem)))))))
+            (literal /tmp/bal_ec_key.pem) <default>))))))
     (var-def
       (variable ecPub (type
         (user-defined-type crypto PublicKey)) (expr
@@ -328,14 +328,14 @@
         (checked-expr
           (invocation crypto encryptRsaEcb (
             (simple-var-ref data)
-            (simple-var-ref rsaPk)))))))
+            (simple-var-ref rsaPk) <default>))))))
     (expression-stmt
       (invocation io println (
         (binary-expr ==
           (checked-expr
             (invocation crypto decryptRsaEcb (
               (simple-var-ref ctPriv)
-              (simple-var-ref rsaPk))))
+              (simple-var-ref rsaPk) <default>)))
           (simple-var-ref data)))))
     (var-def
       (variable decErr (type
@@ -345,7 +345,7 @@
           (user-defined-type crypto Error))) (expr
         (invocation crypto decryptRsaEcb (
           (simple-var-ref data)
-          (simple-var-ref rsaPk))))))
+          (simple-var-ref rsaPk) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -359,7 +359,7 @@
           (user-defined-type crypto Error))) (expr
         (invocation crypto decryptRsaEcb (
           (simple-var-ref ct)
-          (simple-var-ref rsaPub))))))
+          (simple-var-ref rsaPub) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -465,7 +465,7 @@
           (user-defined-type crypto PrivateKey)
           (user-defined-type crypto Error))) (expr
         (invocation crypto decodeRsaPrivateKeyFromKeyFile (
-          (literal /tmp/bal_no_such.pem))))))
+          (literal /tmp/bal_no_such.pem) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -477,7 +477,7 @@
           (user-defined-type crypto PrivateKey)
           (user-defined-type crypto Error))) (expr
         (invocation crypto decodeEcPrivateKeyFromKeyFile (
-          (literal /tmp/bal_no_such.pem))))))
+          (literal /tmp/bal_no_such.pem) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -513,7 +513,7 @@
           (user-defined-type crypto PrivateKey)
           (user-defined-type crypto Error))) (expr
         (invocation crypto decodeRsaPrivateKeyFromKeyFile (
-          (literal /tmp/bal_ec_key.pem))))))
+          (literal /tmp/bal_ec_key.pem) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -525,7 +525,7 @@
           (user-defined-type crypto PrivateKey)
           (user-defined-type crypto Error))) (expr
         (invocation crypto decodeEcPrivateKeyFromKeyFile (
-          (literal /tmp/bal_rsa_key.pem))))))
+          (literal /tmp/bal_rsa_key.pem) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -569,7 +569,7 @@
           (user-defined-type crypto PrivateKey)
           (user-defined-type crypto Error))) (expr
         (invocation crypto decodeRsaPrivateKeyFromContent (
-          (simple-var-ref junk))))))
+          (simple-var-ref junk) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is
@@ -588,7 +588,7 @@
           (user-defined-type crypto PrivateKey)
           (user-defined-type crypto Error))) (expr
         (invocation crypto decodeRsaPrivateKeyFromContent (
-          (simple-var-ref ecKeyBytes))))))
+          (simple-var-ref ecKeyBytes) <default>)))))
     (expression-stmt
       (invocation io println (
         (type-test-expr is

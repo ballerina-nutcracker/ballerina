@@ -50,6 +50,7 @@
         (value-type null)))
       (block-function-body)))
   (service isolated
+    (absolute-resource-path /)
     (on
     (simple-var-ref $desugar$0))
     (variable foo (type
@@ -106,7 +107,7 @@
         (invocation attach expr:
           (simple-var-ref $desugar$0) (
           (simple-var-ref $desugar$1)
-          (literal <nil>))))))
+          (list-constructor-expr))))))
   (function main () (
     (value-type null))
     (block-function-body))

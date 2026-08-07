@@ -13,4 +13,6 @@ bar
 42
 100
 7
+error
+immutable
 -- stderr --

@@ -1,13 +1,13 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: no included record parameter accepts named argument 'age'
-  --> incl-record-param-rest-named-e.bal:34:36
-   |
-34 |     withStringRest(name = "Alice", age = 30); // @error int is not a subtype of string rest parameter
-   |                                    ^^^^^^^^
-
-error[SEMANTIC_ERROR]: no included record parameter accepts named argument 'label'
-  --> incl-record-param-rest-named-e.bal:35:28
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "primary"
+  --> incl-record-param-rest-named-e.bal:35:36
    |
 35 |     withIntRest(count = 1, label = "primary"); // @error string is not a subtype of int rest parameter
-   |                            ^^^^^^^^^^^^^^^^^
+   |                                    ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 30
+  --> incl-record-param-rest-named-e.bal:34:42
+   |
+34 |     withStringRest(name = "Alice", age = 30); // @error int is not a subtype of string rest parameter
+   |                                          ^^

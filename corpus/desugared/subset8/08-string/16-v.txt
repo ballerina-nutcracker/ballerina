@@ -9,25 +9,28 @@
           (value-type string)) (expr
           (literal x))))
       (var-def
-        (variable _ (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 0))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (literal 9))))
       (while
         (binary-expr <
-          (simple-var-ref _)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
           (assignment
             (simple-var-ref str)
             (invocation double (
               (simple-var-ref str))))
           (assignment
-            (simple-var-ref _)
+            (simple-var-ref $desugar$0)
             (binary-expr +
-              (simple-var-ref _)
+              (simple-var-ref $desugar$0)
               (numeric-literal 1)))))
       (expression-stmt
         (invocation io println (

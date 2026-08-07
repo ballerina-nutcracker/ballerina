@@ -32,32 +32,37 @@ var templateInsertionAllowedTypes = semtypes.Diff(semtypes.SIMPLE_OR_STRING, sem
 
 func GetInternalSymbols(ctx *context.CompilerContext) model.ExportedSymbolSpace {
 	space := ctx.NewSymbolSpace(*PackageID)
-	addInternalFunction(ctx, space, "querySort", model.FunctionSignature{
+	addInternalFunction(ctx, space, "querySort", model.TypedFunctionSignature{
 		ParamTypes: []semtypes.SemType{semtypes.LIST, semtypes.LIST, semtypes.LIST, semtypes.LIST},
 		ReturnType: semtypes.NIL,
 	})
-	addInternalFunction(ctx, space, "queryGroup", model.FunctionSignature{
+	addInternalFunction(ctx, space, "queryGroup", model.TypedFunctionSignature{
 		ParamTypes: []semtypes.SemType{semtypes.LIST, semtypes.LIST, semtypes.LIST},
 		ReturnType: semtypes.LIST,
 	})
-	addInternalFunction(ctx, space, "queryCollect", model.FunctionSignature{
+	addInternalFunction(ctx, space, "queryCollect", model.TypedFunctionSignature{
 		ParamTypes: []semtypes.SemType{semtypes.LIST, semtypes.INT, semtypes.LIST},
 		ReturnType: semtypes.LIST,
 	})
-	addInternalFunction(ctx, space, "escapeXMLContent", model.FunctionSignature{
+	addInternalFunction(ctx, space, "escapeXMLContent", model.TypedFunctionSignature{
 		ParamTypes: []semtypes.SemType{templateInsertionAllowedTypes},
 		ReturnType: semtypes.STRING,
 	})
-	addInternalFunction(ctx, space, "escapeXMLAttribute", model.FunctionSignature{
+	addInternalFunction(ctx, space, "escapeXMLAttribute", model.TypedFunctionSignature{
 		ParamTypes: []semtypes.SemType{templateInsertionAllowedTypes},
 		ReturnType: semtypes.STRING,
 	})
 	return model.NewExportedSymbolSpaces([]*model.SymbolSpace{space}, nil)
 }
 
-func addInternalFunction(ctx *context.CompilerContext, space *model.SymbolSpace, name string, sig model.FunctionSignature) {
+func addInternalFunction(ctx *context.CompilerContext, space *model.SymbolSpace, name string, sig model.TypedFunctionSignature) {
 	symbol := model.NewFunctionSymbol(name, sig, true, diagnostics.NewBuiltinLocation())
 	space.AddSymbol(name, symbol)
 	ref, _ := space.GetSymbol(name)
 	ctx.SetSymbolType(ref, libcommon.FunctionSignatureToSemType(ctx.GetTypeEnv(), &sig))
+	// We currently don't support defaults, incl record for these so this is fine
+	handle := ctx.AllocateFunctionSignature(make([]model.Param, len(sig.ParamTypes)), false)
+	if !ctx.AssociateFunctionSignature(ref, handle) {
+		ctx.InternalError("function signature already set", diagnostics.NewBuiltinLocation())
+	}
 }

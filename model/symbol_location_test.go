@@ -30,7 +30,7 @@ func TestSymbolConstructorsSetLocation(t *testing.T) {
 	object := NewObjectTypeSymbol("object", false, location)
 
 	symbols := []Symbol{
-		NewFunctionSymbol("function", FunctionSignature{}, false, location),
+		NewFunctionSymbol("function", TypedFunctionSignature{}, false, location),
 		&value,
 		&typeSymbol,
 		NewXMLNSSymbol("prefix", "uri", location),
@@ -39,7 +39,7 @@ func TestSymbolConstructorsSetLocation(t *testing.T) {
 		NewResourceMethodSymbol("resource", "get", false, location),
 		&record,
 		&object,
-		NewDependentlyTypedFunctionSymbol("dependent", nil, 0, 0, false, location),
+		NewDependentlyTypedFunctionSymbol("dependent", 0, false, location),
 	}
 
 	for _, symbol := range symbols {

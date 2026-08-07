@@ -166,7 +166,7 @@ func lookupXMLNS(scope model.Scope, prefix string) (model.SymbolRef, model.Scope
 	return model.SymbolRef{}, nil, false
 }
 
-func processCompilationUnitXMLNS(resolver *moduleSymbolResolver, cu *ast.BLangCompilationUnit) {
+func processCompilationUnitXMLNS(resolver *compilationUnitSymbolResolver, cu *ast.BLangCompilationUnit) {
 	for _, node := range cu.TopLevelNodes {
 		decl, ok := node.(*ast.BLangXMLNS)
 		if !ok {

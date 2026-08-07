@@ -52,7 +52,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				if err != nil {
 					return cryptoError(fmt.Sprintf("Error occurred while RSA encrypt: %s", err.Error())), nil
 				}
-				return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
+				return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), out), nil
 			case *rsa.PrivateKey:
 				pub := &k.PublicKey
 				var out []byte
@@ -65,7 +65,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				if err != nil {
 					return cryptoError(fmt.Sprintf("Error occurred while RSA encrypt: %s", err.Error())), nil
 				}
-				return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
+				return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), out), nil
 			default:
 				return cryptoError("Uninitialized public key"), nil
 			}
@@ -89,7 +89,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				if err != nil {
 					return cryptoError(fmt.Sprintf("Error occurred while RSA decrypt: %s", err.Error())), nil
 				}
-				return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, out), nil
+				return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), out), nil
 			default:
 				return cryptoError("Uninitialized private key"), nil
 			}
@@ -125,7 +125,7 @@ func registerRsaFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while calculating signature: %s", err.Error())), nil
 			}
-			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, sig), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), sig), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "signSha256withEcdsa",
@@ -189,7 +189,7 @@ func rsaSignFunc(hashID crypto.Hash, newHash func() hash.Hash, types cryptoTypes
 		if err != nil {
 			return cryptoError(fmt.Sprintf("Error occurred while calculating signature: %s", err.Error())), nil
 		}
-		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, sig), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), sig), nil
 	}
 }
 
@@ -226,7 +226,7 @@ func ecdsaSignFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFun
 		if err != nil {
 			return cryptoError(fmt.Sprintf("Error occurred while calculating signature: %s", err.Error())), nil
 		}
-		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, sig), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), sig), nil
 	}
 }
 

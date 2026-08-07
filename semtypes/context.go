@@ -25,8 +25,6 @@ type context struct {
 	_memoStack    []*bddMemo
 	_conjunctions []conjunction
 
-	_jsonMemo           SemType
-	_anydataMemo        SemType
 	_cloneableMemo      SemType
 	_orderedMemo        SemType
 	_isolatedObjectMemo SemType
@@ -87,22 +85,6 @@ func (c *context) popFromMemoStack() *bddMemo {
 
 func (c *context) Env() Env {
 	return c._env
-}
-
-func (c *context) jsonMemo() SemType {
-	return c._jsonMemo
-}
-
-func (c *context) setJsonMemo(t SemType) {
-	c._jsonMemo = t
-}
-
-func (c *context) anydataMemo() SemType {
-	return c._anydataMemo
-}
-
-func (c *context) setAnydataMemo(t SemType) {
-	c._anydataMemo = t
 }
 
 func (c *context) cloneableMemo() SemType {
@@ -197,6 +179,35 @@ func (c *context) conjunctionStackDepth() int32 {
 
 func (c *context) resetConjunctionStack(depth int32) {
 	c._conjunctions = c._conjunctions[:depth]
+}
+
+// Reset clears every memo cache and interner entry, leaving the context as if
+// freshly built from the same Env via ContextFrom. Intended for a pooled
+// context that is about to be reused by an unrelated invocation, so cached
+// entries don't accumulate without bound over the context's pooled lifetime.
+func (c *context) Reset() {
+	clear(c._memoStack[:cap(c._memoStack)])
+	c._memoStack = c._memoStack[:0]
+	clear(c._conjunctions[:cap(c._conjunctions)])
+	c._conjunctions = c._conjunctions[:0]
+
+	c._cloneableMemo = SemType{}
+	c._orderedMemo = SemType{}
+	c._isolatedObjectMemo = SemType{}
+	c._serviceObjectMemo = SemType{}
+	c._clientObjectMemo = SemType{}
+	c._isolatedFnMemo = SemType{}
+	c._isolatedMemo = SemType{}
+	c._iterableMemo = SemType{}
+
+	clear(c._listMemo)
+	clear(c._mappingMemo)
+	clear(c._functionMemo)
+	clear(c._comparableMemo)
+	clear(c._fillerMemo)
+	clear(c._streamImplementorMemo)
+	clear(c._listenerMemo)
+	c._semtypeInterner.reset()
 }
 
 func ContextFrom(env Env) Context {

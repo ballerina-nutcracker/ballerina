@@ -12,27 +12,29 @@ main() -> nil{
     %7 = ConstantLoad path
     %8 = ConstantLoad /api/v1
     %9 = newMap {| 'error: never, msg: never, anydata... |}{%5=%6, %7=%8}
-    %10 = printDebug($desugar$0,$desugar$1,%9) -> bb2;
+    $desugar$2 = %9;
+    %11 = printDebug($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %11 = ConstantLoad user details
-    $desugar$2 = %11;
-    %13 = $default$0($desugar$2) -> bb3;
+    %12 = ConstantLoad user details
+    $desugar$3 = %12;
+    %14 = $default$0($desugar$3) -> bb3;
   }
   bb3 {
-    $desugar$3 = %13;
-    %15 = ConstantLoad username
-    %16 = ConstantLoad alice
-    %17 = ConstantLoad active
-    %18 = ConstantLoad true
-    %19 = ConstantLoad score
-    %20 = ConstantLoad 9.8
-    %21 = newMap {| 'error: never, msg: never, anydata... |}{%15=%16, %17=%18, %19=%20}
-    %22 = printDebug($desugar$2,$desugar$3,%21) -> bb4;
+    $desugar$4 = %14;
+    %16 = ConstantLoad username
+    %17 = ConstantLoad alice
+    %18 = ConstantLoad active
+    %19 = ConstantLoad true
+    %20 = ConstantLoad score
+    %21 = ConstantLoad 9.8
+    %22 = newMap {| 'error: never, msg: never, anydata... |}{%16=%17, %18=%19, %20=%21}
+    $desugar$5 = %22;
+    %24 = printDebug($desugar$3,$desugar$4,$desugar$5) -> bb4;
   }
   bb4 {
-    %23 = ConstantLoad ok
-    %24 = println(%23) -> bb5;
+    %25 = ConstantLoad ok
+    %26 = println(%25) -> bb5;
   }
   bb5 {
     return;

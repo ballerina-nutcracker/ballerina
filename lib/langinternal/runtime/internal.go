@@ -117,7 +117,7 @@ type queryGroupState struct {
 type queryGroupIndex map[string]int
 
 func newQueryList(ctx *extern.Context) *values.List {
-	return values.NewList(semtypes.LIST, semtypes.ToListAtomicType(ctx.TypeCtx, semtypes.LIST), false, nil, 0, nil)
+	return values.NewList(semtypes.LIST, semtypes.ToListAtomicType(ctx.TypeEnv(), semtypes.LIST), false, nil, 0, nil)
 }
 
 func queryGroup(ctx *extern.Context, rows *values.List, keyRows *values.List, scalarFlags *values.List) (*values.List, error) {
@@ -139,7 +139,7 @@ func queryGroup(ctx *extern.Context, rows *values.List, keyRows *values.List, sc
 			groupRow := createQueryGroupRow(ctx, sourceRow, scalarSlots)
 			groups = append(groups, queryGroupState{row: groupRow})
 			groupIndices[keySignature] = len(groups) - 1
-			result.Append(ctx.TypeCtx, groupRow)
+			result.Append(ctx.TypeCtx(), groupRow)
 			continue
 		}
 		appendQueryGroupRow(ctx, groups[groupIndex].row, sourceRow, scalarSlots)
@@ -260,12 +260,12 @@ func createQueryGroupRow(ctx *extern.Context, sourceRow *values.List, scalarSlot
 	for slot, isScalar := range scalarSlots {
 		value := sourceRow.Get(slot)
 		if isScalar {
-			groupRow.Append(ctx.TypeCtx, value)
+			groupRow.Append(ctx.TypeCtx(), value)
 			continue
 		}
 		valuesForGroup := newQueryList(ctx)
-		valuesForGroup.Append(ctx.TypeCtx, value)
-		groupRow.Append(ctx.TypeCtx, valuesForGroup)
+		valuesForGroup.Append(ctx.TypeCtx(), value)
+		groupRow.Append(ctx.TypeCtx(), valuesForGroup)
 	}
 	return groupRow
 }
@@ -276,7 +276,7 @@ func appendQueryGroupRow(ctx *extern.Context, groupRow *values.List, sourceRow *
 			continue
 		}
 		valuesForGroup := groupRow.Get(slot).(*values.List)
-		valuesForGroup.Append(ctx.TypeCtx, sourceRow.Get(slot))
+		valuesForGroup.Append(ctx.TypeCtx(), sourceRow.Get(slot))
 	}
 }
 
@@ -287,19 +287,19 @@ func queryCollect(ctx *extern.Context, rows *values.List, slotCount int, flatten
 	}
 	resultRow := newQueryList(ctx)
 	for slot := 0; slot < slotCount; slot++ {
-		resultRow.Append(ctx.TypeCtx, newQueryList(ctx))
+		resultRow.Append(ctx.TypeCtx(), newQueryList(ctx))
 	}
 	for rowIndex := 0; rowIndex < rows.Len(); rowIndex++ {
 		row := rows.Get(rowIndex).(*values.List)
 		for slot := 0; slot < slotCount; slot++ {
 			valuesForSlot := resultRow.Get(slot).(*values.List)
 			if !flattenSlots[slot] {
-				valuesForSlot.Append(ctx.TypeCtx, row.Get(slot))
+				valuesForSlot.Append(ctx.TypeCtx(), row.Get(slot))
 				continue
 			}
 			nestedValues := row.Get(slot).(*values.List)
 			for valueIndex := 0; valueIndex < nestedValues.Len(); valueIndex++ {
-				valuesForSlot.Append(ctx.TypeCtx, nestedValues.Get(valueIndex))
+				valuesForSlot.Append(ctx.TypeCtx(), nestedValues.Get(valueIndex))
 			}
 		}
 	}
@@ -312,7 +312,7 @@ func reorderListInPlace(ctx *extern.Context, list *values.List, order []int) {
 		old[i] = list.Get(i)
 	}
 	for i, sourceIndex := range order {
-		list.FillingSet(ctx.TypeCtx, i, old[sourceIndex])
+		list.FillingSet(ctx.TypeCtx(), i, old[sourceIndex])
 	}
 }
 

@@ -1,0 +1,136 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable label (type
+      (value-type string)))
+    (variable count (type
+      (value-type int)))
+    (function init (
+      (variable label (type
+        (value-type string)) (expr
+        (literal default)))
+      (variable count (type
+        (value-type int)) (expr
+        (literal 5)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal label))
+          (literal ))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 0))
+        (if
+          (binary-expr <
+            (simple-var-ref count)
+            (literal 0))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal negative count))))) ())
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref self)
+              (literal label))
+            (simple-var-ref label))
+          (assignment
+            (index-based-access
+              (simple-var-ref self)
+              (literal count))
+            (simple-var-ref count)))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (return
+          (string-template-literal
+            (template-string "")
+            (index-based-access
+              (simple-var-ref self)
+              (literal label))
+            (template-string ":")
+            (index-based-access
+              (simple-var-ref self)
+              (literal count))
+            (template-string ""))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable defaulted (type
+          (union-type
+            (user-defined-type Counter)
+            (error-type))) (expr
+          (new (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref defaulted)
+          (user-defined-type Counter))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation describe expr:
+                (simple-var-ref defaulted) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable named (type
+            (union-type
+              (user-defined-type Counter)
+              (error-type))) (expr
+            (new (
+              (literal named)
+              (literal 7))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref named)
+            (user-defined-type Counter))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation describe expr:
+                  (simple-var-ref named) ()))))) ())
+        (block-stmt
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $default$0 ()))))
+          (var-def
+            (variable $desugar$3 (expr
+              (unary-expr -
+                (literal 1)))))
+          (var-def
+            (variable failed (type
+              (union-type
+                (user-defined-type Counter)
+                (error-type))) (expr
+              (new (
+                (simple-var-ref $desugar$2)
+                (simple-var-ref $desugar$3))))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref failed)
+                (error-type)))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal default))))
+  (function $default$1 (
+    (variable label)) ()
+    (block-function-body
+      (return
+        (literal 5)))))

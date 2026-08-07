@@ -10,11 +10,11 @@
   (bb0 () ()
     (expression-stmt
       (invocation io println (
-        (invocation foo ()))))
+        (invocation foo ( <default> <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation foo (
-          (literal 1))))))
+          (literal 1) <default>)))))
     (expression-stmt
       (invocation io println (
         (invocation foo (

@@ -1,0 +1,66 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (type-definition S
+    (object-type service))
+  (class-definition L
+    (function attach (
+      (variable svc (type
+        (user-defined-type S)))
+      (variable attachPoint (type
+        (union-type
+          (tuple-type
+            (value-type string))
+          (tuple-type
+            (value-type string)
+            (value-type string)))))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (wildcard-binding-pattern)
+          (simple-var-ref svc))
+        (assignment
+          (wildcard-binding-pattern)
+          (simple-var-ref attachPoint))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type S)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (wildcard-binding-pattern)
+          (simple-var-ref svc))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable l (type
+    (user-defined-type L)) (expr
+    (new ())))
+  (service
+    (user-defined-type S)
+    (absolute-resource-path foo)
+    (on
+    (simple-var-ref l)))
+  (service
+    (user-defined-type S)
+    (absolute-resource-path foo bar)
+    (on
+    (simple-var-ref l)))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

@@ -1,0 +1,115 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation moduleLambda ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation moduleLambda (
+          (literal 6))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation moduleLambdaAlias ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation moduleLambdaAlias (
+          (literal 7))))))
+    (var-def
+      (variable lambda (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable value (type
+              (value-type int)) (expr
+              (literal 5)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref value))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lambda ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lambda (
+          (literal 8))))))
+    (var-def
+      (variable lambdaAlias (expr
+        (simple-var-ref lambda))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lambdaAlias ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lambdaAlias (
+          (literal 9))))))
+    (var-def
+      (variable typedLambda (type
+        (function-type (
+          (value-type int)) (
+          (value-type int)))) (expr
+        (simple-var-ref lambda))))
+    (expression-stmt
+      (invocation io println (
+        (invocation typedLambda ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation typedLambda (
+          (literal 11))))))
+    (var-def
+      (variable includedRecordLambda (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable pair (type
+              (user-defined-type Pair)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (field-based-access left
+                    (simple-var-ref pair))
+                  (field-based-access right
+                    (simple-var-ref pair))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation includedRecordLambda (
+          (mapping-constructor-expr
+            (key-value
+              (literal left)
+              (literal 1))
+            (key-value
+              (literal right)
+              (literal 2))))))))
+    (var-def
+      (variable includedRecordLambdaAlias (expr
+        (simple-var-ref includedRecordLambda))))
+    (expression-stmt
+      (invocation io println (
+        (invocation includedRecordLambdaAlias (
+          (mapping-constructor-expr
+            (key-value
+              (literal left)
+              (literal 3))
+            (key-value
+              (literal right)
+              (literal 4))))))))
+    (var-def
+      (variable groupedLambda (expr
+        (group-expr
+          (lambda
+            (function $anonFunc$_3 (
+              (variable value (type
+                (value-type int)) (expr
+                (literal 5)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref value)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation groupedLambda ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation groupedLambda (
+          (literal 10))))))
+  )
+)

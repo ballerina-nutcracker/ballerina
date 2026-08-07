@@ -251,12 +251,11 @@ func TestHttpServiceTLSOptions(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-tls-options-v"), newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
 
-// TestHttpServiceGracefulStop verifies that a resource calling
-// ep.gracefulStop() on the listener it is attached to does not self-deadlock:
-// the extern runs inline on the handler's own goroutine, so it must return
-// immediately (letting the drain happen in the background) rather than
-// blocking on server.Shutdown until this very connection goes idle. Before
-// the fix this test hangs forever.
+// TestHttpServiceGracefulStop verifies gracefulStop invoked from a non-serving
+// strand: it blocks until in-flight requests drain and the server closes, then
+// returns () — after which a fresh request is refused. (Calling gracefulStop
+// from within a resource on its own listener self-deadlocks by design and so is
+// not exercised here.)
 func TestHttpServiceGracefulStop(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()
@@ -264,11 +263,9 @@ func TestHttpServiceGracefulStop(t *testing.T) {
 }
 
 // TestHttpServiceImmediateStop covers immediate stop and requests-after-stop.
-// immediateStop calls Close(), which severs active connections and shuts the
-// listener down synchronously (unlike graceful stop, whose listener-close is
-// backgrounded and would be racy to assert on). So the stop call itself errors
-// (its connection is cut before the response arrives) and any request after
-// stop is connection-refused.
+// immediateStop calls Close(), which severs active connections at once, so the
+// stop call itself errors (its connection is cut before the response arrives)
+// and any request after stop is connection-refused.
 func TestHttpServiceImmediateStop(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()

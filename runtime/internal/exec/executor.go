@@ -89,7 +89,7 @@ func initLocalsForFunction(ctx *extern.Context, birFunc *bir.BIRFunction, args [
 		restArgs := args[requiredCount+argOffset:]
 		restParamIdx := requiredCount + 1 + argOffset
 		restParamType := (*localVars)[restParamIdx].GetType()
-		atomic := semtypes.ToListAtomicType(ctx.TypeCtx, restParamType)
+		atomic := semtypes.ToListAtomicType(ctx.TypeEnv(), restParamType)
 		if atomic == nil {
 			panic("rest parameter type has no list atomic representation")
 		}

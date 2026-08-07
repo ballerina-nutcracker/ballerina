@@ -14,17 +14,20 @@
     (value-type int))
     (block-function-body
       (var-def
-        (variable i (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 5))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (literal 10))))
       (while
         (binary-expr <
-          (simple-var-ref i)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
           (return
             (simple-var-ref i))))
       (return

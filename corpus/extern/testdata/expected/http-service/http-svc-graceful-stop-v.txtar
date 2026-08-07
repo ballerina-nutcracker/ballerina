@@ -1,3 +1,5 @@
 -- stdout --
-202
+200
+gracefully stopped
+true
 -- stderr --

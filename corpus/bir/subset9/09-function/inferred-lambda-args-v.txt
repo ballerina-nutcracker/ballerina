@@ -1,0 +1,228 @@
+module $anon.. v 0.0.0;
+moduleLambda  function(int) returns int;
+moduleLambdaAlias  function(int) returns int;
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_2({| left: int, right: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad left
+    %3 = pair[%4];
+    %5 = %3;
+    %7 = ConstantLoad right
+    %6 = pair[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = moduleLambda(%3) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad 6
+    %8 = %7;
+    %9 = moduleLambda(%8) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    %12 = $default$0() -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %12;
+    %14 = $desugar$1;
+    %15 = moduleLambdaAlias(%14) -> bb7;
+  }
+  bb7 {
+    %16 = %15;
+    %17 = println(%16) -> bb8;
+  }
+  bb8 {
+    %18 = ConstantLoad 7
+    %19 = %18;
+    %20 = moduleLambdaAlias(%19) -> bb9;
+  }
+  bb9 {
+    %21 = %20;
+    %22 = println(%21) -> bb10;
+  }
+  bb10 {
+    %23 = fp $anon/.:$anonFunc$_1
+    lambda = %23;
+    %25 = $default$1() -> bb11;
+  }
+  bb11 {
+    $desugar$2 = %25;
+    %27 = $desugar$2;
+    %28 = lambda(%27) -> bb12;
+  }
+  bb12 {
+    %29 = %28;
+    %30 = println(%29) -> bb13;
+  }
+  bb13 {
+    %31 = ConstantLoad 8
+    %32 = %31;
+    %33 = lambda(%32) -> bb14;
+  }
+  bb14 {
+    %34 = %33;
+    %35 = println(%34) -> bb15;
+  }
+  bb15 {
+    lambdaAlias = lambda;
+    %37 = $default$1() -> bb16;
+  }
+  bb16 {
+    $desugar$3 = %37;
+    %39 = $desugar$3;
+    %40 = lambdaAlias(%39) -> bb17;
+  }
+  bb17 {
+    %41 = %40;
+    %42 = println(%41) -> bb18;
+  }
+  bb18 {
+    %43 = ConstantLoad 9
+    %44 = %43;
+    %45 = lambdaAlias(%44) -> bb19;
+  }
+  bb19 {
+    %46 = %45;
+    %47 = println(%46) -> bb20;
+  }
+  bb20 {
+    %48 = fp $anon/.:$default$2
+    $desugar$4 = %48;
+    typedLambda = lambda;
+    %51 = $desugar$4() -> bb21;
+  }
+  bb21 {
+    $desugar$5 = %51;
+    %53 = $desugar$5;
+    %54 = typedLambda(%53) -> bb22;
+  }
+  bb22 {
+    %55 = %54;
+    %56 = println(%55) -> bb23;
+  }
+  bb23 {
+    %57 = ConstantLoad 11
+    %58 = %57;
+    %59 = typedLambda(%58) -> bb24;
+  }
+  bb24 {
+    %60 = %59;
+    %61 = println(%60) -> bb25;
+  }
+  bb25 {
+    %62 = fp $anon/.:$anonFunc$_2
+    includedRecordLambda = %62;
+    %64 = ConstantLoad left
+    %65 = ConstantLoad 1
+    %66 = ConstantLoad right
+    %67 = ConstantLoad 2
+    %68 = newMap {| left: int, right: int, never... |}{%64=%65, %66=%67}
+    %69 = includedRecordLambda(%68) -> bb26;
+  }
+  bb26 {
+    %70 = %69;
+    %71 = println(%70) -> bb27;
+  }
+  bb27 {
+    includedRecordLambdaAlias = includedRecordLambda;
+    %73 = ConstantLoad left
+    %74 = ConstantLoad 3
+    %75 = ConstantLoad right
+    %76 = ConstantLoad 4
+    %77 = newMap {| left: int, right: int, never... |}{%73=%74, %75=%76}
+    %78 = includedRecordLambdaAlias(%77) -> bb28;
+  }
+  bb28 {
+    %79 = %78;
+    %80 = println(%79) -> bb29;
+  }
+  bb29 {
+    %81 = fp $anon/.:$anonFunc$_3
+    groupedLambda = %81;
+    %83 = $default$3() -> bb30;
+  }
+  bb30 {
+    $desugar$6 = %83;
+    %85 = $desugar$6;
+    %86 = groupedLambda(%85) -> bb31;
+  }
+  bb31 {
+    %87 = %86;
+    %88 = println(%87) -> bb32;
+  }
+  bb32 {
+    %89 = ConstantLoad 10
+    %90 = %89;
+    %91 = groupedLambda(%90) -> bb33;
+  }
+  bb33 {
+    %92 = %91;
+    %93 = println(%92) -> bb34;
+  }
+  bb34 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}

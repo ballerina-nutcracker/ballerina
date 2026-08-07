@@ -1,0 +1,26 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Box
+    (variable val (type
+      (value-type int)))
+    (function init (
+      (variable v (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access val
+            (simple-var-ref self))
+          (simple-var-ref v)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (user-defined-type Box)) (expr
+          (new (
+            (literal 42))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b)))))))

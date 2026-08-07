@@ -207,9 +207,9 @@ main() -> nil|error{
   }
   bb19 {
     %40 = ConstantLoad 0
-    i = %40;
+    $desugar$12 = %40;
     %42 = ConstantLoad 3
-    $desugar$12 = %42;
+    $desugar$13 = %42;
     GOTO bb24;
   }
   bb20 {
@@ -235,25 +235,26 @@ main() -> nil|error{
     GOTO bb17;
   }
   bb24 {
-    %45 = i;
-    %46 = $desugar$12;
+    %45 = $desugar$12;
+    %46 = $desugar$13;
     %44 = < %45 %46;
     %44 ? bb25 : bb26;
   }
   bb25 {
-    PushScopeFrame 6
-    %0 = (1, i);
-    %1 = println(%0) -> bb27;
+    PushScopeFrame 7
+    i = (1, $desugar$12);
+    %1 = i;
+    %2 = println(%1) -> bb27;
   }
   bb26 {
     return;
   }
   bb27 {
-    %3 = (1, i);
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    (1, i) = %2;
+    %4 = (1, $desugar$12);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$12) = %3;
     PopScopeFrame
     GOTO bb24;
   }

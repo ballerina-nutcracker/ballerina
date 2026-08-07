@@ -1,0 +1,35 @@
+(package
+  (import-package ballerina lang value (as lang.value))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable cyclic (type
+          (value-type anydata)) (expr
+          (simple-var-ref m))))
+      (assignment
+        (index-based-access
+          (simple-var-ref m)
+          (literal self))
+        (simple-var-ref cyclic))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref cyclic)
+            (typedesc-expr))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (panic
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable _ (type
+          (value-type anydata)) (expr
+          (simple-var-ref $desugar$0)))))))

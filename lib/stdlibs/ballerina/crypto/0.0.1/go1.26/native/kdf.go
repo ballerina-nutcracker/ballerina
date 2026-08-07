@@ -47,7 +47,7 @@ func registerKdfFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if _, err := io.ReadFull(r, key); err != nil {
 				return cryptoError(fmt.Sprintf("Error occurred while HKDF: %s", err.Error())), nil
 			}
-			return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, key), nil
+			return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), key), nil
 		})
 }
 

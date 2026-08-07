@@ -1,0 +1,19 @@
+(first
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref rest))
+    (return
+      (simple-var-ref self))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation first (
+          (literal 1)
+          (literal 2)
+          (literal 3))))))
+  )
+)

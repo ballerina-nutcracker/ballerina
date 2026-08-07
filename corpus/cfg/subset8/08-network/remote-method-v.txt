@@ -34,7 +34,7 @@
     (assignment
       (simple-var-ref res)
       (remote-method-call getT expr:
-        (simple-var-ref c) ()))
+        (simple-var-ref c) ( <default>)))
     (expression-stmt
       (invocation io println (
         (simple-var-ref res))))

@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"ballerina/ast"
+	"ballerina/context"
 	"ballerina/model"
 	"ballerina/semtypes"
 	"ballerina/tools/diagnostics"
@@ -166,7 +167,7 @@ func resolveRestricted(a analyzer, lock *ast.BLangLock) bool {
 }
 
 // validateLockInvocations enforces all invocations within lock statement must be to isolated functions.
-func validateLockInvocations(a analyzer, body *ast.BLangBlockStmt) bool {
+func validateLockInvocations(a analyzer, body ast.BLangNode) bool {
 	tyCtx := a.tyCtx()
 	isolatedFn := semtypes.CreateIsolatedFn(tyCtx)
 	ok := true
@@ -175,9 +176,14 @@ func validateLockInvocations(a analyzer, body *ast.BLangBlockStmt) bool {
 		case *ast.BLangLambdaFunction, *ast.BLangFunction:
 			return false
 		case *ast.BLangInvocation:
-			if !isIsolatedInvocation(a, n) {
-				a.semanticErr("invocation of a non-isolated function inside lock statement", n.GetPosition())
+			if loc, invalid := isolatedInvocationViolation(a, n); invalid {
+				a.semanticErr("invocation of a non-isolated function inside lock statement", loc)
 				ok = false
+			}
+			for _, lambda := range isolatedParamLambdas(a.ctx(), n) {
+				if !validateLockInvocations(a, lambda.Function.Body.(ast.BLangNode)) {
+					ok = false
+				}
 			}
 		case *ast.BLangRemoteMethodCallAction:
 			fnSym := n.MethodSymbol()
@@ -191,14 +197,96 @@ func validateLockInvocations(a analyzer, body *ast.BLangBlockStmt) bool {
 	return ok
 }
 
-func isIsolatedInvocation(a analyzer, n *ast.BLangInvocation) bool {
-	if ast.IsStreamOperation(n) {
-		return true
+func isolatedInvocationViolation(a analyzer, n *ast.BLangInvocation) (diagnostics.Location, bool) {
+	return isolatedInvocationViolationInner(a.ctx(), a.tyCtx(), n)
+}
+
+func isolatedParamLambdas(ctx *context.CompilerContext, n *ast.BLangInvocation) []*ast.BLangLambdaFunction {
+	resolvedFn, ok := ctx.GetSymbol(n.Symbol()).(model.FunctionSymbol)
+	if !ok {
+		return nil
 	}
-	tyCtx := a.tyCtx()
+	originalRef := n.Symbol()
+	if mono, ok := resolvedFn.(model.MonomorphicFunctionSymbol); ok {
+		originalRef = mono.PolymorphicSymbol()
+	}
+	opaque, ok := ctx.GetSymbol(originalRef).(*model.OpaqueFunctionSymbol)
+	if !ok {
+		return nil
+	}
+	sig, ok := ctx.GetFunctionSignature(n.Symbol())
+	if !ok {
+		ctx.InternalError("function signature not found", n.GetPosition())
+		return nil
+	}
+	paramNames := sig.ParamNames
+	lambdas := make([]*ast.BLangLambdaFunction, 0)
+	for i, arg := range n.CallArgs() {
+		paramIndex := i
+		argExpr := arg
+		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
+			paramIndex = paramIndexOf(paramNames, named.Name.GetValue())
+			argExpr = named.Expr
+		}
+		if paramIndex < 0 || !opaque.IsIsolatedParam(paramIndex) {
+			continue
+		}
+		if lambda, ok := argExpr.(*ast.BLangLambdaFunction); ok && lambda.HasInferredParams() {
+			lambdas = append(lambdas, lambda)
+		}
+	}
+	return lambdas
+}
+
+func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtypes.Context, n *ast.BLangInvocation) (diagnostics.Location, bool) {
+	if ast.IsStreamOperation(n) {
+		return diagnostics.Location{}, false
+	}
 	isolatedFn := semtypes.CreateIsolatedFn(tyCtx)
-	fnSym := n.Symbol()
-	return semtypes.IsSubtype(tyCtx, a.ctx().SymbolType(fnSym), isolatedFn)
+	fnRef := n.Symbol()
+	if !semtypes.IsSubtype(tyCtx, ctx.SymbolType(fnRef), isolatedFn) {
+		return n.GetPosition(), true
+	}
+
+	resolvedSymbol := ctx.GetSymbol(fnRef)
+	resolvedFn, ok := resolvedSymbol.(model.FunctionSymbol)
+	if !ok {
+		if _, isFunctionValue := resolvedSymbol.(model.ValueSymbol); isFunctionValue {
+			return diagnostics.Location{}, false
+		}
+		ctx.InternalError(fmt.Sprintf("unexpected symbol kind in invocation: %T", resolvedSymbol), n.GetPosition())
+		return diagnostics.Location{}, false
+	}
+	originalRef := fnRef
+	if mono, ok := resolvedFn.(model.MonomorphicFunctionSymbol); ok {
+		originalRef = mono.PolymorphicSymbol()
+	}
+	opaque, ok := ctx.GetSymbol(originalRef).(*model.OpaqueFunctionSymbol)
+	if !ok {
+		return diagnostics.Location{}, false
+	}
+
+	sig, ok := ctx.GetFunctionSignature(fnRef)
+	if !ok {
+		ctx.InternalError("function signature not found", n.GetPosition())
+		return diagnostics.Location{}, false
+	}
+	paramNames := sig.ParamNames
+	for i, arg := range n.CallArgs() {
+		paramIndex := i
+		argExpr := arg
+		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
+			paramIndex = paramIndexOf(paramNames, named.Name.GetValue())
+			argExpr = named.Expr
+		}
+		if paramIndex < 0 || !opaque.IsIsolatedParam(paramIndex) {
+			continue
+		}
+		if !semtypes.IsSubtype(tyCtx, argExpr.GetDeterminedType(), isolatedFn) {
+			return arg.GetPosition(), true
+		}
+	}
+	return diagnostics.Location{}, false
 }
 
 // validateLockBody validates transfer in and out conditions.
@@ -631,8 +719,8 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		})
 		return visitor
 	case *ast.BLangInvocation:
-		if !isIsolatedInvocation(a, node) {
-			a.semanticErr("invocation of a non-isolated function", node.GetPosition())
+		if loc, invalid := isolatedInvocationViolation(a, node); invalid {
+			a.semanticErr("invocation of a non-isolated function", loc)
 		}
 		return visitor
 	case *ast.BLangRemoteMethodCallAction:
@@ -733,11 +821,14 @@ func (visitor *isolatedFnVisitor) walkLock(node *ast.BLangLock) {
 func (visitor *isolatedFnVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return visitor }
 
 func checkIsolatedNew(a analyzer, expr *ast.BLangNewExpression) bool {
+	return checkIsolatedNewWithContext(a.ctx(), a.tyCtx(), expr)
+}
+
+func checkIsolatedNewWithContext(ctx *context.CompilerContext, tyCtx semtypes.Context, expr *ast.BLangNewExpression) bool {
 	if ast.IsStreamNewExpression(expr) {
 		return true
 	}
-	tyCtx := a.tyCtx()
-	classTy := a.ctx().SymbolType(expr.ClassSymbol)
+	classTy := ctx.SymbolType(expr.ClassSymbol)
 	initTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("init"), classTy)
 	if semtypes.IsZero(initTy) || !semtypes.IsSubtype(tyCtx, initTy, semtypes.CreateIsolatedFn(tyCtx)) {
 		return false

@@ -1,0 +1,126 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 255
+    maxByte = %1;
+    %3 = ConstantLoad typedesc
+    %4 = fromJsonWithType(maxByte,%3) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %4;
+    %6 = $desugar$0 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    b = $desugar$0;
+    %8 = b;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad 255.6
+    roundedOutOfRange = %10;
+    %12 = ConstantLoad typedesc
+    %13 = fromJsonWithType(roundedOutOfRange,%12) -> bb5;
+  }
+  bb5 {
+    %14 = %13 is error
+    %15 = %14;
+    %16 = println(%15) -> bb6;
+  }
+  bb6 {
+    %17 = ConstantLoad 1e+100
+    hugeFloat = %17;
+    %19 = ConstantLoad typedesc
+    %20 = fromJsonWithType(hugeFloat,%19) -> bb7;
+  }
+  bb7 {
+    %21 = %20 is error
+    %22 = %21;
+    %23 = println(%22) -> bb8;
+  }
+  bb8 {
+    %24 = ConstantLoad 9.223372036854776e+18
+    maxIntOverflow = %24;
+    maxIntOverflowJson = maxIntOverflow;
+    %27 = ConstantLoad typedesc
+    %28 = fromJsonWithType(maxIntOverflowJson,%27) -> bb9;
+  }
+  bb9 {
+    %29 = %28 is error
+    %30 = %29;
+    %31 = println(%30) -> bb10;
+  }
+  bb10 {
+    %32 = ConstantLoad 9.223372036854776E+18
+    tooBig = %32;
+    tooBigJson = tooBig;
+    %35 = ConstantLoad typedesc
+    %36 = fromJsonWithType(tooBigJson,%35) -> bb11;
+  }
+  bb11 {
+    %37 = %36 is error
+    %38 = %37;
+    %39 = println(%38) -> bb12;
+  }
+  bb12 {
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %43 = ConstantLoad 0
+    %44 = %43;
+    %40 = / %42 %44;
+    nan = %40;
+    nanJson = nan;
+    %48 = ConstantLoad 1
+    %49 = %48;
+    %50 = ConstantLoad 0
+    %51 = %50;
+    %47 = / %49 %51;
+    inf = %47;
+    infJson = inf;
+    %54 = ConstantLoad typedesc
+    %55 = fromJsonWithType(nanJson,%54) -> bb13;
+  }
+  bb13 {
+    %56 = %55 is error
+    %57 = %56;
+    %58 = println(%57) -> bb14;
+  }
+  bb14 {
+    %59 = ConstantLoad typedesc
+    %60 = fromJsonWithType(infJson,%59) -> bb15;
+  }
+  bb15 {
+    %61 = %60 is error
+    %62 = %61;
+    %63 = println(%62) -> bb16;
+  }
+  bb16 {
+    %64 = ConstantLoad typedesc
+    %65 = fromJsonWithType(nanJson,%64) -> bb17;
+  }
+  bb17 {
+    %66 = %65 is error
+    %67 = %66;
+    %68 = println(%67) -> bb18;
+  }
+  bb18 {
+    %69 = ConstantLoad typedesc
+    %70 = fromJsonWithType(infJson,%69) -> bb19;
+  }
+  bb19 {
+    %71 = %70 is error
+    %72 = %71;
+    %73 = println(%72) -> bb20;
+  }
+  bb20 {
+    %74 = ConstantLoad <nil>
+    %0 = %74;
+    return;
+  }
+}

@@ -1,0 +1,79 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition public Listener
+    (variable path (type
+      (value-type string)))
+    (variable recursive (type
+      (value-type boolean)))
+    (function init (
+      (variable path (type
+        (value-type string)))
+      (variable recursive (type
+        (value-type boolean)) (expr
+        (literal false)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (field-based-access path
+            (simple-var-ref self))
+          (simple-var-ref path))
+        (assignment
+          (field-based-access recursive
+            (simple-var-ref self))
+          (simple-var-ref recursive))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (return
+          (string-template-literal
+            (template-string "")
+            (field-based-access path
+              (simple-var-ref self))
+            (template-string ":")
+            (field-based-access recursive
+              (simple-var-ref self))
+            (template-string ""))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable named (type
+          (user-defined-type Listener)) (expr
+          (checked-expr
+            (new (
+              (named-arg path
+                (literal /tmp))
+              (named-arg recursive
+                (literal true))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref named) ()))))
+      (var-def
+        (variable mixed (type
+          (user-defined-type Listener)) (expr
+          (checked-expr
+            (new (
+              (literal /var)
+              (named-arg recursive
+                (literal true))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref mixed) ()))))
+      (var-def
+        (variable defaulted (type
+          (user-defined-type Listener)) (expr
+          (checked-expr
+            (new (
+              (named-arg path
+                (literal /etc))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref defaulted) ())))))))

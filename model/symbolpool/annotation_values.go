@@ -274,7 +274,7 @@ func (sr *symbolReader) readAnnotationValue() values.AnnotationValue {
 			initial[i] = sr.readAnnotationValue()
 		}
 		tyCtx := semtypes.TypeCheckContext(sr.env.GetTypeEnv())
-		atomic := semtypes.ToListAtomicType(tyCtx, ty)
+		atomic := semtypes.ToListAtomicType(tyCtx.Env(), ty)
 		if atomic == nil {
 			panic("annotation list type is not atomic")
 		}

@@ -1,0 +1,90 @@
+(Counter
+  (init
+    (bb0 () (bb1 bb2)
+      (binary-expr <
+        (simple-var-ref count)
+        (literal 0))
+    )
+    (bb1 (bb0) ()
+      (return
+        (error-constructor-expr (
+          (literal negative count))))
+    )
+    (bb2 (bb0) ()
+      (assignment
+        (field-based-access label
+          (simple-var-ref self))
+        (simple-var-ref label))
+      (assignment
+        (field-based-access count
+          (simple-var-ref self))
+        (simple-var-ref count))
+    )
+  )
+  (describe
+    (bb0 () ()
+      (return
+        (string-template-literal
+          (template-string "")
+          (field-based-access label
+            (simple-var-ref self))
+          (template-string ":")
+          (field-based-access count
+            (simple-var-ref self))
+          (template-string "")))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable defaulted (type
+        (union-type
+          (user-defined-type Counter)
+          (error-type))) (expr
+        (new ( <default> <default>)))))
+    (type-test-expr is
+      (simple-var-ref defaulted)
+      (user-defined-type Counter))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation describe expr:
+          (simple-var-ref defaulted) ()))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable named (type
+        (union-type
+          (user-defined-type Counter)
+          (error-type))) (expr
+        (new (
+          (literal named)
+          (literal 7))))))
+    (type-test-expr is
+      (simple-var-ref named)
+      (user-defined-type Counter))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation describe expr:
+          (simple-var-ref named) ()))))
+  )
+  (bb4 (bb3 bb2) ()
+    (var-def
+      (variable failed (type
+        (union-type
+          (user-defined-type Counter)
+          (error-type))) (expr
+        (new ( <default>
+          (unary-expr -
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref failed)
+          (error-type)))))
+  )
+)

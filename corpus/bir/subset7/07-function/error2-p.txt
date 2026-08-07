@@ -50,28 +50,29 @@ foo([int...]...) -> int|error{
     %2 = ConstantLoad 0
     sum = %2;
     %4 = ConstantLoad 0
-    i = %4;
+    $desugar$0 = %4;
     %6 = length(vals) -> bb1;
   }
   bb1 {
-    $desugar$0 = %6;
+    $desugar$1 = %6;
     GOTO bb2;
   }
   bb2 {
-    %9 = i;
-    %10 = $desugar$0;
+    %9 = $desugar$0;
+    %10 = $desugar$1;
     %8 = < %9 %10;
     %8 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 10
-    %0 = (1, vals)[(1, i)];
-    val = %0;
-    %3 = val;
-    %4 = ConstantLoad 0
-    %5 = %4;
-    %2 = < %3 %5;
-    %2 ? bb5 : bb6;
+    PushScopeFrame 11
+    i = (1, $desugar$0);
+    %1 = (1, vals)[i];
+    val = %1;
+    %4 = val;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %3 = < %4 %6;
+    %3 ? bb5 : bb6;
   }
   bb4 {
     %0 = sum;
@@ -93,11 +94,11 @@ foo([int...]...) -> int|error{
     %0 = + %1 %2;
     (2, sum) = %0;
     PopScopeFrame
-    %7 = (1, i);
-    %8 = ConstantLoad 1
-    %9 = %8;
-    %6 = + %7 %9;
-    (1, i) = %6;
+    %8 = (1, $desugar$0);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$0) = %7;
     PopScopeFrame
     GOTO bb2;
   }

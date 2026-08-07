@@ -17,6 +17,7 @@
 import ballerina/io;
 
 type StringConfig record {|
+    never count?;
     string...;
 |};
 

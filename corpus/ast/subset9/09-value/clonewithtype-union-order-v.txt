@@ -1,0 +1,132 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R3
+    (record-type
+      (field f3
+        (value-type int))))
+  (type-definition R4
+    (record-type
+      (field f3
+        (value-type float))))
+  (type-definition R5
+    (record-type
+      (field f3
+        (value-type int))))
+  (type-definition R6
+    (record-type
+      (field f3
+        (value-type string))))
+  (type-definition R1
+    (record-type
+      (field f1
+        (union-type
+          (user-defined-type R3)
+          (user-defined-type R4)))))
+  (type-definition R2
+    (record-type
+      (field f2
+        (union-type
+          (user-defined-type R5)
+          (user-defined-type R6)))))
+  (type-definition R
+    (union-type
+      (user-defined-type R1)
+      (user-defined-type R2)))
+  (type-definition R1b
+    (record-type
+      (field f1
+        (union-type
+          (user-defined-type R4)
+          (user-defined-type R3)))))
+  (type-definition Rb
+    (union-type
+      (user-defined-type R1b)
+      (user-defined-type R2)))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (value-type decimal)) (expr
+          (literal 1.5))))
+      (var-def
+        (variable v1 (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f1)
+              (mapping-constructor-expr
+                (key-value
+                  (literal f3)
+                  (simple-var-ref d))))))))
+      (var-def
+        (variable r1 (type
+          (user-defined-type R)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref v1) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r1))))
+      (var-def
+        (variable r1b (type
+          (user-defined-type Rb)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref v1) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r1b))))
+      (var-def
+        (variable v2 (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f2)
+              (mapping-constructor-expr
+                (key-value
+                  (literal f3)
+                  (simple-var-ref d))))))))
+      (var-def
+        (variable r2 (type
+          (user-defined-type R)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref v2) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r2))))
+      (var-def
+        (variable v3 (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f1)
+              (mapping-constructor-expr
+                (key-value
+                  (literal f3)
+                  (literal true))))))))
+      (var-def
+        (variable r3 (type
+          (union-type
+            (user-defined-type R)
+            (error-type))) (expr
+          (invocation cloneWithType expr:
+            (simple-var-ref v3) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref r3)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal error))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref r3)))))))
+      (return
+        (literal <nil>)))))

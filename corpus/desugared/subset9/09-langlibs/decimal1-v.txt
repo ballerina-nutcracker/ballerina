@@ -1,6 +1,6 @@
 (package
-  (import-package ballerina io (as io))
   (import-package ballerina lang decimal (as decimals))
+  (import-package ballerina io (as io))
   (import-package ballerina lang decimal (as lang.decimal))
   (function main () (
     (value-type null))

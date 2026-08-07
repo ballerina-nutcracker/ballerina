@@ -52,6 +52,6 @@ func hmacFunc(newHash func() hash.Hash, types cryptoTypes) extern.NativeFunc {
 		key := args[1].(*values.List).ToByteSlice()
 		h := hmac.New(newHash, key)
 		h.Write(input)
-		return values.ByteSliceToList(types.byteArrTy, ctx.TypeCtx, h.Sum(nil)), nil
+		return values.ByteSliceToList(types.byteArrTy, ctx.TypeEnv(), h.Sum(nil)), nil
 	}
 }

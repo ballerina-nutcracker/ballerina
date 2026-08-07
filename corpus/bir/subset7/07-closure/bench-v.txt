@@ -27,29 +27,30 @@ genFs(int) -> [function(int) returns int...]{
     %3 = newArray [function(int) returns int...][%2]{}
     array = %3;
     %5 = ConstantLoad 0
-    i = %5;
+    $desugar$0 = %5;
     %7 = ConstantLoad 1000
-    $desugar$0 = %7;
+    $desugar$1 = %7;
     GOTO bb1;
   }
   bb1 {
-    %10 = i;
-    %11 = $desugar$0;
+    %10 = $desugar$0;
+    %11 = $desugar$1;
     %9 = < %10 %11;
     %9 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 13
-    v = (1, i);
-    %3 = (1, i);
-    %4 = ConstantLoad 2
-    %5 = %4;
-    %2 = % %3 %5;
-    %6 = %2;
-    %7 = ConstantLoad 0
-    %8 = %7;
-    %1 = == %6 %8;
-    %1 ? bb4 : bb6;
+    PushScopeFrame 14
+    i = (1, $desugar$0);
+    v = i;
+    %4 = i;
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %3 = % %4 %6;
+    %7 = %3;
+    %8 = ConstantLoad 0
+    %9 = %8;
+    %2 = == %7 %9;
+    %2 ? bb4 : bb6;
   }
   bb3 {
     %0 = array;
@@ -75,11 +76,11 @@ genFs(int) -> [function(int) returns int...]{
     GOTO bb8;
   }
   bb8 {
-    %10 = (1, i);
-    %11 = ConstantLoad 1
-    %12 = %11;
-    %9 = + %10 %12;
-    (1, i) = %9;
+    %11 = (1, $desugar$0);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$0) = %10;
     PopScopeFrame
     GOTO bb1;
   }
@@ -89,40 +90,41 @@ fSum([function(int) returns int...]) -> int{
     %2 = ConstantLoad 0
     sum = %2;
     %4 = ConstantLoad 0
-    i = %4;
+    $desugar$0 = %4;
     %6 = length(funcs) -> bb1;
   }
   bb1 {
-    $desugar$0 = %6;
+    $desugar$1 = %6;
     GOTO bb2;
   }
   bb2 {
-    %9 = i;
-    %10 = $desugar$0;
+    %9 = $desugar$0;
+    %10 = $desugar$1;
     %8 = < %9 %10;
     %8 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 11
-    %0 = (1, funcs)[(1, i)];
-    f = %0;
-    %3 = (1, sum);
-    %4 = (1, i);
-    %5 = f(%4) -> bb5;
+    PushScopeFrame 12
+    i = (1, $desugar$0);
+    %1 = (1, funcs)[i];
+    f = %1;
+    %4 = (1, sum);
+    %5 = i;
+    %6 = f(%5) -> bb5;
   }
   bb4 {
     %0 = sum;
     return;
   }
   bb5 {
-    %6 = %5;
-    %2 = + %3 %6;
-    (1, sum) = %2;
-    %8 = (1, i);
-    %9 = ConstantLoad 1
-    %10 = %9;
-    %7 = + %8 %10;
-    (1, i) = %7;
+    %7 = %6;
+    %3 = + %4 %7;
+    (1, sum) = %3;
+    %9 = (1, $desugar$0);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$0) = %8;
     PopScopeFrame
     GOTO bb2;
   }

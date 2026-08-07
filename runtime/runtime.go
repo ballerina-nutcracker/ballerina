@@ -18,6 +18,7 @@ package runtime
 
 import (
 	"errors"
+	"sync"
 
 	"ballerina/bir"
 	"ballerina/model"
@@ -76,6 +77,10 @@ type Runtime struct {
 	lifeCycle
 	env        *extern.Env
 	ExitStatus <-chan uint8
+	// ctxPool recycles extern.Contexts across invocations so the (program-
+	// constant) semtype context caches stay warm instead of being reallocated
+	// per call — a hot path for request-per-invocation workloads like http.
+	ctxPool sync.Pool
 }
 
 // ModuleInitializer is a function that can install modules (e.g. stdlibs) into
@@ -192,12 +197,46 @@ func (rt *Runtime) GetTypeEnv() semtypes.Env {
 	return rt.env.TypeEnv
 }
 
-// NewExternContext creates a properly initialised extern.Context with a fresh
-// call stack. Use this when dispatching Ballerina code from outside the main
-// interpreter loop, such as from HTTP handler goroutines. Each concurrent
-// execution path must have its own context.
-func (rt *Runtime) NewExternContext() *extern.Context {
+// AcquirePooledContext creates a properly initialised extern.Context with a
+// fresh call stack, reusing a pooled context when one is available. Use this
+// only when the caller knows exactly when its unit of work ends and can
+// guarantee a matching ReleasePooledContext call (e.g. HTTP resource/remote
+// dispatch, which releases once the response is fully written) — every
+// context obtained here MUST be released back to the pool. Callers that
+// cannot make that guarantee (starting a strand, the public calling API)
+// should use exec.CreateContext / extern.CreateContext instead; going through
+// the pool without a guaranteed release point is just overhead, and a context
+// that never gets released is never reused.
+//
+// A context handed out here is already reset for a fresh unit of work —
+// ReleasePooledContext resets it before returning it to the pool, so it never
+// sits idle holding a prior request's state.
+func (rt *Runtime) AcquirePooledContext() *extern.Context {
+	if v := rt.ctxPool.Get(); v != nil {
+		return v.(*extern.Context)
+	}
 	return exec.CreateContext(rt.env)
+}
+
+// ReleasePooledContext returns a context obtained from AcquirePooledContext to
+// the pool for reuse. Call it once the owning strand is done with the context
+// and nothing else still references it or its TypeCtx (e.g. after the
+// response is fully written).
+//
+// Resets the context before pooling it — rather than on the next Acquire —
+// so a context sitting idle in the pool doesn't keep a finished request's
+// call-stack frames, TypeCtx memo caches, and held-lock slots reachable any
+// longer than necessary.
+//
+// Async work spawned during the invocation is safe: StartMethod snapshots the
+// caller's frames by value and runStrand builds each started strand its own
+// context via CreateContext (own TypeCtx), so a started strand never aliases
+// this context — releasing it does not race with in-flight children. The only
+// shared state is the program-wide Env, which every context already shares and
+// which is not recycled here.
+func (rt *Runtime) ReleasePooledContext(ctx *extern.Context) {
+	exec.ResetContextForReuse(ctx)
+	rt.ctxPool.Put(ctx)
 }
 
 // RegisterExternFunction registers a native (extern) function implementation in

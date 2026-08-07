@@ -1,0 +1,508 @@
+module $anon.. v 0.0.0;
+class NonIsolatedInit {
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = %2;
+      %4 = increment(%3) -> bb1;
+    }
+    bb1 {
+      _ = %4;
+      return;
+    }
+  }
+}
+increment(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+isolatedIncrement(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+mapInIsolatedFunction([int...]) -> [int...]{
+  bb0 {
+    %2 = fp $anon/.:isolatedIncrement
+    %3 = map(values,%2) -> bb1;
+  }
+  bb1 {
+    explicitResult = %3;
+    %5 = fp $anon/.:$anonFunc$_0
+    %6 = map(explicitResult,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+mapInsideLock([int...]) -> int{
+  bb0 {
+    lock-start "" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 11
+    %0 = fp $anon/.:isolatedIncrement
+    %1 = map((1, values),%0) -> bb2;
+  }
+  bb2 {
+    %2 = length(%1) -> bb3;
+  }
+  bb3 {
+    explicitLength = %2;
+    %4 = fp $anon/.:$anonFunc$_1
+    %5 = map((1, values),%4) -> bb4;
+  }
+  bb4 {
+    %6 = length(%5) -> bb5;
+  }
+  bb5 {
+    inferredLength = %6;
+    %9 = explicitLength;
+    %10 = inferredLength;
+    %8 = + %9 %10;
+    (1, %0) = %8;
+    PopScopeFrame
+    lock-end "" GOTO bb6;
+  }
+  bb6 {
+    return;
+  }
+  bb7 {
+    return;
+  }
+}
+$anonFunc$_2({| value: int, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad value
+    %2 = value[%3];
+    %0 = %2;
+    return;
+  }
+}
+mapRecordFields([{| value: int, never... |}...]) -> [int...]{
+  bb0 {
+    %2 = fp $anon/.:$anonFunc$_2
+    %3 = map(values,%2) -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %3 = ConstantLoad 0
+    %4 = ConstantLoad 1
+    %5 = newArray [int, never...][%4]{value}
+    %6 = fp $anon/.:isolatedIncrement
+    %7 = map(%5,%6) -> bb1;
+  }
+  bb1 {
+    %2 = %7[%3];
+    %0 = %2;
+    return;
+  }
+}
+mapWithFunctionReference([int...]) -> [int...]{
+  bb0 {
+    %2 = fp $anon/.:$anonFunc$_3
+    %3 = map(values,%2) -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_4() -> object { public function init() returns nil }{
+  bb0 {
+    %1 = newObject $anon/.:NonIsolatedInit
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %3;
+    return;
+  }
+}
+createFactory() -> function() returns object { public function init() returns nil }{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_4
+    factory = %1;
+    %0 = factory;
+    return;
+  }
+}
+withMappedDefault([int...]) -> int{
+  bb0 {
+    %3 = ConstantLoad 0
+    %2 = values[%3];
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_6(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = (1, offset);
+    %2 = + %3 %4;
+    %0 = %2;
+    return;
+  }
+}
+mapWithCapture([int...],int) -> [int...]{
+  bb0 {
+    %3 = closure_fp $anon/.:$anonFunc$_6
+    %4 = map(values,%3) -> bb1;
+  }
+  bb1 {
+    %0 = %4;
+    return;
+  }
+}
+$anonFunc$_7(int) -> int{
+  bb0 {
+    %3 = value;
+    %5 = ConstantLoad 0
+    %4 = (1, state)[%5];
+    %6 = %4;
+    %2 = + %3 %6;
+    %0 = %2;
+    return;
+  }
+}
+mapWithInferredCapture([int...]) -> [int...]{
+  bb0 {
+    %2 = ConstantLoad 20
+    %3 = ConstantLoad 1
+    %4 = newArray [int...][%3]{%2}
+    state = %4;
+    %6 = closure_fp $anon/.:$anonFunc$_7
+    %7 = map(values,%6) -> bb1;
+  }
+  bb1 {
+    %0 = %7;
+    return;
+  }
+}
+mapAcrossIsolationContexts([int...]) -> [int...]{
+  bb0 {
+    lock-start "" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 8
+    %0 = ConstantLoad 1
+    %1 = ConstantLoad 1
+    %2 = newArray [int, never...][%1]{%0}
+    %3 = <[int...]>(%2)
+    %4 = fp $anon/.:isolatedIncrement
+    %5 = map(%3,%4) -> bb2;
+  }
+  bb2 {
+    %6 = length(%5) -> bb3;
+  }
+  bb3 {
+    _ = %6;
+    PopScopeFrame
+    lock-end "" GOTO bb4;
+  }
+  bb4 {
+    %2 = fp $anon/.:increment
+    %3 = map(values,%2) -> bb5;
+  }
+  bb5 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_8(int) -> boolean{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = > %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_9(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_10(int) -> {| value: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad value
+    %3 = newMap {| value: int, never... |}{%2=value}
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_11(int|string) -> boolean{
+  bb0 {
+    %2 = value is int
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    values = %4;
+    %6 = fp $anon/.:increment
+    %7 = map(values,%6) -> bb1;
+  }
+  bb1 {
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %9 = fp $anon/.:$anonFunc$_8
+    %10 = map(values,%9) -> bb3;
+  }
+  bb3 {
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    %12 = fp $anon/.:$anonFunc$_9
+    %13 = map(values,%12) -> bb5;
+  }
+  bb5 {
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %15 = fp $anon/.:increment
+    %16 = map(values,%15) -> bb7;
+  }
+  bb7 {
+    mutableResult = %16;
+    %18 = ConstantLoad 10
+    %19 = %18;
+    %20 = push(mutableResult,%19) -> bb8;
+  }
+  bb8 {
+    %21 = println(mutableResult) -> bb9;
+  }
+  bb9 {
+    %22 = fp $anon/.:isolatedIncrement
+    %23 = map(values,%22) -> bb10;
+  }
+  bb10 {
+    %24 = println(%23) -> bb11;
+  }
+  bb11 {
+    %25 = fp $anon/.:isolatedIncrement
+    %26 = map(values,%25) -> bb12;
+  }
+  bb12 {
+    %27 = println(%26) -> bb13;
+  }
+  bb13 {
+    %28 = mapInIsolatedFunction(values) -> bb14;
+  }
+  bb14 {
+    %29 = println(%28) -> bb15;
+  }
+  bb15 {
+    %30 = mapInsideLock(values) -> bb16;
+  }
+  bb16 {
+    %31 = %30;
+    %32 = println(%31) -> bb17;
+  }
+  bb17 {
+    %33 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$desugar$0}
+    recordValue = %33;
+    %36 = ConstantLoad values
+    %35 = recordValue[%36];
+    %37 = println(%35) -> bb18;
+  }
+  bb18 {
+    %38 = $default$0() -> bb19;
+  }
+  bb19 {
+    $desugar$0 = %38;
+    %40 = withMappedDefault($desugar$0) -> bb20;
+  }
+  bb20 {
+    %41 = %40;
+    %42 = println(%41) -> bb21;
+  }
+  bb21 {
+    %43 = ConstantLoad 10
+    %44 = %43;
+    %45 = mapWithCapture(values,%44) -> bb22;
+  }
+  bb22 {
+    %46 = println(%45) -> bb23;
+  }
+  bb23 {
+    %47 = mapWithInferredCapture(values) -> bb24;
+  }
+  bb24 {
+    %48 = println(%47) -> bb25;
+  }
+  bb25 {
+    %49 = ConstantLoad value
+    %50 = ConstantLoad 4
+    %51 = newMap {| value: int, never... |}{%49=%50}
+    %52 = ConstantLoad value
+    %53 = ConstantLoad 5
+    %54 = newMap {| value: int, never... |}{%52=%53}
+    %55 = ConstantLoad 2
+    %56 = newArray [{| value: int, never... |}...][%55]{%51, %54}
+    %57 = mapRecordFields(%56) -> bb26;
+  }
+  bb26 {
+    %58 = println(%57) -> bb27;
+  }
+  bb27 {
+    %59 = mapWithFunctionReference(values) -> bb28;
+  }
+  bb28 {
+    %60 = println(%59) -> bb29;
+  }
+  bb29 {
+    %61 = createFactory() -> bb30;
+  }
+  bb30 {
+    _ = %61;
+    %63 = ConstantLoad created
+    %64 = println(%63) -> bb31;
+  }
+  bb31 {
+    %65 = fp $anon/.:$anonFunc$_10
+    %66 = map(values,%65) -> bb32;
+  }
+  bb32 {
+    recordResults = %66;
+    %68 = println(recordResults) -> bb33;
+  }
+  bb33 {
+    %69 = ConstantLoad 0
+    %70 = newArray [never...][%69]{}
+    %71 = <[int...]>(%70)
+    %72 = fp $anon/.:increment
+    %73 = map(%71,%72) -> bb34;
+  }
+  bb34 {
+    %74 = println(%73) -> bb35;
+  }
+  bb35 {
+    %75 = ConstantLoad 0
+    %76 = newArray [never...][%75]{}
+    %77 = fp $anon/.:increment
+    %78 = map(%76,%77) -> bb36;
+  }
+  bb36 {
+    mappedEmpty = %78;
+    %80 = ConstantLoad 1
+    %81 = %80;
+    %82 = push(mappedEmpty,%81) -> bb37;
+  }
+  bb37 {
+    %83 = println(mappedEmpty) -> bb38;
+  }
+  bb38 {
+    %84 = ConstantLoad 1
+    %85 = ConstantLoad one
+    %86 = ConstantLoad 2
+    %87 = newArray [int, string, never...][%86]{%84, %85}
+    tupleValue = %87;
+    %89 = fp $anon/.:$anonFunc$_11
+    %90 = map(tupleValue,%89) -> bb39;
+  }
+  bb39 {
+    %91 = println(%90) -> bb40;
+  }
+  bb40 {
+    return;
+  }
+}
+$desugar$0() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    %5 = fp $anon/.:isolatedIncrement
+    %6 = map(%4,%5) -> bb1;
+  }
+  bb1 {
+    %0 = %6;
+    return;
+  }
+}
+$anonFunc$_5(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$default$0() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 2
+    %2 = ConstantLoad 1
+    %3 = newArray [int, never...][%2]{%1}
+    %4 = fp $anon/.:$anonFunc$_5
+    %5 = map(%3,%4) -> bb1;
+  }
+  bb1 {
+    %0 = %5;
+    return;
+  }
+}

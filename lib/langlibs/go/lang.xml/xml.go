@@ -54,8 +54,8 @@ func xmlIteratorNext(ctx *extern.Context, args []values.BalValue) (values.BalVal
 		return nil, nil
 	}
 	it.Put("idx", idx+1)
-	recordTy := xmlIteratorNextRecordType(ctx.Env.TypeEnv)
-	return values.NewMap(recordTy, semtypes.ToMappingAtomicType(ctx.TypeCtx, recordTy), false, []values.MapEntry{{
+	recordTy := xmlIteratorNextRecordType(ctx.TypeEnv())
+	return values.NewMap(recordTy, semtypes.ToMappingAtomicType(ctx.TypeCtx(), recordTy), false, []values.MapEntry{{
 		Key:   "value",
 		Value: items[idx],
 	}}), nil

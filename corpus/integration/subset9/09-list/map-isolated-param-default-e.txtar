@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> map-isolated-param-default-e.bal:20:49
+   |
+20 | isolated function invalidDefault(int[] values = [1].map(nonIsolated)) returns int { // @error
+   |                                                 ^^^^^^^^^^^^^^^^^^^^

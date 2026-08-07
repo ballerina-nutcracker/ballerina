@@ -13,26 +13,29 @@
     (value-type null))
     (block-function-body
       (var-def
-        (variable _ (type
-          (value-type int)) (expr
+        (variable $desugar$0 (expr
           (literal 0))))
       (var-def
-        (variable $desugar$0 (expr
+        (variable $desugar$1 (expr
           (simple-var-ref amount))))
       (while
         (binary-expr <
-          (simple-var-ref _)
-          (simple-var-ref $desugar$0))
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
         (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
           (lock
             (block-stmt
               (compound-assignment +
                 (simple-var-ref counter)
                 (literal 1))))
           (assignment
-            (simple-var-ref _)
+            (simple-var-ref $desugar$0)
             (binary-expr +
-              (simple-var-ref _)
+              (simple-var-ref $desugar$0)
               (numeric-literal 1)))))))
   (function main () (
     (value-type null))

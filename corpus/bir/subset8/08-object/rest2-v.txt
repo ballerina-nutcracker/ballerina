@@ -6,32 +6,33 @@ class Joiner {
     bb0 {
       result = head;
       %5 = ConstantLoad 0
-      i = %5;
+      $desugar$0 = %5;
       %7 = length(rest) -> bb1;
     }
     bb1 {
-      $desugar$0 = %7;
+      $desugar$1 = %7;
       GOTO bb2;
     }
     bb2 {
-      %10 = i;
-      %11 = $desugar$0;
+      %10 = $desugar$0;
+      %11 = $desugar$1;
       %9 = < %10 %11;
       %9 ? bb3 : bb4;
     }
     bb3 {
-      PushScopeFrame 9
-      %3 = ConstantLoad sep
-      %2 = (1, self)[%3];
-      %1 = + (1, result) %2;
-      %4 = (1, rest)[(1, i)];
-      %0 = + %1 %4;
-      (1, result) = %0;
-      %6 = (1, i);
-      %7 = ConstantLoad 1
-      %8 = %7;
-      %5 = + %6 %8;
-      (1, i) = %5;
+      PushScopeFrame 10
+      i = (1, $desugar$0);
+      %4 = ConstantLoad sep
+      %3 = (1, self)[%4];
+      %2 = + (1, result) %3;
+      %5 = (1, rest)[i];
+      %1 = + %2 %5;
+      (1, result) = %1;
+      %7 = (1, $desugar$0);
+      %8 = ConstantLoad 1
+      %9 = %8;
+      %6 = + %7 %9;
+      (1, $desugar$0) = %6;
       PopScopeFrame
       GOTO bb2;
     }

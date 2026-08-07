@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> map-isolated-param-e.bal:23:12
+   |
+23 |     return values.map(nonIsolated); // @error
+   |            ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> map-isolated-param-e.bal:27:12
+   |
+27 |     return array:map(arr = values, func = nonIsolated); // @error
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> map-isolated-param-e.bal:32:16
+   |
+32 |         return values.map(nonIsolated).length(); // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> map-isolated-param-e.bal:37:32
+   |
+37 |     return values.map(value => [value].map(nonIsolated)[0]); // @error
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,134 +1,100 @@
-## Ballerina Nutcracker
+<div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![X](https://img.shields.io/twitter/follow/ballerinalang?style=social&label=Follow%20Us)
-[![stackoverflow](https://img.shields.io/badge/Get%20Support%20on%20Stack%20Overflow-ballerina-52C3C2)](https://stackoverflow.com/questions/tagged/ballerina)
-[![Join the community on Discord](https://img.shields.io/badge/Join%20us%20on%20Discord-Ballerina-52C3C2)](https://discord.gg/ballerinalang)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/img/logo-dark.svg" width="300">
+  <source media="(prefers-color-scheme: light)" srcset="doc/img/logo-light.svg" width="300">
+  <img alt="Ballerina Nutcracker" src="doc/img/logo-light.svg" width="300">
+</picture>
+
+**A native interpreter for the Ballerina programming language.**
+
+[![Release](https://img.shields.io/github/v/release/ballerina-nutcracker/ballerina)](https://github.com/ballerina-nutcracker/ballerina/releases)
+[![Native CI](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/native-ci.yml/badge.svg)](https://github.com/ballerina-nutcracker/ballerina/actions/workflows/native-ci.yml)
 [![codecov](https://codecov.io/gh/ballerina-nutcracker/ballerina/graph/badge.svg)](https://codecov.io/gh/ballerina-nutcracker/ballerina)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Discord](https://img.shields.io/badge/Discord-Ballerina-52C3C2?logo=discord&logoColor=white)](https://discord.gg/ballerinalang)
 
-[Ballerina](https://ballerina.io) is an open-source, cloud-native programming language optimized for integration. It has built-in support for JSON and XML, first-class constructs for services and concurrency, and structural typing. It is developed and supported by WSO2.
+[Website](https://ballerina.io) &nbsp;·&nbsp;
+[Playground](https://play.ballerina.io/) &nbsp;·&nbsp;
+[Language spec](https://github.com/ballerina-platform/ballerina-spec) &nbsp;·&nbsp;
+[Developing](doc/guides/DEVELOPING.md) &nbsp;·&nbsp;
+[Architecture](doc/guides/ARCHITECTURE.md) &nbsp;·&nbsp;
+[Roadmap](https://github.com/ballerina-nutcracker/ballerina/milestones)
 
-**Try Ballerina in your browser:** [Ballerina Playground](https://play.ballerina.io/) — run and share snippets without installing anything.
+</div>
 
-## Goals
+---
 
-Ballerina Nutcracker is a **native Ballerina interpreter in Go**: compile Ballerina source to **Ballerina Intermediate Representation (BIR)** and interpret the BIR, with a focus on speed, low memory use, and fast startup. Development is organized by **subsets** of the language; each milestone adds support for a defined subset.
+[Ballerina](https://ballerina.io) is an open-source, cloud-native programming language optimized for integration, with built-in support for JSON and XML, first-class constructs for services and concurrency, and structural typing. It is developed and supported by [WSO2](https://wso2.com) and the wider Ballerina community. Try the language in your browser on the [Ballerina Playground](https://play.ballerina.io/).
 
-- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
-- **Subset docs:** [doc/](doc/) (language features and restrictions per subset)
+**Ballerina Nutcracker** compiles Ballerina source to **Ballerina Intermediate Representation (BIR)** and interprets the BIR directly. Written in Go, it ships as one self-contained binary — no separate runtime, nothing to warm up — which keeps startup fast and the footprint small for short-lived cloud-native workloads such as CLIs, functions, and sidecars.
 
-## Usage
+> [!IMPORTANT]
+> Nutcracker is under active development and does not yet support the whole language. For production use today, reach for [Ballerina Swan Lake](https://ballerina.io/downloads/) — the official distribution, which supports the full language.
 
-### Dependencies
+## Architecture
 
-The project is built using the [Go programming language](https://go.dev/). The following dependencies are required:
+![Ballerina Nutcracker architecture, left to right: the bal CLI feeds the compilation pipeline (parse, AST, symbols and types, desugar, emit BIR), whose BIR is executed by the runtime (dispatch loop, strands and frames, values, extern bridge), which reaches the host only through the Platform Adaptation Layer. The library of language and standard modules is resolved both at compile time and at run time. Ballerina Central and the host OS are the only boundaries outside the binary.](doc/img/architecture.svg)
 
-- [Go 1.24 or later](https://go.dev/dl/)
+Almost everything inside the binary is a Go package; only Ballerina Central and the host OS sit outside it. See [ARCHITECTURE.md](doc/guides/ARCHITECTURE.md) for how the diagram maps onto source directories.
 
-### Build the CLI
+## Getting started
 
-#### Production Build (default)
+Download a binary from the [latest release](https://github.com/ballerina-nutcracker/ballerina/releases), or build from source with [Go 1.26 or later](https://go.dev/dl/):
 
 ```bash
+git clone https://github.com/ballerina-nutcracker/ballerina.git
+cd ballerina
 go build -o bal ./cli/cmd
 ```
 
-#### Debug Build
+Create and run your first program:
 
 ```bash
-go build -tags debug -o bal-debug ./cli/cmd
+./bal new hello
+./bal run hello
 ```
 
-### Using Profiling
+```ballerina
+import ballerina/io;
 
-Profiling is only available in debug builds (compiled with `-tags debug`).
-
-#### Enable Profiling
-
-```bash
-# Default profiling port (:6060)
-./bal-debug run --prof corpus/bal/subset1/01-boolean/equal1-v.bal
-
-# Custom port
-./bal-debug run --prof --prof-addr=:8080 corpus/bal/subset1/01-boolean/equal1-v.bal
+public function main() {
+    io:println("Hello, World!");
+}
 ```
 
-#### Access Profiling Data
+| Command | Description |
+| --- | --- |
+| `bal new <path>` | Create a new package (`-t <template>`, `--workspace`) |
+| `bal run <file.bal> \| <package-dir> \| .` | Compile and execute a source file or package |
+| `bal pack [<package-dir>]` | Build the `.bala` distribution archive of a package |
+| `bal build [<package-dir>]` | Build a standalone executable that bundles the Ballerina runtime |
+| `bal version` | Print the version |
 
-- Web UI: http://localhost:6060/debug/pprof/
-- CPU Profile: http://localhost:6060/debug/pprof/profile?seconds=30
-- Heap Profile: http://localhost:6060/debug/pprof/heap
-- Goroutines: http://localhost:6060/debug/pprof/goroutine
+`bal build` needs a `balrt` stripped-down runtime alongside `bal` (`go build -o balrt ./cli/internal/balrt`), or pointed at via the `main.RuntimeStubPath` link-time override.
 
-#### Analyze with pprof Tool
+For debugging flags, profiling, testing, and linting, see [DEVELOPING.md](doc/guides/DEVELOPING.md).
 
-```bash
-# CPU profiling (30 second sample)
-go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
+## Scope & roadmap
 
-# Heap profiling
-go tool pprof http://localhost:6060/debug/pprof/heap
+Development is organized by **subsets** of the Ballerina language; each milestone adds support for a defined subset.
 
-# Interactive web UI
-go tool pprof -http=:8081 http://localhost:6060/debug/pprof/profile?seconds=30
-```
+- **Progress:** [GitHub Milestones](https://github.com/ballerina-nutcracker/ballerina/milestones)
+- **Supported language features:** [`doc/lang`](doc/lang)
+- **Supported library features:** [`doc/library`](doc/library)
 
-### Using the CLI
+## Contributing
 
-#### CLI Help
+Contributions are welcome — read the [contribution guidelines](CONTRIBUTING.md) to get started, and the [code of conduct](CODE_OF_CONDUCT.md) before you take part.
 
-```bash
-./bal --help
-```
+- **Found a bug or want a feature?** Search [existing issues](https://github.com/ballerina-nutcracker/ballerina/issues), then open a new one.
+- **New here?** Start with issues labelled [`good first issue`](https://github.com/ballerina-nutcracker/ballerina/labels/good%20first%20issue).
+- **Found a security vulnerability?** Do not open an issue. Email [security@ballerina.io](mailto:security@ballerina.io) — see the [security policy](SECURITY.md).
 
-```bash
-./bal run --help
-```
+## Community
 
-#### Running a bal source
-
-Currently, the following are supported:
-
-- Single .bal file
-- Ballerina package with only the default module
-
-E.g.
-
-```bash
-./bal run --dump-bir corpus/bal/subset1/01-boolean/equal1-v.bal
-./bal run project-api-test/testdata/myproject
-```
-
-### Testing
-
-To run the tests, use the following command:
-
-```bash
-go test ./...
-```
-
-## Report issues
-
-> **Tip:** If you are unsure whether you have found a bug, search the [existing issues](https://github.com/ballerina-nutcracker/ballerina/issues) in the GitHub repo and open an issue if needed.
-
-### Open an issue
-
-- [Open an issue](https://github.com/ballerina-nutcracker/ballerina/issues) for bug reports or feature requests related to the Ballerina Nutcracker.
-
-### Report security issues
-
-- Send an email to [security@ballerina.io](mailto:security@ballerina.io). For details, see the [security policy](SECURITY.md).
-
-## Contribute to Ballerina Nutcracker
-
-As an open-source project, Ballerina Nutcracker welcomes contributions from the community. To start contributing, read the [contribution guidelines](CONTRIBUTING.md).
+Questions and ideas belong in [GitHub Discussions](https://github.com/ballerina-nutcracker/ballerina/discussions) or on [Discord](https://discord.gg/ballerinalang) — Discord is where the team is most active. See [ballerina.io/community](https://ballerina.io/community/) for everything else.
 
 ## License
 
-Ballerina code is distributed under [Apache License 2.0](./LICENSE).
-
-## Join the community
-
-- Get help on [Stack Overflow](https://stackoverflow.com/questions/tagged/ballerina)
-- Join the conversations in [Discord community](https://discord.gg/ballerinalang).
-- For more details on how to engage with the community, see [Community](https://ballerina.io/community/).
+Distributed under the [Apache License 2.0](LICENSE).

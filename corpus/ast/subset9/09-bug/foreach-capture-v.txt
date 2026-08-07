@@ -1,0 +1,251 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition NumberIterator
+    (variable items (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))) (expr
+      (list-constructor-expr
+        (literal 7)
+        (literal 8)
+        (literal 9))))
+    (variable index (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (field-based-access index
+              (simple-var-ref self))
+            (invocation length expr:
+              (field-based-access items
+                (simple-var-ref self)) ()))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (index-based-access
+                (field-based-access items
+                  (simple-var-ref self))
+                (field-based-access index
+                  (simple-var-ref self))))))
+          (compound-assignment +
+            (field-based-access index
+              (simple-var-ref self))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (simple-var-ref value))))))))
+  (class-definition NumberGenerator
+    (function iterator () (
+      (user-defined-type NumberIterator))
+      (block-function-body
+        (return
+          (new ())))))
+  (function capturedSum (
+    (variable functions (type
+      (array-type
+        (function-type () (
+          (value-type int))) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable fn (type
+            (function-type () (
+              (value-type int))))))
+        (simple-var-ref functions)
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref sum)
+            (invocation fn ()))))
+      (return
+        (simple-var-ref sum))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable functions (type
+          (array-type
+            (function-type () (
+              (value-type int))) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (foreach
+        (var-def
+          (variable value (type
+            (value-type int))))
+        (binary-expr ...
+          (literal 0)
+          (literal 3))
+        (block-stmt
+          (if
+            (binary-expr ==
+              (simple-var-ref value)
+              (literal 1))
+            (block-stmt
+              (continue)) ())
+          (block-stmt
+            (expression-stmt
+              (invocation push expr:
+                (simple-var-ref functions) (
+                (lambda
+                  (function $anonFunc$_0 () (
+                    (value-type int))
+                    (block-function-body
+                      (return
+                        (simple-var-ref value)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (assignment
+        (simple-var-ref functions)
+        (list-constructor-expr))
+      (foreach
+        (var-def
+          (variable value (type
+            (value-type int))))
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3))
+        (block-stmt
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref functions) (
+              (lambda
+                (function $anonFunc$_1 () (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (assignment
+        (simple-var-ref functions)
+        (list-constructor-expr))
+      (var-def
+        (variable values (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 4))
+            (key-value
+              (literal b)
+              (literal 5))
+            (key-value
+              (literal c)
+              (literal 6))))))
+      (foreach
+        (var-def
+          (variable value (type
+            (value-type int))))
+        (simple-var-ref values)
+        (block-stmt
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref functions) (
+              (lambda
+                (function $anonFunc$_2 () (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (assignment
+        (simple-var-ref functions)
+        (list-constructor-expr))
+      (var-def
+        (variable generator (type
+          (user-defined-type NumberGenerator)) (expr
+          (new ()))))
+      (foreach
+        (var-def
+          (variable value (type
+            (value-type int))))
+        (simple-var-ref generator)
+        (block-stmt
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref functions) (
+              (lambda
+                (function $anonFunc$_3 () (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref value))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturedSum (
+            (simple-var-ref functions))))))
+      (var-def
+        (variable xmlFunctions (type
+          (array-type
+            (function-type () (
+              (value-type xml))) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable sequence (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))
+              (user-defined-type xml Comment)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal item)
+            (xml-text-literal text)
+            (xml-comment-literal comment)))))
+      (foreach
+        (var-def
+          (variable item (type
+            (union-type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))
+              (user-defined-type xml Comment)))))
+        (simple-var-ref sequence)
+        (block-stmt
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref xmlFunctions) (
+              (lambda
+                (function $anonFunc$_4 () (
+                  (value-type xml))
+                  (block-function-body
+                    (return
+                      (simple-var-ref item))))))))))
+      (foreach
+        (var-def
+          (variable fn (type
+            (function-type () (
+              (value-type xml))))))
+        (simple-var-ref xmlFunctions)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation fn ())))))))))

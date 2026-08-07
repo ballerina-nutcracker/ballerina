@@ -95,8 +95,32 @@ func (l *loopTypeResolver) createNarrowedSymbol(ref model.SymbolRef) model.Symbo
 	return l.parentResolver.createNarrowedSymbol(ref)
 }
 
-func (l *loopTypeResolver) createFunctionSymbol(space *model.SymbolSpace, name string, sig model.FunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
+func (l *loopTypeResolver) createFunctionSymbol(space *model.SymbolSpace, name string, sig model.TypedFunctionSignature, fnTy semtypes.SemType) model.SymbolRef {
 	return l.parentResolver.createFunctionSymbol(space, name, sig, fnTy)
+}
+
+func (l *loopTypeResolver) allocateFunctionSignature(params []model.Param, hasRest bool) model.FunctionSignatureRef {
+	return l.parentResolver.allocateFunctionSignature(params, hasRest)
+}
+
+func (l *loopTypeResolver) associateFunctionSignature(owner model.SymbolRef, ref model.FunctionSignatureRef) bool {
+	return l.parentResolver.associateFunctionSignature(owner, ref)
+}
+
+func (l *loopTypeResolver) functionSignatureRef(owner model.SymbolRef) (model.FunctionSignatureRef, bool) {
+	return l.parentResolver.functionSignatureRef(owner)
+}
+
+func (l *loopTypeResolver) updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
+	l.parentResolver.updateFunctionSignatureIncludedRecords(ref, includedRecords)
+}
+
+func (l *loopTypeResolver) functionSignature(owner model.SymbolRef) (model.UntypedFunctionSignature, bool) {
+	return l.parentResolver.functionSignature(owner)
+}
+
+func (l *loopTypeResolver) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
+	return l.parentResolver.functionSignatureByRef(ref)
 }
 
 func (l *loopTypeResolver) compilerContext() *context.CompilerContext {

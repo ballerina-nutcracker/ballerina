@@ -1,4 +1,4 @@
 -- stdout --
 -- stderr --
-error: cannot convert 9.2233720368547758076E+20 to int64: value out of range
+error: bad type cast: cannot convert 9.2233720368547758076E+20 to int64: value out of range
         at main(toint11-p.bal:21)

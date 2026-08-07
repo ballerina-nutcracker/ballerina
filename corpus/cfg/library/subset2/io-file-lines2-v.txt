@@ -10,7 +10,7 @@
           (simple-var-ref path)
           (list-constructor-expr
             (literal Line1)
-            (literal Line2))))))
+            (literal Line2)) <default>))))
     (expression-stmt
       (checked-expr
         (invocation io fileWriteLines (

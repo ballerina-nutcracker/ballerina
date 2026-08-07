@@ -1,0 +1,17 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: service type must be atomic
+  --> service-non-atomic-type1-e.bal:38:1
+   |
+38 | service ServiceUnion on explicitListener { // @error explicit service type is not atomic
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | }
+   | ^
+
+error[SEMANTIC_ERROR]: service type must be atomic
+  --> service-non-atomic-type1-e.bal:41:1
+   |
+41 | service on inferredListener { // @error inferred service type is not atomic
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+42 | }
+   | ^
