@@ -2042,10 +2042,6 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 			a.semanticErr("cannot assign to annotation", variable.GetPosition())
 			return false
 		}
-		if valueSym, ok := ctx.GetSymbol(symbol).(model.ValueSymbol); ok && valueSym.IsFinal() {
-			a.semanticErr("cannot assign to final variable", variable.GetPosition())
-			return false
-		}
 	}
 	if !analyzeActionOrExpression(a, variable, semtypes.SemType{}) {
 		return false
