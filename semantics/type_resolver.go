@@ -4199,27 +4199,11 @@ func resolveQueryCollectionTypes(
 		ld := semtypes.NewListDefinition()
 		emptyListTy := ld.DefineListTypeWrapped(t.typeEnv(), nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
 		iteratorFnTy := semtypes.ObjectMemberType(ctx, semtypes.StringConst("iterator"), collectionTy)
-		if semtypes.IsZero(iteratorFnTy) || !semtypes.IsSubtype(ctx, iteratorFnTy, semtypes.FUNCTION) {
-			t.semanticError("query collection is not iterable", pos)
-			return semtypes.SemType{}, semtypes.SemType{}, false
-		}
 		iteratorTy := semtypes.FunctionReturnType(ctx, iteratorFnTy, emptyListTy)
 		nextFnTy := semtypes.ObjectMemberType(ctx, semtypes.StringConst("next"), iteratorTy)
-		if semtypes.IsZero(nextFnTy) || !semtypes.IsSubtype(ctx, nextFnTy, semtypes.FUNCTION) {
-			t.semanticError("query iterator does not have a next method", pos)
-			return semtypes.SemType{}, semtypes.SemType{}, false
-		}
 		nextReturnTy := semtypes.FunctionReturnType(ctx, nextFnTy, emptyListTy)
 		valueRecordTy := semtypes.Diff(nextReturnTy, semtypes.Union(semtypes.NIL, semtypes.ERROR))
-		if !semtypes.IsSubtype(ctx, valueRecordTy, semtypes.MAPPING) {
-			t.semanticError("query iterator next method must return a record with a value field", pos)
-			return semtypes.SemType{}, semtypes.SemType{}, false
-		}
 		elementTy := semtypes.MappingMemberTypeInnerVal(ctx, valueRecordTy, semtypes.StringConst("value"))
-		if semtypes.IsZero(elementTy) {
-			t.semanticError("query iterator next method must return a record with a value field", pos)
-			return semtypes.SemType{}, semtypes.SemType{}, false
-		}
 		completionErrorTy := semtypes.Intersect(nextReturnTy, semtypes.ERROR)
 		return elementTy, completionErrorTy, true
 	default:
