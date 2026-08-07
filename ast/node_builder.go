@@ -4394,9 +4394,7 @@ func (n *NodeBuilder) TransformJoinClause(joinClauseNode *tree.JoinClauseNode) B
 	joinClause.SetVariableDefinitionNode(
 		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
 	)
-	if joinClause.VariableDefinitionNode != nil && joinClause.VariableDefinitionNode.Var != nil {
-		joinClause.VariableDefinitionNode.Var.SetFinal()
-	}
+	joinClause.VariableDefinitionNode.Var.SetFinal()
 	joinClause.IsDeclaredWithVarFlag = isDeclaredWithVar(bindingPatternNode.TypeDescriptor())
 	joinClause.IsOuterJoinFlag = joinClauseNode.OuterKeyword() != nil
 	if onClauseNode := joinClauseNode.JoinOnCondition(); onClauseNode != nil {
