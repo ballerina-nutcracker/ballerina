@@ -610,6 +610,12 @@ type queryActionCompletionState struct {
 	controlStopRef *ast.BLangSimpleVarRef
 }
 
+// Type resolution rejects stream and object:Iterable sources for query expressions,
+// so their iterator segments cannot produce completion errors.
+func queryExpressionCompletionState() queryActionCompletionState {
+	return queryActionCompletionState{}
+}
+
 type queryActionControlFlowState struct {
 	loopDepth   int
 	stopRef     *ast.BLangSimpleVarRef
@@ -1403,7 +1409,7 @@ func appendInitialQueryRows(
 
 	appendQueryActionCollectionSegment(
 		cx, collectionSource, loopBinding, []ast.StatementNode{pushStmt}, nil,
-		queryActionCompletionState{}, initStmts, pos,
+		queryExpressionCompletionState(), initStmts, pos,
 	)
 
 	return []queryRowBinding{loopBinding}, true
@@ -1456,7 +1462,7 @@ func appendQueryFromClauseRows(
 	setPositionIfMissing(pushStmt, clause.GetPosition())
 	appendQueryActionCollectionSegment(
 		cx, collectionSource, fromBinding, []ast.StatementNode{pushStmt}, nil,
-		queryActionCompletionState{}, &outerBody, clause.GetPosition(),
+		queryExpressionCompletionState(), &outerBody, clause.GetPosition(),
 	)
 	outerBody = append(outerBody, createIncrementStmt(outerCounterRef))
 
@@ -2206,7 +2212,7 @@ func appendQueryJoinClauseRows(
 	innerBody = append(innerBody, matchIf)
 	appendQueryActionCollectionSegment(
 		cx, joinSource, joinBinding, innerBody, nil,
-		queryActionCompletionState{}, &outerBody, pos,
+		queryExpressionCompletionState(), &outerBody, pos,
 	)
 
 	if matchedRef != nil {
