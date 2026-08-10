@@ -30,7 +30,7 @@ public isolated function iterator(string str) returns object {
     return new StringIterator(str);
 }
 
-class StringIterator {
+isolated class StringIterator {
     private final handle iteratorHandle;
 
     isolated function init(string str) {
