@@ -293,7 +293,7 @@ func createQueryActionNextInvocation(
 	receiverTy semtypes.SemType,
 ) *ast.BLangInvocation {
 	methodReceiverTy := receiverTy
-	if semtypes.IsSubtypeSimple(receiverTy, semtypes.STREAM) {
+	if semtypes.IsSubtype(cx.typeCtx(), receiverTy, semtypes.STREAM) {
 		valueTy := semtypes.StreamValueType(cx.typeCtx(), receiverTy)
 		completionTy := semtypes.StreamCompletionType(cx.typeCtx(), receiverTy)
 		methodReceiverTy = semtypes.CreateStreamImplementorType(cx.typeCtx(), valueTy, completionTy)
