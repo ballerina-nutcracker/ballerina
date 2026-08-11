@@ -22,7 +22,7 @@ main() -> nil{
   bb3 {
     %6 = ConstantLoad value
     %7 = ConstantLoad 80
-    %8 = newMap {| value: int, never... |}{%6=%7}
+    %8 = newMap {| value: int, never... |}{%6=%7} defaults{value=$anon/.:$desugar$0}
     %9 = combined(%8) -> bb4;
   }
   bb4 {

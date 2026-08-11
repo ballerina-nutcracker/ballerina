@@ -7,6 +7,27 @@
         (value-type int)
         (literal 42)))) (expr
     (mapping-constructor-expr)))
+  (type-definition OuterFn
+    (function-type (
+      (record-type
+        (field a
+          (value-type int)
+          (literal 7)))) (
+      (value-type int))))
+  (type-definition InnerFn
+    (function-type (
+      (record-type
+        (field b
+          (value-type int)
+          (literal 8)))) (
+      (value-type int))))
+  (type-definition NestedFn
+    (function-type (
+      (record-type
+        (field c
+          (value-type int)
+          (literal 9)))) (
+      (value-type int))))
   (function parameterValue (
     (variable input (type
       (record-type
@@ -19,6 +40,23 @@
       (return
         (field-based-access value
           (simple-var-ref input)))))
+  (function foo (
+    (variable m (type
+      (record-type
+        (field a
+          (value-type int)
+          (literal 5))
+        (field b
+          (value-type int)
+          (literal 10)))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (field-based-access a
+            (simple-var-ref m))
+          (field-based-access b
+            (simple-var-ref m))))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -28,4 +66,70 @@
             (simple-var-ref moduleValue)))))
       (expression-stmt
         (invocation io println (
-          (invocation parameterValue ())))))))
+          (invocation parameterValue ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 6))))))))
+      (var-def
+        (variable outerFn (type
+          (user-defined-type OuterFn)) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (record-type
+                  (field a
+                    (value-type int)
+                    (literal 7)))))) (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable innerFn (type
+                    (user-defined-type InnerFn)) (expr
+                    (lambda
+                      (function $anonFunc$_1 (
+                        (variable y (type
+                          (record-type
+                            (field b
+                              (value-type int)
+                              (literal 8)))))) (
+                        (value-type int))
+                        (block-function-body
+                          (var-def
+                            (variable nestedFn (type
+                              (user-defined-type NestedFn)) (expr
+                              (lambda
+                                (function $anonFunc$_2 (
+                                  (variable z (type
+                                    (record-type
+                                      (field c
+                                        (value-type int)
+                                        (literal 9)))))) (
+                                  (value-type int))
+                                  (block-function-body
+                                    (return
+                                      (binary-expr +
+                                        (binary-expr +
+                                          (field-based-access a
+                                            (simple-var-ref x))
+                                          (field-based-access b
+                                            (simple-var-ref y)))
+                                        (field-based-access c
+                                          (simple-var-ref z))))))))))
+                          (return
+                            (invocation nestedFn (
+                              (mapping-constructor-expr))))))))))
+                (return
+                  (invocation innerFn (
+                    (mapping-constructor-expr))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation outerFn (
+            (mapping-constructor-expr)))))))))

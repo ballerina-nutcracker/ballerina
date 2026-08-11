@@ -16,32 +16,26 @@
 
 package semtypes
 
-type CellMutability uint
-
-type cellAtomicType struct {
-	Ty  SemType
-	Mut CellMutability
+// AtomicTypeInterner assigns handles using atomic-type pointer identity. It is
+// thread compatible; callers must synchronize concurrent access.
+type AtomicTypeInterner struct {
+	handles map[AtomicType]InternHandle
 }
 
-const (
-	CellMutabilityNone CellMutability = iota
-	CellMutabilityLimited
-	cellMutabilityUnlimited
-)
-
-var _ AtomicType = &cellAtomicType{}
-
-func newCellAtomicTypeFromTyMut(ty SemType, mut CellMutability) cellAtomicType {
-	this := cellAtomicType{}
-	this.Ty = ty
-	this.Mut = mut
-	return this
+func NewAtomicTypeInterner() *AtomicTypeInterner {
+	return &AtomicTypeInterner{handles: make(map[AtomicType]InternHandle)}
 }
 
-func cellAtomicTypeFrom(ty SemType, mut CellMutability) cellAtomicType {
-	return newCellAtomicTypeFromTyMut(ty, mut)
+func (i *AtomicTypeInterner) Intern(atom AtomicType) InternHandle {
+	if handle, ok := i.handles[atom]; ok {
+		return handle
+	}
+	handle := InternHandle(len(i.handles))
+	i.handles[atom] = handle
+	return handle
 }
 
-func (c *cellAtomicType) atomKind() kind {
-	return kind_CELL_ATOM
+func (i *AtomicTypeInterner) Lookup(atom AtomicType) (InternHandle, bool) {
+	handle, ok := i.handles[atom]
+	return handle, ok
 }

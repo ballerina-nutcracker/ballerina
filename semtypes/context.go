@@ -39,7 +39,7 @@ type context struct {
 	_mappingMemo           map[bddKey]*bddMemo
 	_functionMemo          map[bddKey]*bddMemo
 	_comparableMemo        map[comparableMemoKey]*comparableMemo
-	_fillerMemo            map[atomicType]Filler
+	_fillerMemo            map[AtomicType]Filler
 	_streamImplementorMemo map[streamImplementorMemoKey]SemType
 	_listenerMemo          map[listenerMemoKey]SemType
 	_semtypeInterner       *SemTypeInterner
@@ -217,7 +217,7 @@ func ContextFrom(env Env) Context {
 		_mappingMemo:           make(map[bddKey]*bddMemo),
 		_functionMemo:          make(map[bddKey]*bddMemo),
 		_comparableMemo:        make(map[comparableMemoKey]*comparableMemo),
-		_fillerMemo:            make(map[atomicType]Filler),
+		_fillerMemo:            make(map[AtomicType]Filler),
 		_streamImplementorMemo: make(map[streamImplementorMemoKey]SemType),
 		_listenerMemo:          make(map[listenerMemoKey]SemType),
 		_semtypeInterner:       NewSemtypeInterner(),

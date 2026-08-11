@@ -30,7 +30,7 @@ type Env = *env
 
 func CreateTypeEnv() Env {
 	env := &env{
-		atomTable: make(map[atomicType]typeAtom),
+		atomTable: make(map[AtomicType]typeAtom),
 	}
 	fillRecAtoms(predefTypeEnv, &env.recListAtoms, predefTypeEnv.initializedRecListAtoms)
 	fillRecAtoms(predefTypeEnv, &env.recMappingAtoms, predefTypeEnv.initializedRecMappingAtoms)
@@ -64,7 +64,7 @@ type env struct {
 	distinctAtoms     int
 	distinctAtomMutex sync.Mutex
 	atomTableMutex    sync.Mutex
-	atomTable         map[atomicType]typeAtom
+	atomTable         map[AtomicType]typeAtom
 
 	preallocatedTypeVals preallocatedTypeVals
 
@@ -176,7 +176,7 @@ func (e *env) cellAtom(atomicType *cellAtomicType) *typeAtom {
 // atomTable by value and a fresh pointer to a copy is returned (atom identity is
 // by index, not pointer). After freeze, new atoms are ephemeral so the env can
 // only retain them weakly.
-func (e *env) typeAtom(atomicType atomicType) *typeAtom {
+func (e *env) typeAtom(atomicType AtomicType) *typeAtom {
 	if e.frozen.Load() {
 		// After freezing atom table is immutable so we can do lookup lock free
 		if ta, ok := e.atomTable[atomicType]; ok {
@@ -207,7 +207,7 @@ func (e *env) typeAtom(atomicType atomicType) *typeAtom {
 // otherwise appends a new slot. A slot whose gen has reached the max is retired
 // (skipped) rather than wrapped, since reusing a gen could alias a stale memo
 // entry on the atom's canonicalKey.
-func (e *env) newEphemeralAtom(atomicType atomicType) *typeAtom {
+func (e *env) newEphemeralAtom(atomicType AtomicType) *typeAtom {
 	// In theory we can improve through put by having per slot rw locks and one lock for resizing the array
 	// Idea is we can create ephemeral atoms concurrently, but I don't feel like dealing with the complexity
 	// is worth it (array resizing, etc)
@@ -322,7 +322,7 @@ func (e *env) cellAtomType(atom atom) *cellAtomicType {
 // }
 
 // fillRecAtoms fills the environment rec atom list with initialized rec atoms
-func fillRecAtoms[E atomicType](env *predefinedTypeEnv, envRecAtomList *[]E, initializedRecAtoms []E) {
+func fillRecAtoms[E AtomicType](env *predefinedTypeEnv, envRecAtomList *[]E, initializedRecAtoms []E) {
 	count := env.ReservedRecAtomCount()
 	for i := range count {
 		if i < len(initializedRecAtoms) {

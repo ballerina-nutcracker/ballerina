@@ -1,0 +1,77 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable first (type
+        (union-type
+          (record-type
+            (field kind
+              (value-type string))
+            (field first
+              (value-type int)
+              (literal 11)))
+          (record-type
+            (field code
+              (value-type int))
+            (field second
+              (value-type int)
+              (literal 12))))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal kind)
+            (literal one))
+          (key-value
+            (literal first)
+            (literal 11))))))
+    (type-test-expr is
+      (simple-var-ref first)
+      (record-type
+        (field kind
+          (value-type string))
+        (field first
+          (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access first
+          (simple-var-ref first)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable second (type
+        (union-type
+          (record-type
+            (field kind
+              (value-type string))
+            (field first
+              (value-type int)
+              (literal 11)))
+          (record-type
+            (field code
+              (value-type int))
+            (field second
+              (value-type int)
+              (literal 12))))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal code)
+            (literal 2))
+          (key-value
+            (literal second)
+            (literal 12))))))
+    (type-test-expr is
+      (simple-var-ref second)
+      (record-type
+        (field code
+          (value-type int))
+        (field second
+          (value-type int))))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access second
+          (simple-var-ref second)))))
+  )
+  (bb4 (bb3 bb2) ())
+)
