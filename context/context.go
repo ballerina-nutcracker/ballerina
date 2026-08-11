@@ -189,6 +189,14 @@ func (c *CompilerContext) SymbolAnnotationValues(symbol model.SymbolRef) values.
 	return c.env.SymbolAnnotationValues(symbol)
 }
 
+func (c *CompilerContext) SetMappingDefaults(mat *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	c.env.SetMappingDefaults(mat, defaults)
+}
+
+func (c *CompilerContext) MappingDefaults(mat *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	return c.env.MappingDefaults(mat)
+}
+
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {
 	return c.env.DistinctTypeID(symbol)
 }

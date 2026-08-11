@@ -81,6 +81,7 @@ func (sr *symbolReader) deserialize() (result model.ExportedSymbolSpace, err err
 	sr.externalRefKeys = sr.readExternalSymbolRefPool()
 
 	mainSpace := sr.readSymbolSpace()
+	sr.readMappingDefaults(mainSpace)
 	annotationSpace := sr.readSymbolSpace()
 
 	return model.NewExportedSymbolSpaces([]*model.SymbolSpace{mainSpace}, []*model.SymbolSpace{annotationSpace}), nil
@@ -149,6 +150,43 @@ func (sr *symbolReader) readSymbolSpace() *model.SymbolSpace {
 	}
 
 	return space
+}
+
+func (sr *symbolReader) readMappingDefaults(space *model.SymbolSpace) {
+	var count int64
+	read(sr.r, &count)
+	if count < 0 {
+		panic(fmt.Sprintf("invalid mapping-default entry count: %d", count))
+	}
+	seen := make(map[int32]struct{}, count)
+	for i := int64(0); i < count; i++ {
+		var atomIndex int32
+		read(sr.r, &atomIndex)
+		if _, duplicate := seen[atomIndex]; duplicate {
+			panic(fmt.Sprintf("duplicate mapping-default atom index: %d", atomIndex))
+		}
+		seen[atomIndex] = struct{}{}
+		atom, ok := sr.tp.MappingAtomicTypeAt(atomIndex)
+		if !ok {
+			panic(fmt.Sprintf("invalid mapping-default atom index: %d", atomIndex))
+		}
+		var defaultCount int64
+		read(sr.r, &defaultCount)
+		if defaultCount < 0 {
+			panic(fmt.Sprintf("invalid field-default count: %d", defaultCount))
+		}
+		if defaultCount > 0 && space == nil {
+			panic("mapping defaults require a main symbol space")
+		}
+		defaults := make([]model.FieldDefault, defaultCount)
+		for j := range defaults {
+			defaults[j] = model.FieldDefault{
+				FieldName: sr.readStringCP(),
+				FnRef:     sr.readSymbolRef(space),
+			}
+		}
+		sr.env.SetMappingDefaults(atom, defaults)
+	}
 }
 
 func (sr *symbolReader) readSymbol(space *model.SymbolSpace, opaque []model.Symbol) {

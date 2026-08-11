@@ -159,11 +159,11 @@ func (l *loopTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
 	return l.parentResolver.ensureResolved(ref, depth)
 }
 
-func (l *loopTypeResolver) setMappingDefaults(atom semtypes.AtomicType, defaults []model.FieldDefault) {
+func (l *loopTypeResolver) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
 	l.parentResolver.setMappingDefaults(atom, defaults)
 }
 
-func (l *loopTypeResolver) mappingDefaults(atom semtypes.AtomicType) ([]model.FieldDefault, bool) {
+func (l *loopTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
 	return l.parentResolver.mappingDefaults(atom)
 }
 

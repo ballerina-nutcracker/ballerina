@@ -102,8 +102,8 @@ type typeResolver interface {
 
 	ensureResolved(ref model.SymbolRef, depth int) bool
 
-	setMappingDefaults(atom semtypes.AtomicType, defaults []model.FieldDefault)
-	mappingDefaults(atom semtypes.AtomicType) ([]model.FieldDefault, bool)
+	setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault)
+	mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool)
 	setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef)
 	getClassAtomSymbol(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool)
 	currentScope() model.Scope
@@ -145,12 +145,12 @@ func newMappingDefaultsResolverBase() *mappingDefaultsResolverBase {
 	}
 }
 
-func (r *mappingDefaultsResolverBase) setMappingDefaults(atom semtypes.AtomicType, defaults []model.FieldDefault) {
+func (r *mappingDefaultsResolverBase) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
 	handle := r.atomicTypeInterner.Intern(atom)
 	r.mappingDefaultsByHandle[handle] = defaults
 }
 
-func (r *mappingDefaultsResolverBase) mappingDefaults(atom semtypes.AtomicType) ([]model.FieldDefault, bool) {
+func (r *mappingDefaultsResolverBase) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
 	handle, ok := r.atomicTypeInterner.Lookup(atom)
 	if !ok {
 		return nil, false
@@ -160,7 +160,6 @@ func (r *mappingDefaultsResolverBase) mappingDefaults(atom semtypes.AtomicType) 
 }
 
 type packageTypeResolver struct {
-	*mappingDefaultsResolverBase
 	ctx             *context.CompilerContext
 	tyCtx           semtypes.Context
 	importedSymbols map[string]model.ExportedSymbolSpace
@@ -308,6 +307,14 @@ func (t *packageTypeResolver) functionSignatureByRef(ref model.FunctionSignature
 
 func (t *packageTypeResolver) compilerContext() *context.CompilerContext {
 	return t.ctx
+}
+
+func (t *packageTypeResolver) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	t.ctx.SetMappingDefaults(atom, defaults)
+}
+
+func (t *packageTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	return t.ctx.MappingDefaults(atom)
 }
 
 func (t *packageTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
@@ -514,7 +521,7 @@ func (f *functionTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bo
 	return f.parentResolver.ensureResolved(ref, depth)
 }
 
-func (f *functionTypeResolver) mappingDefaults(atom semtypes.AtomicType) ([]model.FieldDefault, bool) {
+func (f *functionTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
 	if _, ok := f.atomicTypeInterner.Lookup(atom); ok {
 		return f.mappingDefaultsResolverBase.mappingDefaults(atom)
 	}
@@ -574,24 +581,23 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 
 func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
 	return &packageTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		ctx:                         ctx,
-		tyCtx:                       semtypes.ContextFrom(ctx.GetTypeEnv()),
-		importedSymbols:             importedSymbols,
-		pkg:                         pkg,
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		packageConstants:            make(map[model.SymbolRef]*ast.BLangVariable),
-		inferredGlobalVarNodes:      make(map[model.SymbolRef]*ast.BLangVariable),
-		lazyResolutionStatus:        make(map[model.SymbolRef]resolutionStatus),
-		functionNodes:               make(map[model.SymbolRef]*ast.BLangFunction),
-		typeDefnNodes:               make(map[model.SymbolRef]*ast.BLangTypeDefinition),
-		classDefnNodes:              make(map[model.SymbolRef]*ast.BLangClassDefinition),
-		classAtomSymbols:            make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classSymbolByType:           make(map[semtypes.InternHandle]model.SymbolRef),
-		semtypeInterner:             semtypes.NewSemtypeInterner(),
-		xmlIteratorTypes:            semtypes.NewSemTypeCache(),
-		monoCounters:                make(map[string]int),
-		scope:                       moduleScope,
+		ctx:                    ctx,
+		tyCtx:                  semtypes.ContextFrom(ctx.GetTypeEnv()),
+		importedSymbols:        importedSymbols,
+		pkg:                    pkg,
+		implicitImports:        make(map[string]ast.BLangImportPackage),
+		packageConstants:       make(map[model.SymbolRef]*ast.BLangVariable),
+		inferredGlobalVarNodes: make(map[model.SymbolRef]*ast.BLangVariable),
+		lazyResolutionStatus:   make(map[model.SymbolRef]resolutionStatus),
+		functionNodes:          make(map[model.SymbolRef]*ast.BLangFunction),
+		typeDefnNodes:          make(map[model.SymbolRef]*ast.BLangTypeDefinition),
+		classDefnNodes:         make(map[model.SymbolRef]*ast.BLangClassDefinition),
+		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
+		semtypeInterner:        semtypes.NewSemtypeInterner(),
+		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
+		monoCounters:           make(map[string]int),
+		scope:                  moduleScope,
 	}
 }
 
@@ -681,40 +687,7 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 // ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
 func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
-	populateImportedNamedRecordDefaults(t, importedSymbols)
 	t.resolveTopLevelTypes(pkg)
-}
-
-func populateImportedNamedRecordDefaults(t typeResolver, importedSymbols map[string]model.ExportedSymbolSpace) {
-	for _, symbolSpace := range importedSymbols {
-		for ref := range symbolSpace.PublicMainSymbols() {
-			carrier, ok := t.getSymbol(ref).(model.MemberCarrier)
-			if !ok || t.compilerContext().SymbolKind(ref) != model.SymbolKindType {
-				continue
-			}
-			mat := semtypes.ToMappingAtomicType(t.typeContext(), t.symbolType(ref))
-			if mat != nil {
-				t.setMappingDefaults(mat, carrier.FieldDefaults())
-			}
-		}
-	}
-}
-
-func populatePackageNamedRecordDefaults(t typeResolver, pkg *ast.BLangPackage) {
-	for i := range pkg.TypeDefinitions {
-		defn := pkg.TypeDefinitions[i]
-		if _, ok := defn.GetTypeData().TypeDescriptor.(*ast.BLangRecordType); !ok {
-			continue
-		}
-		mat := semtypes.ToMappingAtomicType(t.typeContext(), t.symbolType(defn.Symbol()))
-		if mat == nil {
-			t.internalError("failed to extract mapping atomic type for record type", defn.GetPosition())
-			continue
-		}
-		if carrier, ok := t.getSymbol(defn.Symbol()).(model.MemberCarrier); ok {
-			t.setMappingDefaults(mat, carrier.FieldDefaults())
-		}
-	}
 }
 
 func populateClassAtomSymbols(t typeResolver, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
@@ -735,107 +708,11 @@ func populateClassAtomSymbols(t typeResolver, pkg *ast.BLangPackage, importedSym
 	}
 }
 
-func seedResolvedRecordDefaults(t typeResolver, ty ast.BType) {
-	if ty == nil {
-		return
-	}
-	seedTypeData := func(data ast.TypeData) {
-		if nested, ok := data.TypeDescriptor.(ast.BType); ok {
-			seedResolvedRecordDefaults(t, nested)
-		}
-	}
-	switch ty := ty.(type) {
-	case *ast.BLangArrayType:
-		seedTypeData(ty.Elemtype)
-	case *ast.BLangUnionTypeNode:
-		seedTypeData(*ty.Lhs())
-		seedTypeData(*ty.Rhs())
-	case *ast.BLangIntersectionTypeNode:
-		seedTypeData(*ty.Lhs())
-		seedTypeData(*ty.Rhs())
-	case *ast.BLangErrorTypeNode:
-		seedTypeData(ty.DetailType)
-	case *ast.BLangConstrainedType:
-		seedTypeData(ty.Type)
-		seedTypeData(ty.Constraint)
-	case *ast.BLangStreamType:
-		seedTypeData(ty.ValueType)
-		seedTypeData(ty.CompletionType)
-	case *ast.BLangTupleTypeNode:
-		for i := range ty.Members {
-			if member, ok := ty.Members[i].TypeDesc.(ast.BType); ok {
-				seedResolvedRecordDefaults(t, member)
-			}
-		}
-		seedResolvedRecordDefaults(t, ty.Rest)
-	case *ast.BLangRecordType:
-		if ty.Definition != nil {
-			mat := semtypes.ToMappingAtomicType(t.typeContext(), ty.Definition.GetSemType(t.typeEnv()))
-			if mat != nil {
-				t.setMappingDefaults(mat, recordFieldDefaults(t, ty))
-			}
-		}
-		for _, includedTy := range ty.TypeInclusions {
-			seedResolvedRecordDefaults(t, includedTy)
-		}
-		for _, field := range ty.FieldPtrs() {
-			seedResolvedRecordDefaults(t, field.Type)
-		}
-		seedResolvedRecordDefaults(t, ty.RestType)
-	case *ast.BLangFunctionType:
-		for i := range ty.RequiredParams {
-			seedResolvedRecordDefaults(t, ty.RequiredParams[i].TypeDesc)
-		}
-		if ty.RestParam != nil {
-			seedResolvedRecordDefaults(t, ty.RestParam.TypeDesc)
-		}
-		seedResolvedRecordDefaults(t, ty.ReturnTypeDescriptor)
-	}
-}
-
-func seedPackageOwnedInlineRecordDefaults(t typeResolver, pkg *ast.BLangPackage) {
-	for i := range pkg.TypeDefinitions {
-		seedResolvedRecordDefaults(t, pkg.TypeDefinitions[i].GetTypeData().TypeDescriptor.(ast.BType))
-	}
-	for _, variable := range append(append([]*ast.BLangVariable{}, pkg.Constants...), pkg.GlobalVars...) {
-		seedResolvedRecordDefaults(t, variable.TypeNode())
-	}
-	for _, fn := range common.PackageFunctionDecls(pkg) {
-		for i := range fn.GetParameters() {
-			seedResolvedRecordDefaults(t, fn.GetParameters()[i].TypeNode())
-		}
-		if rest := fn.GetRestParam(); rest != nil {
-			seedResolvedRecordDefaults(t, rest.TypeNode())
-		}
-		if ret := fn.GetReturnTypeDescriptor(); ret != nil {
-			seedResolvedRecordDefaults(t, ret.TypeDescriptor)
-		}
-	}
-	for i := range pkg.ClassDefinitions {
-		for _, field := range pkg.ClassDefinitions[i].Fields {
-			seedResolvedRecordDefaults(t, field.TypeNode())
-		}
-	}
-	for i := range pkg.Services {
-		for _, field := range pkg.Services[i].Fields {
-			seedResolvedRecordDefaults(t, field.TypeNode())
-		}
-	}
-	for i := range pkg.Annotations {
-		if ty, ok := pkg.Annotations[i].GetTypeDescriptor().(ast.BType); ok {
-			seedResolvedRecordDefaults(t, ty)
-		}
-	}
-}
-
 // ResolvePrivateNodesTypes resolves the types private nodes within the package. Then can be executed concurrently
 func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	populateClassSymbolByType(p, pkg)
 	populateClassAtomSymbols(p, pkg, importedSymbols)
-	populateImportedNamedRecordDefaults(p, importedSymbols)
-	populatePackageNamedRecordDefaults(p, pkg)
-	seedPackageOwnedInlineRecordDefaults(p, pkg)
 	fns := common.PackageFunctionDecls(pkg)
 
 	allImports := make(map[string]ast.BLangImportPackage)
@@ -1147,7 +1024,6 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	}
 	populateClassSymbolByType(t, pkg)
 	populateClassAtomSymbols(t, pkg, t.importedSymbols)
-	populatePackageNamedRecordDefaults(t, pkg)
 	for i := range pkg.Functions {
 		fn := pkg.Functions[i]
 		if _, ok := resolveFunctionSignature(t, fn, 0); !ok {
