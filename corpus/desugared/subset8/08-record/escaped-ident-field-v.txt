@@ -1,0 +1,70 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Doc
+    (record-type
+      (field system
+        (union-type
+          (value-type string)
+          (value-type null))
+        (literal <nil>))
+      (field public
+        (union-type
+          (value-type string)
+          (value-type null))
+        (literal <nil>))
+      (field type
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (user-defined-type Doc)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal public)
+              (literal pub-id))
+            (key-value
+              (literal system)
+              (literal sys-id))
+            (key-value
+              (literal type)
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal public)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal system)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal type)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal public)))))
+      (assignment
+        (index-based-access
+          (simple-var-ref d)
+          (literal public))
+        (literal updated))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal public)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal <nil>)))))

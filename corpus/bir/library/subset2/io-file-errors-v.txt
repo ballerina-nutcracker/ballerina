@@ -48,7 +48,7 @@ main() -> nil|error{
     $desugar$0 = badJson;
     %26 = ConstantLoad {not valid json}
     $desugar$1 = %26;
-    %28 = $default$0($desugar$0,$desugar$1) -> bb11;
+    %28 = $default$1($desugar$0,$desugar$1) -> bb11;
   }
   bb11 {
     $desugar$2 = %28;
@@ -79,7 +79,7 @@ main() -> nil|error{
     $desugar$4 = trailingJson;
     %40 = ConstantLoad {"k": 1} extra
     $desugar$5 = %40;
-    %42 = $default$0($desugar$4,$desugar$5) -> bb17;
+    %42 = $default$1($desugar$4,$desugar$5) -> bb17;
   }
   bb17 {
     $desugar$6 = %42;

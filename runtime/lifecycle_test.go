@@ -19,6 +19,7 @@ package runtime_test
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -490,6 +491,18 @@ func (p *lifecycleTestPal) Platform() pal.Platform {
 		FS: pal.FS{
 			ReadFile: func(path string) ([]byte, error) {
 				return nil, &fs.PathError{Op: "open", Path: path, Err: fs.ErrNotExist}
+			},
+			OpenReadable: func(path string) (io.ReadCloser, error) {
+				return os.Open(path)
+			},
+			OpenWritable: func(path string, appendMode bool) (io.WriteCloser, error) {
+				flag := os.O_CREATE | os.O_WRONLY
+				if appendMode {
+					flag |= os.O_APPEND
+				} else {
+					flag |= os.O_TRUNC
+				}
+				return os.OpenFile(path, flag, 0o644)
 			},
 		},
 		HTTP: pal.HTTP{

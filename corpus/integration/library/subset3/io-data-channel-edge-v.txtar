@@ -1,0 +1,13 @@
+-- stdout --
+Data channel is already closed.
+Data channel is already closed.
+0
+EoF when reading from the channel
+true
+258
+0
+1
+-1
+9223372036854775807
+-9223372036854775808
+-- stderr --

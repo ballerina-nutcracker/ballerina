@@ -17,7 +17,7 @@ main() -> nil|error{
     data = %13;
     $desugar$0 = path;
     $desugar$1 = data;
-    %17 = $default$3($desugar$0,$desugar$1) -> bb1;
+    %17 = $default$6($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
     $desugar$2 = %17;

@@ -78,7 +78,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     %9 = ConstantLoad /tmp/bal_rsa_key.pem
     $desugar$0 = %9;
     $desugar$1 = rsaKey;
-    %12 = $default$0($desugar$0,$desugar$1) -> bb1;
+    %12 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
     $desugar$2 = %12;
@@ -99,7 +99,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     %17 = ConstantLoad /tmp/bal_rsa_cert.pem
     $desugar$4 = %17;
     $desugar$5 = rsaCert;
-    %20 = $default$0($desugar$4,$desugar$5) -> bb5;
+    %20 = $default$1($desugar$4,$desugar$5) -> bb5;
   }
   bb5 {
     $desugar$6 = %20;
@@ -120,7 +120,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     %25 = ConstantLoad /tmp/bal_ec_key.pem
     $desugar$8 = %25;
     $desugar$9 = ecKey;
-    %28 = $default$0($desugar$8,$desugar$9) -> bb9;
+    %28 = $default$1($desugar$8,$desugar$9) -> bb9;
   }
   bb9 {
     $desugar$10 = %28;
@@ -141,7 +141,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
     %33 = ConstantLoad /tmp/bal_ec_cert.pem
     $desugar$12 = %33;
     $desugar$13 = ecCert;
-    %36 = $default$0($desugar$12,$desugar$13) -> bb13;
+    %36 = $default$1($desugar$12,$desugar$13) -> bb13;
   }
   bb13 {
     $desugar$14 = %36;

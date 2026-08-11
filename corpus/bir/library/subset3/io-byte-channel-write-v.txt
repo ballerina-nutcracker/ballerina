@@ -1,0 +1,194 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_byte_channel_write.bin
+    path = %1;
+    $desugar$0 = path;
+    %4 = $default$11($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %4;
+    %6 = openWritableFile($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %6;
+    %8 = $desugar$2 is error
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    writer = $desugar$2;
+    %10 = ConstantLoad 1
+    %11 = ConstantLoad 2
+    %12 = ConstantLoad 3
+    %13 = ConstantLoad 4
+    %14 = ConstantLoad 5
+    %15 = ConstantLoad 5
+    %16 = newArray [int:Unsigned8...][%15]{%10, %11, %12, %13, %14}
+    %17 = ConstantLoad 2
+    %18 = %17;
+    %19 = write(writer,%16,%18) -> bb5;
+  }
+  bb5 {
+    n1 = %19;
+    %21 = n1 is int
+    %21 ? bb6 : bb8;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = println((1, n1)) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 51
+    %0 = close((1, writer)) -> bb9;
+  }
+  bb9 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is error
+    %2 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    %3 = fileReadBytes((1, path)) -> bb12;
+  }
+  bb12 {
+    $desugar$4 = %3;
+    %5 = $desugar$4 is error
+    %5 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$4);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    written = $desugar$4;
+    %7 = length(written) -> bb15;
+  }
+  bb15 {
+    %8 = %7;
+    %9 = println(%8) -> bb16;
+  }
+  bb16 {
+    %11 = ConstantLoad 0
+    %10 = written[%11];
+    %12 = %10;
+    %13 = println(%12) -> bb17;
+  }
+  bb17 {
+    %15 = ConstantLoad 2
+    %14 = written[%15];
+    %16 = %14;
+    %17 = println(%16) -> bb18;
+  }
+  bb18 {
+    %18 = ConstantLoad APPEND
+    %19 = openWritableFile((1, path),%18) -> bb19;
+  }
+  bb19 {
+    $desugar$5 = %19;
+    %21 = $desugar$5 is error
+    %21 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$5);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    appender = $desugar$5;
+    %23 = ConstantLoad 9
+    %24 = ConstantLoad 8
+    %25 = ConstantLoad 2
+    %26 = newArray [int:Unsigned8...][%25]{%23, %24}
+    %27 = ConstantLoad 0
+    %28 = %27;
+    %29 = write(appender,%26,%28) -> bb22;
+  }
+  bb22 {
+    $desugar$6 = %29;
+    %31 = $desugar$6 is error
+    %31 ? bb23 : bb24;
+  }
+  bb23 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$6);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb24 {
+    %32 = $desugar$6;
+    %33 = close(appender) -> bb25;
+  }
+  bb25 {
+    $desugar$7 = %33;
+    %35 = $desugar$7 is error
+    %35 ? bb26 : bb27;
+  }
+  bb26 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$7);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    %36 = fileReadBytes((1, path)) -> bb28;
+  }
+  bb28 {
+    $desugar$8 = %36;
+    %38 = $desugar$8 is error
+    %38 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$8);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb30 {
+    appended = $desugar$8;
+    %40 = length(appended) -> bb31;
+  }
+  bb31 {
+    %41 = %40;
+    %42 = println(%41) -> bb32;
+  }
+  bb32 {
+    %44 = ConstantLoad 3
+    %43 = appended[%44];
+    %45 = %43;
+    %46 = println(%45) -> bb33;
+  }
+  bb33 {
+    %48 = ConstantLoad 4
+    %47 = appended[%48];
+    %49 = %47;
+    %50 = println(%49) -> bb34;
+  }
+  bb34 {
+    PopScopeFrame
+    return;
+  }
+}

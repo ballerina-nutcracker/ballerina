@@ -13,7 +13,7 @@ main() -> nil|error{
     written = %9;
     $desugar$0 = path;
     $desugar$1 = written;
-    %13 = $default$2($desugar$0,$desugar$1) -> bb1;
+    %13 = $default$4($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
     $desugar$2 = %13;

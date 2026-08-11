@@ -7,7 +7,7 @@ main() -> nil{
   }
   bb1 {
     $desugar$1 = %3;
-    %5 = newMap {| 'error: never, msg: never, anydata... |}{}
+    %5 = newMap {| error: never, msg: never, anydata... |}{}
     $desugar$2 = %5;
     %7 = printInfo($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
@@ -20,7 +20,7 @@ main() -> nil{
     $desugar$4 = %10;
     %12 = ConstantLoad diskPct
     %13 = ConstantLoad 12
-    %14 = newMap {| 'error: never, msg: never, anydata... |}{%12=%13}
+    %14 = newMap {| error: never, msg: never, anydata... |}{%12=%13}
     $desugar$5 = %14;
     %16 = printWarn($desugar$3,$desugar$4,$desugar$5) -> bb4;
   }
@@ -28,7 +28,7 @@ main() -> nil{
     %17 = ConstantLoad request failed
     %18 = ConstantLoad disk full
     %19 = newError error(%18)
-    %20 = newMap {| 'error: never, msg: never, anydata... |}{}
+    %20 = newMap {| error: never, msg: never, anydata... |}{}
     %21 = printError(%17,%19,%20) -> bb5;
   }
   bb5 {

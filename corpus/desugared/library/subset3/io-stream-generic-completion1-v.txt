@@ -1,0 +1,205 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable inPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_generic_in.txt))))
+      (var-def
+        (variable outPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_generic_out.txt))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref inPath))))
+      (var-def
+        (variable $desugar$1 (expr
+          (list-constructor-expr
+            (literal 72)
+            (literal 101)
+            (literal 108)
+            (literal 108)
+            (literal 111)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$4 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$3))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation io fileReadBlocksAsStream (
+            (simple-var-ref inPath)
+            (literal 2))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$4))) ())
+      (var-def
+        (variable blocks (type
+          (stream-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (simple-var-ref $desugar$4))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref outPath))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref blocks))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$5 (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation io fileWriteBlocksFromStream (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$8))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$8))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation io fileReadBytes (
+            (simple-var-ref outPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$9))) ())
+      (var-def
+        (variable outBytes (type
+          (array-type
+            (value-type byte) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$9))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref outBytes))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (simple-var-ref inPath))))
+      (var-def
+        (variable $desugar$11 (expr
+          (list-constructor-expr
+            (literal Alpha)
+            (literal Beta)))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (invocation io fileWriteLines (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$13))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$13))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$13))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation io fileReadLinesAsStream (
+            (simple-var-ref inPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$14))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$14))) ())
+      (var-def
+        (variable lines (type
+          (stream-type
+            (value-type string)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (simple-var-ref $desugar$14))))
+      (var-def
+        (variable $desugar$15 (expr
+          (simple-var-ref outPath))))
+      (var-def
+        (variable $desugar$16 (expr
+          (simple-var-ref lines))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16))))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation io fileWriteLinesFromStream (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$18))) ())
+      (expression-stmt
+        (simple-var-ref $desugar$18))
+      (var-def
+        (variable $desugar$19 (expr
+          (invocation io fileReadLines (
+            (simple-var-ref outPath))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$19))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$19))) ())
+      (var-def
+        (variable outLines (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$19))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref outLines)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref outLines)
+            (literal 1))))))))

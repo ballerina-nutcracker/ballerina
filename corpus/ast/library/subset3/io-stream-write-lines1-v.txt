@@ -1,0 +1,135 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition LineProvider
+    (variable lines (type
+      (array-type
+        (value-type string) dimensions: 1 ([]))))
+    (variable idx (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function init (
+      (variable lines (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access lines
+            (simple-var-ref self))
+          (simple-var-ref lines))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type string)))
+        (union-type
+          (user-defined-type io Error)
+          (value-type null))))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (field-based-access idx
+              (simple-var-ref self))
+            (invocation length expr:
+              (field-based-access lines
+                (simple-var-ref self)) ()))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (var-def
+            (variable line (type
+              (value-type string)) (expr
+              (index-based-access
+                (field-based-access lines
+                  (simple-var-ref self))
+                (field-based-access idx
+                  (simple-var-ref self))))))
+          (compound-assignment +
+            (field-based-access idx
+              (simple-var-ref self))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (simple-var-ref line))))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_write_lines1.txt))))
+      (var-def
+        (variable lineStream (type
+          (stream-type
+            (value-type string)
+            (union-type
+              (user-defined-type io Error)
+              (value-type null)))) (expr
+          (new (
+            (new
+              (user-defined-type LineProvider) (
+              (list-constructor-expr
+                (literal One)
+                (literal Two)
+                (literal Three)))))))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteLinesFromStream (
+            (simple-var-ref path)
+            (simple-var-ref lineStream)))))
+      (var-def
+        (variable lines (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref path)))))))
+      (foreach
+        (var-def
+          (variable line (type
+            (value-type string))))
+        (simple-var-ref lines)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref line))))))
+      (var-def
+        (variable appendStream (type
+          (stream-type
+            (value-type string)
+            (union-type
+              (user-defined-type io Error)
+              (value-type null)))) (expr
+          (new (
+            (new
+              (user-defined-type LineProvider) (
+              (list-constructor-expr
+                (literal Four)))))))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteLinesFromStream (
+            (simple-var-ref path)
+            (simple-var-ref appendStream)
+            (simple-var-ref io APPEND)))))
+      (var-def
+        (variable allLines (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref path)))))))
+      (foreach
+        (var-def
+          (variable line (type
+            (value-type string))))
+        (simple-var-ref allLines)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref line)))))))))

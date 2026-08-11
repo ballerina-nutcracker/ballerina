@@ -1,0 +1,61 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_byte_channel_readall.bin))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal 10)
+              (literal 20)
+              (literal 30)
+              (literal 40)
+              (literal 50))))))
+      (var-def
+        (variable channel (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (checked-expr
+            (invocation io openReadableFile (
+              (simple-var-ref path)))))))
+      (var-def
+        (variable content (type
+          (union-type
+            (array-type
+              (value-type byte) dimensions: 1 ([]))
+            (user-defined-type io Error))) (expr
+          (invocation readAll expr:
+            (simple-var-ref channel) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref content)
+          (array-type
+            (value-type byte) dimensions: 1 ([])))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation length expr:
+                (simple-var-ref content) ()))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref content)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref content)
+                (literal 4)))))) ())
+      (block-stmt
+        (expression-stmt
+          (checked-expr
+            (invocation close expr:
+              (simple-var-ref channel) ())))))))

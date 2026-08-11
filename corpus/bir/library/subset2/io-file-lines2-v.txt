@@ -9,7 +9,7 @@ main() -> nil|error{
     %6 = ConstantLoad 2
     %7 = newArray [string...][%6]{%4, %5}
     $desugar$1 = %7;
-    %9 = $default$1($desugar$0,$desugar$1) -> bb1;
+    %9 = $default$2($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
     $desugar$2 = %9;

@@ -1,0 +1,122 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_read_lines2.txt
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad 97
+    %5 = ConstantLoad 13
+    %6 = ConstantLoad 10
+    %7 = ConstantLoad 98
+    %8 = ConstantLoad 13
+    %9 = ConstantLoad 99
+    %10 = ConstantLoad 6
+    %11 = newArray [int:Unsigned8...][%10]{%4, %5, %6, %7, %8, %9}
+    $desugar$1 = %11;
+    %13 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %13;
+    %15 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %15;
+    %17 = $desugar$3 is error
+    %17 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %18 = fileReadLinesAsStream(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %18;
+    %20 = $desugar$4 is error
+    %20 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    s = $desugar$4;
+    %22 = streamNext s
+    r1 = %22;
+    %24 = r1 is {| value: string, never... |}
+    %24 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, r1)[%1];
+    %2 = println(%0) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 3
+    %0 = streamNext (1, s)
+    r2 = %0;
+    %2 = r2 is {| value: string, never... |}
+    %2 ? bb11 : bb13;
+  }
+  bb11 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, r2)[%1];
+    %2 = println(%0) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 3
+    %0 = streamNext (2, s)
+    r3 = %0;
+    %2 = r3 is {| value: string, never... |}
+    %2 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, r3)[%1];
+    %2 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 3
+    %0 = streamNext (3, s)
+    r4 = %0;
+    %2 = r4 is nil
+    %2 ? bb17 : bb19;
+  }
+  bb17 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb19 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

@@ -1,0 +1,91 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_byte_channel_closed.bin))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))))))
+      (var-def
+        (variable reader (type
+          (user-defined-type io ReadableByteChannel)) (expr
+          (checked-expr
+            (invocation io openReadableFile (
+              (simple-var-ref path)))))))
+      (expression-stmt
+        (checked-expr
+          (invocation close expr:
+            (simple-var-ref reader) ())))
+      (var-def
+        (variable secondClose (type
+          (union-type
+            (user-defined-type io Error)
+            (value-type null))) (expr
+          (invocation close expr:
+            (simple-var-ref reader) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref secondClose)
+            (user-defined-type io Error)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref secondClose)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref secondClose) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable readAfterClose (type
+            (union-type
+              (array-type
+                (value-type byte) dimensions: 1 ([]))
+              (user-defined-type io Error))) (expr
+            (invocation read expr:
+              (simple-var-ref reader) (
+              (literal 1))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref readAfterClose)
+              (user-defined-type io Error)))))
+        (var-def
+          (variable writer (type
+            (user-defined-type io WritableByteChannel)) (expr
+            (checked-expr
+              (invocation io openWritableFile (
+                (simple-var-ref path)))))))
+        (expression-stmt
+          (checked-expr
+            (invocation close expr:
+              (simple-var-ref writer) ())))
+        (var-def
+          (variable writeAfterClose (type
+            (union-type
+              (value-type int)
+              (user-defined-type io Error))) (expr
+            (invocation write expr:
+              (simple-var-ref writer) (
+              (list-constructor-expr
+                (literal 1))
+              (literal 0))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref writeAfterClose)
+              (user-defined-type io Error)))))))))

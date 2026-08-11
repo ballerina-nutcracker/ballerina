@@ -7,7 +7,7 @@ main() -> nil{
   }
   bb1 {
     $desugar$1 = %3;
-    %5 = newMap {| 'error: never, msg: never, anydata... |}{}
+    %5 = newMap {| error: never, msg: never, anydata... |}{}
     $desugar$2 = %5;
     %7 = printDebug($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }

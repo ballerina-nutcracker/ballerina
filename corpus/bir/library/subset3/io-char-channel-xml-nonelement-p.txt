@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_char_xml_nonelement.xml
+    $desugar$0 = %1;
+    %3 = $default$11($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = openWritableFile($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %5;
+    %7 = $desugar$2 is error
+    %7 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$2);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    wb = $desugar$2;
+    %9 = newObject ballerina/io:WritableCharacterChannel
+    %10 = ConstantLoad UTF-8
+    %11 = init(%9,wb,%10) -> bb5;
+  }
+  bb5 {
+    %13 = %11 is nil
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %12 = %9;
+    GOTO bb8;
+  }
+  bb7 {
+    %12 = %11;
+    GOTO bb8;
+  }
+  bb8 {
+    wc = %12;
+    %15 = ConstantLoad c
+    %16 = newXMLComment(%15)
+    %17 = ConstantLoad note
+    %18 = newXMLElement(%17, ())
+    %19 = newXMLSequence{%16, %18}
+    seq = %19;
+    %21 = ConstantLoad system
+    %22 = ConstantLoad note.dtd
+    %23 = newMap {| internalSubset: nil|string, public: nil|string, system: nil|string, never... |}{%21=%22} defaults{system=ballerina/io:$desugar$0, public=ballerina/io:$desugar$1, internalSubset=ballerina/io:$desugar$2}
+    %24 = writeXml(wc,seq,%23) -> bb9;
+  }
+  bb9 {
+    $desugar$3 = %24;
+    %26 = $desugar$3 is error
+    %26 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    %27 = ConstantLoad unreached
+    %28 = println(%27) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

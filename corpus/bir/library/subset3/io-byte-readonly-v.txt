@@ -1,0 +1,170 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_byte_readonly.bin
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 4
+    %8 = ConstantLoad 5
+    %9 = ConstantLoad 5
+    %10 = newArray [int:Unsigned8...][%9]{%4, %5, %6, %7, %8}
+    $desugar$1 = %10;
+    %12 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %12;
+    %14 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %14;
+    %16 = $desugar$3 is error
+    %16 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %17 = fileReadBytes(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %17;
+    %19 = $desugar$4 is error
+    %19 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    bytes = $desugar$4;
+    %21 = bytes is readonly&[int:Unsigned8...]
+    %22 = %21;
+    %23 = println(%22) -> bb8;
+  }
+  bb8 {
+    %24 = length(bytes) -> bb9;
+  }
+  bb9 {
+    %25 = %24;
+    %26 = println(%25) -> bb10;
+  }
+  bb10 {
+    %27 = ConstantLoad 2
+    %28 = %27;
+    %29 = fileReadBlocksAsStream(path,%28) -> bb11;
+  }
+  bb11 {
+    $desugar$5 = %29;
+    %31 = $desugar$5 is error
+    %31 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$5);
+    PopScopeFrame
+    return;
+  }
+  bb13 {
+    blocks = $desugar$5;
+    %33 = streamNext blocks
+    first = %33;
+    %35 = first is {| value: readonly&[int:Unsigned8...], never... |}
+    %35 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, first)[%1];
+    %2 = %0 is readonly&[int:Unsigned8...]
+    %3 = %2;
+    %4 = println(%3) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 21
+    %0 = streamClose (1, blocks)
+    $desugar$6 = %0;
+    %2 = $desugar$6 is error
+    %2 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$6);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb18 {
+    %3 = openReadableFile((1, path)) -> bb19;
+  }
+  bb19 {
+    $desugar$7 = %3;
+    %5 = $desugar$7 is error
+    %5 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$7);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb21 {
+    channel = $desugar$7;
+    %7 = readAll(channel) -> bb22;
+  }
+  bb22 {
+    $desugar$8 = %7;
+    %9 = $desugar$8 is error
+    %9 ? bb23 : bb24;
+  }
+  bb23 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$8);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb24 {
+    all = $desugar$8;
+    %11 = all is readonly&[int:Unsigned8...]
+    %12 = %11;
+    %13 = println(%12) -> bb25;
+  }
+  bb25 {
+    %15 = ConstantLoad 4
+    %14 = all[%15];
+    %16 = %14;
+    %17 = println(%16) -> bb26;
+  }
+  bb26 {
+    %18 = close(channel) -> bb27;
+  }
+  bb27 {
+    $desugar$9 = %18;
+    %20 = $desugar$9 is error
+    %20 ? bb28 : bb29;
+  }
+  bb28 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$9);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb29 {
+    PopScopeFrame
+    return;
+  }
+}

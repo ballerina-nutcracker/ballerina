@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable bad (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation io createReadableChannel (
+            (list-constructor-expr
+              (literal 33)
+              (literal 64)
+              (literal 35)
+              (literal 36))))))))
+    (var-def
+      (variable dec (type
+        (user-defined-type io ReadableByteChannel)) (expr
+        (checked-expr
+          (invocation base64Decode expr:
+            (simple-var-ref bad) ())))))
+    (var-def
+      (variable _ (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation readAll expr:
+            (simple-var-ref dec) ())))))
+  )
+)

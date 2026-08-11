@@ -1,0 +1,99 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_byte_channel_readall.bin
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad 10
+    %5 = ConstantLoad 20
+    %6 = ConstantLoad 30
+    %7 = ConstantLoad 40
+    %8 = ConstantLoad 50
+    %9 = ConstantLoad 5
+    %10 = newArray [int:Unsigned8...][%9]{%4, %5, %6, %7, %8}
+    $desugar$1 = %10;
+    %12 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %12;
+    %14 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %14;
+    %16 = $desugar$3 is error
+    %16 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %17 = openReadableFile(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %17;
+    %19 = $desugar$4 is error
+    %19 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    channel = $desugar$4;
+    %21 = readAll(channel) -> bb8;
+  }
+  bb8 {
+    content = %21;
+    %23 = content is [int:Unsigned8...]
+    %23 ? bb9 : bb14;
+  }
+  bb9 {
+    PushScopeFrame 11
+    %0 = length((1, content)) -> bb10;
+  }
+  bb10 {
+    %1 = %0;
+    %2 = println(%1) -> bb11;
+  }
+  bb11 {
+    %4 = ConstantLoad 0
+    %3 = (1, content)[%4];
+    %5 = %3;
+    %6 = println(%5) -> bb12;
+  }
+  bb12 {
+    %8 = ConstantLoad 4
+    %7 = (1, content)[%8];
+    %9 = %7;
+    %10 = println(%9) -> bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    PushScopeFrame 3
+    %0 = close((1, channel)) -> bb15;
+  }
+  bb15 {
+    $desugar$5 = %0;
+    %2 = $desugar$5 is error
+    %2 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$5);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb17 {
+    PopScopeFrame
+    return;
+  }
+}

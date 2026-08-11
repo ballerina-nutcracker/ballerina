@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: illegal Base64 input: illegal base64 data at input byte 0
+        at ballerina/io:ReadableByteChannel.base64Decode(0.0.1::io.bal:330)
+           main(io-byte-channel-base64-p.bal:24)

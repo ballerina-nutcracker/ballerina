@@ -1,0 +1,20 @@
+-- stdout --
+Ballerina
+[value with spaces  ]
+fallback
+x
+line one continued
+value
+éclair
+3
+8
+true
+#first line
+#second line
+5
+value=1
+text
+ü
+true
+true
+-- stderr --

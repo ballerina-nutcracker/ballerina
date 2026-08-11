@@ -96,7 +96,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (simple-var-ref rsaKey))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def
@@ -121,7 +121,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (simple-var-ref rsaCert))))
       (var-def
         (variable $desugar$6 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$4)
             (simple-var-ref $desugar$5))))))
       (var-def
@@ -146,7 +146,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (simple-var-ref ecKey))))
       (var-def
         (variable $desugar$10 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$8)
             (simple-var-ref $desugar$9))))))
       (var-def
@@ -171,7 +171,7 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
           (simple-var-ref ecCert))))
       (var-def
         (variable $desugar$14 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$12)
             (simple-var-ref $desugar$13))))))
       (var-def

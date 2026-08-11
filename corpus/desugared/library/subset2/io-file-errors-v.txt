@@ -51,7 +51,7 @@
           (literal {not valid json}))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def
@@ -86,7 +86,7 @@
           (literal {"k": 1} extra))))
       (var-def
         (variable $desugar$6 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$4)
             (simple-var-ref $desugar$5))))))
       (var-def

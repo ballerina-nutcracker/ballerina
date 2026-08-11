@@ -1,0 +1,232 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_read_blocks1.bin
+    blockPath = %1;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 3
+    %6 = ConstantLoad 4
+    %7 = ConstantLoad 5
+    %8 = ConstantLoad 6
+    %9 = ConstantLoad 7
+    %10 = ConstantLoad 7
+    %11 = newArray [int:Unsigned8...][%10]{%3, %4, %5, %6, %7, %8, %9}
+    content = %11;
+    $desugar$0 = blockPath;
+    $desugar$1 = content;
+    %15 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %15;
+    %17 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %17;
+    %19 = $desugar$3 is error
+    %19 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %20 = ConstantLoad 3
+    %21 = %20;
+    %22 = fileReadBlocksAsStream(blockPath,%21) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %22;
+    %24 = $desugar$4 is error
+    %24 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    s = $desugar$4;
+    %26 = streamNext s
+    r1 = %26;
+    %28 = r1 is {| value: readonly&[int:Unsigned8...], never... |}
+    %28 ? bb8 : bb12;
+  }
+  bb8 {
+    PushScopeFrame 11
+    %1 = ConstantLoad value
+    %0 = (1, r1)[%1];
+    %2 = length(%0) -> bb9;
+  }
+  bb9 {
+    %3 = %2;
+    %4 = println(%3) -> bb10;
+  }
+  bb10 {
+    %6 = ConstantLoad 0
+    %8 = ConstantLoad value
+    %7 = (1, r1)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb11;
+  }
+  bb11 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 3
+    %0 = streamNext (1, s)
+    r2 = %0;
+    %2 = r2 is {| value: readonly&[int:Unsigned8...], never... |}
+    %2 ? bb13 : bb16;
+  }
+  bb13 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, r2)[%1];
+    %2 = length(%0) -> bb14;
+  }
+  bb14 {
+    %3 = %2;
+    %4 = println(%3) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 3
+    %0 = streamNext (2, s)
+    r3 = %0;
+    %2 = r3 is {| value: readonly&[int:Unsigned8...], never... |}
+    %2 ? bb17 : bb21;
+  }
+  bb17 {
+    PushScopeFrame 11
+    %1 = ConstantLoad value
+    %0 = (1, r3)[%1];
+    %2 = length(%0) -> bb18;
+  }
+  bb18 {
+    %3 = %2;
+    %4 = println(%3) -> bb19;
+  }
+  bb19 {
+    %6 = ConstantLoad 0
+    %8 = ConstantLoad value
+    %7 = (1, r3)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 3
+    %0 = streamNext (3, s)
+    r4 = %0;
+    %2 = r4 is nil
+    %2 ? bb22 : bb24;
+  }
+  bb22 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb23;
+  }
+  bb23 {
+    PopScopeFrame
+    GOTO bb24;
+  }
+  bb24 {
+    PushScopeFrame 25
+    %0 = ConstantLoad /tmp/bal_io_stream_read_blocks_default.bin
+    defaultPath = %0;
+    $desugar$5 = defaultPath;
+    %3 = ConstantLoad 9
+    %4 = ConstantLoad 8
+    %5 = ConstantLoad 7
+    %6 = ConstantLoad 3
+    %7 = newArray [int:Unsigned8...][%6]{%3, %4, %5}
+    $desugar$6 = %7;
+    %9 = $default$4($desugar$5,$desugar$6) -> bb25;
+  }
+  bb25 {
+    $desugar$7 = %9;
+    %11 = fileWriteBytes($desugar$5,$desugar$6,$desugar$7) -> bb26;
+  }
+  bb26 {
+    $desugar$8 = %11;
+    %13 = $desugar$8 is error
+    %13 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (5, %0) = (1, $desugar$8);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    $desugar$9 = defaultPath;
+    %15 = $default$0($desugar$9) -> bb29;
+  }
+  bb29 {
+    $desugar$10 = %15;
+    %17 = $desugar$10;
+    %18 = fileReadBlocksAsStream($desugar$9,%17) -> bb30;
+  }
+  bb30 {
+    $desugar$11 = %18;
+    %20 = $desugar$11 is error
+    %20 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    (5, %0) = (1, $desugar$11);
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    defaultStream = $desugar$11;
+    %22 = streamNext defaultStream
+    d1 = %22;
+    %24 = d1 is {| value: readonly&[int:Unsigned8...], never... |}
+    %24 ? bb33 : bb36;
+  }
+  bb33 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, d1)[%1];
+    %2 = length(%0) -> bb34;
+  }
+  bb34 {
+    %3 = %2;
+    %4 = println(%3) -> bb35;
+  }
+  bb35 {
+    PopScopeFrame
+    GOTO bb36;
+  }
+  bb36 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

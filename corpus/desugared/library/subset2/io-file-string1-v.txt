@@ -18,7 +18,7 @@
 World))))
       (var-def
         (variable $desugar$2 (expr
-          (invocation $default$0 (
+          (invocation $default$1 (
             (simple-var-ref $desugar$0)
             (simple-var-ref $desugar$1))))))
       (var-def

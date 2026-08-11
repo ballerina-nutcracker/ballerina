@@ -31,6 +31,12 @@ func getFormattedError(cs *callStack, r any) error {
 	return fmt.Errorf("%s", formatRuntimePanic(message, stack))
 }
 
+// panicWithExternError raises a native-call failure as a *values.Error so
+// that `trap` can recover it like any other Ballerina panic.
+func panicWithExternError(err error) {
+	panic(values.NewErrorWithMessage(err.Error()))
+}
+
 func panicMessage(r any) string {
 	switch v := r.(type) {
 	case *values.Error:

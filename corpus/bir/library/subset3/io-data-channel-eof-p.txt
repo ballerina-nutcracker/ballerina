@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int:Unsigned8...][%1]{}
+    %3 = createReadableChannel(%2) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %5 = $desugar$0 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$0);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    rb = $desugar$0;
+    $desugar$1 = rb;
+    %8 = $default$9($desugar$1) -> bb4;
+  }
+  bb4 {
+    $desugar$2 = %8;
+    %10 = newObject ballerina/io:ReadableDataChannel
+    %11 = init(%10,$desugar$1,$desugar$2) -> bb5;
+  }
+  bb5 {
+    %13 = %11 is nil
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %12 = %10;
+    GOTO bb8;
+  }
+  bb7 {
+    %12 = %11;
+    GOTO bb8;
+  }
+  bb8 {
+    rd = %12;
+    %15 = readInt64(rd) -> bb9;
+  }
+  bb9 {
+    $desugar$3 = %15;
+    %17 = $desugar$3 is error
+    %17 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb11 {
+    n = $desugar$3;
+    %19 = n;
+    %20 = println(%19) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

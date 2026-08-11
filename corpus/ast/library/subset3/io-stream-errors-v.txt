@@ -1,0 +1,185 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition FailingLineProvider
+    (variable n (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type string)))
+        (union-type
+          (user-defined-type io Error)
+          (value-type null))))
+      (block-function-body
+        (if
+          (binary-expr ==
+            (field-based-access n
+              (simple-var-ref self))
+            (literal 0))
+          (block-stmt
+            (compound-assignment +
+              (field-based-access n
+                (simple-var-ref self))
+              (literal 1))
+            (return
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal first))))) ())
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal boom))))))))
+  (class-definition FailingBlockProvider
+    (variable n (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (array-type
+              (value-type byte) dimensions: 1 ([]))))
+        (union-type
+          (user-defined-type io Error)
+          (value-type null))))
+      (block-function-body
+        (if
+          (binary-expr ==
+            (field-based-access n
+              (simple-var-ref self))
+            (literal 0))
+          (block-stmt
+            (compound-assignment +
+              (field-based-access n
+                (simple-var-ref self))
+              (literal 1))
+            (return
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (list-constructor-expr
+                    (literal 1)
+                    (literal 2)))))) ())
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal block boom))))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable missing (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_missing_xyz.dat))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadLinesAsStream (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadBlocksAsStream (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (var-def
+        (variable existing (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_blocksize_check.bin))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteBytes (
+            (simple-var-ref existing)
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadBlocksAsStream (
+              (simple-var-ref existing)
+              (literal 0)))
+            (user-defined-type io Error)))))
+      (var-def
+        (variable linesPath (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_stream_write_lines_err1.txt))))
+      (var-def
+        (variable lineStream (type
+          (stream-type
+            (value-type string)
+            (union-type
+              (user-defined-type io Error)
+              (value-type null)))) (expr
+          (new (
+            (new
+              (user-defined-type FailingLineProvider) ()))))))
+      (var-def
+        (variable lineResult (type
+          (union-type
+            (user-defined-type io Error)
+            (value-type null))) (expr
+          (invocation io fileWriteLinesFromStream (
+            (simple-var-ref linesPath)
+            (simple-var-ref lineStream))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref lineResult)
+            (user-defined-type io Error)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref lineResult)
+          (user-defined-type io Error))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref lineResult) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable blocksPath (type
+            (value-type string)) (expr
+            (literal /tmp/bal_io_stream_write_blocks_err1.bin))))
+        (var-def
+          (variable blockStream (type
+            (stream-type
+              (array-type
+                (value-type byte) dimensions: 1 ([]))
+              (union-type
+                (user-defined-type io Error)
+                (value-type null)))) (expr
+            (new (
+              (new
+                (user-defined-type FailingBlockProvider) ()))))))
+        (var-def
+          (variable blockResult (type
+            (union-type
+              (user-defined-type io Error)
+              (value-type null))) (expr
+            (invocation io fileWriteBlocksFromStream (
+              (simple-var-ref blocksPath)
+              (simple-var-ref blockStream))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref blockResult)
+              (user-defined-type io Error)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref blockResult)
+            (user-defined-type io Error))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation message expr:
+                  (simple-var-ref blockResult) ()))))) ())
+        (block-stmt)))))

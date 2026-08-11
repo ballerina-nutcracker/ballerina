@@ -1,0 +1,124 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_read_lines1.txt
+    path = %1;
+    $desugar$0 = path;
+    %4 = ConstantLoad Alpha
+    %5 = ConstantLoad Beta
+    %6 = ConstantLoad Gamma
+    %7 = ConstantLoad 3
+    %8 = newArray [string...][%7]{%4, %5, %6}
+    $desugar$1 = %8;
+    %10 = $default$2($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %10;
+    %12 = fileWriteLines($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %12;
+    %14 = $desugar$3 is error
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$3);
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    %15 = fileReadLinesAsStream(path) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %15;
+    %17 = $desugar$4 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$4);
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    s = $desugar$4;
+    %19 = streamNext s
+    r1 = %19;
+    %21 = r1 is {| value: string, never... |}
+    %21 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, r1)[%1];
+    %2 = println(%0) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 3
+    %0 = streamNext (1, s)
+    r2 = %0;
+    %2 = r2 is {| value: string, never... |}
+    %2 ? bb11 : bb13;
+  }
+  bb11 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, r2)[%1];
+    %2 = println(%0) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 3
+    %0 = streamNext (2, s)
+    r3 = %0;
+    %2 = r3 is {| value: string, never... |}
+    %2 ? bb14 : bb16;
+  }
+  bb14 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, r3)[%1];
+    %2 = println(%0) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    PushScopeFrame 3
+    %0 = streamNext (3, s)
+    r4 = %0;
+    %2 = r4 is nil
+    %2 ? bb17 : bb19;
+  }
+  bb17 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb19 {
+    PushScopeFrame 3
+    %0 = streamClose (4, s)
+    closeResult = %0;
+    %2 = println(closeResult) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

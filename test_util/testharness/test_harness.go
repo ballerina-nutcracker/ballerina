@@ -267,6 +267,22 @@ func (p *testPal) Platform() pal.Platform {
 				_, err = f.Write(data)
 				return err
 			},
+			OpenReadable: func(path string) (io.ReadCloser, error) {
+				return os.Open(normalizePath(path))
+			},
+			OpenWritable: func(path string, appendMode bool) (io.WriteCloser, error) {
+				path = normalizePath(path)
+				if err := createParentDirs(path); err != nil {
+					return nil, err
+				}
+				flag := os.O_CREATE | os.O_WRONLY
+				if appendMode {
+					flag |= os.O_APPEND
+				} else {
+					flag |= os.O_TRUNC
+				}
+				return os.OpenFile(path, flag, 0o644)
+			},
 		},
 		OS: pal.OS{
 			GetEnv:      os.Getenv,

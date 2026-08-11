@@ -1,0 +1,18 @@
+-- stdout --
+héllo
+
+wörld
+last
+EoF when reading from the channel
+Character channel is already closed.
+Character channel is already closed.
+ab
+0
+EoF when reading from the channel
+3
+wörld
+héllo
+wörld
+last
+true
+-- stderr --
