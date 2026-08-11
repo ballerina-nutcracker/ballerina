@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "inline_record_default_cross_module"
+version = "0.1.0"

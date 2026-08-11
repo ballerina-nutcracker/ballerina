@@ -85,23 +85,25 @@ type bddSerializationContext struct {
 	pool *TypePool
 	cx   Context
 
-	listAtomMap     map[atom]int32
-	mappingAtomMap  map[atom]int32
-	functionAtomMap map[atom]int32
-	xmlAtomMap      map[atom]int32
+	listAtomMap              map[atom]int32
+	mappingAtomMap           map[atom]int32
+	functionAtomMap          map[atom]int32
+	xmlAtomMap               map[atom]int32
+	mappingAtomicTypeIndexes map[*MappingAtomicType]int32
 
 	bp *binaryPool
 }
 
 func newBddSerializationContext(pool *TypePool, cx Context, bp *binaryPool) *bddSerializationContext {
 	sc := &bddSerializationContext{
-		pool:            pool,
-		cx:              cx,
-		listAtomMap:     make(map[atom]int32),
-		mappingAtomMap:  make(map[atom]int32),
-		functionAtomMap: make(map[atom]int32),
-		xmlAtomMap:      make(map[atom]int32),
-		bp:              bp,
+		pool:                     pool,
+		cx:                       cx,
+		listAtomMap:              make(map[atom]int32),
+		mappingAtomMap:           make(map[atom]int32),
+		functionAtomMap:          make(map[atom]int32),
+		xmlAtomMap:               make(map[atom]int32),
+		mappingAtomicTypeIndexes: make(map[*MappingAtomicType]int32),
+		bp:                       bp,
 	}
 	// Reserve index 0 in list and mapping atom tables for bddRecAtomReadonly
 	bp.listAtomicTypes = append(bp.listAtomicTypes, listAtomicTypeEntry{})
@@ -226,6 +228,7 @@ func (sc *bddSerializationContext) serializeMappingAtom(atom atom) int32 {
 	sc.bp.mappingAtomicTypes = append(sc.bp.mappingAtomicTypes, mappingAtomicTypeEntry{})
 
 	at := sc.cx.MappingAtomType(atom)
+	sc.mappingAtomicTypeIndexes[at] = idx
 	names := make([]enumerableStringDataEntry, len(at.names))
 	types := make([]TypePoolIndex, len(at.types))
 	muts := make([]uint8, len(at.types))
@@ -453,6 +456,7 @@ func (dc *bddDeserializationContext) deserializeMappingAtom(atomIndex int32) ato
 	result := def.defineFromCells(dc.env, cellFields, restCell)
 	atom := extractAtom(result)
 	dc.mappingAtoms[atomIndex] = atom
+	dc.pool.mappingAtomicTypesByIndex[atomIndex] = ContextFrom(dc.env).MappingAtomType(atom)
 	return atom
 }
 

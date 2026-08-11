@@ -105,6 +105,7 @@ type CompilerEnvironment struct {
 	functionSignatures         functionsignatures.Store
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
+	mappingDefaults            sync.Map // *semtypes.MappingAtomicType -> []model.FieldDefault
 	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
 	// a field on each symbol — most symbols carry no annotations, so this avoids
 	// a per-symbol word and keeps lookup keyed by reference. Values are written
@@ -128,6 +129,32 @@ func (c *CompilerEnvironment) SymbolAnnotationValues(symbol model.SymbolRef) val
 		return av.(values.AnnotationValues)
 	}
 	return values.NewAnnotationValues()
+}
+
+// SetMappingDefaults associates a package-level mapping atom with its field defaults.
+// Callers must not mutate defaults after storing them.
+func (c *CompilerEnvironment) SetMappingDefaults(mat *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	c.mappingDefaults.Store(mat, defaults)
+}
+
+// MappingDefaults returns the field defaults associated with a package-level mapping atom.
+// Callers must treat the returned slice as read-only.
+func (c *CompilerEnvironment) MappingDefaults(mat *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	defaults, ok := c.mappingDefaults.Load(mat)
+	if !ok {
+		return nil, false
+	}
+	return defaults.([]model.FieldDefault), true
+}
+
+// MappingDefaultsSnapshot returns a read-only snapshot for symbol-table serialization.
+func (c *CompilerEnvironment) MappingDefaultsSnapshot() map[*semtypes.MappingAtomicType][]model.FieldDefault {
+	snapshot := make(map[*semtypes.MappingAtomicType][]model.FieldDefault)
+	c.mappingDefaults.Range(func(key, value any) bool {
+		snapshot[key.(*semtypes.MappingAtomicType)] = value.([]model.FieldDefault)
+		return true
+	})
+	return snapshot
 }
 
 func (c *CompilerEnvironment) DiagnosticEnv() *diagnostics.DiagnosticEnv {

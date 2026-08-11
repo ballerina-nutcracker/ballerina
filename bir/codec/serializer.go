@@ -73,7 +73,7 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 
 	write(buf, int32(BIR_VERSION))
 
-	tpBytes := semtypes.MarshalTypePool(bw.tp, bw.env)
+	tpBytes := semtypes.MarshalTypePool(bw.tp, bw.env).Bytes()
 	write(buf, int64(len(tpBytes)))
 	_, err = buf.Write(tpBytes)
 	if err != nil {

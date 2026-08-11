@@ -25,15 +25,31 @@ import (
 )
 
 type TypePool struct {
-	tys      []SemType
-	memo     map[InternHandle]TypePoolIndex
-	interner *SemTypeInterner
+	tys                       []SemType
+	memo                      map[InternHandle]TypePoolIndex
+	interner                  *SemTypeInterner
+	mappingAtomicTypesByIndex map[int32]*MappingAtomicType
+}
+
+type TypePoolEncoding struct {
+	data                     []byte
+	mappingAtomicTypeIndexes map[*MappingAtomicType]int32
+}
+
+func (e TypePoolEncoding) Bytes() []byte {
+	return e.data
+}
+
+func (e TypePoolEncoding) MappingAtomicTypeIndex(atom *MappingAtomicType) (int32, bool) {
+	index, ok := e.mappingAtomicTypeIndexes[atom]
+	return index, ok
 }
 
 func NewTypePool() *TypePool {
 	return &TypePool{
-		memo:     make(map[InternHandle]TypePoolIndex),
-		interner: NewSemtypeInterner(),
+		memo:                      make(map[InternHandle]TypePoolIndex),
+		interner:                  NewSemtypeInterner(),
+		mappingAtomicTypesByIndex: make(map[int32]*MappingAtomicType),
 	}
 }
 
@@ -74,7 +90,13 @@ func (pool *TypePool) PutErrorDefinition(ty SemType) TypePoolIndex {
 	return pool.Put(stripErrorDistinctAtoms(ty))
 }
 
-func fromTypePool(pool *TypePool, env Env) binaryPool {
+// MappingAtomicTypeAt returns the mapping atom reconstructed at a serialized index.
+func (pool *TypePool) MappingAtomicTypeAt(index int32) (*MappingAtomicType, bool) {
+	atom, ok := pool.mappingAtomicTypesByIndex[index]
+	return atom, ok
+}
+
+func fromTypePool(pool *TypePool, env Env) (binaryPool, map[*MappingAtomicType]int32) {
 	bp := binaryPool{}
 	cx := ContextFrom(env)
 	sc := newBddSerializationContext(pool, cx, &bp)
@@ -163,14 +185,15 @@ func fromTypePool(pool *TypePool, env Env) binaryPool {
 	bp.nListAtomicTypes = uint32(len(bp.listAtomicTypes))
 	bp.nMappingAtomicTypes = uint32(len(bp.mappingAtomicTypes))
 	bp.nFunctionAtomicTypes = uint32(len(bp.functionAtomicTypes))
-	return bp
+	return bp, sc.mappingAtomicTypeIndexes
 }
 
 func toTypePool(bp binaryPool, env Env) *TypePool {
 	pool := &TypePool{
-		memo:     make(map[InternHandle]TypePoolIndex),
-		interner: NewSemtypeInterner(),
-		tys:      make([]SemType, len(bp.types)),
+		memo:                      make(map[InternHandle]TypePoolIndex),
+		interner:                  NewSemtypeInterner(),
+		tys:                       make([]SemType, len(bp.types)),
+		mappingAtomicTypesByIndex: make(map[int32]*MappingAtomicType),
 	}
 	dc := newBddDeserializationContext(pool, env, &bp)
 	for i := range bp.types {
@@ -179,8 +202,8 @@ func toTypePool(bp binaryPool, env Env) *TypePool {
 	return pool
 }
 
-func MarshalTypePool(pool *TypePool, env Env) []byte {
-	bp := fromTypePool(pool, env)
+func MarshalTypePool(pool *TypePool, env Env) TypePoolEncoding {
+	bp, mappingAtomicTypeIndexes := fromTypePool(pool, env)
 	buf := &bytes.Buffer{}
 
 	write(buf, bp.nIntSubtypes)
@@ -264,7 +287,10 @@ func MarshalTypePool(pool *TypePool, env Env) []byte {
 	marshalSubtypeData(buf, bp.subtypeData)
 	marshalTypes(buf, bp.types)
 
-	return buf.Bytes()
+	return TypePoolEncoding{
+		data:                     buf.Bytes(),
+		mappingAtomicTypeIndexes: mappingAtomicTypeIndexes,
+	}
 }
 
 func UnmarshalTypePool(data []byte, env Env) *TypePool {
