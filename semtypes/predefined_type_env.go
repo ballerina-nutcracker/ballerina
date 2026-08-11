@@ -23,7 +23,7 @@ import (
 
 // initializedTypeAtom is a generic record holding an atomic type and its index
 type initializedTypeAtom[E interface {
-	atomicType
+	AtomicType
 	comparable
 }] struct {
 	atomicType E
@@ -135,7 +135,7 @@ func (p *predefinedTypeEnv) addInitializedMapAtom(atom *MappingAtomicType) {
 
 // addInitializedAtom is a generic function to add an atom to the atoms list with an index
 func addInitializedAtom[E interface {
-	atomicType
+	AtomicType
 	comparable
 }](env *predefinedTypeEnv, atoms *[]initializedTypeAtom[E], atom E) {
 	*atoms = append(*atoms, initializedTypeAtom[E]{atomicType: atom, index: env.nextAtomIndex})
@@ -159,7 +159,7 @@ func (p *predefinedTypeEnv) mappingAtomIndex(atom *MappingAtomicType) int {
 
 // atomIndex is a generic function to find the index of an atom in the atoms list.
 func atomIndex[E interface {
-	atomicType
+	AtomicType
 	comparable
 }](initializedAtoms []initializedTypeAtom[E], atom E) int {
 	for _, initializedAtom := range initializedAtoms {
