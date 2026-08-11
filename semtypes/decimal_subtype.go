@@ -17,8 +17,8 @@
 package semtypes
 
 import (
-	"ballerina/common"
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 type decimalSubtype struct {

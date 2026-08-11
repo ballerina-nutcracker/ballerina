@@ -16,7 +16,7 @@
 
 package semantics
 
-import "ballerina/ast"
+import "github.com/ballerina-nutcracker/ballerina/ast"
 
 // enclosingClassBody captures the subset of a class or service body that
 // semantic analysis (in particular lock validation and isolated-field

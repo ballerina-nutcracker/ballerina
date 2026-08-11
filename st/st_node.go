@@ -14,15 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package tree
+package st
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
 
-	"ballerina/parser/common"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // This represent green nodes in the syntax tree. Green nodes satisfy fallowing properties:
@@ -39,7 +38,7 @@ import (
 // exposed
 
 type STNode interface {
-	Kind() common.SyntaxKind
+	Kind() SyntaxKind
 	Diagnostics() []STNodeDiagnostic
 	Width() uint16
 	WidthWithLeadingMinutiae() uint16
@@ -69,13 +68,13 @@ type STToken interface {
 
 // Actual "base" types for AST nodes. We generate most of the actual nodes in st_node_gen.go.
 //
-//go:generate ../../tree-gen -config ../nodes.json -type st-node -template ../../compiler-tools/tree-gen/templates/st-node.go.tmpl -output st_node_gen.go -util-template ../../compiler-tools/tree-gen/templates/st-node-util.go.tmpl -util-output st_node_util_gen.go
+//go:generate ../tree-gen -config nodes.json -type st-node -template ../compiler-tools/tree-gen/templates/st-node.go.tmpl -output st_node_gen.go -util-template ../compiler-tools/tree-gen/templates/st-node-util.go.tmpl -util-output st_node_util_gen.go
 type (
 	STTokenBase struct {
 		diagnostics      []STNodeDiagnostic
 		leadingMinutiae  STNode
 		trailingMinutiae STNode
-		kind             common.SyntaxKind
+		kind             SyntaxKind
 		width            uint16
 		flags            uint8
 	}
@@ -122,7 +121,7 @@ type (
 	}
 
 	STNodeBase struct {
-		kind                      common.SyntaxKind
+		kind                      SyntaxKind
 		diagnostics               []STNodeDiagnostic
 		width                     uint16
 		widthWithLeadingMinutiae  uint16
@@ -253,7 +252,7 @@ func (t *STMissingToken) ModifyWith(leadingMinutiae STNode, trailingMinutiae STN
 }
 
 func (t *STMissingToken) CreateFacade(position int, parent NonTerminalNode) Node {
-	if t.kind == common.IDENTIFIER_TOKEN {
+	if t.kind == IDENTIFIER_TOKEN {
 		return &IdentifierToken{
 			TokenBase: TokenBase{
 				NodeBase: NodeBase{
@@ -357,7 +356,7 @@ func (s *STNodeList) CreateFacade(position int, parent NonTerminalNode) Node {
 var (
 	emptyNodeList = &STNodeList{
 		STNodeBase: STNodeBase{
-			kind: common.LIST,
+			kind: LIST,
 		},
 	}
 )
@@ -366,13 +365,13 @@ var (
 func CreateInvalidTokenMinutiaeNode(token STToken) *STInvalidTokenMinutiaeNode {
 	return createNodeAndAddChildren(&STInvalidTokenMinutiaeNode{
 		STNodeBase: STNodeBase{
-			kind: common.INVALID_TOKEN_MINUTIAE_NODE,
+			kind: INVALID_TOKEN_MINUTIAE_NODE,
 		},
 		token: token,
 	}, token).(*STInvalidTokenMinutiaeNode)
 }
 
-func CreateLiteralValueToken(kind common.SyntaxKind,
+func CreateLiteralValueToken(kind SyntaxKind,
 	text string,
 	leadingTrivia STNode,
 	trailingTrivia STNode,
@@ -380,7 +379,7 @@ func CreateLiteralValueToken(kind common.SyntaxKind,
 	return CreateLiteralValueTokenWithDiagnostics(kind, text, leadingTrivia, trailingTrivia, nil)
 }
 
-func CreateLiteralValueTokenWithDiagnostics(kind common.SyntaxKind,
+func CreateLiteralValueTokenWithDiagnostics(kind SyntaxKind,
 	text string,
 	leadingTrivia STNode,
 	trailingTrivia STNode,
@@ -405,11 +404,11 @@ func CreateDiagnostic(code diagnostics.DiagnosticCode, args ...any) STNodeDiagno
 	}
 }
 
-func CreateTokenFrom(kind common.SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode) STToken {
+func CreateTokenFrom(kind SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode) STToken {
 	return CreateTokenWithDiagnostics(kind, leadingMinutiae, trailingMinutiae, nil)
 }
 
-func CreateTokenWithDiagnostics(kind common.SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode, diagnostics []STNodeDiagnostic) STToken {
+func CreateTokenWithDiagnostics(kind SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode, diagnostics []STNodeDiagnostic) STToken {
 	width := uint16(len(kind.StrValue()))
 	return createNodeAndAddChildren(&STTokenBase{
 		kind:             kind,
@@ -432,7 +431,7 @@ func CreateNodeList(nodes ...STNode) STNode {
 	}
 	return createNodeAndAddChildren(&STNodeList{
 		STNodeBase: STNodeBase{
-			kind: common.LIST,
+			kind: LIST,
 		},
 		children: nodes,
 	}, nodes...)
@@ -442,7 +441,7 @@ func CreateEmptyNodeList() STNode {
 	return emptyNodeList
 }
 
-func CreateMinutiae(kind common.SyntaxKind, text string) *STMinutiae {
+func CreateMinutiae(kind SyntaxKind, text string) *STMinutiae {
 	return &STMinutiae{
 		STNodeBase: STNodeBase{
 			kind: kind,
@@ -454,7 +453,7 @@ func CreateMinutiae(kind common.SyntaxKind, text string) *STMinutiae {
 func CreateInvalidToken(tokenText string) *STInvalidToken {
 	return &STInvalidToken{
 		STTokenBase: STTokenBase{
-			kind:             common.INVALID_TOKEN,
+			kind:             INVALID_TOKEN,
 			width:            uint16(len(tokenText)),
 			leadingMinutiae:  CreateEmptyNodeList(),
 			trailingMinutiae: CreateEmptyNodeList(),
@@ -468,7 +467,7 @@ func CreateInvalidNodeMinutiae(invalidToken STToken) STNode {
 	return createNodeAndAddChildren(&STInvalidNodeMinutiae{
 		STMinutiae: STMinutiae{
 			STNodeBase: STNodeBase{
-				kind: common.INVALID_NODE_MINUTIAE,
+				kind: INVALID_NODE_MINUTIAE,
 			},
 			text: ToSourceCode(invalidNode),
 		},
@@ -479,7 +478,7 @@ func CreateInvalidNodeMinutiae(invalidToken STToken) STNode {
 func CreateIdentifierToken(text string, leadingTrivia STNode, trailingTrivia STNode) STToken {
 	return createNodeAndAddChildren(&STIdentifierToken{
 		STTokenBase: STTokenBase{
-			kind:             common.IDENTIFIER_TOKEN,
+			kind:             IDENTIFIER_TOKEN,
 			width:            uint16(len(text)),
 			leadingMinutiae:  leadingTrivia,
 			trailingMinutiae: trailingTrivia,
@@ -618,9 +617,9 @@ func writeTo(n STNode, builder *strings.Builder) {
 func (n *STNodeBase) setDiagnostics(diagnostics []STNodeDiagnostic) {
 	n.diagnostics = diagnostics
 	if len(diagnostics) > 0 {
-		n.flags = n.flags | HAS_DIAGNOSTIC
+		n.flags = n.flags | hasDiagnosticFlag
 	} else {
-		n.flags = n.flags &^ HAS_DIAGNOSTIC
+		n.flags = n.flags &^ hasDiagnosticFlag
 	}
 }
 
@@ -639,7 +638,7 @@ func (n *STNodeBase) copy() *STNodeBase {
 	}
 }
 
-func (n STNodeBase) Kind() common.SyntaxKind {
+func (n STNodeBase) Kind() SyntaxKind {
 	return n.kind
 }
 
@@ -668,11 +667,11 @@ func (n STNodeBase) Flags() uint8 {
 }
 
 func (n STNodeBase) HasDiagnostics() bool {
-	return isFlagSet(n.flags, HAS_DIAGNOSTIC)
+	return isFlagSet(n.flags, hasDiagnosticFlag)
 }
 
 func (n STNodeBase) IsMissing() bool {
-	return isFlagSet(n.flags, IS_MISSING)
+	return isFlagSet(n.flags, isMissingFlag)
 }
 
 func Tokens(n STNode) []STToken {
@@ -700,7 +699,7 @@ func (n *STNodeBase) updateDiagnostics(children []STNode) {
 			continue
 		}
 		if child.HasDiagnostics() {
-			n.flags = n.flags | HAS_DIAGNOSTIC
+			n.flags = n.flags | hasDiagnosticFlag
 			return
 		}
 	}
@@ -762,7 +761,7 @@ func (n STNodeBase) getLastChildIndex(children []STNode) int {
 	return -1
 }
 
-func (n STTokenBase) Kind() common.SyntaxKind {
+func (n STTokenBase) Kind() SyntaxKind {
 	return n.kind
 }
 
@@ -794,7 +793,7 @@ func (n *STTokenBase) updateDiagnostics(children []STNode) {
 			continue
 		}
 		if child.HasDiagnostics() {
-			n.flags = n.flags | HAS_DIAGNOSTIC
+			n.flags = n.flags | hasDiagnosticFlag
 			return
 		}
 	}
@@ -837,7 +836,7 @@ func (n *STTokenBase) ChildBuckets() []STNode {
 }
 
 func (n *STTokenBase) HasDiagnostics() bool {
-	return isFlagSet(n.flags, HAS_DIAGNOSTIC)
+	return isFlagSet(n.flags, hasDiagnosticFlag)
 }
 
 func (n *STTokenBase) ChildInBucket(bucket int) STNode {
@@ -845,7 +844,7 @@ func (n *STTokenBase) ChildInBucket(bucket int) STNode {
 }
 
 func (n *STTokenBase) IsMissing() bool {
-	return isFlagSet(n.flags, IS_MISSING)
+	return isFlagSet(n.flags, isMissingFlag)
 }
 
 func (n *STTokenBase) Tokens() []STToken {
@@ -893,7 +892,7 @@ func (t *STInvalidToken) Text() string {
 func (t *STTokenBase) HasTrailingNewLine() bool {
 	stNodeList := t.trailingMinutiae.(*STNodeList)
 	for i := 0; i < stNodeList.Size(); i++ {
-		if stNodeList.Get(i).Kind() == common.END_OF_LINE_MINUTIAE {
+		if stNodeList.Get(i).Kind() == END_OF_LINE_MINUTIAE {
 			return true
 		}
 	}
@@ -903,9 +902,9 @@ func (t *STTokenBase) HasTrailingNewLine() bool {
 func (t *STTokenBase) setDiagnostics(diagnostics []STNodeDiagnostic) {
 	t.diagnostics = diagnostics
 	if len(diagnostics) > 0 {
-		t.flags = t.flags | HAS_DIAGNOSTIC
+		t.flags = t.flags | hasDiagnosticFlag
 	} else {
-		t.flags = t.flags &^ HAS_DIAGNOSTIC
+		t.flags = t.flags &^ hasDiagnosticFlag
 	}
 }
 
@@ -1035,25 +1034,25 @@ func rangeCheck(index, size int) {
 }
 
 // getLiteralTokenName returns the name for literal tokens used in S-expression format
-func getLiteralTokenName(kind common.SyntaxKind) string {
+func getLiteralTokenName(kind SyntaxKind) string {
 	switch kind {
-	case common.IDENTIFIER_TOKEN:
+	case IDENTIFIER_TOKEN:
 		return "ident"
-	case common.STRING_LITERAL_TOKEN:
+	case STRING_LITERAL_TOKEN:
 		return "string"
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN:
+	case DECIMAL_INTEGER_LITERAL_TOKEN:
 		return "int"
-	case common.HEX_INTEGER_LITERAL_TOKEN:
+	case HEX_INTEGER_LITERAL_TOKEN:
 		return "hexInt"
-	case common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
+	case DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
 		return "float"
-	case common.HEX_FLOATING_POINT_LITERAL_TOKEN:
+	case HEX_FLOATING_POINT_LITERAL_TOKEN:
 		return "hexFloat"
-	case common.XML_TEXT_CONTENT:
+	case XML_TEXT_CONTENT:
 		return "xmlText"
-	case common.TEMPLATE_STRING:
+	case TEMPLATE_STRING:
 		return "templateString"
-	case common.PROMPT_CONTENT:
+	case PROMPT_CONTENT:
 		return "promptContent"
 	default:
 		return ""
@@ -1063,7 +1062,7 @@ func getLiteralTokenName(kind common.SyntaxKind) string {
 // kindStrValue returns a string representation of the SyntaxKind.
 // If StrValue() returns a non-empty string, it uses that.
 // Otherwise, it returns the Go constant name for known values, or falls back to the tag number.
-func kindStrValue(kind common.SyntaxKind) string {
+func kindStrValue(kind SyntaxKind) string {
 	strVal := kind.StrValue()
 	if strVal != "" {
 		return strVal
@@ -1071,15 +1070,15 @@ func kindStrValue(kind common.SyntaxKind) string {
 
 	// For values where StrValue() returns empty, return the constant name
 	switch kind {
-	case common.INVALID:
+	case INVALID:
 		return "INVALID"
-	case common.MODULE_PART:
+	case MODULE_PART:
 		return "MODULE_PART"
-	case common.EOF_TOKEN:
+	case EOF_TOKEN:
 		return "EOF_TOKEN"
-	case common.LIST:
+	case LIST:
 		return "LIST"
-	case common.NONE:
+	case NONE:
 		return "NONE"
 	default:
 		// Fall back to tag number for unknown values
@@ -1171,8 +1170,8 @@ const (
 
 // Flag constants for STNode
 const (
-	HAS_DIAGNOSTIC uint8 = 1 << 1 // 0x02
-	IS_MISSING     uint8 = 1 << 2 // 0x04
+	hasDiagnosticFlag uint8 = 1 << 1 // 0x02
+	isMissingFlag     uint8 = 1 << 2 // 0x04
 )
 
 // isFlagSet checks whether the given flag is set in the given flags.
@@ -1181,7 +1180,7 @@ func isFlagSet(flags uint8, flag uint8) bool {
 }
 
 func IsSTNodeList(child STNode) bool {
-	return child.Kind() == common.LIST
+	return child.Kind() == LIST
 }
 
 func IsSTNodePresent(child STNode) bool {
@@ -1217,11 +1216,7 @@ func CloneWithLeadingInvalidNodeMinutiaeWithoutDiagnostics(toClone STNode, inval
 	return CloneWithLeadingInvalidNodeMinutiae(toClone, invalidNode, nil)
 }
 
-func CreateMissingTokenWithDiagnosticsFromParserRules(expectedKind common.SyntaxKind, currentCtx common.ParserRuleContext) STToken {
-	return CreateMissingTokenWithDiagnostics(expectedKind, currentCtx.GetErrorCode())
-}
-
-func CreateMissingTokenWithDiagnostics(expectedKind common.SyntaxKind, diagnosticCode diagnostics.DiagnosticCode) STToken {
+func CreateMissingTokenWithDiagnostics(expectedKind SyntaxKind, diagnosticCode diagnostics.DiagnosticCode) STToken {
 	diagnosticList := []STNodeDiagnostic{CreateDiagnosticWithArgs(diagnosticCode)}
 	return CreateMissingToken(expectedKind, diagnosticList)
 }
@@ -1233,12 +1228,12 @@ func CreateDiagnosticWithArgs(diagnosticCode diagnostics.DiagnosticCode, args ..
 	}
 }
 
-func CreateMissingToken(expectedKind common.SyntaxKind, diagnosticList []STNodeDiagnostic) STToken {
+func CreateMissingToken(expectedKind SyntaxKind, diagnosticList []STNodeDiagnostic) STToken {
 	flags := uint8(0)
 	if len(diagnosticList) > 0 {
-		flags = flags | HAS_DIAGNOSTIC
+		flags = flags | hasDiagnosticFlag
 	}
-	flags = flags | IS_MISSING
+	flags = flags | isMissingFlag
 	return &STMissingToken{
 		STTokenBase: STTokenBase{
 			kind:             expectedKind,
@@ -1335,7 +1330,7 @@ func CreateEmptyNode() STNode {
 	return nil
 }
 
-func CreateMarkdownDocumentationLineNode(kind common.SyntaxKind, hashToken STNode, documentElements STNode) STNode {
+func CreateMarkdownDocumentationLineNode(kind SyntaxKind, hashToken STNode, documentElements STNode) STNode {
 	return createNodeAndAddChildren(&STMarkdownDocumentationLineNode{
 		STDocumentationNode: &STNodeBase{
 			kind: kind,
@@ -1348,13 +1343,13 @@ func CreateMarkdownDocumentationLineNode(kind common.SyntaxKind, hashToken STNod
 func CreateMarkdownDocumentationNode(documentationLines STNode) STNode {
 	return createNodeAndAddChildren(&STMarkdownDocumentationNode{
 		STDocumentationNode: &STNodeBase{
-			kind: common.MARKDOWN_DOCUMENTATION,
+			kind: MARKDOWN_DOCUMENTATION,
 		},
 		DocumentationLines: documentationLines,
 	}, documentationLines)
 }
 
-func CreateMarkdownParameterDocumentationLineNode(kind common.SyntaxKind, hashToken STNode, plusToken STNode, parameterName STNode, minusToken STNode, documentElements STNode) STNode {
+func CreateMarkdownParameterDocumentationLineNode(kind SyntaxKind, hashToken STNode, plusToken STNode, parameterName STNode, minusToken STNode, documentElements STNode) STNode {
 	return createNodeAndAddChildren(&STMarkdownParameterDocumentationLineNode{
 		STDocumentationNode: &STNodeBase{
 			kind: kind,
@@ -1370,7 +1365,7 @@ func CreateMarkdownParameterDocumentationLineNode(kind common.SyntaxKind, hashTo
 func CreateBallerinaNameReferenceNode(referenceType STNode, startBacktick STNode, nameReference STNode, endBacktick STNode) STNode {
 	return createNodeAndAddChildren(&STBallerinaNameReferenceNode{
 		STDocumentationNode: &STNodeBase{
-			kind: common.BALLERINA_NAME_REFERENCE,
+			kind: BALLERINA_NAME_REFERENCE,
 		},
 		ReferenceType: referenceType,
 		StartBacktick: startBacktick,
@@ -1382,7 +1377,7 @@ func CreateBallerinaNameReferenceNode(referenceType STNode, startBacktick STNode
 func CreateInlineCodeReferenceNode(startBacktick STNode, codeReference STNode, endBacktick STNode) STNode {
 	return createNodeAndAddChildren(&STInlineCodeReferenceNode{
 		STDocumentationNode: &STNodeBase{
-			kind: common.INLINE_CODE_REFERENCE,
+			kind: INLINE_CODE_REFERENCE,
 		},
 		StartBacktick: startBacktick,
 		CodeReference: codeReference,
@@ -1393,7 +1388,7 @@ func CreateInlineCodeReferenceNode(startBacktick STNode, codeReference STNode, e
 func CreateMarkdownCodeBlockNode(startLineHashToken STNode, startBacktick STNode, langAttribute STNode, codeLines STNode, endLineHashToken STNode, endBacktick STNode) STNode {
 	return createNodeAndAddChildren(&STMarkdownCodeBlockNode{
 		STDocumentationNode: &STNodeBase{
-			kind: common.MARKDOWN_CODE_BLOCK,
+			kind: MARKDOWN_CODE_BLOCK,
 		},
 		StartLineHashToken: startLineHashToken,
 		StartBacktick:      startBacktick,
@@ -1407,7 +1402,7 @@ func CreateMarkdownCodeBlockNode(startLineHashToken STNode, startBacktick STNode
 func CreateMarkdownCodeLineNode(hashToken STNode, codeDescription STNode) STNode {
 	return createNodeAndAddChildren(&STMarkdownCodeLineNode{
 		STDocumentationNode: &STNodeBase{
-			kind: common.MARKDOWN_CODE_LINE,
+			kind: MARKDOWN_CODE_LINE,
 		},
 		HashToken:       hashToken,
 		CodeDescription: codeDescription,
@@ -1417,7 +1412,7 @@ func CreateMarkdownCodeLineNode(hashToken STNode, codeDescription STNode) STNode
 func CreateModulePartNode(imports STNode, members STNode, eofToken STNode) STNode {
 	return createNodeAndAddChildren(&STModulePart{
 		STNode: &STNodeBase{
-			kind: common.MODULE_PART,
+			kind: MODULE_PART,
 		},
 		Imports:  imports,
 		Members:  members,
@@ -1428,14 +1423,14 @@ func CreateModulePartNode(imports STNode, members STNode, eofToken STNode) STNod
 func CreateMetadataNode(documentationString STNode, annotations STNode) STNode {
 	return createNodeAndAddChildren(&STMetadataNode{
 		STNode: &STNodeBase{
-			kind: common.METADATA,
+			kind: METADATA,
 		},
 		DocumentationString: documentationString,
 		Annotations:         annotations,
 	}, documentationString, annotations)
 }
 
-func CreateAmbiguousCollectionNode(kind common.SyntaxKind, collectionStartToken STNode, members []STNode, collectionEndToken STNode) *STAmbiguousCollectionNode {
+func CreateAmbiguousCollectionNode(kind SyntaxKind, collectionStartToken STNode, members []STNode, collectionEndToken STNode) *STAmbiguousCollectionNode {
 	children := make([]STNode, 0, len(members)+2)
 	children = append(children, collectionStartToken)
 	children = append(children, members...)
@@ -1466,7 +1461,7 @@ func UpdateAllNodesInNodeListWithDiagnostic(nodeList *STNodeList, diagnosticCode
 func CreateImportOrgNameNode(orgName STNode, slashToken STNode) STNode {
 	return createNodeAndAddChildren(&STImportOrgNameNode{
 		STNode: &STNodeBase{
-			kind: common.IMPORT_ORG_NAME,
+			kind: IMPORT_ORG_NAME,
 		},
 		OrgName:    orgName,
 		SlashToken: slashToken,
@@ -1476,7 +1471,7 @@ func CreateImportOrgNameNode(orgName STNode, slashToken STNode) STNode {
 func CreateImportDeclarationNode(importKeyword STNode, orgName STNode, moduleName STNode, prefix STNode, semicolon STNode) STNode {
 	return createNodeAndAddChildren(&STImportDeclarationNode{
 		STNode: &STNodeBase{
-			kind: common.IMPORT_DECLARATION,
+			kind: IMPORT_DECLARATION,
 		},
 		ImportKeyword: importKeyword,
 		OrgName:       orgName,
@@ -1487,7 +1482,7 @@ func CreateImportDeclarationNode(importKeyword STNode, orgName STNode, moduleNam
 }
 
 // FIXME:
-func CreateBuiltinSimpleNameReferenceNode(kind common.SyntaxKind, name STNode) STNode {
+func CreateBuiltinSimpleNameReferenceNode(kind SyntaxKind, name STNode) STNode {
 	return createNodeAndAddChildren(&STBuiltinSimpleNameReferenceNode{
 		STNameReferenceNode: &STNodeBase{
 			kind: kind,
@@ -1499,7 +1494,7 @@ func CreateBuiltinSimpleNameReferenceNode(kind common.SyntaxKind, name STNode) S
 func CreateImportPrefixNode(asKeyword STNode, prefix STNode) STNode {
 	return createNodeAndAddChildren(&STImportPrefixNode{
 		STNode: &STNodeBase{
-			kind: common.IMPORT_PREFIX,
+			kind: IMPORT_PREFIX,
 		},
 		AsKeyword: asKeyword,
 		Prefix:    prefix,
@@ -1509,7 +1504,7 @@ func CreateImportPrefixNode(asKeyword STNode, prefix STNode) STNode {
 func CreateSpecificFieldNode(readonlyKeyword STNode, fieldName STNode, colon STNode, valueExpr STNode) STNode {
 	return createNodeAndAddChildren(&STSpecificFieldNode{
 		STMappingFieldNode: &STNodeBase{
-			kind: common.SPECIFIC_FIELD,
+			kind: SPECIFIC_FIELD,
 		},
 		ReadonlyKeyword: readonlyKeyword,
 		FieldName:       fieldName,
@@ -1521,7 +1516,7 @@ func CreateSpecificFieldNode(readonlyKeyword STNode, fieldName STNode, colon STN
 func CreateCaptureBindingPatternNode(variableName STNode) STNode {
 	return createNodeAndAddChildren(&STCaptureBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.CAPTURE_BINDING_PATTERN,
+			kind: CAPTURE_BINDING_PATTERN,
 		},
 		VariableName: variableName,
 	}, variableName)
@@ -1530,7 +1525,7 @@ func CreateCaptureBindingPatternNode(variableName STNode) STNode {
 func CreateTypedBindingPatternNode(typeDescriptor STNode, bindingPattern STNode) STNode {
 	return createNodeAndAddChildren(&STTypedBindingPatternNode{
 		STNode: &STNodeBase{
-			kind: common.TYPED_BINDING_PATTERN,
+			kind: TYPED_BINDING_PATTERN,
 		},
 		TypeDescriptor: typeDescriptor,
 		BindingPattern: bindingPattern,
@@ -1540,7 +1535,7 @@ func CreateTypedBindingPatternNode(typeDescriptor STNode, bindingPattern STNode)
 func CreateSimpleNameReferenceNode(name STNode) STNode {
 	return createNodeAndAddChildren(&STSimpleNameReferenceNode{
 		STNameReferenceNode: &STNodeBase{
-			kind: common.SIMPLE_NAME_REFERENCE,
+			kind: SIMPLE_NAME_REFERENCE,
 		},
 		Name: name,
 	}, name)
@@ -1549,7 +1544,7 @@ func CreateSimpleNameReferenceNode(name STNode) STNode {
 func CreateFieldBindingPatternFullNode(variableName STNode, colon STNode, bindingPattern STNode) STNode {
 	return createNodeAndAddChildren(&STFieldBindingPatternFullNode{
 		STFieldBindingPatternNode: &STNodeBase{
-			kind: common.FIELD_BINDING_PATTERN,
+			kind: FIELD_BINDING_PATTERN,
 		},
 		VariableName:   variableName,
 		Colon:          colon,
@@ -1560,7 +1555,7 @@ func CreateFieldBindingPatternFullNode(variableName STNode, colon STNode, bindin
 func CreateRestBindingPatternNode(ellipsisToken STNode, variableName STNode) STNode {
 	return createNodeAndAddChildren(&STRestBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.REST_BINDING_PATTERN,
+			kind: REST_BINDING_PATTERN,
 		},
 		EllipsisToken: ellipsisToken,
 		VariableName:  variableName,
@@ -1570,7 +1565,7 @@ func CreateRestBindingPatternNode(ellipsisToken STNode, variableName STNode) STN
 func CreateSpreadFieldNode(ellipsis STNode, valueExpr STNode) STNode {
 	return createNodeAndAddChildren(&STSpreadFieldNode{
 		STMappingFieldNode: &STNodeBase{
-			kind: common.SPREAD_FIELD,
+			kind: SPREAD_FIELD,
 		},
 		Ellipsis:  ellipsis,
 		ValueExpr: valueExpr,
@@ -1580,7 +1575,7 @@ func CreateSpreadFieldNode(ellipsis STNode, valueExpr STNode) STNode {
 func CreateSingletonTypeDescriptorNode(simpleContExprNode STNode) STNode {
 	return createNodeAndAddChildren(&STSingletonTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.SINGLETON_TYPE_DESC,
+			kind: SINGLETON_TYPE_DESC,
 		},
 		SimpleContExprNode: simpleContExprNode,
 	}, simpleContExprNode)
@@ -1589,7 +1584,7 @@ func CreateSingletonTypeDescriptorNode(simpleContExprNode STNode) STNode {
 func CreateListConstructorExpressionNode(openBracket STNode, expressions STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STListConstructorExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.LIST_CONSTRUCTOR,
+			kind: LIST_CONSTRUCTOR,
 		},
 		OpenBracket:  openBracket,
 		Expressions:  expressions,
@@ -1600,7 +1595,7 @@ func CreateListConstructorExpressionNode(openBracket STNode, expressions STNode,
 func CreateListBindingPatternNode(openBracket STNode, bindingPatterns STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STListBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.LIST_BINDING_PATTERN,
+			kind: LIST_BINDING_PATTERN,
 		},
 		OpenBracket:     openBracket,
 		BindingPatterns: bindingPatterns,
@@ -1611,14 +1606,14 @@ func CreateListBindingPatternNode(openBracket STNode, bindingPatterns STNode, cl
 func CreateInferredTypedescDefaultNode(ltToken STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STInferredTypedescDefaultNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.INFERRED_TYPEDESC_DEFAULT,
+			kind: INFERRED_TYPEDESC_DEFAULT,
 		},
 		LtToken: ltToken,
 		GtToken: gtToken,
 	}, ltToken, gtToken)
 }
 
-func CreateBinaryExpressionNode(kind common.SyntaxKind, lhsExpr STNode, operator STNode, rhsExpr STNode) STNode {
+func CreateBinaryExpressionNode(kind SyntaxKind, lhsExpr STNode, operator STNode, rhsExpr STNode) STNode {
 	return createNodeAndAddChildren(&STBinaryExpressionNode{
 		STExpressionNode: &STNodeBase{
 			kind: kind,
@@ -1632,7 +1627,7 @@ func CreateBinaryExpressionNode(kind common.SyntaxKind, lhsExpr STNode, operator
 func CreateFieldAccessExpressionNode(expression STNode, dotToken STNode, fieldName STNode) STNode {
 	return createNodeAndAddChildren(&STFieldAccessExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.FIELD_ACCESS,
+			kind: FIELD_ACCESS,
 		},
 		Expression: expression,
 		DotToken:   dotToken,
@@ -1643,7 +1638,7 @@ func CreateFieldAccessExpressionNode(expression STNode, dotToken STNode, fieldNa
 func CreateIndexedExpressionNode(containerExpression STNode, openBracket STNode, keyExpression STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STIndexedExpressionNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.INDEXED_EXPRESSION,
+			kind: INDEXED_EXPRESSION,
 		},
 		ContainerExpression: containerExpression,
 		OpenBracket:         openBracket,
@@ -1655,7 +1650,7 @@ func CreateIndexedExpressionNode(containerExpression STNode, openBracket STNode,
 func CreateTypeTestExpressionNode(expression STNode, isKeyword STNode, typeDescriptor STNode) STNode {
 	return createNodeAndAddChildren(&STTypeTestExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.TYPE_TEST_EXPRESSION,
+			kind: TYPE_TEST_EXPRESSION,
 		},
 		Expression:     expression,
 		IsKeyword:      isKeyword,
@@ -1666,7 +1661,7 @@ func CreateTypeTestExpressionNode(expression STNode, isKeyword STNode, typeDescr
 func CreateConditionalExpressionNode(lhsExpression STNode, questionMarkToken STNode, middleExpression STNode, colonToken STNode, endExpression STNode) STNode {
 	return createNodeAndAddChildren(&STConditionalExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.CONDITIONAL_EXPRESSION,
+			kind: CONDITIONAL_EXPRESSION,
 		},
 		LhsExpression:     lhsExpression,
 		QuestionMarkToken: questionMarkToken,
@@ -1679,7 +1674,7 @@ func CreateConditionalExpressionNode(lhsExpression STNode, questionMarkToken STN
 func CreateRemoteMethodCallActionNode(expression STNode, rightArrowToken STNode, methodName STNode, openParenToken STNode, arguments STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STRemoteMethodCallActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.REMOTE_METHOD_CALL_ACTION,
+			kind: REMOTE_METHOD_CALL_ACTION,
 		},
 		Expression:      expression,
 		RightArrowToken: rightArrowToken,
@@ -1693,7 +1688,7 @@ func CreateRemoteMethodCallActionNode(expression STNode, rightArrowToken STNode,
 func CreateAsyncSendActionNode(expression STNode, rightArrowToken STNode, peerWorker STNode) STNode {
 	return createNodeAndAddChildren(&STAsyncSendActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.ASYNC_SEND_ACTION,
+			kind: ASYNC_SEND_ACTION,
 		},
 		Expression:      expression,
 		RightArrowToken: rightArrowToken,
@@ -1704,7 +1699,7 @@ func CreateAsyncSendActionNode(expression STNode, rightArrowToken STNode, peerWo
 func CreateFunctionCallExpressionNode(functionName STNode, openParenToken STNode, arguments STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STFunctionCallExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.FUNCTION_CALL,
+			kind: FUNCTION_CALL,
 		},
 		FunctionName:    functionName,
 		OpenParenToken:  openParenToken,
@@ -1716,7 +1711,7 @@ func CreateFunctionCallExpressionNode(functionName STNode, openParenToken STNode
 func CreateArrayTypeDescriptorNode(memberTypeDesc STNode, dimensions STNode) STNode {
 	return createNodeAndAddChildren(&STArrayTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.ARRAY_TYPE_DESC,
+			kind: ARRAY_TYPE_DESC,
 		},
 		MemberTypeDesc: memberTypeDesc,
 		Dimensions:     dimensions,
@@ -1726,7 +1721,7 @@ func CreateArrayTypeDescriptorNode(memberTypeDesc STNode, dimensions STNode) STN
 func CreateOptionalTypeDescriptorNode(typeDescriptor STNode, questionMarkToken STNode) STNode {
 	return createNodeAndAddChildren(&STOptionalTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.OPTIONAL_TYPE_DESC,
+			kind: OPTIONAL_TYPE_DESC,
 		},
 		TypeDescriptor:    typeDescriptor,
 		QuestionMarkToken: questionMarkToken,
@@ -1736,7 +1731,7 @@ func CreateOptionalTypeDescriptorNode(typeDescriptor STNode, questionMarkToken S
 func CreateMemberTypeDescriptorNode(annotations STNode, typeDescriptor STNode) STNode {
 	return createNodeAndAddChildren(&STMemberTypeDescriptorNode{
 		STNode: &STNodeBase{
-			kind: common.MEMBER_TYPE_DESC,
+			kind: MEMBER_TYPE_DESC,
 		},
 		Annotations:    annotations,
 		TypeDescriptor: typeDescriptor,
@@ -1746,7 +1741,7 @@ func CreateMemberTypeDescriptorNode(annotations STNode, typeDescriptor STNode) S
 func CreateNilTypeDescriptorNode(openParenToken STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STNilTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.NIL_TYPE_DESC,
+			kind: NIL_TYPE_DESC,
 		},
 		OpenParenToken:  openParenToken,
 		CloseParenToken: closeParenToken,
@@ -1756,7 +1751,7 @@ func CreateNilTypeDescriptorNode(openParenToken STNode, closeParenToken STNode) 
 func CreateParenthesisedTypeDescriptorNode(openParenToken STNode, typedesc STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STParenthesisedTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.PARENTHESISED_TYPE_DESC,
+			kind: PARENTHESISED_TYPE_DESC,
 		},
 		OpenParenToken:  openParenToken,
 		Typedesc:        typedesc,
@@ -1767,7 +1762,7 @@ func CreateParenthesisedTypeDescriptorNode(openParenToken STNode, typedesc STNod
 func CreateTupleTypeDescriptorNode(openBracket STNode, memberTypeDesc STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STTupleTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.TUPLE_TYPE_DESC,
+			kind: TUPLE_TYPE_DESC,
 		},
 		OpenBracketToken:  openBracket,
 		MemberTypeDesc:    memberTypeDesc,
@@ -1778,7 +1773,7 @@ func CreateTupleTypeDescriptorNode(openBracket STNode, memberTypeDesc STNode, cl
 func CreateMappingBindingPatternNode(openBrace STNode, fieldBindingPatterns STNode, closeBrace STNode) STNode {
 	return createNodeAndAddChildren(&STMappingBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.MAPPING_BINDING_PATTERN,
+			kind: MAPPING_BINDING_PATTERN,
 		},
 		OpenBrace:            openBrace,
 		FieldBindingPatterns: fieldBindingPatterns,
@@ -1789,7 +1784,7 @@ func CreateMappingBindingPatternNode(openBrace STNode, fieldBindingPatterns STNo
 func CreateFieldBindingPatternVarnameNode(variableName STNode) STNode {
 	return createNodeAndAddChildren(&STFieldBindingPatternVarnameNode{
 		STFieldBindingPatternNode: &STNodeBase{
-			kind: common.FIELD_BINDING_PATTERN,
+			kind: FIELD_BINDING_PATTERN,
 		},
 		VariableName: variableName,
 	}, variableName)
@@ -1798,7 +1793,7 @@ func CreateFieldBindingPatternVarnameNode(variableName STNode) STNode {
 func CreateErrorBindingPatternNode(errorKeyword STNode, typeReference STNode, openParenthesis STNode, argListBindingPatterns STNode, closeParenthesis STNode) STNode {
 	return createNodeAndAddChildren(&STErrorBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.ERROR_BINDING_PATTERN,
+			kind: ERROR_BINDING_PATTERN,
 		},
 		ErrorKeyword:           errorKeyword,
 		TypeReference:          typeReference,
@@ -1811,7 +1806,7 @@ func CreateErrorBindingPatternNode(errorKeyword STNode, typeReference STNode, op
 func CreateNamedArgBindingPatternNode(argName STNode, equalsToken STNode, bindingPattern STNode) STNode {
 	return createNodeAndAddChildren(&STNamedArgBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.NAMED_ARG_BINDING_PATTERN,
+			kind: NAMED_ARG_BINDING_PATTERN,
 		},
 		ArgName:        argName,
 		EqualsToken:    equalsToken,
@@ -1822,7 +1817,7 @@ func CreateNamedArgBindingPatternNode(argName STNode, equalsToken STNode, bindin
 func CreateRestParameterNode(annotations STNode, typeName STNode, ellipsisToken STNode, paramName STNode) STNode {
 	return createNodeAndAddChildren(&STRestParameterNode{
 		STParameterNode: &STNodeBase{
-			kind: common.REST_PARAM,
+			kind: REST_PARAM,
 		},
 		Annotations:   annotations,
 		TypeName:      typeName,
@@ -1834,7 +1829,7 @@ func CreateRestParameterNode(annotations STNode, typeName STNode, ellipsisToken 
 func CreateIncludedRecordParameterNode(annotations STNode, asteriskToken STNode, typeName STNode, paramName STNode) STNode {
 	return createNodeAndAddChildren(&STIncludedRecordParameterNode{
 		STParameterNode: &STNodeBase{
-			kind: common.INCLUDED_RECORD_PARAM,
+			kind: INCLUDED_RECORD_PARAM,
 		},
 		Annotations:   annotations,
 		AsteriskToken: asteriskToken,
@@ -1846,7 +1841,7 @@ func CreateIncludedRecordParameterNode(annotations STNode, asteriskToken STNode,
 func CreateRequiredParameterNode(annotations STNode, typeName STNode, paramName STNode) STNode {
 	return createNodeAndAddChildren(&STRequiredParameterNode{
 		STParameterNode: &STNodeBase{
-			kind: common.REQUIRED_PARAM,
+			kind: REQUIRED_PARAM,
 		},
 		Annotations: annotations,
 		TypeName:    typeName,
@@ -1857,7 +1852,7 @@ func CreateRequiredParameterNode(annotations STNode, typeName STNode, paramName 
 func CreateDefaultableParameterNode(annotations STNode, typeName STNode, paramName STNode, equalsToken STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STDefaultableParameterNode{
 		STParameterNode: &STNodeBase{
-			kind: common.DEFAULTABLE_PARAM,
+			kind: DEFAULTABLE_PARAM,
 		},
 		Annotations: annotations,
 		TypeName:    typeName,
@@ -1870,7 +1865,7 @@ func CreateDefaultableParameterNode(annotations STNode, typeName STNode, paramNa
 func CreateReturnTypeDescriptorNode(returnsKeyword STNode, annotations STNode, typeNode STNode) STNode {
 	return createNodeAndAddChildren(&STReturnTypeDescriptorNode{
 		STNode: &STNodeBase{
-			kind: common.RETURN_TYPE_DESCRIPTOR,
+			kind: RETURN_TYPE_DESCRIPTOR,
 		},
 		ReturnsKeyword: returnsKeyword,
 		Annotations:    annotations,
@@ -1878,7 +1873,7 @@ func CreateReturnTypeDescriptorNode(returnsKeyword STNode, annotations STNode, t
 	}, returnsKeyword, annotations, typeNode)
 }
 
-func CreateFunctionDefinitionNode(kind common.SyntaxKind, metadata STNode, qualifierList STNode, functionKeyword STNode, functionName STNode, relativeResourcePath STNode, functionSignature STNode, functionBody STNode) STNode {
+func CreateFunctionDefinitionNode(kind SyntaxKind, metadata STNode, qualifierList STNode, functionKeyword STNode, functionName STNode, relativeResourcePath STNode, functionSignature STNode, functionBody STNode) STNode {
 	return createNodeAndAddChildren(&STFunctionDefinition{
 		STModuleMemberDeclarationNode: &STNodeBase{
 			kind: kind,
@@ -1893,7 +1888,7 @@ func CreateFunctionDefinitionNode(kind common.SyntaxKind, metadata STNode, quali
 	}, metadata, qualifierList, functionKeyword, functionName, relativeResourcePath, functionSignature, functionBody)
 }
 
-func CreateMethodDeclarationNode(kind common.SyntaxKind, metadata STNode, qualifierList STNode, functionKeyword STNode, methodName STNode, relativeResourcePath STNode, methodSignature STNode, semicolon STNode) STNode {
+func CreateMethodDeclarationNode(kind SyntaxKind, metadata STNode, qualifierList STNode, functionKeyword STNode, methodName STNode, relativeResourcePath STNode, methodSignature STNode, semicolon STNode) STNode {
 	return createNodeAndAddChildren(&STMethodDeclarationNode{
 		STNode: &STNodeBase{
 			kind: kind,
@@ -1911,7 +1906,7 @@ func CreateMethodDeclarationNode(kind common.SyntaxKind, metadata STNode, qualif
 func CreateFunctionSignatureNode(openParenToken STNode, parameters STNode, closeParenToken STNode, returnTypeDesc STNode) STNode {
 	return createNodeAndAddChildren(&STFunctionSignatureNode{
 		STNode: &STNodeBase{
-			kind: common.FUNCTION_SIGNATURE,
+			kind: FUNCTION_SIGNATURE,
 		},
 		OpenParenToken:  openParenToken,
 		Parameters:      parameters,
@@ -1923,7 +1918,7 @@ func CreateFunctionSignatureNode(openParenToken STNode, parameters STNode, close
 func CreateFunctionTypeDescriptorNode(qualifierList STNode, functionKeyword STNode, functionSignature STNode) STNode {
 	return createNodeAndAddChildren(&STFunctionTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.FUNCTION_TYPE_DESC,
+			kind: FUNCTION_TYPE_DESC,
 		},
 		QualifierList:     qualifierList,
 		FunctionKeyword:   functionKeyword,
@@ -1934,7 +1929,7 @@ func CreateFunctionTypeDescriptorNode(qualifierList STNode, functionKeyword STNo
 func CreateDistinctTypeDescriptorNode(distinctKeyword STNode, typeDescriptor STNode) STNode {
 	return createNodeAndAddChildren(&STDistinctTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.DISTINCT_TYPE_DESC,
+			kind: DISTINCT_TYPE_DESC,
 		},
 		DistinctKeyword: distinctKeyword,
 		TypeDescriptor:  typeDescriptor,
@@ -1944,7 +1939,7 @@ func CreateDistinctTypeDescriptorNode(distinctKeyword STNode, typeDescriptor STN
 func CreateNamedWorkerDeclarator(workerInitStatements STNode, namedWorkerDeclarations STNode) STNode {
 	return createNodeAndAddChildren(&STNamedWorkerDeclarator{
 		STNode: &STNodeBase{
-			kind: common.NAMED_WORKER_DECLARATOR,
+			kind: NAMED_WORKER_DECLARATOR,
 		},
 		WorkerInitStatements:    workerInitStatements,
 		NamedWorkerDeclarations: namedWorkerDeclarations,
@@ -1954,7 +1949,7 @@ func CreateNamedWorkerDeclarator(workerInitStatements STNode, namedWorkerDeclara
 func CreateFunctionBodyBlockNode(openBraceToken STNode, namedWorkerDeclarator STNode, statements STNode, closeBraceToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STFunctionBodyBlockNode{
 		STFunctionBodyNode: &STNodeBase{
-			kind: common.FUNCTION_BODY_BLOCK,
+			kind: FUNCTION_BODY_BLOCK,
 		},
 		OpenBraceToken:        openBraceToken,
 		NamedWorkerDeclarator: namedWorkerDeclarator,
@@ -1967,7 +1962,7 @@ func CreateFunctionBodyBlockNode(openBraceToken STNode, namedWorkerDeclarator ST
 func CreateExternalFunctionBodyNode(equalsToken STNode, annotations STNode, externalKeyword STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STExternalFunctionBodyNode{
 		STFunctionBodyNode: &STNodeBase{
-			kind: common.EXTERNAL_FUNCTION_BODY,
+			kind: EXTERNAL_FUNCTION_BODY,
 		},
 		EqualsToken:     equalsToken,
 		Annotations:     annotations,
@@ -1979,7 +1974,7 @@ func CreateExternalFunctionBodyNode(equalsToken STNode, annotations STNode, exte
 func CreateRecordTypeDescriptorNode(recordKeyword STNode, bodyStartDelimiter STNode, fields STNode, recordRestDescriptor STNode, bodyEndDelimiter STNode) STNode {
 	return createNodeAndAddChildren(&STRecordTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.RECORD_TYPE_DESC,
+			kind: RECORD_TYPE_DESC,
 		},
 		RecordKeyword:        recordKeyword,
 		BodyStartDelimiter:   bodyStartDelimiter,
@@ -1992,7 +1987,7 @@ func CreateRecordTypeDescriptorNode(recordKeyword STNode, bodyStartDelimiter STN
 func CreateClassDefinitionNode(metadata STNode, visibilityQualifier STNode, classTypeQualifiers STNode, classKeyword STNode, className STNode, openBrace STNode, members STNode, closeBrace STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STClassDefinitionNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.CLASS_DEFINITION,
+			kind: CLASS_DEFINITION,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2009,7 +2004,7 @@ func CreateClassDefinitionNode(metadata STNode, visibilityQualifier STNode, clas
 func CreateTypeDefinitionNode(metadata STNode, visibilityQualifier STNode, typeKeyword STNode, typeName STNode, typeDescriptor STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STTypeDefinitionNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.TYPE_DEFINITION,
+			kind: TYPE_DEFINITION,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2023,7 +2018,7 @@ func CreateTypeDefinitionNode(metadata STNode, visibilityQualifier STNode, typeK
 func CreateTypeReferenceNode(asteriskToken STNode, typeName STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STTypeReferenceNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.TYPE_REFERENCE,
+			kind: TYPE_REFERENCE,
 		},
 		AsteriskToken:  asteriskToken,
 		TypeName:       typeName,
@@ -2034,7 +2029,7 @@ func CreateTypeReferenceNode(asteriskToken STNode, typeName STNode, semicolonTok
 func CreateQualifiedNameReferenceNode(modulePrefix STNode, colon STNode, identifier STNode) STNode {
 	return createNodeAndAddChildren(&STQualifiedNameReferenceNode{
 		STNameReferenceNode: &STNodeBase{
-			kind: common.QUALIFIED_NAME_REFERENCE,
+			kind: QUALIFIED_NAME_REFERENCE,
 		},
 		ModulePrefix: modulePrefix,
 		Colon:        colon,
@@ -2045,7 +2040,7 @@ func CreateQualifiedNameReferenceNode(modulePrefix STNode, colon STNode, identif
 func CreateObjectFieldNode(metadata STNode, visibilityQualifier STNode, qualifierList STNode, typeName STNode, fieldName STNode, equalsToken STNode, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STObjectFieldNode{
 		STNode: &STNodeBase{
-			kind: common.OBJECT_FIELD,
+			kind: OBJECT_FIELD,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2061,7 +2056,7 @@ func CreateObjectFieldNode(metadata STNode, visibilityQualifier STNode, qualifie
 func CreateWhereClauseNode(whereKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STWhereClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.WHERE_CLAUSE,
+			kind: WHERE_CLAUSE,
 		},
 		WhereKeyword: whereKeyword,
 		Expression:   expression,
@@ -2071,7 +2066,7 @@ func CreateWhereClauseNode(whereKeyword STNode, expression STNode) STNode {
 func CreateModuleVariableDeclarationNode(metadata STNode, visibilityQualifier STNode, qualifiers STNode, typedBindingPattern STNode, equalsToken STNode, initializer STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STModuleVariableDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.MODULE_VAR_DECL,
+			kind: MODULE_VAR_DECL,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2086,7 +2081,7 @@ func CreateModuleVariableDeclarationNode(metadata STNode, visibilityQualifier ST
 func CreateRequiredExpressionNode(questionMarkToken STNode) STNode {
 	return createNodeAndAddChildren(&STRequiredExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.REQUIRED_EXPRESSION,
+			kind: REQUIRED_EXPRESSION,
 		},
 		QuestionMarkToken: questionMarkToken,
 	}, questionMarkToken)
@@ -2095,7 +2090,7 @@ func CreateRequiredExpressionNode(questionMarkToken STNode) STNode {
 func CreateVariableDeclarationNode(annotations STNode, finalKeyword STNode, typedBindingPattern STNode, equalsToken STNode, initializer STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STVariableDeclarationNode{
 		STStatementNode: &STNodeBase{
-			kind: common.LOCAL_VAR_DECL,
+			kind: LOCAL_VAR_DECL,
 		},
 		Annotations:         annotations,
 		FinalKeyword:        finalKeyword,
@@ -2109,7 +2104,7 @@ func CreateVariableDeclarationNode(annotations STNode, finalKeyword STNode, type
 func CreateRecordRestDescriptorNode(typeName STNode, ellipsisToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STRecordRestDescriptorNode{
 		STNode: &STNodeBase{
-			kind: common.RECORD_REST_TYPE,
+			kind: RECORD_REST_TYPE,
 		},
 		TypeName:       typeName,
 		EllipsisToken:  ellipsisToken,
@@ -2120,7 +2115,7 @@ func CreateRecordRestDescriptorNode(typeName STNode, ellipsisToken STNode, semic
 func CreateRecordFieldNode(metadata STNode, readonlyKeyword STNode, typeName STNode, fieldName STNode, questionMarkToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STRecordFieldNode{
 		STNode: &STNodeBase{
-			kind: common.RECORD_FIELD,
+			kind: RECORD_FIELD,
 		},
 		Metadata:          metadata,
 		ReadonlyKeyword:   readonlyKeyword,
@@ -2134,7 +2129,7 @@ func CreateRecordFieldNode(metadata STNode, readonlyKeyword STNode, typeName STN
 func CreateRecordFieldWithDefaultValueNode(metadata STNode, readonlyKeyword STNode, typeName STNode, fieldName STNode, equalsToken STNode, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STRecordFieldWithDefaultValueNode{
 		STNode: &STNodeBase{
-			kind: common.RECORD_FIELD_WITH_DEFAULT_VALUE,
+			kind: RECORD_FIELD_WITH_DEFAULT_VALUE,
 		},
 		Metadata:        metadata,
 		ReadonlyKeyword: readonlyKeyword,
@@ -2149,7 +2144,7 @@ func CreateRecordFieldWithDefaultValueNode(metadata STNode, readonlyKeyword STNo
 func CreateAssignmentStatementNode(varRef STNode, equalsToken STNode, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STAssignmentStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.ASSIGNMENT_STATEMENT,
+			kind: ASSIGNMENT_STATEMENT,
 		},
 		VarRef:         varRef,
 		EqualsToken:    equalsToken,
@@ -2161,7 +2156,7 @@ func CreateAssignmentStatementNode(varRef STNode, equalsToken STNode, expression
 func CreateNaturalExpressionNode(constKeyword STNode, naturalKeyword STNode, parenthesizedArgList STNode, openBraceToken STNode, prompt STNode, closeBraceToken STNode) STNode {
 	return createNodeAndAddChildren(&STNaturalExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.NATURAL_EXPRESSION,
+			kind: NATURAL_EXPRESSION,
 		},
 		ConstKeyword:         constKeyword,
 		NaturalKeyword:       naturalKeyword,
@@ -2175,7 +2170,7 @@ func CreateNaturalExpressionNode(constKeyword STNode, naturalKeyword STNode, par
 func CreateObjectConstructorExpressionNode(annotations STNode, objectTypeQualifiers STNode, objectKeyword STNode, typeReference STNode, openBraceToken STNode, members STNode, closeBraceToken STNode) STNode {
 	return createNodeAndAddChildren(&STObjectConstructorExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.OBJECT_CONSTRUCTOR,
+			kind: OBJECT_CONSTRUCTOR,
 		},
 		Annotations:          annotations,
 		ObjectTypeQualifiers: objectTypeQualifiers,
@@ -2190,7 +2185,7 @@ func CreateObjectConstructorExpressionNode(annotations STNode, objectTypeQualifi
 func CreateExplicitNewExpressionNode(newKeyword STNode, typeDescriptor STNode, parenthesizedArgList STNode) STNode {
 	return createNodeAndAddChildren(&STExplicitNewExpressionNode{
 		STNewExpressionNode: &STNodeBase{
-			kind: common.EXPLICIT_NEW_EXPRESSION,
+			kind: EXPLICIT_NEW_EXPRESSION,
 		},
 		NewKeyword:           newKeyword,
 		TypeDescriptor:       typeDescriptor,
@@ -2201,7 +2196,7 @@ func CreateExplicitNewExpressionNode(newKeyword STNode, typeDescriptor STNode, p
 func CreateImplicitNewExpressionNode(newKeyword STNode, parenthesizedArgList STNode) STNode {
 	return createNodeAndAddChildren(&STImplicitNewExpressionNode{
 		STNewExpressionNode: &STNodeBase{
-			kind: common.IMPLICIT_NEW_EXPRESSION,
+			kind: IMPLICIT_NEW_EXPRESSION,
 		},
 		NewKeyword:           newKeyword,
 		ParenthesizedArgList: parenthesizedArgList,
@@ -2211,7 +2206,7 @@ func CreateImplicitNewExpressionNode(newKeyword STNode, parenthesizedArgList STN
 func CreateParenthesizedArgList(openParenToken STNode, arguments STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STParenthesizedArgList{
 		STNode: &STNodeBase{
-			kind: common.PARENTHESIZED_ARG_LIST,
+			kind: PARENTHESIZED_ARG_LIST,
 		},
 		OpenParenToken:  openParenToken,
 		Arguments:       arguments,
@@ -2222,7 +2217,7 @@ func CreateParenthesizedArgList(openParenToken STNode, arguments STNode, closePa
 func CreateMethodCallExpressionNode(expression STNode, dotToken STNode, methodName STNode, openParenToken STNode, arguments STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STMethodCallExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.METHOD_CALL,
+			kind: METHOD_CALL,
 		},
 		Expression:      expression,
 		DotToken:        dotToken,
@@ -2233,7 +2228,7 @@ func CreateMethodCallExpressionNode(expression STNode, dotToken STNode, methodNa
 	}, expression, dotToken, methodName, openParenToken, arguments, closeParenToken)
 }
 
-func CreateBasicLiteralNode(kind common.SyntaxKind, literalToken STNode) STNode {
+func CreateBasicLiteralNode(kind SyntaxKind, literalToken STNode) STNode {
 	return createNodeAndAddChildren(&STBasicLiteralNode{
 		STExpressionNode: &STNodeBase{
 			kind: kind,
@@ -2245,7 +2240,7 @@ func CreateBasicLiteralNode(kind common.SyntaxKind, literalToken STNode) STNode 
 func CreateErrorConstructorExpressionNode(errorKeyword STNode, typeReference STNode, openParenToken STNode, arguments STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STErrorConstructorExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.ERROR_CONSTRUCTOR,
+			kind: ERROR_CONSTRUCTOR,
 		},
 		ErrorKeyword:    errorKeyword,
 		TypeReference:   typeReference,
@@ -2258,7 +2253,7 @@ func CreateErrorConstructorExpressionNode(errorKeyword STNode, typeReference STN
 func CreateXMLStepExpressionNode(expression STNode, xmlStepStart STNode, xmlStepExtend STNode) STNode {
 	return createNodeAndAddChildren(&STXMLStepExpressionNode{
 		STXMLNavigateExpressionNode: &STNodeBase{
-			kind: common.XML_STEP_EXPRESSION,
+			kind: XML_STEP_EXPRESSION,
 		},
 		Expression:    expression,
 		XmlStepStart:  xmlStepStart,
@@ -2266,7 +2261,7 @@ func CreateXMLStepExpressionNode(expression STNode, xmlStepStart STNode, xmlStep
 	}, expression, xmlStepStart, xmlStepExtend)
 }
 
-func CreateBracedExpressionNode(kind common.SyntaxKind, openParen STNode, expression STNode, closeParen STNode) STNode {
+func CreateBracedExpressionNode(kind SyntaxKind, openParen STNode, expression STNode, closeParen STNode) STNode {
 	return createNodeAndAddChildren(&STBracedExpressionNode{
 		STExpressionNode: &STNodeBase{
 			kind: kind,
@@ -2280,14 +2275,14 @@ func CreateBracedExpressionNode(kind common.SyntaxKind, openParen STNode, expres
 func CreateNilLiteralNode(openParenToken STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STNilLiteralNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.NIL_LITERAL,
+			kind: NIL_LITERAL,
 		},
 		OpenParenToken:  openParenToken,
 		CloseParenToken: closeParenToken,
 	}, openParenToken, closeParenToken)
 }
 
-func CreateResourcePathParameterNode(kind common.SyntaxKind, openBracketToken STNode, annotations STNode, typeDescriptor STNode, ellipsisToken STNode, paramName STNode, closeBracketToken STNode) STNode {
+func CreateResourcePathParameterNode(kind SyntaxKind, openBracketToken STNode, annotations STNode, typeDescriptor STNode, ellipsisToken STNode, paramName STNode, closeBracketToken STNode) STNode {
 	return createNodeAndAddChildren(&STResourcePathParameterNode{
 		STNode: &STNodeBase{
 			kind: kind,
@@ -2304,7 +2299,7 @@ func CreateResourcePathParameterNode(kind common.SyntaxKind, openBracketToken ST
 func CreateObjectTypeDescriptorNode(objectTypeQualifiers STNode, objectKeyword STNode, openBrace STNode, members STNode, closeBrace STNode) STNode {
 	return createNodeAndAddChildren(&STObjectTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.OBJECT_TYPE_DESC,
+			kind: OBJECT_TYPE_DESC,
 		},
 		ObjectTypeQualifiers: objectTypeQualifiers,
 		ObjectKeyword:        objectKeyword,
@@ -2317,7 +2312,7 @@ func CreateObjectTypeDescriptorNode(objectTypeQualifiers STNode, objectKeyword S
 func CreatePositionalArgumentNode(expression STNode) STNode {
 	return createNodeAndAddChildren(&STPositionalArgumentNode{
 		STFunctionArgumentNode: &STNodeBase{
-			kind: common.POSITIONAL_ARG,
+			kind: POSITIONAL_ARG,
 		},
 		Expression: expression,
 	}, expression)
@@ -2326,7 +2321,7 @@ func CreatePositionalArgumentNode(expression STNode) STNode {
 func CreateRestArgumentNode(ellipsis STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STRestArgumentNode{
 		STFunctionArgumentNode: &STNodeBase{
-			kind: common.REST_ARG,
+			kind: REST_ARG,
 		},
 		Ellipsis:   ellipsis,
 		Expression: expression,
@@ -2336,7 +2331,7 @@ func CreateRestArgumentNode(ellipsis STNode, expression STNode) STNode {
 func CreateNamedArgumentNode(argumentName STNode, equalsToken STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STNamedArgumentNode{
 		STFunctionArgumentNode: &STNodeBase{
-			kind: common.NAMED_ARG,
+			kind: NAMED_ARG,
 		},
 		ArgumentName: argumentName,
 		EqualsToken:  equalsToken,
@@ -2347,7 +2342,7 @@ func CreateNamedArgumentNode(argumentName STNode, equalsToken STNode, expression
 func CreateIfElseStatementNode(ifKeyword STNode, condition STNode, ifBody STNode, elseBody STNode) STNode {
 	return createNodeAndAddChildren(&STIfElseStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.IF_ELSE_STATEMENT,
+			kind: IF_ELSE_STATEMENT,
 		},
 		IfKeyword: ifKeyword,
 		Condition: condition,
@@ -2359,7 +2354,7 @@ func CreateIfElseStatementNode(ifKeyword STNode, condition STNode, ifBody STNode
 func CreateTypeCastExpressionNode(ltToken STNode, typeCastParam STNode, gtToken STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STTypeCastExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.TYPE_CAST_EXPRESSION,
+			kind: TYPE_CAST_EXPRESSION,
 		},
 		LtToken:       ltToken,
 		TypeCastParam: typeCastParam,
@@ -2371,7 +2366,7 @@ func CreateTypeCastExpressionNode(ltToken STNode, typeCastParam STNode, gtToken 
 func CreateSpreadMemberNode(ellipsis STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STSpreadMemberNode{
 		STNode: &STNodeBase{
-			kind: common.SPREAD_MEMBER,
+			kind: SPREAD_MEMBER,
 		},
 		Ellipsis:   ellipsis,
 		Expression: expression,
@@ -2381,7 +2376,7 @@ func CreateSpreadMemberNode(ellipsis STNode, expression STNode) STNode {
 func CreateForEachStatementNode(forEachKeyword STNode, typedBindingPattern STNode, inKeyword STNode, actionOrExpressionNode STNode, blockStatement STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STForEachStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.FOREACH_STATEMENT,
+			kind: FOREACH_STATEMENT,
 		},
 		ForEachKeyword:         forEachKeyword,
 		TypedBindingPattern:    typedBindingPattern,
@@ -2392,7 +2387,7 @@ func CreateForEachStatementNode(forEachKeyword STNode, typedBindingPattern STNod
 	}, forEachKeyword, typedBindingPattern, inKeyword, actionOrExpressionNode, blockStatement, onFailClause)
 }
 
-func CreateTrapExpressionNode(kind common.SyntaxKind, trapKeyword STNode, expression STNode) STNode {
+func CreateTrapExpressionNode(kind SyntaxKind, trapKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STTrapExpressionNode{
 		STExpressionNode: &STNodeBase{
 			kind: kind,
@@ -2405,7 +2400,7 @@ func CreateTrapExpressionNode(kind common.SyntaxKind, trapKeyword STNode, expres
 func CreateForkStatementNode(forkKeyword STNode, openBraceToken STNode, namedWorkerDeclarations STNode, closeBraceToken STNode) STNode {
 	return createNodeAndAddChildren(&STForkStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.FORK_STATEMENT,
+			kind: FORK_STATEMENT,
 		},
 		ForkKeyword:             forkKeyword,
 		OpenBraceToken:          openBraceToken,
@@ -2417,7 +2412,7 @@ func CreateForkStatementNode(forkKeyword STNode, openBraceToken STNode, namedWor
 func CreateUnionTypeDescriptorNode(leftTypeDesc STNode, pipeToken STNode, rightTypeDesc STNode) STNode {
 	return createNodeAndAddChildren(&STUnionTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.UNION_TYPE_DESC,
+			kind: UNION_TYPE_DESC,
 		},
 		LeftTypeDesc:  leftTypeDesc,
 		PipeToken:     pipeToken,
@@ -2428,7 +2423,7 @@ func CreateUnionTypeDescriptorNode(leftTypeDesc STNode, pipeToken STNode, rightT
 func CreateLockStatementNode(lockKeyword STNode, blockStatement STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STLockStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.LOCK_STATEMENT,
+			kind: LOCK_STATEMENT,
 		},
 		LockKeyword:    lockKeyword,
 		BlockStatement: blockStatement,
@@ -2439,7 +2434,7 @@ func CreateLockStatementNode(lockKeyword STNode, blockStatement STNode, onFailCl
 func CreateNamedWorkerDeclarationNode(annotations STNode, transactionalKeyword STNode, workerKeyword STNode, workerName STNode, returnTypeDesc STNode, workerBody STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STNamedWorkerDeclarationNode{
 		STNode: &STNodeBase{
-			kind: common.NAMED_WORKER_DECLARATION,
+			kind: NAMED_WORKER_DECLARATION,
 		},
 		Annotations:          annotations,
 		TransactionalKeyword: transactionalKeyword,
@@ -2454,7 +2449,7 @@ func CreateNamedWorkerDeclarationNode(annotations STNode, transactionalKeyword S
 func CreateModuleXMLNamespaceDeclarationNode(xmlnsKeyword STNode, namespaceuri STNode, asKeyword STNode, namespacePrefix STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STModuleXMLNamespaceDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.MODULE_XML_NAMESPACE_DECLARATION,
+			kind: MODULE_XML_NAMESPACE_DECLARATION,
 		},
 		XmlnsKeyword:    xmlnsKeyword,
 		Namespaceuri:    namespaceuri,
@@ -2467,7 +2462,7 @@ func CreateModuleXMLNamespaceDeclarationNode(xmlnsKeyword STNode, namespaceuri S
 func CreateXMLNamespaceDeclarationNode(xmlnsKeyword STNode, namespaceuri STNode, asKeyword STNode, namespacePrefix STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STXMLNamespaceDeclarationNode{
 		STStatementNode: &STNodeBase{
-			kind: common.XML_NAMESPACE_DECLARATION,
+			kind: XML_NAMESPACE_DECLARATION,
 		},
 		XmlnsKeyword:    xmlnsKeyword,
 		Namespaceuri:    namespaceuri,
@@ -2480,7 +2475,7 @@ func CreateXMLNamespaceDeclarationNode(xmlnsKeyword STNode, namespaceuri STNode,
 func CreateAnnotationAttachPointNode(sourceKeyword STNode, identifiers STNode) STNode {
 	return createNodeAndAddChildren(&STAnnotationAttachPointNode{
 		STNode: &STNodeBase{
-			kind: common.ANNOTATION_ATTACH_POINT,
+			kind: ANNOTATION_ATTACH_POINT,
 		},
 		SourceKeyword: sourceKeyword,
 		Identifiers:   identifiers,
@@ -2490,7 +2485,7 @@ func CreateAnnotationAttachPointNode(sourceKeyword STNode, identifiers STNode) S
 func CreateAnnotationDeclarationNode(metadata STNode, visibilityQualifier STNode, constKeyword STNode, annotationKeyword STNode, typeDescriptor STNode, annotationTag STNode, onKeyword STNode, attachPoints STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STAnnotationDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.ANNOTATION_DECLARATION,
+			kind: ANNOTATION_DECLARATION,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2504,7 +2499,7 @@ func CreateAnnotationDeclarationNode(metadata STNode, visibilityQualifier STNode
 	}, metadata, visibilityQualifier, constKeyword, annotationKeyword, typeDescriptor, annotationTag, onKeyword, attachPoints, semicolonToken)
 }
 
-func CreateParameterizedTypeDescriptorNode(kind common.SyntaxKind, keywordToken STNode, typeParamNode STNode) STNode {
+func CreateParameterizedTypeDescriptorNode(kind SyntaxKind, keywordToken STNode, typeParamNode STNode) STNode {
 	return createNodeAndAddChildren(&STParameterizedTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
 			kind: kind,
@@ -2517,7 +2512,7 @@ func CreateParameterizedTypeDescriptorNode(kind common.SyntaxKind, keywordToken 
 func CreateMapTypeDescriptorNode(mapKeywordToken STNode, mapTypeParamsNode STNode) STNode {
 	return createNodeAndAddChildren(&STMapTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.MAP_TYPE_DESC,
+			kind: MAP_TYPE_DESC,
 		},
 		MapKeywordToken:   mapKeywordToken,
 		MapTypeParamsNode: mapTypeParamsNode,
@@ -2527,7 +2522,7 @@ func CreateMapTypeDescriptorNode(mapKeywordToken STNode, mapTypeParamsNode STNod
 func CreateClientResourceAccessActionNode(expression STNode, rightArrowToken STNode, slashToken STNode, resourceAccessPath STNode, dotToken STNode, methodName STNode, arguments STNode) STNode {
 	return createNodeAndAddChildren(&STClientResourceAccessActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.CLIENT_RESOURCE_ACCESS_ACTION,
+			kind: CLIENT_RESOURCE_ACCESS_ACTION,
 		},
 		Expression:         expression,
 		RightArrowToken:    rightArrowToken,
@@ -2542,7 +2537,7 @@ func CreateClientResourceAccessActionNode(expression STNode, rightArrowToken STN
 func CreateResourceAccessRestSegmentNode(openBracketToken STNode, ellipsisToken STNode, expression STNode, closeBracketToken STNode) STNode {
 	return createNodeAndAddChildren(&STResourceAccessRestSegmentNode{
 		STNode: &STNodeBase{
-			kind: common.RESOURCE_ACCESS_REST_SEGMENT,
+			kind: RESOURCE_ACCESS_REST_SEGMENT,
 		},
 		OpenBracketToken:  openBracketToken,
 		EllipsisToken:     ellipsisToken,
@@ -2554,7 +2549,7 @@ func CreateResourceAccessRestSegmentNode(openBracketToken STNode, ellipsisToken 
 func CreateComputedResourceAccessSegmentNode(openBracketToken STNode, expression STNode, closeBracketToken STNode) STNode {
 	return createNodeAndAddChildren(&STComputedResourceAccessSegmentNode{
 		STNode: &STNodeBase{
-			kind: common.COMPUTED_RESOURCE_ACCESS_SEGMENT,
+			kind: COMPUTED_RESOURCE_ACCESS_SEGMENT,
 		},
 		OpenBracketToken:  openBracketToken,
 		Expression:        expression,
@@ -2562,7 +2557,7 @@ func CreateComputedResourceAccessSegmentNode(openBracketToken STNode, expression
 	}, openBracketToken, expression, closeBracketToken)
 }
 
-func CreateExpressionStatementNode(kind common.SyntaxKind, expression STNode, semicolonToken STNode) STNode {
+func CreateExpressionStatementNode(kind SyntaxKind, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STExpressionStatementNode{
 		STStatementNode: &STNodeBase{
 			kind: kind,
@@ -2575,7 +2570,7 @@ func CreateExpressionStatementNode(kind common.SyntaxKind, expression STNode, se
 func CreateLocalTypeDefinitionStatementNode(annotations STNode, typeKeyword STNode, typeName STNode, typeDescriptor STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STLocalTypeDefinitionStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.LOCAL_TYPE_DEFINITION_STATEMENT,
+			kind: LOCAL_TYPE_DEFINITION_STATEMENT,
 		},
 		Annotations:    annotations,
 		TypeKeyword:    typeKeyword,
@@ -2588,7 +2583,7 @@ func CreateLocalTypeDefinitionStatementNode(annotations STNode, typeKeyword STNo
 func CreateAnnotationNode(atToken STNode, annotReference STNode, annotValue STNode) STNode {
 	return createNodeAndAddChildren(&STAnnotationNode{
 		STNode: &STNodeBase{
-			kind: common.ANNOTATION,
+			kind: ANNOTATION,
 		},
 		AtToken:        atToken,
 		AnnotReference: annotReference,
@@ -2599,7 +2594,7 @@ func CreateAnnotationNode(atToken STNode, annotReference STNode, annotValue STNo
 func CreateArrayDimensionNode(openBracket STNode, arrayLength STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STArrayDimensionNode{
 		STNode: &STNodeBase{
-			kind: common.ARRAY_DIMENSION,
+			kind: ARRAY_DIMENSION,
 		},
 		OpenBracket:  openBracket,
 		ArrayLength:  arrayLength,
@@ -2610,7 +2605,7 @@ func CreateArrayDimensionNode(openBracket STNode, arrayLength STNode, closeBrack
 func CreateUnaryExpressionNode(unaryOperator STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STUnaryExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.UNARY_EXPRESSION,
+			kind: UNARY_EXPRESSION,
 		},
 		UnaryOperator: unaryOperator,
 		Expression:    expression,
@@ -2620,7 +2615,7 @@ func CreateUnaryExpressionNode(unaryOperator STNode, expression STNode) STNode {
 func CreateTypeofExpressionNode(typeofKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STTypeofExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.TYPEOF_EXPRESSION,
+			kind: TYPEOF_EXPRESSION,
 		},
 		TypeofKeyword: typeofKeyword,
 		Expression:    expression,
@@ -2630,7 +2625,7 @@ func CreateTypeofExpressionNode(typeofKeyword STNode, expression STNode) STNode 
 func CreateConstantDeclarationNode(metadata STNode, visibilityQualifier STNode, constKeyword STNode, typeDescriptor STNode, variableName STNode, equalsToken STNode, initializer STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STConstantDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.CONST_DECLARATION,
+			kind: CONST_DECLARATION,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2646,7 +2641,7 @@ func CreateConstantDeclarationNode(metadata STNode, visibilityQualifier STNode, 
 func CreateListenerDeclarationNode(metadata STNode, visibilityQualifier STNode, listenerKeyword STNode, typeDescriptor STNode, variableName STNode, equalsToken STNode, initializer STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STListenerDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.LISTENER_DECLARATION,
+			kind: LISTENER_DECLARATION,
 		},
 		Metadata:            metadata,
 		VisibilityQualifier: visibilityQualifier,
@@ -2662,7 +2657,7 @@ func CreateListenerDeclarationNode(metadata STNode, visibilityQualifier STNode, 
 func CreateServiceDeclarationNode(metadata STNode, qualifiers STNode, serviceKeyword STNode, typeDescriptor STNode, absoluteResourcePath STNode, onKeyword STNode, expressions STNode, openBraceToken STNode, members STNode, closeBraceToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STServiceDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.SERVICE_DECLARATION,
+			kind: SERVICE_DECLARATION,
 		},
 		Metadata:             metadata,
 		Qualifiers:           qualifiers,
@@ -2681,7 +2676,7 @@ func CreateServiceDeclarationNode(metadata STNode, qualifiers STNode, serviceKey
 func CreateCompoundAssignmentStatementNode(lhsExpression STNode, binaryOperator STNode, equalsToken STNode, rhsExpression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STCompoundAssignmentStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.COMPOUND_ASSIGNMENT_STATEMENT,
+			kind: COMPOUND_ASSIGNMENT_STATEMENT,
 		},
 		LhsExpression:  lhsExpression,
 		BinaryOperator: binaryOperator,
@@ -2694,7 +2689,7 @@ func CreateCompoundAssignmentStatementNode(lhsExpression STNode, binaryOperator 
 func CreateComputedNameFieldNode(openBracket STNode, fieldNameExpr STNode, closeBracket STNode, colonToken STNode, valueExpr STNode) STNode {
 	return createNodeAndAddChildren(&STComputedNameFieldNode{
 		STMappingFieldNode: &STNodeBase{
-			kind: common.COMPUTED_NAME_FIELD,
+			kind: COMPUTED_NAME_FIELD,
 		},
 		OpenBracket:   openBracket,
 		FieldNameExpr: fieldNameExpr,
@@ -2707,7 +2702,7 @@ func CreateComputedNameFieldNode(openBracket STNode, fieldNameExpr STNode, close
 func CreateContinueStatementNode(continueToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STContinueStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.CONTINUE_STATEMENT,
+			kind: CONTINUE_STATEMENT,
 		},
 		ContinueToken:  continueToken,
 		SemicolonToken: semicolonToken,
@@ -2717,7 +2712,7 @@ func CreateContinueStatementNode(continueToken STNode, semicolonToken STNode) ST
 func CreateFailStatementNode(failKeyword STNode, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STFailStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.FAIL_STATEMENT,
+			kind: FAIL_STATEMENT,
 		},
 		FailKeyword:    failKeyword,
 		Expression:     expression,
@@ -2728,14 +2723,14 @@ func CreateFailStatementNode(failKeyword STNode, expression STNode, semicolonTok
 func CreateBreakStatementNode(breakToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STBreakStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.BREAK_STATEMENT,
+			kind: BREAK_STATEMENT,
 		},
 		BreakToken:     breakToken,
 		SemicolonToken: semicolonToken,
 	}, breakToken, semicolonToken)
 }
 
-func CreateCheckExpressionNode(kind common.SyntaxKind, checkKeyword STNode, expression STNode) STNode {
+func CreateCheckExpressionNode(kind SyntaxKind, checkKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STCheckExpressionNode{
 		STExpressionNode: &STNodeBase{
 			kind: kind,
@@ -2748,7 +2743,7 @@ func CreateCheckExpressionNode(kind common.SyntaxKind, checkKeyword STNode, expr
 func CreateBlockStatementNode(openBraceToken STNode, statements STNode, closeBraceToken STNode) STNode {
 	return createNodeAndAddChildren(&STBlockStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.BLOCK_STATEMENT,
+			kind: BLOCK_STATEMENT,
 		},
 		OpenBraceToken:  openBraceToken,
 		Statements:      statements,
@@ -2759,7 +2754,7 @@ func CreateBlockStatementNode(openBraceToken STNode, statements STNode, closeBra
 func CreateElseBlockNode(elseKeyword STNode, elseBody STNode) STNode {
 	return createNodeAndAddChildren(&STElseBlockNode{
 		STNode: &STNodeBase{
-			kind: common.ELSE_BLOCK,
+			kind: ELSE_BLOCK,
 		},
 		ElseKeyword: elseKeyword,
 		ElseBody:    elseBody,
@@ -2769,7 +2764,7 @@ func CreateElseBlockNode(elseKeyword STNode, elseBody STNode) STNode {
 func CreateDoStatementNode(doKeyword STNode, blockStatement STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STDoStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.DO_STATEMENT,
+			kind: DO_STATEMENT,
 		},
 		DoKeyword:      doKeyword,
 		BlockStatement: blockStatement,
@@ -2780,7 +2775,7 @@ func CreateDoStatementNode(doKeyword STNode, blockStatement STNode, onFailClause
 func CreateWhileStatementNode(whileKeyword STNode, condition STNode, whileBody STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STWhileStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.WHILE_STATEMENT,
+			kind: WHILE_STATEMENT,
 		},
 		WhileKeyword: whileKeyword,
 		Condition:    condition,
@@ -2792,7 +2787,7 @@ func CreateWhileStatementNode(whileKeyword STNode, condition STNode, whileBody S
 func CreatePanicStatementNode(panicKeyword STNode, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STPanicStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.PANIC_STATEMENT,
+			kind: PANIC_STATEMENT,
 		},
 		PanicKeyword:   panicKeyword,
 		Expression:     expression,
@@ -2803,7 +2798,7 @@ func CreatePanicStatementNode(panicKeyword STNode, expression STNode, semicolonT
 func CreateReturnStatementNode(returnKeyword STNode, expression STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STReturnStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.RETURN_STATEMENT,
+			kind: RETURN_STATEMENT,
 		},
 		ReturnKeyword:  returnKeyword,
 		Expression:     expression,
@@ -2814,7 +2809,7 @@ func CreateReturnStatementNode(returnKeyword STNode, expression STNode, semicolo
 func CreateMappingConstructorExpressionNode(openBrace STNode, fields STNode, closeBrace STNode) STNode {
 	return createNodeAndAddChildren(&STMappingConstructorExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.MAPPING_CONSTRUCTOR,
+			kind: MAPPING_CONSTRUCTOR,
 		},
 		OpenBrace:  openBrace,
 		Fields:     fields,
@@ -2825,7 +2820,7 @@ func CreateMappingConstructorExpressionNode(openBrace STNode, fields STNode, clo
 func CreateTypeCastParamNode(annotations STNode, typeNode STNode) STNode {
 	return createNodeAndAddChildren(&STTypeCastParamNode{
 		STNode: &STNodeBase{
-			kind: common.TYPE_CAST_PARAM,
+			kind: TYPE_CAST_PARAM,
 		},
 		Annotations: annotations,
 		Type:        typeNode,
@@ -2835,7 +2830,7 @@ func CreateTypeCastParamNode(annotations STNode, typeNode STNode) STNode {
 func CreateTableConstructorExpressionNode(tableKeyword STNode, keySpecifier STNode, openBracket STNode, rows STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STTableConstructorExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.TABLE_CONSTRUCTOR,
+			kind: TABLE_CONSTRUCTOR,
 		},
 		TableKeyword: tableKeyword,
 		KeySpecifier: keySpecifier,
@@ -2848,7 +2843,7 @@ func CreateTableConstructorExpressionNode(tableKeyword STNode, keySpecifier STNo
 func CreateKeySpecifierNode(keyKeyword STNode, openParenToken STNode, fieldNames STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STKeySpecifierNode{
 		STNode: &STNodeBase{
-			kind: common.KEY_SPECIFIER,
+			kind: KEY_SPECIFIER,
 		},
 		KeyKeyword:      keyKeyword,
 		OpenParenToken:  openParenToken,
@@ -2860,7 +2855,7 @@ func CreateKeySpecifierNode(keyKeyword STNode, openParenToken STNode, fieldNames
 func CreateStreamTypeDescriptorNode(streamKeywordToken STNode, streamTypeParamsNode STNode) STNode {
 	return createNodeAndAddChildren(&STStreamTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.STREAM_TYPE_DESC,
+			kind: STREAM_TYPE_DESC,
 		},
 		StreamKeywordToken:   streamKeywordToken,
 		StreamTypeParamsNode: streamTypeParamsNode,
@@ -2870,7 +2865,7 @@ func CreateStreamTypeDescriptorNode(streamKeywordToken STNode, streamTypeParamsN
 func CreateStreamTypeParamsNode(ltToken STNode, leftTypeDescNode STNode, commaToken STNode, rightTypeDescNode STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STStreamTypeParamsNode{
 		STNode: &STNodeBase{
-			kind: common.STREAM_TYPE_PARAMS,
+			kind: STREAM_TYPE_PARAMS,
 		},
 		LtToken:           ltToken,
 		LeftTypeDescNode:  leftTypeDescNode,
@@ -2883,7 +2878,7 @@ func CreateStreamTypeParamsNode(ltToken STNode, leftTypeDescNode STNode, commaTo
 func CreateLetExpressionNode(letKeyword STNode, letVarDeclarations STNode, inKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STLetExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.LET_EXPRESSION,
+			kind: LET_EXPRESSION,
 		},
 		LetKeyword:         letKeyword,
 		LetVarDeclarations: letVarDeclarations,
@@ -2895,7 +2890,7 @@ func CreateLetExpressionNode(letKeyword STNode, letVarDeclarations STNode, inKey
 func CreateLetVariableDeclarationNode(annotations STNode, typedBindingPattern STNode, equalsToken STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STLetVariableDeclarationNode{
 		STNode: &STNodeBase{
-			kind: common.LET_VAR_DECL,
+			kind: LET_VAR_DECL,
 		},
 		Annotations:         annotations,
 		TypedBindingPattern: typedBindingPattern,
@@ -2904,7 +2899,7 @@ func CreateLetVariableDeclarationNode(annotations STNode, typedBindingPattern ST
 	}, annotations, typedBindingPattern, equalsToken, expression)
 }
 
-func CreateTemplateExpressionNode(kind common.SyntaxKind, typeNode STNode, startBacktick STNode, content STNode, endBacktick STNode) STNode {
+func CreateTemplateExpressionNode(kind SyntaxKind, typeNode STNode, startBacktick STNode, content STNode, endBacktick STNode) STNode {
 	return createNodeAndAddChildren(&STTemplateExpressionNode{
 		STExpressionNode: &STNodeBase{
 			kind: kind,
@@ -2919,7 +2914,7 @@ func CreateTemplateExpressionNode(kind common.SyntaxKind, typeNode STNode, start
 func CreateWaitActionNode(waitKeyword STNode, waitFutureExpr STNode) STNode {
 	return createNodeAndAddChildren(&STWaitActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.WAIT_ACTION,
+			kind: WAIT_ACTION,
 		},
 		WaitKeyword:    waitKeyword,
 		WaitFutureExpr: waitFutureExpr,
@@ -2929,7 +2924,7 @@ func CreateWaitActionNode(waitKeyword STNode, waitFutureExpr STNode) STNode {
 func CreateAlternateReceiveNode(workers STNode) STNode {
 	return createNodeAndAddChildren(&STAlternateReceiveNode{
 		STNode: &STNodeBase{
-			kind: common.ALTERNATE_RECEIVE,
+			kind: ALTERNATE_RECEIVE,
 		},
 		Workers: workers,
 	}, workers)
@@ -2938,7 +2933,7 @@ func CreateAlternateReceiveNode(workers STNode) STNode {
 func CreateWaitFieldsListNode(openBrace STNode, waitFields STNode, closeBrace STNode) STNode {
 	return createNodeAndAddChildren(&STWaitFieldsListNode{
 		STNode: &STNodeBase{
-			kind: common.WAIT_FIELDS_LIST,
+			kind: WAIT_FIELDS_LIST,
 		},
 		OpenBrace:  openBrace,
 		WaitFields: waitFields,
@@ -2949,7 +2944,7 @@ func CreateWaitFieldsListNode(openBrace STNode, waitFields STNode, closeBrace ST
 func CreateWaitFieldNode(fieldName STNode, colon STNode, waitFutureExpr STNode) STNode {
 	return createNodeAndAddChildren(&STWaitFieldNode{
 		STNode: &STNodeBase{
-			kind: common.WAIT_FIELD,
+			kind: WAIT_FIELD,
 		},
 		FieldName:      fieldName,
 		Colon:          colon,
@@ -2957,7 +2952,7 @@ func CreateWaitFieldNode(fieldName STNode, colon STNode, waitFutureExpr STNode) 
 	}, fieldName, colon, waitFutureExpr)
 }
 
-func CreateToken(kind common.SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode) STToken {
+func CreateToken(kind SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode) STToken {
 	// FIXME: remove this
 	return CreateTokenFrom(kind, leadingMinutiae, trailingMinutiae)
 }
@@ -2969,19 +2964,19 @@ func GetSimpleNameRefNode(modulePrefixIdentifier STNode) STNode {
 	text := identifier.Text()
 	switch text {
 	case "boolean":
-		syntaxToken = CreateTokenFrom(common.BOOLEAN_KEYWORD,
+		syntaxToken = CreateTokenFrom(BOOLEAN_KEYWORD,
 			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
 	case "decimal":
-		syntaxToken = CreateTokenFrom(common.DECIMAL_KEYWORD,
+		syntaxToken = CreateTokenFrom(DECIMAL_KEYWORD,
 			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
 	case "float":
-		syntaxToken = CreateTokenFrom(common.FLOAT_KEYWORD,
+		syntaxToken = CreateTokenFrom(FLOAT_KEYWORD,
 			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
 	case "int":
-		syntaxToken = CreateTokenFrom(common.INT_KEYWORD,
+		syntaxToken = CreateTokenFrom(INT_KEYWORD,
 			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
 	case "string":
-		syntaxToken = CreateTokenFrom(common.STRING_KEYWORD,
+		syntaxToken = CreateTokenFrom(STRING_KEYWORD,
 			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
 	default:
 		return CreateSimpleNameReferenceNode(identifier)
@@ -2993,7 +2988,7 @@ func GetQualifiedNameRefNode(parentNode STNode, leftMost bool) STNode {
 	if parentNode == nil {
 		return nil
 	}
-	if parentNode.Kind() == common.LIST {
+	if parentNode.Kind() == LIST {
 		listNode, ok := parentNode.(*STNodeList)
 		if !ok {
 			panic("expected STNodeList")
@@ -3002,7 +2997,7 @@ func GetQualifiedNameRefNode(parentNode STNode, leftMost bool) STNode {
 			return nil
 		}
 	}
-	if parentNode.Kind() == common.QUALIFIED_NAME_REFERENCE {
+	if parentNode.Kind() == QUALIFIED_NAME_REFERENCE {
 		qualifiedNameRefNode, ok := parentNode.(*STQualifiedNameReferenceNode)
 		if !ok {
 			panic("expected STQualifiedNameReferenceNode")
@@ -3051,7 +3046,7 @@ func IsToken(node STNode) bool {
 func CreateQueryConstructTypeNode(keyword STNode, keySpecifier STNode) STNode {
 	return createNodeAndAddChildren(&STQueryConstructTypeNode{
 		STNode: &STNodeBase{
-			kind: common.QUERY_CONSTRUCT_TYPE,
+			kind: QUERY_CONSTRUCT_TYPE,
 		},
 		Keyword:      keyword,
 		KeySpecifier: keySpecifier,
@@ -3062,7 +3057,7 @@ func CreateQueryConstructTypeNode(keyword STNode, keySpecifier STNode) STNode {
 func CreateFromClauseNode(fromKeyword STNode, typedBindingPattern STNode, inKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STFromClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.FROM_CLAUSE,
+			kind: FROM_CLAUSE,
 		},
 		FromKeyword:         fromKeyword,
 		TypedBindingPattern: typedBindingPattern,
@@ -3075,7 +3070,7 @@ func CreateFromClauseNode(fromKeyword STNode, typedBindingPattern STNode, inKeyw
 func CreateLetClauseNode(letKeyword STNode, letVarDeclarations STNode) STNode {
 	return createNodeAndAddChildren(&STLetClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.LET_CLAUSE,
+			kind: LET_CLAUSE,
 		},
 		LetKeyword:         letKeyword,
 		LetVarDeclarations: letVarDeclarations,
@@ -3086,7 +3081,7 @@ func CreateLetClauseNode(letKeyword STNode, letVarDeclarations STNode) STNode {
 func CreateJoinClauseNode(outerKeyword STNode, joinKeyword STNode, typedBindingPattern STNode, inKeyword STNode, expression STNode, joinOnCondition STNode) STNode {
 	return createNodeAndAddChildren(&STJoinClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.JOIN_CLAUSE,
+			kind: JOIN_CLAUSE,
 		},
 		OuterKeyword:        outerKeyword,
 		JoinKeyword:         joinKeyword,
@@ -3101,7 +3096,7 @@ func CreateJoinClauseNode(outerKeyword STNode, joinKeyword STNode, typedBindingP
 func CreateOnClauseNode(onKeyword STNode, onExpression STNode, equalsKeyword STNode, equalsExpression STNode) STNode {
 	return createNodeAndAddChildren(&STOnClauseNode{
 		STClauseNode: &STNodeBase{
-			kind: common.ON_CLAUSE,
+			kind: ON_CLAUSE,
 		},
 		OnKeyword:        onKeyword,
 		OnExpression:     onExpression,
@@ -3114,7 +3109,7 @@ func CreateOnClauseNode(onKeyword STNode, onExpression STNode, equalsKeyword STN
 func CreateLimitClauseNode(limitKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STLimitClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.LIMIT_CLAUSE,
+			kind: LIMIT_CLAUSE,
 		},
 		LimitKeyword: limitKeyword,
 		Expression:   expression,
@@ -3125,7 +3120,7 @@ func CreateLimitClauseNode(limitKeyword STNode, expression STNode) STNode {
 func CreateOnConflictClauseNode(onKeyword STNode, conflictKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STOnConflictClauseNode{
 		STClauseNode: &STNodeBase{
-			kind: common.ON_CONFLICT_CLAUSE,
+			kind: ON_CONFLICT_CLAUSE,
 		},
 		OnKeyword:       onKeyword,
 		ConflictKeyword: conflictKeyword,
@@ -3137,7 +3132,7 @@ func CreateOnConflictClauseNode(onKeyword STNode, conflictKeyword STNode, expres
 func CreateQueryPipelineNode(fromClause STNode, intermediateClauses STNode) STNode {
 	return createNodeAndAddChildren(&STQueryPipelineNode{
 		STNode: &STNodeBase{
-			kind: common.QUERY_PIPELINE,
+			kind: QUERY_PIPELINE,
 		},
 		FromClause:          fromClause,
 		IntermediateClauses: intermediateClauses,
@@ -3148,7 +3143,7 @@ func CreateQueryPipelineNode(fromClause STNode, intermediateClauses STNode) STNo
 func CreateSelectClauseNode(selectKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STSelectClauseNode{
 		STClauseNode: &STNodeBase{
-			kind: common.SELECT_CLAUSE,
+			kind: SELECT_CLAUSE,
 		},
 		SelectKeyword: selectKeyword,
 		Expression:    expression,
@@ -3159,7 +3154,7 @@ func CreateSelectClauseNode(selectKeyword STNode, expression STNode) STNode {
 func CreateCollectClauseNode(collectKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STCollectClauseNode{
 		STClauseNode: &STNodeBase{
-			kind: common.COLLECT_CLAUSE,
+			kind: COLLECT_CLAUSE,
 		},
 		CollectKeyword: collectKeyword,
 		Expression:     expression,
@@ -3170,7 +3165,7 @@ func CreateCollectClauseNode(collectKeyword STNode, expression STNode) STNode {
 func CreateQueryExpressionNode(queryConstructType STNode, queryPipeline STNode, resultClause STNode, onConflictClause STNode) STNode {
 	return createNodeAndAddChildren(&STQueryExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.QUERY_EXPRESSION,
+			kind: QUERY_EXPRESSION,
 		},
 		QueryConstructType: queryConstructType,
 		QueryPipeline:      queryPipeline,
@@ -3183,7 +3178,7 @@ func CreateQueryExpressionNode(queryConstructType STNode, queryPipeline STNode, 
 func CreateQueryActionNode(queryPipeline STNode, doKeyword STNode, blockStatement STNode) STNode {
 	return createNodeAndAddChildren(&STQueryActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.QUERY_ACTION,
+			kind: QUERY_ACTION,
 		},
 		QueryPipeline:  queryPipeline,
 		DoKeyword:      doKeyword,
@@ -3195,7 +3190,7 @@ func CreateQueryActionNode(queryPipeline STNode, doKeyword STNode, blockStatemen
 func CreateOrderByClauseNode(orderKeyword STNode, byKeyword STNode, orderKey STNode) STNode {
 	return createNodeAndAddChildren(&STOrderByClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.ORDER_BY_CLAUSE,
+			kind: ORDER_BY_CLAUSE,
 		},
 		OrderKeyword: orderKeyword,
 		ByKeyword:    byKeyword,
@@ -3207,7 +3202,7 @@ func CreateOrderByClauseNode(orderKeyword STNode, byKeyword STNode, orderKey STN
 func CreateOrderKeyNode(expression STNode, orderDirection STNode) STNode {
 	return createNodeAndAddChildren(&STOrderKeyNode{
 		STNode: &STNodeBase{
-			kind: common.ORDER_KEY,
+			kind: ORDER_KEY,
 		},
 		Expression:     expression,
 		OrderDirection: orderDirection,
@@ -3218,7 +3213,7 @@ func CreateOrderKeyNode(expression STNode, orderDirection STNode) STNode {
 func CreateGroupByClauseNode(groupKeyword STNode, byKeyword STNode, groupingKey STNode) STNode {
 	return createNodeAndAddChildren(&STGroupByClauseNode{
 		STIntermediateClauseNode: &STNodeBase{
-			kind: common.GROUP_BY_CLAUSE,
+			kind: GROUP_BY_CLAUSE,
 		},
 		GroupKeyword: groupKeyword,
 		ByKeyword:    byKeyword,
@@ -3230,7 +3225,7 @@ func CreateGroupByClauseNode(groupKeyword STNode, byKeyword STNode, groupingKey 
 func CreateGroupingKeyVarDeclarationNode(typeDescriptor STNode, simpleBindingPattern STNode, equalsToken STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STGroupingKeyVarDeclarationNode{
 		STNode: &STNodeBase{
-			kind: common.GROUPING_KEY_VAR_DECLARATION,
+			kind: GROUPING_KEY_VAR_DECLARATION,
 		},
 		TypeDescriptor:       typeDescriptor,
 		SimpleBindingPattern: simpleBindingPattern,
@@ -3245,7 +3240,7 @@ func CreateGroupingKeyVarDeclarationNode(typeDescriptor STNode, simpleBindingPat
 func CreateMatchStatementNode(matchKeyword STNode, condition STNode, openBrace STNode, matchClauses STNode, closeBrace STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STMatchStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.MATCH_STATEMENT,
+			kind: MATCH_STATEMENT,
 		},
 		MatchKeyword: matchKeyword,
 		Condition:    condition,
@@ -3260,7 +3255,7 @@ func CreateMatchStatementNode(matchKeyword STNode, condition STNode, openBrace S
 func CreateMatchClauseNode(matchPatterns STNode, matchGuard STNode, rightDoubleArrow STNode, blockStatement STNode) STNode {
 	return createNodeAndAddChildren(&STMatchClauseNode{
 		STNode: &STNodeBase{
-			kind: common.MATCH_CLAUSE,
+			kind: MATCH_CLAUSE,
 		},
 		MatchPatterns:    matchPatterns,
 		MatchGuard:       matchGuard,
@@ -3273,7 +3268,7 @@ func CreateMatchClauseNode(matchPatterns STNode, matchGuard STNode, rightDoubleA
 func CreateMatchGuardNode(ifKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STMatchGuardNode{
 		STNode: &STNodeBase{
-			kind: common.MATCH_GUARD,
+			kind: MATCH_GUARD,
 		},
 		IfKeyword:  ifKeyword,
 		Expression: expression,
@@ -3284,7 +3279,7 @@ func CreateMatchGuardNode(ifKeyword STNode, expression STNode) STNode {
 func CreateListMatchPatternNode(openBracket STNode, matchPatterns STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STListMatchPatternNode{
 		STNode: &STNodeBase{
-			kind: common.LIST_MATCH_PATTERN,
+			kind: LIST_MATCH_PATTERN,
 		},
 		OpenBracket:   openBracket,
 		MatchPatterns: matchPatterns,
@@ -3296,7 +3291,7 @@ func CreateListMatchPatternNode(openBracket STNode, matchPatterns STNode, closeB
 func CreateRestMatchPatternNode(ellipsisToken STNode, varKeywordToken STNode, variableName STNode) STNode {
 	return createNodeAndAddChildren(&STRestMatchPatternNode{
 		STNode: &STNodeBase{
-			kind: common.REST_MATCH_PATTERN,
+			kind: REST_MATCH_PATTERN,
 		},
 		EllipsisToken:   ellipsisToken,
 		VarKeywordToken: varKeywordToken,
@@ -3308,7 +3303,7 @@ func CreateRestMatchPatternNode(ellipsisToken STNode, varKeywordToken STNode, va
 func CreateMappingMatchPatternNode(openBraceToken STNode, fieldMatchPatterns STNode, closeBraceToken STNode) STNode {
 	return createNodeAndAddChildren(&STMappingMatchPatternNode{
 		STNode: &STNodeBase{
-			kind: common.MAPPING_MATCH_PATTERN,
+			kind: MAPPING_MATCH_PATTERN,
 		},
 		OpenBraceToken:     openBraceToken,
 		FieldMatchPatterns: fieldMatchPatterns,
@@ -3320,7 +3315,7 @@ func CreateMappingMatchPatternNode(openBraceToken STNode, fieldMatchPatterns STN
 func CreateFieldMatchPatternNode(fieldNameNode STNode, colonToken STNode, matchPattern STNode) STNode {
 	return createNodeAndAddChildren(&STFieldMatchPatternNode{
 		STNode: &STNodeBase{
-			kind: common.FIELD_MATCH_PATTERN,
+			kind: FIELD_MATCH_PATTERN,
 		},
 		FieldNameNode: fieldNameNode,
 		ColonToken:    colonToken,
@@ -3332,7 +3327,7 @@ func CreateFieldMatchPatternNode(fieldNameNode STNode, colonToken STNode, matchP
 func CreateErrorMatchPatternNode(errorKeyword STNode, typeReference STNode, openParenthesisToken STNode, argListMatchPatternNode STNode, closeParenthesisToken STNode) STNode {
 	return createNodeAndAddChildren(&STErrorMatchPatternNode{
 		STNode: &STNodeBase{
-			kind: common.ERROR_MATCH_PATTERN,
+			kind: ERROR_MATCH_PATTERN,
 		},
 		ErrorKeyword:            errorKeyword,
 		TypeReference:           typeReference,
@@ -3346,7 +3341,7 @@ func CreateErrorMatchPatternNode(errorKeyword STNode, typeReference STNode, open
 func CreateNamedArgMatchPatternNode(identifier STNode, equalToken STNode, matchPattern STNode) STNode {
 	return createNodeAndAddChildren(&STNamedArgMatchPatternNode{
 		STNode: &STNodeBase{
-			kind: common.NAMED_ARG_MATCH_PATTERN,
+			kind: NAMED_ARG_MATCH_PATTERN,
 		},
 		Identifier:   identifier,
 		EqualToken:   equalToken,
@@ -3360,7 +3355,7 @@ func CreateNamedArgMatchPatternNode(identifier STNode, equalToken STNode, matchP
 func CreateStartActionNode(annotations STNode, startKeyword STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STStartActionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.START_ACTION,
+			kind: START_ACTION,
 		},
 		Annotations:  annotations,
 		StartKeyword: startKeyword,
@@ -3372,7 +3367,7 @@ func CreateStartActionNode(annotations STNode, startKeyword STNode, expression S
 func CreateFlushActionNode(flushKeyword STNode, peerWorker STNode) STNode {
 	return createNodeAndAddChildren(&STFlushActionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.FLUSH_ACTION,
+			kind: FLUSH_ACTION,
 		},
 		FlushKeyword: flushKeyword,
 		PeerWorker:   peerWorker,
@@ -3383,7 +3378,7 @@ func CreateFlushActionNode(flushKeyword STNode, peerWorker STNode) STNode {
 func CreateSyncSendActionNode(expression STNode, syncSendToken STNode, peerWorker STNode) STNode {
 	return createNodeAndAddChildren(&STSyncSendActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.SYNC_SEND_ACTION,
+			kind: SYNC_SEND_ACTION,
 		},
 		Expression:    expression,
 		SyncSendToken: syncSendToken,
@@ -3395,7 +3390,7 @@ func CreateSyncSendActionNode(expression STNode, syncSendToken STNode, peerWorke
 func CreateReceiveActionNode(leftArrow STNode, receiveWorkers STNode) STNode {
 	return createNodeAndAddChildren(&STReceiveActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.RECEIVE_ACTION,
+			kind: RECEIVE_ACTION,
 		},
 		LeftArrow:      leftArrow,
 		ReceiveWorkers: receiveWorkers,
@@ -3406,7 +3401,7 @@ func CreateReceiveActionNode(leftArrow STNode, receiveWorkers STNode) STNode {
 func CreateReceiveFieldsNode(openBrace STNode, receiveFields STNode, closeBrace STNode) STNode {
 	return createNodeAndAddChildren(&STReceiveFieldsNode{
 		STNode: &STNodeBase{
-			kind: common.RECEIVE_FIELDS,
+			kind: RECEIVE_FIELDS,
 		},
 		OpenBrace:     openBrace,
 		ReceiveFields: receiveFields,
@@ -3418,7 +3413,7 @@ func CreateReceiveFieldsNode(openBrace STNode, receiveFields STNode, closeBrace 
 func CreateRestDescriptorNode(typeDescriptor STNode, ellipsisToken STNode) STNode {
 	return createNodeAndAddChildren(&STRestDescriptorNode{
 		STNode: &STNodeBase{
-			kind: common.REST_TYPE,
+			kind: REST_TYPE,
 		},
 		TypeDescriptor: typeDescriptor,
 		EllipsisToken:  ellipsisToken,
@@ -3429,7 +3424,7 @@ func CreateRestDescriptorNode(typeDescriptor STNode, ellipsisToken STNode) STNod
 func CreateReceiveFieldNode(fieldName STNode, colon STNode, peerWorker STNode) STNode {
 	return createNodeAndAddChildren(&STReceiveFieldNode{
 		STNode: &STNodeBase{
-			kind: common.RECEIVE_FIELD,
+			kind: RECEIVE_FIELD,
 		},
 		FieldName:  fieldName,
 		Colon:      colon,
@@ -3443,7 +3438,7 @@ func CreateReceiveFieldNode(fieldName STNode, colon STNode, peerWorker STNode) S
 func CreateTransactionStatementNode(transactionKeyword STNode, blockStatement STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STTransactionStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.TRANSACTION_STATEMENT,
+			kind: TRANSACTION_STATEMENT,
 		},
 		TransactionKeyword: transactionKeyword,
 		BlockStatement:     blockStatement,
@@ -3455,7 +3450,7 @@ func CreateTransactionStatementNode(transactionKeyword STNode, blockStatement ST
 func CreateRollbackStatementNode(rollbackKeyword STNode, expression STNode, semicolon STNode) STNode {
 	return createNodeAndAddChildren(&STRollbackStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.ROLLBACK_STATEMENT,
+			kind: ROLLBACK_STATEMENT,
 		},
 		RollbackKeyword: rollbackKeyword,
 		Expression:      expression,
@@ -3467,7 +3462,7 @@ func CreateRollbackStatementNode(rollbackKeyword STNode, expression STNode, semi
 func CreateRetryStatementNode(retryKeyword STNode, typeParameter STNode, arguments STNode, retryBody STNode, onFailClause STNode) STNode {
 	return createNodeAndAddChildren(&STRetryStatementNode{
 		STStatementNode: &STNodeBase{
-			kind: common.RETRY_STATEMENT,
+			kind: RETRY_STATEMENT,
 		},
 		RetryKeyword:  retryKeyword,
 		TypeParameter: typeParameter,
@@ -3481,7 +3476,7 @@ func CreateRetryStatementNode(retryKeyword STNode, typeParameter STNode, argumen
 func CreateCommitActionNode(commitKeyword STNode) STNode {
 	return createNodeAndAddChildren(&STCommitActionNode{
 		STActionNode: &STNodeBase{
-			kind: common.COMMIT_ACTION,
+			kind: COMMIT_ACTION,
 		},
 		CommitKeyword: commitKeyword,
 	}, commitKeyword)
@@ -3491,7 +3486,7 @@ func CreateCommitActionNode(commitKeyword STNode) STNode {
 func CreateTransactionalExpressionNode(transactionalKeyword STNode) STNode {
 	return createNodeAndAddChildren(&STTransactionalExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.TRANSACTIONAL_EXPRESSION,
+			kind: TRANSACTIONAL_EXPRESSION,
 		},
 		TransactionalKeyword: transactionalKeyword,
 	}, transactionalKeyword)
@@ -3501,7 +3496,7 @@ func CreateTransactionalExpressionNode(transactionalKeyword STNode) STNode {
 func CreateOnFailClauseNode(onKeyword STNode, failKeyword STNode, typedBindingPattern STNode, blockStatement STNode) STNode {
 	return createNodeAndAddChildren(&STOnFailClauseNode{
 		STClauseNode: &STNodeBase{
-			kind: common.ON_FAIL_CLAUSE,
+			kind: ON_FAIL_CLAUSE,
 		},
 		OnKeyword:           onKeyword,
 		FailKeyword:         failKeyword,
@@ -3516,7 +3511,7 @@ func CreateOnFailClauseNode(onKeyword STNode, failKeyword STNode, typedBindingPa
 func CreateImplicitAnonymousFunctionParameters(openParenToken STNode, parameters STNode, closeParenToken STNode) STNode {
 	return createNodeAndAddChildren(&STImplicitAnonymousFunctionParameters{
 		STNode: &STNodeBase{
-			kind: common.INFER_PARAM_LIST,
+			kind: INFER_PARAM_LIST,
 		},
 		OpenParenToken:  openParenToken,
 		Parameters:      parameters,
@@ -3528,7 +3523,7 @@ func CreateImplicitAnonymousFunctionParameters(openParenToken STNode, parameters
 func CreateImplicitAnonymousFunctionExpressionNode(params STNode, rightDoubleArrow STNode, expression STNode) STNode {
 	return createNodeAndAddChildren(&STImplicitAnonymousFunctionExpressionNode{
 		STAnonymousFunctionExpressionNode: &STNodeBase{
-			kind: common.IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION,
+			kind: IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION,
 		},
 		Params:           params,
 		RightDoubleArrow: rightDoubleArrow,
@@ -3540,7 +3535,7 @@ func CreateImplicitAnonymousFunctionExpressionNode(params STNode, rightDoubleArr
 func CreateExplicitAnonymousFunctionExpressionNode(annotations STNode, qualifierList STNode, functionKeyword STNode, functionSignature STNode, functionBody STNode) STNode {
 	return createNodeAndAddChildren(&STExplicitAnonymousFunctionExpressionNode{
 		STAnonymousFunctionExpressionNode: &STNodeBase{
-			kind: common.EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION,
+			kind: EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION,
 		},
 		Annotations:       annotations,
 		QualifierList:     qualifierList,
@@ -3554,7 +3549,7 @@ func CreateExplicitAnonymousFunctionExpressionNode(annotations STNode, qualifier
 func CreateExpressionFunctionBodyNode(rightDoubleArrow STNode, expression STNode, semicolon STNode) STNode {
 	return createNodeAndAddChildren(&STExpressionFunctionBodyNode{
 		STFunctionBodyNode: &STNodeBase{
-			kind: common.EXPRESSION_FUNCTION_BODY,
+			kind: EXPRESSION_FUNCTION_BODY,
 		},
 		RightDoubleArrow: rightDoubleArrow,
 		Expression:       expression,
@@ -3568,7 +3563,7 @@ func CreateExpressionFunctionBodyNode(rightDoubleArrow STNode, expression STNode
 func CreateIntersectionTypeDescriptorNode(leftTypeDesc STNode, bitwiseAndToken STNode, rightTypeDesc STNode) STNode {
 	return createNodeAndAddChildren(&STIntersectionTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.INTERSECTION_TYPE_DESC,
+			kind: INTERSECTION_TYPE_DESC,
 		},
 		LeftTypeDesc:    leftTypeDesc,
 		BitwiseAndToken: bitwiseAndToken,
@@ -3580,7 +3575,7 @@ func CreateIntersectionTypeDescriptorNode(leftTypeDesc STNode, bitwiseAndToken S
 func CreateTableTypeDescriptorNode(tableKeywordToken STNode, rowTypeParameterNode STNode, keyConstraintNode STNode) STNode {
 	return createNodeAndAddChildren(&STTableTypeDescriptorNode{
 		STTypeDescriptorNode: &STNodeBase{
-			kind: common.TABLE_TYPE_DESC,
+			kind: TABLE_TYPE_DESC,
 		},
 		TableKeywordToken:    tableKeywordToken,
 		RowTypeParameterNode: rowTypeParameterNode,
@@ -3592,7 +3587,7 @@ func CreateTableTypeDescriptorNode(tableKeywordToken STNode, rowTypeParameterNod
 func CreateTypeParameterNode(ltToken STNode, typeNode STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STTypeParameterNode{
 		STNode: &STNodeBase{
-			kind: common.TYPE_PARAMETER,
+			kind: TYPE_PARAMETER,
 		},
 		LtToken:  ltToken,
 		TypeNode: typeNode,
@@ -3604,7 +3599,7 @@ func CreateTypeParameterNode(ltToken STNode, typeNode STNode, gtToken STNode) ST
 func CreateKeyTypeConstraintNode(keyKeywordToken STNode, typeParameterNode STNode) STNode {
 	return createNodeAndAddChildren(&STKeyTypeConstraintNode{
 		STNode: &STNodeBase{
-			kind: common.KEY_TYPE_CONSTRAINT,
+			kind: KEY_TYPE_CONSTRAINT,
 		},
 		KeyKeywordToken:   keyKeywordToken,
 		TypeParameterNode: typeParameterNode,
@@ -3617,7 +3612,7 @@ func CreateKeyTypeConstraintNode(keyKeywordToken STNode, typeParameterNode STNod
 func CreateXMLFilterExpressionNode(expression STNode, xmlPatternChain STNode) STNode {
 	return createNodeAndAddChildren(&STXMLFilterExpressionNode{
 		STXMLNavigateExpressionNode: &STNodeBase{
-			kind: common.XML_FILTER_EXPRESSION,
+			kind: XML_FILTER_EXPRESSION,
 		},
 		Expression:      expression,
 		XmlPatternChain: xmlPatternChain,
@@ -3628,7 +3623,7 @@ func CreateXMLFilterExpressionNode(expression STNode, xmlPatternChain STNode) ST
 func CreateXMLNamePatternChainingNode(startToken STNode, xmlNamePattern STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STXMLNamePatternChainingNode{
 		STNode: &STNodeBase{
-			kind: common.XML_NAME_PATTERN_CHAIN,
+			kind: XML_NAME_PATTERN_CHAIN,
 		},
 		StartToken:     startToken,
 		XmlNamePattern: xmlNamePattern,
@@ -3640,7 +3635,7 @@ func CreateXMLNamePatternChainingNode(startToken STNode, xmlNamePattern STNode, 
 func CreateXMLStepIndexedExtendNode(openBracket STNode, expression STNode, closeBracket STNode) STNode {
 	return createNodeAndAddChildren(&STXMLStepIndexedExtendNode{
 		STNode: &STNodeBase{
-			kind: common.XML_STEP_INDEXED_EXTEND,
+			kind: XML_STEP_INDEXED_EXTEND,
 		},
 		OpenBracket:  openBracket,
 		Expression:   expression,
@@ -3652,7 +3647,7 @@ func CreateXMLStepIndexedExtendNode(openBracket STNode, expression STNode, close
 func CreateXMLStepMethodCallExtendNode(dotToken STNode, methodName STNode, parenthesizedArgList STNode) STNode {
 	return createNodeAndAddChildren(&STXMLStepMethodCallExtendNode{
 		STNode: &STNodeBase{
-			kind: common.XML_STEP_METHOD_CALL_EXTEND,
+			kind: XML_STEP_METHOD_CALL_EXTEND,
 		},
 		DotToken:             dotToken,
 		MethodName:           methodName,
@@ -3664,7 +3659,7 @@ func CreateXMLStepMethodCallExtendNode(dotToken STNode, methodName STNode, paren
 func CreateXMLAtomicNamePatternNode(prefix STNode, colon STNode, name STNode) STNode {
 	return createNodeAndAddChildren(&STXMLAtomicNamePatternNode{
 		STNode: &STNodeBase{
-			kind: common.XML_ATOMIC_NAME_PATTERN,
+			kind: XML_ATOMIC_NAME_PATTERN,
 		},
 		Prefix: prefix,
 		Colon:  colon,
@@ -3678,7 +3673,7 @@ func CreateXMLAtomicNamePatternNode(prefix STNode, colon STNode, name STNode) ST
 func CreateAnnotAccessExpressionNode(expression STNode, annotChainingToken STNode, annotTagReference STNode) STNode {
 	return createNodeAndAddChildren(&STAnnotAccessExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.ANNOT_ACCESS,
+			kind: ANNOT_ACCESS,
 		},
 		Expression:         expression,
 		AnnotChainingToken: annotChainingToken,
@@ -3690,7 +3685,7 @@ func CreateAnnotAccessExpressionNode(expression STNode, annotChainingToken STNod
 func CreateOptionalFieldAccessExpressionNode(expression STNode, optionalChainingToken STNode, fieldName STNode) STNode {
 	return createNodeAndAddChildren(&STOptionalFieldAccessExpressionNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.OPTIONAL_FIELD_ACCESS,
+			kind: OPTIONAL_FIELD_ACCESS,
 		},
 		Expression:            expression,
 		OptionalChainingToken: optionalChainingToken,
@@ -3702,7 +3697,7 @@ func CreateOptionalFieldAccessExpressionNode(expression STNode, optionalChaining
 func CreateByteArrayLiteralNode(typeNode STNode, startBacktick STNode, content STNode, endBacktick STNode) STNode {
 	return createNodeAndAddChildren(&STByteArrayLiteralNode{
 		STExpressionNode: &STNodeBase{
-			kind: common.BYTE_ARRAY_LITERAL,
+			kind: BYTE_ARRAY_LITERAL,
 		},
 		Type:          typeNode,
 		StartBacktick: startBacktick,
@@ -3715,7 +3710,7 @@ func CreateByteArrayLiteralNode(typeNode STNode, startBacktick STNode, content S
 func CreateInterpolationNode(interpolationStartToken STNode, expression STNode, interpolationEndToken STNode) STNode {
 	return createNodeAndAddChildren(&STInterpolationNode{
 		STXMLItemNode: &STNodeBase{
-			kind: common.INTERPOLATION,
+			kind: INTERPOLATION,
 		},
 		InterpolationStartToken: interpolationStartToken,
 		Expression:              expression,
@@ -3728,7 +3723,7 @@ func CreateInterpolationNode(interpolationStartToken STNode, expression STNode, 
 func CreateXMLElementNode(startTag STNode, content STNode, endTag STNode) STNode {
 	return createNodeAndAddChildren(&STXMLElementNode{
 		STXMLItemNode: &STNodeBase{
-			kind: common.XML_ELEMENT,
+			kind: XML_ELEMENT,
 		},
 		StartTag: startTag,
 		Content:  content,
@@ -3739,7 +3734,7 @@ func CreateXMLElementNode(startTag STNode, content STNode, endTag STNode) STNode
 func CreateXMLStartTagNode(ltToken STNode, name STNode, attributes STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STXMLStartTagNode{
 		STXMLElementTagNode: &STNodeBase{
-			kind: common.XML_ELEMENT_START_TAG,
+			kind: XML_ELEMENT_START_TAG,
 		},
 		LtToken:    ltToken,
 		Name:       name,
@@ -3751,7 +3746,7 @@ func CreateXMLStartTagNode(ltToken STNode, name STNode, attributes STNode, gtTok
 func CreateXMLEndTagNode(ltToken STNode, slashToken STNode, name STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STXMLEndTagNode{
 		STXMLElementTagNode: &STNodeBase{
-			kind: common.XML_ELEMENT_END_TAG,
+			kind: XML_ELEMENT_END_TAG,
 		},
 		LtToken:    ltToken,
 		SlashToken: slashToken,
@@ -3763,7 +3758,7 @@ func CreateXMLEndTagNode(ltToken STNode, slashToken STNode, name STNode, gtToken
 func CreateXMLEmptyElementNode(ltToken STNode, name STNode, attributes STNode, slashToken STNode, gtToken STNode) STNode {
 	return createNodeAndAddChildren(&STXMLEmptyElementNode{
 		STXMLItemNode: &STNodeBase{
-			kind: common.XML_EMPTY_ELEMENT,
+			kind: XML_EMPTY_ELEMENT,
 		},
 		LtToken:    ltToken,
 		Name:       name,
@@ -3776,7 +3771,7 @@ func CreateXMLEmptyElementNode(ltToken STNode, name STNode, attributes STNode, s
 func CreateXMLSimpleNameNode(name STNode) STNode {
 	return createNodeAndAddChildren(&STXMLSimpleNameNode{
 		STXMLNameNode: &STNodeBase{
-			kind: common.XML_SIMPLE_NAME,
+			kind: XML_SIMPLE_NAME,
 		},
 		Name: name,
 	}, name)
@@ -3785,7 +3780,7 @@ func CreateXMLSimpleNameNode(name STNode) STNode {
 func CreateXMLQualifiedNameNode(prefix STNode, colon STNode, name STNode) STNode {
 	return createNodeAndAddChildren(&STXMLQualifiedNameNode{
 		STXMLNameNode: &STNodeBase{
-			kind: common.XML_QUALIFIED_NAME,
+			kind: XML_QUALIFIED_NAME,
 		},
 		Prefix: prefix,
 		Colon:  colon,
@@ -3796,7 +3791,7 @@ func CreateXMLQualifiedNameNode(prefix STNode, colon STNode, name STNode) STNode
 func CreateXMLAttributeNode(attributeName STNode, equalToken STNode, value STNode) STNode {
 	return createNodeAndAddChildren(&STXMLAttributeNode{
 		STNode: &STNodeBase{
-			kind: common.XML_ATTRIBUTE,
+			kind: XML_ATTRIBUTE,
 		},
 		AttributeName: attributeName,
 		EqualToken:    equalToken,
@@ -3807,7 +3802,7 @@ func CreateXMLAttributeNode(attributeName STNode, equalToken STNode, value STNod
 func CreateXMLAttributeValue(startQuote STNode, value STNode, endQuote STNode) STNode {
 	return createNodeAndAddChildren(&STXMLAttributeValue{
 		STNode: &STNodeBase{
-			kind: common.XML_ATTRIBUTE_VALUE,
+			kind: XML_ATTRIBUTE_VALUE,
 		},
 		StartQuote: startQuote,
 		Value:      value,
@@ -3818,7 +3813,7 @@ func CreateXMLAttributeValue(startQuote STNode, value STNode, endQuote STNode) S
 func CreateXMLTextNode(content STNode) STNode {
 	return createNodeAndAddChildren(&STXMLTextNode{
 		STXMLItemNode: &STNodeBase{
-			kind: common.XML_TEXT,
+			kind: XML_TEXT,
 		},
 		Content: content,
 	}, content)
@@ -3827,7 +3822,7 @@ func CreateXMLTextNode(content STNode) STNode {
 func CreateXMLComment(commentStart STNode, content STNode, commentEnd STNode) STNode {
 	return createNodeAndAddChildren(&STXMLComment{
 		STXMLItemNode: &STNodeBase{
-			kind: common.XML_COMMENT,
+			kind: XML_COMMENT,
 		},
 		CommentStart: commentStart,
 		Content:      content,
@@ -3838,7 +3833,7 @@ func CreateXMLComment(commentStart STNode, content STNode, commentEnd STNode) ST
 func CreateXMLProcessingInstruction(piStart STNode, target STNode, data STNode, piEnd STNode) STNode {
 	return createNodeAndAddChildren(&STXMLProcessingInstruction{
 		STXMLItemNode: &STNodeBase{
-			kind: common.XML_PI,
+			kind: XML_PI,
 		},
 		PiStart: piStart,
 		Target:  target,
@@ -3850,7 +3845,7 @@ func CreateXMLProcessingInstruction(piStart STNode, target STNode, data STNode, 
 func CreateXMLCDATANode(cdataStart STNode, content STNode, cdataEnd STNode) STNode {
 	return createNodeAndAddChildren(&STXMLCDATANode{
 		STXMLItemNode: &STNodeBase{
-			kind: common.XML_CDATA,
+			kind: XML_CDATA,
 		},
 		CdataStart: cdataStart,
 		Content:    content,
@@ -3864,7 +3859,7 @@ func CreateXMLCDATANode(cdataStart STNode, content STNode, cdataEnd STNode) STNo
 func CreateWildcardBindingPatternNode(underscoreToken STNode) STNode {
 	return createNodeAndAddChildren(&STWildcardBindingPatternNode{
 		STBindingPatternNode: &STNodeBase{
-			kind: common.WILDCARD_BINDING_PATTERN,
+			kind: WILDCARD_BINDING_PATTERN,
 		},
 		UnderscoreToken: underscoreToken,
 	}, underscoreToken)
@@ -3876,7 +3871,7 @@ func CreateWildcardBindingPatternNode(underscoreToken STNode) STNode {
 func CreateEnumDeclarationNode(metadata STNode, qualifier STNode, enumKeywordToken STNode, identifier STNode, openBraceToken STNode, enumMemberList STNode, closeBraceToken STNode, semicolonToken STNode) STNode {
 	return createNodeAndAddChildren(&STEnumDeclarationNode{
 		STModuleMemberDeclarationNode: &STNodeBase{
-			kind: common.ENUM_DECLARATION,
+			kind: ENUM_DECLARATION,
 		},
 		Metadata:         metadata,
 		Qualifier:        qualifier,
@@ -3893,7 +3888,7 @@ func CreateEnumDeclarationNode(metadata STNode, qualifier STNode, enumKeywordTok
 func CreateEnumMemberNode(metadata STNode, identifier STNode, equalToken STNode, constExprNode STNode) STNode {
 	return createNodeAndAddChildren(&STEnumMemberNode{
 		STNode: &STNodeBase{
-			kind: common.ENUM_MEMBER,
+			kind: ENUM_MEMBER,
 		},
 		Metadata:      metadata,
 		Identifier:    identifier,
@@ -3913,7 +3908,7 @@ type STAmbiguousCollectionNode struct {
 	CollectionEndToken STNode
 }
 
-func (n *STAmbiguousCollectionNode) Kind() common.SyntaxKind {
+func (n *STAmbiguousCollectionNode) Kind() SyntaxKind {
 	return n.STNodeBase.Kind()
 }
 

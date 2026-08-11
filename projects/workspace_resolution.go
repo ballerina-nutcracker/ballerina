@@ -20,7 +20,7 @@ import (
 	"cmp"
 	"strings"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // WorkspaceResolution holds the result of workspace-level dependency resolution.

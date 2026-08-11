@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina/tools/diagnostics"
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // KeyValueNode represents a key = value pair.
 // When the TOML source uses a dotted key (a.b.c = val), keys holds all

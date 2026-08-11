@@ -21,7 +21,7 @@ import (
 	"sync"
 	"weak"
 
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // keyData associates opaque Go key material (an *rsa.PrivateKey, *rsa.PublicKey,

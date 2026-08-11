@@ -22,8 +22,8 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/projects"
-	"ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
 
 // Probes that exercise WORKSPACE-SUPPORT-SPEC.md acceptance criteria items

@@ -22,16 +22,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ballerina/bir"
-	bircodec "ballerina/bir/codec"
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/model/symbolpool"
-	"ballerina/projects"
-	"ballerina/semantics"
-	"ballerina/semtypes"
-	"ballerina/test_util"
-	"ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 )
 
 type serializationFixture struct {

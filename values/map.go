@@ -21,7 +21,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type mapEntry struct {

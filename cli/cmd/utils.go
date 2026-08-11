@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ballerina/projects"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"

@@ -26,9 +26,9 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/projects"
-	"ballerina/test_util"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // TestBuildProjectAPI tests loading a valid build project.

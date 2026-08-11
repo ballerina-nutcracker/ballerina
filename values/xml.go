@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type (

@@ -21,7 +21,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 type TypePool struct {

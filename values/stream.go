@@ -16,7 +16,7 @@
 
 package values
 
-import "ballerina/semtypes"
+import "github.com/ballerina-nutcracker/ballerina/semtypes"
 
 // Stream is the runtime representation of a stream<T, C> value.
 //

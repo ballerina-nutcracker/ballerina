@@ -22,11 +22,11 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina/ast"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type invocable interface {

@@ -21,8 +21,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"ballerina/ast"
-	"ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
 type CPEntryType uint8

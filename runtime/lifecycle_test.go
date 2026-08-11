@@ -26,12 +26,12 @@ import (
 	"testing"
 	"time"
 
-	_ "ballerina/lib/rt"
-	"ballerina/platform/pal"
-	"ballerina/projects"
-	"ballerina/runtime"
-	"ballerina/runtime/extern"
-	"ballerina/values"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // This defines tests that validate exit status and signal handling since we can't validate those

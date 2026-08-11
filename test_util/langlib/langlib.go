@@ -25,14 +25,14 @@ import (
 	"io/fs"
 	"strings"
 
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/lib/langlibs"
-	"ballerina/lib/stdlibs"
-	"ballerina/model"
-	"ballerina/parser"
-	"ballerina/semantics"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/lib/langlibs"
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/parser"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 type bundledLib struct {

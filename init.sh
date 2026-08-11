@@ -45,6 +45,6 @@ echo "  - ./tree-gen"
 # Generate test data files (corpus and parser/testdata JSON files)
 echo ""
 echo "Generating test data files..."
-go test ./... -update || true
+make update-testdata
 echo "✓ Test data files generated"
 

@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ballerina/bir"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 func getFormattedError(cs *callStack, r any) error {

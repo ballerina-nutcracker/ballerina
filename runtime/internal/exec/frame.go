@@ -17,12 +17,12 @@
 package exec
 
 import (
-	"ballerina/bir"
-	"ballerina/model"
-	"ballerina/runtime/extern"
-	runtimeframe "ballerina/runtime/internal/frame"
-	"ballerina/runtime/internal/modules"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	runtimeframe "github.com/ballerina-nutcracker/ballerina/runtime/internal/frame"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/modules"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type Frame = runtimeframe.Frame

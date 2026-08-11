@@ -19,7 +19,7 @@ package semtypes
 import (
 	"strings"
 
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 var SINT8 = intWidthSigned(8)

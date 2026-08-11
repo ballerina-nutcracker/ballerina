@@ -22,7 +22,7 @@ import (
 	"io"
 	"strings"
 
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 const xmlNamespaceURI = "http://www.w3.org/XML/1998/namespace"

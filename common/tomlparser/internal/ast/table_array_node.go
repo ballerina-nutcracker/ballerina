@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina/tools/diagnostics"
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // TableArrayNode represents [[array-of-tables]] entries.
 // Each [[array-of-tables]] occurrence appends a new TableNode child.

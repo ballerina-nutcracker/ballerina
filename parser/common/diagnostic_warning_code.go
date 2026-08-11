@@ -15,7 +15,7 @@
 // under the License.
 package common
 
-import "ballerina/tools/diagnostics"
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 type DiagnosticWarningCode struct {
 	diagnosticId string

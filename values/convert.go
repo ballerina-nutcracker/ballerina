@@ -19,8 +19,8 @@ package values
 import (
 	"fmt"
 
-	"ballerina/decimal"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // numericTypes are the basic types tryConvertBasicType can widen or narrow (e.g. int -> float);

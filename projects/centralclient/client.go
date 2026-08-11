@@ -31,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	"ballerina/projects/centralclient/models"
+	"github.com/ballerina-nutcracker/ballerina/projects/centralclient/models"
 )
 
 type CentralAPIClient interface {

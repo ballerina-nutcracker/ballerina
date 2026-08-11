@@ -13,7 +13,11 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-package common
+
+// Package st declares types used to represent Syntax Tree for Ballerina source.
+package st
+
+//go:generate go run golang.org/x/tools/cmd/stringer@v0.44.0 -type=SyntaxKind -output=syntaxkind_string.go
 
 type SyntaxKind uint16
 

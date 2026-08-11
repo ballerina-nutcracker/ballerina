@@ -27,8 +27,8 @@ import (
 	"fmt"
 	"os"
 
-	"ballerina/cli/internal/executable"
-	_ "ballerina/lib/rt"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/executable"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
 )
 
 func main() {

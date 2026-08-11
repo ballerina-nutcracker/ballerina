@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sync"
 
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // Sentinel fileIndex values for synthetic sources that carry no TextDocument

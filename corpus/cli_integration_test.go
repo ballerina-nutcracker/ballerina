@@ -34,10 +34,13 @@ import (
 	"sync"
 	"testing"
 
-	"ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
 
-const cliCoverDirEnv = "BAL_GOCOVERDIR"
+const (
+	cliCoverDirEnv   = "BAL_GOCOVERDIR"
+	cliCoverPackages = "github.com/ballerina-nutcracker/ballerina/..."
+)
 
 var (
 	cliIntegrationBinsOnce    sync.Once
@@ -1538,7 +1541,6 @@ func TestBalBuildUnsupportedTargetPlatform(t *testing.T) {
 // native-multi-org-v fixture + golden output as TestNativeMultiOrgPackages
 // (native_runner_test.go).
 func TestBalBuildNativeDependency(t *testing.T) {
-	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
 	}
@@ -1558,7 +1560,15 @@ func TestBalBuildNativeDependency(t *testing.T) {
 	projectDir := t.TempDir()
 	copyDir(t, srcProject, projectDir)
 
-	extraEnv := []string{"BAL_ENV=" + tempHome, "BALLERINA_SRC=" + repoRoot}
+	proxyURL := localDistributionProxy(t, repoRoot)
+	moduleCache := isolatedGoModuleCache(t, tempHome)
+	extraEnv := []string{
+		"BAL_ENV=" + tempHome,
+		"BALLERINA_SRC=",
+		"GOPROXY=" + proxyURL + ",https://proxy.golang.org,direct",
+		"GONOSUMDB=github.com/ballerina-nutcracker/ballerina*",
+		"GOMODCACHE=" + moduleCache,
+	}
 	runBuild := func() (stdout, stderr string, code int) {
 		return runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv, "build", projectDir)
 	}
@@ -2185,7 +2195,7 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 	}
 	args = append(args, "-o", outputPath)
 	if coverDir != "" {
-		args = append(args, "-cover", "-coverpkg=./...")
+		args = append(args, "-cover", "-coverpkg="+cliCoverPackages)
 	}
 	args = append(args, "./cli/cmd")
 

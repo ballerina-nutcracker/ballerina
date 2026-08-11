@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"sort"
 
-	"ballerina/decimal"
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type annotationValueTag int8

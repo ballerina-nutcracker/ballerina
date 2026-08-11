@@ -24,18 +24,17 @@ import (
 	goruntime "runtime"
 	"strings"
 
-	interpsrc "ballerina"
-	"ballerina/bir"
-	"ballerina/cli/internal/nativeexec"
-	"ballerina/cli/internal/nativerunner"
-	debugcommon "ballerina/common"
-	_ "ballerina/lib/rt"
-	"ballerina/lib/stdlibs"
-	"ballerina/platform/palnative"
-	"ballerina/projects"
-	"ballerina/runtime"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativerunner"
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 )
@@ -426,11 +425,11 @@ func isEmbeddedPackage(bp *projects.BalaProject) bool {
 
 // chooseNativeExecutor returns a LocalExecutor targeting targetPackage
 // (e.g. "cli/cmd" for run's re-exec, "cli/internal/balrt" for build's slim stub),
-// erroring if Go isn't installed or the interpreter source can't be found.
+// erroring if Go isn't installed or the CLI driver source can't be found.
 func chooseNativeExecutor(outBin, targetPackage string) (nativeexec.NativeExecutor, error) {
 	root, err := findInterpreterRoot()
 	if err != nil {
-		return nil, fmt.Errorf("native Go packages require the interpreter source: %w", err)
+		return nil, fmt.Errorf("native Go packages require the CLI driver source: %w", err)
 	}
 	local := nativerunner.NewForTarget(root, outBin, targetPackage)
 	if !local.Available() {
@@ -439,9 +438,9 @@ func chooseNativeExecutor(outBin, targetPackage string) (nativeexec.NativeExecut
 	return local, nil
 }
 
-// findInterpreterRoot returns the absolute path to the ballerina source tree.
-// It checks BALLERINA_SRC first, then falls back to the source tree embedded
-// in the binary (extracted to a cache directory on first use).
+// findInterpreterRoot returns the absolute path to a native-build driver workspace.
+// It checks BALLERINA_SRC first, then falls back to the CLI source embedded in
+// the binary and extracted to a cache directory on first use.
 func findInterpreterRoot() (string, error) {
 	root, err := locateInterpreterRoot()
 	if err != nil {
@@ -465,7 +464,7 @@ func locateInterpreterRoot() (string, error) {
 
 	cacheRoot, err := getBallerinaEnvPath()
 	if err != nil {
-		return "", fmt.Errorf("interpreter source not found; set BALLERINA_SRC to the ballerina directory")
+		return "", fmt.Errorf("CLI driver source not found; set BALLERINA_SRC to the ballerina directory")
 	}
-	return interpsrc.ExtractTo(cacheRoot, Version)
+	return extractDriverSource(cacheRoot, Version)
 }

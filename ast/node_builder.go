@@ -23,13 +23,12 @@ import (
 	"strconv"
 	"strings"
 
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
-	balCommon "ballerina/common"
+	balCommon "github.com/ballerina-nutcracker/ballerina/common"
 )
 
 type typeTable struct {
@@ -114,486 +113,486 @@ func newNodeBuilder(cx *context.CompilerContext, mode NodeBuilderMode) *NodeBuil
 	return nodeBuilder
 }
 
-var _ tree.NodeTransformer[BLangNode] = &NodeBuilder{}
+var _ st.NodeTransformer[BLangNode] = &NodeBuilder{}
 
 const (
 	OPEN_ARRAY_INDICATOR     = -1
 	INFERRED_ARRAY_INDICATOR = -2
 )
 
-func (n *NodeBuilder) TransformSyntaxNode(node tree.Node) BLangNode {
+func (n *NodeBuilder) TransformSyntaxNode(node st.Node) BLangNode {
 	switch t := node.(type) {
-	case *tree.ModulePart:
+	case *st.ModulePart:
 		return n.TransformModulePart(t)
-	case *tree.FunctionDefinition:
+	case *st.FunctionDefinition:
 		return n.TransformFunctionDefinition(t)
-	case *tree.ImportDeclarationNode:
+	case *st.ImportDeclarationNode:
 		return n.TransformImportDeclaration(t)
-	case *tree.ListenerDeclarationNode:
+	case *st.ListenerDeclarationNode:
 		return n.TransformListenerDeclaration(t)
-	case *tree.TypeDefinitionNode:
+	case *st.TypeDefinitionNode:
 		return n.TransformTypeDefinition(t)
-	case *tree.ServiceDeclarationNode:
+	case *st.ServiceDeclarationNode:
 		return n.TransformServiceDeclaration(t)
-	case *tree.AssignmentStatementNode:
+	case *st.AssignmentStatementNode:
 		return n.TransformAssignmentStatement(t)
-	case *tree.CompoundAssignmentStatementNode:
+	case *st.CompoundAssignmentStatementNode:
 		return n.TransformCompoundAssignmentStatement(t)
-	case *tree.VariableDeclarationNode:
+	case *st.VariableDeclarationNode:
 		return n.TransformVariableDeclaration(t)
-	case *tree.BlockStatementNode:
+	case *st.BlockStatementNode:
 		return n.TransformBlockStatement(t)
-	case *tree.BreakStatementNode:
+	case *st.BreakStatementNode:
 		return n.TransformBreakStatement(t)
-	case *tree.FailStatementNode:
+	case *st.FailStatementNode:
 		return n.TransformFailStatement(t)
-	case *tree.ExpressionStatementNode:
+	case *st.ExpressionStatementNode:
 		return n.TransformExpressionStatement(t)
-	case *tree.ContinueStatementNode:
+	case *st.ContinueStatementNode:
 		return n.TransformContinueStatement(t)
-	case *tree.ExternalFunctionBodyNode:
+	case *st.ExternalFunctionBodyNode:
 		return n.TransformExternalFunctionBody(t)
-	case *tree.IfElseStatementNode:
+	case *st.IfElseStatementNode:
 		return n.TransformIfElseStatement(t)
-	case *tree.ElseBlockNode:
+	case *st.ElseBlockNode:
 		return n.TransformElseBlock(t)
-	case *tree.WhileStatementNode:
+	case *st.WhileStatementNode:
 		return n.TransformWhileStatement(t)
-	case *tree.PanicStatementNode:
+	case *st.PanicStatementNode:
 		return n.TransformPanicStatement(t)
-	case *tree.ReturnStatementNode:
+	case *st.ReturnStatementNode:
 		return n.TransformReturnStatement(t)
-	case *tree.LocalTypeDefinitionStatementNode:
+	case *st.LocalTypeDefinitionStatementNode:
 		return n.TransformLocalTypeDefinitionStatement(t)
-	case *tree.LockStatementNode:
+	case *st.LockStatementNode:
 		return n.TransformLockStatement(t)
-	case *tree.ForkStatementNode:
+	case *st.ForkStatementNode:
 		return n.TransformForkStatement(t)
-	case *tree.ForEachStatementNode:
+	case *st.ForEachStatementNode:
 		return n.TransformForEachStatement(t)
-	case *tree.BinaryExpressionNode:
+	case *st.BinaryExpressionNode:
 		return n.TransformBinaryExpression(t)
-	case *tree.BracedExpressionNode:
+	case *st.BracedExpressionNode:
 		return n.TransformBracedExpression(t)
-	case *tree.CheckExpressionNode:
+	case *st.CheckExpressionNode:
 		return n.TransformCheckExpression(t)
-	case *tree.FieldAccessExpressionNode:
+	case *st.FieldAccessExpressionNode:
 		return n.TransformFieldAccessExpression(t)
-	case *tree.FunctionCallExpressionNode:
+	case *st.FunctionCallExpressionNode:
 		return n.TransformFunctionCallExpression(t)
-	case *tree.MethodCallExpressionNode:
+	case *st.MethodCallExpressionNode:
 		return n.TransformMethodCallExpression(t)
-	case *tree.MappingConstructorExpressionNode:
+	case *st.MappingConstructorExpressionNode:
 		return n.TransformMappingConstructorExpression(t)
-	case *tree.IndexedExpressionNode:
+	case *st.IndexedExpressionNode:
 		return n.TransformIndexedExpression(t)
-	case *tree.TypeofExpressionNode:
+	case *st.TypeofExpressionNode:
 		return n.TransformTypeofExpression(t)
-	case *tree.UnaryExpressionNode:
+	case *st.UnaryExpressionNode:
 		return n.TransformUnaryExpression(t)
-	case *tree.ComputedNameFieldNode:
+	case *st.ComputedNameFieldNode:
 		return n.TransformComputedNameField(t)
-	case *tree.ConstantDeclarationNode:
+	case *st.ConstantDeclarationNode:
 		return n.TransformConstantDeclaration(t)
-	case *tree.DefaultableParameterNode:
+	case *st.DefaultableParameterNode:
 		return n.TransformDefaultableParameter(t)
-	case *tree.RequiredParameterNode:
+	case *st.RequiredParameterNode:
 		return n.TransformRequiredParameter(t)
-	case *tree.IncludedRecordParameterNode:
+	case *st.IncludedRecordParameterNode:
 		return n.TransformIncludedRecordParameter(t)
-	case *tree.RestParameterNode:
+	case *st.RestParameterNode:
 		return n.TransformRestParameter(t)
-	case *tree.ImportOrgNameNode:
+	case *st.ImportOrgNameNode:
 		return n.TransformImportOrgName(t)
-	case *tree.ImportPrefixNode:
+	case *st.ImportPrefixNode:
 		return n.TransformImportPrefix(t)
-	case *tree.SpecificFieldNode:
+	case *st.SpecificFieldNode:
 		return n.TransformSpecificField(t)
-	case *tree.SpreadFieldNode:
+	case *st.SpreadFieldNode:
 		return n.TransformSpreadField(t)
-	case *tree.NamedArgumentNode:
+	case *st.NamedArgumentNode:
 		return n.TransformNamedArgument(t)
-	case *tree.PositionalArgumentNode:
+	case *st.PositionalArgumentNode:
 		return n.TransformPositionalArgument(t)
-	case *tree.RestArgumentNode:
+	case *st.RestArgumentNode:
 		return n.TransformRestArgument(t)
-	case *tree.InferredTypedescDefaultNode:
+	case *st.InferredTypedescDefaultNode:
 		return n.TransformInferredTypedescDefault(t)
-	case *tree.ObjectTypeDescriptorNode:
+	case *st.ObjectTypeDescriptorNode:
 		return n.TransformObjectTypeDescriptor(t)
-	case *tree.ObjectConstructorExpressionNode:
+	case *st.ObjectConstructorExpressionNode:
 		return n.TransformObjectConstructorExpression(t)
-	case *tree.RecordTypeDescriptorNode:
+	case *st.RecordTypeDescriptorNode:
 		return n.TransformRecordTypeDescriptor(t)
-	case *tree.ReturnTypeDescriptorNode:
+	case *st.ReturnTypeDescriptorNode:
 		return n.TransformReturnTypeDescriptor(t)
-	case *tree.NilTypeDescriptorNode:
+	case *st.NilTypeDescriptorNode:
 		return n.TransformNilTypeDescriptor(t)
-	case *tree.OptionalTypeDescriptorNode:
+	case *st.OptionalTypeDescriptorNode:
 		return n.TransformOptionalTypeDescriptor(t)
-	case *tree.ObjectFieldNode:
+	case *st.ObjectFieldNode:
 		return n.TransformObjectField(t)
-	case *tree.RecordFieldNode:
+	case *st.RecordFieldNode:
 		return n.TransformRecordField(t)
-	case *tree.RecordFieldWithDefaultValueNode:
+	case *st.RecordFieldWithDefaultValueNode:
 		return n.TransformRecordFieldWithDefaultValue(t)
-	case *tree.RecordRestDescriptorNode:
+	case *st.RecordRestDescriptorNode:
 		return n.TransformRecordRestDescriptor(t)
-	case *tree.TypeReferenceNode:
+	case *st.TypeReferenceNode:
 		return n.TransformTypeReference(t)
-	case *tree.AnnotationNode:
+	case *st.AnnotationNode:
 		return n.TransformAnnotation(t)
-	case *tree.MetadataNode:
+	case *st.MetadataNode:
 		return n.TransformMetadata(t)
-	case *tree.ModuleVariableDeclarationNode:
+	case *st.ModuleVariableDeclarationNode:
 		return n.TransformModuleVariableDeclaration(t)
-	case *tree.TypeTestExpressionNode:
+	case *st.TypeTestExpressionNode:
 		return n.TransformTypeTestExpression(t)
-	case *tree.RemoteMethodCallActionNode:
+	case *st.RemoteMethodCallActionNode:
 		return n.TransformRemoteMethodCallAction(t)
-	case *tree.MapTypeDescriptorNode:
+	case *st.MapTypeDescriptorNode:
 		return n.TransformMapTypeDescriptor(t)
-	case *tree.NilLiteralNode:
+	case *st.NilLiteralNode:
 		return n.TransformNilLiteral(t)
-	case *tree.AnnotationDeclarationNode:
+	case *st.AnnotationDeclarationNode:
 		return n.TransformAnnotationDeclaration(t)
-	case *tree.AnnotationAttachPointNode:
+	case *st.AnnotationAttachPointNode:
 		return n.TransformAnnotationAttachPoint(t)
-	case *tree.XMLNamespaceDeclarationNode:
+	case *st.XMLNamespaceDeclarationNode:
 		return n.TransformXMLNamespaceDeclaration(t)
-	case *tree.ModuleXMLNamespaceDeclarationNode:
+	case *st.ModuleXMLNamespaceDeclarationNode:
 		return n.TransformModuleXMLNamespaceDeclaration(t)
-	case *tree.FunctionBodyBlockNode:
+	case *st.FunctionBodyBlockNode:
 		return n.TransformFunctionBodyBlock(t)
-	case *tree.NamedWorkerDeclarationNode:
+	case *st.NamedWorkerDeclarationNode:
 		return n.TransformNamedWorkerDeclaration(t)
-	case *tree.NamedWorkerDeclarator:
+	case *st.NamedWorkerDeclarator:
 		return n.TransformNamedWorkerDeclarator(t)
-	case *tree.BasicLiteralNode:
+	case *st.BasicLiteralNode:
 		return n.TransformBasicLiteral(t)
-	case *tree.SimpleNameReferenceNode:
+	case *st.SimpleNameReferenceNode:
 		return n.TransformSimpleNameReference(t)
-	case *tree.QualifiedNameReferenceNode:
+	case *st.QualifiedNameReferenceNode:
 		return n.TransformQualifiedNameReference(t)
-	case *tree.BuiltinSimpleNameReferenceNode:
+	case *st.BuiltinSimpleNameReferenceNode:
 		return n.TransformBuiltinSimpleNameReference(t)
-	case *tree.TrapExpressionNode:
+	case *st.TrapExpressionNode:
 		return n.TransformTrapExpression(t)
-	case *tree.ListConstructorExpressionNode:
+	case *st.ListConstructorExpressionNode:
 		return n.TransformListConstructorExpression(t)
-	case *tree.TypeCastExpressionNode:
+	case *st.TypeCastExpressionNode:
 		return n.TransformTypeCastExpression(t)
-	case *tree.TypeCastParamNode:
+	case *st.TypeCastParamNode:
 		return n.TransformTypeCastParam(t)
-	case *tree.UnionTypeDescriptorNode:
+	case *st.UnionTypeDescriptorNode:
 		return n.TransformUnionTypeDescriptor(t)
-	case *tree.TableConstructorExpressionNode:
+	case *st.TableConstructorExpressionNode:
 		return n.TransformTableConstructorExpression(t)
-	case *tree.KeySpecifierNode:
+	case *st.KeySpecifierNode:
 		return n.TransformKeySpecifier(t)
-	case *tree.StreamTypeDescriptorNode:
+	case *st.StreamTypeDescriptorNode:
 		return n.TransformStreamTypeDescriptor(t)
-	case *tree.StreamTypeParamsNode:
+	case *st.StreamTypeParamsNode:
 		return n.TransformStreamTypeParams(t)
-	case *tree.LetExpressionNode:
+	case *st.LetExpressionNode:
 		return n.TransformLetExpression(t)
-	case *tree.LetVariableDeclarationNode:
+	case *st.LetVariableDeclarationNode:
 		return n.TransformLetVariableDeclaration(t)
-	case *tree.TemplateExpressionNode:
+	case *st.TemplateExpressionNode:
 		return n.TransformTemplateExpression(t)
-	case *tree.XMLElementNode:
+	case *st.XMLElementNode:
 		return n.TransformXMLElement(t)
-	case *tree.XMLStartTagNode:
+	case *st.XMLStartTagNode:
 		return n.TransformXMLStartTag(t)
-	case *tree.XMLEndTagNode:
+	case *st.XMLEndTagNode:
 		return n.TransformXMLEndTag(t)
-	case *tree.XMLSimpleNameNode:
+	case *st.XMLSimpleNameNode:
 		return n.TransformXMLSimpleName(t)
-	case *tree.XMLQualifiedNameNode:
+	case *st.XMLQualifiedNameNode:
 		return n.TransformXMLQualifiedName(t)
-	case *tree.XMLEmptyElementNode:
+	case *st.XMLEmptyElementNode:
 		return n.TransformXMLEmptyElement(t)
-	case *tree.InterpolationNode:
+	case *st.InterpolationNode:
 		return n.TransformInterpolation(t)
-	case *tree.XMLTextNode:
+	case *st.XMLTextNode:
 		return n.TransformXMLText(t)
-	case *tree.XMLAttributeNode:
+	case *st.XMLAttributeNode:
 		return n.TransformXMLAttribute(t)
-	case *tree.XMLAttributeValue:
+	case *st.XMLAttributeValue:
 		return n.TransformXMLAttributeValue(t)
-	case *tree.XMLComment:
+	case *st.XMLComment:
 		return n.TransformXMLComment(t)
-	case *tree.XMLCDATANode:
+	case *st.XMLCDATANode:
 		return n.TransformXMLCDATA(t)
-	case *tree.XMLProcessingInstruction:
+	case *st.XMLProcessingInstruction:
 		return n.TransformXMLProcessingInstruction(t)
-	case *tree.TableTypeDescriptorNode:
+	case *st.TableTypeDescriptorNode:
 		return n.TransformTableTypeDescriptor(t)
-	case *tree.TypeParameterNode:
+	case *st.TypeParameterNode:
 		return n.TransformTypeParameter(t)
-	case *tree.KeyTypeConstraintNode:
+	case *st.KeyTypeConstraintNode:
 		return n.TransformKeyTypeConstraint(t)
-	case *tree.FunctionTypeDescriptorNode:
+	case *st.FunctionTypeDescriptorNode:
 		return n.TransformFunctionTypeDescriptor(t)
-	case *tree.FunctionSignatureNode:
+	case *st.FunctionSignatureNode:
 		return n.TransformFunctionSignature(t)
-	case *tree.ExplicitAnonymousFunctionExpressionNode:
+	case *st.ExplicitAnonymousFunctionExpressionNode:
 		return n.TransformExplicitAnonymousFunctionExpression(t)
-	case *tree.ExpressionFunctionBodyNode:
+	case *st.ExpressionFunctionBodyNode:
 		return n.TransformExpressionFunctionBody(t)
-	case *tree.TupleTypeDescriptorNode:
+	case *st.TupleTypeDescriptorNode:
 		return n.TransformTupleTypeDescriptor(t)
-	case *tree.ParenthesisedTypeDescriptorNode:
+	case *st.ParenthesisedTypeDescriptorNode:
 		return n.TransformParenthesisedTypeDescriptor(t)
-	case *tree.ExplicitNewExpressionNode:
+	case *st.ExplicitNewExpressionNode:
 		return n.TransformExplicitNewExpression(t)
-	case *tree.ImplicitNewExpressionNode:
+	case *st.ImplicitNewExpressionNode:
 		return n.TransformImplicitNewExpression(t)
-	case *tree.ParenthesizedArgList:
+	case *st.ParenthesizedArgList:
 		return n.TransformParenthesizedArgList(t)
-	case *tree.QueryConstructTypeNode:
+	case *st.QueryConstructTypeNode:
 		return n.TransformQueryConstructType(t)
-	case *tree.FromClauseNode:
+	case *st.FromClauseNode:
 		return n.TransformFromClause(t)
-	case *tree.WhereClauseNode:
+	case *st.WhereClauseNode:
 		return n.TransformWhereClause(t)
-	case *tree.LetClauseNode:
+	case *st.LetClauseNode:
 		return n.TransformLetClause(t)
-	case *tree.JoinClauseNode:
+	case *st.JoinClauseNode:
 		return n.TransformJoinClause(t)
-	case *tree.OnClauseNode:
+	case *st.OnClauseNode:
 		return n.TransformOnClause(t)
-	case *tree.LimitClauseNode:
+	case *st.LimitClauseNode:
 		return n.TransformLimitClause(t)
-	case *tree.OnConflictClauseNode:
+	case *st.OnConflictClauseNode:
 		return n.TransformOnConflictClause(t)
-	case *tree.QueryPipelineNode:
+	case *st.QueryPipelineNode:
 		return n.TransformQueryPipeline(t)
-	case *tree.SelectClauseNode:
+	case *st.SelectClauseNode:
 		return n.TransformSelectClause(t)
-	case *tree.CollectClauseNode:
+	case *st.CollectClauseNode:
 		return n.TransformCollectClause(t)
-	case *tree.QueryExpressionNode:
+	case *st.QueryExpressionNode:
 		return n.TransformQueryExpression(t)
-	case *tree.QueryActionNode:
+	case *st.QueryActionNode:
 		return n.TransformQueryAction(t)
-	case *tree.IntersectionTypeDescriptorNode:
+	case *st.IntersectionTypeDescriptorNode:
 		return n.TransformIntersectionTypeDescriptor(t)
-	case *tree.ImplicitAnonymousFunctionParameters:
+	case *st.ImplicitAnonymousFunctionParameters:
 		return n.TransformImplicitAnonymousFunctionParameters(t)
-	case *tree.ImplicitAnonymousFunctionExpressionNode:
+	case *st.ImplicitAnonymousFunctionExpressionNode:
 		return n.TransformImplicitAnonymousFunctionExpression(t)
-	case *tree.StartActionNode:
+	case *st.StartActionNode:
 		return n.TransformStartAction(t)
-	case *tree.FlushActionNode:
+	case *st.FlushActionNode:
 		return n.TransformFlushAction(t)
-	case *tree.SingletonTypeDescriptorNode:
+	case *st.SingletonTypeDescriptorNode:
 		return n.TransformSingletonTypeDescriptor(t)
-	case *tree.MethodDeclarationNode:
+	case *st.MethodDeclarationNode:
 		return n.TransformMethodDeclaration(t)
-	case *tree.TypedBindingPatternNode:
+	case *st.TypedBindingPatternNode:
 		return n.TransformTypedBindingPattern(t)
-	case *tree.CaptureBindingPatternNode:
+	case *st.CaptureBindingPatternNode:
 		return n.TransformCaptureBindingPattern(t)
-	case *tree.WildcardBindingPatternNode:
+	case *st.WildcardBindingPatternNode:
 		return n.TransformWildcardBindingPattern(t)
-	case *tree.ListBindingPatternNode:
+	case *st.ListBindingPatternNode:
 		return n.TransformListBindingPattern(t)
-	case *tree.MappingBindingPatternNode:
+	case *st.MappingBindingPatternNode:
 		return n.TransformMappingBindingPattern(t)
-	case *tree.FieldBindingPatternFullNode:
+	case *st.FieldBindingPatternFullNode:
 		return n.TransformFieldBindingPatternFull(t)
-	case *tree.FieldBindingPatternVarnameNode:
+	case *st.FieldBindingPatternVarnameNode:
 		return n.TransformFieldBindingPatternVarname(t)
-	case *tree.RestBindingPatternNode:
+	case *st.RestBindingPatternNode:
 		return n.TransformRestBindingPattern(t)
-	case *tree.ErrorBindingPatternNode:
+	case *st.ErrorBindingPatternNode:
 		return n.TransformErrorBindingPattern(t)
-	case *tree.NamedArgBindingPatternNode:
+	case *st.NamedArgBindingPatternNode:
 		return n.TransformNamedArgBindingPattern(t)
-	case *tree.AsyncSendActionNode:
+	case *st.AsyncSendActionNode:
 		return n.TransformAsyncSendAction(t)
-	case *tree.SyncSendActionNode:
+	case *st.SyncSendActionNode:
 		return n.TransformSyncSendAction(t)
-	case *tree.ReceiveActionNode:
+	case *st.ReceiveActionNode:
 		return n.TransformReceiveAction(t)
-	case *tree.ReceiveFieldsNode:
+	case *st.ReceiveFieldsNode:
 		return n.TransformReceiveFields(t)
-	case *tree.AlternateReceiveNode:
+	case *st.AlternateReceiveNode:
 		return n.TransformAlternateReceive(t)
-	case *tree.RestDescriptorNode:
+	case *st.RestDescriptorNode:
 		return n.TransformRestDescriptor(t)
-	case *tree.DoubleGTTokenNode:
+	case *st.DoubleGTTokenNode:
 		return n.TransformDoubleGTToken(t)
-	case *tree.TrippleGTTokenNode:
+	case *st.TrippleGTTokenNode:
 		return n.TransformTrippleGTToken(t)
-	case *tree.WaitActionNode:
+	case *st.WaitActionNode:
 		return n.TransformWaitAction(t)
-	case *tree.WaitFieldsListNode:
+	case *st.WaitFieldsListNode:
 		return n.TransformWaitFieldsList(t)
-	case *tree.WaitFieldNode:
+	case *st.WaitFieldNode:
 		return n.TransformWaitField(t)
-	case *tree.AnnotAccessExpressionNode:
+	case *st.AnnotAccessExpressionNode:
 		return n.TransformAnnotAccessExpression(t)
-	case *tree.OptionalFieldAccessExpressionNode:
+	case *st.OptionalFieldAccessExpressionNode:
 		return n.TransformOptionalFieldAccessExpression(t)
-	case *tree.ConditionalExpressionNode:
+	case *st.ConditionalExpressionNode:
 		return n.TransformConditionalExpression(t)
-	case *tree.EnumDeclarationNode:
+	case *st.EnumDeclarationNode:
 		return n.TransformEnumDeclaration(t)
-	case *tree.EnumMemberNode:
+	case *st.EnumMemberNode:
 		return n.TransformEnumMember(t)
-	case *tree.ArrayTypeDescriptorNode:
+	case *st.ArrayTypeDescriptorNode:
 		return n.TransformArrayTypeDescriptor(t)
-	case *tree.ArrayDimensionNode:
+	case *st.ArrayDimensionNode:
 		return n.TransformArrayDimension(t)
-	case *tree.TransactionStatementNode:
+	case *st.TransactionStatementNode:
 		return n.TransformTransactionStatement(t)
-	case *tree.RollbackStatementNode:
+	case *st.RollbackStatementNode:
 		return n.TransformRollbackStatement(t)
-	case *tree.RetryStatementNode:
+	case *st.RetryStatementNode:
 		return n.TransformRetryStatement(t)
-	case *tree.CommitActionNode:
+	case *st.CommitActionNode:
 		return n.TransformCommitAction(t)
-	case *tree.TransactionalExpressionNode:
+	case *st.TransactionalExpressionNode:
 		return n.TransformTransactionalExpression(t)
-	case *tree.ByteArrayLiteralNode:
+	case *st.ByteArrayLiteralNode:
 		return n.TransformByteArrayLiteral(t)
-	case *tree.XMLFilterExpressionNode:
+	case *st.XMLFilterExpressionNode:
 		return n.TransformXMLFilterExpression(t)
-	case *tree.XMLStepExpressionNode:
+	case *st.XMLStepExpressionNode:
 		return n.TransformXMLStepExpression(t)
-	case *tree.XMLNamePatternChainingNode:
+	case *st.XMLNamePatternChainingNode:
 		return n.TransformXMLNamePatternChaining(t)
-	case *tree.XMLStepIndexedExtendNode:
+	case *st.XMLStepIndexedExtendNode:
 		return n.TransformXMLStepIndexedExtend(t)
-	case *tree.XMLStepMethodCallExtendNode:
+	case *st.XMLStepMethodCallExtendNode:
 		return n.TransformXMLStepMethodCallExtend(t)
-	case *tree.XMLAtomicNamePatternNode:
+	case *st.XMLAtomicNamePatternNode:
 		return n.TransformXMLAtomicNamePattern(t)
-	case *tree.TypeReferenceTypeDescNode:
+	case *st.TypeReferenceTypeDescNode:
 		return n.TransformTypeReferenceTypeDesc(t)
-	case *tree.MatchStatementNode:
+	case *st.MatchStatementNode:
 		return n.TransformMatchStatement(t)
-	case *tree.MatchClauseNode:
+	case *st.MatchClauseNode:
 		return n.TransformMatchClause(t)
-	case *tree.MatchGuardNode:
+	case *st.MatchGuardNode:
 		return n.TransformMatchGuard(t)
-	case *tree.DistinctTypeDescriptorNode:
+	case *st.DistinctTypeDescriptorNode:
 		return n.TransformDistinctTypeDescriptor(t)
-	case *tree.ListMatchPatternNode:
+	case *st.ListMatchPatternNode:
 		return n.TransformListMatchPattern(t)
-	case *tree.RestMatchPatternNode:
+	case *st.RestMatchPatternNode:
 		return n.TransformRestMatchPattern(t)
-	case *tree.MappingMatchPatternNode:
+	case *st.MappingMatchPatternNode:
 		return n.TransformMappingMatchPattern(t)
-	case *tree.FieldMatchPatternNode:
+	case *st.FieldMatchPatternNode:
 		return n.TransformFieldMatchPattern(t)
-	case *tree.ErrorMatchPatternNode:
+	case *st.ErrorMatchPatternNode:
 		return n.TransformErrorMatchPattern(t)
-	case *tree.NamedArgMatchPatternNode:
+	case *st.NamedArgMatchPatternNode:
 		return n.TransformNamedArgMatchPattern(t)
-	case *tree.OrderByClauseNode:
+	case *st.OrderByClauseNode:
 		return n.TransformOrderByClause(t)
-	case *tree.OrderKeyNode:
+	case *st.OrderKeyNode:
 		return n.TransformOrderKey(t)
-	case *tree.GroupByClauseNode:
+	case *st.GroupByClauseNode:
 		return n.TransformGroupByClause(t)
-	case *tree.GroupingKeyVarDeclarationNode:
+	case *st.GroupingKeyVarDeclarationNode:
 		return n.TransformGroupingKeyVarDeclaration(t)
-	case *tree.OnFailClauseNode:
+	case *st.OnFailClauseNode:
 		return n.TransformOnFailClause(t)
-	case *tree.DoStatementNode:
+	case *st.DoStatementNode:
 		return n.TransformDoStatement(t)
-	case *tree.ClassDefinitionNode:
+	case *st.ClassDefinitionNode:
 		return n.TransformClassDefinition(t)
-	case *tree.ResourcePathParameterNode:
+	case *st.ResourcePathParameterNode:
 		return n.TransformResourcePathParameter(t)
-	case *tree.RequiredExpressionNode:
+	case *st.RequiredExpressionNode:
 		return n.TransformRequiredExpression(t)
-	case *tree.ErrorConstructorExpressionNode:
+	case *st.ErrorConstructorExpressionNode:
 		return n.TransformErrorConstructorExpression(t)
-	case *tree.ParameterizedTypeDescriptorNode:
+	case *st.ParameterizedTypeDescriptorNode:
 		return n.TransformParameterizedTypeDescriptor(t)
-	case *tree.SpreadMemberNode:
+	case *st.SpreadMemberNode:
 		return n.TransformSpreadMember(t)
-	case *tree.ClientResourceAccessActionNode:
+	case *st.ClientResourceAccessActionNode:
 		return n.TransformClientResourceAccessAction(t)
-	case *tree.ComputedResourceAccessSegmentNode:
+	case *st.ComputedResourceAccessSegmentNode:
 		return n.TransformComputedResourceAccessSegment(t)
-	case *tree.ResourceAccessRestSegmentNode:
+	case *st.ResourceAccessRestSegmentNode:
 		return n.TransformResourceAccessRestSegment(t)
-	case *tree.ReSequenceNode:
+	case *st.ReSequenceNode:
 		return n.TransformReSequence(t)
-	case *tree.ReAtomQuantifierNode:
+	case *st.ReAtomQuantifierNode:
 		return n.TransformReAtomQuantifier(t)
-	case *tree.ReAtomCharOrEscapeNode:
+	case *st.ReAtomCharOrEscapeNode:
 		return n.TransformReAtomCharOrEscape(t)
-	case *tree.ReQuoteEscapeNode:
+	case *st.ReQuoteEscapeNode:
 		return n.TransformReQuoteEscape(t)
-	case *tree.ReSimpleCharClassEscapeNode:
+	case *st.ReSimpleCharClassEscapeNode:
 		return n.TransformReSimpleCharClassEscape(t)
-	case *tree.ReUnicodePropertyEscapeNode:
+	case *st.ReUnicodePropertyEscapeNode:
 		return n.TransformReUnicodePropertyEscape(t)
-	case *tree.ReUnicodeScriptNode:
+	case *st.ReUnicodeScriptNode:
 		return n.TransformReUnicodeScript(t)
-	case *tree.ReUnicodeGeneralCategoryNode:
+	case *st.ReUnicodeGeneralCategoryNode:
 		return n.TransformReUnicodeGeneralCategory(t)
-	case *tree.ReCharacterClassNode:
+	case *st.ReCharacterClassNode:
 		return n.TransformReCharacterClass(t)
-	case *tree.ReCharSetRangeWithReCharSetNode:
+	case *st.ReCharSetRangeWithReCharSetNode:
 		return n.TransformReCharSetRangeWithReCharSet(t)
-	case *tree.ReCharSetRangeNode:
+	case *st.ReCharSetRangeNode:
 		return n.TransformReCharSetRange(t)
-	case *tree.ReCharSetAtomWithReCharSetNoDashNode:
+	case *st.ReCharSetAtomWithReCharSetNoDashNode:
 		return n.TransformReCharSetAtomWithReCharSetNoDash(t)
-	case *tree.ReCharSetRangeNoDashWithReCharSetNode:
+	case *st.ReCharSetRangeNoDashWithReCharSetNode:
 		return n.TransformReCharSetRangeNoDashWithReCharSet(t)
-	case *tree.ReCharSetRangeNoDashNode:
+	case *st.ReCharSetRangeNoDashNode:
 		return n.TransformReCharSetRangeNoDash(t)
-	case *tree.ReCharSetAtomNoDashWithReCharSetNoDashNode:
+	case *st.ReCharSetAtomNoDashWithReCharSetNoDashNode:
 		return n.TransformReCharSetAtomNoDashWithReCharSetNoDash(t)
-	case *tree.ReCapturingGroupsNode:
+	case *st.ReCapturingGroupsNode:
 		return n.TransformReCapturingGroups(t)
-	case *tree.ReFlagExpressionNode:
+	case *st.ReFlagExpressionNode:
 		return n.TransformReFlagExpression(t)
-	case *tree.ReFlagsOnOffNode:
+	case *st.ReFlagsOnOffNode:
 		return n.TransformReFlagsOnOff(t)
-	case *tree.ReFlagsNode:
+	case *st.ReFlagsNode:
 		return n.TransformReFlags(t)
-	case *tree.ReAssertionNode:
+	case *st.ReAssertionNode:
 		return n.TransformReAssertion(t)
-	case *tree.ReQuantifierNode:
+	case *st.ReQuantifierNode:
 		return n.TransformReQuantifier(t)
-	case *tree.ReBracedQuantifierNode:
+	case *st.ReBracedQuantifierNode:
 		return n.TransformReBracedQuantifier(t)
-	case *tree.MemberTypeDescriptorNode:
+	case *st.MemberTypeDescriptorNode:
 		return n.TransformMemberTypeDescriptor(t)
-	case *tree.ReceiveFieldNode:
+	case *st.ReceiveFieldNode:
 		return n.TransformReceiveField(t)
-	case *tree.NaturalExpressionNode:
+	case *st.NaturalExpressionNode:
 		return n.TransformNaturalExpression(t)
-	case *tree.IdentifierToken:
+	case *st.IdentifierToken:
 		return n.TransformIdentifierToken(t)
-	case tree.Token:
+	case st.Token:
 		return n.TransformToken(t)
 	default:
 		panic("TransformSyntaxNode: unsupported node type")
 	}
 }
 
-func getFileName(node tree.Node) string {
+func getFileName(node st.Node) string {
 	st := node.SyntaxTree()
 	return st.FilePath()
 }
 
-func innermostDiagnosticNodes(node tree.Node) []tree.Node {
+func innermostDiagnosticNodes(node st.Node) []st.Node {
 	if !node.HasDiagnostics() {
 		return nil
 	}
 
-	var nodes []tree.Node
-	if nt, ok := node.(tree.NonTerminalNode); ok {
+	var nodes []st.Node
+	if nt, ok := node.(st.NonTerminalNode); ok {
 		for child := range nt.ChildNodes() {
 			if child != nil && child.HasDiagnostics() {
 				nodes = append(nodes, innermostDiagnosticNodes(child)...)
@@ -603,14 +602,14 @@ func innermostDiagnosticNodes(node tree.Node) []tree.Node {
 	if len(nodes) > 0 {
 		return nodes
 	}
-	return []tree.Node{node}
+	return []st.Node{node}
 }
 
-func diagnosticMessage(diagnostic tree.STNodeDiagnostic) string {
+func diagnosticMessage(diagnostic st.STNodeDiagnostic) string {
 	return strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " ")
 }
 
-func (n *NodeBuilder) getPosition(node tree.Node) diagnostics.Location {
+func (n *NodeBuilder) getPosition(node st.Node) diagnostics.Location {
 	textRange := node.TextRange()
 	if n.mode == NodeBuilderModeRecover {
 		textRange = node.TextRangeWithMinutiae()
@@ -618,29 +617,29 @@ func (n *NodeBuilder) getPosition(node tree.Node) diagnostics.Location {
 	return n.location(node, textRange)
 }
 
-func (n *NodeBuilder) getRecoveryPosition(node tree.Node) diagnostics.Location {
+func (n *NodeBuilder) getRecoveryPosition(node st.Node) diagnostics.Location {
 	return n.location(node, node.TextRangeWithMinutiae())
 }
 
-func (n *NodeBuilder) location(node tree.Node, textRange tree.TextRange) diagnostics.Location {
+func (n *NodeBuilder) location(node st.Node, textRange st.TextRange) diagnostics.Location {
 	return diagnostics.NewLocation(n.de(), getFileName(node), textRange.StartOffset, textRange.EndOffset)
 }
 
-func (n *NodeBuilder) getPositionRange(startNode tree.Node, endNode tree.Node) diagnostics.Location {
+func (n *NodeBuilder) getPositionRange(startNode st.Node, endNode st.Node) diagnostics.Location {
 	startRange := startNode.TextRange()
 	endRange := endNode.TextRange()
 	return diagnostics.NewLocation(n.de(), getFileName(startNode), startRange.StartOffset, endRange.EndOffset)
 }
 
-func (n *NodeBuilder) getPositionWithoutMetadata(node tree.Node) diagnostics.Location {
+func (n *NodeBuilder) getPositionWithoutMetadata(node st.Node) diagnostics.Location {
 	pos := n.getPosition(node)
 	return diagnostics.NewLocation(n.de(), getFileName(node), metadataExcludedStartOffset(node, pos.StartOffset()), pos.EndOffset())
 }
 
-func metadataExcludedStartOffset(node tree.Node, defaultStartOffset int) int {
-	nonTerminalNode := node.(tree.NonTerminalNode)
+func metadataExcludedStartOffset(node st.Node, defaultStartOffset int) int {
+	nonTerminalNode := node.(st.NonTerminalNode)
 
-	var firstChild, secondChild tree.Node
+	var firstChild, secondChild st.Node
 	childIndex := 0
 	for child := range nonTerminalNode.ChildNodes() {
 		if childIndex == 0 {
@@ -652,18 +651,18 @@ func metadataExcludedStartOffset(node tree.Node, defaultStartOffset int) int {
 		}
 	}
 
-	if firstChild != nil && firstChild.Kind() == common.METADATA && secondChild != nil {
+	if firstChild != nil && firstChild.Kind() == st.METADATA && secondChild != nil {
 		return secondChild.TextRange().StartOffset
 	}
 	return defaultStartOffset
 }
 
 // getDocumentationString extracts the documentation string from metadata
-func getDocumentationString(metadata *tree.MetadataNode) tree.Node {
+func getDocumentationString(metadata *st.MetadataNode) st.Node {
 	return metadata.DocumentationString()
 }
 
-func (n *NodeBuilder) populateMetadata(metadata *tree.MetadataNode, target AnnotatableNode) {
+func (n *NodeBuilder) populateMetadata(metadata *st.MetadataNode, target AnnotatableNode) {
 	if metadata == nil || metadata.IsMissing() {
 		return
 	}
@@ -676,7 +675,7 @@ func (n *NodeBuilder) populateMetadata(metadata *tree.MetadataNode, target Annot
 	n.addAnnotationAttachments(metadata.Annotations(), target)
 }
 
-func (n *NodeBuilder) addAnnotationAttachments(annotations tree.NodeList[*tree.AnnotationNode], target AnnotatableNode) {
+func (n *NodeBuilder) addAnnotationAttachments(annotations st.NodeList[*st.AnnotationNode], target AnnotatableNode) {
 	for annotation := range annotations.Iterator() {
 		target.AddAnnotationAttachment(n.TransformAnnotation(annotation).(*BLangAnnotationAttachment))
 	}
@@ -692,12 +691,12 @@ func (n *NodeBuilder) createTrueLiteral(pos diagnostics.Location) *BLangLiteral 
 }
 
 // createMarkdownDocumentationAttachment creates a BLangMarkdownDocumentation from a documentation string node
-func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.Node) *BLangMarkdownDocumentation {
+func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode st.Node) *BLangMarkdownDocumentation {
 	if docStringNode == nil || docStringNode.IsMissing() {
 		return nil
 	}
 
-	markdownDocumentationNode, ok := docStringNode.(*tree.MarkdownDocumentationNode)
+	markdownDocumentationNode, ok := docStringNode.(*st.MarkdownDocumentationNode)
 	if !ok {
 		return nil
 	}
@@ -717,8 +716,8 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 	for i := 0; i < docLineList.Size(); i++ {
 		singleDocLine := docLineList.Get(i)
 		switch singleDocLine.Kind() {
-		case common.MARKDOWN_DOCUMENTATION_LINE, common.MARKDOWN_REFERENCE_DOCUMENTATION_LINE:
-			docLineNode := singleDocLine.(*tree.MarkdownDocumentationLineNode)
+		case st.MARKDOWN_DOCUMENTATION_LINE, st.MARKDOWN_REFERENCE_DOCUMENTATION_LINE:
+			docLineNode := singleDocLine.(*st.MarkdownDocumentationLineNode)
 			docElements := docLineNode.DocumentElements()
 			docText := n.addReferencesAndReturnDocumentationText(&references, docElements)
 
@@ -734,7 +733,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 				bLangDocLine.pos = n.getPosition(docLineNode)
 				documentationLines = append(documentationLines, bLangDocLine)
 			}
-		case common.MARKDOWN_PARAMETER_DOCUMENTATION_LINE:
+		case st.MARKDOWN_PARAMETER_DOCUMENTATION_LINE:
 			if bLangParaDoc != nil {
 				if bLangDeprecatedParaDoc != nil {
 					bLangDeprecatedParaDoc.Parameters = append(bLangDeprecatedParaDoc.Parameters, *bLangParaDoc)
@@ -748,7 +747,7 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 			}
 
 			bLangParaDoc = &BLangMarkdownParameterDocumentation{}
-			parameterDocLineNode := singleDocLine.(*tree.MarkdownParameterDocumentationLineNode)
+			parameterDocLineNode := singleDocLine.(*st.MarkdownParameterDocumentationLineNode)
 
 			paraName := &BLangIdentifier{}
 			parameterName := parameterDocLineNode.ParameterName()
@@ -767,9 +766,9 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 
 			bLangParaDoc.ParameterDocumentationLines = append(bLangParaDoc.ParameterDocumentationLines, paraDocText)
 			bLangParaDoc.pos = n.getPosition(parameterName)
-		case common.MARKDOWN_RETURN_PARAMETER_DOCUMENTATION_LINE:
+		case st.MARKDOWN_RETURN_PARAMETER_DOCUMENTATION_LINE:
 			bLangReturnParaDoc = &BLangMarkdownReturnParameterDocumentation{}
-			returnParaDocLineNode := singleDocLine.(*tree.MarkdownParameterDocumentationLineNode)
+			returnParaDocLineNode := singleDocLine.(*st.MarkdownParameterDocumentationLineNode)
 
 			returnParaDocElements := returnParaDocLineNode.DocumentElements()
 			returnParaDocText := n.addReferencesAndReturnDocumentationText(&references, returnParaDocElements)
@@ -777,22 +776,22 @@ func (n *NodeBuilder) createMarkdownDocumentationAttachment(docStringNode tree.N
 			bLangReturnParaDoc.ReturnParameterDocumentationLines = append(bLangReturnParaDoc.ReturnParameterDocumentationLines, returnParaDocText)
 			bLangReturnParaDoc.pos = n.getPosition(returnParaDocLineNode)
 			doc.ReturnParameter = bLangReturnParaDoc
-		case common.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE:
+		case st.MARKDOWN_DEPRECATION_DOCUMENTATION_LINE:
 			bLangDeprecationDoc = &BLangMarkDownDeprecationDocumentation{}
-			deprecationDocLineNode := singleDocLine.(*tree.MarkdownDocumentationLineNode)
+			deprecationDocLineNode := singleDocLine.(*st.MarkdownDocumentationLineNode)
 
 			docElements := deprecationDocLineNode.DocumentElements()
 			var lineText string
 			if docElements.Size() > 0 {
 				firstElement := docElements.Get(0)
-				if token, ok := firstElement.(tree.Token); ok {
+				if token, ok := firstElement.(st.Token); ok {
 					lineText = token.Text()
 				}
 			}
 			bLangDeprecationDoc.AddDeprecationLine("# " + lineText)
 			bLangDeprecationDoc.pos = n.getPosition(deprecationDocLineNode)
-		case common.MARKDOWN_CODE_BLOCK:
-			codeBlockNode := singleDocLine.(*tree.MarkdownCodeBlockNode)
+		case st.MARKDOWN_CODE_BLOCK:
+			codeBlockNode := singleDocLine.(*st.MarkdownCodeBlockNode)
 			n.transformCodeBlock(&documentationLines, codeBlockNode)
 		default:
 		}
@@ -841,12 +840,12 @@ func normalizedIdentifierValue(value string) (string, bool) {
 }
 
 // createIdentifierFromToken creates an identifier from a token, handling missing tokens and validation
-func createIdentifierFromToken(pos diagnostics.Location, token tree.Token) BLangIdentifier {
+func createIdentifierFromToken(pos diagnostics.Location, token st.Token) BLangIdentifier {
 	return createIdentifierFromTokenInternal(pos, token, false)
 }
 
 // createIdentifierFromTokenInternal creates an identifier from a token with XML handling option
-func createIdentifierFromTokenInternal(pos diagnostics.Location, token tree.Token, isXML bool) BLangIdentifier {
+func createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token, isXML bool) BLangIdentifier {
 	if token == nil {
 		// Return empty identifier for nil token
 		return createIdentifier(pos, nil, nil)
@@ -865,7 +864,7 @@ func createIdentifierFromTokenInternal(pos diagnostics.Location, token tree.Toke
 	return createIdentifier(pos, &identifierName, &identifierName)
 }
 
-func (n *NodeBuilder) createIgnoreIdentifier(node tree.Node) BLangIdentifier {
+func (n *NodeBuilder) createIgnoreIdentifier(node st.Node) BLangIdentifier {
 	pos := n.getPosition(node)
 	ignoreValue := string(model.IGNORE)
 	identifier := createIdentifier(pos, &ignoreValue, &ignoreValue)
@@ -880,7 +879,7 @@ func (n *NodeBuilder) getNextAnonymousTypeKey(packageID *model.PackageID, suffix
 
 // createTypeNode creates a type node from a syntax tree node
 // This delegates to the appropriate Transform method based on the node type
-func (n *NodeBuilder) createTypeNode(typeNode tree.Node) TypeDescriptor {
+func (n *NodeBuilder) createTypeNode(typeNode st.Node) TypeDescriptor {
 	result, err := n.createTypeNodeInner(typeNode)
 	if err == nil {
 		return result
@@ -891,18 +890,18 @@ func (n *NodeBuilder) createTypeNode(typeNode tree.Node) TypeDescriptor {
 	panic(err)
 }
 
-func (n *NodeBuilder) createTypeNodeInner(typeNode tree.Node) (TypeDescriptor, error) {
+func (n *NodeBuilder) createTypeNodeInner(typeNode st.Node) (TypeDescriptor, error) {
 	if typeNode == nil {
 		return nil, fmt.Errorf("createTypeNode: typeNode is nil")
 	}
-	if typeNode, ok := typeNode.(*tree.BuiltinSimpleNameReferenceNode); ok {
+	if typeNode, ok := typeNode.(*st.BuiltinSimpleNameReferenceNode); ok {
 		return n.createBuiltInTypeNode(typeNode), nil
 	}
 	kind := typeNode.Kind()
 	switch kind {
-	case common.NIL_TYPE_DESC:
+	case st.NIL_TYPE_DESC:
 		return n.createBuiltInTypeNode(typeNode), nil
-	case common.QUALIFIED_NAME_REFERENCE, common.IDENTIFIER_TOKEN:
+	case st.QUALIFIED_NAME_REFERENCE, st.IDENTIFIER_TOKEN:
 		bLUserDefinedType := BLangUserDefinedType{}
 		nameRefence := n.createBLangNameReference(typeNode)
 		pkgAlias, pkgOK := nameRefence[0].(*BLangIdentifier)
@@ -914,8 +913,8 @@ func (n *NodeBuilder) createTypeNodeInner(typeNode tree.Node) (TypeDescriptor, e
 		bLUserDefinedType.TypeName = *typeName
 		bLUserDefinedType.pos = n.getPosition(typeNode)
 		return &bLUserDefinedType, nil
-	case common.SIMPLE_NAME_REFERENCE:
-		nameReferenceNode := typeNode.(*tree.SimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		nameReferenceNode := typeNode.(*st.SimpleNameReferenceNode)
 		return n.createTypeNodeInner(nameReferenceNode.Name())
 	default:
 		result, ok := n.TransformSyntaxNode(typeNode).(BType)
@@ -927,14 +926,14 @@ func (n *NodeBuilder) createTypeNodeInner(typeNode tree.Node) (TypeDescriptor, e
 }
 
 // isDeclaredWithVar checks if a type node is declared with var
-func isDeclaredWithVar(typeNode tree.Node) bool {
-	if typeNode == nil || typeNode.Kind() == common.VAR_TYPE_DESC {
+func isDeclaredWithVar(typeNode st.Node) bool {
+	if typeNode == nil || typeNode.Kind() == st.VAR_TYPE_DESC {
 		return true
 	}
 	return false
 }
 
-func (n *NodeBuilder) createSimpleVarInner(name tree.Token, typeName tree.Node, initializer tree.Node, visibilityQualifier tree.Token, annotations tree.NodeList[*tree.AnnotationNode]) *BLangSimpleVariable {
+func (n *NodeBuilder) createSimpleVarInner(name st.Token, typeName st.Node, initializer st.Node, visibilityQualifier st.Token, annotations st.NodeList[*st.AnnotationNode]) *BLangSimpleVariable {
 	bLSimpleVar := createSimpleVariableNode()
 
 	var namePos diagnostics.Location
@@ -951,9 +950,9 @@ func (n *NodeBuilder) createSimpleVarInner(name tree.Token, typeName tree.Node, 
 	}
 
 	if visibilityQualifier != nil {
-		if visibilityQualifier.Kind() == common.PRIVATE_KEYWORD {
+		if visibilityQualifier.Kind() == st.PRIVATE_KEYWORD {
 			bLSimpleVar.SetPrivate()
-		} else if visibilityQualifier.Kind() == common.PUBLIC_KEYWORD {
+		} else if visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
 			bLSimpleVar.SetPublic()
 		}
 	}
@@ -967,12 +966,12 @@ func (n *NodeBuilder) createSimpleVarInner(name tree.Token, typeName tree.Node, 
 	return bLSimpleVar
 }
 
-func (n *NodeBuilder) createBuiltInTypeNode(typeNode tree.Node) TypeDescriptor {
+func (n *NodeBuilder) createBuiltInTypeNode(typeNode st.Node) TypeDescriptor {
 	var typeText string
-	if typeNode.Kind() == common.NIL_TYPE_DESC {
+	if typeNode.Kind() == st.NIL_TYPE_DESC {
 		typeText = "()"
-	} else if simpleNameRef, ok := typeNode.(*tree.BuiltinSimpleNameReferenceNode); ok {
-		if simpleNameRef.Kind() == common.VAR_TYPE_DESC {
+	} else if simpleNameRef, ok := typeNode.(*st.BuiltinSimpleNameReferenceNode); ok {
+		if simpleNameRef.Kind() == st.VAR_TYPE_DESC {
 			return nil
 		} else if simpleNameRef.Name().IsMissing() {
 			name := getNextMissingNodeName(n.PackageID)
@@ -983,7 +982,7 @@ func (n *NodeBuilder) createBuiltInTypeNode(typeNode tree.Node) TypeDescriptor {
 		typeText = simpleNameRef.Name().Text()
 	} else {
 		// TODO: Remove this once map<string> returns Nodes for `map`
-		if token, ok := typeNode.(tree.Token); ok {
+		if token, ok := typeNode.(st.Token); ok {
 			typeText = token.Text()
 		} else {
 			panic("createBuiltInTypeNode: unexpected node type")
@@ -994,18 +993,18 @@ func (n *NodeBuilder) createBuiltInTypeNode(typeNode tree.Node) TypeDescriptor {
 
 	kind := typeNode.Kind()
 	switch kind {
-	case common.BOOLEAN_TYPE_DESC,
-		common.INT_TYPE_DESC,
-		common.BYTE_TYPE_DESC,
-		common.FLOAT_TYPE_DESC,
-		common.DECIMAL_TYPE_DESC,
-		common.STRING_TYPE_DESC,
-		common.ANY_TYPE_DESC,
-		common.NIL_TYPE_DESC,
-		common.HANDLE_TYPE_DESC,
-		common.ANYDATA_TYPE_DESC,
-		common.READONLY_TYPE_DESC,
-		common.NEVER_TYPE_DESC:
+	case st.BOOLEAN_TYPE_DESC,
+		st.INT_TYPE_DESC,
+		st.BYTE_TYPE_DESC,
+		st.FLOAT_TYPE_DESC,
+		st.DECIMAL_TYPE_DESC,
+		st.STRING_TYPE_DESC,
+		st.ANY_TYPE_DESC,
+		st.NIL_TYPE_DESC,
+		st.HANDLE_TYPE_DESC,
+		st.ANYDATA_TYPE_DESC,
+		st.READONLY_TYPE_DESC,
+		st.NEVER_TYPE_DESC:
 		valueType := BLangValueType{}
 		valueType.TypeKind = typeKind
 		valueType.pos = n.getPosition(typeNode)
@@ -1030,7 +1029,7 @@ func setIdentifierValue(identifier IdentifierNode, value string) {
 	// We ignore immuatable identifiers such as BadIdentifier (not sure if this can be called for them)
 }
 
-func (n *NodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token tree.Token) IdentifierNode {
+func (n *NodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) IdentifierNode {
 	if token == nil {
 		if n.mode == NodeBuilderModeRecover {
 			return n.badIdentifier(token)
@@ -1047,35 +1046,35 @@ func (n *NodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, to
 	return &identifier
 }
 
-func isUnsupportedIdentifierToken(token tree.Token) bool {
+func isUnsupportedIdentifierToken(token st.Token) bool {
 	return token.Text() == "'" || token.Text() == "_" || token.Text() == "'_"
 }
 
-func (n *NodeBuilder) createBLangNameReference(node tree.Node) [2]IdentifierNode {
+func (n *NodeBuilder) createBLangNameReference(node st.Node) [2]IdentifierNode {
 	switch node.Kind() {
-	case common.QUALIFIED_NAME_REFERENCE:
-		iNode := node.(*tree.QualifiedNameReferenceNode)
+	case st.QUALIFIED_NAME_REFERENCE:
+		iNode := node.(*st.QualifiedNameReferenceNode)
 		modulePrefix := iNode.ModulePrefix()
 		identifier := iNode.Identifier()
 		pkgAlias := n.createIdentifierNodeFromToken(n.getPosition(modulePrefix), modulePrefix)
 		namePos := n.getPosition(identifier)
 		name := n.createIdentifierNodeFromToken(namePos, identifier)
 		return [...]IdentifierNode{pkgAlias, name}
-	case common.ERROR_TYPE_DESC:
-		builtinNode := node.(*tree.BuiltinSimpleNameReferenceNode)
+	case st.ERROR_TYPE_DESC:
+		builtinNode := node.(*st.BuiltinSimpleNameReferenceNode)
 		node = builtinNode.Name()
 		// Fall through to default handling
-	case common.NEW_KEYWORD, common.IDENTIFIER_TOKEN, common.ERROR_KEYWORD:
+	case st.NEW_KEYWORD, st.IDENTIFIER_TOKEN, st.ERROR_KEYWORD:
 		// Break and fall through to default handling
-	case common.SIMPLE_NAME_REFERENCE:
+	case st.SIMPLE_NAME_REFERENCE:
 		fallthrough
 	default:
-		simpleNode := node.(*tree.SimpleNameReferenceNode)
+		simpleNode := node.(*st.SimpleNameReferenceNode)
 		node = simpleNode.Name()
 	}
 
 	// Default case: node should be a Token at this point
-	iToken := node.(tree.Token)
+	iToken := node.(st.Token)
 
 	emptyStr := ""
 	pkgAlias := createIdentifier(diagnostics.NewBuiltinLocation(), &emptyStr, &emptyStr)
@@ -1084,16 +1083,16 @@ func (n *NodeBuilder) createBLangNameReference(node tree.Node) [2]IdentifierNode
 }
 
 // isFunctionCallAsync checks if a function call expression is async
-func (n *NodeBuilder) isFunctionCallAsync(functionCallBLangExpression *tree.FunctionCallExpressionNode) bool {
+func (n *NodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.FunctionCallExpressionNode) bool {
 	parent := functionCallBLangExpression.Parent()
 	if parent == nil {
 		panic("isFunctionCallAsync: parent is nil")
 	}
-	return parent.Kind() == common.START_ACTION
+	return parent.Kind() == st.START_ACTION
 }
 
 // createBLangInvocation creates a BLangInvocation from a name node and arguments
-func (n *NodeBuilder) createBLangInvocation(nameNode tree.Node, arguments tree.NodeList[tree.FunctionArgumentNode], position diagnostics.Location, isAsync bool) *BLangInvocation {
+func (n *NodeBuilder) createBLangInvocation(nameNode st.Node, arguments st.NodeList[st.FunctionArgumentNode], position diagnostics.Location, isAsync bool) *BLangInvocation {
 	var bLInvocation BLangInvocation
 	if isAsync {
 		panic("unimplemented")
@@ -1115,9 +1114,9 @@ func (n *NodeBuilder) createBLangInvocation(nameNode tree.Node, arguments tree.N
 }
 
 // isSimpleLiteral checks if the syntax kind is a simple literal
-func isSimpleLiteral(syntaxKind common.SyntaxKind) bool {
+func isSimpleLiteral(syntaxKind st.SyntaxKind) bool {
 	switch syntaxKind {
-	case common.STRING_LITERAL, common.NUMERIC_LITERAL, common.BOOLEAN_LITERAL, common.NIL_LITERAL, common.NULL_LITERAL:
+	case st.STRING_LITERAL, st.NUMERIC_LITERAL, st.BOOLEAN_LITERAL, st.NIL_LITERAL, st.NULL_LITERAL:
 		return true
 	default:
 		return false
@@ -1125,40 +1124,40 @@ func isSimpleLiteral(syntaxKind common.SyntaxKind) bool {
 }
 
 // isType checks if the syntax kind is a type descriptor
-func isType(nodeKind common.SyntaxKind) bool {
+func isType(nodeKind st.SyntaxKind) bool {
 	switch nodeKind {
-	case common.RECORD_TYPE_DESC,
-		common.OBJECT_TYPE_DESC,
-		common.NIL_TYPE_DESC,
-		common.OPTIONAL_TYPE_DESC,
-		common.ARRAY_TYPE_DESC,
-		common.INT_TYPE_DESC,
-		common.BYTE_TYPE_DESC,
-		common.FLOAT_TYPE_DESC,
-		common.DECIMAL_TYPE_DESC,
-		common.STRING_TYPE_DESC,
-		common.BOOLEAN_TYPE_DESC,
-		common.XML_TYPE_DESC,
-		common.JSON_TYPE_DESC,
-		common.HANDLE_TYPE_DESC,
-		common.ANY_TYPE_DESC,
-		common.ANYDATA_TYPE_DESC,
-		common.NEVER_TYPE_DESC,
-		common.VAR_TYPE_DESC,
-		common.SERVICE_TYPE_DESC,
-		common.MAP_TYPE_DESC,
-		common.UNION_TYPE_DESC,
-		common.ERROR_TYPE_DESC,
-		common.STREAM_TYPE_DESC,
-		common.TABLE_TYPE_DESC,
-		common.FUNCTION_TYPE_DESC,
-		common.TUPLE_TYPE_DESC,
-		common.PARENTHESISED_TYPE_DESC,
-		common.READONLY_TYPE_DESC,
-		common.DISTINCT_TYPE_DESC,
-		common.INTERSECTION_TYPE_DESC,
-		common.SINGLETON_TYPE_DESC,
-		common.TYPE_REFERENCE_TYPE_DESC:
+	case st.RECORD_TYPE_DESC,
+		st.OBJECT_TYPE_DESC,
+		st.NIL_TYPE_DESC,
+		st.OPTIONAL_TYPE_DESC,
+		st.ARRAY_TYPE_DESC,
+		st.INT_TYPE_DESC,
+		st.BYTE_TYPE_DESC,
+		st.FLOAT_TYPE_DESC,
+		st.DECIMAL_TYPE_DESC,
+		st.STRING_TYPE_DESC,
+		st.BOOLEAN_TYPE_DESC,
+		st.XML_TYPE_DESC,
+		st.JSON_TYPE_DESC,
+		st.HANDLE_TYPE_DESC,
+		st.ANY_TYPE_DESC,
+		st.ANYDATA_TYPE_DESC,
+		st.NEVER_TYPE_DESC,
+		st.VAR_TYPE_DESC,
+		st.SERVICE_TYPE_DESC,
+		st.MAP_TYPE_DESC,
+		st.UNION_TYPE_DESC,
+		st.ERROR_TYPE_DESC,
+		st.STREAM_TYPE_DESC,
+		st.TABLE_TYPE_DESC,
+		st.FUNCTION_TYPE_DESC,
+		st.TUPLE_TYPE_DESC,
+		st.PARENTHESISED_TYPE_DESC,
+		st.READONLY_TYPE_DESC,
+		st.DISTINCT_TYPE_DESC,
+		st.INTERSECTION_TYPE_DESC,
+		st.SINGLETON_TYPE_DESC,
+		st.TYPE_REFERENCE_TYPE_DESC:
 		return true
 	default:
 		return false
@@ -1166,21 +1165,21 @@ func isType(nodeKind common.SyntaxKind) bool {
 }
 
 // createSimpleLiteral creates a simple literal from a node
-func (n *NodeBuilder) createSimpleLiteral(literal tree.Node) LiteralNode {
+func (n *NodeBuilder) createSimpleLiteral(literal st.Node) LiteralNode {
 	return n.createSimpleLiteralInner(literal)
 }
 
 // getIntegerLiteral parses integer literals (decimal/hex)
-func (n *NodeBuilder) getIntegerLiteral(literal tree.Node, textValue string) any {
-	basicLiteralNode := literal.(*tree.BasicLiteralNode)
+func (n *NodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
+	basicLiteralNode := literal.(*st.BasicLiteralNode)
 	literalTokenKind := basicLiteralNode.LiteralToken().Kind()
 	switch literalTokenKind {
-	case common.DECIMAL_INTEGER_LITERAL_TOKEN:
+	case st.DECIMAL_INTEGER_LITERAL_TOKEN:
 		if textValue[0] == '0' && len(textValue) > 1 {
 			n.cx.SyntaxError("invalid integer literal: leading zero", n.getPosition(literal))
 		}
 		return parseLong(textValue, textValue, 10)
-	case common.HEX_INTEGER_LITERAL_TOKEN:
+	case st.HEX_INTEGER_LITERAL_TOKEN:
 		processedNodeValue := strings.ToLower(textValue)
 		processedNodeValue = strings.ReplaceAll(processedNodeValue, "0x", "")
 		return parseLong(textValue, processedNodeValue, 16)
@@ -1225,37 +1224,37 @@ func getHexNodeValue(value string) string {
 }
 
 // isTokenInRegExp checks if token is in regexp context
-func isTokenInRegExp(kind common.SyntaxKind) bool {
+func isTokenInRegExp(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.RE_LITERAL_CHAR,
-		common.RE_CONTROL_ESCAPE,
-		common.RE_NUMERIC_ESCAPE,
-		common.RE_SIMPLE_CHAR_CLASS_CODE,
-		common.RE_PROPERTY,
-		common.RE_UNICODE_SCRIPT_START,
-		common.RE_UNICODE_PROPERTY_VALUE,
-		common.RE_UNICODE_GENERAL_CATEGORY_START,
-		common.RE_UNICODE_GENERAL_CATEGORY_NAME,
-		common.RE_FLAGS_VALUE,
-		common.DIGIT,
-		common.ASTERISK_TOKEN,
-		common.PLUS_TOKEN,
-		common.QUESTION_MARK_TOKEN,
-		common.DOT_TOKEN,
-		common.OPEN_BRACE_TOKEN,
-		common.CLOSE_BRACE_TOKEN,
-		common.OPEN_BRACKET_TOKEN,
-		common.CLOSE_BRACKET_TOKEN,
-		common.OPEN_PAREN_TOKEN,
-		common.CLOSE_PAREN_TOKEN,
-		common.DOLLAR_TOKEN,
-		common.BITWISE_XOR_TOKEN,
-		common.COLON_TOKEN,
-		common.BACK_SLASH_TOKEN,
-		common.MINUS_TOKEN,
-		common.ESCAPED_MINUS_TOKEN,
-		common.PIPE_TOKEN,
-		common.COMMA_TOKEN:
+	case st.RE_LITERAL_CHAR,
+		st.RE_CONTROL_ESCAPE,
+		st.RE_NUMERIC_ESCAPE,
+		st.RE_SIMPLE_CHAR_CLASS_CODE,
+		st.RE_PROPERTY,
+		st.RE_UNICODE_SCRIPT_START,
+		st.RE_UNICODE_PROPERTY_VALUE,
+		st.RE_UNICODE_GENERAL_CATEGORY_START,
+		st.RE_UNICODE_GENERAL_CATEGORY_NAME,
+		st.RE_FLAGS_VALUE,
+		st.DIGIT,
+		st.ASTERISK_TOKEN,
+		st.PLUS_TOKEN,
+		st.QUESTION_MARK_TOKEN,
+		st.DOT_TOKEN,
+		st.OPEN_BRACE_TOKEN,
+		st.CLOSE_BRACE_TOKEN,
+		st.OPEN_BRACKET_TOKEN,
+		st.CLOSE_BRACKET_TOKEN,
+		st.OPEN_PAREN_TOKEN,
+		st.CLOSE_PAREN_TOKEN,
+		st.DOLLAR_TOKEN,
+		st.BITWISE_XOR_TOKEN,
+		st.COLON_TOKEN,
+		st.BACK_SLASH_TOKEN,
+		st.MINUS_TOKEN,
+		st.ESCAPED_MINUS_TOKEN,
+		st.PIPE_TOKEN,
+		st.COMMA_TOKEN:
 		return true
 	default:
 		return false
@@ -1263,12 +1262,12 @@ func isTokenInRegExp(kind common.SyntaxKind) bool {
 }
 
 // isNumericLiteral checks if syntax kind is numeric literal
-func isNumericLiteral(kind common.SyntaxKind) bool {
-	return kind == common.NUMERIC_LITERAL
+func isNumericLiteral(kind st.SyntaxKind) bool {
+	return kind == st.NUMERIC_LITERAL
 }
 
 // createSimpleLiteralInner creates a simple literal from a node
-func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
+func (n *NodeBuilder) createSimpleLiteralInner(literal st.Node) LiteralNode {
 	var bLiteral LiteralNode
 	kind := literal.Kind()
 	var typeTag TypeTags = -1
@@ -1276,28 +1275,28 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 	var originalValue *string = nil
 
 	var textValue string
-	if basicLiteralNode, ok := literal.(*tree.BasicLiteralNode); ok {
+	if basicLiteralNode, ok := literal.(*st.BasicLiteralNode); ok {
 		textValue = basicLiteralNode.LiteralToken().Text()
-	} else if token, ok := literal.(tree.Token); ok {
+	} else if token, ok := literal.(st.Token); ok {
 		textValue = token.Text()
 	} else {
 		textValue = ""
 	}
 
 	// TODO: Verify all types, only string type tested
-	if kind == common.NUMERIC_LITERAL {
-		basicLiteralNode := literal.(*tree.BasicLiteralNode)
+	if kind == st.NUMERIC_LITERAL {
+		basicLiteralNode := literal.(*st.BasicLiteralNode)
 		literalTokenKind := basicLiteralNode.LiteralToken().Kind()
 		switch literalTokenKind {
-		case common.DECIMAL_INTEGER_LITERAL_TOKEN, common.HEX_INTEGER_LITERAL_TOKEN:
+		case st.DECIMAL_INTEGER_LITERAL_TOKEN, st.HEX_INTEGER_LITERAL_TOKEN:
 			typeTag = TypeTags_INT
 			value = n.getIntegerLiteral(literal, textValue)
 			originalValue = &textValue
 			// TODO: can we fix below?
-			if literalTokenKind == common.HEX_INTEGER_LITERAL_TOKEN && withinByteRange(value) {
+			if literalTokenKind == st.HEX_INTEGER_LITERAL_TOKEN && withinByteRange(value) {
 				typeTag = TypeTags_BYTE
 			}
-		case common.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
+		case st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
 			if balCommon.IsDecimalDiscriminated(textValue) {
 				typeTag = TypeTags_DECIMAL
@@ -1318,16 +1317,16 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 		numericLiteral.Value = value
 		numericLiteral.OriginalValue = *originalValue
 		return &numericLiteral.BLangLiteral
-	} else if kind == common.BOOLEAN_LITERAL {
+	} else if kind == st.BOOLEAN_LITERAL {
 		typeTag = TypeTags_BOOLEAN
 		value = strings.ToLower(textValue) == "true"
 		originalValue = &textValue
 		bLiteral = &BLangLiteral{}
-	} else if kind == common.STRING_LITERAL || kind == common.XML_TEXT_CONTENT ||
-		kind == common.TEMPLATE_STRING || kind == common.IDENTIFIER_TOKEN ||
-		kind == common.PROMPT_CONTENT || isTokenInRegExp(kind) {
+	} else if kind == st.STRING_LITERAL || kind == st.XML_TEXT_CONTENT ||
+		kind == st.TEMPLATE_STRING || kind == st.IDENTIFIER_TOKEN ||
+		kind == st.PROMPT_CONTENT || isTokenInRegExp(kind) {
 		text := textValue
-		if kind == common.STRING_LITERAL {
+		if kind == st.STRING_LITERAL {
 			if len(text) > 1 && text[len(text)-1] == '"' {
 				text = text[1 : len(text)-1]
 			} else {
@@ -1337,12 +1336,12 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 		}
 
 		const identifierLiteralPrefix = "'"
-		if kind == common.IDENTIFIER_TOKEN && strings.HasPrefix(text, identifierLiteralPrefix) {
+		if kind == st.IDENTIFIER_TOKEN && strings.HasPrefix(text, identifierLiteralPrefix) {
 			text = text[1:]
 		}
 
-		if kind != common.TEMPLATE_STRING && kind != common.XML_TEXT_CONTENT &&
-			kind != common.PROMPT_CONTENT && !isTokenInRegExp(kind) {
+		if kind != st.TEMPLATE_STRING && kind != st.XML_TEXT_CONTENT &&
+			kind != st.PROMPT_CONTENT && !isTokenInRegExp(kind) {
 			pos := n.getPosition(literal)
 			validateUnicodePoints(text, pos)
 
@@ -1356,16 +1355,16 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 		value = text
 		originalValue = &textValue
 		bLiteral = &BLangLiteral{}
-	} else if kind == common.NIL_LITERAL {
+	} else if kind == st.NIL_LITERAL {
 		typeTag = TypeTags_NIL
 		value = nil
 		originalValue = new(string(model.NIL_VALUE))
 		bLiteral = &BLangLiteral{}
-	} else if kind == common.NULL_LITERAL {
+	} else if kind == st.NULL_LITERAL {
 		originalValue = new("null")
 		typeTag = TypeTags_NIL
 		bLiteral = &BLangLiteral{}
-	} else if kind == common.BINARY_EXPRESSION { // Should be base16 and base64
+	} else if kind == st.BINARY_EXPRESSION { // Should be base16 and base64
 		typeTag = TypeTags_BYTE_ARRAY
 		value = textValue
 		originalValue = &textValue
@@ -1376,7 +1375,7 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 		} else {
 			bLiteral = &BLangLiteral{}
 		}
-	} else if kind == common.BYTE_ARRAY_LITERAL {
+	} else if kind == st.BYTE_ARRAY_LITERAL {
 		return n.TransformSyntaxNode(literal).(LiteralNode)
 	}
 	bLangNode := bLiteral.(BLangNode)
@@ -1394,7 +1393,7 @@ func (n *NodeBuilder) createSimpleLiteralInner(literal tree.Node) LiteralNode {
 	return bLiteral
 }
 
-func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLangNode {
+func (n *NodeBuilder) TransformModulePart(modulePartNode *st.ModulePart) BLangNode {
 	compilationUnit := BLangCompilationUnit{}
 	n.currentCompUnit = &compilationUnit
 	defer func() { n.currentCompUnit = nil }()
@@ -1429,12 +1428,12 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 	members := modulePartNode.Members()
 	for member := range members.Iterator() {
 		// Dispatch to TransformSyntaxNode which handles all node types
-		var memberNode tree.Node = member
+		var memberNode st.Node = member
 		if memberNode.HasDiagnostics() {
 			if n.mode != NodeBuilderModeRecover {
 				continue
 			}
-			if memberNode.Kind() != common.FUNCTION_DEFINITION {
+			if memberNode.Kind() != st.FUNCTION_DEFINITION {
 				compilationUnit.AddTopLevelNode(n.badTopLevel(memberNode))
 				continue
 			}
@@ -1459,26 +1458,26 @@ func (n *NodeBuilder) TransformModulePart(modulePartNode *tree.ModulePart) BLang
 	return &compilationUnit
 }
 
-func setFunctionQualifiers(bLFunction *BLangFunction, qualifierList tree.NodeList[tree.Token]) {
+func setFunctionQualifiers(bLFunction *BLangFunction, qualifierList st.NodeList[st.Token]) {
 	setFunctionQualifiersOnBase(&bLFunction.bLangInvokableNodeBase, qualifierList)
 }
 
-func setFunctionQualifiersOnBase(base *bLangInvokableNodeBase, qualifierList tree.NodeList[tree.Token]) {
+func setFunctionQualifiersOnBase(base *bLangInvokableNodeBase, qualifierList st.NodeList[st.Token]) {
 	for qualifier := range qualifierList.Iterator() {
 		kind := qualifier.Kind()
 
 		switch kind {
-		case common.PUBLIC_KEYWORD:
+		case st.PUBLIC_KEYWORD:
 			base.SetPublic()
-		case common.PRIVATE_KEYWORD:
+		case st.PRIVATE_KEYWORD:
 			// private is the default
-		case common.REMOTE_KEYWORD:
+		case st.REMOTE_KEYWORD:
 			base.SetRemote()
-		case common.TRANSACTIONAL_KEYWORD:
+		case st.TRANSACTIONAL_KEYWORD:
 			base.SetTransactional()
-		case common.RESOURCE_KEYWORD:
+		case st.RESOURCE_KEYWORD:
 			base.SetResource()
-		case common.ISOLATED_KEYWORD:
+		case st.ISOLATED_KEYWORD:
 			base.SetIsolated()
 		default:
 			// Skip unknown qualifiers
@@ -1487,11 +1486,11 @@ func setFunctionQualifiersOnBase(base *bLangInvokableNodeBase, qualifierList tre
 	}
 }
 
-func (n *NodeBuilder) populateFuncSignature(bLFunction *BLangFunction, funcSignature *tree.FunctionSignatureNode) {
+func (n *NodeBuilder) populateFuncSignature(bLFunction *BLangFunction, funcSignature *st.FunctionSignatureNode) {
 	n.populateFuncSignatureOnBase(&bLFunction.bLangInvokableNodeBase, funcSignature)
 }
 
-func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNodeBase, funcSignature *tree.FunctionSignatureNode) {
+func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNodeBase, funcSignature *st.FunctionSignatureNode) {
 	bLFunction.ParamListPos = diagnostics.NewBuiltinLocation()
 	openParen := funcSignature.OpenParenToken()
 	closeParen := funcSignature.CloseParenToken()
@@ -1506,7 +1505,7 @@ func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNode
 		paramNode := n.TransformSyntaxNode(param).(SimpleVariableNode)
 
 		// Special handling for rest parameters
-		if _, isRestParam := param.(*tree.RestParameterNode); isRestParam {
+		if _, isRestParam := param.(*st.RestParameterNode); isRestParam {
 			bLFunction.SetRestParameter(paramNode)
 			continue
 		}
@@ -1544,7 +1543,7 @@ func (n *NodeBuilder) populateFuncSignatureOnBase(bLFunction *bLangInvokableNode
 	}
 }
 
-func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *tree.FunctionDefinition) BLangNode {
+func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *st.FunctionDefinition) BLangNode {
 	// Check for resource functions - panic for now
 	relativeResourcePath := funcDefNode.RelativeResourcePath()
 	hasResourcePath := relativeResourcePath.Size() > 0
@@ -1562,14 +1561,14 @@ func (n *NodeBuilder) TransformFunctionDefinition(funcDefNode *tree.FunctionDefi
 	return bLFunction
 }
 
-func (n *NodeBuilder) createFunctionNode(funcName *tree.IdentifierToken, qualifierList tree.NodeList[tree.Token], funcSignature *tree.FunctionSignatureNode, funcBody tree.FunctionBodyNode) *BLangFunction {
+func (n *NodeBuilder) createFunctionNode(funcName *st.IdentifierToken, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode) *BLangFunction {
 	blFunction := BLangFunction{}
 	name := n.createIdentifierNodeFromToken(n.getPosition(funcName), funcName)
 	n.populateFunctionNode(name, qualifierList, funcSignature, funcBody, &blFunction)
 	return &blFunction
 }
 
-func (n *NodeBuilder) populateFunctionNode(name IdentifierNode, qualifierList tree.NodeList[tree.Token], funcSignature *tree.FunctionSignatureNode, funcBody tree.FunctionBodyNode, blFunction *BLangFunction) {
+func (n *NodeBuilder) populateFunctionNode(name IdentifierNode, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode, blFunction *BLangFunction) {
 	// Set function name
 	blFunction.Name = name
 	// Set method qualifiers
@@ -1594,7 +1593,7 @@ func (n *NodeBuilder) populateFunctionNode(name IdentifierNode, qualifierList tr
 	}
 }
 
-func (n *NodeBuilder) transformImportTopLevel(importDecl *tree.ImportDeclarationNode) (TopLevelNode, error) {
+func (n *NodeBuilder) transformImportTopLevel(importDecl *st.ImportDeclarationNode) (TopLevelNode, error) {
 	transformedNode := n.TransformImportDeclaration(importDecl)
 	bLangImport, ok := transformedNode.(*BLangImportPackage)
 	if !ok {
@@ -1603,7 +1602,7 @@ func (n *NodeBuilder) transformImportTopLevel(importDecl *tree.ImportDeclaration
 	return bLangImport, nil
 }
 
-func (n *NodeBuilder) transformTopLevel(node tree.Node) (TopLevelNode, error) {
+func (n *NodeBuilder) transformTopLevel(node st.Node) (TopLevelNode, error) {
 	result, err := n.transformTopLevelInner(node)
 	if err == nil {
 		return result, nil
@@ -1614,7 +1613,7 @@ func (n *NodeBuilder) transformTopLevel(node tree.Node) (TopLevelNode, error) {
 	return nil, err
 }
 
-func (n *NodeBuilder) transformTopLevelInner(node tree.Node) (TopLevelNode, error) {
+func (n *NodeBuilder) transformTopLevelInner(node st.Node) (TopLevelNode, error) {
 	transformedNode := n.TransformSyntaxNode(node)
 	topLevel, ok := transformedNode.(TopLevelNode)
 	if !ok {
@@ -1623,10 +1622,10 @@ func (n *NodeBuilder) transformTopLevelInner(node tree.Node) (TopLevelNode, erro
 	return topLevel, nil
 }
 
-func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.ImportDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *st.ImportDeclarationNode) BLangNode {
 	// 1. Extract org name (optional)
 	orgNameNode := importDeclarationNode.OrgName()
-	var orgNameToken tree.Token
+	var orgNameToken st.Token
 	if orgNameNode != nil && !orgNameNode.IsMissing() {
 		orgNameToken = orgNameNode.OrgName()
 	}
@@ -1681,7 +1680,7 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.Imp
 	prefix := prefixNode.Prefix()
 	prefixPos := n.getPosition(prefix)
 
-	if prefix.Kind() == common.UNDERSCORE_KEYWORD {
+	if prefix.Kind() == st.UNDERSCORE_KEYWORD {
 		// Create ignore identifier for underscore
 		aliasIdent := n.createIgnoreIdentifier(prefix)
 		importDcl.Alias = &aliasIdent
@@ -1695,7 +1694,7 @@ func (n *NodeBuilder) TransformImportDeclaration(importDeclarationNode *tree.Imp
 	return importDcl
 }
 
-func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree.ListenerDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *st.ListenerDeclarationNode) BLangNode {
 	metadata := listenerDeclarationNode.Metadata()
 
 	pos := n.getPositionWithoutMetadata(listenerDeclarationNode)
@@ -1718,7 +1717,7 @@ func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree
 		bLSimpleVar.SetInitialExpression(n.createExpression(initializer))
 	}
 
-	if visQual := listenerDeclarationNode.VisibilityQualifier(); visQual != nil && visQual.Kind() == common.PUBLIC_KEYWORD {
+	if visQual := listenerDeclarationNode.VisibilityQualifier(); visQual != nil && visQual.Kind() == st.PUBLIC_KEYWORD {
 		bLSimpleVar.SetPublic()
 	}
 
@@ -1735,16 +1734,16 @@ func (n *NodeBuilder) TransformListenerDeclaration(listenerDeclarationNode *tree
 	return bLSimpleVar
 }
 
-func isAllowedDistinctTypeDescriptor(kind common.SyntaxKind) bool {
+func isAllowedDistinctTypeDescriptor(kind st.SyntaxKind) bool {
 	switch kind {
-	case common.OBJECT_TYPE_DESC, common.ERROR_TYPE_DESC, common.SIMPLE_NAME_REFERENCE, common.QUALIFIED_NAME_REFERENCE, common.IDENTIFIER_TOKEN:
+	case st.OBJECT_TYPE_DESC, st.ERROR_TYPE_DESC, st.SIMPLE_NAME_REFERENCE, st.QUALIFIED_NAME_REFERENCE, st.IDENTIFIER_TOKEN:
 		return true
 	default:
 		return false
 	}
 }
 
-func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefinitionNode) BLangNode {
+func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *st.TypeDefinitionNode) BLangNode {
 	typeDef := NewBLangTypeDefinition()
 
 	identifierNode := createIdentifierFromToken(n.getPosition(typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
@@ -1753,7 +1752,7 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, typeDef.Name.GetValue())
 
 	typeDescriptorNode := typeDefinitionNode.TypeDescriptor()
-	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*tree.DistinctTypeDescriptorNode); ok {
+	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*st.DistinctTypeDescriptorNode); ok {
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
 		if innerTypeDescriptorNode == nil || !isAllowedDistinctTypeDescriptor(innerTypeDescriptorNode.Kind()) {
 			n.cx.SyntaxError("only object and error types can be distinct", n.getPosition(distinctTypeDescriptorNode))
@@ -1774,7 +1773,7 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
 
 	visibilityQualifier := typeDefinitionNode.VisibilityQualifier()
-	if visibilityQualifier != nil && visibilityQualifier.Kind() == common.PUBLIC_KEYWORD {
+	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
 		typeDef.SetPublic()
 	}
 
@@ -1785,7 +1784,7 @@ func (n *NodeBuilder) TransformTypeDefinition(typeDefinitionNode *tree.TypeDefin
 	return typeDef
 }
 
-func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *tree.ServiceDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *st.ServiceDeclarationNode) BLangNode {
 	metadata := serviceDeclarationNode.Metadata()
 
 	service := NewBLangService()
@@ -1821,16 +1820,16 @@ func (n *NodeBuilder) TransformServiceDeclaration(serviceDeclarationNode *tree.S
 
 // populateServiceQualifiers reads the user-controllable qualifiers from the
 // service declaration. The `service` flag is already set by NewBLangService.
-func (n *NodeBuilder) populateServiceQualifiers(service *BLangService, node *tree.ServiceDeclarationNode) {
+func (n *NodeBuilder) populateServiceQualifiers(service *BLangService, node *st.ServiceDeclarationNode) {
 	quals := node.Qualifiers()
 	for qual := range quals.Iterator() {
-		if qual.Kind() == common.ISOLATED_KEYWORD {
+		if qual.Kind() == st.ISOLATED_KEYWORD {
 			service.SetIsolated()
 		}
 	}
 }
 
-func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tree.ServiceDeclarationNode) {
+func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *st.ServiceDeclarationNode) {
 	paths := node.AbsoluteResourcePath()
 	if node.HasDiagnostics() {
 		return
@@ -1840,20 +1839,20 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 	}
 	for i := 0; i < paths.Size(); i++ {
 		seg := paths.Get(i)
-		if seg.Kind() == common.STRING_LITERAL {
+		if seg.Kind() == st.STRING_LITERAL {
 			service.AttachPointLiteral = n.createSimpleLiteral(seg).(*BLangLiteral) //nolint:forcetypeassert // string literals always create BLangLiteral nodes
 			continue
 		}
-		tok, ok := seg.(tree.Token)
+		tok, ok := seg.(st.Token)
 		if !ok {
 			n.cx.InternalError("unexpected node in service attach point", n.getPosition(seg))
 			continue
 		}
 		switch tok.Kind() {
-		case common.IDENTIFIER_TOKEN:
+		case st.IDENTIFIER_TOKEN:
 			ident := createIdentifierFromToken(n.getPosition(tok), tok)
 			service.AbsoluteResourcePath = append(service.AbsoluteResourcePath, ident)
-		case common.SLASH_TOKEN:
+		case st.SLASH_TOKEN:
 			// Slash tokens between segments are ignored.
 		default:
 			n.cx.InternalError(fmt.Sprintf("unexpected token in service attach point: %v", tok.Kind()), n.getPosition(tok))
@@ -1861,7 +1860,7 @@ func (n *NodeBuilder) populateServiceAttachPoint(service *BLangService, node *tr
 	}
 }
 
-func (n *NodeBuilder) populateServiceAttachedExprs(service *BLangService, node *tree.ServiceDeclarationNode) {
+func (n *NodeBuilder) populateServiceAttachedExprs(service *BLangService, node *st.ServiceDeclarationNode) {
 	exprs := node.Expressions()
 	if exprs.Size() > 0 {
 		service.AttachedExprsPosition = n.getPositionRange(exprs.Get(0), exprs.Get(exprs.Size()-1))
@@ -1883,21 +1882,21 @@ func newClassDefnMembers() classDefnMembers {
 	return classDefnMembers{Methods: map[string]*BLangFunction{}}
 }
 
-func (n *NodeBuilder) collectClassDefnMembers(memberNodes tree.NodeList[tree.Node]) classDefnMembers {
+func (n *NodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) classDefnMembers {
 	members := newClassDefnMembers()
 	for i := 0; i < memberNodes.Size(); i++ {
 		member := memberNodes.Get(i)
 		switch member.Kind() {
-		case common.OBJECT_FIELD:
-			field := n.transformClassField(member.(*tree.ObjectFieldNode))
+		case st.OBJECT_FIELD:
+			field := n.transformClassField(member.(*st.ObjectFieldNode))
 			members.Fields = append(members.Fields, field)
-		case common.FUNCTION_DEFINITION, common.OBJECT_METHOD_DEFINITION:
-			n.addCollectedMethod(&members, member.(*tree.FunctionDefinition))
-		case common.RESOURCE_ACCESSOR_DEFINITION:
-			rm := n.createResourceMethodNode(member.(*tree.FunctionDefinition))
+		case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION:
+			n.addCollectedMethod(&members, member.(*st.FunctionDefinition))
+		case st.RESOURCE_ACCESSOR_DEFINITION:
+			rm := n.createResourceMethodNode(member.(*st.FunctionDefinition))
 			members.ResourceMethods = append(members.ResourceMethods, rm)
-		case common.TYPE_REFERENCE:
-			typeRef := member.(*tree.TypeReferenceNode)
+		case st.TYPE_REFERENCE:
+			typeRef := member.(*st.TypeReferenceNode)
 			members.UnresolvedInclusions = append(members.UnresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*BLangUserDefinedType))
 		default:
 			panic("collectClassDefnMembers: unsupported member kind")
@@ -1906,7 +1905,7 @@ func (n *NodeBuilder) collectClassDefnMembers(memberNodes tree.NodeList[tree.Nod
 	return members
 }
 
-func (n *NodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *tree.FunctionDefinition) {
+func (n *NodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *st.FunctionDefinition) {
 	bLFunction := n.createFunctionNode(funcDef.FunctionName(), funcDef.QualifierList(), funcDef.FunctionSignature(), funcDef.FunctionBody())
 	bLFunction.pos = n.getPositionWithoutMetadata(funcDef)
 	bLFunction.SetAttached()
@@ -1932,10 +1931,10 @@ func (n *NodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *tre
 	members.Methods[funcName] = bLFunction
 }
 
-func (n *NodeBuilder) TransformAssignmentStatement(assignmentStatementNode *tree.AssignmentStatementNode) BLangNode {
+func (n *NodeBuilder) TransformAssignmentStatement(assignmentStatementNode *st.AssignmentStatementNode) BLangNode {
 	lhsKind := assignmentStatementNode.VarRef().Kind()
 	switch lhsKind {
-	case common.LIST_BINDING_PATTERN, common.MAPPING_BINDING_PATTERN, common.ERROR_BINDING_PATTERN:
+	case st.LIST_BINDING_PATTERN, st.MAPPING_BINDING_PATTERN, st.ERROR_BINDING_PATTERN:
 		panic("unimplemented")
 	default:
 		break
@@ -1955,7 +1954,7 @@ func (n *NodeBuilder) TransformAssignmentStatement(assignmentStatementNode *tree
 	return bLAssignment
 }
 
-func (n *NodeBuilder) TransformCompoundAssignmentStatement(compoundAssignmentStmtNode *tree.CompoundAssignmentStatementNode) BLangNode {
+func (n *NodeBuilder) TransformCompoundAssignmentStatement(compoundAssignmentStmtNode *st.CompoundAssignmentStatementNode) BLangNode {
 	bLCompAssignment := &BLangCompoundAssignment{}
 	bLCompAssignment.SetActionOrExpression(n.createActionOrExpression(compoundAssignmentStmtNode.RhsExpression()))
 	lhsExpr := n.createExpression(compoundAssignmentStmtNode.LhsExpression())
@@ -1973,7 +1972,7 @@ func (n *NodeBuilder) TransformCompoundAssignmentStatement(compoundAssignmentStm
 	return bLCompAssignment
 }
 
-func (n *NodeBuilder) TransformVariableDeclaration(variableDeclarationNode *tree.VariableDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformVariableDeclaration(variableDeclarationNode *st.VariableDeclarationNode) BLangNode {
 	varNode := n.createBLangVarDef(
 		n.getPosition(variableDeclarationNode),
 		variableDeclarationNode.TypedBindingPattern(),
@@ -1988,19 +1987,19 @@ func (n *NodeBuilder) TransformVariableDeclaration(variableDeclarationNode *tree
 	return varNode.(BLangNode)
 }
 
-func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBindingPattern *tree.TypedBindingPatternNode, initializer tree.ExpressionNode, finalKeyword tree.Token) VariableDefinitionNode {
+func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBindingPattern *st.TypedBindingPatternNode, initializer st.ExpressionNode, finalKeyword st.Token) VariableDefinitionNode {
 	bindingPattern := typedBindingPattern.BindingPattern()
 
 	variable := n.getBLangVariableNode(bindingPattern, location)
 
-	var qualifiers []tree.Token
+	var qualifiers []st.Token
 	if finalKeyword != nil {
 		qualifiers = append(qualifiers, finalKeyword) //nolint:staticcheck,ineffassign // qualifierList creation not yet implemented
 	}
-	// qualifierList := tree.CreateNodeListWithFacade(qualifiers)
+	// qualifierList := st.CreateNodeListWithFacade(qualifiers)
 
 	switch bindingPattern.Kind() {
-	case common.CAPTURE_BINDING_PATTERN, common.WILDCARD_BINDING_PATTERN:
+	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN:
 		variable := variable.(*BLangSimpleVariable)
 		bLVarDef := &BLangSimpleVariableDef{}
 
@@ -2028,13 +2027,13 @@ func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 
 		return bLVarDef
 
-	case common.MAPPING_BINDING_PATTERN:
+	case st.MAPPING_BINDING_PATTERN:
 		panic("MAPPING_BINDING_PATTERN unimplemented")
 
-	case common.LIST_BINDING_PATTERN:
+	case st.LIST_BINDING_PATTERN:
 		panic("LIST_BINDING_PATTERN unimplemented")
 
-	case common.ERROR_BINDING_PATTERN:
+	case st.ERROR_BINDING_PATTERN:
 		panic("ERROR_BINDING_PATTERN unimplemented")
 
 	default:
@@ -2042,19 +2041,19 @@ func (n *NodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 	}
 }
 
-func (n *NodeBuilder) TransformBlockStatement(blockStatementNode *tree.BlockStatementNode) BLangNode {
+func (n *NodeBuilder) TransformBlockStatement(blockStatementNode *st.BlockStatementNode) BLangNode {
 	bLBlockStmt := BLangBlockStmt{}
 	bLBlockStmt.Stmts = n.generateBLangStatements(blockStatementNode.Statements(), blockStatementNode)
 	bLBlockStmt.pos = n.getPosition(blockStatementNode)
 	return &bLBlockStmt
 }
 
-func (n *NodeBuilder) generateBLangStatements(statementNodes tree.NodeList[tree.StatementNode], endNode tree.Node) []StatementNode {
+func (n *NodeBuilder) generateBLangStatements(statementNodes st.NodeList[st.StatementNode], endNode st.Node) []StatementNode {
 	statements := []StatementNode{}
 	return *n.generateAndAddBLangStatements(statementNodes, &statements, 0, endNode)
 }
 
-func (n *NodeBuilder) transformStatement(statement tree.StatementNode) StatementNode {
+func (n *NodeBuilder) transformStatement(statement st.StatementNode) StatementNode {
 	result, err := n.transformStatementInner(statement)
 	if err == nil {
 		return result
@@ -2065,7 +2064,7 @@ func (n *NodeBuilder) transformStatement(statement tree.StatementNode) Statement
 	panic(err)
 }
 
-func (n *NodeBuilder) transformStatementInner(statement tree.StatementNode) (StatementNode, error) {
+func (n *NodeBuilder) transformStatementInner(statement st.StatementNode) (StatementNode, error) {
 	if statement == nil {
 		return nil, fmt.Errorf("statement is nil")
 	}
@@ -2078,7 +2077,7 @@ func (n *NodeBuilder) transformStatementInner(statement tree.StatementNode) (Sta
 	return stmt, nil
 }
 
-func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList[tree.StatementNode], statements *[]StatementNode, startPosition int, endNode tree.Node) *[]StatementNode {
+func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[st.StatementNode], statements *[]StatementNode, startPosition int, endNode st.Node) *[]StatementNode {
 	lastStmtIndex := statementNodes.Size() - 1
 	for j := startPosition; j < statementNodes.Size(); j++ {
 		currentStatement := statementNodes.Get(j)
@@ -2089,14 +2088,14 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 		if currentStatement.HasDiagnostics() && n.mode != NodeBuilderModeRecover {
 			continue
 		}
-		if currentStatement.Kind() == common.FORK_STATEMENT {
-			forkStmt := currentStatement.(*tree.ForkStatementNode)
+		if currentStatement.Kind() == st.FORK_STATEMENT {
+			forkStmt := currentStatement.(*st.ForkStatementNode)
 			n.generateForkStatements(statements, forkStmt)
 			continue
 		}
 		// If there is an `if` statement without an `else`, all the statements following that `if` statement
 		// are added to a new block statement.
-		if ifElseStmt, ok := currentStatement.(*tree.IfElseStatementNode); ok && ifElseStmt.ElseBody() == nil {
+		if ifElseStmt, ok := currentStatement.(*st.IfElseStatementNode); ok && ifElseStmt.ElseBody() == nil {
 			*statements = append(*statements, n.transformStatement(currentStatement))
 			if j == lastStmtIndex {
 				// Add an empty block statement if there are no statements following the `if` statement.
@@ -2120,17 +2119,17 @@ func (n *NodeBuilder) generateAndAddBLangStatements(statementNodes tree.NodeList
 	return statements
 }
 
-func (n *NodeBuilder) TransformBreakStatement(breakStatementNode *tree.BreakStatementNode) BLangNode {
+func (n *NodeBuilder) TransformBreakStatement(breakStatementNode *st.BreakStatementNode) BLangNode {
 	bLBreak := &BLangBreak{}
 	bLBreak.pos = n.getPosition(breakStatementNode)
 	return bLBreak
 }
 
-func (n *NodeBuilder) TransformFailStatement(failStatementNode *tree.FailStatementNode) BLangNode {
+func (n *NodeBuilder) TransformFailStatement(failStatementNode *st.FailStatementNode) BLangNode {
 	panic("TransformFailStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformExpressionStatement(expressionStatement *tree.ExpressionStatementNode) BLangNode {
+func (n *NodeBuilder) TransformExpressionStatement(expressionStatement *st.ExpressionStatementNode) BLangNode {
 	bLExpressionStmt := BLangExpressionStmt{}
 	bLExpressionStmt.Expr = n.createActionOrExpression(expressionStatement.Expression())
 	bLExpressionStmt.pos = n.getPosition(expressionStatement)
@@ -2141,8 +2140,8 @@ func (n *NodeBuilder) TransformExpressionStatement(expressionStatement *tree.Exp
 // non-computed mapping-constructor key. The field name is a static identifier
 // or string literal, not a runtime expression, so it must not be represented
 // as a var-ref.
-func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName tree.Node) BLangExpression {
-	if basicLit, ok := fieldName.(*tree.BasicLiteralNode); ok {
+func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) BLangExpression {
+	if basicLit, ok := fieldName.(*st.BasicLiteralNode); ok {
 		return n.createSimpleLiteral(basicLit).(BLangExpression)
 	}
 	nameRef := n.createBLangNameReference(fieldName)
@@ -2158,7 +2157,7 @@ func (n *NodeBuilder) createSpecificFieldNameLiteral(fieldName tree.Node) BLangE
 	return lit
 }
 
-func (n *NodeBuilder) createExpression(expressionNode tree.Node) BLangExpression {
+func (n *NodeBuilder) createExpression(expressionNode st.Node) BLangExpression {
 	result, err := n.createExpressionInner(expressionNode)
 	if err == nil {
 		return result
@@ -2169,7 +2168,7 @@ func (n *NodeBuilder) createExpression(expressionNode tree.Node) BLangExpression
 	panic(err)
 }
 
-func (n *NodeBuilder) createExpressionInner(expressionNode tree.Node) (BLangExpression, error) {
+func (n *NodeBuilder) createExpressionInner(expressionNode st.Node) (BLangExpression, error) {
 	actionOrExpr, err := n.createActionOrExpressionInner(expressionNode)
 	if err != nil {
 		return nil, err
@@ -2182,7 +2181,7 @@ func (n *NodeBuilder) createExpressionInner(expressionNode tree.Node) (BLangExpr
 }
 
 // createActionOrExpression creates an action or expression node from a syntax tree node
-func (n *NodeBuilder) createActionOrExpression(actionOrExpression tree.Node) BLangActionOrExpression {
+func (n *NodeBuilder) createActionOrExpression(actionOrExpression st.Node) BLangActionOrExpression {
 	result, err := n.createActionOrExpressionInner(actionOrExpression)
 	if err == nil {
 		return result
@@ -2193,7 +2192,7 @@ func (n *NodeBuilder) createActionOrExpression(actionOrExpression tree.Node) BLa
 	panic(err)
 }
 
-func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node) (BLangActionOrExpression, error) {
+func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) (BLangActionOrExpression, error) {
 	if actionOrExpression == nil {
 		return nil, fmt.Errorf("missing action or expression")
 	}
@@ -2204,9 +2203,9 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node
 		}
 		return result, nil
 	}
-	if actionOrExpression.Kind() == common.SIMPLE_NAME_REFERENCE ||
-		actionOrExpression.Kind() == common.QUALIFIED_NAME_REFERENCE ||
-		actionOrExpression.Kind() == common.IDENTIFIER_TOKEN {
+	if actionOrExpression.Kind() == st.SIMPLE_NAME_REFERENCE ||
+		actionOrExpression.Kind() == st.QUALIFIED_NAME_REFERENCE ||
+		actionOrExpression.Kind() == st.IDENTIFIER_TOKEN {
 		nameReference := n.createBLangNameReference(actionOrExpression)
 		bLVarRef := BLangSimpleVarRef{}
 		bLVarRef.pos = n.getPosition(actionOrExpression)
@@ -2214,8 +2213,8 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node
 		bLVarRef.VariableName = nameReference[1]
 		return &bLVarRef, nil
 	}
-	if actionOrExpression.Kind() == common.BRACED_EXPRESSION {
-		bracedExpr := actionOrExpression.(*tree.BracedExpressionNode)
+	if actionOrExpression.Kind() == st.BRACED_EXPRESSION {
+		bracedExpr := actionOrExpression.(*st.BracedExpressionNode)
 		inner, err := n.createActionOrExpressionInner(bracedExpr.Expression())
 		if err != nil {
 			return nil, err
@@ -2246,35 +2245,35 @@ func (n *NodeBuilder) createActionOrExpressionInner(actionOrExpression tree.Node
 	return result, nil
 }
 
-func (n *NodeBuilder) TransformContinueStatement(continueStatementNode *tree.ContinueStatementNode) BLangNode {
+func (n *NodeBuilder) TransformContinueStatement(continueStatementNode *st.ContinueStatementNode) BLangNode {
 	blContinue := &BLangContinue{}
 	blContinue.pos = n.getPosition(continueStatementNode)
 	return blContinue
 }
 
-func (n *NodeBuilder) TransformExternalFunctionBody(externalFunctionBodyNode *tree.ExternalFunctionBodyNode) BLangNode {
+func (n *NodeBuilder) TransformExternalFunctionBody(externalFunctionBodyNode *st.ExternalFunctionBodyNode) BLangNode {
 	body := &BLangExternFunctionBody{}
 	body.pos = n.getPosition(externalFunctionBodyNode)
 	return body
 }
 
-func (n *NodeBuilder) TransformIfElseStatement(ifElseStatementNode *tree.IfElseStatementNode) BLangNode {
+func (n *NodeBuilder) TransformIfElseStatement(ifElseStatementNode *st.IfElseStatementNode) BLangNode {
 	bLIf := BLangIf{}
 	bLIf.pos = n.getPosition(ifElseStatementNode)
 	bLIf.SetCondition(n.createExpression(ifElseStatementNode.Condition()))
 	bLIf.SetBody(n.TransformBlockStatement(ifElseStatementNode.IfBody()).(*BLangBlockStmt))
 	if ifElseStatementNode.ElseBody() != nil {
-		elseNode := ifElseStatementNode.ElseBody().(*tree.ElseBlockNode)
+		elseNode := ifElseStatementNode.ElseBody().(*st.ElseBlockNode)
 		bLIf.SetElseStatement(n.TransformSyntaxNode(elseNode.ElseBody()).(StatementNode))
 	}
 	return &bLIf
 }
 
-func (n *NodeBuilder) TransformElseBlock(elseBlockNode *tree.ElseBlockNode) BLangNode {
+func (n *NodeBuilder) TransformElseBlock(elseBlockNode *st.ElseBlockNode) BLangNode {
 	panic("TransformElseBlock unimplemented")
 }
 
-func (n *NodeBuilder) TransformWhileStatement(whileStatementNode *tree.WhileStatementNode) BLangNode {
+func (n *NodeBuilder) TransformWhileStatement(whileStatementNode *st.WhileStatementNode) BLangNode {
 	bLWhile := &BLangWhile{}
 	bLWhile.SetCondition(n.createExpression(whileStatementNode.Condition()))
 	bLWhile.pos = n.getPosition(whileStatementNode)
@@ -2291,14 +2290,14 @@ func (n *NodeBuilder) TransformWhileStatement(whileStatementNode *tree.WhileStat
 	return bLWhile
 }
 
-func (n *NodeBuilder) TransformPanicStatement(panicStatementNode *tree.PanicStatementNode) BLangNode {
+func (n *NodeBuilder) TransformPanicStatement(panicStatementNode *st.PanicStatementNode) BLangNode {
 	bLPanic := &BLangPanic{}
 	bLPanic.pos = n.getPosition(panicStatementNode)
 	bLPanic.Expr = n.createExpression(panicStatementNode.Expression())
 	return bLPanic
 }
 
-func (n *NodeBuilder) TransformReturnStatement(returnStatementNode *tree.ReturnStatementNode) BLangNode {
+func (n *NodeBuilder) TransformReturnStatement(returnStatementNode *st.ReturnStatementNode) BLangNode {
 	bLReturn := &BLangReturn{}
 	bLReturn.pos = n.getPosition(returnStatementNode)
 	if returnStatementNode.Expression() != nil {
@@ -2314,11 +2313,11 @@ func (n *NodeBuilder) TransformReturnStatement(returnStatementNode *tree.ReturnS
 	return bLReturn
 }
 
-func (n *NodeBuilder) TransformLocalTypeDefinitionStatement(localTypeDefinitionStatementNode *tree.LocalTypeDefinitionStatementNode) BLangNode {
+func (n *NodeBuilder) TransformLocalTypeDefinitionStatement(localTypeDefinitionStatementNode *st.LocalTypeDefinitionStatementNode) BLangNode {
 	panic("TransformLocalTypeDefinitionStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformLockStatement(lockStatementNode *tree.LockStatementNode) BLangNode {
+func (n *NodeBuilder) TransformLockStatement(lockStatementNode *st.LockStatementNode) BLangNode {
 	if lockStatementNode.OnFailClause() != nil {
 		n.cx.Unimplemented("on-fail clause on lock is not yet supported", n.getPosition(lockStatementNode.OnFailClause()))
 	}
@@ -2330,11 +2329,11 @@ func (n *NodeBuilder) TransformLockStatement(lockStatementNode *tree.LockStateme
 	return bLLock
 }
 
-func (n *NodeBuilder) TransformForkStatement(forkStatementNode *tree.ForkStatementNode) BLangNode {
+func (n *NodeBuilder) TransformForkStatement(forkStatementNode *st.ForkStatementNode) BLangNode {
 	panic("TransformForkStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformForEachStatement(forEachStatementNode *tree.ForEachStatementNode) BLangNode {
+func (n *NodeBuilder) TransformForEachStatement(forEachStatementNode *st.ForEachStatementNode) BLangNode {
 	bLForeach := &BLangForeach{}
 	bLForeach.pos = n.getPosition(forEachStatementNode)
 
@@ -2361,8 +2360,8 @@ func (n *NodeBuilder) TransformForEachStatement(forEachStatementNode *tree.ForEa
 	return bLForeach
 }
 
-func (n *NodeBuilder) TransformBinaryExpression(binaryBLangExpression *tree.BinaryExpressionNode) BLangNode {
-	if binaryBLangExpression.Operator().Kind() == common.ELVIS_TOKEN {
+func (n *NodeBuilder) TransformBinaryExpression(binaryBLangExpression *st.BinaryExpressionNode) BLangNode {
+	if binaryBLangExpression.Operator().Kind() == st.ELVIS_TOKEN {
 		panic("TransformBinaryExpression: elvis operator not supported")
 	}
 
@@ -2378,16 +2377,16 @@ func (n *NodeBuilder) TransformBinaryExpression(binaryBLangExpression *tree.Bina
 	return &bLBinaryExpr
 }
 
-func (n *NodeBuilder) TransformBracedExpression(bracedBLangExpression *tree.BracedExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformBracedExpression(bracedBLangExpression *st.BracedExpressionNode) BLangNode {
 	return n.createActionOrExpression(bracedBLangExpression.Expression()).(BLangNode)
 }
 
-func (n *NodeBuilder) TransformCheckExpression(checkBLangExpression *tree.CheckExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformCheckExpression(checkBLangExpression *st.CheckExpressionNode) BLangNode {
 	pos := n.getPosition(checkBLangExpression)
 	// we are deviating from the spec here (https://ballerina.io/spec/lang/master/#section_6.33) check is only suppose
 	// to work with expression but jBallerina also allow remote method calls (which is an action)
 	expr := n.createActionOrExpression(checkBLangExpression.Expression())
-	if checkBLangExpression.CheckKeyword().Kind() == common.CHECK_KEYWORD {
+	if checkBLangExpression.CheckKeyword().Kind() == st.CHECK_KEYWORD {
 		checkedExpr := &BLangCheckedExpr{}
 		checkedExpr.pos = pos
 		checkedExpr.Expr = expr
@@ -2399,19 +2398,19 @@ func (n *NodeBuilder) TransformCheckExpression(checkBLangExpression *tree.CheckE
 	return checkPanickedExpr
 }
 
-func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression *tree.FieldAccessExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression *st.FieldAccessExpressionNode) BLangNode {
 	fieldName := fieldAccessBLangExpression.FieldName()
-	if fieldName.Kind() == common.QUALIFIED_NAME_REFERENCE {
+	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		panic("TransformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported")
 	}
 
 	bLFieldBasedAccess := &BLangFieldBaseAccess{}
-	simpleNameRef := fieldName.(*tree.SimpleNameReferenceNode)
+	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
 	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(fieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
 
 	containerExpr := fieldAccessBLangExpression.Expression()
-	if containerExpr.Kind() == common.BRACED_EXPRESSION {
-		bracedExpr := containerExpr.(*tree.BracedExpressionNode)
+	if containerExpr.Kind() == st.BRACED_EXPRESSION {
+		bracedExpr := containerExpr.(*st.BracedExpressionNode)
 		bLFieldBasedAccess.Expr = n.createExpression(bracedExpr.Expression())
 	} else {
 		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
@@ -2421,7 +2420,7 @@ func (n *NodeBuilder) TransformFieldAccessExpression(fieldAccessBLangExpression 
 	return bLFieldBasedAccess
 }
 
-func (n *NodeBuilder) TransformFunctionCallExpression(functionCallBLangExpression *tree.FunctionCallExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformFunctionCallExpression(functionCallBLangExpression *st.FunctionCallExpressionNode) BLangNode {
 	return n.createBLangInvocation(
 		functionCallBLangExpression.FunctionName(),
 		functionCallBLangExpression.Arguments(),
@@ -2429,7 +2428,7 @@ func (n *NodeBuilder) TransformFunctionCallExpression(functionCallBLangExpressio
 		n.isFunctionCallAsync(functionCallBLangExpression))
 }
 
-func (n *NodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *tree.MethodCallExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *st.MethodCallExpressionNode) BLangNode {
 	bLInvocation := n.createBLangInvocation(methodCallBLangExpression.MethodName(),
 		methodCallBLangExpression.Arguments(),
 		n.getPosition(methodCallBLangExpression), false)
@@ -2437,7 +2436,7 @@ func (n *NodeBuilder) TransformMethodCallExpression(methodCallBLangExpression *t
 	return bLInvocation
 }
 
-func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBLangExpression *tree.MappingConstructorExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBLangExpression *st.MappingConstructorExpressionNode) BLangNode {
 	mappingConstructor := &BLangMappingConstructorExpr{
 		Fields: make([]MappingField, 0),
 	}
@@ -2445,10 +2444,10 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 	for i := 0; i < fields.Size(); i += 2 {
 		field := fields.Get(i)
 		switch field.Kind() {
-		case common.SPREAD_FIELD:
+		case st.SPREAD_FIELD:
 			panic("mapping constructor spread field not implemented")
-		case common.COMPUTED_NAME_FIELD:
-			computedNameField := field.(*tree.ComputedNameFieldNode)
+		case st.COMPUTED_NAME_FIELD:
+			computedNameField := field.(*st.ComputedNameFieldNode)
 			keyExpr := n.createExpression(computedNameField.FieldNameExpr())
 			key := &BLangMappingKey{
 				Expr: keyExpr,
@@ -2461,12 +2460,12 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 			}
 			keyValueField.SetPosition(n.getPosition(computedNameField))
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
-		case common.SPECIFIC_FIELD:
-			specificField := field.(*tree.SpecificFieldNode)
+		case st.SPECIFIC_FIELD:
+			specificField := field.(*st.SpecificFieldNode)
 			if specificField.ValueExpr() == nil {
 				panic("mapping constructor var-name field not implemented")
 			}
-			_, isStringLit := specificField.FieldName().(*tree.BasicLiteralNode)
+			_, isStringLit := specificField.FieldName().(*st.BasicLiteralNode)
 			keyKind := MappingKeyIdentifier
 			if isStringLit {
 				keyKind = MappingKeyStringLiteral
@@ -2491,7 +2490,7 @@ func (n *NodeBuilder) TransformMappingConstructorExpression(mappingConstructorBL
 	return mappingConstructor
 }
 
-func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *tree.IndexedExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *st.IndexedExpressionNode) BLangNode {
 	indexBasedAccess := &BLangIndexBasedAccess{}
 	indexBasedAccess.pos = n.getPosition(indexedBLangExpression)
 	keys := indexedBLangExpression.KeyExpression()
@@ -2514,11 +2513,11 @@ func (n *NodeBuilder) TransformIndexedExpression(indexedBLangExpression *tree.In
 	return indexBasedAccess
 }
 
-func (n *NodeBuilder) TransformTypeofExpression(typeofBLangExpression *tree.TypeofExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTypeofExpression(typeofBLangExpression *st.TypeofExpressionNode) BLangNode {
 	panic("TransformTypeofExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformUnaryExpression(unaryBLangExpression *tree.UnaryExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformUnaryExpression(unaryBLangExpression *st.UnaryExpressionNode) BLangNode {
 	pos := n.getPosition(unaryBLangExpression)
 	operator := model.OperatorKindValueFrom(unaryBLangExpression.UnaryOperator().Text())
 	expr := n.createExpression(unaryBLangExpression.Expression())
@@ -2558,11 +2557,11 @@ func foldNegativeIntLiteral(lit *BLangLiteral) bool {
 	return true
 }
 
-func (n *NodeBuilder) TransformComputedNameField(computedNameFieldNode *tree.ComputedNameFieldNode) BLangNode {
+func (n *NodeBuilder) TransformComputedNameField(computedNameFieldNode *st.ComputedNameFieldNode) BLangNode {
 	panic("TransformComputedNameField unimplemented")
 }
 
-func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *tree.ConstantDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *st.ConstantDeclarationNode) BLangNode {
 	// Line 940: BLangConstant constantNode = (BLangConstant) TreeBuilder.createConstantNode();
 	constantNode := createConstantNode()
 
@@ -2585,14 +2584,14 @@ func (n *NodeBuilder) TransformConstantDeclaration(constantDeclarationNode *tree
 	n.populateMetadata(constantDeclarationNode.Metadata(), constantNode)
 
 	visibilityQualifier := constantDeclarationNode.VisibilityQualifier()
-	if visibilityQualifier != nil && visibilityQualifier.Kind() == common.PUBLIC_KEYWORD {
+	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
 		constantNode.SetPublic()
 	}
 
 	return constantNode
 }
 
-func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *tree.DefaultableParameterNode) BLangNode {
+func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *st.DefaultableParameterNode) BLangNode {
 	paramName := defaultableParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2615,14 +2614,14 @@ func (n *NodeBuilder) TransformDefaultableParameter(defaultableParameterNode *tr
 	return simpleVar
 }
 
-func (n *NodeBuilder) createSimpleVarWithTokenNodeNodeList(name tree.Token, typeName tree.Node, annotations tree.NodeList[*tree.AnnotationNode]) *BLangSimpleVariable {
+func (n *NodeBuilder) createSimpleVarWithTokenNodeNodeList(name st.Token, typeName st.Node, annotations st.NodeList[*st.AnnotationNode]) *BLangSimpleVariable {
 	if name != nil {
 		return n.createSimpleVarInner(name, typeName, nil, nil, annotations)
 	}
 	return n.createSimpleVarInner(nil, typeName, nil, nil, annotations)
 }
 
-func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *tree.RequiredParameterNode) BLangNode {
+func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *st.RequiredParameterNode) BLangNode {
 	paramName := requiredParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2647,7 +2646,7 @@ func (n *NodeBuilder) TransformRequiredParameter(requiredParameterNode *tree.Req
 	return simpleVar
 }
 
-func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNode *tree.IncludedRecordParameterNode) BLangNode {
+func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNode *st.IncludedRecordParameterNode) BLangNode {
 	paramName := includedRecordParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2671,7 +2670,7 @@ func (n *NodeBuilder) TransformIncludedRecordParameter(includedRecordParameterNo
 	return simpleVar
 }
 
-func (n *NodeBuilder) TransformRestParameter(restParameterNode *tree.RestParameterNode) BLangNode {
+func (n *NodeBuilder) TransformRestParameter(restParameterNode *st.RestParameterNode) BLangNode {
 	paramName := restParameterNode.ParamName()
 
 	if paramName != nil {
@@ -2694,23 +2693,23 @@ func (n *NodeBuilder) TransformRestParameter(restParameterNode *tree.RestParamet
 	return simpleVar
 }
 
-func (n *NodeBuilder) TransformImportOrgName(importOrgNameNode *tree.ImportOrgNameNode) BLangNode {
+func (n *NodeBuilder) TransformImportOrgName(importOrgNameNode *st.ImportOrgNameNode) BLangNode {
 	panic("TransformImportOrgName unimplemented")
 }
 
-func (n *NodeBuilder) TransformImportPrefix(importPrefixNode *tree.ImportPrefixNode) BLangNode {
+func (n *NodeBuilder) TransformImportPrefix(importPrefixNode *st.ImportPrefixNode) BLangNode {
 	panic("TransformImportPrefix unimplemented")
 }
 
-func (n *NodeBuilder) TransformSpecificField(specificFieldNode *tree.SpecificFieldNode) BLangNode {
+func (n *NodeBuilder) TransformSpecificField(specificFieldNode *st.SpecificFieldNode) BLangNode {
 	panic("TransformSpecificField unimplemented")
 }
 
-func (n *NodeBuilder) TransformSpreadField(spreadFieldNode *tree.SpreadFieldNode) BLangNode {
+func (n *NodeBuilder) TransformSpreadField(spreadFieldNode *st.SpreadFieldNode) BLangNode {
 	panic("TransformSpreadField unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedArgument(namedArgumentNode *tree.NamedArgumentNode) BLangNode {
+func (n *NodeBuilder) TransformNamedArgument(namedArgumentNode *st.NamedArgumentNode) BLangNode {
 	namedArg := &BLangNamedArgsExpression{}
 	namedArg.pos = n.getPosition(namedArgumentNode)
 	nameToken := namedArgumentNode.ArgumentName().Name()
@@ -2719,34 +2718,34 @@ func (n *NodeBuilder) TransformNamedArgument(namedArgumentNode *tree.NamedArgume
 	return namedArg
 }
 
-func (n *NodeBuilder) TransformPositionalArgument(positionalArgumentNode *tree.PositionalArgumentNode) BLangNode {
+func (n *NodeBuilder) TransformPositionalArgument(positionalArgumentNode *st.PositionalArgumentNode) BLangNode {
 	return n.createExpression(positionalArgumentNode.Expression())
 }
 
-func (n *NodeBuilder) TransformRestArgument(restArgumentNode *tree.RestArgumentNode) BLangNode {
+func (n *NodeBuilder) TransformRestArgument(restArgumentNode *st.RestArgumentNode) BLangNode {
 	panic("TransformRestArgument unimplemented")
 }
 
-func (n *NodeBuilder) TransformInferredTypedescDefault(inferredTypedescDefaultNode *tree.InferredTypedescDefaultNode) BLangNode {
+func (n *NodeBuilder) TransformInferredTypedescDefault(inferredTypedescDefaultNode *st.InferredTypedescDefaultNode) BLangNode {
 	node := &BLangInferredTypedescDefault{}
 	node.pos = n.getPosition(inferredTypedescDefaultNode)
 	return node
 }
 
-func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tree.ObjectTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *st.ObjectTypeDescriptorNode) BLangNode {
 	objectType := &BLangObjectType{members: make(map[string]ObjectMember)}
 
 	// Process object type qualifiers (client/service/isolated)
 	qualifiers := objectTypeDescriptorNode.ObjectTypeQualifiers()
 	for q := range qualifiers.Iterator() {
 		switch q.Kind() {
-		case common.CLIENT_KEYWORD:
+		case st.CLIENT_KEYWORD:
 			objectType.NetworkQuals = ObjectNetworkQualsClient
-		case common.SERVICE_KEYWORD:
+		case st.SERVICE_KEYWORD:
 			objectType.NetworkQuals = ObjectNetworkQualsService
-		case common.ISOLATED_KEYWORD:
+		case st.ISOLATED_KEYWORD:
 			objectType.Isolated = true
-		case common.READONLY_KEYWORD:
+		case st.READONLY_KEYWORD:
 			// https://github.com/ballerina-nutcracker/ballerina/issues/537",
 			n.cx.Unimplemented("readonly object type descriptors are not implemented", n.getPosition(q))
 		}
@@ -2757,23 +2756,23 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 	for i := 0; i < members.Size(); i++ {
 		member := members.Get(i)
 		switch member.Kind() {
-		case common.OBJECT_FIELD:
-			objectField := member.(*tree.ObjectFieldNode)
+		case st.OBJECT_FIELD:
+			objectField := member.(*st.ObjectFieldNode)
 			fieldName, _ := normalizedIdentifierValue(objectField.FieldName().Text())
 			bField := &BObjectField{
 				Ty: n.createTypeNode(objectField.TypeName()).(BType),
 			}
 			bField.name = fieldName
 			bField.pos = n.getPosition(objectField)
-			if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == common.PUBLIC_KEYWORD {
+			if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
 				bField.flags |= model.FlagPublic
 			}
 			n.populateMetadata(objectField.Metadata(), bField)
 			if objectType.AddMember(bField) {
 				n.cx.SyntaxError("redeclared symbol '"+fieldName+"'", bField.pos)
 			}
-		case common.METHOD_DECLARATION:
-			methodDecl := member.(*tree.MethodDeclarationNode)
+		case st.METHOD_DECLARATION:
+			methodDecl := member.(*st.MethodDeclarationNode)
 			methodName, _ := normalizedIdentifierValue(methodDecl.MethodName().Text())
 			bMethod := &BMethodDecl{}
 			bMethod.name = methodName
@@ -2784,15 +2783,15 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 			methodQuals := methodDecl.QualifierList()
 			for q := range methodQuals.Iterator() {
 				switch q.Kind() {
-				case common.PUBLIC_KEYWORD:
+				case st.PUBLIC_KEYWORD:
 					bMethod.flags |= model.FlagPublic
-				case common.REMOTE_KEYWORD:
+				case st.REMOTE_KEYWORD:
 					bMethod.memberKind = ObjectMemberKindRemoteMethod
-				case common.RESOURCE_KEYWORD:
+				case st.RESOURCE_KEYWORD:
 					bMethod.memberKind = ObjectMemberKindResourceMethod
-				case common.ISOLATED_KEYWORD:
+				case st.ISOLATED_KEYWORD:
 					bMethod.SetIsolated()
-				case common.TRANSACTIONAL_KEYWORD:
+				case st.TRANSACTIONAL_KEYWORD:
 					bMethod.SetTransactional()
 				}
 			}
@@ -2815,7 +2814,7 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 				params := funcSig.Parameters()
 				for param := range params.Iterator() {
 					ftParam := n.createFunctionTypeParam(param)
-					if _, isRest := param.(*tree.RestParameterNode); isRest {
+					if _, isRest := param.(*st.RestParameterNode); isRest {
 						bMethod.RestParam = &ftParam
 					} else {
 						bMethod.RequiredParams = append(bMethod.RequiredParams, ftParam)
@@ -2839,8 +2838,8 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 			if objectType.AddMember(bMethod) {
 				n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(bMethod.name)+"'", bMethod.pos)
 			}
-		case common.TYPE_REFERENCE:
-			typeRef := member.(*tree.TypeReferenceNode)
+		case st.TYPE_REFERENCE:
+			typeRef := member.(*st.TypeReferenceNode)
 			objectType.unresolvedInclusions = append(objectType.unresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*BLangUserDefinedType))
 		default:
 			panic("unexpected member kind in object type descriptor")
@@ -2851,18 +2850,18 @@ func (n *NodeBuilder) TransformObjectTypeDescriptor(objectTypeDescriptorNode *tr
 	return objectType
 }
 
-func (n *NodeBuilder) TransformObjectConstructorExpression(objectConstructorBLangExpression *tree.ObjectConstructorExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformObjectConstructorExpression(objectConstructorBLangExpression *st.ObjectConstructorExpressionNode) BLangNode {
 	panic("TransformObjectConstructorExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tree.RecordTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *st.RecordTypeDescriptorNode) BLangNode {
 	recordType := &BLangRecordType{}
 	fields := recordTypeDescriptorNode.Fields()
 	for i := 0; i < fields.Size(); i++ {
 		field := fields.Get(i)
 		switch field.Kind() {
-		case common.RECORD_FIELD:
-			recordField := field.(*tree.RecordFieldNode)
+		case st.RECORD_FIELD:
+			recordField := field.(*st.RecordFieldNode)
 			fieldName := recordField.FieldName().Text()
 			bField := BField{
 				Name: model.Name(fieldName),
@@ -2877,8 +2876,8 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 			}
 			n.populateMetadata(recordField.Metadata(), &bField)
 			recordType.AddField(fieldName, bField)
-		case common.RECORD_FIELD_WITH_DEFAULT_VALUE:
-			recordFieldDV := field.(*tree.RecordFieldWithDefaultValueNode)
+		case st.RECORD_FIELD_WITH_DEFAULT_VALUE:
+			recordFieldDV := field.(*st.RecordFieldWithDefaultValueNode)
 			fieldName := recordFieldDV.FieldName().Text()
 			bField := BField{
 				Name:        model.Name(fieldName),
@@ -2891,8 +2890,8 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 			}
 			n.populateMetadata(recordFieldDV.Metadata(), &bField)
 			recordType.AddField(fieldName, bField)
-		case common.TYPE_REFERENCE:
-			typeRef := field.(*tree.TypeReferenceNode)
+		case st.TYPE_REFERENCE:
+			typeRef := field.(*st.TypeReferenceNode)
 			recordType.TypeInclusions = append(recordType.TypeInclusions, n.createTypeNode(typeRef.TypeName()).(BType))
 		default:
 			panic("unexpected field kind in record type descriptor")
@@ -2901,20 +2900,20 @@ func (n *NodeBuilder) TransformRecordTypeDescriptor(recordTypeDescriptorNode *tr
 	if restDesc := recordTypeDescriptorNode.RecordRestDescriptor(); restDesc != nil {
 		recordType.RestType = n.createTypeNode(restDesc.TypeName()).(BType)
 	}
-	recordType.IsOpen = recordTypeDescriptorNode.BodyStartDelimiter().Kind() == common.OPEN_BRACE_TOKEN
+	recordType.IsOpen = recordTypeDescriptorNode.BodyStartDelimiter().Kind() == st.OPEN_BRACE_TOKEN
 	recordType.pos = n.getPosition(recordTypeDescriptorNode)
 	return recordType
 }
 
-func (n *NodeBuilder) TransformReturnTypeDescriptor(returnTypeDescriptorNode *tree.ReturnTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformReturnTypeDescriptor(returnTypeDescriptorNode *st.ReturnTypeDescriptorNode) BLangNode {
 	panic("TransformReturnTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformNilTypeDescriptor(nilTypeDescriptorNode *tree.NilTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformNilTypeDescriptor(nilTypeDescriptorNode *st.NilTypeDescriptorNode) BLangNode {
 	panic("TransformNilTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode *tree.OptionalTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode *st.OptionalTypeDescriptorNode) BLangNode {
 	typeDesc := optionalTypeDescriptorNode.TypeDescriptor()
 	nilType := &BLangValueType{TypeKind: TypeKind_NIL}
 	nilType.pos = n.getPosition(optionalTypeDescriptorNode.QuestionMarkToken())
@@ -2930,27 +2929,27 @@ func (n *NodeBuilder) TransformOptionalTypeDescriptor(optionalTypeDescriptorNode
 	return bLUnionType
 }
 
-func (n *NodeBuilder) TransformObjectField(objectFieldNode *tree.ObjectFieldNode) BLangNode {
+func (n *NodeBuilder) TransformObjectField(objectFieldNode *st.ObjectFieldNode) BLangNode {
 	panic("TransformObjectField unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordField(recordFieldNode *tree.RecordFieldNode) BLangNode {
+func (n *NodeBuilder) TransformRecordField(recordFieldNode *st.RecordFieldNode) BLangNode {
 	panic("TransformRecordField unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordFieldWithDefaultValue(recordFieldWithDefaultValueNode *tree.RecordFieldWithDefaultValueNode) BLangNode {
+func (n *NodeBuilder) TransformRecordFieldWithDefaultValue(recordFieldWithDefaultValueNode *st.RecordFieldWithDefaultValueNode) BLangNode {
 	panic("TransformRecordFieldWithDefaultValue unimplemented")
 }
 
-func (n *NodeBuilder) TransformRecordRestDescriptor(recordRestDescriptorNode *tree.RecordRestDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformRecordRestDescriptor(recordRestDescriptorNode *st.RecordRestDescriptorNode) BLangNode {
 	panic("TransformRecordRestDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypeReference(typeReferenceNode *tree.TypeReferenceNode) BLangNode {
+func (n *NodeBuilder) TransformTypeReference(typeReferenceNode *st.TypeReferenceNode) BLangNode {
 	panic("TransformTypeReference unimplemented")
 }
 
-func (n *NodeBuilder) TransformAnnotation(annotationNode *tree.AnnotationNode) BLangNode {
+func (n *NodeBuilder) TransformAnnotation(annotationNode *st.AnnotationNode) BLangNode {
 	annotation := &BLangAnnotationAttachment{}
 	annotation.SetPosition(n.getPosition(annotationNode))
 	nameReference := n.createBLangNameReference(annotationNode.AnnotReference())
@@ -2965,7 +2964,7 @@ func (n *NodeBuilder) TransformAnnotation(annotationNode *tree.AnnotationNode) B
 	return annotation
 }
 
-func (n *NodeBuilder) TransformMetadata(metadataNode *tree.MetadataNode) BLangNode {
+func (n *NodeBuilder) TransformMetadata(metadataNode *st.MetadataNode) BLangNode {
 	docString := getDocumentationString(metadataNode)
 	if docString == nil || docString.IsMissing() {
 		return nil
@@ -2973,7 +2972,7 @@ func (n *NodeBuilder) TransformMetadata(metadataNode *tree.MetadataNode) BLangNo
 	return n.createMarkdownDocumentationAttachment(docString)
 }
 
-func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarationNode *tree.ModuleVariableDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarationNode *st.ModuleVariableDeclarationNode) BLangNode {
 	typedBindingPattern := moduleVariableDeclarationNode.TypedBindingPattern()
 	bindingPattern := typedBindingPattern.BindingPattern()
 	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
@@ -3007,9 +3006,9 @@ func (n *NodeBuilder) TransformModuleVariableDeclaration(moduleVariableDeclarati
 	return simpleVar
 }
 
-func (n *NodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *tree.ModuleVariableDeclarationNode, simpleVar *BLangSimpleVariable) {
+func (n *NodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *st.ModuleVariableDeclarationNode, simpleVar *BLangSimpleVariable) {
 	visibilityQualifier := node.VisibilityQualifier()
-	if visibilityQualifier != nil && visibilityQualifier.Kind() == common.PUBLIC_KEYWORD {
+	if visibilityQualifier != nil && visibilityQualifier.Kind() == st.PUBLIC_KEYWORD {
 		simpleVar.SetPublic()
 	}
 
@@ -3017,26 +3016,26 @@ func (n *NodeBuilder) populateModuleVariableVisibilityAndQualifiers(node *tree.M
 	for i := 0; i < qualifiers.Size(); i++ {
 		qualifier := qualifiers.Get(i)
 		switch qualifier.Kind() {
-		case common.FINAL_KEYWORD:
+		case st.FINAL_KEYWORD:
 			simpleVar.SetFinal()
-		case common.ISOLATED_KEYWORD:
+		case st.ISOLATED_KEYWORD:
 			simpleVar.SetIsolated()
-		case common.CONFIGURABLE_KEYWORD:
+		case st.CONFIGURABLE_KEYWORD:
 			n.cx.Unimplemented("configurable module variables are not supported yet", simpleVar.pos)
 		}
 	}
 }
 
-func (n *NodeBuilder) TransformTypeTestExpression(typeTestBLangExpression *tree.TypeTestExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTypeTestExpression(typeTestBLangExpression *st.TypeTestExpressionNode) BLangNode {
 	typeTestExpr := &BLangTypeTestExpr{}
-	typeTestExpr.isNegation = typeTestBLangExpression.IsKeyword().Kind() == common.NOT_IS_KEYWORD
+	typeTestExpr.isNegation = typeTestBLangExpression.IsKeyword().Kind() == st.NOT_IS_KEYWORD
 	typeTestExpr.Expr = n.createExpression(typeTestBLangExpression.Expression())
 	typeTestExpr.Type = TypeData{TypeDescriptor: n.createTypeNode(typeTestBLangExpression.TypeDescriptor())}
 	typeTestExpr.SetPosition(n.getPosition(typeTestBLangExpression))
 	return typeTestExpr
 }
 
-func (n *NodeBuilder) TransformRemoteMethodCallAction(remoteMethodCallActionNode *tree.RemoteMethodCallActionNode) BLangNode {
+func (n *NodeBuilder) TransformRemoteMethodCallAction(remoteMethodCallActionNode *st.RemoteMethodCallActionNode) BLangNode {
 	inv := n.createBLangInvocation(remoteMethodCallActionNode.MethodName(),
 		remoteMethodCallActionNode.Arguments(),
 		n.getPosition(remoteMethodCallActionNode), false)
@@ -3047,7 +3046,7 @@ func (n *NodeBuilder) TransformRemoteMethodCallAction(remoteMethodCallActionNode
 	return action
 }
 
-func (n *NodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *tree.MapTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTypeDescriptorNode) BLangNode {
 	refType := &BLangBuiltInRefTypeNode{
 		TypeKind: TypeKind_MAP,
 	}
@@ -3067,16 +3066,16 @@ func (n *NodeBuilder) TransformMapTypeDescriptor(mapTypeDescriptorNode *tree.Map
 	return constrainedType
 }
 
-func (n *NodeBuilder) TransformNilLiteral(nilLiteralNode *tree.NilLiteralNode) BLangNode {
+func (n *NodeBuilder) TransformNilLiteral(nilLiteralNode *st.NilLiteralNode) BLangNode {
 	panic("TransformNilLiteral unimplemented")
 }
 
-func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *tree.AnnotationDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *st.AnnotationDeclarationNode) BLangNode {
 	annotation := &BLangAnnotation{}
 	annotation.SetPosition(n.getPositionWithoutMetadata(annotationDeclarationNode))
 	name := createIdentifierFromToken(n.getPosition(annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
 	annotation.Name = &name
-	if visibility := annotationDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == common.PUBLIC_KEYWORD {
+	if visibility := annotationDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
 		annotation.SetPublic()
 	}
 	if constKeyword := annotationDeclarationNode.ConstKeyword(); constKeyword != nil && !constKeyword.IsMissing() {
@@ -3087,7 +3086,7 @@ func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *
 	}
 	attachPoints := annotationDeclarationNode.AttachPoints()
 	for attachPoint := range attachPoints.Iterator() {
-		if attachPoint, ok := attachPoint.(*tree.AnnotationAttachPointNode); ok {
+		if attachPoint, ok := attachPoint.(*st.AnnotationAttachPointNode); ok {
 			annotation.AddAttachPoint(n.createAnnotationAttachPoint(attachPoint))
 		}
 	}
@@ -3095,12 +3094,12 @@ func (n *NodeBuilder) TransformAnnotationDeclaration(annotationDeclarationNode *
 	return annotation
 }
 
-func (n *NodeBuilder) TransformAnnotationAttachPoint(annotationAttachPointNode *tree.AnnotationAttachPointNode) BLangNode {
+func (n *NodeBuilder) TransformAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) BLangNode {
 	n.createAnnotationAttachPoint(annotationAttachPointNode)
 	return nil
 }
 
-func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *tree.AnnotationAttachPointNode) AttachPoint {
+func (n *NodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) AttachPoint {
 	parts := []string{}
 	identifiers := annotationAttachPointNode.Identifiers()
 	for i := 0; i < identifiers.Size(); i++ {
@@ -3164,9 +3163,9 @@ func annotationAttachPointFromParts(parts []string) (Point, bool) {
 }
 
 type xmlNamespaceDeclarationNode interface {
-	tree.Node
-	Namespaceuri() tree.ExpressionNode
-	NamespacePrefix() *tree.IdentifierToken
+	st.Node
+	Namespaceuri() st.ExpressionNode
+	NamespacePrefix() *st.IdentifierToken
 }
 
 func (n *NodeBuilder) transformXMLNamespaceDeclaration(node xmlNamespaceDeclarationNode) BLangNode {
@@ -3177,15 +3176,15 @@ func (n *NodeBuilder) transformXMLNamespaceDeclaration(node xmlNamespaceDeclarat
 	return xmlns
 }
 
-func (n *NodeBuilder) TransformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode *tree.XMLNamespaceDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode *st.XMLNamespaceDeclarationNode) BLangNode {
 	return n.transformXMLNamespaceDeclaration(xMLNamespaceDeclarationNode)
 }
 
-func (n *NodeBuilder) TransformModuleXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode *tree.ModuleXMLNamespaceDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformModuleXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode *st.ModuleXMLNamespaceDeclarationNode) BLangNode {
 	return n.transformXMLNamespaceDeclaration(moduleXMLNamespaceDeclarationNode)
 }
 
-func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location, uriNode tree.ExpressionNode, prefixTok *tree.IdentifierToken) {
+func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location, uriNode st.ExpressionNode, prefixTok *st.IdentifierToken) {
 	if uriNode != nil {
 		target.SetNamespaceURI(n.createExpression(uriNode))
 	}
@@ -3195,7 +3194,7 @@ func (n *NodeBuilder) populateXMLNS(target *BLangXMLNS, pos diagnostics.Location
 	}
 }
 
-func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *tree.FunctionBodyBlockNode) BLangNode {
+func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *st.FunctionBodyBlockNode) BLangNode {
 	bLFuncBody := &BLangBlockFunctionBody{}
 	statements := []StatementNode{}
 	stmtList := statements
@@ -3211,27 +3210,27 @@ func (n *NodeBuilder) TransformFunctionBodyBlock(functionBodyBlockNode *tree.Fun
 	return bLFuncBody
 }
 
-func (n *NodeBuilder) generateForkStatements(statements *[]StatementNode, forkStatementNode *tree.ForkStatementNode) {
+func (n *NodeBuilder) generateForkStatements(statements *[]StatementNode, forkStatementNode *st.ForkStatementNode) {
 	panic("generateForkStatements unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedWorkerDeclaration(namedWorkerDeclarationNode *tree.NamedWorkerDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformNamedWorkerDeclaration(namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode) BLangNode {
 	panic("TransformNamedWorkerDeclaration unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedWorkerDeclarator(namedWorkerDeclarator *tree.NamedWorkerDeclarator) BLangNode {
+func (n *NodeBuilder) TransformNamedWorkerDeclarator(namedWorkerDeclarator *st.NamedWorkerDeclarator) BLangNode {
 	panic("TransformNamedWorkerDeclarator unimplemented")
 }
 
-func (n *NodeBuilder) TransformBasicLiteral(basicLiteralNode *tree.BasicLiteralNode) BLangNode {
+func (n *NodeBuilder) TransformBasicLiteral(basicLiteralNode *st.BasicLiteralNode) BLangNode {
 	panic("TransformBasicLiteral unimplemented")
 }
 
-func (n *NodeBuilder) TransformSimpleNameReference(simpleNameReferenceNode *tree.SimpleNameReferenceNode) BLangNode {
+func (n *NodeBuilder) TransformSimpleNameReference(simpleNameReferenceNode *st.SimpleNameReferenceNode) BLangNode {
 	panic("TransformSimpleNameReference unimplemented")
 }
 
-func (n *NodeBuilder) TransformQualifiedNameReference(qualifiedNameReferenceNode *tree.QualifiedNameReferenceNode) BLangNode {
+func (n *NodeBuilder) TransformQualifiedNameReference(qualifiedNameReferenceNode *st.QualifiedNameReferenceNode) BLangNode {
 	nameReference := n.createBLangNameReference(qualifiedNameReferenceNode)
 	bLVarRef := &BLangSimpleVarRef{}
 	bLVarRef.pos = n.getPosition(qualifiedNameReferenceNode)
@@ -3240,11 +3239,11 @@ func (n *NodeBuilder) TransformQualifiedNameReference(qualifiedNameReferenceNode
 	return bLVarRef
 }
 
-func (n *NodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameReferenceNode *tree.BuiltinSimpleNameReferenceNode) BLangNode {
+func (n *NodeBuilder) TransformBuiltinSimpleNameReference(builtinSimpleNameReferenceNode *st.BuiltinSimpleNameReferenceNode) BLangNode {
 	panic("TransformBuiltinSimpleNameReference unimplemented")
 }
 
-func (n *NodeBuilder) TransformTrapExpression(trapBLangExpression *tree.TrapExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTrapExpression(trapBLangExpression *st.TrapExpressionNode) BLangNode {
 	pos := n.getPosition(trapBLangExpression)
 	expr := n.createActionOrExpression(trapBLangExpression.Expression())
 	trapExpr := &BLangTrapExpr{}
@@ -3253,7 +3252,7 @@ func (n *NodeBuilder) TransformTrapExpression(trapBLangExpression *tree.TrapExpr
 	return trapExpr
 }
 
-func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExpression *tree.ListConstructorExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExpression *st.ListConstructorExpressionNode) BLangNode {
 	argExprList := make([]BLangExpression, 0)
 	spreadMemberIndexes := make([]int, 0)
 	listConstructorExpr := &BLangListConstructorExpr{}
@@ -3262,8 +3261,8 @@ func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExp
 	for i := 0; i < expressions.Size(); i += 2 {
 		listMember := expressions.Get(i)
 		var memberExpr BLangExpression
-		if listMember.Kind() == common.SPREAD_MEMBER {
-			spreadMember := listMember.(*tree.SpreadMemberNode)
+		if listMember.Kind() == st.SPREAD_MEMBER {
+			spreadMember := listMember.(*st.SpreadMemberNode)
 			memberExpr = n.createExpression(spreadMember.Expression())
 			spreadMemberIndexes = append(spreadMemberIndexes, len(argExprList))
 		} else {
@@ -3280,7 +3279,7 @@ func (n *NodeBuilder) TransformListConstructorExpression(listConstructorBLangExp
 	return listConstructorExpr
 }
 
-func (n *NodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *tree.TypeCastExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *st.TypeCastExpressionNode) BLangNode {
 	typeConversionNode := &BLangTypeConversionExpr{}
 	typeConversionNode.SetPosition(n.getPosition(typeCastBLangExpression))
 	typeCastParamNode := typeCastBLangExpression.TypeCastParam()
@@ -3297,11 +3296,11 @@ func (n *NodeBuilder) TransformTypeCastExpression(typeCastBLangExpression *tree.
 	return typeConversionNode
 }
 
-func (n *NodeBuilder) TransformTypeCastParam(typeCastParamNode *tree.TypeCastParamNode) BLangNode {
+func (n *NodeBuilder) TransformTypeCastParam(typeCastParamNode *st.TypeCastParamNode) BLangNode {
 	panic("TransformTypeCastParam unimplemented")
 }
 
-func (n *NodeBuilder) TransformUnionTypeDescriptor(unionTypeDescriptorNode *tree.UnionTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformUnionTypeDescriptor(unionTypeDescriptorNode *st.UnionTypeDescriptorNode) BLangNode {
 	lhs := unionTypeDescriptorNode.LeftTypeDesc()
 	rhs := unionTypeDescriptorNode.RightTypeDesc()
 	bLUnionType := &BLangUnionTypeNode{
@@ -3316,15 +3315,15 @@ func (n *NodeBuilder) TransformUnionTypeDescriptor(unionTypeDescriptorNode *tree
 	return bLUnionType
 }
 
-func (n *NodeBuilder) TransformTableConstructorExpression(tableConstructorBLangExpression *tree.TableConstructorExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTableConstructorExpression(tableConstructorBLangExpression *st.TableConstructorExpressionNode) BLangNode {
 	panic("TransformTableConstructorExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformKeySpecifier(keySpecifierNode *tree.KeySpecifierNode) BLangNode {
+func (n *NodeBuilder) TransformKeySpecifier(keySpecifierNode *st.KeySpecifierNode) BLangNode {
 	panic("TransformKeySpecifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *tree.StreamTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *st.StreamTypeDescriptorNode) BLangNode {
 	position := n.getPosition(streamTypeDescriptorNode)
 	paramsNode := streamTypeDescriptorNode.StreamTypeParamsNode()
 	if paramsNode == nil {
@@ -3334,7 +3333,7 @@ func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *tr
 		refType.SetPosition(position)
 		return refType
 	}
-	params, ok := paramsNode.(*tree.StreamTypeParamsNode)
+	params, ok := paramsNode.(*st.StreamTypeParamsNode)
 	if !ok {
 		n.cx.InternalError("unexpected stream type params node", position)
 		return nil
@@ -3353,15 +3352,15 @@ func (n *NodeBuilder) TransformStreamTypeDescriptor(streamTypeDescriptorNode *tr
 	return streamType
 }
 
-func (n *NodeBuilder) TransformStreamTypeParams(streamTypeParamsNode *tree.StreamTypeParamsNode) BLangNode {
+func (n *NodeBuilder) TransformStreamTypeParams(streamTypeParamsNode *st.StreamTypeParamsNode) BLangNode {
 	panic("TransformStreamTypeParams unimplemented")
 }
 
-func (n *NodeBuilder) TransformLetExpression(letBLangExpression *tree.LetExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformLetExpression(letBLangExpression *st.LetExpressionNode) BLangNode {
 	panic("TransformLetExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode *tree.LetVariableDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode *st.LetVariableDeclarationNode) BLangNode {
 	varDef := n.createBLangVarDef(
 		n.getPosition(letVariableDeclarationNode),
 		letVariableDeclarationNode.TypedBindingPattern(),
@@ -3377,7 +3376,7 @@ func (n *NodeBuilder) TransformLetVariableDeclaration(letVariableDeclarationNode
 	return varDef.(BLangNode)
 }
 
-func (n *NodeBuilder) TransformTemplateExpression(templateBLangExpression *tree.TemplateExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTemplateExpression(templateBLangExpression *st.TemplateExpressionNode) BLangNode {
 	typeToken := templateBLangExpression.Type()
 	pos := n.getPosition(templateBLangExpression)
 	if typeToken == nil {
@@ -3395,7 +3394,7 @@ func (n *NodeBuilder) TransformTemplateExpression(templateBLangExpression *tree.
 	}
 }
 
-func (n *NodeBuilder) buildXMLTemplateExpr(templateBLangExpression *tree.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
+func (n *NodeBuilder) buildXMLTemplateExpr(templateBLangExpression *st.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
 	if !xmlTemplateHasInterpolation(templateBLangExpression.Content()) {
 		// If we don't have interpolations we build a literal as an optimization
 		return n.buildXMLSequenceLiteral(templateBLangExpression, pos)
@@ -3421,7 +3420,7 @@ func (n *NodeBuilder) buildXMLTemplateExpr(templateBLangExpression *tree.Templat
 	return tpl
 }
 
-func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *tree.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
+func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *st.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
 	var children []BLangExpression
 	content := templateBLangExpression.Content()
 	for child := range content.Iterator() {
@@ -3446,7 +3445,7 @@ func (n *NodeBuilder) buildXMLSequenceLiteral(templateBLangExpression *tree.Temp
 	return seq
 }
 
-func xmlTemplateHasInterpolation(content tree.NodeList[tree.Node]) bool {
+func xmlTemplateHasInterpolation(content st.NodeList[st.Node]) bool {
 	for child := range content.Iterator() {
 		if xmlNodeHasInterpolation(child) {
 			return true
@@ -3455,15 +3454,15 @@ func xmlTemplateHasInterpolation(content tree.NodeList[tree.Node]) bool {
 	return false
 }
 
-func xmlNodeHasInterpolation(node tree.Node) bool {
+func xmlNodeHasInterpolation(node st.Node) bool {
 	return firstXMLInterpolation(node) != nil
 }
 
-func firstXMLInterpolation(node tree.Node) *tree.InterpolationNode {
+func firstXMLInterpolation(node st.Node) *st.InterpolationNode {
 	switch x := node.(type) {
-	case *tree.InterpolationNode:
+	case *st.InterpolationNode:
 		return x
-	case *tree.XMLElementNode:
+	case *st.XMLElementNode:
 		content := x.Content()
 		for child := range content.Iterator() {
 			if ins := firstXMLInterpolation(child); ins != nil {
@@ -3480,7 +3479,7 @@ func firstXMLInterpolation(node tree.Node) *tree.InterpolationNode {
 				}
 			}
 		}
-	case *tree.XMLEmptyElementNode:
+	case *st.XMLEmptyElementNode:
 		attrs := x.Attributes()
 		for attr := range attrs.Iterator() {
 			if value := attr.Value(); value != nil {
@@ -3489,31 +3488,31 @@ func firstXMLInterpolation(node tree.Node) *tree.InterpolationNode {
 				}
 			}
 		}
-	case *tree.XMLAttributeValue:
+	case *st.XMLAttributeValue:
 		value := x.Value()
 		for child := range value.Iterator() {
 			if ins := firstXMLInterpolation(child); ins != nil {
 				return ins
 			}
 		}
-	case *tree.XMLComment:
+	case *st.XMLComment:
 		content := x.Content()
 		for child := range content.Iterator() {
-			if ins, ok := child.(*tree.InterpolationNode); ok {
+			if ins, ok := child.(*st.InterpolationNode); ok {
 				return ins
 			}
 		}
-	case *tree.XMLProcessingInstruction:
+	case *st.XMLProcessingInstruction:
 		data := x.Data()
 		for child := range data.Iterator() {
-			if ins, ok := child.(*tree.InterpolationNode); ok {
+			if ins, ok := child.(*st.InterpolationNode); ok {
 				return ins
 			}
 		}
-	case *tree.XMLCDATANode:
+	case *st.XMLCDATANode:
 		content := x.Content()
 		for child := range content.Iterator() {
-			if ins, ok := child.(*tree.InterpolationNode); ok {
+			if ins, ok := child.(*st.InterpolationNode); ok {
 				return ins
 			}
 		}
@@ -3579,7 +3578,7 @@ type xmlTemplateDiagnostic struct {
 	Internal bool
 }
 
-func (n *NodeBuilder) flattenXMLTemplateContent(content tree.NodeList[tree.Node], kind XMLTemplateInsertionKind) iter.Seq2[xmlTemplateToken, *xmlTemplateDiagnostic] {
+func (n *NodeBuilder) flattenXMLTemplateContent(content st.NodeList[st.Node], kind XMLTemplateInsertionKind) iter.Seq2[xmlTemplateToken, *xmlTemplateDiagnostic] {
 	return func(yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) {
 		var current *xmlTemplateTextAccumulator
 		rawYield := func(tok xmlTemplateToken, diag *xmlTemplateDiagnostic) bool {
@@ -3614,15 +3613,15 @@ func (n *NodeBuilder) flattenXMLTemplateContent(content tree.NodeList[tree.Node]
 }
 
 func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
-	node tree.Node,
+	node st.Node,
 	kind XMLTemplateInsertionKind,
 	namespaceInsertion *XMLTemplateNamespaceInsertion,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
 	switch x := node.(type) {
-	case tree.Token:
+	case st.Token:
 		return yield(newXMLTemplateTextToken(x.Text()), nil)
-	case *tree.InterpolationNode:
+	case *st.InterpolationNode:
 		expr := n.createActionOrExpression(x.Expression())
 		be, ok := expr.(BLangExpression)
 		if !ok {
@@ -3633,24 +3632,24 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 			})
 		}
 		return yield(newXMLTemplateInsertionToken(be, kind), nil)
-	case *tree.XMLTextNode:
+	case *st.XMLTextNode:
 		if c := x.Content(); c != nil {
 			return yield(newXMLTemplateTextToken(c.Text()), nil)
 		}
 		return true
-	case *tree.XMLElementNode:
+	case *st.XMLElementNode:
 		return n.flattenXMLTemplateElement(x, namespaceInsertion, yield)
-	case *tree.XMLEmptyElementNode:
+	case *st.XMLEmptyElementNode:
 		return n.flattenXMLTemplateEmptyElement(x, namespaceInsertion, yield)
-	case *tree.XMLComment:
+	case *st.XMLComment:
 		if ins := firstXMLInterpolation(x); ins != nil {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation is not allowed in xml comment",
 				Position: n.getPosition(ins),
 			})
 		}
-		return yield(newXMLTemplateTextToken(tree.ToSourceCode(x.InternalNode())), nil)
-	case *tree.XMLProcessingInstruction:
+		return yield(newXMLTemplateTextToken(st.ToSourceCode(x.InternalNode())), nil)
+	case *st.XMLProcessingInstruction:
 		if ins := firstXMLInterpolation(x); ins != nil {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation is not allowed in xml processing instruction",
@@ -3658,21 +3657,21 @@ func (n *NodeBuilder) flattenXMLTemplateNodeWithNamespace(
 			})
 		}
 		return n.flattenXMLTemplatePI(x, yield)
-	case *tree.XMLCDATANode:
+	case *st.XMLCDATANode:
 		if ins := firstXMLInterpolation(x); ins != nil {
 			return yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 				Message:  "interpolation is not allowed in xml CDATA section",
 				Position: n.getPosition(ins),
 			})
 		}
-		return yield(newXMLTemplateTextToken(tree.ToSourceCode(x.InternalNode())), nil)
+		return yield(newXMLTemplateTextToken(st.ToSourceCode(x.InternalNode())), nil)
 	default:
-		return yield(newXMLTemplateTextToken(tree.ToSourceCode(node.InternalNode())), nil)
+		return yield(newXMLTemplateTextToken(st.ToSourceCode(node.InternalNode())), nil)
 	}
 }
 
 func (n *NodeBuilder) flattenXMLTemplateElement(
-	x *tree.XMLElementNode,
+	x *st.XMLElementNode,
 	parentNamespaceInsertion *XMLTemplateNamespaceInsertion,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
@@ -3712,7 +3711,7 @@ func (n *NodeBuilder) flattenXMLTemplateElement(
 }
 
 func (n *NodeBuilder) flattenXMLTemplateEmptyElement(
-	x *tree.XMLEmptyElementNode,
+	x *st.XMLEmptyElementNode,
 	parentNamespaceInsertion *XMLTemplateNamespaceInsertion,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
@@ -3737,7 +3736,7 @@ func (n *NodeBuilder) flattenXMLTemplateEmptyElement(
 	return yield(newXMLTemplateTextToken("/>"), nil)
 }
 
-func (n *NodeBuilder) flattenXMLTemplatePI(x *tree.XMLProcessingInstruction, yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
+func (n *NodeBuilder) flattenXMLTemplatePI(x *st.XMLProcessingInstruction, yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
 	if !yield(newXMLTemplateTextToken("<?"), nil) {
 		return false
 	}
@@ -3747,7 +3746,7 @@ func (n *NodeBuilder) flattenXMLTemplatePI(x *tree.XMLProcessingInstruction, yie
 	var dataText strings.Builder
 	data := x.Data()
 	for child := range data.Iterator() {
-		if tok, ok := child.(tree.Token); ok {
+		if tok, ok := child.(st.Token); ok {
 			dataText.WriteString(tok.Text())
 		}
 	}
@@ -3762,7 +3761,7 @@ func (n *NodeBuilder) flattenXMLTemplatePI(x *tree.XMLProcessingInstruction, yie
 	return yield(newXMLTemplateTextToken("?>"), nil)
 }
 
-func (n *NodeBuilder) flattenXMLTemplateAttributes(attrs tree.NodeList[*tree.XMLAttributeNode], yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
+func (n *NodeBuilder) flattenXMLTemplateAttributes(attrs st.NodeList[*st.XMLAttributeNode], yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool) bool {
 	for attr := range attrs.Iterator() {
 		name := n.xmlNameToString(attr.AttributeName())
 		if !yield(newXMLTemplateTextToken(" "+name+"="), nil) {
@@ -3779,7 +3778,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributes(attrs tree.NodeList[*tree.XML
 
 func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
 	name string,
-	value *tree.XMLAttributeValue,
+	value *st.XMLAttributeValue,
 	yield func(xmlTemplateToken, *xmlTemplateDiagnostic) bool,
 ) bool {
 	startQuote := "\""
@@ -3796,7 +3795,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
 	isXMLNS := isXMLTemplateXMLNSName(name)
 	items := value.Value()
 	for child := range items.Iterator() {
-		if ins, ok := child.(*tree.InterpolationNode); ok {
+		if ins, ok := child.(*st.InterpolationNode); ok {
 			if isXMLNS {
 				if !yield(xmlTemplateToken{}, &xmlTemplateDiagnostic{
 					Message:  "interpolation is not allowed in xml xmlns attribute value",
@@ -3811,7 +3810,7 @@ func (n *NodeBuilder) flattenXMLTemplateAttributeValue(
 			}
 			continue
 		}
-		if tok, ok := child.(tree.Token); ok {
+		if tok, ok := child.(st.Token); ok {
 			if !yield(newXMLTemplateTextToken(tok.Text()), nil) {
 				return false
 			}
@@ -3828,7 +3827,7 @@ func (n *NodeBuilder) reportXMLTemplateDiagnostic(diag *xmlTemplateDiagnostic) {
 	n.cx.SemanticError(diag.Message, diag.Position)
 }
 
-func (n *NodeBuilder) collectXMLTemplateNamespaceInsertion(node tree.Node) XMLTemplateNamespaceInsertion {
+func (n *NodeBuilder) collectXMLTemplateNamespaceInsertion(node st.Node) XMLTemplateNamespaceInsertion {
 	insn := XMLTemplateNamespaceInsertion{
 		UsedPrefixes: map[string]struct{}{},
 	}
@@ -3836,9 +3835,9 @@ func (n *NodeBuilder) collectXMLTemplateNamespaceInsertion(node tree.Node) XMLTe
 	return insn
 }
 
-func (n *NodeBuilder) collectXMLTemplateNamespaceRefs(node tree.Node, scopes []map[string]struct{}, insn *XMLTemplateNamespaceInsertion) {
+func (n *NodeBuilder) collectXMLTemplateNamespaceRefs(node st.Node, scopes []map[string]struct{}, insn *XMLTemplateNamespaceInsertion) {
 	switch x := node.(type) {
-	case *tree.XMLElementNode:
+	case *st.XMLElementNode:
 		start := x.StartTag()
 		if start == nil {
 			return
@@ -3850,7 +3849,7 @@ func (n *NodeBuilder) collectXMLTemplateNamespaceRefs(node tree.Node, scopes []m
 		for child := range content.Iterator() {
 			n.collectXMLTemplateNamespaceRefs(child, childScopes, insn)
 		}
-	case *tree.XMLEmptyElementNode:
+	case *st.XMLEmptyElementNode:
 		childScopes := appendXMLTemplateNamespaceScope(scopes, n.collectInlineXMLTemplatePrefixes(x.Attributes()))
 		n.recordXMLTemplateNameRef(n.xmlNameToString(x.Name()), true, childScopes, insn)
 		n.collectXMLTemplateAttributeNamespaceRefs(x.Attributes(), childScopes, insn)
@@ -3858,7 +3857,7 @@ func (n *NodeBuilder) collectXMLTemplateNamespaceRefs(node tree.Node, scopes []m
 }
 
 func (n *NodeBuilder) collectXMLTemplateAttributeNamespaceRefs(
-	attrs tree.NodeList[*tree.XMLAttributeNode],
+	attrs st.NodeList[*st.XMLAttributeNode],
 	scopes []map[string]struct{},
 	insn *XMLTemplateNamespaceInsertion,
 ) {
@@ -3888,7 +3887,7 @@ func (n *NodeBuilder) recordXMLTemplateNameRef(name string, isElement bool, scop
 	}
 }
 
-func (n *NodeBuilder) collectInlineXMLTemplatePrefixes(attrs tree.NodeList[*tree.XMLAttributeNode]) map[string]struct{} {
+func (n *NodeBuilder) collectInlineXMLTemplatePrefixes(attrs st.NodeList[*st.XMLAttributeNode]) map[string]struct{} {
 	prefixes := map[string]struct{}{}
 	for attr := range attrs.Iterator() {
 		name := n.xmlNameToString(attr.AttributeName())
@@ -3936,7 +3935,7 @@ func isXMLTemplateXMLNSName(name string) bool {
 	return name == "xmlns" || prefix == "xmlns" && local != ""
 }
 
-func (n *NodeBuilder) buildStringTemplateExpr(node *tree.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
+func (n *NodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, pos diagnostics.Location) BLangNode {
 	// We maintain fallowing 2 invariants
 	// 1. First and last elements are always strings
 	// 2. Between any two expressions there is a string
@@ -3947,14 +3946,14 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *tree.TemplateExpressionNode,
 	lastStr := false
 	for child := range content.Iterator() {
 		switch c := child.(type) {
-		case tree.Token:
-			if c.Kind() != common.TEMPLATE_STRING {
+		case st.Token:
+			if c.Kind() != st.TEMPLATE_STRING {
 				n.cx.InternalError(fmt.Sprintf("unexpected token kind in string template: %v", c.Kind()), n.getPosition(c))
 				continue
 			}
 			strs = append(strs, c.Text())
 			lastStr = true
-		case *tree.InterpolationNode:
+		case *st.InterpolationNode:
 			if !lastStr {
 				strs = append(strs, "")
 			}
@@ -3978,17 +3977,17 @@ func (n *NodeBuilder) buildStringTemplateExpr(node *tree.TemplateExpressionNode,
 	return tpl
 }
 
-func (n *NodeBuilder) xmlNameToString(name tree.XMLNameNode) string {
+func (n *NodeBuilder) xmlNameToString(name st.XMLNameNode) string {
 	pos := n.getPosition(name)
 	switch name := name.(type) {
-	case *tree.XMLSimpleNameNode:
+	case *st.XMLSimpleNameNode:
 		tok := name.Name()
 		if tok == nil {
 			n.cx.InternalError("xml simple name missing identifier token", pos)
 			return ""
 		}
 		return tok.Text()
-	case *tree.XMLQualifiedNameNode:
+	case *st.XMLQualifiedNameNode:
 		// TODO: we will a have to revisit this when we support namespaces
 		prefixNode := name.Prefix()
 		localNode := name.Name()
@@ -4008,7 +4007,7 @@ func (n *NodeBuilder) xmlNameToString(name tree.XMLNameNode) string {
 	return ""
 }
 
-func (n *NodeBuilder) xmlAttributes(attrs tree.NodeList[*tree.XMLAttributeNode]) []BLangXMLAttribute {
+func (n *NodeBuilder) xmlAttributes(attrs st.NodeList[*st.XMLAttributeNode]) []BLangXMLAttribute {
 	out := make([]BLangXMLAttribute, 0, attrs.Size())
 	for attrNode := range attrs.Iterator() {
 		attr := n.TransformXMLAttribute(attrNode).(*BLangXMLAttribute)
@@ -4017,7 +4016,7 @@ func (n *NodeBuilder) xmlAttributes(attrs tree.NodeList[*tree.XMLAttributeNode])
 	return out
 }
 
-func (n *NodeBuilder) TransformXMLElement(xMLElementNode *tree.XMLElementNode) BLangNode {
+func (n *NodeBuilder) TransformXMLElement(xMLElementNode *st.XMLElementNode) BLangNode {
 	elem := &BLangXMLElementLiteral{}
 	elem.pos = n.getPosition(xMLElementNode)
 	if start := xMLElementNode.StartTag(); start != nil {
@@ -4051,23 +4050,23 @@ func (n *NodeBuilder) TransformXMLElement(xMLElementNode *tree.XMLElementNode) B
 	return elem
 }
 
-func (n *NodeBuilder) TransformXMLStartTag(xMLStartTagNode *tree.XMLStartTagNode) BLangNode {
+func (n *NodeBuilder) TransformXMLStartTag(xMLStartTagNode *st.XMLStartTagNode) BLangNode {
 	panic("TransformXMLStartTag unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLEndTag(xMLEndTagNode *tree.XMLEndTagNode) BLangNode {
+func (n *NodeBuilder) TransformXMLEndTag(xMLEndTagNode *st.XMLEndTagNode) BLangNode {
 	panic("TransformXMLEndTag unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLSimpleName(xMLSimpleNameNode *tree.XMLSimpleNameNode) BLangNode {
+func (n *NodeBuilder) TransformXMLSimpleName(xMLSimpleNameNode *st.XMLSimpleNameNode) BLangNode {
 	panic("TransformXMLSimpleName unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLQualifiedName(xMLQualifiedNameNode *tree.XMLQualifiedNameNode) BLangNode {
+func (n *NodeBuilder) TransformXMLQualifiedName(xMLQualifiedNameNode *st.XMLQualifiedNameNode) BLangNode {
 	panic("TransformXMLQualifiedName unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLEmptyElement(xMLEmptyElementNode *tree.XMLEmptyElementNode) BLangNode {
+func (n *NodeBuilder) TransformXMLEmptyElement(xMLEmptyElementNode *st.XMLEmptyElementNode) BLangNode {
 	elem := &BLangXMLElementLiteral{}
 	elem.pos = n.getPosition(xMLEmptyElementNode)
 	elem.Name = n.xmlNameToString(xMLEmptyElementNode.Name())
@@ -4075,12 +4074,12 @@ func (n *NodeBuilder) TransformXMLEmptyElement(xMLEmptyElementNode *tree.XMLEmpt
 	return elem
 }
 
-func (n *NodeBuilder) TransformInterpolation(interpolationNode *tree.InterpolationNode) BLangNode {
+func (n *NodeBuilder) TransformInterpolation(interpolationNode *st.InterpolationNode) BLangNode {
 	n.cx.Unimplemented("xml interpolation not yet supported", n.getPosition(interpolationNode))
 	return nil
 }
 
-func (n *NodeBuilder) TransformXMLText(xMLTextNode *tree.XMLTextNode) BLangNode {
+func (n *NodeBuilder) TransformXMLText(xMLTextNode *st.XMLTextNode) BLangNode {
 	text := &BLangXMLTextLiteral{}
 	text.pos = n.getPosition(xMLTextNode)
 	if c := xMLTextNode.Content(); c != nil {
@@ -4089,7 +4088,7 @@ func (n *NodeBuilder) TransformXMLText(xMLTextNode *tree.XMLTextNode) BLangNode 
 	return text
 }
 
-func (n *NodeBuilder) TransformXMLAttribute(xMLAttributeNode *tree.XMLAttributeNode) BLangNode {
+func (n *NodeBuilder) TransformXMLAttribute(xMLAttributeNode *st.XMLAttributeNode) BLangNode {
 	attr := &BLangXMLAttribute{}
 	attr.pos = n.getPosition(xMLAttributeNode)
 	attr.Name = n.xmlNameToString(xMLAttributeNode.AttributeName())
@@ -4103,11 +4102,11 @@ func (n *NodeBuilder) TransformXMLAttribute(xMLAttributeNode *tree.XMLAttributeN
 	return attr
 }
 
-func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *tree.XMLAttributeValue) BLangNode {
+func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *st.XMLAttributeValue) BLangNode {
 	var b strings.Builder
 	items := xMLAttributeValue.Value()
 	for child := range items.Iterator() {
-		tok, ok := child.(tree.Token)
+		tok, ok := child.(st.Token)
 		if !ok {
 			n.cx.Unimplemented("xml attribute value interpolation not yet supported", n.getPosition(child))
 			return nil
@@ -4123,13 +4122,13 @@ func (n *NodeBuilder) TransformXMLAttributeValue(xMLAttributeValue *tree.XMLAttr
 	return lit
 }
 
-func (n *NodeBuilder) TransformXMLComment(xMLComment *tree.XMLComment) BLangNode {
+func (n *NodeBuilder) TransformXMLComment(xMLComment *st.XMLComment) BLangNode {
 	c := &BLangXMLCommentLiteral{}
 	c.pos = n.getPosition(xMLComment)
 	var b strings.Builder
 	content := xMLComment.Content()
 	for child := range content.Iterator() {
-		tok, ok := child.(tree.Token)
+		tok, ok := child.(st.Token)
 		if !ok {
 			n.cx.Unimplemented("xml interpolation in comment not yet supported", n.getPosition(child))
 			continue
@@ -4140,19 +4139,19 @@ func (n *NodeBuilder) TransformXMLComment(xMLComment *tree.XMLComment) BLangNode
 	return c
 }
 
-func (n *NodeBuilder) TransformXMLCDATA(xMLCDATANode *tree.XMLCDATANode) BLangNode {
+func (n *NodeBuilder) TransformXMLCDATA(xMLCDATANode *st.XMLCDATANode) BLangNode {
 	n.cx.Unimplemented("xml CDATA not yet supported", n.getPosition(xMLCDATANode))
 	return nil
 }
 
-func (n *NodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction *tree.XMLProcessingInstruction) BLangNode {
+func (n *NodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction *st.XMLProcessingInstruction) BLangNode {
 	pi := &BLangXMLPILiteral{}
 	pi.pos = n.getPosition(xMLProcessingInstruction)
 	pi.Target = n.xmlNameToString(xMLProcessingInstruction.Target())
 	var b strings.Builder
 	data := xMLProcessingInstruction.Data()
 	for child := range data.Iterator() {
-		tok, ok := child.(tree.Token)
+		tok, ok := child.(st.Token)
 		if !ok {
 			n.cx.Unimplemented("xml interpolation in processing instruction not yet supported", n.getPosition(child))
 			continue
@@ -4163,19 +4162,19 @@ func (n *NodeBuilder) TransformXMLProcessingInstruction(xMLProcessingInstruction
 	return pi
 }
 
-func (n *NodeBuilder) TransformTableTypeDescriptor(tableTypeDescriptorNode *tree.TableTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformTableTypeDescriptor(tableTypeDescriptorNode *st.TableTypeDescriptorNode) BLangNode {
 	panic("TransformTableTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypeParameter(typeParameterNode *tree.TypeParameterNode) BLangNode {
+func (n *NodeBuilder) TransformTypeParameter(typeParameterNode *st.TypeParameterNode) BLangNode {
 	return n.createTypeNode(typeParameterNode.TypeNode()).(BLangNode)
 }
 
-func (n *NodeBuilder) TransformKeyTypeConstraint(keyTypeConstraintNode *tree.KeyTypeConstraintNode) BLangNode {
+func (n *NodeBuilder) TransformKeyTypeConstraint(keyTypeConstraintNode *st.KeyTypeConstraintNode) BLangNode {
 	panic("TransformKeyTypeConstraint unimplemented")
 }
 
-func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode *tree.FunctionTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode *st.FunctionTypeDescriptorNode) BLangNode {
 	funcType := &BLangFunctionType{}
 	funcType.pos = n.getPosition(functionTypeDescriptorNode)
 
@@ -4191,7 +4190,7 @@ func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode
 		parameters := funcSignature.Parameters()
 		for param := range parameters.Iterator() {
 			ftParam := n.createFunctionTypeParam(param)
-			if _, isRestParam := param.(*tree.RestParameterNode); isRestParam {
+			if _, isRestParam := param.(*st.RestParameterNode); isRestParam {
 				funcType.RestParam = &ftParam
 			} else {
 				funcType.RequiredParams = append(funcType.RequiredParams, ftParam)
@@ -4217,9 +4216,9 @@ func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode
 	qualifierList := functionTypeDescriptorNode.QualifierList()
 	for token := range qualifierList.Iterator() {
 		switch token.Kind() {
-		case common.ISOLATED_KEYWORD:
+		case st.ISOLATED_KEYWORD:
 			funcType.SetIsolated()
-		case common.TRANSACTIONAL_KEYWORD:
+		case st.TRANSACTIONAL_KEYWORD:
 			funcType.SetTransactional()
 		}
 	}
@@ -4228,13 +4227,13 @@ func (n *NodeBuilder) TransformFunctionTypeDescriptor(functionTypeDescriptorNode
 }
 
 type typedParameterNode interface {
-	tree.ParameterNode
-	ParamName() tree.Token
-	TypeName() tree.Node
-	Annotations() tree.NodeList[*tree.AnnotationNode]
+	st.ParameterNode
+	ParamName() st.Token
+	TypeName() st.Node
+	Annotations() st.NodeList[*st.AnnotationNode]
 }
 
-func (n *NodeBuilder) createFunctionTypeParam(param tree.ParameterNode) BLangFunctionTypeParam {
+func (n *NodeBuilder) createFunctionTypeParam(param st.ParameterNode) BLangFunctionTypeParam {
 	typedParam, ok := param.(typedParameterNode)
 	if !ok {
 		panic("createFunctionTypeParam: unsupported parameter type")
@@ -4255,10 +4254,10 @@ func (n *NodeBuilder) createFunctionTypeParam(param tree.ParameterNode) BLangFun
 	ftParam.TypeDesc = n.createTypeNode(typeName).(BType)
 
 	switch p := param.(type) {
-	case *tree.DefaultableParameterNode:
+	case *st.DefaultableParameterNode:
 		defaultExpr := p.Expression()
 		ftParam.InitExpr = n.createExpression(defaultExpr)
-	case *tree.IncludedRecordParameterNode:
+	case *st.IncludedRecordParameterNode:
 		ftParam.SetIncludedRecordParam()
 	}
 
@@ -4269,11 +4268,11 @@ func (n *NodeBuilder) createFunctionTypeParam(param tree.ParameterNode) BLangFun
 	return ftParam
 }
 
-func (n *NodeBuilder) TransformFunctionSignature(functionSignatureNode *tree.FunctionSignatureNode) BLangNode {
+func (n *NodeBuilder) TransformFunctionSignature(functionSignatureNode *st.FunctionSignatureNode) BLangNode {
 	panic("TransformFunctionSignature unimplemented")
 }
 
-func (n *NodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprNode *tree.ExplicitAnonymousFunctionExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprNode *st.ExplicitAnonymousFunctionExpressionNode) BLangNode {
 	bLFunction := &BLangFunction{}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
@@ -4290,14 +4289,14 @@ func (n *NodeBuilder) TransformExplicitAnonymousFunctionExpression(anonFuncExprN
 	return lambdaFunc
 }
 
-func (n *NodeBuilder) TransformExpressionFunctionBody(expressionFunctionBodyNode *tree.ExpressionFunctionBodyNode) BLangNode {
+func (n *NodeBuilder) TransformExpressionFunctionBody(expressionFunctionBodyNode *st.ExpressionFunctionBodyNode) BLangNode {
 	exprBody := &BLangExprFunctionBody{}
 	exprBody.Expr = n.createExpression(expressionFunctionBodyNode.Expression())
 	exprBody.pos = n.getPosition(expressionFunctionBodyNode)
 	return exprBody
 }
 
-func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *tree.TupleTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *st.TupleTypeDescriptorNode) BLangNode {
 	tupleTypeNode := &BLangTupleTypeNode{
 		Members: make([]BLangMemberTypeDesc, 0),
 	}
@@ -4305,11 +4304,11 @@ func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *tree
 	types := tupleTypeDescriptorNode.MemberTypeDesc()
 	for i := 0; i < types.Size(); i += 2 {
 		node := types.Get(i)
-		if node.Kind() == common.REST_TYPE {
-			restDescriptor := node.(*tree.RestDescriptorNode)
+		if node.Kind() == st.REST_TYPE {
+			restDescriptor := node.(*st.RestDescriptorNode)
 			tupleTypeNode.Rest = n.createTypeNode(restDescriptor.TypeDescriptor()).(BType)
 		} else {
-			memberNode := node.(*tree.MemberTypeDescriptorNode)
+			memberNode := node.(*st.MemberTypeDescriptorNode)
 			member := BLangMemberTypeDesc{
 				TypeDesc: n.createTypeNode(memberNode.TypeDescriptor()),
 			}
@@ -4321,11 +4320,11 @@ func (n *NodeBuilder) TransformTupleTypeDescriptor(tupleTypeDescriptorNode *tree
 	return tupleTypeNode
 }
 
-func (n *NodeBuilder) TransformParenthesisedTypeDescriptor(parenthesisedTypeDescriptorNode *tree.ParenthesisedTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformParenthesisedTypeDescriptor(parenthesisedTypeDescriptorNode *st.ParenthesisedTypeDescriptorNode) BLangNode {
 	return n.createTypeNode(parenthesisedTypeDescriptorNode.Typedesc()).(BLangNode)
 }
 
-func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression *tree.ExplicitNewExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression *st.ExplicitNewExpressionNode) BLangNode {
 	typeInit := &BLangNewExpression{}
 	typeInit.pos = n.getPosition(explicitNewBLangExpression)
 	typeInit.TypeDescriptor = n.createTypeNode(explicitNewBLangExpression.TypeDescriptor()).(BType)
@@ -4338,7 +4337,7 @@ func (n *NodeBuilder) TransformExplicitNewExpression(explicitNewBLangExpression 
 	return typeInit
 }
 
-func (n *NodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression *tree.ImplicitNewExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression *st.ImplicitNewExpressionNode) BLangNode {
 	typeInit := &BLangNewExpression{}
 	typeInit.pos = n.getPosition(implicitNewBLangExpression)
 	if argList := implicitNewBLangExpression.ParenthesizedArgList(); argList != nil {
@@ -4350,11 +4349,11 @@ func (n *NodeBuilder) TransformImplicitNewExpression(implicitNewBLangExpression 
 	return typeInit
 }
 
-func (n *NodeBuilder) TransformParenthesizedArgList(parenthesizedArgList *tree.ParenthesizedArgList) BLangNode {
+func (n *NodeBuilder) TransformParenthesizedArgList(parenthesizedArgList *st.ParenthesizedArgList) BLangNode {
 	panic("TransformParenthesizedArgList unimplemented")
 }
 
-func (n *NodeBuilder) TransformQueryConstructType(queryConstructTypeNode *tree.QueryConstructTypeNode) BLangNode {
+func (n *NodeBuilder) TransformQueryConstructType(queryConstructTypeNode *st.QueryConstructTypeNode) BLangNode {
 	keyword := queryConstructTypeNode.Keyword()
 	return &BLangIdentifier{
 		Value: keyword.Text(),
@@ -4364,7 +4363,7 @@ func (n *NodeBuilder) TransformQueryConstructType(queryConstructTypeNode *tree.Q
 	}
 }
 
-func (n *NodeBuilder) TransformFromClause(fromClauseNode *tree.FromClauseNode) BLangNode {
+func (n *NodeBuilder) TransformFromClause(fromClauseNode *st.FromClauseNode) BLangNode {
 	fromClause := &BLangFromClause{}
 	fromClause.pos = n.getPosition(fromClauseNode)
 	fromClause.SetCollection(n.createActionOrExpression(fromClauseNode.Expression()))
@@ -4376,14 +4375,14 @@ func (n *NodeBuilder) TransformFromClause(fromClauseNode *tree.FromClauseNode) B
 	return fromClause
 }
 
-func (n *NodeBuilder) TransformWhereClause(whereClauseNode *tree.WhereClauseNode) BLangNode {
+func (n *NodeBuilder) TransformWhereClause(whereClauseNode *st.WhereClauseNode) BLangNode {
 	whereClause := &BLangWhereClause{}
 	whereClause.pos = n.getPosition(whereClauseNode)
 	whereClause.Expression = n.createExpression(whereClauseNode.Expression())
 	return whereClause
 }
 
-func (n *NodeBuilder) TransformLetClause(letClauseNode *tree.LetClauseNode) BLangNode {
+func (n *NodeBuilder) TransformLetClause(letClauseNode *st.LetClauseNode) BLangNode {
 	letClause := &BLangLetClause{}
 	letClause.pos = n.getPosition(letClauseNode)
 	letVarDeclarations := letClauseNode.LetVarDeclarations()
@@ -4395,7 +4394,7 @@ func (n *NodeBuilder) TransformLetClause(letClauseNode *tree.LetClauseNode) BLan
 	return letClause
 }
 
-func (n *NodeBuilder) TransformJoinClause(joinClauseNode *tree.JoinClauseNode) BLangNode {
+func (n *NodeBuilder) TransformJoinClause(joinClauseNode *st.JoinClauseNode) BLangNode {
 	joinClause := &BLangJoinClause{}
 	joinClause.pos = n.getPosition(joinClauseNode)
 	joinClause.SetCollection(n.createActionOrExpression(joinClauseNode.Expression()))
@@ -4412,7 +4411,7 @@ func (n *NodeBuilder) TransformJoinClause(joinClauseNode *tree.JoinClauseNode) B
 	return joinClause
 }
 
-func (n *NodeBuilder) TransformOnClause(onClauseNode *tree.OnClauseNode) BLangNode {
+func (n *NodeBuilder) TransformOnClause(onClauseNode *st.OnClauseNode) BLangNode {
 	onClause := &BLangOnClause{}
 	onClause.pos = n.getPosition(onClauseNode)
 	onClause.SetOnExpression(n.createExpression(onClauseNode.OnExpression()))
@@ -4420,25 +4419,25 @@ func (n *NodeBuilder) TransformOnClause(onClauseNode *tree.OnClauseNode) BLangNo
 	return onClause
 }
 
-func (n *NodeBuilder) TransformLimitClause(limitClauseNode *tree.LimitClauseNode) BLangNode {
+func (n *NodeBuilder) TransformLimitClause(limitClauseNode *st.LimitClauseNode) BLangNode {
 	limitClause := &BLangLimitClause{}
 	limitClause.pos = n.getPosition(limitClauseNode)
 	limitClause.SetExpression(n.createExpression(limitClauseNode.Expression()))
 	return limitClause
 }
 
-func (n *NodeBuilder) TransformOnConflictClause(onConflictClauseNode *tree.OnConflictClauseNode) BLangNode {
+func (n *NodeBuilder) TransformOnConflictClause(onConflictClauseNode *st.OnConflictClauseNode) BLangNode {
 	onConflictClause := &BLangOnConflictClause{}
 	onConflictClause.pos = n.getPosition(onConflictClauseNode)
 	onConflictClause.SetExpression(n.createExpression(onConflictClauseNode.Expression()))
 	return onConflictClause
 }
 
-func (n *NodeBuilder) TransformQueryPipeline(queryPipelineNode *tree.QueryPipelineNode) BLangNode {
+func (n *NodeBuilder) TransformQueryPipeline(queryPipelineNode *st.QueryPipelineNode) BLangNode {
 	panic("TransformQueryPipeline unimplemented")
 }
 
-func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQueryClause(Node) }, queryPipeline *tree.QueryPipelineNode) {
+func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQueryClause(Node) }, queryPipeline *st.QueryPipelineNode) {
 	if queryPipeline == nil || queryPipeline.FromClause() == nil {
 		return
 	}
@@ -4449,8 +4448,8 @@ func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQue
 	for i := 0; i < intermediateClauses.Size(); i++ {
 		clause := intermediateClauses.Get(i)
 		switch clause.Kind() {
-		case common.FROM_CLAUSE, common.JOIN_CLAUSE, common.LET_CLAUSE, common.WHERE_CLAUSE,
-			common.GROUP_BY_CLAUSE, common.LIMIT_CLAUSE, common.ORDER_BY_CLAUSE:
+		case st.FROM_CLAUSE, st.JOIN_CLAUSE, st.LET_CLAUSE, st.WHERE_CLAUSE,
+			st.GROUP_BY_CLAUSE, st.LIMIT_CLAUSE, st.ORDER_BY_CLAUSE:
 			queryClauseAdder.AddQueryClause(n.TransformSyntaxNode(clause))
 		default:
 			n.cx.Unimplemented("only from, join, let, where, group by, order by, and limit query clauses are supported for now", n.getPosition(clause))
@@ -4458,14 +4457,14 @@ func (n *NodeBuilder) addQueryPipelineClauses(queryClauseAdder interface{ AddQue
 	}
 }
 
-func (n *NodeBuilder) TransformSelectClause(selectClauseNode *tree.SelectClauseNode) BLangNode {
+func (n *NodeBuilder) TransformSelectClause(selectClauseNode *st.SelectClauseNode) BLangNode {
 	selectClause := &BLangSelectClause{}
 	selectClause.pos = n.getPosition(selectClauseNode)
 	selectClause.SetExpression(n.createActionOrExpression(selectClauseNode.Expression()))
 	return selectClause
 }
 
-func (n *NodeBuilder) TransformCollectClause(collectClauseNode *tree.CollectClauseNode) BLangNode {
+func (n *NodeBuilder) TransformCollectClause(collectClauseNode *st.CollectClauseNode) BLangNode {
 	collectClause := &BLangCollectClause{
 		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
 	}
@@ -4474,7 +4473,7 @@ func (n *NodeBuilder) TransformCollectClause(collectClauseNode *tree.CollectClau
 	return collectClause
 }
 
-func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *st.QueryExpressionNode) BLangNode {
 	queryExpr := &BLangQueryExpr{}
 	queryExpr.pos = n.getPosition(queryBLangExpression)
 
@@ -4491,7 +4490,7 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryE
 	n.addQueryPipelineClauses(queryExpr, queryPipeline)
 
 	resultClause := queryBLangExpression.ResultClause()
-	if resultClause != nil && (resultClause.Kind() == common.SELECT_CLAUSE || resultClause.Kind() == common.COLLECT_CLAUSE) {
+	if resultClause != nil && (resultClause.Kind() == st.SELECT_CLAUSE || resultClause.Kind() == st.COLLECT_CLAUSE) {
 		queryExpr.AddQueryClause(n.TransformSyntaxNode(resultClause))
 	} else if resultClause != nil {
 		n.cx.Unimplemented("only select/collect result clauses are supported for now", n.getPosition(resultClause))
@@ -4504,7 +4503,7 @@ func (n *NodeBuilder) TransformQueryExpression(queryBLangExpression *tree.QueryE
 	return queryExpr
 }
 
-func (n *NodeBuilder) TransformQueryAction(queryActionNode *tree.QueryActionNode) BLangNode {
+func (n *NodeBuilder) TransformQueryAction(queryActionNode *st.QueryActionNode) BLangNode {
 	queryAction := &BLangQueryAction{}
 	queryAction.pos = n.getPosition(queryActionNode)
 
@@ -4519,7 +4518,7 @@ func (n *NodeBuilder) TransformQueryAction(queryActionNode *tree.QueryActionNode
 	return queryAction
 }
 
-func (n *NodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *tree.IntersectionTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *st.IntersectionTypeDescriptorNode) BLangNode {
 	lhs := intersectionTypeDescriptorNode.LeftTypeDesc()
 	rhs := intersectionTypeDescriptorNode.RightTypeDesc()
 	bLIntersectionType := &BLangIntersectionTypeNode{
@@ -4534,11 +4533,11 @@ func (n *NodeBuilder) TransformIntersectionTypeDescriptor(intersectionTypeDescri
 	return bLIntersectionType
 }
 
-func (n *NodeBuilder) TransformImplicitAnonymousFunctionParameters(implicitAnonymousFunctionParameters *tree.ImplicitAnonymousFunctionParameters) BLangNode {
+func (n *NodeBuilder) TransformImplicitAnonymousFunctionParameters(implicitAnonymousFunctionParameters *st.ImplicitAnonymousFunctionParameters) BLangNode {
 	panic("TransformImplicitAnonymousFunctionParameters unimplemented")
 }
 
-func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *tree.ImplicitAnonymousFunctionExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *st.ImplicitAnonymousFunctionExpressionNode) BLangNode {
 	fn := &BLangFunction{}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
@@ -4546,11 +4545,11 @@ func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *tree.Im
 	fn.pos = n.getPosition(node)
 	fn.SetAnonymous()
 
-	var paramNodes []*tree.SimpleNameReferenceNode
+	var paramNodes []*st.SimpleNameReferenceNode
 	switch params := node.Params().(type) {
-	case *tree.SimpleNameReferenceNode:
+	case *st.SimpleNameReferenceNode:
 		paramNodes = append(paramNodes, params)
-	case *tree.ImplicitAnonymousFunctionParameters:
+	case *st.ImplicitAnonymousFunctionParameters:
 		parameters := params.Parameters()
 		for param := range parameters.Iterator() {
 			paramNodes = append(paramNodes, param)
@@ -4585,112 +4584,112 @@ func (n *NodeBuilder) TransformImplicitAnonymousFunctionExpression(node *tree.Im
 	return lambda
 }
 
-func (n *NodeBuilder) TransformStartAction(startActionNode *tree.StartActionNode) BLangNode {
+func (n *NodeBuilder) TransformStartAction(startActionNode *st.StartActionNode) BLangNode {
 	panic("TransformStartAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformFlushAction(flushActionNode *tree.FlushActionNode) BLangNode {
+func (n *NodeBuilder) TransformFlushAction(flushActionNode *st.FlushActionNode) BLangNode {
 	panic("TransformFlushAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformSingletonTypeDescriptor(singletonTypeDescriptorNode *tree.SingletonTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformSingletonTypeDescriptor(singletonTypeDescriptorNode *st.SingletonTypeDescriptorNode) BLangNode {
 	bLFiniteTypeNode := &BLangFiniteTypeNode{}
 	bLFiniteTypeNode.pos = n.getPosition(singletonTypeDescriptorNode)
 	bLFiniteTypeNode.ValueSpace = append(bLFiniteTypeNode.ValueSpace, n.createExpression(singletonTypeDescriptorNode.SimpleContExprNode()))
 	return bLFiniteTypeNode
 }
 
-func (n *NodeBuilder) TransformMethodDeclaration(methodDeclarationNode *tree.MethodDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformMethodDeclaration(methodDeclarationNode *st.MethodDeclarationNode) BLangNode {
 	panic("TransformMethodDeclaration unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypedBindingPattern(typedBindingPatternNode *tree.TypedBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformTypedBindingPattern(typedBindingPatternNode *st.TypedBindingPatternNode) BLangNode {
 	panic("TransformTypedBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformCaptureBindingPattern(captureBindingPatternNode *tree.CaptureBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformCaptureBindingPattern(captureBindingPatternNode *st.CaptureBindingPatternNode) BLangNode {
 	panic("TransformCaptureBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformWildcardBindingPattern(wildcardBindingPatternNode *tree.WildcardBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformWildcardBindingPattern(wildcardBindingPatternNode *st.WildcardBindingPatternNode) BLangNode {
 	bLWildCardBindingPattern := &BLangWildCardBindingPattern{}
 	bLWildCardBindingPattern.pos = n.getPosition(wildcardBindingPatternNode)
 	return bLWildCardBindingPattern
 }
 
-func (n *NodeBuilder) TransformListBindingPattern(listBindingPatternNode *tree.ListBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformListBindingPattern(listBindingPatternNode *st.ListBindingPatternNode) BLangNode {
 	panic("TransformListBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformMappingBindingPattern(mappingBindingPatternNode *tree.MappingBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformMappingBindingPattern(mappingBindingPatternNode *st.MappingBindingPatternNode) BLangNode {
 	panic("TransformMappingBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformFieldBindingPatternFull(fieldBindingPatternFullNode *tree.FieldBindingPatternFullNode) BLangNode {
+func (n *NodeBuilder) TransformFieldBindingPatternFull(fieldBindingPatternFullNode *st.FieldBindingPatternFullNode) BLangNode {
 	panic("TransformFieldBindingPatternFull unimplemented")
 }
 
-func (n *NodeBuilder) TransformFieldBindingPatternVarname(fieldBindingPatternVarnameNode *tree.FieldBindingPatternVarnameNode) BLangNode {
+func (n *NodeBuilder) TransformFieldBindingPatternVarname(fieldBindingPatternVarnameNode *st.FieldBindingPatternVarnameNode) BLangNode {
 	panic("TransformFieldBindingPatternVarname unimplemented")
 }
 
-func (n *NodeBuilder) TransformRestBindingPattern(restBindingPatternNode *tree.RestBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformRestBindingPattern(restBindingPatternNode *st.RestBindingPatternNode) BLangNode {
 	panic("TransformRestBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformErrorBindingPattern(errorBindingPatternNode *tree.ErrorBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformErrorBindingPattern(errorBindingPatternNode *st.ErrorBindingPatternNode) BLangNode {
 	panic("TransformErrorBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedArgBindingPattern(namedArgBindingPatternNode *tree.NamedArgBindingPatternNode) BLangNode {
+func (n *NodeBuilder) TransformNamedArgBindingPattern(namedArgBindingPatternNode *st.NamedArgBindingPatternNode) BLangNode {
 	panic("TransformNamedArgBindingPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformAsyncSendAction(asyncSendActionNode *tree.AsyncSendActionNode) BLangNode {
+func (n *NodeBuilder) TransformAsyncSendAction(asyncSendActionNode *st.AsyncSendActionNode) BLangNode {
 	panic("TransformAsyncSendAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformSyncSendAction(syncSendActionNode *tree.SyncSendActionNode) BLangNode {
+func (n *NodeBuilder) TransformSyncSendAction(syncSendActionNode *st.SyncSendActionNode) BLangNode {
 	panic("TransformSyncSendAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformReceiveAction(receiveActionNode *tree.ReceiveActionNode) BLangNode {
+func (n *NodeBuilder) TransformReceiveAction(receiveActionNode *st.ReceiveActionNode) BLangNode {
 	panic("TransformReceiveAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformReceiveFields(receiveFieldsNode *tree.ReceiveFieldsNode) BLangNode {
+func (n *NodeBuilder) TransformReceiveFields(receiveFieldsNode *st.ReceiveFieldsNode) BLangNode {
 	panic("TransformReceiveFields unimplemented")
 }
 
-func (n *NodeBuilder) TransformAlternateReceive(alternateReceiveNode *tree.AlternateReceiveNode) BLangNode {
+func (n *NodeBuilder) TransformAlternateReceive(alternateReceiveNode *st.AlternateReceiveNode) BLangNode {
 	panic("TransformAlternateReceive unimplemented")
 }
 
-func (n *NodeBuilder) TransformRestDescriptor(restDescriptorNode *tree.RestDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformRestDescriptor(restDescriptorNode *st.RestDescriptorNode) BLangNode {
 	panic("TransformRestDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformDoubleGTToken(doubleGTTokenNode *tree.DoubleGTTokenNode) BLangNode {
+func (n *NodeBuilder) TransformDoubleGTToken(doubleGTTokenNode *st.DoubleGTTokenNode) BLangNode {
 	panic("TransformDoubleGTToken unimplemented")
 }
 
-func (n *NodeBuilder) TransformTrippleGTToken(trippleGTTokenNode *tree.TrippleGTTokenNode) BLangNode {
+func (n *NodeBuilder) TransformTrippleGTToken(trippleGTTokenNode *st.TrippleGTTokenNode) BLangNode {
 	panic("TransformTrippleGTToken unimplemented")
 }
 
-func (n *NodeBuilder) TransformWaitAction(waitActionNode *tree.WaitActionNode) BLangNode {
+func (n *NodeBuilder) TransformWaitAction(waitActionNode *st.WaitActionNode) BLangNode {
 	panic("TransformWaitAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformWaitFieldsList(waitFieldsListNode *tree.WaitFieldsListNode) BLangNode {
+func (n *NodeBuilder) TransformWaitFieldsList(waitFieldsListNode *st.WaitFieldsListNode) BLangNode {
 	panic("TransformWaitFieldsList unimplemented")
 }
 
-func (n *NodeBuilder) TransformWaitField(waitFieldNode *tree.WaitFieldNode) BLangNode {
+func (n *NodeBuilder) TransformWaitField(waitFieldNode *st.WaitFieldNode) BLangNode {
 	panic("TransformWaitField unimplemented")
 }
 
-func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression *tree.AnnotAccessExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression *st.AnnotAccessExpressionNode) BLangNode {
 	expr := &BLangAnnotAccessExpr{}
 	expr.Expr = n.createExpression(annotAccessBLangExpression.Expression())
 	nameReference := n.createBLangNameReference(annotAccessBLangExpression.AnnotTagReference())
@@ -4700,9 +4699,9 @@ func (n *NodeBuilder) TransformAnnotAccessExpression(annotAccessBLangExpression 
 	return expr
 }
 
-func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *tree.OptionalFieldAccessExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *st.OptionalFieldAccessExpressionNode) BLangNode {
 	fieldName := optionalFieldAccessBLangExpression.FieldName()
-	if fieldName.Kind() == common.QUALIFIED_NAME_REFERENCE {
+	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
 		// @cleanup we should replace all these panics with proper internal errors. Need to problem is with return value
 		// this should be detected by parser
 		panic("TransformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE expected")
@@ -4710,12 +4709,12 @@ func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccess
 
 	bLFieldBasedAccess := &BLangFieldBaseAccess{}
 	bLFieldBasedAccess.SetOptionalAccess()
-	simpleNameRef := fieldName.(*tree.SimpleNameReferenceNode)
+	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
 	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(optionalFieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
 
 	containerExpr := optionalFieldAccessBLangExpression.Expression()
-	if containerExpr.Kind() == common.BRACED_EXPRESSION {
-		bracedExpr := containerExpr.(*tree.BracedExpressionNode)
+	if containerExpr.Kind() == st.BRACED_EXPRESSION {
+		bracedExpr := containerExpr.(*st.BracedExpressionNode)
 		bLFieldBasedAccess.Expr = n.createExpression(bracedExpr.Expression())
 	} else {
 		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
@@ -4725,24 +4724,24 @@ func (n *NodeBuilder) TransformOptionalFieldAccessExpression(optionalFieldAccess
 	return bLFieldBasedAccess
 }
 
-func (n *NodeBuilder) TransformConditionalExpression(conditionalBLangExpression *tree.ConditionalExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) BLangNode {
 	panic("TransformConditionalExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *st.EnumDeclarationNode) BLangNode {
 	publicQualifier := false
 	qualifier := enumDeclarationNode.Qualifier()
-	if qualifier != nil && qualifier.Kind() == common.PUBLIC_KEYWORD {
+	if qualifier != nil && qualifier.Kind() == st.PUBLIC_KEYWORD {
 		publicQualifier = true
 	}
 
 	memberNodes := enumDeclarationNode.EnumMemberList()
 	memberTypeNodes := make([]TypeDescriptor, 0)
 	for memberNode := range memberNodes.Iterator() {
-		if memberNode.Kind() != common.ENUM_MEMBER {
+		if memberNode.Kind() != st.ENUM_MEMBER {
 			continue
 		}
-		enumMember := memberNode.(*tree.EnumMemberNode)
+		enumMember := memberNode.(*st.EnumMemberNode)
 		if enumMember.Identifier() == nil || enumMember.Identifier().IsMissing() {
 			n.cx.InternalError("missing enum member identifier", n.getPosition(enumMember))
 			continue
@@ -4793,11 +4792,11 @@ func (n *NodeBuilder) TransformEnumDeclaration(enumDeclarationNode *tree.EnumDec
 	return typeDef
 }
 
-func (n *NodeBuilder) TransformEnumMember(enumMemberNode *tree.EnumMemberNode) BLangNode {
+func (n *NodeBuilder) TransformEnumMember(enumMemberNode *st.EnumMemberNode) BLangNode {
 	return n.transformEnumMember(enumMemberNode, false)
 }
 
-func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, publicQualifier bool) *BLangConstant {
+func (n *NodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode, publicQualifier bool) *BLangConstant {
 	constantNode := createConstantNode()
 	constantNode.pos = n.getPositionWithoutMetadata(enumMemberNode)
 	if publicQualifier {
@@ -4827,7 +4826,7 @@ func (n *NodeBuilder) transformEnumMember(enumMemberNode *tree.EnumMemberNode, p
 	return constantNode
 }
 
-func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *tree.ArrayTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *st.ArrayTypeDescriptorNode) BLangNode {
 	position := n.getPosition(arrayTypeDescriptorNode)
 	dimensionNodes := arrayTypeDescriptorNode.Dimensions()
 	dimensionSize := dimensionNodes.Size()
@@ -4853,63 +4852,63 @@ func (n *NodeBuilder) TransformArrayTypeDescriptor(arrayTypeDescriptorNode *tree
 	return arrayTypeNode
 }
 
-func (n *NodeBuilder) TransformArrayDimension(arrayDimensionNode *tree.ArrayDimensionNode) BLangNode {
+func (n *NodeBuilder) TransformArrayDimension(arrayDimensionNode *st.ArrayDimensionNode) BLangNode {
 	panic("TransformArrayDimension unimplemented")
 }
 
-func (n *NodeBuilder) TransformTransactionStatement(transactionStatementNode *tree.TransactionStatementNode) BLangNode {
+func (n *NodeBuilder) TransformTransactionStatement(transactionStatementNode *st.TransactionStatementNode) BLangNode {
 	panic("TransformTransactionStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformRollbackStatement(rollbackStatementNode *tree.RollbackStatementNode) BLangNode {
+func (n *NodeBuilder) TransformRollbackStatement(rollbackStatementNode *st.RollbackStatementNode) BLangNode {
 	panic("TransformRollbackStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformRetryStatement(retryStatementNode *tree.RetryStatementNode) BLangNode {
+func (n *NodeBuilder) TransformRetryStatement(retryStatementNode *st.RetryStatementNode) BLangNode {
 	panic("TransformRetryStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformCommitAction(commitActionNode *tree.CommitActionNode) BLangNode {
+func (n *NodeBuilder) TransformCommitAction(commitActionNode *st.CommitActionNode) BLangNode {
 	panic("TransformCommitAction unimplemented")
 }
 
-func (n *NodeBuilder) TransformTransactionalExpression(transactionalBLangExpression *tree.TransactionalExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformTransactionalExpression(transactionalBLangExpression *st.TransactionalExpressionNode) BLangNode {
 	panic("TransformTransactionalExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformByteArrayLiteral(byteArrayLiteralNode *tree.ByteArrayLiteralNode) BLangNode {
+func (n *NodeBuilder) TransformByteArrayLiteral(byteArrayLiteralNode *st.ByteArrayLiteralNode) BLangNode {
 	panic("TransformByteArrayLiteral unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLFilterExpression(xMLFilterBLangExpression *tree.XMLFilterExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformXMLFilterExpression(xMLFilterBLangExpression *st.XMLFilterExpressionNode) BLangNode {
 	panic("TransformXMLFilterExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLStepExpression(xMLStepBLangExpression *tree.XMLStepExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformXMLStepExpression(xMLStepBLangExpression *st.XMLStepExpressionNode) BLangNode {
 	panic("TransformXMLStepExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLNamePatternChaining(xMLNamePatternChainingNode *tree.XMLNamePatternChainingNode) BLangNode {
+func (n *NodeBuilder) TransformXMLNamePatternChaining(xMLNamePatternChainingNode *st.XMLNamePatternChainingNode) BLangNode {
 	panic("TransformXMLNamePatternChaining unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLStepIndexedExtend(xMLStepIndexedExtendNode *tree.XMLStepIndexedExtendNode) BLangNode {
+func (n *NodeBuilder) TransformXMLStepIndexedExtend(xMLStepIndexedExtendNode *st.XMLStepIndexedExtendNode) BLangNode {
 	panic("TransformXMLStepIndexedExtend unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLStepMethodCallExtend(xMLStepMethodCallExtendNode *tree.XMLStepMethodCallExtendNode) BLangNode {
+func (n *NodeBuilder) TransformXMLStepMethodCallExtend(xMLStepMethodCallExtendNode *st.XMLStepMethodCallExtendNode) BLangNode {
 	panic("TransformXMLStepMethodCallExtend unimplemented")
 }
 
-func (n *NodeBuilder) TransformXMLAtomicNamePattern(xMLAtomicNamePatternNode *tree.XMLAtomicNamePatternNode) BLangNode {
+func (n *NodeBuilder) TransformXMLAtomicNamePattern(xMLAtomicNamePatternNode *st.XMLAtomicNamePatternNode) BLangNode {
 	panic("TransformXMLAtomicNamePattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformTypeReferenceTypeDesc(typeReferenceTypeDescNode *tree.TypeReferenceTypeDescNode) BLangNode {
+func (n *NodeBuilder) TransformTypeReferenceTypeDesc(typeReferenceTypeDescNode *st.TypeReferenceTypeDescNode) BLangNode {
 	panic("TransformTypeReferenceTypeDesc unimplemented")
 }
 
-func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *tree.MatchStatementNode) BLangNode {
+func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *st.MatchStatementNode) BLangNode {
 	matchStatement := &BLangMatchStatement{}
 	matchStmtExpr := n.createExpression(matchStatementNode.Condition())
 	matchStatement.Expr = matchStmtExpr
@@ -4944,13 +4943,13 @@ func (n *NodeBuilder) TransformMatchStatement(matchStatementNode *tree.MatchStat
 	return matchStatement
 }
 
-func (n *NodeBuilder) transformMatchPattern(matchPattern tree.Node, matchStmtExpr BLangExpression) BLangMatchPattern {
+func (n *NodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr BLangExpression) BLangMatchPattern {
 	matchPatternPos := n.getPosition(matchPattern)
 	kind := matchPattern.Kind()
 
 	switch kind {
-	case common.SIMPLE_NAME_REFERENCE:
-		nameRef := matchPattern.(*tree.SimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		nameRef := matchPattern.(*st.SimpleNameReferenceNode)
 		if nameRef.Name().Text() == "_" {
 			bLangWildCard := &BLangWildCardMatchPattern{}
 			bLangWildCard.pos = matchPatternPos
@@ -4961,8 +4960,8 @@ func (n *NodeBuilder) transformMatchPattern(matchPattern tree.Node, matchStmtExp
 		bLangConstPattern.pos = matchPatternPos
 		return bLangConstPattern
 
-	case common.IDENTIFIER_TOKEN:
-		idToken := matchPattern.(tree.Token)
+	case st.IDENTIFIER_TOKEN:
+		idToken := matchPattern.(st.Token)
 		if idToken.Text() == "_" {
 			bLangWildCard := &BLangWildCardMatchPattern{}
 			bLangWildCard.pos = matchPatternPos
@@ -4973,19 +4972,19 @@ func (n *NodeBuilder) transformMatchPattern(matchPattern tree.Node, matchStmtExp
 		bLangConstPattern.pos = matchPatternPos
 		return bLangConstPattern
 
-	case common.NUMERIC_LITERAL,
-		common.STRING_LITERAL,
-		common.QUALIFIED_NAME_REFERENCE,
-		common.NULL_LITERAL,
-		common.NIL_LITERAL,
-		common.BOOLEAN_LITERAL,
-		common.UNARY_EXPRESSION:
+	case st.NUMERIC_LITERAL,
+		st.STRING_LITERAL,
+		st.QUALIFIED_NAME_REFERENCE,
+		st.NULL_LITERAL,
+		st.NIL_LITERAL,
+		st.BOOLEAN_LITERAL,
+		st.UNARY_EXPRESSION:
 		bLangConstPattern := &BLangConstPattern{}
 		bLangConstPattern.Expr = n.createExpression(matchPattern)
 		bLangConstPattern.pos = matchPatternPos
 		return bLangConstPattern
 
-	case common.PIPE_TOKEN, common.COMMA_TOKEN:
+	case st.PIPE_TOKEN, st.COMMA_TOKEN:
 		// Skip separator tokens in match pattern lists
 		return nil
 
@@ -4995,54 +4994,54 @@ func (n *NodeBuilder) transformMatchPattern(matchPattern tree.Node, matchStmtExp
 	}
 }
 
-func (n *NodeBuilder) TransformMatchClause(matchClauseNode *tree.MatchClauseNode) BLangNode {
+func (n *NodeBuilder) TransformMatchClause(matchClauseNode *st.MatchClauseNode) BLangNode {
 	panic("TransformMatchClause unimplemented")
 }
 
-func (n *NodeBuilder) TransformMatchGuard(matchGuardNode *tree.MatchGuardNode) BLangNode {
+func (n *NodeBuilder) TransformMatchGuard(matchGuardNode *st.MatchGuardNode) BLangNode {
 	panic("TransformMatchGuard unimplemented")
 }
 
-func (n *NodeBuilder) TransformDistinctTypeDescriptor(distinctTypeDescriptorNode *tree.DistinctTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformDistinctTypeDescriptor(distinctTypeDescriptorNode *st.DistinctTypeDescriptorNode) BLangNode {
 	n.cx.Unimplemented("anonymous distinct types not supported", n.getPosition(distinctTypeDescriptorNode))
 	neverType := &BLangValueType{TypeKind: TypeKind_NEVER}
 	neverType.pos = n.getPosition(distinctTypeDescriptorNode)
 	return neverType
 }
 
-func (n *NodeBuilder) TransformListMatchPattern(listMatchPatternNode *tree.ListMatchPatternNode) BLangNode {
+func (n *NodeBuilder) TransformListMatchPattern(listMatchPatternNode *st.ListMatchPatternNode) BLangNode {
 	panic("TransformListMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformRestMatchPattern(restMatchPatternNode *tree.RestMatchPatternNode) BLangNode {
+func (n *NodeBuilder) TransformRestMatchPattern(restMatchPatternNode *st.RestMatchPatternNode) BLangNode {
 	panic("TransformRestMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformMappingMatchPattern(mappingMatchPatternNode *tree.MappingMatchPatternNode) BLangNode {
+func (n *NodeBuilder) TransformMappingMatchPattern(mappingMatchPatternNode *st.MappingMatchPatternNode) BLangNode {
 	panic("TransformMappingMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformFieldMatchPattern(fieldMatchPatternNode *tree.FieldMatchPatternNode) BLangNode {
+func (n *NodeBuilder) TransformFieldMatchPattern(fieldMatchPatternNode *st.FieldMatchPatternNode) BLangNode {
 	panic("TransformFieldMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformErrorMatchPattern(errorMatchPatternNode *tree.ErrorMatchPatternNode) BLangNode {
+func (n *NodeBuilder) TransformErrorMatchPattern(errorMatchPatternNode *st.ErrorMatchPatternNode) BLangNode {
 	panic("TransformErrorMatchPattern unimplemented")
 }
 
-func (n *NodeBuilder) TransformNamedArgMatchPattern(namedArgMatchPatternNode *tree.NamedArgMatchPatternNode) BLangNode {
+func (n *NodeBuilder) TransformNamedArgMatchPattern(namedArgMatchPatternNode *st.NamedArgMatchPatternNode) BLangNode {
 	panic("TransformNamedArgMatchPattern unimplemented")
 }
 
 // Helper functions for markdown documentation transformation
 
-func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLangMarkdownReferenceDocumentation, docElements tree.NodeList[tree.Node]) string {
+func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLangMarkdownReferenceDocumentation, docElements st.NodeList[st.Node]) string {
 	var docText strings.Builder
 	for i := 0; i < docElements.Size(); i++ {
 		element := docElements.Get(i)
-		if element.Kind() == common.BALLERINA_NAME_REFERENCE {
+		if element.Kind() == st.BALLERINA_NAME_REFERENCE {
 			bLangRefDoc := &BLangMarkdownReferenceDocumentation{}
-			balNameRefNode := element.(*tree.BallerinaNameReferenceNode)
+			balNameRefNode := element.(*st.BallerinaNameReferenceNode)
 
 			bLangRefDoc.pos = n.getPosition(balNameRefNode)
 
@@ -5053,7 +5052,7 @@ func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLan
 			contentString := ""
 			if backtickContent != nil && !backtickContent.IsMissing() {
 				// Use InternalNode() to get STNode and convert to source code
-				contentString = tree.ToSourceCode(backtickContent.InternalNode())
+				contentString = st.ToSourceCode(backtickContent.InternalNode())
 			}
 			bLangRefDoc.ReferenceName = contentString
 			bLangRefDoc.Type = DocumentationReferenceType("BACKTICK_CONTENT")
@@ -5075,12 +5074,12 @@ func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLan
 				docText.WriteString(endBacktick.Text())
 			}
 			*references = append(*references, *bLangRefDoc)
-		} else if element.Kind() == common.DOCUMENTATION_DESCRIPTION {
-			if token, ok := element.(tree.Token); ok {
+		} else if element.Kind() == st.DOCUMENTATION_DESCRIPTION {
+			if token, ok := element.(st.Token); ok {
 				docText.WriteString(token.Text())
 			}
-		} else if element.Kind() == common.INLINE_CODE_REFERENCE {
-			inlineCodeRefNode := element.(*tree.InlineCodeReferenceNode)
+		} else if element.Kind() == st.INLINE_CODE_REFERENCE {
+			inlineCodeRefNode := element.(*st.InlineCodeReferenceNode)
 			if startBacktick := inlineCodeRefNode.StartBacktick(); startBacktick != nil && !startBacktick.IsMissing() {
 				docText.WriteString(startBacktick.Text())
 			}
@@ -5096,15 +5095,15 @@ func (n *NodeBuilder) addReferencesAndReturnDocumentationText(references *[]BLan
 	return n.trimLeftAtMostOne(docText.String())
 }
 
-func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent tree.Node, bLangRefDoc *BLangMarkdownReferenceDocumentation) {
+func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent st.Node, bLangRefDoc *BLangMarkdownReferenceDocumentation) {
 	switch backtickContent.Kind() {
-	case common.CODE_CONTENT:
+	case st.CODE_CONTENT:
 		// reaching here means ballerina name reference is syntactically invalid.
 		// therefore, set hasParserWarnings to true. so that,
 		// doc analyzer will avoid further checks on this.
 		bLangRefDoc.HasParserWarnings = true
-	case common.QUALIFIED_NAME_REFERENCE:
-		qualifiedRef := backtickContent.(*tree.QualifiedNameReferenceNode)
+	case st.QUALIFIED_NAME_REFERENCE:
+		qualifiedRef := backtickContent.(*st.QualifiedNameReferenceNode)
 		modulePrefix := qualifiedRef.ModulePrefix()
 		identifier := qualifiedRef.Identifier()
 		if modulePrefix != nil && !modulePrefix.IsMissing() {
@@ -5113,17 +5112,17 @@ func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent tree
 		if identifier != nil && !identifier.IsMissing() {
 			bLangRefDoc.Identifier = identifier.Text()
 		}
-	case common.SIMPLE_NAME_REFERENCE:
-		simpleRef := backtickContent.(*tree.SimpleNameReferenceNode)
+	case st.SIMPLE_NAME_REFERENCE:
+		simpleRef := backtickContent.(*st.SimpleNameReferenceNode)
 		name := simpleRef.Name()
 		if name != nil && !name.IsMissing() {
 			bLangRefDoc.Identifier = name.Text()
 		}
-	case common.FUNCTION_CALL:
-		funcCallExpr := backtickContent.(*tree.FunctionCallExpressionNode)
+	case st.FUNCTION_CALL:
+		funcCallExpr := backtickContent.(*st.FunctionCallExpressionNode)
 		funcName := funcCallExpr.FunctionName()
-		if funcName.Kind() == common.QUALIFIED_NAME_REFERENCE {
-			qualifiedRef := funcName.(*tree.QualifiedNameReferenceNode)
+		if funcName.Kind() == st.QUALIFIED_NAME_REFERENCE {
+			qualifiedRef := funcName.(*st.QualifiedNameReferenceNode)
 			modulePrefix := qualifiedRef.ModulePrefix()
 			identifier := qualifiedRef.Identifier()
 			if modulePrefix != nil && !modulePrefix.IsMissing() {
@@ -5133,24 +5132,24 @@ func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent tree
 				bLangRefDoc.Identifier = identifier.Text()
 			}
 		} else {
-			simpleRef := funcName.(*tree.SimpleNameReferenceNode)
+			simpleRef := funcName.(*st.SimpleNameReferenceNode)
 			name := simpleRef.Name()
 			if name != nil && !name.IsMissing() {
 				bLangRefDoc.Identifier = name.Text()
 			}
 		}
-	case common.METHOD_CALL:
-		methodCallExprNode := backtickContent.(*tree.MethodCallExpressionNode)
+	case st.METHOD_CALL:
+		methodCallExprNode := backtickContent.(*st.MethodCallExpressionNode)
 		methodName := methodCallExprNode.MethodName()
-		if simpleRef, ok := methodName.(*tree.SimpleNameReferenceNode); ok {
+		if simpleRef, ok := methodName.(*st.SimpleNameReferenceNode); ok {
 			name := simpleRef.Name()
 			if name != nil && !name.IsMissing() {
 				bLangRefDoc.Identifier = name.Text()
 			}
 		}
 		refName := methodCallExprNode.Expression()
-		if refName.Kind() == common.QUALIFIED_NAME_REFERENCE {
-			qualifiedRef := refName.(*tree.QualifiedNameReferenceNode)
+		if refName.Kind() == st.QUALIFIED_NAME_REFERENCE {
+			qualifiedRef := refName.(*st.QualifiedNameReferenceNode)
 			identifier := qualifiedRef.Identifier()
 			if identifier != nil && !identifier.IsMissing() {
 				bLangRefDoc.TypeName = identifier.Text()
@@ -5159,8 +5158,8 @@ func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent tree
 			if modulePrefix != nil && !modulePrefix.IsMissing() {
 				bLangRefDoc.Qualifier = modulePrefix.Text()
 			}
-		} else if refName.Kind() == common.SIMPLE_NAME_REFERENCE {
-			simpleRef := refName.(*tree.SimpleNameReferenceNode)
+		} else if refName.Kind() == st.SIMPLE_NAME_REFERENCE {
+			simpleRef := refName.(*st.SimpleNameReferenceNode)
 			name := simpleRef.Name()
 			if name != nil && !name.IsMissing() {
 				bLangRefDoc.TypeName = name.Text()
@@ -5185,7 +5184,7 @@ func (n *NodeBuilder) transformDocumentationBacktickContent(backtickContent tree
 	}
 }
 
-func (n *NodeBuilder) transformCodeBlock(documentationLines *[]BLangMarkdownDocumentationLine, codeBlockNode *tree.MarkdownCodeBlockNode) {
+func (n *NodeBuilder) transformCodeBlock(documentationLines *[]BLangMarkdownDocumentationLine, codeBlockNode *st.MarkdownCodeBlockNode) {
 	bLangDocLine := BLangMarkdownDocumentationLine{}
 
 	var docText strings.Builder
@@ -5262,7 +5261,7 @@ func (n *NodeBuilder) trimLeftAtMostOne(text string) string {
 	return text
 }
 
-func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *tree.OrderByClauseNode) BLangNode {
+func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *st.OrderByClauseNode) BLangNode {
 	orderByClause := &BLangOrderByClause{}
 	orderByClause.pos = n.getPosition(orderByClauseNode)
 
@@ -5278,11 +5277,11 @@ func (n *NodeBuilder) TransformOrderByClause(orderByClauseNode *tree.OrderByClau
 	return orderByClause
 }
 
-func (n *NodeBuilder) TransformOrderKey(orderKeyNode *tree.OrderKeyNode) BLangNode {
+func (n *NodeBuilder) TransformOrderKey(orderKeyNode *st.OrderKeyNode) BLangNode {
 	orderKey := &BLangOrderKey{}
 	orderKey.pos = n.getPosition(orderKeyNode)
 	orderKey.Expression = n.createExpression(orderKeyNode.Expression())
-	if dir := orderKeyNode.OrderDirection(); dir != nil && dir.Kind() == common.DESCENDING_KEYWORD {
+	if dir := orderKeyNode.OrderDirection(); dir != nil && dir.Kind() == st.DESCENDING_KEYWORD {
 		orderKey.IsDescending = true
 	} else {
 		orderKey.IsDescending = false
@@ -5290,7 +5289,7 @@ func (n *NodeBuilder) TransformOrderKey(orderKeyNode *tree.OrderKeyNode) BLangNo
 	return orderKey
 }
 
-func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *tree.GroupByClauseNode) BLangNode {
+func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *st.GroupByClauseNode) BLangNode {
 	groupByClause := &BLangGroupByClause{
 		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
 	}
@@ -5298,19 +5297,19 @@ func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *tree.GroupByClau
 
 	groupingKeys := groupByClauseNode.GroupingKey()
 	for node := range groupingKeys.Iterator() {
-		if node.Kind() == common.COMMA_TOKEN {
+		if node.Kind() == st.COMMA_TOKEN {
 			continue
 		}
 		groupingKey := &BLangGroupingKey{}
 		groupingKey.pos = n.getPosition(node)
-		if node.Kind() == common.SIMPLE_NAME_REFERENCE || node.Kind() == common.IDENTIFIER_TOKEN {
+		if node.Kind() == st.SIMPLE_NAME_REFERENCE || node.Kind() == st.IDENTIFIER_TOKEN {
 			varRef, ok := n.createExpression(node).(*BLangSimpleVarRef)
 			if !ok {
 				panic("expected grouping key variable reference to be a simple variable reference")
 			}
 			groupingKey.SetGroupingKey(varRef)
 		} else {
-			keyNode, ok := n.TransformGroupingKeyVarDeclaration(node.(*tree.GroupingKeyVarDeclarationNode)).(*BLangGroupingKey)
+			keyNode, ok := n.TransformGroupingKeyVarDeclaration(node.(*st.GroupingKeyVarDeclarationNode)).(*BLangGroupingKey)
 			if !ok {
 				panic("expected grouping key declaration to produce a BLangGroupingKey")
 			}
@@ -5321,7 +5320,7 @@ func (n *NodeBuilder) TransformGroupByClause(groupByClauseNode *tree.GroupByClau
 	return groupByClause
 }
 
-func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarationNode *tree.GroupingKeyVarDeclarationNode) BLangNode {
+func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarationNode *st.GroupingKeyVarDeclarationNode) BLangNode {
 	pos := n.getPosition(groupingKeyVarDeclarationNode)
 	groupingKey := &BLangGroupingKey{}
 	groupingKey.pos = pos
@@ -5349,15 +5348,15 @@ func (n *NodeBuilder) TransformGroupingKeyVarDeclaration(groupingKeyVarDeclarati
 	return groupingKey
 }
 
-func (n *NodeBuilder) TransformOnFailClause(onFailClauseNode *tree.OnFailClauseNode) BLangNode {
+func (n *NodeBuilder) TransformOnFailClause(onFailClauseNode *st.OnFailClauseNode) BLangNode {
 	panic("TransformOnFailClause unimplemented")
 }
 
-func (n *NodeBuilder) TransformDoStatement(doStatementNode *tree.DoStatementNode) BLangNode {
+func (n *NodeBuilder) TransformDoStatement(doStatementNode *st.DoStatementNode) BLangNode {
 	panic("TransformDoStatement unimplemented")
 }
 
-func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *tree.ClassDefinitionNode) BLangNode {
+func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *st.ClassDefinitionNode) BLangNode {
 	blangClass := NewBLangClassDefinition()
 	blangClass.pos = n.getPositionWithoutMetadata(classDefinitionNode)
 
@@ -5369,7 +5368,7 @@ func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *tree.ClassDe
 
 	// Handle visibility qualifier
 	if visQual := classDefinitionNode.VisibilityQualifier(); visQual != nil {
-		if visQual.Kind() == common.PUBLIC_KEYWORD {
+		if visQual.Kind() == st.PUBLIC_KEYWORD {
 			blangClass.SetPublic()
 		}
 	}
@@ -5387,24 +5386,24 @@ func (n *NodeBuilder) TransformClassDefinition(classDefinitionNode *tree.ClassDe
 	return &blangClass
 }
 
-func (n *NodeBuilder) setClassQualifiers(blangClass *BLangClassDefinition, qualifiers tree.NodeList[tree.Token]) {
+func (n *NodeBuilder) setClassQualifiers(blangClass *BLangClassDefinition, qualifiers st.NodeList[st.Token]) {
 	for qualifier := range qualifiers.Iterator() {
 		switch qualifier.Kind() {
-		case common.DISTINCT_KEYWORD:
+		case st.DISTINCT_KEYWORD:
 			blangClass.SetDistinct()
-		case common.CLIENT_KEYWORD:
+		case st.CLIENT_KEYWORD:
 			blangClass.SetClient()
-		case common.READONLY_KEYWORD:
+		case st.READONLY_KEYWORD:
 			blangClass.SetReadonly()
-		case common.SERVICE_KEYWORD:
+		case st.SERVICE_KEYWORD:
 			blangClass.SetService()
-		case common.ISOLATED_KEYWORD:
+		case st.ISOLATED_KEYWORD:
 			blangClass.SetIsolated()
 		}
 	}
 }
 
-func (n *NodeBuilder) transformClassField(objectField *tree.ObjectFieldNode) *BLangSimpleVariable {
+func (n *NodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *BLangSimpleVariable {
 	bLSimpleVar := createSimpleVariableNode()
 	identifier := createIdentifierFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
 	bLSimpleVar.SetName(&identifier)
@@ -5412,16 +5411,16 @@ func (n *NodeBuilder) transformClassField(objectField *tree.ObjectFieldNode) *BL
 	bLSimpleVar.SetTypeNode(n.createTypeNode(objectField.TypeName()).(BType))
 
 	if vis := objectField.VisibilityQualifier(); vis != nil {
-		if vis.Kind() == common.PUBLIC_KEYWORD {
+		if vis.Kind() == st.PUBLIC_KEYWORD {
 			bLSimpleVar.SetPublic()
-		} else if vis.Kind() == common.PRIVATE_KEYWORD {
+		} else if vis.Kind() == st.PRIVATE_KEYWORD {
 			bLSimpleVar.SetPrivate()
 		}
 	}
 
 	qualifiers := objectField.QualifierList()
 	for qualifier := range qualifiers.Iterator() {
-		if qualifier.Kind() == common.FINAL_KEYWORD {
+		if qualifier.Kind() == st.FINAL_KEYWORD {
 			bLSimpleVar.SetFinal()
 		}
 	}
@@ -5434,12 +5433,12 @@ func (n *NodeBuilder) transformClassField(objectField *tree.ObjectFieldNode) *BL
 	return bLSimpleVar
 }
 
-func (n *NodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *tree.ResourcePathParameterNode) BLangNode {
+func (n *NodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *st.ResourcePathParameterNode) BLangNode {
 	seg := &BLangResourcePathSegment{}
 	switch resourcePathParameterNode.Kind() {
-	case common.RESOURCE_PATH_SEGMENT_PARAM:
+	case st.RESOURCE_PATH_SEGMENT_PARAM:
 		seg.Kind = ResourcePathSegmentParam
-	case common.RESOURCE_PATH_REST_PARAM:
+	case st.RESOURCE_PATH_REST_PARAM:
 		seg.Kind = ResourcePathSegmentParamRest
 	default:
 		n.cx.InternalError(fmt.Sprintf("unexpected resource path parameter node kind: %v", resourcePathParameterNode.Kind()), n.getPosition(resourcePathParameterNode))
@@ -5455,7 +5454,7 @@ func (n *NodeBuilder) TransformResourcePathParameter(resourcePathParameterNode *
 	return seg
 }
 
-func (n *NodeBuilder) createResourceMethodNode(funcDef *tree.FunctionDefinition) *BLangResourceMethod {
+func (n *NodeBuilder) createResourceMethodNode(funcDef *st.FunctionDefinition) *BLangResourceMethod {
 	rm := &BLangResourceMethod{}
 	rm.pos = n.getPositionWithoutMetadata(funcDef)
 	rm.Name = n.createIdentifierNodeFromToken(n.getPosition(funcDef.FunctionName()), funcDef.FunctionName())
@@ -5480,21 +5479,21 @@ func (n *NodeBuilder) createResourceMethodNode(funcDef *tree.FunctionDefinition)
 	return rm
 }
 
-func (n *NodeBuilder) createResourcePathSegments(pathNodes tree.NodeList[tree.Node]) []BLangResourcePathSegment {
+func (n *NodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node]) []BLangResourcePathSegment {
 	var segments []BLangResourcePathSegment
 	for node := range pathNodes.Iterator() {
 		switch node.Kind() {
-		case common.SLASH_TOKEN:
+		case st.SLASH_TOKEN:
 			continue
-		case common.DOT_TOKEN:
+		case st.DOT_TOKEN:
 			continue
-		case common.IDENTIFIER_TOKEN:
-			tok := node.(tree.Token)
+		case st.IDENTIFIER_TOKEN:
+			tok := node.(st.Token)
 			seg := BLangResourcePathSegment{Kind: ResourcePathSegmentName, Name: tok.Text()}
 			seg.pos = n.getPosition(node)
 			segments = append(segments, seg)
-		case common.RESOURCE_PATH_SEGMENT_PARAM, common.RESOURCE_PATH_REST_PARAM:
-			param := node.(*tree.ResourcePathParameterNode)
+		case st.RESOURCE_PATH_SEGMENT_PARAM, st.RESOURCE_PATH_REST_PARAM:
+			param := node.(*st.ResourcePathParameterNode)
 			segments = append(segments, *n.TransformResourcePathParameter(param).(*BLangResourcePathSegment))
 		default:
 			n.cx.InternalError(fmt.Sprintf("unexpected resource path node kind: %v", node.Kind()), n.getPosition(node))
@@ -5503,11 +5502,11 @@ func (n *NodeBuilder) createResourcePathSegments(pathNodes tree.NodeList[tree.No
 	return segments
 }
 
-func (n *NodeBuilder) TransformRequiredExpression(requiredBLangExpression *tree.RequiredExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformRequiredExpression(requiredBLangExpression *st.RequiredExpressionNode) BLangNode {
 	panic("TransformRequiredExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangExpression *tree.ErrorConstructorExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangExpression *st.ErrorConstructorExpressionNode) BLangNode {
 	result := &BLangErrorConstructorExpr{}
 	result.pos = n.getPosition(errorConstructorBLangExpression)
 
@@ -5527,16 +5526,16 @@ func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangE
 
 	for arg := range arguments.Iterator() {
 		switch arg.Kind() {
-		case common.POSITIONAL_ARG:
-			posArg := arg.(*tree.PositionalArgumentNode)
+		case st.POSITIONAL_ARG:
+			posArg := arg.(*st.PositionalArgumentNode)
 			expr := n.createExpression(posArg.Expression())
 			positionalArgs = append(positionalArgs, expr)
 
-		case common.NAMED_ARG:
-			namedArgNode := arg.(*tree.NamedArgumentNode)
+		case st.NAMED_ARG:
+			namedArgNode := arg.(*st.NamedArgumentNode)
 			namedArg := n.TransformNamedArgument(namedArgNode).(*BLangNamedArgsExpression)
 			namedArgs = append(namedArgs, *namedArg)
-		case common.REST_ARG:
+		case st.REST_ARG:
 			n.cx.InternalError("rest arguments not supported in error constructor", n.getPosition(arg))
 		default:
 			n.cx.InternalError(fmt.Sprintf("unexpected argument kind: %v", arg.Kind()), n.getPosition(arg))
@@ -5549,19 +5548,19 @@ func (n *NodeBuilder) TransformErrorConstructorExpression(errorConstructorBLangE
 	return result
 }
 
-func (n *NodeBuilder) TransformParameterizedTypeDescriptor(parameterizedTypeDescriptorNode *tree.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformParameterizedTypeDescriptor(parameterizedTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) BLangNode {
 	switch parameterizedTypeDescriptorNode.Kind() {
-	case common.ERROR_TYPE_DESC:
+	case st.ERROR_TYPE_DESC:
 		return n.transformErrorTypeDescriptor(parameterizedTypeDescriptorNode)
-	case common.TYPEDESC_TYPE_DESC:
+	case st.TYPEDESC_TYPE_DESC:
 		return n.transformTypedescTypeDescriptor(parameterizedTypeDescriptorNode)
-	case common.XML_TYPE_DESC:
+	case st.XML_TYPE_DESC:
 		return n.transformXMLTypeDescriptor(parameterizedTypeDescriptorNode)
 	}
 	panic("TransformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors")
 }
 
-func (n *NodeBuilder) transformTypedescTypeDescriptor(node *tree.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) BLangNode {
 	typeParamNode := node.TypeParamNode()
 	if typeParamNode == nil {
 		valueType := &BLangValueType{}
@@ -5584,7 +5583,7 @@ func (n *NodeBuilder) transformTypedescTypeDescriptor(node *tree.ParameterizedTy
 	return constrainedType
 }
 
-func (n *NodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode *tree.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) BLangNode {
 	pos := n.getPosition(parameterizedTypeDescriptorNode)
 	typeParamNode := parameterizedTypeDescriptorNode.TypeParamNode()
 	if typeParamNode == nil {
@@ -5606,7 +5605,7 @@ func (n *NodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode
 	return constrainedType
 }
 
-func (n *NodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *tree.ParameterizedTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *st.ParameterizedTypeDescriptorNode) BLangNode {
 	errorType := &BLangErrorTypeNode{}
 	errorType.pos = n.getPosition(errorTypeDescriptorNode)
 
@@ -5620,18 +5619,18 @@ func (n *NodeBuilder) transformErrorTypeDescriptor(errorTypeDescriptorNode *tree
 
 	// Check if this is a distinct error type
 	parent := errorTypeDescriptorNode.Parent()
-	if parent.Kind() == common.DISTINCT_TYPE_DESC {
+	if parent.Kind() == st.DISTINCT_TYPE_DESC {
 		errorType.SetDistinct()
 	}
 
 	return errorType
 }
 
-func (n *NodeBuilder) TransformSpreadMember(spreadMemberNode *tree.SpreadMemberNode) BLangNode {
+func (n *NodeBuilder) TransformSpreadMember(spreadMemberNode *st.SpreadMemberNode) BLangNode {
 	return n.createExpression(spreadMemberNode.Expression()).(BLangNode)
 }
 
-func (n *NodeBuilder) TransformClientResourceAccessAction(node *tree.ClientResourceAccessActionNode) BLangNode {
+func (n *NodeBuilder) TransformClientResourceAccessAction(node *st.ClientResourceAccessActionNode) BLangNode {
 	action := &BLangClientResourceAccessAction{}
 	action.pos = n.getPosition(node)
 	action.Expr = n.createExpression(node.Expression())
@@ -5659,21 +5658,21 @@ func (n *NodeBuilder) TransformClientResourceAccessAction(node *tree.ClientResou
 	return action
 }
 
-func (n *NodeBuilder) createResourceAccessSegments(pathNodes tree.NodeList[tree.Node]) []BLangResourceAccessSegment {
+func (n *NodeBuilder) createResourceAccessSegments(pathNodes st.NodeList[st.Node]) []BLangResourceAccessSegment {
 	var segments []BLangResourceAccessSegment
 	for node := range pathNodes.Iterator() {
 		switch node.Kind() {
-		case common.SLASH_TOKEN, common.DOT_TOKEN:
+		case st.SLASH_TOKEN, st.DOT_TOKEN:
 			continue
-		case common.IDENTIFIER_TOKEN:
-			tok := node.(tree.Token)
+		case st.IDENTIFIER_TOKEN:
+			tok := node.(st.Token)
 			seg := BLangResourceAccessSegment{Kind: ResourceAccessSegmentName, Name: tok.Text()}
 			seg.pos = n.getPosition(node)
 			segments = append(segments, seg)
-		case common.COMPUTED_RESOURCE_ACCESS_SEGMENT:
-			computed := node.(*tree.ComputedResourceAccessSegmentNode)
+		case st.COMPUTED_RESOURCE_ACCESS_SEGMENT:
+			computed := node.(*st.ComputedResourceAccessSegmentNode)
 			segments = append(segments, *n.TransformComputedResourceAccessSegment(computed).(*BLangResourceAccessSegment))
-		case common.RESOURCE_ACCESS_REST_SEGMENT:
+		case st.RESOURCE_ACCESS_REST_SEGMENT:
 			n.cx.Unimplemented("resource access rest segments are not yet supported", n.getPosition(node))
 		default:
 			n.cx.InternalError(fmt.Sprintf("unexpected resource access segment kind: %v", node.Kind()), n.getPosition(node))
@@ -5682,121 +5681,121 @@ func (n *NodeBuilder) createResourceAccessSegments(pathNodes tree.NodeList[tree.
 	return segments
 }
 
-func (n *NodeBuilder) TransformComputedResourceAccessSegment(node *tree.ComputedResourceAccessSegmentNode) BLangNode {
+func (n *NodeBuilder) TransformComputedResourceAccessSegment(node *st.ComputedResourceAccessSegmentNode) BLangNode {
 	seg := &BLangResourceAccessSegment{Kind: ResourceAccessSegmentComputed}
 	seg.pos = n.getPosition(node)
 	seg.Expr = n.createExpression(node.Expression())
 	return seg
 }
 
-func (n *NodeBuilder) TransformResourceAccessRestSegment(resourceAccessRestSegmentNode *tree.ResourceAccessRestSegmentNode) BLangNode {
+func (n *NodeBuilder) TransformResourceAccessRestSegment(resourceAccessRestSegmentNode *st.ResourceAccessRestSegmentNode) BLangNode {
 	panic("TransformResourceAccessRestSegment unimplemented")
 }
 
-func (n *NodeBuilder) TransformReSequence(reSequenceNode *tree.ReSequenceNode) BLangNode {
+func (n *NodeBuilder) TransformReSequence(reSequenceNode *st.ReSequenceNode) BLangNode {
 	panic("TransformReSequence unimplemented")
 }
 
-func (n *NodeBuilder) TransformReAtomQuantifier(reAtomQuantifierNode *tree.ReAtomQuantifierNode) BLangNode {
+func (n *NodeBuilder) TransformReAtomQuantifier(reAtomQuantifierNode *st.ReAtomQuantifierNode) BLangNode {
 	panic("TransformReAtomQuantifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformReAtomCharOrEscape(reAtomCharOrEscapeNode *tree.ReAtomCharOrEscapeNode) BLangNode {
+func (n *NodeBuilder) TransformReAtomCharOrEscape(reAtomCharOrEscapeNode *st.ReAtomCharOrEscapeNode) BLangNode {
 	panic("TransformReAtomCharOrEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReQuoteEscape(reQuoteEscapeNode *tree.ReQuoteEscapeNode) BLangNode {
+func (n *NodeBuilder) TransformReQuoteEscape(reQuoteEscapeNode *st.ReQuoteEscapeNode) BLangNode {
 	panic("TransformReQuoteEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReSimpleCharClassEscape(reSimpleCharClassEscapeNode *tree.ReSimpleCharClassEscapeNode) BLangNode {
+func (n *NodeBuilder) TransformReSimpleCharClassEscape(reSimpleCharClassEscapeNode *st.ReSimpleCharClassEscapeNode) BLangNode {
 	panic("TransformReSimpleCharClassEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReUnicodePropertyEscape(reUnicodePropertyEscapeNode *tree.ReUnicodePropertyEscapeNode) BLangNode {
+func (n *NodeBuilder) TransformReUnicodePropertyEscape(reUnicodePropertyEscapeNode *st.ReUnicodePropertyEscapeNode) BLangNode {
 	panic("TransformReUnicodePropertyEscape unimplemented")
 }
 
-func (n *NodeBuilder) TransformReUnicodeScript(reUnicodeScriptNode *tree.ReUnicodeScriptNode) BLangNode {
+func (n *NodeBuilder) TransformReUnicodeScript(reUnicodeScriptNode *st.ReUnicodeScriptNode) BLangNode {
 	panic("TransformReUnicodeScript unimplemented")
 }
 
-func (n *NodeBuilder) TransformReUnicodeGeneralCategory(reUnicodeGeneralCategoryNode *tree.ReUnicodeGeneralCategoryNode) BLangNode {
+func (n *NodeBuilder) TransformReUnicodeGeneralCategory(reUnicodeGeneralCategoryNode *st.ReUnicodeGeneralCategoryNode) BLangNode {
 	panic("TransformReUnicodeGeneralCategory unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharacterClass(reCharacterClassNode *tree.ReCharacterClassNode) BLangNode {
+func (n *NodeBuilder) TransformReCharacterClass(reCharacterClassNode *st.ReCharacterClassNode) BLangNode {
 	panic("TransformReCharacterClass unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRangeWithReCharSet(reCharSetRangeWithReCharSetNode *tree.ReCharSetRangeWithReCharSetNode) BLangNode {
+func (n *NodeBuilder) TransformReCharSetRangeWithReCharSet(reCharSetRangeWithReCharSetNode *st.ReCharSetRangeWithReCharSetNode) BLangNode {
 	panic("TransformReCharSetRangeWithReCharSet unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRange(reCharSetRangeNode *tree.ReCharSetRangeNode) BLangNode {
+func (n *NodeBuilder) TransformReCharSetRange(reCharSetRangeNode *st.ReCharSetRangeNode) BLangNode {
 	panic("TransformReCharSetRange unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetAtomWithReCharSetNoDash(reCharSetAtomWithReCharSetNoDashNode *tree.ReCharSetAtomWithReCharSetNoDashNode) BLangNode {
+func (n *NodeBuilder) TransformReCharSetAtomWithReCharSetNoDash(reCharSetAtomWithReCharSetNoDashNode *st.ReCharSetAtomWithReCharSetNoDashNode) BLangNode {
 	panic("TransformReCharSetAtomWithReCharSetNoDash unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRangeNoDashWithReCharSet(reCharSetRangeNoDashWithReCharSetNode *tree.ReCharSetRangeNoDashWithReCharSetNode) BLangNode {
+func (n *NodeBuilder) TransformReCharSetRangeNoDashWithReCharSet(reCharSetRangeNoDashWithReCharSetNode *st.ReCharSetRangeNoDashWithReCharSetNode) BLangNode {
 	panic("TransformReCharSetRangeNoDashWithReCharSet unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetRangeNoDash(reCharSetRangeNoDashNode *tree.ReCharSetRangeNoDashNode) BLangNode {
+func (n *NodeBuilder) TransformReCharSetRangeNoDash(reCharSetRangeNoDashNode *st.ReCharSetRangeNoDashNode) BLangNode {
 	panic("TransformReCharSetRangeNoDash unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCharSetAtomNoDashWithReCharSetNoDash(reCharSetAtomNoDashWithReCharSetNoDashNode *tree.ReCharSetAtomNoDashWithReCharSetNoDashNode) BLangNode {
+func (n *NodeBuilder) TransformReCharSetAtomNoDashWithReCharSetNoDash(reCharSetAtomNoDashWithReCharSetNoDashNode *st.ReCharSetAtomNoDashWithReCharSetNoDashNode) BLangNode {
 	panic("TransformReCharSetAtomNoDashWithReCharSetNoDash unimplemented")
 }
 
-func (n *NodeBuilder) TransformReCapturingGroups(reCapturingGroupsNode *tree.ReCapturingGroupsNode) BLangNode {
+func (n *NodeBuilder) TransformReCapturingGroups(reCapturingGroupsNode *st.ReCapturingGroupsNode) BLangNode {
 	panic("TransformReCapturingGroups unimplemented")
 }
 
-func (n *NodeBuilder) TransformReFlagExpression(reFlagBLangExpression *tree.ReFlagExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformReFlagExpression(reFlagBLangExpression *st.ReFlagExpressionNode) BLangNode {
 	panic("TransformReFlagExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformReFlagsOnOff(reFlagsOnOffNode *tree.ReFlagsOnOffNode) BLangNode {
+func (n *NodeBuilder) TransformReFlagsOnOff(reFlagsOnOffNode *st.ReFlagsOnOffNode) BLangNode {
 	panic("TransformReFlagsOnOff unimplemented")
 }
 
-func (n *NodeBuilder) TransformReFlags(reFlagsNode *tree.ReFlagsNode) BLangNode {
+func (n *NodeBuilder) TransformReFlags(reFlagsNode *st.ReFlagsNode) BLangNode {
 	panic("TransformReFlags unimplemented")
 }
 
-func (n *NodeBuilder) TransformReAssertion(reAssertionNode *tree.ReAssertionNode) BLangNode {
+func (n *NodeBuilder) TransformReAssertion(reAssertionNode *st.ReAssertionNode) BLangNode {
 	panic("TransformReAssertion unimplemented")
 }
 
-func (n *NodeBuilder) TransformReQuantifier(reQuantifierNode *tree.ReQuantifierNode) BLangNode {
+func (n *NodeBuilder) TransformReQuantifier(reQuantifierNode *st.ReQuantifierNode) BLangNode {
 	panic("TransformReQuantifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformReBracedQuantifier(reBracedQuantifierNode *tree.ReBracedQuantifierNode) BLangNode {
+func (n *NodeBuilder) TransformReBracedQuantifier(reBracedQuantifierNode *st.ReBracedQuantifierNode) BLangNode {
 	panic("TransformReBracedQuantifier unimplemented")
 }
 
-func (n *NodeBuilder) TransformMemberTypeDescriptor(memberTypeDescriptorNode *tree.MemberTypeDescriptorNode) BLangNode {
+func (n *NodeBuilder) TransformMemberTypeDescriptor(memberTypeDescriptorNode *st.MemberTypeDescriptorNode) BLangNode {
 	panic("TransformMemberTypeDescriptor unimplemented")
 }
 
-func (n *NodeBuilder) TransformReceiveField(receiveFieldNode *tree.ReceiveFieldNode) BLangNode {
+func (n *NodeBuilder) TransformReceiveField(receiveFieldNode *st.ReceiveFieldNode) BLangNode {
 	panic("TransformReceiveField unimplemented")
 }
 
-func (n *NodeBuilder) TransformNaturalExpression(naturalBLangExpression *tree.NaturalExpressionNode) BLangNode {
+func (n *NodeBuilder) TransformNaturalExpression(naturalBLangExpression *st.NaturalExpressionNode) BLangNode {
 	panic("TransformNaturalExpression unimplemented")
 }
 
-func (n *NodeBuilder) TransformToken(token tree.Token) BLangNode {
+func (n *NodeBuilder) TransformToken(token st.Token) BLangNode {
 	kind := token.Kind()
 	switch kind {
-	case common.XML_TEXT_CONTENT, common.TEMPLATE_STRING, common.CLOSE_BRACE_TOKEN, common.PROMPT_CONTENT:
+	case st.XML_TEXT_CONTENT, st.TEMPLATE_STRING, st.CLOSE_BRACE_TOKEN, st.PROMPT_CONTENT:
 		return n.createSimpleLiteral(token).(BLangNode)
 	default:
 		if isTokenInRegExp(kind) {
@@ -5806,7 +5805,7 @@ func (n *NodeBuilder) TransformToken(token tree.Token) BLangNode {
 	}
 }
 
-func (n *NodeBuilder) TransformIdentifierToken(identifier *tree.IdentifierToken) BLangNode {
+func (n *NodeBuilder) TransformIdentifierToken(identifier *st.IdentifierToken) BLangNode {
 	panic("TransformIdentifierToken unimplemented")
 }
 
@@ -5875,21 +5874,21 @@ func getNextMissingNodeName(pkgID *model.PackageID) string {
 	panic("getNextMissingNodeName unimplemented")
 }
 
-func (n *NodeBuilder) getBLangVariableNode(bindingPattern tree.BindingPatternNode, varPos diagnostics.Location) VariableNode {
-	var varName tree.Token
+func (n *NodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) VariableNode {
+	var varName st.Token
 	switch bindingPattern.Kind() {
-	case common.WILDCARD_BINDING_PATTERN:
+	case st.WILDCARD_BINDING_PATTERN:
 		ignore := n.createIgnoreIdentifier(bindingPattern)
 		simpleVar := createSimpleVariableNode()
 		simpleVar.SetName(&ignore)
 		simpleVar.pos = varPos
 		return simpleVar
-	case common.MAPPING_BINDING_PATTERN, common.LIST_BINDING_PATTERN, common.ERROR_BINDING_PATTERN, common.REST_BINDING_PATTERN:
+	case st.MAPPING_BINDING_PATTERN, st.LIST_BINDING_PATTERN, st.ERROR_BINDING_PATTERN, st.REST_BINDING_PATTERN:
 		panic("unimplemented")
-	case common.CAPTURE_BINDING_PATTERN:
+	case st.CAPTURE_BINDING_PATTERN:
 		fallthrough
 	default:
-		captureBindingPattern := bindingPattern.(*tree.CaptureBindingPatternNode)
+		captureBindingPattern := bindingPattern.(*st.CaptureBindingPatternNode)
 		varName = captureBindingPattern.VariableName()
 	}
 
@@ -5899,19 +5898,19 @@ func (n *NodeBuilder) getBLangVariableNode(bindingPattern tree.BindingPatternNod
 	return simpleVar
 }
 
-func (n *NodeBuilder) badTopLevel(node tree.Node) *BLangBadTopLevelNode {
+func (n *NodeBuilder) badTopLevel(node st.Node) *BLangBadTopLevelNode {
 	bad := &BLangBadTopLevelNode{}
 	bad.SetPosition(n.getRecoveryPosition(node))
 	return bad
 }
 
-func (n *NodeBuilder) badStmt(node tree.Node) *BLangBadStmt {
+func (n *NodeBuilder) badStmt(node st.Node) *BLangBadStmt {
 	bad := &BLangBadStmt{}
 	bad.SetPosition(n.getRecoveryPosition(node))
 	return bad
 }
 
-func (n *NodeBuilder) badExprOrAction(node tree.Node) *BLangBadExprOrAction {
+func (n *NodeBuilder) badExprOrAction(node st.Node) *BLangBadExprOrAction {
 	bad := &BLangBadExprOrAction{}
 	if node != nil {
 		bad.SetPosition(n.getRecoveryPosition(node))
@@ -5921,7 +5920,7 @@ func (n *NodeBuilder) badExprOrAction(node tree.Node) *BLangBadExprOrAction {
 	return bad
 }
 
-func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
+func (n *NodeBuilder) badTypeNode(node st.Node) *BLangBadTypeNode {
 	bad := &BLangBadTypeNode{}
 	if node != nil {
 		bad.SetPosition(n.getRecoveryPosition(node))
@@ -5931,7 +5930,7 @@ func (n *NodeBuilder) badTypeNode(node tree.Node) *BLangBadTypeNode {
 	return bad
 }
 
-func (n *NodeBuilder) badIdentifier(token tree.Token) *BLangBadIdentifier {
+func (n *NodeBuilder) badIdentifier(token st.Token) *BLangBadIdentifier {
 	bad := &BLangBadIdentifier{}
 	if token != nil {
 		bad.Value, bad.isLiteral = normalizedIdentifierValue(token.Text())
@@ -5943,13 +5942,13 @@ func (n *NodeBuilder) badIdentifier(token tree.Token) *BLangBadIdentifier {
 	return bad
 }
 
-func (n *NodeBuilder) syntaxError(node tree.Node) {
+func (n *NodeBuilder) syntaxError(node st.Node) {
 	diagnosticNodes := innermostDiagnosticNodes(node)
 	if len(diagnosticNodes) == 0 {
 		return
 	}
 	for _, diagnosticNode := range diagnosticNodes {
-		deep := tree.FindDeepestDiagnosticSTNode(diagnosticNode.InternalNode())
+		deep := st.FindDeepestDiagnosticSTNode(diagnosticNode.InternalNode())
 		if deep == nil || len(deep.Diagnostics()) == 0 {
 			continue
 		}

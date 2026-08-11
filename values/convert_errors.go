@@ -19,7 +19,7 @@ package values
 import (
 	"fmt"
 
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 const conversionErrorTypeName = "{ballerina/lang.value}ConversionError"

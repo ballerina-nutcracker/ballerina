@@ -24,7 +24,7 @@ import (
 	"slices"
 	"testing"
 
-	"ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
 func newTestRepository(path string) *projects.FileSystemRepository {

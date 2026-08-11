@@ -16,7 +16,7 @@
 
 package ast
 
-import "ballerina/model"
+import "github.com/ballerina-nutcracker/ballerina/model"
 
 type FailureBreakMode uint
 

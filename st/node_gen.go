@@ -15,18 +15,14 @@
 // under the License.
 //
 
-package tree
-
-import (
-	"ballerina/parser/common"
-)
+package st
 
 type ModulePart struct {
 	NonTerminalNodeBase
 }
 
-func (n ModulePart) Kind() common.SyntaxKind {
-	return common.MODULE_PART
+func (n ModulePart) Kind() SyntaxKind {
+	return MODULE_PART
 }
 
 func (n ModulePart) Imports() NodeList[*ImportDeclarationNode] {
@@ -103,8 +99,8 @@ type ImportDeclarationNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ImportDeclarationNode) Kind() common.SyntaxKind {
-	return common.IMPORT_DECLARATION
+func (n ImportDeclarationNode) Kind() SyntaxKind {
+	return IMPORT_DECLARATION
 }
 
 func (n ImportDeclarationNode) ImportKeyword() Token {
@@ -147,8 +143,8 @@ type ListenerDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n ListenerDeclarationNode) Kind() common.SyntaxKind {
-	return common.LISTENER_DECLARATION
+func (n ListenerDeclarationNode) Kind() SyntaxKind {
+	return LISTENER_DECLARATION
 }
 
 func (n ListenerDeclarationNode) Metadata() *MetadataNode {
@@ -215,8 +211,8 @@ type TypeDefinitionNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n TypeDefinitionNode) Kind() common.SyntaxKind {
-	return common.TYPE_DEFINITION
+func (n TypeDefinitionNode) Kind() SyntaxKind {
+	return TYPE_DEFINITION
 }
 
 func (n TypeDefinitionNode) Metadata() *MetadataNode {
@@ -267,8 +263,8 @@ type ServiceDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n ServiceDeclarationNode) Kind() common.SyntaxKind {
-	return common.SERVICE_DECLARATION
+func (n ServiceDeclarationNode) Kind() SyntaxKind {
+	return SERVICE_DECLARATION
 }
 
 func (n ServiceDeclarationNode) Metadata() *MetadataNode {
@@ -349,8 +345,8 @@ type AssignmentStatementNode struct {
 	StatementNode
 }
 
-func (n AssignmentStatementNode) Kind() common.SyntaxKind {
-	return common.ASSIGNMENT_STATEMENT
+func (n AssignmentStatementNode) Kind() SyntaxKind {
+	return ASSIGNMENT_STATEMENT
 }
 
 func (n AssignmentStatementNode) VarRef() Node {
@@ -385,8 +381,8 @@ type CompoundAssignmentStatementNode struct {
 	StatementNode
 }
 
-func (n CompoundAssignmentStatementNode) Kind() common.SyntaxKind {
-	return common.COMPOUND_ASSIGNMENT_STATEMENT
+func (n CompoundAssignmentStatementNode) Kind() SyntaxKind {
+	return COMPOUND_ASSIGNMENT_STATEMENT
 }
 
 func (n CompoundAssignmentStatementNode) LhsExpression() ExpressionNode {
@@ -433,8 +429,8 @@ type VariableDeclarationNode struct {
 	StatementNode
 }
 
-func (n VariableDeclarationNode) Kind() common.SyntaxKind {
-	return common.LOCAL_VAR_DECL
+func (n VariableDeclarationNode) Kind() SyntaxKind {
+	return LOCAL_VAR_DECL
 }
 
 func (n VariableDeclarationNode) Annotations() NodeList[*AnnotationNode] {
@@ -485,8 +481,8 @@ type BlockStatementNode struct {
 	StatementNode
 }
 
-func (n BlockStatementNode) Kind() common.SyntaxKind {
-	return common.BLOCK_STATEMENT
+func (n BlockStatementNode) Kind() SyntaxKind {
+	return BLOCK_STATEMENT
 }
 
 func (n BlockStatementNode) OpenBraceToken() Token {
@@ -513,8 +509,8 @@ type BreakStatementNode struct {
 	StatementNode
 }
 
-func (n BreakStatementNode) Kind() common.SyntaxKind {
-	return common.BREAK_STATEMENT
+func (n BreakStatementNode) Kind() SyntaxKind {
+	return BREAK_STATEMENT
 }
 
 func (n BreakStatementNode) BreakToken() Token {
@@ -537,8 +533,8 @@ type FailStatementNode struct {
 	StatementNode
 }
 
-func (n FailStatementNode) Kind() common.SyntaxKind {
-	return common.FAIL_STATEMENT
+func (n FailStatementNode) Kind() SyntaxKind {
+	return FAIL_STATEMENT
 }
 
 func (n FailStatementNode) FailKeyword() Token {
@@ -589,8 +585,8 @@ type ContinueStatementNode struct {
 	StatementNode
 }
 
-func (n ContinueStatementNode) Kind() common.SyntaxKind {
-	return common.CONTINUE_STATEMENT
+func (n ContinueStatementNode) Kind() SyntaxKind {
+	return CONTINUE_STATEMENT
 }
 
 func (n ContinueStatementNode) ContinueToken() Token {
@@ -613,8 +609,8 @@ type ExternalFunctionBodyNode struct {
 	FunctionBodyNode
 }
 
-func (n ExternalFunctionBodyNode) Kind() common.SyntaxKind {
-	return common.EXTERNAL_FUNCTION_BODY
+func (n ExternalFunctionBodyNode) Kind() SyntaxKind {
+	return EXTERNAL_FUNCTION_BODY
 }
 
 func (n ExternalFunctionBodyNode) EqualsToken() Token {
@@ -649,8 +645,8 @@ type IfElseStatementNode struct {
 	StatementNode
 }
 
-func (n IfElseStatementNode) Kind() common.SyntaxKind {
-	return common.IF_ELSE_STATEMENT
+func (n IfElseStatementNode) Kind() SyntaxKind {
+	return IF_ELSE_STATEMENT
 }
 
 func (n IfElseStatementNode) IfKeyword() Token {
@@ -685,8 +681,8 @@ type ElseBlockNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ElseBlockNode) Kind() common.SyntaxKind {
-	return common.ELSE_BLOCK
+func (n ElseBlockNode) Kind() SyntaxKind {
+	return ELSE_BLOCK
 }
 
 func (n ElseBlockNode) ElseKeyword() Token {
@@ -709,8 +705,8 @@ type WhileStatementNode struct {
 	StatementNode
 }
 
-func (n WhileStatementNode) Kind() common.SyntaxKind {
-	return common.WHILE_STATEMENT
+func (n WhileStatementNode) Kind() SyntaxKind {
+	return WHILE_STATEMENT
 }
 
 func (n WhileStatementNode) WhileKeyword() Token {
@@ -749,8 +745,8 @@ type PanicStatementNode struct {
 	StatementNode
 }
 
-func (n PanicStatementNode) Kind() common.SyntaxKind {
-	return common.PANIC_STATEMENT
+func (n PanicStatementNode) Kind() SyntaxKind {
+	return PANIC_STATEMENT
 }
 
 func (n PanicStatementNode) PanicKeyword() Token {
@@ -781,8 +777,8 @@ type ReturnStatementNode struct {
 	StatementNode
 }
 
-func (n ReturnStatementNode) Kind() common.SyntaxKind {
-	return common.RETURN_STATEMENT
+func (n ReturnStatementNode) Kind() SyntaxKind {
+	return RETURN_STATEMENT
 }
 
 func (n ReturnStatementNode) ReturnKeyword() Token {
@@ -813,8 +809,8 @@ type LocalTypeDefinitionStatementNode struct {
 	StatementNode
 }
 
-func (n LocalTypeDefinitionStatementNode) Kind() common.SyntaxKind {
-	return common.LOCAL_TYPE_DEFINITION_STATEMENT
+func (n LocalTypeDefinitionStatementNode) Kind() SyntaxKind {
+	return LOCAL_TYPE_DEFINITION_STATEMENT
 }
 
 func (n LocalTypeDefinitionStatementNode) Annotations() NodeList[*AnnotationNode] {
@@ -849,8 +845,8 @@ type LockStatementNode struct {
 	StatementNode
 }
 
-func (n LockStatementNode) Kind() common.SyntaxKind {
-	return common.LOCK_STATEMENT
+func (n LockStatementNode) Kind() SyntaxKind {
+	return LOCK_STATEMENT
 }
 
 func (n LockStatementNode) LockKeyword() Token {
@@ -881,8 +877,8 @@ type ForkStatementNode struct {
 	StatementNode
 }
 
-func (n ForkStatementNode) Kind() common.SyntaxKind {
-	return common.FORK_STATEMENT
+func (n ForkStatementNode) Kind() SyntaxKind {
+	return FORK_STATEMENT
 }
 
 func (n ForkStatementNode) ForkKeyword() Token {
@@ -917,8 +913,8 @@ type ForEachStatementNode struct {
 	StatementNode
 }
 
-func (n ForEachStatementNode) Kind() common.SyntaxKind {
-	return common.FOREACH_STATEMENT
+func (n ForEachStatementNode) Kind() SyntaxKind {
+	return FOREACH_STATEMENT
 }
 
 func (n ForEachStatementNode) ForEachKeyword() Token {
@@ -1039,8 +1035,8 @@ type FieldAccessExpressionNode struct {
 	ExpressionNode
 }
 
-func (n FieldAccessExpressionNode) Kind() common.SyntaxKind {
-	return common.FIELD_ACCESS
+func (n FieldAccessExpressionNode) Kind() SyntaxKind {
+	return FIELD_ACCESS
 }
 
 func (n FieldAccessExpressionNode) Expression() ExpressionNode {
@@ -1071,8 +1067,8 @@ type FunctionCallExpressionNode struct {
 	ExpressionNode
 }
 
-func (n FunctionCallExpressionNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_CALL
+func (n FunctionCallExpressionNode) Kind() SyntaxKind {
+	return FUNCTION_CALL
 }
 
 func (n FunctionCallExpressionNode) FunctionName() NameReferenceNode {
@@ -1107,8 +1103,8 @@ type MethodCallExpressionNode struct {
 	ExpressionNode
 }
 
-func (n MethodCallExpressionNode) Kind() common.SyntaxKind {
-	return common.METHOD_CALL
+func (n MethodCallExpressionNode) Kind() SyntaxKind {
+	return METHOD_CALL
 }
 
 func (n MethodCallExpressionNode) Expression() ExpressionNode {
@@ -1159,8 +1155,8 @@ type MappingConstructorExpressionNode struct {
 	ExpressionNode
 }
 
-func (n MappingConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.MAPPING_CONSTRUCTOR
+func (n MappingConstructorExpressionNode) Kind() SyntaxKind {
+	return MAPPING_CONSTRUCTOR
 }
 
 func (n MappingConstructorExpressionNode) OpenBrace() Token {
@@ -1191,8 +1187,8 @@ type IndexedExpressionNode struct {
 	TypeDescriptorNode
 }
 
-func (n IndexedExpressionNode) Kind() common.SyntaxKind {
-	return common.INDEXED_EXPRESSION
+func (n IndexedExpressionNode) Kind() SyntaxKind {
+	return INDEXED_EXPRESSION
 }
 
 func (n IndexedExpressionNode) ContainerExpression() ExpressionNode {
@@ -1227,8 +1223,8 @@ type TypeofExpressionNode struct {
 	ExpressionNode
 }
 
-func (n TypeofExpressionNode) Kind() common.SyntaxKind {
-	return common.TYPEOF_EXPRESSION
+func (n TypeofExpressionNode) Kind() SyntaxKind {
+	return TYPEOF_EXPRESSION
 }
 
 func (n TypeofExpressionNode) TypeofKeyword() Token {
@@ -1251,8 +1247,8 @@ type UnaryExpressionNode struct {
 	ExpressionNode
 }
 
-func (n UnaryExpressionNode) Kind() common.SyntaxKind {
-	return common.UNARY_EXPRESSION
+func (n UnaryExpressionNode) Kind() SyntaxKind {
+	return UNARY_EXPRESSION
 }
 
 func (n UnaryExpressionNode) UnaryOperator() Token {
@@ -1275,8 +1271,8 @@ type ComputedNameFieldNode struct {
 	MappingFieldNode
 }
 
-func (n ComputedNameFieldNode) Kind() common.SyntaxKind {
-	return common.COMPUTED_NAME_FIELD
+func (n ComputedNameFieldNode) Kind() SyntaxKind {
+	return COMPUTED_NAME_FIELD
 }
 
 func (n ComputedNameFieldNode) OpenBracket() Token {
@@ -1323,8 +1319,8 @@ type ConstantDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n ConstantDeclarationNode) Kind() common.SyntaxKind {
-	return common.CONST_DECLARATION
+func (n ConstantDeclarationNode) Kind() SyntaxKind {
+	return CONST_DECLARATION
 }
 
 func (n ConstantDeclarationNode) Metadata() *MetadataNode {
@@ -1393,8 +1389,8 @@ type DefaultableParameterNode struct {
 	ParameterNode
 }
 
-func (n DefaultableParameterNode) Kind() common.SyntaxKind {
-	return common.DEFAULTABLE_PARAM
+func (n DefaultableParameterNode) Kind() SyntaxKind {
+	return DEFAULTABLE_PARAM
 }
 
 func (n DefaultableParameterNode) Annotations() NodeList[*AnnotationNode] {
@@ -1429,8 +1425,8 @@ type RequiredParameterNode struct {
 	ParameterNode
 }
 
-func (n RequiredParameterNode) Kind() common.SyntaxKind {
-	return common.REQUIRED_PARAM
+func (n RequiredParameterNode) Kind() SyntaxKind {
+	return REQUIRED_PARAM
 }
 
 func (n RequiredParameterNode) Annotations() NodeList[*AnnotationNode] {
@@ -1453,8 +1449,8 @@ type IncludedRecordParameterNode struct {
 	ParameterNode
 }
 
-func (n IncludedRecordParameterNode) Kind() common.SyntaxKind {
-	return common.INCLUDED_RECORD_PARAM
+func (n IncludedRecordParameterNode) Kind() SyntaxKind {
+	return INCLUDED_RECORD_PARAM
 }
 
 func (n IncludedRecordParameterNode) Annotations() NodeList[*AnnotationNode] {
@@ -1485,8 +1481,8 @@ type RestParameterNode struct {
 	ParameterNode
 }
 
-func (n RestParameterNode) Kind() common.SyntaxKind {
-	return common.REST_PARAM
+func (n RestParameterNode) Kind() SyntaxKind {
+	return REST_PARAM
 }
 
 func (n RestParameterNode) Annotations() NodeList[*AnnotationNode] {
@@ -1517,8 +1513,8 @@ type ImportOrgNameNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ImportOrgNameNode) Kind() common.SyntaxKind {
-	return common.IMPORT_ORG_NAME
+func (n ImportOrgNameNode) Kind() SyntaxKind {
+	return IMPORT_ORG_NAME
 }
 
 func (n ImportOrgNameNode) OrgName() Token {
@@ -1541,8 +1537,8 @@ type ImportPrefixNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ImportPrefixNode) Kind() common.SyntaxKind {
-	return common.IMPORT_PREFIX
+func (n ImportPrefixNode) Kind() SyntaxKind {
+	return IMPORT_PREFIX
 }
 
 func (n ImportPrefixNode) AsKeyword() Token {
@@ -1567,8 +1563,8 @@ type SpecificFieldNode struct {
 	MappingFieldNode
 }
 
-func (n SpecificFieldNode) Kind() common.SyntaxKind {
-	return common.SPECIFIC_FIELD
+func (n SpecificFieldNode) Kind() SyntaxKind {
+	return SPECIFIC_FIELD
 }
 
 func (n SpecificFieldNode) ReadonlyKeyword() Token {
@@ -1603,8 +1599,8 @@ type SpreadFieldNode struct {
 	MappingFieldNode
 }
 
-func (n SpreadFieldNode) Kind() common.SyntaxKind {
-	return common.SPREAD_FIELD
+func (n SpreadFieldNode) Kind() SyntaxKind {
+	return SPREAD_FIELD
 }
 
 func (n SpreadFieldNode) Ellipsis() Token {
@@ -1629,8 +1625,8 @@ type NamedArgumentNode struct {
 	FunctionArgumentNode
 }
 
-func (n NamedArgumentNode) Kind() common.SyntaxKind {
-	return common.NAMED_ARG
+func (n NamedArgumentNode) Kind() SyntaxKind {
+	return NAMED_ARG
 }
 
 func (n NamedArgumentNode) ArgumentName() *SimpleNameReferenceNode {
@@ -1661,8 +1657,8 @@ type PositionalArgumentNode struct {
 	FunctionArgumentNode
 }
 
-func (n PositionalArgumentNode) Kind() common.SyntaxKind {
-	return common.POSITIONAL_ARG
+func (n PositionalArgumentNode) Kind() SyntaxKind {
+	return POSITIONAL_ARG
 }
 
 func (n PositionalArgumentNode) Expression() ExpressionNode {
@@ -1677,8 +1673,8 @@ type RestArgumentNode struct {
 	FunctionArgumentNode
 }
 
-func (n RestArgumentNode) Kind() common.SyntaxKind {
-	return common.REST_ARG
+func (n RestArgumentNode) Kind() SyntaxKind {
+	return REST_ARG
 }
 
 func (n RestArgumentNode) Ellipsis() Token {
@@ -1701,8 +1697,8 @@ type InferredTypedescDefaultNode struct {
 	ExpressionNode
 }
 
-func (n InferredTypedescDefaultNode) Kind() common.SyntaxKind {
-	return common.INFERRED_TYPEDESC_DEFAULT
+func (n InferredTypedescDefaultNode) Kind() SyntaxKind {
+	return INFERRED_TYPEDESC_DEFAULT
 }
 
 func (n InferredTypedescDefaultNode) LtToken() Token {
@@ -1725,8 +1721,8 @@ type ObjectTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n ObjectTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.OBJECT_TYPE_DESC
+func (n ObjectTypeDescriptorNode) Kind() SyntaxKind {
+	return OBJECT_TYPE_DESC
 }
 
 func (n ObjectTypeDescriptorNode) ObjectTypeQualifiers() NodeList[Token] {
@@ -1765,8 +1761,8 @@ type ObjectConstructorExpressionNode struct {
 	ExpressionNode
 }
 
-func (n ObjectConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.OBJECT_CONSTRUCTOR
+func (n ObjectConstructorExpressionNode) Kind() SyntaxKind {
+	return OBJECT_CONSTRUCTOR
 }
 
 func (n ObjectConstructorExpressionNode) Annotations() NodeList[*AnnotationNode] {
@@ -1817,8 +1813,8 @@ type RecordTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n RecordTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.RECORD_TYPE_DESC
+func (n RecordTypeDescriptorNode) Kind() SyntaxKind {
+	return RECORD_TYPE_DESC
 }
 
 func (n RecordTypeDescriptorNode) RecordKeyword() Token {
@@ -1861,8 +1857,8 @@ type ReturnTypeDescriptorNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReturnTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.RETURN_TYPE_DESCRIPTOR
+func (n ReturnTypeDescriptorNode) Kind() SyntaxKind {
+	return RETURN_TYPE_DESCRIPTOR
 }
 
 func (n ReturnTypeDescriptorNode) ReturnsKeyword() Token {
@@ -1885,8 +1881,8 @@ type NilTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n NilTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.NIL_TYPE_DESC
+func (n NilTypeDescriptorNode) Kind() SyntaxKind {
+	return NIL_TYPE_DESC
 }
 
 func (n NilTypeDescriptorNode) OpenParenToken() Token {
@@ -1909,8 +1905,8 @@ type OptionalTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n OptionalTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.OPTIONAL_TYPE_DESC
+func (n OptionalTypeDescriptorNode) Kind() SyntaxKind {
+	return OPTIONAL_TYPE_DESC
 }
 
 func (n OptionalTypeDescriptorNode) TypeDescriptor() Node {
@@ -1929,8 +1925,8 @@ type ObjectFieldNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ObjectFieldNode) Kind() common.SyntaxKind {
-	return common.OBJECT_FIELD
+func (n ObjectFieldNode) Kind() SyntaxKind {
+	return OBJECT_FIELD
 }
 
 func (n ObjectFieldNode) Metadata() *MetadataNode {
@@ -1993,8 +1989,8 @@ type RecordFieldNode struct {
 	NonTerminalNodeBase
 }
 
-func (n RecordFieldNode) Kind() common.SyntaxKind {
-	return common.RECORD_FIELD
+func (n RecordFieldNode) Kind() SyntaxKind {
+	return RECORD_FIELD
 }
 
 func (n RecordFieldNode) Metadata() *MetadataNode {
@@ -2045,8 +2041,8 @@ type RecordFieldWithDefaultValueNode struct {
 	NonTerminalNodeBase
 }
 
-func (n RecordFieldWithDefaultValueNode) Kind() common.SyntaxKind {
-	return common.RECORD_FIELD_WITH_DEFAULT_VALUE
+func (n RecordFieldWithDefaultValueNode) Kind() SyntaxKind {
+	return RECORD_FIELD_WITH_DEFAULT_VALUE
 }
 
 func (n RecordFieldWithDefaultValueNode) Metadata() *MetadataNode {
@@ -2105,8 +2101,8 @@ type RecordRestDescriptorNode struct {
 	NonTerminalNodeBase
 }
 
-func (n RecordRestDescriptorNode) Kind() common.SyntaxKind {
-	return common.RECORD_REST_TYPE
+func (n RecordRestDescriptorNode) Kind() SyntaxKind {
+	return RECORD_REST_TYPE
 }
 
 func (n RecordRestDescriptorNode) TypeName() Node {
@@ -2133,8 +2129,8 @@ type TypeReferenceNode struct {
 	TypeDescriptorNode
 }
 
-func (n TypeReferenceNode) Kind() common.SyntaxKind {
-	return common.TYPE_REFERENCE
+func (n TypeReferenceNode) Kind() SyntaxKind {
+	return TYPE_REFERENCE
 }
 
 func (n TypeReferenceNode) AsteriskToken() Token {
@@ -2161,8 +2157,8 @@ type AnnotationNode struct {
 	NonTerminalNodeBase
 }
 
-func (n AnnotationNode) Kind() common.SyntaxKind {
-	return common.ANNOTATION
+func (n AnnotationNode) Kind() SyntaxKind {
+	return ANNOTATION
 }
 
 func (n AnnotationNode) AtToken() Token {
@@ -2189,8 +2185,8 @@ type MetadataNode struct {
 	NonTerminalNodeBase
 }
 
-func (n MetadataNode) Kind() common.SyntaxKind {
-	return common.METADATA
+func (n MetadataNode) Kind() SyntaxKind {
+	return METADATA
 }
 
 func (n MetadataNode) DocumentationString() Node {
@@ -2205,8 +2201,8 @@ type ModuleVariableDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n ModuleVariableDeclarationNode) Kind() common.SyntaxKind {
-	return common.MODULE_VAR_DECL
+func (n ModuleVariableDeclarationNode) Kind() SyntaxKind {
+	return MODULE_VAR_DECL
 }
 
 func (n ModuleVariableDeclarationNode) Metadata() *MetadataNode {
@@ -2265,8 +2261,8 @@ type TypeTestExpressionNode struct {
 	ExpressionNode
 }
 
-func (n TypeTestExpressionNode) Kind() common.SyntaxKind {
-	return common.TYPE_TEST_EXPRESSION
+func (n TypeTestExpressionNode) Kind() SyntaxKind {
+	return TYPE_TEST_EXPRESSION
 }
 
 func (n TypeTestExpressionNode) Expression() ExpressionNode {
@@ -2295,8 +2291,8 @@ type RemoteMethodCallActionNode struct {
 	ActionNode
 }
 
-func (n RemoteMethodCallActionNode) Kind() common.SyntaxKind {
-	return common.REMOTE_METHOD_CALL_ACTION
+func (n RemoteMethodCallActionNode) Kind() SyntaxKind {
+	return REMOTE_METHOD_CALL_ACTION
 }
 
 func (n RemoteMethodCallActionNode) Expression() ExpressionNode {
@@ -2347,8 +2343,8 @@ type MapTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n MapTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.MAP_TYPE_DESC
+func (n MapTypeDescriptorNode) Kind() SyntaxKind {
+	return MAP_TYPE_DESC
 }
 
 func (n MapTypeDescriptorNode) MapKeywordToken() Token {
@@ -2371,8 +2367,8 @@ type NilLiteralNode struct {
 	ExpressionNode
 }
 
-func (n NilLiteralNode) Kind() common.SyntaxKind {
-	return common.NIL_LITERAL
+func (n NilLiteralNode) Kind() SyntaxKind {
+	return NIL_LITERAL
 }
 
 func (n NilLiteralNode) OpenParenToken() Token {
@@ -2395,8 +2391,8 @@ type AnnotationDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n AnnotationDeclarationNode) Kind() common.SyntaxKind {
-	return common.ANNOTATION_DECLARATION
+func (n AnnotationDeclarationNode) Kind() SyntaxKind {
+	return ANNOTATION_DECLARATION
 }
 
 func (n AnnotationDeclarationNode) Metadata() *MetadataNode {
@@ -2467,8 +2463,8 @@ type AnnotationAttachPointNode struct {
 	NonTerminalNodeBase
 }
 
-func (n AnnotationAttachPointNode) Kind() common.SyntaxKind {
-	return common.ANNOTATION_ATTACH_POINT
+func (n AnnotationAttachPointNode) Kind() SyntaxKind {
+	return ANNOTATION_ATTACH_POINT
 }
 
 func (n AnnotationAttachPointNode) SourceKeyword() Token {
@@ -2487,8 +2483,8 @@ type XMLNamespaceDeclarationNode struct {
 	StatementNode
 }
 
-func (n XMLNamespaceDeclarationNode) Kind() common.SyntaxKind {
-	return common.XML_NAMESPACE_DECLARATION
+func (n XMLNamespaceDeclarationNode) Kind() SyntaxKind {
+	return XML_NAMESPACE_DECLARATION
 }
 
 func (n XMLNamespaceDeclarationNode) XmlnsKeyword() Token {
@@ -2535,8 +2531,8 @@ type ModuleXMLNamespaceDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n ModuleXMLNamespaceDeclarationNode) Kind() common.SyntaxKind {
-	return common.MODULE_XML_NAMESPACE_DECLARATION
+func (n ModuleXMLNamespaceDeclarationNode) Kind() SyntaxKind {
+	return MODULE_XML_NAMESPACE_DECLARATION
 }
 
 func (n ModuleXMLNamespaceDeclarationNode) XmlnsKeyword() Token {
@@ -2583,8 +2579,8 @@ type FunctionBodyBlockNode struct {
 	FunctionBodyNode
 }
 
-func (n FunctionBodyBlockNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_BODY_BLOCK
+func (n FunctionBodyBlockNode) Kind() SyntaxKind {
+	return FUNCTION_BODY_BLOCK
 }
 
 func (n FunctionBodyBlockNode) OpenBraceToken() Token {
@@ -2627,8 +2623,8 @@ type NamedWorkerDeclarationNode struct {
 	NonTerminalNodeBase
 }
 
-func (n NamedWorkerDeclarationNode) Kind() common.SyntaxKind {
-	return common.NAMED_WORKER_DECLARATION
+func (n NamedWorkerDeclarationNode) Kind() SyntaxKind {
+	return NAMED_WORKER_DECLARATION
 }
 
 func (n NamedWorkerDeclarationNode) Annotations() NodeList[*AnnotationNode] {
@@ -2683,8 +2679,8 @@ type NamedWorkerDeclarator struct {
 	NonTerminalNodeBase
 }
 
-func (n NamedWorkerDeclarator) Kind() common.SyntaxKind {
-	return common.NAMED_WORKER_DECLARATOR
+func (n NamedWorkerDeclarator) Kind() SyntaxKind {
+	return NAMED_WORKER_DECLARATOR
 }
 
 func (n NamedWorkerDeclarator) WorkerInitStatements() NodeList[StatementNode] {
@@ -2715,8 +2711,8 @@ type SimpleNameReferenceNode struct {
 	NameReferenceNode
 }
 
-func (n SimpleNameReferenceNode) Kind() common.SyntaxKind {
-	return common.SIMPLE_NAME_REFERENCE
+func (n SimpleNameReferenceNode) Kind() SyntaxKind {
+	return SIMPLE_NAME_REFERENCE
 }
 
 func (n SimpleNameReferenceNode) Name() Token {
@@ -2731,8 +2727,8 @@ type QualifiedNameReferenceNode struct {
 	NameReferenceNode
 }
 
-func (n QualifiedNameReferenceNode) Kind() common.SyntaxKind {
-	return common.QUALIFIED_NAME_REFERENCE
+func (n QualifiedNameReferenceNode) Kind() SyntaxKind {
+	return QUALIFIED_NAME_REFERENCE
 }
 
 func (n QualifiedNameReferenceNode) ModulePrefix() Token {
@@ -2791,8 +2787,8 @@ type ListConstructorExpressionNode struct {
 	ExpressionNode
 }
 
-func (n ListConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.LIST_CONSTRUCTOR
+func (n ListConstructorExpressionNode) Kind() SyntaxKind {
+	return LIST_CONSTRUCTOR
 }
 
 func (n ListConstructorExpressionNode) OpenBracket() Token {
@@ -2819,8 +2815,8 @@ type TypeCastExpressionNode struct {
 	ExpressionNode
 }
 
-func (n TypeCastExpressionNode) Kind() common.SyntaxKind {
-	return common.TYPE_CAST_EXPRESSION
+func (n TypeCastExpressionNode) Kind() SyntaxKind {
+	return TYPE_CAST_EXPRESSION
 }
 
 func (n TypeCastExpressionNode) LtToken() Token {
@@ -2859,8 +2855,8 @@ type TypeCastParamNode struct {
 	NonTerminalNodeBase
 }
 
-func (n TypeCastParamNode) Kind() common.SyntaxKind {
-	return common.TYPE_CAST_PARAM
+func (n TypeCastParamNode) Kind() SyntaxKind {
+	return TYPE_CAST_PARAM
 }
 
 func (n TypeCastParamNode) Annotations() NodeList[*AnnotationNode] {
@@ -2875,8 +2871,8 @@ type UnionTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n UnionTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.UNION_TYPE_DESC
+func (n UnionTypeDescriptorNode) Kind() SyntaxKind {
+	return UNION_TYPE_DESC
 }
 
 func (n UnionTypeDescriptorNode) LeftTypeDesc() TypeDescriptorNode {
@@ -2907,8 +2903,8 @@ type TableConstructorExpressionNode struct {
 	ExpressionNode
 }
 
-func (n TableConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.TABLE_CONSTRUCTOR
+func (n TableConstructorExpressionNode) Kind() SyntaxKind {
+	return TABLE_CONSTRUCTOR
 }
 
 func (n TableConstructorExpressionNode) TableKeyword() Token {
@@ -2951,8 +2947,8 @@ type KeySpecifierNode struct {
 	NonTerminalNodeBase
 }
 
-func (n KeySpecifierNode) Kind() common.SyntaxKind {
-	return common.KEY_SPECIFIER
+func (n KeySpecifierNode) Kind() SyntaxKind {
+	return KEY_SPECIFIER
 }
 
 func (n KeySpecifierNode) KeyKeyword() Token {
@@ -2987,8 +2983,8 @@ type StreamTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n StreamTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.STREAM_TYPE_DESC
+func (n StreamTypeDescriptorNode) Kind() SyntaxKind {
+	return STREAM_TYPE_DESC
 }
 
 func (n StreamTypeDescriptorNode) StreamKeywordToken() Token {
@@ -3007,8 +3003,8 @@ type StreamTypeParamsNode struct {
 	NonTerminalNodeBase
 }
 
-func (n StreamTypeParamsNode) Kind() common.SyntaxKind {
-	return common.STREAM_TYPE_PARAMS
+func (n StreamTypeParamsNode) Kind() SyntaxKind {
+	return STREAM_TYPE_PARAMS
 }
 
 func (n StreamTypeParamsNode) LtToken() Token {
@@ -3047,8 +3043,8 @@ type LetExpressionNode struct {
 	ExpressionNode
 }
 
-func (n LetExpressionNode) Kind() common.SyntaxKind {
-	return common.LET_EXPRESSION
+func (n LetExpressionNode) Kind() SyntaxKind {
+	return LET_EXPRESSION
 }
 
 func (n LetExpressionNode) LetKeyword() Token {
@@ -3083,8 +3079,8 @@ type LetVariableDeclarationNode struct {
 	NonTerminalNodeBase
 }
 
-func (n LetVariableDeclarationNode) Kind() common.SyntaxKind {
-	return common.LET_VAR_DECL
+func (n LetVariableDeclarationNode) Kind() SyntaxKind {
+	return LET_VAR_DECL
 }
 
 func (n LetVariableDeclarationNode) Annotations() NodeList[*AnnotationNode] {
@@ -3153,8 +3149,8 @@ type XMLElementNode struct {
 	XMLItemNode
 }
 
-func (n XMLElementNode) Kind() common.SyntaxKind {
-	return common.XML_ELEMENT
+func (n XMLElementNode) Kind() SyntaxKind {
+	return XML_ELEMENT
 }
 
 func (n XMLElementNode) StartTag() *XMLStartTagNode {
@@ -3183,8 +3179,8 @@ type XMLStartTagNode struct {
 	XMLElementTagNode
 }
 
-func (n XMLStartTagNode) Kind() common.SyntaxKind {
-	return common.XML_ELEMENT_START_TAG
+func (n XMLStartTagNode) Kind() SyntaxKind {
+	return XML_ELEMENT_START_TAG
 }
 
 func (n XMLStartTagNode) LtToken() Token {
@@ -3219,8 +3215,8 @@ type XMLEndTagNode struct {
 	XMLElementTagNode
 }
 
-func (n XMLEndTagNode) Kind() common.SyntaxKind {
-	return common.XML_ELEMENT_END_TAG
+func (n XMLEndTagNode) Kind() SyntaxKind {
+	return XML_ELEMENT_END_TAG
 }
 
 func (n XMLEndTagNode) LtToken() Token {
@@ -3261,8 +3257,8 @@ type XMLSimpleNameNode struct {
 	XMLNameNode
 }
 
-func (n XMLSimpleNameNode) Kind() common.SyntaxKind {
-	return common.XML_SIMPLE_NAME
+func (n XMLSimpleNameNode) Kind() SyntaxKind {
+	return XML_SIMPLE_NAME
 }
 
 func (n XMLSimpleNameNode) Name() Token {
@@ -3277,8 +3273,8 @@ type XMLQualifiedNameNode struct {
 	XMLNameNode
 }
 
-func (n XMLQualifiedNameNode) Kind() common.SyntaxKind {
-	return common.XML_QUALIFIED_NAME
+func (n XMLQualifiedNameNode) Kind() SyntaxKind {
+	return XML_QUALIFIED_NAME
 }
 
 func (n XMLQualifiedNameNode) Prefix() *XMLSimpleNameNode {
@@ -3309,8 +3305,8 @@ type XMLEmptyElementNode struct {
 	XMLItemNode
 }
 
-func (n XMLEmptyElementNode) Kind() common.SyntaxKind {
-	return common.XML_EMPTY_ELEMENT
+func (n XMLEmptyElementNode) Kind() SyntaxKind {
+	return XML_EMPTY_ELEMENT
 }
 
 func (n XMLEmptyElementNode) LtToken() Token {
@@ -3353,8 +3349,8 @@ type InterpolationNode struct {
 	XMLItemNode
 }
 
-func (n InterpolationNode) Kind() common.SyntaxKind {
-	return common.INTERPOLATION
+func (n InterpolationNode) Kind() SyntaxKind {
+	return INTERPOLATION
 }
 
 func (n InterpolationNode) InterpolationStartToken() Token {
@@ -3385,8 +3381,8 @@ type XMLTextNode struct {
 	XMLItemNode
 }
 
-func (n XMLTextNode) Kind() common.SyntaxKind {
-	return common.XML_TEXT
+func (n XMLTextNode) Kind() SyntaxKind {
+	return XML_TEXT
 }
 
 func (n XMLTextNode) Content() Token {
@@ -3401,8 +3397,8 @@ type XMLAttributeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n XMLAttributeNode) Kind() common.SyntaxKind {
-	return common.XML_ATTRIBUTE
+func (n XMLAttributeNode) Kind() SyntaxKind {
+	return XML_ATTRIBUTE
 }
 
 func (n XMLAttributeNode) AttributeName() XMLNameNode {
@@ -3433,8 +3429,8 @@ type XMLAttributeValue struct {
 	NonTerminalNodeBase
 }
 
-func (n XMLAttributeValue) Kind() common.SyntaxKind {
-	return common.XML_ATTRIBUTE_VALUE
+func (n XMLAttributeValue) Kind() SyntaxKind {
+	return XML_ATTRIBUTE_VALUE
 }
 
 func (n XMLAttributeValue) StartQuote() Token {
@@ -3461,8 +3457,8 @@ type XMLComment struct {
 	XMLItemNode
 }
 
-func (n XMLComment) Kind() common.SyntaxKind {
-	return common.XML_COMMENT
+func (n XMLComment) Kind() SyntaxKind {
+	return XML_COMMENT
 }
 
 func (n XMLComment) CommentStart() Token {
@@ -3489,8 +3485,8 @@ type XMLCDATANode struct {
 	XMLItemNode
 }
 
-func (n XMLCDATANode) Kind() common.SyntaxKind {
-	return common.XML_CDATA
+func (n XMLCDATANode) Kind() SyntaxKind {
+	return XML_CDATA
 }
 
 func (n XMLCDATANode) CdataStart() Token {
@@ -3517,8 +3513,8 @@ type XMLProcessingInstruction struct {
 	XMLItemNode
 }
 
-func (n XMLProcessingInstruction) Kind() common.SyntaxKind {
-	return common.XML_PI
+func (n XMLProcessingInstruction) Kind() SyntaxKind {
+	return XML_PI
 }
 
 func (n XMLProcessingInstruction) PiStart() Token {
@@ -3553,8 +3549,8 @@ type TableTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n TableTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.TABLE_TYPE_DESC
+func (n TableTypeDescriptorNode) Kind() SyntaxKind {
+	return TABLE_TYPE_DESC
 }
 
 func (n TableTypeDescriptorNode) TableKeywordToken() Token {
@@ -3577,8 +3573,8 @@ type TypeParameterNode struct {
 	NonTerminalNodeBase
 }
 
-func (n TypeParameterNode) Kind() common.SyntaxKind {
-	return common.TYPE_PARAMETER
+func (n TypeParameterNode) Kind() SyntaxKind {
+	return TYPE_PARAMETER
 }
 
 func (n TypeParameterNode) LtToken() Token {
@@ -3609,8 +3605,8 @@ type KeyTypeConstraintNode struct {
 	NonTerminalNodeBase
 }
 
-func (n KeyTypeConstraintNode) Kind() common.SyntaxKind {
-	return common.KEY_TYPE_CONSTRAINT
+func (n KeyTypeConstraintNode) Kind() SyntaxKind {
+	return KEY_TYPE_CONSTRAINT
 }
 
 func (n KeyTypeConstraintNode) KeyKeywordToken() Token {
@@ -3629,8 +3625,8 @@ type FunctionTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n FunctionTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_TYPE_DESC
+func (n FunctionTypeDescriptorNode) Kind() SyntaxKind {
+	return FUNCTION_TYPE_DESC
 }
 
 func (n FunctionTypeDescriptorNode) QualifierList() NodeList[Token] {
@@ -3657,8 +3653,8 @@ type FunctionSignatureNode struct {
 	NonTerminalNodeBase
 }
 
-func (n FunctionSignatureNode) Kind() common.SyntaxKind {
-	return common.FUNCTION_SIGNATURE
+func (n FunctionSignatureNode) Kind() SyntaxKind {
+	return FUNCTION_SIGNATURE
 }
 
 func (n FunctionSignatureNode) OpenParenToken() Token {
@@ -3695,8 +3691,8 @@ type ExplicitAnonymousFunctionExpressionNode struct {
 	AnonymousFunctionExpressionNode
 }
 
-func (n ExplicitAnonymousFunctionExpressionNode) Kind() common.SyntaxKind {
-	return common.EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
+func (n ExplicitAnonymousFunctionExpressionNode) Kind() SyntaxKind {
+	return EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
 }
 
 func (n ExplicitAnonymousFunctionExpressionNode) Annotations() NodeList[*AnnotationNode] {
@@ -3737,8 +3733,8 @@ type ExpressionFunctionBodyNode struct {
 	FunctionBodyNode
 }
 
-func (n ExpressionFunctionBodyNode) Kind() common.SyntaxKind {
-	return common.EXPRESSION_FUNCTION_BODY
+func (n ExpressionFunctionBodyNode) Kind() SyntaxKind {
+	return EXPRESSION_FUNCTION_BODY
 }
 
 func (n ExpressionFunctionBodyNode) RightDoubleArrow() Token {
@@ -3769,8 +3765,8 @@ type TupleTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n TupleTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.TUPLE_TYPE_DESC
+func (n TupleTypeDescriptorNode) Kind() SyntaxKind {
+	return TUPLE_TYPE_DESC
 }
 
 func (n TupleTypeDescriptorNode) OpenBracketToken() Token {
@@ -3797,8 +3793,8 @@ type ParenthesisedTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n ParenthesisedTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.PARENTHESISED_TYPE_DESC
+func (n ParenthesisedTypeDescriptorNode) Kind() SyntaxKind {
+	return PARENTHESISED_TYPE_DESC
 }
 
 func (n ParenthesisedTypeDescriptorNode) OpenParenToken() Token {
@@ -3831,8 +3827,8 @@ type ExplicitNewExpressionNode struct {
 	NewExpressionNode
 }
 
-func (n ExplicitNewExpressionNode) Kind() common.SyntaxKind {
-	return common.EXPLICIT_NEW_EXPRESSION
+func (n ExplicitNewExpressionNode) Kind() SyntaxKind {
+	return EXPLICIT_NEW_EXPRESSION
 }
 
 func (n ExplicitNewExpressionNode) NewKeyword() Token {
@@ -3863,8 +3859,8 @@ type ImplicitNewExpressionNode struct {
 	NewExpressionNode
 }
 
-func (n ImplicitNewExpressionNode) Kind() common.SyntaxKind {
-	return common.IMPLICIT_NEW_EXPRESSION
+func (n ImplicitNewExpressionNode) Kind() SyntaxKind {
+	return IMPLICIT_NEW_EXPRESSION
 }
 
 func (n ImplicitNewExpressionNode) NewKeyword() Token {
@@ -3887,8 +3883,8 @@ type ParenthesizedArgList struct {
 	NonTerminalNodeBase
 }
 
-func (n ParenthesizedArgList) Kind() common.SyntaxKind {
-	return common.PARENTHESIZED_ARG_LIST
+func (n ParenthesizedArgList) Kind() SyntaxKind {
+	return PARENTHESIZED_ARG_LIST
 }
 
 func (n ParenthesizedArgList) OpenParenToken() Token {
@@ -3919,8 +3915,8 @@ type QueryConstructTypeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n QueryConstructTypeNode) Kind() common.SyntaxKind {
-	return common.QUERY_CONSTRUCT_TYPE
+func (n QueryConstructTypeNode) Kind() SyntaxKind {
+	return QUERY_CONSTRUCT_TYPE
 }
 
 func (n QueryConstructTypeNode) Keyword() Token {
@@ -3943,8 +3939,8 @@ type FromClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n FromClauseNode) Kind() common.SyntaxKind {
-	return common.FROM_CLAUSE
+func (n FromClauseNode) Kind() SyntaxKind {
+	return FROM_CLAUSE
 }
 
 func (n FromClauseNode) FromKeyword() Token {
@@ -3983,8 +3979,8 @@ type WhereClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n WhereClauseNode) Kind() common.SyntaxKind {
-	return common.WHERE_CLAUSE
+func (n WhereClauseNode) Kind() SyntaxKind {
+	return WHERE_CLAUSE
 }
 
 func (n WhereClauseNode) WhereKeyword() Token {
@@ -4007,8 +4003,8 @@ type LetClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n LetClauseNode) Kind() common.SyntaxKind {
-	return common.LET_CLAUSE
+func (n LetClauseNode) Kind() SyntaxKind {
+	return LET_CLAUSE
 }
 
 func (n LetClauseNode) LetKeyword() Token {
@@ -4027,8 +4023,8 @@ type JoinClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n JoinClauseNode) Kind() common.SyntaxKind {
-	return common.JOIN_CLAUSE
+func (n JoinClauseNode) Kind() SyntaxKind {
+	return JOIN_CLAUSE
 }
 
 func (n JoinClauseNode) OuterKeyword() Token {
@@ -4083,8 +4079,8 @@ type OnClauseNode struct {
 	ClauseNode
 }
 
-func (n OnClauseNode) Kind() common.SyntaxKind {
-	return common.ON_CLAUSE
+func (n OnClauseNode) Kind() SyntaxKind {
+	return ON_CLAUSE
 }
 
 func (n OnClauseNode) OnKeyword() Token {
@@ -4123,8 +4119,8 @@ type LimitClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n LimitClauseNode) Kind() common.SyntaxKind {
-	return common.LIMIT_CLAUSE
+func (n LimitClauseNode) Kind() SyntaxKind {
+	return LIMIT_CLAUSE
 }
 
 func (n LimitClauseNode) LimitKeyword() Token {
@@ -4147,8 +4143,8 @@ type OnConflictClauseNode struct {
 	ClauseNode
 }
 
-func (n OnConflictClauseNode) Kind() common.SyntaxKind {
-	return common.ON_CONFLICT_CLAUSE
+func (n OnConflictClauseNode) Kind() SyntaxKind {
+	return ON_CONFLICT_CLAUSE
 }
 
 func (n OnConflictClauseNode) OnKeyword() Token {
@@ -4179,8 +4175,8 @@ type QueryPipelineNode struct {
 	NonTerminalNodeBase
 }
 
-func (n QueryPipelineNode) Kind() common.SyntaxKind {
-	return common.QUERY_PIPELINE
+func (n QueryPipelineNode) Kind() SyntaxKind {
+	return QUERY_PIPELINE
 }
 
 func (n QueryPipelineNode) FromClause() *FromClauseNode {
@@ -4199,8 +4195,8 @@ type SelectClauseNode struct {
 	ClauseNode
 }
 
-func (n SelectClauseNode) Kind() common.SyntaxKind {
-	return common.SELECT_CLAUSE
+func (n SelectClauseNode) Kind() SyntaxKind {
+	return SELECT_CLAUSE
 }
 
 func (n SelectClauseNode) SelectKeyword() Token {
@@ -4223,8 +4219,8 @@ type CollectClauseNode struct {
 	ClauseNode
 }
 
-func (n CollectClauseNode) Kind() common.SyntaxKind {
-	return common.COLLECT_CLAUSE
+func (n CollectClauseNode) Kind() SyntaxKind {
+	return COLLECT_CLAUSE
 }
 
 func (n CollectClauseNode) CollectKeyword() Token {
@@ -4247,8 +4243,8 @@ type QueryExpressionNode struct {
 	ExpressionNode
 }
 
-func (n QueryExpressionNode) Kind() common.SyntaxKind {
-	return common.QUERY_EXPRESSION
+func (n QueryExpressionNode) Kind() SyntaxKind {
+	return QUERY_EXPRESSION
 }
 
 func (n QueryExpressionNode) QueryConstructType() *QueryConstructTypeNode {
@@ -4287,8 +4283,8 @@ type QueryActionNode struct {
 	ActionNode
 }
 
-func (n QueryActionNode) Kind() common.SyntaxKind {
-	return common.QUERY_ACTION
+func (n QueryActionNode) Kind() SyntaxKind {
+	return QUERY_ACTION
 }
 
 func (n QueryActionNode) QueryPipeline() *QueryPipelineNode {
@@ -4319,8 +4315,8 @@ type IntersectionTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n IntersectionTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.INTERSECTION_TYPE_DESC
+func (n IntersectionTypeDescriptorNode) Kind() SyntaxKind {
+	return INTERSECTION_TYPE_DESC
 }
 
 func (n IntersectionTypeDescriptorNode) LeftTypeDesc() Node {
@@ -4343,8 +4339,8 @@ type ImplicitAnonymousFunctionParameters struct {
 	NonTerminalNodeBase
 }
 
-func (n ImplicitAnonymousFunctionParameters) Kind() common.SyntaxKind {
-	return common.INFER_PARAM_LIST
+func (n ImplicitAnonymousFunctionParameters) Kind() SyntaxKind {
+	return INFER_PARAM_LIST
 }
 
 func (n ImplicitAnonymousFunctionParameters) OpenParenToken() Token {
@@ -4371,8 +4367,8 @@ type ImplicitAnonymousFunctionExpressionNode struct {
 	AnonymousFunctionExpressionNode
 }
 
-func (n ImplicitAnonymousFunctionExpressionNode) Kind() common.SyntaxKind {
-	return common.IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
+func (n ImplicitAnonymousFunctionExpressionNode) Kind() SyntaxKind {
+	return IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION
 }
 
 func (n ImplicitAnonymousFunctionExpressionNode) Params() Node {
@@ -4399,8 +4395,8 @@ type StartActionNode struct {
 	ExpressionNode
 }
 
-func (n StartActionNode) Kind() common.SyntaxKind {
-	return common.START_ACTION
+func (n StartActionNode) Kind() SyntaxKind {
+	return START_ACTION
 }
 
 func (n StartActionNode) Annotations() NodeList[*AnnotationNode] {
@@ -4427,8 +4423,8 @@ type FlushActionNode struct {
 	ExpressionNode
 }
 
-func (n FlushActionNode) Kind() common.SyntaxKind {
-	return common.FLUSH_ACTION
+func (n FlushActionNode) Kind() SyntaxKind {
+	return FLUSH_ACTION
 }
 
 func (n FlushActionNode) FlushKeyword() Token {
@@ -4451,8 +4447,8 @@ type SingletonTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n SingletonTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.SINGLETON_TYPE_DESC
+func (n SingletonTypeDescriptorNode) Kind() SyntaxKind {
+	return SINGLETON_TYPE_DESC
 }
 
 func (n SingletonTypeDescriptorNode) SimpleContExprNode() ExpressionNode {
@@ -4519,8 +4515,8 @@ type TypedBindingPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n TypedBindingPatternNode) Kind() common.SyntaxKind {
-	return common.TYPED_BINDING_PATTERN
+func (n TypedBindingPatternNode) Kind() SyntaxKind {
+	return TYPED_BINDING_PATTERN
 }
 
 func (n TypedBindingPatternNode) TypeDescriptor() TypeDescriptorNode {
@@ -4545,8 +4541,8 @@ type CaptureBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n CaptureBindingPatternNode) Kind() common.SyntaxKind {
-	return common.CAPTURE_BINDING_PATTERN
+func (n CaptureBindingPatternNode) Kind() SyntaxKind {
+	return CAPTURE_BINDING_PATTERN
 }
 
 func (n CaptureBindingPatternNode) VariableName() Token {
@@ -4561,8 +4557,8 @@ type WildcardBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n WildcardBindingPatternNode) Kind() common.SyntaxKind {
-	return common.WILDCARD_BINDING_PATTERN
+func (n WildcardBindingPatternNode) Kind() SyntaxKind {
+	return WILDCARD_BINDING_PATTERN
 }
 
 func (n WildcardBindingPatternNode) UnderscoreToken() Token {
@@ -4577,8 +4573,8 @@ type ListBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n ListBindingPatternNode) Kind() common.SyntaxKind {
-	return common.LIST_BINDING_PATTERN
+func (n ListBindingPatternNode) Kind() SyntaxKind {
+	return LIST_BINDING_PATTERN
 }
 
 func (n ListBindingPatternNode) OpenBracket() Token {
@@ -4605,8 +4601,8 @@ type MappingBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n MappingBindingPatternNode) Kind() common.SyntaxKind {
-	return common.MAPPING_BINDING_PATTERN
+func (n MappingBindingPatternNode) Kind() SyntaxKind {
+	return MAPPING_BINDING_PATTERN
 }
 
 func (n MappingBindingPatternNode) OpenBrace() Token {
@@ -4635,8 +4631,8 @@ type FieldBindingPatternFullNode struct {
 	FieldBindingPatternNode
 }
 
-func (n FieldBindingPatternFullNode) Kind() common.SyntaxKind {
-	return common.FIELD_BINDING_PATTERN
+func (n FieldBindingPatternFullNode) Kind() SyntaxKind {
+	return FIELD_BINDING_PATTERN
 }
 
 func (n FieldBindingPatternFullNode) VariableName() *SimpleNameReferenceNode {
@@ -4667,8 +4663,8 @@ type FieldBindingPatternVarnameNode struct {
 	FieldBindingPatternNode
 }
 
-func (n FieldBindingPatternVarnameNode) Kind() common.SyntaxKind {
-	return common.FIELD_BINDING_PATTERN
+func (n FieldBindingPatternVarnameNode) Kind() SyntaxKind {
+	return FIELD_BINDING_PATTERN
 }
 
 func (n FieldBindingPatternVarnameNode) VariableName() *SimpleNameReferenceNode {
@@ -4683,8 +4679,8 @@ type RestBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n RestBindingPatternNode) Kind() common.SyntaxKind {
-	return common.REST_BINDING_PATTERN
+func (n RestBindingPatternNode) Kind() SyntaxKind {
+	return REST_BINDING_PATTERN
 }
 
 func (n RestBindingPatternNode) EllipsisToken() Token {
@@ -4707,8 +4703,8 @@ type ErrorBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n ErrorBindingPatternNode) Kind() common.SyntaxKind {
-	return common.ERROR_BINDING_PATTERN
+func (n ErrorBindingPatternNode) Kind() SyntaxKind {
+	return ERROR_BINDING_PATTERN
 }
 
 func (n ErrorBindingPatternNode) ErrorKeyword() Token {
@@ -4747,8 +4743,8 @@ type NamedArgBindingPatternNode struct {
 	BindingPatternNode
 }
 
-func (n NamedArgBindingPatternNode) Kind() common.SyntaxKind {
-	return common.NAMED_ARG_BINDING_PATTERN
+func (n NamedArgBindingPatternNode) Kind() SyntaxKind {
+	return NAMED_ARG_BINDING_PATTERN
 }
 
 func (n NamedArgBindingPatternNode) ArgName() *IdentifierToken {
@@ -4779,8 +4775,8 @@ type AsyncSendActionNode struct {
 	ActionNode
 }
 
-func (n AsyncSendActionNode) Kind() common.SyntaxKind {
-	return common.ASYNC_SEND_ACTION
+func (n AsyncSendActionNode) Kind() SyntaxKind {
+	return ASYNC_SEND_ACTION
 }
 
 func (n AsyncSendActionNode) Expression() ExpressionNode {
@@ -4811,8 +4807,8 @@ type SyncSendActionNode struct {
 	ActionNode
 }
 
-func (n SyncSendActionNode) Kind() common.SyntaxKind {
-	return common.SYNC_SEND_ACTION
+func (n SyncSendActionNode) Kind() SyntaxKind {
+	return SYNC_SEND_ACTION
 }
 
 func (n SyncSendActionNode) Expression() ExpressionNode {
@@ -4843,8 +4839,8 @@ type ReceiveActionNode struct {
 	ActionNode
 }
 
-func (n ReceiveActionNode) Kind() common.SyntaxKind {
-	return common.RECEIVE_ACTION
+func (n ReceiveActionNode) Kind() SyntaxKind {
+	return RECEIVE_ACTION
 }
 
 func (n ReceiveActionNode) LeftArrow() Token {
@@ -4863,8 +4859,8 @@ type ReceiveFieldsNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReceiveFieldsNode) Kind() common.SyntaxKind {
-	return common.RECEIVE_FIELDS
+func (n ReceiveFieldsNode) Kind() SyntaxKind {
+	return RECEIVE_FIELDS
 }
 
 func (n ReceiveFieldsNode) OpenBrace() Token {
@@ -4891,8 +4887,8 @@ type AlternateReceiveNode struct {
 	NonTerminalNodeBase
 }
 
-func (n AlternateReceiveNode) Kind() common.SyntaxKind {
-	return common.ALTERNATE_RECEIVE
+func (n AlternateReceiveNode) Kind() SyntaxKind {
+	return ALTERNATE_RECEIVE
 }
 
 func (n AlternateReceiveNode) Workers() NodeList[*SimpleNameReferenceNode] {
@@ -4903,8 +4899,8 @@ type RestDescriptorNode struct {
 	NonTerminalNodeBase
 }
 
-func (n RestDescriptorNode) Kind() common.SyntaxKind {
-	return common.REST_TYPE
+func (n RestDescriptorNode) Kind() SyntaxKind {
+	return REST_TYPE
 }
 
 func (n RestDescriptorNode) TypeDescriptor() TypeDescriptorNode {
@@ -4927,8 +4923,8 @@ type DoubleGTTokenNode struct {
 	NonTerminalNodeBase
 }
 
-func (n DoubleGTTokenNode) Kind() common.SyntaxKind {
-	return common.DOUBLE_GT_TOKEN
+func (n DoubleGTTokenNode) Kind() SyntaxKind {
+	return DOUBLE_GT_TOKEN
 }
 
 func (n DoubleGTTokenNode) OpenGTToken() Token {
@@ -4951,8 +4947,8 @@ type TrippleGTTokenNode struct {
 	NonTerminalNodeBase
 }
 
-func (n TrippleGTTokenNode) Kind() common.SyntaxKind {
-	return common.TRIPPLE_GT_TOKEN
+func (n TrippleGTTokenNode) Kind() SyntaxKind {
+	return TRIPPLE_GT_TOKEN
 }
 
 func (n TrippleGTTokenNode) OpenGTToken() Token {
@@ -4983,8 +4979,8 @@ type WaitActionNode struct {
 	ActionNode
 }
 
-func (n WaitActionNode) Kind() common.SyntaxKind {
-	return common.WAIT_ACTION
+func (n WaitActionNode) Kind() SyntaxKind {
+	return WAIT_ACTION
 }
 
 func (n WaitActionNode) WaitKeyword() Token {
@@ -5003,8 +4999,8 @@ type WaitFieldsListNode struct {
 	NonTerminalNodeBase
 }
 
-func (n WaitFieldsListNode) Kind() common.SyntaxKind {
-	return common.WAIT_FIELDS_LIST
+func (n WaitFieldsListNode) Kind() SyntaxKind {
+	return WAIT_FIELDS_LIST
 }
 
 func (n WaitFieldsListNode) OpenBrace() Token {
@@ -5031,8 +5027,8 @@ type WaitFieldNode struct {
 	NonTerminalNodeBase
 }
 
-func (n WaitFieldNode) Kind() common.SyntaxKind {
-	return common.WAIT_FIELD
+func (n WaitFieldNode) Kind() SyntaxKind {
+	return WAIT_FIELD
 }
 
 func (n WaitFieldNode) FieldName() *SimpleNameReferenceNode {
@@ -5063,8 +5059,8 @@ type AnnotAccessExpressionNode struct {
 	ExpressionNode
 }
 
-func (n AnnotAccessExpressionNode) Kind() common.SyntaxKind {
-	return common.ANNOT_ACCESS
+func (n AnnotAccessExpressionNode) Kind() SyntaxKind {
+	return ANNOT_ACCESS
 }
 
 func (n AnnotAccessExpressionNode) Expression() ExpressionNode {
@@ -5095,8 +5091,8 @@ type OptionalFieldAccessExpressionNode struct {
 	ExpressionNode
 }
 
-func (n OptionalFieldAccessExpressionNode) Kind() common.SyntaxKind {
-	return common.OPTIONAL_FIELD_ACCESS
+func (n OptionalFieldAccessExpressionNode) Kind() SyntaxKind {
+	return OPTIONAL_FIELD_ACCESS
 }
 
 func (n OptionalFieldAccessExpressionNode) Expression() ExpressionNode {
@@ -5127,8 +5123,8 @@ type ConditionalExpressionNode struct {
 	ExpressionNode
 }
 
-func (n ConditionalExpressionNode) Kind() common.SyntaxKind {
-	return common.CONDITIONAL_EXPRESSION
+func (n ConditionalExpressionNode) Kind() SyntaxKind {
+	return CONDITIONAL_EXPRESSION
 }
 
 func (n ConditionalExpressionNode) LhsExpression() ExpressionNode {
@@ -5175,8 +5171,8 @@ type EnumDeclarationNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n EnumDeclarationNode) Kind() common.SyntaxKind {
-	return common.ENUM_DECLARATION
+func (n EnumDeclarationNode) Kind() SyntaxKind {
+	return ENUM_DECLARATION
 }
 
 func (n EnumDeclarationNode) Metadata() *MetadataNode {
@@ -5243,8 +5239,8 @@ type EnumMemberNode struct {
 	NonTerminalNodeBase
 }
 
-func (n EnumMemberNode) Kind() common.SyntaxKind {
-	return common.ENUM_MEMBER
+func (n EnumMemberNode) Kind() SyntaxKind {
+	return ENUM_MEMBER
 }
 
 func (n EnumMemberNode) Metadata() *MetadataNode {
@@ -5283,8 +5279,8 @@ type ArrayTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n ArrayTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.ARRAY_TYPE_DESC
+func (n ArrayTypeDescriptorNode) Kind() SyntaxKind {
+	return ARRAY_TYPE_DESC
 }
 
 func (n ArrayTypeDescriptorNode) MemberTypeDesc() TypeDescriptorNode {
@@ -5303,8 +5299,8 @@ type ArrayDimensionNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ArrayDimensionNode) Kind() common.SyntaxKind {
-	return common.ARRAY_DIMENSION
+func (n ArrayDimensionNode) Kind() SyntaxKind {
+	return ARRAY_DIMENSION
 }
 
 func (n ArrayDimensionNode) OpenBracket() Token {
@@ -5331,8 +5327,8 @@ type TransactionStatementNode struct {
 	StatementNode
 }
 
-func (n TransactionStatementNode) Kind() common.SyntaxKind {
-	return common.TRANSACTION_STATEMENT
+func (n TransactionStatementNode) Kind() SyntaxKind {
+	return TRANSACTION_STATEMENT
 }
 
 func (n TransactionStatementNode) TransactionKeyword() Token {
@@ -5363,8 +5359,8 @@ type RollbackStatementNode struct {
 	StatementNode
 }
 
-func (n RollbackStatementNode) Kind() common.SyntaxKind {
-	return common.ROLLBACK_STATEMENT
+func (n RollbackStatementNode) Kind() SyntaxKind {
+	return ROLLBACK_STATEMENT
 }
 
 func (n RollbackStatementNode) RollbackKeyword() Token {
@@ -5395,8 +5391,8 @@ type RetryStatementNode struct {
 	StatementNode
 }
 
-func (n RetryStatementNode) Kind() common.SyntaxKind {
-	return common.RETRY_STATEMENT
+func (n RetryStatementNode) Kind() SyntaxKind {
+	return RETRY_STATEMENT
 }
 
 func (n RetryStatementNode) RetryKeyword() Token {
@@ -5443,8 +5439,8 @@ type CommitActionNode struct {
 	ActionNode
 }
 
-func (n CommitActionNode) Kind() common.SyntaxKind {
-	return common.COMMIT_ACTION
+func (n CommitActionNode) Kind() SyntaxKind {
+	return COMMIT_ACTION
 }
 
 func (n CommitActionNode) CommitKeyword() Token {
@@ -5459,8 +5455,8 @@ type TransactionalExpressionNode struct {
 	ExpressionNode
 }
 
-func (n TransactionalExpressionNode) Kind() common.SyntaxKind {
-	return common.TRANSACTIONAL_EXPRESSION
+func (n TransactionalExpressionNode) Kind() SyntaxKind {
+	return TRANSACTIONAL_EXPRESSION
 }
 
 func (n TransactionalExpressionNode) TransactionalKeyword() Token {
@@ -5475,8 +5471,8 @@ type ByteArrayLiteralNode struct {
 	ExpressionNode
 }
 
-func (n ByteArrayLiteralNode) Kind() common.SyntaxKind {
-	return common.BYTE_ARRAY_LITERAL
+func (n ByteArrayLiteralNode) Kind() SyntaxKind {
+	return BYTE_ARRAY_LITERAL
 }
 
 func (n ByteArrayLiteralNode) Type() Token {
@@ -5517,8 +5513,8 @@ type XMLFilterExpressionNode struct {
 	XMLNavigateExpressionNode
 }
 
-func (n XMLFilterExpressionNode) Kind() common.SyntaxKind {
-	return common.XML_FILTER_EXPRESSION
+func (n XMLFilterExpressionNode) Kind() SyntaxKind {
+	return XML_FILTER_EXPRESSION
 }
 
 func (n XMLFilterExpressionNode) Expression() ExpressionNode {
@@ -5541,8 +5537,8 @@ type XMLStepExpressionNode struct {
 	XMLNavigateExpressionNode
 }
 
-func (n XMLStepExpressionNode) Kind() common.SyntaxKind {
-	return common.XML_STEP_EXPRESSION
+func (n XMLStepExpressionNode) Kind() SyntaxKind {
+	return XML_STEP_EXPRESSION
 }
 
 func (n XMLStepExpressionNode) Expression() ExpressionNode {
@@ -5565,8 +5561,8 @@ type XMLNamePatternChainingNode struct {
 	NonTerminalNodeBase
 }
 
-func (n XMLNamePatternChainingNode) Kind() common.SyntaxKind {
-	return common.XML_NAME_PATTERN_CHAIN
+func (n XMLNamePatternChainingNode) Kind() SyntaxKind {
+	return XML_NAME_PATTERN_CHAIN
 }
 
 func (n XMLNamePatternChainingNode) StartToken() Token {
@@ -5593,8 +5589,8 @@ type XMLStepIndexedExtendNode struct {
 	NonTerminalNodeBase
 }
 
-func (n XMLStepIndexedExtendNode) Kind() common.SyntaxKind {
-	return common.XML_STEP_INDEXED_EXTEND
+func (n XMLStepIndexedExtendNode) Kind() SyntaxKind {
+	return XML_STEP_INDEXED_EXTEND
 }
 
 func (n XMLStepIndexedExtendNode) OpenBracket() Token {
@@ -5625,8 +5621,8 @@ type XMLStepMethodCallExtendNode struct {
 	NonTerminalNodeBase
 }
 
-func (n XMLStepMethodCallExtendNode) Kind() common.SyntaxKind {
-	return common.XML_STEP_METHOD_CALL_EXTEND
+func (n XMLStepMethodCallExtendNode) Kind() SyntaxKind {
+	return XML_STEP_METHOD_CALL_EXTEND
 }
 
 func (n XMLStepMethodCallExtendNode) DotToken() Token {
@@ -5657,8 +5653,8 @@ type XMLAtomicNamePatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n XMLAtomicNamePatternNode) Kind() common.SyntaxKind {
-	return common.XML_ATOMIC_NAME_PATTERN
+func (n XMLAtomicNamePatternNode) Kind() SyntaxKind {
+	return XML_ATOMIC_NAME_PATTERN
 }
 
 func (n XMLAtomicNamePatternNode) Prefix() Token {
@@ -5689,8 +5685,8 @@ type TypeReferenceTypeDescNode struct {
 	TypeDescriptorNode
 }
 
-func (n TypeReferenceTypeDescNode) Kind() common.SyntaxKind {
-	return common.TYPE_REFERENCE_TYPE_DESC
+func (n TypeReferenceTypeDescNode) Kind() SyntaxKind {
+	return TYPE_REFERENCE_TYPE_DESC
 }
 
 func (n TypeReferenceTypeDescNode) TypeRef() NameReferenceNode {
@@ -5705,8 +5701,8 @@ type MatchStatementNode struct {
 	StatementNode
 }
 
-func (n MatchStatementNode) Kind() common.SyntaxKind {
-	return common.MATCH_STATEMENT
+func (n MatchStatementNode) Kind() SyntaxKind {
+	return MATCH_STATEMENT
 }
 
 func (n MatchStatementNode) MatchKeyword() Token {
@@ -5757,8 +5753,8 @@ type MatchClauseNode struct {
 	NonTerminalNodeBase
 }
 
-func (n MatchClauseNode) Kind() common.SyntaxKind {
-	return common.MATCH_CLAUSE
+func (n MatchClauseNode) Kind() SyntaxKind {
+	return MATCH_CLAUSE
 }
 
 func (n MatchClauseNode) MatchPatterns() NodeList[Node] {
@@ -5793,8 +5789,8 @@ type MatchGuardNode struct {
 	NonTerminalNodeBase
 }
 
-func (n MatchGuardNode) Kind() common.SyntaxKind {
-	return common.MATCH_GUARD
+func (n MatchGuardNode) Kind() SyntaxKind {
+	return MATCH_GUARD
 }
 
 func (n MatchGuardNode) IfKeyword() Token {
@@ -5817,8 +5813,8 @@ type DistinctTypeDescriptorNode struct {
 	TypeDescriptorNode
 }
 
-func (n DistinctTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.DISTINCT_TYPE_DESC
+func (n DistinctTypeDescriptorNode) Kind() SyntaxKind {
+	return DISTINCT_TYPE_DESC
 }
 
 func (n DistinctTypeDescriptorNode) DistinctKeyword() Token {
@@ -5841,8 +5837,8 @@ type ListMatchPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ListMatchPatternNode) Kind() common.SyntaxKind {
-	return common.LIST_MATCH_PATTERN
+func (n ListMatchPatternNode) Kind() SyntaxKind {
+	return LIST_MATCH_PATTERN
 }
 
 func (n ListMatchPatternNode) OpenBracket() Token {
@@ -5869,8 +5865,8 @@ type RestMatchPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n RestMatchPatternNode) Kind() common.SyntaxKind {
-	return common.REST_MATCH_PATTERN
+func (n RestMatchPatternNode) Kind() SyntaxKind {
+	return REST_MATCH_PATTERN
 }
 
 func (n RestMatchPatternNode) EllipsisToken() Token {
@@ -5901,8 +5897,8 @@ type MappingMatchPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n MappingMatchPatternNode) Kind() common.SyntaxKind {
-	return common.MAPPING_MATCH_PATTERN
+func (n MappingMatchPatternNode) Kind() SyntaxKind {
+	return MAPPING_MATCH_PATTERN
 }
 
 func (n MappingMatchPatternNode) OpenBraceToken() Token {
@@ -5929,8 +5925,8 @@ type FieldMatchPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n FieldMatchPatternNode) Kind() common.SyntaxKind {
-	return common.FIELD_MATCH_PATTERN
+func (n FieldMatchPatternNode) Kind() SyntaxKind {
+	return FIELD_MATCH_PATTERN
 }
 
 func (n FieldMatchPatternNode) FieldNameNode() *IdentifierToken {
@@ -5957,8 +5953,8 @@ type ErrorMatchPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ErrorMatchPatternNode) Kind() common.SyntaxKind {
-	return common.ERROR_MATCH_PATTERN
+func (n ErrorMatchPatternNode) Kind() SyntaxKind {
+	return ERROR_MATCH_PATTERN
 }
 
 func (n ErrorMatchPatternNode) ErrorKeyword() Token {
@@ -6001,8 +5997,8 @@ type NamedArgMatchPatternNode struct {
 	NonTerminalNodeBase
 }
 
-func (n NamedArgMatchPatternNode) Kind() common.SyntaxKind {
-	return common.NAMED_ARG_MATCH_PATTERN
+func (n NamedArgMatchPatternNode) Kind() SyntaxKind {
+	return NAMED_ARG_MATCH_PATTERN
 }
 
 func (n NamedArgMatchPatternNode) Identifier() *IdentifierToken {
@@ -6031,8 +6027,8 @@ type MarkdownDocumentationNode struct {
 	DocumentationNode
 }
 
-func (n MarkdownDocumentationNode) Kind() common.SyntaxKind {
-	return common.MARKDOWN_DOCUMENTATION
+func (n MarkdownDocumentationNode) Kind() SyntaxKind {
+	return MARKDOWN_DOCUMENTATION
 }
 
 func (n MarkdownDocumentationNode) DocumentationLines() NodeList[Node] {
@@ -6099,8 +6095,8 @@ type BallerinaNameReferenceNode struct {
 	DocumentationNode
 }
 
-func (n BallerinaNameReferenceNode) Kind() common.SyntaxKind {
-	return common.BALLERINA_NAME_REFERENCE
+func (n BallerinaNameReferenceNode) Kind() SyntaxKind {
+	return BALLERINA_NAME_REFERENCE
 }
 
 func (n BallerinaNameReferenceNode) ReferenceType() Token {
@@ -6135,8 +6131,8 @@ type InlineCodeReferenceNode struct {
 	DocumentationNode
 }
 
-func (n InlineCodeReferenceNode) Kind() common.SyntaxKind {
-	return common.INLINE_CODE_REFERENCE
+func (n InlineCodeReferenceNode) Kind() SyntaxKind {
+	return INLINE_CODE_REFERENCE
 }
 
 func (n InlineCodeReferenceNode) StartBacktick() Token {
@@ -6167,8 +6163,8 @@ type MarkdownCodeBlockNode struct {
 	DocumentationNode
 }
 
-func (n MarkdownCodeBlockNode) Kind() common.SyntaxKind {
-	return common.MARKDOWN_CODE_BLOCK
+func (n MarkdownCodeBlockNode) Kind() SyntaxKind {
+	return MARKDOWN_CODE_BLOCK
 }
 
 func (n MarkdownCodeBlockNode) StartLineHashToken() Token {
@@ -6219,8 +6215,8 @@ type MarkdownCodeLineNode struct {
 	DocumentationNode
 }
 
-func (n MarkdownCodeLineNode) Kind() common.SyntaxKind {
-	return common.MARKDOWN_CODE_LINE
+func (n MarkdownCodeLineNode) Kind() SyntaxKind {
+	return MARKDOWN_CODE_LINE
 }
 
 func (n MarkdownCodeLineNode) HashToken() Token {
@@ -6243,8 +6239,8 @@ type OrderByClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n OrderByClauseNode) Kind() common.SyntaxKind {
-	return common.ORDER_BY_CLAUSE
+func (n OrderByClauseNode) Kind() SyntaxKind {
+	return ORDER_BY_CLAUSE
 }
 
 func (n OrderByClauseNode) OrderKeyword() Token {
@@ -6271,8 +6267,8 @@ type OrderKeyNode struct {
 	NonTerminalNodeBase
 }
 
-func (n OrderKeyNode) Kind() common.SyntaxKind {
-	return common.ORDER_KEY
+func (n OrderKeyNode) Kind() SyntaxKind {
+	return ORDER_KEY
 }
 
 func (n OrderKeyNode) Expression() ExpressionNode {
@@ -6295,8 +6291,8 @@ type GroupByClauseNode struct {
 	IntermediateClauseNode
 }
 
-func (n GroupByClauseNode) Kind() common.SyntaxKind {
-	return common.GROUP_BY_CLAUSE
+func (n GroupByClauseNode) Kind() SyntaxKind {
+	return GROUP_BY_CLAUSE
 }
 
 func (n GroupByClauseNode) GroupKeyword() Token {
@@ -6323,8 +6319,8 @@ type GroupingKeyVarDeclarationNode struct {
 	NonTerminalNodeBase
 }
 
-func (n GroupingKeyVarDeclarationNode) Kind() common.SyntaxKind {
-	return common.GROUPING_KEY_VAR_DECLARATION
+func (n GroupingKeyVarDeclarationNode) Kind() SyntaxKind {
+	return GROUPING_KEY_VAR_DECLARATION
 }
 
 func (n GroupingKeyVarDeclarationNode) TypeDescriptor() TypeDescriptorNode {
@@ -6363,8 +6359,8 @@ type OnFailClauseNode struct {
 	ClauseNode
 }
 
-func (n OnFailClauseNode) Kind() common.SyntaxKind {
-	return common.ON_FAIL_CLAUSE
+func (n OnFailClauseNode) Kind() SyntaxKind {
+	return ON_FAIL_CLAUSE
 }
 
 func (n OnFailClauseNode) OnKeyword() Token {
@@ -6403,8 +6399,8 @@ type DoStatementNode struct {
 	StatementNode
 }
 
-func (n DoStatementNode) Kind() common.SyntaxKind {
-	return common.DO_STATEMENT
+func (n DoStatementNode) Kind() SyntaxKind {
+	return DO_STATEMENT
 }
 
 func (n DoStatementNode) DoKeyword() Token {
@@ -6435,8 +6431,8 @@ type ClassDefinitionNode struct {
 	ModuleMemberDeclarationNode
 }
 
-func (n ClassDefinitionNode) Kind() common.SyntaxKind {
-	return common.CLASS_DEFINITION
+func (n ClassDefinitionNode) Kind() SyntaxKind {
+	return CLASS_DEFINITION
 }
 
 func (n ClassDefinitionNode) Metadata() *MetadataNode {
@@ -6555,8 +6551,8 @@ type RequiredExpressionNode struct {
 	ExpressionNode
 }
 
-func (n RequiredExpressionNode) Kind() common.SyntaxKind {
-	return common.REQUIRED_EXPRESSION
+func (n RequiredExpressionNode) Kind() SyntaxKind {
+	return REQUIRED_EXPRESSION
 }
 
 func (n RequiredExpressionNode) QuestionMarkToken() Token {
@@ -6571,8 +6567,8 @@ type ErrorConstructorExpressionNode struct {
 	ExpressionNode
 }
 
-func (n ErrorConstructorExpressionNode) Kind() common.SyntaxKind {
-	return common.ERROR_CONSTRUCTOR
+func (n ErrorConstructorExpressionNode) Kind() SyntaxKind {
+	return ERROR_CONSTRUCTOR
 }
 
 func (n ErrorConstructorExpressionNode) ErrorKeyword() Token {
@@ -6635,8 +6631,8 @@ type SpreadMemberNode struct {
 	NonTerminalNodeBase
 }
 
-func (n SpreadMemberNode) Kind() common.SyntaxKind {
-	return common.SPREAD_MEMBER
+func (n SpreadMemberNode) Kind() SyntaxKind {
+	return SPREAD_MEMBER
 }
 
 func (n SpreadMemberNode) Ellipsis() Token {
@@ -6659,8 +6655,8 @@ type ClientResourceAccessActionNode struct {
 	ActionNode
 }
 
-func (n ClientResourceAccessActionNode) Kind() common.SyntaxKind {
-	return common.CLIENT_RESOURCE_ACCESS_ACTION
+func (n ClientResourceAccessActionNode) Kind() SyntaxKind {
+	return CLIENT_RESOURCE_ACCESS_ACTION
 }
 
 func (n ClientResourceAccessActionNode) Expression() ExpressionNode {
@@ -6719,8 +6715,8 @@ type ComputedResourceAccessSegmentNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ComputedResourceAccessSegmentNode) Kind() common.SyntaxKind {
-	return common.COMPUTED_RESOURCE_ACCESS_SEGMENT
+func (n ComputedResourceAccessSegmentNode) Kind() SyntaxKind {
+	return COMPUTED_RESOURCE_ACCESS_SEGMENT
 }
 
 func (n ComputedResourceAccessSegmentNode) OpenBracketToken() Token {
@@ -6751,8 +6747,8 @@ type ResourceAccessRestSegmentNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ResourceAccessRestSegmentNode) Kind() common.SyntaxKind {
-	return common.RESOURCE_ACCESS_REST_SEGMENT
+func (n ResourceAccessRestSegmentNode) Kind() SyntaxKind {
+	return RESOURCE_ACCESS_REST_SEGMENT
 }
 
 func (n ResourceAccessRestSegmentNode) OpenBracketToken() Token {
@@ -6791,8 +6787,8 @@ type ReSequenceNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReSequenceNode) Kind() common.SyntaxKind {
-	return common.RE_SEQUENCE
+func (n ReSequenceNode) Kind() SyntaxKind {
+	return RE_SEQUENCE
 }
 
 func (n ReSequenceNode) ReTerm() NodeList[ReTermNode] {
@@ -6805,8 +6801,8 @@ type ReAtomQuantifierNode struct {
 	ReTermNode
 }
 
-func (n ReAtomQuantifierNode) Kind() common.SyntaxKind {
-	return common.RE_ATOM_QUANTIFIER
+func (n ReAtomQuantifierNode) Kind() SyntaxKind {
+	return RE_ATOM_QUANTIFIER
 }
 
 func (n ReAtomQuantifierNode) ReAtom() Node {
@@ -6825,8 +6821,8 @@ type ReAtomCharOrEscapeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReAtomCharOrEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_LITERAL_CHAR_DOT_OR_ESCAPE
+func (n ReAtomCharOrEscapeNode) Kind() SyntaxKind {
+	return RE_LITERAL_CHAR_DOT_OR_ESCAPE
 }
 
 func (n ReAtomCharOrEscapeNode) ReAtomCharOrEscape() Node {
@@ -6837,8 +6833,8 @@ type ReQuoteEscapeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReQuoteEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_QUOTE_ESCAPE
+func (n ReQuoteEscapeNode) Kind() SyntaxKind {
+	return RE_QUOTE_ESCAPE
 }
 
 func (n ReQuoteEscapeNode) SlashToken() Token {
@@ -6857,8 +6853,8 @@ type ReSimpleCharClassEscapeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReSimpleCharClassEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_SIMPLE_CHAR_CLASS_ESCAPE
+func (n ReSimpleCharClassEscapeNode) Kind() SyntaxKind {
+	return RE_SIMPLE_CHAR_CLASS_ESCAPE
 }
 
 func (n ReSimpleCharClassEscapeNode) SlashToken() Token {
@@ -6877,8 +6873,8 @@ type ReUnicodePropertyEscapeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReUnicodePropertyEscapeNode) Kind() common.SyntaxKind {
-	return common.RE_UNICODE_PROPERTY_ESCAPE
+func (n ReUnicodePropertyEscapeNode) Kind() SyntaxKind {
+	return RE_UNICODE_PROPERTY_ESCAPE
 }
 
 func (n ReUnicodePropertyEscapeNode) SlashToken() Token {
@@ -6923,8 +6919,8 @@ type ReUnicodeScriptNode struct {
 	ReUnicodePropertyNode
 }
 
-func (n ReUnicodeScriptNode) Kind() common.SyntaxKind {
-	return common.RE_UNICODE_SCRIPT
+func (n ReUnicodeScriptNode) Kind() SyntaxKind {
+	return RE_UNICODE_SCRIPT
 }
 
 func (n ReUnicodeScriptNode) ScriptStart() Node {
@@ -6939,8 +6935,8 @@ type ReUnicodeGeneralCategoryNode struct {
 	ReUnicodePropertyNode
 }
 
-func (n ReUnicodeGeneralCategoryNode) Kind() common.SyntaxKind {
-	return common.RE_UNICODE_GENERAL_CATEGORY
+func (n ReUnicodeGeneralCategoryNode) Kind() SyntaxKind {
+	return RE_UNICODE_GENERAL_CATEGORY
 }
 
 func (n ReUnicodeGeneralCategoryNode) CategoryStart() Node {
@@ -6955,8 +6951,8 @@ type ReCharacterClassNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharacterClassNode) Kind() common.SyntaxKind {
-	return common.RE_CHARACTER_CLASS
+func (n ReCharacterClassNode) Kind() SyntaxKind {
+	return RE_CHARACTER_CLASS
 }
 
 func (n ReCharacterClassNode) OpenBracket() Token {
@@ -6991,8 +6987,8 @@ type ReCharSetRangeWithReCharSetNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharSetRangeWithReCharSetNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE_WITH_RE_CHAR_SET
+func (n ReCharSetRangeWithReCharSetNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE_WITH_RE_CHAR_SET
 }
 
 func (n ReCharSetRangeWithReCharSetNode) ReCharSetRange() *ReCharSetRangeNode {
@@ -7011,8 +7007,8 @@ type ReCharSetRangeNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharSetRangeNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE
+func (n ReCharSetRangeNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE
 }
 
 func (n ReCharSetRangeNode) LhsReCharSetAtom() Node {
@@ -7035,8 +7031,8 @@ type ReCharSetAtomWithReCharSetNoDashNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharSetAtomWithReCharSetNoDashNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_ATOM_WITH_RE_CHAR_SET_NO_DASH
+func (n ReCharSetAtomWithReCharSetNoDashNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_ATOM_WITH_RE_CHAR_SET_NO_DASH
 }
 
 func (n ReCharSetAtomWithReCharSetNoDashNode) ReCharSetAtom() Node {
@@ -7051,8 +7047,8 @@ type ReCharSetRangeNoDashWithReCharSetNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharSetRangeNoDashWithReCharSetNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE_NO_DASH_WITH_RE_CHAR_SET
+func (n ReCharSetRangeNoDashWithReCharSetNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE_NO_DASH_WITH_RE_CHAR_SET
 }
 
 func (n ReCharSetRangeNoDashWithReCharSetNode) ReCharSetRangeNoDash() *ReCharSetRangeNoDashNode {
@@ -7071,8 +7067,8 @@ type ReCharSetRangeNoDashNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharSetRangeNoDashNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_RANGE_NO_DASH
+func (n ReCharSetRangeNoDashNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_RANGE_NO_DASH
 }
 
 func (n ReCharSetRangeNoDashNode) ReCharSetAtomNoDash() Node {
@@ -7095,8 +7091,8 @@ type ReCharSetAtomNoDashWithReCharSetNoDashNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCharSetAtomNoDashWithReCharSetNoDashNode) Kind() common.SyntaxKind {
-	return common.RE_CHAR_SET_ATOM_NO_DASH_WITH_RE_CHAR_SET_NO_DASH
+func (n ReCharSetAtomNoDashWithReCharSetNoDashNode) Kind() SyntaxKind {
+	return RE_CHAR_SET_ATOM_NO_DASH_WITH_RE_CHAR_SET_NO_DASH
 }
 
 func (n ReCharSetAtomNoDashWithReCharSetNoDashNode) ReCharSetAtomNoDash() Node {
@@ -7111,8 +7107,8 @@ type ReCapturingGroupsNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReCapturingGroupsNode) Kind() common.SyntaxKind {
-	return common.RE_CAPTURING_GROUP
+func (n ReCapturingGroupsNode) Kind() SyntaxKind {
+	return RE_CAPTURING_GROUP
 }
 
 func (n ReCapturingGroupsNode) OpenParenthesis() Token {
@@ -7147,8 +7143,8 @@ type ReFlagExpressionNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReFlagExpressionNode) Kind() common.SyntaxKind {
-	return common.RE_FLAG_EXPR
+func (n ReFlagExpressionNode) Kind() SyntaxKind {
+	return RE_FLAG_EXPR
 }
 
 func (n ReFlagExpressionNode) QuestionMark() Token {
@@ -7179,8 +7175,8 @@ type ReFlagsOnOffNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReFlagsOnOffNode) Kind() common.SyntaxKind {
-	return common.RE_FLAGS_ON_OFF
+func (n ReFlagsOnOffNode) Kind() SyntaxKind {
+	return RE_FLAGS_ON_OFF
 }
 
 func (n ReFlagsOnOffNode) LhsReFlags() *ReFlagsNode {
@@ -7211,8 +7207,8 @@ type ReFlagsNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReFlagsNode) Kind() common.SyntaxKind {
-	return common.RE_FLAGS
+func (n ReFlagsNode) Kind() SyntaxKind {
+	return RE_FLAGS
 }
 
 func (n ReFlagsNode) ReFlag() NodeList[Node] {
@@ -7223,8 +7219,8 @@ type ReAssertionNode struct {
 	ReTermNode
 }
 
-func (n ReAssertionNode) Kind() common.SyntaxKind {
-	return common.RE_ASSERTION
+func (n ReAssertionNode) Kind() SyntaxKind {
+	return RE_ASSERTION
 }
 
 func (n ReAssertionNode) ReAssertion() Node {
@@ -7235,8 +7231,8 @@ type ReQuantifierNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReQuantifierNode) Kind() common.SyntaxKind {
-	return common.RE_QUANTIFIER
+func (n ReQuantifierNode) Kind() SyntaxKind {
+	return RE_QUANTIFIER
 }
 
 func (n ReQuantifierNode) ReBaseQuantifier() Node {
@@ -7255,8 +7251,8 @@ type ReBracedQuantifierNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReBracedQuantifierNode) Kind() common.SyntaxKind {
-	return common.RE_BRACED_QUANTIFIER
+func (n ReBracedQuantifierNode) Kind() SyntaxKind {
+	return RE_BRACED_QUANTIFIER
 }
 
 func (n ReBracedQuantifierNode) OpenBraceToken() Token {
@@ -7295,8 +7291,8 @@ type MemberTypeDescriptorNode struct {
 	NonTerminalNodeBase
 }
 
-func (n MemberTypeDescriptorNode) Kind() common.SyntaxKind {
-	return common.MEMBER_TYPE_DESC
+func (n MemberTypeDescriptorNode) Kind() SyntaxKind {
+	return MEMBER_TYPE_DESC
 }
 
 func (n MemberTypeDescriptorNode) Annotations() NodeList[*AnnotationNode] {
@@ -7315,8 +7311,8 @@ type ReceiveFieldNode struct {
 	NonTerminalNodeBase
 }
 
-func (n ReceiveFieldNode) Kind() common.SyntaxKind {
-	return common.RECEIVE_FIELD
+func (n ReceiveFieldNode) Kind() SyntaxKind {
+	return RECEIVE_FIELD
 }
 
 func (n ReceiveFieldNode) FieldName() *SimpleNameReferenceNode {
@@ -7347,8 +7343,8 @@ type NaturalExpressionNode struct {
 	ExpressionNode
 }
 
-func (n NaturalExpressionNode) Kind() common.SyntaxKind {
-	return common.NATURAL_EXPRESSION
+func (n NaturalExpressionNode) Kind() SyntaxKind {
+	return NATURAL_EXPRESSION
 }
 
 func (n NaturalExpressionNode) ConstKeyword() Token {

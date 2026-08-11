@@ -21,10 +21,10 @@ import (
 	"iter"
 	"sync"
 
-	"ballerina/platform/pal"
-	"ballerina/runtime/extern"
-	"ballerina/runtime/internal/exec"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/exec"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // State is the runtime lifecycle state.

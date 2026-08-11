@@ -20,8 +20,8 @@ package values
 import (
 	"strconv"
 
-	"ballerina/decimal"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // Currently this is just an alias on any but I think we will need to add methods to this like type

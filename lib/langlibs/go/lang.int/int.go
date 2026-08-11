@@ -17,10 +17,10 @@
 package intruntime
 
 import (
-	"ballerina/runtime"
-	"ballerina/runtime/extern"
-	"ballerina/values"
 	"fmt"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/values"
 	"math"
 	"strconv"
 )

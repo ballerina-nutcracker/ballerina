@@ -17,9 +17,9 @@
 package semantics
 
 import (
-	"ballerina/ast"
-	"ballerina/context"
-	"ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
 type initState struct {

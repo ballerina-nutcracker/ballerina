@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // PackageResolution holds the result of package dependency resolution.

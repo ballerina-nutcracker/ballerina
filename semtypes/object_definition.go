@@ -16,7 +16,7 @@
 
 package semtypes
 
-import "ballerina/common"
+import "github.com/ballerina-nutcracker/ballerina/common"
 
 // Represent object type desc.
 type ObjectDefinition struct {

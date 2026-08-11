@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 var fsys = os.DirFS(".")

@@ -25,8 +25,8 @@ import (
 	"slices"
 	"testing"
 
-	"ballerina/projects"
-	"ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
 
 // TestLoadSingleFile tests loading a valid standalone Ballerina file.

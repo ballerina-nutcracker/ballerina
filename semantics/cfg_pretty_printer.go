@@ -17,9 +17,9 @@
 package semantics
 
 import (
-	"ballerina/ast"
-	"ballerina/context"
 	"fmt"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"sort"
 	"strings"
 )

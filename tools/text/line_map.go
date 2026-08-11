@@ -17,7 +17,7 @@
 package text
 
 import (
-	"ballerina/common/errors"
+	"github.com/ballerina-nutcracker/ballerina/common/errors"
 )
 
 // LineMap represents a collection of text lines in the TextDocument.

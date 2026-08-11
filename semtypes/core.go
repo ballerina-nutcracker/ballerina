@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"math/bits"
 
-	"ballerina/common"
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 const (

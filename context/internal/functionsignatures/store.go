@@ -20,7 +20,7 @@ package functionsignatures
 import (
 	"sync"
 
-	"ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
 // Store keeps the untyped signatures associated with function symbols.

@@ -16,11 +16,8 @@
 
 package parser
 
-import (
-	"ballerina/parser/tree"
-)
+import "github.com/ballerina-nutcracker/ballerina/st"
 
-// GenerateJSONForTesting is a test helper that generates JSON from an AST node
-func GenerateJSONForTesting(node tree.STNode) string {
-	return tree.GenerateJSON(node)
+func generateJSON(node st.STNode) string {
+	return st.GenerateJSON(node, kindName)
 }

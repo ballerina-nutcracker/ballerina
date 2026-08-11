@@ -1,4 +1,4 @@
-// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -14,16 +14,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build native_interp
+package parser
 
-// Package interpsrc — stub used when building the native interpreter binary.
-// The native interpreter is always built from an already-extracted source tree,
-// so there is no need to embed the source again.
-package interpsrc
+import (
+	"fmt"
+	"strings"
 
-import "errors"
+	"github.com/ballerina-nutcracker/ballerina/st"
+)
 
-// ExtractTo is a no-op in native interpreter builds.
-func ExtractTo(_, _ string) (string, error) {
-	return "", errors.New("interpreter source is not embedded in native interpreter builds")
+// kindName returns the generated constant name for a SyntaxKind (matching Java enum.name()).
+func kindName(kind st.SyntaxKind) string {
+	name := kind.String()
+	if strings.HasPrefix(name, "SyntaxKind(") {
+		return fmt.Sprintf("UNKNOWN_KIND_%d", kind)
+	}
+	return name
 }

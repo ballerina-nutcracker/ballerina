@@ -16,7 +16,7 @@
 
 package semantics
 
-import "ballerina/semtypes"
+import "github.com/ballerina-nutcracker/ballerina/semtypes"
 
 // listenerTypes structurally checks whether ty is a valid listener
 // object type and, on success, returns its projected service-target type T

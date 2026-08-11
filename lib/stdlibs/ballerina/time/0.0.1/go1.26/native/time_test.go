@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // The time module's behaviour is exercised end-to-end through the corpus tests

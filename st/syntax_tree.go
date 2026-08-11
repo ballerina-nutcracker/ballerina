@@ -14,13 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package tree
+package st
 
 import (
 	"iter"
 
-	"ballerina/parser/common"
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 type SyntaxTree struct {
@@ -44,7 +43,7 @@ func (s *SyntaxTree) TextDocument() text.TextDocument {
 
 func (s *SyntaxTree) ContainsModulePart() bool {
 	// migrated from SyntaxTree.java:76:5
-	return s.RootNode.Kind() == common.MODULE_PART
+	return s.RootNode.Kind() == MODULE_PART
 }
 
 func (s *SyntaxTree) FilePath() string {

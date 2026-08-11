@@ -19,9 +19,9 @@ package semantics
 import (
 	"strings"
 
-	"ballerina/ast"
-	"ballerina/model"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 func extractXMLNSURI[T symbolResolver](resolver T, uriExpr ast.BLangExpression, pos diagnostics.Location) (string, bool) {

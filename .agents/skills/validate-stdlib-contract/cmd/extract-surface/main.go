@@ -33,18 +33,17 @@ import (
 	"sort"
 	"strings"
 
-	"ballerina/context"
-	"ballerina/parser"
-	"ballerina/parser/common"
-	"ballerina/parser/tree"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/parser"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/st"
 )
 
 var skipDirs = map[string]bool{"tests": true, "build": true, "target": true}
 
 // items works around NodeList's pointer-receiver Iterator, which cannot be
 // called on the non-addressable values accessor methods return.
-func items[T tree.Node](list tree.NodeList[T]) iter.Seq[T] {
+func items[T st.Node](list st.NodeList[T]) iter.Seq[T] {
 	return list.Iterator()
 }
 
@@ -117,12 +116,12 @@ func extractFile(env *context.CompilerEnvironment, path string) ([]symbol, bool)
 		return nil, false
 	}
 	cx := context.NewCompilerContext(env)
-	st, err := parser.GetSyntaxTree(cx, path, string(content))
-	if err != nil || st == nil {
+	syntaxTree, err := parser.GetSyntaxTree(cx, path, string(content))
+	if err != nil || syntaxTree == nil {
 		fmt.Fprintf(os.Stderr, "warning: %s: parse failed: %v\n", path, err)
 		return nil, false
 	}
-	mp, ok := st.RootNode.(*tree.ModulePart)
+	mp, ok := syntaxTree.RootNode.(*st.ModulePart)
 	if !ok {
 		fmt.Fprintf(os.Stderr, "warning: %s: no module part\n", path)
 		return nil, false
@@ -140,7 +139,7 @@ func extractFile(env *context.CompilerEnvironment, path string) ([]symbol, bool)
 	return syms, !cx.HasErrors()
 }
 
-func (ex *extractor) text(n tree.Node) string {
+func (ex *extractor) text(n st.Node) string {
 	if n == nil {
 		return ""
 	}
@@ -151,29 +150,29 @@ func (ex *extractor) text(n tree.Node) string {
 	return norm(ex.src[r.StartOffset:r.EndOffset])
 }
 
-func (ex *extractor) member(m tree.Node) (symbol, bool) {
+func (ex *extractor) member(m st.Node) (symbol, bool) {
 	switch d := m.(type) {
-	case *tree.FunctionDefinition:
+	case *st.FunctionDefinition:
 		quals := qualTexts(d.QualifierList())
 		if !contains(quals, "public") {
 			return symbol{}, false
 		}
 		name := d.FunctionName().Text()
 		return symbol{"function", name, []string{ex.fnLine(quals, name, ex.resourcePath(d.RelativeResourcePath()), d.FunctionSignature())}}, true
-	case *tree.TypeDefinitionNode:
+	case *st.TypeDefinitionNode:
 		if !isPublicToken(d.VisibilityQualifier()) {
 			return symbol{}, false
 		}
 		name := d.TypeName().Text()
 		return symbol{"type", name, ex.typeBody(name, d.TypeDescriptor())}, true
-	case *tree.ClassDefinitionNode:
+	case *st.ClassDefinitionNode:
 		if !isPublicToken(d.VisibilityQualifier()) {
 			return symbol{}, false
 		}
 		name := d.ClassName().Text()
 		header := strings.Join(append(qualTexts(d.ClassTypeQualifiers()), "class", name), " ")
 		return symbol{"class", name, append([]string{header}, ex.objectMemberLines(d.Members())...)}, true
-	case *tree.ConstantDeclarationNode:
+	case *st.ConstantDeclarationNode:
 		if !isPublicToken(d.VisibilityQualifier()) {
 			return symbol{}, false
 		}
@@ -184,14 +183,14 @@ func (ex *extractor) member(m tree.Node) (symbol, bool) {
 		}
 		line += " " + name + " = " + ex.text(d.Initializer())
 		return symbol{"const", name, []string{line}}, true
-	case *tree.EnumDeclarationNode:
+	case *st.EnumDeclarationNode:
 		if !isPublicToken(d.Qualifier()) {
 			return symbol{}, false
 		}
 		name := d.Identifier().Text()
 		var members []string
 		for em := range items(d.EnumMemberList()) {
-			if e, ok := em.(*tree.EnumMemberNode); ok {
+			if e, ok := em.(*st.EnumMemberNode); ok {
 				line := "member " + e.Identifier().Text()
 				if expr := e.ConstExprNode(); expr != nil {
 					line += " = " + ex.text(expr)
@@ -201,7 +200,7 @@ func (ex *extractor) member(m tree.Node) (symbol, bool) {
 		}
 		sort.Strings(members)
 		return symbol{"enum", name, append([]string{"enum " + name}, members...)}, true
-	case *tree.AnnotationDeclarationNode:
+	case *st.AnnotationDeclarationNode:
 		if !isPublicToken(d.VisibilityQualifier()) {
 			return symbol{}, false
 		}
@@ -223,13 +222,13 @@ func (ex *extractor) member(m tree.Node) (symbol, bool) {
 			line += " on " + strings.Join(points, ", ")
 		}
 		return symbol{"annotation", name, []string{line}}, true
-	case *tree.ListenerDeclarationNode:
+	case *st.ListenerDeclarationNode:
 		if !isPublicToken(d.VisibilityQualifier()) {
 			return symbol{}, false
 		}
 		name := d.VariableName().Text()
 		return symbol{"listener", name, []string{"listener " + ex.text(d.TypeDescriptor()) + " " + name}}, true
-	case *tree.ModuleVariableDeclarationNode:
+	case *st.ModuleVariableDeclarationNode:
 		if !isPublicToken(d.VisibilityQualifier()) {
 			return symbol{}, false
 		}
@@ -241,9 +240,9 @@ func (ex *extractor) member(m tree.Node) (symbol, bool) {
 	return symbol{}, false
 }
 
-func (ex *extractor) typeBody(name string, descriptor tree.Node) []string {
+func (ex *extractor) typeBody(name string, descriptor st.Node) []string {
 	switch td := descriptor.(type) {
-	case *tree.RecordTypeDescriptorNode:
+	case *st.RecordTypeDescriptorNode:
 		openness := "open"
 		if td.BodyStartDelimiter().Text() == "{|" {
 			openness = "closed"
@@ -258,7 +257,7 @@ func (ex *extractor) typeBody(name string, descriptor tree.Node) []string {
 		}
 		sort.Strings(fields)
 		return append(lines, fields...)
-	case *tree.ObjectTypeDescriptorNode:
+	case *st.ObjectTypeDescriptorNode:
 		header := strings.Join(append(qualTexts(td.ObjectTypeQualifiers()), "object"), " ")
 		return append([]string{"type " + name + " " + header}, ex.objectMemberLines(td.Members())...)
 	default:
@@ -266,9 +265,9 @@ func (ex *extractor) typeBody(name string, descriptor tree.Node) []string {
 	}
 }
 
-func (ex *extractor) recordFieldLine(f tree.Node) string {
+func (ex *extractor) recordFieldLine(f st.Node) string {
 	switch fd := f.(type) {
-	case *tree.RecordFieldNode:
+	case *st.RecordFieldNode:
 		line := "field " + fd.FieldName().Text() + " " + ex.text(fd.TypeName())
 		if fd.ReadonlyKeyword() != nil {
 			line += " readonly"
@@ -277,24 +276,24 @@ func (ex *extractor) recordFieldLine(f tree.Node) string {
 			line += " optional"
 		}
 		return line
-	case *tree.RecordFieldWithDefaultValueNode:
+	case *st.RecordFieldWithDefaultValueNode:
 		line := "field " + fd.FieldName().Text() + " " + ex.text(fd.TypeName())
 		if fd.ReadonlyKeyword() != nil {
 			line += " readonly"
 		}
 		return line + " = " + ex.text(fd.Expression())
-	case *tree.TypeReferenceNode:
+	case *st.TypeReferenceNode:
 		return "include *" + ex.text(fd.TypeName())
 	default:
 		return "field? " + ex.text(f)
 	}
 }
 
-func (ex *extractor) objectMemberLines(members tree.NodeList[tree.Node]) []string {
+func (ex *extractor) objectMemberLines(members st.NodeList[st.Node]) []string {
 	var lines []string
 	for m := range members.Iterator() {
 		switch md := m.(type) {
-		case *tree.ObjectFieldNode:
+		case *st.ObjectFieldNode:
 			if !isPublicToken(md.VisibilityQualifier()) {
 				continue
 			}
@@ -306,19 +305,19 @@ func (ex *extractor) objectMemberLines(members tree.NodeList[tree.Node]) []strin
 				line += " = " + ex.text(expr)
 			}
 			lines = append(lines, line)
-		case *tree.FunctionDefinition:
+		case *st.FunctionDefinition:
 			quals := qualTexts(md.QualifierList())
 			if !callerVisibleMethod(quals, md.FunctionName().Text()) {
 				continue
 			}
 			lines = append(lines, "method "+ex.fnLine(quals, md.FunctionName().Text(), ex.resourcePath(md.RelativeResourcePath()), md.FunctionSignature()))
-		case *tree.MethodDeclarationNode:
+		case *st.MethodDeclarationNode:
 			quals := qualTexts(md.QualifierList())
 			if !callerVisibleMethod(quals, md.MethodName().Text()) {
 				continue
 			}
 			lines = append(lines, "method "+ex.fnLine(quals, md.MethodName().Text(), ex.resourcePath(md.RelativeResourcePath()), md.MethodSignature()))
-		case *tree.TypeReferenceNode:
+		case *st.TypeReferenceNode:
 			lines = append(lines, "include *"+ex.text(md.TypeName()))
 		}
 	}
@@ -333,7 +332,7 @@ func callerVisibleMethod(quals []string, name string) bool {
 	return contains(quals, "public") || contains(quals, "remote") || contains(quals, "resource") || name == "init"
 }
 
-func (ex *extractor) fnLine(quals []string, name string, resPath string, sig *tree.FunctionSignatureNode) string {
+func (ex *extractor) fnLine(quals []string, name string, resPath string, sig *st.FunctionSignatureNode) string {
 	var params []string
 	for p := range items(sig.Parameters()) {
 		params = append(params, ex.paramString(p))
@@ -349,20 +348,20 @@ func (ex *extractor) fnLine(quals []string, name string, resPath string, sig *tr
 	return line
 }
 
-func (ex *extractor) paramString(p tree.ParameterNode) string {
+func (ex *extractor) paramString(p st.ParameterNode) string {
 	switch pd := p.(type) {
-	case *tree.RequiredParameterNode:
+	case *st.RequiredParameterNode:
 		return ex.text(pd.TypeName()) + " " + tokenText(pd.ParamName())
-	case *tree.DefaultableParameterNode:
+	case *st.DefaultableParameterNode:
 		return ex.text(pd.TypeName()) + " " + tokenText(pd.ParamName()) + " = " + ex.text(pd.Expression())
-	case *tree.RestParameterNode:
+	case *st.RestParameterNode:
 		return ex.text(pd.TypeName()) + "... " + tokenText(pd.ParamName())
 	default:
 		return ex.text(p)
 	}
 }
 
-func (ex *extractor) resourcePath(path tree.NodeList[tree.Node]) string {
+func (ex *extractor) resourcePath(path st.NodeList[st.Node]) string {
 	var parts []string
 	for p := range path.Iterator() {
 		parts = append(parts, ex.text(p))
@@ -370,7 +369,7 @@ func (ex *extractor) resourcePath(path tree.NodeList[tree.Node]) string {
 	return strings.Join(parts, "")
 }
 
-func qualTexts(quals tree.NodeList[tree.Token]) []string {
+func qualTexts(quals st.NodeList[st.Token]) []string {
 	var out []string
 	for q := range quals.Iterator() {
 		out = append(out, q.Text())
@@ -379,11 +378,11 @@ func qualTexts(quals tree.NodeList[tree.Token]) []string {
 	return out
 }
 
-func isPublicToken(t tree.Token) bool {
-	return t != nil && t.Kind() == common.PUBLIC_KEYWORD
+func isPublicToken(t st.Token) bool {
+	return t != nil && t.Kind() == st.PUBLIC_KEYWORD
 }
 
-func tokenText(t tree.Token) string {
+func tokenText(t st.Token) string {
 	if t == nil {
 		return ""
 	}

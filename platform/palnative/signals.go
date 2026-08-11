@@ -22,7 +22,7 @@ import (
 	"sync"
 	"syscall"
 
-	"ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 )
 
 // newSignalSource installs an os/signal.Notify handler and returns a

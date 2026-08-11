@@ -23,8 +23,8 @@ import (
 	goruntime "runtime"
 	"testing"
 
-	"ballerina/platform/palnative"
-	"ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
 
 // skipIfNoLoopback skips on platforms without loopback TCP (js/wasm). Unlike

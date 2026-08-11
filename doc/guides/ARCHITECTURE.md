@@ -74,7 +74,13 @@ This layer also exists so that a non-native host could be swapped in: `palnative
 | [`corpus/`](../../corpus/) | Ballerina test sources and per-stage golden files |
 | [`compiler-tools/`](../../compiler-tools/) | Standalone tools: the `tree-gen` generator, `cfgviz`, and the benchmark harness |
 | [`cli/internal/nativeexec/`](../../cli/internal/nativeexec/) | Defines the interface for building and running a project-specific interpreter that embeds a dependency's native Go code |
-| [`cli/internal/nativerunner/`](../../cli/internal/nativerunner/) | Implements that interface: builds the custom interpreter binary with the local Go toolchain, using the interpreter source `interpsrc.go` extracts, and runs it |
+| [`cli/internal/nativerunner/`](../../cli/internal/nativerunner/) | Implements that interface: builds a custom `cli/cmd` or `cli/internal/balrt` binary with the local Go toolchain, adds native `.bala` payload modules through a generated workspace and overlay, and runs or packages it |
+
+## Native dependency builds
+
+The released `bal` binary bundles source only for the `cli` driver module. When a dependency contains native Go code, the CLI extracts that driver source and builds either `cli/cmd` for `bal run` or `cli/internal/balrt` for `bal build`. Each native `.bala` payload remains a separate temporary Go module and is blank-imported through the build overlay.
+
+Compiler and runtime modules such as `ast`, `projects`, `runtime`, and `semtypes` are not embedded or extracted. They are ordinary requirements in `cli/go.mod` and are resolved by the Go toolchain in the same way as third-party dependencies. Repository development preserves the local module selection in the repository `go.work`; released versions resolve matching nested-module tags through the normal Go module cache and proxy.
 
 ## Boundaries
 

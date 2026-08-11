@@ -19,7 +19,7 @@ package projects
 import (
 	"context"
 
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // blendedManifest is the per-resolution view of consumer dependency policy.

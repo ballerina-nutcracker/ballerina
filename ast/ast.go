@@ -21,13 +21,13 @@ import (
 	"iter"
 	"strings"
 
-	"ballerina/common"
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/parser/tree"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type BNodeWithSymbol interface {
@@ -1586,16 +1586,16 @@ func createConstantNode() *BLangConstant {
 	return c
 }
 
-func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *tree.SyntaxTree) *BLangCompilationUnit {
+func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *BLangCompilationUnit {
 	nodeBuilder := NewNodeBuilder(cx)
-	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
+	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*BLangCompilationUnit)
 }
 
 // GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
-func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *tree.SyntaxTree) *BLangCompilationUnit {
+func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *BLangCompilationUnit {
 	nodeBuilder := NewRecoveringNodeBuilder(cx)
-	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*tree.ModulePart))
+	compilationUnit := nodeBuilder.TransformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*BLangCompilationUnit)
 }
 

@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 var ErrBadTypeCast = errors.New("bad type cast")

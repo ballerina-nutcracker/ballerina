@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"sort"
 
-	"ballerina/ast"
-	compilerctx "ballerina/context"
-	"ballerina/desugar"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	compilerctx "github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/desugar"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // birLoc converts a diagnostics.Location (byte offsets) to a bir.Location (line/column)

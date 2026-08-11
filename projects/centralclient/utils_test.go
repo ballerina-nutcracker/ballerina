@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"ballerina/common/bfs"
+	"github.com/ballerina-nutcracker/ballerina/common/bfs"
 )
 
 var tempBalaCache string

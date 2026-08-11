@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/common"
 )
 
 type TypeParamEntry struct {

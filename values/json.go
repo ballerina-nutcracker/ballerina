@@ -20,8 +20,8 @@ package values
 import (
 	"encoding/json"
 
-	"ballerina/decimal"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // ToJSONByteArray serializes a Ballerina JSON value to its JSON byte

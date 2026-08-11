@@ -17,9 +17,9 @@
 package semantics
 
 import (
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // collectIncludedMembers resolves each included type, validates it is a subtype of expectedBasicType,

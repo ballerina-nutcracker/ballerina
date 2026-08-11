@@ -25,9 +25,9 @@ import (
 	"hash"
 	"hash/crc32"
 
-	"ballerina/runtime"
-	"ballerina/runtime/extern"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/values"
 	"golang.org/x/crypto/sha3"
 )
 

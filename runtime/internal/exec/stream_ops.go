@@ -17,9 +17,9 @@
 package exec
 
 import (
-	"ballerina/bir"
-	"ballerina/runtime/extern"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 func execNewStream(ctx *extern.Context, instr *bir.NewStream, frame *Frame) {

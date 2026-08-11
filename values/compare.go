@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 
-	"ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 type CompareResult int8

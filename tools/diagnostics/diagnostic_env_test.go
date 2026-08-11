@@ -19,7 +19,7 @@ package diagnostics
 import (
 	"testing"
 
-	"ballerina/tools/text"
+	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
 // TestRegisterFile_SamePointerTwice: registering the same TextDocument

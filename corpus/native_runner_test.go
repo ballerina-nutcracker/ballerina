@@ -17,10 +17,14 @@
 package corpus
 
 import (
+	"archive/zip"
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,17 +34,17 @@ import (
 	"testing"
 	"testing/fstest"
 
-	interpsrc "ballerina"
-	"ballerina/lib/stdlibs"
-	"ballerina/projects"
-	"ballerina/runtime"
-	"ballerina/test_util"
-	"ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/cli"
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 
 	// Blank-import native packages so their init() registers extern
 	// functions before tests run; testdata isn't in ./... builds otherwise.
-	_ "ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
-	_ "ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
 )
 
 const nativeTestDataDir = "extern/testdata"
@@ -244,9 +248,7 @@ func TestNativeResolution_EmbeddedStdlibFilter(t *testing.T) {
 	}
 }
 
-// TestInterpsrc_ExtractAndCache checks interpsrc.ExtractTo extracts once,
-// then skips re-extraction on a second call with the same version.
-func TestInterpsrc_ExtractAndCache(t *testing.T) {
+func TestDriverSource(t *testing.T) {
 	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
@@ -254,18 +256,26 @@ func TestInterpsrc_ExtractAndCache(t *testing.T) {
 	cacheRoot := t.TempDir()
 	const version = "test-v0.0.1"
 
-	dir1, err := interpsrc.ExtractTo(cacheRoot, version)
+	dir1, err := cli.ExtractDriverSource(cacheRoot, version)
 	require.NoError(err)
 	require.NotEmpty(dir1)
 
-	_, err = os.Stat(filepath.Join(dir1, "go.mod"))
-	require.NoError(err, "go.mod must exist after extraction")
+	for _, name := range []string{
+		filepath.Join("cli", "go.mod"),
+		filepath.Join("cli", "cmd"),
+		filepath.Join("cli", "internal", "balrt"),
+	} {
+		_, err = os.Stat(filepath.Join(dir1, name))
+		require.NoError(err, "driver source must contain "+name)
+	}
+	for _, name := range []string{"ast", "runtime", "projects", "semtypes"} {
+		_, err = os.Stat(filepath.Join(dir1, name))
+		assert.True(os.IsNotExist(err), "driver source must not contain dependency directory "+name)
+	}
 
-	// go.mod already exists, so this call should skip extraction and return
-	// the same path.
-	dir2, err := interpsrc.ExtractTo(cacheRoot, version)
+	dir2, err := cli.ExtractDriverSource(cacheRoot, version)
 	require.NoError(err)
-	assert.Equal(dir1, dir2, "second call must return the cached path without re-extracting")
+	assert.Equal(dir1, dir2, "second call must reuse the cached extraction")
 }
 
 // TestNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
@@ -292,7 +302,6 @@ func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
 // twice: the first run must build the interpreter (cold), the second must
 // hit loadCachedRunner's fingerprint cache and skip the rebuild.
 func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
-	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
 	}
@@ -310,10 +319,14 @@ func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
 	tempProject := t.TempDir()
 	copyDir(t, srcProject, tempProject)
 
+	proxyURL := localDistributionProxy(t, repoRoot)
+	moduleCache := isolatedGoModuleCache(t, tempHome)
 	runNative := func() (stdout, stderr string, code int) {
-		env := append(os.Environ(),
+		env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC", "GOPROXY", "GONOSUMDB"),
 			"BAL_ENV="+tempHome,
-			"BALLERINA_SRC="+repoRoot,
+			"GOPROXY="+proxyURL+",https://proxy.golang.org,direct",
+			"GONOSUMDB=github.com/ballerina-nutcracker/ballerina*",
+			"GOMODCACHE="+moduleCache,
 		)
 		if coverDir != "" {
 			env = append(env, "GOCOVERDIR="+coverDir)
@@ -428,6 +441,131 @@ version = "1.0.0"
 	}
 }
 
+func isolatedGoModuleCache(t *testing.T, root string) string {
+	t.Helper()
+	cache := filepath.Join(root, "go-mod-cache")
+	t.Cleanup(func() {
+		_ = filepath.WalkDir(cache, func(name string, _ os.DirEntry, err error) error {
+			if err == nil {
+				_ = os.Chmod(name, 0o755)
+			}
+			return nil
+		})
+	})
+	return cache
+}
+
+// localDistributionProxy publishes the current workspace modules at the
+// shared development version through a temporary file-based Go proxy.
+func localDistributionProxy(t *testing.T, repoRoot string) string {
+	t.Helper()
+	const (
+		modulePrefix = "github.com/ballerina-nutcracker/ballerina"
+		version      = "v0.7.0"
+	)
+
+	cmd := exec.Command("go", "list", "-m", "-f", "{{if .Main}}{{.Path}}\t{{.Dir}}{{end}}", "all")
+	cmd.Dir = repoRoot
+	output, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("listing workspace modules for local proxy: %v", err)
+	}
+
+	proxyDir := t.TempDir()
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		modulePath, moduleDir, ok := strings.Cut(scanner.Text(), "\t")
+		if !ok || modulePath == modulePrefix+"/cli" ||
+			(modulePath != modulePrefix && !strings.HasPrefix(modulePath, modulePrefix+"/")) {
+			continue
+		}
+		writeProxyModule(t, proxyDir, modulePath, moduleDir, version)
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("reading workspace module list: %v", err)
+	}
+
+	proxyPath := filepath.ToSlash(proxyDir)
+	if goruntime.GOOS == "windows" {
+		proxyPath = "/" + proxyPath
+	}
+	return (&url.URL{Scheme: "file", Path: proxyPath}).String()
+}
+
+func writeProxyModule(t *testing.T, proxyDir, modulePath, moduleDir, version string) {
+	t.Helper()
+	versionDir := filepath.Join(proxyDir, filepath.FromSlash(modulePath), "@v")
+	if err := os.MkdirAll(versionDir, 0o755); err != nil {
+		t.Fatalf("creating local proxy directory: %v", err)
+	}
+	goMod, err := os.ReadFile(filepath.Join(moduleDir, "go.mod"))
+	if err != nil {
+		t.Fatalf("reading %s/go.mod: %v", moduleDir, err)
+	}
+	if err := os.WriteFile(filepath.Join(versionDir, version+".mod"), goMod, 0o644); err != nil {
+		t.Fatalf("writing proxy go.mod: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(versionDir, version+".info"),
+		[]byte(fmt.Sprintf(`{"Version":%q,"Time":"2026-01-01T00:00:00Z"}`, version)), 0o644); err != nil {
+		t.Fatalf("writing proxy info: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(versionDir, "list"), []byte(version+"\n"), 0o644); err != nil {
+		t.Fatalf("writing proxy version list: %v", err)
+	}
+
+	zipFile, err := os.Create(filepath.Join(versionDir, version+".zip"))
+	if err != nil {
+		t.Fatalf("creating proxy zip: %v", err)
+	}
+	zw := zip.NewWriter(zipFile)
+	prefix := modulePath + "@" + version + "/"
+	walkErr := filepath.WalkDir(moduleDir, func(name string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(moduleDir, name)
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			if rel != "." {
+				switch entry.Name() {
+				case ".agents", ".git", ".github", ".pi", "corpus", "doc", "target", "testdata", "vendor":
+					return filepath.SkipDir
+				}
+				if _, err := os.Stat(filepath.Join(name, "go.mod")); err == nil {
+					return filepath.SkipDir
+				}
+			}
+			return nil
+		}
+		if entry.Type()&os.ModeSymlink != 0 || !entry.Type().IsRegular() || strings.HasSuffix(entry.Name(), "_test.go") {
+			return nil
+		}
+		data, err := os.ReadFile(name)
+		if err != nil {
+			return err
+		}
+		writer, err := zw.Create(prefix + filepath.ToSlash(rel))
+		if err != nil {
+			return err
+		}
+		_, err = writer.Write(data)
+		return err
+	})
+	if walkErr == nil {
+		walkErr = zw.Close()
+	} else {
+		_ = zw.Close()
+	}
+	if closeErr := zipFile.Close(); walkErr == nil {
+		walkErr = closeErr
+	}
+	if walkErr != nil {
+		t.Fatalf("writing proxy zip for %s: %v", modulePath, walkErr)
+	}
+}
+
 // setupNativeTestFixtures copies native-multi-org-v and its bala deps into
 // fresh temp dirs, returning the BAL_ENV root and project dir, so tests can
 // mutate them without touching the checked-in fixtures.
@@ -529,12 +667,12 @@ func TestBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_InterpreterSourceUnresolvable covers a native-dependency
-// project when the embedded-source cache extraction can't succeed. The
+// TestNativeRunner_DriverSourceUnresolvable covers a native-dependency
+// project when the embedded driver cache extraction can't succeed. The
 // dev-build extraction path ignores BAL_ENV and uses os.TempDir(), so this
 // redirects TMPDIR/TMP/TEMP (in the child process only) to a path blocked by
 // a regular file, without touching the real shared temp dir.
-func TestNativeRunner_InterpreterSourceUnresolvable(t *testing.T) {
+func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
@@ -559,10 +697,10 @@ func TestNativeRunner_InterpreterSourceUnresolvable(t *testing.T) {
 
 	_, stderr, code := runNativeCLICommandWithEnv(t, balBin, repoRoot, []string{"run", tempProject}, env)
 	if code == 0 {
-		t.Fatalf("expected a non-zero exit code when the interpreter source cannot be resolved, got 0\nstderr: %s", stderr)
+		t.Fatalf("expected a non-zero exit code when the CLI driver source cannot be resolved, got 0\nstderr: %s", stderr)
 	}
-	if !strings.Contains(stderr, "interpreter source") {
-		t.Errorf("expected a clear 'interpreter source' error, got:\n%s", stderr)
+	if !strings.Contains(stderr, "driver source") {
+		t.Errorf("expected a clear 'driver source' error, got:\n%s", stderr)
 	}
 }
 

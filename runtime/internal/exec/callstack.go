@@ -16,7 +16,7 @@
 
 package exec
 
-import "ballerina/bir"
+import "github.com/ballerina-nutcracker/ballerina/bir"
 
 type callStackEntry struct {
 	frame    *Frame

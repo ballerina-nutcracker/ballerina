@@ -19,10 +19,10 @@ package projects
 import (
 	"io/fs"
 
-	"ballerina/context"
-	"ballerina/model"
-	"ballerina/semantics"
-	"ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // Environment represents an environment shared by a set of projects.

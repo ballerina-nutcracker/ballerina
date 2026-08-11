@@ -22,11 +22,11 @@ import (
 	"math"
 	"strings"
 
-	"ballerina/ast"
-	"ballerina/decimal"
-	"ballerina/model"
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 var errNotConstantExpression = errors.New("not a constant expression")

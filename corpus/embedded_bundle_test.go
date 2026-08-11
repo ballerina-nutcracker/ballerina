@@ -25,16 +25,16 @@ import (
 	"strings"
 	"testing"
 
-	_ "ballerina/lib/rt" // register stdlib runtime functions (io.println, etc.)
+	_ "github.com/ballerina-nutcracker/ballerina/lib/rt" // register stdlib runtime functions (io.println, etc.)
 	// foo has native code; bar is pure Ballerina. foo's native must be registered
 	// so the interpreter can dispatch foo:add() at runtime.
-	"ballerina/bir"
-	_ "ballerina/corpus/package-resolution/testdata/bundled-embed/ballerina/foo/0.1.0/go1.26/native"
-	"ballerina/lib/stdlibs"
-	"ballerina/projects"
-	"ballerina/runtime"
-	"ballerina/semtypes"
-	"ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	_ "github.com/ballerina-nutcracker/ballerina/corpus/package-resolution/testdata/bundled-embed/ballerina/foo/0.1.0/go1.26/native"
+	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 )
 
 const packageResolutionTestDataDir = "package-resolution/testdata"

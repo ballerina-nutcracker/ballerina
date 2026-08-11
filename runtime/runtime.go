@@ -20,14 +20,14 @@ import (
 	"errors"
 	"sync"
 
-	"ballerina/bir"
-	"ballerina/model"
-	"ballerina/platform/pal"
-	"ballerina/runtime/extern"
-	"ballerina/runtime/internal/exec"
-	"ballerina/runtime/internal/modules"
-	"ballerina/semtypes"
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/exec"
+	"github.com/ballerina-nutcracker/ballerina/runtime/internal/modules"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // LookupFunction resolves a top-level Ballerina function (BIR or native)

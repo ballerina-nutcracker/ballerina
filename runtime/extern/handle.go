@@ -16,7 +16,7 @@
 
 package extern
 
-import "ballerina/values"
+import "github.com/ballerina-nutcracker/ballerina/values"
 
 // MethodHandle is an opaque reference to a resolved method on a Ballerina
 // object. Obtain one from Context.LookupObjectMethod,

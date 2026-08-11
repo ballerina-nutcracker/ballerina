@@ -19,7 +19,7 @@ package frame
 import (
 	"sync"
 
-	"ballerina/values"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 var (

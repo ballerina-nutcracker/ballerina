@@ -18,7 +18,7 @@
 
 package ast
 
-import "ballerina/tools/diagnostics"
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // StringValueNode holds a string value (basic or literal, single or multiline).
 type StringValueNode struct {

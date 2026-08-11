@@ -17,9 +17,9 @@
 package projects
 
 import (
-	"ballerina/bir"
-	"ballerina/model"
-	"ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
 )
 
 // BallerinaBackendTarget is the target platform for the Go/BIR backend.
